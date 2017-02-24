@@ -403,7 +403,7 @@ public class TestBuiltin_asvector extends TestBase {
         assertEval("{ as.vector(\"foo\", \"character\") }");
         assertEval("{ as.vector(\"foo\", \"list\") }");
         assertEval("{ as.vector(\"foo\") }");
-        assertEval(Output.IgnoreErrorContext, "{ as.vector(\"foo\", \"bar\") }");
+        assertEval(Output.ImprovedErrorContext, "{ as.vector(\"foo\", \"bar\") }");
         assertEval(Output.IgnoreWarningContext, "{ as.vector(c(\"foo\", \"bar\"), \"raw\") }");
         assertEval("x<-c(a=1.1, b=2.2); as.vector(x, \"raw\")");
         assertEval("x<-c(a=1L, b=2L); as.vector(x, \"complex\")");
@@ -422,9 +422,9 @@ public class TestBuiltin_asvector extends TestBase {
         assertEval("as.vector(x~z)");
         assertEval("as.vector(file(''))");
 
-        assertEval("{ as.vector(42, NULL) }");
-        assertEval("{ as.vector(42, c(\"character\", \"character\")) }");
-        assertEval("{ as.vector(42, character())  }");
+        assertEval(Output.ImprovedErrorContext, "{ as.vector(42, NULL) }");
+        assertEval(Output.ImprovedErrorContext, "{ as.vector(42, c(\"character\", \"character\")) }");
+        assertEval(Output.ImprovedErrorContext, "{ as.vector(42, character())  }");
     }
 
     @Test

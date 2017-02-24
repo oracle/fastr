@@ -38,8 +38,7 @@ public abstract class ReadTableHead extends RExternalBuiltinNode.Arg7 {
         try (RConnection openConn = RConnection.fromIndex(con).forceOpen("r")) {
             return RDataFactory.createStringVector(openConn.readLines(nlines, true, false), RDataFactory.COMPLETE_VECTOR);
         } catch (IOException ex) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
+            throw error(RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
         }
     }
 }

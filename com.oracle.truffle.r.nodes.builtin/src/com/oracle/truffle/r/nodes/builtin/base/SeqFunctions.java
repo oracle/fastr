@@ -357,7 +357,7 @@ public final class SeqFunctions {
         }
 
         CastNode createLengthResultCast() {
-            return newCastBuilder().defaultError(NO_CALLER, Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED).asIntegerVector(false, false, false).findFirst().mustBe(
+            return newCastBuilder(null).defaultError(Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED).asIntegerVector(false, false, false).findFirst().mustBe(
                             gte(0).and(notIntNA())).buildCastNode();
         }
     }
@@ -603,7 +603,7 @@ public final class SeqFunctions {
             if (directionProfile.profile(from < to)) {
                 if (by < 0) {
                     error.enter();
-                    throw RError.error(this, RError.Message.WRONG_SIGN_IN_BY);
+                    throw error(RError.Message.WRONG_SIGN_IN_BY);
                 }
                 result = RDataFactory.createIntSequence(from, by, (to - from) / by + 1);
             } else {
@@ -612,7 +612,7 @@ public final class SeqFunctions {
                 }
                 if (by > 0) {
                     error.enter();
-                    throw RError.error(this, RError.Message.WRONG_SIGN_IN_BY);
+                    throw error(RError.Message.WRONG_SIGN_IN_BY);
                 }
                 result = RDataFactory.createIntSequence(from, by, (from - to) / (-by) + 1);
             }
@@ -669,7 +669,7 @@ public final class SeqFunctions {
                 } else {
                     error.enter();
                     // This should go away in an upcoming GNU R release
-                    throw RError.error(this, seqFastPath ? RError.Message.INVALID_TFB_SD : RError.Message.INVALID_TFB);
+                    throw error(seqFastPath ? RError.Message.INVALID_TFB_SD : RError.Message.INVALID_TFB);
                 }
             }
             double dd = Math.abs(del) / Math.max(Math.abs(to), Math.abs(from));
@@ -679,11 +679,11 @@ public final class SeqFunctions {
             }
             if (n > Integer.MAX_VALUE) {
                 error.enter();
-                throw RError.error(this, RError.Message.BY_TOO_SMALL);
+                throw error(RError.Message.BY_TOO_SMALL);
             }
             if (n < -FEPS) {
                 error.enter();
-                throw RError.error(this, RError.Message.WRONG_SIGN_IN_BY);
+                throw error(RError.Message.WRONG_SIGN_IN_BY);
             }
             RAbstractVector result;
             if (allInt) {
@@ -921,7 +921,7 @@ public final class SeqFunctions {
         @Fallback
         protected RAbstractVector seqFallback(VirtualFrame frame, Object fromObj, Object toObj, Object byObj, Object lengthOut, Object alongWith) {
             error.enter();
-            throw RError.error(this, RError.Message.TOO_MANY_ARGS);
+            throw error(RError.Message.TOO_MANY_ARGS);
         }
 
         // Guard methods
@@ -972,7 +972,7 @@ public final class SeqFunctions {
         private int validateIntParam(int v, String vName) {
             if (RRuntime.isNA(v)) {
                 error.enter();
-                throw RError.error(this, RError.Message.CANNOT_BE_INVALID, vName);
+                throw error(RError.Message.CANNOT_BE_INVALID, vName);
             }
             return v;
         }
@@ -985,7 +985,7 @@ public final class SeqFunctions {
             if (vObj != RMissing.instance) {
                 if (!isFinite(v)) {
                     error.enter();
-                    throw RError.error(this, RError.Message.CANNOT_BE_INVALID, vName);
+                    throw error(RError.Message.CANNOT_BE_INVALID, vName);
                 }
             }
             return v;
@@ -998,7 +998,7 @@ public final class SeqFunctions {
             if (obj != RMissing.instance) {
                 if (getLength(frame, obj) != 1) {
                     error.enter();
-                    throw RError.error(this, RError.Message.MUST_BE_SCALAR, vName);
+                    throw error(RError.Message.MUST_BE_SCALAR, vName);
                 }
             }
         }
@@ -1007,7 +1007,7 @@ public final class SeqFunctions {
             double len = asRealLen.execute(lengthOut);
             if (RRuntime.isNAorNaN(len) || len <= -0.5) {
                 error.enter();
-                throw RError.error(this, seqFastPath ? RError.Message.MUST_BE_POSITIVE_SD : RError.Message.MUST_BE_POSITIVE, seqFastPath ? "length" : "length.out");
+                throw error(seqFastPath ? RError.Message.MUST_BE_POSITIVE_SD : RError.Message.MUST_BE_POSITIVE, seqFastPath ? "length" : "length.out");
             }
             if (getLength(frame, lengthOut) != 1) {
                 RError.warning(this, RError.Message.FIRST_ELEMENT_USED, "length.out");
@@ -1042,7 +1042,7 @@ public final class SeqFunctions {
             double r = Math.abs(to - from);
             if (r > Integer.MAX_VALUE) {
                 error.enter();
-                throw RError.error(this, RError.Message.TOO_LONG_VECTOR);
+                throw error(RError.Message.TOO_LONG_VECTOR);
             }
             int length = (int) (r + 1 + FLT_EPSILON);
             return length;

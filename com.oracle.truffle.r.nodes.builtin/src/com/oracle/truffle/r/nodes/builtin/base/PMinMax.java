@@ -25,8 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -91,7 +89,7 @@ public abstract class PMinMax extends RBuiltinNode {
 
     protected static Casts createCasts(Class<? extends PMinMax> extCls) {
         Casts casts = new Casts(extCls);
-        casts.arg("na.rm").defaultError(SHOW_CALLER, Message.INVALID_VALUE, "na.rm").mustBe(numericValue()).asLogicalVector().findFirst().mustBe(logicalNA().not()).map(toBoolean());
+        casts.arg("na.rm").defaultError(Message.INVALID_VALUE, "na.rm").mustBe(numericValue()).asLogicalVector().findFirst().mustBe(logicalNA().not()).map(toBoolean());
         return casts;
     }
 
@@ -336,7 +334,7 @@ public abstract class PMinMax extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     protected RRawVector pMinMaxRaw(Object naRm, Object args) {
-        throw RError.error(NO_CALLER, RError.Message.INVALID_INPUT_TYPE);
+        throw error(RError.Message.INVALID_INPUT_TYPE);
     }
 
     @RBuiltin(name = "pmax", kind = INTERNAL, parameterNames = {"na.rm", "..."}, behavior = PURE)

@@ -15,19 +15,20 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 // Transcribed from GnuR, library/utils/src/io.c
 
 // Checkstyle: stop
-public final class CountFields extends RExternalBuiltinNode {
+public abstract class CountFields extends RExternalBuiltinNode.Arg6 {
 
     private static final int R_EOF = -1;
     private static final int SCAN_BLOCKSIZE = 1000;
@@ -54,7 +55,53 @@ public final class CountFields extends RExternalBuiltinNode {
     }
 
     static {
-        Casts.noCasts(CountFields.class);
+        Casts casts = new Casts(CountFields.class);
+        casts.arg(0, "conn").asIntegerVector().findFirst();
+        casts.arg(1, "sep").allowNull().mustBe(Predef.stringValue()).asStringVector().findFirst();
+        casts.arg(2, "quote").allowNull().mustBe(Predef.stringValue()).asStringVector().findFirst();
+        casts.arg(3, "nskip").asIntegerVector().findFirst();
+        casts.arg(4, "blskip").asLogicalVector().findFirst().replaceNA(RRuntime.LOGICAL_TRUE).map(Predef.toBoolean());
+        casts.arg(5, "commend.char").mustBe(Predef.stringValue()).asStringVector().findFirst().mustBe(Predef.length(1));
+    }
+
+    @Specialization
+    protected Object count(int conn, Object sep, Object quote, int nskipArg, boolean blskip, String commentCharArg) {
+        char comChar;
+        if (!(commentCharArg != null && commentCharArg.length() == 1)) {
+            throw error(RError.Message.INVALID_ARGUMENT, "comment.char");
+        } else {
+            comChar = commentCharArg.charAt(0);
+        }
+
+        int nskip;
+        if (nskipArg < 0 || nskipArg == RRuntime.INT_NA) {
+            nskip = 0;
+        } else {
+            nskip = nskipArg;
+        }
+
+        char sepChar;
+        if (sep instanceof RNull) {
+            sepChar = 0;
+        } else {
+            String s = (String) sep;
+            if (s == null) {
+                throw error(RError.Message.INVALID_ARGUMENT, "sep");
+            } else {
+                sepChar = s.length() == 0 ? 0 : s.charAt(0);
+            }
+        }
+        String quoteSet;
+        if (quote instanceof RNull) {
+            quoteSet = "";
+        } else {
+            quoteSet = (String) quote;
+        }
+        try (RConnection openConn = RConnection.fromIndex(conn).forceOpen("r")) {
+            return countFields(openConn, sepChar, quoteSet, nskip, blskip, comChar);
+        } catch (IllegalStateException | IOException ex) {
+            throw error(RError.Message.GENERIC, ex.getMessage());
+        }
     }
 
     @TruffleBoundary
@@ -290,64 +337,5 @@ public final class CountFields extends RExternalBuiltinNode {
         }
         // TODO locale
         return false;
-    }
-
-    // Transcribed from GnuR, library/utils/src/io.c
-    @Override
-    @TruffleBoundary
-    public Object call(RArgsValuesAndNames args) {
-        Object[] argValues = args.getArguments();
-        int conn = castInt(castVector(argValues[0]));
-        Object sepArg = argValues[1];
-        char sepChar;
-        Object quoteArg = argValues[2];
-        int nskip = castInt(castVector(argValues[3]));
-        byte blskip = castLogical(castVector(argValues[4]));
-        String commentCharArg = isString(argValues[5]);
-        char comChar;
-        if (!(commentCharArg != null && commentCharArg.length() == 1)) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "comment.char");
-        } else {
-            comChar = commentCharArg.charAt(0);
-        }
-
-        if (nskip < 0 || nskip == RRuntime.INT_NA) {
-            nskip = 0;
-        }
-        if (blskip == RRuntime.LOGICAL_NA) {
-            blskip = RRuntime.LOGICAL_TRUE;
-        }
-
-        if (sepArg instanceof RNull) {
-            sepChar = 0;
-        } else {
-            String s = isString(sepArg);
-            if (s == null) {
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "sep");
-            } else {
-                if (s.length() == 0) {
-                    sepChar = 0;
-                } else {
-                    sepChar = s.charAt(0);
-                }
-            }
-        }
-        String quoteSet;
-        if (quoteArg instanceof RNull) {
-            quoteSet = "";
-        } else {
-            String s = isString(quoteArg);
-            if (s == null) {
-                throw RError.error(this, RError.Message.GENERIC, "invalid quote symbol set");
-            } else {
-                quoteSet = s;
-            }
-        }
-        try (RConnection openConn = RConnection.fromIndex(conn).forceOpen("r")) {
-            return countFields(openConn, sepChar, quoteSet, nskip, RRuntime.fromLogical(blskip), comChar);
-        } catch (IllegalStateException | IOException ex) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
-        }
     }
 }

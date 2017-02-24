@@ -96,7 +96,6 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(true, true);
         @Child private PromiseCheckHelperNode promiseCheckHelper;
 
-        private final BranchProfile errorProfile = BranchProfile.create();
         private final BranchProfile firstArgMissing = BranchProfile.create();
         private final ConditionProfile argMissingProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
@@ -136,8 +135,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
          */
         private Object getEnclosingArg(VirtualFrame frame, String generic) {
             if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
+                throw error(RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
             }
             Object enclosingArg = RArguments.getArgument(frame, 0);
             if (argsValueAndNamesProfile.profile(enclosingArg instanceof RArgsValuesAndNames)) {
@@ -188,7 +186,6 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
 
         @Child private PromiseHelperNode promiseHelper;
 
-        private final BranchProfile errorProfile = BranchProfile.create();
         private final ConditionProfile emptyArgsProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile genericCallFrameNullProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile genericDefFrameNullProfile = ConditionProfile.createBinaryProfile();
@@ -218,8 +215,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         protected Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") Object ignoredGeneric, Object obj, RArgsValuesAndNames args) {
             String generic = (String) rvnGeneric.execute(frame);
             if (generic == null || generic.isEmpty()) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
+                throw error(RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
             }
             return nextMethod(frame, generic, obj, args);
         }
@@ -290,8 +286,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             }
             if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null ||
                             (!(RArguments.getArgument(frame, 0) instanceof RAbstractContainer) && !(RArguments.getArgument(frame, 0) instanceof RPromise))) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.OBJECT_NOT_SPECIFIED);
+                throw error(RError.Message.OBJECT_NOT_SPECIFIED);
             }
             Object arg = RArguments.getArgument(frame, 0);
             if (arg instanceof RPromise) {

@@ -42,7 +42,7 @@ public abstract class SystemFunction extends RBuiltinNode {
     static {
         Casts casts = new Casts(SystemFunction.class);
         casts.arg("command").mustBe(stringValue(), RError.Message.SYSTEM_CHAR_ARG).asStringVector().findFirst();
-        casts.arg("intern").asLogicalVector().findFirst().notNA(RError.Message.SYSTEM_INTERN_NOT_NA).map(toBoolean());
+        casts.arg("intern").asLogicalVector().findFirst().mustNotBeNA(RError.Message.SYSTEM_INTERN_NOT_NA).map(toBoolean());
     }
 
     @Specialization

@@ -31,7 +31,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.Map;
 import java.util.Set;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -106,8 +105,7 @@ public class OptionsFunctions {
                 visibility.execute(frame, result.visible);
                 return result.value;
             } catch (OptionsException ex) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.error(RError.SHOW_CALLER, ex);
+                throw error(ex);
             }
         }
 
@@ -167,7 +165,7 @@ public class OptionsFunctions {
                             names = newNames;
                         }
                     } else {
-                        throw RError.error(RError.SHOW_CALLER, Message.INVALID_UNNAMED_ARGUMENT);
+                        throw error(Message.INVALID_UNNAMED_ARGUMENT);
                     }
                     Object optionVal = options.getValue(optionName);
                     data[i] = optionVal == null ? RNull.instance : optionVal;
@@ -196,14 +194,14 @@ public class OptionsFunctions {
 
         static {
             Casts casts = new Casts(GetOption.class);
-            casts.arg("x").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_STRING, "x").mustBe(stringValue()).asStringVector().findFirst();
+            casts.arg("x").defaultError(RError.Message.MUST_BE_STRING, "x").mustBe(stringValue()).asStringVector().findFirst();
         }
 
         @TruffleBoundary
         @Specialization
         protected Object getOption(RAbstractStringVector x) {
             if (x.getLength() != 1) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.MUST_BE_STRING);
+                throw error(RError.Message.MUST_BE_STRING);
             }
             ROptions.ContextStateImpl options = RContext.getInstance().stateROptions;
             return options.getValue(x.getDataAt(0));
@@ -211,7 +209,7 @@ public class OptionsFunctions {
 
         @Fallback
         protected Object getOption(@SuppressWarnings("unused") Object x) {
-            throw RError.error(RError.SHOW_CALLER, RError.Message.MUST_BE_STRING);
+            throw error(RError.Message.MUST_BE_STRING);
         }
     }
 }

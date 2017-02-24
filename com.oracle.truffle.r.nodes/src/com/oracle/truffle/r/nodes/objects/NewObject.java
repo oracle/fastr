@@ -13,6 +13,7 @@
 package com.oracle.truffle.r.nodes.objects;
 
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
+import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -39,17 +40,13 @@ public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
     @Child private GetFixedAttributeNode pckgAttrAccess = GetFixedAttributeNode.create(RRuntime.PCKG_ATTR_KEY);
     @Child private SetClassAttributeNode setClassAttrNode;
 
-    @Child private CastNode castStringScalar;
-    @Child private CastNode castLogicalScalar;
-    {
-        castStringScalar = newCastBuilder().asStringVector().findFirst(RRuntime.STRING_NA).buildCastNode();
-        castLogicalScalar = newCastBuilder().asLogicalVector().findFirst(RRuntime.LOGICAL_NA).buildCastNode();
-    }
+    @Child private CastNode castStringScalar = newCastBuilder(NO_CALLER).asStringVector().findFirst(RRuntime.STRING_NA).buildCastNode();
+    @Child private CastNode castLogicalScalar = newCastBuilder(NO_CALLER).asLogicalVector().findFirst(RRuntime.LOGICAL_NA).buildCastNode();
 
     static {
         Casts casts = new Casts(NewObject.class);
         // TODO: should we change the message to (incompatible) "Java level ..."?
-        casts.arg(0).mustNotBeNull(RError.NO_CALLER, RError.Message.GENERIC, "C level NEW macro called with null class definition pointer");
+        casts.arg(0).mustNotBeNull(RError.Message.GENERIC, "C level NEW macro called with null class definition pointer");
     }
 
     @Specialization
@@ -58,15 +55,14 @@ public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
         Object e = accessSlotVirtual.executeAccess(classDef, RRuntime.S_VIRTUAL);
         if (((byte) castLogicalScalar.execute(e)) != RRuntime.LOGICAL_FALSE) {
             e = accessSlotClassName.executeAccess(classDef, RRuntime.S_CLASSNAME);
-            throw RError.error(this, RError.Message.OBJECT_FROM_VIRTUAL, castStringScalar.execute(e));
+            throw error(RError.Message.OBJECT_FROM_VIRTUAL, castStringScalar.execute(e));
         }
         e = accessSlotClassName.executeAccess(classDef, RRuntime.S_CLASSNAME);
         Object prototype = accessSlotPrototypeName.executeAccess(classDef, RRuntime.S_PROTOTYPE);
         Object value = duplicate.executeObject(prototype);
         assert value instanceof RAttributable;
         RAttributable valueAttr = (RAttributable) value;
-        if (valueAttr instanceof RS4Object ||
-                        (e instanceof RAttributable && ((RAttributable) e).getAttributes() != null && pckgAttrAccess.execute(((RAttributable) e).getAttributes()) != null)) {
+        if (valueAttr instanceof RS4Object || (e instanceof RAttributable && ((RAttributable) e).getAttributes() != null && pckgAttrAccess.execute(((RAttributable) e).getAttributes()) != null)) {
 
             if (setClassAttrNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();

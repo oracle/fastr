@@ -69,5 +69,7 @@ public class TestBuiltin_crossprod extends TestBase {
         assertEval("{ x <- matrix(c(NaN,2,3,4,5,NA), nrow=3); crossprod(x) }");
 
         assertEval(Ignored.Unknown, "{ x <- matrix(c(NaN,2+3i,3,4+1i,5,NA), nrow=3); crossprod(x) }");
+
+        assertEval(Output.ImprovedErrorContext, "{ crossprod('asdf', matrix(1:6, ncol=2)) }");
     }
 }

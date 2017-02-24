@@ -35,6 +35,13 @@ public final class MessageData {
     private final RError.Message message;
     private final Object[] messageArgs;
 
+    public MessageData(Message message, Object... messageArgs) {
+        this.callObj = null;
+        this.message = message;
+        this.messageArgs = messageArgs;
+        assert message != null;
+    }
+
     public MessageData(RBaseNode callObj, Message message, Object... messageArgs) {
         this.callObj = callObj;
         this.message = message;

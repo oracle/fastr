@@ -46,7 +46,7 @@ public abstract class Rmd5 extends RExternalBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(Rmd5.class);
-        casts.arg(0).defaultError(RError.NO_CALLER, RError.Message.ARG_MUST_BE_CHARACTER, "files").mustBe(stringValue());
+        casts.arg(0).defaultError(RError.Message.ARG_MUST_BE_CHARACTER, "files").mustBe(stringValue());
     }
 
     @Specialization

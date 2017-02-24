@@ -40,9 +40,9 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
 import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardedValuesAnalyser;
 import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardingAnalysisResult;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Class that holds the data for a pipeline for a single parameter. It holds the cast pipeline steps
@@ -55,8 +55,8 @@ public final class PipelineBuilder {
     private ChainBuilder<?> chainBuilder;
     private final AtomicReference<Optional<ForwardingAnalysisResult>> fwdAnalysisResult = new AtomicReference<>();
 
-    public PipelineBuilder(String argumentName) {
-        this.pcb = new PipelineConfigBuilder(argumentName);
+    public PipelineBuilder(String argumentName, ErrorContext callObj) {
+        this.pcb = new PipelineConfigBuilder(argumentName, callObj);
     }
 
     public CastNode buildNode() {
@@ -71,29 +71,25 @@ public final class PipelineBuilder {
         append(new PipelineStep.BoxPrimitiveStep<>());
     }
 
-    public void appendFindFirst(Object defaultValue, Class<?> elementClass, RBaseNode callObj, Message message, Object[] messageArgs) {
-        append(new FindFirstStep<>(defaultValue, elementClass, createMessage(callObj, message, messageArgs)));
+    public void appendFindFirst(Object defaultValue, Class<?> elementClass, Message message, Object[] messageArgs) {
+        append(new FindFirstStep<>(defaultValue, elementClass, createMessage(message, messageArgs)));
     }
 
     public void appendAsAttributable(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         append(new AttributableCoercionStep<>(preserveNames, preserveDimensions, preserveAttributes));
     }
 
-    public void appendAsVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector, RBaseNode messageCallerObj) {
-        append(new CoercionStep<>(RType.Any, true, preserveNames, preserveDimensions, preserveAttributes, preserveNonVector, messageCallerObj));
-    }
-
-    public void appendAsVector(RType type, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
-        assert type == RType.Integer || type == RType.Double || type == RType.Complex || type == RType.Character || type == RType.Logical || type == RType.Raw;
-        append(new CoercionStep<>(type, true, preserveNames, preserveDimensions, preserveAttributes, true, messageCallerObj));
+    public void appendAsVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector) {
+        append(new CoercionStep<>(RType.Any, true, preserveNames, preserveDimensions, preserveAttributes, preserveNonVector));
     }
 
     public void appendAsVector(RType type, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        appendAsVector(type, preserveNames, preserveDimensions, preserveAttributes, null);
+        assert type == RType.Integer || type == RType.Double || type == RType.Complex || type == RType.Character || type == RType.Logical || type == RType.Raw;
+        append(new CoercionStep<>(type, true, preserveNames, preserveDimensions, preserveAttributes, true));
     }
 
-    public void appendNotNA(Object naReplacement, RBaseNode callObj, Message message, Object[] messageArgs) {
-        append(new NotNAStep<>(naReplacement, createMessage(callObj, message, messageArgs)));
+    public void appendNotNA(Object naReplacement, Message message, Object[] messageArgs) {
+        append(new NotNAStep<>(naReplacement, createMessage(message, messageArgs)));
     }
 
     public void appendMapIf(Filter<?, ?> argFilter, Mapper<?, ?> trueBranchMapper, boolean returns) {
@@ -116,20 +112,16 @@ public final class PipelineBuilder {
         append(new MapStep<>(mapFn));
     }
 
-    public void appendMustBeStep(Filter<?, ?> argFilter, RBaseNode callObj, Message message, Object[] messageArgs) {
-        append(new FilterStep<>(argFilter, createMessage(callObj, message, messageArgs), false));
+    public void appendMustBeStep(Filter<?, ?> argFilter, Message message, Object[] messageArgs) {
+        append(new FilterStep<>(argFilter, createMessage(message, messageArgs), false));
     }
 
     public void appendShouldBeStep(Filter<?, ?> argFilter, Message message, Object[] messageArgs) {
-        appendShouldBeStep(argFilter, null, message, messageArgs);
+        append(new FilterStep<>(argFilter, createMessage(message, messageArgs), true));
     }
 
-    public void appendShouldBeStep(Filter<?, ?> argFilter, RBaseNode callObj, Message message, Object[] messageArgs) {
-        append(new FilterStep<>(argFilter, createMessage(callObj, message, messageArgs), true));
-    }
-
-    private static MessageData createMessage(RBaseNode callObj, Message message, Object[] messageArgs) {
-        return message == null ? null : new MessageData(callObj, message, messageArgs);
+    private static MessageData createMessage(Message message, Object[] messageArgs) {
+        return message == null ? null : new MessageData(message, messageArgs);
     }
 
     PipelineConfigBuilder getPipelineConfig() {

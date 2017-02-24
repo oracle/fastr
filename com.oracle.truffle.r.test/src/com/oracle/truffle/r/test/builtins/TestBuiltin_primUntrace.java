@@ -24,6 +24,6 @@ public class TestBuiltin_primUntrace extends TestBase {
 
     @Test
     public void testArgsCasts() {
-        assertEval(Output.IgnoreErrorContext, ".primUntrace(42)");
+        assertEval(".primUntrace(42)");
     }
 }

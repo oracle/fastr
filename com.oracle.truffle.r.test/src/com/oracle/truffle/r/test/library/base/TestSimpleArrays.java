@@ -89,10 +89,10 @@ public class TestSimpleArrays extends TestBase {
 
         // negative length vectors are not allowed is the error reported by gnu-r
         // negative dims not allowed by R, special GNU message
-        assertEval(Output.IgnoreErrorContext, "{ array(NA, dim=c(-2,2)); }");
+        assertEval("{ array(NA, dim=c(-2,2)); }");
 
         // negative dims not allowed
-        assertEval(Output.IgnoreErrorContext, "{ array(NA, dim=c(-2,-2)); }");
+        assertEval("{ array(NA, dim=c(-2,-2)); }");
 
         // zero dimension array has length 0
         assertEval("{ length(array(NA, dim=c(1,0,2,3))) }");

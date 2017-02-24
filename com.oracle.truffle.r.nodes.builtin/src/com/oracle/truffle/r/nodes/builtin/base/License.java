@@ -46,7 +46,7 @@ public abstract class License extends RBuiltinNode {
         try {
             StdConnections.getStdout().writeString(RRuntime.LICENSE, true);
         } catch (IOException ex) {
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+            throw error(RError.Message.GENERIC, ex.getMessage());
         }
         return RNull.instance;
     }

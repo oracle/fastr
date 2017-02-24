@@ -26,8 +26,8 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringV
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
-import static com.oracle.truffle.r.runtime.RError.Message.NON_STRING_ARG_TO_INTERNAL_PASTE;
 import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
+import static com.oracle.truffle.r.runtime.RError.Message.NON_STRING_ARG_TO_INTERNAL_PASTE;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -223,7 +223,7 @@ public abstract class Paste extends RBuiltinNode {
         }
         if (castAsCharacterResultNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castAsCharacterResultNode = insert(newCastBuilder().mustBe(stringValue(), SHOW_CALLER, NON_STRING_ARG_TO_INTERNAL_PASTE).buildCastNode());
+            castAsCharacterResultNode = insert(newCastBuilder(SHOW_CALLER).mustBe(stringValue(), NON_STRING_ARG_TO_INTERNAL_PASTE).buildCastNode());
         }
     }
 
@@ -238,7 +238,7 @@ public abstract class Paste extends RBuiltinNode {
     private CastNode getAsCharacterNode() {
         if (asCharacterNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            asCharacterNode = insert(newCastBuilder().returnIf(nullValue(), emptyStringVector()).asStringVector().buildCastNode());
+            asCharacterNode = insert(newCastBuilder(SHOW_CALLER).returnIf(nullValue(), emptyStringVector()).asStringVector().buildCastNode());
         }
         return asCharacterNode;
     }

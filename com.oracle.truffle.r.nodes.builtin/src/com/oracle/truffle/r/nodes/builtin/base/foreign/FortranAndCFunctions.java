@@ -107,7 +107,7 @@ public class FortranAndCFunctions {
                     argTypes[i] = SCALAR_LOGICAL;
                     nativeArgs[i] = checkNAs(node, i + 1, new int[]{RRuntime.isNA((byte) arg) ? RRuntime.INT_NA : (byte) arg});
                 } else {
-                    throw RError.error(node, RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
+                    throw node.error(RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
                 }
             }
             invokeCNode.execute(nativeCallInfo, nativeArgs);
@@ -156,7 +156,7 @@ public class FortranAndCFunctions {
             CompilerAsserts.neverPartOfCompilation();
             for (int i = 0; i < data.length; i++) {
                 if (RRuntime.isNA(data[i])) {
-                    throw RError.error(node, RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, argIndex);
+                    throw node.error(RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, argIndex);
                 }
             }
             return data;
@@ -166,7 +166,7 @@ public class FortranAndCFunctions {
             CompilerAsserts.neverPartOfCompilation();
             for (int i = 0; i < data.length; i++) {
                 if (!RRuntime.isFinite(data[i])) {
-                    throw RError.error(node, RError.Message.NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL, argIndex);
+                    throw node.error(RError.Message.NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL, argIndex);
                 }
             }
             return data;
@@ -233,7 +233,7 @@ public class FortranAndCFunctions {
             DLL.SymbolHandle func = findSymbolNode.execute(symbol.getDataAt(0), libName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, symbol);
+                throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, symbol);
             }
             return dispatch(this, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
         }
@@ -275,14 +275,14 @@ public class FortranAndCFunctions {
                 libName = RRuntime.asString(rPackage);
                 if (libName == null) {
                     errorProfile.enter();
-                    throw RError.error(this, RError.Message.ARGUMENT_MUST_BE_STRING, "PACKAGE");
+                    throw error(RError.Message.ARGUMENT_MUST_BE_STRING, "PACKAGE");
                 }
             }
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.C, null, null);
             DLL.SymbolHandle func = findSymbolNode.execute(symbol.getDataAt(0), libName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, symbol);
+                throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, symbol);
             }
             return dispatch(this, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
         }

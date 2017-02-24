@@ -76,7 +76,7 @@ public class DynLoadFunctions {
                 DLLInfo dllInfo = loadPackageDLLNode.execute(lib, local, now);
                 return dllInfo.toRList();
             } catch (DLLException ex) {
-                throw RError.error(RError.SHOW_CALLER, ex);
+                throw error(ex);
             }
         }
     }
@@ -96,7 +96,7 @@ public class DynLoadFunctions {
             try {
                 dllUnloadNode.execute(lib.getDataAt(0));
             } catch (DLLException ex) {
-                throw RError.error(this, ex);
+                throw error(ex);
             }
             return RNull.instance;
         }
@@ -189,7 +189,7 @@ public class DynLoadFunctions {
                         @Cached("create()") DLL.RdlsymNode dlsymNode) {
             DLL.DLLInfo dllInfo = (DLLInfo) externalPtr.getExternalObject();
             if (dllInfo == null) {
-                throw RError.error(this, RError.Message.REQUIRES_NAME_DLLINFO);
+                throw error(RError.Message.REQUIRES_NAME_DLLINFO);
             }
 
             DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();

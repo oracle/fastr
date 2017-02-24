@@ -30,7 +30,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -71,7 +70,7 @@ public abstract class IntToUtf8 extends RBuiltinNode {
                 try {
                     result[j] = new String(new int[]{temp}, 0, 1);
                 } catch (IllegalArgumentException e) {
-                    throw RError.error(RError.SHOW_CALLER, Message.GENERIC, "illegal unicode code point");
+                    throw error(Message.GENERIC, "illegal unicode code point");
                 }
             }
         }
@@ -97,7 +96,7 @@ public abstract class IntToUtf8 extends RBuiltinNode {
         try {
             return new String(result, 0, pos);
         } catch (IllegalArgumentException e) {
-            throw RError.error(RError.SHOW_CALLER, Message.GENERIC, "illegal unicode code point");
+            throw error(Message.GENERIC, "illegal unicode code point");
         }
     }
 }

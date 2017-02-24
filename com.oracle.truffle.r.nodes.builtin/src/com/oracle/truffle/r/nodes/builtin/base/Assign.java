@@ -98,7 +98,7 @@ public abstract class Assign extends RBuiltinNode {
 
         // this argument could be made Boolean unless there were AssignFastPath relying upon the
         // byte argument
-        casts.arg("inherits").asLogicalVector().findFirst().notNA();
+        casts.arg("inherits").asLogicalVector().findFirst().mustNotBeNA();
     }
 
     /**

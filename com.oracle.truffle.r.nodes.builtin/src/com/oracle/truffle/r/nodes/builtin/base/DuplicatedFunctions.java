@@ -47,7 +47,7 @@ public class DuplicatedFunctions {
 
         protected static void casts(Casts casts) {
             // these are similar to those in DuplicatedFunctions.java
-            casts.arg("x").mapNull(emptyList()).mustBe(abstractVectorValue(), RError.SHOW_CALLER, RError.Message.APPLIES_TO_VECTORS, "duplicated()").asVector();
+            casts.arg("x").mapNull(emptyList()).mustBe(abstractVectorValue(), RError.Message.APPLIES_TO_VECTORS, "duplicated()").asVector();
             // not much more can be done for incomparables as it is either a vector of incomparable
             // values or a (single) logical value
             casts.arg("incomparables").asVector(true);
@@ -119,7 +119,7 @@ public class DuplicatedFunctions {
             RType xType = typeof.execute(x);
             // TODO: this is not quite correct, as passing expression generated some obscure error
             // message, but is it worth fixing
-            throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE, ((RTypedValue) incomparables).getRType().getName(), xType.getName());
+            throw error(RError.Message.CANNOT_COERCE, ((RTypedValue) incomparables).getRType().getName(), xType.getName());
         }
 
         @SuppressWarnings("unused")
@@ -156,7 +156,7 @@ public class DuplicatedFunctions {
             initChildren();
             // TODO: this is not quite correct, as passing expression generated some obscure error
             // message, but is it worth fixing
-            throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE, TypeofNode.getTypeof(incomparables).getName(), TypeofNode.getTypeof(x).getName());
+            throw error(RError.Message.CANNOT_COERCE, TypeofNode.getTypeof(incomparables).getName(), TypeofNode.getTypeof(x).getName());
         }
 
         @SuppressWarnings("unused")

@@ -56,7 +56,7 @@ public abstract class DPut extends RBuiltinNode {
         try (RConnection openConn = RConnection.fromIndex(file).forceOpen("wt")) {
             openConn.writeString(string, true);
         } catch (IOException ex) {
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+            throw error(RError.Message.GENERIC, ex.getMessage());
         }
         return x;
     }

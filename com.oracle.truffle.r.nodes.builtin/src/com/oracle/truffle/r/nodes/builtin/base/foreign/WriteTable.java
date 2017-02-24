@@ -55,9 +55,9 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
         // file
         casts.arg(1).defaultError(Message.INVALID_CONNECTION).mustNotBeNull().asIntegerVector().findFirst();
         // nrows
-        casts.arg(2).mustNotBeNull().asIntegerVector().findFirst().notNA();
+        casts.arg(2).mustNotBeNull().asIntegerVector().findFirst().mustNotBeNA();
         // nc
-        casts.arg(3).mustNotBeNull().asIntegerVector().findFirst().notNA();
+        casts.arg(3).mustNotBeNull().asIntegerVector().findFirst().mustNotBeNA();
         // rnames
         casts.arg(4).allowNull().mustBe(stringValue()).asStringVector();
         // sep
@@ -71,7 +71,7 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
         // quote
         casts.arg(9).mustNotBeMissing().mustBe(nullValue().not()).asIntegerVector();
         // qmethod
-        casts.arg(10).mustNotBeNull().asLogicalVector().findFirst().notNA().map(toBoolean());
+        casts.arg(10).mustNotBeNull().asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
     }
 
     // Transcribed from GnuR, library/utils/src/io.c

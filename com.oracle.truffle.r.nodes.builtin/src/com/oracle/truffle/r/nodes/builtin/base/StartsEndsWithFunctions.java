@@ -43,7 +43,7 @@ public class StartsEndsWithFunctions {
         private final ConditionProfile singlePrefixProfile = ConditionProfile.createBinaryProfile();
 
         private static void argCast(Casts casts, String name) {
-            casts.arg(name).mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.NON_CHARACTER_OBJECTS).asStringVector();
+            casts.arg(name).mustBe(stringValue(), RError.Message.NON_CHARACTER_OBJECTS).asStringVector();
         }
 
         protected static Casts createCasts(Class<? extends Adapter> extCls) {

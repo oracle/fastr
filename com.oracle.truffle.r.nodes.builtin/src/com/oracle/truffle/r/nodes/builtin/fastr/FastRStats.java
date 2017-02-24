@@ -68,7 +68,7 @@ public class FastRStats {
         }
 
         private static void append(Casts casts) {
-            casts.arg("append").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).notNA().map(toBoolean());
+            casts.arg("append").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).mustNotBeNA().map(toBoolean());
         }
     }
 
@@ -108,7 +108,7 @@ public class FastRStats {
                     AttributeTracer.addListener(this);
                     AttributeTracer.setTracingState(true);
                 } catch (IOException ex) {
-                    throw RError.error(this, RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filenameVec.getDataAt(0)));
+                    throw error(RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filenameVec.getDataAt(0)));
                 }
             }
             return RNull.instance;
@@ -193,7 +193,7 @@ public class FastRStats {
                     RDataFactory.addListener(this);
                     RDataFactory.setTracingState(true);
                 } catch (IOException ex) {
-                    throw RError.error(this, RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filenameVec.getDataAt(0)));
+                    throw error(RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filenameVec.getDataAt(0)));
                 }
             }
             return RNull.instance;
@@ -299,9 +299,9 @@ public class FastRStats {
             Casts casts = new Casts(FastRProfFuncounts.class);
             CastsHelper.filename(casts);
             CastsHelper.append(casts);
-            casts.arg("timing").asLogicalVector().findFirst().notNA().map(toBoolean());
-            casts.arg("threshold").asIntegerVector().findFirst().notNA();
-            casts.arg("histograms").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("timing").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("threshold").asIntegerVector().findFirst().mustNotBeNA();
+            casts.arg("histograms").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @SuppressWarnings("unused")
@@ -328,7 +328,7 @@ public class FastRStats {
                     profiler.setCollecting(true);
                     profiler.setTiming(timing);
                 } catch (IOException ex) {
-                    throw RError.error(this, RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filenameVec.getDataAt(0)));
+                    throw error(RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filenameVec.getDataAt(0)));
                 }
             }
             return RNull.instance;

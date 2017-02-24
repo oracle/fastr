@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.And;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.Or;
@@ -70,6 +71,11 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         Casts casts = new Casts(BinaryBooleanNode.class);
         casts.arg(0).boxPrimitive();
         casts.arg(1).boxPrimitive();
+    }
+
+    @Override
+    protected RBaseNode getErrorContext() {
+        return this;
     }
 
     private static boolean isLogicOp(BooleanOperation op) {
@@ -159,7 +165,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"(isRMissing(left) || isRMissing(right))"})
     protected Object doOneArg(Object left, Object right) {
-        throw RError.error(this, RError.Message.IS_OF_WRONG_ARITY, 1, factory.createOperation().opName(), 2);
+        throw error(RError.Message.IS_OF_WRONG_ARITY, 1, factory.createOperation().opName(), 2);
     }
 
     protected static boolean isRNullOrEmptyAndNotMissing(Object left, Object right) {
@@ -177,7 +183,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     protected Object doInvalidType(Object left, Object right) {
-        throw RError.error(this, Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
+        throw error(Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
     }
 
     protected static BinaryMapNode createCached(BooleanOperation operation, Object left, Object right) {

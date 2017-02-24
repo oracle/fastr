@@ -17,6 +17,7 @@ package com.oracle.truffle.r.library.graphics;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
+import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.graphics.core.DrawingParameters;
@@ -35,14 +36,11 @@ import com.oracle.truffle.r.runtime.data.RNull;
 
 public class GraphicsCCalls {
     public static final class C_PlotXY extends RExternalBuiltinNode {
-        @Child private CastNode castXYNode;
+
+        @Child private CastNode castXYNode = newCastBuilder(NO_CALLER).mustBe(doubleValue().and(size(2))).asDoubleVector().buildCastNode();
 
         static {
             Casts.noCasts(C_PlotXY.class);
-        }
-
-        public C_PlotXY() {
-            castXYNode = newCastBuilder().mustBe(doubleValue().and(size(2))).asDoubleVector().buildCastNode();
         }
 
         @Override
@@ -107,14 +105,11 @@ public class GraphicsCCalls {
         private double cex = RRuntime.DOUBLE_NA;
         private double col = RRuntime.DOUBLE_NA;
         private double font = RRuntime.DOUBLE_NA;
-        @Child private CastNode firstDoubleCast;
+
+        @Child private CastNode firstDoubleCast = newCastBuilder(NO_CALLER).asDoubleVector().findFirst().buildCastNode();
 
         static {
             Casts.noCasts(C_mtext.class);
-        }
-
-        public C_mtext() {
-            firstDoubleCast = newCastBuilder().asDoubleVector().findFirst().buildCastNode();
         }
 
         @Override

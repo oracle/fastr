@@ -77,11 +77,11 @@ public abstract class UpdateSlot extends RBuiltinNode {
         } else if (rep instanceof ReadVariableNode) {
             return ((ReadVariableNode) rep).getIdentifier();
         } else if (rep instanceof RCallNode) {
-            throw RError.error(this, RError.Message.SLOT_INVALID_TYPE, "language");
+            throw error(RError.Message.SLOT_INVALID_TYPE, "language");
         }
         // TODO: this is not quite correct, but I wonder if we even reach here (can also be
         // augmented on demand)
-        throw RError.error(this, RError.Message.SLOT_INVALID_TYPE, nameObj.getClass().toString());
+        throw error(RError.Message.SLOT_INVALID_TYPE, nameObj.getClass().toString());
     }
 
     private void checkSlotAssign(VirtualFrame frame, Object object, String name, Object value) {

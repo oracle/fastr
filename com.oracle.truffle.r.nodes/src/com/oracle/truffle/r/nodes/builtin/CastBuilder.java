@@ -61,6 +61,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -82,17 +83,18 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class CastBuilder {
 
     private static final PipelineBuilder[] EMPTY_BUILDERS = new PipelineBuilder[0];
 
     private final RBuiltin builtin;
+    private final ErrorContext callObj;
     private final String[] argumentNames;
     private PipelineBuilder[] argumentBuilders;
 
-    public CastBuilder(RBuiltin builtin) {
+    public CastBuilder(RBuiltin builtin, ErrorContext callObj) {
+        this.callObj = callObj;
         // Note: if we have the builtin metadata, we pre-allocate the arrays, builtinNode != null is
         // used to determine, if the arrays are pre-allocated or if they can grow
         if (builtin == null) {
@@ -106,14 +108,16 @@ public final class CastBuilder {
         }
     }
 
-    public CastBuilder(int argumentsCount) {
+    public CastBuilder(int argumentsCount, ErrorContext callObj) {
+        this.callObj = callObj;
         assert argumentsCount >= 0 : "argumentsCount must be non-negative";
         builtin = null;
         argumentNames = null;
         argumentBuilders = new PipelineBuilder[argumentsCount];
     }
 
-    public CastBuilder() {
+    public CastBuilder(ErrorContext callObj) {
+        this.callObj = callObj;
         builtin = null;
         argumentNames = null;
         argumentBuilders = EMPTY_BUILDERS;
@@ -253,7 +257,7 @@ public final class CastBuilder {
             argumentBuilders = Arrays.copyOf(argumentBuilders, argumentIndex + 1);
         }
         if (argumentBuilders[argumentIndex] == null) {
-            argumentBuilders[argumentIndex] = new PipelineBuilder(argumentName);
+            argumentBuilders[argumentIndex] = new PipelineBuilder(argumentName, callObj);
         }
         return argumentBuilders[argumentIndex];
     }
@@ -287,16 +291,16 @@ public final class CastBuilder {
             return filter1.or(filter2);
         }
 
-        public static <T, R extends T> PipelineStep<T, R> mustBe(Filter<T, R> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            return new FilterStep<>(argFilter, new MessageData(callObj, message, messageArgs), false);
+        public static <T, R extends T> PipelineStep<T, R> mustBe(Filter<T, R> argFilter, RError.Message message, Object... messageArgs) {
+            return new FilterStep<>(argFilter, new MessageData(message, messageArgs), false);
         }
 
         public static <T, R extends T> PipelineStep<T, R> mustBe(Filter<T, R> argFilter) {
             return new FilterStep<>(argFilter, null, false);
         }
 
-        public static <T> PipelineStep<T, T> shouldBe(Filter<T, ? extends T> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            return new FilterStep<>(argFilter, new MessageData(callObj, message, messageArgs), true);
+        public static <T> PipelineStep<T, T> shouldBe(Filter<T, ? extends T> argFilter, RError.Message message, Object... messageArgs) {
+            return new FilterStep<>(argFilter, new MessageData(message, messageArgs), true);
         }
 
         public static <T> PipelineStep<T, T> shouldBe(Filter<T, ? extends T> argFilter) {
@@ -331,48 +335,24 @@ public final class CastBuilder {
             return new CoercionStep<>(RType.Integer, false);
         }
 
-        public static <T> PipelineStep<T, Integer> asInteger(RBaseNode messageCallerObj) {
-            return new CoercionStep<>(RType.Integer, false, false, false, false, true, messageCallerObj);
-        }
-
         public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector() {
             return new CoercionStep<>(RType.Integer, true);
         }
 
-        public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector(RBaseNode messageCallerObj) {
-            return new CoercionStep<>(RType.Integer, true, false, false, false, true, messageCallerObj);
-        }
-
         public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return new CoercionStep<>(RType.Integer, true, preserveNames, preserveDimensions, preserveAttributes, true, null);
-        }
-
-        public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
-            return new CoercionStep<>(RType.Integer, true, preserveNames, preserveDimensions, preserveAttributes, true, messageCallerObj);
+            return new CoercionStep<>(RType.Integer, true, preserveNames, preserveDimensions, preserveAttributes, true);
         }
 
         public static <T> PipelineStep<T, Double> asDouble() {
             return new CoercionStep<>(RType.Double, false);
         }
 
-        public static <T> PipelineStep<T, Double> asDouble(RBaseNode messageCallerObj) {
-            return new CoercionStep<>(RType.Double, false, false, false, false, true, messageCallerObj);
-        }
-
         public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector() {
             return new CoercionStep<>(RType.Double, true);
         }
 
-        public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector(RBaseNode messageCallerObj) {
-            return new CoercionStep<>(RType.Double, true, false, false, false, true, messageCallerObj);
-        }
-
         public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
             return new CoercionStep<>(RType.Double, true, preserveNames, preserveDimensions, preserveAttributes);
-        }
-
-        public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
-            return new CoercionStep<>(RType.Double, true, preserveNames, preserveDimensions, preserveAttributes, true, messageCallerObj);
         }
 
         public static <T> PipelineStep<T, String> asString() {
@@ -391,10 +371,6 @@ public final class CastBuilder {
             return new CoercionStep<>(RType.Complex, true);
         }
 
-        public static <T> PipelineStep<T, RAbstractComplexVector> asComplex(RBaseNode messageCallerObj) {
-            return new CoercionStep<>(RType.Complex, false, false, false, false, true, messageCallerObj);
-        }
-
         public static <T> PipelineStep<T, RAbstractRawVector> asRawVector() {
             return new CoercionStep<>(RType.Raw, true);
         }
@@ -403,24 +379,12 @@ public final class CastBuilder {
             return new CoercionStep<>(RType.Logical, false);
         }
 
-        public static <T> PipelineStep<T, Byte> asLogical(RBaseNode messageCallerObj) {
-            return new CoercionStep<>(RType.Logical, false, false, false, false, true, messageCallerObj);
-        }
-
         public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector() {
             return new CoercionStep<>(RType.Logical, true);
         }
 
-        public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector(RBaseNode messageCallerObj) {
-            return new CoercionStep<>(RType.Logical, true, false, false, false, true, messageCallerObj);
-        }
-
         public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return new CoercionStep<>(RType.Logical, true, preserveNames, preserveDimensions, preserveAttributes, false, null);
-        }
-
-        public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
-            return new CoercionStep<>(RType.Logical, true, preserveNames, preserveDimensions, preserveAttributes, true, messageCallerObj);
+            return new CoercionStep<>(RType.Logical, true, preserveNames, preserveDimensions, preserveAttributes, false);
         }
 
         public static PipelineStep<Byte, Boolean> asBoolean() {
@@ -432,15 +396,7 @@ public final class CastBuilder {
         }
 
         public static <T> PipelineStep<T, RAbstractVector> asVector(boolean preserveNonVector) {
-            return new CoercionStep<>(RType.Any, true, false, false, false, preserveNonVector, null);
-        }
-
-        /**
-         * Version of {@code findFirst} step that can be used in {@code chain}, must be followed by
-         * call for {@code xyzElement()}.
-         */
-        public static <V extends RAbstractVector> FindFirstNodeBuilder findFirst(RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            return new FindFirstNodeBuilder(new MessageData(callObj, message, messageArgs));
+            return new CoercionStep<>(RType.Any, true, false, false, false, preserveNonVector);
         }
 
         /**
@@ -448,7 +404,7 @@ public final class CastBuilder {
          * call for {@code xyzElement()}.
          */
         public static <V extends RAbstractVector> FindFirstNodeBuilder findFirst(RError.Message message, Object... messageArgs) {
-            return new FindFirstNodeBuilder(new MessageData(null, message, messageArgs));
+            return new FindFirstNodeBuilder(new MessageData(message, messageArgs));
         }
 
         /**
@@ -459,27 +415,19 @@ public final class CastBuilder {
             return new FindFirstNodeBuilder(null);
         }
 
-        public static <T> PipelineStep<T, T> notNA(RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            return notNA(null, callObj, message, messageArgs);
+        public static <T> PipelineStep<T, T> mustNotBeNA(RError.Message message, Object... messageArgs) {
+            return new NotNAStep<>(null, new MessageData(message, messageArgs));
         }
 
-        public static <T> PipelineStep<T, T> notNA(RError.Message message, Object... messageArgs) {
-            return notNA(null, null, message, messageArgs);
+        public static <T> PipelineStep<T, T> shouldNotBeNA(T naReplacement, RError.Message message, Object... messageArgs) {
+            return new NotNAStep<>(naReplacement, new MessageData(message, messageArgs));
         }
 
-        public static <T> PipelineStep<T, T> notNA(T naReplacement, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-            return new NotNAStep<>(naReplacement, new MessageData(callObj, message, messageArgs));
-        }
-
-        public static <T> PipelineStep<T, T> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
-            return notNA(naReplacement, null, message, messageArgs);
-        }
-
-        public static <T> PipelineStep<T, T> notNA(T naReplacement) {
+        public static <T> PipelineStep<T, T> replaceNA(T naReplacement) {
             return new NotNAStep<>(naReplacement, null);
         }
 
-        public static <T> PipelineStep<T, T> notNA() {
+        public static <T> PipelineStep<T, T> mustNotBeNA() {
             return new NotNAStep<>(null, null);
         }
 

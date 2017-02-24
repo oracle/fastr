@@ -116,7 +116,7 @@ public class AttachFunctions {
             try {
                 return REnvironment.detach(pos.getDataAt(0));
             } catch (DetachException ex) {
-                throw RError.error(this, ex);
+                throw error(ex);
             }
         }
     }

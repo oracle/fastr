@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_LOGICAL;
 import static com.oracle.truffle.r.runtime.RError.Message.ONLY_ATOMIC_CAN_BE_SORTED;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -60,11 +59,11 @@ public class SortFunctions {
 
     private abstract static class Adapter extends RBuiltinNode {
         protected static void addCastForX(Casts casts) {
-            casts.arg("x").allowNull().mustBe(abstractVectorValue(), SHOW_CALLER, ONLY_ATOMIC_CAN_BE_SORTED);
+            casts.arg("x").allowNull().mustBe(abstractVectorValue(), ONLY_ATOMIC_CAN_BE_SORTED);
         }
 
         protected static void addCastForDecreasing(Casts casts) {
-            casts.arg("decreasing").defaultError(SHOW_CALLER, INVALID_LOGICAL, "decreasing").mustBe(numericValue()).asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("decreasing").defaultError(INVALID_LOGICAL, "decreasing").mustBe(numericValue()).asLogicalVector().findFirst().map(toBoolean());
         }
 
         @TruffleBoundary
@@ -244,7 +243,7 @@ public class SortFunctions {
         static {
             Casts casts = new Casts(RadixSort.class);
             casts.arg("na.last").asLogicalVector().findFirst();
-            casts.arg("decreasing").mustBe(numericValue(), SHOW_CALLER, INVALID_LOGICAL, "decreasing").asLogicalVector();
+            casts.arg("decreasing").mustBe(numericValue(), INVALID_LOGICAL, "decreasing").asLogicalVector();
             casts.arg("retgrp").asLogicalVector().findFirst().map(toBoolean());
             casts.arg("sortstr").asLogicalVector().findFirst().map(toBoolean());
         }
@@ -262,7 +261,7 @@ public class SortFunctions {
                 return RNull.instance;
             }
             if (nargs != decreasingVec.getLength()) {
-                throw RError.error(this, RError.Message.RADIX_SORT_DEC_MATCH);
+                throw error(RError.Message.RADIX_SORT_DEC_MATCH);
             }
             /*
              * Order takes a single decreasing argument that applies to all the vectors. We
@@ -274,7 +273,7 @@ public class SortFunctions {
             for (int i = 0; i < nargs; i++) {
                 byte db = decreasingVec.getDataAt(i);
                 if (RRuntime.isNA(db)) {
-                    throw RError.error(this, RError.Message.RADIX_SORT_DEC_NOT_LOGICAL);
+                    throw error(RError.Message.RADIX_SORT_DEC_NOT_LOGICAL);
                 }
                 if (lastdb != RRuntime.LOGICAL_NA && db != lastdb) {
                     throw RError.nyi(this, "radixsort: args > 1 with differing 'decreasing' values not implemented");

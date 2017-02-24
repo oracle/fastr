@@ -32,7 +32,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.signature.MissingNode;
 import com.oracle.truffle.r.nodes.function.signature.MissingNode.MissingCheckCache;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -53,7 +52,7 @@ public abstract class Missing extends RBuiltinNode {
         String symbol = promise.getClosure().asSymbol();
         if (symbol == null) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, Message.INVALID_USE, "missing");
+            throw error(Message.INVALID_USE, "missing");
         }
         return RRuntime.asLogical(cache.execute(frame, symbol));
     }

@@ -27,6 +27,6 @@ public class TestBuiltin_bitwiseNot extends TestBase {
         assertEval("{ bitwNot(c(17,24,34,48,51,66,72,99)) }");
         assertEval("{ bitwNot(c(0,100,200,50,70,20)) }");
 
-        assertEval(Output.IgnoreErrorContext, "{ bitwNot(TRUE) }");
+        assertEval("{ bitwNot(TRUE) }");
     }
 }

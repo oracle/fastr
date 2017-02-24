@@ -117,8 +117,9 @@ public class TestS4 extends TestRBase {
         assertEval("{ standardGeneric(42) }");
         assertEval("{ standardGeneric(character()) }");
         assertEval("{ standardGeneric(\"\") }");
-        assertEval("{ standardGeneric(\"foo\", 42) }");
-        assertEval("{ x<-42; class(x)<-character(); standardGeneric(\"foo\", x) }");
+        // FastR produces better error contexts
+        assertEval(Output.IgnoreErrorContext, "{ standardGeneric(\"foo\", 42) }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-42; class(x)<-character(); standardGeneric(\"foo\", x) }");
     }
 
     @Override

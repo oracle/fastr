@@ -31,7 +31,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -46,13 +45,11 @@ import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 @RBuiltin(name = "delayedAssign", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "value", "eval.env", "assign.env"}, behavior = COMPLEX)
 public abstract class DelayedAssign extends RBuiltinNode {
 
-    private final BranchProfile errorProfile = BranchProfile.create();
-
     static {
         Casts casts = new Casts(DelayedAssign.class);
         casts.arg("x").mustBe(stringValue()).asStringVector().mustBe(notEmpty(), RError.Message.INVALID_FIRST_ARGUMENT).findFirst();
-        casts.arg("eval.env").mustNotBeNull(RError.SHOW_CALLER, RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
-        casts.arg("assign.env").mustNotBeNull(RError.SHOW_CALLER, RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+        casts.arg("eval.env").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+        casts.arg("assign.env").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
     }
 
     @Specialization
@@ -62,8 +59,7 @@ public abstract class DelayedAssign extends RBuiltinNode {
             assignEnv.put(name, RDataFactory.createPromise(PromiseState.Explicit, Closure.create(RASTUtils.createNodeForValue(value)), evalEnv.getFrame()));
             return RNull.instance;
         } catch (PutException ex) {
-            errorProfile.enter();
-            throw RError.error(this, ex);
+            throw error(ex);
         }
     }
 }

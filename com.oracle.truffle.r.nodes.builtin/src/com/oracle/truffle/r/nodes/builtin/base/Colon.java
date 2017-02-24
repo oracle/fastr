@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
@@ -33,7 +33,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.Colon.ColonCastNode;
@@ -99,13 +98,11 @@ public abstract class Colon extends RBuiltinNode {
         private final NACheck leftNA = NACheck.create();
         private final NACheck rightNA = NACheck.create();
 
-        private final BranchProfile naCheckErrorProfile = BranchProfile.create();
-
         abstract RSequence execute(Object left, Object right);
 
         private void naCheck(boolean na) {
             if (na) {
-                naCheckErrorProfile.enter();
+                CompilerDirectives.transferToInterpreter();
                 throw RError.error(this, RError.Message.NA_OR_NAN);
             }
         }
@@ -207,6 +204,7 @@ public abstract class Colon extends RBuiltinNode {
                 RError.warning(this, RError.Message.ONLY_FIRST_USED, length);
             }
             if (lengthEqualsZero.profile(length == 0)) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.error(this, Message.ARGUMENT_LENGTH_0);
             }
         }
@@ -239,11 +237,13 @@ public abstract class Colon extends RBuiltinNode {
             checkLength(vector.getLength());
             String val = vector.getDataAt(0);
             if (RRuntime.isNA(val)) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.error(this, RError.Message.NA_OR_NAN);
             }
             // TODO it might be a double or complex string
             int result = RRuntime.string2intNoCheck(val);
             if (RRuntime.isNA(result)) {
+                CompilerDirectives.transferToInterpreter();
                 RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
                 throw RError.error(this, RError.Message.NA_OR_NAN);
             }
@@ -251,8 +251,8 @@ public abstract class Colon extends RBuiltinNode {
         }
 
         @Fallback
-        @TruffleBoundary
         protected int doOther(@SuppressWarnings("unused") Object value) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.error(this, Message.ARGUMENT_LENGTH_0);
         }
 

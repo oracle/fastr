@@ -55,8 +55,9 @@ public class TestBuiltin_atan2 extends TestBase {
         assertEval("{ atan2(c(0.3,0.6,0.9), c(0.4, 0.3)) }");
         assertEval("{ atan2() }");
         assertEval("{ atan2(0.7) }");
-        assertEval("{ atan2(NULL, 1) }");
-        assertEval("{ atan2(2, new.env()) }");
-        assertEval("{ atan2(2, as.symbol('45')) }");
+
+        assertEval(Output.ImprovedErrorContext, "{ atan2(NULL, 1) }");
+        assertEval(Output.ImprovedErrorContext, "{ atan2(2, new.env()) }");
+        assertEval(Output.ImprovedErrorContext, "{ atan2(2, as.symbol('45')) }");
     }
 }

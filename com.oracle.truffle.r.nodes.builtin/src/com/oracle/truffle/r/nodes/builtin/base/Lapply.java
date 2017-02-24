@@ -75,7 +75,7 @@ public abstract class Lapply extends RBuiltinNode {
         // asVector() to whatever GNU R is doing there; still this can be a problem only if the
         // internal is called directly (otherwise, it's guaranteed that it's a vector)
         casts.arg("X").asVector();
-        casts.arg("FUN").mustBe(instanceOf(RFunction.class), RError.NO_CALLER, RError.Message.APPLY_NON_FUNCTION);
+        casts.arg("FUN").mustBe(instanceOf(RFunction.class), RError.Message.APPLY_NON_FUNCTION);
     }
 
     @Specialization

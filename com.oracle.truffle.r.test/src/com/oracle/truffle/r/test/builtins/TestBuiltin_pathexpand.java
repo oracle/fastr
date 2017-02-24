@@ -39,7 +39,7 @@ public class TestBuiltin_pathexpand extends TestBase {
 
     @Test
     public void testArgsValidation() {
-        assertEval(Output.IgnoreErrorContext, "path.expand(NULL)");
-        assertEval(Output.IgnoreErrorContext, "path.expand(42)");
+        assertEval("path.expand(NULL)");
+        assertEval("path.expand(42)");
     }
 }

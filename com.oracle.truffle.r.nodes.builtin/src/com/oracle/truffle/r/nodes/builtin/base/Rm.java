@@ -60,24 +60,22 @@ public abstract class Rm extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Rm.class);
-        casts.arg("list").mustBe(stringValue(), SHOW_CALLER, INVALID_FIRST_ARGUMENT);
-        casts.arg("envir").mustNotBeNull(SHOW_CALLER, USE_NULL_ENV_DEFUNCT).mustBe(REnvironment.class, SHOW_CALLER, INVALID_ARGUMENT, "envir");
-        casts.arg("inherits").mustBe(numericValue(), SHOW_CALLER, INVALID_ARGUMENT, "inherits").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("list").mustBe(stringValue(), INVALID_FIRST_ARGUMENT);
+        casts.arg("envir").mustNotBeNull(USE_NULL_ENV_DEFUNCT).mustBe(REnvironment.class, INVALID_ARGUMENT, "envir");
+        casts.arg("inherits").mustBe(numericValue(), INVALID_ARGUMENT, "inherits").asLogicalVector().findFirst().map(toBoolean());
     }
 
     // this specialization is for internal use only
     // TODO: what internal use? Does it still apply?
     @Specialization
-    @SuppressWarnings("unused")
-    protected Object rm(VirtualFrame frame, String name, RMissing envir, boolean inherits) {
+    protected Object rm(VirtualFrame frame, String name, @SuppressWarnings("unused") RMissing envir, @SuppressWarnings("unused") boolean inherits) {
         removeFromFrame(frame, name);
         return RNull.instance;
     }
 
     @Specialization
     @TruffleBoundary
-    @SuppressWarnings("unused")
-    protected Object rm(RAbstractStringVector list, REnvironment envir, boolean inherits) {
+    protected Object rm(RAbstractStringVector list, REnvironment envir, @SuppressWarnings("unused") boolean inherits) {
         try {
             for (int i = 0; i < list.getLength(); i++) {
                 if (envir == REnvironment.globalEnv()) {
@@ -87,7 +85,7 @@ public abstract class Rm extends RBuiltinNode {
                 }
             }
         } catch (PutException ex) {
-            throw RError.error(SHOW_CALLER, ex);
+            throw error(ex);
         }
         return RNull.instance;
     }

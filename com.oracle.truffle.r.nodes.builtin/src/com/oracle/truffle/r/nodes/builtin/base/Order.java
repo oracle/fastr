@@ -233,7 +233,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             case 1:
                 return RDataFactory.createIntVectorFromScalar(1);
             default:
-                throw RError.error(RError.NO_CALLER, RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, "list", "orderVector1");
+                throw error(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, "list", "orderVector1");
         }
     }
 
@@ -248,7 +248,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             v = castVector2(vectors[i]);
             if (n != v.getLength()) {
                 error.enter();
-                throw RError.error(this, RError.Message.ARGUMENT_LENGTHS_DIFFER);
+                throw error(RError.Message.ARGUMENT_LENGTHS_DIFFER);
             }
             vectors[i] = v;
         }

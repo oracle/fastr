@@ -68,12 +68,12 @@ public class GrepFunctions {
 
         protected static void castPattern(Casts casts) {
             // with default error message, NO_CALLER does not work
-            casts.arg("pattern").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "pattern").asVector().mustBe(notEmpty(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT,
+            casts.arg("pattern").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "pattern").asVector().mustBe(notEmpty(), RError.Message.INVALID_ARGUMENT,
                             "pattern");
         }
 
         protected static void castText(Casts casts, String textId) {
-            casts.arg(textId).mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, textId);
+            casts.arg(textId).mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, textId);
         }
 
         protected static void castIgnoreCase(Casts casts) {
@@ -140,7 +140,7 @@ public class GrepFunctions {
 
         protected String checkLength(RAbstractStringVector arg, String name) {
             if (arg.getLength() < 1) {
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, name);
+                throw error(RError.Message.INVALID_ARGUMENT, name);
             } else if (arg.getLength() > 1) {
                 RError.warning(this, RError.Message.ARGUMENT_ONLY_FIRST, name);
             }
@@ -206,7 +206,7 @@ public class GrepFunctions {
             PCRERFFI.Result pcre = compileNode.execute(pattern, cflags, tables);
             if (pcre.result == 0) {
                 // TODO output warning if pcre.errorMessage not NULL
-                throw RError.error(this, RError.Message.INVALID_REGEXP, pattern);
+                throw error(RError.Message.INVALID_REGEXP, pattern);
             }
             return pcre;
         }
@@ -370,8 +370,7 @@ public class GrepFunctions {
 
         protected static void castReplacement(Casts casts) {
             // with default error message, NO_CALLER does not work
-            casts.arg("replacement").mustBe(stringValue(), RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "replacement").asVector().mustBe(notEmpty(), RError.NO_CALLER,
-                            RError.Message.INVALID_ARGUMENT, "replacement");
+            casts.arg("replacement").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "replacement").asVector().mustBe(notEmpty(), RError.Message.INVALID_ARGUMENT, "replacement");
         }
 
         protected RStringVector doSub(RAbstractStringVector patternArgVec, RAbstractStringVector replacementVec, RAbstractStringVector vector, byte ignoreCaseLogical, byte perlLogical,
@@ -1175,8 +1174,8 @@ public class GrepFunctions {
 
         static {
             Casts casts = new Casts(Strsplit.class);
-            casts.arg("x").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.NON_CHARACTER);
-            casts.arg("split").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.NON_CHARACTER);
+            casts.arg("x").mustBe(stringValue(), RError.Message.NON_CHARACTER);
+            casts.arg("split").mustBe(stringValue(), RError.Message.NON_CHARACTER);
             castFixed(casts, RRuntime.LOGICAL_FALSE);
             castPerl(casts);
             castUseBytes(casts);
@@ -1205,7 +1204,7 @@ public class GrepFunctions {
                         pcreSplits[i] = compileNode.execute(currentSplit, 0, pcreTables);
                         if (pcreSplits[i].result == 0) {
                             // TODO output warning if pcre.errorMessage not NULL
-                            throw RError.error(this, RError.Message.INVALID_REGEXP, currentSplit);
+                            throw error(RError.Message.INVALID_REGEXP, currentSplit);
                         }
                         // TODO pcre_study for vectors > 10 ? (cf GnuR)
                     }
@@ -1252,9 +1251,9 @@ public class GrepFunctions {
         @Fallback
         protected RList split(Object x, Object splitArg, Object fixedLogical, Object perlLogical, Object useBytes) {
             if (!(x instanceof RAbstractStringVector)) {
-                throw RError.error(this, RError.Message.NON_CHARACTER);
+                throw error(RError.Message.NON_CHARACTER);
             } else {
-                throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+                throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
             }
         }
 

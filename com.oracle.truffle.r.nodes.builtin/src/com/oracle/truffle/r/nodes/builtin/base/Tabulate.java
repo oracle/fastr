@@ -32,8 +32,8 @@ public abstract class Tabulate extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Tabulate.class);
-        casts.arg("bin").defaultError(RError.NO_CALLER, RError.Message.INVALID_INPUT).mustBe(integerValue()).asIntegerVector();
-        casts.arg("nbins").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "nbin").asIntegerVector().findFirst().mustBe(gte(0));
+        casts.arg("bin").defaultError(RError.Message.INVALID_INPUT).mustBe(integerValue()).asIntegerVector();
+        casts.arg("nbins").defaultError(RError.Message.INVALID_ARGUMENT, "nbin").asIntegerVector().findFirst().mustBe(gte(0));
     }
 
     @Specialization

@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
@@ -70,6 +71,11 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         Casts casts = new Casts(BinaryArithmeticNode.class);
         casts.arg(0).boxPrimitive();
         casts.arg(1).boxPrimitive();
+    }
+
+    @Override
+    protected RBaseNode getErrorContext() {
+        return this;
     }
 
     public static BinaryArithmeticNode create(BinaryArithmeticFactory binary, UnaryArithmeticFactory unary) {
@@ -111,7 +117,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     protected final UnaryArithmeticNode createUnaryArithmeticNode() {
         if (unary == null) {
-            throw RError.error(this, RError.Message.ARGUMENT_EMPTY, 2);
+            throw error(RError.Message.ARGUMENT_EMPTY, 2);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return UnaryArithmeticNodeGen.create(unary, RError.Message.INVALID_ARG_TYPE_UNARY);
@@ -141,7 +147,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     @Fallback
     protected Object doInvalidType(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") Object right) {
-        throw RError.error(this, Message.NON_NUMERIC_BINARY);
+        throw error(Message.NON_NUMERIC_BINARY);
     }
 
     protected static BinaryMapNode createCached(BinaryArithmetic innerArithmetic, Object left, Object right) {

@@ -93,12 +93,12 @@ public class TestBuiltin_sample extends TestBase {
         assertEval("set.seed(42); sample(2, 0)");
         assertEval("set.seed(42); sample(0, 0)");
         // replace
-        assertEval(Output.IgnoreErrorContext, "set.seed(42); sample(4, replace=c(T,F))");
+        assertEval("set.seed(42); sample(4, replace=c(T,F))");
         assertEval("set.seed(42); sample(4, replace=1)");
         assertEval("set.seed(42); sample(4, replace=1.2)");
         assertEval(Output.IgnoreErrorMessage, "set.seed(42); sample(4, replace='s')");
         // prob
-        assertEval(Output.IgnoreErrorContext, "set.seed(42); sample(4, prob=c(1,2))");
-        assertEval(Output.IgnoreErrorContext, "set.seed(42); sample(4, prob=c(-1,1,1,2))");
+        assertEval("set.seed(42); sample(4, prob=c(1,2))");
+        assertEval("set.seed(42); sample(4, prob=c(-1,1,1,2))");
     }
 }

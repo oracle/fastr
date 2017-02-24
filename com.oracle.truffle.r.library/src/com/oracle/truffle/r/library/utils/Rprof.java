@@ -127,7 +127,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
                 profState.initialize(out, profileThread, statementListener, intervalInMillis, lineProfiling, memProfiling);
                 profileThread.start();
             } catch (IOException ex) {
-                throw RError.error(this, RError.Message.GENERIC, String.format("Rprof: cannot open profile file '%s'", filename));
+                throw error(RError.Message.GENERIC, String.format("Rprof: cannot open profile file '%s'", filename));
             }
         }
         return RNull.instance;

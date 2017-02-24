@@ -41,11 +41,11 @@ public abstract class IConv extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(IConv.class);
-        casts.arg("x").mustBe(stringValue(), RError.NO_CALLER, RError.Message.NOT_CHARACTER_VECTOR, "x");
+        casts.arg("x").mustBe(stringValue(), RError.Message.NOT_CHARACTER_VECTOR, "x");
         // with default error message, NO_CALLER does not work
-        casts.arg("from").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "from").mustBe(stringValue()).asStringVector().mustBe(size(1));
-        casts.arg("to").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "to").mustBe(stringValue()).asStringVector().mustBe(size(1));
-        casts.arg("sub").defaultError(RError.NO_CALLER, RError.Message.INVALID_ARGUMENT, "sub").mustBe(stringValue()).asStringVector().mustBe(size(1));
+        casts.arg("from").defaultError(RError.Message.INVALID_ARGUMENT, "from").mustBe(stringValue()).asStringVector().mustBe(size(1));
+        casts.arg("to").defaultError(RError.Message.INVALID_ARGUMENT, "to").mustBe(stringValue()).asStringVector().mustBe(size(1));
+        casts.arg("sub").defaultError(RError.Message.INVALID_ARGUMENT, "sub").mustBe(stringValue()).asStringVector().mustBe(size(1));
         casts.arg("mark").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         casts.arg("toRaw").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
 

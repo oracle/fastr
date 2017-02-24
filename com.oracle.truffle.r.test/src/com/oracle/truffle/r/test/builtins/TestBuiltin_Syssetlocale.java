@@ -29,8 +29,8 @@ public class TestBuiltin_Syssetlocale extends TestBase {
 
     @Test
     public void testSyssetlocaleInvalidArgs() {
-        assertEval(Output.IgnoreErrorContext, ".Internal(Sys.setlocale(4, c('more', 'elements')))");
-        assertEval(Output.IgnoreErrorContext, ".Internal(Sys.setlocale(4, 42))");
+        assertEval(".Internal(Sys.setlocale(4, c('more', 'elements')))");
+        assertEval(".Internal(Sys.setlocale(4, 42))");
         assertEval(Output.IgnoreErrorMessage, ".Internal(Sys.setlocale('3L', 'C'))");
     }
 }

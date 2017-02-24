@@ -43,7 +43,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 @RBuiltin(name = "aperm", kind = INTERNAL, parameterNames = {"a", "perm", "resize"}, behavior = PURE)
 public abstract class APerm extends RBuiltinNode {
 
-    private final BranchProfile errorProfile = BranchProfile.create();
     private final BranchProfile emptyPermVector = BranchProfile.create();
     private final ConditionProfile mustResize = ConditionProfile.createBinaryProfile();
 
@@ -56,8 +55,7 @@ public abstract class APerm extends RBuiltinNode {
 
     private void checkErrorConditions(int[] dim) {
         if (!GetDimAttributeNode.isArray(dim)) {
-            errorProfile.enter();
-            throw RError.error(RError.SHOW_CALLER, RError.Message.FIRST_ARG_MUST_BE_ARRAY);
+            throw error(RError.Message.FIRST_ARG_MUST_BE_ARRAY);
         }
     }
 
@@ -137,8 +135,7 @@ public abstract class APerm extends RBuiltinNode {
         RList dimNames = getDimNamesNode.getDimNames(vector);
         if (dimNames == null) {
             // TODO: this error is reported after IS_OF_WRONG_LENGTH in GnuR
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.DOES_NOT_HAVE_DIMNAMES, "a");
+            throw error(RError.Message.DOES_NOT_HAVE_DIMNAMES, "a");
         }
 
         int[] perm = new int[permVector.getLength()];
@@ -176,22 +173,19 @@ public abstract class APerm extends RBuiltinNode {
             for (int i = 0; i < perm.getLength(); i++) {
                 int pos = perm.getDataAt(i) - 1; // Adjust to zero based permute.
                 if (pos >= perm.getLength() || pos < 0) {
-                    errorProfile.enter();
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.VALUE_OUT_OF_RANGE, "perm");
+                    throw error(RError.Message.VALUE_OUT_OF_RANGE, "perm");
                 }
                 arrayPerm[i] = pos;
                 if (visited[pos]) {
                     // Duplicate dimension mapping in permute
-                    errorProfile.enter();
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "perm");
+                    throw error(RError.Message.INVALID_ARGUMENT, "perm");
                 }
                 visited[pos] = true;
             }
             return arrayPerm;
         } else {
             // perm size error
-            errorProfile.enter();
-            throw RError.error(RError.SHOW_CALLER, RError.Message.IS_OF_WRONG_LENGTH, "perm", perm.getLength(), dim.length);
+            throw error(RError.Message.IS_OF_WRONG_LENGTH, "perm", perm.getLength(), dim.length);
         }
     }
 

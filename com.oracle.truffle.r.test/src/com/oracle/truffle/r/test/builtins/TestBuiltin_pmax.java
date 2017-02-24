@@ -113,7 +113,7 @@ public class TestBuiltin_pmax extends TestBase {
         assertEval("{ pmax(c(FALSE, TRUE), logical()) }");
         assertEval("{ pmax(c(FALSE, TRUE), c(FALSE, NA)) }");
 
-        assertEval(Output.IgnoreErrorContext, "{ pmax(as.raw(42)) }");
-        assertEval(Output.IgnoreErrorContext, "{ pmax(7+42i) }");
+        assertEval("{ pmax(as.raw(42)) }");
+        assertEval("{ pmax(7+42i) }");
     }
 }

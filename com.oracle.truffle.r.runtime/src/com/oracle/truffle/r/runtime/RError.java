@@ -18,6 +18,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -68,32 +70,50 @@ public final class RError extends RuntimeException {
         }
     }
 
+    public abstract static class ErrorContext extends RBaseNode {
+        private ErrorContext() {
+            // private constructor
+        }
+    }
+
+    private static final class ErrorContextImpl extends ErrorContext {
+
+    }
+
+    public static ErrorContext contextForBuiltin(RBuiltin builtin) {
+        ErrorContext callObj;
+        if (builtin == null) {
+            callObj = RError.NO_CALLER;
+        } else if (builtin.kind() == RBuiltinKind.INTERNAL) {
+            callObj = RError.SHOW_CALLER;
+        } else {
+            callObj = null;
+        }
+        return callObj;
+    }
+
     /**
      * This flags a call to {@code error} or {@code warning} where the error message should show the
      * caller's caller.
      */
-    public static final RBaseNode SHOW_CALLER2 = new RBaseNode() {
-    };
+    public static final ErrorContext SHOW_CALLER2 = new ErrorContextImpl();
     /**
      * This flags a call to {@code error} or {@code warning} where the error message should show the
      * caller of the current function.
      */
-    public static final RBaseNode SHOW_CALLER = new RBaseNode() {
-    };
+    public static final ErrorContext SHOW_CALLER = new ErrorContextImpl();
 
     /**
      * A very special case that ensures that no caller is output in the error/warning message. This
      * is needed where, even if there is a caller, GnuR does not show it.
      */
-    public static final RBaseNode NO_CALLER = new RBaseNode() {
-    };
+    public static final ErrorContext NO_CALLER = new ErrorContextImpl();
 
     /**
      * This is a workaround for a case in {@code RCallNode} where an error might be thrown while
      * executing a {@code RootNode}, which is not a subclass of {@link RBaseNode}.
      */
-    public static final RBaseNode ROOTNODE = new RBaseNode() {
-    };
+    public static final ErrorContext ROOTNODE = new ErrorContextImpl();
 
     /**
      * TODO the string is not really needed as all output is performed prior to the throw.
@@ -110,6 +130,19 @@ public final class RError extends RuntimeException {
 
     public String getVerboseStackTrace() {
         return verboseStackTrace;
+    }
+
+    public static RError error(ErrorContext node, Message msg) {
+        throw error(node, msg, new Object[]{});
+    }
+
+    public static RError error(ErrorContext node, Message msg, Object arg) {
+        throw error(node, msg, new Object[]{arg});
+    }
+
+    @TruffleBoundary
+    public static RError error(ErrorContext node, Message msg, Object... args) {
+        throw error0(node, msg, args);
     }
 
     @TruffleBoundary

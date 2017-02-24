@@ -91,9 +91,9 @@ public class TestBuiltin_cat extends TestBase {
     @Test
     public void testCatUnsupportedArgs() {
         assertEval("cat(list(), expression(), sep='this-should-be-ok')");
-        assertEval("cat(list(1,2,3))");
-        assertEval("cat(parse(text='42'))");
+        assertEval(Output.ImprovedErrorContext, "cat(list(1,2,3))");
+        assertEval(Output.ImprovedErrorContext, "cat(parse(text='42'))");
         assertEval("cat(quote(a))");
-        assertEval("cat(quote(3+3))");
+        assertEval(Output.ImprovedErrorContext, "cat(quote(3+3))");
     }
 }

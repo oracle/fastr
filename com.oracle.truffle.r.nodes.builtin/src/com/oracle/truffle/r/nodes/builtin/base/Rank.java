@@ -20,7 +20,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_TIES_FOR_RANK;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_VALUE;
@@ -64,14 +63,14 @@ public abstract class Rank extends RBuiltinNode {
     static {
         Casts casts = new Casts(Rank.class);
         Function<Object, Object> typeFunc = x -> x.getClass().getSimpleName();
-        casts.arg("x").mustBe(abstractVectorValue(), SHOW_CALLER, UNIMPLEMENTED_TYPE_IN_GREATER, typeFunc).mustBe(not(rawValue()), SHOW_CALLER, RError.Message.RAW_SORT);
+        casts.arg("x").mustBe(abstractVectorValue(), UNIMPLEMENTED_TYPE_IN_GREATER, typeFunc).mustBe(not(rawValue()), RError.Message.RAW_SORT);
         // Note: in the case of no long vector support, when given anything but integer as n, GnuR
         // behaves as if n=1,
         // we allow ourselves to be bit inconsistent with GnuR in that.
-        casts.arg("len").defaultError(NO_CALLER, INVALID_VALUE, "length(xx)").mustBe(numericValue()).asIntegerVector().mustBe(notEmpty()).findFirst().mustBe(intNA().not().and(gte0()));
+        casts.arg("len").defaultError(INVALID_VALUE, "length(xx)").mustBe(numericValue()).asIntegerVector().mustBe(notEmpty()).findFirst().mustBe(intNA().not().and(gte0()));
         // Note: we parse ties.methods in the Specialization anyway, so the validation of the value
         // is there
-        casts.arg("ties.method").defaultError(NO_CALLER, INVALID_TIES_FOR_RANK).mustBe(stringValue()).asStringVector().findFirst();
+        casts.arg("ties.method").defaultError(INVALID_TIES_FOR_RANK).mustBe(stringValue()).asStringVector().findFirst();
     }
 
     private Order.OrderVector1Node initOrderVector1() {
@@ -156,7 +155,7 @@ public abstract class Rank extends RBuiltinNode {
                 return TiesKind.MIN;
             default:
                 errorProfile.enter();
-                throw RError.error(NO_CALLER, RError.Message.GENERIC, "invalid ties.method for rank() [should never happen]");
+                throw error(RError.Message.GENERIC, "invalid ties.method for rank() [should never happen]");
         }
     }
 }

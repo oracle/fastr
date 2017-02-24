@@ -18,7 +18,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
@@ -49,8 +48,6 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     @Child private IsFactorNode isFactor;
     @Child private SetClassAttributeNode setClassAttrNode;
 
-    private final BranchProfile errorProfile = BranchProfile.create();
-
     static {
         Casts.noCasts(UpdateStorageMode.class);
     }
@@ -61,8 +58,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
                     @Cached("create()") SetAttributeNode setAttrNode) {
         RType mode = typeFromMode.execute(value);
         if (mode == RType.DefunctReal || mode == RType.DefunctSingle) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.USE_DEFUNCT, mode.getName(), mode == RType.DefunctSingle ? "mode<-" : "double");
+            throw error(RError.Message.USE_DEFUNCT, mode.getName(), mode == RType.DefunctSingle ? "mode<-" : "double");
         }
         initTypeOfNode();
         RType typeX = typeof.execute(x);
@@ -71,8 +67,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         }
         initFactorNode();
         if (isFactor.executeIsFactor(x)) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_STORAGE_MODE_UPDATE);
+            throw error(RError.Message.INVALID_STORAGE_MODE_UPDATE);
         }
         initCastTypeNode();
         if (mode != null) {
@@ -108,8 +103,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
                 return result;
             }
         }
-        errorProfile.enter();
-        throw RError.error(this, RError.Message.INVALID_UNNAMED_VALUE);
+        throw error(RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     private void initCastTypeNode() {
@@ -137,6 +131,6 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     @Specialization
     protected Object update(Object x, Object value) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, RError.Message.MUST_BE_NONNULL_STRING, "value");
+        throw error(RError.Message.MUST_BE_NONNULL_STRING, "value");
     }
 }

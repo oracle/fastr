@@ -78,7 +78,7 @@ public class LoadSaveFunctions {
                         return RDataFactory.createEmptyStringVector();
                     }
                     if (!(o instanceof RPairList)) {
-                        throw RError.error(this, RError.Message.GENERIC, "loaded data is not in pair list form");
+                        throw error(RError.Message.GENERIC, "loaded data is not in pair list form");
                     }
                     RPairList vars = (RPairList) o;
 
@@ -102,12 +102,12 @@ public class LoadSaveFunctions {
                     return RDataFactory.createStringVector(data, naCheck.neverSeenNA());
 
                 } else {
-                    throw RError.error(this, RError.Message.GENERIC, "the input does not start with a magic number compatible with loading from a connection");
+                    throw error(RError.Message.GENERIC, "the input does not start with a magic number compatible with loading from a connection");
                 }
             } catch (IOException iox) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_READING_CONNECTION, iox.getMessage());
+                throw error(RError.Message.ERROR_READING_CONNECTION, iox.getMessage());
             } catch (PutException px) {
-                throw RError.error(RError.SHOW_CALLER, px);
+                throw error(px);
             }
         }
     }
@@ -140,16 +140,16 @@ public class LoadSaveFunctions {
                 int magic = readMagic(bs);
                 switch (magic) {
                     case R_MAGIC_EMPTY:
-                        throw RError.error(this, RError.Message.MAGIC_EMPTY);
+                        throw error(RError.Message.MAGIC_EMPTY);
                     case R_MAGIC_TOONEW:
-                        throw RError.error(this, RError.Message.MAGIC_TOONEW);
+                        throw error(RError.Message.MAGIC_TOONEW);
                     case R_MAGIC_CORRUPT:
-                        throw RError.error(this, RError.Message.MAGIC_CORRUPT);
+                        throw error(RError.Message.MAGIC_CORRUPT);
                     default:
 
                 }
             } catch (IOException ex) {
-                throw RError.error(this, RError.Message.FILE_OPEN_ERROR);
+                throw error(RError.Message.FILE_OPEN_ERROR);
             }
             throw RError.nyi(this, "load");
         }
@@ -200,7 +200,7 @@ public class LoadSaveFunctions {
             casts.arg("ascii").mustBe(logicalValue(), RError.Message.ASCII_NOT_LOGICAL);
             casts.arg("version").allowNull().mustBe(integerValue());
             casts.arg("environment").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
-            casts.arg("eval.promises").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("eval.promises").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @Specialization
@@ -212,7 +212,7 @@ public class LoadSaveFunctions {
                 String varName = list.getDataAt(i);
                 Object value = envir.get(varName);
                 if (value == null) {
-                    throw RError.error(this, RError.Message.UNKNOWN_OBJECT, varName);
+                    throw error(RError.Message.UNKNOWN_OBJECT, varName);
                 }
                 if (evalPromises) {
                     value = promiseHelper.checkEvaluate(frame, value);
@@ -235,22 +235,22 @@ public class LoadSaveFunctions {
         private void doSaveConn(Object toSave, RConnection conn, boolean ascii) {
             try (RConnection openConn = conn.forceOpen(ascii ? "wt" : "wb")) {
                 if (!openConn.canWrite()) {
-                    throw RError.error(this, RError.Message.CONNECTION_NOT_OPEN_WRITE);
+                    throw error(RError.Message.CONNECTION_NOT_OPEN_WRITE);
                 }
                 if (!ascii && openConn.isTextMode()) {
-                    throw RError.error(this, RError.Message.CONN_XDR);
+                    throw error(RError.Message.CONN_XDR);
                 }
                 openConn.writeChar(ascii ? ASCII_HEADER : XDR_HEADER, 0, "", false);
                 RSerialize.serialize(openConn, toSave, ascii ? RSerialize.ASCII : RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
             } catch (IOException ex) {
-                throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+                throw error(RError.Message.GENERIC, ex.getMessage());
             }
         }
 
         @SuppressWarnings("unused")
         @Fallback
         protected Object saveToConn(Object list, Object con, Object ascii, Object version, Object envir, Object evaPromises) {
-            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+            throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
 }

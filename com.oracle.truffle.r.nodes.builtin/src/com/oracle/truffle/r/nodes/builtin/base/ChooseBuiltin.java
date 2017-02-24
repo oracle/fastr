@@ -54,8 +54,8 @@ public abstract class ChooseBuiltin extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(ChooseBuiltin.class);
-        casts.arg("n").mustBe(numericValue(), RError.SHOW_CALLER, Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
-        casts.arg("k").mustBe(numericValue(), RError.SHOW_CALLER, Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
+        casts.arg("n").mustBe(numericValue(), Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
+        casts.arg("k").mustBe(numericValue(), Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
     }
 
     @Specialization

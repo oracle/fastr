@@ -66,12 +66,12 @@ public class FastRContext {
         }
 
         private static void kind(Casts casts) {
-            casts.arg("kind").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().notNA().mustBe(
+            casts.arg("kind").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustNotBeNA().mustBe(
                             equalTo(RContext.ContextKind.SHARE_NOTHING.name()).or(equalTo(RContext.ContextKind.SHARE_PARENT_RW.name()).or(equalTo(RContext.ContextKind.SHARE_PARENT_RO.name()))));
         }
 
         private static void pc(Casts casts) {
-            casts.arg("pc").asIntegerVector().findFirst().notNA().mustBe(gt(0));
+            casts.arg("pc").asIntegerVector().findFirst().mustNotBeNA().mustBe(gt(0));
         }
 
         private static void key(Casts casts) {
@@ -152,7 +152,7 @@ public class FastRContext {
                     }
                 }
             } catch (InterruptedException ex) {
-                throw RError.error(this, RError.Message.GENERIC, "error finishing eval thread");
+                throw error(RError.Message.GENERIC, "error finishing eval thread");
 
             }
             return RNull.instance;
@@ -214,7 +214,7 @@ public class FastRContext {
                         results[i] = threads[i].getEvalResult();
                     }
                 } catch (InterruptedException ex) {
-                    throw RError.error(this, RError.Message.GENERIC, "error finishing eval thread");
+                    throw error(RError.Message.GENERIC, "error finishing eval thread");
                 }
             }
             return RDataFactory.createList(results);

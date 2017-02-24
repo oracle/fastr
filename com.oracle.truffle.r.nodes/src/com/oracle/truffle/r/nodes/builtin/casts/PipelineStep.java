@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -98,6 +99,7 @@ public abstract class PipelineStep<T, R> {
         private final Object replacement;
 
         public NotNAStep(Object replacement, MessageData message) {
+            assert !(replacement instanceof RBaseNode || replacement instanceof RError.Message);
             this.replacement = replacement;
             this.message = message;
         }
@@ -163,7 +165,6 @@ public abstract class PipelineStep<T, R> {
         public final boolean preserveNames;
         public final boolean preserveDimensions;
         public final boolean preserveAttributes;
-        public final RBaseNode messageCallObj;
 
         /**
          * Whether RNull/RMissing should be preserved, or converted to an empty list.
@@ -176,29 +177,24 @@ public abstract class PipelineStep<T, R> {
         public final boolean vectorCoercion;
 
         public CoercionStep(RType type, boolean vectorCoercion) {
-            this(type, vectorCoercion, false, false, false, true, null);
+            this(type, vectorCoercion, false, false, false, true);
         }
 
         public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            this(type, vectorCoercion, preserveNames, preserveDimensions, preserveAttributes, true, null);
+            this(type, vectorCoercion, preserveNames, preserveDimensions, preserveAttributes, true);
         }
 
-        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector, RBaseNode messageCallObj) {
+        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector) {
             this.type = type;
             this.vectorCoercion = vectorCoercion;
             this.preserveNames = preserveNames;
             this.preserveAttributes = preserveAttributes;
             this.preserveDimensions = preserveDimensions;
             this.preserveNonVector = preserveNonVector;
-            this.messageCallObj = messageCallObj;
         }
 
         public RType getType() {
             return type;
-        }
-
-        public RBaseNode getMessageCallObj() {
-            return messageCallObj;
         }
 
         @Override
@@ -285,7 +281,7 @@ public abstract class PipelineStep<T, R> {
             if (!returns) {
                 return this;
             }
-            return new MapIfStep<T, R>(filter, trueBranch, falseBranch, false);
+            return new MapIfStep<>(filter, trueBranch, falseBranch, false);
         }
     }
 

@@ -114,7 +114,7 @@ public abstract class Sprintf extends RBuiltinNode {
             if (Math.floor(x) == x) {
                 return format(fmt, (long) x);
             }
-            throw RError.error(this, RError.Message.INVALID_FORMAT_DOUBLE, fmt);
+            throw error(RError.Message.INVALID_FORMAT_DOUBLE, fmt);
         }
         return format(fmt, x);
     }

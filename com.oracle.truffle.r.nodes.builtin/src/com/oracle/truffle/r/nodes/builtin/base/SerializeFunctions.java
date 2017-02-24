@@ -54,11 +54,11 @@ public class SerializeFunctions {
         protected Object doUnserializeFromConnBase(int connIndex, @SuppressWarnings("unused") REnvironment refhook) {
             try (RConnection openConn = RConnection.fromIndex(connIndex).forceOpen("rb")) {
                 if (!openConn.canRead()) {
-                    throw RError.error(this, RError.Message.CONNECTION_NOT_OPEN_READ);
+                    throw error(RError.Message.CONNECTION_NOT_OPEN_READ);
                 }
                 return RSerialize.unserialize(openConn);
             } catch (IOException ex) {
-                throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+                throw error(RError.Message.GENERIC, ex.getMessage());
             }
         }
 
@@ -73,15 +73,15 @@ public class SerializeFunctions {
             // xdr is only relevant if ascii is false
             try (RConnection openConn = RConnection.fromIndex(connIndex).forceOpen(type != RSerialize.XDR ? "wt" : "wb")) {
                 if (!openConn.canWrite()) {
-                    throw RError.error(this, RError.Message.CONNECTION_NOT_OPEN_WRITE);
+                    throw error(RError.Message.CONNECTION_NOT_OPEN_WRITE);
                 }
                 if (type == RSerialize.XDR && openConn.isTextMode()) {
-                    throw RError.error(this, RError.Message.BINARY_CONNECTION_REQUIRED);
+                    throw error(RError.Message.BINARY_CONNECTION_REQUIRED);
                 }
                 RSerialize.serialize(openConn, object, type, RSerialize.DEFAULT_VERSION, null);
                 return RNull.instance;
             } catch (IOException ex) {
-                throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+                throw error(RError.Message.GENERIC, ex.getMessage());
             }
         }
 

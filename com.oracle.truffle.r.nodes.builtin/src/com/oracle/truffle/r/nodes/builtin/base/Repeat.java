@@ -92,7 +92,7 @@ public abstract class Repeat extends RBuiltinNode {
         casts.arg("times").defaultError(RError.Message.INVALID_ARGUMENT, "times").mustNotBeNull().asIntegerVector();
         casts.arg("length.out").asIntegerVector().shouldBe(size(1).or(size(0)), RError.Message.FIRST_ELEMENT_USED, "length.out").findFirst(RRuntime.INT_NA,
                         RError.Message.FIRST_ELEMENT_USED, "length.out").mustBe(intNA().or(gte(0)));
-        casts.arg("each").asIntegerVector().shouldBe(size(1).or(size(0)), RError.Message.FIRST_ELEMENT_USED, "each").findFirst(1, RError.Message.FIRST_ELEMENT_USED, "each").notNA(
+        casts.arg("each").asIntegerVector().shouldBe(size(1).or(size(0)), RError.Message.FIRST_ELEMENT_USED, "each").findFirst(1, RError.Message.FIRST_ELEMENT_USED, "each").replaceNA(
                         1).mustBe(gte(0));
     }
 
@@ -101,7 +101,7 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     private RError invalidTimes() {
-        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "times");
+        throw error(RError.Message.INVALID_ARGUMENT, "times");
     }
 
     @Specialization(guards = {"x.getLength() == 1", "times.getLength() == 1", "each <= 1", "!hasNames(x)"})

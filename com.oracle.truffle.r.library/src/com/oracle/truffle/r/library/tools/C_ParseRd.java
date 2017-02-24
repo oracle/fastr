@@ -69,7 +69,7 @@ public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
         int con = conAsInteger.execute(conObj);
         int warningCalls = warningCallsAsLogical.execute(warningCallsObj);
         if (RRuntime.isNA(warningCalls)) {
-            throw RError.error(this, RError.Message.INVALID_VALUE, "warningCalls");
+            throw error(RError.Message.INVALID_VALUE, "warningCalls");
         }
         int fragment = fragmentAsLogical.execute(fragmentObj);
         int warndups = warnDupsAsLogical.execute(warndupsObj);
@@ -86,7 +86,7 @@ public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
                             RDataFactory.createLogicalVectorFromScalar((byte) warndups));
             // @formatter:on
         } catch (Throwable ex) {
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+            throw error(RError.Message.GENERIC, ex.getMessage());
         }
     }
 
@@ -94,6 +94,6 @@ public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
     @Fallback
     public Object parseRd(Object con, Object srcfile, Object encoding, Object verbose, Object basename, Object fragment, Object warningCalls,
                     Object macros, Object warndupsL) {
-        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 }

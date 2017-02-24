@@ -43,7 +43,7 @@ public abstract class RegFinalizer extends RBuiltinNode {
         Casts casts = new Casts(RegFinalizer.class);
         casts.arg("e").mustBe(instanceOf(REnvironment.class).or(instanceOf(RExternalPtr.class)), RError.Message.REG_FINALIZER_FIRST);
         casts.arg("f").mustBe(instanceOf(RFunction.class), RError.Message.REG_FINALIZER_SECOND);
-        casts.arg("onexit").asLogicalVector().findFirst().notNA(RError.Message.REG_FINALIZER_THIRD).map(toBoolean());
+        casts.arg("onexit").asLogicalVector().findFirst().mustNotBeNA(RError.Message.REG_FINALIZER_THIRD).map(toBoolean());
     }
 
     @Specialization

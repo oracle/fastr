@@ -46,7 +46,7 @@ public abstract class Quit extends RBuiltinNode {
                 return SA_TYPE.fromString(save);
             }
         }
-        throw RError.error(this, RError.Message.QUIT_SAVE);
+        throw error(RError.Message.QUIT_SAVE);
     }
 
     @Specialization

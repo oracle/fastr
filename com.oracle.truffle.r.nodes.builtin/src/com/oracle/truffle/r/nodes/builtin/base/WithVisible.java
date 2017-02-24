@@ -87,7 +87,7 @@ public abstract class WithVisible extends RBuiltinNode {
         Object value = promiseHelper.evaluate(frame, x);
         if (value == RMissing.instance) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, Message.ARGUMENT_MISSING, "x");
+            throw error(Message.ARGUMENT_MISSING, "x");
         }
         return RDataFactory.createList(new Object[]{value, RRuntime.asLogical(visibility.execute(frame))}, LISTNAMES);
     }
@@ -99,6 +99,6 @@ public abstract class WithVisible extends RBuiltinNode {
     @Specialization
     protected RList withVisible(@SuppressWarnings("unused") RMissing x) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, Message.ARGUMENT_MISSING, "x");
+        throw error(Message.ARGUMENT_MISSING, "x");
     }
 }

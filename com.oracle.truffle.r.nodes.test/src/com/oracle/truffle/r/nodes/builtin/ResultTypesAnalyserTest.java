@@ -103,7 +103,7 @@ public class ResultTypesAnalyserTest {
     @Before
     public void setUp() {
         MarkLookup.clear();
-        cb = new CastBuilder(DummyBuiltin.class.getAnnotation(RBuiltin.class));
+        cb = new CastBuilder(DummyBuiltin.class.getAnnotation(RBuiltin.class), RError.NO_CALLER);
         arg = cb.arg("x");
     }
 
@@ -374,7 +374,7 @@ public class ResultTypesAnalyserTest {
 
     @Test
     public void testNonNA() {
-        arg.mustBe(atomicIntegerValue()).notNA(RError.Message.GENERIC, "abc");
+        arg.mustBe(atomicIntegerValue()).mustNotBeNA(RError.Message.GENERIC, "abc");
         // the type representation of the wildcard result type is the nonNA step
         PipelineStep<?, ?> notNAStep = cb.getPipelineBuilders()[0].getFirstStep().getNext();
         assertTypes(atom(Integer.class).lower(notNAStep));
@@ -464,8 +464,8 @@ public class ResultTypesAnalyserTest {
 
     @Test
     public void testAnalyseRealPipeline() {
-        arg.mustBe(numericValue()).asVector().mustBe(matrix(), RError.ROOTNODE, RError.Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(not(dimEq(0, 0)), RError.ROOTNODE,
-                        RError.Message.GENERIC, "'a' is 0-diml").mustBe(squareMatrix(), RError.ROOTNODE, RError.Message.MUST_BE_SQUARE_MATRIX_SPEC, "a", getDimVal(0), getDimVal(1));
+        arg.mustBe(numericValue()).asVector().mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(not(dimEq(0, 0)),
+                        RError.Message.GENERIC, "'a' is 0-diml").mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_MATRIX_SPEC, "a", getDimVal(0), getDimVal(1));
         assertTypes(TypeExpr.union(RAbstractDoubleVector.class, RAbstractIntVector.class, RAbstractLogicalVector.class), true);
     }
 

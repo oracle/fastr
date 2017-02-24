@@ -48,16 +48,16 @@ public abstract class ColSumsBase extends RBuiltinNode {
 
     protected static Casts createCasts(Class<? extends ColSumsBase> extCls) {
         Casts casts = new Casts(extCls);
-        casts.arg("X").mustBe(numericValue(), RError.SHOW_CALLER, RError.Message.X_NUMERIC);
-        casts.arg("m").defaultError(RError.SHOW_CALLER, INVALID_ARGUMENT, "n").asIntegerVector().findFirst().notNA(RError.NO_CALLER, RError.Message.VECTOR_SIZE_NA);
-        casts.arg("n").defaultError(RError.SHOW_CALLER, INVALID_ARGUMENT, "p").asIntegerVector().findFirst().notNA(RError.NO_CALLER, RError.Message.VECTOR_SIZE_NA);
-        casts.arg("na.rm").asLogicalVector().findFirst().notNA().map(toBoolean());
+        casts.arg("X").mustBe(numericValue(), RError.Message.X_NUMERIC);
+        casts.arg("m").defaultError(INVALID_ARGUMENT, "n").asIntegerVector().findFirst().mustNotBeNA(RError.Message.VECTOR_SIZE_NA);
+        casts.arg("n").defaultError(INVALID_ARGUMENT, "p").asIntegerVector().findFirst().mustNotBeNA(RError.Message.VECTOR_SIZE_NA);
+        casts.arg("na.rm").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         return casts;
     }
 
     protected final void checkVectorLength(RAbstractVector x, int rowNum, int colNum) {
         if (vectorLengthProfile.profile(x.getLength() < rowNum * colNum)) {
-            throw RError.error(RError.NO_CALLER, RError.Message.TOO_SHORT, "X");
+            throw error(RError.Message.TOO_SHORT, "X");
         }
     }
 
@@ -130,7 +130,7 @@ public abstract class ColSumsBase extends RBuiltinNode {
 
     private void checkLengthOne(int rowNum, int colNum) {
         if (vectorLengthProfile.profile(rowNum * colNum > 1)) {
-            throw RError.error(RError.NO_CALLER, RError.Message.TOO_SHORT, "X");
+            throw error(RError.Message.TOO_SHORT, "X");
         }
     }
 }

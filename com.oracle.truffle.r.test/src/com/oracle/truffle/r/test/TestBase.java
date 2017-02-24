@@ -69,6 +69,7 @@ public class TestBase {
      * See {@link com.oracle.truffle.r.test.builtins.TestTestBase} for examples.
      */
     public enum Output implements TestTrait {
+        ImprovedErrorContext, // FastR provides a more accurate error context
         IgnoreErrorContext, // the error context is ignored (e.g., "a+b" vs. "a + b")
         IgnoreErrorMessage, // the actual error message is ignored
         IgnoreWarningContext, // the warning context is ignored
@@ -591,7 +592,7 @@ public class TestBase {
             ignored.addAll(Arrays.asList(TestTrait.collect(traits, Ignored.class)));
             output.addAll(Arrays.asList(TestTrait.collect(traits, Output.class)));
             context.addAll(Arrays.asList(TestTrait.collect(traits, Context.class)));
-            containsError = (!FULL_COMPARE_ERRORS && (output.contains(Output.IgnoreErrorContext) || output.contains(Output.IgnoreErrorMessage)));
+            containsError = (!FULL_COMPARE_ERRORS && (output.contains(Output.IgnoreErrorContext) || output.contains(Output.ImprovedErrorContext) || output.contains(Output.IgnoreErrorMessage)));
             isIgnored = ignored.size() > 0 ^ (ProcessFailedTests && !(ignored.contains(Ignored.Unstable) || ignored.contains(Ignored.SideEffects)));
             assert !output.contains(Output.IgnoreWhitespace) || output.size() == 1 : "IgnoreWhitespace trait does not work with any other Output trait";
 

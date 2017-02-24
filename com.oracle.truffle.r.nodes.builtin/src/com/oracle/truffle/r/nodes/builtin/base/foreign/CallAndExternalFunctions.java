@@ -61,7 +61,7 @@ import com.oracle.truffle.r.library.tools.DirChmodNodeGen;
 import com.oracle.truffle.r.library.tools.Rmd5NodeGen;
 import com.oracle.truffle.r.library.tools.ToolsTextFactory.CodeFilesAppendNodeGen;
 import com.oracle.truffle.r.library.tools.ToolsTextFactory.DoTabExpandNodeGen;
-import com.oracle.truffle.r.library.utils.CountFields;
+import com.oracle.truffle.r.library.utils.CountFieldsNodeGen;
 import com.oracle.truffle.r.library.utils.Crc64NodeGen;
 import com.oracle.truffle.r.library.utils.DownloadNodeGen;
 import com.oracle.truffle.r.library.utils.MenuNodeGen;
@@ -706,7 +706,7 @@ public class CallAndExternalFunctions {
             DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "Call", packageName);
+                throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "Call", packageName);
             }
             return callRFFINode.execute(new NativeCallInfo(symbol, func, rns.getDllInfo()), args.getArguments());
         }
@@ -750,7 +750,7 @@ public class CallAndExternalFunctions {
                     return new CompleteCases();
                 // utils
                 case "countfields":
-                    return new CountFields();
+                    return CountFieldsNodeGen.create();
                 case "readtablehead":
                     return ReadTableHeadNodeGen.create();
                 case "download":
@@ -811,7 +811,7 @@ public class CallAndExternalFunctions {
             DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External", packageName);
+                throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External", packageName);
             }
             Object list = encodeArgumentPairList(args, symbol);
             return callRFFINode.execute(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{list});
@@ -893,7 +893,7 @@ public class CallAndExternalFunctions {
             DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External2", packageName);
+                throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External2", packageName);
             }
             Object list = encodeArgumentPairList(args, symbol);
             // TODO: provide proper values for the CALL, OP and RHO parameters
@@ -957,7 +957,7 @@ public class CallAndExternalFunctions {
             DLL.SymbolHandle func = findSymbolNode.execute(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
+                throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
             Object list = encodeArgumentPairList(args, name);
             return callRFFINode.execute(new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{list});
@@ -1020,7 +1020,7 @@ public class CallAndExternalFunctions {
             DLL.SymbolHandle func = findSymbolNode.execute(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
+                throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
             return callRFFINode.execute(new NativeCallInfo(name, func, rns.getDllInfo()), args.getArguments());
         }

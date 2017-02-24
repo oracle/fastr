@@ -37,7 +37,7 @@ public class TestExternal_BinDist extends TestBase {
 
     @Test
     public void testBinDistWrongArgs() {
-        assertEval(Output.IgnoreWarningContext, ".Call(stats:::C_BinDist, 0, 0, 'string', 3, 5)");
+        assertEval(".Call(stats:::C_BinDist, 0, 0, 'string', 3, 5)");
         assertEval(".Call(stats:::C_BinDist, c(1,2,3), c(4,5,6), 0, 3, c(NA, 3L))");
         assertEval(".Call(stats:::C_BinDist, c(1,2,3), c(4,5,6), 0, 3, -5L)");
     }

@@ -66,7 +66,7 @@ public abstract class AsFunction extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(AsFunction.class);
-        casts.arg("x").mustBe(instanceOf(RAbstractListVector.class).or(instanceOf(RExpression.class)), RError.SHOW_CALLER2, RError.Message.TYPE_EXPECTED, RType.List.getName());
+        casts.arg("x").mustBe(instanceOf(RAbstractListVector.class).or(instanceOf(RExpression.class)), RError.Message.TYPE_EXPECTED, RType.List.getName());
         casts.arg("envir").mustBe(instanceOf(REnvironment.class), RError.Message.INVALID_ENVIRONMENT);
     }
 
@@ -74,7 +74,7 @@ public abstract class AsFunction extends RBuiltinNode {
     @TruffleBoundary
     protected RFunction asFunction(RAbstractVector x, REnvironment envir) {
         if (x.getLength() == 0) {
-            throw RError.error(this, RError.Message.GENERIC, "argument must have length at least 1");
+            throw error(RError.Message.GENERIC, "argument must have length at least 1");
         }
         SaveArgumentsNode saveArguments;
         FormalArguments formals;

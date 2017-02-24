@@ -209,8 +209,8 @@ public class TestBuiltin_inherits extends TestBase {
 
         assertEval("{ inherits(getClass(\"ClassUnionRepresentation\"), \"classRepresentation\") }");
 
-        assertEval(Output.IgnoreErrorContext, "{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, 2, c(TRUE)) ;}");
-        assertEval(Output.IgnoreErrorContext, "{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", 1) ;}");
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, 2, c(TRUE)) ;}");
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", 1) ;}");
 
         assertEval("inherits(NULL, 'NULL')");
     }

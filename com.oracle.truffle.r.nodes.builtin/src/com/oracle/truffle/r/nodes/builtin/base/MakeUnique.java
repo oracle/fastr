@@ -46,8 +46,8 @@ public abstract class MakeUnique extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(MakeUnique.class);
-        casts.arg("names").defaultError(RError.SHOW_CALLER, RError.Message.NOT_CHARACTER_VECTOR, "names").mustBe(stringValue());
-        casts.arg("sep").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_STRING, "sep").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
+        casts.arg("names").defaultError(RError.Message.NOT_CHARACTER_VECTOR, "names").mustBe(stringValue());
+        casts.arg("sep").defaultError(RError.Message.MUST_BE_STRING, "sep").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
 
     }
 

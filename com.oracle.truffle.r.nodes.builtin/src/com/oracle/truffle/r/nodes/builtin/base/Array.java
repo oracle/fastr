@@ -78,9 +78,9 @@ public abstract class Array extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Array.class);
-        casts.arg("data").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_VECTOR_BUT_WAS, "data", typeName()).mustBe(abstractVectorValue());
-        casts.arg("dim").defaultError(RError.SHOW_CALLER, RError.Message.CANNOT_BE_LENGTH, "dims", 0).mustNotBeNull().asIntegerVector().mustBe(notEmpty());
-        casts.arg("dimnames").defaultError(RError.SHOW_CALLER, RError.Message.DIMNAMES_LIST).allowNull().mustBe(instanceOf(RList.class));
+        casts.arg("data").defaultError(RError.Message.MUST_BE_VECTOR_BUT_WAS, "data", typeName()).mustBe(abstractVectorValue());
+        casts.arg("dim").defaultError(RError.Message.CANNOT_BE_LENGTH, "dims", 0).mustNotBeNull().asIntegerVector().mustBe(notEmpty());
+        casts.arg("dimnames").defaultError(RError.Message.DIMNAMES_LIST).allowNull().mustBe(instanceOf(RList.class));
     }
 
     private int dimDataHelper(RAbstractIntVector dim, int[] dimData) {
@@ -94,9 +94,9 @@ public abstract class Array extends RBuiltinNode {
             totalLength *= dimData[i];
         }
         if (seenNegative == dim.getLength() && seenNegative != 0) {
-            throw RError.error(this, RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
+            throw error(RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
         } else if (seenNegative > 0) {
-            throw RError.error(this, RError.Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
+            throw error(RError.Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
         }
         return totalLength;
     }

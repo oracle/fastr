@@ -62,7 +62,7 @@ public class TestBuiltin_pmatch extends TestBase {
         assertEval("pmatch(NULL, 1)");
         assertEval("pmatch(1, NULL)");
         assertEval("pmatch(1:5, c(1,3), nomatch=NULL)");
-        assertEval(Output.IgnoreWarningContext, "pmatch(1:5, c(1,3), nomatch='str')");
+        assertEval("pmatch(1:5, c(1,3), nomatch='str')");
         assertEval("pmatch(1:5, c(1,3), duplicates.ok=42)");
     }
 }

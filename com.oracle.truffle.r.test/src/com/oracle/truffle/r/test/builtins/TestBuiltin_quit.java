@@ -64,7 +64,7 @@ public class TestBuiltin_quit extends TestBase {
 
     @Test
     public void testQuitErrorSave() {
-        assertEval("{ quit(\"xx\") }");
+        assertEval(Output.ImprovedErrorContext, "{ quit(\"xx\") }");
     }
 
     @Test
@@ -75,7 +75,7 @@ public class TestBuiltin_quit extends TestBase {
     /**
      * Removes temporarily created files {@code .RData} and {@code .Rhistory} and restore backups if
      * available.
-     * 
+     *
      * @throws IOException
      */
     @AfterClass

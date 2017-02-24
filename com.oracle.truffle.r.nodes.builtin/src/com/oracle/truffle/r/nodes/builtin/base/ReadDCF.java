@@ -72,10 +72,10 @@ public abstract class ReadDCF extends RBuiltinNode {
             }
             dcf = DCF.read(openConn.readLines(0, true, false), keepWhiteSet);
         } catch (IOException ex) {
-            throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
+            throw error(RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
         }
         if (dcf == null) {
-            throw RError.error(this, RError.Message.INVALID_CONNECTION);
+            throw error(RError.Message.INVALID_CONNECTION);
         }
         List<DCF.Fields> records = dcf.getRecords();
         int nRecords = records.size();

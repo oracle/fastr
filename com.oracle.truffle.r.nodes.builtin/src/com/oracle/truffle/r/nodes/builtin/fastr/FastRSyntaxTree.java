@@ -161,7 +161,7 @@ public abstract class FastRSyntaxTree extends RBuiltinNode {
                 break;
 
             default:
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "visitMode");
+                throw error(RError.Message.INVALID_ARGUMENT, "visitMode");
 
         }
         return RNull.instance;

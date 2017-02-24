@@ -81,7 +81,7 @@ public class ConditionFunctions {
                         @Cached("createHandlerFrameSlot(frame)") FrameSlot handlerFrameSlot) {
             if (classes.getLength() != handlers.getLength()) {
                 CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, RError.Message.BAD_HANDLER_DATA);
+                throw error(RError.Message.BAD_HANDLER_DATA);
             }
             try {
                 if (!frame.isObject(handlerFrameSlot) || frame.getObject(handlerFrameSlot) == null) {
@@ -117,7 +117,7 @@ public class ConditionFunctions {
     public abstract static class RestartAdapter extends RBuiltinNode {
         protected void checkLength(RList restart) {
             if (restart.getLength() < 2) {
-                throw RError.error(this, RError.Message.BAD_RESTART);
+                throw error(RError.Message.BAD_RESTART);
             }
         }
 
@@ -182,7 +182,7 @@ public class ConditionFunctions {
         protected RNull invokeRestart(RList restart, Object args) {
             checkLength(restart);
             if (RErrorHandling.invokeRestart(restart, args) == null) {
-                throw RError.error(this, RError.Message.RESTART_NOT_ON_STACK);
+                throw error(RError.Message.RESTART_NOT_ON_STACK);
             } else {
                 return RNull.instance; // not reached
             }

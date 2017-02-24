@@ -83,7 +83,7 @@ public class SampleCollectorTest {
 
     @Before
     public void setUp() {
-        cb = new CastBuilder(DummyBuiltin.class.getAnnotation(RBuiltin.class));
+        cb = new CastBuilder(DummyBuiltin.class.getAnnotation(RBuiltin.class), RError.NO_CALLER);
         arg = cb.arg("x");
     }
 
@@ -367,7 +367,7 @@ public class SampleCollectorTest {
 
     @Test
     public void testNonNA() {
-        arg.mustBe(atomicIntegerValue()).notNA(RError.Message.GENERIC, "abc");
+        arg.mustBe(atomicIntegerValue()).mustNotBeNA(RError.Message.GENERIC, "abc");
         assertSamples(RRuntime.STRING_NA);
     }
 

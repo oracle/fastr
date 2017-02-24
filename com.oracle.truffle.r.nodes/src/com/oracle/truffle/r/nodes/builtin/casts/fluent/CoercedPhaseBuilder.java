@@ -27,7 +27,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Defines fluent API methods for building cast pipeline steps for argument that has been cast to a
@@ -50,12 +49,7 @@ public final class CoercedPhaseBuilder<T extends RAbstractVector, S> extends Arg
      * reports the warning message.
      */
     public HeadPhaseBuilder<S> findFirst(S defaultValue, RError.Message message, Object... messageArgs) {
-        pipelineBuilder().appendFindFirst(defaultValue, elementClass, null, message, messageArgs);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
-    }
-
-    public HeadPhaseBuilder<S> findFirst(S defaultValue, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-        pipelineBuilder().appendFindFirst(defaultValue, elementClass, callObj, message, messageArgs);
+        pipelineBuilder().appendFindFirst(defaultValue, elementClass, message, messageArgs);
         return new HeadPhaseBuilder<>(pipelineBuilder());
     }
 
@@ -63,12 +57,7 @@ public final class CoercedPhaseBuilder<T extends RAbstractVector, S> extends Arg
      * The inserted cast node raises an error if the input vector is empty.
      */
     public HeadPhaseBuilder<S> findFirst(RError.Message message, Object... messageArgs) {
-        pipelineBuilder().appendFindFirst(null, elementClass, null, message, messageArgs);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
-    }
-
-    public HeadPhaseBuilder<S> findFirst(RBaseNode callObj, RError.Message message, Object... messageArgs) {
-        pipelineBuilder().appendFindFirst(null, elementClass, callObj, message, messageArgs);
+        pipelineBuilder().appendFindFirst(null, elementClass, message, messageArgs);
         return new HeadPhaseBuilder<>(pipelineBuilder());
     }
 
@@ -77,7 +66,7 @@ public final class CoercedPhaseBuilder<T extends RAbstractVector, S> extends Arg
      * error if the input vector is empty.
      */
     public HeadPhaseBuilder<S> findFirst() {
-        pipelineBuilder().appendFindFirst(null, elementClass, null, null, null);
+        pipelineBuilder().appendFindFirst(null, elementClass, null, null);
         return new HeadPhaseBuilder<>(pipelineBuilder());
     }
 
@@ -87,22 +76,17 @@ public final class CoercedPhaseBuilder<T extends RAbstractVector, S> extends Arg
      */
     public HeadPhaseBuilder<S> findFirst(S defaultValue) {
         assert defaultValue != null : "defaultValue cannot be null";
-        pipelineBuilder().appendFindFirst(defaultValue, elementClass, null, null, null);
+        pipelineBuilder().appendFindFirst(defaultValue, elementClass, null, null);
         return new HeadPhaseBuilder<>(pipelineBuilder());
     }
 
     public HeadPhaseBuilder<S> findFirstOrNull() {
-        pipelineBuilder().appendFindFirst(RNull.instance, elementClass, null, null, null);
+        pipelineBuilder().appendFindFirst(RNull.instance, elementClass, null, null);
         return new HeadPhaseBuilder<>(pipelineBuilder());
     }
 
-    public CoercedPhaseBuilder<T, S> mustBe(Filter<? super T, ? extends T> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-        pipelineBuilder().appendMustBeStep(argFilter, callObj, message, messageArgs);
-        return this;
-    }
-
     public CoercedPhaseBuilder<T, S> mustBe(Filter<? super T, ? extends T> argFilter, RError.Message message, Object... messageArgs) {
-        pipelineBuilder().appendMustBeStep(argFilter, null, message, messageArgs);
+        pipelineBuilder().appendMustBeStep(argFilter, message, messageArgs);
         return this;
     }
 

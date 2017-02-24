@@ -50,7 +50,7 @@ public abstract class Merge extends RBuiltinNode {
     }
 
     private static void addLogicalCast(Casts casts, String name) {
-        casts.arg(name).defaultError(INVALID_LOGICAL, "all.x").mustBe(numericValue()).asLogicalVector().findFirst().notNA().map(toBoolean());
+        casts.arg(name).defaultError(INVALID_LOGICAL, "all.x").mustBe(numericValue()).asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
     }
 
     private static void isortWithIndex(int[] x, int[] indx, int n) {
@@ -142,7 +142,7 @@ public abstract class Merge extends RBuiltinNode {
             dnans += ((double) (nnx - i)) * (nny - j);
         }
         if (dnans > RRuntime.INT_MAX_VALUE) {
-            throw RError.error(this, RError.Message.GENERIC, "number of rows in the result exceeds maximum vector length");
+            throw error(RError.Message.GENERIC, "number of rows in the result exceeds maximum vector length");
         }
         int nans = (int) dnans;
 

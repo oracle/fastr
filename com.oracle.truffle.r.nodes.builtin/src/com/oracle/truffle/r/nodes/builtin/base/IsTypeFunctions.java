@@ -62,7 +62,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Handles all builtin functions of the form {@code is.xxx}, where is {@code xxx} is a "type".
@@ -73,7 +72,7 @@ public class IsTypeFunctions {
 
         protected static Casts createCasts(Class<? extends MissingAdapter> extCls) {
             Casts casts = new Casts(extCls);
-            casts.arg("x").mustNotBeMissing((RBaseNode) null, RError.Message.ARGUMENT_MISSING, "x");
+            casts.arg("x").mustNotBeMissing(RError.Message.ARGUMENT_MISSING, "x");
             return casts;
         }
     }

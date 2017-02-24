@@ -98,8 +98,8 @@ public class TestBuiltin_pmin extends TestBase {
         assertEval("{ pmin(c(FALSE, TRUE), logical()) }");
         assertEval("{ pmin(c(FALSE, TRUE), c(FALSE, NA)) }");
 
-        assertEval(Output.IgnoreErrorContext, "{ pmin(as.raw(42)) }");
-        assertEval(Output.IgnoreErrorContext, "{ pmin(7+42i) }");
+        assertEval("{ pmin(as.raw(42)) }");
+        assertEval("{ pmin(7+42i) }");
     }
 
     @Test

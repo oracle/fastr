@@ -150,7 +150,7 @@ public final class StatsFunctionsNodes {
     }
 
     private static void castDoubleVec(Casts casts, int index) {
-        casts.arg(index).mustBe(numericValue(), RError.SHOW_CALLER, Message.NON_NUMERIC_MATH).asDoubleVector();
+        casts.arg(index).mustBe(numericValue(), Message.NON_NUMERIC_MATH).asDoubleVector();
     }
 
     public abstract static class Function3_2Node extends RExternalBuiltinNode.Arg5 {
@@ -337,16 +337,16 @@ public final class StatsFunctionsNodes {
                     break;
                 case 2:
                     if (!RRuntime.isFinite(f) || f < 0.0 || f > 1.0) {
-                        throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "approx(): invalid f value");
+                        throw error(RError.Message.GENERIC, "approx(): invalid f value");
                     }
                     break;
                 default:
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "approx(): invalid interpolation method");
+                    throw error(RError.Message.GENERIC, "approx(): invalid interpolation method");
             }
 
             for (int i = 0; i < nx; i++) {
                 if (RRuntime.isNAorNaN(x.getDataAt(i)) || RRuntime.isNAorNaN(y.getDataAt(i))) {
-                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, ("approx(): attempted to interpolate NA values"));
+                    throw error(RError.Message.GENERIC, ("approx(): attempted to interpolate NA values"));
                 }
             }
 

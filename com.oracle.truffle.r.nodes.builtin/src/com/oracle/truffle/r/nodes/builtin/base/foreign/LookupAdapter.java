@@ -133,7 +133,7 @@ abstract class LookupAdapter extends RBuiltinNode {
             libName = RRuntime.asString(rPackage);
             if (libName == null) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.ARGUMENT_MUST_BE_STRING, "PACKAGE");
+                throw error(RError.Message.ARGUMENT_MUST_BE_STRING, "PACKAGE");
             }
         }
         return libName;

@@ -56,6 +56,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.test.TestBase;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -134,7 +135,7 @@ public class TestCasts extends TestBase {
     }
 
     private static CastNode setupAndGetCast(Consumer<CastBuilder> setup) {
-        CastBuilder builder = new CastBuilder(1);
+        CastBuilder builder = new CastBuilder(1, RError.NO_CALLER);
         setup.accept(builder);
         return builder.getCasts()[0];
     }
@@ -370,7 +371,7 @@ public class TestCasts extends TestBase {
 
             protected Root(String name) {
                 super(name, setupAndGetCast(b -> b.arg(0).mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustBe(lengthLte(1)).map(
-                                charAt0(RRuntime.INT_NA)).notNA(100000)));
+                                charAt0(RRuntime.INT_NA)).replaceNA(100000)));
             }
 
             @Override

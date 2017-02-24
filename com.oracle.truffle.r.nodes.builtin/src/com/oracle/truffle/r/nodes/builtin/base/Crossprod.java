@@ -47,8 +47,8 @@ public abstract class Crossprod extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Crossprod.class);
-        casts.arg("x").mustBe(numericValue().or(complexValue()), RError.ROOTNODE, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
-        casts.arg("y").defaultError(RError.ROOTNODE, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR).allowNull().mustBe(numericValue().or(complexValue()));
+        casts.arg("x").mustBe(numericValue().or(complexValue()), RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
+        casts.arg("y").defaultError(RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR).allowNull().mustBe(numericValue().or(complexValue()));
     }
 
     private Object matMult(Object op1, Object op2) {

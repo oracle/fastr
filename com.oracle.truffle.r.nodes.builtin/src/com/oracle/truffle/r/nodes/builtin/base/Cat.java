@@ -193,7 +193,7 @@ public abstract class Cat extends RBuiltinNode {
         try (RConnection openConn = conn.forceOpen("wt")) {
             openConn.writeLines(RDataFactory.createStringVectorFromScalar(data), "", false);
         } catch (IOException ex) {
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+            throw error(RError.Message.GENERIC, ex.getMessage());
         }
 
         return RNull.instance;
@@ -202,7 +202,7 @@ public abstract class Cat extends RBuiltinNode {
     private void validateType(int argIndex, Object obj) {
         if (obj instanceof RList || obj instanceof RLanguage || obj instanceof RExpression) {
             RTypedValue rType = (RTypedValue) obj;
-            throw RError.error(this, Message.CAT_ARGUMENT_OF_TYPE, argIndex, rType.getRType().getName());
+            throw error(Message.CAT_ARGUMENT_OF_TYPE, argIndex, rType.getRType().getName());
         }
     }
 

@@ -106,7 +106,7 @@ public class TestBuiltin_attrassign extends TestBase {
 
     @Test
     public void testArgsCasts() {
-        assertEval(Output.IgnoreErrorContext, "x<-42; attr(x, NULL) <- NULL");
-        assertEval(Output.IgnoreErrorContext, "x<-42; attr(x, 42) <- NULL");
+        assertEval("x<-42; attr(x, NULL) <- NULL");
+        assertEval("x<-42; attr(x, 42) <- NULL");
     }
 }

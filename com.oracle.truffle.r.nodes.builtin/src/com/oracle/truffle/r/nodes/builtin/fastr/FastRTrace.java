@@ -90,7 +90,7 @@ public class FastRTrace {
 
         protected void checkWhat(Object what) {
             if (what == RMissing.instance) {
-                throw RError.error(this, RError.Message.ARGUMENT_MISSING, "what");
+                throw error(RError.Message.ARGUMENT_MISSING, "what");
             }
         }
 
@@ -98,12 +98,12 @@ public class FastRTrace {
             if (what instanceof RFunction) {
                 RFunction func = (RFunction) what;
                 if (func.isBuiltin()) {
-                    throw RError.error(this, RError.Message.GENERIC, "builtin functions cannot be traced");
+                    throw error(RError.Message.GENERIC, "builtin functions cannot be traced");
                 } else {
                     return func;
                 }
             } else {
-                throw RError.error(this, RError.Message.ARG_MUST_BE_CLOSURE);
+                throw error(RError.Message.ARG_MUST_BE_CLOSURE);
             }
         }
     }
@@ -171,7 +171,7 @@ public class FastRTrace {
             } else if (tracerObj instanceof RLanguage) {
                 tracer = (RLanguage) tracerObj;
             } else {
-                throw RError.error(this, RError.Message.GENERIC, "tracer is unexpected type");
+                throw error(RError.Message.GENERIC, "tracer is unexpected type");
             }
             TraceHandling.enableStatementTrace(func, tracer, exit, at, print);
         }

@@ -93,7 +93,6 @@ public class FrameFunctions {
     public abstract static class FrameHelper extends RBuiltinNode {
 
         private final ConditionProfile currentFrameProfile = ConditionProfile.createBinaryProfile();
-        protected final BranchProfile errorProfile = BranchProfile.create();
 
         /**
          * Determine the frame access mode of a subclass. The rule of thumb is that subclasses that
@@ -134,14 +133,12 @@ public class FrameFunctions {
             int depth = call.getDepth();
             if (n > 0) {
                 if (n > depth) {
-                    errorProfile.enter();
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.NOT_THAT_MANY_FRAMES);
+                    throw error(RError.Message.NOT_THAT_MANY_FRAMES);
                 }
                 return n;
             } else {
                 if (-n > depth) {
-                    errorProfile.enter();
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.NOT_THAT_MANY_FRAMES);
+                    throw error(RError.Message.NOT_THAT_MANY_FRAMES);
                 }
                 return depth + n;
             }
@@ -253,7 +250,7 @@ public class FrameFunctions {
              */
             RLanguage call = checkCall(callObj);
             if (expandDotsL == RRuntime.LOGICAL_NA) {
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "expand.dots");
+                throw error(RError.Message.INVALID_ARGUMENT, "expand.dots");
             }
             boolean expandDots = RRuntime.fromLogical(expandDotsL);
 
@@ -384,7 +381,7 @@ public class FrameFunctions {
         @Specialization
         @SuppressWarnings("unused")
         protected RLanguage matchCall(Object definition, Object call, Object expandDots, Object envir) {
-            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+            throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
 
         private RLanguage checkCall(Object obj) throws RError {
@@ -399,7 +396,7 @@ public class FrameFunctions {
                     return call;
                 }
             }
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "call");
+            throw error(RError.Message.INVALID_ARGUMENT, "call");
         }
     }
 
@@ -684,8 +681,7 @@ public class FrameFunctions {
         @Specialization(replaces = "parentFrameDirect")
         protected REnvironment parentFrame(VirtualFrame frame, int n) {
             if (n <= 0) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.INVALID_VALUE, "n");
+                throw error(RError.Message.INVALID_VALUE, "n");
             }
             RCaller call = RArguments.getCall(frame);
             while (call.isPromise()) {

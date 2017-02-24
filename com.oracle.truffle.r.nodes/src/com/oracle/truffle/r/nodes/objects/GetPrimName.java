@@ -23,12 +23,11 @@ public abstract class GetPrimName extends RExternalBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(GetPrimName.class);
-        casts.arg(0).defaultError(RError.NO_CALLER, RError.Message.GENERIC, "'R_get_primname' called on a non-primitive").mustBe(builtin());
+        casts.arg(0).defaultError(RError.Message.GENERIC, "'R_get_primname' called on a non-primitive").mustBe(builtin());
     }
 
     @Specialization(guards = "f.isBuiltin()")
     protected String getPrimName(RFunction f) {
         return f.getName();
     }
-
 }

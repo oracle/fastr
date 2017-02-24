@@ -79,7 +79,7 @@ public abstract class OnExit extends RBuiltinNode {
     protected Object onExit(VirtualFrame frame, RPromise expr, byte add) {
 
         if (na.isNA(add)) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "add");
+            throw error(RError.Message.INVALID_ARGUMENT, "add");
         }
 
         // the empty (RNull.instance) expression is used to clear on.exit

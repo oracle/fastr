@@ -48,7 +48,7 @@ public abstract class Contributors extends RBuiltinNode {
         try {
             StdConnections.getStdout().writeString(CONTRIBUTORS, true);
         } catch (IOException ex) {
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+            throw error(RError.Message.GENERIC, ex.getMessage());
         }
         return RNull.instance;
     }

@@ -70,8 +70,7 @@ public abstract class Dqrcf extends RExternalBuiltinNode.Arg8 {
             return RDataFactory.createList(data, DQRCF_NAMES);
 
         } catch (ClassCastException | ArrayIndexOutOfBoundsException ex) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INCORRECT_ARG, "dqrcf");
+            throw error(RError.Message.INCORRECT_ARG, "dqrcf");
         }
     }
 }

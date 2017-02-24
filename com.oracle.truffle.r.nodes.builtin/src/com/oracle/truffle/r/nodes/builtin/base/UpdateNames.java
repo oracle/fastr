@@ -34,7 +34,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -82,7 +81,7 @@ public abstract class UpdateNames extends RBuiltinNode {
         if (stringVector.getLength() < result.getLength()) {
             stringVector = (RStringVector) stringVector.copyResized(result.getLength(), true);
         } else if (stringVector.getLength() > result.getLength()) {
-            throw RError.error(this, Message.NAMES_LONGER, stringVector.getLength(), result.getLength());
+            throw error(Message.NAMES_LONGER, stringVector.getLength(), result.getLength());
         } else if (stringVector == names) {
             stringVector = (RStringVector) stringVector.copy();
         }

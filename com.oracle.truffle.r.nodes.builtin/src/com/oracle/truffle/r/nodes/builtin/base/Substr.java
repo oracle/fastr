@@ -140,7 +140,7 @@ public abstract class Substr extends RBuiltinNode {
 
     protected boolean wrongParams(RAbstractIntVector start, RAbstractIntVector stop) {
         if (start.getLength() == 0 || stop.getLength() == 0) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENTS_NO_QUOTE, "substring");
+            throw error(RError.Message.INVALID_ARGUMENTS_NO_QUOTE, "substring");
         }
         return false;
     }

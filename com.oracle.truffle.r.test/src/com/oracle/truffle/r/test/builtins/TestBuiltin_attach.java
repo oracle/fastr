@@ -40,7 +40,7 @@ public class TestBuiltin_attach extends TestBase {
     public void testArguments() {
         assertEval("attach('string')");
         assertEval(Output.IgnoreErrorMessage, "attach(list(x=42), pos='string')");
-        assertEval(Output.IgnoreErrorContext, "attach(list(), name=42)");
+        assertEval("attach(list(), name=42)");
         assertEval("detach('string')");
     }
 

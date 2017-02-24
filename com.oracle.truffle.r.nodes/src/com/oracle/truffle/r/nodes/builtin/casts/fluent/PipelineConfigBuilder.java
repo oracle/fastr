@@ -22,10 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 
-import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineConfig;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -39,20 +39,18 @@ public final class PipelineConfigBuilder {
     private MessageData defaultError;
     private MessageData defaultWarning;
 
-    private Mapper<? super RMissing, ?> missingMapper;
-    private Mapper<? super RNull, ?> nullMapper;
-    private MessageData missingMsg;
-    private MessageData nullMsg;
     private boolean valueForwarding = true;
+    private final ErrorContext callObj;
 
-    public PipelineConfigBuilder(String argumentName) {
+    public PipelineConfigBuilder(String argumentName, ErrorContext callObj) {
         this.argumentName = argumentName;
-        defaultError = new MessageData(null, RError.Message.INVALID_ARGUMENT, argumentName);
+        this.callObj = callObj;
+        defaultError = new MessageData(RError.Message.INVALID_ARGUMENT, argumentName);
         defaultWarning = defaultError;
     }
 
     public PipelineConfig build() {
-        return new PipelineConfig(argumentName, defaultError, defaultWarning, missingMapper, nullMapper, valueForwarding, missingMsg, nullMsg);
+        return new PipelineConfig(argumentName, callObj, defaultError, defaultWarning, valueForwarding);
     }
 
     void setDefaultError(MessageData defaultError) {
@@ -67,5 +65,4 @@ public final class PipelineConfigBuilder {
         this.valueForwarding = flag;
         return this;
     }
-
 }

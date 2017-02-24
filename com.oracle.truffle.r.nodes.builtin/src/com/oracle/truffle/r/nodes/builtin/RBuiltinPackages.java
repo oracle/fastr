@@ -31,10 +31,13 @@ import java.util.Map;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
 import com.oracle.truffle.r.nodes.builtin.base.BaseVariables;
+import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -51,6 +54,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 /**
  * Support for loading the base package and also optional overrides for the packages provided with
@@ -152,13 +156,29 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         return createFunction(builtin, methodName);
     }
 
+    private static RootCallTarget createArgumentsCallTarget(RBuiltinFactory builtin) {
+        CompilerAsserts.neverPartOfCompilation();
+
+        RBuiltinNode node = builtin.getConstructor().get();
+        FormalArguments formals = FormalArguments.createForBuiltin(node.getDefaultParameterValues(), builtin.getSignature());
+        if (builtin.getKind() == RBuiltinKind.INTERNAL) {
+            assert node.getDefaultParameterValues().length == 0 : "INTERNAL builtins do not need default values";
+            assert builtin.getSignature().getVarArgCount() == 0 || builtin.getSignature().getVarArgIndex() == builtin.getSignature().getLength() - 1 : "only last argument can be vararg";
+        }
+
+        FrameDescriptor frameDescriptor = new FrameDescriptor();
+        RBuiltinRootNode root = new RBuiltinRootNode(builtin, node, formals, frameDescriptor, null);
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(builtin.getName(), frameDescriptor);
+        return Truffle.getRuntime().createCallTarget(root);
+    }
+
     private static RFunction createFunction(RBuiltinFactory builtinFactory, String methodName) {
         try {
             RFunction function = cachedBuiltinFunctions.get(methodName);
             if (function != null) {
                 return function;
             }
-            RootCallTarget callTarget = RBuiltinNode.createArgumentsCallTarget(builtinFactory);
+            RootCallTarget callTarget = createArgumentsCallTarget(builtinFactory);
             function = RDataFactory.createFunction(builtinFactory.getName(), "base", callTarget, builtinFactory, null);
             cachedBuiltinFunctions.put(methodName, function);
             return function;

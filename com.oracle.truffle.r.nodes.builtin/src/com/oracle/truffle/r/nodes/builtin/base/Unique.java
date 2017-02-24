@@ -73,7 +73,7 @@ public abstract class Unique extends RBuiltinNode {
     static {
         Casts casts = new Casts(Unique.class);
         // these are similar to those in DuplicatedFunctions.java
-        casts.arg("x").defaultError(RError.SHOW_CALLER, RError.Message.APPLIES_TO_VECTORS, "unique()").allowNull().mustBe(abstractVectorValue()).asVector();
+        casts.arg("x").defaultError(RError.Message.APPLIES_TO_VECTORS, "unique()").allowNull().mustBe(abstractVectorValue()).asVector();
         // not much more can be done for incomparables as it is either a vector of incomparable
         // values or a (single) logical value
         // TODO: coercion error must be handled by specialization as it depends on type of x (much

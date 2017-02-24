@@ -36,14 +36,14 @@ public class TestBuiltin_ngettext extends TestBase {
         assertEval("{ ngettext(1, \"a\", c(\"b\")) }");
         assertEval("{ ngettext(c(1), \"a\", \"b\") }");
         assertEval("{ ngettext(c(1,2), \"a\", \"b\") }");
-        assertEval(Output.IgnoreWarningContext, "{ ngettext(1+1i, \"a\", \"b\") }");
-        assertEval(Output.IgnoreErrorContext, "{ ngettext(1, NULL, \"b\") }");
-        assertEval(Output.IgnoreErrorContext, "{ ngettext(1, \"a\", NULL) }");
-        assertEval(Output.IgnoreErrorContext, "{ ngettext(1, NULL, NULL) }");
-        assertEval(Output.IgnoreErrorContext, "{ ngettext(1, c(\"a\", \"c\"), \"b\") }");
-        assertEval(Output.IgnoreErrorContext, "{ ngettext(1, \"a\", c(\"b\", \"c\")) }");
-        assertEval(Output.IgnoreErrorContext, "{ ngettext(1, c(1), \"b\") }");
-        assertEval(Output.IgnoreErrorContext, "{ ngettext(1, \"a\", c(1)) }");
-        assertEval(Output.IgnoreErrorContext, "{ ngettext(-1, \"a\", \"b\") }");
+        assertEval("{ ngettext(1+1i, \"a\", \"b\") }");
+        assertEval("{ ngettext(1, NULL, \"b\") }");
+        assertEval("{ ngettext(1, \"a\", NULL) }");
+        assertEval("{ ngettext(1, NULL, NULL) }");
+        assertEval("{ ngettext(1, c(\"a\", \"c\"), \"b\") }");
+        assertEval("{ ngettext(1, \"a\", c(\"b\", \"c\")) }");
+        assertEval("{ ngettext(1, c(1), \"b\") }");
+        assertEval("{ ngettext(1, \"a\", c(1)) }");
+        assertEval("{ ngettext(-1, \"a\", \"b\") }");
     }
 }

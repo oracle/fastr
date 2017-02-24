@@ -87,7 +87,7 @@ public abstract class NormalizePath extends RBuiltinNode {
                         msg = Message.GENERIC;
                     }
                     if (mustWork == RRuntime.LOGICAL_TRUE) {
-                        throw RError.error(this, msg, errorArgs);
+                        throw error(msg, errorArgs);
                     } else {
                         // NA means warning
                         RError.warning(this, msg, errorArgs);

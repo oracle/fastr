@@ -23,7 +23,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -44,11 +43,11 @@ public abstract class Diag extends RBuiltinNode {
         casts.arg("ncol").asIntegerVector().findFirst().mustBe(notIntNA(), Message.INVALID_LARGE_NA_VALUE, "ncol").mustBe(gte0(), Message.INVALID_NEGATIVE_VALUE, "ncol");
     }
 
-    private static int checkX(RAbstractVector x, int nrow, int ncol) {
+    private int checkX(RAbstractVector x, int nrow, int ncol) {
         int mn = (nrow < ncol) ? nrow : ncol;
         if (mn > 0 && x.getLength() == 0) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(RError.SHOW_CALLER2, Message.POSITIVE_LENGTH, "x");
+            throw error(Message.POSITIVE_LENGTH, "x");
         }
         return mn;
     }
@@ -58,7 +57,7 @@ public abstract class Diag extends RBuiltinNode {
         if (nrow == 0 && ncol == 0) {
             return RDataFactory.createDoubleVector(new double[]{}, true, new int[]{0, 0});
         } else {
-            throw RError.error(RError.SHOW_CALLER2, Message.X_NUMERIC);
+            throw error(Message.X_NUMERIC);
         }
     }
 

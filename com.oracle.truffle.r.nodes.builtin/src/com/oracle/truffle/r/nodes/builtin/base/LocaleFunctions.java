@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.ARGUMENT_NOT_CHAR_VECTOR;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARGUMENT;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_VALUE;
@@ -184,7 +183,7 @@ public class LocaleFunctions {
         }
 
         private static void category(Casts casts) {
-            casts.arg("category").mustBe(numericValue(), NO_CALLER, INVALID_ARGUMENT, "category").asIntegerVector().findFirst();
+            casts.arg("category").mustBe(numericValue(), INVALID_ARGUMENT, "category").asIntegerVector().findFirst();
         }
     }
 }

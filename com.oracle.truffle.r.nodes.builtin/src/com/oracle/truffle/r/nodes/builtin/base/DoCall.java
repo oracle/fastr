@@ -94,7 +94,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
     protected ReadVariableNode createRead(RAbstractStringVector what) {
         if (what.getLength() != 1) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
+            throw error(RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
         }
         return ReadVariableNode.createForcedFunctionLookup(RSyntaxNode.INTERNAL, what.getDataAt(0));
     }
@@ -104,7 +104,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
                     @Cached("createGet()") Get getNode) {
         if (what.getLength() != 1) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
+            throw error(RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
         }
         RFunction func = (RFunction) getNode.execute(frame, what.getDataAt(0), env, RType.Function.getName(), true);
         return doCall(frame, func, argsAsList, quote, env);
@@ -121,7 +121,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
     protected Object doCall(VirtualFrame frame, RAbstractStringVector what, RList argsAsList, boolean quote, RMissing env) {
         if (what.getLength() != 1) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
+            throw error(RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
         }
         RFunction func = ReadVariableNode.lookupFunction(what.getDataAt(0), frame.materialize());
         return doCall(frame, func, argsAsList, quote, env);

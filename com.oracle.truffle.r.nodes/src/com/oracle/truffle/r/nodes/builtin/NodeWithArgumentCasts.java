@@ -29,6 +29,8 @@ import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PreinitialPhaseBuilder;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
@@ -50,24 +52,35 @@ public interface NodeWithArgumentCasts {
 
     final class Casts {
         private static final ConcurrentHashMap<Class<?>, Casts> castsMap = new ConcurrentHashMap<>();
-        private static final Casts empty = new Casts(false);
+        private static final Casts empty = new Casts();
 
         protected final CastBuilder casts;
         private final boolean declaresNoCasts;
 
-        private Casts(boolean noCasts) {
-            casts = new CastBuilder();
-            this.declaresNoCasts = noCasts;
-        }
-
-        private Casts(Class<? extends NodeWithArgumentCasts> cls, boolean noCasts) {
-            castsMap.put(cls, this);
-            casts = new CastBuilder(cls.getAnnotation(RBuiltin.class));
-            this.declaresNoCasts = noCasts;
+        private Casts() {
+            casts = new CastBuilder(RError.NO_CALLER);
+            this.declaresNoCasts = false;
         }
 
         public Casts(Class<? extends NodeWithArgumentCasts> cls) {
-            this(cls, false);
+            castsMap.put(cls, this);
+            RBuiltin builtin = cls.getAnnotation(RBuiltin.class);
+            ErrorContext callObj = RError.contextForBuiltin(builtin);
+            casts = new CastBuilder(builtin, callObj);
+            this.declaresNoCasts = false;
+        }
+
+        public Casts(Class<? extends NodeWithArgumentCasts> cls, ErrorContext callObj) {
+            castsMap.put(cls, this);
+            RBuiltin annotation = cls.getAnnotation(RBuiltin.class);
+            casts = new CastBuilder(annotation, callObj);
+            this.declaresNoCasts = false;
+        }
+
+        private Casts(Class<? extends NodeWithArgumentCasts> cls, boolean declaresNoCasts) {
+            RBuiltin annotation = cls.getAnnotation(RBuiltin.class);
+            casts = new CastBuilder(annotation, null);
+            this.declaresNoCasts = declaresNoCasts;
         }
 
         public static void noCasts(Class<? extends NodeWithArgumentCasts> cls) {

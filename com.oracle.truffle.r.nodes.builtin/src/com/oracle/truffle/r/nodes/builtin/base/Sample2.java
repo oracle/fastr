@@ -17,7 +17,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte0;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.isFinite;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.ALGORITHM_FOR_SIZE_N_DIV_2;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARGUMENT;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_FIRST_ARGUMENT;
@@ -25,11 +24,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.MODIFIES_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashSetDouble;
 import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashSetInt;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -44,14 +41,12 @@ public abstract class Sample2 extends RBuiltinNode {
     private static final double U = 33554432.0;
     static final double MAX_INT = Integer.MAX_VALUE;
 
-    private final BranchProfile errorProfile = BranchProfile.create();
-
     static {
         Casts casts = new Casts(Sample2.class);
-        casts.arg("x").defaultError(SHOW_CALLER, INVALID_FIRST_ARGUMENT).allowNull().mustBe(integerValue().or(doubleValue())).notNA(SHOW_CALLER,
-                        INVALID_FIRST_ARGUMENT).asDoubleVector().findFirst().mustBe(gte(0.0)).mustBe(isFinite());
-        casts.arg("size").defaultError(SHOW_CALLER, INVALID_ARGUMENT, "size").mustBe(integerValue().or(doubleValue())).asIntegerVector().findFirst().notNA(SHOW_CALLER, INVALID_ARGUMENT,
-                        "size").mustBe(gte0(), SHOW_CALLER, INVALID_ARGUMENT, "size");
+        casts.arg("x").defaultError(INVALID_FIRST_ARGUMENT).allowNull().mustBe(integerValue().or(doubleValue())).mustNotBeNA(INVALID_FIRST_ARGUMENT).asDoubleVector().findFirst().mustBe(
+                        gte(0.0)).mustBe(isFinite());
+        casts.arg("size").defaultError(INVALID_ARGUMENT, "size").mustBe(integerValue().or(doubleValue())).asIntegerVector().findFirst().mustNotBeNA(INVALID_ARGUMENT,
+                        "size").mustBe(gte0(), INVALID_ARGUMENT, "size");
     }
 
     @Specialization(guards = "x > MAX_INT")
@@ -98,8 +93,7 @@ public abstract class Sample2 extends RBuiltinNode {
 
     private void validate(double x, int size) {
         if (size > x / 2) {
-            errorProfile.enter();
-            throw RError.error(SHOW_CALLER, ALGORITHM_FOR_SIZE_N_DIV_2);
+            throw error(ALGORITHM_FOR_SIZE_N_DIV_2);
         }
     }
 

@@ -106,14 +106,14 @@ public abstract class UpdateClass extends RBuiltinNode {
                 }
                 CompilerDirectives.transferToInterpreter();
                 int[] dimensions = resultVector.getDimensions();
-                throw RError.error(this, RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimensions == null ? 0 : dimensions.length);
+                throw error(RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimensions == null ? 0 : dimensions.length);
             }
             if (RType.Array.getName().equals(className)) {
                 if (resultVector.isArray()) {
                     return setClass(resultVector, RNull.instance);
                 }
                 CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, RError.Message.NOT_ARRAY_UPDATE_CLASS);
+                throw error(RError.Message.NOT_ARRAY_UPDATE_CLASS);
             }
         }
 

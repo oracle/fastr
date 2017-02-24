@@ -101,7 +101,7 @@ public class EnvFunctions {
 
         @Specialization
         protected REnvironment asEnvironment(@SuppressWarnings("unused") RNull rnull) {
-            throw RError.error(this, RError.Message.AS_ENV_NULL_DEFUNCT);
+            throw error(RError.Message.AS_ENV_NULL_DEFUNCT);
         }
 
         @Specialization
@@ -114,7 +114,7 @@ public class EnvFunctions {
                         @Cached("new()") GetCallerFrameNode getCallerFrame) {
             if (pos.getLength() == 0) {
                 CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, Message.INVALID_ARGUMENT, "pos");
+                throw error(Message.INVALID_ARGUMENT, "pos");
             }
             Object[] results = pos.getLength() == 1 ? null : new Object[pos.getLength()];
             for (int i = 0; i < pos.getLength(); i++) {
@@ -122,8 +122,7 @@ public class EnvFunctions {
                 int p = pos.getDataAt(i);
                 if (p == -1) {
                     if (RArguments.getDepth(frame) == 0) {
-                        errorProfile.enter();
-                        throw RError.error(this, RError.Message.NO_ENCLOSING_ENVIRONMENT);
+                        throw error(RError.Message.NO_ENCLOSING_ENVIRONMENT);
                     }
                     Frame callerFrame = getCallerFrame.execute(frame);
                     env = REnvironment.frameToEnvironment(callerFrame.materialize());
@@ -146,8 +145,7 @@ public class EnvFunctions {
                 // not accessible by name, GnuR allows it to be accessible by index
                 return REnvironment.emptyEnv();
             } else if ((p <= 0) || (p > searchPath.length + 1)) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "pos");
+                throw error(RError.Message.INVALID_ARGUMENT, "pos");
             } else {
                 return REnvironment.lookupOnSearchPath(searchPath[p - 1]);
             }
@@ -163,8 +161,7 @@ public class EnvFunctions {
                     return REnvironment.lookupOnSearchPath(e);
                 }
             }
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.NO_ITEM_NAMED, name);
+            throw error(RError.Message.NO_ITEM_NAMED, name);
         }
 
         @Specialization
@@ -185,7 +182,7 @@ public class EnvFunctions {
             // generic dispatch tried already
             Object xData = getXDataAttrNode.execute(obj);
             if (xData == null || !(xData instanceof REnvironment)) {
-                throw RError.error(this, RError.Message.S4OBJECT_NX_ENVIRONMENT);
+                throw error(RError.Message.S4OBJECT_NX_ENVIRONMENT);
             } else {
                 return xData;
             }
@@ -193,7 +190,7 @@ public class EnvFunctions {
 
         @Fallback
         protected REnvironment asEnvironment(@SuppressWarnings("unused") Object object) {
-            throw RError.error(this, RError.Message.INVALID_OBJECT);
+            throw error(RError.Message.INVALID_OBJECT);
         }
     }
 
@@ -286,14 +283,14 @@ public class EnvFunctions {
 
         static {
             Casts casts = new Casts(ParentEnv.class);
-            casts.arg("env").mustBe(instanceOf(REnvironment.class), RError.SHOW_CALLER, Message.ARGUMENT_NOT_ENVIRONMENT);
+            casts.arg("env").mustBe(instanceOf(REnvironment.class), Message.ARGUMENT_NOT_ENVIRONMENT);
         }
 
         @Specialization
         protected REnvironment parentenv(REnvironment env) {
             if (env == REnvironment.emptyEnv()) {
                 errorProfile.enter();
-                throw RError.error(RError.SHOW_CALLER, RError.Message.EMPTY_NO_PARENT);
+                throw error(RError.Message.EMPTY_NO_PARENT);
             }
             return env.getParent();
         }
@@ -312,7 +309,7 @@ public class EnvFunctions {
         @TruffleBoundary
         protected REnvironment setParentenv(REnvironment env, REnvironment parent) {
             if (env == REnvironment.emptyEnv()) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_SET_PARENT);
+                throw error(RError.Message.CANNOT_SET_PARENT);
             }
             env.setParent(parent);
             return env;
@@ -424,7 +421,7 @@ public class EnvFunctions {
         @Specialization
         @TruffleBoundary
         protected Object updateEnvironment(@SuppressWarnings("unused") RFunction fun, @SuppressWarnings("unused") RNull env) {
-            throw RError.error(this, RError.Message.USE_NULL_ENV_DEFUNCT);
+            throw error(RError.Message.USE_NULL_ENV_DEFUNCT);
         }
 
         protected SetFixedAttributeNode createSetEnvAttrNode() {
@@ -468,7 +465,7 @@ public class EnvFunctions {
         @Specialization
         @TruffleBoundary
         protected Object updateEnvironment(@SuppressWarnings("unused") RNull obj, @SuppressWarnings("unused") REnvironment env) {
-            throw RError.error(this, Message.SET_ATTRIBUTES_ON_NULL);
+            throw error(Message.SET_ATTRIBUTES_ON_NULL);
         }
     }
 
@@ -523,7 +520,7 @@ public class EnvFunctions {
 
         static {
             Casts casts = new Casts(LockEnvironment.class);
-            casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("env").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
             // TODO: the actual interpretation of this parameter remains dubious
             casts.arg("bindings").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         }
@@ -540,7 +537,7 @@ public class EnvFunctions {
 
         static {
             Casts casts = new Casts(EnvironmentIsLocked.class);
-            casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("env").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
         }
 
         @Specialization
@@ -554,8 +551,8 @@ public class EnvFunctions {
 
         static {
             Casts casts = new Casts(LockBinding.class);
-            casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
-            casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("sym").mustBe(RSymbol.class, Message.NOT_A_SYMBOL);
+            casts.arg("env").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
         }
 
         @Specialization
@@ -570,8 +567,8 @@ public class EnvFunctions {
 
         static {
             Casts casts = new Casts(UnlockBinding.class);
-            casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
-            casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("sym").mustBe(RSymbol.class, Message.NOT_A_SYMBOL);
+            casts.arg("env").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
         }
 
         @Specialization
@@ -586,8 +583,8 @@ public class EnvFunctions {
 
         static {
             Casts casts = new Casts(BindingIsLocked.class);
-            casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
-            casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("sym").mustBe(RSymbol.class, Message.NOT_A_SYMBOL);
+            casts.arg("env").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
         }
 
         @Specialization
@@ -601,9 +598,9 @@ public class EnvFunctions {
 
         static {
             Casts casts = new Casts(MakeActiveBinding.class);
-            casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
-            casts.arg("fun").mustBe(RFunction.class, RError.SHOW_CALLER, Message.NOT_A_FUNCTION);
-            casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("sym").mustBe(RSymbol.class, Message.NOT_A_SYMBOL);
+            casts.arg("fun").mustBe(RFunction.class, Message.NOT_A_FUNCTION);
+            casts.arg("env").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
         }
 
         @SuppressWarnings("unused")
@@ -619,8 +616,8 @@ public class EnvFunctions {
 
         static {
             Casts casts = new Casts(BindingIsActive.class);
-            casts.arg("sym").mustBe(RSymbol.class, RError.SHOW_CALLER, Message.NOT_A_SYMBOL);
-            casts.arg("env").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("sym").mustBe(RSymbol.class, Message.NOT_A_SYMBOL);
+            casts.arg("env").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
         }
 
         @SuppressWarnings("unused")
@@ -638,7 +635,7 @@ public class EnvFunctions {
 
         static {
             Casts casts = new Casts(EnvToList.class);
-            casts.arg("x").mustBe(REnvironment.class, RError.SHOW_CALLER, Message.NOT_AN_ENVIRONMENT);
+            casts.arg("x").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
             casts.arg("all.names").mustNotBeNull().asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
             casts.arg("sorted").mustNotBeNull().asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         }
