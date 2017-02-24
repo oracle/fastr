@@ -29,14 +29,15 @@ public class ReadWriteHelper {
      * {@link BufferedReader} but mixing binary and text operations, which is a requirement, would
      * then be difficult.
      *
-     * @param warn TODO
-     * @param skipNul TODO
+     * @param warn Specifies if warnings should be output.
+     * @param skipNul Specifies if the null character should be ignored.
      */
     public static String[] readLinesHelper(BaseRConnection conn, InputStream in, int n, boolean warn, boolean skipNul) throws IOException {
         ArrayList<String> lines = new ArrayList<>();
         int totalRead = 0;
         byte[] buffer = new byte[64];
         int pushBack = 0;
+        boolean nullRead = false;
         while (true) {
             int ch;
             if (pushBack != 0) {
@@ -71,6 +72,11 @@ public class ReadWriteHelper {
                 } else {
                     pushBack = ch;
                 }
+            } else if (ch == 0) {
+                nullRead = true;
+                if (warn && !skipNul) {
+                    RError.warning(RError.SHOW_CALLER, RError.Message.LINE_CONTAINS_EMBEDDED_NULLS, lines.size() + 1);
+                }
             }
             if (lineEnd) {
                 lines.add(new String(buffer, 0, totalRead, conn.getEncoding()));
@@ -78,9 +84,15 @@ public class ReadWriteHelper {
                     break;
                 }
                 totalRead = 0;
+                nullRead = false;
             } else {
-                buffer = ReadWriteHelper.checkBuffer(buffer, totalRead);
-                buffer[totalRead++] = (byte) (ch & 0xFF);
+                if (!nullRead) {
+                    buffer = ReadWriteHelper.checkBuffer(buffer, totalRead);
+                    buffer[totalRead++] = (byte) (ch & 0xFF);
+                }
+                if (skipNul) {
+                    nullRead = false;
+                }
             }
         }
         String[] result = new String[lines.size()];

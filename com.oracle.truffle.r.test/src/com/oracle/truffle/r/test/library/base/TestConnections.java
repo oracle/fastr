@@ -79,6 +79,7 @@ public class TestConnections extends TestBase {
         TEMP_FILES.add(path.resolve("file4039819292"));
         TEMP_FILES.add(path.resolve("file9823674682"));
         TEMP_FILES.add(path.resolve("file3762346723"));
+        TEMP_FILES.add(path.resolve("file8723674332"));
     }
 
     @AfterClass
@@ -203,6 +204,31 @@ public class TestConnections extends TestBase {
         final Path utf8File1 = TEMP_FILES.get(2);
         assertEval("{ wline <- \"Hellö\"; fin <- file(\"" + utf8File1 +
                         "\", \"w+\", encoding = \"UTF-8\"); writeLines(wline, fin); seek(fin, 0); rline <- readLines(fin, 1); close(fin); c(wline, rline, wline == rline) }");
+    }
+
+    @Test
+    public void testReadLines() {
+        final Path tmpFile = TEMP_FILES.get(3);
+
+        // one line containing '\0'
+        final String lineWithNul = "c(97,98,99,100,0,101,10)";
+
+        // two lines, first containing '\0'
+        final String twoLinesOneNul = "c(97,98,99,100,0,101,10,65,66,67,10)";
+
+        // one line containing '\0' and imcomplete
+        final String lineWithNulIncomp = "c(97,98,99,100,0,101)";
+
+        // two lines, first containing '\0', second line incomplete
+        final String twoLinesOneNulIncomp = "c(97,98,99,100,0,101,10,65,66,67)";
+
+        assertEval(TestBase.template("{ fn <- \"" + tmpFile +
+                        "\"; zz <- file(fn,\"w+b\"); writeBin(as.raw(%0), zz, useBytes=T); seek(zz, 0); res <- readLines(zz, 1, warn=%1, skipNul=%2); close(zz); unlink(fn); res }",
+                        arr(lineWithNul, twoLinesOneNul, lineWithNulIncomp, twoLinesOneNulIncomp), arr("T", "F"), arr("T", "F")));
+    }
+
+    private static String[] arr(String... args) {
+        return args;
     }
 
     /**

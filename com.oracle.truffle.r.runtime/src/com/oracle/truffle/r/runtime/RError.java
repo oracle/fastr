@@ -836,7 +836,8 @@ public final class RError extends RuntimeException {
         SEEK_NOT_ENABLED("'seek' not enabled for this connection"),
         CANNOT_OPEN_FIFO("cannot open fifo '%s'"),
         UNSUPPORTED_ENCODING_CONVERSION("unsupported conversion from '%s' to '%s'"),
-        UNABLE_TO_RESOLVE("unable to resolve '%s'");
+        UNABLE_TO_RESOLVE("unable to resolve '%s'"),
+        LINE_CONTAINS_EMBEDDED_NULLS("line %d appears to contain an embedded nul");
 
         public final String message;
         final boolean hasArgs;
