@@ -39,6 +39,7 @@ public abstract class ExecutionPathVisitor<T> implements PipelineStepVisitor<T> 
     private int mapIfCounter;
     private List<T> results = new ArrayList<>();
 
+    @SuppressWarnings("unchecked")
     public List<T> visitPaths(PipelineStep<?, ?> firstStep, T initial) {
         if (firstStep == null) {
             return Collections.singletonList(initial);
@@ -48,7 +49,13 @@ public abstract class ExecutionPathVisitor<T> implements PipelineStepVisitor<T> 
         int n = 1 << mapIfStepStatuses.size();
         for (long i = 1; i < n; i++) {
             bs = BitSet.valueOf(new long[]{i});
-            results.add(firstStep.acceptPipeline(this, initial));
+            T res;
+            try {
+                res = firstStep.acceptPipeline(this, initial);
+            } catch (PathBreakException br) {
+                res = (T) br.result;
+            }
+            results.add(res);
         }
         return results;
     }
@@ -62,9 +69,30 @@ public abstract class ExecutionPathVisitor<T> implements PipelineStepVisitor<T> 
         } else {
             visitTrueBranch = bs.get(mapIfStepStatuses.get(step));
         }
-        return visitBranch(step, previous, visitTrueBranch);
+        T res = visitBranch(step, previous, visitTrueBranch);
+        if (step.isReturns() && visitTrueBranch) {
+            throw new PathBreakException(res);
+        } else {
+            return res;
+        }
     }
 
     protected abstract T visitBranch(MapIfStep<?, ?> step, T previous, boolean visitTrueBranch);
+
+    @SuppressWarnings("serial")
+    static final class PathBreakException extends RuntimeException {
+
+        private final Object result;
+
+        private PathBreakException(Object result) {
+            this.result = result;
+        }
+
+        @SuppressWarnings("sync-override")
+        @Override
+        public Throwable fillInStackTrace() {
+            return null;
+        }
+    }
 
 }

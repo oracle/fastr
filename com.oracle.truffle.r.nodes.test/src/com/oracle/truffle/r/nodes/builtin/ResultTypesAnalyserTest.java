@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullConstant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.atomicIntegerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.atomicLogicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
@@ -167,9 +169,8 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testBoxPrimitive() {
         arg.boxPrimitive();
-        TypeExpr expected = TypeExpr.union(RNull.class, RMissing.class, RInteger.class, RLogical.class,
-                        RDouble.class, RString.class);
-        expected = expected.or(expected.not());
+        TypeExpr expected = TypeExpr.union(RInteger.class, RLogical.class, RDouble.class, RString.class);
+        expected = expected.or((expected.not().and(atom(String.class).not()).and(atom(Double.class).not()).and(atom(Integer.class).not()).and(atom(Byte.class).not())));
         assertTypes(expected);
     }
 
@@ -428,9 +429,21 @@ public class ResultTypesAnalyserTest {
     }
 
     @Test
-    public void testReturnIf() {
+    public void testReturnIf1() {
         arg.mapIf(nullValue(), mark(constant(1), "m1"), mark(constant("abc"), "m2"));
         assertTypes(atom(String.class).lower(m("m2")).or(atom(Integer.class).lower(m("m1"))));
+    }
+
+    @Test
+    public void testReturnIf2() {
+        arg.returnIf(nullValue(), emptyIntegerVector()).returnIf(missingValue(), emptyIntegerVector()).asIntegerVector();
+        assertTypes(atom(int.class).or(atom(RIntSequence.class)).or(atom(RIntVector.class)), true);
+    }
+
+    @Test
+    public void testMustNotBeMissingAndBoxPrimitive() {
+        arg.mustNotBeMissing().returnIf(nullValue(), nullConstant()).mustBe(stringValue()).boxPrimitive().asStringVector();
+        assertTypes(atom(RNull.class).or(atom(RStringVector.class)), true);
     }
 
     @Test
