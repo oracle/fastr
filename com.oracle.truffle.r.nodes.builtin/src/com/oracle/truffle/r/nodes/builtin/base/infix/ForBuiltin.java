@@ -33,6 +33,11 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "for", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class ForBuiltin extends RBuiltinNode {
+
+    static {
+        Casts.noCasts(ForBuiltin.class);
+    }
+
     @Specialization
     protected Object doIt(@SuppressWarnings("unused") Object x) {
         throw RInternalError.unimplemented();

@@ -15,6 +15,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVec
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -34,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -48,8 +48,8 @@ public abstract class CumMax extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(CumMax.class);
-        casts.arg("x").allowNull().mustBe(complexValue().not(), RError.Message.CUMMAX_UNDEFINED_FOR_COMPLEX).mapIf(integerValue().or(logicalValue()), asIntegerVector(true, false, false),
-                        asDoubleVector(true, false, false));
+        casts.arg("x").allowNull().mustBe(missingValue().not(), RError.Message.ARGUMENT_EMPTY, 0, "cumsum", 1).mustBe(complexValue().not(), RError.Message.CUMMAX_UNDEFINED_FOR_COMPLEX).mapIf(
+                        integerValue().or(logicalValue()), asIntegerVector(true, false, false), asDoubleVector(true, false, false));
     }
 
     @Specialization
@@ -65,11 +65,6 @@ public abstract class CumMax extends RBuiltinNode {
     @Specialization
     protected RDoubleVector cumNull(@SuppressWarnings("unused") RNull rnull) {
         return RDataFactory.createEmptyDoubleVector();
-    }
-
-    @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(RAbstractComplexVector emptyVec) {
-        return RDataFactory.createComplexVector(new double[0], true, emptyVec.getNames());
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")

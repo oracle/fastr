@@ -20,6 +20,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -470,6 +471,13 @@ public class FileFunctions {
 
     @RBuiltin(name = "file.link", kind = INTERNAL, parameterNames = {"from", "to"}, behavior = IO)
     public abstract static class FileLink extends FileLinkAdaptor {
+
+        static {
+            Casts casts = new Casts(FileLink.class);
+            casts.arg("from").mustBe(stringValue(), RError.Message.INVALID_FIRST_FILENAME).asStringVector();
+            casts.arg("to").mustBe(stringValue(), RError.Message.INVALID_SECOND_FILENAME).asStringVector();
+        }
+
         @Specialization
         @TruffleBoundary
         protected Object doFileLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
@@ -479,6 +487,13 @@ public class FileFunctions {
 
     @RBuiltin(name = "file.symlink", kind = INTERNAL, parameterNames = {"from", "to"}, behavior = IO)
     public abstract static class FileSymLink extends FileLinkAdaptor {
+
+        static {
+            Casts casts = new Casts(FileSymLink.class);
+            casts.arg("from").mustBe(stringValue(), RError.Message.INVALID_FIRST_FILENAME).asStringVector();
+            casts.arg("to").mustBe(stringValue(), RError.Message.INVALID_SECOND_FILENAME).asStringVector();
+        }
+
         @Specialization
         @TruffleBoundary
         protected Object doFileSymLink(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
@@ -1017,9 +1032,9 @@ public class FileFunctions {
 
         static {
             Casts casts = new Casts(FileShow.class);
-            casts.arg("files").asStringVector();
-            casts.arg("header").asStringVector();
-            casts.arg("title").asStringVector();
+            casts.arg("files").mustNotBeMissing().mustBe(nullValue().not(), Message.INVALID_FILENAME_SPECIFICATION).asStringVector();
+            casts.arg("header").mustNotBeMissing().mustBe(nullValue().not(), Message.INVALID_ARG, "'headers'").asStringVector();
+            casts.arg("title").mustNotBeMissing().mustBe(nullValue().not(), Message.INVALID_ARG, "'title'").asStringVector();
             casts.arg("delete.file").asLogicalVector().findFirst().map(toBoolean());
             casts.arg("pager").asStringVector().findFirst();
         }

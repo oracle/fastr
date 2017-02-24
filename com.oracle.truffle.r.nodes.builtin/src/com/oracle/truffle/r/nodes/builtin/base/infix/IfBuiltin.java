@@ -33,6 +33,11 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "if", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class IfBuiltin extends RBuiltinNode {
+
+    static {
+        Casts.noCasts(IfBuiltin.class);
+    }
+
     @Specialization
     protected Object doIt(@SuppressWarnings("unused") Object x) {
         throw RInternalError.unimplemented();

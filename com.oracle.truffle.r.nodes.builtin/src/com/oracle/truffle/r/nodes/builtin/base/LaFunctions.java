@@ -399,7 +399,7 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RList doDetGeReal(RDoubleVector aIn, boolean useLog,
+        protected RList doDetGeReal(RAbstractDoubleVector aIn, boolean useLog,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
                         @Cached("create()") LapackRFFI.DgetrfNode dgetrfNode) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
