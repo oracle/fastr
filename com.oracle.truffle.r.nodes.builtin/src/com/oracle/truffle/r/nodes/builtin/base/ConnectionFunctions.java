@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.equalTo;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
@@ -31,6 +32,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalTrue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
@@ -90,6 +92,7 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -166,7 +169,7 @@ public abstract class ConnectionFunctions {
         }
 
         private static void nchars(Casts casts) {
-            casts.arg("nchars").asIntegerVector().mustBe(notEmpty());
+            casts.arg("nchars").mustNotBeMissing().mapIf(nullValue(), constant(0)).asIntegerVector().mustBe(notEmpty());
         }
 
         private static void useBytes(Casts casts) {
@@ -725,13 +728,16 @@ public abstract class ConnectionFunctions {
     public abstract static class WriteChar extends RBuiltinNode {
 
         static {
+            // @formatter:off
             Casts casts = new Casts(WriteChar.class);
-            casts.arg("object").asStringVector();
-            casts.arg("con").defaultError(Message.INVALID_CONNECTION).mustBe(integerValue().or(rawValue())).mapIf(integerValue(),
-                            asIntegerVector().setNext(findFirst().integerElement()));
+            casts.arg("object").mustBe(stringValue(), RError.SHOW_CALLER, Message.ONLY_WRITE_CHAR_OBJECTS).asStringVector();
+            casts.arg("con").mustBe(rawValue().not(), Message.GENERIC, "raw connection in writeChar not implemented in FastR yet.").
+                    mustBe(stringValue().not(), Message.GENERIC, "filename as a connection in writeChar not implemented in FastR yet.").
+                    mustBe(integerValue(), RError.SHOW_CALLER, Message.INVALID_CONNECTION).asIntegerVector().findFirst();
             CastsHelper.nchars(casts);
-            casts.arg("sep").allowNull().mustBe(stringValue());
+            casts.arg("sep").mustNotBeMissing().returnIf(nullValue()).mustBe(stringValue()).asStringVector();
             CastsHelper.useBytes(casts);
+            // @formatter:on
         }
 
         @Specialization
@@ -804,7 +810,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object readBin(int con, String what, int n, int sizeInput, boolean signed, boolean swap) {
-            RVector<?> result = null;
+            RVector<?> result;
             BaseRConnection connection = RConnection.fromIndex(con);
             try (RConnection openConn = connection.forceOpen("rb")) {
                 if (getBaseConnection(openConn).getOpenMode().isText()) {
@@ -1079,8 +1085,7 @@ public abstract class ConnectionFunctions {
 
         static {
             Casts casts = new Casts(WriteBin.class);
-            // TODO atomic, i.e. not RList or RExpression
-            casts.arg("object").asVector().mustBe(instanceOf(RAbstractVector.class));
+            casts.arg("object").asVector().mustBe(RAbstractAtomicVector.class);
             casts.arg("con").defaultError(Message.INVALID_CONNECTION).mustBe(integerValue().or(rawValue())).mapIf(integerValue(), asIntegerVector().setNext(findFirst().integerElement()));
             CastsHelper.size(casts);
             CastsHelper.swap(casts);
@@ -1111,10 +1116,8 @@ public abstract class ConnectionFunctions {
         }
 
         @Specialization
-        protected RRawVector writeBin(RAbstractVector object, @SuppressWarnings("unused") RAbstractRawVector con, int size, byte swapArg, byte useBytesArg,
+        protected RRawVector writeBin(RAbstractVector object, @SuppressWarnings("unused") RAbstractRawVector con, int size, boolean swap, boolean useBytes,
                         @Cached("create()") WriteDataNode writeData) {
-            boolean swap = RRuntime.fromLogical(swapArg);
-            boolean useBytes = RRuntime.fromLogical(useBytesArg);
             ByteBuffer buffer = writeData.execute(object, size, swap, useBytes);
             buffer.flip();
             return RDataFactory.createRawVector(buffer.array());

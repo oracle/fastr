@@ -11,6 +11,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -29,7 +31,7 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(Fft.class);
-        casts.arg(0).mustNotBeNull().asComplexVector(false, true, false);
+        casts.arg(0).mustNotBeMissing().mustBe(nullValue().not()).asComplexVector(false, true, false);
         casts.arg(1).mustNotBeNull().asLogicalVector().findFirst().map(Predef.toBoolean());
     }
 

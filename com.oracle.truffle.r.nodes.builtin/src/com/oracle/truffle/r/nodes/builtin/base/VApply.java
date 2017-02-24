@@ -23,8 +23,11 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyList;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notLogicalNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -95,14 +98,14 @@ public abstract class VApply extends RBuiltinNode {
     @Child private SetNamesAttributeNode setNamesNode = SetNamesAttributeNode.create();
 
     static {
+        // @formatter:off
         Casts casts = new Casts(VApply.class);
-        casts.arg("X").asVector();
+        casts.arg("X").mapNull(emptyList());
         casts.arg("FUN").mustBe(instanceOf(RFunction.class), RError.SHOW_CALLER, RError.Message.APPLY_NON_FUNCTION);
-        // casts.arg("FUN.VALUE").mapIf(anyValue(),
-        // chain(asVector(true)).with(mustBe(abstractVectorValue(), RError.SHOW_CALLER, true,
-        // RError.Message.MUST_BE_VECTOR, "FUN.VALUE")).end());
-        casts.arg("FUN.VALUE").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_VECTOR, "FUN.VALUE").asVector(true).mustBe(abstractVectorValue());
-        casts.arg("USE.NAMES").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "USE.NAMES").mustBe(stringValue().not()).asLogicalVector().findFirst();
+        casts.arg("FUN.VALUE").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_VECTOR, "FUN.VALUE").mustBe(abstractVectorValue()).asVector(true);
+        casts.arg("USE.NAMES").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "USE.NAMES").
+                mustBe(numericValue()).asLogicalVector().findFirst().mustBe(notLogicalNA()).map(toBoolean());
+        // @formatter:on
     }
 
     private Object castComplex(Object operand, boolean preserveAllAttr) {
@@ -146,13 +149,21 @@ public abstract class VApply extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RAbstractVector funValue, byte useNames) {
-        RVector<?> result = delegateToLapply(frame, vec, fun, funValue, useNames);
-        // set here else it gets overridden by the iterator evaluation
-        return result;
+    protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RAbstractVector funValue, boolean useNames) {
+        return delegateToLapply(frame, vec, fun, funValue, useNames);
     }
 
-    private RVector<?> delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RAbstractVector funValueVec, byte useNames) {
+    @Specialization(guards = "isNotAbstractVector(obj)")
+    protected Object vapplyNonVector(VirtualFrame frame, Object obj, RFunction fun, RAbstractVector funValue, boolean useNames) {
+        // wrap the single value into a list and use normal vapply algorithm
+        return vapply(frame, RDataFactory.createList(new Object[]{obj}), fun, funValue, useNames);
+    }
+
+    static boolean isNotAbstractVector(Object obj) {
+        return !(obj instanceof RAbstractVector);
+    }
+
+    private RVector<?> delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RAbstractVector funValueVec, boolean useNames) {
         /*
          * The implementation is complicated by the existence of scalar length 1 vectors (e.g.
          * Integer) and concrete length 1 vectors (e.g. RIntVector), as either form can occur in
@@ -164,7 +175,7 @@ public abstract class VApply extends RBuiltinNode {
         RVector<?> vecMat = vec.materialize();
         Object[] applyResult = doApply.execute(frame, vecMat, fun);
 
-        RVector<?> result = null;
+        RVector<?> result;
         boolean applyResultZeroLength = applyResult.length == 0;
 
         naCheck.enable(true);
@@ -197,7 +208,7 @@ public abstract class VApply extends RBuiltinNode {
         }
 
         // TODO: handle names in case of matrices
-        if (useNamesProfile.profile(RRuntime.fromLogical(useNames))) {
+        if (useNamesProfile.profile(useNames)) {
             RStringVector names = getNamesNode.getNames(vecMat);
             RStringVector newNames = null;
             if (names != null) {

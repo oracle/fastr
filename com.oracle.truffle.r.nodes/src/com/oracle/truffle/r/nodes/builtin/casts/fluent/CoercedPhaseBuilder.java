@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -107,5 +108,9 @@ public final class CoercedPhaseBuilder<T extends RAbstractVector, S> extends Arg
 
     public CoercedPhaseBuilder<T, S> mustBe(Filter<? super T, ? extends T> argFilter) {
         return mustBe(argFilter, null, null, (Object[]) null);
+    }
+
+    public <R extends T> CoercedPhaseBuilder<R, S> mustBe(Class<R> cls) {
+        return new CoercedPhaseBuilder<R, S>(pipelineBuilder(), elementClass).mustBe(Predef.instanceOf(cls));
     }
 }

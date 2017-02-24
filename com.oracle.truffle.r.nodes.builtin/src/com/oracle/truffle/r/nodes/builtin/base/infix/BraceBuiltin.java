@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
+import static com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts.noCasts;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -33,6 +34,11 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "{", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class BraceBuiltin extends RBuiltinNode {
+
+    static {
+        noCasts(BraceBuiltin.class);
+    }
+
     @Specialization
     protected Object doIt(@SuppressWarnings("unused") Object x) {
         throw RInternalError.unimplemented();

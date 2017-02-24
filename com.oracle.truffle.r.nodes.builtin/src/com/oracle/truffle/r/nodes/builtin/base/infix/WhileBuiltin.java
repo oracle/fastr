@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
+import static com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts.noCasts;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -33,6 +34,10 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "while", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class WhileBuiltin extends RBuiltinNode {
+    static {
+        noCasts(WhileBuiltin.class);
+    }
+
     @SuppressWarnings("unused")
     @Specialization
     protected Object doIt(Object x) {

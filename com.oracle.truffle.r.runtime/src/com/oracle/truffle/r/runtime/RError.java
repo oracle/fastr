@@ -333,6 +333,7 @@ public final class RError extends RuntimeException {
         CONN_XDR("cannot save XDR format to a text-mode connection"),
         ONLY_READ_BINARY_CONNECTION("can only read from a binary connection"),
         ONLY_WRITE_BINARY_CONNECTION("can only write to a binary connection"),
+        ONLY_WRITE_CHAR_OBJECTS("can only write character objects"),
         NOT_A_TEXT_CONNECTION("'con' is not a textConnection"),
         UNSEEKABLE_CONNECTION("'con' is not seekable"),
         MUST_BE_STRING_OR_CONNECTION("'%s' must be a character string or a connection"),

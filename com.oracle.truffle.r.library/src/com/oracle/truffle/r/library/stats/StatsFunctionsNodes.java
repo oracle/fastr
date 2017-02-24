@@ -12,6 +12,7 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -30,9 +31,11 @@ import com.oracle.truffle.r.library.stats.StatsFunctionsNodesFactory.Function3_2
 import com.oracle.truffle.r.library.stats.StatsFunctionsNodesFactory.Function4_1NodeGen;
 import com.oracle.truffle.r.library.stats.StatsFunctionsNodesFactory.Function4_2NodeGen;
 import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
@@ -137,6 +140,15 @@ public final class StatsFunctionsNodes {
         return resultVec;
     }
 
+    private static void castBoolean(Casts casts, int index, byte defaultValue) {
+        // defensively we map missing to the default values
+        casts.arg(index).asLogicalVector().findFirst(defaultValue).map(toBoolean());
+    }
+
+    private static void castDoubleVec(Casts casts, int index) {
+        casts.arg(index).mustBe(numericValue(), RError.SHOW_CALLER, Message.NON_NUMERIC_MATH).asDoubleVector();
+    }
+
     public abstract static class Function3_2Node extends RExternalBuiltinNode.Arg5 {
         private final Function3_2 function;
 
@@ -150,11 +162,11 @@ public final class StatsFunctionsNodes {
 
         static {
             Casts casts = new Casts(Function3_2Node.class);
-            casts.arg(0).asDoubleVector();
-            casts.arg(1).asDoubleVector();
-            casts.arg(2).asDoubleVector();
-            casts.arg(3).asLogicalVector().findFirst().map(toBoolean());
-            casts.arg(4).asLogicalVector().findFirst().map(toBoolean());
+            castDoubleVec(casts, 0);
+            castDoubleVec(casts, 1);
+            castDoubleVec(casts, 2);
+            castBoolean(casts, 3, RRuntime.LOGICAL_TRUE);
+            castBoolean(casts, 4, RRuntime.LOGICAL_FALSE);
         }
 
         @Specialization
@@ -178,11 +190,11 @@ public final class StatsFunctionsNodes {
 
         static {
             Casts casts = new Casts(Function4_1Node.class);
-            casts.arg(0).asDoubleVector();
-            casts.arg(1).asDoubleVector();
-            casts.arg(2).asDoubleVector();
-            casts.arg(3).asDoubleVector();
-            casts.arg(4).asLogicalVector().findFirst().map(toBoolean());
+            castDoubleVec(casts, 0);
+            castDoubleVec(casts, 1);
+            castDoubleVec(casts, 2);
+            castDoubleVec(casts, 3);
+            castBoolean(casts, 4, RRuntime.LOGICAL_TRUE);
         }
 
         @Specialization
@@ -206,12 +218,12 @@ public final class StatsFunctionsNodes {
 
         static {
             Casts casts = new Casts(Function4_2Node.class);
-            casts.arg(0).asDoubleVector();
-            casts.arg(1).asDoubleVector();
-            casts.arg(2).asDoubleVector();
-            casts.arg(3).asDoubleVector();
-            casts.arg(4).asLogicalVector().findFirst().map(toBoolean());
-            casts.arg(5).asLogicalVector().findFirst().map(toBoolean());
+            castDoubleVec(casts, 0);
+            castDoubleVec(casts, 1);
+            castDoubleVec(casts, 2);
+            castDoubleVec(casts, 3);
+            castBoolean(casts, 4, RRuntime.LOGICAL_TRUE);
+            castBoolean(casts, 5, RRuntime.LOGICAL_FALSE);
         }
 
         @Specialization
@@ -235,10 +247,10 @@ public final class StatsFunctionsNodes {
 
         static {
             Casts casts = new Casts(Function3_1Node.class);
-            casts.arg(0).asDoubleVector();
-            casts.arg(1).asDoubleVector();
-            casts.arg(2).asDoubleVector();
-            casts.arg(3).asLogicalVector().findFirst().map(toBoolean());
+            castDoubleVec(casts, 0);
+            castDoubleVec(casts, 1);
+            castDoubleVec(casts, 2);
+            castBoolean(casts, 3, RRuntime.LOGICAL_TRUE);
         }
 
         @Specialization
@@ -262,9 +274,9 @@ public final class StatsFunctionsNodes {
 
         static {
             Casts casts = new Casts(Function2_1Node.class);
-            casts.arg(0).asDoubleVector();
-            casts.arg(1).asDoubleVector();
-            casts.arg(2).asLogicalVector().findFirst().map(toBoolean());
+            castDoubleVec(casts, 0);
+            castDoubleVec(casts, 1);
+            castBoolean(casts, 2, RRuntime.LOGICAL_TRUE);
         }
 
         @Specialization
@@ -288,10 +300,10 @@ public final class StatsFunctionsNodes {
 
         static {
             Casts casts = new Casts(Function2_2Node.class);
-            casts.arg(0).asDoubleVector();
-            casts.arg(1).asDoubleVector();
-            casts.arg(2).asLogicalVector().findFirst().map(toBoolean());
-            casts.arg(3).asLogicalVector().findFirst().map(toBoolean());
+            castDoubleVec(casts, 0);
+            castDoubleVec(casts, 1);
+            castBoolean(casts, 2, RRuntime.LOGICAL_TRUE);
+            castBoolean(casts, 3, RRuntime.LOGICAL_FALSE);
         }
 
         @Specialization

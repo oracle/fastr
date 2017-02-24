@@ -110,9 +110,9 @@ public class WhichFunctions {
             this.isMax = isMax;
         }
 
-        protected static Casts createCasts(Class<? extends WhichMinMax> extCls) {
+        static Casts createCasts(Class<? extends WhichMinMax> extCls) {
             Casts casts = new Casts(extCls);
-            casts.arg(0, "x").asDoubleVector(true, false, false);
+            casts.arg(0, "x").mustNotBeMissing().asDoubleVector(true, false, false);
             return casts;
         }
 
