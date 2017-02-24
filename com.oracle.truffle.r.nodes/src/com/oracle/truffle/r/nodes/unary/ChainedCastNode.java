@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.r.nodes.unary.ConditionalMapNode.PipelineReturnException;
 
 @NodeInfo(cost = NodeCost.NONE)
 public final class ChainedCastNode extends CastNode {
@@ -33,22 +34,21 @@ public final class ChainedCastNode extends CastNode {
         CastNode create();
     }
 
-    private final CastNodeFactory firstCastFact;
-    private final CastNodeFactory secondCastFact;
-
     @Child private CastNode firstCast;
     @Child private CastNode secondCast;
 
-    public ChainedCastNode(CastNodeFactory firstCastFact, CastNodeFactory secondCastFact) {
-        this.firstCastFact = firstCastFact;
-        this.secondCastFact = secondCastFact;
-        this.firstCast = firstCastFact.create();
-        this.secondCast = secondCastFact.create();
+    public ChainedCastNode(CastNode firstCast, CastNode secondCast) {
+        this.firstCast = firstCast;
+        this.secondCast = secondCast;
     }
 
     @Override
     public Object execute(Object value) {
-        return secondCast.execute(firstCast.execute(value));
+        try {
+            return secondCast.execute(firstCast.execute(value));
+        } catch (PipelineReturnException ex) {
+            return ex.getResult();
+        }
     }
 
     public CastNode getFirstCast() {
@@ -57,13 +57,5 @@ public final class ChainedCastNode extends CastNode {
 
     public CastNode getSecondCast() {
         return secondCast;
-    }
-
-    public CastNodeFactory getFirstCastFact() {
-        return firstCastFact;
-    }
-
-    public CastNodeFactory getSecondCastFact() {
-        return secondCastFact;
     }
 }

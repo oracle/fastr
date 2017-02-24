@@ -65,11 +65,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.NotNAStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.PipelineStepVisitor;
 import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardingAnalysisResult;
-import com.oracle.truffle.r.nodes.unary.BypassNode;
-import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassDoubleNodeGen;
-import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassIntegerNodeGen;
-import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassLogicalMapToBooleanNodeGen;
-import com.oracle.truffle.r.nodes.unary.BypassNodeGen.BypassStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
@@ -117,18 +112,18 @@ public final class PipelineToCastNode {
         return convert(config, firstStep, PipelineConfig.getFilterFactory(), PipelineConfig.getMapperFactory(), fwdAnalysisResult);
     }
 
-    public static CastNode convert(PipelineConfig config, PipelineStep<?, ?> firstStep, ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory,
+    public static CastNode convert(PipelineConfig config, PipelineStep<?, ?> firstStepIn, ArgumentFilterFactory filterFactory, ArgumentMapperFactory mapperFactory,
                     Optional<ForwardingAnalysisResult> fwdAnalysisResult) {
-        if (firstStep == null) {
-            return BypassNode.create(config, null, mapperFactory, null);
+        if (firstStepIn == null) {
+            return null;
         }
 
-        Supplier<CastNode> originalPipelineFactory = () -> {
-            CastNodeFactory nodeFactory = new CastNodeFactory(filterFactory, mapperFactory, config.getDefaultDefaultMessage());
-            SinglePrimitiveOptimization singleOptVisitor = new SinglePrimitiveOptimization(nodeFactory);
-            CastNode headNode = convert(firstStep, singleOptVisitor);
-            return singleOptVisitor.createBypassNode(config, headNode, mapperFactory);
-        };
+        // if the pipeline is only single return, we change it to map to avoid needing to catch
+        // the PipelineReturnException, otherwise the exception is caught by ChainedCastNode
+        boolean singleMapStep = firstStepIn.getNext() == null && firstStepIn instanceof MapIfStep;
+        PipelineStep<?, ?> firstStep = singleMapStep ? ((MapIfStep) firstStepIn).withoutReturns() : firstStepIn;
+
+        Supplier<CastNode> originalPipelineFactory = () -> convert(firstStep, new CastNodeFactory(filterFactory, mapperFactory, config.getDefaultDefaultMessage()));
 
         if (!config.getValueForwarding()) {
             return originalPipelineFactory.get();
@@ -159,171 +154,13 @@ public final class PipelineToCastNode {
                     prevCastNode = node;
                 } else {
                     CastNode finalPrevCastNode = prevCastNode;
-                    prevCastNode = new ChainedCastNode(() -> finalPrevCastNode, () -> node);
+                    prevCastNode = new ChainedCastNode(finalPrevCastNode, node);
                 }
             }
 
             currCastStep = currCastStep.getNext();
         }
         return prevCastNode;
-    }
-
-    /**
-     * Visitor that is capable of recognizing patterns that permit to bypass single primitive value
-     * directly to any casts after find first step or directly to the built-in if there is nothing
-     * after find first step.
-     */
-    private static final class SinglePrimitiveOptimization implements PipelineStepVisitor<CastNode> {
-        // Any destructive step or step we cannot analyze changes this to false
-        private boolean canBeOptimized = true;
-        // Any coercion or check step initialize this or check the existing value, if it does not
-        // match -> canBeOptimized = false
-        private RType targetType = null;
-        // We remember this step so that we can construct another copy of its cast node
-        private FindFirstStep<?, ?> findFirstStep = null;
-        private final PipelineStepVisitor<CastNode> inner;
-
-        private SinglePrimitiveOptimization(PipelineStepVisitor<CastNode> inner) {
-            this.inner = inner;
-        }
-
-        /**
-         * Creates {@link BypassNode} if there is no optimization opportunity, or creates more
-         * specialized child class if the cast pipeline follows the required pattern.
-         */
-        public CastNode createBypassNode(PipelineConfig pipelineConfig, CastNode wrappedHead, ArgumentMapperFactory mapperFactory) {
-            if (canBeOptimized && findFirstStep != null) {
-                if (targetType == RType.Integer) {
-                    return BypassIntegerNodeGen.create(pipelineConfig, wrappedHead, mapperFactory, getFindFirstWithDefault(), getAfterFindFirstNode());
-                } else if (targetType == RType.Double) {
-                    return BypassDoubleNodeGen.create(pipelineConfig, wrappedHead, mapperFactory, getFindFirstWithDefault(), getAfterFindFirstNode());
-                } else if (targetType == RType.Logical && isNextMapToBoolean(findFirstStep)) {
-                    return BypassLogicalMapToBooleanNodeGen.create(pipelineConfig, wrappedHead, mapperFactory, getFindFirstWithDefault(), getAfterFindFirstNode());
-                } else if (targetType == RType.Character) {
-                    return BypassStringNodeGen.create(pipelineConfig, wrappedHead, mapperFactory, getFindFirstWithDefault(), getAfterFindFirstNode());
-                }
-            }
-            return BypassNode.create(pipelineConfig, wrappedHead, mapperFactory, getFindFirstWithDefault());
-        }
-
-        @Override
-        public CastNode visit(FindFirstStep<?, ?> step, CastNode previous) {
-            assert !canBeOptimized || targetType != null : "There must be a coercion step before find first";
-            findFirstStep = step;
-            return inner.visit(step, previous);
-        }
-
-        @Override
-        public CastNode visit(CoercionStep<?, ?> step, CastNode previous) {
-            canBeOptimized(step.type);
-            return inner.visit(step, previous);
-        }
-
-        @Override
-        public CastNode visit(MapStep<?, ?> step, CastNode previous) {
-            cannotBeOptimizedBeforeFindFirst();
-            return inner.visit(step, previous);
-        }
-
-        @Override
-        public CastNode visit(MapIfStep<?, ?> step, CastNode previous) {
-            cannotBeOptimizedBeforeFindFirst();
-            return inner.visit(step, previous);
-        }
-
-        @Override
-        public CastNode visit(FilterStep<?, ?> step, CastNode previous) {
-            targetType = checkFilter(step.getFilter());
-            if (targetType == null) {
-                canBeOptimized = false;
-            }
-            return inner.visit(step, previous);
-        }
-
-        @Override
-        public CastNode visit(NotNAStep<?> step, CastNode previous) {
-            // TODO: we can remember that we saw not NA and do this check in the BypassNode
-            canBeOptimized = false;
-            return inner.visit(step, previous);
-        }
-
-        @Override
-        public CastNode visit(DefaultErrorStep<?> step, CastNode previous) {
-            return inner.visit(step, previous);
-        }
-
-        @Override
-        public CastNode visit(DefaultWarningStep<?> step, CastNode previous) {
-            return inner.visit(step, previous);
-        }
-
-        @Override
-        public CastNode visit(BoxPrimitiveStep<?> step, CastNode previous) {
-            canBeOptimized = false;
-            return inner.visit(step, previous);
-        }
-
-        @Override
-        public CastNode visit(AttributableCoercionStep<?> step, CastNode previous) {
-            cannotBeOptimizedBeforeFindFirst();
-            return inner.visit(step, previous);
-        }
-
-        private void cannotBeOptimizedBeforeFindFirst() {
-            if (findFirstStep == null) {
-                canBeOptimized = false;
-            }
-        }
-
-        private void canBeOptimized(RType newType) {
-            if (targetType == null) {
-                targetType = newType;
-            } else if (targetType != newType) {
-                canBeOptimized = false;
-            }
-        }
-
-        /**
-         * Returns null if the filter does not conform to expected type or does not produce some
-         * concrete type if there is no expected type.
-         */
-        private RType checkFilter(Filter<?, ?> filter) {
-            if (filter instanceof RTypeFilter) {
-                RType type = ((RTypeFilter<?>) filter).getType();
-                if (targetType == null) {
-                    return type;
-                }
-                return type == targetType ? type : null;
-            } else if (filter instanceof OrFilter) {
-                OrFilter<?> or = (OrFilter<?>) filter;
-                RType leftType = checkFilter(or.getLeft());
-                if (targetType == null) {
-                    return leftType;
-                }
-                RType rightType = checkFilter(or.getRight());
-                return rightType == targetType || leftType == targetType ? targetType : null;
-            }
-            return null;
-        }
-
-        private CastNode getFindFirstWithDefault() {
-            if (findFirstStep != null && findFirstStep.getDefaultValue() != null) {
-                return convert(findFirstStep, inner);
-            }
-            return null;
-        }
-
-        private CastNode getAfterFindFirstNode() {
-            if (findFirstStep.getNext() != null) {
-                return convert(findFirstStep.getNext(), inner);
-            }
-            return null;
-        }
-
-        private static boolean isNextMapToBoolean(FindFirstStep<?, ?> findFirst) {
-            PipelineStep<?, ?> next = findFirst.getNext();
-            return next != null && next instanceof MapStep && ((MapStep<?, ?>) next).getMapper() instanceof MapByteToBoolean;
-        }
     }
 
     private static final class CastNodeFactory implements PipelineStepVisitor<CastNode> {

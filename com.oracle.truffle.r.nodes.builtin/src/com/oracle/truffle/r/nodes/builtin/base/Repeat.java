@@ -75,8 +75,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 @RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "times", "length.out", "each"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Repeat extends RBuiltinNode {
 
-    protected abstract Object execute(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each);
-
     private final ConditionProfile lengthOutOrTimes = ConditionProfile.createBinaryProfile();
     private final BranchProfile errorBranch = BranchProfile.create();
     private final ConditionProfile oneTimeGiven = ConditionProfile.createBinaryProfile();
@@ -92,7 +90,7 @@ public abstract class Repeat extends RBuiltinNode {
         Casts casts = new Casts(Repeat.class);
         casts.arg("x").mustBe(abstractVectorValue(), RError.Message.ATTEMPT_TO_REPLICATE, typeName());
         casts.arg("times").defaultError(RError.Message.INVALID_ARGUMENT, "times").mustNotBeNull().asIntegerVector();
-        casts.arg("length.out").mustNotBeNull().asIntegerVector().shouldBe(size(1).or(size(0)), RError.Message.FIRST_ELEMENT_USED, "length.out").findFirst(RRuntime.INT_NA,
+        casts.arg("length.out").asIntegerVector().shouldBe(size(1).or(size(0)), RError.Message.FIRST_ELEMENT_USED, "length.out").findFirst(RRuntime.INT_NA,
                         RError.Message.FIRST_ELEMENT_USED, "length.out").mustBe(intNA().or(gte(0)));
         casts.arg("each").asIntegerVector().shouldBe(size(1).or(size(0)), RError.Message.FIRST_ELEMENT_USED, "each").findFirst(1, RError.Message.FIRST_ELEMENT_USED, "each").notNA(
                         1).mustBe(gte(0));
@@ -224,7 +222,7 @@ public abstract class Repeat extends RBuiltinNode {
             // times is a vector with several elements
             if (x.getLength() != times.getLength()) {
                 errorBranch.enter();
-                invalidTimes();
+                throw invalidTimes();
             }
             // iterate once over the times vector to determine result vector size
             int resultLength = 0;

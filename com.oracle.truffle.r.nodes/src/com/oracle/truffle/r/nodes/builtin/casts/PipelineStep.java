@@ -324,6 +324,13 @@ public abstract class PipelineStep<T, R> {
         public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
             return visitor.visit(this, previous);
         }
+
+        public MapIfStep<T, R> withoutReturns() {
+            if (!returns) {
+                return this;
+            }
+            return new MapIfStep<T, R>(filter, trueBranch, falseBranch, false);
+        }
     }
 
     /**
