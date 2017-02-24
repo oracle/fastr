@@ -311,6 +311,8 @@ public class TestBuiltin_deparse extends TestBase {
         assertEval("{ x<-c(a=42, b=7); deparse(x) }");
 
         assertEval("deparse(quote(1/0))");
+
+        assertEval("e <- quote(a <- 1); e[[3]] <- as.raw(c(1,6,9,254)); e");
     }
 
     @Test

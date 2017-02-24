@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -791,15 +792,25 @@ public class RDeparse {
                     return;
                 } else {
                     // TODO COMPAT?
-                    append("c(");
-                    for (int i = 0; i < len; i++) {
-                        Object element = vec.getDataAtAsObject(i);
-                        vecElement2buff(type, element, false);
-                        if (i < len - 1) {
-                            append(", ");
+                    if (type == SEXPTYPE.RAWSXP) {
+                        append("as.raw(c(");
+                        for (int i = 0; i < len; i++) {
+                            if (i > 0) {
+                                append(", ");
+                            }
+                            vecElement2buff(type, vec.getDataAtAsObject(i), false);
                         }
+                        append("))");
+                    } else {
+                        append("c(");
+                        for (int i = 0; i < len; i++) {
+                            if (i > 0) {
+                                append(", ");
+                            }
+                            vecElement2buff(type, vec.getDataAtAsObject(i), false);
+                        }
+                        append(')');
                     }
-                    append(')');
                 }
             }
         }
@@ -857,6 +868,10 @@ public class RDeparse {
                     } else {
                         append(RContext.getRRuntimeASTAccess().encodeComplex(c));
                     }
+                    break;
+                case RAWSXP:
+                    RRaw r = (RRaw) element;
+                    append(String.format("0x%02x", r.getValue()));
                     break;
                 default:
                     throw RInternalError.shouldNotReachHere("unexpected SEXPTYPE: " + type);
