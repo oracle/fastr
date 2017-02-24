@@ -151,7 +151,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     static {
         Casts casts = new Casts(Order.class);
         casts.arg("na.last").mustBe(numericValue(), INVALID_LOGICAL, "na.last").asLogicalVector().findFirst();
-        casts.arg("decreasing").mustBe(numericValue(), INVALID_LOGICAL, "decreasing").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("decreasing").defaultError(INVALID_LOGICAL, "decreasing").mustBe(numericValue()).asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
     }
 
     private int cmp(Object v, int i, int j, boolean naLast) {

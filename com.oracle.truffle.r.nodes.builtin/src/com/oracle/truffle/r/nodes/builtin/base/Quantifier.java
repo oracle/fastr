@@ -35,6 +35,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -80,7 +81,7 @@ public abstract class Quantifier extends RBuiltinNode {
 
     protected static Casts createCasts(Class<? extends Quantifier> extCls) {
         Casts casts = new Casts(extCls);
-        casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+        casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         return casts;
     }
 
@@ -122,8 +123,9 @@ public abstract class Quantifier extends RBuiltinNode {
     }
 
     @Specialization(replaces = "opCachedLength")
-    protected byte op(RArgsValuesAndNames args, boolean naRm) {
-        boolean profiledNaRm = naRm;
+    protected byte op(RArgsValuesAndNames args, boolean naRm,
+                    @Cached("createBinaryProfile()") ConditionProfile naRmProfile) {
+        boolean profiledNaRm = naRmProfile.profile(naRm);
 
         byte result = RRuntime.asLogical(emptyVectorResult());
         for (Object argValue : args.getArguments()) {

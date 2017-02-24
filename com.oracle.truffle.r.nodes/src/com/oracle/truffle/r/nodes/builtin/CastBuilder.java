@@ -703,7 +703,11 @@ public final class CastBuilder {
         }
 
         public static MapByteToBoolean toBoolean() {
-            return MapByteToBoolean.INSTANCE;
+            return new MapByteToBoolean(true);
+        }
+
+        public static MapByteToBoolean toBoolean(boolean naReplacement) {
+            return new MapByteToBoolean(naReplacement);
         }
 
         public static MapDoubleToInt doubleToInt() {

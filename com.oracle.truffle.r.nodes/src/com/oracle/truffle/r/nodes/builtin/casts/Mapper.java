@@ -59,11 +59,10 @@ public abstract class Mapper<T, R> {
     }
 
     public static final class MapByteToBoolean extends Mapper<Byte, Boolean> {
+        public final boolean naReplacement;
 
-        public static final MapByteToBoolean INSTANCE = new MapByteToBoolean();
-
-        private MapByteToBoolean() {
-
+        public MapByteToBoolean(boolean naReplacement) {
+            this.naReplacement = naReplacement;
         }
 
         @Override

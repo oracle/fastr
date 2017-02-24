@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -74,7 +74,9 @@ public class TestBuiltin_nchar extends TestBase {
 
     @Test
     public void testnchar13() {
-        assertEval("argv <- list(structure(c('rpart', 'recommended', '4.1-1', '2013-03-20', 'c(person(\\\'Terry\\\', \\\'Therneau\\\', role = \\\'aut\\\',\\n\\t             email = \\\'therneau@mayo.edu\\\'),\\n             person(\\\'Beth\\\', \\\'Atkinson\\\', role = \\\'aut\\\',\\t\\n\\t             email = \\\'atkinson@mayo.edu\\\'),\\n             person(\\\'Brian\\\', \\\'Ripley\\\', role = c(\\\'aut\\\', \\\'trl\\\', \\\'cre\\\'),\\n                    email = \\\'ripley@stats.ox.ac.uk\\\',\\n\\t\\t   comment = \\\'author of R port\\\'))', 'Recursive partitioning and regression trees', 'Recursive Partitioning', 'R (>= 2.14.0), graphics, stats, grDevices', 'survival', 'GPL-2 | GPL-3', 'yes', 'yes', 'Maintainers are not available to give advice on using a package\\nthey did not author.', '2013-03-20 07:27:05 UTC; ripley', 'Terry Therneau [aut],\\n  Beth Atkinson [aut],\\n  Brian Ripley [aut, trl, cre] (author of R port)', 'Brian Ripley <ripley@stats.ox.ac.uk>'), .Names = c('Package', 'Priority', 'Version', 'Date', 'Authors@R', 'Description', 'Title', 'Depends', 'Suggests', 'License', 'LazyData', 'ByteCompile', 'Note', 'Packaged', 'Author', 'Maintainer')), 'c', TRUE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        // allowNA == TRUE is not implemented
+        assertEval(Ignored.Unimplemented,
+                        "argv <- list(structure(c('rpart', 'recommended', '4.1-1', '2013-03-20', 'c(person(\\\'Terry\\\', \\\'Therneau\\\', role = \\\'aut\\\',\\n\\t             email = \\\'therneau@mayo.edu\\\'),\\n             person(\\\'Beth\\\', \\\'Atkinson\\\', role = \\\'aut\\\',\\t\\n\\t             email = \\\'atkinson@mayo.edu\\\'),\\n             person(\\\'Brian\\\', \\\'Ripley\\\', role = c(\\\'aut\\\', \\\'trl\\\', \\\'cre\\\'),\\n                    email = \\\'ripley@stats.ox.ac.uk\\\',\\n\\t\\t   comment = \\\'author of R port\\\'))', 'Recursive partitioning and regression trees', 'Recursive Partitioning', 'R (>= 2.14.0), graphics, stats, grDevices', 'survival', 'GPL-2 | GPL-3', 'yes', 'yes', 'Maintainers are not available to give advice on using a package\\nthey did not author.', '2013-03-20 07:27:05 UTC; ripley', 'Terry Therneau [aut],\\n  Beth Atkinson [aut],\\n  Brian Ripley [aut, trl, cre] (author of R port)', 'Brian Ripley <ripley@stats.ox.ac.uk>'), .Names = c('Package', 'Priority', 'Version', 'Date', 'Authors@R', 'Description', 'Title', 'Depends', 'Suggests', 'License', 'LazyData', 'ByteCompile', 'Note', 'Packaged', 'Author', 'Maintainer')), 'c', TRUE, FALSE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
@@ -84,7 +86,19 @@ public class TestBuiltin_nchar extends TestBase {
         assertEval("{ nchar(c(10,130)) }");
         assertEval("{ .Internal(nchar(c(10,130), 'chars', FALSE, FALSE)) }");
         assertEval("{ .Internal(nchar('ff', 'chars', FALSE, FALSE)) }");
-
         assertEval("v <- c(a=1,b=1234,c='ff',d='gg'); dim(v) <- c(foo=2,bar=2); dimnames(v) <- list(a=c('foo', 'bar'), n=c('f','g')); nchar(v)");
+    }
+
+    @Test
+    public void testNCharKeepNA() {
+        assertEval("nchar(c('aasd', NA), keepNA=NA)");
+        assertEval("nchar(c('aasd', NA, 'asdasd'), keepNA=TRUE)");
+    }
+
+    @Test
+    public void testNCharTypeMatching() {
+        assertEval("nchar('aasd', type='cha')");
+        assertEval("nchar('aasd', type='charsxzy')");
+        assertEval("nchar('aasd', type='')");
     }
 }

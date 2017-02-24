@@ -178,6 +178,7 @@ public class TestBuiltin_sum extends TestBase {
         assertEval("{ sum(1+1i,2,NA, na.rm=TRUE) }");
 
         assertEval("sum(v <- 42)");
+        assertEval("sum(c(1,2,NA,3), na.rm=NA)");
     }
 
     @Test

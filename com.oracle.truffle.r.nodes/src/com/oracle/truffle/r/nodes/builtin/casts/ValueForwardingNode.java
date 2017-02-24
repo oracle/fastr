@@ -65,7 +65,7 @@ public abstract class ValueForwardingNode extends CastNode {
 
     @Specialization(guards = "forwardingResult.isLogicalMappedToBoolean()")
     protected boolean mapLogicalToBoolean(byte x) {
-        return RRuntime.fromLogical(x);
+        return RRuntime.fromLogical(x, forwardingResult.getMapByteToBooleanNAMapping());
     }
 
     @Specialization(guards = "forwardingResult.isDoubleForwarded()")

@@ -82,7 +82,12 @@ public final class ForwardingAnalysisResult {
     }
 
     public boolean isLogicalMappedToBoolean() {
-        return !invalid && logicalForwarded.mapper == MapByteToBoolean.INSTANCE;
+        return !invalid && logicalForwarded.mapper instanceof MapByteToBoolean;
+    }
+
+    public boolean getMapByteToBooleanNAMapping() {
+        assert logicalForwarded.mapper instanceof MapByteToBoolean : "check isLogicalMappedToBoolean() before calling this method";
+        return ((MapByteToBoolean) logicalForwarded.mapper).naReplacement;
     }
 
     public boolean isDoubleForwarded() {
