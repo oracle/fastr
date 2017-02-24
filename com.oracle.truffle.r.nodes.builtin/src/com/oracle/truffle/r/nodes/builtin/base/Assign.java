@@ -66,7 +66,7 @@ public abstract class Assign extends RBuiltinNode {
     }
 
     @Override
-    protected RBaseNode getErrorContext() {
+    public RBaseNode getErrorContext() {
         return direct ? this : super.getErrorContext();
     }
 

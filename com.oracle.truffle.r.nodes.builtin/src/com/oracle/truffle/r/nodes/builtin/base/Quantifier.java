@@ -63,7 +63,7 @@ public abstract class Quantifier extends RBuiltinNode {
         @Child private CastNode next;
 
         ProfileCastNode() {
-            this.next = newCastBuilder(null).allowNull().shouldBe(integerValue().or(logicalValue()).or(instanceOf(RAbstractVector.class).and(size(0))),
+            this.next = newCastBuilder().allowNull().shouldBe(integerValue().or(logicalValue()).or(instanceOf(RAbstractVector.class).and(size(0))),
                             RError.Message.COERCING_ARGUMENT, typeName(), "logical").asLogicalVector().buildCastNode();
         }
 

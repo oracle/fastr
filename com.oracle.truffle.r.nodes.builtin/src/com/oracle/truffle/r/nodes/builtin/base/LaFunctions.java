@@ -444,7 +444,6 @@ public class LaFunctions {
     @RBuiltin(name = "La_chol", kind = INTERNAL, parameterNames = {"a", "pivot", "tol"}, behavior = PURE)
     public abstract static class LaChol extends RBuiltinNode {
 
-        private final BranchProfile errorProfile = BranchProfile.create();
         private final ConditionProfile noPivot = ConditionProfile.createBinaryProfile();
 
         @Child private SetFixedAttributeNode setPivotAttrNode = SetFixedAttributeNode.create("pivot");
@@ -482,7 +481,6 @@ public class LaFunctions {
             if (noPivot.profile(!piv)) {
                 info = dpotrfNode.execute('U', m, aData, m);
                 if (info != 0) {
-                    errorProfile.enter();
                     // TODO informative error message (aka GnuR)
                     throw error(RError.Message.LAPACK_ERROR, info, "dpotrf");
                 }
@@ -492,7 +490,6 @@ public class LaFunctions {
                 int[] rank = new int[1];
                 info = dpstrfNode.execute('U', n, aData, n, ipiv, rank, tol, work);
                 if (info != 0) {
-                    errorProfile.enter();
                     // TODO informative error message (aka GnuR)
                     throw error(RError.Message.LAPACK_ERROR, info, "dpotrf");
                 }

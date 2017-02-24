@@ -88,7 +88,7 @@ public class TestBuiltin_pmin extends TestBase {
 
         assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", \"1\")) }");
         assertEval("{ pmin(c(\"1\", \"7\"), character()) }");
-        assertEval(Output.IgnoreWarningContext, "{ pmin(c(\"1\", \"7\", \"8\"), c(\"1\"), c(\"42\", \"1\")) }");
+        assertEval("{ pmin(c(\"1\", \"7\", \"8\"), c(\"1\"), c(\"42\", \"1\")) }");
         assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", as.character(NA))) }");
         assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", as.character(NA)), na.rm=TRUE) }");
         assertEval("{ pmin(c(\"1\", as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");

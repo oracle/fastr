@@ -61,7 +61,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -89,12 +88,10 @@ public final class CastBuilder {
     private static final PipelineBuilder[] EMPTY_BUILDERS = new PipelineBuilder[0];
 
     private final RBuiltin builtin;
-    private final ErrorContext callObj;
     private final String[] argumentNames;
     private PipelineBuilder[] argumentBuilders;
 
-    public CastBuilder(RBuiltin builtin, ErrorContext callObj) {
-        this.callObj = callObj;
+    public CastBuilder(RBuiltin builtin) {
         // Note: if we have the builtin metadata, we pre-allocate the arrays, builtinNode != null is
         // used to determine, if the arrays are pre-allocated or if they can grow
         if (builtin == null) {
@@ -108,16 +105,14 @@ public final class CastBuilder {
         }
     }
 
-    public CastBuilder(int argumentsCount, ErrorContext callObj) {
-        this.callObj = callObj;
+    public CastBuilder(int argumentsCount) {
         assert argumentsCount >= 0 : "argumentsCount must be non-negative";
         builtin = null;
         argumentNames = null;
         argumentBuilders = new PipelineBuilder[argumentsCount];
     }
 
-    public CastBuilder(ErrorContext callObj) {
-        this.callObj = callObj;
+    public CastBuilder() {
         builtin = null;
         argumentNames = null;
         argumentBuilders = EMPTY_BUILDERS;
@@ -257,7 +252,7 @@ public final class CastBuilder {
             argumentBuilders = Arrays.copyOf(argumentBuilders, argumentIndex + 1);
         }
         if (argumentBuilders[argumentIndex] == null) {
-            argumentBuilders[argumentIndex] = new PipelineBuilder(argumentName, callObj);
+            argumentBuilders[argumentIndex] = new PipelineBuilder(argumentName);
         }
         return argumentBuilders[argumentIndex];
     }

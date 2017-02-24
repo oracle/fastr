@@ -87,7 +87,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -96,7 +95,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
@@ -118,7 +116,7 @@ public final class PipelineToCastNode {
         boolean singleMapStep = firstStepIn.getNext() == null && firstStepIn instanceof MapIfStep;
         PipelineStep<?, ?> firstStep = singleMapStep ? ((MapIfStep<?, ?>) firstStepIn).withoutReturns() : firstStepIn;
 
-        Supplier<CastNode> originalPipelineFactory = () -> convert(firstStep, new CastNodeFactory(config.getDefaultError(), config.getDefaultWarning(), config.getDefaultDefaultMessage(), config.getCallObj()));
+        Supplier<CastNode> originalPipelineFactory = () -> convert(firstStep, new CastNodeFactory(config.getDefaultError(), config.getDefaultWarning(), config.getDefaultDefaultMessage()));
 
         if (!config.getValueForwarding()) {
             return originalPipelineFactory.get();
@@ -163,21 +161,11 @@ public final class PipelineToCastNode {
 
         private final MessageData defaultError;
         private final MessageData defaultWarning;
-        private final RBaseNode callObj;
 
-        CastNodeFactory(MessageData defaultError, MessageData defaultWarning, MessageData defaultMessage, ErrorContext callObj) {
+        CastNodeFactory(MessageData defaultError, MessageData defaultWarning, MessageData defaultMessage) {
             assert defaultMessage != null : "defaultMessage is null";
             this.defaultError = MessageData.getFirstNonNull(defaultError, defaultMessage);
             this.defaultWarning = MessageData.getFirstNonNull(defaultWarning, defaultMessage);
-            this.callObj = callObj;
-        }
-
-        private MessageData process(MessageData data) {
-            if (data == null || callObj == null) {
-                return data;
-            } else {
-                return new MessageData(callObj, data.getMessage(), data.getMessageArgs());
-            }
         }
 
         @Override
@@ -196,13 +184,13 @@ public final class PipelineToCastNode {
                     // Note: intentional direct use of defaultError
                     msg = defaultError != null ? defaultError : new MessageData(RError.Message.LENGTH_ZERO);
                 }
-                return FindFirstNodeGen.create(step.getElementClass(), process(msg), step.getDefaultValue());
+                return FindFirstNodeGen.create(step.getElementClass(), msg, step.getDefaultValue());
             } else {
                 MessageData warning = step.getError();
                 if (warning == null) {
                     return FindFirstNodeGen.create(step.getElementClass(), step.getDefaultValue());
                 } else {
-                    return FindFirstNodeGen.create(step.getElementClass(), process(warning), step.getDefaultValue());
+                    return FindFirstNodeGen.create(step.getElementClass(), warning, step.getDefaultValue());
                 }
             }
         }
@@ -212,7 +200,7 @@ public final class PipelineToCastNode {
             @SuppressWarnings("unchecked")
             ArgumentFilter<Object, Object> filter = (ArgumentFilter<Object, Object>) ArgumentFilterFactoryImpl.INSTANCE.createFilter(step.getFilter());
             MessageData msg = getDefaultIfNull(step.getMessage(), step.isWarning());
-            return FilterNode.create(filter, step.isWarning(), process(msg), boxPrimitives, step.getFilter().resultForNull() == ResultForArg.TRUE,
+            return FilterNode.create(filter, step.isWarning(), msg, boxPrimitives, step.getFilter().resultForNull() == ResultForArg.TRUE,
                             step.getFilter().resultForMissing() == ResultForArg.TRUE);
         }
 
@@ -220,13 +208,13 @@ public final class PipelineToCastNode {
         public CastNode visit(NotNAStep<?> step, CastNode previous) {
             if (step.getReplacement() == null) {
                 MessageData msg = getDefaultIfNull(step.getMessage(), false);
-                return NonNANodeGen.create(process(msg), step.getReplacement());
+                return NonNANodeGen.create(msg, step.getReplacement());
             } else {
                 MessageData msg = step.getMessage();
                 if (msg == null) {
                     return NonNANodeGen.create(null, step.getReplacement());
                 } else {
-                    return NonNANodeGen.create(process(msg), step.getReplacement());
+                    return NonNANodeGen.create(msg, step.getReplacement());
                 }
             }
         }
@@ -238,19 +226,19 @@ public final class PipelineToCastNode {
             RType type = step.getType();
             switch (type) {
                 case Integer:
-                    return step.vectorCoercion ? CastIntegerNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, callObj)
-                                    : CastIntegerBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, callObj);
+                    return step.vectorCoercion ? CastIntegerNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
+                                    : CastIntegerBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
                 case Double:
-                    return step.vectorCoercion ? CastDoubleNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, callObj)
-                                    : CastDoubleBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, callObj);
+                    return step.vectorCoercion ? CastDoubleNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
+                                    : CastDoubleBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
                 case Character:
                     return step.vectorCoercion ? CastStringNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
                                     : CastStringBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
                 case Logical:
-                    return step.vectorCoercion ? CastLogicalNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, callObj)
-                                    : CastLogicalBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, callObj);
+                    return step.vectorCoercion ? CastLogicalNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
+                                    : CastLogicalBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
                 case Complex:
-                    return CastComplexNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, callObj);
+                    return CastComplexNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
                 case Raw:
                     return CastRawNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
                 case Any:

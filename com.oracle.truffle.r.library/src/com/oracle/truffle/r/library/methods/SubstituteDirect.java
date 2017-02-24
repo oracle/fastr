@@ -38,12 +38,18 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
 
     static {
-        Casts casts = new Casts(SubstituteDirect.class, RError.SHOW_CALLER);
+        Casts casts = new Casts(SubstituteDirect.class);
         casts.arg(1).defaultError(INVALID_LIST_FOR_SUBSTITUTION).mustBe(instanceOf(RAbstractListVector.class).or(instanceOf(REnvironment.class)));
+    }
+
+    @Override
+    protected RBaseNode getErrorContext() {
+        return RError.SHOW_CALLER;
     }
 
     @Specialization

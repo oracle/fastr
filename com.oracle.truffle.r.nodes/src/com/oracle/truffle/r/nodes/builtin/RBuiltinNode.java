@@ -104,7 +104,7 @@ public abstract class RBuiltinNode extends RBuiltinBaseNode implements NodeWithA
     }
 
     @Override
-    protected RBaseNode getErrorContext() {
+    public RBaseNode getErrorContext() {
         ErrorContext context = RError.contextForBuiltin(getRBuiltin());
         return context == null ? this : context;
     }

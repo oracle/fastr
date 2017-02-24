@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -42,23 +43,20 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     private final NAProfile naProfile = NAProfile.create();
 
-    protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        this(preserveNames, preserveDimensions, preserveAttributes, false);
-    }
+    private final BranchProfile warningBranch = BranchProfile.create();
 
     protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
         super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
     }
 
-    protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallObj) {
-        super(preserveNames, preserveDimensions, preserveAttributes, messageCallObj);
+    protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
     }
 
     public abstract Object executeInt(int o);
@@ -126,8 +124,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
             }
         }
         if (warning) {
-            warningBranch.enter();
-            RError.warning(messageCallObj, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return vectorCopy(operand, idata, naCheck.neverSeenNA());
     }
@@ -158,7 +155,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
             idata[i] = intValue;
         }
         if (warning) {
-            RError.warning(messageCallObj, RError.Message.NA_INTRODUCED_COERCION);
+            warning(RError.Message.NA_INTRODUCED_COERCION);
         }
         return vectorCopy(operand, idata, !seenNA);
     }
@@ -230,7 +227,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     public static CastIntegerNode create() {
-        return CastIntegerNodeGen.create(true, true, true, null);
+        return CastIntegerNodeGen.create(true, true, true);
     }
 
     public static CastIntegerNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
@@ -238,10 +235,6 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     public static CastIntegerNode createNonPreserving() {
-        return CastIntegerNodeGen.create(false, false, false, null);
-    }
-
-    public static CastIntegerNode createPreserveNames() {
-        return CastIntegerNodeGen.create(false, false, false, null);
+        return CastIntegerNodeGen.create(false, false, false);
     }
 }

@@ -33,7 +33,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.IterableAttributeNode;
@@ -60,7 +59,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class Attr extends RBuiltinNode {
 
     private final ConditionProfile searchPartialProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile errorProfile = BranchProfile.create();
 
     @Child private UpdateShareableChildValueNode sharedAttrUpdate = UpdateShareableChildValueNode.create();
     @Child private InternStringNode intern = InternStringNodeGen.create();
@@ -141,7 +139,6 @@ public abstract class Attr extends RBuiltinNode {
         if (object instanceof RAttributable) {
             return attrRA((RAttributable) object, intern.execute((String) name), (boolean) exact);
         } else {
-            errorProfile.enter();
             throw RError.nyi(this, "object cannot be attributed");
         }
     }

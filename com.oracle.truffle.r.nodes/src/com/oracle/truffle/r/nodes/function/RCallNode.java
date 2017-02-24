@@ -762,6 +762,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             wrapSeen = new boolean[formals.getLength()];
         }
 
+        @Override
+        protected RBaseNode getErrorContext() {
+            return builtin.getErrorContext();
+        }
+
         @ExplodeLoop
         public Object[] castArguments(VirtualFrame frame, Object[] args) {
             int argCount = formals.getLength();

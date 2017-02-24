@@ -20,7 +20,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -226,13 +225,11 @@ public class FortranAndCFunctions {
 
         @Specialization
         protected RList c(RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
-                        @Cached("create()") BranchProfile errorProfile) {
-            String libName = checkPackageArg(rPackage, errorProfile);
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
+            String libName = checkPackageArg(rPackage);
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Fortran, null, null);
             DLL.SymbolHandle func = findSymbolNode.execute(symbol.getDataAt(0), libName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
-                errorProfile.enter();
                 throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, symbol);
             }
             return dispatch(this, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
@@ -258,30 +255,25 @@ public class FortranAndCFunctions {
             throw RInternalError.shouldNotReachHere();
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding) {
+        protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage, @SuppressWarnings("unused") RMissing encoding) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
             return dispatch(this, nativeCallInfo, naok, dup, args);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected RList c(RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
-                        @Cached("create()") BranchProfile errorProfile) {
+        protected RList c(RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             String libName = null;
             if (!(rPackage instanceof RMissing)) {
                 libName = RRuntime.asString(rPackage);
                 if (libName == null) {
-                    errorProfile.enter();
                     throw error(RError.Message.ARGUMENT_MUST_BE_STRING, "PACKAGE");
                 }
             }
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.C, null, null);
             DLL.SymbolHandle func = findSymbolNode.execute(symbol.getDataAt(0), libName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
-                errorProfile.enter();
                 throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, symbol);
             }
             return dispatch(this, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);

@@ -126,8 +126,8 @@ public class TestBuiltin_duplicated extends TestBase {
         assertEval("{ duplicated(c(1+1i, 4-6i, 4-6i, 6+7i)) }");
         assertEval("{ duplicated(c(1, 4+6i, 7+7i, 1), incomparables = c(1, 2)) }");
 
-        assertEval(Output.IgnoreWarningContext, "{ duplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }");
-        assertEval(Output.IgnoreWarningContext, "{ duplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
+        assertEval("{ duplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }");
+        assertEval("{ duplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
 
         assertEval("{ duplicated(NULL, 0); }");
 

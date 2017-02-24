@@ -83,7 +83,7 @@ public class SampleCollectorTest {
 
     @Before
     public void setUp() {
-        cb = new CastBuilder(DummyBuiltin.class.getAnnotation(RBuiltin.class), RError.NO_CALLER);
+        cb = new CastBuilder(DummyBuiltin.class.getAnnotation(RBuiltin.class));
         arg = cb.arg("x");
     }
 

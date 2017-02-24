@@ -74,7 +74,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     }
 
     @Override
-    protected RBaseNode getErrorContext() {
+    public RBaseNode getErrorContext() {
         return this;
     }
 

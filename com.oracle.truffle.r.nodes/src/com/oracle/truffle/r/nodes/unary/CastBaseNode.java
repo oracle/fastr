@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class CastBaseNode extends CastNode {
 
@@ -62,8 +61,6 @@ public abstract class CastBaseNode extends CastNode {
     private final boolean preserveDimensions;
     private final boolean preserveAttributes;
 
-    protected final RBaseNode messageCallObj;
-
     /**
      * GnuR provides several, sometimes incompatible, ways to coerce given value to given type. This
      * flag tells the cast node that it should behave in a way compatible with functions exposed by
@@ -71,19 +68,11 @@ public abstract class CastBaseNode extends CastNode {
      */
     private final boolean forRFFI;
 
-    protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallObj) {
-        this(preserveNames, preserveDimensions, preserveAttributes, false, messageCallObj);
-    }
-
     protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        this(preserveNames, preserveDimensions, preserveAttributes, false, null);
+        this(preserveNames, preserveDimensions, preserveAttributes, false);
     }
 
     protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
-        this(preserveNames, preserveDimensions, preserveAttributes, forRFFI, null);
-    }
-
-    protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, RBaseNode messageCallObj) {
         this.preserveNames = preserveNames;
         this.preserveDimensions = preserveDimensions;
         this.preserveAttributes = preserveAttributes;
@@ -91,7 +80,6 @@ public abstract class CastBaseNode extends CastNode {
         if (preserveDimensions) {
             getDimNamesNode = GetDimNamesAttributeNode.create();
         }
-        this.messageCallObj = messageCallObj == null ? this : messageCallObj;
     }
 
     public final boolean preserveNames() {
@@ -110,7 +98,7 @@ public abstract class CastBaseNode extends CastNode {
 
     protected RError throwCannotCoerceListError(String type) {
         listCoercionErrorBranch.enter();
-        throw RError.error(messageCallObj, RError.Message.LIST_COERCION, type);
+        throw error(RError.Message.LIST_COERCION, type);
     }
 
     protected int[] getPreservedDimensions(RAbstractContainer operand) {
@@ -155,11 +143,11 @@ public abstract class CastBaseNode extends CastNode {
 
     protected Object doOtherDefault(Object mappedValue) {
         if (mappedValue instanceof REnvironment) {
-            throw RError.error(RError.SHOW_CALLER, RError.Message.ENVIRONMENTS_COERCE);
+            throw error(RError.Message.ENVIRONMENTS_COERCE);
         } else if (mappedValue instanceof RTypedValue) {
-            throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE, ((RTypedValue) mappedValue).getRType().getName(), getTargetType().getName());
+            throw error(RError.Message.CANNOT_COERCE, ((RTypedValue) mappedValue).getRType().getName(), getTargetType().getName());
         } else if (mappedValue instanceof TruffleObject) {
-            throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE, "truffleobject", getTargetType().getName());
+            throw error(RError.Message.CANNOT_COERCE, "truffleobject", getTargetType().getName());
         } else {
             throw RInternalError.shouldNotReachHere("unexpected value of type " + (mappedValue == null ? "null" : mappedValue.getClass()));
         }
@@ -167,9 +155,9 @@ public abstract class CastBaseNode extends CastNode {
 
     protected Object doOtherRFFI(Object mappedValue) {
         if (mappedValue instanceof RTypedValue) {
-            RError.warning(RError.SHOW_CALLER2, Message.CANNOT_COERCE_RFFI, ((RTypedValue) mappedValue).getRType().getName(), getTargetType().getName());
+            warning(Message.CANNOT_COERCE_RFFI, ((RTypedValue) mappedValue).getRType().getName(), getTargetType().getName());
         } else if (mappedValue instanceof TruffleObject) {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.CANNOT_COERCE, "truffleobject", getTargetType().getName());
+            throw error(RError.Message.CANNOT_COERCE, "truffleobject", getTargetType().getName());
         }
         return RNull.instance;
     }

@@ -27,6 +27,7 @@ import java.util.function.IntToDoubleFunction;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -43,20 +44,15 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class CastDoubleNode extends CastDoubleBaseNode {
-
-    protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        this(preserveNames, preserveDimensions, preserveAttributes, false);
-    }
 
     protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
         super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
     }
 
-    protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
-        super(preserveNames, preserveDimensions, preserveAttributes, messageCallerObj);
+    protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        super(preserveNames, preserveDimensions, preserveAttributes);
     }
 
     @Child private CastDoubleNode recursiveCastDouble;
@@ -102,7 +98,8 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
     @Specialization
     protected RDoubleVector doStringVector(RStringVector operand,
-                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
+                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile,
+                    @Cached("create()") BranchProfile warningBranch) {
         naCheck.enable(operand);
         double[] ddata = new double[operand.getLength()];
         boolean seenNA = false;
@@ -126,7 +123,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
             ddata[i] = doubleValue;
         }
         if (warning) {
-            RError.warning(messageCallObj, RError.Message.NA_INTRODUCED_COERCION);
+            warning(RError.Message.NA_INTRODUCED_COERCION);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
@@ -149,8 +146,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
             }
         }
         if (warning) {
-            warningBranch.enter();
-            RError.warning(messageCallObj, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return vectorCopy(operand, ddata, naCheck.neverSeenNA());
     }

@@ -239,7 +239,7 @@ public abstract class PMinMax extends RBuiltinNode {
             naCheckX.enable(x);
             naCheckY.enable(y);
             if ((xLength > 1 && xLength < maxLength) || (yLength > 1 && yLength < maxLength)) {
-                RError.warning(RError.SHOW_CALLER2, RError.Message.ARG_RECYCYLED);
+                warning(RError.Message.ARG_RECYCYLED);
             }
             boolean profiledNaRm = naRmProfile.profile(naRm);
             double[] data = new double[maxLength];
@@ -422,7 +422,7 @@ public abstract class PMinMax extends RBuiltinNode {
             byte warningAdded = warning;
             RAbstractStringVector vec = (RAbstractStringVector) argValues[offset];
             if (vec.getLength() > 1 && vec.getLength() < maxLength && warningAdded == RRuntime.LOGICAL_FALSE) {
-                RError.warning(RError.SHOW_CALLER2, RError.Message.ARG_RECYCYLED);
+                warning(RError.Message.ARG_RECYCYLED);
                 warningAdded = RRuntime.LOGICAL_TRUE;
             }
             String result = vec.getDataAt(ind % vec.getLength());
@@ -449,7 +449,7 @@ public abstract class PMinMax extends RBuiltinNode {
             for (int i = offset + 1; i < argValues.length; i++) {
                 vec = (RAbstractStringVector) argValues[i];
                 if (vec.getLength() > 1 && vec.getLength() < maxLength && warningAdded == RRuntime.LOGICAL_FALSE) {
-                    RError.warning(this, RError.Message.ARG_RECYCYLED);
+                    warning(RError.Message.ARG_RECYCYLED);
                     warningAdded = RRuntime.LOGICAL_TRUE;
                 }
 

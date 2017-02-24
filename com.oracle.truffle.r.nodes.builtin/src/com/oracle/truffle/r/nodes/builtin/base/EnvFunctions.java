@@ -45,7 +45,6 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
@@ -88,7 +87,6 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 public class EnvFunctions {
 
     protected abstract static class Adapter extends RBuiltinNode {
-        protected final BranchProfile errorProfile = BranchProfile.create();
     }
 
     @RBuiltin(name = "as.environment", kind = PRIMITIVE, parameterNames = {"fun"}, dispatch = INTERNAL_GENERIC, behavior = COMPLEX)
@@ -289,7 +287,6 @@ public class EnvFunctions {
         @Specialization
         protected REnvironment parentenv(REnvironment env) {
             if (env == REnvironment.emptyEnv()) {
-                errorProfile.enter();
                 throw error(RError.Message.EMPTY_NO_PARENT);
             }
             return env.getParent();

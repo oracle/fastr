@@ -129,7 +129,7 @@ public class CastBuilderTest {
 
     @Before
     public void setUp() {
-        cb = new CastBuilder(DummyBuiltin.class.getAnnotation(RBuiltin.class), RError.NO_CALLER);
+        cb = new CastBuilder(DummyBuiltin.class.getAnnotation(RBuiltin.class));
         arg = cb.arg("x");
         castNode = null;
     }
@@ -931,7 +931,7 @@ public class CastBuilderTest {
         testPipeline(false);
     }
 
-    private static void testPipeline(boolean emptyPositiveSamplesAllowed) {
+    private static void testPipeline(@SuppressWarnings("unused") boolean emptyPositiveSamplesAllowed) {
         if (!TEST_SAMPLING) {
             return;
         }
@@ -946,6 +946,7 @@ public class CastBuilderTest {
         return castNode;
     }
 
+    @SuppressWarnings("unused")
     private void testPipeline(Samples<?> samples) {
         if (!TEST_SAMPLING) {
             return;

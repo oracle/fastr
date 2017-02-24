@@ -35,7 +35,6 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
@@ -76,7 +75,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class Repeat extends RBuiltinNode {
 
     private final ConditionProfile lengthOutOrTimes = ConditionProfile.createBinaryProfile();
-    private final BranchProfile errorBranch = BranchProfile.create();
     private final ConditionProfile oneTimeGiven = ConditionProfile.createBinaryProfile();
     private final ConditionProfile replicateOnce = ConditionProfile.createBinaryProfile();
     @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
@@ -100,16 +98,11 @@ public abstract class Repeat extends RBuiltinNode {
         return getNames.getNames(x) != null;
     }
 
-    private RError invalidTimes() {
-        throw error(RError.Message.INVALID_ARGUMENT, "times");
-    }
-
     @Specialization(guards = {"x.getLength() == 1", "times.getLength() == 1", "each <= 1", "!hasNames(x)"})
     protected RAbstractVector repNoEachNoNamesSimple(RAbstractDoubleVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
         int t = times.getDataAt(0);
         if (t < 0) {
-            errorBranch.enter();
-            throw invalidTimes();
+            throw error(RError.Message.INVALID_ARGUMENT, "times");
         }
         int length = lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut)) ? lengthOut : t;
         double[] data = new double[length];
@@ -120,8 +113,7 @@ public abstract class Repeat extends RBuiltinNode {
     @Specialization(guards = {"each > 1", "!hasNames(x)"})
     protected RAbstractVector repEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
         if (times.getLength() > 1) {
-            errorBranch.enter();
-            throw invalidTimes();
+            throw error(RError.Message.INVALID_ARGUMENT, "times");
         }
         RAbstractVector input = handleEach(x, each);
         if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
@@ -145,8 +137,7 @@ public abstract class Repeat extends RBuiltinNode {
                     @Cached("create()") InitAttributesNode initAttributes,
                     @Cached("createNames()") SetFixedAttributeNode putNames) {
         if (times.getLength() > 1) {
-            errorBranch.enter();
-            throw invalidTimes();
+            throw error(RError.Message.INVALID_ARGUMENT, "times");
         }
         RAbstractVector input = handleEach(x, each);
         RStringVector names = (RStringVector) handleEach(getNames.getNames(x), each);
@@ -210,8 +201,7 @@ public abstract class Repeat extends RBuiltinNode {
             // only one times value is given
             final int howManyTimes = times.getDataAt(0);
             if (howManyTimes < 0) {
-                errorBranch.enter();
-                throw invalidTimes();
+                throw error(RError.Message.INVALID_ARGUMENT, "times");
             }
             if (replicateOnce.profile(howManyTimes == 1)) {
                 return (RVector<?>) (copyIfSameSize ? x.copy() : x);
@@ -221,16 +211,14 @@ public abstract class Repeat extends RBuiltinNode {
         } else {
             // times is a vector with several elements
             if (x.getLength() != times.getLength()) {
-                errorBranch.enter();
-                throw invalidTimes();
+                throw error(RError.Message.INVALID_ARGUMENT, "times");
             }
             // iterate once over the times vector to determine result vector size
             int resultLength = 0;
             for (int i = 0; i < times.getLength(); i++) {
                 int t = times.getDataAt(i);
                 if (t < 0) {
-                    errorBranch.enter();
-                    throw invalidTimes();
+                    throw error(RError.Message.INVALID_ARGUMENT, "times");
                 }
                 resultLength += t;
             }

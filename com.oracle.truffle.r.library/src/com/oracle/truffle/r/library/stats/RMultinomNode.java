@@ -52,7 +52,7 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
     }
 
     static {
-        Casts casts = new Casts(RMultinomNode.class, RError.SHOW_CALLER);
+        Casts casts = new Casts(RMultinomNode.class);
         casts.arg(0).asIntegerVector().findFirst().mustBe(notIntNA(), Message.INVALID_FIRST_ARGUMENT_NAME, "n");
         casts.arg(1).asIntegerVector().findFirst().mustBe(notIntNA(), Message.INVALID_SECOND_ARGUMENT_NAME, "size");
         casts.arg(2).mustBe(missingValue().not(), Message.ARGUMENT_MISSING, "prob").mapIf(nullValue(), emptyDoubleVector()).asDoubleVector();

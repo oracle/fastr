@@ -83,7 +83,7 @@ public class PipelineToCastNodeTests {
     }
 
     private static CastNode createPipeline(PipelineStep<?, ?> lastStep) {
-        PipelineConfigBuilder configBuilder = new PipelineConfigBuilder("x", null);
+        PipelineConfigBuilder configBuilder = new PipelineConfigBuilder("x");
         configBuilder.setValueForwarding(false);
         return PipelineToCastNode.convert(configBuilder.build(), lastStep, Optional.empty());
     }

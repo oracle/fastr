@@ -20,7 +20,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.library.grDevices.DevicesCCalls;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_Par;
@@ -223,8 +222,6 @@ public class CallAndExternalFunctions {
      */
     @RBuiltin(name = ".Call", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotCall extends CallRFFIAdapter {
-
-        private final BranchProfile errorProfile = BranchProfile.create();
 
         static {
             Casts.noCasts(DotCall.class);
@@ -705,7 +702,6 @@ public class CallAndExternalFunctions {
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
-                errorProfile.enter();
                 throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "Call", packageName);
             }
             return callRFFINode.execute(new NativeCallInfo(symbol, func, rns.getDllInfo()), args.getArguments());
@@ -724,8 +720,6 @@ public class CallAndExternalFunctions {
      */
     @RBuiltin(name = ".External", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotExternal extends CallRFFIAdapter {
-
-        private final BranchProfile errorProfile = BranchProfile.create();
 
         static {
             Casts.noCasts(DotExternal.class);
@@ -810,7 +804,6 @@ public class CallAndExternalFunctions {
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
-                errorProfile.enter();
                 throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External", packageName);
             }
             Object list = encodeArgumentPairList(args, symbol);
@@ -832,8 +825,6 @@ public class CallAndExternalFunctions {
         static {
             Casts.noCasts(DotExternal2.class);
         }
-
-        private final BranchProfile errorProfile = BranchProfile.create();
 
         @Override
         @TruffleBoundary
@@ -892,7 +883,6 @@ public class CallAndExternalFunctions {
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
-                errorProfile.enter();
                 throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External2", packageName);
             }
             Object list = encodeArgumentPairList(args, symbol);
@@ -908,8 +898,6 @@ public class CallAndExternalFunctions {
 
     @RBuiltin(name = ".External.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotExternalGraphics extends CallRFFIAdapter {
-
-        private final BranchProfile errorProfile = BranchProfile.create();
 
         static {
             Casts.noCasts(DotExternalGraphics.class);
@@ -956,7 +944,6 @@ public class CallAndExternalFunctions {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
             DLL.SymbolHandle func = findSymbolNode.execute(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
-                errorProfile.enter();
                 throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
             Object list = encodeArgumentPairList(args, name);
@@ -971,8 +958,6 @@ public class CallAndExternalFunctions {
 
     @RBuiltin(name = ".Call.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotCallGraphics extends CallRFFIAdapter {
-
-        private final BranchProfile errorProfile = BranchProfile.create();
 
         static {
             Casts.noCasts(DotCallGraphics.class);
@@ -1019,7 +1004,6 @@ public class CallAndExternalFunctions {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
             DLL.SymbolHandle func = findSymbolNode.execute(name, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
-                errorProfile.enter();
                 throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
             return callRFFINode.execute(new NativeCallInfo(name, func, rns.getDllInfo()), args.getArguments());

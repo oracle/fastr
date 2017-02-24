@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.nmath;
 
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.nmath.distr.SExp;
 import com.oracle.truffle.r.runtime.nmath.distr.SNorm;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 import com.oracle.truffle.r.runtime.rng.RRNG.NormKind;
 import com.oracle.truffle.r.runtime.rng.RandomNumberGenerator;
@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.rng.RandomNumberGenerator;
  * implement common code for the vectorized versions.
  */
 public class RandomFunctions {
-    public abstract static class RandFunction3_Double extends Node {
+    public abstract static class RandFunction3_Double extends RBaseNode {
         public abstract double execute(double a, double b, double c, RandomNumberProvider rand);
     }
 

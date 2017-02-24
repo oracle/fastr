@@ -67,8 +67,8 @@ public abstract class StandardGeneric extends RBuiltinNode {
     @Child private CollectGenericArgumentsNode collectArgumentsNode;
     @Child private DispatchGeneric dispatchGeneric = DispatchGenericNodeGen.create();
 
-    @Child private CastNode castIntScalar = newCastBuilder(null).asIntegerVector().findFirst(RRuntime.INT_NA).buildCastNode();
-    @Child private CastNode castStringScalar = newCastBuilder(null).asStringVector().findFirst(RRuntime.STRING_NA).buildCastNode();
+    @Child private CastNode castIntScalar = newCastBuilder().asIntegerVector().findFirst(RRuntime.INT_NA).buildCastNode();
+    @Child private CastNode castStringScalar = newCastBuilder().asStringVector().findFirst(RRuntime.STRING_NA).buildCastNode();
 
     private final BranchProfile noGenFunFound = BranchProfile.create();
     private final ConditionProfile sameNamesProfile = ConditionProfile.createBinaryProfile();

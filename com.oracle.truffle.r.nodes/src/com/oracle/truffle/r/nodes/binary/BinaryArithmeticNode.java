@@ -74,7 +74,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     @Override
-    protected RBaseNode getErrorContext() {
+    public RBaseNode getErrorContext() {
         return this;
     }
 

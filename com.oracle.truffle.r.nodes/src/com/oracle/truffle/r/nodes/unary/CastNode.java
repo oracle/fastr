@@ -25,10 +25,9 @@ package com.oracle.truffle.r.nodes.unary;
 import java.util.Arrays;
 import java.util.function.Function;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Cast nodes behave like unary nodes, but in many cases it is useful to have a specific type for
@@ -69,28 +68,26 @@ public abstract class CastNode extends UnaryNode {
         return newMsgArgs;
     }
 
-    private RBaseNode getCallObj(MessageData message) {
-        return message.getCallObj() == null ? this : message.getCallObj();
-    }
-
-    @TruffleBoundary
     protected RuntimeException handleArgumentError(Object arg, MessageData message) {
+        CompilerDirectives.transferToInterpreter();
+        Object[] args = substituteArgs(arg, message);
         if (isTesting) {
-            throw new IllegalArgumentException(String.format(message.getMessage().message, substituteArgs(arg, message)));
+            throw new IllegalArgumentException(String.format(message.getMessage().message, args));
         } else {
-            throw RError.error(getCallObj(message), message.getMessage(), substituteArgs(arg, message));
+            throw RError.error(getErrorContext(), message.getMessage(), args);
         }
     }
 
-    @TruffleBoundary
     protected void handleArgumentWarning(Object arg, MessageData message) {
+        CompilerDirectives.transferToInterpreter();
         if (message == null) {
             return;
         }
+        Object[] args = substituteArgs(arg, message);
         if (isTesting) {
-            lastWarning = String.format(message.getMessage().message, substituteArgs(arg, message));
+            lastWarning = String.format(message.getMessage().message, args);
         } else {
-            RError.warning(getCallObj(message), message.getMessage(), substituteArgs(arg, message));
+            RError.warning(getErrorContext(), message.getMessage(), args);
         }
     }
 }

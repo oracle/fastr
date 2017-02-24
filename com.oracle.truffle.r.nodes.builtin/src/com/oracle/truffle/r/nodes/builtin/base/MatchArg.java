@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
-import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
@@ -81,9 +80,9 @@ public abstract class MatchArg extends RBuiltinNode {
         @Child private PMatch pmatch = PMatchNodeGen.create();
         @Child private Identical identical = IdenticalNodeGen.create();
 
-        @Child private CastNode argCast = newCastBuilder(NO_CALLER).asStringVector().buildCastNode();
-        @Child private CastNode choicesCast = newCastBuilder(NO_CALLER).allowMissing().mustBe(stringValue()).asStringVector().buildCastNode();
-        @Child private CastNode severalOKCast = newCastBuilder(NO_CALLER).mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean()).buildCastNode();
+        @Child private CastNode argCast = newCastBuilder().asStringVector().buildCastNode();
+        @Child private CastNode choicesCast = newCastBuilder().allowMissing().mustBe(stringValue()).asStringVector().buildCastNode();
+        @Child private CastNode severalOKCast = newCastBuilder().mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean()).buildCastNode();
 
         public abstract Object execute(Object arg, Object choices, Object severalOK);
 

@@ -17,8 +17,6 @@ package com.oracle.truffle.r.library.grDevices;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
-import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.grDevices.DevicesCCallsFactory.C_DevOffNodeGen;
@@ -59,11 +57,11 @@ public class DevicesCCalls {
 
     public static final class C_PDF extends RExternalBuiltinNode {
 
-        @Child private CastNode extractFontsNode = newCastBuilder(NO_CALLER).mapNull(emptyStringVector()).mustBe(stringValue()).asStringVector().buildCastNode();
-        @Child private CastNode asStringNode = newCastBuilder(NO_CALLER).asStringVector().findFirst().buildCastNode();
-        @Child private CastNode asDoubleNode = newCastBuilder(NO_CALLER).asDoubleVector().findFirst().buildCastNode();
-        @Child private CastNode asLogicalNode = newCastBuilder(NO_CALLER).asLogicalVector().findFirst().buildCastNode();
-        @Child private CastNode asIntNode = newCastBuilder(NO_CALLER).asIntegerVector().findFirst().buildCastNode();
+        @Child private CastNode extractFontsNode = newCastBuilder().mapNull(emptyStringVector()).mustBe(stringValue()).asStringVector().buildCastNode();
+        @Child private CastNode asStringNode = newCastBuilder().asStringVector().findFirst().buildCastNode();
+        @Child private CastNode asDoubleNode = newCastBuilder().asDoubleVector().findFirst().buildCastNode();
+        @Child private CastNode asLogicalNode = newCastBuilder().asLogicalVector().findFirst().buildCastNode();
+        @Child private CastNode asIntNode = newCastBuilder().asIntegerVector().findFirst().buildCastNode();
 
         static {
             Casts.noCasts(C_PDF.class);

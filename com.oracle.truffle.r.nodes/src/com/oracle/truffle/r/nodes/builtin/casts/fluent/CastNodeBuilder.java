@@ -22,14 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 
-import com.oracle.truffle.r.runtime.RError.ErrorContext;
-
 /**
  * Can be used to construct a cast node outside of the FastR builtins framework. The cast node can
  * be then used to cast anything, not only arguments.
  */
 public final class CastNodeBuilder {
-    public static PreinitialPhaseBuilder newCastBuilder(ErrorContext callObj) {
-        return new PipelineBuilder("", callObj).fluent();
+    public static PreinitialPhaseBuilder newCastBuilder() {
+        return new PipelineBuilder("").fluent();
     }
 }

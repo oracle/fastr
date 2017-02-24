@@ -25,32 +25,18 @@ package com.oracle.truffle.r.nodes.builtin.casts;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Value type that holds data necessary for error/warning message from a cast pipeline.
  */
 public final class MessageData {
-    private final RBaseNode callObj;
     private final RError.Message message;
     private final Object[] messageArgs;
 
     public MessageData(Message message, Object... messageArgs) {
-        this.callObj = null;
         this.message = message;
         this.messageArgs = messageArgs;
         assert message != null;
-    }
-
-    public MessageData(RBaseNode callObj, Message message, Object... messageArgs) {
-        this.callObj = callObj;
-        this.message = message;
-        this.messageArgs = messageArgs;
-        assert message != null;
-    }
-
-    public RBaseNode getCallObj() {
-        return callObj;
     }
 
     public Message getMessage() {

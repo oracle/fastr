@@ -99,7 +99,7 @@ public final class RandFunctionsNodes {
      * result vector, and similar. The random function is provided as implementation of
      * {@link RandFunction3_Double}.
      */
-    protected abstract static class RandFunctionExecutorBase extends Node {
+    protected abstract static class RandFunctionExecutorBase extends RBaseNode {
         static final class RandGenerationNodeData {
             final BranchProfile nanResult = BranchProfile.create();
             final BranchProfile nan = BranchProfile.create();
@@ -109,6 +109,11 @@ public final class RandFunctionsNodes {
             public static RandGenerationNodeData create() {
                 return new RandGenerationNodeData();
             }
+        }
+
+        @Override
+        protected RBaseNode getErrorContext() {
+            return RError.SHOW_CALLER;
         }
 
         public abstract Object execute(RAbstractVector length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider rand);
@@ -149,8 +154,8 @@ public final class RandFunctionsNodes {
             RRNG.putRNGState();
         }
 
-        static void showNAWarning() {
-            RError.warning(SHOW_CALLER, RError.Message.NA_PRODUCED);
+        void showNAWarning() {
+            warning(RError.Message.NA_PRODUCED);
         }
     }
 

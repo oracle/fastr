@@ -13,6 +13,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
@@ -231,8 +232,8 @@ public final class RError extends RuntimeException {
      * A temporary error that indicates an unimplemented feature where terminating the VM using
      * {@link Utils#rSuicide(String)} would be inappropriate.
      */
-    @TruffleBoundary
     public static RError nyi(RBaseNode node, String msg) {
+        CompilerDirectives.transferToInterpreter();
         throw error(node, RError.Message.NYI, msg);
     }
 

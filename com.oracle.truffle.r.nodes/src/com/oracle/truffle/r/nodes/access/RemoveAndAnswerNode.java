@@ -65,7 +65,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
 
         private RemoveAndAnswerNode specialize(FrameSlot fs) {
             if (fs == null) {
-                RError.warning(RError.SHOW_CALLER, RError.Message.UNKNOWN_OBJECT, name);
+                warning(RError.Message.UNKNOWN_OBJECT, name);
             }
             return replace(RemoveAndAnswerResolvedNodeGen.create(fs));
         }

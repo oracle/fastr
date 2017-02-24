@@ -235,7 +235,7 @@ public final class RHyper extends RandFunction3_Double {
                 v = rand.unifRand();
                 nUv++;
                 if (nUv >= 10000) {
-                    RError.warning(RError.SHOW_CALLER, Message.GENERIC, String.format("rhyper() branch III: giving up after %d rejections", nUv));
+                    warning(Message.GENERIC, String.format("rhyper() branch III: giving up after %d rejections", nUv));
                     return RMathError.defaultError();
                 }
 

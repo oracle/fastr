@@ -29,8 +29,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PreinitialPhaseBuilder;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
@@ -58,28 +56,18 @@ public interface NodeWithArgumentCasts {
         private final boolean declaresNoCasts;
 
         private Casts() {
-            casts = new CastBuilder(RError.NO_CALLER);
+            casts = new CastBuilder();
             this.declaresNoCasts = false;
         }
 
         public Casts(Class<? extends NodeWithArgumentCasts> cls) {
             castsMap.put(cls, this);
-            RBuiltin builtin = cls.getAnnotation(RBuiltin.class);
-            ErrorContext callObj = RError.contextForBuiltin(builtin);
-            casts = new CastBuilder(builtin, callObj);
-            this.declaresNoCasts = false;
-        }
-
-        public Casts(Class<? extends NodeWithArgumentCasts> cls, ErrorContext callObj) {
-            castsMap.put(cls, this);
-            RBuiltin annotation = cls.getAnnotation(RBuiltin.class);
-            casts = new CastBuilder(annotation, callObj);
+            casts = new CastBuilder(cls.getAnnotation(RBuiltin.class));
             this.declaresNoCasts = false;
         }
 
         private Casts(Class<? extends NodeWithArgumentCasts> cls, boolean declaresNoCasts) {
-            RBuiltin annotation = cls.getAnnotation(RBuiltin.class);
-            casts = new CastBuilder(annotation, null);
+            casts = new CastBuilder(cls.getAnnotation(RBuiltin.class));
             this.declaresNoCasts = declaresNoCasts;
         }
 

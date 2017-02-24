@@ -62,7 +62,7 @@ public abstract class CastSymbolNode extends CastBaseNode {
 
     @Specialization
     protected RSymbol doNull(@SuppressWarnings("unused") RNull value) {
-        throw RError.error(this, RError.Message.INVALID_TYPE_LENGTH, "symbol", 0);
+        throw error(RError.Message.INVALID_TYPE_LENGTH, "symbol", 0);
     }
 
     @Specialization
@@ -117,9 +117,9 @@ public abstract class CastSymbolNode extends CastBaseNode {
     @TruffleBoundary
     protected RSymbol doEmptyVector(RAbstractVector vector) {
         if (vector instanceof RList) {
-            throw RError.error(this, RError.Message.INVALID_TYPE_LENGTH, "symbol", 0);
+            throw error(RError.Message.INVALID_TYPE_LENGTH, "symbol", 0);
         } else {
-            throw RError.error(this, Message.INVALID_DATA_OF_TYPE_TOO_SHORT, vector.getRType().getName(), 0);
+            throw error(Message.INVALID_DATA_OF_TYPE_TOO_SHORT, vector.getRType().getName(), 0);
         }
     }
 

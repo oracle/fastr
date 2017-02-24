@@ -51,7 +51,7 @@ public class TestRandGenerationFunctions extends TestBase {
         assertEval("length(runif(c('a', 'b', 'b', 'd')))");
         assertEval("length(runif('3'))");
         // wrong size argument
-        assertEval(Output.IgnoreWarningContext, "runif('hello')");
+        assertEval("runif('hello')");
         // empty parameters
         assertEval("runif(2, numeric(), 2)");
         assertEval("runif(2, 2, numeric())");

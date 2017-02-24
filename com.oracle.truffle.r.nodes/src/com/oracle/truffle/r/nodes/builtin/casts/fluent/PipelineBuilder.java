@@ -40,7 +40,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
 import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardedValuesAnalyser;
 import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardingAnalysisResult;
 import com.oracle.truffle.r.nodes.unary.CastNode;
-import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 
@@ -55,8 +54,8 @@ public final class PipelineBuilder {
     private ChainBuilder<?> chainBuilder;
     private final AtomicReference<Optional<ForwardingAnalysisResult>> fwdAnalysisResult = new AtomicReference<>();
 
-    public PipelineBuilder(String argumentName, ErrorContext callObj) {
-        this.pcb = new PipelineConfigBuilder(argumentName, callObj);
+    public PipelineBuilder(String argumentName) {
+        this.pcb = new PipelineConfigBuilder(argumentName);
     }
 
     public CastNode buildNode() {

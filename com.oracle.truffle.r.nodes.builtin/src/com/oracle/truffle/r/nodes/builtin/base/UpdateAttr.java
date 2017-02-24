@@ -174,7 +174,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
         } else if (value instanceof String) {
             return RDataFactory.createStringVector((String) value);
         } else {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.SET_INVALID_CLASS_ATTR);
+            throw RError.error(RError.SHOW_CALLER, RError.Message.SET_INVALID_CLASS_ATTR);
         }
     }
 

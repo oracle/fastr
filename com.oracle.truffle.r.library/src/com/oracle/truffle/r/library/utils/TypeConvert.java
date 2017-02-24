@@ -48,18 +48,24 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
 
     @Child private SetFixedAttributeNode setLevelsAttrNode = SetFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
 
     static {
-        Casts casts = new Casts(TypeConvert.class, RError.SHOW_CALLER);
+        Casts casts = new Casts(TypeConvert.class);
         casts.arg(0).mustBe(stringValue(), FIRST_ARGUMENT_MUST_BE_CHARACTER).asStringVector();
         casts.arg(1).mustBe(stringValue(), INVALID_ARG, "'na.strings'").asStringVector();
         casts.arg(2).mapIf(logicalValue(),
                         chain(asLogicalVector()).with(findFirst().logicalElement(LOGICAL_FALSE)).with(toBoolean()).end(),
                         chain(map(constant(LOGICAL_FALSE))).with(toBoolean()).end());
+    }
+
+    @Override
+    protected RBaseNode getErrorContext() {
+        return RError.SHOW_CALLER;
     }
 
     private static boolean isNA(String s, RAbstractStringVector naStrings) {
