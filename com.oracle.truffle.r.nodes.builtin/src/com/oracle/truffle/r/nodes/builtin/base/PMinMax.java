@@ -176,7 +176,7 @@ public abstract class PMinMax extends RBuiltinNode {
                     RAbstractIntVector vec = (RAbstractIntVector) argValues[j];
                     na.enable(vec);
                     if (vec.getLength() > 1 && vec.getLength() < maxLength && !warningAdded) {
-                        RError.warning(RError.SHOW_CALLER2, RError.Message.ARG_RECYCYLED);
+                        warning(RError.Message.ARG_RECYCYLED);
                         warningAdded = true;
                     }
                     int v = vec.getDataAt(i % vec.getLength());
@@ -280,7 +280,7 @@ public abstract class PMinMax extends RBuiltinNode {
                 RAbstractDoubleVector vec = (RAbstractDoubleVector) argValues[j];
                 na.enable(vec);
                 if (vec.getLength() > 1 && vec.getLength() < maxLength && !warningAdded) {
-                    RError.warning(RError.SHOW_CALLER2, RError.Message.ARG_RECYCYLED);
+                    warning(RError.Message.ARG_RECYCYLED);
                     warningAdded = true;
                 }
             }

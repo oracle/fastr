@@ -275,11 +275,10 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
              */
             if ((this.numberOfDimensions > 1 && isNullValue()) || (replacementLength != valueLength && replacementLength % valueLength != 0)) {
                 if (this.numberOfDimensions > 1) {
-                    errorBranch.enter();
-                    throw RError.error(this, RError.Message.NOT_MULTIPLE_REPLACEMENT);
+                    throw error(RError.Message.NOT_MULTIPLE_REPLACEMENT);
                 } else {
                     warningBranch.enter();
-                    RError.warning(this, RError.Message.NOT_MULTIPLE_REPLACEMENT);
+                    warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
                 }
             }
         }
@@ -410,24 +409,21 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private void verifyValueLength(PositionProfile[] positionProfiles, int valueLength) {
         if (mode.isSubscript()) {
             if (!isList()) {
-                errorBranch.enter();
                 if (isNullValue()) {
-                    throw RError.error(this, RError.Message.MORE_SUPPLIED_REPLACE);
+                    throw error(RError.Message.MORE_SUPPLIED_REPLACE);
                 } else if (valueLength == 0) {
-                    throw RError.error(this, RError.Message.REPLACEMENT_0);
+                    throw error(RError.Message.REPLACEMENT_0);
                 } else {
-                    throw RError.error(this, RError.Message.MORE_SUPPLIED_REPLACE);
+                    throw error(RError.Message.MORE_SUPPLIED_REPLACE);
                 }
             }
         } else {
             assert mode.isSubset();
             if (!isNullValue() || this.numberOfDimensions == 1) {
                 if (valueLength == 0) {
-                    errorBranch.enter();
-                    throw RError.error(this, RError.Message.REPLACEMENT_0);
+                    throw error(RError.Message.REPLACEMENT_0);
                 } else if (positionsCheckNode.getContainsNA(positionProfiles)) {
-                    errorBranch.enter();
-                    throw RError.error(this, RError.Message.NA_SUBSCRIPTED);
+                    throw error(RError.Message.NA_SUBSCRIPTED);
                 }
             }
         }
@@ -461,14 +457,12 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
     private Object doEnvironment(REnvironment env, Object[] positions, Object originalValues) {
         if (mode.isSubset()) {
-            errorBranch.enter();
-            throw RError.error(this, RError.Message.OBJECT_NOT_SUBSETTABLE, RType.Environment.getName());
+            throw error(RError.Message.OBJECT_NOT_SUBSETTABLE, RType.Environment.getName());
         }
 
         String positionString = tryCastSingleString(positionsCheckNode, positions);
         if (positionString == null) {
-            errorBranch.enter();
-            throw RError.error(this, RError.Message.WRONG_ARGS_SUBSET_ENV);
+            throw error(RError.Message.WRONG_ARGS_SUBSET_ENV);
         }
 
         try {

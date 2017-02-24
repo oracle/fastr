@@ -233,7 +233,7 @@ public class HiddenInternalFunctions {
                 if (compression == 2 || compression == 3) {
                     RCompression.Type type = RCompression.Type.fromTypeChar(dbData[4]);
                     if (type == null) {
-                        RError.warning(this, RError.Message.GENERIC, "unknown compression type");
+                        warning(RError.Message.GENERIC, "unknown compression type");
                         return RNull.instance;
                     }
                     byte[] data = new byte[length - 5];

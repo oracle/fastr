@@ -156,9 +156,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @TruffleBoundary
         public String op(String left, String right) {
-            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -214,9 +213,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @TruffleBoundary
         public String op(String left, String right) {
-            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -291,9 +289,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @TruffleBoundary
         public String op(String left, String right) {
-            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -386,9 +383,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @TruffleBoundary
         public String op(String left, String right) {
-            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -430,15 +426,13 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @TruffleBoundary
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            throw RError.error(this, RError.Message.UNIMPLEMENTED_COMPLEX);
+            throw error(RError.Message.UNIMPLEMENTED_COMPLEX);
         }
 
         @Override
-        @TruffleBoundary
         public String op(String left, String right) {
-            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -506,15 +500,13 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @TruffleBoundary
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            throw RError.error(this, RError.Message.UNIMPLEMENTED_COMPLEX);
+            throw error(RError.Message.UNIMPLEMENTED_COMPLEX);
         }
 
         @Override
-        @TruffleBoundary
         public String op(String left, String right) {
-            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -992,9 +984,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @TruffleBoundary
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "complex");
+            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "complex");
         }
 
         @Override
@@ -1039,9 +1030,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        @TruffleBoundary
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "complex");
+            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "complex");
         }
 
         @Override

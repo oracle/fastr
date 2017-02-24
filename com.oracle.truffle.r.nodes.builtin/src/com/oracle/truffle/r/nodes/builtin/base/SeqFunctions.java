@@ -1010,7 +1010,7 @@ public final class SeqFunctions {
                 throw error(seqFastPath ? RError.Message.MUST_BE_POSITIVE_SD : RError.Message.MUST_BE_POSITIVE, seqFastPath ? "length" : "length.out");
             }
             if (getLength(frame, lengthOut) != 1) {
-                RError.warning(this, RError.Message.FIRST_ELEMENT_USED, "length.out");
+                warning(RError.Message.FIRST_ELEMENT_USED, "length.out");
             }
             return (int) Math.ceil(len);
         }

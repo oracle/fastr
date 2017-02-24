@@ -193,7 +193,7 @@ public class TestBuiltin_aperm extends TestBase {
         assertEval("{ aperm(array(c('FASTR', 'IS', 'SO', 'FAST'), c(3,1,2))) }");
 
         // perm specified in complex numbers produces warning
-        assertEval(Output.IgnoreWarningContext, "{ aperm(array(1:27,c(3,3,3)), c(1+1i,3+3i,2+2i))[1,2,3] == array(1:27,c(3,3,3))[1,3,2]; }");
+        assertEval("{ aperm(array(1:27,c(3,3,3)), c(1+1i,3+3i,2+2i))[1,2,3] == array(1:27,c(3,3,3))[1,3,2]; }");
 
         // perm is not a permutation vector
         assertEval("{ aperm(array(1,c( 3,3,3)), c(1,2,1)); }");

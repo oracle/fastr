@@ -20,7 +20,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_TIES_FOR_RANK;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_VALUE;
 import static com.oracle.truffle.r.runtime.RError.Message.RANK_LARGE_N;
@@ -95,7 +94,7 @@ public abstract class Rank extends RBuiltinNode {
         if (n > xa.getLength()) {
             errorProfile.enter();
             n = xa.getLength();
-            RError.warning(SHOW_CALLER, RANK_LARGE_N);
+            warning(RANK_LARGE_N);
         }
 
         TiesKind tiesKind = getTiesKind(tiesMethod);

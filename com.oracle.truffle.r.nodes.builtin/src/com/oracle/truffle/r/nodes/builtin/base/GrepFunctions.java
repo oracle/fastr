@@ -125,13 +125,13 @@ public class GrepFunctions {
 
         protected void checkCaseFixed(boolean ignoreCase, boolean fixed) {
             if (ignoreCase && fixed) {
-                RError.warning(this, RError.Message.ARGUMENT_IGNORED, "ignore.case = TRUE");
+                warning(RError.Message.ARGUMENT_IGNORED, "ignore.case = TRUE");
             }
         }
 
         protected boolean checkPerlFixed(boolean perl, boolean fixed) {
             if (fixed && perl) {
-                RError.warning(this, RError.Message.ARGUMENT_IGNORED, "perl = TRUE");
+                warning(RError.Message.ARGUMENT_IGNORED, "perl = TRUE");
                 return false;
             } else {
                 return perl;
@@ -142,7 +142,7 @@ public class GrepFunctions {
             if (arg.getLength() < 1) {
                 throw error(RError.Message.INVALID_ARGUMENT, name);
             } else if (arg.getLength() > 1) {
-                RError.warning(this, RError.Message.ARGUMENT_ONLY_FIRST, name);
+                warning(RError.Message.ARGUMENT_ONLY_FIRST, name);
             }
             return arg.getDataAt(0);
         }

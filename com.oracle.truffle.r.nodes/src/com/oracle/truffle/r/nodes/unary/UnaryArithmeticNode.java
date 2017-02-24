@@ -22,14 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.primitive.UnaryMapNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -43,7 +44,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     protected final UnaryArithmeticFactory unary;
     private final Message error;
-    private final Object errorArgs;
+    private final Object[] errorArgs;
     protected final RType minPrecedence;
 
     public UnaryArithmeticNode(UnaryArithmeticFactory factory, RType minPrecedence, Message error, Object... errorArgs) {
@@ -105,10 +106,17 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     @Fallback
     protected Object invalidArgType(@SuppressWarnings("unused") Object operand) {
-        if (errorArgs == null) {
-            throw RError.error(this, error);
+        CompilerDirectives.transferToInterpreter();
+        if (errorArgs == null || errorArgs.length == 0) {
+            throw error(error);
+        } else if (errorArgs.length == 1) {
+            throw error(error, errorArgs[0]);
+        } else if (errorArgs.length == 2) {
+            throw error(error, errorArgs[0], errorArgs[1]);
+        } else if (errorArgs.length == 3) {
+            throw error(error, errorArgs[0], errorArgs[1], errorArgs[2]);
         } else {
-            throw RError.error(this, error, (Object[]) errorArgs);
+            throw RInternalError.shouldNotReachHere("too many error arguments in UnaryArithmeticNode");
         }
     }
 

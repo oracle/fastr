@@ -31,7 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
@@ -56,8 +55,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 @RBuiltin(name = "assign", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "value", "envir", "inherits"}, behavior = COMPLEX)
 public abstract class Assign extends RBuiltinNode {
 
-    private final BranchProfile errorProfile = BranchProfile.create();
-    private final BranchProfile warningProfile = BranchProfile.create();
     private final boolean direct;
 
     protected Assign() {
@@ -68,8 +65,9 @@ public abstract class Assign extends RBuiltinNode {
         this.direct = direct;
     }
 
-    private RBaseNode errorContext() {
-        return direct ? this : RError.SHOW_CALLER;
+    @Override
+    protected RBaseNode getErrorContext() {
+        return direct ? this : super.getErrorContext();
     }
 
     /**
@@ -81,11 +79,9 @@ public abstract class Assign extends RBuiltinNode {
         if (len == 1) {
             return xVec.getDataAt(0);
         } else if (len == 0) {
-            errorProfile.enter();
-            throw RError.error(errorContext(), RError.Message.INVALID_FIRST_ARGUMENT);
+            throw error(RError.Message.INVALID_FIRST_ARGUMENT);
         } else {
-            warningProfile.enter();
-            RError.warning(errorContext(), RError.Message.ONLY_FIRST_VARIABLE_NAME);
+            warning(RError.Message.ONLY_FIRST_VARIABLE_NAME);
             return xVec.getDataAt(0);
         }
     }
@@ -125,15 +121,13 @@ public abstract class Assign extends RBuiltinNode {
                 LoopNode.reportLoopCount(this, -1);
             }
             if (env == REnvironment.emptyEnv()) {
-                errorProfile.enter();
-                throw RError.error(errorContext(), RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
+                throw error(RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
             }
         }
         try {
             env.put(x, share.execute(value));
         } catch (PutException ex) {
-            errorProfile.enter();
-            throw RError.error(errorContext(), ex);
+            throw error(ex);
         }
         return value;
     }

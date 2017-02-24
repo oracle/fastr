@@ -162,7 +162,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
                 return RDataFactory.createComplexRealOne();
             } else if (this.arithmetic instanceof BinaryArithmetic.Mod) {
                 // CORNER: Must throw error on modulo operation on complex numbers.
-                throw RError.error(this, RError.Message.UNIMPLEMENTED_COMPLEX);
+                throw error(RError.Message.UNIMPLEMENTED_COMPLEX);
             }
             return RRuntime.createComplexNA();
         }
@@ -172,7 +172,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
                 return RDataFactory.createComplex(Double.NaN, Double.NaN);
             } else if (this.arithmetic instanceof BinaryArithmetic.Mod) {
                 // CORNER: Must throw error on modulo operation on complex numbers.
-                throw RError.error(this, RError.Message.UNIMPLEMENTED_COMPLEX);
+                throw error(RError.Message.UNIMPLEMENTED_COMPLEX);
             }
             return RRuntime.createComplexNA();
         }

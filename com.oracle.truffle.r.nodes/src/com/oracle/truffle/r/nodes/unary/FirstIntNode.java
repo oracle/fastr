@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -46,7 +45,6 @@ public abstract class FirstIntNode extends CastNode {
     public abstract int executeInt(Object value);
 
     private final ConditionProfile lengthOneProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile errorProfile = BranchProfile.create();
 
     @Specialization
     protected int firstScalar(int argument) {
@@ -62,8 +60,7 @@ public abstract class FirstIntNode extends CastNode {
                     return defaultValue;
                 }
             } else if (emptyError != null && argument.getLength() == 0) {
-                errorProfile.enter();
-                throw RError.error(this, emptyError, argumentName);
+                throw error(emptyError, argumentName);
             }
         }
         return argument.getDataAt(0);

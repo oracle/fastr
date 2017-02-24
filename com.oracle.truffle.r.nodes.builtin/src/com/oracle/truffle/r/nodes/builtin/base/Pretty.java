@@ -122,10 +122,10 @@ public abstract class Pretty extends RBuiltinNode {
         }
 
         if (cell < 20 * Double.MIN_VALUE) {
-            RError.warning(this, RError.Message.GENERIC, "Internal(pretty()): very small range.. corrected");
+            warning(RError.Message.GENERIC, "Internal(pretty()): very small range.. corrected");
             cell = 20 * Double.MIN_VALUE;
         } else if (cell * 10 > Double.MAX_VALUE) {
-            RError.warning(this, RError.Message.GENERIC, "Internal(pretty()): very large range.. corrected");
+            warning(RError.Message.GENERIC, "Internal(pretty()): very large range.. corrected");
             cell = .1 * Double.MAX_VALUE;
         }
         /*

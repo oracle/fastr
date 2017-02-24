@@ -49,7 +49,7 @@ public class TestSimpleLoop extends TestBase {
 
     @Test
     public void testLoopsErrors() {
-        assertEval(Output.IgnoreErrorContext, "{ while (1 < NA) { 1 } }");
+        assertEval("{ while (1 < NA) { 1 } }");
 
         assertEval("{ break; }");
         assertEval("{ next; }");

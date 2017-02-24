@@ -130,7 +130,6 @@ public class MethodsListDispatch {
         static {
             Casts casts = new Casts(R_getClassFromCache.class);
             casts.arg(0, "klass").defaultError(RError.Message.GENERIC, "class should be either a character-string name or a class definition").mustBe(stringValue().or(instanceOf(RS4Object.class)));
-
             casts.arg(1, "table").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
         }
 
@@ -408,11 +407,11 @@ public class MethodsListDispatch {
                 }
                 String s = vec.getDataAt(0);
                 if (nonEmpty && s.length() == 0) {
-                    throw RError.error(node, RError.Message.NON_EMPTY_STRING, what);
+                    throw node.error(RError.Message.NON_EMPTY_STRING, what);
                 }
                 return s;
             } else {
-                throw RError.error(node, RError.Message.SINGLE_STRING_WRONG_TYPE, what, classHierarchyNode.executeString(o));
+                throw node.error(RError.Message.SINGLE_STRING_WRONG_TYPE, what, classHierarchyNode.executeString(o));
             }
         }
 

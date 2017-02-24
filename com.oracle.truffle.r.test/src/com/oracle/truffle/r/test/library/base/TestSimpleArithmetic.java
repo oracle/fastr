@@ -320,10 +320,10 @@ public class TestSimpleArithmetic extends TestBase {
 
     @Test
     public void testVectorsLengthWarning() {
-        assertEval(Output.IgnoreWarningContext, "{ 1:2+1:3 }");
-        assertEval(Output.IgnoreWarningContext, "{ 1:3*1:2 }");
-        assertEval(Output.IgnoreWarningContext, "{ 1:3+c(1,2+2i) }");
-        assertEval(Output.IgnoreWarningContext, "{ c(1,2+2i)+1:3 }");
+        assertEval("{ 1:2+1:3 }");
+        assertEval("{ 1:3*1:2 }");
+        assertEval("{ 1:3+c(1,2+2i) }");
+        assertEval("{ c(1,2+2i)+1:3 }");
     }
 
     @Test
@@ -612,11 +612,11 @@ public class TestSimpleArithmetic extends TestBase {
 
     @Test
     public void testNonvectorizedLogicalLengthChecks() {
-        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1,4)) | as.raw(c(1,5,4)) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1,5,4)) | as.raw(c(1,4)) }");
-        assertEval(Output.IgnoreWarningContext, "{ c(TRUE, FALSE, FALSE) & c(TRUE,TRUE) }");
-        assertEval(Output.IgnoreWarningContext, "{ c(TRUE, TRUE) & c(TRUE, FALSE, FALSE) }");
-        assertEval(Output.IgnoreWarningContext, "{ c(a=TRUE, TRUE) | c(TRUE, b=FALSE, FALSE) }");
+        assertEval("{ as.raw(c(1,4)) | as.raw(c(1,5,4)) }");
+        assertEval("{ as.raw(c(1,5,4)) | as.raw(c(1,4)) }");
+        assertEval("{ c(TRUE, FALSE, FALSE) & c(TRUE,TRUE) }");
+        assertEval("{ c(TRUE, TRUE) & c(TRUE, FALSE, FALSE) }");
+        assertEval("{ c(a=TRUE, TRUE) | c(TRUE, b=FALSE, FALSE) }");
     }
 
     @Test

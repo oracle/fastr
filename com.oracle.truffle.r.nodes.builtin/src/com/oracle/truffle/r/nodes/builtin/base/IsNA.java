@@ -191,7 +191,7 @@ public abstract class IsNA extends RBuiltinNode {
 
     @Specialization
     protected RLogicalVector isNA(RNull value) {
-        RError.warning(this, RError.Message.IS_NA_TO_NON_VECTOR, value.getRType().getName());
+        warning(RError.Message.IS_NA_TO_NON_VECTOR, value.getRType().getName());
         return RDataFactory.createEmptyLogicalVector();
     }
 
@@ -199,7 +199,7 @@ public abstract class IsNA extends RBuiltinNode {
     // fallback
     @Fallback
     protected byte isNA(Object value) {
-        RError.warning(this, RError.Message.IS_NA_TO_NON_VECTOR, ((RTypedValue) value).getRType().getName());
+        warning(RError.Message.IS_NA_TO_NON_VECTOR, ((RTypedValue) value).getRType().getName());
         return RRuntime.LOGICAL_FALSE;
     }
 

@@ -58,8 +58,6 @@ public class TestBuiltin_extract_dataframe extends TestBase {
     @Test
     public void extractDataFrameWithNULLNames() {
         assertEval("{ fr <- data.frame(1:3,4:6); attr(fr,'names') <- NULL; fr[1,2] }");
-        // N.B.: this warning is surprisingly formatted with extra new line before the contents of
-        // warning(...) invoked from R code
-        assertEval(Output.IgnoreWarningContext, "{ fr <- data.frame(1:3,4:6); attr(fr,'names') <- NULL; fr['col'] }");
+        assertEval("{ fr <- data.frame(1:3,4:6); attr(fr,'names') <- NULL; fr['col'] }");
     }
 }

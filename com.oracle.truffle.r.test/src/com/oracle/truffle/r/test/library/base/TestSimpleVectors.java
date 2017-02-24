@@ -382,7 +382,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ l<-list(1,2,3,4); l[[c(2,1)]]<-7; l }");
         assertEval("{ l<-list(1,2,3,4); l[c(2,1)]<-7; l }");
 
-        assertEval(Output.IgnoreWarningContext, "{ x<-1:4; x[1]<-c(1,1); x }");
+        assertEval("{ x<-1:4; x[1]<-c(1,1); x }");
         assertEval("{ x<-1:4; x[[1]]<-c(1,1); x }");
         assertEval("{ x<-1; x[0]<-integer(); x }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-1; x[[0]]<-integer(); x }");
@@ -399,8 +399,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ x<-7; x[[0]]<-42; x }");
         assertEval("{ x<-1:4;  x[c(1, 0)]<-42; x }");
         assertEval("{ x<-1:4;  x[c(0, 1)]<-42; x }");
-        assertEval(Output.IgnoreWarningContext, "{ x<-1:4;  x[c(1, 0)]<-c(7, 42); x }");
-        assertEval(Output.IgnoreWarningContext, "{ x<-1:4;  x[c(0, 1)]<-c(7, 42); x }");
+        assertEval("{ x<-1:4;  x[c(1, 0)]<-c(7, 42); x }");
+        assertEval("{ x<-1:4;  x[c(0, 1)]<-c(7, 42); x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[NULL]<-42; x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[NA]<-42; x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[0]<-42; x }");
@@ -409,15 +409,15 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1,NA)]<-c(42, 43); x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(NA,1)]<-c(42, 43); x }");
         assertEval(Output.IgnoreErrorContext, "{ x<-1:4; dim(x)<-c(2,2); x[[c(1,0)]]<-c(42, 43); x }");
-        assertEval(Output.IgnoreWarningContext, "{ x<-1:4; dim(x)<-c(2,2); x[c(1,0)]<-c(42, 43); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1,0)]<-c(42, 43); x }");
         assertEval(Output.IgnoreErrorContext, "{ x<-1:4; dim(x)<-c(2,2); x[[c(1,0,0)]]<-c(42, 43); x }");
-        assertEval(Output.IgnoreWarningContext, "{ x<-1:4; dim(x)<-c(2,2); x[c(1,0,0)]<-c(42, 43); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1,0,0)]<-c(42, 43); x }");
         assertEval(Output.IgnoreErrorContext, "{ x<-1:4; dim(x)<-c(2,2); x[[c(1,1,0)]]<-c(42, 43); x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1,1,0)]<-c(42, 43); x }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-1:4; dim(x)<-c(2,2); x[[c(0,1)]]<-c(42, 43); x }");
-        assertEval(Output.IgnoreWarningContext, "{ x<-1:4; dim(x)<-c(2,2); x[c(0,1)]<-c(42, 43); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(0,1)]<-c(42, 43); x }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-1:4; dim(x)<-c(2,2); x[[c(0,0,1)]]<-c(42, 43); x }");
-        assertEval(Output.IgnoreWarningContext, "{ x<-1:4; dim(x)<-c(2,2); x[c(0,0,1)]<-c(42, 43); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(0,0,1)]<-c(42, 43); x }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-1:4; dim(x)<-c(2,2); x[[c(0,1,1)]]<-c(42, 43); x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(0,1,1)]<-c(42, 43); x }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-1:4; dim(x)<-c(2,2); x[[c(0,0)]]<-c(42, 43); x }");
@@ -1432,7 +1432,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-1:2; x[[0-2]]<-100; x }");
 
         assertEval(Output.IgnoreErrorContext, "{ f <- function() { a[3] <- 4 } ; f() }");
-        assertEval(Output.IgnoreWarningContext, "{ b <- c(1,2) ; z <- c(10,11) ; attr(z,\"my\") <- 4 ; b[2] <- z ; b }");
+        assertEval("{ b <- c(1,2) ; z <- c(10,11) ; attr(z,\"my\") <- 4 ; b[2] <- z ; b }");
         assertEval("{ b <- c(1,2) ; z <- b ; b[-2] <- 3L ; b }");
         assertEval("{ b <- c(1,2) ; z <- b ; b[-10L] <- FALSE ; b }");
         assertEval("{ b <- c(TRUE,NA) ; z <- b ; b[-10L] <- FALSE ; b }");
@@ -1723,17 +1723,17 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ b <- 3:4 ; b[c(NA)] <- c(2,7) ; b }");
         assertEval("{ b <- 3:4 ; b[c(NA,1)] <- c(2,10) ; b }");
         assertEval(Output.IgnoreErrorContext, "{ b <- 3:4 ; b[[c(NA,1)]] <- c(2,10) ; b }");
-        assertEval(Output.IgnoreWarningContext, "{ b <- 3:4 ; b[c(0,1)] <- c(2,10,11) ; b }");
+        assertEval("{ b <- 3:4 ; b[c(0,1)] <- c(2,10,11) ; b }");
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(3:4, c(1,2), c(10,11)) ; f(4:5, as.integer(NA), 2) }");
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(3:4, c(1,2), c(10,11)) ; f(4:5, c(1,-1), 2) }");
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(3:4, c(1,2), c(10,11)) ; f(4:5, c(NA,-1), 2) }");
 
         assertEval("{ b <- c(1,4,5) ; x <- c(2,8,2) ; b[x==2] <- c(10,11) ; b }");
         assertEval("{ b <- c(1,4,5) ; z <- b ; x <- c(2,8,2) ; b[x==2] <- c(10,11) ; b }");
-        assertEval(Output.IgnoreWarningContext, "{ b <- c(1,4,5) ;  x <- c(2,2) ; b[x==2] <- c(10,11) ; b }");
+        assertEval("{ b <- c(1,4,5) ;  x <- c(2,2) ; b[x==2] <- c(10,11) ; b }");
         assertEval("{ b <- c(1,2,5) ;  x <- c(2,2,NA) ; b[x==2] <- c(10,11,3) ; b }");
         assertEval("{ b <- c(1,2,5) ;  x <- as.double(NA) ; attr(x,\"my\") <- 2 ; b[c(1,NA,2)==2] <- x ; b }");
-        assertEval(Output.IgnoreWarningContext, "{ b <- c(1,2,5) ;  x <- c(2,2,-1) ; b[x==2] <- c(10,11,5) ; b }");
+        assertEval("{ b <- c(1,2,5) ;  x <- c(2,2,-1) ; b[x==2] <- c(10,11,5) ; b }");
 
         assertEval("{ b <- c(1,2,5) ; b[integer()] <- NULL ; b }");
         assertEval("{ b <- c(1,2,5) ; b[c(1)] <- NULL ; b }");
@@ -1769,13 +1769,13 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,c(TRUE,FALSE,TRUE),5:6) ; f(c(3+4i,5+6i), c(FALSE,TRUE,TRUE), c(NA,1+10i)) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,c(TRUE,FALSE,TRUE),5:6) ; f(c(TRUE,FALSE), c(FALSE,TRUE,TRUE), c(NA,2L)) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,c(TRUE,FALSE,TRUE),5:6) ; f(3:5, c(FALSE,TRUE,TRUE), c(NA,FALSE)) }");
-        assertEval(Output.IgnoreWarningContext, "{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,c(TRUE,FALSE,TRUE),5:6) ; f(3:5, c(FALSE,TRUE,TRUE), 4:6) }");
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,c(TRUE,FALSE,TRUE),5:6) ; f(3:5, c(FALSE,TRUE,TRUE), 4:6) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,c(TRUE,FALSE,TRUE),5:6) ; f(c(TRUE,TRUE,FALSE), c(FALSE,TRUE,TRUE), c(TRUE,NA)) }");
         assertEval(" { f <- function(b, i, v) { b[i] <- v ; b } ; f(c(1,2,3),c(TRUE,FALSE,TRUE),5:6) ; f(3:5, c(FALSE,TRUE,TRUE), c(NA,FALSE)) }");
-        assertEval(Output.IgnoreWarningContext, "{ f <- function(b, i, v) { b[i] <- v ; b } ; f(c(1,2,3),c(TRUE,FALSE,TRUE),5:6) ; f(3:5, c(FALSE,TRUE,TRUE), 4:6) }");
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(c(1,2,3),c(TRUE,FALSE,TRUE),5:6) ; f(3:5, c(FALSE,TRUE,TRUE), 4:6) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(c(1,2,3),c(TRUE,FALSE,TRUE),5:6) ; f(3:5, c(FALSE,NA), 4) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(c(1,2,3),c(TRUE,FALSE,TRUE),5:6) ; f(3:5, c(FALSE,NA), 4:5) }");
-        assertEval(Output.IgnoreErrorContext, "{ f <- function(b, i, v) { b[[i]] <- v ; b } ; f(c(1,2,3),c(TRUE,FALSE,TRUE),5:6) ; f(3:5, c(FALSE,NA), 4:5) }");
+        assertEval(Output.ImprovedErrorContext, "{ f <- function(b, i, v) { b[[i]] <- v ; b } ; f(c(1,2,3),c(TRUE,FALSE,TRUE),5:6) ; f(3:5, c(FALSE,NA), 4:5) }");
 
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(list(1,2), c(TRUE,FALSE), list(1+2i)) }");
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(list(1,2), c(TRUE,FALSE), list(1+2i)) ; f(1:2, c(TRUE,FALSE), list(TRUE)) }");
@@ -1787,11 +1787,11 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(list(1,2), c(TRUE,NA), 10) }");
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(list(1,2), c(TRUE,NA), c(10,11)) }");
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; x <- list(1,2) ; z <- x ; f(x, c(TRUE,NA), c(10,11)) }");
-        assertEval(Output.IgnoreWarningContext, "{ x <- list(1,2) ; attr(x,\"my\") <- 10; x[c(TRUE,TRUE)] <- c(10,11,12); x }");
-        assertEval(Output.IgnoreWarningContext, "{ x <- list(1,0) ; x[as.logical(x)] <- c(10,11); x }");
+        assertEval("{ x <- list(1,2) ; attr(x,\"my\") <- 10; x[c(TRUE,TRUE)] <- c(10,11,12); x }");
+        assertEval("{ x <- list(1,0) ; x[as.logical(x)] <- c(10,11); x }");
         assertEval("{ x <- list(1,0) ; x[is.na(x)] <- c(10,11); x }");
-        assertEval(Output.IgnoreWarningContext, "{ x <- list(1,0) ; x[c(TRUE,FALSE)] <- x[2:1] ; x }");
-        assertEval(Output.IgnoreWarningContext, "{ x <- list(1,0) ; attr(x,\"my\") <- 20 ; x[c(TRUE,FALSE)] <- c(11,12) ; x }");
+        assertEval("{ x <- list(1,0) ; x[c(TRUE,FALSE)] <- x[2:1] ; x }");
+        assertEval("{ x <- list(1,0) ; attr(x,\"my\") <- 20 ; x[c(TRUE,FALSE)] <- c(11,12) ; x }");
         assertEval("{ x <- list(1,0) ; x[is.na(x)] <- c(10L,11L); x }");
         assertEval("{ x <- list(1,0) ; x[c(TRUE,TRUE)] <- c(TRUE,NA); x }");
         assertEval("{ x <- list(1,0) ; x[logical()] <- c(TRUE,NA); x }");
@@ -1822,20 +1822,20 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x <- c(1L,2L,3L,4L) ; x[c(TRUE,FALSE)] <- 5:6 ; x }");
         assertEval("{ x <- c(1L,2L,3L,4L) ; attr(x,\"my\") <- 0 ;  x[c(TRUE,FALSE)] <- 5:6 ; x }");
         assertEval("{ x <- c(1L,2L,3L,4L) ;  x[is.na(x)] <- 5:6 ; x }");
-        assertEval(Output.IgnoreWarningContext, "{ x <- c(1L,2L,3L,4L) ; x[c(TRUE,FALSE)] <- rev(x) ; x }");
+        assertEval("{ x <- c(1L,2L,3L,4L) ; x[c(TRUE,FALSE)] <- rev(x) ; x }");
         assertEval("{ x <- c(1L,2L) ; x[logical()] <- 3L ; x }");
 
         assertEval("{ b <- c(TRUE,NA,FALSE,TRUE) ; b[c(TRUE,FALSE)] <- c(FALSE,NA) ; b }");
         assertEval("{ b <- c(TRUE,NA,FALSE,TRUE) ; b[c(TRUE,FALSE,FALSE)] <- c(FALSE,NA) ; b }");
         assertEval("{ b <- c(TRUE,NA,FALSE,TRUE) ; b[c(TRUE,NA)] <- c(FALSE,NA) ; b }");
-        assertEval(Output.IgnoreWarningContext, "{ b <- c(TRUE,NA,FALSE) ; b[c(TRUE,TRUE)] <- c(FALSE,NA) ; b }");
+        assertEval("{ b <- c(TRUE,NA,FALSE) ; b[c(TRUE,TRUE)] <- c(FALSE,NA) ; b }");
         assertEval("{ b <- c(TRUE,NA,FALSE) ; b[c(TRUE,FALSE,TRUE,TRUE)] <- c(FALSE,NA,NA) ; b }");
         assertEval("{ b <- c(TRUE,NA,FALSE,TRUE) ; b[c(TRUE,FALSE,TRUE,NA)] <- FALSE ; b }");
         assertEval("{ b <- c(TRUE,NA,FALSE,TRUE) ; z <- b ; b[c(TRUE,FALSE,TRUE,NA)] <- FALSE ; b }");
         assertEval("{ b <- c(TRUE,NA,FALSE,TRUE) ; attr(b,\"my\") <- 10 ; b[c(TRUE,FALSE,TRUE,NA)] <- FALSE ; b }");
-        assertEval(Output.IgnoreWarningContext, "{ b <- c(TRUE,NA,FALSE,TRUE) ; b[c(TRUE,FALSE,TRUE,FALSE)] <- b ; b }");
+        assertEval("{ b <- c(TRUE,NA,FALSE,TRUE) ; b[c(TRUE,FALSE,TRUE,FALSE)] <- b ; b }");
         assertEval("{ b <- c(TRUE,FALSE,FALSE,TRUE) ; b[b] <- c(TRUE,FALSE) ; b }");
-        assertEval(Output.IgnoreWarningContext, "{ f <- function(b,i,v) { b[b] <- b ; b } ; f(c(TRUE,FALSE,FALSE,TRUE)) ; f(1:3) }");
+        assertEval("{ f <- function(b,i,v) { b[b] <- b ; b } ; f(c(TRUE,FALSE,FALSE,TRUE)) ; f(1:3) }");
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(c(TRUE,FALSE,FALSE,TRUE),c(TRUE,FALSE), NA) ; f(1:4, c(TRUE,TRUE), NA) }");
         assertEval("{ f <- function(b,i,v) { b[i] <- v ; b } ; f(c(TRUE,FALSE,FALSE,TRUE),c(TRUE,FALSE), NA) ; f(c(FALSE,FALSE,TRUE), c(TRUE,TRUE), c(1,2,3)) }");
         assertEval("{ b <- c(TRUE,NA,FALSE,TRUE) ; b[logical()] <- c(FALSE,NA) ; b }");
@@ -1846,7 +1846,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ b <- c(\"a\",\"b\",\"c\") ; b[c(TRUE,FALSE,NA)] <- \"X\" ; b }");
         assertEval("{ b <- c(\"a\",\"b\",\"c\") ; b[logical()] <- \"X\" ; b }");
         assertEval("{ b <- c(\"a\",\"b\",\"c\") ; b[c(FALSE,NA,NA)] <- c(\"X\",\"y\") ; b }");
-        assertEval(Output.IgnoreWarningContext, "{ b <- c(\"a\",\"b\",\"c\") ; b[c(FALSE,TRUE,TRUE)] <- c(\"X\",\"y\",\"z\") ; b }");
+        assertEval("{ b <- c(\"a\",\"b\",\"c\") ; b[c(FALSE,TRUE,TRUE)] <- c(\"X\",\"y\",\"z\") ; b }");
         assertEval("{ b <- c(\"a\",\"b\",\"c\") ; x <- b ; b[c(FALSE,TRUE,TRUE)] <- c(\"X\",\"z\") ; b } ");
         assertEval("{ b <- c(\"a\",\"b\",\"c\") ; x <- b ; b[c(FALSE,TRUE,NA)] <- c(\"X\",\"z\") ; b }");
         assertEval("{ b <- c(\"a\",\"b\",\"c\") ; b[is.na(b)] <- c(\"X\",\"z\") ; b }");
@@ -2103,12 +2103,12 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,3:1,4:6) ; f(as.complex(c(13,14)),c(\"\",\"\",\"\"),as.complex(23)) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,3:1,4:6) ; f(as.complex(c(13,14)),c(\"\",\"\",NA),as.complex(23)) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,3:1,4:6) ; f(as.raw(c(13,14)),c(\"a\",\"X\",\"a\"),as.raw(23)) }");
-        assertEval(Output.IgnoreWarningContext, "{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,3:1,4:6) ; f(c(X=1,a=2),c(\"a\",\"X\",\"a\",\"b\"),list(3,TRUE,FALSE)) }");
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,3:1,4:6) ; f(c(X=1,a=2),c(\"a\",\"X\",\"a\",\"b\"),list(3,TRUE,FALSE)) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,3:1,4:6) ; f(c(X=1,a=2),c(\"X\",\"b\",NA),list(3,TRUE,FALSE)) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,3:1,4:6) ; f(c(X=1,a=2),c(\"X\",\"b\",NA),as.raw(10)) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,3:1,4:6) ; f(c(X=1,a=2),c(\"X\",\"b\",NA),as.complex(10)) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:3,3:1,4:6) ; f(c(X=1,a=2),c(\"X\",\"b\",NA),1:3) }");
-        assertEval(Output.IgnoreWarningContext, "{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1+2i,3:1,4:6) ; f(c(X=1,a=2),c(\"X\",\"b\",NA),c(TRUE,NA)) }");
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1+2i,3:1,4:6) ; f(c(X=1,a=2),c(\"X\",\"b\",NA),c(TRUE,NA)) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1+2i,3:1,4:6) ; f(c(X=1L,a=2L),c(\"X\",\"b\",NA),c(TRUE,NA,FALSE)) }");
         assertEval(Output.IgnoreErrorContext, "{ f <- function(b, i, v) { b[[i]] <- v ; b } ; f(1+2i,3:1,4:6) ; f(c(X=1L,a=2L),c(\"X\",\"b\",NA),NULL) }");
         assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1+2i,3:1,4:6) ; f(list(X=1L,a=2L),c(\"X\",\"b\",NA),NULL) }");
@@ -2162,10 +2162,10 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x <- NULL; x[c(0,1)] <- c(5); x; }");
         assertEval("{ x <- NULL; x[c(0,2)] <- c(5); x; }");
         assertEval("{ x <- NULL; x[0] <- c(1,5); x; }");
-        assertEval(Output.IgnoreWarningContext, "{ x <- NULL; x[1] <- c(1,5); x; }");
-        assertEval(Output.IgnoreWarningContext, "{ x <- NULL; x[c(1,0)] <- c(1,5); x; }");
-        assertEval(Output.IgnoreWarningContext, "{ x <- NULL; x[c(0,1)] <- c(1,5); x; }");
-        assertEval(Output.IgnoreWarningContext, "{ x <- NULL; x[c(0,2)] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[1] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[c(1,0)] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[c(0,1)] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[c(0,2)] <- c(1,5); x; }");
         assertEval(Output.IgnoreErrorMessage, "{ x <- NULL; x[[c(1,0)]] <- c(1,5); x; }");
         assertEval(Output.IgnoreErrorMessage, "{ x <- NULL; x[[c(1,2)]] <- c(1,5); x; }");
 

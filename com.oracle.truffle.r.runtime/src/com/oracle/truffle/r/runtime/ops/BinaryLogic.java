@@ -129,7 +129,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public boolean op(String left, String right) {
-            throw RError.error(this, RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
+            throw error(RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
@@ -184,7 +184,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public boolean op(String left, String right) {
-            throw RError.error(this, RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
+            throw error(RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override

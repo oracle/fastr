@@ -22,52 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.nodes.builtin;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class RBuiltinBaseNode extends RBaseNode {
 
-    protected abstract RBaseNode getErrorContext();
-
-    public final RError error(RErrorException exception) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(getErrorContext(), exception);
-    }
-
-    public final RError error(RError.Message message) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(getErrorContext(), message);
-    }
-
-    public final RError error(RError.Message message, Object arg) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(getErrorContext(), message, arg);
-    }
-
-    public final RError error(RError.Message message, Object arg1, Object arg2) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(getErrorContext(), message, arg1, arg2);
-    }
-
-    public final RError error(RError.Message message, Object arg1, Object arg2, Object arg3) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(getErrorContext(), message, arg1, arg2, arg3);
-    }
-
-    public final RError error(RError.Message message, Object arg1, Object arg2, Object arg3, Object arg4) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(getErrorContext(), message, arg1, arg2, arg3, arg4);
-    }
-
-    public final RError error(RError.Message message, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(getErrorContext(), message, arg1, arg2, arg3, arg4, arg5);
-    }
-
-    public final RError error(RError.Message message, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(getErrorContext(), message, arg1, arg2, arg3, arg4, arg5, arg6);
-    }
 }

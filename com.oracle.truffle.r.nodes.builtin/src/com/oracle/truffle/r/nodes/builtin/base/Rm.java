@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARGUMENT;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_FIRST_ARGUMENT;
 import static com.oracle.truffle.r.runtime.RError.Message.USE_NULL_ENV_DEFUNCT;
@@ -101,7 +100,7 @@ public abstract class Rm extends RBuiltinNode {
             }
         }
         if (fs == null) {
-            RError.warning(SHOW_CALLER, RError.Message.UNKNOWN_OBJECT, x);
+            warning(RError.Message.UNKNOWN_OBJECT, x);
         } else {
             // use null (not an R value) to represent "undefined"
             FrameSlotChangeMonitor.setObjectAndInvalidate(frame, fs, null, false, invalidateProfile);

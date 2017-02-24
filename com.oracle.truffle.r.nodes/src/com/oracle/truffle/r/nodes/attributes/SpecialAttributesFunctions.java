@@ -325,7 +325,6 @@ public final class SpecialAttributesFunctions {
 
         @Specialization(insertBefore = "setAttrInAttributable")
         protected void setNamesInVector(RAbstractVector x, RStringVector newNames,
-                        @Cached("create()") BranchProfile namesTooLongProfile,
                         @Cached("createBinaryProfile()") ConditionProfile useDimNamesProfile,
                         @Cached("create()") GetDimAttributeNode getDimNode,
                         @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
@@ -335,8 +334,8 @@ public final class SpecialAttributesFunctions {
                         @Cached("create()") ShareObjectNode updateRefCountNode) {
             RAbstractVector xProfiled = xTypeProfile.profile(x);
             if (newNames.getLength() > xProfiled.getLength()) {
-                namesTooLongProfile.enter();
-                throw RError.error(this, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, RRuntime.NAMES_ATTR_KEY, newNames.getLength(), xProfiled.getLength());
+                CompilerDirectives.transferToInterpreter();
+                throw error(RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, RRuntime.NAMES_ATTR_KEY, newNames.getLength(), xProfiled.getLength());
             }
 
             int[] dimensions = getDimNode.getDimensions(x);
@@ -466,9 +465,6 @@ public final class SpecialAttributesFunctions {
     public abstract static class SetDimAttributeNode extends SetSpecialAttributeNode {
 
         private final ConditionProfile nullDimProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile naDimProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile negativeDimProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile dimNotMatchLengthProfile = ConditionProfile.createBinaryProfile();
         private final ValueProfile contArgClassProfile = ValueProfile.createClassProfile();
         private final ValueProfile dimArgClassProfile = ValueProfile.createClassProfile();
         private final LoopConditionProfile verifyLoopProfile = LoopConditionProfile.createCountingProfile();
@@ -552,14 +548,13 @@ public final class SpecialAttributesFunctions {
 
         private void verifyOneDimensions(int vectorLength, int dim) {
             int length = dim;
-            if (naDimProfile.profile(RRuntime.isNA(dim))) {
-                throw RError.error(this, RError.Message.DIMS_CONTAIN_NA);
-            } else if (negativeDimProfile.profile(dim < 0)) {
-                throw RError.error(this, RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
+            if (RRuntime.isNA(dim)) {
+                throw error(RError.Message.DIMS_CONTAIN_NA);
+            } else if (dim < 0) {
+                throw error(RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
             }
-            if (dimNotMatchLengthProfile.profile(length != vectorLength && vectorLength > 0)) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, RError.Message.DIMS_DONT_MATCH_LENGTH, length, vectorLength);
+            if (length != vectorLength && vectorLength > 0) {
+                throw error(RError.Message.DIMS_DONT_MATCH_LENGTH, length, vectorLength);
             }
         }
 
@@ -570,18 +565,15 @@ public final class SpecialAttributesFunctions {
             int length = 1;
             for (int i = 0; i < dimLen; i++) {
                 int dim = dimsProfiled.getDataAt(i);
-                if (naDimProfile.profile(RRuntime.isNA(dim))) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.error(this, RError.Message.DIMS_CONTAIN_NA);
-                } else if (negativeDimProfile.profile(dim < 0)) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.error(this, RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
+                if (RRuntime.isNA(dim)) {
+                    throw error(RError.Message.DIMS_CONTAIN_NA);
+                } else if (dim < 0) {
+                    throw error(RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
                 }
                 length *= dim;
             }
             if (length != vectorLength && vectorLength > 0) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, RError.Message.DIMS_DONT_MATCH_LENGTH, length, vectorLength);
+                throw error(RError.Message.DIMS_DONT_MATCH_LENGTH, length, vectorLength);
             }
         }
     }
@@ -610,7 +602,6 @@ public final class SpecialAttributesFunctions {
         private final ConditionProfile nullDimsProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile nonEmptyDimsProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile twoDimsOrMoreProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile isContainerProfile = ConditionProfile.createBinaryProfile();
 
         protected GetDimAttributeNode() {
             super(RRuntime.DIM_ATTR_KEY);
@@ -680,7 +671,7 @@ public final class SpecialAttributesFunctions {
         }
 
         public int nrows(Object x) {
-            if (isContainerProfile.profile(x instanceof RAbstractContainer)) {
+            if (x instanceof RAbstractContainer) {
                 RAbstractContainer xa = (RAbstractContainer) x;
                 int[] dims = getDimensions(xa);
                 if (nonEmptyDimsProfile.profile(dims != null && dims.length > 0)) {
@@ -689,12 +680,12 @@ public final class SpecialAttributesFunctions {
                     return xa.getLength();
                 }
             } else {
-                throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
+                throw error(RError.Message.OBJECT_NOT_MATRIX);
             }
         }
 
         public int ncols(Object x) {
-            if (isContainerProfile.profile(x instanceof RAbstractContainer)) {
+            if (x instanceof RAbstractContainer) {
                 RAbstractContainer xa = (RAbstractContainer) x;
                 int[] dims = getDimensions(xa);
                 if (nonEmptyDimsProfile.profile(dims != null && dims.length > 0)) {
@@ -707,7 +698,7 @@ public final class SpecialAttributesFunctions {
                     return 1;
                 }
             } else {
-                throw RError.error(RError.SHOW_CALLER2, RError.Message.OBJECT_NOT_MATRIX);
+                throw error(RError.Message.OBJECT_NOT_MATRIX);
             }
         }
     }
@@ -753,10 +744,7 @@ public final class SpecialAttributesFunctions {
         @Specialization(insertBefore = "setAttrInAttributable")
         protected void setDimNamesInVector(RVector<?> x, RList newDimNames,
                         @Cached("create()") GetDimAttributeNode getDimNode,
-                        @Cached("create()") BranchProfile nullDimsProfile,
-                        @Cached("create()") BranchProfile dimsLengthProfile,
                         @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
-                        @Cached("create()") BranchProfile invalidDimProfile,
                         @Cached("create()") BranchProfile nullDimProfile,
                         @Cached("create()") BranchProfile resizeDimsProfile,
                         @Cached("create()") BranchProfile attrNullProfile,
@@ -765,14 +753,12 @@ public final class SpecialAttributesFunctions {
                         @Cached("create()") ShareObjectNode updateRefCountNode) {
             int[] dimensions = getDimNode.getDimensions(x);
             if (dimensions == null) {
-                nullDimsProfile.enter();
-                throw RError.error(this, RError.Message.DIMNAMES_NONARRAY);
+                throw error(RError.Message.DIMNAMES_NONARRAY);
             }
             int newDimNamesLength = newDimNames.getLength();
             if (newDimNamesLength > dimensions.length) {
-                dimsLengthProfile.enter();
-                throw RError.error(this, RError.Message.DIMNAMES_DONT_MATCH_DIMS, newDimNamesLength,
-                                dimensions.length);
+                CompilerDirectives.transferToInterpreter();
+                throw error(RError.Message.DIMNAMES_DONT_MATCH_DIMS, newDimNamesLength, dimensions.length);
             }
 
             loopProfile.profileCounted(newDimNamesLength);
@@ -781,8 +767,8 @@ public final class SpecialAttributesFunctions {
 
                 if ((dimObject instanceof String && dimensions[i] != 1) ||
                                 (dimObject instanceof RStringVector && !isValidDimLength((RStringVector) dimObject, dimensions[i]))) {
-                    invalidDimProfile.enter();
-                    throw RError.error(this, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+                    CompilerDirectives.transferToInterpreter();
+                    throw error(RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
                 }
 
                 if (dimObject == null || (dimObject instanceof RStringVector && ((RStringVector) dimObject).getLength() == 0)) {
@@ -1091,7 +1077,7 @@ public final class SpecialAttributesFunctions {
                             // also
                             // does not update the 'class' attr with other, possibly
                             // valid classes when it reaches this error.
-                            throw RError.error(RError.SHOW_CALLER2, RError.Message.ADDING_INVALID_CLASS, "factor");
+                            throw error(RError.Message.ADDING_INVALID_CLASS, "factor");
                         }
                     }
                 }

@@ -110,7 +110,7 @@ public class ToolsText {
                             }
                             data[i] = RRuntime.LOGICAL_TRUE;
                         } catch (IOException ex) {
-                            RError.warning(this, RError.Message.GENERIC, "IO error during file append");
+                            warning(RError.Message.GENERIC, "IO error during file append");
                             // shouldn't happen, just continue with false result
                         }
                     }

@@ -127,6 +127,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return sourceSection;
     }
 
+    @Override
+    protected RBaseNode getErrorContext() {
+        return this;
+    }
+
     public abstract RNode getFunction();
 
     private final RSyntaxNode[] arguments;
@@ -280,8 +285,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         Object dispatchObject = dispatchArgument.execute(frame);
         // Cannot dispatch on REmpty
         if (dispatchObject == REmpty.instance) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.ARGUMENT_EMPTY, 1);
+            throw error(RError.Message.ARGUMENT_EMPTY, 1);
         }
         FrameSlot slot = dispatchTempSlot.initialize(frame, dispatchObject);
         try {

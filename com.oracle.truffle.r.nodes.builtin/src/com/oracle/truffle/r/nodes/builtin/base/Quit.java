@@ -54,19 +54,19 @@ public abstract class Quit extends RBuiltinNode {
     protected Object doQuit(String save, final int status, final byte runLastIn) {
         byte runLast = runLastIn;
         if (RContext.getInstance().stateInstrumentation.getBrowserState().inBrowser()) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.BROWSER_QUIT);
+            warning(RError.Message.BROWSER_QUIT);
             return RNull.instance;
         }
         RStartParams.SA_TYPE ask = checkSaveValue(save);
         if (ask == SA_TYPE.SAVEASK && !RContext.getInstance().getConsoleHandler().isInteractive()) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.QUIT_ASK_INTERACTIVE);
+            warning(RError.Message.QUIT_ASK_INTERACTIVE);
         }
         if (status == RRuntime.INT_NA) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.QUIT_INVALID_STATUS);
+            warning(RError.Message.QUIT_INVALID_STATUS);
             runLast = RRuntime.LOGICAL_FALSE;
         }
         if (runLast == RRuntime.LOGICAL_NA) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.QUIT_INVALID_RUNLAST);
+            warning(RError.Message.QUIT_INVALID_RUNLAST);
             runLast = RRuntime.LOGICAL_FALSE;
         }
         RCleanUp.cleanUp(ask, status, RRuntime.fromLogical(runLast));

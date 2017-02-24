@@ -142,12 +142,12 @@ public abstract class FastRPkgSource extends RBuiltinNode {
 
     @TruffleBoundary
     private void notFound(String pkg) {
-        RError.warning(this, RError.Message.GENERIC, String.format("namespace '%s' not found - ignoring", pkg));
+        warning(RError.Message.GENERIC, String.format("namespace '%s' not found - ignoring", pkg));
     }
 
     @TruffleBoundary
     private void noDeparse(String pkg, String fname) {
-        RError.warning(this, RError.Message.GENERIC, String.format("function '%s::%s' failed to deparse - ignoring", pkg, fname));
+        warning(RError.Message.GENERIC, String.format("function '%s::%s' failed to deparse - ignoring", pkg, fname));
     }
 
     @TruffleBoundary

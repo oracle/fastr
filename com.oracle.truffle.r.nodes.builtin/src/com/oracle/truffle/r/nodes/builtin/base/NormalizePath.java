@@ -39,7 +39,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
@@ -77,20 +76,19 @@ public abstract class NormalizePath extends RBuiltinNode {
                 if (doesNotNeedToWork.profile(mustWork == RRuntime.LOGICAL_FALSE)) {
                     // no error or warning
                 } else {
-                    Object[] errorArgs;
-                    Message msg;
-                    if (e instanceof NoSuchFileException) {
-                        errorArgs = new Object[]{i + 1, expandPath};
-                        msg = Message.NORMALIZE_PATH_NOSUCH;
-                    } else {
-                        errorArgs = new Object[]{e.toString()};
-                        msg = Message.GENERIC;
-                    }
                     if (mustWork == RRuntime.LOGICAL_TRUE) {
-                        throw error(msg, errorArgs);
+                        if (e instanceof NoSuchFileException) {
+                            throw error(Message.NORMALIZE_PATH_NOSUCH, i + 1, expandPath);
+                        } else {
+                            throw error(Message.GENERIC, e.toString());
+                        }
                     } else {
                         // NA means warning
-                        RError.warning(this, msg, errorArgs);
+                        if (e instanceof NoSuchFileException) {
+                            warning(Message.NORMALIZE_PATH_NOSUCH, i + 1, expandPath);
+                        } else {
+                            warning(Message.GENERIC, e.toString());
+                        }
                     }
                 }
             }

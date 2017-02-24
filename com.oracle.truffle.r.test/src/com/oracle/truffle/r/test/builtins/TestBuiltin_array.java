@@ -156,7 +156,7 @@ public class TestBuiltin_array extends TestBase {
     @Test
     public void testArray() {
         assertEval("{ array(1:4, 1:2, 4) }");
-        assertEval(Output.IgnoreWarningContext, "{ array(1:4, c(1+2i, 2+2i)) }");
+        assertEval("{ array(1:4, c(1+2i, 2+2i)) }");
         assertEval("{ array(as.raw(1:4)) }");
         assertEval("{ array(1:4, integer()) }");
         assertEval("{ array(NULL) }");

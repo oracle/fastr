@@ -57,7 +57,7 @@ public final class IfNode extends OperatorNode {
         byte cond = condition.executeByte(frame);
         if (cond == RRuntime.LOGICAL_NA) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.NA_UNEXP);
+            throw error(RError.Message.NA_UNEXP);
         }
         assert cond == RRuntime.LOGICAL_FALSE || cond == RRuntime.LOGICAL_TRUE : "logical value none of TRUE|FALSE|NA";
         return conditionProfile.profile(cond == RRuntime.LOGICAL_TRUE);

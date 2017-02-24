@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -121,6 +122,11 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     public SourceSection getSourceSection() {
         RDeparse.ensureSourceSection(this);
         return sourceSection;
+    }
+
+    @Override
+    protected RBaseNode getErrorContext() {
+        return this;
     }
 
     @Child private RNode functionNode;

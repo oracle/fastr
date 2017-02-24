@@ -24,8 +24,7 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn2() {
-        assertEval(Output.IgnoreWarningContext,
-                        "argv <- list('bessel_y(2,nu=288.12): precision lost in result', quote(besselY(2, nu = nu <- seq(3, 300, len = 51)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('bessel_y(2,nu=288.12): precision lost in result', quote(besselY(2, nu = nu <- seq(3, 300, len = 51)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -35,8 +34,7 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn4() {
-        assertEval(Output.IgnoreWarningContext,
-                        "argv <- list('header and col.names are of different lengths', quote(read.table('foo3', header = TRUE, col.names = letters[1:4]))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('header and col.names are of different lengths', quote(read.table('foo3', header = TRUE, col.names = letters[1:4]))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -51,7 +49,7 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn7() {
-        assertEval(Output.IgnoreWarningContext, "argv <- list(\'drop argument will be ignored', quote(`[.data.frame`(women, 'height', drop = FALSE))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(\'drop argument will be ignored', quote(`[.data.frame`(women, 'height', drop = FALSE))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -62,13 +60,12 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn9() {
-        assertEval(Output.IgnoreWarningContext, "argv <- list('1 y value <= 0 omitted from logarithmic plot', quote(xy.coords(x, NULL, log = log))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('1 y value <= 0 omitted from logarithmic plot', quote(xy.coords(x, NULL, log = log))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testdfltWarn10() {
-        assertEval(Output.IgnoreWarningContext,
-                        "argv <- list(\'x is neither a vector nor a matrix: using as.numeric(x)', quote(dotchart(table(infert$education)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(\'x is neither a vector nor a matrix: using as.numeric(x)', quote(dotchart(table(infert$education)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -79,7 +76,6 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn12() {
-        assertEval(Output.IgnoreWarningContext,
-                        "argv <- list('incomplete final line found by readTableHeader on foo4', quote(read.table('foo4', header = TRUE))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('incomplete final line found by readTableHeader on foo4', quote(read.table('foo4', header = TRUE))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 }

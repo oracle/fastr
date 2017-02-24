@@ -60,7 +60,7 @@ public class RawFunctions {
         @Specialization
         protected RRawVector charToRaw(RAbstractStringVector x) {
             if (x.getLength() > 1) {
-                RError.warning(this, RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
+                warning(RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
             }
             String s = x.getDataAt(0);
             byte[] data = new byte[s.length()];

@@ -32,9 +32,7 @@ public class TestBuiltin_bitwiseShiftL extends TestBase {
         assertEval("{ bitwShiftL(TRUE, c(TRUE, FALSE)) }");
 
         assertEval("{ bitwShiftL(c(3+3i), c(3,2,4)) }");
-        // Warning message mismatch
-        assertEval(Output.IgnoreWarningContext, "{ bitwShiftL(c(3,2,4), c(3+3i)) }");
-        // No warning message printed for NAs produced by coercion
+        assertEval("{ bitwShiftL(c(3,2,4), c(3+3i)) }");
         assertEval("{ bitwShiftL(c(1,2,3,4), c(\"a\")) }");
     }
 }

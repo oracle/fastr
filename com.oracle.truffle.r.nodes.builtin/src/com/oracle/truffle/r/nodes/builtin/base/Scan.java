@@ -413,7 +413,7 @@ public abstract class Scan extends RBuiltinNode {
 
         if (n > 0 && n < nc) {
             if (!fill) {
-                RError.warning(this, RError.Message.ITEMS_NOT_MULTIPLE);
+                warning(RError.Message.ITEMS_NOT_MULTIPLE);
             }
             fillEmpty(n, nc, records, list, data);
             records++;

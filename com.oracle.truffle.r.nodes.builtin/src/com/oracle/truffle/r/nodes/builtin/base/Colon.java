@@ -201,11 +201,10 @@ public abstract class Colon extends RBuiltinNode {
 
         private void checkLength(int length) {
             if (lengthGreaterOne.profile(length > 1)) {
-                RError.warning(this, RError.Message.ONLY_FIRST_USED, length);
+                warning(RError.Message.ONLY_FIRST_USED, length);
             }
             if (lengthEqualsZero.profile(length == 0)) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, Message.ARGUMENT_LENGTH_0);
+                throw error(Message.ARGUMENT_LENGTH_0);
             }
         }
 
@@ -237,23 +236,20 @@ public abstract class Colon extends RBuiltinNode {
             checkLength(vector.getLength());
             String val = vector.getDataAt(0);
             if (RRuntime.isNA(val)) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, RError.Message.NA_OR_NAN);
+                throw error(RError.Message.NA_OR_NAN);
             }
             // TODO it might be a double or complex string
             int result = RRuntime.string2intNoCheck(val);
             if (RRuntime.isNA(result)) {
-                CompilerDirectives.transferToInterpreter();
-                RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
-                throw RError.error(this, RError.Message.NA_OR_NAN);
+                warning(RError.Message.NA_INTRODUCED_COERCION);
+                throw error(RError.Message.NA_OR_NAN);
             }
             return result;
         }
 
         @Fallback
         protected int doOther(@SuppressWarnings("unused") Object value) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, Message.ARGUMENT_LENGTH_0);
+            throw error(Message.ARGUMENT_LENGTH_0);
         }
 
         protected static boolean isIntValue(double d) {

@@ -262,10 +262,10 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
 
             /* PR#850 */
             if (rl != null && r > rl.getLength()) {
-                throw RError.error(printCtx.printerNode(), RError.Message.GENERIC, "too few row labels");
+                throw printCtx.printerNode().error(RError.Message.GENERIC, "too few row labels");
             }
             if (cl != null && c > cl.getLength()) {
-                throw RError.error(printCtx.printerNode(), RError.Message.GENERIC, "too few column labels");
+                throw printCtx.printerNode().error(RError.Message.GENERIC, "too few column labels");
             }
             if (r == 0 && c == 0) { // FIXME? names(dimnames(.)) :
                 out.print("<0 x 0 matrix>");

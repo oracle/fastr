@@ -111,7 +111,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
             try {
                 PrintStream out = new PrintStream(new FileOutputStream(filename, append));
                 if (gcProfiling) {
-                    RError.warning(this, RError.Message.GENERIC, "Rprof: gc profiling not supported");
+                    warning(RError.Message.GENERIC, "Rprof: gc profiling not supported");
                 }
                 if (memProfiling) {
                     RDataFactory.addListener(this);

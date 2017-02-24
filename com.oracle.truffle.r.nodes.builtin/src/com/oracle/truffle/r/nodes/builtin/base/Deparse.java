@@ -43,7 +43,7 @@ public abstract class Deparse extends RBuiltinNode {
     protected RStringVector deparse(Object expr, int widthCutoffArg, boolean backtick, int control, int nlines) {
         int widthCutoff = widthCutoffArg;
         if (widthCutoff == RRuntime.INT_NA || widthCutoff < RDeparse.MIN_Cutoff || widthCutoff > RDeparse.MAX_Cutoff) {
-            RError.warning(this, RError.Message.DEPARSE_INVALID_CUTOFF);
+            warning(RError.Message.DEPARSE_INVALID_CUTOFF);
             widthCutoff = RDeparse.DEFAULT_Cutoff;
         }
 

@@ -97,7 +97,7 @@ public class TestBuiltin_pmax extends TestBase {
 
         assertEval("{ pmax(c(1, 7), c(42, 1)) }");
         assertEval("{ pmax(c(1, 7), double()) }");
-        assertEval(Output.IgnoreWarningContext, "{ pmax(c(1, 7, 8), c(1), c(42, 1)) }");
+        assertEval("{ pmax(c(1, 7, 8), c(1), c(42, 1)) }");
         assertEval("{ pmax(c(1, 7), c(42, as.double(NA))) }");
         assertEval("{ pmax(c(1, 7), c(42, as.double(NA)), na.rm=TRUE) }");
 

@@ -53,7 +53,7 @@ public abstract class ReadREnviron extends RBuiltinNode {
         try {
             RContext.getInstance().stateREnvVars.readEnvironFile(path);
         } catch (FileNotFoundException ex) {
-            RError.warning(this, RError.Message.GENERIC, ex.getMessage());
+            warning(RError.Message.GENERIC, ex.getMessage());
             result = RRuntime.LOGICAL_FALSE;
         } catch (IOException ex) {
             throw error(RError.Message.GENERIC, ex.getMessage());

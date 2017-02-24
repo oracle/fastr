@@ -184,10 +184,10 @@ public class TestBuiltin_sum extends TestBase {
     public void testOveflow() {
         assertEval("sum(1:100000)");
         assertEval("sum(seq.int(1, 100000))");
-        assertEval(Output.IgnoreWarningContext, "sum(seq.int(from=1, by=1, length.out=100000))");
+        assertEval("sum(seq.int(from=1, by=1, length.out=100000))");
         assertEval("sum(-1:-100000)");
         assertEval("sum(seq.int(-1, -100000))");
-        assertEval(Output.IgnoreWarningContext, "sum(seq.int(from=-1, by=-1, length.out=100000))");
+        assertEval("sum(seq.int(from=-1, by=-1, length.out=100000))");
 
         assertEval("sum(c(2147483647L, 1L))");
         assertEval("sum(c(-2147483647L, -1L))");

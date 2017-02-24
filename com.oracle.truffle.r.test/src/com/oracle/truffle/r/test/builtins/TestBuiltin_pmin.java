@@ -76,13 +76,13 @@ public class TestBuiltin_pmin extends TestBase {
     public void testPMin() {
         assertEval("{ pmin(c(1L, 7L), c(42L, 1L)) }");
         assertEval("{ pmin(c(1L, 7L), integer()) }");
-        assertEval(Output.IgnoreWarningContext, "{ pmin(c(1L, 7L, 8L), c(1L), c(42L, 1L)) }");
+        assertEval("{ pmin(c(1L, 7L, 8L), c(1L), c(42L, 1L)) }");
         assertEval("{ pmin(c(1L, 7L), c(42L, as.integer(NA))) }");
         assertEval("{ pmin(c(1L, 7L), c(42L, as.integer(NA)), na.rm=TRUE) }");
 
         assertEval("{ pmin(c(1, 7), c(42, 1)) }");
         assertEval("{ pmin(c(1, 7), double()) }");
-        assertEval(Output.IgnoreWarningContext, "{ pmin(c(1, 7, 8), c(1), c(42, 1)) }");
+        assertEval("{ pmin(c(1, 7, 8), c(1), c(42, 1)) }");
         assertEval("{ pmin(c(1, 7), c(42, as.double(NA))) }");
         assertEval("{ pmin(c(1, 7), c(42, as.double(NA)), na.rm=TRUE) }");
 

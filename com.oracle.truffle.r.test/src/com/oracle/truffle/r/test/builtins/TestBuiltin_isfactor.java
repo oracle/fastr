@@ -30,6 +30,6 @@ public class TestBuiltin_isfactor extends TestBase {
         assertEval("{is.factor(1)}");
         assertEval("{is.factor(c)}");
 
-        assertEval(Output.IgnoreErrorContext, "{x<-1;class(x)<-\"factor\";is.factor(x)}");
+        assertEval("{x<-1;class(x)<-\"factor\";is.factor(x)}");
     }
 }

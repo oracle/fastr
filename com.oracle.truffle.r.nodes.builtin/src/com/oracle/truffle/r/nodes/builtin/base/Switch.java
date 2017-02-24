@@ -73,7 +73,7 @@ public abstract class Switch extends RBuiltinNode {
 
     private Object doSwitchString(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         if (noAlternativesProfile.profile(optionalArgs.getLength() == 0)) {
-            RError.warning(this, RError.Message.NO_ALTERNATIVES_IN_SWITCH);
+            warning(RError.Message.NO_ALTERNATIVES_IN_SWITCH);
             return null;
         }
         Object[] optionalArgValues = optionalArgs.getArguments();
@@ -167,7 +167,7 @@ public abstract class Switch extends RBuiltinNode {
 
     private Object doSwitchInt(VirtualFrame frame, int index, RArgsValuesAndNames optionalArgs) {
         if (noAlternativesProfile.profile(optionalArgs.getLength() == 0)) {
-            RError.warning(this, RError.Message.NO_ALTERNATIVES_IN_SWITCH);
+            warning(RError.Message.NO_ALTERNATIVES_IN_SWITCH);
             return null;
         }
         Object[] optionalArgValues = optionalArgs.getArguments();

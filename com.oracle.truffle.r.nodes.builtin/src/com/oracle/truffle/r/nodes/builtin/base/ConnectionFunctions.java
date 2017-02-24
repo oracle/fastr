@@ -220,14 +220,14 @@ public abstract class ConnectionFunctions {
                 } else {
                     if (!(open.equals("w+") || open.equals("w+b"))) {
                         open = "w+";
-                        RError.warning(RError.SHOW_CALLER, RError.Message.FILE_OPEN_TMP);
+                        warning(RError.Message.FILE_OPEN_TMP);
                     }
                 }
             }
             try {
                 return new FileRConnection(path, open).asVector();
             } catch (IOException ex) {
-                RError.warning(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_FILE, description, ex.getMessage());
+                warning(RError.Message.CANNOT_OPEN_FILE, description, ex.getMessage());
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
@@ -265,7 +265,7 @@ public abstract class ConnectionFunctions {
         }
 
         private RError reportError(String path, IOException ex) throws RError {
-            RError.warning(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_FILE, path, ex.getMessage());
+            warning(RError.Message.CANNOT_OPEN_FILE, path, ex.getMessage());
             throw error(RError.Message.CANNOT_OPEN_CONNECTION);
         }
     }
@@ -506,7 +506,7 @@ public abstract class ConnectionFunctions {
                     throw error(RError.Message.INVALID_CONNECTION);
                 }
                 if (baseConn.isOpen()) {
-                    RError.warning(RError.SHOW_CALLER, RError.Message.ALREADY_OPEN_CONNECTION);
+                    warning(RError.Message.ALREADY_OPEN_CONNECTION);
                     return RNull.instance;
                 }
                 baseConn.open(open);
@@ -756,7 +756,7 @@ public abstract class ConnectionFunctions {
                     final int writeLen = Math.min(s.length(), nc);
                     int pad = nc - s.length();
                     if (pad > 0) {
-                        RError.warning(RError.SHOW_CALLER, RError.Message.MORE_CHARACTERS);
+                        warning(RError.Message.MORE_CHARACTERS);
                     }
                     openConn.writeChar(s.substring(0, writeLen), pad, getSepFor(sep, i), useBytes);
                 }

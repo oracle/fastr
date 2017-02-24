@@ -28,10 +28,13 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -304,5 +307,144 @@ public abstract class RBaseNode extends Node {
 
     protected static boolean isRAttributable(Object value) {
         return value instanceof RAttributable;
+    }
+
+    /*
+     * Error handling-related functionality.
+     */
+
+    /**
+     * Find the proper context for errors or warnings produced by this node. The default behavior is
+     * to call getErrorContext() of the parent RBaseNode recursively.
+     *
+     * Certain types of nodes, e.g., builtins, will supply the correct context for themselves.
+     */
+    protected RBaseNode getErrorContext() {
+        Node node = getParent();
+        while (node != null) {
+            if (node instanceof RBaseNode) {
+                return ((RBaseNode) node).getErrorContext();
+            }
+            if (node instanceof RootNode) {
+                return RError.NO_CALLER;
+            }
+            node = node.getParent();
+        }
+        throw RInternalError.shouldNotReachHere("trying to get error context of node without parent");
+    }
+
+    /**
+     * @see #error(Message)
+     */
+    public final RError error(RErrorException exception) {
+        CompilerDirectives.transferToInterpreter();
+        throw RError.error(getErrorContext(), exception);
+    }
+
+    /**
+     * Raises the given error with the error context determined by {@link #getErrorContext()}. This
+     * function is always considered to be a slow-path operation and will transferToInterpreter.
+     *
+     * @return an RError so that this function can be called as {@code throw error(...);}.
+     */
+    public final RError error(RError.Message message) {
+        CompilerDirectives.transferToInterpreter();
+        throw RError.error(getErrorContext(), message);
+    }
+
+    /**
+     * @see #error(Message)
+     */
+    public final RError error(RError.Message message, Object arg) {
+        CompilerDirectives.transferToInterpreter();
+        throw RError.error(getErrorContext(), message, arg);
+    }
+
+    /**
+     * @see #error(Message)
+     */
+    public final RError error(RError.Message message, Object arg1, Object arg2) {
+        CompilerDirectives.transferToInterpreter();
+        throw RError.error(getErrorContext(), message, arg1, arg2);
+    }
+
+    /**
+     * @see #error(Message)
+     */
+    public final RError error(RError.Message message, Object arg1, Object arg2, Object arg3) {
+        CompilerDirectives.transferToInterpreter();
+        throw RError.error(getErrorContext(), message, arg1, arg2, arg3);
+    }
+
+    /**
+     * @see #error(Message)
+     */
+    public final RError error(RError.Message message, Object arg1, Object arg2, Object arg3, Object arg4) {
+        CompilerDirectives.transferToInterpreter();
+        throw RError.error(getErrorContext(), message, arg1, arg2, arg3, arg4);
+    }
+
+    /**
+     * @see #error(Message)
+     */
+    public final RError error(RError.Message message, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5) {
+        CompilerDirectives.transferToInterpreter();
+        throw RError.error(getErrorContext(), message, arg1, arg2, arg3, arg4, arg5);
+    }
+
+    /**
+     * @see #error(Message)
+     */
+    public final RError error(RError.Message message, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6) {
+        CompilerDirectives.transferToInterpreter();
+        throw RError.error(getErrorContext(), message, arg1, arg2, arg3, arg4, arg5, arg6);
+    }
+
+    @CompilationFinal boolean hasSeenWarning;
+
+    /**
+     * Raises the given warning with the error context determined by {@link #getErrorContext()}.
+     * This function is profiled so that it will only use a real call if a warning was issued from
+     * this node before.
+     */
+    public final void warning(Message msg) {
+        if (!hasSeenWarning) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            hasSeenWarning = true;
+        }
+        RError.warning(getErrorContext(), msg);
+    }
+
+    /**
+     * @see #warning(Message)
+     */
+    public final void warning(Message msg, Object arg1) {
+        if (!hasSeenWarning) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            hasSeenWarning = true;
+        }
+        RError.warning(getErrorContext(), msg, arg1);
+    }
+
+    /**
+     * @see #warning(Message)
+     */
+    public final void warning(Message msg, Object arg1, Object arg2) {
+        if (!hasSeenWarning) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            hasSeenWarning = true;
+        }
+        RError.warning(getErrorContext(), msg, arg1, arg2);
+    }
+
+    /**
+     * @see #warning(Message)
+     */
+    public final void warning(Message msg, Object arg1, Object arg2, Object arg3) {
+        if (!hasSeenWarning) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            hasSeenWarning = true;
+        }
+        RError.warning(getErrorContext(), msg, arg1, arg2, arg3);
     }
 }

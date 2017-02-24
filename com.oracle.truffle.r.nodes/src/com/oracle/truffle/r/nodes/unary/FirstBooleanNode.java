@@ -58,7 +58,7 @@ public abstract class FirstBooleanNode extends CastNode {
     protected boolean firstScalar(byte argument) {
         if (RRuntime.isNA(argument)) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, invalidValueName == null ? Message.NA_UNEXP : Message.INVALID_VALUE, invalidValueName);
+            throw error(invalidValueName == null ? Message.NA_UNEXP : Message.INVALID_VALUE, invalidValueName);
         }
         return RRuntime.fromLogical(argument);
     }
@@ -67,7 +67,7 @@ public abstract class FirstBooleanNode extends CastNode {
         if (lengthNotOneProfile.profile(argument.getLength() != 1)) {
             if (argument.getLength() == 0) {
                 CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, invalidValueName == null ? Message.LENGTH_ZERO : Message.INVALID_VALUE, invalidValueName);
+                throw error(invalidValueName == null ? Message.LENGTH_ZERO : Message.INVALID_VALUE, invalidValueName);
             } else {
                 warningProfile.enter();
                 if (invalidValueName == null) {
@@ -104,6 +104,6 @@ public abstract class FirstBooleanNode extends CastNode {
     @Fallback
     protected boolean fallback(@SuppressWarnings("unused") Object argument) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, invalidValueName == null ? Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL : Message.INVALID_VALUE, invalidValueName);
+        throw error(invalidValueName == null ? Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL : Message.INVALID_VALUE, invalidValueName);
     }
 }

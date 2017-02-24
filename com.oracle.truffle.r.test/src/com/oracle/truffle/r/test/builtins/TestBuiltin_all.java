@@ -29,7 +29,7 @@ public class TestBuiltin_all extends TestBase {
 
     @Test
     public void testall3() {
-        assertEval(Output.IgnoreWarningContext, "argv <- list(c(1, 1, 3, 1, 1, 3, 3, 3, 3), FALSE, NULL);all(argv[[1]],argv[[2]],argv[[3]]);");
+        assertEval("argv <- list(c(1, 1, 3, 1, 1, 3, 3, 3, 3), FALSE, NULL);all(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
@@ -117,10 +117,9 @@ public class TestBuiltin_all extends TestBase {
         assertEval("{ all(TRUE, TRUE, NA,  na.rm=FALSE) }");
 
         assertEval("{ all(TRUE, TRUE, NA,  na.rm=TRUE) }");
-        // FIXME coercion warning missing
         assertEval("{ all(1) }");
         assertEval("{ all(0) }");
-        assertEval(Output.IgnoreWarningContext, "{ all(TRUE,c(TRUE,TRUE),1) }");
+        assertEval("{ all(TRUE,c(TRUE,TRUE),1) }");
         assertEval("{ all(TRUE,c(TRUE,TRUE),1,0) }");
 
         assertEval("{ all(NULL) }");

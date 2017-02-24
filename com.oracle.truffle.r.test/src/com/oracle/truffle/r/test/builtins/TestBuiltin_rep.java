@@ -205,10 +205,10 @@ public class TestBuiltin_rep extends TestBase {
         assertEval("{ rep(7, times=NULL) }");
         assertEval("{ rep(7, times=\"7\") }");
         assertEval("{ rep(7, length.out=\"7\") }");
-        assertEval(Output.IgnoreWarningContext, "{ rep(7, length.out=integer()) }");
+        assertEval("{ rep(7, length.out=integer()) }");
         assertEval("{ rep(7, length.out=NA) }");
         assertEval("{ rep(7, length.out=NULL) }");
-        assertEval(Output.IgnoreWarningContext, "{ rep(7, length.out=c(7, 42)) }");
+        assertEval("{ rep(7, length.out=c(7, 42)) }");
         assertEval("{ rep(7, each=\"7\") }");
         assertEval("{ rep(7, each=integer()) }");
         assertEval("{ rep(7, each=NA) }");

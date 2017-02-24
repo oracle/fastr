@@ -142,7 +142,7 @@ public abstract class UpdateField extends RBuiltinNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castList = insert(CastListNodeGen.create(true, true, false));
             }
-            RError.warning(this, RError.Message.COERCING_LHS_TO_LIST);
+            warning(RError.Message.COERCING_LHS_TO_LIST);
             return castList.executeList(vector);
         }
         return vector;

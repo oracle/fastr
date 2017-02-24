@@ -43,7 +43,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * might require more information to disambiguate. Rather than create a new class to carry that, we
  * would simply create an instance of a {@link RBaseNode} subclass with the additional state.
  * Currently,there are no such cases.
- *
  */
 @SuppressWarnings("serial")
 public final class RError extends RuntimeException {
@@ -190,11 +189,10 @@ public final class RError extends RuntimeException {
      * Handles an R error with the most general argument signature. All other facade variants
      * delegate to this method.
      *
-     * Note that the method never actually returns a result, but the throws the error directly.
+     * Note that the method never actually returns a result, instead it throws the error directly.
      * However, the signature has a return type of {@link RError} to allow callers to use the idiom
      * {@code throw error(...)} to indicate the control transfer. It is entirely possible that, due
      * to condition handlers, the error will not actually be thrown.
-     *
      *
      * @param node {@code RNode} of the code throwing the error, or {@link #SHOW_CALLER2} if not
      *            available. If {@code NO_NODE} an attempt will be made to identify the call context
@@ -236,6 +234,12 @@ public final class RError extends RuntimeException {
     @TruffleBoundary
     public static RError nyi(RBaseNode node, String msg) {
         throw error(node, RError.Message.NYI, msg);
+    }
+
+    @TruffleBoundary
+    public static void warning(ErrorContext node, Message msg, Object... args) {
+        assert node != null;
+        RErrorHandling.warningcall(true, node, msg, args);
     }
 
     @TruffleBoundary

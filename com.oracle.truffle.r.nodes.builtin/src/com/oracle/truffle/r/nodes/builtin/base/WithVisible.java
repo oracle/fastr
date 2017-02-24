@@ -33,7 +33,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -57,8 +56,7 @@ final class WithVisibleSpecial extends RNode {
     public Object execute(VirtualFrame frame) {
         Object value = delegate.visibleExecute(frame);
         if (value == RMissing.instance) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, Message.ARGUMENT_MISSING, "x");
+            throw error(Message.ARGUMENT_MISSING, "x");
         }
         return RDataFactory.createList(new Object[]{value, RRuntime.asLogical(visibility.execute(frame))}, WithVisible.LISTNAMES);
     }
@@ -98,7 +96,6 @@ public abstract class WithVisible extends RBuiltinNode {
 
     @Specialization
     protected RList withVisible(@SuppressWarnings("unused") RMissing x) {
-        CompilerDirectives.transferToInterpreter();
         throw error(Message.ARGUMENT_MISSING, "x");
     }
 }

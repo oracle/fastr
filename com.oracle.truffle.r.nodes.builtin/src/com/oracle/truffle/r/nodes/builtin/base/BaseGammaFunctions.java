@@ -149,7 +149,7 @@ public class BaseGammaFunctions {
                 }
             }
             if (warnNaN) {
-                RError.warning(this, RError.Message.NAN_PRODUCED);
+                warning(RError.Message.NAN_PRODUCED);
             }
             return RDataFactory.createDoubleVector(result, naValCheck.neverSeenNA());
         }
