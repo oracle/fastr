@@ -32,14 +32,22 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -347,16 +355,11 @@ public class ConnectionSupport {
 
     // TODO implement all open modes
 
-    public static final class InvalidConnection extends RConnection {
+    public static final class InvalidConnection implements RConnection {
 
         public static final InvalidConnection instance = new InvalidConnection();
 
         private static final int INVALID_DESCRIPTOR = -1;
-
-        @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
-        }
 
         @Override
         public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
@@ -464,8 +467,14 @@ public class ConnectionSupport {
         }
 
         @Override
-        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        public void pushBack(RAbstractStringVector lines, boolean addNewLine) {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            // TODO Auto-generated method stub
+            return 0;
         }
     }
 
@@ -488,7 +497,7 @@ public class ConnectionSupport {
      * it subsequently will throw an error. The latter will open/close the connection (internally)
      * and this can be repeated indefinitely.
      */
-    public abstract static class BaseRConnection extends RConnection {
+    public abstract static class BaseRConnection implements RConnection {
 
         /**
          * {@code true} is the connection has been opened successfully. N.B. This supports lazy
@@ -530,6 +539,14 @@ public class ConnectionSupport {
         private Charset encoding;
 
         private ConnectionClass conClass;
+
+        private LinkedList<String> pushBack;
+
+        /**
+         * Indicates that the last line read operation was incomplete.<br>
+         * This is only relevant for connections in text and non-blocking mode.
+         */
+        private boolean incomplete = false;
 
         /**
          * The constructor for every connection class except {@link StdConnections}.
@@ -717,10 +734,9 @@ public class ConnectionSupport {
             opened = true;
         }
 
-        @Override
         protected String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
             checkOpen();
-            return theConnection.readLinesInternal(n, warn, skipNul);
+            return theConnection.readLines(n, warn, skipNul);
         }
 
         @Override
@@ -811,10 +827,9 @@ public class ConnectionSupport {
             return theConnection.getc();
         }
 
-        @Override
-        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        public long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             checkOpen();
-            return theConnection.seekInternal(offset, seekMode, seekRWMode);
+            return theConnection.seek(offset, seekMode, seekRWMode);
         }
 
         @Override
@@ -854,6 +869,179 @@ public class ConnectionSupport {
 
         public boolean isClosed() {
             return closed;
+        }
+
+        private String readOneLineWithPushBack(List<String> res, int ind) {
+            String s = pushBack.pollLast();
+            if (s == null) {
+                return null;
+            } else {
+                String[] lines = s.split("\n", 2);
+                if (lines.length == 2) {
+                    // we hit end of the line
+                    if (lines[1].length() != 0) {
+                        // suffix is not empty and needs to be processed later
+                        pushBack.push(lines[1]);
+                    }
+                    assert res.size() == ind;
+                    res.add(ind, lines[0]);
+                    return null;
+                } else {
+                    // no end of the line found yet
+                    StringBuilder sb = new StringBuilder();
+                    do {
+                        assert lines.length == 1;
+                        sb.append(lines[0]);
+                        s = pushBack.pollLast();
+                        if (s == null) {
+                            break;
+                        }
+
+                        lines = s.split("\n", 2);
+                        if (lines.length == 2) {
+                            // we hit end of the line
+                            if (lines[1].length() != 0) {
+                                // suffix is not empty and needs to be processed later
+                                pushBack.push(lines[1]);
+                            }
+                            assert res.size() == ind;
+                            res.add(ind, sb.append(lines[0]).toString());
+                            return null;
+                        } // else continue
+                    } while (true);
+                    return sb.toString();
+                }
+            }
+        }
+
+        /**
+         * TODO(fa) This method is subject for refactoring. I modified the original implementation
+         * to be capable to handle a negative 'n' parameter. It indicates to read as much lines as
+         * available.
+         */
+        @TruffleBoundary
+        private String[] readLinesWithPushBack(int n, boolean warn, boolean skipNul) throws IOException {
+            // NOTE: 'n' may be negative indicating to read as much lines as available
+            final List<String> res;
+            if (n >= 0) {
+                res = new ArrayList<>(n);
+            } else {
+                res = new ArrayList<>();
+            }
+
+            for (int i = 0; i < n || n < 0; i++) {
+                String s = readOneLineWithPushBack(res, i);
+                final int remainingLineCount = n >= 0 ? n - i : n;
+                if (s == null) {
+                    if (i >= res.size() || res.get(i) == null) {
+                        // no more push back value
+
+                        String[] resInternal = readLinesInternal(remainingLineCount, warn, skipNul);
+                        res.addAll(Arrays.asList(resInternal));
+                        pushBack = null;
+                        break;
+                    }
+                    // else res[i] has been filled - move to trying to fill the next one
+                } else {
+                    // reached the last push back value without reaching and of line
+                    assert pushBack.size() == 0;
+                    String[] resInternal = readLinesInternal(remainingLineCount, warn, skipNul);
+                    res.addAll(i, Arrays.asList(resInternal));
+                    if (res.get(i) != null) {
+                        res.set(i, s + res.get(i));
+                    } else {
+                        res.set(i, s);
+                    }
+                    pushBack = null;
+                    break;
+                }
+            }
+            return res.toArray(new String[res.size()]);
+        }
+
+        @Override
+        public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
+            if (pushBack == null) {
+                return readLinesInternal(n, warn, skipNul);
+            } else if (pushBack.size() == 0) {
+                pushBack = null;
+                return readLinesInternal(n, warn, skipNul);
+            } else {
+                return readLinesWithPushBack(n, warn, skipNul);
+            }
+        }
+
+        /**
+         * Pushes lines back to the connection.
+         */
+        @Override
+        @TruffleBoundary
+        public final void pushBack(RAbstractStringVector lines, boolean addNewLine) {
+            if (pushBack == null) {
+                pushBack = new LinkedList<>();
+            }
+            for (int i = 0; i < lines.getLength(); i++) {
+                String newLine = lines.getDataAt(i);
+                if (addNewLine) {
+                    newLine = newLine + '\n';
+                }
+                pushBack.addFirst(newLine);
+            }
+        }
+
+        /**
+         * Return the length of the push back.
+         */
+        @TruffleBoundary
+        public final int pushBackLength() {
+            return pushBack == null ? 0 : pushBack.size();
+        }
+
+        /**
+         * Clears the pushback.
+         */
+        @TruffleBoundary
+        public final void pushBackClear() {
+            pushBack = null;
+        }
+
+        /**
+         * Support for {@code seek} Internal. Also clears push back lines.
+         */
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            if (isSeekable()) {
+                // discard any push back strings
+                pushBackClear();
+            }
+            // Do not throw error at this position, since the error messages varies depending on the
+            // connection.
+            return seekInternal(offset, seekMode, seekRWMode);
+        }
+
+        /**
+         * Returns {@code true} iff the last read operation was blocked or there is unflushed
+         * output.
+         */
+        public boolean isIncomplete() {
+            return incomplete;
+        }
+
+        protected void setIncomplete(boolean b) {
+            this.incomplete = b;
+        }
+
+        public final RAbstractIntVector asVector() {
+            String[] classes = new String[]{ConnectionSupport.getBaseConnection(this).getConnectionClass().getPrintName(), "connection"};
+
+            RAbstractIntVector result = RDataFactory.createIntVector(new int[]{getDescriptor()}, true);
+
+            RStringVector classVector = RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR);
+            // it's important to put "this" into the externalptr, so that it doesn't get collected
+            RExternalPtr connectionId = RDataFactory.createExternalPtr(null, this, RDataFactory.createSymbol("connection"), RNull.instance);
+            DynamicObject attrs = RAttributesLayout.createClassWithConnId(classVector, connectionId);
+            result.initAttributes(attrs);
+            return result;
         }
     }
 

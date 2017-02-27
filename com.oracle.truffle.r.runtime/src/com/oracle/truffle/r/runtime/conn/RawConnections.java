@@ -148,7 +148,7 @@ public class RawConnections {
         }
 
         @Override
-        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             return RawRConnection.seek(channel, offset, seekMode, seekRWMode);
         }
 
@@ -179,7 +179,7 @@ public class RawConnections {
         }
 
         @Override
-        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             return RawRConnection.seek(channel, offset, seekMode, seekRWMode);
         }
 
@@ -211,7 +211,7 @@ public class RawConnections {
         }
 
         @Override
-        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             return RawRConnection.seek(channel, offset, seekMode, seekRWMode);
         }
 

@@ -41,7 +41,7 @@ abstract class DelegateWriteRConnection extends DelegateRConnection {
     }
 
     @Override
-    public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+    public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
         throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
     }
 
@@ -118,7 +118,7 @@ abstract class DelegateWriteRConnection extends DelegateRConnection {
     @Override
     public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
         boolean incomplete = DelegateRConnection.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
-        setIncomplete(incomplete);
+        base.setIncomplete(incomplete);
     }
 
     @Override

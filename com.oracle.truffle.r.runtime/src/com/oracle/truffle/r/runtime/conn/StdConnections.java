@@ -79,15 +79,15 @@ public class StdConnections {
         return RContext.getInstance().stateStdConnections;
     }
 
-    public static RConnection getStdin() {
+    public static BaseRConnection getStdin() {
         return getContextState().stdin;
     }
 
-    public static RConnection getStdout() {
+    public static BaseRConnection getStdout() {
         return getContextState().stdout;
     }
 
-    public static RConnection getStderr() {
+    public static BaseRConnection getStderr() {
         return getContextState().stderr;
     }
 

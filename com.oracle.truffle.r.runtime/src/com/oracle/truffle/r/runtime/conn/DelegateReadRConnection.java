@@ -29,7 +29,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
@@ -84,12 +83,6 @@ public abstract class DelegateReadRConnection extends DelegateRConnection {
     @Override
     public byte[] readBinChars() throws IOException {
         return DelegateRConnection.readBinCharsHelper(getChannel());
-    }
-
-    @TruffleBoundary
-    @Override
-    public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-        return readLinesHelper(n, warn, skipNul);
     }
 
     @Override

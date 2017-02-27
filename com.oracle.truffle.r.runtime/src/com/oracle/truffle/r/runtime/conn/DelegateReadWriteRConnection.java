@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
@@ -76,12 +75,6 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
         return DelegateRConnection.readBinCharsHelper(getChannel());
     }
 
-    @TruffleBoundary
-    @Override
-    public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-        return readLinesHelper(n, warn, skipNul);
-    }
-
     @Override
     public void flush() {
         // nothing to do for channels
@@ -124,7 +117,7 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
     @Override
     public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
         boolean incomplete = DelegateRConnection.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
-        setIncomplete(incomplete);
+        base.setIncomplete(incomplete);
     }
 
     @Override

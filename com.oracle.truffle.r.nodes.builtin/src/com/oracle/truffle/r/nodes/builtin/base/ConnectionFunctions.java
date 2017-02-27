@@ -1170,7 +1170,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RAbstractIntVector getConnection(int what) {
-            RConnection con = RContext.getInstance().stateRConnection.getConnection(what, false);
+            BaseRConnection con = RContext.getInstance().stateRConnection.getConnection(what, false);
             if (con == null) {
                 throw error(RError.Message.NO_SUCH_CONNECTION, what);
             } else {

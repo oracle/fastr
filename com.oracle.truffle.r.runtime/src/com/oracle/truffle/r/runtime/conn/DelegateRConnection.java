@@ -33,6 +33,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Objects;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
@@ -49,7 +50,7 @@ import sun.nio.cs.StreamDecoder;
  * operations.
  * </p>
  */
-abstract class DelegateRConnection extends RConnection {
+abstract class DelegateRConnection implements RConnection {
     protected final BaseRConnection base;
 
     DelegateRConnection(BaseRConnection base) {
@@ -77,7 +78,7 @@ abstract class DelegateRConnection extends RConnection {
     }
 
     @Override
-    protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+    public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
         if (!isSeekable()) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.SEEK_NOT_ENABLED);
         }
@@ -91,7 +92,9 @@ abstract class DelegateRConnection extends RConnection {
      * @param warn Specifies if warnings should be output.
      * @param skipNul Specifies if the null character should be ignored.
      */
-    protected String[] readLinesHelper(int n, boolean warn, boolean skipNul) throws IOException {
+    @Override
+    @TruffleBoundary
+    public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
         base.setIncomplete(false);
         ArrayList<String> lines = new ArrayList<>();
         int totalRead = 0;
@@ -348,4 +351,8 @@ abstract class DelegateRConnection extends RConnection {
         return incomplete;
     }
 
+    @Override
+    public void pushBack(RAbstractStringVector lines, boolean addNewLine) {
+        throw RInternalError.shouldNotReachHere();
+    }
 }

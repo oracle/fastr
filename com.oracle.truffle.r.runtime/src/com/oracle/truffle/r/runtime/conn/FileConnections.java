@@ -377,7 +377,7 @@ public class FileConnections {
         }
 
         @Override
-        public long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             long result = raf.getFilePointer();
             switch (seekMode) {
                 case ENQUIRE:
@@ -406,9 +406,9 @@ public class FileConnections {
         }
 
         @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+        public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
             raf.seek(readOffset);
-            return super.readLinesInternal(n, warn, skipNul);
+            return super.readLines(n, warn, skipNul);
         }
 
         @Override
@@ -486,7 +486,7 @@ public class FileConnections {
         }
 
         @Override
-        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             if (seekable) {
                 // TODO GZIP is basically seekable; however, the output stream does not allow any
                 // seeking
@@ -494,7 +494,7 @@ public class FileConnections {
                 seekPosition = offset;
                 return oldPos;
             }
-            return super.seekInternal(offset, seekMode, seekRWMode);
+            return super.seek(offset, seekMode, seekRWMode);
         }
 
         @Override

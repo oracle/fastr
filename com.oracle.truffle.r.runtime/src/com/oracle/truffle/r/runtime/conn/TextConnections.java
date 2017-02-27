@@ -101,7 +101,7 @@ public class TextConnections {
         }
 
         @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+        public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
             int nleft = lines.length - index;
             int nlines = nleft;
             if (n > 0) {
@@ -302,7 +302,7 @@ public class TextConnections {
         }
 
         @Override
-        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             throw RError.error(RError.SHOW_CALLER, RError.Message.SEEK_NOT_RELEVANT_FOR_TEXT_CON);
         }
 
