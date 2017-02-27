@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyDoubleVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
@@ -141,7 +142,7 @@ public class DatePOSIXFunctions {
 
         static {
             Casts casts = new Casts(Date2POSIXlt.class);
-            casts.arg("x").mapNull(emptyDoubleVector()).asDoubleVector();
+            casts.arg("x").mustNotBeMissing().mapIf(nullValue(), emptyDoubleVector()).asDoubleVector();
         }
 
         @Specialization

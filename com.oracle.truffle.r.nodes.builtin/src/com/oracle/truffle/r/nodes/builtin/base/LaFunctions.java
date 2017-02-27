@@ -102,13 +102,13 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected Object doRg(RDoubleVector matrix, boolean onlyValues,
+        protected Object doRg(RAbstractDoubleVector matrix, boolean onlyValues,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
                         @Cached("create()") LapackRFFI.DgeevNode dgeevNode) {
             int[] dims = getDimsNode.getDimensions(matrix);
             // copy array component of matrix as Lapack destroys it
             int n = dims[0];
-            double[] a = matrix.getDataCopy();
+            double[] a = matrix.materialize().getDataCopy();
             char jobVL = 'N';
             char jobVR = 'N';
             boolean vectors = !onlyValues;
@@ -202,7 +202,7 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected Object doRs(RDoubleVector matrix, boolean onlyValues,
+        protected Object doRs(RAbstractDoubleVector matrix, boolean onlyValues,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
                         @Cached("create()") LapackRFFI.DsyevrNode dsyevrNode) {
             int[] dims = getDimsNode.getDimensions(matrix);
@@ -215,7 +215,7 @@ public class LaFunctions {
             int il = 0;
             int iu = 0;
             double abstol = 0.0;
-            double[] x = matrix.getDataCopy();
+            double[] x = matrix.materialize().getDataCopy();
 
             double[] values = new double[n];
 
@@ -275,15 +275,11 @@ public class LaFunctions {
                         @Cached("create()") SetDimAttributeNode setDimsNode,
                         @Cached("create()") LapackRFFI.Dgeqp3Node dgeqp3Node) {
             // This implementation is sufficient for B25 matcal-5.
-            if (!(aIn instanceof RDoubleVector)) {
-                RError.nyi(this, "non-real vectors not supported (yet)");
-            }
-            RDoubleVector daIn = (RDoubleVector) aIn;
-            int[] dims = getDimsNode.getDimensions(daIn);
+            int[] dims = getDimsNode.getDimensions(aIn);
             // copy array component of matrix as Lapack destroys it
             int n = dims[0];
             int m = dims[1];
-            double[] a = daIn.getDataCopy();
+            double[] a = aIn.materialize().getDataCopy();
             int[] jpvt = new int[n];
             double[] tau = new double[m < n ? m : n];
             double[] work = new double[1];
@@ -328,7 +324,7 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RDoubleVector doQrCoefReal(RList qIn, RDoubleVector bIn,
+        protected RDoubleVector doQrCoefReal(RList qIn, RAbstractDoubleVector bIn,
                         @Cached("create()") GetDimAttributeNode getBDimsNode,
                         @Cached("create()") GetDimAttributeNode getQDimsNode,
                         @Cached("create()") LapackRFFI.DormqrNode dormqrNode,
@@ -481,7 +477,7 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RDoubleVector doDetGeReal(RDoubleVector aIn, boolean piv, double tol,
+        protected RDoubleVector doDetGeReal(RAbstractDoubleVector aIn, boolean piv, double tol,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
                         @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
                         @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
@@ -551,7 +547,7 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RDoubleVector laSolve(RAbstractVector a, RDoubleVector bin, double tol,
+        protected RDoubleVector laSolve(RAbstractVector a, RAbstractDoubleVector bin, double tol,
                         @Cached("create()") GetDimAttributeNode getADimsNode,
                         @Cached("create()") GetDimAttributeNode getBinDimsNode,
                         @Cached("create()") SetDimAttributeNode setBDimsNode,

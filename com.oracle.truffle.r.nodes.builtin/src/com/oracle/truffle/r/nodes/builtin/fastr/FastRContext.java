@@ -274,20 +274,13 @@ public class FastRContext {
         @Specialization
         @TruffleBoundary
         protected Object rscript(RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
-            Object rc = RContext.getRRuntimeASTAccess().rscriptMain(args.materialize().getDataCopy(), env.materialize().getDataCopy(), intern);
-            return rc;
+            return RContext.getRRuntimeASTAccess().rscriptMain(args.materialize().getDataCopy(), env.materialize().getDataCopy(), intern);
         }
 
         @Specialization
         @TruffleBoundary
         protected Object rscript(RAbstractStringVector args, @SuppressWarnings("unused") RMissing env, boolean intern) {
             return rscript(args, RDataFactory.createEmptyStringVector(), intern);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected Object rscript(@SuppressWarnings("unused") RMissing args, RAbstractStringVector env, boolean intern) {
-            return rscript(RDataFactory.createEmptyStringVector(), env, intern);
         }
     }
 

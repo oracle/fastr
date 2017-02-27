@@ -31,6 +31,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -39,15 +40,27 @@ public abstract class FastRDebug extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(FastRDebug.class);
-        casts.arg("values").asStringVector();
+        casts.arg("values").allowNullAndMissing().asStringVector();
     }
 
     @Specialization
     @TruffleBoundary
-    protected RNull debug(RAbstractStringVector vec) {
-        for (int i = 0; i < vec.getLength(); i++) {
-            FastROptions.debugUpdate(vec.getDataAt(i));
+    protected RNull debug(RAbstractStringVector values) {
+        for (int i = 0; i < values.getLength(); i++) {
+            FastROptions.debugUpdate(values.getDataAt(i));
         }
+        return RNull.instance;
+    }
+
+    @Specialization
+    @TruffleBoundary
+    protected RNull debug(@SuppressWarnings("unused") RNull values) {
+        return RNull.instance;
+    }
+
+    @Specialization
+    @TruffleBoundary
+    protected RNull debug(@SuppressWarnings("unused") RMissing values) {
         return RNull.instance;
     }
 }
