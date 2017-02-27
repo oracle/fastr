@@ -85,7 +85,7 @@ public class TextConnections {
         String[] getValue();
     }
 
-    private static class TextReadRConnection extends DelegateReadNonBlockRConnection implements GetConnectionValue {
+    private static class TextReadRConnection extends DelegateReadRConnection implements GetConnectionValue {
         private final String[] lines;
         private int index;
 
@@ -136,7 +136,7 @@ public class TextConnections {
         }
     }
 
-    private static class TextWriteRConnection extends DelegateWriteNonBlockRConnection implements GetConnectionValue {
+    private static class TextWriteRConnection extends DelegateWriteRConnection implements GetConnectionValue {
         private String incompleteLine;
         private RStringVector textVec;
         private String idName;

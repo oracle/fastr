@@ -253,7 +253,7 @@ public class FileConnections {
         }
     }
 
-    static class FileReadBinaryRConnection extends DelegateReadNonBlockRConnection {
+    static class FileReadBinaryRConnection extends DelegateReadRConnection {
 
         private final FileChannel channel;
 
@@ -303,7 +303,7 @@ public class FileConnections {
         }
     }
 
-    private static class FileWriteBinaryConnection extends DelegateWriteNonBlockRConnection {
+    private static class FileWriteBinaryConnection extends DelegateWriteRConnection {
 
         private final FileChannel channel;
 
@@ -333,7 +333,7 @@ public class FileConnections {
 
     }
 
-    private static class FileReadWriteConnection extends DelegateReadWriteNonBlockRConnection {
+    private static class FileReadWriteConnection extends DelegateReadWriteRConnection {
         /*
          * This is a minimal implementation to support one specific use in package installation.
          *
@@ -443,7 +443,7 @@ public class FileConnections {
 
     }
 
-    private static class CompressedInputRConnection extends DelegateReadNonBlockRConnection {
+    private static class CompressedInputRConnection extends DelegateReadRConnection {
         private final ReadableByteChannel channel;
 
         protected CompressedInputRConnection(BasePathRConnection base, InputStream is) {
@@ -468,7 +468,7 @@ public class FileConnections {
         }
     }
 
-    private static class CompressedOutputRConnection extends DelegateWriteNonBlockRConnection {
+    private static class CompressedOutputRConnection extends DelegateWriteRConnection {
         protected WritableByteChannel channel;
         private final boolean seekable;
         private long seekPosition = 0L;

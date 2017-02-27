@@ -114,7 +114,7 @@ public class RawConnections {
 
     }
 
-    static class RawReadRConnection extends DelegateReadNonBlockRConnection {
+    static class RawReadRConnection extends DelegateReadRConnection {
         private SeekableMemoryByteChannel channel;
 
         RawReadRConnection(BaseRConnection base, SeekableMemoryByteChannel channel) {
@@ -163,7 +163,7 @@ public class RawConnections {
         }
     }
 
-    private static class RawWriteBinaryConnection extends DelegateWriteNonBlockRConnection {
+    private static class RawWriteBinaryConnection extends DelegateWriteRConnection {
         private final SeekableMemoryByteChannel channel;
 
         RawWriteBinaryConnection(BaseRConnection base, SeekableMemoryByteChannel channel, boolean append) {
@@ -194,7 +194,7 @@ public class RawConnections {
         }
     }
 
-    private static class RawReadWriteConnection extends DelegateReadWriteNonBlockRConnection {
+    private static class RawReadWriteConnection extends DelegateReadWriteRConnection {
 
         private final SeekableMemoryByteChannel channel;
 

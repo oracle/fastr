@@ -34,9 +34,9 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-abstract class DelegateWriteNonBlockRConnection extends DelegateRConnection {
+abstract class DelegateWriteRConnection extends DelegateRConnection {
 
-    protected DelegateWriteNonBlockRConnection(BaseRConnection base) {
+    protected DelegateWriteRConnection(BaseRConnection base) {
         super(base);
     }
 

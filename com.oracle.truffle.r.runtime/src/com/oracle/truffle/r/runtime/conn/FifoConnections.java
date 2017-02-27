@@ -120,7 +120,7 @@ public class FifoConnections {
         }
     }
 
-    static class FifoReadRConnection extends DelegateReadNonBlockRConnection {
+    static class FifoReadRConnection extends DelegateReadRConnection {
         private final FileChannel channel;
 
         protected FifoReadRConnection(BaseRConnection base, String path) throws IOException {
@@ -139,7 +139,7 @@ public class FifoConnections {
         }
     }
 
-    private static class FifoWriteConnection extends DelegateWriteNonBlockRConnection {
+    private static class FifoWriteConnection extends DelegateWriteRConnection {
         private final RandomAccessFile raf;
 
         FifoWriteConnection(BaseRConnection base, String path) throws IOException {
@@ -163,7 +163,7 @@ public class FifoConnections {
         }
     }
 
-    private static class FifoReadWriteConnection extends DelegateReadWriteNonBlockRConnection {
+    private static class FifoReadWriteConnection extends DelegateReadWriteRConnection {
 
         private final RandomAccessFile raf;
 
@@ -184,7 +184,7 @@ public class FifoConnections {
 
     }
 
-    static class FifoReadNonBlockingRConnection extends DelegateReadNonBlockRConnection {
+    static class FifoReadNonBlockingRConnection extends DelegateReadRConnection {
         private final FileChannel channel;
 
         protected FifoReadNonBlockingRConnection(BaseRConnection base, String path) throws IOException {
@@ -203,7 +203,7 @@ public class FifoConnections {
         }
     }
 
-    private static class FifoWriteNonBlockingRConnection extends DelegateWriteNonBlockRConnection {
+    private static class FifoWriteNonBlockingRConnection extends DelegateWriteRConnection {
         private final FileChannel channel;
 
         FifoWriteNonBlockingRConnection(BaseRConnection base, String path) throws IOException {
@@ -222,7 +222,7 @@ public class FifoConnections {
         }
     }
 
-    private static class FifoReadWriteNonBlockingRConnection extends DelegateReadWriteNonBlockRConnection {
+    private static class FifoReadWriteNonBlockingRConnection extends DelegateReadWriteRConnection {
         private final FileChannel channel;
 
         FifoReadWriteNonBlockingRConnection(BaseRConnection base, String path) throws IOException {

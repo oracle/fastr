@@ -63,7 +63,7 @@ public class URLConnections {
         }
     }
 
-    private static class URLReadRConnection extends DelegateReadNonBlockRConnection {
+    private static class URLReadRConnection extends DelegateReadRConnection {
 
         private final ReadableByteChannel rchannel;
 

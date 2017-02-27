@@ -35,11 +35,11 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-abstract class DelegateReadWriteNonBlockRConnection extends DelegateRConnection {
+abstract class DelegateReadWriteRConnection extends DelegateRConnection {
 
     private final ByteBuffer tmp = ByteBuffer.allocate(1);
 
-    protected DelegateReadWriteNonBlockRConnection(BaseRConnection base) {
+    protected DelegateReadWriteRConnection(BaseRConnection base) {
         super(base);
     }
 

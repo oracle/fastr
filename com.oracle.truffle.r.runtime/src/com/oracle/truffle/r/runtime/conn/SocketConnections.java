@@ -76,7 +76,7 @@ public class SocketConnections {
         }
     }
 
-    private abstract static class RSocketReadWriteConnection extends DelegateReadWriteNonBlockRConnection {
+    private abstract static class RSocketReadWriteConnection extends DelegateReadWriteRConnection {
         private Socket socket;
         private SocketChannel channel;
         protected final RSocketConnection thisBase;
@@ -113,7 +113,7 @@ public class SocketConnections {
         }
     }
 
-    private abstract static class RSocketReadWriteNonBlockConnection extends DelegateReadWriteNonBlockRConnection {
+    private abstract static class RSocketReadWriteNonBlockConnection extends DelegateReadWriteRConnection {
         private Socket socket;
         private SocketChannel socketChannel;
 

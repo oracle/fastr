@@ -92,7 +92,7 @@ public class PipeConnections {
         }
     }
 
-    static class PipeReadRConnection extends DelegateReadNonBlockRConnection {
+    static class PipeReadRConnection extends DelegateReadRConnection {
         private final ReadableByteChannel channel;
 
         protected PipeReadRConnection(BaseRConnection base, String command) throws IOException {
@@ -112,7 +112,7 @@ public class PipeConnections {
         }
     }
 
-    private static class PipeWriteConnection extends DelegateWriteNonBlockRConnection {
+    private static class PipeWriteConnection extends DelegateWriteRConnection {
         private final WritableByteChannel channel;
 
         PipeWriteConnection(BaseRConnection base, String command) throws IOException {
@@ -132,7 +132,7 @@ public class PipeConnections {
         }
     }
 
-    private static class PipeReadWriteConnection extends DelegateReadWriteNonBlockRConnection {
+    private static class PipeReadWriteConnection extends DelegateReadWriteRConnection {
 
         private final RWChannel channel;
 
