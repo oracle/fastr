@@ -107,5 +107,6 @@ public class TestBuiltin_setS4Object extends TestBase {
         assertEval("{ x<-42; asS4(x, TRUE, \"1\") }");
         assertEval("{ x<-42; asS4(x, TRUE, logical()) }");
         assertEval("{ x<-42; asS4(x, TRUE, c(1,2)) }");
+        assertEval("{ x<-42; asS4(, TRUE, 1)) }");
     }
 }

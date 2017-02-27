@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -81,5 +81,18 @@ public class TestBuiltin_qsort extends TestBase {
     @Test
     public void testqsort13() {
         assertEval("argv <- list(c(63, 187, 64, 188), FALSE); .Internal(qsort(argv[[1]], argv[[2]]))");
+    }
+
+    @Test
+    public void testArgsCasts() {
+        // GnuR "qsort" outputs
+        // "Error: argument is not a numeric vector"
+        // for the raw vector while both "sort" and "qsort" in GnuR output
+        // "Error: raw vectors cannot be sorted"
+        // We share the same Casts adapter for all "sort","psort" and "qsort"
+        // so prefixing with ignore the error message here for now.
+        assertEval(Output.IgnoreErrorMessage, "{ .Internal(qsort(as.raw(c(0x44,0x40)), FALSE)) }");
+        assertEval("{ .Internal(sort(NULL, FALSE)) }");
+        assertEval("{ lv<-list(a=5,b=c(1,2)); .Internal(sort(lv,FALSE)) }");
     }
 }

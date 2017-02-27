@@ -33,6 +33,11 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "repeat", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class RepeatBuiltin extends RBuiltinNode {
+
+    static {
+        Casts.noCasts(RepeatBuiltin.class);
+    }
+
     @Specialization
     protected Object doIt(@SuppressWarnings("unused") Object x) {
         throw RInternalError.unimplemented();

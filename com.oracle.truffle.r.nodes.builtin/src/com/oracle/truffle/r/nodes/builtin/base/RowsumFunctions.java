@@ -12,8 +12,12 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.and;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.not;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -29,6 +33,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -54,9 +59,9 @@ public class RowsumFunctions {
             Casts casts = new Casts(Rowsum.class);
             casts.arg("x").mustBe(integerValue().or(doubleValue()), RError.Message.ROWSUM_NON_NUMERIC);
 
-            casts.arg("g").asVector();
+            casts.arg("g").mustNotBeMissing().mustBe(and(not(nullValue()), not(instanceOf(RFunction.class)))).asVector();
 
-            casts.arg("uniqueg").asVector();
+            casts.arg("uniqueg").mustNotBeMissing().mustBe(and(not(nullValue()), not(instanceOf(RFunction.class)))).asVector();
 
             casts.arg("snarm").asLogicalVector().findFirst().mustNotBeNA(RError.Message.INVALID_LOGICAL).map(toBoolean());
 

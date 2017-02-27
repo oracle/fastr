@@ -43,8 +43,8 @@ public abstract class Sample2 extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Sample2.class);
-        casts.arg("x").defaultError(INVALID_FIRST_ARGUMENT).allowNull().mustBe(integerValue().or(doubleValue())).mustNotBeNA(INVALID_FIRST_ARGUMENT).asDoubleVector().findFirst().mustBe(
-                        gte(0.0)).mustBe(isFinite());
+        casts.arg("x").defaultError(INVALID_FIRST_ARGUMENT).mustBe(integerValue().or(doubleValue())).mustNotBeNA(
+                        INVALID_FIRST_ARGUMENT).asDoubleVector().findFirst().mustBe(gte(0.0)).mustBe(isFinite());
         casts.arg("size").defaultError(INVALID_ARGUMENT, "size").mustBe(integerValue().or(doubleValue())).asIntegerVector().findFirst().mustNotBeNA(INVALID_ARGUMENT,
                         "size").mustBe(gte0(), INVALID_ARGUMENT, "size");
     }

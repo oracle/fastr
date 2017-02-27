@@ -23,9 +23,12 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_LOGICAL;
+import static com.oracle.truffle.r.runtime.RError.Message.RAW_SORT;
 import static com.oracle.truffle.r.runtime.RError.Message.ONLY_ATOMIC_CAN_BE_SORTED;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -46,8 +49,10 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -59,7 +64,8 @@ public class SortFunctions {
 
     private abstract static class Adapter extends RBuiltinNode {
         protected static void addCastForX(Casts casts) {
-            casts.arg("x").allowNull().mustBe(abstractVectorValue(), ONLY_ATOMIC_CAN_BE_SORTED);
+            casts.arg("x").allowNull().mustBe(rawValue().not(), RAW_SORT).mustBe(instanceOf(RAbstractListVector.class).not(), ONLY_ATOMIC_CAN_BE_SORTED).mustBe(
+                            abstractVectorValue(), ONLY_ATOMIC_CAN_BE_SORTED);
         }
 
         protected static void addCastForDecreasing(Casts casts) {
@@ -175,6 +181,18 @@ public class SortFunctions {
         protected RLogicalVector sort(RAbstractLogicalVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
+
+        @Specialization
+        protected RLogicalVector sort(RAbstractComplexVector vec, boolean decreasing) {
+            throw RError.error(this, RError.Message.UNIMPLEMENTED_ARG_TYPE, 1); // [TODO] implement
+                                                                                // complex sort
+        }
+
+        @Specialization
+        protected RNull sort(RNull vec, boolean decreasing) {
+            return RNull.instance;
+        }
+
     }
 
     @RBuiltin(name = "qsort", kind = INTERNAL, parameterNames = {"x", "decreasing"}, behavior = PURE)

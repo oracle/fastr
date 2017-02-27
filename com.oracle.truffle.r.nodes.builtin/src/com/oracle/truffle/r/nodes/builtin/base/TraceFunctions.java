@@ -255,7 +255,7 @@ public class TraceFunctions {
 
         static {
             Casts casts = new Casts(Retracemem.class);
-            casts.arg("previous").defaultError(Message.INVALID_ARGUMENT, "previous").allowNullAndMissing().mustBe(stringValue());
+            casts.arg("previous").defaultError(Message.INVALID_ARGUMENT, "previous").allowNullAndMissing().mustBe(stringValue()).asStringVector().findFirst();
         }
 
         @Specialization

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -125,5 +125,9 @@ public class TestBuiltin_sort extends TestBase {
     public void testArgsCasts() {
         assertEval("{ .Internal(sort(c(1L,10L,2L), 'not-numeric')) }");
         assertEval("{ .Internal(sort(c(1L,10L,2L), NULL)) }");
+        assertEval("{ .Internal(sort(as.raw(c(0x44,0x40)), FALSE)) }"); // Only numeric vectors can
+                                                                        // be sorted
+        assertEval("{ .Internal(sort(NULL, FALSE)) }");
+        assertEval("{ lv<-list(a=5,b=c(1,2)); .Internal(sort(lv,FALSE)) }");
     }
 }

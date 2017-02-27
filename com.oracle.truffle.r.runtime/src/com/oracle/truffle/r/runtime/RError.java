@@ -839,7 +839,8 @@ public final class RError extends RuntimeException {
         UNSUPPORTED_ENCODING_CONVERSION("unsupported conversion from '%s' to '%s'"),
         UNABLE_TO_RESOLVE("unable to resolve '%s'"),
         LINE_CONTAINS_EMBEDDED_NULLS("line %d appears to contain an embedded nul"),
-        UNSUPPORTED_URL_METHOD("method = \"%s\" is not supported");
+        UNSUPPORTED_URL_METHOD("method = \"%s\" is not supported"),
+        CANNOT_REPLICATE_NULL("cannot replicate NULL to a non-zero length");
 
         public final String message;
         final boolean hasArgs;

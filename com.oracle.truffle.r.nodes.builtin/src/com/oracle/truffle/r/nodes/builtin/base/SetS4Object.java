@@ -46,7 +46,7 @@ public abstract class SetS4Object extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(SetS4Object.class);
-        casts.arg("object").asAttributable(true, true, true);
+        casts.arg("object").mustNotBeMissing().asAttributable(true, true, true);
         casts.arg("flag").asLogicalVector().mustBe(singleElement(), RError.Message.INVALID_ARGUMENT, "flag").findFirst().map(toBoolean());
         // "complete" can be a vector, unlike "flag"
         casts.arg("complete").asIntegerVector().findFirst(RError.Message.INVALID_ARGUMENT, "complete");

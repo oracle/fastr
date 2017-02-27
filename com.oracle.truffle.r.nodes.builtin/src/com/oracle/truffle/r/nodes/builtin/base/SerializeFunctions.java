@@ -115,9 +115,11 @@ public class SerializeFunctions {
 
         static {
             Casts casts = new Casts(SerializeToConn.class);
+            casts.arg("object").mustNotBeMissing();
             connection(casts);
-            casts.arg("ascii").mustBe(logicalValue(), RError.Message.ASCII_NOT_LOGICAL);
-            casts.arg("version").allowNull().mustBe(integerValue());
+            casts.arg("ascii").mustBe(logicalValue(), RError.Message.ASCII_NOT_LOGICAL).asLogicalVector().findFirst();
+            casts.arg("version").allowNull().mustBe(integerValue()).asIntegerVector().findFirst();
+            casts.arg("refhook").mustNotBeMissing();
         }
 
         @Specialization
@@ -131,6 +133,12 @@ public class SerializeFunctions {
                 type = RSerialize.XDR;
             }
             return doSerializeToConnBase(object, conn, type, RRuntime.LOGICAL_NA, version, refhook);
+        }
+
+        @Specialization
+        protected Object doSerializeToConn(Object object, int conn, byte asciiLogical, int version, Object refhook) {
+            throw RError.error(this, RError.Message.UNIMPLEMENTED_ARG_TYPE, 4); // [TODO] implement
+                                                                                // "version" support
         }
     }
 

@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -43,8 +44,8 @@ public abstract class Strrep extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Strrep.class);
-        casts.arg("x").asStringVector();
-        casts.arg("times").asIntegerVector();
+        casts.arg("x").mustNotBeMissing().asStringVector();
+        casts.arg("times").mustNotBeMissing().asIntegerVector();
     }
 
     @Specialization
@@ -87,6 +88,18 @@ public abstract class Strrep extends RBuiltinNode {
             copyNames(xVec, result);
         }
         return result;
+    }
+
+    @Specialization
+    protected Object strrep(RNull xVec, RAbstractIntVector timesVec) {
+        return RDataFactory.createEmptyStringVector(); // GnuR fails with segfault; return value
+                                                       // adheres to non-internal strrep() result
+    }
+
+    @Specialization
+    protected Object strrep(RAbstractStringVector xVec, RNull timesVec) {
+        return RDataFactory.createEmptyStringVector(); // GnuR - infinite loop; return value adheres
+                                                       // to non-internal strrep() result
     }
 
     @TruffleBoundary

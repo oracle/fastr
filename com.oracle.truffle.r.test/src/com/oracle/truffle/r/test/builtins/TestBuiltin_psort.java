@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -91,5 +91,13 @@ public class TestBuiltin_psort extends TestBase {
     @Test
     public void testpsort14() {
         assertEval("argv <- list(c(-1.36919169254062, -0.667819876370237, -0.253162069270378, -0.0834190388782434, -0.00786394222146348, 0.0246733498130512, 0.0730305465518564, 0.0881443844426084, 0.170711734013213, 0.552921941721332), c(1L, 3L, 4L, 5L, 6L, 7L, 8L, 10L)); .Internal(psort(argv[[1]], argv[[2]]))");
+    }
+
+    @Test
+    public void testArgsCasts() {
+        assertEval("{ .Internal(psort(as.raw(c(0x44,0x40)), FALSE)) }"); // Only numeric vectors can
+                                                                         // be sorted
+        assertEval("{ .Internal(sort(NULL, FALSE)) }");
+        assertEval("{ lv<-list(a=5,b=c(1,2)); .Internal(sort(lv,FALSE)) }");
     }
 }

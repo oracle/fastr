@@ -81,6 +81,11 @@ public class TestBuiltin_sample extends TestBase {
         assertEval("set.seed(42); .Internal(sample(4.5e20, 4.5e20, FALSE, NULL))");
         assertEval("set.seed(42); .Internal(sample(NA, NA, FALSE, NULL))");
         assertEval("set.seed(42); .Internal(sample(NaN, NaN, FALSE, NULL))");
+        assertEval("set.seed(42); .Internal(sample(NULL, NULL, F, NULL))");
+        assertEval("set.seed(42); .Internal(sample(NULL, NULL, F, seq(1.2,3)))");
+        assertEval(Output.IgnoreErrorMessage, "set.seed(42); .Internal(sample(5,6,T,))");
+        assertEval("set.seed(42); .Internal(sample(5,6,T,NULL))");
+        assertEval(Output.IgnoreErrorMessage, "set.seed(42); .Internal(sample(5,6,T,seq(1.2,3)))");
         // Note: we treat Infinity in NaN check
         assertEval(Output.IgnoreErrorMessage, "set.seed(42); .Internal(sample(1/0, 1, FALSE, NULL))");
         // size

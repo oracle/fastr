@@ -113,6 +113,12 @@ public class TestBuiltin_rep extends TestBase {
     }
 
     @Test
+    public void testRepLenNull() {
+        assertEval("rep_len(NULL,0)");
+        assertEval("rep_len(NULL,2)");
+    }
+
+    @Test
     public void testrep21() {
         assertEval("argv <- structure(list(1:5, each = 2), .Names = c('', 'each'));do.call('rep', argv)");
     }
