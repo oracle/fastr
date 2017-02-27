@@ -90,17 +90,17 @@ abstract class DelegateWriteNonBlockRConnection extends DelegateRConnection {
 
     @Override
     public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-        ReadWriteHelper.writeCharHelper(getChannel(), s, pad, eos);
+        DelegateRConnection.writeCharHelper(getChannel(), s, pad, eos);
     }
 
     @Override
     public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-        ReadWriteHelper.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
+        DelegateRConnection.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
     }
 
     @Override
     public void writeString(String s, boolean nl) throws IOException {
-        ReadWriteHelper.writeStringHelper(getChannel(), s, nl, base.getEncoding());
+        DelegateRConnection.writeStringHelper(getChannel(), s, nl, base.getEncoding());
     }
 
 }

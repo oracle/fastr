@@ -212,6 +212,8 @@ public class RCompression {
             if (rc == 0) {
                 readThread.join();
                 return Arrays.copyOf(readThread.getData(), readThread.getTotalRead());
+            } else {
+                throw new IOException("bzip2 error code: " + rc);
             }
         } catch (InterruptedException ex) {
             // fall through
@@ -239,6 +241,8 @@ public class RCompression {
                 OpenOption[] openOptions = append ? new OpenOption[]{StandardOpenOption.APPEND} : new OpenOption[0];
                 Files.write(Paths.get(path), cData, openOptions);
                 return;
+            } else {
+                throw new IOException("bzip2 error code: " + rc);
             }
         } catch (InterruptedException ex) {
             // fall through

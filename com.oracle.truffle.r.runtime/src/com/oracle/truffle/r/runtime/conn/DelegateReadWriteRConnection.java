@@ -37,10 +37,10 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
     @Override
     public String readChar(int nchars, boolean useBytes) throws IOException {
         if (useBytes) {
-            return ReadWriteHelper.readCharHelper(nchars, getInputStream());
+            return DelegateRConnection.readCharHelper(nchars, getInputStream());
         } else {
             final InputStreamReader isr = new InputStreamReader(getInputStream(), base.getEncoding());
-            return ReadWriteHelper.readCharHelper(nchars, isr);
+            return DelegateRConnection.readCharHelper(nchars, isr);
         }
     }
 
@@ -51,13 +51,13 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
 
     @Override
     public byte[] readBinChars() throws IOException {
-        return ReadWriteHelper.readBinCharsHelper(getInputStream());
+        return DelegateRConnection.readBinCharsHelper(getInputStream());
     }
 
     @TruffleBoundary
     @Override
     public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-        return ReadWriteHelper.readLinesHelper(base, getInputStream(), n, warn, skipNul);
+        return readLinesHelper(n, warn, skipNul);
     }
 
     @Override
@@ -90,17 +90,17 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
 
     @Override
     public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-        ReadWriteHelper.writeCharHelper(getOutputStream(), s, pad, eos);
+        DelegateRConnection.writeCharHelper(getOutputStream(), s, pad, eos);
     }
 
     @Override
     public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-        ReadWriteHelper.writeLinesHelper(getOutputStream(), lines, sep, base.getEncoding());
+        DelegateRConnection.writeLinesHelper(getOutputStream(), lines, sep, base.getEncoding());
     }
 
     @Override
     public void writeString(String s, boolean nl) throws IOException {
-        ReadWriteHelper.writeStringHelper(getOutputStream(), s, nl, base.getEncoding());
+        DelegateRConnection.writeStringHelper(getOutputStream(), s, nl, base.getEncoding());
     }
 
 }

@@ -54,7 +54,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.util.ArrayList;
 
@@ -72,7 +71,6 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.FifoConnections.FifoRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.CompressedRConnection;
@@ -195,7 +193,7 @@ public abstract class ConnectionFunctions {
         }
 
         private static void method(Casts casts) {
-            casts.arg("method").asStringVector().findFirst();
+            casts.arg("method").asStringVector().findFirst().mustBe(equalTo("default").or(equalTo("internal")), RError.Message.UNSUPPORTED_URL_METHOD);
         }
 
         static void blockingNotSupported(Casts casts) {
@@ -218,7 +216,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector file(String description, String openArg, @SuppressWarnings("unused") boolean blocking, String encoding, @SuppressWarnings("unused") String method, boolean raw) {
+        protected RAbstractIntVector file(String description, String openArg, boolean blocking, String encoding, @SuppressWarnings("unused") String method, boolean raw) {
             String open = openArg;
 
             // check if the description is an URL and dispatch if necessary
@@ -226,7 +224,7 @@ public abstract class ConnectionFunctions {
             try {
                 URL url = new URL(description);
                 if (!"file".equals(url.getProtocol())) {
-                    return new URLRConnection(description, open).asVector();
+                    return new URLRConnection(description, open, encoding).asVector();
                 } else {
                     path = removeFileURLPrefix(description);
                 }
@@ -249,8 +247,7 @@ public abstract class ConnectionFunctions {
                 }
             }
             try {
-                Charset charset = Charset.forName(ConnectionSupport.convertEncodingName(encoding));
-                return new FileRConnection(path, open, charset).asVector();
+                return new FileRConnection(path, open, blocking, encoding).asVector();
             } catch (IOException ex) {
                 warning(RError.Message.CANNOT_OPEN_FILE, description, ex.getMessage());
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);
@@ -285,8 +282,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RAbstractIntVector zzFile(RAbstractStringVector description, String open, String encoding, int compression) {
             try {
-                Charset charset = Charset.forName(ConnectionSupport.convertEncodingName(encoding));
-                return new CompressedRConnection(description.getDataAt(0), open, cType, charset, compression).asVector();
+                return new CompressedRConnection(description.getDataAt(0), open, cType, encoding, compression).asVector();
             } catch (IOException ex) {
                 throw reportError(description.getDataAt(0), ex);
             } catch (IllegalCharsetNameException ex) {
@@ -404,11 +400,19 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector socketConnection(String host, int port, boolean server, boolean blocking, String open, @SuppressWarnings("unused") RAbstractStringVector encoding, int timeout) {
+        protected RAbstractIntVector socketConnection(String host, int port, boolean server, boolean blocking, String open,
+                        String encoding, int timeout) {
             try {
+                if (server) {
+                    return new RSocketConnection(open, true, host, port, blocking, timeout, encoding).asVector();
+                } else {
+                    return new RSocketConnection(open, false, host, port, blocking, timeout, encoding).asVector();
+                }
                 return new RSocketConnection(open, server, host, port, blocking, timeout).asVector();
             } catch (IOException ex) {
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);
+            } catch (IllegalCharsetNameException ex) {
+                throw error(RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
     }
@@ -427,14 +431,16 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector urlConnection(String url, String open, @SuppressWarnings("unused") boolean blocking, @SuppressWarnings("unused") String encoding,
+        protected RAbstractIntVector urlConnection(String url, String open, @SuppressWarnings("unused") boolean blocking, String encoding,
                         @SuppressWarnings("unused") String method) {
             try {
-                return new URLRConnection(url, open).asVector();
+                return new URLRConnection(url, open, encoding).asVector();
             } catch (MalformedURLException ex) {
                 throw error(RError.Message.UNSUPPORTED_URL_SCHEME);
             } catch (IOException ex) {
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);
+            } catch (IllegalCharsetNameException ex) {
+                throw error(RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
     }
@@ -1252,11 +1258,12 @@ public abstract class ConnectionFunctions {
 
             String open = openArg;
             try {
-                Charset charset = Charset.forName(ConnectionSupport.convertEncodingName(encoding));
-                return new FifoRConnection(path, open, blocking, charset).asVector();
+                return new FifoRConnection(path, open, blocking, encoding).asVector();
             } catch (IOException ex) {
                 RError.warning(this, RError.Message.CANNOT_OPEN_FIFO, path);
                 throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
+            } catch (IllegalCharsetNameException ex) {
+                throw RError.error(this, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
     }
@@ -1277,11 +1284,12 @@ public abstract class ConnectionFunctions {
 
             String open = openArg;
             try {
-                Charset charset = Charset.forName(ConnectionSupport.convertEncodingName(encoding));
-                return new PipeRConnection(path, open, charset).asVector();
+                return new PipeRConnection(path, open, encoding).asVector();
             } catch (IOException ex) {
                 RError.warning(this, RError.Message.CANNOT_OPEN_FIFO, path);
                 throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
+            } catch (IllegalCharsetNameException ex) {
+                throw RError.error(this, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
     }

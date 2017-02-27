@@ -26,7 +26,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
-import java.nio.charset.Charset;
+import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
@@ -51,7 +55,7 @@ public class PipeConnections {
 
         private final String command;
 
-        public PipeRConnection(String command, String open, Charset encoding) throws IOException {
+        public PipeRConnection(String command, String open, String encoding) throws IOException {
             super(ConnectionClass.FIFO, open, AbstractOpenMode.Read, encoding);
             this.command = command;
             openNonLazyConnection();
@@ -88,23 +92,18 @@ public class PipeConnections {
         }
     }
 
-    static class PipeReadRConnection extends DelegateReadRConnection {
-        private final InputStream in;
+    static class PipeReadRConnection extends DelegateReadNonBlockRConnection {
+        private final ReadableByteChannel channel;
 
         protected PipeReadRConnection(BaseRConnection base, String command) throws IOException {
             super(base);
             Process p = PipeConnections.executeAndJoin(command);
-            in = p.getInputStream();
+            channel = Channels.newChannel(p.getInputStream());
         }
 
         @Override
-        public InputStream getInputStream() {
-            return in;
-        }
-
-        @Override
-        public void close() throws IOException {
-            in.close();
+        public ReadableByteChannel getChannel() {
+            return channel;
         }
 
         @Override
@@ -113,23 +112,18 @@ public class PipeConnections {
         }
     }
 
-    private static class PipeWriteConnection extends DelegateWriteRConnection {
-        private final OutputStream out;
+    private static class PipeWriteConnection extends DelegateWriteNonBlockRConnection {
+        private final WritableByteChannel channel;
 
         PipeWriteConnection(BaseRConnection base, String command) throws IOException {
             super(base);
             Process p = PipeConnections.executeAndJoin(command);
-            out = p.getOutputStream();
+            channel = Channels.newChannel(p.getOutputStream());
         }
 
         @Override
-        public OutputStream getOutputStream() throws IOException {
-            return out;
-        }
-
-        @Override
-        public void close() throws IOException {
-            out.close();
+        public WritableByteChannel getChannel() {
+            return channel;
         }
 
         @Override
@@ -138,31 +132,56 @@ public class PipeConnections {
         }
     }
 
-    private static class PipeReadWriteConnection extends DelegateReadWriteRConnection {
+    private static class PipeReadWriteConnection extends DelegateReadWriteNonBlockRConnection {
 
-        private final InputStream in;
-        private final OutputStream out;
+        private final RWChannel channel;
 
         protected PipeReadWriteConnection(BaseRConnection base, String command) throws IOException {
             super(base);
             Process p = PipeConnections.executeAndJoin(command);
-            in = p.getInputStream();
-            out = p.getOutputStream();
+            channel = new RWChannel(p.getInputStream(), p.getOutputStream());
         }
 
         @Override
-        public InputStream getInputStream() {
-            return in;
-        }
-
-        @Override
-        public OutputStream getOutputStream() {
-            return out;
+        public ByteChannel getChannel() {
+            return channel;
         }
 
         @Override
         public boolean isSeekable() {
             return false;
+        }
+
+        private static final class RWChannel implements ByteChannel {
+            private final ReadableByteChannel rchannel;
+            private final WritableByteChannel wchannel;
+
+            public RWChannel(InputStream in, OutputStream out) {
+                rchannel = Channels.newChannel(in);
+                wchannel = Channels.newChannel(out);
+            }
+
+            @Override
+            public int read(ByteBuffer dst) throws IOException {
+                return rchannel.read(dst);
+            }
+
+            @Override
+            public boolean isOpen() {
+                return rchannel.isOpen() && wchannel.isOpen();
+            }
+
+            @Override
+            public void close() throws IOException {
+                rchannel.close();
+                wchannel.close();
+            }
+
+            @Override
+            public int write(ByteBuffer src) throws IOException {
+                return wchannel.write(src);
+            }
+
         }
 
     }

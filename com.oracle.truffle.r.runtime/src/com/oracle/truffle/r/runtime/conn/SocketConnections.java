@@ -23,15 +23,12 @@
 package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.SocketChannel;
 
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
@@ -49,8 +46,8 @@ public class SocketConnections {
         protected final int port;
         protected final int timeout;
 
-        public RSocketConnection(String modeString, boolean server, String host, int port, boolean blocking, int timeout) throws IOException {
-            super(ConnectionClass.Socket, modeString, AbstractOpenMode.Read, blocking);
+        public RSocketConnection(String modeString, boolean server, String host, int port, boolean blocking, int timeout, String encoding) throws IOException {
+            super(ConnectionClass.Socket, modeString, AbstractOpenMode.Read, blocking, encoding);
             this.server = server;
             this.host = host;
             this.port = port;
@@ -79,10 +76,9 @@ public class SocketConnections {
         }
     }
 
-    private abstract static class RSocketReadWriteConnection extends DelegateReadWriteRConnection {
+    private abstract static class RSocketReadWriteConnection extends DelegateReadWriteNonBlockRConnection {
         private Socket socket;
-        protected InputStream inputStream;
-        protected OutputStream outputStream;
+        private SocketChannel channel;
         protected final RSocketConnection thisBase;
 
         protected RSocketReadWriteConnection(RSocketConnection base) {
@@ -92,36 +88,23 @@ public class SocketConnections {
 
         protected void openStreams(Socket socketArg) throws IOException {
             this.socket = socketArg;
+            channel = socket.getChannel();
             if (thisBase.isBlocking()) {
+                channel.configureBlocking(true);
                 // Java (int) timeouts do not meet the POSIX standard of 31 days
                 long millisTimeout = ((long) thisBase.timeout) * 1000;
                 if (millisTimeout > Integer.MAX_VALUE) {
                     millisTimeout = Integer.MAX_VALUE;
                 }
                 socket.setSoTimeout((int) millisTimeout);
-            }
-            inputStream = socket.getInputStream();
-            outputStream = socket.getOutputStream();
-        }
-
-        @Override
-        public void flush() {
-            // TODO add "throws"
-            try {
-                outputStream.flush();
-            } catch (IOException e) {
-                RInternalError.shouldNotReachHere();
+            } else {
+                channel.configureBlocking(false);
             }
         }
 
         @Override
-        public InputStream getInputStream() {
-            return inputStream;
-        }
-
-        @Override
-        public OutputStream getOutputStream() {
-            return outputStream;
+        public ByteChannel getChannel() {
+            return channel;
         }
 
         @Override

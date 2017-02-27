@@ -43,15 +43,15 @@ public abstract class DelegateReadNonBlockRConnection extends DelegateRConnectio
 
     @Override
     public int getc() throws IOException {
-        // TODO a character may consist of multiple bytes
         tmp.clear();
-        getChannel().read(tmp);
-        return tmp.get();
+        int nread = getChannel().read(tmp);
+        tmp.rewind();
+        return nread > 0 ? tmp.get() : -1;
     }
 
     @Override
     public String readChar(int nchars, boolean useBytes) throws IOException {
-        return ReadWriteHelper.readCharHelper(nchars, getChannel(), useBytes);
+        return DelegateRConnection.readCharHelper(nchars, getChannel(), useBytes);
     }
 
     @Override
@@ -61,13 +61,13 @@ public abstract class DelegateReadNonBlockRConnection extends DelegateRConnectio
 
     @Override
     public byte[] readBinChars() throws IOException {
-        return ReadWriteHelper.readBinCharsHelper(getInputStream());
+        return DelegateRConnection.readBinCharsHelper(getChannel());
     }
 
     @TruffleBoundary
     @Override
     public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-        return ReadWriteHelper.readLinesNonBlockHelper(base, getChannel(), n, warn, skipNul, base.getSummaryDescription(), base.getEncoding());
+        return readLinesHelper(n, warn, skipNul);
     }
 
     @Override

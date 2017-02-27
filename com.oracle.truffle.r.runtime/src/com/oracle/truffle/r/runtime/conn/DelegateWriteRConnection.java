@@ -83,17 +83,17 @@ abstract class DelegateWriteRConnection extends DelegateRConnection {
 
     @Override
     public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-        ReadWriteHelper.writeCharHelper(getOutputStream(), s, pad, eos);
+        DelegateRConnection.writeCharHelper(getOutputStream(), s, pad, eos);
     }
 
     @Override
     public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-        ReadWriteHelper.writeLinesHelper(getOutputStream(), lines, sep, base.getEncoding());
+        DelegateRConnection.writeLinesHelper(getOutputStream(), lines, sep, base.getEncoding());
     }
 
     @Override
     public void writeString(String s, boolean nl) throws IOException {
-        ReadWriteHelper.writeStringHelper(getOutputStream(), s, nl, base.getEncoding());
+        DelegateRConnection.writeStringHelper(getOutputStream(), s, nl, base.getEncoding());
     }
 
 }

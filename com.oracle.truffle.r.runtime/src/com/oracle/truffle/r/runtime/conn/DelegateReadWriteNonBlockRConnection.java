@@ -15,6 +15,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 abstract class DelegateReadWriteNonBlockRConnection extends DelegateRConnection {
 
+    private final ByteBuffer tmp = ByteBuffer.allocate(1);
+
     protected DelegateReadWriteNonBlockRConnection(BaseRConnection base) {
         super(base);
     }
@@ -31,16 +33,19 @@ abstract class DelegateReadWriteNonBlockRConnection extends DelegateRConnection 
 
     @Override
     public int getc() throws IOException {
-        return getInputStream().read();
+        tmp.clear();
+        int nread = getChannel().read(tmp);
+        tmp.rewind();
+        return nread > 0 ? tmp.get() : -1;
     }
 
     @Override
     public String readChar(int nchars, boolean useBytes) throws IOException {
         if (useBytes) {
-            return ReadWriteHelper.readCharHelper(nchars, getInputStream());
+            return DelegateRConnection.readCharHelper(nchars, getInputStream());
         } else {
             final InputStreamReader isr = new InputStreamReader(getInputStream(), base.getEncoding());
-            return ReadWriteHelper.readCharHelper(nchars, isr);
+            return DelegateRConnection.readCharHelper(nchars, isr);
         }
     }
 
@@ -51,13 +56,13 @@ abstract class DelegateReadWriteNonBlockRConnection extends DelegateRConnection 
 
     @Override
     public byte[] readBinChars() throws IOException {
-        return ReadWriteHelper.readBinCharsHelper(getInputStream());
+        return DelegateRConnection.readBinCharsHelper(getInputStream());
     }
 
     @TruffleBoundary
     @Override
     public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-        return ReadWriteHelper.readLinesHelper(base, getInputStream(), n, warn, skipNul);
+        return readLinesHelper(n, warn, skipNul);
     }
 
     @Override
@@ -96,17 +101,17 @@ abstract class DelegateReadWriteNonBlockRConnection extends DelegateRConnection 
 
     @Override
     public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-        ReadWriteHelper.writeCharHelper(getChannel(), s, pad, eos);
+        DelegateRConnection.writeCharHelper(getChannel(), s, pad, eos);
     }
 
     @Override
     public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-        ReadWriteHelper.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
+        DelegateRConnection.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
     }
 
     @Override
     public void writeString(String s, boolean nl) throws IOException {
-        ReadWriteHelper.writeStringHelper(getChannel(), s, nl, base.getEncoding());
+        DelegateRConnection.writeStringHelper(getChannel(), s, nl, base.getEncoding());
     }
 
 }

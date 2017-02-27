@@ -32,7 +32,15 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
-import java.nio.charset.Charset;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
+import java.nio.file.OpenOption;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -57,12 +65,11 @@ public class FileConnections {
 
     /**
      * Base class for all modes of file connections.
-     *
      */
     public static class FileRConnection extends BasePathRConnection {
 
-        public FileRConnection(String path, String modeString, Charset encoding) throws IOException {
-            super(checkTemp(path), ConnectionClass.File, modeString, encoding);
+        public FileRConnection(String path, String modeString, boolean blocking, String encoding) throws IOException {
+            super(checkTemp(path), ConnectionClass.File, modeString, blocking, encoding);
             openNonLazyConnection();
         }
 
@@ -80,6 +87,37 @@ public class FileConnections {
             DelegateRConnection delegate = FileConnections.createDelegateConnection(this, RCompression.Type.NONE);
             setDelegate(delegate);
         }
+    }
+
+    /**
+     * Base class for all modes of gzfile/bzfile/xzfile connections. N.B. In GNU R these can read
+     * gzip, bzip, lzma and uncompressed files, and this has to be implemented by reading the first
+     * few bytes of the file and detecting the type of the file.
+     */
+    public static class CompressedRConnection extends BasePathRConnection {
+        private final RCompression.Type cType;
+        @SuppressWarnings("unused") private final int compression; // TODO
+
+        public CompressedRConnection(String path, String modeString, Type cType, String encoding, int compression) throws IOException {
+            super(path, mapConnectionClass(cType), modeString, AbstractOpenMode.ReadBinary, encoding);
+            this.cType = cType;
+            this.compression = compression;
+            openNonLazyConnection();
+        }
+
+        @Override
+        protected void createDelegateConnection() throws IOException {
+            setDelegate(FileConnections.createDelegateConnection(this, cType));
+
+        }
+
+        // @Override
+        /**
+         * GnuR behavior for lazy connections is odd, e.g. gzfile returns "text", even though the
+         * default mode is "rb".
+         */
+        // public boolean isTextMode() {
+        // }
     }
 
     private static DelegateRConnection createUncompressedDelegateConnection(BasePathRConnection base)
@@ -118,7 +156,7 @@ public class FileConnections {
         switch (base.getOpenMode().abstractOpenMode) {
             case Read:
             case ReadBinary:
-                return new CompressedInputRConnection(base, new GZIPInputStream(new FileInputStream(base.path), GZIP_BUFFER_SIZE), true);
+                return new CompressedInputRConnection(base, new GZIPInputStream(new FileInputStream(base.path), GZIP_BUFFER_SIZE));
             case Append:
             case AppendBinary:
                 append = true;
@@ -137,7 +175,7 @@ public class FileConnections {
         switch (base.getOpenMode().abstractOpenMode) {
             case Read:
             case ReadBinary:
-                return new CompressedInputRConnection(base, new XZInputStream(new FileInputStream(base.path)), false);
+                return new CompressedInputRConnection(base, new XZInputStream(new FileInputStream(base.path)));
             case Append:
             case AppendBinary:
                 append = true;
@@ -157,7 +195,7 @@ public class FileConnections {
             case Read:
             case ReadBinary:
                 byte[] bzipUdata = RCompression.bzipUncompressFromFile(base.path);
-                return new ByteStreamCompressedInputRConnection(base, new ByteArrayInputStream(bzipUdata), false);
+                return new ByteStreamCompressedInputRConnection(base, new ByteArrayInputStream(bzipUdata));
             case Append:
             case AppendBinary:
                 append = true;
@@ -178,7 +216,7 @@ public class FileConnections {
          * type.
          */
         final RCompression.Type cTypeActual;
-        if (openMode == AbstractOpenMode.Read || openMode == AbstractOpenMode.ReadBinary) {
+        if (openMode == AbstractOpenMode.Read) {
             cTypeActual = RCompression.getCompressionType(base.path);
             if (cTypeActual != cType) {
                 base.updateConnectionClass(mapConnectionClass(cTypeActual));
@@ -215,13 +253,13 @@ public class FileConnections {
         }
     }
 
-    static class FileReadBinaryRConnection extends DelegateReadRConnection {
+    static class FileReadBinaryRConnection extends DelegateReadNonBlockRConnection {
 
-        private final FileInputStream inputStream;
+        private final FileChannel channel;
 
         FileReadBinaryRConnection(BasePathRConnection base) throws IOException {
             super(base);
-            inputStream = new FileInputStream(base.path);
+            channel = FileChannel.open(Paths.get(base.path), StandardOpenOption.READ);
         }
 
         @Override
@@ -230,13 +268,8 @@ public class FileConnections {
         }
 
         @Override
-        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            return ReadWriteHelper.seek(inputStream.getChannel(), offset, seekMode, seekRWMode);
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            return inputStream;
+        public ReadableByteChannel getChannel() {
+            return channel;
         }
 
     }
@@ -270,13 +303,22 @@ public class FileConnections {
         }
     }
 
-    private static class FileWriteBinaryConnection extends DelegateWriteRConnection {
+    private static class FileWriteBinaryConnection extends DelegateWriteNonBlockRConnection {
 
-        private final FileOutputStream out;
+        private final FileChannel channel;
 
         FileWriteBinaryConnection(BasePathRConnection base, boolean append) throws IOException {
             super(base);
-            out = new FileOutputStream(base.path, append);
+            List<OpenOption> opts = new ArrayList<>();
+            opts.add(StandardOpenOption.WRITE);
+            opts.add(StandardOpenOption.CREATE);
+            if (append) {
+                opts.add(StandardOpenOption.APPEND);
+            } else {
+                opts.add(StandardOpenOption.TRUNCATE_EXISTING);
+            }
+            channel = FileChannel.open(Paths.get(base.path), opts.toArray(new OpenOption[opts.size()]));
+
         }
 
         @Override
@@ -285,13 +327,8 @@ public class FileConnections {
         }
 
         @Override
-        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            return ReadWriteHelper.seek(out.getChannel(), offset, seekMode, seekRWMode);
-        }
-
-        @Override
-        public OutputStream getOutputStream() throws IOException {
-            return out;
+        public WritableByteChannel getChannel() {
+            return channel;
         }
 
     }
@@ -406,103 +443,46 @@ public class FileConnections {
 
     }
 
-    /**
-     * Base class for all modes of gzfile/bzfile/xzfile connections. N.B. In GNU R these can read
-     * gzip, bzip, lzma and uncompressed files, and this has to be implemented by reading the first
-     * few bytes of the file and detecting the type of the file.
-     */
-    public static class CompressedRConnection extends BasePathRConnection {
-        private final RCompression.Type cType;
-        @SuppressWarnings("unused") private final int compression; // TODO
+    private static class CompressedInputRConnection extends DelegateReadNonBlockRConnection {
+        private final ReadableByteChannel channel;
 
-        public CompressedRConnection(String path, String modeString, Type cType, Charset encoding, int compression) throws IOException {
-            super(path, mapConnectionClass(cType), modeString, AbstractOpenMode.ReadBinary, encoding);
-            this.cType = cType;
-            this.compression = compression;
-            openNonLazyConnection();
-        }
-
-        @Override
-        protected void createDelegateConnection() throws IOException {
-            setDelegate(FileConnections.createDelegateConnection(this, cType));
-
-        }
-
-        // @Override
-        /**
-         * GnuR behavior for lazy connections is odd, e.g. gzfile returns "text", even though the
-         * default mode is "rb".
-         */
-        // public boolean isTextMode() {
-        // }
-    }
-
-    private static class CompressedInputRConnection extends DelegateReadRConnection {
-        private final InputStream inputStream;
-        private final boolean seekable;
-
-        protected CompressedInputRConnection(BasePathRConnection base, InputStream is, boolean seekable) {
+        protected CompressedInputRConnection(BasePathRConnection base, InputStream is) {
             super(base);
-            this.inputStream = is;
-            this.seekable = seekable;
+            channel = Channels.newChannel(is);
         }
 
         @Override
-        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            if (seekable) {
-                // TODO
-            }
-            return super.seekInternal(offset, seekMode, seekRWMode);
+        public ReadableByteChannel getChannel() {
+            return channel;
         }
 
         @Override
         public boolean isSeekable() {
-            return seekable;
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            return inputStream;
+            return false;
         }
     }
 
     private static class ByteStreamCompressedInputRConnection extends CompressedInputRConnection {
-        ByteStreamCompressedInputRConnection(BasePathRConnection base, ByteArrayInputStream is, boolean seekable) {
-            super(base, is, seekable);
+        ByteStreamCompressedInputRConnection(BasePathRConnection base, ByteArrayInputStream is) {
+            super(base, is);
         }
     }
 
-    private static class CompressedOutputRConnection extends DelegateWriteRConnection {
-        protected OutputStream outputStream;
+    private static class CompressedOutputRConnection extends DelegateWriteNonBlockRConnection {
+        protected WritableByteChannel channel;
         private final boolean seekable;
         private long seekPosition = 0L;
 
         protected CompressedOutputRConnection(BasePathRConnection base, OutputStream os, boolean seekable) {
             super(base);
-            this.outputStream = os;
             this.seekable = seekable;
-        }
-
-        @Override
-        public OutputStream getOutputStream() throws IOException {
-            return outputStream;
+            this.channel = Channels.newChannel(os);
         }
 
         @Override
         public void closeAndDestroy() throws IOException {
             base.closed = true;
             close();
-        }
-
-        @Override
-        public void close() throws IOException {
-            flush();
-            outputStream.close();
-        }
-
-        @Override
-        public void flush() throws IOException {
-            outputStream.flush();
         }
 
         @Override
@@ -521,6 +501,11 @@ public class FileConnections {
         public boolean isSeekable() {
             return seekable;
         }
+
+        @Override
+        public WritableByteChannel getChannel() {
+            return channel;
+        }
     }
 
     private static class BZip2OutputRConnection extends CompressedOutputRConnection {
@@ -536,7 +521,6 @@ public class FileConnections {
         @Override
         public void close() throws IOException {
             flush();
-            outputStream.close();
             // Now actually do the compression using sub-process
             byte[] data = bos.toByteArray();
             RCompression.bzipCompressToFile(data, ((BasePathRConnection) base).path, append);

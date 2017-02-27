@@ -24,9 +24,10 @@ package com.oracle.truffle.r.runtime.conn;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
@@ -37,8 +38,8 @@ public class URLConnections {
     public static class URLRConnection extends BaseRConnection {
         protected final String urlString;
 
-        public URLRConnection(String url, String modeString) throws IOException {
-            super(ConnectionClass.URL, modeString, AbstractOpenMode.Read);
+        public URLRConnection(String url, String modeString, String encoding) throws IOException {
+            super(ConnectionClass.URL, modeString, AbstractOpenMode.Read, encoding);
             this.urlString = url;
         }
 
@@ -52,6 +53,7 @@ public class URLConnections {
             DelegateRConnection delegate = null;
             switch (getOpenMode().abstractOpenMode) {
                 case Read:
+                case ReadBinary:
                     delegate = new URLReadRConnection(this);
                     break;
                 default:
@@ -61,19 +63,19 @@ public class URLConnections {
         }
     }
 
-    private static class URLReadRConnection extends DelegateReadRConnection {
+    private static class URLReadRConnection extends DelegateReadNonBlockRConnection {
 
-        private final BufferedInputStream inputStream;
+        private final ReadableByteChannel rchannel;
 
         protected URLReadRConnection(URLRConnection base) throws MalformedURLException, IOException {
             super(base);
             URL url = new URL(base.urlString);
-            inputStream = new BufferedInputStream(url.openStream());
+            rchannel = Channels.newChannel(new BufferedInputStream(url.openStream()));
         }
 
         @Override
-        public InputStream getInputStream() {
-            return inputStream;
+        public ReadableByteChannel getChannel() {
+            return rchannel;
         }
 
         @Override

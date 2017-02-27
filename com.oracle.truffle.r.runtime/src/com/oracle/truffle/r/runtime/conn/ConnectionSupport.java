@@ -30,6 +30,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -487,18 +488,6 @@ public class ConnectionSupport {
      * it subsequently will throw an error. The latter will open/close the connection (internally)
      * and this can be repeated indefinitely.
      */
-    /**
-     * @author fa
-     *
-     */
-    /**
-     * @author fa
-     *
-     */
-    /**
-     * @author fa
-     *
-     */
     public abstract static class BaseRConnection extends RConnection {
 
         /**
@@ -549,16 +538,22 @@ public class ConnectionSupport {
          * @param modeString the mode in which the connection should be opened, "" for lazy opening
          * @param defaultModeForLazy the mode to use when this connection is opened implicitly
          * @param blocking Indicates if this connection has been openend in blocking mode.
-         * @param encoding The encoding used to read from or to write to the connection.
+         * @param encoding The name of the encoding used to read from or to write to the connection
+         *            ({@code null} is allowed and sets the character set to
+         *            {@code Charset#defaultCharset()}).
          *
          */
-        protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy, boolean blocking, Charset encoding) throws IOException {
+        protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy, boolean blocking, String encoding) throws IOException, IllegalCharsetNameException {
             this(conClass, new OpenMode(modeString, defaultModeForLazy));
             if (conClass != ConnectionClass.Internal) {
                 this.descriptor = getContextStateImpl().setConnection(this);
             }
             this.blocking = blocking;
-            this.encoding = encoding;
+            if (encoding != null) {
+                this.encoding = Charset.forName(ConnectionSupport.convertEncodingName(encoding));
+            } else {
+                this.encoding = Charset.defaultCharset();
+            }
         }
 
         /**
@@ -580,10 +575,10 @@ public class ConnectionSupport {
          * @param conClass the specific class of the connection, e.g, {@link ConnectionClass#File}
          * @param modeString the mode in which the connection should be opened, "" for lazy opening
          * @param defaultModeForLazy the mode to use when this connection is opened implicitly
-         * @param encoding The encoding used to read from or to write to the connection.
+         * @param encoding The name of the encoding used to read from or to write to the connection.
          *
          */
-        protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy, Charset encoding) throws IOException {
+        protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy, String encoding) throws IOException {
             this(conClass, modeString, defaultModeForLazy, true, encoding);
         }
 
@@ -596,7 +591,7 @@ public class ConnectionSupport {
          *
          */
         protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy) throws IOException {
-            this(conClass, modeString, defaultModeForLazy, true, Charset.defaultCharset());
+            this(conClass, modeString, defaultModeForLazy, true, null);
         }
 
         /**
@@ -723,7 +718,7 @@ public class ConnectionSupport {
         }
 
         @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+        protected String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
             checkOpen();
             return theConnection.readLinesInternal(n, warn, skipNul);
         }
@@ -875,12 +870,21 @@ public class ConnectionSupport {
     abstract static class BasePathRConnection extends BaseRConnection {
         protected final String path;
 
-        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, Charset encoding) throws IOException {
+        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, String encoding) throws IOException {
             this(path, connectionClass, modeString, AbstractOpenMode.Read, encoding);
         }
 
-        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode, Charset encoding) throws IOException {
+        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, boolean blocking, String encoding) throws IOException {
+            this(path, connectionClass, modeString, AbstractOpenMode.Read, blocking, encoding);
+        }
+
+        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode, String encoding) throws IOException {
             super(connectionClass, modeString, defaultLazyOpenMode, encoding);
+            this.path = Utils.tildeExpand(path);
+        }
+
+        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode, boolean blocking, String encoding) throws IOException {
+            super(connectionClass, modeString, defaultLazyOpenMode, blocking, encoding);
             this.path = Utils.tildeExpand(path);
         }
 

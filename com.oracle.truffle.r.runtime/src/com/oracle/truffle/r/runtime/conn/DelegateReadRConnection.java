@@ -49,10 +49,10 @@ public abstract class DelegateReadRConnection extends DelegateRConnection {
     @Override
     public String readChar(int nchars, boolean useBytes) throws IOException {
         if (useBytes) {
-            return ReadWriteHelper.readCharHelper(nchars, getInputStream());
+            return DelegateRConnection.readCharHelper(nchars, getInputStream());
         } else {
             final InputStreamReader isr = new InputStreamReader(getInputStream(), base.getEncoding());
-            return ReadWriteHelper.readCharHelper(nchars, isr);
+            return DelegateRConnection.readCharHelper(nchars, isr);
         }
     }
 
@@ -63,13 +63,13 @@ public abstract class DelegateReadRConnection extends DelegateRConnection {
 
     @Override
     public byte[] readBinChars() throws IOException {
-        return ReadWriteHelper.readBinCharsHelper(getInputStream());
+        return DelegateRConnection.readBinCharsHelper(getInputStream());
     }
 
     @TruffleBoundary
     @Override
     public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-        return ReadWriteHelper.readLinesHelper(base, getInputStream(), n, warn, skipNul);
+        return readLinesHelper(n, warn, skipNul);
     }
 
     @Override

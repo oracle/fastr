@@ -72,7 +72,7 @@ public abstract class RConnection implements AutoCloseable {
      */
     private boolean incomplete = false;
 
-    public abstract String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException;
+    protected abstract String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException;
 
     private String readOneLineWithPushBack(String[] res, int ind, @SuppressWarnings("unused") boolean warn, @SuppressWarnings("unused") boolean skipNul) {
         String s = pushBack.pollLast();

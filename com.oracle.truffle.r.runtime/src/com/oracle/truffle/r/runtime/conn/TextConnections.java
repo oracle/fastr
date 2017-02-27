@@ -23,9 +23,11 @@
 package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 
 import com.oracle.truffle.r.runtime.RError;
@@ -83,7 +85,7 @@ public class TextConnections {
         String[] getValue();
     }
 
-    private static class TextReadRConnection extends DelegateReadRConnection implements GetConnectionValue {
+    private static class TextReadRConnection extends DelegateReadNonBlockRConnection implements GetConnectionValue {
         private final String[] lines;
         private int index;
 
@@ -129,12 +131,12 @@ public class TextConnections {
         }
 
         @Override
-        public InputStream getInputStream() {
+        public ReadableByteChannel getChannel() {
             throw RInternalError.shouldNotReachHere();
         }
     }
 
-    private static class TextWriteRConnection extends DelegateWriteRConnection implements GetConnectionValue {
+    private static class TextWriteRConnection extends DelegateWriteNonBlockRConnection implements GetConnectionValue {
         private String incompleteLine;
         private RStringVector textVec;
         private String idName;
@@ -161,8 +163,8 @@ public class TextConnections {
         }
 
         @Override
-        public OutputStream getOutputStream() throws IOException {
-            return new ConnectionOutputStream();
+        public WritableByteChannel getChannel() {
+            return Channels.newChannel(new ConnectionOutputStream());
         }
 
         @Override

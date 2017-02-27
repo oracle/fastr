@@ -1,16 +1,12 @@
-# IgnoreWarningContext
 cat("TITLE extra line", "2 3 5 7", "", "11 13 17", file = "ex.data", sep = "\n")
-readLines("ex.data", n = -1)
-unlink("ex.data") # tidy up
-
-## difference in blocking
+r0 <- readLines("ex.data", n = -1)
+unlink("ex.data")
 cat("123\nabc", file = "test1")
-readLines("test1") # line with a warning
-
+r1 <- readLines("test1")
 con <- file("test1", "r", blocking = FALSE)
-readLines(con) # empty
+r2 <- readLines(con)
 cat(" def\n", file = "test1", append = TRUE)
-readLines(con) # gets both
+r3 <- readLines(con)
 close(con)
-
-unlink("test1") # tidy up
+unlink("test1")
+print(c(r0, r1, r2, r3))

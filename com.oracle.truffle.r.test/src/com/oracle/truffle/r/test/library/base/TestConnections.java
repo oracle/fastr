@@ -102,6 +102,11 @@ public class TestConnections extends TestBase {
     }
 
     @Test
+    public void testURLWrite() {
+        assertEval("url(\"http://localhost:8877\", \"w\")");
+    }
+
+    @Test
     public void testFileWriteReadLines() {
         assertEval(TestBase.template("{ writeLines(c(\"line1\", \"line2\"), file(\"%0\")) }", testDir.subDir("wl1")));
         assertEval(TestBase.template("{ readLines(file(\"%0\"), 2) }", testDir.subDir("wl1")));
@@ -222,10 +227,12 @@ public class TestConnections extends TestBase {
         // two lines, first containing '\0', second line incomplete
         final String twoLinesOneNulIncomp = "c(97,98,99,100,0,101,10,65,66,67)";
 
-        assertEval(TestBase.template("{ fn <- \"" + tmpFile +
-                        "\"; zz <- file(fn,\"w+b\"); writeBin(as.raw(%0), zz, useBytes=T); seek(zz, 0); res <- readLines(zz, 1, warn=%1, skipNul=%2); close(zz); unlink(fn); res }",
-                        arr(lineWithNul, twoLinesOneNul, lineWithNulIncomp, twoLinesOneNulIncomp), arr("T", "F"), arr("T", "F")));
+        assertEval(Output.MayIgnoreWarningContext, TestBase.template("{ fn <- \"" + tmpFile +
+                        "\"; zz <- file(fn,\"w+b\", blocking=%0); writeBin(as.raw(%1), zz, useBytes=T); seek(zz, 0); res <- readLines(zz, 2, warn=%2, skipNul=%3); close(zz); unlink(fn); res }",
+                        LVAL, arr(lineWithNul, twoLinesOneNul, lineWithNulIncomp, twoLinesOneNulIncomp), LVAL, LVAL));
     }
+
+    private static final String[] LVAL = arr("T", "F");
 
     private static String[] arr(String... args) {
         return args;

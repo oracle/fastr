@@ -22,15 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Paths;
@@ -49,7 +48,7 @@ public class FifoConnections {
 
         private final String path;
 
-        public FifoRConnection(String path, String open, boolean blocking, Charset encoding) throws IOException {
+        public FifoRConnection(String path, String open, boolean blocking, String encoding) throws IOException {
             super(ConnectionClass.FIFO, open, AbstractOpenMode.Read, blocking, encoding);
             this.path = path;
             openNonLazyConnection();
@@ -121,28 +120,22 @@ public class FifoConnections {
         }
     }
 
-    static class FifoReadRConnection extends DelegateReadRConnection {
-        private final RandomAccessFile raf;
+    static class FifoReadRConnection extends DelegateReadNonBlockRConnection {
+        private final FileChannel channel;
 
-        protected FifoReadRConnection(BaseRConnection base, String path) throws FileNotFoundException {
+        protected FifoReadRConnection(BaseRConnection base, String path) throws IOException {
             super(base);
-            raf = new RandomAccessFile(path, "r");
+            channel = FileChannel.open(Paths.get(path), StandardOpenOption.READ);
         }
 
         @Override
-        public void close() throws IOException {
-            raf.close();
+        public ReadableByteChannel getChannel() {
+            return channel;
         }
 
         @Override
         public boolean isSeekable() {
             return false;
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            // TODO Auto-generated method stub
-            return null;
         }
     }
 
