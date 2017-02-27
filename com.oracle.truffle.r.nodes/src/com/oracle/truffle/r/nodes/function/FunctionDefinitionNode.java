@@ -253,6 +253,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             saveArguments.execute(frame);
             Object result = body.visibleExecute(frame);
             normalExit.enter();
+            if (CompilerDirectives.inInterpreter() && result == null) {
+                throw RInternalError.shouldNotReachHere("invalid null in result of " + this);
+            }
             return result;
         } catch (ReturnException ex) {
             if (returnTopLevelProfile.profile(ex.getTarget() == RArguments.getCall(frame))) {

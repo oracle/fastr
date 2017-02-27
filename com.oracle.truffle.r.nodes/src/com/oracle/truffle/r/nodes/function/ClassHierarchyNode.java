@@ -162,6 +162,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     @Fallback
     protected RStringVector getClassHr(Object obj) {
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.shouldNotReachHere("type: " + (obj == null ? "null" : obj.getClass().getSimpleName()));
     }
 }

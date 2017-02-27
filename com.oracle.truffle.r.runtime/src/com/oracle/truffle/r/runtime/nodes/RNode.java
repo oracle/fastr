@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumentable;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RTypesGen;
 import com.oracle.truffle.r.runtime.nodes.instrumentation.RNodeWrapperFactory;
@@ -53,7 +55,11 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
      * does not start with "execute" so that the DSL does not treat it like an execute function.
      */
     public Object visibleExecute(VirtualFrame frame) {
-        return execute(frame);
+        Object result = execute(frame);
+        if (CompilerDirectives.inInterpreter() && result == null) {
+            throw RInternalError.shouldNotReachHere("null result in " + this.getClass().getSimpleName());
+        }
+        return result;
     }
 
     /*

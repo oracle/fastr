@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperN
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -233,7 +234,11 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
                 index = flattenVarArgsObject(frame, varArgs, values, index);
                 vargsSymbolsIndex++;
             } else {
-                values[index] = arguments[i] == null ? RMissing.instance : arguments[i].execute(frame);
+                Object result = arguments[i] == null ? RMissing.instance : arguments[i].execute(frame);
+                if (CompilerDirectives.inInterpreter() && result == null) {
+                    throw RInternalError.shouldNotReachHere("invalid null in arguments");
+                }
+                values[index] = result;
                 index++;
             }
         }
