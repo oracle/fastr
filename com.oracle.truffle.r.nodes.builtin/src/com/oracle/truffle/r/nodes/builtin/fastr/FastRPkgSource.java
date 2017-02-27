@@ -34,6 +34,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -71,12 +72,13 @@ public abstract class FastRPkgSource extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(FastRPkgSource.class);
-        casts.arg("pkgs").mustBe(stringValue());
+        casts.arg("pkgs").allowNull().mustBe(stringValue());
         casts.arg("verbose").asLogicalVector().findFirst().notNA().map(toBoolean());
     }
 
     @Specialization
     public RNull pkgSource(VirtualFrame frame, @SuppressWarnings("unused") RNull pkgs, boolean verbose) {
+        CompilerDirectives.transferToInterpreter();
         String[] searchPath = REnvironment.searchPath();
         for (String s : searchPath) {
             REnvironment env = REnvironment.lookupOnSearchPath(s);
@@ -90,6 +92,7 @@ public abstract class FastRPkgSource extends RBuiltinNode {
 
     @Specialization
     public RNull pkgSource(VirtualFrame frame, RAbstractStringVector pkgs, boolean verbose) {
+        CompilerDirectives.transferToInterpreter();
         for (int i = 0; i < pkgs.getLength(); i++) {
             String pkg = pkgs.getDataAt(i);
             REnvironment env = REnvironment.getRegisteredNamespace(pkg);

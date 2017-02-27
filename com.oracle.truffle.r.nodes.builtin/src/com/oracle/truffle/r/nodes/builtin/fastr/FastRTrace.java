@@ -182,6 +182,10 @@ public class FastRTrace {
 
         @Child private TraceFunctions.PrimUnTrace primUnTrace;
 
+        static {
+            Casts.noCasts(Untrace.class);
+        }
+
         @Specialization
         protected Object untrace(VirtualFrame frame, Object whatObj, Object signature, Object whereObj) {
             Object what = whatObj;

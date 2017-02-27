@@ -33,6 +33,11 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "<-", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"x", "i"}, behavior = RBehavior.MODIFIES_FRAME)
 public abstract class AssignBuiltin extends RBuiltinNode {
+
+    static {
+        Casts.noCasts(AssignBuiltin.class);
+    }
+
     @Specialization
     protected Object doIt(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object i) {
         throw RInternalError.unimplemented();

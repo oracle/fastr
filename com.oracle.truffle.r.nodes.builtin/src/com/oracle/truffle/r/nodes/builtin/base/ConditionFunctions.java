@@ -101,6 +101,11 @@ public class ConditionFunctions {
 
     @RBuiltin(name = ".resetCondHands", visibility = OFF, kind = INTERNAL, parameterNames = {"stack"}, behavior = COMPLEX)
     public abstract static class ResetCondHands extends RBuiltinNode {
+
+        static {
+            Casts.noCasts(ResetCondHands.class);
+        }
+
         @SuppressWarnings("unused")
         @Specialization
         protected RNull resetCondHands(Object stack) {
