@@ -24,9 +24,9 @@ package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.channels.ByteChannel;
+import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
@@ -86,9 +86,9 @@ public class SocketConnections {
             this.thisBase = base;
         }
 
-        protected void openStreams(Socket socketArg) throws IOException {
-            this.socket = socketArg;
-            channel = socket.getChannel();
+        protected void openStreams(SocketChannel socketArg) throws IOException {
+            channel = socketArg;
+            socket = socketArg.socket();
             if (thisBase.isBlocking()) {
                 channel.configureBlocking(true);
                 // Java (int) timeouts do not meet the POSIX standard of 31 days
@@ -145,21 +145,22 @@ public class SocketConnections {
     }
 
     private static class RServerSocketConnection extends RSocketReadWriteConnection {
-        private final Socket connectionSocket;
+        private final SocketChannel connectionSocket;
 
         RServerSocketConnection(RSocketConnection base) throws IOException {
             super(base);
             InetSocketAddress addr = new InetSocketAddress(base.port);
-            ServerSocket serverSocket = new ServerSocket();
+            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+
             // we expect only one connection per-server socket; furthermore, we need to accommodate
             // for multiple connections being established locally on the same server port;
             // consequently, we close the server socket at the end of the constructor and allow
             // address reuse to be able to open the next connection after the current one closes
-            serverSocket.setReuseAddress(true);
-            serverSocket.bind(addr);
-            connectionSocket = serverSocket.accept();
+            serverSocketChannel.socket().setReuseAddress(true);
+            serverSocketChannel.socket().bind(addr);
+            connectionSocket = serverSocketChannel.accept();
             openStreams(connectionSocket);
-            serverSocket.close();
+            serverSocketChannel.close();
         }
 
         @Override
@@ -174,7 +175,7 @@ public class SocketConnections {
         RClientSocketConnection(RSocketConnection base) throws IOException {
             super(base);
             SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress(base.host, base.port));
-            openStreams(socketChannel.socket());
+            openStreams(socketChannel);
         }
     }
 
