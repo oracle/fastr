@@ -60,8 +60,8 @@ public class TestConnections extends TestBase {
     }
 
     private static TestDir testDir;
-    private static Path TEMP_FILE_GZIP;
-    private static List<Path> TEMP_FILES = new ArrayList<>();
+    private static Path tempFileGzip;
+    private static final List<Path> TEMP_FILES = new ArrayList<>();
 
     @BeforeClass
     public static void setup() throws IOException {
@@ -70,8 +70,8 @@ public class TestConnections extends TestBase {
         Path path = Paths.get(System.getProperty("java.io.tmpdir"));
 
         // create a gzipped file
-        TEMP_FILE_GZIP = path.resolve("gzipped_____5137528280012599068___.gz");
-        OutputStream gzos = new GZIPOutputStream(Files.newOutputStream(TEMP_FILE_GZIP, StandardOpenOption.WRITE, StandardOpenOption.CREATE));
+        tempFileGzip = path.resolve("gzipped_____5137528280012599068___.gz");
+        OutputStream gzos = new GZIPOutputStream(Files.newOutputStream(tempFileGzip, StandardOpenOption.WRITE, StandardOpenOption.CREATE));
         gzos.write("Hello, World!".getBytes());
         gzos.close();
 
@@ -87,7 +87,7 @@ public class TestConnections extends TestBase {
         if (!deleteDir(testDir.testDirPath)) {
             System.err.println("WARNING: error deleting : " + testDir.testDirPath);
         }
-        deleteFile(TEMP_FILE_GZIP);
+        deleteFile(tempFileGzip);
         for (Path p : TEMP_FILES) {
             deleteFile(p);
         }
@@ -182,8 +182,8 @@ public class TestConnections extends TestBase {
     @Test
     public void testFileSummary() {
 
-        Assert.assertTrue("Could not create required temp file for test.", Files.exists(TEMP_FILE_GZIP));
-        assertEval("{ zz <- file(\"" + TEMP_FILE_GZIP + "\", \"r\"); res <- summary(zz); close(zz); res }");
+        Assert.assertTrue("Could not create required temp file for test.", Files.exists(tempFileGzip));
+        assertEval("{ zz <- file(\"" + tempFileGzip + "\", \"r\"); res <- summary(zz); close(zz); res }");
     }
 
     @Test

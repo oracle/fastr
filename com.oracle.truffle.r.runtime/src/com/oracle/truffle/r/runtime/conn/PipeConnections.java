@@ -156,7 +156,7 @@ public class PipeConnections {
             private final ReadableByteChannel rchannel;
             private final WritableByteChannel wchannel;
 
-            public RWChannel(InputStream in, OutputStream out) {
+            RWChannel(InputStream in, OutputStream out) {
                 rchannel = Channels.newChannel(in);
                 wchannel = Channels.newChannel(out);
             }

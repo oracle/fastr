@@ -860,8 +860,8 @@ public class ConnectionSupport {
     public static BaseRConnection getBaseConnection(RConnection conn) {
         if (conn instanceof BaseRConnection) {
             return (BaseRConnection) conn;
-        } else if (conn instanceof DelegateReadRConnection) {
-            return ((DelegateReadRConnection) conn).base;
+        } else if (conn instanceof DelegateReadNonBlockRConnection) {
+            return ((DelegateReadNonBlockRConnection) conn).base;
         } else {
             throw RInternalError.shouldNotReachHere();
         }
