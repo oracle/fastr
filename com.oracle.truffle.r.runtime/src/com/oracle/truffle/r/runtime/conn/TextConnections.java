@@ -173,6 +173,7 @@ public class TextConnections {
             if (incompleteLine != null) {
                 appendData(new String[]{incompleteLine});
                 incompleteLine = null;
+                base.setIncomplete(false);
             }
             base.closed = true;
             TextRConnection textBase = (TextRConnection) base;
@@ -192,6 +193,7 @@ public class TextConnections {
                 if (incompleteLine != null) {
                     appendedLines.add(new StringBuffer(incompleteLine).append(result.substring(px, nlIndex)).toString());
                     incompleteLine = null;
+                    base.setIncomplete(false);
                 } else {
                     appendedLines.add(result.substring(px, nlIndex));
                 }
@@ -202,9 +204,11 @@ public class TextConnections {
             if (incompleteLine != null && !endOfLine) {
                 // end of line not found - accumulate incomplete line
                 incompleteLine = new StringBuffer(incompleteLine).append(result).toString();
+                base.setIncomplete(true);
             } else if (px < result.length()) {
                 // only reset incompleteLine if
                 incompleteLine = result.substring(px);
+                base.setIncomplete(true);
             }
             if (appendedLines.size() > 0) {
                 // update the vector data
@@ -238,6 +242,7 @@ public class TextConnections {
             if (incompleteLine != null) {
                 sb.append(incompleteLine);
                 incompleteLine = null;
+                base.setIncomplete(false);
             }
             for (int i = 0; i < lines.getLength(); i++) {
                 sb.append(lines.getDataAt(i));

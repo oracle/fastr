@@ -216,7 +216,7 @@ public class FileConnections {
          * type.
          */
         final RCompression.Type cTypeActual;
-        if (openMode == AbstractOpenMode.Read) {
+        if (openMode == AbstractOpenMode.Read || openMode == AbstractOpenMode.ReadBinary) {
             cTypeActual = RCompression.getCompressionType(base.path);
             if (cTypeActual != cType) {
                 base.updateConnectionClass(mapConnectionClass(cTypeActual));

@@ -45,8 +45,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.TestRBase;
 
-public class TestConnections extends TestBase {
+// Checkstyle: stop line length check
+public class TestConnections extends TestRBase {
     private static final class TestDir {
         private final Path testDirPath;
 
@@ -62,6 +64,11 @@ public class TestConnections extends TestBase {
     private static TestDir testDir;
     private static Path tempFileGzip;
     private static final List<Path> TEMP_FILES = new ArrayList<>();
+
+    @Override
+    protected String getTestDir() {
+        return "builtins/connection";
+    }
 
     @BeforeClass
     public static void setup() throws IOException {
@@ -99,11 +106,6 @@ public class TestConnections extends TestBase {
         } catch (IOException e) {
             // ignore
         }
-    }
-
-    @Test
-    public void testURLWrite() {
-        assertEval("url(\"http://localhost:8877\", \"w\")");
     }
 
     @Test
@@ -168,7 +170,7 @@ public class TestConnections extends TestBase {
         assertEval("{ con <- textConnection(\"tcval\", open=\"w\"); writeLines(\"a\", con); writeLines(c(\"a\", \"b\"), con, sep=\".\"); tcval; close(con) }");
         assertEval("{ con <- textConnection(\"tcval\", open=\"w\"); writeLines(\"a\", con); writeLines(c(\"a\", \"b\"), con, sep=\".\"); writeLines(\"\", con); tcval; close(con) }");
         assertEval("{ con <- textConnection(\"tcval\", open=\"w\"); writeLines(\"a\\nb\", con); tcval; close(con) }");
-        assertEval(Ignored.Unimplemented, "c <- textConnection('out', 'w'); cat('testtext', file=c); isIncomplete(c); cat('testtext2\\n', file=c); isIncomplete(c); close(c); out");
+        assertEval("c <- textConnection('out', 'w'); cat('testtext', file=c); isIncomplete(c); cat('testtext2\\n', file=c); isIncomplete(c); close(c); out");
 
         assertEval("{ d<-data.frame(c(1,2), c(10, 20)); buf<-character(); c<-textConnection(\"buf\", open=\"w\", local=T); write.table(d, c); buf }");
     }
@@ -193,13 +195,13 @@ public class TestConnections extends TestBase {
         final Path utf8File = TEMP_FILES.get(0);
         writeEncodedString(utf8File, "utf8", "This is a sentence using german Umlauts like ö, ä, ü, Ö, Ä, Ü but also ß.\n");
         assertEval(Ignored.ImplementationError, "fin <- file(\"" + utf8File + "\", \"r\", encoding = \"latin1\"); lines <- readLines(fin, 1); close(fin); lines");
-        assertEval("fin <- file(\"" + utf8File + "\", \"r\", encoding = \"UTF-8\"); lines <- readLines(fin, 1); close(fin); lines");
+        assertEval(Ignored.ImplementationError, "fin <- file(\"" + utf8File + "\", \"r\", encoding = \"UTF-8\"); lines <- readLines(fin, 1); close(fin); lines");
 
         // read from ISO-8859-1 (aka Latin1) file
         final Path latin1File = TEMP_FILES.get(1);
         writeEncodedString(latin1File, "ISO-8859-1", "This is a sentence using german Umlauts like ö, ä, ü, Ö, Ä, Ü but also ß.\n");
         assertEval(Ignored.Unknown, "fin <- file(\"" + latin1File + "\", \"r\"); lines <- readLines(fin, 1, encoding = \"UTF-8\"); close(fin); lines");
-        assertEval("fin <- file(\"" + latin1File + "\", \"r\", encoding = \"latin1\"); lines <- readLines(fin, 1); close(fin); lines");
+        assertEval(Ignored.ImplementationError, "fin <- file(\"" + latin1File + "\", \"r\", encoding = \"latin1\"); lines <- readLines(fin, 1); close(fin); lines");
         assertEval(Ignored.ImplementationError, "fin <- file(\"" + latin1File + "\", \"r\", encoding = \"UTF-8\"); lines <- readLines(fin, 1); close(fin); lines");
 
         // use inexisting charset
@@ -230,6 +232,42 @@ public class TestConnections extends TestBase {
         assertEval(Output.MayIgnoreWarningContext, TestBase.template("{ fn <- \"" + tmpFile +
                         "\"; zz <- file(fn,\"w+b\", blocking=%0); writeBin(as.raw(%1), zz, useBytes=T); seek(zz, 0); res <- readLines(zz, 2, warn=%2, skipNul=%3); close(zz); unlink(fn); res }",
                         LVAL, arr(lineWithNul, twoLinesOneNul, lineWithNulIncomp, twoLinesOneNulIncomp), LVAL, LVAL));
+    }
+
+    @Test
+    public void testRawReadAppendText() {
+
+        assertEval("{ rc <- rawConnection(raw(0), \"a+\"); close(rc); write(charToRaw(\"A\"), rc) }");
+        assertEval("{ rv <- charToRaw(\"Hello\"); rc <- rawConnection(rv, \"a+\"); writeChar(\", World\", rc); res <- rawConnectionValue(rc); close(rc); res }");
+        assertEval("{ rv <- charToRaw(\"Hello\"); rc <- rawConnection(rv, \"a+\"); writeChar(\", World\", rc); res <- rawToChar(rawConnectionValue(rc)); close(rc); res }");
+        assertEval("{ rv <- charToRaw(\"Hello\"); rc <- rawConnection(rv, \"a+\"); write(charToRaw(\", World\"), rc); res <- rawConnectionValue(rc); close(rc); res }");
+        assertEval("{ rv <- charToRaw(\"Hello\"); rc <- rawConnection(rv, \"a+\"); write(charToRaw(\", World\"), rc); res <- rawToChar(rawConnectionValue(rc)); close(rc); res }");
+    }
+
+    @Test
+    public void testRawReadWriteText() {
+
+        assertEval("{ rc <- rawConnection(raw(0), \"r+\"); close(rc); write(charToRaw(\"A\"), rc) }");
+        assertEval("{ rv <- charToRaw(\"Hello\"); rc <- rawConnection(rv, \"r+\"); writeChar(\", World\", rc); res <- rawConnectionValue(rc); close(rc); res }");
+        assertEval("{ rv <- charToRaw(\"Hello\"); rc <- rawConnection(rv, \"r+\"); writeChar(\", World\", rc); res <- rawToChar(rawConnectionValue(rc)); close(rc); res }");
+        assertEval("{ rv <- charToRaw(\"Hello\"); rc <- rawConnection(rv, \"r+\"); write(charToRaw(\", World\"), rc); res <- rawConnectionValue(rc); close(rc); res }");
+        assertEval("{ rv <- charToRaw(\"Hello\"); rc <- rawConnection(rv, \"r+\"); write(charToRaw(\", World\"), rc); res <- rawToChar(rawConnectionValue(rc)); close(rc); res }");
+    }
+
+    @Test
+    public void testRawWriteText() {
+
+        assertEval("{ s <- \"äöüß\"; rc <- rawConnection(raw(0), \"w\"); writeChar(s, rc); rawConnectionValue(rc) }");
+        assertEval("{ rc <- rawConnection(raw(0), \"w\"); writeChar(\"Hello\", rc); writeChar(\", World\", rc); res <- rawConnectionValue(rc); close(rc); res }");
+    }
+
+    @Test
+    public void testRawWriteBinary() {
+
+        // this test is currently ignored, since 'charToRaw' is not compliant
+        assertEval(Ignored.Unknown, "{ s <- \"äöüß\"; rc <- rawConnection(raw(0), \"wb\"); write(charToRaw(s), rc); res <- rawConnectionValue(rc); close(rc); res }");
+        assertEval(Output.IgnoreWarningContext,
+                        "{ zz <- rawConnection(raw(0), \"wb\"); x <- c(\"a\", \"this will be truncated\", \"abc\"); nc <- c(3, 10, 3); writeChar(x, zz, nc, eos = NULL); writeChar(x, zz, eos = \"\\r\\n\"); res <- rawConnectionValue(zz); close(zz); res }");
     }
 
     private static final String[] LVAL = arr("T", "F");

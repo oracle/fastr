@@ -63,12 +63,7 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
 
     @Override
     public String readChar(int nchars, boolean useBytes) throws IOException {
-        if (useBytes) {
-            return DelegateRConnection.readCharHelper(nchars, getInputStream());
-        } else {
-            final InputStreamReader isr = new InputStreamReader(getInputStream(), base.getEncoding());
-            return DelegateRConnection.readCharHelper(nchars, isr);
-        }
+        return DelegateRConnection.readCharHelper(nchars, getChannel(), useBytes);
     }
 
     @Override
@@ -78,7 +73,7 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
 
     @Override
     public byte[] readBinChars() throws IOException {
-        return DelegateRConnection.readBinCharsHelper(getInputStream());
+        return DelegateRConnection.readBinCharsHelper(getChannel());
     }
 
     @TruffleBoundary
@@ -128,7 +123,8 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
 
     @Override
     public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-        DelegateRConnection.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
+        boolean incomplete = DelegateRConnection.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
+        setIncomplete(incomplete);
     }
 
     @Override

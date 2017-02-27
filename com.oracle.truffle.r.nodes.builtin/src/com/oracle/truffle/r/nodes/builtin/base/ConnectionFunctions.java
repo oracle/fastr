@@ -1304,9 +1304,10 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected boolean isIncomplete(int con) {
+        protected RLogicalVector isIncomplete(int con) {
 
-            return RConnection.fromIndex(con).isIncomplete();
+            final boolean res = RConnection.fromIndex(con).isIncomplete();
+            return RDataFactory.createLogicalVectorFromScalar(res);
         }
     }
 }

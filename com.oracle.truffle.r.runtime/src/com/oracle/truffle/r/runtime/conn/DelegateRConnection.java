@@ -24,8 +24,6 @@ package com.oracle.truffle.r.runtime.conn;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -33,6 +31,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -43,11 +42,18 @@ import com.sun.istack.internal.NotNull;
 
 import sun.nio.cs.StreamDecoder;
 
+/**
+ * Actually performs the I/O operations for a connections.<br>
+ * <p>
+ * A delegate connection is called from its base connection and implements the actual I/O
+ * operations.
+ * </p>
+ */
 abstract class DelegateRConnection extends RConnection {
-    protected BaseRConnection base;
+    protected final BaseRConnection base;
 
-    DelegateRConnection(@NotNull BaseRConnection base) {
-        this.base = base;
+    DelegateRConnection(BaseRConnection base) {
+        this.base = Objects.requireNonNull(base);
     }
 
     @Override
@@ -79,14 +85,14 @@ abstract class DelegateRConnection extends RConnection {
     }
 
     /**
-     * {@code readLines} from an {@link InputStream}. It would be convenient to use a
-     * {@link BufferedReader} but mixing binary and text operations, which is a requirement, would
-     * then be difficult.
+     * {@code readLines} from the connection. It would be convenient to use a {@link BufferedReader}
+     * but mixing binary and text operations, which is a requirement, would then be difficult.
      *
      * @param warn Specifies if warnings should be output.
      * @param skipNul Specifies if the null character should be ignored.
      */
     protected String[] readLinesHelper(int n, boolean warn, boolean skipNul) throws IOException {
+        base.setIncomplete(false);
         ArrayList<String> lines = new ArrayList<>();
         int totalRead = 0;
         byte[] buffer = new byte[64];
@@ -110,6 +116,7 @@ abstract class DelegateRConnection extends RConnection {
                     final String incompleteFinalLine = new String(buffer, 0, totalRead, base.getEncoding());
                     if (!base.isBlocking() && base.isTextMode()) {
                         base.pushBack(RDataFactory.createStringVector(incompleteFinalLine), false);
+                        base.setIncomplete(true);
                     } else {
                         lines.add(incompleteFinalLine);
                         if (warn) {
@@ -157,14 +164,18 @@ abstract class DelegateRConnection extends RConnection {
         return result;
     }
 
-    public static void writeStringHelper(OutputStream out, String s, boolean nl, Charset encoding) throws IOException {
-        out.write(s.getBytes(encoding));
-        if (nl) {
-            out.write(System.lineSeparator().getBytes(encoding));
-        }
-    }
-
-    public static void writeStringHelper(WritableByteChannel out, String s, boolean nl, Charset encoding) throws IOException {
+    /**
+     * Writes a string to a channel.
+     *
+     * @param out the channel
+     * @param s The actual string to write.
+     * @param nl Indicates if a line separator should be appended.
+     * @param encoding The encoding to use for writing.
+     * @return {@code true} if an incomplete line was written; {@code false} otherwise
+     * @throws IOException
+     */
+    public static boolean writeStringHelper(WritableByteChannel out, String s, boolean nl, Charset encoding) throws IOException {
+        boolean incomplete;
         final byte[] bytes = s.getBytes(encoding);
         final byte[] lineSepBytes = nl ? System.lineSeparator().getBytes(encoding) : null;
 
@@ -172,36 +183,14 @@ abstract class DelegateRConnection extends RConnection {
         buf.put(bytes);
         if (nl) {
             buf.put(lineSepBytes);
+            incomplete = false;
+        } else {
+            incomplete = !s.contains("\n");
         }
 
         buf.rewind();
         out.write(buf);
-    }
-
-    /**
-     * Writes characters in binary mode (without any re-encoding) to the provided channel.
-     *
-     * @param out The output stream (must not be {@code null}.
-     * @param s The character string to write (must not be {@code null}).
-     * @param pad The number of null characters to append to the characters.
-     * @param eos The end-of-string terminator (may be {@code null}).
-     * @throws IOException
-     */
-    public static void writeCharHelper(OutputStream out, String s, int pad, String eos) throws IOException {
-
-        out.write(s.getBytes());
-        if (pad > 0) {
-            for (int i = 0; i < pad; i++) {
-                out.write(0);
-            }
-        }
-        if (eos != null) {
-            if (eos.length() > 0) {
-                out.write(eos.getBytes());
-            }
-            // function writeChar is defined to append the null character if eos != null
-            out.write(0);
-        }
+        return incomplete;
     }
 
     /**
@@ -238,14 +227,6 @@ abstract class DelegateRConnection extends RConnection {
         channel.write(buf);
     }
 
-    @Deprecated
-    public static void writeBinHelper(ByteBuffer buffer, OutputStream outputStream) throws IOException {
-        int n = buffer.remaining();
-        byte[] b = new byte[n];
-        buffer.get(b);
-        outputStream.write(b);
-    }
-
     /**
      * Reads null-terminated character strings from a {@link ReadableByteChannel}.
      */
@@ -270,39 +251,6 @@ abstract class DelegateRConnection extends RConnection {
     }
 
     /**
-     * Reads null-terminated character strings from a {@link InputStream}.
-     */
-    public static byte[] readBinCharsHelper(InputStream in) throws IOException {
-        int ch = in.read();
-        if (ch < 0) {
-            return null;
-        }
-        int totalRead = 0;
-        byte[] buffer = new byte[64];
-        while (true) {
-            buffer = DelegateRConnection.checkBuffer(buffer, totalRead);
-            buffer[totalRead++] = (byte) (ch & 0xFF);
-            if (ch == 0) {
-                break;
-            }
-            ch = in.read();
-        }
-        return buffer;
-    }
-
-    public static int readBinHelper(ByteBuffer buffer, InputStream inputStream) throws IOException {
-        int bytesToRead = buffer.remaining();
-        byte[] b = new byte[bytesToRead];
-        int totalRead = 0;
-        int thisRead = 0;
-        while ((totalRead < bytesToRead) && ((thisRead = inputStream.read(b, totalRead, bytesToRead - totalRead)) > 0)) {
-            totalRead += thisRead;
-        }
-        buffer.put(b, 0, totalRead);
-        return totalRead;
-    }
-
-    /**
      * Reads a specified amount of characters.
      *
      * @param nchars Number of characters to read.
@@ -322,28 +270,6 @@ abstract class DelegateRConnection extends RConnection {
         }
 
         return new String(chars, 0, j);
-    }
-
-    /**
-     * Reads a specified amount of bytes.
-     *
-     * @param nchars The number of bytes to read.
-     * @param in The input stream.
-     * @return The read string.
-     * @throws IOException
-     */
-    public static String readCharHelper(int nchars, InputStream in) throws IOException {
-        byte[] buf = new byte[nchars];
-        in.read(buf);
-        int j = 0;
-        for (; j < buf.length; j++) {
-            // strings end at 0
-            if (buf[j] == 0) {
-                break;
-            }
-        }
-
-        return new String(buf, 0, j);
     }
 
     public static String readCharHelper(int nchars, ReadableByteChannel channel, boolean useBytes) throws IOException {
@@ -402,7 +328,7 @@ abstract class DelegateRConnection extends RConnection {
     /**
      * Enlarges the buffer if necessary.
      */
-    static byte[] checkBuffer(byte[] buffer, int n) {
+    private static byte[] checkBuffer(byte[] buffer, int n) {
         if (n > buffer.length - 1) {
             byte[] newBuffer = new byte[buffer.length + buffer.length / 2];
             System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
@@ -412,26 +338,14 @@ abstract class DelegateRConnection extends RConnection {
         }
     }
 
-    @SuppressWarnings("unused")
-    public static String[] readLinesNonBlockHelper(BaseRConnection conn, ReadableByteChannel channel, int n, boolean warn, boolean skipNul, String summaryDescription, Charset encoding) {
-
-        throw RInternalError.unimplemented();
-    }
-
-    public static void writeLinesHelper(WritableByteChannel out, RAbstractStringVector lines, String sep, Charset encoding) throws IOException {
+    public static boolean writeLinesHelper(WritableByteChannel out, RAbstractStringVector lines, String sep, Charset encoding) throws IOException {
+        boolean incomplete = false;
         for (int i = 0; i < lines.getLength(); i++) {
             final String line = lines.getDataAt(i);
-            DelegateRConnection.writeStringHelper(out, line, false, encoding);
-            DelegateRConnection.writeStringHelper(out, sep, false, encoding);
+            incomplete = DelegateRConnection.writeStringHelper(out, line, false, encoding);
+            incomplete = DelegateRConnection.writeStringHelper(out, sep, false, encoding) || incomplete;
         }
-    }
-
-    public static void writeLinesHelper(OutputStream out, RAbstractStringVector lines, String sep, Charset encoding) throws IOException {
-        for (int i = 0; i < lines.getLength(); i++) {
-            final String line = lines.getDataAt(i);
-            DelegateRConnection.writeStringHelper(out, line, false, encoding);
-            DelegateRConnection.writeStringHelper(out, sep, false, encoding);
-        }
+        return incomplete;
     }
 
 }

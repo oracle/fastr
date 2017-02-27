@@ -26,7 +26,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -74,7 +77,7 @@ public abstract class RConnection implements AutoCloseable {
 
     protected abstract String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException;
 
-    private String readOneLineWithPushBack(String[] res, int ind, @SuppressWarnings("unused") boolean warn, @SuppressWarnings("unused") boolean skipNul) {
+    private String readOneLineWithPushBack(List<String> res, int ind) {
         String s = pushBack.pollLast();
         if (s == null) {
             return null;
@@ -86,7 +89,8 @@ public abstract class RConnection implements AutoCloseable {
                     // suffix is not empty and needs to be processed later
                     pushBack.push(lines[1]);
                 }
-                res[ind] = lines[0];
+                assert res.size() == ind;
+                res.add(ind, lines[0]);
                 return null;
             } else {
                 // no end of the line found yet
@@ -106,7 +110,8 @@ public abstract class RConnection implements AutoCloseable {
                             // suffix is not empty and needs to be processed later
                             pushBack.push(lines[1]);
                         }
-                        res[ind] = sb.append(lines[0]).toString();
+                        assert res.size() == ind;
+                        res.add(ind, sb.append(lines[0]).toString());
                         return null;
                     } // else continue
                 } while (true);
@@ -115,15 +120,29 @@ public abstract class RConnection implements AutoCloseable {
         }
     }
 
+    /**
+     * TODO(fa) This method is subject for refactoring. I modified the original implementation to be
+     * capable to handle a negative 'n' parameter. It indicates to read as much lines as available.
+     */
     @TruffleBoundary
     private String[] readLinesWithPushBack(int n, boolean warn, boolean skipNul) throws IOException {
-        String[] res = new String[n];
-        for (int i = 0; i < n; i++) {
-            String s = readOneLineWithPushBack(res, i, warn, skipNul);
+        // NOTE: 'n' may be negative indicating to read as much lines as available
+        final List<String> res;
+        if (n >= 0) {
+            res = new ArrayList<>(n);
+        } else {
+            res = new ArrayList<>();
+        }
+
+        for (int i = 0; i < n || n < 0; i++) {
+            String s = readOneLineWithPushBack(res, i);
+            final int remainingLineCount = n >= 0 ? n - i : n;
             if (s == null) {
-                if (res[i] == null) {
+                if (i >= res.size() || res.get(i) == null) {
                     // no more push back value
-                    System.arraycopy(readLinesInternal(n - i, warn, skipNul), 0, res, i, n - i);
+
+                    String[] resInternal = readLinesInternal(remainingLineCount, warn, skipNul);
+                    res.addAll(Arrays.asList(resInternal));
                     pushBack = null;
                     break;
                 }
@@ -131,13 +150,18 @@ public abstract class RConnection implements AutoCloseable {
             } else {
                 // reached the last push back value without reaching and of line
                 assert pushBack.size() == 0;
-                System.arraycopy(readLinesInternal(n - i, warn, skipNul), 0, res, i, n - i);
-                res[i] = s + res[i];
+                String[] resInternal = readLinesInternal(remainingLineCount, warn, skipNul);
+                res.addAll(i, Arrays.asList(resInternal));
+                if (res.get(i) != null) {
+                    res.set(i, s + res.get(i));
+                } else {
+                    res.set(i, s);
+                }
                 pushBack = null;
                 break;
             }
         }
-        return res;
+        return res.toArray(new String[res.size()]);
     }
 
     /**

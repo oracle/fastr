@@ -117,7 +117,8 @@ abstract class DelegateWriteRConnection extends DelegateRConnection {
 
     @Override
     public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-        DelegateRConnection.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
+        boolean incomplete = DelegateRConnection.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
+        setIncomplete(incomplete);
     }
 
     @Override
