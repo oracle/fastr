@@ -28,7 +28,6 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -79,8 +78,8 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
     }
 
     @Override
-    public OutputStream getOutputStream() {
-        throw RInternalError.shouldNotReachHere();
+    public OutputStream getOutputStream() throws IOException {
+        return Channels.newOutputStream(getChannel());
     }
 
     @Override

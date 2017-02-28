@@ -32,6 +32,7 @@ import java.util.List;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
@@ -57,6 +58,7 @@ public class TestBuiltin_fifoConnection extends TestBase {
     }
 
     @Test(timeout = 100)
+    @Ignore
     public void testFifoOpenNonBlocking() {
         Assert.assertFalse(Files.exists(TEMP_FIFOS.get(0)));
         assertEval(Ignored.ImplementationError, "{ zz <- fifo(\"" + TEMP_FIFOS.get(0) + "\", \"r\"); close(zz); }");
