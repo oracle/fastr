@@ -169,7 +169,7 @@ public final class FrameSlotChangeMonitor {
     private static final class FrameDescriptorMetaData {
         private final String name; // name for debug purposes
         private final WeakReference<MaterializedFrame> singletonFrame;
-        private final Set<FrameDescriptor> subDescriptors = Collections.newSetFromMap(new WeakHashMap<>());
+        private final Set<FrameDescriptor> subDescriptors = Collections.newSetFromMap(new WeakHashMap<>(2));
 
         /**
          * This set contains all lookups that have been performed "across" this frame descriptor. If
@@ -180,7 +180,7 @@ public final class FrameSlotChangeMonitor {
         /**
          * A set of all lookups that started in this frame descriptor.
          */
-        private final WeakHashMap<Object, WeakReference<LookupResult>> lookupResults = new WeakHashMap<>();
+        private final WeakHashMap<Object, WeakReference<LookupResult>> lookupResults = new WeakHashMap<>(2);
 
         private WeakReference<FrameDescriptor> enclosingFrameDescriptor = new WeakReference<>(null);
         private Assumption enclosingFrameDescriptorAssumption = Truffle.getRuntime().createAssumption("enclosing frame descriptor");
