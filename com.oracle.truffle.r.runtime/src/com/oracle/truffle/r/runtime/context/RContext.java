@@ -424,7 +424,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
 
     private ContextState[] contextStates() {
-        return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize,
+        return new ContextState[]{stateREnvVars, stateRProfile, stateTempPath, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI,
+                        stateRSerialize,
                         stateLazyDBCache, stateInstrumentation, stateDLL};
     }
 

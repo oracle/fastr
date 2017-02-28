@@ -23,8 +23,14 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Random;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -47,6 +53,11 @@ public class TempPathName implements RContext.ContextState {
 
     @Override
     public RContext.ContextState initialize(RContext context) {
+        if (context.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
+            // share tempdir with parent
+            tempDirPath = context.getParent().stateTempPath.tempDirPath;
+            return this;
+        }
         final String[] envVars = new String[]{"TMPDIR", "TMP", "TEMP"};
         String startingTempDir = null;
         for (String envVar : envVars) {
@@ -72,13 +83,26 @@ public class TempPathName implements RContext.ContextState {
         return this;
     }
 
+    @Override
+    public void beforeDestroy(RContext context) {
+        if (context.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
+            return;
+        }
+        try {
+            Files.walkFileTree(Paths.get(tempDirPath), new DeleteVisitor());
+        } catch (Throwable e) {
+            // unexpected and we are exiting anyway
+        }
+    }
+
     private static boolean isWriteableDirectory(String path) {
         File f = new File(path);
         return f.exists() && f.isDirectory() && f.canWrite();
     }
 
     public static String tempDirPath() {
-        return RContext.getInstance().stateTempPath.tempDirPath;
+        String result = RContext.getInstance().stateTempPath.tempDirPath;
+        return result;
     }
 
     public static TempPathName newContextState() {
@@ -105,6 +129,24 @@ public class TempPathName implements RContext.ContextState {
     private static void appendRandomString(StringBuilder sb) {
         for (int i = 0; i < RANDOM_LENGTH; i++) {
             sb.append(RANDOM_CHARACTERS.charAt(rand.nextInt(RANDOM_CHARACTERS_LENGTH)));
+        }
+    }
+
+    private static final class DeleteVisitor extends SimpleFileVisitor<Path> {
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            return del(file);
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            return del(dir);
+        }
+
+        private static FileVisitResult del(Path p) throws IOException {
+            Files.delete(p);
+            return FileVisitResult.CONTINUE;
         }
     }
 }

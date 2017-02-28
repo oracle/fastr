@@ -104,8 +104,7 @@ public class RCleanUp {
                 RInternalError.reportError(t);
             }
         }
-        // TODO run exit finalizers (FFI)
-        // TODO clean tmpdir
+        // TODO run exit finalizers (FFI) (this should happen in the FFI context beforeDestroy)
         throw new ExitException(status);
 
     }
