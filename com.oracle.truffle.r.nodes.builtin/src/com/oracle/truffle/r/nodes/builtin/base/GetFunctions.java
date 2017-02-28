@@ -164,7 +164,7 @@ public class GetFunctions {
 
         private final ConditionProfile inheritsProfile = ConditionProfile.createBinaryProfile();
 
-        public abstract Object execute(VirtualFrame frame, String x, REnvironment environment, String mode, boolean inherits);
+        public abstract Object execute(VirtualFrame frame, Object what, Object where, String name, boolean inherits);
 
         static {
             Casts casts = new Casts(Get.class);
@@ -196,6 +196,7 @@ public class GetFunctions {
         protected Object get(VirtualFrame frame, String x, int envir, String mode, boolean inherits) {
             throw RInternalError.unimplemented();
         }
+
     }
 
     @RBuiltin(name = "get0", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits", "ifnotfound"}, behavior = COMPLEX)

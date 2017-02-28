@@ -238,6 +238,8 @@ public class EnvFunctions {
 
         @Child private FrameFunctions.ParentFrame parentFrameNode;
 
+        public abstract Object execute(VirtualFrame frame, Object execute, Object instance);
+
         @Specialization
         protected REnvironment topEnv(REnvironment env, REnvironment matchThisEnv) {
             return doTopEnv(matchThisEnv, env);
@@ -270,7 +272,7 @@ public class EnvFunctions {
         }
 
         @TruffleBoundary
-        private static REnvironment doTopEnv(REnvironment target, final REnvironment envArg) {
+        private static REnvironment doTopEnv(REnvironment target, REnvironment envArg) {
             REnvironment env = envArg;
             while (env != REnvironment.emptyEnv()) {
                 if (env == target || env == REnvironment.globalEnv() || env == REnvironment.baseEnv() || env == REnvironment.baseNamespaceEnv() || env.isPackageEnv() != null || env.isNamespaceEnv() ||
@@ -281,6 +283,7 @@ public class EnvFunctions {
             }
             return REnvironment.globalEnv();
         }
+
     }
 
     @RBuiltin(name = "parent.env", kind = INTERNAL, parameterNames = {"env"}, behavior = READS_FRAME)

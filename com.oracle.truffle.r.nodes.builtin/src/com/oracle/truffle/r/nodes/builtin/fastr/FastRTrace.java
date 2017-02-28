@@ -77,7 +77,7 @@ public class FastRTrace {
                 topEnv = insert(TopEnvNodeGen.create());
                 parentFrame = insert(ParentFrameNodeGen.create());
             }
-            return topEnv.executeBuiltin(frame, parentFrame.execute(frame, 1), RNull.instance);
+            return topEnv.execute(frame, parentFrame.execute(frame, 1), RNull.instance);
         }
 
         protected Object getFunction(VirtualFrame frame, Object what, Object where) {
@@ -85,7 +85,7 @@ public class FastRTrace {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getNode = insert(GetNodeGen.create());
             }
-            return getNode.executeBuiltin(frame, what, where, RType.Function.getName(), true);
+            return getNode.execute(frame, what, where, RType.Function.getName(), true);
         }
 
         protected void checkWhat(Object what) {
@@ -140,7 +140,7 @@ public class FastRTrace {
                     primTrace = insert(PrimTraceNodeGen.create());
                 }
 
-                Object result = primTrace.executeBuiltin(frame, func);
+                Object result = primTrace.execute(frame, func);
                 visibility.execute(frame, false);
                 return result;
             }
@@ -204,7 +204,7 @@ public class FastRTrace {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     primUnTrace = insert(PrimUnTraceNodeGen.create());
                 }
-                primUnTrace.executeBuiltin(frame, func);
+                primUnTrace.execute(frame, func);
             } else {
                 throw RError.nyi(this, "method tracing");
             }

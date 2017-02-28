@@ -62,16 +62,18 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     protected final BinaryArithmeticFactory binary;
     private final UnaryArithmeticFactory unary;
 
-    public BinaryArithmeticNode(BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
-        this.binary = binaryFactory;
-        this.unary = unaryFactory;
-    }
-
     static {
         Casts casts = new Casts(BinaryArithmeticNode.class);
         casts.arg(0).boxPrimitive();
         casts.arg(1).boxPrimitive();
     }
+
+    public BinaryArithmeticNode(BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
+        this.binary = binaryFactory;
+        this.unary = unaryFactory;
+    }
+
+    public abstract Object execute(Object left, Object right);
 
     @Override
     public RBaseNode getErrorContext() {

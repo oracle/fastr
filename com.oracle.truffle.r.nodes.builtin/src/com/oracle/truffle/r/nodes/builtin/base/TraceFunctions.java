@@ -91,6 +91,8 @@ public class TraceFunctions {
             createCasts(PrimTrace.class);
         }
 
+        public abstract Object execute(VirtualFrame frame, RFunction func);
+
         @Specialization
         protected RNull primTrace(VirtualFrame frame, RAbstractStringVector funcName) {
             return primTrace((RFunction) getFunction(frame, funcName.getDataAt(0)));
@@ -106,6 +108,7 @@ public class TraceFunctions {
             }
             return RNull.instance;
         }
+
     }
 
     @RBuiltin(name = ".primUntrace", visibility = OFF, kind = PRIMITIVE, parameterNames = "what", behavior = COMPLEX)
@@ -114,6 +117,8 @@ public class TraceFunctions {
         static {
             createCasts(PrimUnTrace.class);
         }
+
+        public abstract void execute(VirtualFrame frame, RFunction func);
 
         @Specialization
         protected RNull primUnTrace(VirtualFrame frame, RAbstractStringVector funcName) {
@@ -128,6 +133,7 @@ public class TraceFunctions {
             }
             return RNull.instance;
         }
+
     }
 
     @RBuiltin(name = "traceOnOff", kind = INTERNAL, parameterNames = "state", behavior = COMPLEX)

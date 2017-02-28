@@ -30,6 +30,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -64,6 +65,8 @@ public abstract class Assign extends RBuiltinNode {
     protected Assign(boolean direct) {
         this.direct = direct;
     }
+
+    public abstract Object execute(VirtualFrame frame, RAbstractStringVector x, Object value, REnvironment pos, byte inherits);
 
     @Override
     public RBaseNode getErrorContext() {

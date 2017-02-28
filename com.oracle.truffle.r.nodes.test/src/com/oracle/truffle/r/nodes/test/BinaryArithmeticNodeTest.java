@@ -387,6 +387,6 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
 
     private static NodeHandle<BinaryArithmeticNode> create(BinaryArithmeticFactory factory) {
         return createHandle(BinaryArithmeticNode.create(factory, null),
-                        (node, args) -> node.executeBuiltin(null, args[0], args[1]));
+                        (node, args) -> node.execute(args[0], args[1]));
     }
 }

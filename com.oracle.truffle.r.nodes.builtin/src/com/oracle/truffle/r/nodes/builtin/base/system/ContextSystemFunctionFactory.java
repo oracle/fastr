@@ -59,7 +59,7 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
         @Specialization
         protected Object systemFunction(VirtualFrame frame, RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
             initContextRNode();
-            Object result = contextRNode.executeBuiltin(frame, args, env, intern);
+            Object result = contextRNode.execute(frame, args, env, intern);
             return result;
         }
     }

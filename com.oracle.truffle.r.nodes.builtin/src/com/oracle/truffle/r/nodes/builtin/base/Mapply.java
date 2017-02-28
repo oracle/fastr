@@ -35,25 +35,23 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
+import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.MapplyNodeGen.MapplyInternalNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.infix.Subscript;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SubscriptNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -78,7 +76,7 @@ public abstract class Mapply extends RBuiltinNode {
 
     protected static final class ElementNode extends Node {
         @Child private Length lengthNode;
-        @Child private Subscript indexedLoadNode;
+        @Child private ExtractVectorNode extractNode;
         @Child private WriteVariableNode writeVectorElementNode;
         private final String vectorElementName;
         private final String argName;
@@ -87,7 +85,7 @@ public abstract class Mapply extends RBuiltinNode {
             // the name is a hack to treat ReadVariableNode-s as syntax nodes
             this.vectorElementName = "*" + AnonymousFrameVariable.create(vectorElementName);
             this.lengthNode = insert(LengthNodeGen.create());
-            this.indexedLoadNode = insert(SubscriptNodeGen.create());
+            this.extractNode = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, false));
             this.writeVectorElementNode = insert(WriteVariableNode.createAnonymous(this.vectorElementName, Mode.REGULAR, null));
             this.argName = argName;
         }
@@ -110,8 +108,6 @@ public abstract class Mapply extends RBuiltinNode {
     public abstract static class MapplyInternalNode extends Node implements InternalRSyntaxNodeChildren {
 
         private static final String VECTOR_ELEMENT_PREFIX = "MAPPLY_VEC_ELEM_";
-        private static final RLogicalVector DROP = RDataFactory.createLogicalVectorFromScalar(true);
-        private static final RLogicalVector EXACT = RDataFactory.createLogicalVectorFromScalar(true);
         private static final ArgumentsSignature I_INDEX = ArgumentsSignature.get("i");
         private static final RArgsValuesAndNames[] INDEX_CACHE = new RArgsValuesAndNames[32];
 
@@ -125,33 +121,8 @@ public abstract class Mapply extends RBuiltinNode {
 
         public abstract Object[] execute(VirtualFrame frame, RAbstractListVector dots, RFunction function, RAbstractListVector additionalArguments);
 
-        private static Object getVecElement(VirtualFrame frame, RAbstractListVector dots, int i, int listIndex, int[] lengths, Subscript indexedLoadNode) {
-            Object listElem = dots.getDataAt(listIndex);
-            RAbstractContainer vec = null;
-            if (listElem instanceof RAbstractContainer) {
-                vec = (RAbstractContainer) listElem;
-            } else {
-                // TODO scalar types are a nuisance!
-                if (listElem instanceof String) {
-                    vec = RDataFactory.createStringVectorFromScalar((String) listElem);
-                } else if (listElem instanceof Integer) {
-                    vec = RDataFactory.createIntVectorFromScalar((int) listElem);
-                } else if (listElem instanceof Double) {
-                    vec = RDataFactory.createDoubleVectorFromScalar((double) listElem);
-                } else {
-                    throw RInternalError.unimplemented();
-                }
-            }
-
-            int adjIndex = i % lengths[listIndex];
-            RArgsValuesAndNames indexArg;
-            if (adjIndex < INDEX_CACHE.length) {
-                indexArg = INDEX_CACHE[adjIndex];
-            } else {
-                indexArg = new RArgsValuesAndNames(new Object[]{adjIndex + 1}, I_INDEX);
-            }
-            return indexedLoadNode.executeBuiltin(frame, vec, indexArg, EXACT, DROP);
-
+        private static Object getVecElement(VirtualFrame frame, RAbstractListVector dots, int i, int listIndex, int[] lengths, ExtractVectorNode extractNode) {
+            return extractNode.apply(frame, dots.getDataAt(listIndex), new Object[]{i % lengths[listIndex] + 1}, RLogical.TRUE, RLogical.TRUE);
         }
 
         @SuppressWarnings("unused")
@@ -183,7 +154,7 @@ public abstract class Mapply extends RBuiltinNode {
             for (int i = 0; i < maxLength; i++) {
                 /* Evaluate and store the arguments */
                 for (int listIndex = 0; listIndex < dotsLength; listIndex++) {
-                    Object vecElement = getVecElement(frame, dots, i, listIndex, lengths, cachedElementNodeArray[listIndex].indexedLoadNode);
+                    Object vecElement = getVecElement(frame, dots, i, listIndex, lengths, cachedElementNodeArray[listIndex].extractNode);
                     cachedElementNodeArray[listIndex].writeVectorElementNode.execute(frame, vecElement);
                 }
                 /* Now call the function */
@@ -195,7 +166,7 @@ public abstract class Mapply extends RBuiltinNode {
         @Specialization(replaces = "cachedMApply")
         protected Object[] mApply(VirtualFrame frame, RAbstractListVector dots, RFunction function, RAbstractListVector moreArgs,
                         @Cached("create()") RLengthNode lengthNode,
-                        @Cached("createIndexedLoadNode()") Subscript indexedLoadNode,
+                        @Cached("createExtractNode()") ExtractVectorNode extractNode,
                         @Cached("create()") RExplicitCallNode callNode) {
             int dotsLength = dots.getLength();
             int moreArgsLength = moreArgs.getLength();
@@ -226,7 +197,7 @@ public abstract class Mapply extends RBuiltinNode {
             for (int i = 0; i < maxLength; i++) {
                 /* Evaluate and store the arguments */
                 for (int listIndex = 0; listIndex < dotsLength; listIndex++) {
-                    Object vecElement = getVecElement(frame, dots, i, listIndex, lengths, indexedLoadNode);
+                    Object vecElement = getVecElement(frame, dots, i, listIndex, lengths, extractNode);
                     values[listIndex] = vecElement;
                 }
                 /* Now call the function */
@@ -265,8 +236,8 @@ public abstract class Mapply extends RBuiltinNode {
             return elementNodes;
         }
 
-        protected Subscript createIndexedLoadNode() {
-            return SubscriptNodeGen.create();
+        protected ExtractVectorNode createExtractNode() {
+            return ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, false);
         }
 
         protected boolean sameNames(RAbstractListVector list, RAbstractListVector cachedList) {

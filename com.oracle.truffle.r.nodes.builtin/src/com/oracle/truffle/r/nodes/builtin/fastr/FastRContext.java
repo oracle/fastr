@@ -36,6 +36,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.vm.PolyglotEngine;
@@ -236,6 +237,8 @@ public class FastRContext {
             casts.arg("env").allowMissing().mustBe(stringValue());
             casts.arg("intern").asLogicalVector().findFirst().map(toBoolean());
         }
+
+        public abstract Object execute(VirtualFrame frame, RAbstractStringVector args, RAbstractStringVector env, boolean intern);
 
         @Specialization
         @TruffleBoundary
