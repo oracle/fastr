@@ -161,7 +161,7 @@ public class StdConnections {
         }
 
         @Override
-        public RConnection forceOpen(String modeString) {
+        public BaseRConnection forceOpen(String modeString) {
             return this;
         }
 

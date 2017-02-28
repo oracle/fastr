@@ -704,7 +704,7 @@ public class ConnectionSupport {
         }
 
         @Override
-        public RConnection forceOpen(String modeString) throws IOException {
+        public BaseRConnection forceOpen(String modeString) throws IOException {
             if (closed) {
                 throw new IOException(RError.Message.INVALID_CONNECTION.message);
             }

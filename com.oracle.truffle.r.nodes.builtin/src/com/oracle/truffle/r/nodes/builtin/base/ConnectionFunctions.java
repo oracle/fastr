@@ -494,7 +494,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object textConnection(int con) {
-            RConnection connection = RConnection.fromIndex(con);
+            BaseRConnection connection = RConnection.fromIndex(con);
             if (connection instanceof RawRConnection) {
                 return RDataFactory.createRawVector(((RawRConnection) connection).getValue());
             } else {
@@ -571,7 +571,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RLogicalVector isOpen(int con, int rw) {
-            RConnection baseCon = getBaseConnection(RConnection.fromIndex(con));
+            BaseRConnection baseCon = getBaseConnection(RConnection.fromIndex(con));
             boolean result = baseCon.isOpen();
             switch (rw) {
                 case 0:
@@ -601,7 +601,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object close(int con, @SuppressWarnings("unused") String type) {
-            RConnection connection = RConnection.fromIndex(con);
+            BaseRConnection connection = RConnection.fromIndex(con);
             try {
                 connection.closeAndDestroy();
             } catch (IOException ex) {
@@ -750,7 +750,7 @@ public abstract class ConnectionFunctions {
         @Specialization(guards = "!ncharsEmpty(nchars)")
         @TruffleBoundary
         protected RStringVector readChar(int con, RAbstractIntVector nchars, boolean useBytes) {
-            try (RConnection openConn = RConnection.fromIndex(con).forceOpen("rb")) {
+            try (BaseRConnection openConn = RConnection.fromIndex(con).forceOpen("rb")) {
                 String[] data = new String[nchars.getLength()];
                 for (int i = 0; i < data.length; i++) {
                     data[i] = openConn.readChar(nchars.getDataAt(i), useBytes);
