@@ -231,8 +231,8 @@ public abstract class ConnectionFunctions {
             } catch (MalformedURLException e) {
                 // ignore and try to open file
             } catch (IOException e) {
-                RError.warning(this, RError.Message.UNABLE_TO_RESOLVE, e.getMessage());
-                throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
+                RError.warning(RError.SHOW_CALLER, RError.Message.UNABLE_TO_RESOLVE, e.getMessage());
+                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_CONNECTION);
             }
 
             if (path.length() == 0) {
@@ -247,13 +247,13 @@ public abstract class ConnectionFunctions {
                 }
             }
             try {
-                return new FileRConnection(path, open, blocking, encoding).asVector();
+                return new FileRConnection(path, open, blocking, encoding, raw).asVector();
             } catch (IOException ex) {
                 warning(RError.Message.CANNOT_OPEN_FILE, description, ex.getMessage());
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);
             } catch (IllegalCharsetNameException ex) {
                 throw error(RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
-            }
+            } 
         }
     }
 
@@ -286,7 +286,7 @@ public abstract class ConnectionFunctions {
             } catch (IOException ex) {
                 throw reportError(description.getDataAt(0), ex);
             } catch (IllegalCharsetNameException ex) {
-                throw RError.error(this, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
+                throw RError.error(RError.SHOW_CALLER, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
 
@@ -353,7 +353,6 @@ public abstract class ConnectionFunctions {
             }
         }
 
-        @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
         protected RAbstractIntVector textConnection(String description, RNull text, String open, REnvironment env, int encoding) {
@@ -403,12 +402,7 @@ public abstract class ConnectionFunctions {
         protected RAbstractIntVector socketConnection(String host, int port, boolean server, boolean blocking, String open,
                         String encoding, int timeout) {
             try {
-                if (server) {
-                    return new RSocketConnection(open, true, host, port, blocking, timeout, encoding).asVector();
-                } else {
-                    return new RSocketConnection(open, false, host, port, blocking, timeout, encoding).asVector();
-                }
-                return new RSocketConnection(open, server, host, port, blocking, timeout).asVector();
+                return new RSocketConnection(open, server, host, port, blocking, timeout, encoding).asVector();
             } catch (IOException ex) {
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);
             } catch (IllegalCharsetNameException ex) {
@@ -1222,13 +1216,15 @@ public abstract class ConnectionFunctions {
              * for the NA (enquiry) case.
              */
             long offset = 0;
+            final int actualOrigin;
             if (RRuntime.isNAorNaN(where)) {
-                origin = 0;
+                actualOrigin = 0;
             } else {
                 offset = (long) where;
+                actualOrigin = origin;
             }
             try {
-                long newOffset = RConnection.fromIndex(con).seek(offset, RConnection.SeekMode.values()[origin], RConnection.SeekRWMode.values()[rw]);
+                long newOffset = RConnection.fromIndex(con).seek(offset, RConnection.SeekMode.values()[actualOrigin], RConnection.SeekRWMode.values()[rw]);
                 if (newOffset > Integer.MAX_VALUE) {
                     throw RError.nyi(RError.SHOW_CALLER, "seek > Integer.MAX_VALUE");
                 }
@@ -1261,9 +1257,9 @@ public abstract class ConnectionFunctions {
                 return new FifoRConnection(path, open, blocking, encoding).asVector();
             } catch (IOException ex) {
                 RError.warning(this, RError.Message.CANNOT_OPEN_FIFO, path);
-                throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
+                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_CONNECTION);
             } catch (IllegalCharsetNameException ex) {
-                throw RError.error(this, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
+                throw RError.error(RError.SHOW_CALLER, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
     }
@@ -1287,9 +1283,9 @@ public abstract class ConnectionFunctions {
                 return new PipeRConnection(path, open, encoding).asVector();
             } catch (IOException ex) {
                 RError.warning(this, RError.Message.CANNOT_OPEN_FIFO, path);
-                throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
+                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_CONNECTION);
             } catch (IllegalCharsetNameException ex) {
-                throw RError.error(this, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
+                throw RError.error(RError.SHOW_CALLER, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
     }

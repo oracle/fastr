@@ -67,9 +67,11 @@ public class FileConnections {
      * Base class for all modes of file connections.
      */
     public static class FileRConnection extends BasePathRConnection {
+        private final boolean raw;
 
-        public FileRConnection(String path, String modeString, boolean blocking, String encoding) throws IOException {
+        public FileRConnection(String path, String modeString, boolean blocking, String encoding, boolean raw) throws IOException {
             super(checkTemp(path), ConnectionClass.File, modeString, blocking, encoding);
+            this.raw = raw;
             openNonLazyConnection();
         }
 
@@ -84,7 +86,7 @@ public class FileConnections {
         @Override
         protected void createDelegateConnection() throws IOException {
 
-            DelegateRConnection delegate = FileConnections.createDelegateConnection(this, RCompression.Type.NONE);
+            DelegateRConnection delegate = FileConnections.createDelegateConnection(this, RCompression.Type.NONE, raw);
             setDelegate(delegate);
         }
     }
@@ -107,7 +109,7 @@ public class FileConnections {
 
         @Override
         protected void createDelegateConnection() throws IOException {
-            setDelegate(FileConnections.createDelegateConnection(this, cType));
+            setDelegate(FileConnections.createDelegateConnection(this, cType, false));
 
         }
 
@@ -208,15 +210,15 @@ public class FileConnections {
         }
     }
 
-    private static DelegateRConnection createDelegateConnection(BasePathRConnection base, RCompression.Type cType) throws IOException {
+    private static DelegateRConnection createDelegateConnection(BasePathRConnection base, RCompression.Type cType, boolean raw) throws IOException {
         AbstractOpenMode openMode = base.getOpenMode().abstractOpenMode;
 
         /*
          * For input, we check the actual compression type as GNU R is permissive about the claimed
-         * type.
+         * type except 'raw' is true.
          */
         final RCompression.Type cTypeActual;
-        if (openMode == AbstractOpenMode.Read || openMode == AbstractOpenMode.ReadBinary) {
+        if (!raw && (openMode == AbstractOpenMode.Read || openMode == AbstractOpenMode.ReadBinary)) {
             cTypeActual = RCompression.getCompressionType(base.path);
             if (cTypeActual != cType) {
                 base.updateConnectionClass(mapConnectionClass(cTypeActual));

@@ -189,6 +189,12 @@ public class TestConnections extends TestRBase {
     }
 
     @Test
+    public void testFileOpenRaw() {
+        Assert.assertTrue("Could not create required temp file for test.", Files.exists(tempFileGzip));
+        assertEval("{ zz <- file(\"" + tempFileGzip + "\", \"r\", raw=T); res <- readBin(zz, raw(), 4); close(zz); res }");
+    }
+
+    @Test
     public void testEncoding() throws IOException {
 
         // read from UTF-8 file
