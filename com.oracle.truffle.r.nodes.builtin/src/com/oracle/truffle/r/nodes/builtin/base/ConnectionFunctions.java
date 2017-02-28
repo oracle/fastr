@@ -65,6 +65,7 @@ import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.WriteDataNodeGen;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.HeadPhaseBuilder;
+import com.oracle.truffle.r.nodes.builtin.casts.fluent.InitialPhaseBuilder;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -143,8 +144,16 @@ public abstract class ConnectionFunctions {
     }
 
     public static final class CastsHelper {
-        private static void description(Casts casts) {
-            casts.arg("description").mustBe(stringValue()).asStringVector().shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").findFirst().mustNotBeNA();
+        private static HeadPhaseBuilder<String> description(Casts casts) {
+            return descriptionInternal(casts.arg("description"));
+        }
+
+        private static HeadPhaseBuilder<String> descriptionNull(Casts casts) {
+            return descriptionInternal(casts.arg("description").allowNull());
+        }
+
+        private static HeadPhaseBuilder<String> descriptionInternal(InitialPhaseBuilder<Object> casts) {
+	    return casts.mustBe(stringValue()).asStringVector().shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").findFirst().mustNotBeNA();
         }
 
         private static HeadPhaseBuilder<String> open(Casts casts) {
@@ -334,9 +343,7 @@ public abstract class ConnectionFunctions {
 
         static {
             Casts casts = new Casts(TextConnection.class);
-            CastsHelper.description(casts);
-            // TODO how to have either a RNull or a String/RStringVector and have the latter coerced
-            // to a RAbstractStringVector to avoid the explicit handling in the specialization
+            CastsHelper.descriptionNull(casts);
             casts.arg("text").allowNull().mustBe(stringValue());
             CastsHelper.open(casts).mustBe(equalTo("").or(equalTo("r").or(equalTo("w").or(equalTo("a")))), RError.Message.UNSUPPORTED_MODE);
             casts.arg("env").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
@@ -354,6 +361,7 @@ public abstract class ConnectionFunctions {
         }
 
         @Specialization
+<<<<<<< c511704667d1698f267ee975789ef5071f992da9
         @TruffleBoundary
         protected RAbstractIntVector textConnection(String description, RNull text, String open, REnvironment env, int encoding) {
             if (open.length() == 0 || open.equals("r")) {
@@ -361,6 +369,11 @@ public abstract class ConnectionFunctions {
             } else {
                 throw RError.nyi(RError.SHOW_CALLER, "textConnection: NULL");
             }
+=======
+        protected RAbstractIntVector textConnection(String description, @SuppressWarnings("unused") RNull text, String open,
+                        REnvironment env, int encoding) {
+            return this.textConnection(description, (RAbstractStringVector) null, open, env, encoding);
+>>>>>>> Implemented support for anonymous text connections.
         }
     }
 
@@ -374,10 +387,10 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object textConnection(int con) {
+        protected RAbstractStringVector textConnection(int con) {
             RConnection connection = RConnection.fromIndex(con);
             if (connection instanceof TextRConnection) {
-                return RDataFactory.createStringVector(((TextRConnection) connection).getValue(), RDataFactory.COMPLETE_VECTOR);
+                return ((TextRConnection) connection).getValue();
             } else {
                 throw error(Message.NOT_A_TEXT_CONNECTION);
             }
@@ -614,7 +627,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object readLines(int con, int n, boolean ok, boolean warn, @SuppressWarnings("unused") String encoding, boolean skipNul) {
-            // TODO implement all the arguments
+            // TODO Implement argument 'encoding'.
             try (RConnection openConn = RConnection.fromIndex(con).forceOpen("rt")) {
                 String[] lines = openConn.readLines(n, warn, skipNul);
                 if (n > 0 && lines.length < n && !ok) {

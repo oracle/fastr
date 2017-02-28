@@ -135,6 +135,8 @@ public class TestConnections extends TestRBase {
 
     @Test
     public void testTextReadConnection() {
+        assertEval(Output.IgnoreErrorContext, "textConnection(NULL, 'r')");
+
         assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con) }");
         assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con, 2) }");
         assertEval("{ con <- textConnection(c(\"1\", \"2\", \"3\",\"4\")); readLines(con, 2); readLines(con, 2) }");
@@ -165,12 +167,15 @@ public class TestConnections extends TestRBase {
     }
 
     @Test
-    public void testWriteConnection() {
+    public void testWriteTextConnection() {
         assertEval("{ con <- textConnection(\"tcval\", open=\"w\"); writeLines(\"a\", con); tcval; close(con) }");
         assertEval("{ con <- textConnection(\"tcval\", open=\"w\"); writeLines(\"a\", con); writeLines(c(\"a\", \"b\"), con, sep=\".\"); tcval; close(con) }");
         assertEval("{ con <- textConnection(\"tcval\", open=\"w\"); writeLines(\"a\", con); writeLines(c(\"a\", \"b\"), con, sep=\".\"); writeLines(\"\", con); tcval; close(con) }");
         assertEval("{ con <- textConnection(\"tcval\", open=\"w\"); writeLines(\"a\\nb\", con); tcval; close(con) }");
         assertEval("c <- textConnection('out', 'w'); cat('testtext', file=c); isIncomplete(c); cat('testtext2\\n', file=c); isIncomplete(c); close(c); out");
+
+        // anonymous connection
+        assertEval("{ c <- textConnection(NULL, 'w'); cat('testtext\\n', file=c); textConnectionValue(c) }");
 
         assertEval("{ d<-data.frame(c(1,2), c(10, 20)); buf<-character(); c<-textConnection(\"buf\", open=\"w\", local=T); write.table(d, c); buf }");
     }
@@ -211,7 +216,7 @@ public class TestConnections extends TestRBase {
         assertEval(Ignored.ImplementationError, "fin <- file(\"" + latin1File + "\", \"r\", encoding = \"UTF-8\"); lines <- readLines(fin, 1); close(fin); lines");
 
         // use inexisting charset
-        assertEval(Output.IgnoreErrorContext, "fin <- file(\"" + utf8File + "\", \"r\", encoding = \"___inexistingCharSet___\")");
+        assertEval("fin <- file(\"" + utf8File + "\", \"r\", encoding = \"___inexistingCharSet___\")");
 
         // write UTF-8 file
         final Path utf8File1 = TEMP_FILES.get(2);
