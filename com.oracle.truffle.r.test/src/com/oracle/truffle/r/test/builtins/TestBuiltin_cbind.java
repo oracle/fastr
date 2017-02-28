@@ -62,6 +62,7 @@ public class TestBuiltin_cbind extends TestBase {
         assertEval("{ cbind(c(1,c=2)) }");
         assertEval("{ v<-c(b=1, c=2); cbind(v) }");
         assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y')))) }");
+        assertEval("{x <- numeric(); y <- matrix(2,2); dimnames(y) <- list(c(NA_character_,NA_character_), c(NA_character_)); rbind(x, y) }");
 
         assertEval("{ cbind(a=c(1,2), b=c(3,4)) }");
         assertEval("{ cbind(a=c(x=1,y=2), b=c(3,4)) }");
