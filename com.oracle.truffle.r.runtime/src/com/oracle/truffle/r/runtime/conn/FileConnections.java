@@ -32,10 +32,7 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
-import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
 import java.nio.file.OpenOption;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -154,18 +151,16 @@ public class FileConnections {
 
     private static DelegateRConnection createGZIPDelegateConnection(BasePathRConnection base) throws IOException {
 
-        boolean append = false;
         switch (base.getOpenMode().abstractOpenMode) {
             case Read:
             case ReadBinary:
                 return new CompressedInputRConnection(base, new GZIPInputStream(new FileInputStream(base.path), GZIP_BUFFER_SIZE));
             case Append:
             case AppendBinary:
-                append = true;
-                // intentionally fall through !
+                return new CompressedOutputRConnection(base, new GZIPOutputStream(new FileOutputStream(base.path, true), GZIP_BUFFER_SIZE), true);
             case Write:
             case WriteBinary:
-                return new CompressedOutputRConnection(base, new GZIPOutputStream(new FileOutputStream(base.path, append), GZIP_BUFFER_SIZE), true);
+                return new CompressedOutputRConnection(base, new GZIPOutputStream(new FileOutputStream(base.path, false), GZIP_BUFFER_SIZE), true);
             default:
                 throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + base.getOpenMode());
         }
@@ -173,18 +168,16 @@ public class FileConnections {
 
     private static DelegateRConnection createXZDelegateConnection(BasePathRConnection base) throws IOException {
 
-        boolean append = false;
         switch (base.getOpenMode().abstractOpenMode) {
             case Read:
             case ReadBinary:
                 return new CompressedInputRConnection(base, new XZInputStream(new FileInputStream(base.path)));
             case Append:
             case AppendBinary:
-                append = true;
-                // intentionally fall through !
+                return new CompressedOutputRConnection(base, new XZOutputStream(new FileOutputStream(base.path, true), new LZMA2Options(), XZ.CHECK_CRC32), false);
             case Write:
             case WriteBinary:
-                return new CompressedOutputRConnection(base, new XZOutputStream(new FileOutputStream(base.path, append), new LZMA2Options(), XZ.CHECK_CRC32), false);
+                return new CompressedOutputRConnection(base, new XZOutputStream(new FileOutputStream(base.path, false), new LZMA2Options(), XZ.CHECK_CRC32), false);
             default:
                 throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + base.getOpenMode());
         }
@@ -192,7 +185,6 @@ public class FileConnections {
 
     private static DelegateRConnection createBZIP2DelegateConnection(BasePathRConnection base) throws IOException {
 
-        boolean append = false;
         switch (base.getOpenMode().abstractOpenMode) {
             case Read:
             case ReadBinary:
@@ -200,11 +192,10 @@ public class FileConnections {
                 return new ByteStreamCompressedInputRConnection(base, new ByteArrayInputStream(bzipUdata));
             case Append:
             case AppendBinary:
-                append = true;
-                // intentionally fall through !
+                return new BZip2OutputRConnection(base, new ByteArrayOutputStream(), true);
             case Write:
             case WriteBinary:
-                return new BZip2OutputRConnection(base, new ByteArrayOutputStream(), append);
+                return new BZip2OutputRConnection(base, new ByteArrayOutputStream(), false);
             default:
                 throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + base.getOpenMode());
         }
@@ -270,7 +261,7 @@ public class FileConnections {
         }
 
         @Override
-        public ReadableByteChannel getChannel() {
+        public ByteChannel getChannel() {
             return channel;
         }
 
@@ -329,7 +320,7 @@ public class FileConnections {
         }
 
         @Override
-        public WritableByteChannel getChannel() {
+        public ByteChannel getChannel() {
             return channel;
         }
 
@@ -446,15 +437,15 @@ public class FileConnections {
     }
 
     private static class CompressedInputRConnection extends DelegateReadRConnection {
-        private final ReadableByteChannel channel;
+        private final ByteChannel channel;
 
         protected CompressedInputRConnection(BasePathRConnection base, InputStream is) {
             super(base);
-            channel = Channels.newChannel(is);
+            channel = ConnectionSupport.newChannel(is);
         }
 
         @Override
-        public ReadableByteChannel getChannel() {
+        public ByteChannel getChannel() {
             return channel;
         }
 
@@ -471,14 +462,14 @@ public class FileConnections {
     }
 
     private static class CompressedOutputRConnection extends DelegateWriteRConnection {
-        protected WritableByteChannel channel;
+        protected ByteChannel channel;
         private final boolean seekable;
         private long seekPosition = 0L;
 
         protected CompressedOutputRConnection(BasePathRConnection base, OutputStream os, boolean seekable) {
             super(base);
             this.seekable = seekable;
-            this.channel = Channels.newChannel(os);
+            this.channel = ConnectionSupport.newChannel(os);
         }
 
         @Override
@@ -505,7 +496,7 @@ public class FileConnections {
         }
 
         @Override
-        public WritableByteChannel getChannel() {
+        public ByteChannel getChannel() {
             return channel;
         }
     }

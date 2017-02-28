@@ -27,7 +27,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -105,10 +104,7 @@ public abstract class DelegateReadRConnection extends DelegateRConnection {
         return false;
     }
 
-    public abstract ReadableByteChannel getChannel();
-
     @Override
-    @Deprecated
     public InputStream getInputStream() throws IOException {
         return Channels.newInputStream(getChannel());
     }

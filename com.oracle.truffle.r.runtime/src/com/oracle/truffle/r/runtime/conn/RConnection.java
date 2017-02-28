@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
@@ -42,16 +43,21 @@ public interface RConnection extends AutoCloseable {
     }
 
     /**
-     * Return the underlying input stream (for internal use). TODO Replace with a more principled
-     * solution.
+     * Return the underlying input stream (for internal use).
      */
     InputStream getInputStream() throws IOException;
 
     /**
-     * Return the underlying output stream (for internal use). TODO Replace with a more principled
-     * solution.
+     * Return the underlying output stream (for internal use).
      */
     OutputStream getOutputStream() throws IOException;
+
+    /**
+     * Return the underlying byte channel (for internal use).
+     *
+     * @throws IOException
+     */
+    ByteChannel getChannel() throws IOException;
 
     /**
      * Close the connection. The corresponds to the {@code R close} function.

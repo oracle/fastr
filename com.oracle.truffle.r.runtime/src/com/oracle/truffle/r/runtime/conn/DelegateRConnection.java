@@ -80,7 +80,7 @@ abstract class DelegateRConnection implements RConnection {
     @Override
     public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
         if (!isSeekable()) {
-            throw RError.error(RError.SHOW_CALLER, RError.Message.SEEK_NOT_ENABLED);
+            throw RError.error(RError.SHOW_CALLER, RError.Message.NOT_ENABLED_FOR_THIS_CONN, "seek");
         }
         throw RInternalError.shouldNotReachHere("seek has not been implemented for this connection");
     }

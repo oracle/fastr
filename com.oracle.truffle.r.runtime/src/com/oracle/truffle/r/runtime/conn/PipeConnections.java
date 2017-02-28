@@ -93,16 +93,16 @@ public class PipeConnections {
     }
 
     static class PipeReadRConnection extends DelegateReadRConnection {
-        private final ReadableByteChannel channel;
+        private final ByteChannel channel;
 
         protected PipeReadRConnection(BaseRConnection base, String command) throws IOException {
             super(base);
             Process p = PipeConnections.executeAndJoin(command);
-            channel = Channels.newChannel(p.getInputStream());
+            channel = ConnectionSupport.newChannel(p.getInputStream());
         }
 
         @Override
-        public ReadableByteChannel getChannel() {
+        public ByteChannel getChannel() {
             return channel;
         }
 
@@ -113,16 +113,16 @@ public class PipeConnections {
     }
 
     private static class PipeWriteConnection extends DelegateWriteRConnection {
-        private final WritableByteChannel channel;
+        private final ByteChannel channel;
 
         PipeWriteConnection(BaseRConnection base, String command) throws IOException {
             super(base);
             Process p = PipeConnections.executeAndJoin(command);
-            channel = Channels.newChannel(p.getOutputStream());
+            channel = ConnectionSupport.newChannel(p.getOutputStream());
         }
 
         @Override
-        public WritableByteChannel getChannel() {
+        public ByteChannel getChannel() {
             return channel;
         }
 

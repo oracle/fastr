@@ -27,7 +27,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -97,10 +96,7 @@ abstract class DelegateWriteRConnection extends DelegateRConnection {
         getChannel().close();
     }
 
-    public abstract WritableByteChannel getChannel();
-
     @Override
-    @Deprecated
     public OutputStream getOutputStream() throws IOException {
         return Channels.newOutputStream(getChannel());
     }

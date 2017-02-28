@@ -26,8 +26,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.ByteChannel;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
@@ -65,16 +64,16 @@ public class URLConnections {
 
     private static class URLReadRConnection extends DelegateReadRConnection {
 
-        private final ReadableByteChannel rchannel;
+        private final ByteChannel rchannel;
 
         protected URLReadRConnection(URLRConnection base) throws MalformedURLException, IOException {
             super(base);
             URL url = new URL(base.urlString);
-            rchannel = Channels.newChannel(new BufferedInputStream(url.openStream()));
+            rchannel = ConnectionSupport.newChannel(new BufferedInputStream(url.openStream()));
         }
 
         @Override
-        public ReadableByteChannel getChannel() {
+        public ByteChannel getChannel() {
             return rchannel;
         }
 

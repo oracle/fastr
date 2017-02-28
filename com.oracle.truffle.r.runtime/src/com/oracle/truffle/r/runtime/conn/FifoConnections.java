@@ -28,7 +28,6 @@ import java.io.RandomAccessFile;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
@@ -129,7 +128,7 @@ public class FifoConnections {
         }
 
         @Override
-        public ReadableByteChannel getChannel() {
+        public ByteChannel getChannel() {
             return channel;
         }
 

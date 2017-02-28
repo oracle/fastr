@@ -25,9 +25,7 @@ package com.oracle.truffle.r.runtime.conn;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
+import java.nio.channels.ByteChannel;
 import java.util.ArrayList;
 
 import com.oracle.truffle.r.runtime.RError;
@@ -130,7 +128,7 @@ public class TextConnections {
         }
 
         @Override
-        public ReadableByteChannel getChannel() {
+        public ByteChannel getChannel() {
             throw RInternalError.shouldNotReachHere();
         }
 
@@ -175,8 +173,8 @@ public class TextConnections {
         }
 
         @Override
-        public WritableByteChannel getChannel() {
-            return Channels.newChannel(new ConnectionOutputStream());
+        public ByteChannel getChannel() {
+            return ConnectionSupport.newChannel(new ConnectionOutputStream());
         }
 
         @Override

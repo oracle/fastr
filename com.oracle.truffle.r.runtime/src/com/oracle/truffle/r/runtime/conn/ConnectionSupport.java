@@ -29,6 +29,10 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.util.ArrayList;
@@ -353,8 +357,6 @@ public class ConnectionSupport {
         }
     }
 
-    // TODO implement all open modes
-
     public static final class InvalidConnection implements RConnection {
 
         public static final InvalidConnection instance = new InvalidConnection();
@@ -367,11 +369,15 @@ public class ConnectionSupport {
         }
 
         @Override
+        @Deprecated
+        @SuppressWarnings("deprecation")
         public InputStream getInputStream() throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
 
         @Override
+        @Deprecated
+        @SuppressWarnings("deprecation")
         public OutputStream getOutputStream() throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
@@ -473,8 +479,12 @@ public class ConnectionSupport {
 
         @Override
         public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            // TODO Auto-generated method stub
-            return 0;
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public ByteChannel getChannel() throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
     }
 
@@ -740,15 +750,23 @@ public class ConnectionSupport {
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         public InputStream getInputStream() throws IOException {
             checkOpen();
             return theConnection.getInputStream();
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         public OutputStream getOutputStream() throws IOException {
             checkOpen();
             return theConnection.getOutputStream();
+        }
+
+        @Override
+        public ByteChannel getChannel() throws IOException {
+            checkOpen();
+            return theConnection.getChannel();
         }
 
         @Override
@@ -1080,6 +1098,60 @@ public class ConnectionSupport {
         public String getSummaryDescription() {
             return path;
         }
+    }
+
+    public static ByteChannel newChannel(InputStream in) {
+        final ReadableByteChannel newChannel = Channels.newChannel(in);
+        return new ByteChannel() {
+
+            @Override
+            public int read(ByteBuffer dst) throws IOException {
+                return newChannel.read(dst);
+            }
+
+            @Override
+            public boolean isOpen() {
+                return newChannel.isOpen();
+            }
+
+            @Override
+            public void close() throws IOException {
+                newChannel.close();
+
+            }
+
+            @Override
+            public int write(ByteBuffer src) throws IOException {
+                throw new IOException("This channel is read-only.");
+            }
+        };
+    }
+
+    public static ByteChannel newChannel(OutputStream out) {
+        final WritableByteChannel newChannel = Channels.newChannel(out);
+        return new ByteChannel() {
+
+            @Override
+            public int read(ByteBuffer dst) throws IOException {
+                throw new IOException("This channel is write-only.");
+            }
+
+            @Override
+            public boolean isOpen() {
+                return newChannel.isOpen();
+            }
+
+            @Override
+            public void close() throws IOException {
+                newChannel.close();
+
+            }
+
+            @Override
+            public int write(ByteBuffer src) throws IOException {
+                return newChannel.write(src);
+            }
+        };
     }
 
     /**
