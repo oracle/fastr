@@ -43,6 +43,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
@@ -65,15 +66,15 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class TraceFunctions {
 
-    private abstract static class PrimTraceAdapter extends RBuiltinNode {
-        @Child private GetFunctions.Get getNode;
+    protected static Casts createCasts(Class<? extends RBuiltinNode> extCls) {
+        Casts casts = new Casts(extCls);
+        casts.arg("what").mustBe(instanceOf(RFunction.class).or(stringValue()), Message.ARG_MUST_BE_FUNCTION).mapIf(stringValue(),
+                        chain(asStringVector()).with(findFirst().stringElement()).end());
+        return casts;
+    }
 
-        protected static Casts createCasts(Class<? extends PrimTraceAdapter> extCls) {
-            Casts casts = new Casts(extCls);
-            casts.arg("what").mustBe(instanceOf(RFunction.class).or(stringValue()), Message.ARG_MUST_BE_FUNCTION).mapIf(stringValue(),
-                            chain(asStringVector()).with(findFirst().stringElement()).end());
-            return casts;
-        }
+    private abstract static class PrimTraceAdapter extends RBuiltinNode.Arg1 {
+        @Child private GetFunctions.Get getNode;
 
         protected Object getFunction(VirtualFrame frame, String funcName) {
             if (getNode == null) {
@@ -118,7 +119,7 @@ public class TraceFunctions {
             createCasts(PrimUnTrace.class);
         }
 
-        public abstract void execute(VirtualFrame frame, RFunction func);
+        public abstract Object execute(VirtualFrame frame, RFunction func);
 
         @Specialization
         protected RNull primUnTrace(VirtualFrame frame, RAbstractStringVector funcName) {
@@ -137,7 +138,7 @@ public class TraceFunctions {
     }
 
     @RBuiltin(name = "traceOnOff", kind = INTERNAL, parameterNames = "state", behavior = COMPLEX)
-    public abstract static class TraceOnOff extends RBuiltinNode {
+    public abstract static class TraceOnOff extends RBuiltinNode.Arg1 {
 
         static {
             Casts.noCasts(TraceOnOff.class);
@@ -163,68 +164,66 @@ public class TraceFunctions {
         }
     }
 
-    public abstract static class TracememBase extends RBuiltinNode {
-        static {
-            MemoryCopyTracer.addListener(new TracememBase.TracememListener());
-        }
+    static {
+        MemoryCopyTracer.addListener(new TracememListener());
+    }
 
-        @TruffleBoundary
-        protected static HashSet<Object> getTracedObjects() {
-            return RContext.getInstance().getInstrumentationState().getTracemem().getTracedObjects();
-        }
+    @TruffleBoundary
+    protected static HashSet<Object> getTracedObjects() {
+        return RContext.getInstance().getInstrumentationState().getTracemem().getTracedObjects();
+    }
 
-        @TruffleBoundary
-        protected static String formatHashCode(Object x) {
-            return String.format("<0x%x>", x.hashCode());
-        }
+    @TruffleBoundary
+    protected static String formatHashCode(Object x) {
+        return String.format("<0x%x>", x.hashCode());
+    }
 
-        @TruffleBoundary
-        protected static void startTracing(Object x) {
-            /*
-             * There is no explicit command to enable tracing, it is implicit in the call to
-             * tracemem. However, it can be disabled by tracingState(F), so we can't unilaterally
-             * turn on tracing here.
-             */
-            getTracedObjects().add(x);
-            boolean tracingState = RContext.getInstance().stateInstrumentation.getTracingState();
-            if (tracingState) {
-                MemoryCopyTracer.setTracingState(true);
-            }
+    @TruffleBoundary
+    protected static void startTracing(Object x) {
+        /*
+         * There is no explicit command to enable tracing, it is implicit in the call to tracemem.
+         * However, it can be disabled by tracingState(F), so we can't unilaterally turn on tracing
+         * here.
+         */
+        getTracedObjects().add(x);
+        boolean tracingState = RContext.getInstance().stateInstrumentation.getTracingState();
+        if (tracingState) {
+            MemoryCopyTracer.setTracingState(true);
         }
+    }
 
-        @TruffleBoundary
-        protected static void printToStdout(String msg) {
-            try {
-                StdConnections.getStdout().writeString(msg, true);
-            } catch (IOException ex) {
-                throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, ex.getMessage());
-            }
+    @TruffleBoundary
+    protected static void printToStdout(String msg) {
+        try {
+            StdConnections.getStdout().writeString(msg, true);
+        } catch (IOException ex) {
+            throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, ex.getMessage());
         }
+    }
 
-        @TruffleBoundary
-        protected static String getStackTrace() {
-            final StringBuffer result = new StringBuffer();
-            Truffle.getRuntime().iterateFrames(frame -> {
-                Frame unwrapped = RArguments.unwrap(frame.getFrame(FrameAccess.READ_ONLY));
-                if (RArguments.isRFrame(unwrapped)) {
-                    RCaller call = RArguments.getCall(unwrapped);
-                    if (call != null && call.isValidCaller()) {
-                        result.append(RContext.getRRuntimeASTAccess().getCallerSource(call));
-                        result.append(' ');
-                    }
+    @TruffleBoundary
+    protected static String getStackTrace() {
+        final StringBuffer result = new StringBuffer();
+        Truffle.getRuntime().iterateFrames(frame -> {
+            Frame unwrapped = RArguments.unwrap(frame.getFrame(FrameAccess.READ_ONLY));
+            if (RArguments.isRFrame(unwrapped)) {
+                RCaller call = RArguments.getCall(unwrapped);
+                if (call != null && call.isValidCaller()) {
+                    result.append(RContext.getRRuntimeASTAccess().getCallerSource(call));
+                    result.append(' ');
                 }
-                return null;
-            });
-            return result.toString();
-        }
+            }
+            return null;
+        });
+        return result.toString();
+    }
 
-        private static final class TracememListener implements MemoryCopyTracer.Listener {
-            @TruffleBoundary
-            @Override
-            public void reportCopying(RAbstractVector src, RAbstractVector dest) {
-                if (getTracedObjects().contains(src)) {
-                    printToStdout(String.format("tracemem[0x%x -> 0x%x]: %s", src.hashCode(), dest.hashCode(), getStackTrace()));
-                }
+    private static final class TracememListener implements MemoryCopyTracer.Listener {
+        @TruffleBoundary
+        @Override
+        public void reportCopying(RAbstractVector src, RAbstractVector dest) {
+            if (getTracedObjects().contains(src)) {
+                printToStdout(String.format("tracemem[0x%x -> 0x%x]: %s", src.hashCode(), dest.hashCode(), getStackTrace()));
             }
         }
     }
@@ -235,7 +234,7 @@ public class TraceFunctions {
      * temporary vector wrappers cannot be traced however.
      */
     @RBuiltin(name = "tracemem", kind = PRIMITIVE, parameterNames = "x", behavior = COMPLEX)
-    public abstract static class Tracemem extends TracememBase {
+    public abstract static class Tracemem extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(Tracemem.class);
@@ -255,7 +254,7 @@ public class TraceFunctions {
      * unclear meaning.
      */
     @RBuiltin(name = "retracemem", kind = PRIMITIVE, visibility = CUSTOM, parameterNames = {"x", "previous"}, behavior = COMPLEX)
-    public abstract static class Retracemem extends TracememBase {
+    public abstract static class Retracemem extends RBuiltinNode.Arg2 {
 
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
@@ -297,7 +296,7 @@ public class TraceFunctions {
     }
 
     @RBuiltin(name = "untracemem", kind = PRIMITIVE, visibility = OFF, parameterNames = "x", behavior = COMPLEX)
-    public abstract static class Untracemem extends TracememBase {
+    public abstract static class Untracemem extends RBuiltinNode.Arg1 {
 
         static {
             Casts.noCasts(Untracemem.class);

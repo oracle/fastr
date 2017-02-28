@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 @RBuiltin(name = "prod", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE)
-public abstract class Prod extends RBuiltinNode {
+public abstract class Prod extends RBuiltinNode.Arg2 {
 
     // TODO: handle multiple arguments, handle na.rm
 

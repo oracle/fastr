@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 @RBuiltin(name = "mean", kind = INTERNAL, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class Mean extends RBuiltinNode {
+public abstract class Mean extends RBuiltinNode.Arg1 {
 
     private final BranchProfile emptyProfile = BranchProfile.create();
 

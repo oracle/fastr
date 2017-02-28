@@ -31,7 +31,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "break", kind = PRIMITIVE, parameterNames = {"x"}, behavior = COMPLEX)
-public abstract class BreakBuiltin extends RBuiltinNode {
+public abstract class BreakBuiltin extends RBuiltinNode.Arg1 {
+
     static {
         Casts.noCasts(BreakBuiltin.class);
     }

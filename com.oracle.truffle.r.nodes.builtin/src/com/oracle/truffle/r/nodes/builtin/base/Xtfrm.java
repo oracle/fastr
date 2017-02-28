@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "xtfrm", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = COMPLEX)
-public abstract class Xtfrm extends RBuiltinNode {
+public abstract class Xtfrm extends RBuiltinNode.Arg1 {
 
     @Child private GetFunctions.Get getNode;
 

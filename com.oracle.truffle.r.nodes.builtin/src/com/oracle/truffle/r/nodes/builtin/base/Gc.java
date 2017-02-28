@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 
 @RBuiltin(name = "gc", kind = INTERNAL, parameterNames = {"verbose", "reset"}, behavior = COMPLEX)
-public abstract class Gc extends RBuiltinNode {
+public abstract class Gc extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(Gc.class);

@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "readline", kind = INTERNAL, parameterNames = "prompt", behavior = IO)
-public abstract class Readline extends RBuiltinNode {
+public abstract class Readline extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(Readline.class);

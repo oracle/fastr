@@ -79,7 +79,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * TODO Set dimnames on result if necessary.
  */
 @RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"X", "FUN", "FUN.VALUE", "USE.NAMES"}, splitCaller = true, behavior = COMPLEX)
-public abstract class VApply extends RBuiltinNode {
+public abstract class VApply extends RBuiltinNode.Arg4 {
 
     private final ConditionProfile useNamesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile dimsProfile = ConditionProfile.createBinaryProfile();

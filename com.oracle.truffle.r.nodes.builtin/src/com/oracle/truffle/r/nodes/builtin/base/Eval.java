@@ -62,7 +62,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * Contains the {@code eval} {@code .Internal} implementation.
  */
 @RBuiltin(name = "eval", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"expr", "envir", "enclos"}, behavior = COMPLEX)
-public abstract class Eval extends RBuiltinNode {
+public abstract class Eval extends RBuiltinNode.Arg3 {
 
     /**
      * Profiling for catching {@link ReturnException}s.

@@ -489,7 +489,7 @@ public class TrigExpFunctions {
      * the {@code int} forms to {@code double}.
      */
     @RBuiltin(name = "atan2", kind = INTERNAL, parameterNames = {"y", "x"}, behavior = PURE)
-    public abstract static class Atan2 extends RBuiltinNode {
+    public abstract static class Atan2 extends RBuiltinNode.Arg2 {
 
         private final NACheck yNACheck = NACheck.create();
         private final NACheck xNACheck = NACheck.create();

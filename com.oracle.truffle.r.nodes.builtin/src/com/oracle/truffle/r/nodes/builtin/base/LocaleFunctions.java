@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public class LocaleFunctions {
 
     @RBuiltin(name = "Sys.getlocale", kind = INTERNAL, parameterNames = {"category"}, behavior = READS_STATE)
-    public abstract static class GetLocale extends RBuiltinNode {
+    public abstract static class GetLocale extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(GetLocale.class);
@@ -90,7 +90,7 @@ public class LocaleFunctions {
     }
 
     @RBuiltin(name = "Sys.setlocale", kind = INTERNAL, parameterNames = {"category", "locale"}, behavior = MODIFIES_STATE)
-    public abstract static class SetLocale extends RBuiltinNode {
+    public abstract static class SetLocale extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(SetLocale.class);
@@ -107,7 +107,7 @@ public class LocaleFunctions {
     }
 
     @RBuiltin(name = "Sys.localeconv", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
-    public abstract static class LocaleConv extends RBuiltinNode {
+    public abstract static class LocaleConv extends RBuiltinNode.Arg0 {
         @Specialization
         @TruffleBoundary
         protected Object localeconv() {
@@ -117,7 +117,7 @@ public class LocaleFunctions {
     }
 
     @RBuiltin(name = "l10n_info", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
-    public abstract static class L10nInfo extends RBuiltinNode {
+    public abstract static class L10nInfo extends RBuiltinNode.Arg0 {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"MBCS", "UTF-8", "Latin-1"}, RDataFactory.COMPLETE_VECTOR);
 
         @Specialization
@@ -132,7 +132,7 @@ public class LocaleFunctions {
     }
 
     @RBuiltin(name = "enc2native", kind = PRIMITIVE, parameterNames = "x", behavior = READS_STATE)
-    public abstract static class Enc2Native extends RBuiltinNode {
+    public abstract static class Enc2Native extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(Enc2Native.class);
@@ -147,7 +147,7 @@ public class LocaleFunctions {
     }
 
     @RBuiltin(name = "enc2utf8", kind = PRIMITIVE, parameterNames = "x", behavior = READS_STATE)
-    public abstract static class Enc2Utf8 extends RBuiltinNode {
+    public abstract static class Enc2Utf8 extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(Enc2Utf8.class);
@@ -162,7 +162,7 @@ public class LocaleFunctions {
     }
 
     @RBuiltin(name = "bindtextdomain", kind = PRIMITIVE, parameterNames = {"domain", "dirname"}, behavior = READS_STATE)
-    public abstract static class BindTextDomain extends RBuiltinNode {
+    public abstract static class BindTextDomain extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(BindTextDomain.class);

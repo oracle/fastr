@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.ops.na.NAProfile;
  * evaluating function using a new slot in {@link RArguments} and run it on function exit.
  */
 @RBuiltin(name = "on.exit", visibility = OFF, kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = 0, behavior = COMPLEX)
-public abstract class OnExit extends RBuiltinNode {
+public abstract class OnExit extends RBuiltinNode.Arg2 {
 
     @Child private FrameSlotNode onExitSlot = FrameSlotNode.create(RFrameSlot.OnExit, true);
 

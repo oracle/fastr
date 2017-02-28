@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * specializations shared between {@link RowSums}, {@link RowMeans}, {@link ColMeans},
  * {@link RowSums}.
  */
-public abstract class ColSumsBase extends RBuiltinNode {
+public abstract class ColSumsBase extends RBuiltinNode.Arg4 {
 
     protected final NACheck na = NACheck.create();
     private final ConditionProfile vectorLengthProfile = ConditionProfile.createBinaryProfile();

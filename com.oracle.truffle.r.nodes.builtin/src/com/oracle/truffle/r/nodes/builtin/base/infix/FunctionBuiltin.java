@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "function", kind = PRIMITIVE, parameterNames = {"x"}, behavior = READS_FRAME)
-public abstract class FunctionBuiltin extends RBuiltinNode {
+public abstract class FunctionBuiltin extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(FunctionBuiltin.class);

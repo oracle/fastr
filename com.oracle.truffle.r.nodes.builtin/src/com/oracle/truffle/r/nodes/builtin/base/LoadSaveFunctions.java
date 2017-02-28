@@ -30,7 +30,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.SerializeFunctions.Adapter;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -52,7 +51,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public class LoadSaveFunctions {
 
     @RBuiltin(name = "loadFromConn2", visibility = OFF, kind = INTERNAL, parameterNames = {"con", "envir", "verbose"}, behavior = IO)
-    public abstract static class LoadFromConn2 extends RBuiltinNode {
+    public abstract static class LoadFromConn2 extends RBuiltinNode.Arg3 {
 
         private final NACheck naCheck = NACheck.create();
 
@@ -110,7 +109,7 @@ public class LoadSaveFunctions {
     }
 
     @RBuiltin(name = "load", visibility = OFF, kind = INTERNAL, parameterNames = {"file", "envir"}, behavior = IO)
-    public abstract static class Load extends RBuiltinNode {
+    public abstract static class Load extends RBuiltinNode.Arg2 {
         // now deprecated but still used by some packages
 
         static {
@@ -186,7 +185,7 @@ public class LoadSaveFunctions {
     }
 
     @RBuiltin(name = "saveToConn", visibility = OFF, kind = INTERNAL, parameterNames = {"list", "con", "ascii", "version", "environment", "eval.promises"}, behavior = IO)
-    public abstract static class SaveToConn extends Adapter {
+    public abstract static class SaveToConn extends RBuiltinNode.Arg6 {
         private static final String ASCII_HEADER = "RDA2\n";
         private static final String XDR_HEADER = "RDX2\n";
 

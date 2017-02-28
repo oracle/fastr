@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @RBuiltin(name = "tabulate", kind = INTERNAL, parameterNames = {"bin", "nbins"}, behavior = PURE)
-public abstract class Tabulate extends RBuiltinNode {
+public abstract class Tabulate extends RBuiltinNode.Arg2 {
 
     private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
 

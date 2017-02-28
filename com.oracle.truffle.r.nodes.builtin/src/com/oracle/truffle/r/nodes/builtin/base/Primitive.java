@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
 @RBuiltin(name = ".Primitive", kind = PRIMITIVE, parameterNames = "name", behavior = PURE)
-public abstract class Primitive extends RBuiltinNode {
+public abstract class Primitive extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(Primitive.class);

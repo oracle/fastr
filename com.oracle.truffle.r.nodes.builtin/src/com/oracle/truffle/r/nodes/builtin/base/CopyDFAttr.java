@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "copyDFattr", kind = INTERNAL, parameterNames = {"", ""}, behavior = COMPLEX)
-public abstract class CopyDFAttr extends RBuiltinNode {
+public abstract class CopyDFAttr extends RBuiltinNode.Arg2 {
 
     static {
         Casts.noCasts(CopyDFAttr.class);

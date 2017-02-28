@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "list", kind = PRIMITIVE, parameterNames = {"..."}, behavior = PURE)
-public abstract class ListBuiltin extends RBuiltinNode {
+public abstract class ListBuiltin extends RBuiltinNode.Arg1 {
 
     protected static final int CACHE_LIMIT = 2;
     protected static final int MAX_SHARE_OBJECT_NODES = 16;

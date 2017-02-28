@@ -67,7 +67,7 @@ final class WithVisibleSpecial extends RNode {
 // gets the wrong result. I believe that the only way to handle it as a .Internal would be to
 // set noEvalArgs and evaluate the argument here and set the visibility explicitly.
 @RBuiltin(name = "withVisible", kind = PRIMITIVE, parameterNames = "x", behavior = COMPLEX, nonEvalArgs = {0})
-public abstract class WithVisible extends RBuiltinNode {
+public abstract class WithVisible extends RBuiltinNode.Arg1 {
 
     static final RStringVector LISTNAMES = (RStringVector) RDataFactory.createStringVector(new String[]{"value", "visible"}, RDataFactory.COMPLETE_VECTOR).makeSharedPermanent();
 

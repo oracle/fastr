@@ -55,7 +55,7 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
  * operation is implemented by factory object given as a constructor parameter, e.g.
  * {@link com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Add}
  */
-public abstract class BinaryArithmeticNode extends RBuiltinNode {
+public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
 
     protected static final int CACHE_LIMIT = 5;
 

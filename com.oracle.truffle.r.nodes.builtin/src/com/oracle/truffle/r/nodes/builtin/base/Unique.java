@@ -65,7 +65,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 // TODO A more efficient implementation is in order; GNU R uses hash tables so perhaps we should
 // consider using one of the existing libraries that offer hash table implementations for primitive
 // types
-public abstract class Unique extends RBuiltinNode {
+public abstract class Unique extends RBuiltinNode.Arg4 {
 
     private static final long BIG_THRESHOLD = 100;
 

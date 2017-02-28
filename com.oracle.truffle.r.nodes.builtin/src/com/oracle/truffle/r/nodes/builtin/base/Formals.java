@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @RBuiltin(name = "formals", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
-public abstract class Formals extends RBuiltinNode {
+public abstract class Formals extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(Formals.class);
@@ -72,9 +72,6 @@ public abstract class Formals extends RBuiltinNode {
             return RNull.instance;
         }
         FunctionDefinitionNode fdNode = (FunctionDefinitionNode) fun.getTarget().getRootNode();
-        if (fdNode.getParameterCount() == 0) {
-            return RNull.instance;
-        }
         FormalArguments formalArgs = fdNode.getFormalArguments();
         Object succ = RNull.instance;
         for (int i = formalArgs.getSignature().getLength() - 1; i >= 0; i--) {

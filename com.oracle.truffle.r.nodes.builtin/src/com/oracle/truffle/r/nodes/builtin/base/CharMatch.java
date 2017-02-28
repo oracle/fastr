@@ -24,7 +24,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "charmatch", kind = INTERNAL, parameterNames = {"x", "table", "noMatch"}, behavior = PURE)
-public abstract class CharMatch extends RBuiltinNode {
+public abstract class CharMatch extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(CharMatch.class);

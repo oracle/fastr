@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "inherits", kind = INTERNAL, parameterNames = {"x", "what", "which"}, behavior = PURE)
-public abstract class InheritsBuiltin extends RBuiltinNode {
+public abstract class InheritsBuiltin extends RBuiltinNode.Arg3 {
 
     @Child InheritsNode inheritsNode = InheritsNodeGen.create();
 

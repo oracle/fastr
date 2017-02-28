@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "capabilities", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
-public abstract class Capabilities extends RBuiltinNode {
+public abstract class Capabilities extends RBuiltinNode.Arg0 {
     private enum Capability {
         jpeg(false, null),
         png(false, null),

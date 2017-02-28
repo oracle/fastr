@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 
 @RBuiltin(name = "quote", nonEvalArgs = 0, kind = PRIMITIVE, parameterNames = {"expr"}, behavior = PURE)
-public abstract class Quote extends RBuiltinNode {
+public abstract class Quote extends RBuiltinNode.Arg1 {
 
     protected static final int LIMIT = 3;
 

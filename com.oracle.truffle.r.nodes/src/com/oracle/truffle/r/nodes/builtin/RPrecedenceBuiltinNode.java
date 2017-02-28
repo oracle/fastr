@@ -26,7 +26,7 @@ import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 
-public abstract class RPrecedenceBuiltinNode extends RBuiltinNode {
+public abstract class RPrecedenceBuiltinNode extends RBuiltinNode.Arg3 {
 
     @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
 

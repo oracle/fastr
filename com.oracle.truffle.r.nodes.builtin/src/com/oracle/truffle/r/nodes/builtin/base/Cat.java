@@ -63,7 +63,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  * The {@code cat .Internal}.
  */
 @RBuiltin(name = "cat", visibility = OFF, kind = INTERNAL, parameterNames = {"arglist", "file", "sep", "fill", "labels", "append"}, behavior = IO)
-public abstract class Cat extends RBuiltinNode {
+public abstract class Cat extends RBuiltinNode.Arg6 {
 
     @Child private ToStringNode toString;
 

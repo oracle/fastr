@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @RBuiltin(name = "col", kind = INTERNAL, parameterNames = {"dims"}, behavior = PURE)
-public abstract class Col extends RBuiltinNode {
+public abstract class Col extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(Col.class);

@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = "invisible", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x"}, behavior = COMPLEX)
-public abstract class Invisible extends RBuiltinNode {
+public abstract class Invisible extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(Invisible.class);

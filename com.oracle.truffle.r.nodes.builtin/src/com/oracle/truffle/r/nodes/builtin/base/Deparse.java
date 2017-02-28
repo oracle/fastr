@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 // Part of this transcribed from GnuR src/main/deparse.c
 
 @RBuiltin(name = "deparse", kind = INTERNAL, parameterNames = {"expr", "width.cutoff", "backtick", "control", "nlines"}, behavior = PURE)
-public abstract class Deparse extends RBuiltinNode {
+public abstract class Deparse extends RBuiltinNode.Arg5 {
 
     static {
         Casts casts = new Casts(Deparse.class);

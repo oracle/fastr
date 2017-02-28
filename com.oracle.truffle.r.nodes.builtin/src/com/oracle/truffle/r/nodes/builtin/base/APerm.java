@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 // TODO: add (permuted) dimnames to the result
 @RBuiltin(name = "aperm", kind = INTERNAL, parameterNames = {"a", "perm", "resize"}, behavior = PURE)
-public abstract class APerm extends RBuiltinNode {
+public abstract class APerm extends RBuiltinNode.Arg3 {
 
     private final BranchProfile emptyPermVector = BranchProfile.create();
     private final ConditionProfile mustResize = ConditionProfile.createBinaryProfile();

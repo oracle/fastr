@@ -23,7 +23,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "date", kind = INTERNAL, parameterNames = {}, behavior = IO)
-public abstract class Date extends RBuiltinNode {
+public abstract class Date extends RBuiltinNode.Arg0 {
 
     @Specialization
     @TruffleBoundary

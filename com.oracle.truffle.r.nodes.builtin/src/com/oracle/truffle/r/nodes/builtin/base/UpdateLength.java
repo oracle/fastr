@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 @RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class UpdateLength extends RBuiltinNode {
+public abstract class UpdateLength extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(UpdateLength.class);

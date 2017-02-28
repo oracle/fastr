@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
  * Note: invoked from merge.data.frame.
  */
 @RBuiltin(name = "merge", kind = INTERNAL, parameterNames = {"xinds", "yinds", "all.x", "all.y"}, behavior = PURE)
-public abstract class Merge extends RBuiltinNode {
+public abstract class Merge extends RBuiltinNode.Arg4 {
 
     static {
         Casts casts = new Casts(Merge.class);

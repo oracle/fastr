@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "make.names", kind = INTERNAL, parameterNames = {"names", "allow_"}, behavior = PURE)
-public abstract class MakeNames extends RBuiltinNode {
+public abstract class MakeNames extends RBuiltinNode.Arg2 {
 
     private final ConditionProfile namesLengthZero = ConditionProfile.createBinaryProfile();
     private final NACheck dummyCheck = NACheck.create(); // never triggered (used for vector update)

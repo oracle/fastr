@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "is.na", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class IsNA extends RBuiltinNode {
+public abstract class IsNA extends RBuiltinNode.Arg1 {
 
     @Child private IsNA recursiveIsNA;
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();

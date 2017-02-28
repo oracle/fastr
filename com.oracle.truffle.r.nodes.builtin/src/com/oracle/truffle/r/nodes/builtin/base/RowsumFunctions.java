@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public class RowsumFunctions {
 
     @RBuiltin(name = "rowsum_matrix", kind = INTERNAL, parameterNames = {"x", "g", "uniqueg", "snarm", "rn"}, behavior = PURE)
-    public abstract static class Rowsum extends RBuiltinNode {
+    public abstract static class Rowsum extends RBuiltinNode.Arg5 {
 
         private final ConditionProfile typeProfile = ConditionProfile.createBinaryProfile();
         private final NACheck na = NACheck.create();

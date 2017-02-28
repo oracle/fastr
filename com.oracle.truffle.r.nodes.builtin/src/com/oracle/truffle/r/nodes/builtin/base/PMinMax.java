@@ -66,7 +66,7 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-public abstract class PMinMax extends RBuiltinNode {
+public abstract class PMinMax extends RBuiltinNode.Arg2 {
 
     @Child private MultiElemStringHandler stringHandler;
     @Child private CastToVectorNode castVector;

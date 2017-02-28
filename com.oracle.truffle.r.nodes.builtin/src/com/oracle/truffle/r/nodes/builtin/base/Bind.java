@@ -547,7 +547,7 @@ public abstract class Bind extends RBaseNode {
         }
     }
 
-    protected abstract static class AbstractBind extends RBuiltinNode {
+    protected abstract static class AbstractBind extends RBuiltinNode.Arg2 {
         @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
         private final ConditionProfile hasClassProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile hasDispatchFunction = ConditionProfile.createBinaryProfile();

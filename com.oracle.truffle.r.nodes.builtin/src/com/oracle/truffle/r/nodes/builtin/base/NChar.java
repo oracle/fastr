@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 // TODO interpret "type" and "allowNA" arguments
 @RBuiltin(name = "nchar", kind = INTERNAL, parameterNames = {"x", "type", "allowNA", "keepNA"}, behavior = PURE)
-public abstract class NChar extends RBuiltinNode {
+public abstract class NChar extends RBuiltinNode.Arg4 {
     private static final String[] TYPES = new String[]{"bytes", "chars", "width"};
     private static final int TYPE_BYTES = 0;
     private static final int TYPE_CHARS = 1;

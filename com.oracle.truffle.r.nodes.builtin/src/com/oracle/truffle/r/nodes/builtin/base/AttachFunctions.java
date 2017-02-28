@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.DetachException;
 
 public class AttachFunctions {
     @RBuiltin(name = "attach", visibility = OFF, kind = INTERNAL, parameterNames = {"what", "pos", "name"}, behavior = COMPLEX)
-    public abstract static class Attach extends RBuiltinNode {
+    public abstract static class Attach extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(Attach.class);
@@ -103,7 +103,7 @@ public class AttachFunctions {
     }
 
     @RBuiltin(name = "detach", visibility = OFF, kind = INTERNAL, parameterNames = {"pos"}, behavior = COMPLEX)
-    public abstract static class Detach extends RBuiltinNode {
+    public abstract static class Detach extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(Detach.class);

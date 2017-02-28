@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "iconv", kind = INTERNAL, parameterNames = {"x", "from", "to", "sub", "mark", "toRaw"}, behavior = PURE)
-public abstract class IConv extends RBuiltinNode {
+public abstract class IConv extends RBuiltinNode.Arg6 {
 
     static {
         Casts casts = new Casts(IConv.class);

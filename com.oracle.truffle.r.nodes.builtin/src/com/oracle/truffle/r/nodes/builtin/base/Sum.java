@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * Sum has combine semantics (TBD: exactly?) and uses a reduce operation on the resulting array.
  */
 @RBuiltin(name = "sum", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE)
-public abstract class Sum extends RBuiltinNode {
+public abstract class Sum extends RBuiltinNode.Arg2 {
 
     protected static final boolean FULL_PRECISION = FastROptions.FullPrecisionSum.getBooleanValue();
 

@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public class EncodingFunctions {
 
     @RBuiltin(name = "Encoding", kind = INTERNAL, parameterNames = "x", behavior = PURE)
-    public abstract static class Encoding extends RBuiltinNode {
+    public abstract static class Encoding extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(Encoding.class);
@@ -53,7 +53,7 @@ public class EncodingFunctions {
     }
 
     @RBuiltin(name = "setEncoding", kind = INTERNAL, parameterNames = {"x", "value"}, behavior = PURE)
-    public abstract static class SetEncoding extends RBuiltinNode {
+    public abstract static class SetEncoding extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(SetEncoding.class);

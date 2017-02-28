@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = "stop", kind = INTERNAL, parameterNames = {"call", "message"}, behavior = COMPLEX)
-public abstract class Stop extends RBuiltinNode {
+public abstract class Stop extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(Stop.class);

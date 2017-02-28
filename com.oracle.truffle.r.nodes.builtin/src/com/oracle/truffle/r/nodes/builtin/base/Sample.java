@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 @RBuiltin(name = "sample", kind = INTERNAL, parameterNames = {"x", "size", "replace", "prob"}, behavior = MODIFIES_STATE)
-public abstract class Sample extends RBuiltinNode {
+public abstract class Sample extends RBuiltinNode.Arg4 {
     private final ConditionProfile sampleSizeProfile = ConditionProfile.createBinaryProfile();
 
     static {

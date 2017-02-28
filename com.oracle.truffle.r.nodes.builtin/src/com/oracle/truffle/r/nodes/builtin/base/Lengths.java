@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "lengths", kind = INTERNAL, parameterNames = {"x", "use.names"}, behavior = PURE)
-public abstract class Lengths extends RBuiltinNode {
+public abstract class Lengths extends RBuiltinNode.Arg2 {
 
     @Child private RLengthNode lengthNode;
 

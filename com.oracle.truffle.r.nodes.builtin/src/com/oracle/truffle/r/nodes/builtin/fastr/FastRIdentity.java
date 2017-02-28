@@ -31,7 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = ".fastr.identity", kind = PRIMITIVE, parameterNames = {""}, behavior = COMPLEX)
-public abstract class FastRIdentity extends RBuiltinNode {
+public abstract class FastRIdentity extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(FastRIdentity.class);

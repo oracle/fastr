@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class BaseGammaFunctions {
 
-    public abstract static class GammaBase extends RBuiltinNode {
+    public abstract static class GammaBase extends RBuiltinNode.Arg1 {
 
         private final NACheck naValCheck = NACheck.create();
 

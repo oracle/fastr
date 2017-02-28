@@ -13,9 +13,11 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.dimEq;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.dimGt;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.matrix;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.not;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.or;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.squareMatrix;
@@ -37,7 +39,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNa
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
@@ -68,7 +70,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public class LaFunctions {
 
     @RBuiltin(name = "La_version", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
-    public abstract static class Version extends RBuiltinNode {
+    public abstract static class Version extends RBuiltinNode.Arg0 {
         @Child LapackRFFI.IlaverNode ilaverNode = RFFIFactory.getRFFI().getLapackRFFI().createIlaverNode();
 
         @Specialization
@@ -80,19 +82,17 @@ public class LaFunctions {
         }
     }
 
-    private abstract static class RsgRBuiltinNode extends RBuiltinNode {
-        protected static final String[] NAMES = new String[]{"values", "vectors"};
+    protected static final String[] NAMES = new String[]{"values", "vectors"};
 
-        protected static Casts createCasts(Class<? extends RsgRBuiltinNode> extClass) {
-            Casts casts = new Casts(extClass);
-            casts.arg("matrix").asDoubleVector(false, true, false).mustBe(squareMatrix(), Message.MUST_BE_SQUARE_NUMERIC, "x");
-            casts.arg("onlyValues").defaultError(Message.INVALID_ARGUMENT, "only.values").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
-            return casts;
-        }
+    protected static Casts createCasts(Class<? extends RBuiltinNode> extClass) {
+        Casts casts = new Casts(extClass);
+        casts.arg("matrix").asDoubleVector(false, true, false).mustBe(squareMatrix(), Message.MUST_BE_SQUARE_NUMERIC, "x");
+        casts.arg("onlyValues").defaultError(Message.INVALID_ARGUMENT, "only.values").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+        return casts;
     }
 
     @RBuiltin(name = "La_rg", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"}, behavior = PURE)
-    public abstract static class Rg extends RsgRBuiltinNode {
+    public abstract static class Rg extends RBuiltinNode.Arg2 {
 
         private final ConditionProfile hasComplexValues = ConditionProfile.createBinaryProfile();
 
@@ -192,7 +192,7 @@ public class LaFunctions {
     }
 
     @RBuiltin(name = "La_rs", kind = INTERNAL, parameterNames = {"matrix", "onlyValues"}, behavior = PURE)
-    public abstract static class Rs extends RsgRBuiltinNode {
+    public abstract static class Rs extends RBuiltinNode.Arg2 {
 
         static {
             createCasts(Rs.class);
@@ -253,7 +253,7 @@ public class LaFunctions {
     }
 
     @RBuiltin(name = "La_qr", kind = INTERNAL, parameterNames = {"in"}, behavior = PURE)
-    public abstract static class Qr extends RBuiltinNode {
+    public abstract static class Qr extends RBuiltinNode.Arg1 {
 
         @CompilationFinal private static final String[] NAMES = new String[]{"qr", "rank", "qraux", "pivot"};
 
@@ -301,7 +301,7 @@ public class LaFunctions {
     }
 
     @RBuiltin(name = "qr_coef_real", kind = INTERNAL, parameterNames = {"q", "b"}, behavior = PURE)
-    public abstract static class QrCoefReal extends RBuiltinNode {
+    public abstract static class QrCoefReal extends RBuiltinNode.Arg2 {
 
         private static final char SIDE = 'L';
         private static final char TRANS = 'T';
@@ -360,7 +360,7 @@ public class LaFunctions {
     }
 
     @RBuiltin(name = "det_ge_real", kind = INTERNAL, parameterNames = {"a", "uselog"}, behavior = PURE)
-    public abstract static class DetGeReal extends RBuiltinNode {
+    public abstract static class DetGeReal extends RBuiltinNode.Arg2 {
 
         private static final RStringVector NAMES_VECTOR = RDataFactory.createStringVector(new String[]{"modulus", "sign"}, RDataFactory.COMPLETE_VECTOR);
         private static final RStringVector DET_CLASS = RDataFactory.createStringVector(new String[]{"det"}, RDataFactory.COMPLETE_VECTOR);
@@ -442,7 +442,7 @@ public class LaFunctions {
     }
 
     @RBuiltin(name = "La_chol", kind = INTERNAL, parameterNames = {"a", "pivot", "tol"}, behavior = PURE)
-    public abstract static class LaChol extends RBuiltinNode {
+    public abstract static class LaChol extends RBuiltinNode.Arg3 {
 
         private final ConditionProfile noPivot = ConditionProfile.createBinaryProfile();
 
@@ -510,7 +510,7 @@ public class LaFunctions {
     }
 
     @RBuiltin(name = "La_chol2inv", kind = INTERNAL, parameterNames = {"a", "size"}, behavior = PURE)
-    public abstract static class LaChol2Inv extends RBuiltinNode {
+    public abstract static class LaChol2Inv extends RBuiltinNode.Arg2 {
 
         @Child private SetFixedAttributeNode setPivotAttrNode = SetFixedAttributeNode.create("pivot");
         @Child private SetFixedAttributeNode setRankAttrNode = SetFixedAttributeNode.create("rank");
@@ -518,7 +518,7 @@ public class LaFunctions {
         static {
             Casts casts = new Casts(LaChol2Inv.class);
             casts.arg("a").asDoubleVector(false, true, false).mustBe(matrix(), Message.MUST_BE_NUMERIC_MATRIX, "a");
-            casts.arg("size").asIntegerVector().mustBe(Predef.notEmpty()).findFirst().mustBe(Predef.gt(0), Message.MUST_BE_POSITIVE_INT);
+            casts.arg("size").asIntegerVector().mustBe(notEmpty()).findFirst().mustBe(gt(0), Message.MUST_BE_POSITIVE_INT);
         }
 
         @Specialization
@@ -559,7 +559,7 @@ public class LaFunctions {
     }
 
     @RBuiltin(name = "La_solve", kind = INTERNAL, parameterNames = {"a", "bin", "tolin"}, behavior = PURE)
-    public abstract static class LaSolve extends RBuiltinNode {
+    public abstract static class LaSolve extends RBuiltinNode.Arg3 {
         @Child private CastDoubleNode castDouble = CastDoubleNodeGen.create(false, false, false);
 
         private static Function<RAbstractDoubleVector, Object> getDimVal(int dim) {

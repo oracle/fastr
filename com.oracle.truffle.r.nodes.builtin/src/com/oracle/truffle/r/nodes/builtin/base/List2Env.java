@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "list2env", kind = INTERNAL, parameterNames = {"x", "envir"}, behavior = PURE)
-public abstract class List2Env extends RBuiltinNode {
+public abstract class List2Env extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(List2Env.class);

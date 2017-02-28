@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -25,9 +26,12 @@ import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-public abstract class CastTypeNode extends BinaryNode {
+@TypeSystemReference(RTypes.class)
+public abstract class CastTypeNode extends RBaseNode {
 
     protected static final int NUMBER_OF_TYPES = RType.values().length;
 
@@ -63,7 +67,7 @@ public abstract class CastTypeNode extends BinaryNode {
     }
 
     public static CastTypeNode create() {
-        return CastTypeNodeGen.create(null, null);
+        return CastTypeNodeGen.create();
     }
 
     @TruffleBoundary

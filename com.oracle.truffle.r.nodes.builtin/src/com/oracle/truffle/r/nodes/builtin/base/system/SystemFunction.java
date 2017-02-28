@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "system", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"command", "intern"}, behavior = COMPLEX)
-public abstract class SystemFunction extends RBuiltinNode {
+public abstract class SystemFunction extends RBuiltinNode.Arg2 {
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     static {

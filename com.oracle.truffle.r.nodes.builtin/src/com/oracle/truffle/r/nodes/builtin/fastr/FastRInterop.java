@@ -73,7 +73,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public class FastRInterop {
 
     @RBuiltin(name = ".fastr.interop.eval", visibility = OFF, kind = PRIMITIVE, parameterNames = {"mimeType", "source"}, behavior = COMPLEX)
-    public abstract static class Eval extends RBuiltinNode {
+    public abstract static class Eval extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(Eval.class);
@@ -113,7 +113,7 @@ public class FastRInterop {
     }
 
     @RBuiltin(name = ".fastr.interop.evalFile", visibility = OFF, kind = PRIMITIVE, parameterNames = {"path", "mimeType"}, behavior = COMPLEX)
-    public abstract static class EvalFile extends RBuiltinNode {
+    public abstract static class EvalFile extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(EvalFile.class);
@@ -153,7 +153,7 @@ public class FastRInterop {
     }
 
     @RBuiltin(name = ".fastr.interop.export", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name", "value"}, behavior = COMPLEX)
-    public abstract static class Export extends RBuiltinNode {
+    public abstract static class Export extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(Export.class);
@@ -185,7 +185,7 @@ public class FastRInterop {
     }
 
     @RBuiltin(name = ".fastr.interop.import", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name"}, behavior = COMPLEX)
-    public abstract static class Import extends RBuiltinNode {
+    public abstract static class Import extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(Import.class);
@@ -204,7 +204,7 @@ public class FastRInterop {
     }
 
     @RBuiltin(name = ".fastr.interop.hasSize", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
-    public abstract static class HasSize extends RBuiltinNode {
+    public abstract static class HasSize extends RBuiltinNode.Arg1 {
 
         @Child private Node node = com.oracle.truffle.api.interop.Message.HAS_SIZE.createNode();
 
@@ -219,7 +219,7 @@ public class FastRInterop {
     }
 
     @RBuiltin(name = ".fastr.interop.isNull", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
-    public abstract static class IsNull extends RBuiltinNode {
+    public abstract static class IsNull extends RBuiltinNode.Arg1 {
 
         @Child private Node node = com.oracle.truffle.api.interop.Message.IS_NULL.createNode();
 
@@ -234,7 +234,7 @@ public class FastRInterop {
     }
 
     @RBuiltin(name = ".fastr.interop.isExecutable", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
-    public abstract static class IsExecutable extends RBuiltinNode {
+    public abstract static class IsExecutable extends RBuiltinNode.Arg1 {
 
         @Child private Node node = com.oracle.truffle.api.interop.Message.IS_EXECUTABLE.createNode();
 
@@ -249,7 +249,7 @@ public class FastRInterop {
     }
 
     @RBuiltin(name = ".fastr.interop.toBoolean", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
-    public abstract static class ToBoolean extends RBuiltinNode {
+    public abstract static class ToBoolean extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(ToBoolean.class);
@@ -263,7 +263,7 @@ public class FastRInterop {
     }
 
     @RBuiltin(name = ".fastr.java.class", visibility = ON, kind = PRIMITIVE, parameterNames = {"class"}, behavior = COMPLEX)
-    public abstract static class JavaClass extends RBuiltinNode {
+    public abstract static class JavaClass extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(JavaClass.class);
@@ -283,7 +283,7 @@ public class FastRInterop {
 
     @ImportStatic({com.oracle.truffle.api.interop.Message.class, RRuntime.class})
     @RBuiltin(name = ".fastr.interop.new", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "..."}, behavior = COMPLEX)
-    public abstract static class InteropNew extends RBuiltinNode {
+    public abstract static class InteropNew extends RBuiltinNode.Arg2 {
 
         static {
             Casts.noCasts(InteropNew.class);

@@ -65,7 +65,6 @@ import com.oracle.truffle.r.nodes.function.call.PrepareArguments;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
-import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -777,7 +776,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Child private RBuiltinNode builtin;
         @Child private PromiseCheckHelperNode varArgsPromiseHelper;
         @Children private final PromiseHelperNode[] promiseHelpers;
-        @Children private final CastNode[] casts;
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         // not using profiles to save overhead
@@ -795,7 +793,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             this.builtin = builtin;
             this.builtinDescriptor = builtinDescriptor;
             this.explicitArgs = explicitArgs;
-            this.casts = builtin.getCasts();
             this.formals = formalArguments;
             promiseHelpers = new PromiseHelperNode[formals.getLength()];
             argEmptySeen = new boolean[formals.getLength()];
@@ -807,6 +804,14 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Override
         protected RBaseNode getErrorContext() {
             return builtin.getErrorContext();
+        }
+
+        public RBuiltinNode getBuiltin() {
+            return builtin;
+        }
+
+        public FormalArguments getFormals() {
+            return formals;
         }
 
         @ExplodeLoop
@@ -843,12 +848,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                             }
                             arg = promiseHelpers[i].evaluate(frame, (RPromise) arg);
                         }
-                        if (i < casts.length && casts[i] != null) {
-                            assert builtinDescriptor.evaluatesArg(i);
-                            arg = casts[i].execute(arg);
-                        }
                     } else {
-                        assert casts.length <= i || casts[i] == null : "no casts allowed on non-evaluated arguments in builtin " + builtinDescriptor.getName();
                         if (arg instanceof RPromise || arg instanceof RMissing) {
                             if (!nonWrapSeen[i]) {
                                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -916,7 +916,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction, RArgsValuesAndNames orderedArguments, S3Args s3Args) {
-            Object result = builtin.executeBuiltin(frame, castArguments(frame, orderedArguments.getArguments()));
+            Object result = builtin.call(frame, castArguments(frame, orderedArguments.getArguments()));
             assert result != null : "builtins cannot return 'null': " + builtinDescriptor.getName();
             assert !(result instanceof RConnection) : "builtins cannot return connection': " + builtinDescriptor.getName();
             visibility.execute(frame, builtinDescriptor.getVisibility());

@@ -57,7 +57,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * Does not perform argument matching for first parameter "name".
  */
 @RBuiltin(name = "call", kind = PRIMITIVE, parameterNames = {"", "..."}, behavior = PURE)
-public abstract class Call extends RBuiltinNode {
+public abstract class Call extends RBuiltinNode.Arg2 {
 
     @Override
     public Object[] getDefaultParameterValues() {

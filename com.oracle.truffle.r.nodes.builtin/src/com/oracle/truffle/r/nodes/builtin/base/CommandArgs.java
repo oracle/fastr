@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "commandArgs", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
-public abstract class CommandArgs extends RBuiltinNode {
+public abstract class CommandArgs extends RBuiltinNode.Arg0 {
 
     @Specialization
     @TruffleBoundary

@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "ngettext", kind = INTERNAL, parameterNames = {"n", "msg1", "msg2", "domain"}, behavior = COMPLEX)
-public abstract class NGetText extends RBuiltinNode {
+public abstract class NGetText extends RBuiltinNode.Arg4 {
 
     static {
         Casts casts = new Casts(NGetText.class);

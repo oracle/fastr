@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  *
  */
 @RBuiltin(name = "assign", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "value", "envir", "inherits"}, behavior = COMPLEX)
-public abstract class Assign extends RBuiltinNode {
+public abstract class Assign extends RBuiltinNode.Arg4 {
 
     private final boolean direct;
 

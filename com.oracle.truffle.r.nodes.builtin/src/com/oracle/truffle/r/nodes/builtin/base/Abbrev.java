@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "abbreviate", kind = INTERNAL, parameterNames = {"x", "minlength", "use.classes"}, behavior = PURE)
-public abstract class Abbrev extends RBuiltinNode {
+public abstract class Abbrev extends RBuiltinNode.Arg3 {
     private final NACheck naCheck = NACheck.create();
 
     static {

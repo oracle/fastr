@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "class<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, behavior = PURE)
-public abstract class UpdateClass extends RBuiltinNode {
+public abstract class UpdateClass extends RBuiltinNode.Arg2 {
 
     protected static final int CACHE_LIMIT = 2;
 
@@ -203,7 +203,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castTypeNode = insert(CastTypeNodeGen.create(null, null));
+            castTypeNode = insert(CastTypeNodeGen.create());
         }
     }
 

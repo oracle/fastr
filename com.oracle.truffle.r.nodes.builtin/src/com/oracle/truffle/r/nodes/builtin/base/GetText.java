@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "gettext", kind = INTERNAL, parameterNames = {"domain", "args"}, behavior = PURE)
-public abstract class GetText extends RBuiltinNode {
+public abstract class GetText extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(GetText.class);

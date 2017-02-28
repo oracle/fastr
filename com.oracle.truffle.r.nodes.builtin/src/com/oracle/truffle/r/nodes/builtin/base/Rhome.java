@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
  * R.home builtin.
  */
 @RBuiltin(name = "R.home", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
-public abstract class Rhome extends RBuiltinNode {
+public abstract class Rhome extends RBuiltinNode.Arg0 {
 
     @Specialization
     @TruffleBoundary

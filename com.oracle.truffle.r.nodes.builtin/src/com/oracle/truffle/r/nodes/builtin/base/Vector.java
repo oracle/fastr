@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 
 @RBuiltin(name = "vector", kind = INTERNAL, parameterNames = {"mode", "length"}, behavior = PURE)
-public abstract class Vector extends RBuiltinNode {
+public abstract class Vector extends RBuiltinNode.Arg2 {
 
     private static final String CACHED_MODES_LIMIT = "3";
 

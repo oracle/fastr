@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "strtoi", kind = INTERNAL, parameterNames = {"x", "base"}, behavior = PURE)
-public abstract class Strtoi extends RBuiltinNode {
+public abstract class Strtoi extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(Strtoi.class);

@@ -78,6 +78,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -90,7 +91,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public class FrameFunctions {
 
-    public abstract static class FrameHelper extends RBuiltinNode {
+    public static final class FrameHelper extends RBaseNode {
 
         private final ConditionProfile currentFrameProfile = ConditionProfile.createBinaryProfile();
 
@@ -99,7 +100,11 @@ public class FrameFunctions {
          * only use the frame internally should not materialize it, i.e., they should use
          * {@link FrameAccess#READ_ONLY} or {@link FrameAccess#READ_WRITE}.
          */
-        protected abstract FrameAccess frameAccess();
+        private final FrameAccess access;
+
+        public FrameHelper(FrameAccess access) {
+            this.access = access;
+        }
 
         protected Frame getFrame(VirtualFrame frame, int n) {
             int actualFrame = decodeFrameNumber(RArguments.getCall(frame), n);
@@ -161,7 +166,7 @@ public class FrameFunctions {
                     }
                     notifyRCallNodes(actualFrame, RArguments.getCall(frame));
                 }
-                return Utils.getStackFrame(frameAccess(), actualFrame);
+                return Utils.getStackFrame(access, actualFrame);
             }
         }
 
@@ -181,16 +186,13 @@ public class FrameFunctions {
     }
 
     @RBuiltin(name = "sys.call", kind = INTERNAL, parameterNames = {"which"}, behavior = COMPLEX)
-    public abstract static class SysCall extends FrameHelper {
+    public abstract static class SysCall extends RBuiltinNode.Arg1 {
+
+        @Child private FrameHelper helper = new FrameHelper(FrameAccess.READ_ONLY);
 
         static {
             Casts casts = new Casts(SysCall.class);
             casts.arg("which").asIntegerVector().findFirst();
-        }
-
-        @Override
-        protected final FrameAccess frameAccess() {
-            return FrameAccess.READ_ONLY;
         }
 
         @Specialization
@@ -203,7 +205,7 @@ public class FrameFunctions {
 
         @TruffleBoundary
         private Object createCall(RCaller currentCall, int which) {
-            RCaller call = getCall(currentCall, which);
+            RCaller call = helper.getCall(currentCall, which);
             assert !call.isPromise();
             if (call == null || !call.isValidCaller()) {
                 return RNull.instance;
@@ -227,12 +229,9 @@ public class FrameFunctions {
      * using "..." that make the code a lot more complex that it seems it ought to be.
      */
     @RBuiltin(name = "match.call", kind = INTERNAL, parameterNames = {"definition", "call", "expand.dots", "envir"}, behavior = COMPLEX)
-    public abstract static class MatchCall extends FrameHelper {
+    public abstract static class MatchCall extends RBuiltinNode.Arg4 {
 
-        @Override
-        protected final FrameAccess frameAccess() {
-            return FrameAccess.READ_ONLY;
-        }
+        @Child private FrameHelper helper = new FrameHelper(FrameAccess.READ_ONLY);
 
         static {
             Casts casts = new Casts(MatchCall.class);
@@ -401,7 +400,7 @@ public class FrameFunctions {
     }
 
     @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
-    public abstract static class SysNFrame extends RBuiltinNode {
+    public abstract static class SysNFrame extends RBuiltinNode.Arg0 {
 
         private final BranchProfile isPromiseCurrentProfile = BranchProfile.create();
         private final BranchProfile isPromiseResultProfile = BranchProfile.create();
@@ -422,13 +421,11 @@ public class FrameFunctions {
         }
     }
 
-    private abstract static class DeoptHelper extends FrameHelper {
-        protected final PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
-
-    }
-
     @RBuiltin(name = "sys.frame", kind = INTERNAL, parameterNames = {"which"}, behavior = COMPLEX)
-    public abstract static class SysFrame extends DeoptHelper {
+    public abstract static class SysFrame extends RBuiltinNode.Arg1 {
+
+        @Child private FrameHelper helper = new FrameHelper(FrameAccess.MATERIALIZE);
+        @Child private PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
 
         private final ConditionProfile zeroProfile = ConditionProfile.createBinaryProfile();
 
@@ -436,11 +433,6 @@ public class FrameFunctions {
 
         public static SysFrame create() {
             return SysFrameNodeGen.create();
-        }
-
-        @Override
-        protected final FrameAccess frameAccess() {
-            return FrameAccess.MATERIALIZE;
         }
 
         static {
@@ -454,23 +446,21 @@ public class FrameFunctions {
             if (zeroProfile.profile(which == 0)) {
                 result = REnvironment.globalEnv();
             } else {
-                Frame callerFrame = getFrame(frame, which);
+                Frame callerFrame = helper.getFrame(frame, which);
                 result = REnvironment.frameToEnvironment(callerFrame.materialize());
             }
 
             // Deoptimize every promise which is now in this frame, as it might leave it's stack
             deoptFrameNode.deoptimizeFrame(result.getFrame());
-
             return result;
         }
     }
 
     @RBuiltin(name = "sys.frames", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
-    public abstract static class SysFrames extends DeoptHelper {
-        @Override
-        protected final FrameAccess frameAccess() {
-            return FrameAccess.MATERIALIZE;
-        }
+    public abstract static class SysFrames extends RBuiltinNode.Arg0 {
+
+        @Child private FrameHelper helper = new FrameHelper(FrameAccess.MATERIALIZE);
+        @Child private PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
 
         @Specialization
         protected Object sysFrames(VirtualFrame frame) {
@@ -481,7 +471,7 @@ public class FrameFunctions {
                 RPairList result = RDataFactory.createPairList();
                 RPairList next = result;
                 for (int i = 1; i < depth; i++) {
-                    MaterializedFrame mf = getNumberedFrame(frame, i).materialize();
+                    MaterializedFrame mf = helper.getNumberedFrame(frame, i).materialize();
                     deoptFrameNode.deoptimizeFrame(mf);
                     next.setCar(REnvironment.frameToEnvironment(mf));
                     if (i != depth - 1) {
@@ -498,12 +488,7 @@ public class FrameFunctions {
     }
 
     @RBuiltin(name = "sys.calls", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
-    public abstract static class SysCalls extends FrameHelper {
-
-        @Override
-        protected final FrameAccess frameAccess() {
-            return FrameAccess.READ_ONLY;
-        }
+    public abstract static class SysCalls extends RBuiltinNode.Arg0 {
 
         @Specialization
         protected Object sysCalls(VirtualFrame frame) {
@@ -545,7 +530,7 @@ public class FrameFunctions {
     }
 
     @RBuiltin(name = "sys.parent", kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
-    public abstract static class SysParent extends RBuiltinNode {
+    public abstract static class SysParent extends RBuiltinNode.Arg1 {
 
         private final BranchProfile nullCallerProfile = BranchProfile.create();
         private final BranchProfile promiseProfile = BranchProfile.create();
@@ -576,14 +561,11 @@ public class FrameFunctions {
     }
 
     @RBuiltin(name = "sys.function", kind = INTERNAL, parameterNames = {"which"}, splitCaller = true, alwaysSplit = true, behavior = COMPLEX)
-    public abstract static class SysFunction extends FrameHelper {
+    public abstract static class SysFunction extends RBuiltinNode.Arg1 {
+
+        @Child private FrameHelper helper = new FrameHelper(FrameAccess.READ_ONLY);
 
         public abstract Object executeObject(VirtualFrame frame, int which);
-
-        @Override
-        protected final FrameAccess frameAccess() {
-            return FrameAccess.READ_ONLY;
-        }
 
         static {
             Casts casts = new Casts(SysFunction.class);
@@ -593,7 +575,7 @@ public class FrameFunctions {
         @Specialization
         protected Object sysFunction(VirtualFrame frame, int which) {
             // N.B. Despite the spec, n==0 is treated as the current function
-            Frame callerFrame = getFrame(frame, which);
+            Frame callerFrame = helper.getFrame(frame, which);
             RFunction func = RArguments.getFunction(callerFrame);
 
             if (func == null) {
@@ -605,12 +587,7 @@ public class FrameFunctions {
     }
 
     @RBuiltin(name = "sys.parents", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
-    public abstract static class SysParents extends FrameHelper {
-
-        @Override
-        protected final FrameAccess frameAccess() {
-            return FrameAccess.READ_ONLY;
-        }
+    public abstract static class SysParents extends RBuiltinNode.Arg0 {
 
         @Specialization
         protected RIntVector sysParents(VirtualFrame frame) {
@@ -649,7 +626,9 @@ public class FrameFunctions {
      * The environment of the caller of the function that called parent.frame.
      */
     @RBuiltin(name = "parent.frame", kind = SUBSTITUTE, parameterNames = {"n"}, behavior = COMPLEX)
-    public abstract static class ParentFrame extends FrameHelper {
+    public abstract static class ParentFrame extends RBuiltinNode.Arg1 {
+
+        @Child private FrameHelper helper = new FrameHelper(FrameAccess.MATERIALIZE);
 
         private final BranchProfile nullCallerProfile = BranchProfile.create();
         private final BranchProfile promiseProfile = BranchProfile.create();
@@ -665,11 +644,6 @@ public class FrameFunctions {
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{1};
-        }
-
-        @Override
-        protected final FrameAccess frameAccess() {
-            return FrameAccess.MATERIALIZE;
         }
 
         @Specialization(guards = "n == 1")
@@ -708,7 +682,7 @@ public class FrameFunctions {
             // */
             // parentDepth--;
             // }
-            return REnvironment.frameToEnvironment(getNumberedFrame(frame, call.getDepth()).materialize());
+            return REnvironment.frameToEnvironment(helper.getNumberedFrame(frame, call.getDepth()).materialize());
         }
     }
 }

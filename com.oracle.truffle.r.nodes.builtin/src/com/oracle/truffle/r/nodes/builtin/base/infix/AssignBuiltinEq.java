@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "=", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"x", "i"}, behavior = RBehavior.MODIFIES_FRAME)
-public abstract class AssignBuiltinEq extends RBuiltinNode {
+public abstract class AssignBuiltinEq extends RBuiltinNode.Arg2 {
 
     static {
         Casts.noCasts(AssignBuiltinEq.class);

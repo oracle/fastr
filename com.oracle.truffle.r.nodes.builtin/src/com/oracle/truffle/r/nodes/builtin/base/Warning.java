@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "warning", visibility = OFF, kind = INTERNAL, parameterNames = {"call", "immediate", "nobreaks", "message"}, behavior = COMPLEX)
-public abstract class Warning extends RBuiltinNode {
+public abstract class Warning extends RBuiltinNode.Arg4 {
 
     static {
         Casts casts = new Casts(Warning.class);

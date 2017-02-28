@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 @RBuiltin(name = ".isMethodsDispatchOn", kind = PRIMITIVE, parameterNames = {}, behavior = READS_STATE)
-public abstract class IsMethodsDispatchOn extends RBuiltinNode {
+public abstract class IsMethodsDispatchOn extends RBuiltinNode.Arg0 {
 
     public abstract byte execute();
 

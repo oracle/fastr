@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  * Sample2 is more efficient special case implementation of {@link Sample}.
  */
 @RBuiltin(name = "sample2", kind = INTERNAL, parameterNames = {"x", "size"}, behavior = MODIFIES_STATE)
-public abstract class Sample2 extends RBuiltinNode {
+public abstract class Sample2 extends RBuiltinNode.Arg2 {
     private static final double U = 33554432.0;
     static final double MAX_INT = Integer.MAX_VALUE;
 

@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "reg.finalizer", kind = INTERNAL, parameterNames = {"e", "f", "onexit"}, behavior = COMPLEX)
-public abstract class RegFinalizer extends RBuiltinNode {
+public abstract class RegFinalizer extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(RegFinalizer.class);

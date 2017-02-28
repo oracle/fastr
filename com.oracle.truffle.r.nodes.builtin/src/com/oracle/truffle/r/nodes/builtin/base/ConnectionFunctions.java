@@ -125,7 +125,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  */
 public abstract class ConnectionFunctions {
     @RBuiltin(name = "stdin", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
-    public abstract static class Stdin extends RBuiltinNode {
+    public abstract static class Stdin extends RBuiltinNode.Arg0 {
         @Specialization
         @TruffleBoundary
         protected RAbstractIntVector stdin() {
@@ -134,7 +134,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "stdout", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
-    public abstract static class Stdout extends RBuiltinNode {
+    public abstract static class Stdout extends RBuiltinNode.Arg0 {
         @Specialization
         @TruffleBoundary
         protected RAbstractIntVector stdout() {
@@ -143,7 +143,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "stderr", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
-    public abstract static class Stderr extends RBuiltinNode {
+    public abstract static class Stderr extends RBuiltinNode.Arg0 {
         @Specialization
         @TruffleBoundary
         protected RAbstractIntVector stderr() {
@@ -219,7 +219,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "file", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "method", "raw"}, behavior = IO)
-    public abstract static class File extends RBuiltinNode {
+    public abstract static class File extends RBuiltinNode.Arg6 {
 
         static {
             Casts casts = new Casts(File.class);
@@ -279,7 +279,7 @@ public abstract class ConnectionFunctions {
      * uncompressed files, and files compressed by {@code bzip2, xz, lzma}.
      */
 
-    public abstract static class ZZFileAdapter extends RBuiltinNode {
+    public abstract static class ZZFileAdapter extends RBuiltinNode.Arg4 {
         private final RCompression.Type cType;
 
         protected ZZFileAdapter(RCompression.Type cType) {
@@ -347,7 +347,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "textConnection", kind = INTERNAL, parameterNames = {"description", "text", "open", "env", "encoding"}, behavior = IO)
-    public abstract static class TextConnection extends RBuiltinNode {
+    public abstract static class TextConnection extends RBuiltinNode.Arg5 {
 
         static {
             Casts casts = new Casts(TextConnection.class);
@@ -375,7 +375,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "textConnectionValue", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
-    public abstract static class TextConnectionValue extends RBuiltinNode {
+    public abstract static class TextConnectionValue extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(TextConnectionValue.class);
@@ -395,7 +395,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "socketConnection", kind = INTERNAL, parameterNames = {"host", "port", "server", "blocking", "open", "encoding", "timeout"}, behavior = IO)
-    public abstract static class SocketConnection extends RBuiltinNode {
+    public abstract static class SocketConnection extends RBuiltinNode.Arg7 {
 
         static {
             Casts casts = new Casts(SocketConnection.class);
@@ -422,7 +422,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "url", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "method"}, behavior = IO)
-    public abstract static class URLConnection extends RBuiltinNode {
+    public abstract static class URLConnection extends RBuiltinNode.Arg5 {
 
         static {
             Casts casts = new Casts(URLConnection.class);
@@ -450,7 +450,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "rawConnection", kind = INTERNAL, parameterNames = {"description", "object", "open"}, behavior = IO)
-    public abstract static class RawConnection extends RBuiltinNode {
+    public abstract static class RawConnection extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(RawConnection.class);
@@ -481,7 +481,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "rawConnectionValue", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
-    public abstract static class RawConnectionValue extends RBuiltinNode {
+    public abstract static class RawConnectionValue extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(RawConnectionValue.class);
@@ -501,7 +501,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "summary.connection", kind = INTERNAL, parameterNames = {"object"}, behavior = IO)
-    public abstract static class Summary extends RBuiltinNode {
+    public abstract static class Summary extends RBuiltinNode.Arg1 {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"description", "class", "mode", "text", "opened", "can read", "can write"},
                         RDataFactory.COMPLETE_VECTOR);
 
@@ -527,7 +527,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "open", visibility = OFF, kind = INTERNAL, parameterNames = {"con", "open", "blocking"}, behavior = IO)
-    public abstract static class Open extends RBuiltinNode {
+    public abstract static class Open extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(Open.class);
@@ -556,7 +556,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "isOpen", kind = INTERNAL, parameterNames = {"con", "rw"}, behavior = IO)
-    public abstract static class IsOpen extends RBuiltinNode {
+    public abstract static class IsOpen extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(IsOpen.class);
@@ -586,7 +586,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "close", visibility = OFF, kind = INTERNAL, parameterNames = {"con", "type"}, behavior = IO)
-    public abstract static class Close extends RBuiltinNode {
+    public abstract static class Close extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(Close.class);
@@ -608,7 +608,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "readLines", kind = INTERNAL, parameterNames = {"con", "n", "ok", "warn", "encoding", "skipNul"}, behavior = IO)
-    public abstract static class ReadLines extends RBuiltinNode {
+    public abstract static class ReadLines extends RBuiltinNode.Arg6 {
 
         static {
             Casts casts = new Casts(ReadLines.class);
@@ -637,7 +637,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "writeLines", visibility = OFF, kind = INTERNAL, parameterNames = {"text", "con", "sep", "useBytes"}, behavior = IO)
-    public abstract static class WriteLines extends RBuiltinNode {
+    public abstract static class WriteLines extends RBuiltinNode.Arg4 {
 
         static {
             Casts casts = new Casts(WriteLines.class);
@@ -660,7 +660,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "flush", visibility = OFF, kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
-    public abstract static class Flush extends RBuiltinNode {
+    public abstract static class Flush extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(Flush.class);
@@ -680,7 +680,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "pushBack", visibility = OFF, kind = INTERNAL, parameterNames = {"data", "con", "newLine", "type"}, behavior = IO)
-    public abstract static class PushBack extends RBuiltinNode {
+    public abstract static class PushBack extends RBuiltinNode.Arg4 {
 
         static {
             Casts casts = new Casts(PushBack.class);
@@ -699,7 +699,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "pushBackLength", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
-    public abstract static class PushBackLength extends RBuiltinNode {
+    public abstract static class PushBackLength extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(PushBackLength.class);
@@ -713,7 +713,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "clearPushBack", visibility = OFF, kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
-    public abstract static class PushBackClear extends RBuiltinNode {
+    public abstract static class PushBackClear extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(PushBackClear.class);
@@ -728,7 +728,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "readChar", kind = INTERNAL, parameterNames = {"con", "nchars", "useBytes"}, behavior = IO)
-    public abstract static class ReadChar extends RBuiltinNode {
+    public abstract static class ReadChar extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(ReadChar.class);
@@ -763,7 +763,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "writeChar", visibility = OFF, kind = INTERNAL, parameterNames = {"object", "con", "nchars", "sep", "useBytes"}, behavior = IO)
-    public abstract static class WriteChar extends RBuiltinNode {
+    public abstract static class WriteChar extends RBuiltinNode.Arg5 {
 
         static {
             // @formatter:off
@@ -832,7 +832,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "readBin", kind = INTERNAL, parameterNames = {"con", "what", "n", "size", "signed", "swap"}, behavior = IO)
-    public abstract static class ReadBin extends RBuiltinNode {
+    public abstract static class ReadBin extends RBuiltinNode.Arg6 {
 
         static {
             Casts casts = new Casts(ReadBin.class);
@@ -1124,7 +1124,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "writeBin", visibility = OFF, kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"}, behavior = IO)
-    public abstract static class WriteBin extends RBuiltinNode {
+    public abstract static class WriteBin extends RBuiltinNode.Arg5 {
 
         static {
             Casts casts = new Casts(WriteBin.class);
@@ -1168,7 +1168,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "getConnection", kind = INTERNAL, parameterNames = {"what"}, behavior = IO)
-    public abstract static class GetConnection extends RBuiltinNode {
+    public abstract static class GetConnection extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(GetConnection.class);
@@ -1188,7 +1188,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "getAllConnections", kind = INTERNAL, parameterNames = {}, behavior = IO)
-    public abstract static class GetAllConnections extends RBuiltinNode {
+    public abstract static class GetAllConnections extends RBuiltinNode.Arg0 {
         @Specialization
         @TruffleBoundary
         protected RAbstractIntVector getAllConnections() {
@@ -1197,7 +1197,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "isSeekable", kind = INTERNAL, parameterNames = "con", behavior = IO)
-    public abstract static class IsSeekable extends RBuiltinNode {
+    public abstract static class IsSeekable extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(IsSeekable.class);
@@ -1212,7 +1212,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "seek", kind = INTERNAL, parameterNames = {"con", "where", "origin", "rw"}, behavior = IO)
-    public abstract static class Seek extends RBuiltinNode {
+    public abstract static class Seek extends RBuiltinNode.Arg4 {
 
         static {
             Casts casts = new Casts(Seek.class);
@@ -1250,7 +1250,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "fifo", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding"}, behavior = IO)
-    public abstract static class Fifo extends RBuiltinNode {
+    public abstract static class Fifo extends RBuiltinNode.Arg4 {
 
         static {
             Casts casts = new Casts(Fifo.class);
@@ -1279,7 +1279,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "pipe", kind = INTERNAL, parameterNames = {"description", "open", "encoding"}, behavior = IO)
-    public abstract static class Pipe extends RBuiltinNode {
+    public abstract static class Pipe extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(Pipe.class);
@@ -1305,7 +1305,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "isIncomplete", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
-    public abstract static class IsIncomplete extends RBuiltinNode {
+    public abstract static class IsIncomplete extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(IsIncomplete.class);
@@ -1322,7 +1322,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "truncate", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
-    public abstract static class Truncate extends RBuiltinNode {
+    public abstract static class Truncate extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(Truncate.class);
@@ -1343,7 +1343,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = ".fastr.channelConnection", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"channel", "open", "encoding"}, behavior = IO)
-    public abstract static class ChannelConnection extends RBuiltinNode {
+    public abstract static class ChannelConnection extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(ChannelConnection.class);

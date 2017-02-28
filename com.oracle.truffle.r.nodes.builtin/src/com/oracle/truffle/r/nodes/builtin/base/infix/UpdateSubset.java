@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @RBuiltin(name = "[<-", kind = PRIMITIVE, parameterNames = {"..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class UpdateSubset extends RBuiltinNode {
+public abstract class UpdateSubset extends RBuiltinNode.Arg1 {
 
     @Child private ReplaceVectorNode replaceNode = ReplaceVectorNode.create(ElementAccessMode.SUBSET, false);
     private final ConditionProfile argsLengthLargerThanOneProfile = ConditionProfile.createBinaryProfile();

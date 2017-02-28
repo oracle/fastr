@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
 
 public class RNGFunctions {
     @RBuiltin(name = "set.seed", visibility = OFF, kind = INTERNAL, parameterNames = {"seed", "kind", "normal.kind"}, behavior = MODIFIES_STATE)
-    public abstract static class SetSeed extends RBuiltinNode {
+    public abstract static class SetSeed extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(SetSeed.class);
@@ -76,7 +76,7 @@ public class RNGFunctions {
     }
 
     @RBuiltin(name = "RNGkind", kind = INTERNAL, parameterNames = {"kind", "normkind"}, behavior = MODIFIES_STATE)
-    public abstract static class RNGkind extends RBuiltinNode {
+    public abstract static class RNGkind extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(RNGkind.class);

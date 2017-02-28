@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 @RBuiltin(name = "interactive", kind = PRIMITIVE, parameterNames = {}, behavior = READS_STATE)
-public abstract class Interactive extends RBuiltinNode {
+public abstract class Interactive extends RBuiltinNode.Arg0 {
     @Specialization
     protected byte interactive() {
         return RRuntime.asLogical(RContext.getInstance().isInteractive());

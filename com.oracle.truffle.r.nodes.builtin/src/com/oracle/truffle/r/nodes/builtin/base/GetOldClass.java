@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 @RBuiltin(name = "oldClass", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-public abstract class GetOldClass extends RBuiltinNode {
+public abstract class GetOldClass extends RBuiltinNode.Arg1 {
 
     private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
     @Child private GetClassAttributeNode getClassNode = GetClassAttributeNode.create();

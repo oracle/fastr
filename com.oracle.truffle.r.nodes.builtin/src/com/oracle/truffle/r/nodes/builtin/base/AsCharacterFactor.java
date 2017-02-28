@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "asCharacterFactor", kind = INTERNAL, parameterNames = "x", behavior = PURE)
-public abstract class AsCharacterFactor extends RBuiltinNode {
+public abstract class AsCharacterFactor extends RBuiltinNode.Arg1 {
     private static final RStringVector CLASS_FACTOR_VEC = RDataFactory.createStringVectorFromScalar(RRuntime.CLASS_FACTOR);
 
     @Child private InheritsNode inheritsNode = InheritsNodeGen.create();

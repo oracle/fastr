@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "shortRowNames", kind = INTERNAL, parameterNames = {"x", "type"}, behavior = PURE)
-public abstract class ShortRowNames extends RBuiltinNode {
+public abstract class ShortRowNames extends RBuiltinNode.Arg2 {
 
     private final BranchProfile naValueMet = BranchProfile.create();
     private final ValueProfile operandTypeProfile = ValueProfile.createClassProfile();

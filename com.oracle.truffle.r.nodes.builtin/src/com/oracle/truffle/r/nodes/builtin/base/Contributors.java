@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = "contributors", visibility = OFF, kind = SUBSTITUTE, parameterNames = {}, behavior = IO)
-public abstract class Contributors extends RBuiltinNode {
+public abstract class Contributors extends RBuiltinNode.Arg0 {
 
     private static final String CONTRIBUTORS = Utils.getResourceAsString(Contributors.class, "CONTRIBUTORS", true);
 

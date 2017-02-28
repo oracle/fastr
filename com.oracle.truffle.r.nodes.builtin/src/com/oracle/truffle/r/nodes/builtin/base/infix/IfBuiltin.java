@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "if", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-public abstract class IfBuiltin extends RBuiltinNode {
+public abstract class IfBuiltin extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(IfBuiltin.class);

@@ -33,7 +33,6 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.control.OperatorNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
-import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -194,7 +193,6 @@ public abstract class InternalNode extends OperatorNode {
         protected final int varArgIndex;
 
         @Children protected final RNode[] arguments;
-        @Children protected final CastNode[] casts;
         @Child private RBuiltinNode builtin;
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
@@ -202,15 +200,11 @@ public abstract class InternalNode extends OperatorNode {
             super(src, operator, outerSignature, outerArgs);
             this.factory = factory;
             this.builtin = factory.getConstructor().get();
-            this.casts = builtin.getCasts();
             this.arguments = new RNode[args.length];
             for (int i = 0; i < args.length; i++) {
                 arguments[i] = ((RSyntaxNode) args[i]).asRNode();
             }
             this.varArgIndex = factory.getSignature().getVarArgIndex();
-            if (varArgIndex != ArgumentsSignature.NO_VARARG) {
-                assert casts.length <= varArgIndex || casts[varArgIndex] == null : "no casts on '...' arguments to .Internals";
-            }
         }
 
         @Override
@@ -222,7 +216,7 @@ public abstract class InternalNode extends OperatorNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            Object result = builtin.executeBuiltin(frame, prepareArgs(frame));
+            Object result = builtin.call(frame, prepareArgs(frame));
             assert result != null : "builtins cannot return 'null': " + factory.getName();
             assert !(result instanceof RConnection) : "builtins cannot return connection': " + factory.getName();
             visibility.execute(frame, factory.getVisibility());
@@ -231,7 +225,7 @@ public abstract class InternalNode extends OperatorNode {
 
         @Override
         public void voidExecute(VirtualFrame frame) {
-            builtin.executeBuiltin(frame, prepareArgs(frame));
+            builtin.call(frame, prepareArgs(frame));
         }
     }
 
@@ -250,11 +244,7 @@ public abstract class InternalNode extends OperatorNode {
         protected Object[] prepareArgs(VirtualFrame frame) {
             Object[] args = new Object[arguments.length];
             for (int i = 0; i < args.length; i++) {
-                Object value = arguments[i].execute(frame);
-                if (i < casts.length && casts[i] != null) {
-                    value = casts[i].execute(value);
-                }
-                args[i] = value;
+                args[i] = arguments[i].execute(frame);
             }
             return args;
         }
@@ -281,10 +271,6 @@ public abstract class InternalNode extends OperatorNode {
                 Object value = arguments[i].execute(frame);
                 if (i == varArgIndex) {
                     value = forcePromises(frame, (RArgsValuesAndNames) value);
-                } else {
-                    if (i < casts.length && casts[i] != null) {
-                        value = casts[i].execute(value);
-                    }
                 }
                 args[i] = value;
             }
@@ -316,11 +302,7 @@ public abstract class InternalNode extends OperatorNode {
             Object[] args = new Object[factory.getSignature().getLength()];
 
             for (int i = 0; i < args.length - 1; i++) {
-                Object value = arguments[i].execute(frame);
-                if (i < casts.length && casts[i] != null) {
-                    value = casts[i].execute(value);
-                }
-                args[i] = value;
+                args[i] = arguments[i].execute(frame);
             }
             Object[] varArgs = new Object[arguments.length - (factory.getSignature().getLength() - 1)];
             for (int i = 0; i < varArgs.length; i++) {

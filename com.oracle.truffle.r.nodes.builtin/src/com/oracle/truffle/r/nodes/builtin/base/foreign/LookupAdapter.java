@@ -50,6 +50,11 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+
+interface Lookup {
+    RExternalBuiltinNode lookupBuiltin(RList symbol);
+}
 
 /**
  * Locator for "builtin" package function implementations. The "builtin" packages contain many
@@ -58,8 +63,8 @@ import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
  * symbol, created when the package is loaded and stored in the namespace environment of the
  * package, that is a list-valued object. Evidently these "builtins" are somewhat similar to the
  * {@code .Primitive} and {@code .Internal} builtins and, similarly, most of these are
- * re-implemented in Java in FastR. The {@link #lookupBuiltin(RList)} method checks the name in the
- * list object and returns the {@link RExternalBuiltinNode} that implements the function, or
+ * re-implemented in Java in FastR. The {@link Lookup#lookupBuiltin(RList)} method checks the name
+ * in the list object and returns the {@link RExternalBuiltinNode} that implements the function, or
  * {@code null}. A {@code null} result implies that the builtin is not implemented in Java, but
  * called directly via the FFI interface, which is only possible for functions that use the FFI in a
  * way that FastR can handle.
@@ -67,8 +72,8 @@ import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
  * This class also handles the "lookup" of the {@link NativeCallInfo} data for builtins that are
  * still implemented by native code.
  */
-abstract class LookupAdapter extends RBuiltinNode {
-    @Child private ExtractNativeCallInfoNode extractSymbolInfoNode = ExtractNativeCallInfoNodeGen.create();
+abstract class LookupAdapter extends RBuiltinNode.Arg3 implements Lookup {
+    @Child protected ExtractNativeCallInfoNode extractSymbolInfo = ExtractNativeCallInfoNodeGen.create();
 
     protected static class UnimplementedExternal extends RExternalBuiltinNode {
         private final String name;
@@ -87,11 +92,9 @@ abstract class LookupAdapter extends RBuiltinNode {
         }
     }
 
-    protected abstract RExternalBuiltinNode lookupBuiltin(RList symbol);
-
     private static final String UNKNOWN_EXTERNAL_BUILTIN = "UNKNOWN_EXTERNAL_BUILTIN";
 
-    protected static String lookupName(RList symbol) {
+    public static String lookupName(RList symbol) {
         CompilerAsserts.neverPartOfCompilation();
         if (symbol.getNames() != null) {
             RAbstractStringVector names = symbol.getNames();
@@ -106,32 +109,28 @@ abstract class LookupAdapter extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    protected RuntimeException fallback(Object symbol) {
+    protected static RuntimeException fallback(Lookup lookup, Object symbol) {
         String name = null;
         if (symbol instanceof RList) {
             name = lookupName((RList) symbol);
             name = name == UNKNOWN_EXTERNAL_BUILTIN ? null : name;
-            if (name != null && lookupBuiltin((RList) symbol) != null) {
+            if (name != null && lookup.lookupBuiltin((RList) symbol) != null) {
                 /*
                  * if we reach this point, then the cache saw a different value for f. the lists
                  * that contain the information about native calls are never expected to change.
                  */
-                throw RInternalError.shouldNotReachHere("fallback reached for " + getRBuiltin().name() + " " + name);
+                throw RInternalError.shouldNotReachHere("fallback reached for " + lookup + " " + name);
             }
         }
-        throw RError.nyi(this, getRBuiltin().name() + " specialization failure: " + (name == null ? "<unknown>" : name));
+        throw RError.nyi((RBaseNode) lookup, lookup + " specialization failure: " + (name == null ? "<unknown>" : name));
     }
 
-    protected NativeCallInfo extractSymbolInfo(VirtualFrame frame, RList symbol) {
-        return (NativeCallInfo) extractSymbolInfoNode.execute(frame, symbol);
-    }
-
-    protected String checkPackageArg(Object rPackage) {
+    public static String checkPackageArg(Object rPackage) {
         String libName = null;
         if (!(rPackage instanceof RMissing)) {
             libName = RRuntime.asString(rPackage);
             if (libName == null) {
-                throw error(RError.Message.ARGUMENT_MUST_BE_STRING, "PACKAGE");
+                throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MUST_BE_STRING, "PACKAGE");
             }
         }
         return libName;
@@ -147,10 +146,10 @@ abstract class LookupAdapter extends RBuiltinNode {
         @Child private ExtractVectorNode packageExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
         @Child private ExtractVectorNode infoExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
 
-        protected abstract Object execute(VirtualFrame frame, RList symbol);
+        protected abstract NativeCallInfo execute(VirtualFrame frame, RList symbol);
 
         @Specialization
-        protected Object extractNativeCallInfo(VirtualFrame frame, RList symbol) {
+        protected NativeCallInfo extractNativeCallInfo(VirtualFrame frame, RList symbol) {
             if (nameExtract == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 nameExtract = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));

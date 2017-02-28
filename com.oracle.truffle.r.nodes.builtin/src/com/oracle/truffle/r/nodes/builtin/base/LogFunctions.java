@@ -60,7 +60,7 @@ import java.util.function.Function;
 
 public class LogFunctions {
     @RBuiltin(name = "log", kind = PRIMITIVE, parameterNames = {"x", "base"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-    public abstract static class Log extends RBuiltinNode {
+    public abstract static class Log extends RBuiltinNode.Arg2 {
 
         private final NAProfile naX = NAProfile.create();
         private final BranchProfile nanProfile = BranchProfile.create();

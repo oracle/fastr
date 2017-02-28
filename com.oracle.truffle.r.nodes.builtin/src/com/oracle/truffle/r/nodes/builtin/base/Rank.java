@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "rank", kind = INTERNAL, parameterNames = {"x", "len", "ties.method"}, behavior = PURE)
-public abstract class Rank extends RBuiltinNode {
+public abstract class Rank extends RBuiltinNode.Arg3 {
 
     @Child private Order.OrderVector1Node orderVector1Node;
     @Child private Order.CmpNode orderCmpNode;

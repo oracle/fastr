@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = ".fastr.stacktrace", visibility = OFF, kind = PRIMITIVE, parameterNames = {"print.frame.contents"}, behavior = COMPLEX)
-public abstract class FastRStackTrace extends RBuiltinNode {
+public abstract class FastRStackTrace extends RBuiltinNode.Arg1 {
 
     @Override
     public Object[] getDefaultParameterValues() {

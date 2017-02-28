@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "bincode", kind = INTERNAL, parameterNames = {"x", "breaks", "right", "include.lowest"}, behavior = PURE)
-public abstract class Bincode extends RBuiltinNode {
+public abstract class Bincode extends RBuiltinNode.Arg4 {
 
     private final NACheck naCheck = NACheck.create();
 

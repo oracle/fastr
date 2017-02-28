@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "nzchar", kind = PRIMITIVE, parameterNames = {"x", "keepNA"}, behavior = PURE)
-public abstract class NZChar extends RBuiltinNode {
+public abstract class NZChar extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(NZChar.class);

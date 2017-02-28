@@ -50,7 +50,7 @@ public class NamespaceFunctions {
     }
 
     @RBuiltin(name = "getRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = READS_STATE)
-    public abstract static class GetRegisteredNamespace extends RBuiltinNode {
+    public abstract static class GetRegisteredNamespace extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(GetRegisteredNamespace.class);
@@ -79,7 +79,7 @@ public class NamespaceFunctions {
     }
 
     @RBuiltin(name = "isRegisteredNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = READS_STATE)
-    public abstract static class IsRegisteredNamespace extends RBuiltinNode {
+    public abstract static class IsRegisteredNamespace extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(IsRegisteredNamespace.class);
@@ -108,7 +108,7 @@ public class NamespaceFunctions {
     }
 
     @RBuiltin(name = "isNamespaceEnv", kind = INTERNAL, parameterNames = {"env"}, behavior = PURE)
-    public abstract static class IsNamespaceEnv extends RBuiltinNode {
+    public abstract static class IsNamespaceEnv extends RBuiltinNode.Arg1 {
 
         static {
             Casts.noCasts(IsNamespaceEnv.class);
@@ -126,7 +126,7 @@ public class NamespaceFunctions {
     }
 
     @RBuiltin(name = "getNamespaceRegistry", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
-    public abstract static class GetNamespaceRegistry extends RBuiltinNode {
+    public abstract static class GetNamespaceRegistry extends RBuiltinNode.Arg0 {
         @Specialization
         protected REnvironment doGetNamespaceRegistry() {
             return REnvironment.getNamespaceRegistry();
@@ -134,7 +134,7 @@ public class NamespaceFunctions {
     }
 
     @RBuiltin(name = "registerNamespace", kind = INTERNAL, parameterNames = {"name", "env"}, behavior = MODIFIES_STATE)
-    public abstract static class RegisterNamespace extends RBuiltinNode {
+    public abstract static class RegisterNamespace extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(RegisterNamespace.class);
@@ -161,7 +161,7 @@ public class NamespaceFunctions {
     }
 
     @RBuiltin(name = "unregisterNamespace", kind = INTERNAL, parameterNames = {"name"}, behavior = MODIFIES_STATE)
-    public abstract static class UnregisterNamespace extends RBuiltinNode {
+    public abstract static class UnregisterNamespace extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(UnregisterNamespace.class);

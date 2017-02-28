@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  * Note: remove is invoked from builtin wrappers 'rm' and 'remove' that are identical.
  */
 @RBuiltin(name = "remove", visibility = OFF, kind = INTERNAL, parameterNames = {"list", "envir", "inherits"}, behavior = COMPLEX)
-public abstract class Rm extends RBuiltinNode {
+public abstract class Rm extends RBuiltinNode.Arg3 {
 
     private final BranchProfile invalidateProfile = BranchProfile.create();
 

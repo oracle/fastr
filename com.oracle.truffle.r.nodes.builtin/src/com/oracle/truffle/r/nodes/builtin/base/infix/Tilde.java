@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * argument is missing, i.e. {@code ~ x} result in {@code `~`(x)}.
  */
 @RBuiltin(name = "~", kind = PRIMITIVE, parameterNames = {"x", "y"}, nonEvalArgs = {0, 1}, behavior = READS_FRAME)
-public abstract class Tilde extends RBuiltinNode {
+public abstract class Tilde extends RBuiltinNode.Arg2 {
 
     private static final RStringVector FORMULA_CLASS = RDataFactory.createStringVectorFromScalar(RRuntime.FORMULA_CLASS);
 

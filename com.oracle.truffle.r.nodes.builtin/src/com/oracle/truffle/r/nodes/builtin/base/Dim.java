@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 @RBuiltin(name = "dim", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class Dim extends RBuiltinNode {
+public abstract class Dim extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(Dim.class);

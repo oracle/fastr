@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
  * The {@code Recall} {@code .Internal}.
  */
 @RBuiltin(name = "Recall", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"..."}, nonEvalArgs = {0}, behavior = COMPLEX)
-public abstract class Recall extends RBuiltinNode {
+public abstract class Recall extends RBuiltinNode.Arg1 {
 
     @Child private LocalReadVariableNode readArgs = LocalReadVariableNode.create(ArgumentsSignature.VARARG_NAME, false);
 

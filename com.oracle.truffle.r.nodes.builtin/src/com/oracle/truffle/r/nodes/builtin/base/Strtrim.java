@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "strtrim", kind = INTERNAL, parameterNames = {"x", "width"}, behavior = PURE)
-public abstract class Strtrim extends RBuiltinNode {
+public abstract class Strtrim extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(Strtrim.class);

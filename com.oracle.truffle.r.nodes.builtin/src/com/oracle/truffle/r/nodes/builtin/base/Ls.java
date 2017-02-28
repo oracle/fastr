@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "ls", aliases = {"objects"}, kind = INTERNAL, parameterNames = {"envir", "all.names", "sorted"}, behavior = PURE)
-public abstract class Ls extends RBuiltinNode {
+public abstract class Ls extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(Ls.class);

@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = "license", visibility = OFF, aliases = {"licence"}, kind = SUBSTITUTE, parameterNames = {}, behavior = IO)
-public abstract class License extends RBuiltinNode {
+public abstract class License extends RBuiltinNode.Arg0 {
 
     @Specialization
     @TruffleBoundary

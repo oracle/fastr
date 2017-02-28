@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "diag", kind = INTERNAL, parameterNames = {"x", "nrow", "ncol"}, behavior = PURE)
-public abstract class Diag extends RBuiltinNode {
+public abstract class Diag extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(Diag.class);

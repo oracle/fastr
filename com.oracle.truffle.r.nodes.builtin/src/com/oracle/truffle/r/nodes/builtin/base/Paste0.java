@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RList;
  * efficient.
  */
 @RBuiltin(name = "paste0", kind = INTERNAL, parameterNames = {"list", "collapse"}, behavior = PURE)
-public abstract class Paste0 extends RBuiltinNode {
+public abstract class Paste0 extends RBuiltinNode.Arg2 {
 
     @Child private Paste pasteNode = PasteNodeGen.create();
 

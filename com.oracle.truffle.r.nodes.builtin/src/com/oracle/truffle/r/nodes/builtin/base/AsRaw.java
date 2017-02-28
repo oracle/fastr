@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 
 @RBuiltin(name = "as.raw", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-public abstract class AsRaw extends RBuiltinNode {
+public abstract class AsRaw extends RBuiltinNode.Arg1 {
 
     private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();
 

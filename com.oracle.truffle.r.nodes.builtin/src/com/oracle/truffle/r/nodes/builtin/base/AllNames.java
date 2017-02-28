@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 @RBuiltin(name = "all.names", kind = INTERNAL, parameterNames = {"expr", "functions", "max.names", "unique"}, behavior = PURE)
-public abstract class AllNames extends RBuiltinNode {
+public abstract class AllNames extends RBuiltinNode.Arg4 {
 
     static {
         Casts casts = new Casts(AllNames.class);

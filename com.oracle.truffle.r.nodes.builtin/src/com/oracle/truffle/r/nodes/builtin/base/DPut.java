@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
  * The {@code dput .Internal}.
  */
 @RBuiltin(name = "dput", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "file", "opts"}, behavior = IO)
-public abstract class DPut extends RBuiltinNode {
+public abstract class DPut extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(DPut.class);

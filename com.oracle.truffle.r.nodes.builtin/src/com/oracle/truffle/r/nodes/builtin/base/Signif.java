@@ -55,7 +55,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "signif", kind = PRIMITIVE, parameterNames = {"x", "digits"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-public abstract class Signif extends RBuiltinNode {
+public abstract class Signif extends RBuiltinNode.Arg2 {
 
     @Override
     public Object[] getDefaultParameterValues() {

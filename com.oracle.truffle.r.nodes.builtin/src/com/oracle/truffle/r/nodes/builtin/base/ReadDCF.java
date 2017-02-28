@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "readDCF", kind = INTERNAL, parameterNames = {"conn", "fields", "keepwhite"}, behavior = IO)
-public abstract class ReadDCF extends RBuiltinNode {
+public abstract class ReadDCF extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(ReadDCF.class);

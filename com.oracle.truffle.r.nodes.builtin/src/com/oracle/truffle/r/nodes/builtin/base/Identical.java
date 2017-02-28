@@ -65,7 +65,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * checked for NA (regardless of whether they are used).
  */
 @RBuiltin(name = "identical", kind = INTERNAL, parameterNames = {"x", "y", "num.eq", "single.NA", "attrib.as.set", "ignore.bytecode", "ignore.environment"}, behavior = PURE)
-public abstract class Identical extends RBuiltinNode {
+public abstract class Identical extends RBuiltinNode.Arg7 {
 
     protected abstract byte executeByte(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment);
 

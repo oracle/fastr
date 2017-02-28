@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 
 @RBuiltin(name = "Version", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
-public abstract class RVersion extends RBuiltinNode {
+public abstract class RVersion extends RBuiltinNode.Arg0 {
 
     @Specialization
     @TruffleBoundary

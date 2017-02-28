@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "exists", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"}, behavior = PURE)
-public abstract class Exists extends RBuiltinNode {
+public abstract class Exists extends RBuiltinNode.Arg4 {
 
     @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
 

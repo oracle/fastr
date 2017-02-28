@@ -58,7 +58,7 @@ public class DynLoadFunctions {
     private static final String DLLINFOLIST_CLASS = "DLLInfoList";
 
     @RBuiltin(name = "dyn.load", visibility = OFF, kind = INTERNAL, parameterNames = {"lib", "local", "now", "unused"}, behavior = COMPLEX)
-    public abstract static class DynLoad extends RBuiltinNode {
+    public abstract static class DynLoad extends RBuiltinNode.Arg4 {
         @Child private DLL.LoadPackageDLLNode loadPackageDLLNode = DLL.LoadPackageDLLNode.create();
 
         static {
@@ -82,7 +82,7 @@ public class DynLoadFunctions {
     }
 
     @RBuiltin(name = "dyn.unload", visibility = OFF, kind = INTERNAL, parameterNames = {"lib"}, behavior = COMPLEX)
-    public abstract static class DynUnload extends RBuiltinNode {
+    public abstract static class DynUnload extends RBuiltinNode.Arg1 {
         @Child DLL.UnloadNode dllUnloadNode = DLL.UnloadNode.create();
 
         static {
@@ -103,7 +103,7 @@ public class DynLoadFunctions {
     }
 
     @RBuiltin(name = "getLoadedDLLs", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
-    public abstract static class GetLoadedDLLs extends RBuiltinNode {
+    public abstract static class GetLoadedDLLs extends RBuiltinNode.Arg0 {
 
         @Child private SetClassAttributeNode setClassAttrNode = SetClassAttributeNode.create();
 
@@ -126,7 +126,7 @@ public class DynLoadFunctions {
     }
 
     @RBuiltin(name = "is.loaded", kind = INTERNAL, parameterNames = {"symbol", "PACKAGE", "type"}, behavior = READS_STATE)
-    public abstract static class IsLoaded extends RBuiltinNode {
+    public abstract static class IsLoaded extends RBuiltinNode.Arg3 {
         @Child DLL.RFindSymbolNode findSymbolNode = DLL.RFindSymbolNode.create();
 
         static {
@@ -162,7 +162,7 @@ public class DynLoadFunctions {
     }
 
     @RBuiltin(name = "getSymbolInfo", kind = INTERNAL, parameterNames = {"symbol", "package", "withRegistrationInfo"}, behavior = READS_STATE)
-    public abstract static class GetSymbolInfo extends RBuiltinNode {
+    public abstract static class GetSymbolInfo extends RBuiltinNode.Arg3 {
         @Child DLL.RFindSymbolNode findSymbolNode = DLL.RFindSymbolNode.create();
 
         static {

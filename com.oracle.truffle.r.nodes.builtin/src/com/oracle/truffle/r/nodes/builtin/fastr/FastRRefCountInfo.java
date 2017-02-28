@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RShareable;
  * for permanent shared
  */
 @RBuiltin(name = ".fastr.refcountinfo", kind = PRIMITIVE, parameterNames = {""}, behavior = COMPLEX)
-public abstract class FastRRefCountInfo extends RBuiltinNode {
+public abstract class FastRRefCountInfo extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(FastRRefCountInfo.class);

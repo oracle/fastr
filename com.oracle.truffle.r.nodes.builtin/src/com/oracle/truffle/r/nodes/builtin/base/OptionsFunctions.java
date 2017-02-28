@@ -57,7 +57,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public class OptionsFunctions {
 
     @RBuiltin(name = "options", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"..."}, behavior = MODIFIES_STATE)
-    public abstract static class Options extends RBuiltinNode {
+    public abstract static class Options extends RBuiltinNode.Arg1 {
 
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
@@ -190,7 +190,7 @@ public class OptionsFunctions {
     }
 
     @RBuiltin(name = "getOption", kind = INTERNAL, parameterNames = "x", behavior = READS_STATE)
-    public abstract static class GetOption extends RBuiltinNode {
+    public abstract static class GetOption extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(GetOption.class);

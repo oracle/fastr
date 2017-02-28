@@ -58,7 +58,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "scan", kind = INTERNAL, parameterNames = {"file", "what", "nmax", "sep", "dec", "quote", "skip", "nlines", "na.strings", "flush", "fill", "strip.white", "quiet", "blank.lines.skip",
                 "multi.line", "comment.char", "allowEscapes", "encoding", "skipNull"}, behavior = IO)
-public abstract class Scan extends RBuiltinNode {
+public abstract class Scan extends RBuiltinNode.Arg19 {
 
     private static final int SCAN_BLOCKSIZE = 1000;
     private static final int NO_COMCHAR = 100000; /* won't occur even in Unicode */

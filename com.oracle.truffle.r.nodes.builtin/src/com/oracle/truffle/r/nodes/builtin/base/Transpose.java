@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @RBuiltin(name = "t.default", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-public abstract class Transpose extends RBuiltinNode {
+public abstract class Transpose extends RBuiltinNode.Arg1 {
 
     private final BranchProfile hasDimNamesProfile = BranchProfile.create();
     private final ConditionProfile isMatrixProfile = ConditionProfile.createBinaryProfile();

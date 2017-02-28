@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
  *
  */
 @RBuiltin(name = "switch", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"EXPR", "..."}, nonEvalArgs = 1, behavior = COMPLEX)
-public abstract class Switch extends RBuiltinNode {
+public abstract class Switch extends RBuiltinNode.Arg2 {
 
     @Child private PromiseCheckHelperNode promiseHelper = new PromiseCheckHelperNode();
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();

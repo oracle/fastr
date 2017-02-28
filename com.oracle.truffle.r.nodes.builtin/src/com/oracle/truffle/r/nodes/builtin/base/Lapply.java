@@ -63,7 +63,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * See the comment in {@link VApply} regarding "...".
  */
 @RBuiltin(name = "lapply", kind = INTERNAL, parameterNames = {"X", "FUN"}, splitCaller = true, behavior = COMPLEX)
-public abstract class Lapply extends RBuiltinNode {
+public abstract class Lapply extends RBuiltinNode.Arg2 {
 
     private static final Source CALL_SOURCE = RSource.fromTextInternal("FUN(X[[i]], ...)", RSource.Internal.LAPPLY);
 

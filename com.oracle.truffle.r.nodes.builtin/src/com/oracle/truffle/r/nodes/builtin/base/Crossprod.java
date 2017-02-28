@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "crossprod", kind = INTERNAL, parameterNames = {"x", "y"}, behavior = PURE)
-public abstract class Crossprod extends RBuiltinNode {
+public abstract class Crossprod extends RBuiltinNode.Arg2 {
 
     @Child private MatMult matMult = MatMultNodeGen.create(/* promoteDimNames: */ false);
     @Child private Transpose transpose;

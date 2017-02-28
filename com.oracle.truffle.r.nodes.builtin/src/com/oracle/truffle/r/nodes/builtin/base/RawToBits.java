@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 
 @RBuiltin(name = "rawToBits", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-public abstract class RawToBits extends RBuiltinNode {
+public abstract class RawToBits extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(RawToBits.class);

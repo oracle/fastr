@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
 
 @RBuiltin(name = "forceAndCall", kind = PRIMITIVE, parameterNames = {"n", "FUN", "..."}, nonEvalArgs = 2, behavior = COMPLEX)
-public abstract class ForceAndCall extends RBuiltinNode {
+public abstract class ForceAndCall extends RBuiltinNode.Arg3 {
 
     @Child private RExplicitCallNode call = RExplicitCallNode.create();
 

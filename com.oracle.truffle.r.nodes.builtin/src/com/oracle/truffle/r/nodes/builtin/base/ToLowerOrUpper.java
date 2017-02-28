@@ -90,7 +90,7 @@ public abstract class ToLowerOrUpper {
     }
 
     @RBuiltin(name = "tolower", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class ToLower extends RBuiltinNode {
+    public abstract static class ToLower extends RBuiltinNode.Arg1 {
 
         @Child private StringMapNode mapNode = StringMapNode.create();
 
@@ -116,7 +116,7 @@ public abstract class ToLowerOrUpper {
     }
 
     @RBuiltin(name = "toupper", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class ToUpper extends RBuiltinNode {
+    public abstract static class ToUpper extends RBuiltinNode.Arg1 {
 
         @Child private StringMapNode mapNode = StringMapNode.create();
 

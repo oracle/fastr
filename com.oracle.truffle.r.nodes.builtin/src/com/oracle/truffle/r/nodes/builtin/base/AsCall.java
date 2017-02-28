@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "as.call", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-public abstract class AsCall extends RBuiltinNode {
+public abstract class AsCall extends RBuiltinNode.Arg1 {
 
     private final ConditionProfile nullNamesProfile = ConditionProfile.createBinaryProfile();
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();

@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "{", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-public abstract class BraceBuiltin extends RBuiltinNode {
+public abstract class BraceBuiltin extends RBuiltinNode.Arg1 {
 
     static {
         noCasts(BraceBuiltin.class);

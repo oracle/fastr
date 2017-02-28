@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
 @RBuiltin(name = "names", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class Names extends RBuiltinNode {
+public abstract class Names extends RBuiltinNode.Arg1 {
 
     private final ConditionProfile hasNames = ConditionProfile.createBinaryProfile();
     @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();

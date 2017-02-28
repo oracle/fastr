@@ -62,7 +62,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * the longest vector, with the usual recycling rule.
  */
 @RBuiltin(name = "mapply", kind = INTERNAL, parameterNames = {"FUN", "dots", "MoreArgs"}, splitCaller = true, behavior = COMPLEX)
-public abstract class Mapply extends RBuiltinNode {
+public abstract class Mapply extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(Mapply.class);

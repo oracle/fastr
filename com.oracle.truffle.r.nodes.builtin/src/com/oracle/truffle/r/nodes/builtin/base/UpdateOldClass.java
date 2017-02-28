@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 // oldClass<- (as opposed to class<-), simply sets the attribute (without handling "implicit" attributes)
 @RBuiltin(name = "oldClass<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, behavior = PURE)
-public abstract class UpdateOldClass extends RBuiltinNode {
+public abstract class UpdateOldClass extends RBuiltinNode.Arg2 {
 
     @Child private CastStringNode castStringNode;
     @Child private SetClassAttributeNode setClassAttributeNode = SetClassAttributeNode.create();

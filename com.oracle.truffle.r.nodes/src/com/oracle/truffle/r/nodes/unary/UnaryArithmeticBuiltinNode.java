@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
-public abstract class UnaryArithmeticBuiltinNode extends RBuiltinNode implements UnaryArithmeticFactory {
+public abstract class UnaryArithmeticBuiltinNode extends RBuiltinNode.Arg1 implements UnaryArithmeticFactory {
 
     @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
     @Child private UnaryArithmeticNode unaryNode;

@@ -82,7 +82,10 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode, RSyntaxFunction {
 
-    @Child private RNode body; // typed as RNode to avoid custom instrument wrapper
+    private final FormalArguments formalArguments;
+
+    @Child private RNode body;
+
     /**
      * This exists for debugging purposes. It is set initially when the function is defined to
      * either:
@@ -135,7 +138,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode saveArguments, RSyntaxNode body, FormalArguments formals,
                     String name, PostProcessArgumentsNode argPostProcess) {
-        super(formals, frameDesc, RASTBuilder.createFunctionFastPath(body, formals.getSignature()));
+        super(frameDesc, RASTBuilder.createFunctionFastPath(body, formals.getSignature()));
+        this.formalArguments = formals;
         this.argSourceSections = argSourceSections;
         assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
         assert src != null;
@@ -147,6 +151,16 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.needsSplitting = needsAnyBuiltinSplitting();
         this.containsDispatch = containsAnyDispatch(body);
         this.argPostProcess = argPostProcess;
+    }
+
+    @Override
+    public final FormalArguments getFormalArguments() {
+        return formalArguments;
+    }
+
+    @Override
+    public final ArgumentsSignature getSignature() {
+        return formalArguments.getSignature();
     }
 
     @Override

@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @RBuiltin(name = "attr", kind = PRIMITIVE, parameterNames = {"x", "which", "exact"}, behavior = PURE)
-public abstract class Attr extends RBuiltinNode {
+public abstract class Attr extends RBuiltinNode.Arg3 {
 
     private final ConditionProfile searchPartialProfile = ConditionProfile.createBinaryProfile();
 

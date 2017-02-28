@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 // from apply.c
 
 @RBuiltin(name = "islistfactor", kind = INTERNAL, parameterNames = {"x", "recursive"}, behavior = PURE)
-public abstract class IsListFactor extends RBuiltinNode {
+public abstract class IsListFactor extends RBuiltinNode.Arg2 {
 
     protected abstract static class IsListFactorInternal extends Node {
 

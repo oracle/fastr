@@ -44,10 +44,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.BinaryCompare;
 
-@RBuiltin(name = "is.unsorted", kind = INTERNAL, parameterNames = {"x", "strictly"}, behavior = PURE)
 // TODO support strictly
 // TODO support lists
-public abstract class IsUnsorted extends RBuiltinNode {
+@RBuiltin(name = "is.unsorted", kind = INTERNAL, parameterNames = {"x", "strictly"}, behavior = PURE)
+public abstract class IsUnsorted extends RBuiltinNode.Arg2 {
 
     @Child private BinaryMapBooleanFunctionNode ge = new BinaryMapBooleanFunctionNode(BinaryCompare.GREATER_EQUAL.createOperation());
     @Child private BinaryMapBooleanFunctionNode gt = new BinaryMapBooleanFunctionNode(BinaryCompare.GREATER_THAN.createOperation());

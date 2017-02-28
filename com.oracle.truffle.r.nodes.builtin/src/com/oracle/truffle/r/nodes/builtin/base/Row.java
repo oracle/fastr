@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @RBuiltin(name = "row", kind = INTERNAL, parameterNames = {"dims"}, behavior = PURE)
-public abstract class Row extends RBuiltinNode {
+public abstract class Row extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(Row.class);

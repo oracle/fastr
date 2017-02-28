@@ -52,41 +52,44 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-public abstract class S3DispatchFunctions extends RBuiltinNode {
+public abstract class S3DispatchFunctions {
 
-    @Child private S3FunctionLookupNode methodLookup;
-    @Child private CallMatcherNode callMatcher;
+    private static final class Helper extends RBaseNode {
+        @Child private S3FunctionLookupNode methodLookup;
+        @Child private CallMatcherNode callMatcher;
 
-    private final ConditionProfile callerFrameSlowPath = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile callerFrameSlowPath = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
 
-    protected S3DispatchFunctions(boolean nextMethod) {
-        methodLookup = S3FunctionLookupNode.create(true, nextMethod);
-        callMatcher = CallMatcherNode.create(false);
-    }
-
-    protected MaterializedFrame getCallerFrame(VirtualFrame frame) {
-        MaterializedFrame funFrame = RArguments.getCallerFrame(frame);
-        if (callerFrameSlowPath.profile(funFrame == null)) {
-            funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE).materialize();
-            RError.performanceWarning("slow caller frame access in UseMethod dispatch");
+        protected Helper(boolean nextMethod) {
+            methodLookup = S3FunctionLookupNode.create(true, nextMethod);
+            callMatcher = CallMatcherNode.create(false);
         }
-        // S3 method can be dispatched from top-level where there is no caller frame
-        return topLevelFrameProfile.profile(funFrame == null) ? frame.materialize() : funFrame;
-    }
 
-    protected Object dispatch(VirtualFrame frame, String generic, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame,
-                    ArgumentsSignature suppliedSignature, Object[] suppliedArguments) {
-        Result lookupResult = methodLookup.execute(frame, generic, type, group, callerFrame, genericDefFrame);
+        protected MaterializedFrame getCallerFrame(VirtualFrame frame) {
+            MaterializedFrame funFrame = RArguments.getCallerFrame(frame);
+            if (callerFrameSlowPath.profile(funFrame == null)) {
+                funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE).materialize();
+                RError.performanceWarning("slow caller frame access in UseMethod dispatch");
+            }
+            // S3 method can be dispatched from top-level where there is no caller frame
+            return topLevelFrameProfile.profile(funFrame == null) ? frame.materialize() : funFrame;
+        }
 
-        S3Args s3Args = new S3Args(lookupResult.generic, lookupResult.clazz, lookupResult.targetFunctionName, callerFrame, genericDefFrame, group);
-        Object result = callMatcher.execute(frame, suppliedSignature, suppliedArguments, lookupResult.function, lookupResult.targetFunctionName, s3Args);
-        return result;
+        protected Object dispatch(VirtualFrame frame, String generic, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame,
+                        ArgumentsSignature suppliedSignature, Object[] suppliedArguments) {
+            Result lookupResult = methodLookup.execute(frame, generic, type, group, callerFrame, genericDefFrame);
+
+            S3Args s3Args = new S3Args(lookupResult.generic, lookupResult.clazz, lookupResult.targetFunctionName, callerFrame, genericDefFrame, group);
+            Object result = callMatcher.execute(frame, suppliedSignature, suppliedArguments, lookupResult.function, lookupResult.targetFunctionName, s3Args);
+            return result;
+        }
     }
 
     @RBuiltin(name = "UseMethod", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"generic", "object"}, behavior = COMPLEX)
-    public abstract static class UseMethod extends S3DispatchFunctions {
+    public abstract static class UseMethod extends RBuiltinNode.Arg2 {
 
         /*
          * TODO: If more than two parameters are passed to UseMethod the extra parameters are
@@ -95,6 +98,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
 
         @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(true, true);
         @Child private PromiseCheckHelperNode promiseCheckHelper;
+        @Child private Helper helper = new Helper(false);
 
         private final BranchProfile firstArgMissing = BranchProfile.create();
         private final ConditionProfile argMissingProfile = ConditionProfile.createBinaryProfile();
@@ -102,10 +106,6 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
 
         static {
             Casts.noCasts(UseMethod.class);
-        }
-
-        protected UseMethod() {
-            super(false);
         }
 
         @Specialization
@@ -119,12 +119,12 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             }
 
             RStringVector type = dispatchedObject == null ? RDataFactory.createEmptyStringVector() : classHierarchyNode.execute(dispatchedObject);
-            MaterializedFrame callerFrame = getCallerFrame(frame);
+            MaterializedFrame callerFrame = helper.getCallerFrame(frame);
             MaterializedFrame genericDefFrame = RArguments.getEnclosingFrame(frame);
 
             ArgumentsSignature suppliedSignature = RArguments.getSuppliedSignature(frame);
             Object[] suppliedArguments = RArguments.getArguments(frame);
-            Object result = dispatch(frame, generic, type, null, callerFrame, genericDefFrame, suppliedSignature, suppliedArguments);
+            Object result = helper.dispatch(frame, generic, type, null, callerFrame, genericDefFrame, suppliedSignature, suppliedArguments);
             throw new ReturnException(result, RArguments.getCall(frame));
         }
 
@@ -173,7 +173,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
     }
 
     @RBuiltin(name = "NextMethod", visibility = CUSTOM, kind = SUBSTITUTE, parameterNames = {"generic", "object", "..."}, behavior = COMPLEX)
-    public abstract static class NextMethod extends S3DispatchFunctions {
+    public abstract static class NextMethod extends RBuiltinNode.Arg3 {
 
         @Child private LocalReadVariableNode rvnGroup = LocalReadVariableNode.create(RRuntime.R_DOT_GROUP, false);
         @Child private LocalReadVariableNode rvnClass = LocalReadVariableNode.create(RRuntime.R_DOT_CLASS, false);
@@ -186,6 +186,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
 
         @Child private PromiseHelperNode promiseHelper;
         @Child private ClassHierarchyNode hierarchy;
+        @Child private Helper helper = new Helper(true);
 
         private final ConditionProfile emptyArgsProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile genericCallFrameNullProfile = ConditionProfile.createBinaryProfile();
@@ -197,10 +198,6 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
 
         static {
             Casts.noCasts(NextMethod.class);
-        }
-
-        protected NextMethod() {
-            super(true);
         }
 
         @Override
@@ -252,7 +249,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
                 suppliedArguments = combinedResult.getArguments();
                 finalSignature = combinedResult.getSignature();
             }
-            return dispatch(frame, generic, readType(frame), group, genericCallFrame, genericDefFrame, finalSignature, suppliedArguments);
+            return helper.dispatch(frame, generic, readType(frame), group, genericCallFrame, genericDefFrame, finalSignature, suppliedArguments);
         }
 
         private MaterializedFrame getDefFrame(VirtualFrame frame) {

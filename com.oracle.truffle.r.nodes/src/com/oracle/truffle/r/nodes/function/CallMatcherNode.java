@@ -29,7 +29,6 @@ import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.signature.VarArgsHelper;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
-import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
@@ -187,7 +186,6 @@ public abstract class CallMatcherNode extends RBaseNode {
         @Child private CallMatcherNode next;
         @Child private CallRFunctionNode call;
         @Child private RBuiltinNode builtin;
-        @Children private final CastNode[] builtinArgumentCasts;
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         private final RBuiltinDescriptor builtinDescriptor;
@@ -218,12 +216,10 @@ public abstract class CallMatcherNode extends RBaseNode {
             if (function.isBuiltin()) {
                 this.builtinDescriptor = function.getRBuiltin();
                 this.builtin = RBuiltinNode.inline(builtinDescriptor);
-                this.builtinArgumentCasts = builtin.getCasts();
                 this.fastPath = null;
                 this.fastPathVisibility = null;
             } else {
                 this.call = CallRFunctionNode.create(function.getTarget());
-                this.builtinArgumentCasts = null;
                 this.builtinDescriptor = null;
                 FastPathFactory fastPathFactory = root.getFastPath();
                 this.fastPath = fastPathFactory == null ? null : fastPathFactory.create();
@@ -273,23 +269,12 @@ public abstract class CallMatcherNode extends RBaseNode {
                         visibility.executeAfterCall(frame, caller);
                     }
                 } else {
-                    applyCasts(reorderedArgs);
-                    Object result = builtin.executeBuiltin(frame, reorderedArgs);
+                    Object result = builtin.call(frame, reorderedArgs);
                     visibility.execute(frame, builtinDescriptor.getVisibility());
                     return result;
                 }
             } else {
                 return next.execute(frame, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
-            }
-        }
-
-        @ExplodeLoop
-        private void applyCasts(Object[] reorderedArgs) {
-            for (int i = 0; i < builtinArgumentCasts.length; i++) {
-                CastNode cast = builtinArgumentCasts[i];
-                if (cast != null) {
-                    reorderedArgs[i] = cast.execute(reorderedArgs[i]);
-                }
             }
         }
 
