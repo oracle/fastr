@@ -76,15 +76,7 @@ public class TestConnections extends TestRBase {
         if (!deleteDir(testDir.testDirPath)) {
             System.err.println("WARNING: error deleting : " + testDir.testDirPath);
         }
-        deleteFile(tempFileGzip);
-    }
-
-    private static void deleteFile(Path p) {
-        try {
-            Files.delete(p);
-        } catch (IOException e) {
-            // ignore
-        }
+        deleteDir(tempFileGzip);
     }
 
     @Test
