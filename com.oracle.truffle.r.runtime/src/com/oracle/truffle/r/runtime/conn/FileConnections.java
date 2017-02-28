@@ -66,8 +66,8 @@ public class FileConnections {
     public static class FileRConnection extends BasePathRConnection {
         private final boolean raw;
 
-        public FileRConnection(String path, String modeString, boolean blocking, String encoding, boolean raw) throws IOException {
-            super(checkTemp(path), ConnectionClass.File, modeString, blocking, encoding);
+        public FileRConnection(String description, String path, String modeString, boolean blocking, String encoding, boolean raw) throws IOException {
+            super(description, checkTemp(path), ConnectionClass.File, modeString, blocking, encoding);
             this.raw = raw;
             openNonLazyConnection();
         }
@@ -98,7 +98,7 @@ public class FileConnections {
         @SuppressWarnings("unused") private final int compression; // TODO
 
         public CompressedRConnection(String path, String modeString, Type cType, String encoding, int compression) throws IOException {
-            super(path, mapConnectionClass(cType), modeString, AbstractOpenMode.ReadBinary, encoding);
+            super(path, path, mapConnectionClass(cType), modeString, AbstractOpenMode.ReadBinary, encoding);
             this.cType = cType;
             this.compression = compression;
             openNonLazyConnection();

@@ -22,21 +22,12 @@
  */
 package com.oracle.truffle.r.test.library.base;
 
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
-import static java.nio.file.StandardOpenOption.WRITE;
-
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
 import org.junit.AfterClass;
@@ -63,7 +54,6 @@ public class TestConnections extends TestRBase {
 
     private static TestDir testDir;
     private static Path tempFileGzip;
-    private static final List<Path> TEMP_FILES = new ArrayList<>();
 
     @Override
     protected String getTestDir() {
@@ -74,19 +64,11 @@ public class TestConnections extends TestRBase {
     public static void setup() throws IOException {
         testDir = new TestDir();
 
-        Path path = Paths.get(System.getProperty("java.io.tmpdir"));
-
         // create a gzipped file
-        tempFileGzip = path.resolve("gzipped_____5137528280012599068___.gz");
+        tempFileGzip = Paths.get("gzipped_____5137528280012599068___.gz");
         OutputStream gzos = new GZIPOutputStream(Files.newOutputStream(tempFileGzip, StandardOpenOption.WRITE, StandardOpenOption.CREATE));
         gzos.write("Hello, World!".getBytes());
         gzos.close();
-
-        TEMP_FILES.add(path.resolve("file3408688236"));
-        TEMP_FILES.add(path.resolve("file4039819292"));
-        TEMP_FILES.add(path.resolve("file9823674682"));
-        TEMP_FILES.add(path.resolve("file3762346723"));
-        TEMP_FILES.add(path.resolve("file8723674332"));
     }
 
     @AfterClass
@@ -95,9 +77,6 @@ public class TestConnections extends TestRBase {
             System.err.println("WARNING: error deleting : " + testDir.testDirPath);
         }
         deleteFile(tempFileGzip);
-        for (Path p : TEMP_FILES) {
-            deleteFile(p);
-        }
     }
 
     private static void deleteFile(Path p) {
@@ -188,9 +167,10 @@ public class TestConnections extends TestRBase {
 
     @Test
     public void testFileSummary() {
-
         Assert.assertTrue("Could not create required temp file for test.", Files.exists(tempFileGzip));
         assertEval("{ zz <- file(\"" + tempFileGzip + "\", \"r\"); res <- summary(zz); close(zz); res }");
+
+        assertEval("zz <- file('', 'w+'); summary(zz); close(zz)");
     }
 
     @Test
@@ -200,34 +180,16 @@ public class TestConnections extends TestRBase {
     }
 
     @Test
-    public void testEncoding() throws IOException {
-
-        // read from UTF-8 file
-        final Path utf8File = TEMP_FILES.get(0);
-        writeEncodedString(utf8File, "utf8", "This is a sentence using german Umlauts like ö, ä, ü, Ö, Ä, Ü but also ß.\n");
-        assertEval(Ignored.ImplementationError, "fin <- file(\"" + utf8File + "\", \"r\", encoding = \"latin1\"); lines <- readLines(fin, 1); close(fin); lines");
-        assertEval(Ignored.ImplementationError, "fin <- file(\"" + utf8File + "\", \"r\", encoding = \"UTF-8\"); lines <- readLines(fin, 1); close(fin); lines");
-
-        // read from ISO-8859-1 (aka Latin1) file
-        final Path latin1File = TEMP_FILES.get(1);
-        writeEncodedString(latin1File, "ISO-8859-1", "This is a sentence using german Umlauts like ö, ä, ü, Ö, Ä, Ü but also ß.\n");
-        assertEval(Ignored.Unknown, "fin <- file(\"" + latin1File + "\", \"r\"); lines <- readLines(fin, 1, encoding = \"UTF-8\"); close(fin); lines");
-        assertEval(Ignored.ImplementationError, "fin <- file(\"" + latin1File + "\", \"r\", encoding = \"latin1\"); lines <- readLines(fin, 1); close(fin); lines");
-        assertEval(Ignored.ImplementationError, "fin <- file(\"" + latin1File + "\", \"r\", encoding = \"UTF-8\"); lines <- readLines(fin, 1); close(fin); lines");
-
+    public void testEncoding() {
         // use inexisting charset
-        assertEval("fin <- file(\"" + utf8File + "\", \"r\", encoding = \"___inexistingCharSet___\")");
+        assertEval("fin <- file('', \"w+\", encoding = \"___inexistingCharSet___\")");
 
         // write UTF-8 file
-        final Path utf8File1 = TEMP_FILES.get(2);
-        assertEval("{ wline <- \"Hellö\"; fin <- file(\"" + utf8File1 +
-                        "\", \"w+\", encoding = \"UTF-8\"); writeLines(wline, fin); seek(fin, 0); rline <- readLines(fin, 1); close(fin); c(wline, rline, wline == rline) }");
+        assertEval("{ wline <- 'Hellö'; fin <- file('', 'w+', encoding = 'UTF-8'); writeLines(wline, fin); seek(fin, 0); rline <- readLines(fin, 1); close(fin); c(wline, rline, wline == rline) }");
     }
 
     @Test
     public void testReadLines() {
-        final Path tmpFile = TEMP_FILES.get(3);
-
         // one line containing '\0'
         final String lineWithNul = "c(97,98,99,100,0,101,10)";
 
@@ -240,8 +202,8 @@ public class TestConnections extends TestRBase {
         // two lines, first containing '\0', second line incomplete
         final String twoLinesOneNulIncomp = "c(97,98,99,100,0,101,10,65,66,67)";
 
-        assertEval(Output.MayIgnoreWarningContext, TestBase.template("{ fn <- \"" + tmpFile +
-                        "\"; zz <- file(fn,\"w+b\", blocking=%0); writeBin(as.raw(%1), zz, useBytes=T); seek(zz, 0); res <- readLines(zz, 2, warn=%2, skipNul=%3); close(zz); unlink(fn); res }",
+        assertEval(Output.MayIgnoreWarningContext, TestBase.template(
+                        "{ zz <- file('',\"w+b\", blocking=%0); writeBin(as.raw(%1), zz, useBytes=T); seek(zz, 0); res <- readLines(zz, 2, warn=%2, skipNul=%3); close(zz); res }",
                         LVAL, arr(lineWithNul, twoLinesOneNul, lineWithNulIncomp, twoLinesOneNulIncomp), LVAL, LVAL));
     }
 
@@ -285,16 +247,5 @@ public class TestConnections extends TestRBase {
 
     private static String[] arr(String... args) {
         return args;
-    }
-
-    /**
-     * Writes a string using the specified charset to the provided file. The file is created and
-     * truncated.
-     */
-    private static void writeEncodedString(Path p, String enc, String s) throws IOException {
-        ByteBuffer encode = Charset.forName(enc).encode(s);
-        FileChannel open = FileChannel.open(p, CREATE, WRITE, TRUNCATE_EXISTING);
-        open.write(encode);
-        open.close();
     }
 }

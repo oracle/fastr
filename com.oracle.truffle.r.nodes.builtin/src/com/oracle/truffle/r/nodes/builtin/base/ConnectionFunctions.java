@@ -256,7 +256,7 @@ public abstract class ConnectionFunctions {
                 }
             }
             try {
-                return new FileRConnection(path, open, blocking, encoding, raw).asVector();
+                return new FileRConnection(description, path, open, blocking, encoding, raw).asVector();
             } catch (IOException ex) {
                 warning(RError.Message.CANNOT_OPEN_FILE, description, ex.getMessage());
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);
@@ -289,11 +289,11 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector zzFile(RAbstractStringVector description, String open, String encoding, int compression) {
+        protected RAbstractIntVector zzFile(String description, String open, String encoding, int compression) {
             try {
-                return new CompressedRConnection(description.getDataAt(0), open, cType, encoding, compression).asVector();
+                return new CompressedRConnection(description, open, cType, encoding, compression).asVector();
             } catch (IOException ex) {
-                throw reportError(description.getDataAt(0), ex);
+                throw reportError(description, ex);
             } catch (IllegalCharsetNameException ex) {
                 throw RError.error(RError.SHOW_CALLER, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }

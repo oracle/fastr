@@ -369,15 +369,11 @@ public class ConnectionSupport {
         }
 
         @Override
-        @Deprecated
-        @SuppressWarnings("deprecation")
         public InputStream getInputStream() throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
 
         @Override
-        @Deprecated
-        @SuppressWarnings("deprecation")
         public OutputStream getOutputStream() throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
@@ -750,14 +746,12 @@ public class ConnectionSupport {
         }
 
         @Override
-        @SuppressWarnings("deprecation")
         public InputStream getInputStream() throws IOException {
             checkOpen();
             return theConnection.getInputStream();
         }
 
         @Override
-        @SuppressWarnings("deprecation")
         public OutputStream getOutputStream() throws IOException {
             checkOpen();
             return theConnection.getOutputStream();
@@ -1074,29 +1068,37 @@ public class ConnectionSupport {
     }
 
     abstract static class BasePathRConnection extends BaseRConnection {
+        /** The path of the actual file to open. */
         protected final String path;
 
-        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, String encoding) throws IOException {
-            this(path, connectionClass, modeString, AbstractOpenMode.Read, encoding);
+        /** The description used in the call (required summary output). */
+        protected final String description;
+
+        protected BasePathRConnection(String description, String path, ConnectionClass connectionClass, String modeString, String encoding) throws IOException {
+            this(description, path, connectionClass, modeString, AbstractOpenMode.Read, encoding);
         }
 
-        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, boolean blocking, String encoding) throws IOException {
-            this(path, connectionClass, modeString, AbstractOpenMode.Read, blocking, encoding);
+        protected BasePathRConnection(String description, String path, ConnectionClass connectionClass, String modeString, boolean blocking, String encoding) throws IOException {
+            this(description, path, connectionClass, modeString, AbstractOpenMode.Read, blocking, encoding);
         }
 
-        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode, String encoding) throws IOException {
+        protected BasePathRConnection(String description, String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode, String encoding) throws IOException {
             super(connectionClass, modeString, defaultLazyOpenMode, encoding);
             this.path = Utils.tildeExpand(path);
+            this.description = description;
         }
 
-        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode, boolean blocking, String encoding) throws IOException {
+        protected BasePathRConnection(String description, String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode, boolean blocking, String encoding)
+                        throws IOException {
             super(connectionClass, modeString, defaultLazyOpenMode, blocking, encoding);
             this.path = Utils.tildeExpand(path);
+            this.description = description;
         }
 
         @Override
         public String getSummaryDescription() {
-            return path;
+            // Use 'description' and not 'path' since this may be different, e.g., on temp files.
+            return description;
         }
     }
 
