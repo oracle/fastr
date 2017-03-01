@@ -54,7 +54,6 @@ import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BasePathRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.OpenMode;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class FileConnections {
@@ -140,8 +139,14 @@ public class FileConnections {
                 delegate = new FileWriteBinaryConnection(base, false);
                 break;
             case ReadWriteTrunc:
+                delegate = new FileReadWriteTextConnection(base);
+                break;
             case ReadWriteTruncBinary:
-                delegate = new FileReadWriteConnection(base);
+                delegate = new FileReadWriteBinaryConnection(base, false);
+                break;
+            case ReadAppend:
+            case ReadAppendBinary:
+                delegate = new FileReadWriteBinaryConnection(base, true);
                 break;
             default:
                 throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + base.getOpenMode());
@@ -326,7 +331,94 @@ public class FileConnections {
 
     }
 
-    private static class FileReadWriteConnection extends DelegateReadWriteRConnection {
+    private static class FileReadWriteTextConnection extends DelegateReadWriteRConnection {
+
+        private final FileChannel channel;
+        private long readOffset;
+        private long writeOffset;
+        private SeekRWMode lastMode = SeekRWMode.READ;
+
+        FileReadWriteTextConnection(BasePathRConnection base) throws IOException {
+            super(base);
+            List<OpenOption> opts = new ArrayList<>();
+            opts.add(StandardOpenOption.READ);
+            opts.add(StandardOpenOption.WRITE);
+            opts.add(StandardOpenOption.CREATE);
+            opts.add(StandardOpenOption.TRUNCATE_EXISTING);
+            channel = FileChannel.open(Paths.get(base.path), opts.toArray(new OpenOption[opts.size()]));
+        }
+
+        @Override
+        public int getc() throws IOException {
+            channel.position(readOffset);
+            int value = super.getc();
+            if (value != -1) {
+                readOffset++;
+            }
+            return value;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return true;
+        }
+
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            long result = channel.position();
+            switch (seekMode) {
+                case ENQUIRE:
+                    return result;
+                case START:
+                    break;
+                default:
+                    throw RError.nyi(RError.SHOW_CALLER, "seek mode");
+            }
+            switch (seekRWMode) {
+                case LAST:
+                    if (lastMode == SeekRWMode.READ) {
+                        readOffset = offset;
+                    } else {
+                        writeOffset = offset;
+                    }
+                    break;
+                case READ:
+                    readOffset = offset;
+                    break;
+                case WRITE:
+                    writeOffset = offset;
+                    break;
+            }
+            return result;
+        }
+
+        @Override
+        public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
+            channel.position(readOffset);
+            return super.readLines(n, warn, skipNul);
+        }
+
+        @Override
+        public void close() throws IOException {
+            channel.close();
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+            channel.position(writeOffset);
+            super.writeLines(lines, sep, useBytes);
+            writeOffset = channel.position();
+            lastMode = SeekRWMode.WRITE;
+        }
+
+        @Override
+        public ByteChannel getChannel() {
+            return channel;
+        }
+
+    }
+
+    private static class FileReadWriteBinaryConnection extends DelegateReadWriteRConnection {
         /*
          * This is a minimal implementation to support one specific use in package installation.
          *
@@ -339,25 +431,20 @@ public class FileConnections {
         private long writeOffset;
         private SeekRWMode lastMode = SeekRWMode.READ;
 
-        FileReadWriteConnection(BasePathRConnection base) throws IOException {
+        FileReadWriteBinaryConnection(BasePathRConnection base, boolean append) throws IOException {
             super(base);
-            OpenMode openMode = base.getOpenMode();
-            String rafMode = null;
-            switch (openMode.abstractOpenMode) {
-                case ReadWriteTrunc:
-                case ReadWriteTruncBinary:
-                    rafMode = "rw";
-                    break;
-                default:
-                    throw RInternalError.shouldNotReachHere();
+            raf = new RandomAccessFile(base.path, "rw");
+            if (append) {
+                writeOffset = raf.length();
+            } else {
+                raf.setLength(0);
             }
-            raf = new RandomAccessFile(base.path, rafMode);
         }
 
         @Override
         public int getc() throws IOException {
-            raf.seek(readOffset);
-            int value = raf.read();
+            setPosition(readOffset);
+            int value = super.getc();
             if (value != -1) {
                 readOffset++;
             }
@@ -400,8 +487,14 @@ public class FileConnections {
 
         @Override
         public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
-            raf.seek(readOffset);
+            setPosition(readOffset);
             return super.readLines(n, warn, skipNul);
+        }
+
+        private void setPosition(long pos) throws IOException {
+            if (raf.getFilePointer() != pos) {
+                raf.seek(pos);
+            }
         }
 
         @Override
@@ -411,22 +504,10 @@ public class FileConnections {
 
         @Override
         public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            raf.seek(writeOffset);
-            byte[] sepData = sep.getBytes(base.getEncoding());
-            for (int i = 0; i < lines.getLength(); i++) {
-                writeString(lines.getDataAt(i), false);
-                raf.write(sepData);
-            }
+            setPosition(writeOffset);
+            super.writeLines(lines, sep, useBytes);
             writeOffset = raf.getFilePointer();
             lastMode = SeekRWMode.WRITE;
-        }
-
-        @Override
-        public void writeString(String s, boolean nl) throws IOException {
-            raf.write(s.getBytes(base.getEncoding()));
-            if (nl) {
-                raf.write(System.lineSeparator().getBytes(base.getEncoding()));
-            }
         }
 
         @Override

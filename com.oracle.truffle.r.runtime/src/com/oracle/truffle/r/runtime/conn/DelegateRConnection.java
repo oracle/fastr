@@ -328,8 +328,22 @@ abstract class DelegateRConnection implements RConnection {
         return new String(chars, 0, j);
     }
 
+// @Override
+// public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+//
+//
+// // need to reset the stream decoder since position changed
+// reinitDecoder();
+// }
+//
+// protected abstract long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode)
+// throws IOException;
+
     /**
-     * Implements standard seeking behavior.
+     * Implements standard seeking behavior.<br>
+     * <p>
+     * <it>Standard</it> means that there is a shared cursor between reading and writing operations.
+     * </p>
      */
     public static long seek(SeekableByteChannel channel, long offset, SeekMode seekMode, @SuppressWarnings("unused") SeekRWMode seekRWMode) throws IOException {
         long position = channel.position();
@@ -365,13 +379,27 @@ abstract class DelegateRConnection implements RConnection {
     }
 
     public static boolean writeLinesHelper(WritableByteChannel out, RAbstractStringVector lines, String sep, Charset encoding) throws IOException {
-        boolean incomplete = false;
-        for (int i = 0; i < lines.getLength(); i++) {
-            final String line = lines.getDataAt(i);
-            incomplete = DelegateRConnection.writeStringHelper(out, line, false, encoding);
-            incomplete = DelegateRConnection.writeStringHelper(out, sep, false, encoding) || incomplete;
+        if (sep != null && sep.contains("\n")) {
+            // fast path: we know that the line is complete
+            final ByteBuffer nlBuf = ByteBuffer.wrap(sep.getBytes(encoding));
+            for (int i = 0; i < lines.getLength(); i++) {
+                final String line = lines.getDataAt(i);
+                final ByteBuffer buf = ByteBuffer.wrap(line.getBytes(encoding));
+                out.write(buf);
+                nlBuf.rewind();
+                out.write(nlBuf);
+            }
+            return false;
+        } else {
+            // slow path: we have to scan every string if it contains a newline
+            boolean incomplete = false;
+            for (int i = 0; i < lines.getLength(); i++) {
+                final String line = lines.getDataAt(i);
+                incomplete = DelegateRConnection.writeStringHelper(out, line, false, encoding);
+                incomplete = DelegateRConnection.writeStringHelper(out, sep, false, encoding) || incomplete;
+            }
+            return incomplete;
         }
-        return incomplete;
     }
 
     @Override
@@ -384,9 +412,13 @@ abstract class DelegateRConnection implements RConnection {
      */
     protected StreamDecoder getDecoder() throws IOException {
         if (decoder == null) {
-            CharsetDecoder charsetEncoder = base.getEncoding().newDecoder().onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE);
-            decoder = StreamDecoder.forDecoder(getChannel(), charsetEncoder, -1);
+            initDecoder();
         }
         return decoder;
+    }
+
+    private void initDecoder() throws IOException {
+        CharsetDecoder charsetEncoder = base.getEncoding().newDecoder().onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE);
+        decoder = StreamDecoder.forDecoder(getChannel(), charsetEncoder, -1);
     }
 }

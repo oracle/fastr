@@ -51,10 +51,14 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
 
     @Override
     public int getc() throws IOException {
-        tmp.clear();
-        int nread = getChannel().read(tmp);
-        tmp.rewind();
-        return nread > 0 ? tmp.get() : -1;
+        if (isTextMode()) {
+            return getDecoder().read();
+        } else {
+            tmp.clear();
+            int nread = getChannel().read(tmp);
+            tmp.rewind();
+            return nread > 0 ? tmp.get() : -1;
+        }
     }
 
     @Override
