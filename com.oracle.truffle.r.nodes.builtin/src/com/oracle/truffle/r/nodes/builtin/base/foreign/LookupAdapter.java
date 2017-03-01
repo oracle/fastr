@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.library.fastrGrid.LInitGrid;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodes;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
@@ -175,6 +176,10 @@ abstract class LookupAdapter extends RBuiltinNode {
 
     protected static RExternalBuiltinNode getExternalModelBuiltinNode(String name) {
         return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(RandFunctionsNodes.class, "model.R"), name);
+    }
+
+    protected static RExternalBuiltinNode getExternalFastRGridBuiltinNode(String name) {
+        return new RInternalCodeBuiltinNode(RContext.getInstance(), "grid", RInternalCode.loadSourceRelativeTo(LInitGrid.class, "fastrGrid.R"), name);
     }
 
     protected static final int CallNST = DLL.NativeSymbolType.Call.ordinal();

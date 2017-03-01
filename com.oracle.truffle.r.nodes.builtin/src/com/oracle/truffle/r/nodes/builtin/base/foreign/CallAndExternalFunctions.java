@@ -22,6 +22,18 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.library.fastrGrid.GridStateGetNode;
+import com.oracle.truffle.r.library.fastrGrid.GridStateSetNode;
+import com.oracle.truffle.r.library.fastrGrid.IgnoredGridExternal;
+import com.oracle.truffle.r.library.fastrGrid.LGridDirty;
+import com.oracle.truffle.r.library.fastrGrid.LInitGrid;
+import com.oracle.truffle.r.library.fastrGrid.LInitViewPortStack;
+import com.oracle.truffle.r.library.fastrGrid.LLines;
+import com.oracle.truffle.r.library.fastrGrid.LNewPage;
+import com.oracle.truffle.r.library.fastrGrid.LRect;
+import com.oracle.truffle.r.library.fastrGrid.LSegments;
+import com.oracle.truffle.r.library.fastrGrid.LText;
+import com.oracle.truffle.r.library.fastrGrid.LUpViewPort;
 import com.oracle.truffle.r.library.grDevices.DevicesCCalls;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_Par;
@@ -79,6 +91,8 @@ import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalCode;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -240,6 +254,9 @@ public class CallAndExternalFunctions {
         @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
             String name = lookupName(symbol);
+            if (FastROptions.UseInternalGridGraphics.getBooleanValue() && name != null && name.startsWith("L_")) {
+                return lookupFastRGridBuiltin(name);
+            }
             switch (name) {
                 // methods
                 case "R_initMethodDispatch":
@@ -652,11 +669,77 @@ public class CallAndExternalFunctions {
             }
         }
 
+        private RExternalBuiltinNode lookupFastRGridBuiltin(String name) {
+            switch (name) {
+                case "L_gridDirty":
+                    return new LGridDirty();
+                case "L_initGrid":
+                    return LInitGrid.create();
+                case "L_newpage":
+                    return new LNewPage();
+
+                // Viewport management
+                case "L_upviewport":
+                    return LUpViewPort.create();
+                case "L_initViewportStack":
+                    return new LInitViewPortStack();
+                case "L_setviewport":
+                case "L_downviewport":
+                    return getExternalFastRGridBuiltinNode(name);
+
+                // Drawing primitives
+                case "L_rect":
+                    return LRect.create();
+                case "L_lines":
+                    return LLines.create();
+                case "L_text":
+                    return LText.create();
+                case "L_segments":
+                    return LSegments.create();
+
+                // Simple grid state access
+                case "L_getGPar":
+                    return new GridStateGetNode(state -> state.getGpar());
+                case "L_setGPar":
+                    return GridStateSetNode.create((state, val) -> state.setGpar((RList) val));
+                case "L_getCurrentGrob":
+                    return new GridStateGetNode(state -> state.getCurrentGrob());
+                case "L_setCurrentGrob":
+                    return GridStateSetNode.create((state, val) -> state.setCurrentGrob(val));
+                case "L_currentViewport":
+                    return new GridStateGetNode(state -> state.getViewPort());
+
+                // Display list stuff: not implemented atm
+                case "L_getDisplayList":
+                    return new IgnoredGridExternal(RDataFactory.createList());
+                case "L_getDLindex":
+                    return new IgnoredGridExternal(0);
+                case "L_getDLon":
+                case "L_getEngineDLon":
+                    return new IgnoredGridExternal(RRuntime.LOGICAL_FALSE);
+                case "L_initDisplayList":
+                case "L_newpagerecording":
+                case "L_setDisplayList":
+                case "L_setDLelt":
+                case "L_setDLindex":
+                case "L_setDLon":
+                    return new IgnoredGridExternal(RNull.instance);
+
+                // These methods do not use graphics system or any global state. For now,
+                // we can re-use the native implementation, which in the future should be rewritten
+                // to managed code.
+                case "L_validUnits":
+                    return null;
+                default:
+                    throw RInternalError.shouldNotReachHere("Unimplemented grid external " + name);
+            }
+        }
+
         /**
          * {@code .NAME = NativeSymbolInfo} implemented as a builtin.
          */
         @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
+        @Specialization(limit = "99", guards = {"cached == symbol", "builtin != null"})
         protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
                         @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
@@ -668,9 +751,10 @@ public class CallAndExternalFunctions {
          * package)
          */
         @SuppressWarnings("unused")
-        @Specialization(limit = "2", guards = {"cached == symbol"})
+        @Specialization(limit = "2", guards = {"cached == symbol", "builtin == null"})
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
+                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
                         @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
             return callRFFINode.execute(nativeCallInfo, args.getArguments());
         }
@@ -680,8 +764,12 @@ public class CallAndExternalFunctions {
          * such cases there is this generic version.
          */
         @SuppressWarnings("unused")
-        @Specialization(replaces = "callNamedFunction")
+        @Specialization(replaces = {"callNamedFunction", "doExternal"})
         protected Object callNamedFunctionGeneric(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName) {
+            RExternalBuiltinNode builtin = lookupBuiltin(symbol);
+            if (builtin != null) {
+                throw RInternalError.shouldNotReachHere("Cache for .Calls with FastR reimplementation (lookupBuiltin(...) != null) exceeded the limit");
+            }
             NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
             return callRFFINode.execute(nativeCallInfo, args.getArguments());
         }

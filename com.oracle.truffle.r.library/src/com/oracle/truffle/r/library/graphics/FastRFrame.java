@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ public class FastRFrame extends JFrame {
 
     private static final long serialVersionUID = 1L;
 
-    private final Dimension framePreferredSize = new Dimension(500, 500);
+    private final Dimension framePreferredSize = new Dimension(720, 720);
     private final FastRComponent fastRComponent = new FastRComponent();
 
     public FastRFrame() throws HeadlessException {
