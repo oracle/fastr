@@ -32,6 +32,7 @@
 /com.oracle.truffle.r.native/fficall/jniboot.done
 /com.oracle.truffle.r.native.recommended/install.recommended
 /com.oracle.truffle.r.test.native/packages/copy_recommended
+/com.oracle.truffle.r.test.native/packages/repo/*
 /com.oracle.truffle.r.test.native/packages/recommended
 /com.oracle.truffle.r.test.native/packages/*/lib/*
 /com.oracle.truffle.r.test.native/urand/lib/liburand.so
@@ -127,10 +128,13 @@ R.tokens
 findbugs.html
 test_gnur
 test_fastr
-lib.install.cran*
+lib.install.packages*
 package.blacklist
 *.ll
 *.su
 *.bc
 com.oracle.truffle.r.test.native/embedded/lib
 bench-results.json
+com.oracle.truffle.r.test.native/packages/testrffi/testrffi/tests/asTests.R
+com.oracle.truffle.r.test.native/packages/testrffi/testrffi/tests/coerceTests.R
+com.oracle.truffle.r.native/version.built

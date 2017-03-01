@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -23,19 +23,35 @@
 
 # This "builds" a test package, resulting in a tar file,
 # which is then loaded by the unit tests in TestRPackages.
+# It uses R CMD build ...
+# Currently we can't use FastR for this step as FastR isn't completely built
+# when this is built (it's part of the build)
+# The resulting package is stored in the "repo/src/contrib" folder
+
+# test packages may include .Rin files that are preprocessed to create an
+# actual test file. Unfortunately while R CND check will do this, tools::testInstalledPackage
+# does not (surely a bug). So we generate the files here.
 
 .PHONY: all
 
-PKG_FILES = $(shell find $(PACKAGE)/ -type f -name '*')
+PKG_FILES = $(shell find $(PACKAGE) -type f -name '*')
 
-PKG_TAR = lib/$(PACKAGE).tar
+PKG_TAR = $(REPO_DIR)/$(PACKAGE)_1.0.tar.gz
 
-all: $(PKG_TAR)
+RIN_FILES = $(shell find $(PACKAGE) -type f -name '*.Rin')
+RIN_R_FILES = $(subst .Rin,.R, $(RIN_FILES))
+TEMPLATE_FILE := ../Rutils/template.R
+
+all: $(RIN_R_FILES) $(PKG_TAR)
 
 $(PKG_TAR): $(PKG_FILES)
-	mkdir -p lib
-	tar cf $(PKG_TAR) $(PACKAGE)
+	(cd $(REPO_DIR); TZDIR=/usr/share/zoneinfo/ $(GNUR_HOME)/bin/R CMD build $(CURDIR)/$(PACKAGE))
+
+$(RIN_R_FILES): $(RIN_FILES)
+	for rf in $(RIN_FILES); do \
+		TEMPLATE_FILE=$(TEMPLATE_FILE) $(GNUR_HOME)/bin/Rscript $$rf $$rf || exit 1; \
+	done
 
 clean:
-	rm -f $(PKG_TAR)
+	rm -f $(PKG_TAR) $(RIN_R_FILES)
 

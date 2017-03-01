@@ -1,0 +1,6 @@
+source(Sys.getenv("TEMPLATE_FILE"))
+
+as_values <- c("1L", "2", "2.2", "T", "integer()", "numeric()", "logical()", "character()", "c(5,6)", "c(2.3, 3.4)", "c(T, F)", "as.symbol(\"sym\")", "list()")
+as_funs <- c("Char", "Integer", "Real", "Logical")
+
+initialTest("testrffi", "rffi.as%0(%1)",  as_funs, as_values)

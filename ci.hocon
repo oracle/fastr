@@ -134,6 +134,14 @@ rbcheck : ${common} {
   ]
 }
 
+internalPkgtest: ${common} {
+  run : [
+    ["mx", "build"]
+    ["mx", "pkgtest", "--repos", "FASTR", "--pkg-filelist", "com.oracle.truffle.r.test.native/packages/pkg-filelist"]
+  ]
+  logs: ${common.logs}
+}
+
 # The standard set of gate builds. N.B. the style/builtin checks are only run on Linux as they are not OS-dependent.
 
 builds = [
@@ -142,4 +150,5 @@ builds = [
   ${gateTestDarwin}           {capabilities : [darwin, amd64], targets : [gate, post-merge], name: "gate-test-darwin-amd64"}
   ${gateStyle}                {capabilities : [linux, amd64],  targets : [gate, post-merge], name: "gate-style-linux-amd64"}
   ${rbcheck}                  {capabilities : [linux, amd64],  targets : [gate, post-merge], name: "gate-rbcheck-linux-amd64"}
+  ${internalPkgtest}          {capabilities : [linux, amd64],  targets : [gate, post-merge], name: "gate-internal-pkgtest-linux-amd64"}
 ]

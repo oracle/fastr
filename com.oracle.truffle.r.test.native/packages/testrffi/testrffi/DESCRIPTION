@@ -1,9 +1,10 @@
 Package: testrffi
 Type: Package
-Title: Tests a package with native code
+Title: Tests The R FFI interface
 Version: 1.0
-Date: 2014-08-21
+Date: 2017-02-2
 Author: FastR Tester
 Maintainer: FastR Tester <fastr@yahoogroups.com>
-Description: Tests a package with native code
+Description: Tests The R FFI interface
 License: GPL-2
+NeedsCompilation: yes

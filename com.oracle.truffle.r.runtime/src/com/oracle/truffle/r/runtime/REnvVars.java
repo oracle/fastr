@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.DEFAULT_PACKAGES;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -57,7 +59,13 @@ public final class REnvVars implements RContext.ContextState {
     @Override
     public RContext.ContextState initialize(RContext context) {
         // explicit environment settings in nested contexts must be installed first
-        checkExplciitEnvSettings(context);
+        checkExplicitEnvSettings(context);
+        RCmdOptions cmdOptions = context.getStartParams().getRCmdOptions();
+        // If running Rscript, R_DEFAULT_PACKAGES may need to be set
+        String defaultPackages = cmdOptions.getString(DEFAULT_PACKAGES);
+        if (defaultPackages != null) {
+            envVars.put("R_DEFAULT_PACKAGES", defaultPackages);
+        }
         // set the standard vars defined by R
         checkRHome();
         // Always read the system file
@@ -119,7 +127,7 @@ public final class REnvVars implements RContext.ContextState {
         return new REnvVars();
     }
 
-    private void checkExplciitEnvSettings(RContext context) {
+    private void checkExplicitEnvSettings(RContext context) {
         String[] envs = context.getEnvSettings();
         if (envs == null || envs.length == 0) {
             return;

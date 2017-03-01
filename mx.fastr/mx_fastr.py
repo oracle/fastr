@@ -391,9 +391,6 @@ def junit_simple(args):
 def junit_noapps(args):
     return mx.command_function('junit')(['--tests', _gate_noapps_unit_tests()] + args)
 
-def junit_nopkgs(args):
-    return mx.command_function('junit')(['--tests', ','.join([_simple_unit_tests(), _nodes_unit_tests()])] + args)
-
 def junit_default(args):
     return mx.command_function('junit')(['--tests', _all_unit_tests()] + args)
 
@@ -412,9 +409,6 @@ def _simple_generated_unit_tests():
 def _simple_unit_tests():
     return ','.join([_simple_generated_unit_tests(), _test_subpackage('tck')])
 
-def _package_unit_tests():
-    return ','.join(map(_test_subpackage, ['rffi', 'rpackages']))
-
 def _nodes_unit_tests():
     return 'com.oracle.truffle.r.nodes.test'
 
@@ -422,7 +416,7 @@ def _apps_unit_tests():
     return _test_subpackage('apps')
 
 def _gate_noapps_unit_tests():
-    return ','.join([_simple_unit_tests(), _nodes_unit_tests(), _package_unit_tests()])
+    return ','.join([_simple_unit_tests(), _nodes_unit_tests()])
 
 def _gate_unit_tests():
     return ','.join([_gate_noapps_unit_tests(), _apps_unit_tests()])
@@ -431,7 +425,7 @@ def _all_unit_tests():
     return _gate_unit_tests()
 
 def _all_generated_unit_tests():
-    return ','.join([_simple_generated_unit_tests(), _package_unit_tests()])
+    return ','.join([_simple_generated_unit_tests()])
 
 def testgen(args):
     '''generate the expected output for unit tests, and All/Failing test classes'''
@@ -591,7 +585,6 @@ _commands = {
     'junitdefault' : [junit_default, ['options']],
     'junitgate' : [junit_gate, ['options']],
     'junitnoapps' : [junit_noapps, ['options']],
-    'junitnopkgs' : [junit_nopkgs, ['options']],
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
     'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep=lite | --sweep=total] [--mnonly] [--noSelfTest] [--matchLevel=same | --matchLevel=error] [--maxSweeps=N] [--outMaxLev=N]'],
@@ -599,6 +592,7 @@ _commands = {
     'rembed' : [rembed, '[options]'],
     'r-cp' : [r_classpath, '[options]'],
     'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
+    'pkgtest-cmp' : [mx_fastr_pkgs.pkgtest_cmp, ['gnur_path fastr_path']],
     'installpkgs' : [mx_fastr_pkgs.installpkgs, '[options]'],
     'mkgramrd': [mx_fastr_mkgramrd.mkgramrd, '[options]'],
     'rcopylib' : [mx_copylib.copylib, '[]'],

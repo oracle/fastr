@@ -86,9 +86,9 @@ public class RStartParams {
     private boolean noReadline;
 
     /**
-     * The original command line arguments that were parsed by {@link RCmdOptions}.
+     * The result from parsing the command line options.
      */
-    private final String[] arguments;
+    private final RCmdOptions cmdOptions;
 
     /**
      * Indicates that FastR is running embedded.
@@ -96,7 +96,7 @@ public class RStartParams {
     private boolean embedded;
 
     public RStartParams(RCmdOptions options, boolean embedded) {
-        this.arguments = options.getArguments();
+        this.cmdOptions = options;
         this.embedded = embedded;
         if (options.getBoolean(VERBOSE)) {
             this.verbose = true;
@@ -246,8 +246,12 @@ public class RStartParams {
         return this.noReadline;
     }
 
+    public RCmdOptions getRCmdOptions() {
+        return cmdOptions;
+    }
+
     public String[] getArguments() {
-        return arguments;
+        return cmdOptions.getArguments();
     }
 
     public void setEmbedded() {

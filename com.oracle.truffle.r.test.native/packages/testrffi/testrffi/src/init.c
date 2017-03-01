@@ -32,6 +32,12 @@ static const R_CMethodDef CEntries[]  = {
 
 #define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
 
+/* It is not strictly necessary to include every C function in this table, as
+ * it simply enables a call to be made with the "C_name" variable style of .Call,
+ * as opposed to simply using the string "name". The latter is the default mechanism
+ * used in testrffi.c.
+*/
+
 static const R_CallMethodDef CallEntries[] = {
         CALLDEF(addInt, 2),
         CALLDEF(addDouble, 2),

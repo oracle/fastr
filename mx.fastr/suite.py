@@ -184,7 +184,7 @@ suite = {
       "workingSets" : "FastR",
     },
 
-    "com.oracle.truffle.r.test.cran" : {
+    "com.oracle.truffle.r.test.packages" : {
       "sourceDirs" : ["r"],
       "javaCompliance" : "1.8",
       "workingSets" : "FastR",

@@ -70,8 +70,11 @@ public class DCF {
                     fieldContent = new StringBuffer();
                 }
                 if (endOfParagraph(line)) {
-                    result.paragraphs.add(fields);
-                    fields = new Fields();
+                    fieldName = null;
+                    if (!fields.fieldMap.isEmpty()) {
+                        result.paragraphs.add(fields);
+                        fields = new Fields();
+                    }
                     continue;
                 }
                 int ix = line.indexOf(':');

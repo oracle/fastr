@@ -1,0 +1,17 @@
+Package: testrffi
+Version: 1.0
+Depends: R
+License: GPL-2
+NeedsCompilation: yes
+
+Package: tests4
+Version: 1.0
+Depends: R
+License: GPL-2
+NeedsCompilation: no
+
+Package: vanilla
+Version: 1.0
+Depends: R
+License: GPL-2
+NeedsCompilation: no

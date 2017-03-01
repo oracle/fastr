@@ -1,0 +1,42 @@
+source(Sys.getenv("TEMPLATE_FILE"))
+
+NILSXP <- as.character(0)
+SYMSXP <- as.character(1)
+LISTSXP <- as.character(2)
+CLOSXP <- as.character(3)
+ENVSXP <- as.character(4)
+PROMSXP <- as.character(5)
+LANGSXP <- as.character(6)
+SPECIALSXP <- as.character(7)
+BUILTINSXP <- as.character(8)
+CHARSXP <- as.character(9)
+LGLSXP <- as.character(10)
+INTSXP <- as.character(13)
+REALSXP <- as.character(14)
+CPLXSXP <- as.character(15)
+STRSXP <- as.character(16)
+DOTSXP <- as.character(17)
+ANYSXP <- as.character(18)
+VECSXP <- as.character(19)
+EXPRSXP <- as.character(20)
+BCODESXP <- as.character(21)
+EXTPTRSXP <- as.character(22)
+WEAKREFSXP <- as.character(23)
+RAWSXP <- as.character(24)
+S4SXP <- as.character(25)
+
+coercion_values_for_expr <- c("2", "2.2", "T", "integer()", "numeric()", "logical()", "character()", "c(5,6)", "c(2.3, 3.4)", "c(T, F)",
+                    "list()", "structure(2.2, names='b',dim=c(1,1),myattr='q')", "structure(T, names='c',dim=c(1,1),myattr='q'")
+
+coercion_values <- c("1L", "2", "2.2", "T", "integer()", "numeric()", "logical()", "character()", "c(5,6)", "c(2.3, 3.4)",
+                    "c(T, F)", "list()", "structure(1L,names='a',dim=c(1,1),myattr='q')", "structure(2.2, names='b',dim=c(1,1),myattr='q')",
+                    "structure(T, names='c',dim=c(1,1),myattr='q')", "structure(list(1,'42'), names=c('q','w'),dim=c(2,1),myattr='q'")
+
+coercion_modes <- c(SYMSXP, NILSXP, VECSXP, INTSXP, REALSXP, LGLSXP, STRSXP, CPLXSXP, RAWSXP)
+
+initialTest("testrffi", "rffi.coerceVector(%0, %1)", coercion_values, coercion_modes)
+
+extraTest("rffi.coerceVector(%0, %1)", coercion_values_for_expr, EXPRSXP)
+
+# Ignored.Unimplemented
+# extraTest(paste0("rffi.coerceVector(structure(list(1,'x'), names=c('q','w'),dim=c(2,1),myattr='q'), ", EXPRSXP, ")"))
