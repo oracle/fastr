@@ -94,7 +94,8 @@ public final class CoercedPhaseBuilder<T extends RAbstractVector, S> extends Arg
         return mustBe(argFilter, null, null, (Object[]) null);
     }
 
+    @SuppressWarnings("unchecked")
     public <R extends T> CoercedPhaseBuilder<R, S> mustBe(Class<R> cls) {
-        return new CoercedPhaseBuilder<R, S>(pipelineBuilder(), elementClass).mustBe(Predef.instanceOf(cls));
+        return (CoercedPhaseBuilder<R, S>) mustBe(Predef.instanceOf(cls));
     }
 }

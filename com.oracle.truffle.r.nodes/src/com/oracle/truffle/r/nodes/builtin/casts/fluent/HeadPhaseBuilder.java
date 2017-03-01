@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.RError;
  * head of a vector. This is the last phase in the pipeline building fluent API and comes after
  * {@link CoercedPhaseBuilder} phase.
  */
+@SuppressWarnings("unchecked")
 public final class HeadPhaseBuilder<T> extends ArgCastBuilder<T, HeadPhaseBuilder<T>> {
 
     public HeadPhaseBuilder(PipelineBuilder builder) {
@@ -42,57 +43,57 @@ public final class HeadPhaseBuilder<T> extends ArgCastBuilder<T, HeadPhaseBuilde
     public <S> HeadPhaseBuilder<S> map(Mapper<T, S> mapFn) {
         // state().castBuilder().insert(state().index(), () -> MapNode.create(mapFn));
         pipelineBuilder().appendMap(mapFn);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return (HeadPhaseBuilder<S>) this;
     }
 
     public HeadPhaseBuilder<Object> returnIf(Filter<? super T, ?> argFilter) {
         pipelineBuilder().appendMapIf(argFilter, (PipelineStep<?, ?>) null, (PipelineStep<?, ?>) null, true);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return (HeadPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> HeadPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper) {
         pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, false);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return (HeadPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> HeadPhaseBuilder<T> returnIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper) {
         pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, true);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return this;
     }
 
     public <S extends T, R> HeadPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper, Mapper<T, ?> falseBranchMapper) {
         pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, falseBranchMapper, false);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return (HeadPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> HeadPhaseBuilder<Object> returnIf(Filter<? super T, S> argFilter, Mapper<S, R> trueBranchMapper, Mapper<T, ?> falseBranchMapper) {
         pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, falseBranchMapper, true);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return (HeadPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> HeadPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<S, ?> trueBranch) {
         pipelineBuilder().appendMapIf(argFilter, trueBranch, false);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return (HeadPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> HeadPhaseBuilder<Object> returnIf(Filter<? super T, S> argFilter, PipelineStep<S, ?> trueBranch) {
         pipelineBuilder().appendMapIf(argFilter, trueBranch, true);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return (HeadPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> HeadPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<S, R> trueBranch, PipelineStep<T, ?> falseBranch) {
         pipelineBuilder().appendMapIf(argFilter, trueBranch, falseBranch, false);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return (HeadPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> HeadPhaseBuilder<Object> returnIf(Filter<? super T, S> argFilter, PipelineStep<S, R> trueBranch, PipelineStep<T, ?> falseBranch) {
         pipelineBuilder().appendMapIf(argFilter, trueBranch, falseBranch, true);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return (HeadPhaseBuilder<Object>) this;
     }
 
     public <S extends T> HeadPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
         pipelineBuilder().appendMustBeStep(argFilter, message, messageArgs);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return (HeadPhaseBuilder<S>) this;
     }
 
     public <S extends T> HeadPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter) {
@@ -101,22 +102,22 @@ public final class HeadPhaseBuilder<T> extends ArgCastBuilder<T, HeadPhaseBuilde
 
     public <S extends T> HeadPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {
         mustBe(Predef.instanceOf(cls), message, messageArgs);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return (HeadPhaseBuilder<S>) this;
     }
 
     public <S extends T> HeadPhaseBuilder<S> mustBe(Class<S> cls) {
         mustBe(Predef.instanceOf(cls));
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return (HeadPhaseBuilder<S>) this;
     }
 
     public <S> HeadPhaseBuilder<S> shouldBe(Class<S> cls, RError.Message message, Object... messageArgs) {
         shouldBe(Predef.instanceOf(cls), message, messageArgs);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return (HeadPhaseBuilder<S>) this;
     }
 
     public <S> HeadPhaseBuilder<S> shouldBe(Class<S> cls) {
         shouldBe(Predef.instanceOf(cls));
-        return new HeadPhaseBuilder<>(pipelineBuilder());
+        return (HeadPhaseBuilder<S>) this;
     }
 
     public HeadPhaseBuilder<T> mustNotBeNA(RError.Message message, Object... messageArgs) {

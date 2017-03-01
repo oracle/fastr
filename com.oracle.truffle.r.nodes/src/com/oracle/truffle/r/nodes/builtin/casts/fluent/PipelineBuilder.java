@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
@@ -52,7 +49,7 @@ public final class PipelineBuilder {
 
     private final PipelineConfigBuilder pcb;
     private ChainBuilder<?> chainBuilder;
-    private final AtomicReference<Optional<ForwardingAnalysisResult>> fwdAnalysisResult = new AtomicReference<>();
+    private volatile ForwardingAnalysisResult fwdAnalysisResult;
 
     public PipelineBuilder(String argumentName) {
         this.pcb = new PipelineConfigBuilder(argumentName);
@@ -139,23 +136,19 @@ public final class PipelineBuilder {
         }
     }
 
-    public Optional<ForwardingAnalysisResult> getFwdAnalysisResult() {
-        Optional<ForwardingAnalysisResult> res = fwdAnalysisResult.get();
+    public ForwardingAnalysisResult getFwdAnalysisResult() {
+        ForwardingAnalysisResult res = fwdAnalysisResult;
         if (res == null) {
             ForwardedValuesAnalyser fwdAnalyser = new ForwardedValuesAnalyser();
             PipelineStep<?, ?> firstStep = getFirstStep();
             if (firstStep == null) {
-                res = Optional.empty();
+                res = ForwardingAnalysisResult.INVALID;
             } else {
-                res = Optional.of(fwdAnalyser.analyse(firstStep));
+                res = fwdAnalyser.analyse(firstStep);
             }
-            if (fwdAnalysisResult.compareAndSet(null, res)) {
-                return res;
-            } else {
-                return fwdAnalysisResult.get();
-            }
-        } else {
-            return res;
+            fwdAnalysisResult = res;
         }
+        assert res != null;
+        return res;
     }
 }
