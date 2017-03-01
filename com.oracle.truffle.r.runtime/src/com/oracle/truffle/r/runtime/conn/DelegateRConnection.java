@@ -30,6 +30,8 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -52,6 +54,7 @@ import sun.nio.cs.StreamDecoder;
  */
 abstract class DelegateRConnection implements RConnection {
     protected final BaseRConnection base;
+    private StreamDecoder decoder;
 
     DelegateRConnection(BaseRConnection base) {
         this.base = Objects.requireNonNull(base);
@@ -275,34 +278,54 @@ abstract class DelegateRConnection implements RConnection {
         return new String(chars, 0, j);
     }
 
-    public static String readCharHelper(int nchars, ReadableByteChannel channel, boolean useBytes) throws IOException {
-        if (useBytes) {
-            ByteBuffer buf = ByteBuffer.allocate(nchars);
-            channel.read(buf);
-            int j = 0;
-            for (; j < buf.position(); j++) {
-                // strings end at 0
-                if (buf.get(j) == 0) {
-                    break;
-                }
+    /**
+     * Reads a specified number of single-byte characters.<br>
+     * <p>
+     * This method is meant to be used if R's function {@code readChar} is called with parameter
+     * {@code useBytes=TRUE}.
+     * </p>
+     *
+     * @param nchars The number of single-byte characters to read.
+     * @param channel The channel to read from (must not be {@code null}).
+     * @throws IOException
+     */
+    public static String readCharHelper(int nchars, ReadableByteChannel channel) throws IOException {
+        ByteBuffer buf = ByteBuffer.allocate(nchars);
+        channel.read(buf);
+        int j = 0;
+        for (; j < buf.position(); j++) {
+            // strings end at 0
+            if (buf.get(j) == 0) {
+                break;
             }
-
-            return new String(buf.array(), 0, j);
-        } else {
-            // we need a decoder
-            StreamDecoder decoder = StreamDecoder.forDecoder(channel, Charset.defaultCharset().newDecoder(), nchars);
-            char[] chars = new char[nchars];
-            decoder.read(chars);
-            int j = 0;
-            for (; j < chars.length; j++) {
-                // strings end at 0
-                if (chars[j] == 0) {
-                    break;
-                }
-            }
-
-            return new String(chars, 0, j);
         }
+
+        return new String(buf.array(), 0, j);
+    }
+
+    /**
+     * Reads a specified number of characters (not bytes).<br>
+     * <p>
+     * This method is meant to be used if R's function {@code readChar} is called with parameter
+     * {@code useBytes=FALSE}.
+     * </p>
+     *
+     * @param nchars The number of characters to read.
+     * @param decoder The stream decoder to use (must not be {@code null}).
+     * @throws IOException
+     */
+    public static String readCharHelper(int nchars, StreamDecoder decoder) throws IOException {
+        // we need a decoder
+        char[] chars = new char[nchars];
+        decoder.read(chars);
+        int j = 0;
+        for (; j < chars.length; j++) {
+            // strings end at 0
+            if (chars[j] == 0) {
+                break;
+            }
+        }
+        return new String(chars, 0, j);
     }
 
     /**
@@ -354,5 +377,16 @@ abstract class DelegateRConnection implements RConnection {
     @Override
     public void pushBack(RAbstractStringVector lines, boolean addNewLine) {
         throw RInternalError.shouldNotReachHere();
+    }
+
+    /**
+     * Creates the stream decoder on demand and returns it.
+     */
+    protected StreamDecoder getDecoder() throws IOException {
+        if (decoder == null) {
+            CharsetDecoder charsetEncoder = base.getEncoding().newDecoder().onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE);
+            decoder = StreamDecoder.forDecoder(getChannel(), charsetEncoder, -1);
+        }
+        return decoder;
     }
 }

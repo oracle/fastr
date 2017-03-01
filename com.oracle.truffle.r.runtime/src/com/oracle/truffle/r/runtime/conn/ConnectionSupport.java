@@ -1061,7 +1061,7 @@ public class ConnectionSupport {
         if (conn instanceof BaseRConnection) {
             return (BaseRConnection) conn;
         } else if (conn instanceof DelegateReadRConnection) {
-            return ((DelegateReadRConnection) conn).base;
+            return ((DelegateRConnection) conn).base;
         } else {
             throw RInternalError.shouldNotReachHere();
         }

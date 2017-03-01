@@ -59,7 +59,11 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
 
     @Override
     public String readChar(int nchars, boolean useBytes) throws IOException {
-        return DelegateRConnection.readCharHelper(nchars, getChannel(), useBytes);
+        if (useBytes) {
+            return DelegateRConnection.readCharHelper(nchars, getChannel());
+        } else {
+            return DelegateRConnection.readCharHelper(nchars, getDecoder());
+        }
     }
 
     @Override

@@ -63,15 +63,23 @@ public abstract class DelegateReadRConnection extends DelegateRConnection {
 
     @Override
     public int getc() throws IOException {
-        tmp.clear();
-        int nread = getChannel().read(tmp);
-        tmp.rewind();
-        return nread > 0 ? tmp.get() : -1;
+        if (isTextMode()) {
+            return getDecoder().read();
+        } else {
+            tmp.clear();
+            int nread = getChannel().read(tmp);
+            tmp.rewind();
+            return nread > 0 ? tmp.get() : -1;
+        }
     }
 
     @Override
     public String readChar(int nchars, boolean useBytes) throws IOException {
-        return DelegateRConnection.readCharHelper(nchars, getChannel(), useBytes);
+        if (useBytes) {
+            return DelegateRConnection.readCharHelper(nchars, getChannel());
+        } else {
+            return DelegateRConnection.readCharHelper(nchars, getDecoder());
+        }
     }
 
     @Override

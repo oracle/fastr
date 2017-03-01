@@ -43,12 +43,23 @@ public interface RConnection extends AutoCloseable {
     }
 
     /**
-     * Return the underlying input stream (for internal use).
+     * Return the underlying input stream (for internal use).<br>
+     * <p>
+     * <b>NOTE:</b> The connection may do some caching internally! Therefore, the behavior is
+     * undefined if you mix using the input stream directly and using the read methods of the
+     * connection.
+     * </p>
+     *
      */
     InputStream getInputStream() throws IOException;
 
     /**
-     * Return the underlying output stream (for internal use).
+     * Return the underlying output stream (for internal use).<br>
+     * <p>
+     * <b>NOTE:</b> The connection may do some caching internally! Therefore, the behavior is
+     * undefined if you mix using the output stream directly and using the write methods of the
+     * connection.
+     * </p>
      */
     OutputStream getOutputStream() throws IOException;
 
