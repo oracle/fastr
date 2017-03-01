@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,15 +79,15 @@ public class StdConnections {
         return RContext.getInstance().stateStdConnections;
     }
 
-    public static RConnection getStdin() {
+    public static BaseRConnection getStdin() {
         return getContextState().stdin;
     }
 
-    public static RConnection getStdout() {
+    public static BaseRConnection getStdout() {
         return getContextState().stdout;
     }
 
-    public static RConnection getStderr() {
+    public static BaseRConnection getStderr() {
         return getContextState().stderr;
     }
 
@@ -161,7 +161,7 @@ public class StdConnections {
         }
 
         @Override
-        public RConnection forceOpen(String modeString) {
+        public BaseRConnection forceOpen(String modeString) {
             return this;
         }
 
@@ -171,7 +171,7 @@ public class StdConnections {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        public long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.UNSEEKABLE_CONNECTION);
         }
     }

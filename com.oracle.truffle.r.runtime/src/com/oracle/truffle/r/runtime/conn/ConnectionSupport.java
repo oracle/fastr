@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,15 +29,29 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -107,7 +120,7 @@ public class ConnectionSupport {
             for (int i = 0; i <= hwm; i++) {
                 WeakReference<BaseRConnection> ref = allConnections.get(i);
                 if (ref != null) {
-                    BaseRConnection con = ref.get();
+                    RConnection con = ref.get();
                     if (con != null) {
                         list.add(i);
                     }
@@ -319,7 +332,9 @@ public class ConnectionSupport {
         Text("textConnection"),
         URL("url"),
         RAW("rawConnection"),
-        Internal("internal");
+        Internal("internal"),
+        PIPE("pipe"),
+        FIFO("fifo");
 
         private final String printName;
 
@@ -342,18 +357,11 @@ public class ConnectionSupport {
         }
     }
 
-    // TODO implement all open modes
-
-    public static final class InvalidConnection extends RConnection {
+    public static final class InvalidConnection implements RConnection {
 
         public static final InvalidConnection instance = new InvalidConnection();
 
         private static final int INVALID_DESCRIPTOR = -1;
-
-        @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
-        }
 
         @Override
         public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
@@ -397,11 +405,6 @@ public class ConnectionSupport {
 
         @Override
         public boolean isSeekable() {
-            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
-        }
-
-        @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
 
@@ -464,6 +467,21 @@ public class ConnectionSupport {
         public boolean isOpen() {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
+
+        @Override
+        public void pushBack(RAbstractStringVector lines, boolean addNewLine) {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public ByteChannel getChannel() throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
     }
 
     /**
@@ -485,7 +503,7 @@ public class ConnectionSupport {
      * it subsequently will throw an error. The latter will open/close the connection (internally)
      * and this can be repeated indefinitely.
      */
-    public abstract static class BaseRConnection extends RConnection {
+    public abstract static class BaseRConnection implements RConnection {
 
         /**
          * {@code true} is the connection has been opened successfully. N.B. This supports lazy
@@ -519,7 +537,73 @@ public class ConnectionSupport {
          */
         private int descriptor;
 
+        private boolean blocking = true;
+
+        /**
+         * The encoding to use to read or to write to the connection.
+         */
+        private Charset encoding;
+
         private ConnectionClass conClass;
+
+        private LinkedList<String> pushBack;
+
+        /**
+         * Indicates that the last line read operation was incomplete.<br>
+         * This is only relevant for connections in text and non-blocking mode.
+         */
+        private boolean incomplete = false;
+
+        /**
+         * The constructor for every connection class except {@link StdConnections}.
+         *
+         * @param conClass the specific class of the connection, e.g, {@link ConnectionClass#File}
+         * @param modeString the mode in which the connection should be opened, "" for lazy opening
+         * @param defaultModeForLazy the mode to use when this connection is opened implicitly
+         * @param blocking Indicates if this connection has been openend in blocking mode.
+         * @param encoding The name of the encoding used to read from or to write to the connection
+         *            ({@code null} is allowed and sets the character set to
+         *            {@code Charset#defaultCharset()}).
+         *
+         */
+        protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy, boolean blocking, String encoding) throws IOException, IllegalCharsetNameException {
+            this(conClass, new OpenMode(modeString, defaultModeForLazy));
+            if (conClass != ConnectionClass.Internal) {
+                this.descriptor = getContextStateImpl().setConnection(this);
+            }
+            this.blocking = blocking;
+            if (encoding != null) {
+                this.encoding = Charset.forName(ConnectionSupport.convertEncodingName(encoding));
+            } else {
+                this.encoding = Charset.defaultCharset();
+            }
+        }
+
+        /**
+         * The constructor for every connection class except {@link StdConnections}.
+         *
+         * @param conClass the specific class of the connection, e.g, {@link ConnectionClass#File}
+         * @param modeString the mode in which the connection should be opened, "" for lazy opening
+         * @param defaultModeForLazy the mode to use when this connection is opened implicitly
+         * @param blocking Indicates if this connection has been openend in blocking mode.
+         *
+         */
+        protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy, boolean blocking) throws IOException {
+            this(conClass, modeString, defaultModeForLazy, blocking, null);
+        }
+
+        /**
+         * The constructor for every connection class except {@link StdConnections}.
+         *
+         * @param conClass the specific class of the connection, e.g, {@link ConnectionClass#File}
+         * @param modeString the mode in which the connection should be opened, "" for lazy opening
+         * @param defaultModeForLazy the mode to use when this connection is opened implicitly
+         * @param encoding The name of the encoding used to read from or to write to the connection.
+         *
+         */
+        protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy, String encoding) throws IOException {
+            this(conClass, modeString, defaultModeForLazy, true, encoding);
+        }
 
         /**
          * The constructor for every connection class except {@link StdConnections}.
@@ -530,10 +614,7 @@ public class ConnectionSupport {
          *
          */
         protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy) throws IOException {
-            this(conClass, new OpenMode(modeString, defaultModeForLazy));
-            if (conClass != ConnectionClass.Internal) {
-                this.descriptor = getContextStateImpl().setConnection(this);
-            }
+            this(conClass, modeString, defaultModeForLazy, true, null);
         }
 
         /**
@@ -611,8 +692,19 @@ public class ConnectionSupport {
             return getOpenMode().isText();
         }
 
+        public boolean isBlocking() {
+            return blocking;
+        }
+
+        /**
+         * Returns the original encoding string.
+         */
+        public Charset getEncoding() {
+            return encoding;
+        }
+
         @Override
-        public RConnection forceOpen(String modeString) throws IOException {
+        public BaseRConnection forceOpen(String modeString) throws IOException {
             if (closed) {
                 throw new IOException(RError.Message.INVALID_CONNECTION.message);
             }
@@ -648,10 +740,9 @@ public class ConnectionSupport {
             opened = true;
         }
 
-        @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+        protected String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
             checkOpen();
-            return theConnection.readLinesInternal(n, warn, skipNul);
+            return theConnection.readLines(n, warn, skipNul);
         }
 
         @Override
@@ -664,6 +755,12 @@ public class ConnectionSupport {
         public OutputStream getOutputStream() throws IOException {
             checkOpen();
             return theConnection.getOutputStream();
+        }
+
+        @Override
+        public ByteChannel getChannel() throws IOException {
+            checkOpen();
+            return theConnection.getChannel();
         }
 
         @Override
@@ -742,8 +839,7 @@ public class ConnectionSupport {
             return theConnection.getc();
         }
 
-        @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        public long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             checkOpen();
             return theConnection.seek(offset, seekMode, seekRWMode);
         }
@@ -786,349 +882,290 @@ public class ConnectionSupport {
         public boolean isClosed() {
             return closed;
         }
+
+        private String readOneLineWithPushBack(List<String> res, int ind) {
+            String s = pushBack.pollLast();
+            if (s == null) {
+                return null;
+            } else {
+                String[] lines = s.split("\n", 2);
+                if (lines.length == 2) {
+                    // we hit end of the line
+                    if (lines[1].length() != 0) {
+                        // suffix is not empty and needs to be processed later
+                        pushBack.push(lines[1]);
+                    }
+                    assert res.size() == ind;
+                    res.add(ind, lines[0]);
+                    return null;
+                } else {
+                    // no end of the line found yet
+                    StringBuilder sb = new StringBuilder();
+                    do {
+                        assert lines.length == 1;
+                        sb.append(lines[0]);
+                        s = pushBack.pollLast();
+                        if (s == null) {
+                            break;
+                        }
+
+                        lines = s.split("\n", 2);
+                        if (lines.length == 2) {
+                            // we hit end of the line
+                            if (lines[1].length() != 0) {
+                                // suffix is not empty and needs to be processed later
+                                pushBack.push(lines[1]);
+                            }
+                            assert res.size() == ind;
+                            res.add(ind, sb.append(lines[0]).toString());
+                            return null;
+                        } // else continue
+                    } while (true);
+                    return sb.toString();
+                }
+            }
+        }
+
+        /**
+         * TODO(fa) This method is subject for refactoring. I modified the original implementation
+         * to be capable to handle a negative 'n' parameter. It indicates to read as much lines as
+         * available.
+         */
+        @TruffleBoundary
+        private String[] readLinesWithPushBack(int n, boolean warn, boolean skipNul) throws IOException {
+            // NOTE: 'n' may be negative indicating to read as much lines as available
+            final List<String> res;
+            if (n >= 0) {
+                res = new ArrayList<>(n);
+            } else {
+                res = new ArrayList<>();
+            }
+
+            for (int i = 0; i < n || n < 0; i++) {
+                String s = readOneLineWithPushBack(res, i);
+                final int remainingLineCount = n >= 0 ? n - i : n;
+                if (s == null) {
+                    if (i >= res.size() || res.get(i) == null) {
+                        // no more push back value
+
+                        String[] resInternal = readLinesInternal(remainingLineCount, warn, skipNul);
+                        res.addAll(Arrays.asList(resInternal));
+                        pushBack = null;
+                        break;
+                    }
+                    // else res[i] has been filled - move to trying to fill the next one
+                } else {
+                    // reached the last push back value without reaching and of line
+                    assert pushBack.size() == 0;
+                    String[] resInternal = readLinesInternal(remainingLineCount, warn, skipNul);
+                    res.addAll(i, Arrays.asList(resInternal));
+                    if (res.get(i) != null) {
+                        res.set(i, s + res.get(i));
+                    } else {
+                        res.set(i, s);
+                    }
+                    pushBack = null;
+                    break;
+                }
+            }
+            return res.toArray(new String[res.size()]);
+        }
+
+        @Override
+        public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
+            if (pushBack == null) {
+                return readLinesInternal(n, warn, skipNul);
+            } else if (pushBack.size() == 0) {
+                pushBack = null;
+                return readLinesInternal(n, warn, skipNul);
+            } else {
+                return readLinesWithPushBack(n, warn, skipNul);
+            }
+        }
+
+        /**
+         * Pushes lines back to the connection.
+         */
+        @Override
+        @TruffleBoundary
+        public final void pushBack(RAbstractStringVector lines, boolean addNewLine) {
+            if (pushBack == null) {
+                pushBack = new LinkedList<>();
+            }
+            for (int i = 0; i < lines.getLength(); i++) {
+                String newLine = lines.getDataAt(i);
+                if (addNewLine) {
+                    newLine = newLine + '\n';
+                }
+                pushBack.addFirst(newLine);
+            }
+        }
+
+        /**
+         * Return the length of the push back.
+         */
+        @TruffleBoundary
+        public final int pushBackLength() {
+            return pushBack == null ? 0 : pushBack.size();
+        }
+
+        /**
+         * Clears the pushback.
+         */
+        @TruffleBoundary
+        public final void pushBackClear() {
+            pushBack = null;
+        }
+
+        /**
+         * Support for {@code seek} Internal. Also clears push back lines.
+         */
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            if (isSeekable()) {
+                // discard any push back strings
+                pushBackClear();
+            }
+            // Do not throw error at this position, since the error messages varies depending on the
+            // connection.
+            return seekInternal(offset, seekMode, seekRWMode);
+        }
+
+        /**
+         * Returns {@code true} iff the last read operation was blocked or there is unflushed
+         * output.
+         */
+        public boolean isIncomplete() {
+            return incomplete;
+        }
+
+        protected void setIncomplete(boolean b) {
+            this.incomplete = b;
+        }
+
+        public final RAbstractIntVector asVector() {
+            String[] classes = new String[]{ConnectionSupport.getBaseConnection(this).getConnectionClass().getPrintName(), "connection"};
+
+            RAbstractIntVector result = RDataFactory.createIntVector(new int[]{getDescriptor()}, true);
+
+            RStringVector classVector = RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR);
+            // it's important to put "this" into the externalptr, so that it doesn't get collected
+            RExternalPtr connectionId = RDataFactory.createExternalPtr(null, this, RDataFactory.createSymbol("connection"), RNull.instance);
+            DynamicObject attrs = RAttributesLayout.createClassWithConnId(classVector, connectionId);
+            result.initAttributes(attrs);
+            return result;
+        }
     }
 
     public static BaseRConnection getBaseConnection(RConnection conn) {
         if (conn instanceof BaseRConnection) {
             return (BaseRConnection) conn;
         } else if (conn instanceof DelegateReadRConnection) {
-            return ((DelegateReadRConnection) conn).base;
+            return ((DelegateRConnection) conn).base;
         } else {
             throw RInternalError.shouldNotReachHere();
-        }
-    }
-
-    interface ReadWriteHelper {
-
-        /**
-         * {@code readLines} from an {@link InputStream}. It would be convenient to use a
-         * {@link BufferedReader} but mixing binary and text operations, which is a requirement,
-         * would then be difficult.
-         *
-         * @param warn TODO
-         * @param skipNul TODO
-         */
-        default String[] readLinesHelper(InputStream in, int n, boolean warn, boolean skipNul) throws IOException {
-            ArrayList<String> lines = new ArrayList<>();
-            int totalRead = 0;
-            byte[] buffer = new byte[64];
-            int pushBack = 0;
-            while (true) {
-                int ch;
-                if (pushBack != 0) {
-                    ch = pushBack;
-                    pushBack = 0;
-                } else {
-                    ch = in.read();
-                }
-                boolean lineEnd = false;
-                if (ch < 0) {
-                    if (totalRead > 0) {
-                        /*
-                         * TODO GnuR says keep data and output a warning if blocking, otherwise
-                         * silently push back. FastR doesn't support non-blocking yet, so we keep
-                         * the data. Some refactoring is needed to be able to reliably access the
-                         * "name" for the warning.
-                         */
-                        lines.add(new String(buffer, 0, totalRead));
-                        if (warn) {
-                            RError.warning(RError.SHOW_CALLER2, RError.Message.INCOMPLETE_FINAL_LINE, "TODO: connection path");
-                        }
-                    }
-                    break;
-                }
-                if (ch == '\n') {
-                    lineEnd = true;
-                } else if (ch == '\r') {
-                    lineEnd = true;
-                    ch = in.read();
-                    if (ch == '\n') {
-                        // swallow the trailing lf
-                    } else {
-                        pushBack = ch;
-                    }
-                }
-                if (lineEnd) {
-                    lines.add(new String(buffer, 0, totalRead));
-                    if (n > 0 && lines.size() == n) {
-                        break;
-                    }
-                    totalRead = 0;
-                } else {
-                    buffer = checkBuffer(buffer, totalRead);
-                    buffer[totalRead++] = (byte) (ch & 0xFF);
-                }
-            }
-            String[] result = new String[lines.size()];
-            lines.toArray(result);
-            return result;
-        }
-
-        default void writeLinesHelper(OutputStream out, RAbstractStringVector lines, String sep) throws IOException {
-            for (int i = 0; i < lines.getLength(); i++) {
-                out.write(lines.getDataAt(i).getBytes());
-                out.write(sep.getBytes());
-            }
-        }
-
-        default void writeStringHelper(OutputStream out, String s, boolean nl) throws IOException {
-            out.write(s.getBytes());
-            if (nl) {
-                out.write('\n');
-            }
-        }
-
-        default void writeCharHelper(OutputStream out, String s, int pad, String eos) throws IOException {
-            out.write(s.getBytes());
-            if (pad > 0) {
-                for (int i = 0; i < pad; i++) {
-                    out.write(0);
-                }
-            }
-            if (eos != null) {
-                if (eos.length() > 0) {
-                    out.write(eos.getBytes());
-                }
-                // function writeChar is defined to append the null character if eos != null
-                out.write(0);
-            }
-        }
-
-        default void writeBinHelper(ByteBuffer buffer, OutputStream outputStream) throws IOException {
-            int n = buffer.remaining();
-            byte[] b = new byte[n];
-            buffer.get(b);
-            outputStream.write(b);
-        }
-
-        /**
-         * Reads null-terminated character strings from an {@link InputStream}.
-         */
-        default byte[] readBinCharsHelper(InputStream in) throws IOException {
-            int ch = in.read();
-            if (ch < 0) {
-                return null;
-            }
-            int totalRead = 0;
-            byte[] buffer = new byte[64];
-            while (true) {
-                buffer = checkBuffer(buffer, totalRead);
-                buffer[totalRead++] = (byte) (ch & 0xFF);
-                if (ch == 0) {
-                    break;
-                }
-                ch = in.read();
-            }
-            return buffer;
-        }
-
-        default int readBinHelper(ByteBuffer buffer, InputStream inputStream) throws IOException {
-            int bytesToRead = buffer.remaining();
-            byte[] b = new byte[bytesToRead];
-            int totalRead = 0;
-            int thisRead = 0;
-            while ((totalRead < bytesToRead) && ((thisRead = inputStream.read(b, totalRead, bytesToRead - totalRead)) > 0)) {
-                totalRead += thisRead;
-            }
-            buffer.put(b, 0, totalRead);
-            return totalRead;
-        }
-
-        default String readCharHelper(int nchars, InputStream in, @SuppressWarnings("unused") boolean useBytes) throws IOException {
-            byte[] bytes = new byte[nchars];
-            in.read(bytes);
-            int j = 0;
-            for (; j < bytes.length; j++) {
-                // strings end at 0
-                if (bytes[j] == 0) {
-                    break;
-                }
-            }
-            return new String(bytes, 0, j);
-        }
-    }
-
-    private static byte[] checkBuffer(byte[] buffer, int n) {
-        if (n > buffer.length - 1) {
-            byte[] newBuffer = new byte[buffer.length + buffer.length / 2];
-            System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
-            return newBuffer;
-        } else {
-            return buffer;
-        }
-    }
-
-    abstract static class DelegateRConnection extends RConnection {
-        protected BaseRConnection base;
-
-        DelegateRConnection(BaseRConnection base) {
-            this.base = base;
-        }
-
-        @Override
-        public int getDescriptor() {
-            return base.getDescriptor();
-        }
-
-        @Override
-        public boolean isTextMode() {
-            return base.isTextMode();
-        }
-
-        @Override
-        public boolean isOpen() {
-            return base.isOpen();
-        }
-
-        @Override
-        public RConnection forceOpen(String modeString) throws IOException {
-            return base.forceOpen(modeString);
-        }
-
-        @Override
-        public boolean isSeekable() {
-            return false;
-        }
-
-        @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.UNSEEKABLE_CONNECTION);
-        }
-    }
-
-    abstract static class DelegateReadRConnection extends DelegateRConnection {
-        protected DelegateReadRConnection(BaseRConnection base) {
-            super(base);
-        }
-
-        @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
-        }
-
-        @Override
-        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-            throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
-        }
-
-        @Override
-        public void writeString(String s, boolean nl) throws IOException {
-            throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
-        }
-
-        @Override
-        public void writeBin(ByteBuffer buffer) throws IOException {
-            throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
-        }
-
-        @Override
-        public int getc() throws IOException {
-            return getInputStream().read();
-        }
-
-        @Override
-        public void flush() {
-            // nothing to do
-        }
-
-        @Override
-        public OutputStream getOutputStream() {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public boolean canRead() {
-            return true;
-        }
-
-        @Override
-        public boolean canWrite() {
-            return false;
-        }
-    }
-
-    abstract static class DelegateWriteRConnection extends DelegateRConnection {
-        protected DelegateWriteRConnection(BaseRConnection base) {
-            super(base);
-        }
-
-        @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
-        }
-
-        @Override
-        public String readChar(int nchars, boolean useBytes) throws IOException {
-            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
-        }
-
-        @Override
-        public int readBin(ByteBuffer buffer) throws IOException {
-            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
-        }
-
-        @Override
-        public byte[] readBinChars() throws IOException {
-            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
-        }
-
-        @Override
-        public int getc() throws IOException {
-            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public boolean canRead() {
-            return false;
-        }
-
-        @Override
-        public boolean canWrite() {
-            return true;
-        }
-    }
-
-    abstract static class DelegateReadWriteRConnection extends DelegateRConnection {
-        protected DelegateReadWriteRConnection(BaseRConnection base) {
-            super(base);
-        }
-
-        @Override
-        public boolean canRead() {
-            return true;
-        }
-
-        @Override
-        public boolean canWrite() {
-            return true;
-        }
-
-        @Override
-        public int getc() throws IOException {
-            return getInputStream().read();
         }
     }
 
     abstract static class BasePathRConnection extends BaseRConnection {
+        /** The path of the actual file to open. */
         protected final String path;
 
-        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString) throws IOException {
-            this(path, connectionClass, modeString, AbstractOpenMode.Read);
+        /** The description used in the call (required summary output). */
+        protected final String description;
+
+        protected BasePathRConnection(String description, String path, ConnectionClass connectionClass, String modeString, String encoding) throws IOException {
+            this(description, path, connectionClass, modeString, AbstractOpenMode.Read, encoding);
         }
 
-        protected BasePathRConnection(String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode) throws IOException {
-            super(connectionClass, modeString, defaultLazyOpenMode);
+        protected BasePathRConnection(String description, String path, ConnectionClass connectionClass, String modeString, boolean blocking, String encoding) throws IOException {
+            this(description, path, connectionClass, modeString, AbstractOpenMode.Read, blocking, encoding);
+        }
+
+        protected BasePathRConnection(String description, String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode, String encoding) throws IOException {
+            super(connectionClass, modeString, defaultLazyOpenMode, encoding);
             this.path = Utils.tildeExpand(path);
+            this.description = description;
+        }
+
+        protected BasePathRConnection(String description, String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode, boolean blocking, String encoding)
+                        throws IOException {
+            super(connectionClass, modeString, defaultLazyOpenMode, blocking, encoding);
+            this.path = Utils.tildeExpand(path);
+            this.description = description;
         }
 
         @Override
         public String getSummaryDescription() {
-            return path;
+            // Use 'description' and not 'path' since this may be different, e.g., on temp files.
+            return description;
         }
+    }
+
+    public static ByteChannel newChannel(InputStream in) {
+        final ReadableByteChannel newChannel = Channels.newChannel(in);
+        return new ByteChannel() {
+
+            @Override
+            public int read(ByteBuffer dst) throws IOException {
+                return newChannel.read(dst);
+            }
+
+            @Override
+            public boolean isOpen() {
+                return newChannel.isOpen();
+            }
+
+            @Override
+            public void close() throws IOException {
+                newChannel.close();
+
+            }
+
+            @Override
+            public int write(ByteBuffer src) throws IOException {
+                throw new IOException("This channel is read-only.");
+            }
+        };
+    }
+
+    public static ByteChannel newChannel(OutputStream out) {
+        final WritableByteChannel newChannel = Channels.newChannel(out);
+        return new ByteChannel() {
+
+            @Override
+            public int read(ByteBuffer dst) throws IOException {
+                throw new IOException("This channel is write-only.");
+            }
+
+            @Override
+            public boolean isOpen() {
+                return newChannel.isOpen();
+            }
+
+            @Override
+            public void close() throws IOException {
+                newChannel.close();
+
+            }
+
+            @Override
+            public int write(ByteBuffer src) throws IOException {
+                return newChannel.write(src);
+            }
+        };
+    }
+
+    /**
+     * Converts between character set names of iconv and Java.
+     *
+     * @param encoding The iconv name of the character set to use.
+     * @return The Java name of the character set to use.
+     */
+    public static String convertEncodingName(String encoding) {
+        if (encoding == null || encoding.isEmpty() || "native.enc".equals(encoding)) {
+            return Charset.defaultCharset().name();
+        }
+        return encoding;
     }
 }

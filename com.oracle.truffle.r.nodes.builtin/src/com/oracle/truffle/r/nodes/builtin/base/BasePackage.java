@@ -267,6 +267,8 @@ public class BasePackage extends RBuiltinPackage {
         add(ConnectionFunctions.SocketConnection.class, ConnectionFunctionsFactory.SocketConnectionNodeGen::create);
         add(ConnectionFunctions.RawConnection.class, ConnectionFunctionsFactory.RawConnectionNodeGen::create);
         add(ConnectionFunctions.RawConnectionValue.class, ConnectionFunctionsFactory.RawConnectionValueNodeGen::create);
+        add(ConnectionFunctions.Fifo.class, ConnectionFunctionsFactory.FifoNodeGen::create);
+        add(ConnectionFunctions.Pipe.class, ConnectionFunctionsFactory.PipeNodeGen::create);
         add(ConnectionFunctions.Stderr.class, ConnectionFunctionsFactory.StderrNodeGen::create);
         add(ConnectionFunctions.Stdin.class, ConnectionFunctionsFactory.StdinNodeGen::create);
         add(ConnectionFunctions.Stdout.class, ConnectionFunctionsFactory.StdoutNodeGen::create);
@@ -277,6 +279,7 @@ public class BasePackage extends RBuiltinPackage {
         add(ConnectionFunctions.WriteBin.class, ConnectionFunctionsFactory.WriteBinNodeGen::create);
         add(ConnectionFunctions.WriteChar.class, ConnectionFunctionsFactory.WriteCharNodeGen::create);
         add(ConnectionFunctions.WriteLines.class, ConnectionFunctionsFactory.WriteLinesNodeGen::create);
+        add(ConnectionFunctions.IsIncomplete.class, ConnectionFunctionsFactory.IsIncompleteNodeGen::create);
         add(Contributors.class, ContributorsNodeGen::create);
         add(CopyDFAttr.class, CopyDFAttrNodeGen::create);
         add(Crossprod.class, CrossprodNodeGen::create);

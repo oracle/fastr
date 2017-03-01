@@ -24,25 +24,21 @@ package com.oracle.truffle.r.runtime.conn;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ReadWriteHelper;
 
 public class URLConnections {
     public static class URLRConnection extends BaseRConnection {
         protected final String urlString;
 
-        public URLRConnection(String url, String modeString) throws IOException {
-            super(ConnectionClass.URL, modeString, AbstractOpenMode.Read);
+        public URLRConnection(String url, String modeString, String encoding) throws IOException {
+            super(ConnectionClass.URL, modeString, AbstractOpenMode.Read, encoding);
             this.urlString = url;
         }
 
@@ -56,6 +52,7 @@ public class URLConnections {
             DelegateRConnection delegate = null;
             switch (getOpenMode().abstractOpenMode) {
                 case Read:
+                case ReadBinary:
                     delegate = new URLReadRConnection(this);
                     break;
                 default:
@@ -65,50 +62,24 @@ public class URLConnections {
         }
     }
 
-    private static class URLReadRConnection extends DelegateReadRConnection implements ReadWriteHelper {
+    private static class URLReadRConnection extends DelegateReadRConnection {
 
-        private final BufferedInputStream inputStream;
+        private final ByteChannel rchannel;
 
         protected URLReadRConnection(URLRConnection base) throws MalformedURLException, IOException {
             super(base);
             URL url = new URL(base.urlString);
-            inputStream = new BufferedInputStream(url.openStream());
+            rchannel = ConnectionSupport.newChannel(new BufferedInputStream(url.openStream()));
         }
 
         @Override
-        public int readBin(ByteBuffer buffer) throws IOException {
-            throw RError.nyi(null, "readBin on URL");
+        public ByteChannel getChannel() {
+            return rchannel;
         }
 
         @Override
-        public byte[] readBinChars() throws IOException {
-            throw RError.nyi(null, "readBinChars on URL");
-        }
-
-        @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            return readLinesHelper(inputStream, n, warn, skipNul);
-        }
-
-        @Override
-        public InputStream getInputStream() throws IOException {
-            return inputStream;
-        }
-
-        @Override
-        public void closeAndDestroy() throws IOException {
-            base.closed = true;
-            close();
-        }
-
-        @Override
-        public void close() throws IOException {
-            inputStream.close();
-        }
-
-        @Override
-        public String readChar(int nchars, boolean useBytes) throws IOException {
-            return readCharHelper(nchars, inputStream, useBytes);
+        public boolean isSeekable() {
+            return false;
         }
     }
 }

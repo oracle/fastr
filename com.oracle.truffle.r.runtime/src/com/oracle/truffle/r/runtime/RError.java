@@ -373,6 +373,7 @@ public final class RError extends RuntimeException {
         ONLY_WRITE_BINARY_CONNECTION("can only write to a binary connection"),
         ONLY_WRITE_CHAR_OBJECTS("can only write character objects"),
         NOT_A_TEXT_CONNECTION("'con' is not a textConnection"),
+        NOT_AN_OUTPUT_TEXT_CONNECTION("'con' is not an output textConnection"),
         UNSEEKABLE_CONNECTION("'con' is not seekable"),
         MUST_BE_STRING_OR_CONNECTION("'%s' must be a character string or a connection"),
         MORE_CHARACTERS("writeChar: more characters requested than are in the string - will zero-pad"),
@@ -831,7 +832,14 @@ public final class RError extends RuntimeException {
         NOT_AN_OUTPUT_RAW_CONNECTION("'con' is not an output rawConnection"),
         NOT_A_RAW_CONNECTION("'con' is not a rawConnection"),
         SEEK_OUTSITE_RAW_CONNECTION("attempt to seek outside the range of the raw connection"),
-        VECTOR_IS_TOO_LARGE("vector is too large");
+        VECTOR_IS_TOO_LARGE("vector is too large"),
+        SEEK_NOT_RELEVANT_FOR_TEXT_CON("seek is not relevant for text connection"),
+        NOT_ENABLED_FOR_THIS_CONN("'%s' not enabled for this connection"),
+        CANNOT_OPEN_FIFO("cannot open fifo '%s'"),
+        UNSUPPORTED_ENCODING_CONVERSION("unsupported conversion from '%s' to '%s'"),
+        UNABLE_TO_RESOLVE("unable to resolve '%s'"),
+        LINE_CONTAINS_EMBEDDED_NULLS("line %d appears to contain an embedded nul"),
+        UNSUPPORTED_URL_METHOD("method = \"%s\" is not supported");
 
         public final String message;
         final boolean hasArgs;

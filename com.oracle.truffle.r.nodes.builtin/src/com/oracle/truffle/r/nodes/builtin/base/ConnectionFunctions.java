@@ -49,10 +49,12 @@ import static com.oracle.truffle.r.runtime.conn.StdConnections.getStdout;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
+import java.nio.charset.IllegalCharsetNameException;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -63,15 +65,18 @@ import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.WriteDataNodeGen;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.HeadPhaseBuilder;
+import com.oracle.truffle.r.nodes.builtin.casts.fluent.InitialPhaseBuilder;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.conn.CompressedConnections.CompressedRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
+import com.oracle.truffle.r.runtime.conn.FifoConnections.FifoRConnection;
+import com.oracle.truffle.r.runtime.conn.FileConnections.CompressedRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
+import com.oracle.truffle.r.runtime.conn.PipeConnections.PipeRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.RawConnections.RawRConnection;
 import com.oracle.truffle.r.runtime.conn.SocketConnections.RSocketConnection;
@@ -139,8 +144,16 @@ public abstract class ConnectionFunctions {
     }
 
     public static final class CastsHelper {
-        private static void description(Casts casts) {
-            casts.arg("description").mustBe(stringValue()).asStringVector().shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").findFirst().mustNotBeNA();
+        private static HeadPhaseBuilder<String> description(Casts casts) {
+            return descriptionInternal(casts.arg("description"));
+        }
+
+        private static HeadPhaseBuilder<String> descriptionNull(Casts casts) {
+            return descriptionInternal(casts.arg("description").allowNull());
+        }
+
+        private static HeadPhaseBuilder<String> descriptionInternal(InitialPhaseBuilder<Object> casts) {
+            return casts.mustBe(stringValue()).asStringVector().shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").findFirst().mustNotBeNA();
         }
 
         private static HeadPhaseBuilder<String> open(Casts casts) {
@@ -189,7 +202,11 @@ public abstract class ConnectionFunctions {
         }
 
         private static void method(Casts casts) {
-            casts.arg("method").asStringVector().findFirst();
+            casts.arg("method").asStringVector().findFirst().mustBe(equalTo("default").or(equalTo("internal")), RError.Message.UNSUPPORTED_URL_METHOD);
+        }
+
+        static void blockingNotSupported(Casts casts) {
+            casts.arg("blocking").asLogicalVector().findFirst().mustBe(logicalTrue(), RError.Message.NYI, "non-blocking mode not supported").map(toBoolean());
         }
     }
 
@@ -200,7 +217,7 @@ public abstract class ConnectionFunctions {
             Casts casts = new Casts(File.class);
             CastsHelper.description(casts);
             CastsHelper.open(casts);
-            casts.arg("blocking").asLogicalVector().findFirst().mustBe(logicalTrue(), RError.Message.NYI, "non-blocking mode not supported").map(toBoolean());
+            CastsHelper.blocking(casts);
             CastsHelper.encoding(casts);
             CastsHelper.method(casts);
             CastsHelper.raw(casts);
@@ -208,11 +225,25 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        @SuppressWarnings("unused")
-        protected RAbstractIntVector file(String description, String openArg, boolean blocking, String encoding, String method, boolean raw) {
+        protected RAbstractIntVector file(String description, String openArg, boolean blocking, String encoding, @SuppressWarnings("unused") String method, boolean raw) {
             String open = openArg;
-            // TODO handle http/ftp prefixes and redirect and method
-            String path = removeFileURLPrefix(description);
+
+            // check if the description is an URL and dispatch if necessary
+            String path = description;
+            try {
+                URL url = new URL(description);
+                if (!"file".equals(url.getProtocol())) {
+                    return new URLRConnection(description, open, encoding).asVector();
+                } else {
+                    path = removeFileURLPrefix(description);
+                }
+            } catch (MalformedURLException e) {
+                // ignore and try to open file
+            } catch (IOException e) {
+                RError.warning(RError.SHOW_CALLER, RError.Message.UNABLE_TO_RESOLVE, e.getMessage());
+                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_CONNECTION);
+            }
+
             if (path.length() == 0) {
                 // special case, temp file opened in "w+" or "w+b" only
                 if (open.length() == 0) {
@@ -225,10 +256,12 @@ public abstract class ConnectionFunctions {
                 }
             }
             try {
-                return new FileRConnection(path, open).asVector();
+                return new FileRConnection(description, path, open, blocking, encoding, raw).asVector();
             } catch (IOException ex) {
                 warning(RError.Message.CANNOT_OPEN_FILE, description, ex.getMessage());
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);
+            } catch (IllegalCharsetNameException ex) {
+                throw error(RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
     }
@@ -256,11 +289,13 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector zzFile(RAbstractStringVector description, String open, String encoding, int compression) {
+        protected RAbstractIntVector zzFile(String description, String open, String encoding, int compression) {
             try {
-                return new CompressedRConnection(description.getDataAt(0), open, cType, encoding, compression).asVector();
+                return new CompressedRConnection(description, open, cType, encoding, compression).asVector();
             } catch (IOException ex) {
-                throw reportError(description.getDataAt(0), ex);
+                throw reportError(description, ex);
+            } catch (IllegalCharsetNameException ex) {
+                throw RError.error(RError.SHOW_CALLER, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
 
@@ -308,10 +343,7 @@ public abstract class ConnectionFunctions {
 
         static {
             Casts casts = new Casts(TextConnection.class);
-            CastsHelper.description(casts);
-            // TODO how to have either a RNull or a String/RStringVector and have the latter coerced
-            // to a
-            // RAbstractStringVector to avoid the explicit handling in the specialization
+            CastsHelper.descriptionNull(casts);
             casts.arg("text").allowNull().mustBe(stringValue());
             CastsHelper.open(casts).mustBe(equalTo("").or(equalTo("r").or(equalTo("w").or(equalTo("a")))), RError.Message.UNSUPPORTED_MODE);
             casts.arg("env").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
@@ -328,15 +360,9 @@ public abstract class ConnectionFunctions {
             }
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        @TruffleBoundary
-        protected RAbstractIntVector textConnection(String description, RNull text, String open, REnvironment env, int encoding) {
-            if (open.length() == 0 || open.equals("r")) {
-                throw error(RError.Message.INVALID_ARGUMENT, "text");
-            } else {
-                throw RError.nyi(RError.SHOW_CALLER, "textConnection: NULL");
-            }
+        protected RAbstractIntVector textConnection(String description, @SuppressWarnings("unused") RNull text, String open, REnvironment env, int encoding) {
+            return textConnection(description, (RAbstractStringVector) null, open, env, encoding);
         }
     }
 
@@ -350,10 +376,10 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object textConnection(int con) {
+        protected RAbstractStringVector textConnection(int con) {
             RConnection connection = RConnection.fromIndex(con);
             if (connection instanceof TextRConnection) {
-                return RDataFactory.createStringVector(((TextRConnection) connection).getValue(), RDataFactory.COMPLETE_VECTOR);
+                return ((TextRConnection) connection).getValue();
             } else {
                 throw error(Message.NOT_A_TEXT_CONNECTION);
             }
@@ -375,11 +401,14 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector socketConnection(String host, int port, boolean server, boolean blocking, String open, @SuppressWarnings("unused") RAbstractStringVector encoding, int timeout) {
+        protected RAbstractIntVector socketConnection(String host, int port, boolean server, boolean blocking, String open,
+                        String encoding, int timeout) {
             try {
-                return new RSocketConnection(open, server, host, port, blocking, timeout).asVector();
+                return new RSocketConnection(open, server, host, port, blocking, timeout, encoding).asVector();
             } catch (IOException ex) {
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);
+            } catch (IllegalCharsetNameException ex) {
+                throw error(RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
     }
@@ -398,14 +427,16 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector urlConnection(String url, String open, @SuppressWarnings("unused") boolean blocking, @SuppressWarnings("unused") String encoding,
+        protected RAbstractIntVector urlConnection(String url, String open, @SuppressWarnings("unused") boolean blocking, String encoding,
                         @SuppressWarnings("unused") String method) {
             try {
-                return new URLRConnection(url, open).asVector();
+                return new URLRConnection(url, open, encoding).asVector();
             } catch (MalformedURLException ex) {
                 throw error(RError.Message.UNSUPPORTED_URL_SCHEME);
             } catch (IOException ex) {
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);
+            } catch (IllegalCharsetNameException ex) {
+                throw error(RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
     }
@@ -452,7 +483,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object textConnection(int con) {
-            RConnection connection = RConnection.fromIndex(con);
+            BaseRConnection connection = RConnection.fromIndex(con);
             if (connection instanceof RawRConnection) {
                 return RDataFactory.createRawVector(((RawRConnection) connection).getValue());
             } else {
@@ -585,7 +616,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object readLines(int con, int n, boolean ok, boolean warn, @SuppressWarnings("unused") String encoding, boolean skipNul) {
-            // TODO implement all the arguments
+            // TODO Implement argument 'encoding'.
             try (RConnection openConn = RConnection.fromIndex(con).forceOpen("rt")) {
                 String[] lines = openConn.readLines(n, warn, skipNul);
                 if (n > 0 && lines.length < n && !ok) {
@@ -708,7 +739,7 @@ public abstract class ConnectionFunctions {
         @Specialization(guards = "!ncharsEmpty(nchars)")
         @TruffleBoundary
         protected RStringVector readChar(int con, RAbstractIntVector nchars, boolean useBytes) {
-            try (RConnection openConn = RConnection.fromIndex(con).forceOpen("rb")) {
+            try (BaseRConnection openConn = RConnection.fromIndex(con).forceOpen("rb")) {
                 String[] data = new String[nchars.getLength()];
                 for (int i = 0; i < data.length; i++) {
                     data[i] = openConn.readChar(nchars.getDataAt(i), useBytes);
@@ -748,10 +779,10 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         private RNull writeCharGeneric(RAbstractStringVector object, int con, RAbstractIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
             try (RConnection openConn = RConnection.fromIndex(con).forceOpen("wb")) {
-                int length = object.getLength();
+                final int length = object.getLength();
+                final int ncharsLen = nchars.getLength();
                 for (int i = 0; i < length; i++) {
-                    // FIXME: 'i % length' is probably wrong
-                    int nc = nchars.getDataAt(i % length);
+                    int nc = nchars.getDataAt(i % ncharsLen);
                     String s = object.getDataAt(i);
                     final int writeLen = Math.min(s.length(), nc);
                     int pad = nc - s.length();
@@ -1187,13 +1218,15 @@ public abstract class ConnectionFunctions {
              * for the NA (enquiry) case.
              */
             long offset = 0;
+            final int actualOrigin;
             if (RRuntime.isNAorNaN(where)) {
-                origin = 0;
+                actualOrigin = 0;
             } else {
                 offset = (long) where;
+                actualOrigin = origin;
             }
             try {
-                long newOffset = RConnection.fromIndex(con).seek(offset, RConnection.SeekMode.values()[origin], RConnection.SeekRWMode.values()[rw]);
+                long newOffset = RConnection.fromIndex(con).seek(offset, RConnection.SeekMode.values()[actualOrigin], RConnection.SeekRWMode.values()[rw]);
                 if (newOffset > Integer.MAX_VALUE) {
                     throw RError.nyi(RError.SHOW_CALLER, "seek > Integer.MAX_VALUE");
                 }
@@ -1201,6 +1234,78 @@ public abstract class ConnectionFunctions {
             } catch (IOException x) {
                 throw error(RError.Message.GENERIC, x.getMessage());
             }
+        }
+    }
+
+    @RBuiltin(name = "fifo", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding"}, behavior = IO)
+    public abstract static class Fifo extends RBuiltinNode {
+
+        static {
+            Casts casts = new Casts(Fifo.class);
+            CastsHelper.description(casts);
+            CastsHelper.open(casts);
+            // We cannot support non-blocking because Java does simply not allow to open a file or
+            // named pipe in non-blocking mode.
+            CastsHelper.blockingNotSupported(casts);
+            CastsHelper.encoding(casts);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RAbstractIntVector fifo(String path, String openArg, boolean blocking, String encoding) {
+
+            String open = openArg;
+            try {
+                return new FifoRConnection(path, open, blocking, encoding).asVector();
+            } catch (IOException ex) {
+                RError.warning(this, RError.Message.CANNOT_OPEN_FIFO, path);
+                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_CONNECTION);
+            } catch (IllegalCharsetNameException ex) {
+                throw RError.error(RError.SHOW_CALLER, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
+            }
+        }
+    }
+
+    @RBuiltin(name = "pipe", kind = INTERNAL, parameterNames = {"description", "open", "encoding"}, behavior = IO)
+    public abstract static class Pipe extends RBuiltinNode {
+
+        static {
+            Casts casts = new Casts(Pipe.class);
+            CastsHelper.description(casts);
+            CastsHelper.open(casts);
+            CastsHelper.encoding(casts);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RAbstractIntVector pipe(String path, String openArg, String encoding) {
+
+            String open = openArg;
+            try {
+                return new PipeRConnection(path, open, encoding).asVector();
+            } catch (IOException ex) {
+                RError.warning(this, RError.Message.CANNOT_OPEN_FIFO, path);
+                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_CONNECTION);
+            } catch (IllegalCharsetNameException ex) {
+                throw RError.error(RError.SHOW_CALLER, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
+            }
+        }
+    }
+
+    @RBuiltin(name = "isIncomplete", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
+    public abstract static class IsIncomplete extends RBuiltinNode {
+
+        static {
+            Casts casts = new Casts(IsIncomplete.class);
+            CastsHelper.connection(casts);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RLogicalVector isIncomplete(int con) {
+
+            final boolean res = RConnection.fromIndex(con).isIncomplete();
+            return RDataFactory.createLogicalVectorFromScalar(res);
         }
     }
 }

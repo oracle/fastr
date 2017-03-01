@@ -23,9 +23,9 @@
 package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
 import java.util.ArrayList;
 
 import com.oracle.truffle.r.runtime.RError;
@@ -33,9 +33,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateWriteRConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -45,7 +42,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 public class TextConnections {
     public static class TextRConnection extends BaseRConnection {
         protected String description;
-        protected RAbstractStringVector object;
+        private final RAbstractStringVector object;
         protected REnvironment env;
 
         public TextRConnection(String description, RAbstractStringVector object, REnvironment env, String modeString) throws IOException {
@@ -66,10 +63,14 @@ public class TextConnections {
             DelegateRConnection delegate = null;
             switch (getOpenMode().abstractOpenMode) {
                 case Read:
-                    delegate = new TextReadRConnection(this);
+                    if (object != null) {
+                        delegate = new TextReadRConnection(this, object);
+                    } else {
+                        throw RError.error(RError.SHOW_CALLER2, RError.Message.INVALID_ARGUMENT, "text");
+                    }
                     break;
                 case Write:
-                    delegate = new TextWriteRConnection(this);
+                    delegate = new TextWriteRConnection(this, object);
                     break;
                 default:
                     throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + getOpenMode().modeString);
@@ -77,24 +78,25 @@ public class TextConnections {
             setDelegate(delegate);
         }
 
-        public String[] getValue() {
+        public RAbstractStringVector getValue() {
             return ((GetConnectionValue) theConnection).getValue();
         }
     }
 
     private interface GetConnectionValue {
-        String[] getValue();
+        RAbstractStringVector getValue();
     }
 
     private static class TextReadRConnection extends DelegateReadRConnection implements GetConnectionValue {
         private final String[] lines;
         private int index;
 
-        TextReadRConnection(TextRConnection base) {
+        TextReadRConnection(TextRConnection base, RAbstractStringVector object) {
             super(base);
+            assert object != null;
             StringBuffer sb = new StringBuffer();
-            for (int i = 0; i < base.object.getLength(); i++) {
-                sb.append(base.object.getDataAt(i));
+            for (int i = 0; i < object.getLength(); i++) {
+                sb.append(object.getDataAt(i));
                 // vector elements are implicitly terminated with a newline
                 sb.append('\n');
             }
@@ -102,7 +104,7 @@ public class TextConnections {
         }
 
         @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+        public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
             int nleft = lines.length - index;
             int nlines = nleft;
             if (n > 0) {
@@ -115,44 +117,24 @@ public class TextConnections {
             return result;
         }
 
-        @SuppressWarnings("hiding")
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
+        public void close() throws IOException {
+            // nothing to do
         }
 
         @Override
-        public InputStream getInputStream() throws IOException {
+        public boolean isSeekable() {
+            return false;
+        }
+
+        @Override
+        public ByteChannel getChannel() {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        public void closeAndDestroy() throws IOException {
-            base.closed = true;
-        }
-
-        @Override
-        public void close() {
-        }
-
-        @Override
-        public int readBin(ByteBuffer buffer) throws IOException {
-            throw RError.nyi(null, "readBin on text connection");
-        }
-
-        @Override
-        public byte[] readBinChars() throws IOException {
-            throw RError.nyi(null, "readBinChars on text connection");
-        }
-
-        @Override
-        public String readChar(int nchars, boolean useBytes) throws IOException {
-            throw RError.nyi(null, "readChar on text connection");
-        }
-
-        @Override
-        public String[] getValue() {
-            throw RError.nyi(null, "textConnectionValue");
+        public RAbstractStringVector getValue() {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.NOT_AN_OUTPUT_TEXT_CONNECTION);
         }
     }
 
@@ -160,31 +142,39 @@ public class TextConnections {
         private String incompleteLine;
         private RStringVector textVec;
         private String idName;
+        private RAbstractStringVector object;
+
+        /** Indicates if the connection is anonymous, i.e., not input object has been provided. */
+        private final boolean anonymous;
 
         private void initTextVec(RStringVector v, TextRConnection textBase) {
-            if (textBase.description.equals("NULL")) {
-                throw RError.nyi(null, "anonymous text output connection");
+
+            if (anonymous) {
+                object = v;
+            } else {
+                idName = object.getDataAt(0);
+                try {
+                    textVec = v;
+                    textBase.env.put(idName, textVec);
+                } catch (PutException ex) {
+                    throw RError.error(RError.SHOW_CALLER2, ex);
+                }
+                // lock the binding
+                textBase.env.lockBinding(idName);
             }
-            idName = textBase.object.getDataAt(0);
-            try {
-                textVec = v;
-                textBase.env.put(idName, textVec);
-            } catch (PutException ex) {
-                throw RError.error(RError.SHOW_CALLER2, ex);
-            }
-            // lock the binding
-            textBase.env.lockBinding(idName);
         }
 
-        protected TextWriteRConnection(BaseRConnection base) {
+        protected TextWriteRConnection(BaseRConnection base, RAbstractStringVector object) {
             super(base);
+            this.object = object;
+            this.anonymous = object == null;
             TextRConnection textBase = (TextRConnection) base;
             initTextVec(RDataFactory.createStringVector(0), textBase);
         }
 
         @Override
-        public OutputStream getOutputStream() throws IOException {
-            return new ConnectionOutputStream();
+        public ByteChannel getChannel() {
+            return ConnectionSupport.newChannel(new ConnectionOutputStream());
         }
 
         @Override
@@ -193,10 +183,17 @@ public class TextConnections {
             if (incompleteLine != null) {
                 appendData(new String[]{incompleteLine});
                 incompleteLine = null;
+                base.setIncomplete(false);
             }
             base.closed = true;
             TextRConnection textBase = (TextRConnection) base;
-            textBase.env.unlockBinding(idName);
+            unlockBinding(textBase);
+        }
+
+        private void unlockBinding(TextRConnection textBase) {
+            if (idName != null) {
+                textBase.env.unlockBinding(idName);
+            }
         }
 
         @Override
@@ -210,8 +207,9 @@ public class TextConnections {
             ArrayList<String> appendedLines = new ArrayList<>();
             while ((nlIndex = result.indexOf('\n', px)) >= 0) {
                 if (incompleteLine != null) {
-                    appendedLines.add(new StringBuffer(incompleteLine).append(result.substring(px, nlIndex)).toString());
+                    appendedLines.add(new StringBuilder(incompleteLine).append(result.substring(px, nlIndex)).toString());
                     incompleteLine = null;
+                    base.setIncomplete(false);
                 } else {
                     appendedLines.add(result.substring(px, nlIndex));
                 }
@@ -222,9 +220,11 @@ public class TextConnections {
             if (incompleteLine != null && !endOfLine) {
                 // end of line not found - accumulate incomplete line
                 incompleteLine = new StringBuffer(incompleteLine).append(result).toString();
+                base.setIncomplete(true);
             } else if (px < result.length()) {
                 // only reset incompleteLine if
                 incompleteLine = result.substring(px);
+                base.setIncomplete(true);
             }
             if (appendedLines.size() > 0) {
                 // update the vector data
@@ -235,7 +235,7 @@ public class TextConnections {
         }
 
         void appendData(String[] appendedData) {
-            String[] existingData = textVec.getDataWithoutCopying();
+            String[] existingData = textVec != null ? textVec.getDataWithoutCopying() : new String[0];
             String[] updateData = appendedData;
             if (existingData.length > 0) {
                 updateData = new String[existingData.length + appendedData.length];
@@ -243,11 +243,7 @@ public class TextConnections {
                 System.arraycopy(appendedData, 0, updateData, existingData.length, appendedData.length);
             }
             TextRConnection textBase = (TextRConnection) base;
-            /*
-             * N.B. This assumes one thread per RContext else another thread could be calling
-             * lockBinding
-             */
-            textBase.env.unlockBinding(idName);
+            unlockBinding(textBase);
             // TODO: is vector really complete?
             initTextVec(RDataFactory.createStringVector(updateData, RDataFactory.COMPLETE_VECTOR), textBase);
         }
@@ -258,6 +254,7 @@ public class TextConnections {
             if (incompleteLine != null) {
                 sb.append(incompleteLine);
                 incompleteLine = null;
+                base.setIncomplete(false);
             }
             for (int i = 0; i < lines.getLength(); i++) {
                 sb.append(lines.getDataAt(i));
@@ -277,17 +274,17 @@ public class TextConnections {
 
         @Override
         public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-            throw RError.nyi(null, "writeChar on text connection");
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.NOT_ENABLED_FOR_THIS_CONN, "write");
         }
 
         @Override
         public void writeBin(ByteBuffer buffer) throws IOException {
-            throw RError.nyi(null, "writeBin on text connection");
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.ONLY_WRITE_BINARY_CONNECTION);
         }
 
         @Override
-        public String[] getValue() {
-            throw RError.nyi(null, "textConnectionValue");
+        public RAbstractStringVector getValue() {
+            return object;
         }
 
         private class ConnectionOutputStream extends OutputStream {
@@ -314,6 +311,16 @@ public class TextConnections {
             public void write(int b) {
                 throw RInternalError.unimplemented();
             }
+        }
+
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.SEEK_NOT_RELEVANT_FOR_TEXT_CON);
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return false;
         }
     }
 

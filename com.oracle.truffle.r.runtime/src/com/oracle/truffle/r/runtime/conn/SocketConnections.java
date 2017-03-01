@@ -23,21 +23,15 @@
 package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
+import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.DelegateReadWriteRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ReadWriteHelper;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class SocketConnections {
     /**
@@ -50,22 +44,29 @@ public class SocketConnections {
         protected final boolean server;
         protected final String host;
         protected final int port;
-        protected final boolean blocking;
         protected final int timeout;
 
-        public RSocketConnection(String modeString, boolean server, String host, int port, boolean blocking, int timeout) throws IOException {
-            super(ConnectionClass.Socket, modeString, AbstractOpenMode.Read);
+        public RSocketConnection(String modeString, boolean server, String host, int port, boolean blocking, int timeout, String encoding) throws IOException {
+            super(ConnectionClass.Socket, modeString, AbstractOpenMode.Read, blocking, encoding);
             this.server = server;
             this.host = host;
             this.port = port;
-            this.blocking = blocking;
             this.timeout = timeout;
             openNonLazyConnection();
         }
 
         @Override
         protected void createDelegateConnection() throws IOException {
-            DelegateRConnection delegate = server ? new RServerSocketConnection(this) : new RClientSocketConnection(this);
+            DelegateRConnection delegate;
+            if (server) {
+                delegate = new RServerSocketConnection(this);
+            } else {
+                if (isBlocking()) {
+                    delegate = new RClientSocketConnection(this);
+                } else {
+                    delegate = new RClientSocketNonBlockConnection(this);
+                }
+            }
             setDelegate(delegate);
         }
 
@@ -75,11 +76,9 @@ public class SocketConnections {
         }
     }
 
-    private abstract static class RSocketReadWriteConnection extends DelegateReadWriteRConnection implements ReadWriteHelper {
+    private abstract static class RSocketReadWriteConnection extends DelegateReadWriteRConnection {
         private Socket socket;
-        private SocketChannel socketChannel;
-        protected InputStream inputStream;
-        protected OutputStream outputStream;
+        private SocketChannel channel;
         protected final RSocketConnection thisBase;
 
         protected RSocketReadWriteConnection(RSocketConnection base) {
@@ -87,10 +86,11 @@ public class SocketConnections {
             this.thisBase = base;
         }
 
-        protected void openStreams(Socket socketArg) throws IOException {
-            this.socket = socketArg;
-            this.socketChannel = socket.getChannel();
-            if (thisBase.blocking) {
+        protected void openStreams(SocketChannel socketArg) throws IOException {
+            channel = socketArg;
+            socket = socketArg.socket();
+            if (thisBase.isBlocking()) {
+                channel.configureBlocking(true);
                 // Java (int) timeouts do not meet the POSIX standard of 31 days
                 long millisTimeout = ((long) thisBase.timeout) * 1000;
                 if (millisTimeout > Integer.MAX_VALUE) {
@@ -98,95 +98,69 @@ public class SocketConnections {
                 }
                 socket.setSoTimeout((int) millisTimeout);
             } else {
-                socketChannel.configureBlocking(false);
+                channel.configureBlocking(false);
             }
-            inputStream = socket.getInputStream();
-            outputStream = socket.getOutputStream();
         }
 
         @Override
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            return readLinesHelper(inputStream, n, warn, skipNul);
+        public ByteChannel getChannel() {
+            return channel;
         }
 
         @Override
-        public InputStream getInputStream() throws IOException {
-            return inputStream;
+        public boolean isSeekable() {
+            return false;
+        }
+    }
+
+    private abstract static class RSocketReadWriteNonBlockConnection extends DelegateReadWriteRConnection {
+        private Socket socket;
+        private SocketChannel socketChannel;
+
+        protected RSocketReadWriteNonBlockConnection(RSocketConnection base) {
+            super(base);
         }
 
-        @Override
-        public OutputStream getOutputStream() throws IOException {
-            return outputStream;
-        }
-
-        @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            writeLinesHelper(outputStream, lines, sep);
-        }
-
-        @Override
-        public void writeBin(ByteBuffer buffer) throws IOException {
-            writeBinHelper(buffer, outputStream);
-        }
-
-        @Override
-        public int readBin(ByteBuffer buffer) throws IOException {
-            return readBinHelper(buffer, inputStream);
-        }
-
-        @Override
-        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-            writeCharHelper(outputStream, s, pad, eos);
-        }
-
-        @Override
-        public void writeString(String s, boolean nl) throws IOException {
-            writeStringHelper(outputStream, s, nl);
-        }
-
-        @Override
-        public String readChar(int nchars, boolean useBytes) throws IOException {
-            return readCharHelper(nchars, inputStream, useBytes);
-        }
-
-        @Override
-        public byte[] readBinChars() throws IOException {
-            return readBinCharsHelper(inputStream);
-        }
-
-        @Override
-        public void flush() throws IOException {
-            outputStream.flush();
-        }
-
-        @Override
-        public void closeAndDestroy() throws IOException {
-            base.closed = true;
-            close();
+        protected void openStreams(Socket socketArg) throws IOException {
+            this.socket = socketArg;
+            this.socketChannel = socket.getChannel();
+            socketChannel.configureBlocking(false);
         }
 
         @Override
         public void close() throws IOException {
+            socketChannel.close();
             socket.close();
+        }
+
+        @Override
+        public ByteChannel getChannel() {
+            return socketChannel;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return false;
         }
     }
 
     private static class RServerSocketConnection extends RSocketReadWriteConnection {
-        private final Socket connectionSocket;
+        private final SocketChannel connectionSocket;
 
         RServerSocketConnection(RSocketConnection base) throws IOException {
             super(base);
             InetSocketAddress addr = new InetSocketAddress(base.port);
-            ServerSocket serverSocket = new ServerSocket();
+            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+
             // we expect only one connection per-server socket; furthermore, we need to accommodate
             // for multiple connections being established locally on the same server port;
             // consequently, we close the server socket at the end of the constructor and allow
             // address reuse to be able to open the next connection after the current one closes
-            serverSocket.setReuseAddress(true);
-            serverSocket.bind(addr);
-            connectionSocket = serverSocket.accept();
+            serverSocketChannel.socket().setReuseAddress(true);
+            serverSocketChannel.socket().bind(addr);
+            connectionSocket = serverSocketChannel.accept();
             openStreams(connectionSocket);
-            serverSocket.close();
+            serverSocketChannel.close();
         }
 
         @Override
@@ -199,6 +173,15 @@ public class SocketConnections {
     private static class RClientSocketConnection extends RSocketReadWriteConnection {
 
         RClientSocketConnection(RSocketConnection base) throws IOException {
+            super(base);
+            SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress(base.host, base.port));
+            openStreams(socketChannel);
+        }
+    }
+
+    private static class RClientSocketNonBlockConnection extends RSocketReadWriteNonBlockConnection {
+
+        RClientSocketNonBlockConnection(RSocketConnection base) throws IOException {
             super(base);
             SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress(base.host, base.port));
             openStreams(socketChannel.socket());
