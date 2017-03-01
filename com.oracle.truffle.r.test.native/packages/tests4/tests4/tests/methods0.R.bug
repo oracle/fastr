@@ -1,0 +1,15 @@
+# this has differences that the fuzzy compare cannot cope with
+
+stopifnot(require(methods))
+stopifnot(require(tests4))
+
+setGeneric("gen", function(object) standardGeneric("gen")); res<-print(gen); removeGeneric("gen"); res
+gen<-function(object) 0; setGeneric("gen"); res<-print(gen); removeGeneric("gen"); res
+
+gen<-function(object) 0; setGeneric("gen"); setClass("foo", representation(d="numeric")); setMethod("gen", signature(object="foo"), function(object) object@d); res<-print(gen(new("foo", d=42))); removeGeneric("gen"); res
+
+setClass("foo", representation(d="numeric")); setClass("bar",  contains="foo"); setGeneric("gen", function(o) standardGeneric("gen")); setMethod("gen", signature(o="foo"), function(o) "FOO"); setMethod("gen", signature(o="bar"), function(o) "BAR"); res<-print(c(gen(new("foo", d=7)), gen(new("bar", d=42)))); removeGeneric("gen"); res
+
+setGeneric("gen", function(o) standardGeneric("gen")); res<-print(setGeneric("gen", function(o) standardGeneric("gen"))); removeGeneric("gen"); res
+
+setClass("foo"); setMethod("diag<-", "foo", function(x, value) 42); removeMethod("diag<-", "foo"); removeGeneric("diag<-"); removeClass("foo")

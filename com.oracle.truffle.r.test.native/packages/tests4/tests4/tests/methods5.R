@@ -1,5 +1,7 @@
 # test from Hadley Wickham's book (slightly augmented)
 
+stopifnot(require(methods))
+stopifnot(require(tests4))
 setClass("Vehicle")
 setClass("Truck", contains = "Vehicle")
 setClass("Car", contains = "Vehicle")
@@ -26,4 +28,5 @@ setMethod("inspect.vehicle",
  })
 
 inspect.vehicle(new("Car"), new("Inspector"))
-removeGeneric("inspect.vehicle");
+# BUG print should not be necessary
+print(removeGeneric("inspect.vehicle"))

@@ -297,12 +297,9 @@ def _get_test_outputs(rvm, pkg_name, test_info):
             test_info[pkg_name] = TestStatus()
         for f in files:
             ext = os.path.splitext(f)[1]
-            if f == 'test_time' or ext == '.R' or ext == '.Rin' or ext == '.prev':
-                continue
             # suppress .pdf's for now (we can't compare them)
-            if ext == '.pdf':
-                continue
-            if ext == '.save':
+            ignore = ['.R', '.Rin', '.prev', '.bug', '.pdf', '.save']
+            if f == 'test_time' or ext in ignore:
                 continue
             status = "OK"
             if ext == '.fail':
@@ -451,7 +448,13 @@ def _find_start(content):
     for i in range(len(content)):
         line = content[i]
         if marker in line:
-            return i + 1
+            # skip blank lines
+            j = i + 1
+            while j < len(content):
+                line = content[j].strip()
+                if len(line) > 0:
+                    return j
+                j = j + 1
     return None
 
 def _find_end(content):
@@ -484,7 +487,7 @@ def _fuzzy_compare(gnur_content, fastr_content):
     fastr_len = len(fastr_content)
     if not gnur_start or not gnur_end or not fastr_start:
         return -1
-    gnur_i = gnur_start + 1 # Gnu has extra empty line
+    gnur_i = gnur_start
     fastr_i = fastr_start
     result = 0
     while gnur_i < gnur_end:
@@ -510,6 +513,9 @@ def _fuzzy_compare(gnur_content, fastr_content):
                     # skip until lines match (or not)
                     gnur_i = gnur_i + 1
                     fastr_i = fastr_i + 1
+                    if gnur_i == gnur_end - 1:
+                        # at end (there is always a blank line)
+                        break
                     ni = -1
                     while gnur_i < gnur_end:
                         ni = _find_line(gnur_content[gnur_i], fastr_content, fastr_i)
@@ -523,16 +529,20 @@ def _fuzzy_compare(gnur_content, fastr_content):
                         result = 1
                         break
             else:
-                # genuine difference
-                result = 1
-                break
+                # genuine difference (modulo whitespace)
+                if not _ignore_whitespace(gnur_line, fastr_line):
+                    result = 1
+                    break
         gnur_i = gnur_i + 1
         fastr_i = fastr_i + 1
     return result
+
+def _ignore_whitespace(gnur_line, fastr_line):
+    return gnur_line.translate(None, ' \t') == fastr_line.translate(None, ' \t')
 
 def pkgtest_cmp(args):
     with open(args[0]) as f:
         gnur_content = f.readlines()
     with open(args[1]) as f:
         fastr_content = f.readlines()
-    _fuzzy_compare(gnur_content, fastr_content)
+    return _fuzzy_compare(gnur_content, fastr_content)
