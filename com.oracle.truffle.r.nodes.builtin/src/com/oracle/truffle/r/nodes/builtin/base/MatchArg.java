@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
@@ -39,7 +40,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.MatchArgNodeGen.MatchArgInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
@@ -80,20 +80,14 @@ public abstract class MatchArg extends RBuiltinNode {
         @Child private PMatch pmatch = PMatchNodeGen.create();
         @Child private Identical identical = IdenticalNodeGen.create();
 
-        @Children private final CastNode[] casts;
-
-        {
-            CastBuilder builder = new CastBuilder();
-            builder.arg(0).asStringVector();
-            builder.arg(1).allowMissing().mustBe(stringValue()).asStringVector();
-            builder.arg(2).mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean());
-            this.casts = builder.getCasts();
-        }
+        @Child private CastNode argCast = newCastBuilder().asStringVector().buildCastNode();
+        @Child private CastNode choicesCast = newCastBuilder().allowMissing().mustBe(stringValue()).asStringVector().buildCastNode();
+        @Child private CastNode severalOKCast = newCastBuilder().mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean()).buildCastNode();
 
         public abstract Object execute(Object arg, Object choices, Object severalOK);
 
         public final Object castAndExecute(Object arg, Object choices, Object severalOK) {
-            return execute(casts[0].execute(arg), casts[1].execute(choices), casts[2].execute(severalOK));
+            return execute(argCast.execute(arg), choicesCast.execute(choices), severalOKCast.execute(severalOK));
         }
 
         @Specialization
@@ -233,6 +227,6 @@ public abstract class MatchArg extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     protected Object matchArgFallback(Object arg, Object choices, Object severalOK) {
-        throw RError.error(this, Message.GENERIC, "too many different names in match.arg");
+        throw error(Message.GENERIC, "too many different names in match.arg");
     }
 }

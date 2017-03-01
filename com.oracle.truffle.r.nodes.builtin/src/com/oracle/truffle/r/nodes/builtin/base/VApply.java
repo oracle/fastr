@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyList;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notLogicalNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
@@ -98,14 +97,11 @@ public abstract class VApply extends RBuiltinNode {
     @Child private SetNamesAttributeNode setNamesNode = SetNamesAttributeNode.create();
 
     static {
-        // @formatter:off
         Casts casts = new Casts(VApply.class);
         casts.arg("X").mapNull(emptyList());
-        casts.arg("FUN").mustBe(instanceOf(RFunction.class), RError.SHOW_CALLER, RError.Message.APPLY_NON_FUNCTION);
-        casts.arg("FUN.VALUE").defaultError(RError.SHOW_CALLER, RError.Message.MUST_BE_VECTOR, "FUN.VALUE").mustBe(abstractVectorValue()).asVector(true);
-        casts.arg("USE.NAMES").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "USE.NAMES").
-                mustBe(numericValue()).asLogicalVector().findFirst().mustBe(notLogicalNA()).map(toBoolean());
-        // @formatter:on
+        casts.arg("FUN").mustBe(instanceOf(RFunction.class), RError.Message.APPLY_NON_FUNCTION);
+        casts.arg("FUN.VALUE").defaultError(RError.Message.MUST_BE_VECTOR, "FUN.VALUE").mustBe(abstractVectorValue()).asVector(true);
+        casts.arg("USE.NAMES").defaultError(RError.Message.INVALID_VALUE, "USE.NAMES").mustBe(numericValue()).asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
     }
 
     private Object castComplex(Object operand, boolean preserveAllAttr) {

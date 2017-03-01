@@ -127,7 +127,7 @@ public class HiddenInternalFunctions {
                      * not an error, but is used as an override mechanism.
                      */
                     if (!RContext.getInstance().getLoadingBase()) {
-                        throw RError.error(this, ex);
+                        throw error(ex);
                     }
                 }
             }
@@ -157,7 +157,7 @@ public class HiddenInternalFunctions {
         protected RNull importIntoEnv(REnvironment impEnv, RAbstractStringVector impNames, REnvironment expEnv, RAbstractStringVector expNames) {
             int length = impNames.getLength();
             if (length != expNames.getLength()) {
-                throw RError.error(this, Message.IMP_EXP_NAMES_MATCH);
+                throw error(Message.IMP_EXP_NAMES_MATCH);
             }
             for (int i = 0; i < length; i++) {
                 String impsym = impNames.getDataAt(i);
@@ -173,7 +173,7 @@ public class HiddenInternalFunctions {
                 try {
                     impEnv.put(impsym, binding);
                 } catch (PutException ex) {
-                    throw RError.error(RError.SHOW_CALLER, ex);
+                    throw error(ex);
                 }
             }
             return RNull.instance;
@@ -233,7 +233,7 @@ public class HiddenInternalFunctions {
                 if (compression == 2 || compression == 3) {
                     RCompression.Type type = RCompression.Type.fromTypeChar(dbData[4]);
                     if (type == null) {
-                        RError.warning(this, RError.Message.GENERIC, "unknown compression type");
+                        warning(RError.Message.GENERIC, "unknown compression type");
                         return RNull.instance;
                     }
                     byte[] data = new byte[length - 5];
@@ -247,7 +247,7 @@ public class HiddenInternalFunctions {
                 }
             }
             if (!rc) {
-                throw RError.error(this, RError.Message.LAZY_LOAD_DB_CORRUPT, dbPath);
+                throw error(RError.Message.LAZY_LOAD_DB_CORRUPT, dbPath);
             }
             try {
                 RSerialize.CallHook callHook = new RSerialize.CallHook() {
@@ -284,7 +284,7 @@ public class HiddenInternalFunctions {
 
         @Specialization
         protected RList getRegisteredRoutines(@SuppressWarnings("unused") RNull info) {
-            throw RError.error(this, RError.Message.NULL_DLLINFO);
+            throw error(RError.Message.NULL_DLLINFO);
         }
 
         @Specialization(guards = "isDLLInfo(externalPtr)")
@@ -315,7 +315,7 @@ public class HiddenInternalFunctions {
 
         @Fallback
         protected RList getRegisteredRoutines(@SuppressWarnings("unused") Object info) {
-            throw RError.error(this, RError.Message.REQUIRES_DLLINFO);
+            throw error(RError.Message.REQUIRES_DLLINFO);
         }
 
         protected static boolean isDLLInfo(RExternalPtr externalPtr) {
@@ -339,7 +339,7 @@ public class HiddenInternalFunctions {
                 String var = varsVec.getDataAt(i);
                 Object value = env.get(var);
                 if (value == null) {
-                    throw RError.error(this, RError.Message.UNKNOWN_OBJECT, var);
+                    throw error(RError.Message.UNKNOWN_OBJECT, var);
                 }
                 if (force && value instanceof RPromise) {
                     if (promiseHelper == null) {
@@ -356,7 +356,7 @@ public class HiddenInternalFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected RList getVarsFromFrame(Object varsVec, Object env, Object forceArg) {
-            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+            throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
 
@@ -379,7 +379,7 @@ public class HiddenInternalFunctions {
         @TruffleBoundary
         private RIntVector lazyLoadDBinsertValueInternal(MaterializedFrame frame, Object value, RAbstractStringVector file, int type, int compression, RFunction hook) {
             if (!(compression == 1 || compression == 3)) {
-                throw RError.error(this, Message.GENERIC, "unsupported compression");
+                throw error(Message.GENERIC, "unsupported compression");
             }
 
             RSerialize.CallHook callHook = new RSerialize.CallHook() {
@@ -403,7 +403,7 @@ public class HiddenInternalFunctions {
                     cdata = new byte[outLen];
                     boolean rc = RCompression.compress(ctype, data, cdata);
                     if (!rc) {
-                        throw RError.error(this, Message.GENERIC, "zlib compress error");
+                        throw error(Message.GENERIC, "zlib compress error");
                     }
                 } else if (compression == 3) {
                     ctype = RCompression.Type.XZ;
@@ -412,7 +412,7 @@ public class HiddenInternalFunctions {
                     cdata = new byte[outLen];
                     boolean rc = RCompression.compress(ctype, data, cdata);
                     if (!rc) {
-                        throw RError.error(this, Message.GENERIC, "lzma compress error");
+                        throw error(Message.GENERIC, "lzma compress error");
                     }
                 } else {
                     throw RInternalError.shouldNotReachHere();
@@ -431,7 +431,7 @@ public class HiddenInternalFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object lazyLoadDBinsertValue(Object value, Object file, Object ascii, Object compsxp, Object hook) {
-            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+            throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
 
         /**

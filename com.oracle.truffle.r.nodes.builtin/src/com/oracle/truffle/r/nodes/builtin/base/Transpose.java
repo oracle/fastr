@@ -32,7 +32,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAt
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -161,6 +160,6 @@ public abstract class Transpose extends RBuiltinNode {
 
     @Fallback
     protected RVector<?> transpose(@SuppressWarnings("unused") Object x) {
-        throw RError.error(RError.SHOW_CALLER, Message.ARGUMENT_NOT_MATRIX);
+        throw error(Message.ARGUMENT_NOT_MATRIX);
     }
 }

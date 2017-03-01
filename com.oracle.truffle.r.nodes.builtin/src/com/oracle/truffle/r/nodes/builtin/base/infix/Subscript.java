@@ -223,13 +223,13 @@ public abstract class Subscript extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "indexes.isEmpty()")
     protected Object getNoInd(Object x, RArgsValuesAndNames indexes, RAbstractLogicalVector exact, RAbstractLogicalVector drop) {
-        throw RError.error(this, RError.Message.NO_INDEX);
+        throw error(RError.Message.NO_INDEX);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected Object get(Object x, RMissing indexes, RAbstractLogicalVector exact, RAbstractLogicalVector drop) {
-        throw RError.error(this, RError.Message.NO_INDEX);
+        throw error(RError.Message.NO_INDEX);
     }
 
     @Specialization(guards = "!indexes.isEmpty()")

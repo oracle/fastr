@@ -130,7 +130,7 @@ public abstract class Matrix extends RBuiltinNode {
             return new int[]{size, 1};
         } else if (nrowGivenNcolMissing.profile(!missingNr && missingNc)) {
             if (nrow == 0 && size > 0) {
-                throw RError.error(this, RError.Message.NROW_ZERO);
+                throw error(RError.Message.NROW_ZERO);
             }
             if (empty.profile(size == 0)) {
                 return new int[]{nrow, 0};
@@ -139,7 +139,7 @@ public abstract class Matrix extends RBuiltinNode {
             }
         } else if (nrowMissingNcolGiven.profile(missingNr && !missingNc)) {
             if (ncol == 0 && size > 0) {
-                throw RError.error(this, RError.Message.NCOL_ZERO);
+                throw error(RError.Message.NCOL_ZERO);
             }
             if (empty.profile(size == 0)) {
                 return new int[]{0, ncol};
@@ -157,7 +157,7 @@ public abstract class Matrix extends RBuiltinNode {
             return new int[]{1, size};
         } else if (nrowGivenNcolMissing.profile(!missingNr && missingNc)) {
             if (nrow == 0 && size > 0) {
-                throw RError.error(this, RError.Message.NROW_ZERO);
+                throw error(RError.Message.NROW_ZERO);
             }
             if (empty.profile(size == 0)) {
                 return new int[]{0, nrow};
@@ -167,7 +167,7 @@ public abstract class Matrix extends RBuiltinNode {
             }
         } else if (nrowMissingNcolGiven.profile(missingNr && !missingNc)) {
             if (ncol == 0 && size > 0) {
-                throw RError.error(this, RError.Message.NCOL_ZERO);
+                throw error(RError.Message.NCOL_ZERO);
             }
             if (empty.profile(size == 0)) {
                 return new int[]{ncol, 0};

@@ -110,8 +110,7 @@ public final class ReplacementDispatchNode extends OperatorNode {
             if (c.getValue() instanceof String) {
                 name = (String) c.getValue();
             } else {
-                // "this" needs to be initialized for error reporting to work
-                throw RError.error(this, RError.Message.INVALID_LHS, "do_set");
+                throw error(RError.Message.INVALID_LHS, "do_set");
             }
         } else {
             throw RInternalError.unimplemented("unexpected lhs type in replacement: " + lhsSyntax.getClass());
@@ -144,9 +143,9 @@ public final class ReplacementDispatchNode extends OperatorNode {
         while (!(current instanceof RSyntaxLookup)) {
             if (!(current instanceof RSyntaxCall)) {
                 if (current instanceof RSyntaxConstant && ((RSyntaxConstant) current).getValue() == RNull.instance) {
-                    throw RError.error(this, RError.Message.INVALID_NULL_LHS);
+                    throw error(RError.Message.INVALID_NULL_LHS);
                 } else {
-                    throw RError.error(this, RError.Message.NON_LANG_ASSIGNMENT_TARGET);
+                    throw error(RError.Message.NON_LANG_ASSIGNMENT_TARGET);
                 }
             }
             RSyntaxCall call = (RSyntaxCall) current;
@@ -154,7 +153,7 @@ public final class ReplacementDispatchNode extends OperatorNode {
 
             RSyntaxElement syntaxLHS = call.getSyntaxLHS();
             if (call.getSyntaxArguments().length == 0 || !(syntaxLHS instanceof RSyntaxLookup || isNamespaceLookupCall(syntaxLHS))) {
-                throw RError.error(this, RError.Message.INVALID_NULL_LHS);
+                throw error(RError.Message.INVALID_NULL_LHS);
             }
             current = call.getSyntaxArguments()[0];
         }

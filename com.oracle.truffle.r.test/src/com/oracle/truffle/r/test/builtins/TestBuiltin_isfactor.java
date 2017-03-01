@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -30,6 +30,6 @@ public class TestBuiltin_isfactor extends TestBase {
         assertEval("{is.factor(1)}");
         assertEval("{is.factor(c)}");
 
-        assertEval(Output.IgnoreErrorContext, "{x<-1;class(x)<-\"factor\";is.factor(x)}");
+        assertEval("{x<-1;class(x)<-\"factor\";is.factor(x)}");
     }
 }

@@ -33,7 +33,6 @@ import java.util.function.IntUnaryOperator;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
@@ -54,8 +53,8 @@ public abstract class ChooseBuiltin extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(ChooseBuiltin.class);
-        casts.arg("n").mustBe(numericValue(), RError.SHOW_CALLER, Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
-        casts.arg("k").mustBe(numericValue(), RError.SHOW_CALLER, Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
+        casts.arg("n").mustBe(numericValue(), Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
+        casts.arg("k").mustBe(numericValue(), Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
     }
 
     @Specialization
@@ -93,7 +92,7 @@ public abstract class ChooseBuiltin extends RBuiltinNode {
 
         double result = Math.round(data);
         if (result != data) {
-            RError.warning(this, Message.CHOOSE_ROUNDING_WARNING, data, (int) result);
+            warning(Message.CHOOSE_ROUNDING_WARNING, data, (int) result);
         }
         return (int) result;
     }

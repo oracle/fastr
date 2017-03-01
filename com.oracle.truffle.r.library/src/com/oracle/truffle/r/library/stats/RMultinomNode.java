@@ -16,7 +16,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyDoubleV
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.NA_IN_PROB_VECTOR;
 import static com.oracle.truffle.r.runtime.RError.Message.NEGATIVE_PROBABILITY;
 import static com.oracle.truffle.r.runtime.RError.Message.NO_POSITIVE_PROBABILITIES;
@@ -39,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nmath.distr.RMultinom;
 import com.oracle.truffle.r.runtime.nmath.distr.Rbinom;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 /**
@@ -53,9 +53,14 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(RMultinomNode.class);
-        casts.arg(0).asIntegerVector().findFirst().mustBe(notIntNA(), SHOW_CALLER, Message.INVALID_FIRST_ARGUMENT_NAME, "n");
-        casts.arg(1).asIntegerVector().findFirst().mustBe(notIntNA(), SHOW_CALLER, Message.INVALID_SECOND_ARGUMENT_NAME, "size");
-        casts.arg(2).mustBe(missingValue().not(), SHOW_CALLER, Message.ARGUMENT_MISSING, "prob").mapIf(nullValue(), emptyDoubleVector()).asDoubleVector();
+        casts.arg(0).asIntegerVector().findFirst().mustBe(notIntNA(), Message.INVALID_FIRST_ARGUMENT_NAME, "n");
+        casts.arg(1).asIntegerVector().findFirst().mustBe(notIntNA(), Message.INVALID_SECOND_ARGUMENT_NAME, "size");
+        casts.arg(2).mustBe(missingValue().not(), Message.ARGUMENT_MISSING, "prob").mapIf(nullValue(), emptyDoubleVector()).asDoubleVector();
+    }
+
+    @Override
+    protected RBaseNode getErrorContext() {
+        return RError.SHOW_CALLER;
     }
 
     @Specialization
@@ -91,15 +96,15 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
         return resultVec;
     }
 
-    private static void fixupProb(double[] p) {
+    private void fixupProb(double[] p) {
         double sum = 0.0;
         int npos = 0;
         for (double prob : p) {
             if (!Double.isFinite(prob)) {
-                throw RError.error(SHOW_CALLER, NA_IN_PROB_VECTOR);
+                throw error(NA_IN_PROB_VECTOR);
             }
             if (prob < 0.0) {
-                throw RError.error(SHOW_CALLER, NEGATIVE_PROBABILITY);
+                throw error(NEGATIVE_PROBABILITY);
             }
             if (prob > 0.0) {
                 npos++;
@@ -107,7 +112,7 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
             }
         }
         if (npos == 0) {
-            throw RError.error(SHOW_CALLER, NO_POSITIVE_PROBABILITIES);
+            throw error(NO_POSITIVE_PROBABILITIES);
         }
         for (int i = 0; i < p.length; i++) {
             p[i] /= sum;

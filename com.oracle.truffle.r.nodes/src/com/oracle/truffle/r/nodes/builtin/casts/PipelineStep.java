@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -73,53 +74,9 @@ public abstract class PipelineStep<T, R> {
 
         T visit(NotNAStep<?> step, T previous);
 
-        T visit(DefaultErrorStep<?> step, T previous);
-
-        T visit(DefaultWarningStep<?> step, T previous);
-
         T visit(BoxPrimitiveStep<?> step, T previous);
 
         T visit(AttributableCoercionStep<?> step, T previous);
-    }
-
-    /**
-     * Changes the current default error, which is used by steps/filters that do not have error
-     * message set explicitly.
-     */
-    public abstract static class DefaultMessageStep<T> extends PipelineStep<T, T> {
-        private final MessageData defaultMessage;
-
-        public DefaultMessageStep(MessageData defaultMessage) {
-            this.defaultMessage = defaultMessage;
-        }
-
-        public MessageData getDefaultMessage() {
-            return defaultMessage;
-        }
-    }
-
-    public static final class DefaultErrorStep<T> extends DefaultMessageStep<T> {
-
-        public DefaultErrorStep(MessageData defaultMessage) {
-            super(defaultMessage);
-        }
-
-        @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
-            return visitor.visit(this, previous);
-        }
-    }
-
-    public static final class DefaultWarningStep<T> extends DefaultMessageStep<T> {
-
-        public DefaultWarningStep(MessageData defaultMessage) {
-            super(defaultMessage);
-        }
-
-        @Override
-        public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
-            return visitor.visit(this, previous);
-        }
     }
 
     /**
@@ -142,6 +99,7 @@ public abstract class PipelineStep<T, R> {
         private final Object replacement;
 
         public NotNAStep(Object replacement, MessageData message) {
+            assert !(replacement instanceof RBaseNode || replacement instanceof RError.Message);
             this.replacement = replacement;
             this.message = message;
         }
@@ -165,8 +123,8 @@ public abstract class PipelineStep<T, R> {
      * the vector is empty, the message is used as a warning. If only default value is provided,
      * then if the vector is empty, the default value is returned without any warning. If the
      * default value is not provided, then error is raised if the vector is empty, the error message
-     * chosen in the following order: provided message, explicitly set default error message using
-     * {@link PipelineStep.DefaultErrorStep}, default find first message.
+     * chosen in the following order: provided message, explicitly set default error message,
+     * default find first message.
      */
     public static final class FindFirstStep<V, E> extends PipelineStep<V, E> {
         private final MessageData error;
@@ -207,7 +165,6 @@ public abstract class PipelineStep<T, R> {
         public final boolean preserveNames;
         public final boolean preserveDimensions;
         public final boolean preserveAttributes;
-        public final RBaseNode messageCallObj;
 
         /**
          * Whether RNull/RMissing should be preserved, or converted to an empty list.
@@ -220,29 +177,24 @@ public abstract class PipelineStep<T, R> {
         public final boolean vectorCoercion;
 
         public CoercionStep(RType type, boolean vectorCoercion) {
-            this(type, vectorCoercion, false, false, false, true, null);
+            this(type, vectorCoercion, false, false, false, true);
         }
 
         public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            this(type, vectorCoercion, preserveNames, preserveDimensions, preserveAttributes, true, null);
+            this(type, vectorCoercion, preserveNames, preserveDimensions, preserveAttributes, true);
         }
 
-        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector, RBaseNode messageCallObj) {
+        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector) {
             this.type = type;
             this.vectorCoercion = vectorCoercion;
             this.preserveNames = preserveNames;
             this.preserveAttributes = preserveAttributes;
             this.preserveDimensions = preserveDimensions;
             this.preserveNonVector = preserveNonVector;
-            this.messageCallObj = messageCallObj;
         }
 
         public RType getType() {
             return type;
-        }
-
-        public RBaseNode getMessageCallObj() {
-            return messageCallObj;
         }
 
         @Override
@@ -323,6 +275,13 @@ public abstract class PipelineStep<T, R> {
         @Override
         public <D> D accept(PipelineStepVisitor<D> visitor, D previous) {
             return visitor.visit(this, previous);
+        }
+
+        public MapIfStep<T, R> withoutReturns() {
+            if (!returns) {
+                return this;
+            }
+            return new MapIfStep<>(filter, trueBranch, falseBranch, false);
         }
     }
 

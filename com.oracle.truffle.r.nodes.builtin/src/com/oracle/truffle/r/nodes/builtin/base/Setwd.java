@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.CHAR_ARGUMENT;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
@@ -44,7 +43,7 @@ public abstract class Setwd extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Setwd.class);
-        casts.arg("path").defaultError(SHOW_CALLER, CHAR_ARGUMENT).mustBe(stringValue()).asStringVector().mustBe(notEmpty()).findFirst();
+        casts.arg("path").defaultError(CHAR_ARGUMENT).mustBe(stringValue()).asStringVector().mustBe(notEmpty()).findFirst();
     }
 
     @Specialization
@@ -56,7 +55,7 @@ public abstract class Setwd extends RBuiltinNode {
         String nwd = Utils.tildeExpand(path);
         int rc = setwdNode.execute(nwd);
         if (rc != 0) {
-            throw RError.error(this, RError.Message.CANNOT_CHANGE_DIRECTORY);
+            throw error(RError.Message.CANNOT_CHANGE_DIRECTORY);
         } else {
             String nwdAbs = getwdNode.execute();
             Utils.updateCurwd(nwdAbs);

@@ -118,7 +118,7 @@ public abstract class MatchFun extends RBuiltinNode {
                 return (RFunction) result;
             } else {
                 CompilerDirectives.transferToInterpreter();
-                throw RError.error(outer, RError.Message.NON_FUNCTION, RDeparse.deparse(result));
+                throw outer.error(RError.Message.NON_FUNCTION, RDeparse.deparse(result));
             }
         }
 
@@ -149,10 +149,10 @@ public abstract class MatchFun extends RBuiltinNode {
         }
 
         @TruffleBoundary
-        private static Object slowPathLookup(String name, MaterializedFrame frame, boolean descend) {
+        private Object slowPathLookup(String name, MaterializedFrame frame, boolean descend) {
             Object result = descend ? ReadVariableNode.lookupFunction(name, frame) : ReadVariableNode.lookupAny(name, frame, false);
             if (result == null) {
-                throw RError.error(RError.SHOW_CALLER, descend ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, name);
+                throw outer.error(descend ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, name);
             }
             return result;
         }
@@ -179,7 +179,7 @@ public abstract class MatchFun extends RBuiltinNode {
                 return checkResult(slowPathLookup(lookupName, getCallerFrame.execute(frame), descend));
             } else {
                 CompilerDirectives.transferToInterpreter();
-                throw RError.error(outer, RError.Message.NOT_FUNCTION, RDeparse.deparseSyntaxElement(rep));
+                throw outer.error(RError.Message.NOT_FUNCTION, RDeparse.deparseSyntaxElement(rep));
             }
         }
 

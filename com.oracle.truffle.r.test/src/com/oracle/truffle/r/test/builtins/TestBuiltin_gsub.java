@@ -174,7 +174,7 @@ public class TestBuiltin_gsub extends TestBase {
         assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\") }");
         assertEval("{ gsub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
         assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE) }");
-        assertEval(Output.IgnoreWarningContext, "{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE, ignore.case=TRUE) }");
+        assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE, ignore.case=TRUE) }");
         assertEval("{ gsub(\"([a-e])\",\"\\\\1\\\\1\", \"prague alley\") }");
         assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\")) }");
         assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\"), fixed=TRUE) }");

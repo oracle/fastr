@@ -63,7 +63,7 @@ public abstract class FastRThrowIt extends RBuiltinNode {
             case "BRQ":
                 throw new JumpToTopLevelException();
             default:
-                throw RError.error(this, RError.Message.GENERIC, "unknown case: " + name);
+                throw error(RError.Message.GENERIC, "unknown case: " + name);
         }
     }
 }

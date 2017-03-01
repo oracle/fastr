@@ -123,7 +123,7 @@ public abstract class UpdateField extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(UpdateField.class);
-        casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT).mustBe(stringValue(), RError.NO_CALLER, Message.INVALID_SUBSCRIPT_TYPE, Predef.typeName()).asStringVector().findFirst();
+        casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT).mustBe(stringValue(), Message.INVALID_SUBSCRIPT_TYPE, Predef.typeName()).asStringVector().findFirst();
     }
 
     public static RNode createSpecial(ArgumentsSignature signature, RNode[] arguments, @SuppressWarnings("unused") boolean inReplacement) {
@@ -142,7 +142,7 @@ public abstract class UpdateField extends RBuiltinNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castList = insert(CastListNodeGen.create(true, true, false));
             }
-            RError.warning(this, RError.Message.COERCING_LHS_TO_LIST);
+            warning(RError.Message.COERCING_LHS_TO_LIST);
             return castList.executeList(vector);
         }
         return vector;

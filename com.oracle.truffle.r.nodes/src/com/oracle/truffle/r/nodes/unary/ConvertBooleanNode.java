@@ -48,7 +48,6 @@ public abstract class ConvertBooleanNode extends RNode {
 
     private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile invalidElementCountBranch = BranchProfile.create();
-    private final BranchProfile errorBranch = BranchProfile.create();
 
     @Override
     public final Object execute(VirtualFrame frame) {
@@ -64,13 +63,13 @@ public abstract class ConvertBooleanNode extends RNode {
 
     @Specialization
     protected byte doNull(@SuppressWarnings("unused") RNull value) {
-        throw RError.error(this, RError.Message.LENGTH_ZERO);
+        throw error(RError.Message.LENGTH_ZERO);
     }
 
     @Specialization
     protected byte doInt(int value) {
         if (naProfile.isNA(value)) {
-            throw RError.error(this, RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+            throw error(RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return RRuntime.int2logicalNoCheck(value);
     }
@@ -78,7 +77,7 @@ public abstract class ConvertBooleanNode extends RNode {
     @Specialization
     protected byte doDouble(double value) {
         if (naProfile.isNA(value)) {
-            throw RError.error(this, RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+            throw error(RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return RRuntime.double2logicalNoCheck(value);
     }
@@ -86,7 +85,7 @@ public abstract class ConvertBooleanNode extends RNode {
     @Specialization
     protected byte doLogical(byte value) {
         if (naProfile.isNA(value)) {
-            throw RError.error(this, RError.Message.NA_UNEXP);
+            throw error(RError.Message.NA_UNEXP);
         }
         return value;
     }
@@ -94,7 +93,7 @@ public abstract class ConvertBooleanNode extends RNode {
     @Specialization
     protected byte doComplex(RComplex value) {
         if (naProfile.isNA(value)) {
-            throw RError.error(this, RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+            throw error(RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return RRuntime.complex2logicalNoCheck(value);
     }
@@ -103,7 +102,7 @@ public abstract class ConvertBooleanNode extends RNode {
     protected byte doString(String value) {
         byte logicalValue = RRuntime.string2logicalNoCheck(value);
         if (naProfile.isNA(logicalValue)) {
-            throw RError.error(this, RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+            throw error(RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
         return logicalValue;
     }
@@ -117,10 +116,9 @@ public abstract class ConvertBooleanNode extends RNode {
         if (value.getLength() != 1) {
             invalidElementCountBranch.enter();
             if (value.getLength() == 0) {
-                errorBranch.enter();
-                throw RError.error(this, RError.Message.LENGTH_ZERO);
+                throw error(RError.Message.LENGTH_ZERO);
             } else {
-                RError.warning(this, RError.Message.LENGTH_GT_1);
+                warning(RError.Message.LENGTH_GT_1);
             }
         }
     }
@@ -164,7 +162,7 @@ public abstract class ConvertBooleanNode extends RNode {
     @Specialization
     protected byte doRawVector(RList value) {
         checkLength(value);
-        throw RError.error(this, RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+        throw error(RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
     }
 
     public static ConvertBooleanNode create(RSyntaxNode node) {

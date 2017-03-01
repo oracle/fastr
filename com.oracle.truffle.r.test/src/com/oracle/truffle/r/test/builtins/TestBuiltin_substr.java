@@ -82,8 +82,8 @@ public class TestBuiltin_substr extends TestBase {
         assertEval("{ substr(1234L,2,3) }");
         assertEval("{ substr(1234,2,3) }");
         assertEval("{ substr(\"abcdef\",c(1,2),c(3L,5L)) }");
-        assertEval(Output.IgnoreErrorContext, "{ substr(c(\"abcdef\", \"aa\"), integer(), 2) }");
-        assertEval(Output.IgnoreErrorContext, "{ substr(c(\"abcdef\", \"aa\"), 2, integer()) }");
+        assertEval("{ substr(c(\"abcdef\", \"aa\"), integer(), 2) }");
+        assertEval("{ substr(c(\"abcdef\", \"aa\"), 2, integer()) }");
         assertEval("{ substr(character(), integer(), integer()) }");
         assertEval("{ substr(c(\"abcdef\", \"aa\"), NA, 4) }");
         assertEval("{ substr(c(\"abcdef\", \"aa\"), 3, NA) }");
@@ -101,10 +101,12 @@ public class TestBuiltin_substr extends TestBase {
         assertEval("{ x<-\"abcdef\"; substr(x,1,NA)<-\"0\"; x }");
         assertEval("{ x<-character(); substr(x,1,3)<-\"0\"; x }");
         assertEval("{ x<-c(\"abcdef\", \"ghijklm\"); substr(x, c(1,NA), 4)<-\"0\"; x }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-\"abcdef\"; substr(x,3,1)<-0; x }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-\"abcdef\"; substr(x,1,3)<-character(); x }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-\"abcdef\"; substr(x,1,3)<-NULL; x }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-\"abcdef\"; substr(x,integer(),3)<-NULL; x }");
+
+        assertEval(Output.ImprovedErrorContext, "{ x<-\"abcdef\"; substr(x,3,1)<-0; x }");
+        assertEval(Output.ImprovedErrorContext, "{ x<-\"abcdef\"; substr(x,1,3)<-character(); x }");
+        assertEval(Output.ImprovedErrorContext, "{ x<-\"abcdef\"; substr(x,1,3)<-NULL; x }");
+        assertEval(Output.ImprovedErrorContext, "{ x<-\"abcdef\"; substr(x,integer(),3)<-NULL; x }");
+
         assertEval("{ x<-character(); substr(x,1,3)<-0; x }");
         assertEval("{ x<-character(); substr(x,1,3)<-NULL; x }");
         assertEval("{ x<-character(); substr(x,integer(),3)<-NULL; x }");

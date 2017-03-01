@@ -209,6 +209,6 @@ public abstract class UnaryNotNode extends RBuiltinNode {
 
     @Fallback
     protected Object invalidArgType(@SuppressWarnings("unused") Object operand) {
-        throw RError.error(this, RError.Message.INVALID_ARG_TYPE);
+        throw error(RError.Message.INVALID_ARG_TYPE);
     }
 }

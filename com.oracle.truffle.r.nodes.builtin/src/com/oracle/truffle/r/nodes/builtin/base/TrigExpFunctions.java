@@ -307,7 +307,7 @@ public class TrigExpFunctions {
 
         @Override
         public RComplex op(double re, double im) {
-            throw RError.error(this, RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
+            throw error(RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
         }
     }
 
@@ -571,7 +571,7 @@ public class TrigExpFunctions {
             if (x instanceof RAbstractComplexVector || y instanceof RAbstractComplexVector) {
                 throw RInternalError.unimplemented("atan2 for complex values");
             }
-            throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
+            throw error(RError.Message.NON_NUMERIC_MATH);
         }
     }
 }

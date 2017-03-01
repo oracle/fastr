@@ -145,7 +145,7 @@ public class NamespaceFunctions {
         @Specialization
         protected RNull registerNamespace(RAbstractStringVector name, REnvironment env) {
             if (REnvironment.registerNamespace(name.getDataAt(0), env) == null) {
-                throw RError.error(this, RError.Message.NS_ALREADY_REG);
+                throw error(RError.Message.NS_ALREADY_REG);
             }
             return RNull.instance;
         }
@@ -153,7 +153,7 @@ public class NamespaceFunctions {
         @Specialization
         protected RNull registerNamespace(RSymbol nameSym, REnvironment env) {
             if (REnvironment.registerNamespace(nameSym.getName(), env) == null) {
-                throw RError.error(this, RError.Message.NS_ALREADY_REG);
+                throw error(RError.Message.NS_ALREADY_REG);
             }
             return RNull.instance;
 
@@ -183,7 +183,7 @@ public class NamespaceFunctions {
         private void doUnregisterNamespace(String name) {
             Object ns = REnvironment.unregisterNamespace(name);
             if (ns == null) {
-                throw RError.error(this, RError.Message.NS_NOTREG);
+                throw error(RError.Message.NS_NOTREG);
             }
         }
     }

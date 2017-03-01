@@ -113,6 +113,6 @@ public abstract class AsCall extends RBuiltinNode {
 
     @Fallback
     protected Object asCallFunction(@SuppressWarnings("unused") Object x) {
-        throw RError.error(this, RError.Message.GENERIC, "invalid argument list");
+        throw error(RError.Message.GENERIC, "invalid argument list");
     }
 }

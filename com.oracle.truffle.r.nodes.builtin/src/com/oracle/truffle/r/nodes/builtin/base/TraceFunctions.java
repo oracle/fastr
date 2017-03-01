@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
@@ -71,7 +70,7 @@ public class TraceFunctions {
 
         protected static Casts createCasts(Class<? extends PrimTraceAdapter> extCls) {
             Casts casts = new Casts(extCls);
-            casts.arg("what").mustBe(instanceOf(RFunction.class).or(stringValue()), SHOW_CALLER, Message.ARG_MUST_BE_FUNCTION).mapIf(stringValue(),
+            casts.arg("what").mustBe(instanceOf(RFunction.class).or(stringValue()), Message.ARG_MUST_BE_FUNCTION).mapIf(stringValue(),
                             chain(asStringVector()).with(findFirst().stringElement()).end());
             return casts;
         }
@@ -103,7 +102,7 @@ public class TraceFunctions {
             if (!func.isBuiltin()) {
                 TraceHandling.enableTrace(func);
             } else {
-                throw RError.error(this, RError.Message.GENERIC, "builtin functions cannot be traced");
+                throw error(RError.Message.GENERIC, "builtin functions cannot be traced");
             }
             return RNull.instance;
         }

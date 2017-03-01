@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -36,7 +36,7 @@ public class TestBuiltin_levels extends TestBase {
         assertEval("{ x <- 1 ; levels(x)<-c(\"cat\", \"dog\"); levels(x)}");
         assertEval("{ x <- 1 ; levels(x)<-c(3, \"cat\"); levels(x);}");
         assertEval("{ x <- 1 ; levels(x)<-c(1, \"cat\", 4.5, \"3\"); levels(x);}");
-        assertEval(Output.IgnoreErrorContext, "{ x <- 1 ; levels(x)<-NULL; levels(notx)}");
+        assertEval(Output.MayIgnoreErrorContext, "{ x <- 1 ; levels(x)<-NULL; levels(notx)}");
         assertEval("{ x <- NULL; levels(x)<-\"dog\"; levels(x)}");
     }
 }

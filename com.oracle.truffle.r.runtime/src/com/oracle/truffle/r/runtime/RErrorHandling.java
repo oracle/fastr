@@ -672,26 +672,18 @@ public class RErrorHandling {
                 if (warning.call == RNull.instance) {
                     Utils.writeStderr(warning.message, true);
                 } else {
-                    String callSource = RContext.getRRuntimeASTAccess().getCallerSource((RLanguage) warning.call);
-                    Utils.writeStderr(String.format("In %s : %s", callSource, warning.message), true);
+                    printWarningMessage("In ", warning, 69);
                 }
             } else if (nWarnings <= 10) {
                 Utils.writeStderr("Warning messages:", true);
                 for (int i = 0; i < nWarnings; i++) {
-                    Object call = warnings.get(i).call;
-                    String message = warnings.get(i).message;
-                    if (call == RNull.instance || ((RLanguage) call).getRep().getSourceSection() == null) {
+                    Warning warning = warnings.get(i);
+                    if (warning.call == RNull.instance) {
                         Utils.writeStderr((i + 1) + ":", true);
-                        Utils.writeStderr("  " + warnings.get(i).message, true);
+                        Utils.writeStderr("  " + warning.message, true);
                     } else {
-                        String callString = RContext.getRRuntimeASTAccess().getCallerSource((RLanguage) call);
-                        // this can be enabled when deparsing is completely stable:
-                        // callString = RDeparse.deparse1Line(call, false);
-                        Utils.writeStderr((i + 1) + ": In ", false);
-                        int firstLineLength = message.contains("\n") ? message.indexOf('\n') : message.length();
-                        boolean nl = callString.length() + firstLineLength > 65;
-                        Utils.writeStderr(callString + " :", nl);
-                        Utils.writeStderr((nl ? "  " : " ") + message, true);
+                        Utils.writeStderr(Integer.toString(i + 1), false);
+                        printWarningMessage(": In ", warning, 65);
                     }
                 }
             } else {
@@ -716,6 +708,20 @@ public class RErrorHandling {
         }
     }
 
+    private static void printWarningMessage(String prefix, Warning warning, int maxLen) {
+        String callString = RContext.getRRuntimeASTAccess().getCallerSource((RLanguage) warning.call);
+
+        String message = warning.message;
+        int firstLineLength = message.contains("\n") ? message.indexOf('\n') : message.length();
+        if (callString.length() + firstLineLength > maxLen) {
+            // split long lines
+            Utils.writeStderr(prefix + callString + " :", true);
+            Utils.writeStderr("  " + message, true);
+        } else {
+            Utils.writeStderr(prefix + callString + " : " + message, true);
+        }
+    }
+
     public static void printDeferredWarnings() {
         if (getRErrorHandlingState().warnings.size() > 0) {
             Utils.writeStderr("In addition: ", false);
@@ -735,7 +741,7 @@ public class RErrorHandling {
         // (is 74 a given percentage of console width?)
         if (preamble.length() + 1 + message.length() >= 74) {
             // +1 is for the extra space following the colon
-            return preamble + "\n  " + message;
+            return preamble + " \n  " + message;
         } else {
             return preamble + " " + message;
         }

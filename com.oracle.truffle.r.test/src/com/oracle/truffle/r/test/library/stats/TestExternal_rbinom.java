@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ public class TestExternal_rbinom extends TestBase {
     public void testRbinom() {
         assertEval("set.seed(42); rbinom(10, 10, 0.5)");
         assertEval("set.seed(42); rbinom('10', 10, 0.5)");
-        assertEval(Output.IgnoreWarningContext, "set.seed(42); rbinom('aa', 10, 0.5)");
+        assertEval("set.seed(42); rbinom('aa', 10, 0.5)");
         assertEval("set.seed(42); rbinom(10, 2:10, c(0.1, 0.5, 0.9))");
         assertEval("set.seed(42); rbinom(1:10, 2:10, c(0.1, 0.5, 0.9))");
         assertEval("set.seed(42); rbinom(c(1,2), 11:12, c(0.1, 0.5, 0.9))");

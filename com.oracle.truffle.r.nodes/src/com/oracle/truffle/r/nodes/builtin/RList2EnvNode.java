@@ -50,12 +50,12 @@ public final class RList2EnvNode extends RBaseNode {
         }
         RStringVector names = list.getNames();
         if (names == null) {
-            throw RError.error(this, RError.Message.LIST_NAMES_SAME_LENGTH);
+            throw error(RError.Message.LIST_NAMES_SAME_LENGTH);
         }
         for (int i = list.getLength() - 1; i >= 0; i--) {
             String name = names.getDataAt(i);
             if (!ignoreMissingNames && name.length() == 0) {
-                throw RError.error(this, RError.Message.ZERO_LENGTH_VARIABLE);
+                throw error(RError.Message.ZERO_LENGTH_VARIABLE);
             }
             // in case of duplicates, last element in list wins
             if (env.get(name) == null) {

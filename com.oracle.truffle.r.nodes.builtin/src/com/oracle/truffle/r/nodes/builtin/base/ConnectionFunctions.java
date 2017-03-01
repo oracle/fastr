@@ -140,11 +140,11 @@ public abstract class ConnectionFunctions {
 
     public static final class CastsHelper {
         private static void description(Casts casts) {
-            casts.arg("description").mustBe(stringValue()).asStringVector().shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").findFirst().notNA();
+            casts.arg("description").mustBe(stringValue()).asStringVector().shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").findFirst().mustNotBeNA();
         }
 
         private static HeadPhaseBuilder<String> open(Casts casts) {
-            return casts.arg("open").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().notNA();
+            return casts.arg("open").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustNotBeNA();
         }
 
         private static HeadPhaseBuilder<String> openMode(Casts casts) {
@@ -157,11 +157,11 @@ public abstract class ConnectionFunctions {
         }
 
         private static void raw(Casts casts) {
-            casts.arg("raw").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("raw").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         private static void blocking(Casts casts) {
-            casts.arg("blocking").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("blocking").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         public static void connection(Casts casts) {
@@ -173,7 +173,7 @@ public abstract class ConnectionFunctions {
         }
 
         private static void useBytes(Casts casts) {
-            casts.arg("useBytes").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("useBytes").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         private static void n(Casts casts) {
@@ -185,7 +185,7 @@ public abstract class ConnectionFunctions {
         }
 
         private static void swap(Casts casts) {
-            casts.arg("swap").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("swap").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         private static void method(Casts casts) {
@@ -220,15 +220,15 @@ public abstract class ConnectionFunctions {
                 } else {
                     if (!(open.equals("w+") || open.equals("w+b"))) {
                         open = "w+";
-                        RError.warning(RError.SHOW_CALLER, RError.Message.FILE_OPEN_TMP);
+                        warning(RError.Message.FILE_OPEN_TMP);
                     }
                 }
             }
             try {
                 return new FileRConnection(path, open).asVector();
             } catch (IOException ex) {
-                RError.warning(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_FILE, description, ex.getMessage());
-                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_CONNECTION);
+                warning(RError.Message.CANNOT_OPEN_FILE, description, ex.getMessage());
+                throw error(RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
     }
@@ -250,7 +250,7 @@ public abstract class ConnectionFunctions {
             CastsHelper.description(casts);
             CastsHelper.open(casts);
             CastsHelper.encoding(casts);
-            casts.arg("compression").asIntegerVector().findFirst().notNA().mustBe(gte(cType == RCompression.Type.XZ ? -9 : 0).and(lte(9)));
+            casts.arg("compression").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte(cType == RCompression.Type.XZ ? -9 : 0).and(lte(9)));
             return casts;
         }
 
@@ -264,9 +264,9 @@ public abstract class ConnectionFunctions {
             }
         }
 
-        private static RError reportError(String path, IOException ex) throws RError {
-            RError.warning(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_FILE, path, ex.getMessage());
-            throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_CONNECTION);
+        private RError reportError(String path, IOException ex) throws RError {
+            warning(RError.Message.CANNOT_OPEN_FILE, path, ex.getMessage());
+            throw error(RError.Message.CANNOT_OPEN_CONNECTION);
         }
     }
 
@@ -315,7 +315,7 @@ public abstract class ConnectionFunctions {
             casts.arg("text").allowNull().mustBe(stringValue());
             CastsHelper.open(casts).mustBe(equalTo("").or(equalTo("r").or(equalTo("w").or(equalTo("a")))), RError.Message.UNSUPPORTED_MODE);
             casts.arg("env").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
-            casts.arg("encoding").asIntegerVector().findFirst().notNA();
+            casts.arg("encoding").asIntegerVector().findFirst().mustNotBeNA();
         }
 
         @Specialization
@@ -333,7 +333,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RAbstractIntVector textConnection(String description, RNull text, String open, REnvironment env, int encoding) {
             if (open.length() == 0 || open.equals("r")) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "text");
+                throw error(RError.Message.INVALID_ARGUMENT, "text");
             } else {
                 throw RError.nyi(RError.SHOW_CALLER, "textConnection: NULL");
             }
@@ -355,7 +355,7 @@ public abstract class ConnectionFunctions {
             if (connection instanceof TextRConnection) {
                 return RDataFactory.createStringVector(((TextRConnection) connection).getValue(), RDataFactory.COMPLETE_VECTOR);
             } else {
-                throw RError.error(RError.SHOW_CALLER, Message.NOT_A_TEXT_CONNECTION);
+                throw error(Message.NOT_A_TEXT_CONNECTION);
             }
         }
     }
@@ -366,8 +366,8 @@ public abstract class ConnectionFunctions {
         static {
             Casts casts = new Casts(SocketConnection.class);
             casts.arg("host").mustBe(stringValue()).asStringVector().findFirst();
-            casts.arg("port").asIntegerVector().findFirst().notNA().mustBe(gte(0));
-            casts.arg("server").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("port").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte(0));
+            casts.arg("server").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
             CastsHelper.open(casts);
             CastsHelper.blocking(casts);
             casts.arg("timeout").asIntegerVector().findFirst();
@@ -379,7 +379,7 @@ public abstract class ConnectionFunctions {
             try {
                 return new RSocketConnection(open, server, host, port, blocking, timeout).asVector();
             } catch (IOException ex) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_CONNECTION);
+                throw error(RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
     }
@@ -403,9 +403,9 @@ public abstract class ConnectionFunctions {
             try {
                 return new URLRConnection(url, open).asVector();
             } catch (MalformedURLException ex) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.UNSUPPORTED_URL_SCHEME);
+                throw error(RError.Message.UNSUPPORTED_URL_SCHEME);
             } catch (IOException ex) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_CONNECTION);
+                throw error(RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
     }
@@ -456,7 +456,7 @@ public abstract class ConnectionFunctions {
             if (connection instanceof RawRConnection) {
                 return RDataFactory.createRawVector(((RawRConnection) connection).getValue());
             } else {
-                throw RError.error(RError.SHOW_CALLER, Message.NOT_A_RAW_CONNECTION);
+                throw error(Message.NOT_A_RAW_CONNECTION);
             }
         }
     }
@@ -503,15 +503,15 @@ public abstract class ConnectionFunctions {
             try {
                 BaseRConnection baseConn = getBaseConnection(RConnection.fromIndex(con));
                 if (baseConn.isClosed()) {
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.INVALID_CONNECTION);
+                    throw error(RError.Message.INVALID_CONNECTION);
                 }
                 if (baseConn.isOpen()) {
-                    RError.warning(RError.SHOW_CALLER, RError.Message.ALREADY_OPEN_CONNECTION);
+                    warning(RError.Message.ALREADY_OPEN_CONNECTION);
                     return RNull.instance;
                 }
                 baseConn.open(open);
             } catch (IOException ex) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, ex.getMessage());
+                throw error(RError.Message.GENERIC, ex.getMessage());
             }
             return RNull.instance;
         }
@@ -541,7 +541,7 @@ public abstract class ConnectionFunctions {
                     result &= baseCon.canWrite();
                     break;
                 default:
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.UNKNOWN_VALUE, "rw");
+                    throw error(RError.Message.UNKNOWN_VALUE, "rw");
             }
             return RDataFactory.createLogicalVectorFromScalar(result);
         }
@@ -563,7 +563,7 @@ public abstract class ConnectionFunctions {
             try {
                 connection.closeAndDestroy();
             } catch (IOException ex) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, ex.getMessage());
+                throw error(RError.Message.GENERIC, ex.getMessage());
             }
             return RNull.instance;
         }
@@ -575,11 +575,11 @@ public abstract class ConnectionFunctions {
         static {
             Casts casts = new Casts(ReadLines.class);
             CastsHelper.connection(casts);
-            casts.arg("n").asIntegerVector().findFirst().notNA();
-            casts.arg("ok").asLogicalVector().findFirst().notNA().map(toBoolean());
-            casts.arg("warn").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("n").asIntegerVector().findFirst().mustNotBeNA();
+            casts.arg("ok").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("warn").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
             CastsHelper.encoding(casts);
-            casts.arg("skipNul").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("skipNul").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @Specialization
@@ -589,11 +589,11 @@ public abstract class ConnectionFunctions {
             try (RConnection openConn = RConnection.fromIndex(con).forceOpen("rt")) {
                 String[] lines = openConn.readLines(n, warn, skipNul);
                 if (n > 0 && lines.length < n && !ok) {
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.TOO_FEW_LINES_READ_LINES);
+                    throw error(RError.Message.TOO_FEW_LINES_READ_LINES);
                 }
                 return RDataFactory.createStringVector(lines, RDataFactory.COMPLETE_VECTOR);
             } catch (IOException x) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_READING_CONNECTION, x.getMessage());
+                throw error(RError.Message.ERROR_READING_CONNECTION, x.getMessage());
             }
         }
     }
@@ -615,7 +615,7 @@ public abstract class ConnectionFunctions {
             try (RConnection openConn = RConnection.fromIndex(con).forceOpen("wt")) {
                 openConn.writeLines(text, sep, useBytes);
             } catch (IOException x) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
+                throw error(RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
             }
             return RNull.instance;
         }
@@ -635,7 +635,7 @@ public abstract class ConnectionFunctions {
             try {
                 RConnection.fromIndex(con).flush();
             } catch (IOException x) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_FLUSHING_CONNECTION, x.getMessage());
+                throw error(RError.Message.ERROR_FLUSHING_CONNECTION, x.getMessage());
             }
             return RNull.instance;
         }
@@ -648,7 +648,7 @@ public abstract class ConnectionFunctions {
             Casts casts = new Casts(PushBack.class);
             casts.arg("data").asStringVector().mustBe(instanceOf(RAbstractStringVector.class));
             CastsHelper.connection(casts);
-            casts.arg("newLine").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("newLine").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
             casts.arg("type").asIntegerVector().findFirst();
         }
 
@@ -715,7 +715,7 @@ public abstract class ConnectionFunctions {
                 }
                 return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
             } catch (IOException x) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_READING_CONNECTION, x.getMessage());
+                throw error(RError.Message.ERROR_READING_CONNECTION, x.getMessage());
             }
         }
 
@@ -730,10 +730,10 @@ public abstract class ConnectionFunctions {
         static {
             // @formatter:off
             Casts casts = new Casts(WriteChar.class);
-            casts.arg("object").mustBe(stringValue(), RError.SHOW_CALLER, Message.ONLY_WRITE_CHAR_OBJECTS).asStringVector();
+            casts.arg("object").mustBe(stringValue(), Message.ONLY_WRITE_CHAR_OBJECTS).asStringVector();
             casts.arg("con").mustBe(rawValue().not(), Message.GENERIC, "raw connection in writeChar not implemented in FastR yet.").
                     mustBe(stringValue().not(), Message.GENERIC, "filename as a connection in writeChar not implemented in FastR yet.").
-                    mustBe(integerValue(), RError.SHOW_CALLER, Message.INVALID_CONNECTION).asIntegerVector().findFirst();
+                    mustBe(integerValue(), Message.INVALID_CONNECTION).asIntegerVector().findFirst();
             CastsHelper.nchars(casts);
             casts.arg("sep").mustNotBeMissing().returnIf(nullValue()).mustBe(stringValue()).asStringVector();
             CastsHelper.useBytes(casts);
@@ -746,7 +746,7 @@ public abstract class ConnectionFunctions {
         }
 
         @TruffleBoundary
-        private static RNull writeCharGeneric(RAbstractStringVector object, int con, RAbstractIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
+        private RNull writeCharGeneric(RAbstractStringVector object, int con, RAbstractIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
             try (RConnection openConn = RConnection.fromIndex(con).forceOpen("wb")) {
                 int length = object.getLength();
                 for (int i = 0; i < length; i++) {
@@ -756,12 +756,12 @@ public abstract class ConnectionFunctions {
                     final int writeLen = Math.min(s.length(), nc);
                     int pad = nc - s.length();
                     if (pad > 0) {
-                        RError.warning(RError.SHOW_CALLER, RError.Message.MORE_CHARACTERS);
+                        warning(RError.Message.MORE_CHARACTERS);
                     }
                     openConn.writeChar(s.substring(0, writeLen), pad, getSepFor(sep, i), useBytes);
                 }
             } catch (IOException x) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
+                throw error(RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
             }
             return RNull.instance;
         }
@@ -803,7 +803,7 @@ public abstract class ConnectionFunctions {
             casts.arg("what").asStringVector().findFirst();
             CastsHelper.n(casts);
             CastsHelper.size(casts);
-            casts.arg("signed").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("signed").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
             CastsHelper.swap(casts);
         }
 
@@ -814,7 +814,7 @@ public abstract class ConnectionFunctions {
             BaseRConnection connection = RConnection.fromIndex(con);
             try (RConnection openConn = connection.forceOpen("rb")) {
                 if (getBaseConnection(openConn).getOpenMode().isText()) {
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.ONLY_READ_BINARY_CONNECTION);
+                    throw error(RError.Message.ONLY_READ_BINARY_CONNECTION);
                 }
                 switch (what) {
                     case "int":
@@ -849,7 +849,7 @@ public abstract class ConnectionFunctions {
                         throw RInternalError.shouldNotReachHere();
                 }
             } catch (IOException x) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_READING_CONNECTION, x.getMessage());
+                throw error(RError.Message.ERROR_READING_CONNECTION, x.getMessage());
             }
             return result;
         }
@@ -1097,19 +1097,19 @@ public abstract class ConnectionFunctions {
         protected Object writeBin(RAbstractVector object, int con, int size, boolean swap, boolean useBytes,
                         @Cached("create()") WriteDataNode writeData) {
             if (object instanceof RList || object instanceof RExpression) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "object");
+                throw error(RError.Message.INVALID_ARGUMENT, "object");
             }
             if (object.getLength() > 0) {
                 RConnection connection = RConnection.fromIndex(con);
                 try (RConnection openConn = connection.forceOpen("wb")) {
                     if (getBaseConnection(openConn).isTextMode()) {
-                        throw RError.error(RError.SHOW_CALLER, RError.Message.ONLY_WRITE_BINARY_CONNECTION);
+                        throw error(RError.Message.ONLY_WRITE_BINARY_CONNECTION);
                     }
                     ByteBuffer buffer = writeData.execute(object, size, swap, useBytes);
                     buffer.flip();
                     connection.writeBin(buffer);
                 } catch (IOException x) {
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
+                    throw error(RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
                 }
             }
             return RNull.instance;
@@ -1137,7 +1137,7 @@ public abstract class ConnectionFunctions {
         protected RAbstractIntVector getConnection(int what) {
             BaseRConnection con = RContext.getInstance().stateRConnection.getConnection(what, false);
             if (con == null) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.NO_SUCH_CONNECTION, what);
+                throw error(RError.Message.NO_SUCH_CONNECTION, what);
             } else {
                 return con.asVector();
             }
@@ -1199,7 +1199,7 @@ public abstract class ConnectionFunctions {
                 }
                 return (int) newOffset;
             } catch (IOException x) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, x.getMessage());
+                throw error(RError.Message.GENERIC, x.getMessage());
             }
         }
     }

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,8 +29,8 @@ public class TestBuiltin_Syssetlocale extends TestBase {
 
     @Test
     public void testSyssetlocaleInvalidArgs() {
-        assertEval(Output.IgnoreErrorContext, ".Internal(Sys.setlocale(4, c('more', 'elements')))");
-        assertEval(Output.IgnoreErrorContext, ".Internal(Sys.setlocale(4, 42))");
+        assertEval(".Internal(Sys.setlocale(4, c('more', 'elements')))");
+        assertEval(".Internal(Sys.setlocale(4, 42))");
         assertEval(Output.IgnoreErrorMessage, ".Internal(Sys.setlocale('3L', 'C'))");
     }
 }

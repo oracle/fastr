@@ -32,19 +32,24 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
 import com.oracle.truffle.r.runtime.RError;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_LIST_FOR_SUBSTITUTION;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import com.oracle.truffle.r.runtime.RSubstitute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(SubstituteDirect.class);
-        casts.arg(1).defaultError(SHOW_CALLER, INVALID_LIST_FOR_SUBSTITUTION).mustBe(instanceOf(RAbstractListVector.class).or(instanceOf(REnvironment.class)));
+        casts.arg(1).defaultError(INVALID_LIST_FOR_SUBSTITUTION).mustBe(instanceOf(RAbstractListVector.class).or(instanceOf(REnvironment.class)));
+    }
+
+    @Override
+    protected RBaseNode getErrorContext() {
+        return RError.SHOW_CALLER;
     }
 
     @Specialization
@@ -73,7 +78,7 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
 
     @Fallback
     protected Object substituteDirect(@SuppressWarnings("unused") Object object, @SuppressWarnings("unused") Object env) {
-        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
     @TruffleBoundary

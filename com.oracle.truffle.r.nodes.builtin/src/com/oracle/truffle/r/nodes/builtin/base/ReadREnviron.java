@@ -43,7 +43,7 @@ public abstract class ReadREnviron extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(ReadREnviron.class);
-        casts.arg("x").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.ARGUMENT_MUST_BE_STRING, "x").asStringVector().findFirst();
+        casts.arg("x").mustBe(stringValue(), RError.Message.ARGUMENT_MUST_BE_STRING, "x").asStringVector().findFirst();
     }
 
     @TruffleBoundary
@@ -53,10 +53,10 @@ public abstract class ReadREnviron extends RBuiltinNode {
         try {
             RContext.getInstance().stateREnvVars.readEnvironFile(path);
         } catch (FileNotFoundException ex) {
-            RError.warning(this, RError.Message.GENERIC, ex.getMessage());
+            warning(RError.Message.GENERIC, ex.getMessage());
             result = RRuntime.LOGICAL_FALSE;
         } catch (IOException ex) {
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+            throw error(RError.Message.GENERIC, ex.getMessage());
         }
         return result;
     }

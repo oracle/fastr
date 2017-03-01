@@ -31,7 +31,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.function.IntFunction;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -54,13 +53,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class RepeatInternal extends RBuiltinNode {
 
     private final ConditionProfile timesOneProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile errorProfile = BranchProfile.create();
 
     static {
         Casts casts = new Casts(RepeatInternal.class);
-        casts.arg("x").mustBe(abstractVectorValue(), RError.SHOW_CALLER2, RError.Message.ATTEMPT_TO_REPLICATE, typeName());
-        casts.arg("times").defaultError(RError.SHOW_CALLER, RError.Message.INCORRECT_ARG_TYPE, "second").mustBe(abstractVectorValue()).asIntegerVector().mustBe(notEmpty(),
-                        RError.SHOW_CALLER, RError.Message.INVALID_VALUE, "times");
+        casts.arg("x").mustBe(abstractVectorValue(), RError.Message.ATTEMPT_TO_REPLICATE, typeName());
+        casts.arg("times").defaultError(RError.Message.INCORRECT_ARG_TYPE, "second").mustBe(abstractVectorValue()).asIntegerVector().mustBe(notEmpty(),
+                        RError.Message.INVALID_VALUE, "times");
     }
 
     @FunctionalInterface
@@ -81,8 +79,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
         if (timesOneProfile.profile(timesLength == 1)) {
             int timesValue = times.getDataAt(0);
             if (timesValue < 0) {
-                errorProfile.enter();
-                RError.error(this, RError.Message.INVALID_VALUE, "times");
+                throw error(RError.Message.INVALID_VALUE, "times");
             }
             int count = timesValue * valueLength;
             result = arrayConstructor.apply(count);
@@ -97,8 +94,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
             for (int i = 0; i < timesLength; i++) {
                 int data = times.getDataAt(i);
                 if (data < 0) {
-                    errorProfile.enter();
-                    RError.error(this, RError.Message.INVALID_VALUE, "times");
+                    throw error(RError.Message.INVALID_VALUE, "times");
                 }
                 count += data;
             }
@@ -111,8 +107,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
                 }
             }
         } else {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_VALUE, "times");
+            throw error(RError.Message.INVALID_VALUE, "times");
         }
         return createResult.create(result, value.isComplete());
     }

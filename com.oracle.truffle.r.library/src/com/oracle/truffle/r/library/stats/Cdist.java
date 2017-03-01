@@ -86,19 +86,19 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         return RRuntime.isFinite(a) && RRuntime.isFinite(b);
     }
 
-    public static Method getMethod(int method) {
+    public Method getMethod(int method) {
         if (method < 1 || method > Method.values().length) {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "distance(): invalid distance");
+            throw error(RError.Message.GENERIC, "distance(): invalid distance");
         }
         return Method.values()[method - 1];
     }
 
-    private static void rdistance(double[] x, int nr, int nc, double[] d, boolean diag, Method method, double p) {
+    private void rdistance(double[] x, int nr, int nc, double[] d, boolean diag, Method method, double p) {
         int ij; /* can exceed 2^31 - 1, but Java can't handle that */
         //
         if (method == Method.MINKOWSKI) {
             if (!RRuntime.isFinite(p) || p <= 0) {
-                throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "distance(): invalid p");
+                throw error(RError.Message.GENERIC, "distance(): invalid p");
             }
         }
         int dc = diag ? 0 : 1; /* diag=1: we do the diagonal */

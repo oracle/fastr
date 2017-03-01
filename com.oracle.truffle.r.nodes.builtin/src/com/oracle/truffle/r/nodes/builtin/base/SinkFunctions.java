@@ -46,9 +46,9 @@ public class SinkFunctions {
         static {
             Casts casts = new Casts(Sink.class);
             casts.arg("file").mustBe(integerValue()).asIntegerVector().findFirst();
-            casts.arg("closeOnExit").asLogicalVector().findFirst().notNA().map(toBoolean());
-            casts.arg("type").asLogicalVector().findFirst().notNA().map(toBoolean());
-            casts.arg("split").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("closeOnExit").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("type").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("split").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @Specialization
@@ -62,7 +62,7 @@ public class SinkFunctions {
                 try {
                     StdConnections.popDivertOut();
                 } catch (IOException ex) {
-                    throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+                    throw error(RError.Message.GENERIC, ex.getMessage());
                 }
             } else {
                 RConnection conn = RConnection.fromIndex(file);
@@ -81,7 +81,7 @@ public class SinkFunctions {
 
         static {
             Casts casts = new Casts(SinkNumber.class);
-            casts.arg("type").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("type").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @Specialization

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -62,7 +62,7 @@ public class TestBuiltin_pmatch extends TestBase {
         assertEval("pmatch(NULL, 1)");
         assertEval("pmatch(1, NULL)");
         assertEval("pmatch(1:5, c(1,3), nomatch=NULL)");
-        assertEval(Output.IgnoreWarningContext, "pmatch(1:5, c(1,3), nomatch='str')");
+        assertEval("pmatch(1:5, c(1,3), nomatch='str')");
         assertEval("pmatch(1:5, c(1,3), duplicates.ok=42)");
     }
 }

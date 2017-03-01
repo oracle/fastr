@@ -38,8 +38,7 @@ public abstract class RawToBits extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(RawToBits.class);
-        casts.arg("x").mustNotBeNull(RError.SHOW_CALLER, RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x").mustBe(Predef.rawValue(), RError.SHOW_CALLER,
-                        RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
+        casts.arg("x").mustNotBeNull(RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x").mustBe(Predef.rawValue(), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
     }
 
     @Specialization

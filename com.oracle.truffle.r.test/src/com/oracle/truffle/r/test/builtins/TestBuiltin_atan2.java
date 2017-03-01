@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -55,8 +55,9 @@ public class TestBuiltin_atan2 extends TestBase {
         assertEval("{ atan2(c(0.3,0.6,0.9), c(0.4, 0.3)) }");
         assertEval("{ atan2() }");
         assertEval("{ atan2(0.7) }");
-        assertEval("{ atan2(NULL, 1) }");
-        assertEval("{ atan2(2, new.env()) }");
-        assertEval("{ atan2(2, as.symbol('45')) }");
+
+        assertEval(Output.ImprovedErrorContext, "{ atan2(NULL, 1) }");
+        assertEval(Output.ImprovedErrorContext, "{ atan2(2, new.env()) }");
+        assertEval(Output.ImprovedErrorContext, "{ atan2(2, as.symbol('45')) }");
     }
 }

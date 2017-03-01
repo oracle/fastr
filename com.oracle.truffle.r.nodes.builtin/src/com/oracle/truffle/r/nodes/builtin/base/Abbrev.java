@@ -32,8 +32,8 @@ public abstract class Abbrev extends RBuiltinNode {
     static {
         Casts casts = new Casts(Abbrev.class);
         casts.arg("x").mustBe(stringValue());
-        casts.arg("minlength").asIntegerVector().findFirst().notNA();
-        casts.arg("use.classes").asLogicalVector().findFirst().notNA().map(toBoolean());
+        casts.arg("minlength").asIntegerVector().findFirst().mustNotBeNA();
+        casts.arg("use.classes").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
     }
 
     @Specialization

@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -41,8 +40,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 
 @RBuiltin(name = ".Primitive", kind = PRIMITIVE, parameterNames = "name", behavior = PURE)
 public abstract class Primitive extends RBuiltinNode {
-
-    private final BranchProfile errorProfile = BranchProfile.create();
 
     static {
         Casts casts = new Casts(Primitive.class);
@@ -66,8 +63,7 @@ public abstract class Primitive extends RBuiltinNode {
     protected RFunction lookup(String name) {
         RFunction function = RContext.lookupBuiltin(name);
         if (function == null || function.getRBuiltin() != null && function.getRBuiltin().getKind() != RBuiltinKind.PRIMITIVE) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.NO_SUCH_PRIMITIVE, name);
+            throw error(RError.Message.NO_SUCH_PRIMITIVE, name);
         }
         return function;
     }

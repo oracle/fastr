@@ -248,8 +248,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     private Object doEnvironment(REnvironment env, Object[] positions) {
         if (mode.isSubset()) {
-            errorBranch.enter();
-            throw RError.error(this, RError.Message.OBJECT_NOT_SUBSETTABLE, RType.Environment.getName());
+            throw error(RError.Message.OBJECT_NOT_SUBSETTABLE, RType.Environment.getName());
         }
 
         String positionString = tryCastSingleString(positionsCheckNode, positions);
@@ -257,8 +256,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             Object obj = env.get(positionString);
             return obj == null ? RNull.instance : obj;
         }
-        errorBranch.enter();
-        throw RError.error(this, RError.Message.WRONG_ARGS_SUBSET_ENV);
+        throw error(RError.Message.WRONG_ARGS_SUBSET_ENV);
     }
 
     private boolean isMissingSingleDimension() {

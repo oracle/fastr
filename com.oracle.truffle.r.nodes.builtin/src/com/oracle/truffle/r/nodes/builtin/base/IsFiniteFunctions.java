@@ -86,7 +86,7 @@ public class IsFiniteFunctions {
         @Fallback
         @TruffleBoundary
         protected Object doIsFiniteOther(Object x) {
-            throw RError.error(this, RError.Message.DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE, TypeofNode.getTypeof(x).getName());
+            throw error(RError.Message.DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE, TypeofNode.getTypeof(x).getName());
         }
 
         protected RLogicalVector doFunConstant(RAbstractVector x, byte value) {

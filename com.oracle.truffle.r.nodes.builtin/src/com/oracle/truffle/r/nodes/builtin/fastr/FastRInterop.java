@@ -77,7 +77,7 @@ public class FastRInterop {
             try {
                 return RContext.getInstance().getEnv().parse(sourceObject);
             } catch (Throwable t) {
-                throw RError.error(this, Message.GENERIC, "Error while parsing: " + t.getMessage());
+                throw error(Message.GENERIC, "Error while parsing: " + t.getMessage());
             }
         }
 
@@ -122,9 +122,9 @@ public class FastRInterop {
                 Source sourceObject = sourceBuilder.build();
                 return RContext.getInstance().getEnv().parse(sourceObject);
             } catch (IOException e) {
-                throw RError.error(this, Message.GENERIC, "Error reading file: " + e.getMessage());
+                throw error(Message.GENERIC, "Error reading file: " + e.getMessage());
             } catch (Throwable t) {
-                throw RError.error(this, Message.GENERIC, "Error while parsing: " + t.getMessage());
+                throw error(Message.GENERIC, "Error while parsing: " + t.getMessage());
             }
         }
 
@@ -154,7 +154,7 @@ public class FastRInterop {
         @TruffleBoundary
         protected Object exportSymbol(String name, RTypedValue value) {
             if (name == null) {
-                throw RError.error(this, RError.Message.INVALID_ARG_TYPE, "name");
+                throw error(RError.Message.INVALID_ARG_TYPE, "name");
             }
             RContext.getInstance().getExportedSymbols().put(name, value);
             return RNull.instance;
@@ -163,13 +163,13 @@ public class FastRInterop {
         @Specialization
         @TruffleBoundary
         protected Object exportSymbol(@SuppressWarnings("unused") String name, @SuppressWarnings("unused") RMissing value) {
-            throw RError.error(this, Message.ARGUMENT_MISSING, "value");
+            throw error(Message.ARGUMENT_MISSING, "value");
         }
 
         @Fallback
         @TruffleBoundary
         protected Object exportSymbol(@SuppressWarnings("unused") Object name, @SuppressWarnings("unused") Object value) {
-            throw RError.error(this, Message.GENERIC, "only R language objects can be exported");
+            throw error(Message.GENERIC, "only R language objects can be exported");
         }
     }
 
@@ -186,7 +186,7 @@ public class FastRInterop {
         protected Object importSymbol(String name) {
             Object object = RContext.getInstance().getEnv().importSymbol(name);
             if (object == null) {
-                throw RError.error(this, RError.Message.NO_IMPORT_OBJECT, name);
+                throw error(RError.Message.NO_IMPORT_OBJECT, name);
             }
             return object;
         }

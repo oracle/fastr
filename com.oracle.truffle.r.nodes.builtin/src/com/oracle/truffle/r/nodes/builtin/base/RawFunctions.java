@@ -60,7 +60,7 @@ public class RawFunctions {
         @Specialization
         protected RRawVector charToRaw(RAbstractStringVector x) {
             if (x.getLength() > 1) {
-                RError.warning(this, RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
+                warning(RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
             }
             String s = x.getDataAt(0);
             byte[] data = new byte[s.length()];
@@ -76,8 +76,8 @@ public class RawFunctions {
 
         static {
             Casts casts = new Casts(RawToChar.class);
-            casts.arg("x").mustBe(instanceOf(RAbstractRawVector.class), RError.SHOW_CALLER, RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
-            casts.arg("multiple").defaultError(RError.Message.INVALID_LOGICAL).asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("x").mustBe(instanceOf(RAbstractRawVector.class), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
+            casts.arg("multiple").defaultError(RError.Message.INVALID_LOGICAL).asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @Specialization
@@ -110,8 +110,8 @@ public class RawFunctions {
 
         static {
             Casts casts = new Casts(RawShift.class);
-            casts.arg("x").mustBe(instanceOf(RAbstractRawVector.class), RError.SHOW_CALLER, RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
-            casts.arg("n").defaultError(RError.Message.MUST_BE_SMALL_INT, "shift").asIntegerVector().findFirst().notNA().mustBe(gte(-8).and(lte(8)));
+            casts.arg("x").mustBe(instanceOf(RAbstractRawVector.class), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
+            casts.arg("n").defaultError(RError.Message.MUST_BE_SMALL_INT, "shift").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte(-8).and(lte(8)));
         }
 
         @Specialization

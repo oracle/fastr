@@ -42,7 +42,7 @@ public abstract class Col extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Col.class);
-        casts.arg("dims").defaultError(RError.SHOW_CALLER, RError.Message.MATRIX_LIKE_REQUIRED, "col").mustBe(integerValue()).asIntegerVector().mustBe(size(2));
+        casts.arg("dims").defaultError(RError.Message.MATRIX_LIKE_REQUIRED, "col").mustBe(integerValue()).asIntegerVector().mustBe(size(2));
     }
 
     @Specialization

@@ -147,7 +147,7 @@ public class FileFunctions {
             int len1 = file1Vec.getLength();
             int len2 = file2Vec.getLength();
             if (len1 < 1) {
-                throw RError.error(this, RError.Message.FILE_APPEND_TO);
+                throw error(RError.Message.FILE_APPEND_TO);
             }
             if (len2 < 1) {
                 return RDataFactory.createEmptyLogicalVector();
@@ -212,7 +212,7 @@ public class FileFunctions {
                     out.write(buf);
                     return true;
                 } catch (IOException ex) {
-                    RError.warning(this, RError.Message.FILE_APPEND_WRITE);
+                    warning(RError.Message.FILE_APPEND_WRITE);
                     return false;
                 }
             }
@@ -243,7 +243,7 @@ public class FileFunctions {
                     } catch (IOException ex) {
                         ok = false;
                         if (showWarnings == RRuntime.LOGICAL_TRUE) {
-                            RError.warning(this, RError.Message.FILE_CANNOT_CREATE, path);
+                            warning(RError.Message.FILE_CANNOT_CREATE, path);
                         }
                     }
                     status[i] = RRuntime.asLogical(ok);
@@ -436,7 +436,7 @@ public class FileFunctions {
             int lenFrom = vecFrom.getLength();
             int lenTo = vecTo.getLength();
             if (lenFrom < 1) {
-                throw RError.error(this, RError.Message.NOTHING_TO_LINK);
+                throw error(RError.Message.NOTHING_TO_LINK);
             }
             if (lenTo < 1) {
                 return RDataFactory.createLogicalVector(0);
@@ -461,7 +461,7 @@ public class FileFunctions {
                         }
                     } catch (UnsupportedOperationException | IOException ex) {
                         status[i] = RRuntime.LOGICAL_FALSE;
-                        RError.warning(this, RError.Message.FILE_CANNOT_LINK, from, to, ex.getMessage());
+                        warning(RError.Message.FILE_CANNOT_LINK, from, to, ex.getMessage());
                     }
                 }
             }
@@ -522,7 +522,7 @@ public class FileFunctions {
                     boolean ok = f.delete();
                     status[i] = RRuntime.asLogical(ok);
                     if (!ok) {
-                        RError.warning(this, RError.Message.FILE_CANNOT_REMOVE, path);
+                        warning(RError.Message.FILE_CANNOT_REMOVE, path);
                     }
                 }
             }
@@ -544,7 +544,7 @@ public class FileFunctions {
         protected Object doFileRename(RAbstractStringVector vecFrom, RAbstractStringVector vecTo) {
             int len = vecFrom.getLength();
             if (len != vecTo.getLength()) {
-                throw RError.error(this, RError.Message.FROM_TO_DIFFERENT);
+                throw error(RError.Message.FROM_TO_DIFFERENT);
             }
             byte[] status = new byte[len];
             for (int i = 0; i < len; i++) {
@@ -558,7 +558,7 @@ public class FileFunctions {
                     boolean ok = new File(Utils.tildeExpand(from)).renameTo(new File(Utils.tildeExpand(to)));
                     status[i] = RRuntime.asLogical(ok);
                     if (!ok) {
-                        RError.warning(this, RError.Message.FILE_CANNOT_RENAME, from, to);
+                        warning(RError.Message.FILE_CANNOT_RENAME, from, to);
                     }
                 }
             }
@@ -602,12 +602,12 @@ public class FileFunctions {
             Casts casts = new Casts(ListFiles.class);
             casts.arg("path").mustBe(stringValue()).asStringVector();
             casts.arg("pattern").allowNull().mustBe(stringValue());
-            casts.arg("all.files").asLogicalVector().findFirst().notNA().map(toBoolean());
-            casts.arg("full.names").asLogicalVector().findFirst().notNA().map(toBoolean());
-            casts.arg("recursive").asLogicalVector().findFirst().notNA().map(toBoolean());
-            casts.arg("ignore.case").asLogicalVector().findFirst().notNA().map(toBoolean());
-            casts.arg("include.dirs").asLogicalVector().findFirst().notNA().map(toBoolean());
-            casts.arg("no..").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("all.files").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("full.names").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("recursive").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("ignore.case").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("include.dirs").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("no..").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @SuppressWarnings("unused")
@@ -632,7 +632,7 @@ public class FileFunctions {
             String pattern = null;
             if (patternVec.getLength() > 0) {
                 if (RRuntime.isNA(patternVec.getDataAt(0))) {
-                    throw RError.error(this, RError.Message.INVALID_ARGUMENT, "pattern");
+                    throw error(RError.Message.INVALID_ARGUMENT, "pattern");
                 } else {
                     pattern = patternVec.getDataAt(0);
                 }
@@ -703,7 +703,7 @@ public class FileFunctions {
 
         private boolean check(boolean value, String argName) {
             if (value) {
-                RError.warning(this, RError.Message.GENERIC, "'" + argName + "'" + " is not implemented");
+                warning(RError.Message.GENERIC, "'" + argName + "'" + " is not implemented");
             }
             return value;
         }
@@ -743,8 +743,8 @@ public class FileFunctions {
         static {
             Casts casts = new Casts(ListDirs.class);
             casts.arg("directory").mustBe(stringValue()).asStringVector();
-            casts.arg("full.names").asLogicalVector().findFirst().notNA().map(toBoolean());
-            casts.arg("recursive").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("full.names").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("recursive").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @Specialization
@@ -799,7 +799,7 @@ public class FileFunctions {
         static {
             Casts casts = new Casts(FilePath.class);
             casts.arg("paths").mustBe(instanceOf(RList.class), RError.Message.INVALID_FIRST_ARGUMENT);
-            casts.arg("fsep").mustBe(stringValue()).asStringVector().findFirst().notNA();
+            casts.arg("fsep").mustBe(stringValue()).asStringVector().findFirst().mustNotBeNA();
         }
 
         @Child private CastStringNode castStringNode;
@@ -857,7 +857,7 @@ public class FileFunctions {
                 } else if (elem instanceof RStringVector) {
                     inputs[i] = ((RStringVector) elem).getDataWithoutCopying();
                 } else {
-                    throw RError.error(this, RError.Message.NON_STRING_ARG_TO_INTERNAL_PASTE);
+                    throw error(RError.Message.NON_STRING_ARG_TO_INTERNAL_PASTE);
                 }
             }
             for (int i = 0; i < resultLength; i++) {
@@ -899,10 +899,10 @@ public class FileFunctions {
             Casts casts = new Casts(FileCopy.class);
             casts.arg("from").mustBe(stringValue()).asStringVector();
             casts.arg("to").mustBe(stringValue()).asStringVector();
-            casts.arg("overwrite").asLogicalVector().findFirst().notNA().map(toBoolean());
-            casts.arg("recursive").asLogicalVector().findFirst().notNA().map(toBoolean());
-            casts.arg("copy.mode").asLogicalVector().findFirst().notNA().map(toBoolean());
-            casts.arg("copy.date").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("overwrite").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("recursive").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("copy.mode").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("copy.date").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @Specialization
@@ -914,7 +914,7 @@ public class FileFunctions {
             if (lenFrom > 0) {
                 int lenTo = vecTo.getLength();
                 if (lenTo != 1) {
-                    throw RError.error(this, RError.Message.INVALID_ARGUMENT, "to");
+                    throw error(RError.Message.INVALID_ARGUMENT, "to");
                 }
 
                 // Java cannot distinguish copy.mode and copy.dates
@@ -940,7 +940,7 @@ public class FileFunctions {
                 }
                 if (recursive) {
                     if (toDir == null) {
-                        RError.warning(this, RError.Message.FILE_COPY_RECURSIVE_IGNORED);
+                        warning(RError.Message.FILE_COPY_RECURSIVE_IGNORED);
                         recursive = false;
                     }
                 }
@@ -978,7 +978,7 @@ public class FileFunctions {
                         }
                     } catch (UnsupportedOperationException | IOException ex) {
                         status[i] = RRuntime.LOGICAL_FALSE;
-                        RError.warning(this, RError.Message.FILE_CANNOT_COPY, from, to, ex.getMessage());
+                        warning(RError.Message.FILE_CANNOT_COPY, from, to, ex.getMessage());
                     }
                 }
             }
@@ -1041,7 +1041,7 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected static RNull show(RAbstractStringVector files, RAbstractStringVector header, RAbstractStringVector title, boolean deleteFile, @SuppressWarnings("unused") String pager) {
+        protected RNull show(RAbstractStringVector files, RAbstractStringVector header, RAbstractStringVector title, boolean deleteFile, @SuppressWarnings("unused") String pager) {
             ConsoleHandler console = RContext.getInstance().getConsoleHandler();
             for (int i = 0; i < title.getLength(); i++) {
                 console.println("==== " + title.getDataAt(i) + " ====");
@@ -1060,7 +1060,7 @@ public class FileFunctions {
                         path.toFile().delete();
                     }
                 } catch (IOException e) {
-                    throw RError.error(RError.SHOW_CALLER, Message.GENERIC, e.getMessage());
+                    throw error(Message.GENERIC, e.getMessage());
                 }
             }
             return RNull.instance;
@@ -1129,8 +1129,8 @@ public class FileFunctions {
         static {
             Casts casts = new Casts(Unlink.class);
             casts.arg("x").mustBe(stringValue(), RError.Message.CHAR_VEC_ARGUMENT);
-            casts.arg("recursive").asLogicalVector().findFirst().notNA().map(toBoolean());
-            casts.arg("force").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("recursive").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("force").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @Specialization
@@ -1243,7 +1243,7 @@ public class FileFunctions {
                 return true;
             } catch (IOException ex) {
                 if (showWarnings) {
-                    RError.warning(this, RError.Message.DIR_CANNOT_CREATE, path);
+                    warning(RError.Message.DIR_CANNOT_CREATE, path);
                 }
                 return false;
             }

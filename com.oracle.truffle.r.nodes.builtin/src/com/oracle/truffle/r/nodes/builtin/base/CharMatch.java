@@ -16,7 +16,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -29,8 +28,8 @@ public abstract class CharMatch extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(CharMatch.class);
-        casts.arg("x").mustBe(stringValue(), RError.NO_CALLER, Message.ARG_IS_NOT_OF_MODE, "character");
-        casts.arg("table").mustBe(stringValue(), RError.NO_CALLER, Message.ARG_IS_NOT_OF_MODE, "character");
+        casts.arg("x").mustBe(stringValue(), Message.ARG_IS_NOT_OF_MODE, "character");
+        casts.arg("table").mustBe(stringValue(), Message.ARG_IS_NOT_OF_MODE, "character");
         casts.arg("noMatch").asIntegerVector().findFirst(RRuntime.INT_NA);
     }
 

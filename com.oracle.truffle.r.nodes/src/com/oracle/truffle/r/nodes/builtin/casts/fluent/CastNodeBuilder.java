@@ -27,11 +27,7 @@ package com.oracle.truffle.r.nodes.builtin.casts.fluent;
  * be then used to cast anything, not only arguments.
  */
 public final class CastNodeBuilder {
-    public static PreinitialPhaseBuilder newCastBuilder(String argName) {
-        return new PipelineBuilder(argName).fluent();
-    }
-
     public static PreinitialPhaseBuilder newCastBuilder() {
-        return newCastBuilder("");
+        return new PipelineBuilder("").fluent();
     }
 }

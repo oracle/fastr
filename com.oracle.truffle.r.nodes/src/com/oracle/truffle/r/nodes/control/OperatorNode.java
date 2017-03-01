@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
@@ -40,5 +41,10 @@ public abstract class OperatorNode extends RSourceSectionNode implements RSyntax
     @Override
     public final RSyntaxLookup getSyntaxLHS() {
         return operator;
+    }
+
+    @Override
+    protected RBaseNode getErrorContext() {
+        return this;
     }
 }

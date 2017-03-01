@@ -20,7 +20,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -67,6 +66,6 @@ public abstract class UpdateLevels extends RBuiltinNode {
 
     @Specialization(guards = "!isRNull(levels)")
     protected RAbstractVector updateLevels(@SuppressWarnings("unused") RNull vector, @SuppressWarnings("unused") Object levels) {
-        throw RError.error(this, Message.SET_ATTRIBUTES_ON_NULL);
+        throw error(Message.SET_ATTRIBUTES_ON_NULL);
     }
 }

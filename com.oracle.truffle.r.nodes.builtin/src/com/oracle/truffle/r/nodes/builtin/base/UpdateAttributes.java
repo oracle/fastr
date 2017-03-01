@@ -129,7 +129,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
                     @Cached("create()") GetNonSharedNode nonShared) {
         Object listNamesObject = getNamesNode.getNames(list);
         if (listNamesObject == null || listNamesObject == RNull.instance) {
-            throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
+            throw error(RError.Message.ATTRIBUTES_NAMED);
         }
         RStringVector listNames = (RStringVector) listNamesObject;
         RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
@@ -144,7 +144,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
             }
             // has to be reported if no other name is undefined
             if (listNames.getDataAt(0).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
-                throw RError.error(this, RError.Message.ZERO_LENGTH_VARIABLE);
+                throw error(RError.Message.ZERO_LENGTH_VARIABLE);
             }
             // set the dim attribute first
             setDimAttribute(result, list);
@@ -162,7 +162,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
         for (int i = 1; i < length; i++) {
             String attrName = listNames.getDataAt(i);
             if (attrName.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
-                throw RError.error(this, RError.Message.ALL_ATTRIBUTES_NAMES, i + 1);
+                throw error(RError.Message.ALL_ATTRIBUTES_NAMES, i + 1);
             }
         }
     }
@@ -186,7 +186,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
                 } else {
                     RAbstractIntVector dimsVector = castInteger(castVector(value));
                     if (dimsVector.getLength() == 0) {
-                        throw RError.error(this, RError.Message.LENGTH_ZERO_DIM_INVALID);
+                        throw error(RError.Message.LENGTH_ZERO_DIM_INVALID);
                     }
                     setDimNode.setDimensions(result, dimsVector.materialize().getDataCopy());
                 }
@@ -261,17 +261,17 @@ public abstract class UpdateAttributes extends RBuiltinNode {
             RList list = (RList) operand;
             RStringVector listNames = list.getNames();
             if (listNames == null) {
-                throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
+                throw error(RError.Message.ATTRIBUTES_NAMED);
             }
             for (int i = 0; i < list.getLength(); i++) {
                 String attrName = listNames.getDataAt(i);
                 if (attrName == null) {
-                    throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
+                    throw error(RError.Message.ATTRIBUTES_NAMED);
                 }
                 if (RRuntime.CLASS_ATTR_KEY.equals(attrName)) {
                     Object attrValue = list.getDataAt(i);
                     if (attrValue == null) {
-                        throw RError.error(this, RError.Message.SET_INVALID_CLASS_ATTR);
+                        throw error(RError.Message.SET_INVALID_CLASS_ATTR);
                     }
                     attrObj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue));
                 } else {
@@ -284,7 +284,7 @@ public abstract class UpdateAttributes extends RBuiltinNode {
 
     private void checkAttributable(Object obj) {
         if (!(obj instanceof RAttributable)) {
-            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+            throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
 

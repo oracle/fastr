@@ -22,14 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentFilterFactory;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentFilterFactoryImpl;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentMapperFactory;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode.ArgumentMapperFactoryImpl;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineConfigBuilder;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
  * Immutable class with configuration of the pipeline. Create using {@link PipelineConfigBuilder}.
@@ -38,29 +32,15 @@ import com.oracle.truffle.r.runtime.data.RNull;
  * warning if RNull/RMissing occurs.
  */
 public class PipelineConfig {
-    private static ArgumentFilterFactory filterFactory = ArgumentFilterFactoryImpl.INSTANCE;
-    private static ArgumentMapperFactory mapperFactory = ArgumentMapperFactoryImpl.INSTANCE;
-
     private final String argumentName;
     private final MessageData defaultError;
     private final MessageData defaultWarning;
-    private final Mapper<? super RMissing, ?> missingMapper;
-    private final Mapper<? super RNull, ?> nullMapper;
-    private final MessageData missingMsg;
-    private final MessageData nullMsg;
     private boolean valueForwarding;
 
-    public PipelineConfig(String argumentName, MessageData defaultError, MessageData defaultWarning, Mapper<? super RMissing, ?> missingMapper, Mapper<? super RNull, ?> nullMapper,
-                    boolean valueForwarding,
-                    MessageData missingMsg,
-                    MessageData nullMsg) {
+    public PipelineConfig(String argumentName, MessageData defaultError, MessageData defaultWarning, boolean valueForwarding) {
         this.defaultError = defaultError;
         this.defaultWarning = defaultWarning;
-        this.missingMapper = missingMapper;
-        this.nullMapper = nullMapper;
         this.valueForwarding = valueForwarding;
-        this.missingMsg = missingMsg;
-        this.nullMsg = nullMsg;
         this.argumentName = argumentName;
     }
 
@@ -69,7 +49,7 @@ public class PipelineConfig {
      * time being this is not configurable.
      */
     public MessageData getDefaultDefaultMessage() {
-        return new MessageData(null, RError.Message.INVALID_ARGUMENT, argumentName);
+        return new MessageData(RError.Message.INVALID_ARGUMENT, argumentName);
     }
 
     public MessageData getDefaultError() {
@@ -80,39 +60,7 @@ public class PipelineConfig {
         return defaultWarning;
     }
 
-    public Mapper<? super RMissing, ?> getMissingMapper() {
-        return missingMapper;
-    }
-
-    public Mapper<? super RNull, ?> getNullMapper() {
-        return nullMapper;
-    }
-
-    public MessageData getMissingMessage() {
-        return missingMsg;
-    }
-
-    public MessageData getNullMessage() {
-        return nullMsg;
-    }
-
     public boolean getValueForwarding() {
         return valueForwarding;
-    }
-
-    public static ArgumentFilterFactory getFilterFactory() {
-        return filterFactory;
-    }
-
-    public static ArgumentMapperFactory getMapperFactory() {
-        return mapperFactory;
-    }
-
-    public static void setFilterFactory(ArgumentFilterFactory ff) {
-        filterFactory = ff;
-    }
-
-    public static void setMapperFactory(ArgumentMapperFactory mf) {
-        mapperFactory = mf;
     }
 }

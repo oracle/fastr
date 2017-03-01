@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -69,5 +69,7 @@ public class TestBuiltin_crossprod extends TestBase {
         assertEval("{ x <- matrix(c(NaN,2,3,4,5,NA), nrow=3); crossprod(x) }");
 
         assertEval(Ignored.Unknown, "{ x <- matrix(c(NaN,2+3i,3,4+1i,5,NA), nrow=3); crossprod(x) }");
+
+        assertEval(Output.ImprovedErrorContext, "{ crossprod('asdf', matrix(1:6, ncol=2)) }");
     }
 }

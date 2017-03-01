@@ -42,7 +42,7 @@ public class EncodingFunctions {
 
         static {
             Casts casts = new Casts(Encoding.class);
-            casts.arg("x").mustBe(stringValue(), RError.SHOW_CALLER, RError.Message.CHAR_VEC_ARGUMENT);
+            casts.arg("x").mustBe(stringValue(), RError.Message.CHAR_VEC_ARGUMENT);
         }
 
         @Specialization
@@ -57,10 +57,10 @@ public class EncodingFunctions {
 
         static {
             Casts casts = new Casts(SetEncoding.class);
-            casts.arg("x").defaultError(RError.SHOW_CALLER, RError.Message.CHAR_VEC_ARGUMENT).mustBe(stringValue());
+            casts.arg("x").defaultError(RError.Message.CHAR_VEC_ARGUMENT).mustBe(stringValue());
             // asStringVector is required for notEmpty() to receive a proper type in case of scalars
-            casts.arg("value").defaultError(RError.SHOW_CALLER, RError.Message.GENERIC, "a character vector 'value' expected").mustBe(stringValue()).asStringVector().mustBe(notEmpty(),
-                            RError.SHOW_CALLER, RError.Message.GENERIC, "'value' must be of positive length");
+            casts.arg("value").defaultError(RError.Message.GENERIC, "a character vector 'value' expected").mustBe(stringValue()).asStringVector().mustBe(notEmpty(),
+                            RError.Message.GENERIC, "'value' must be of positive length");
         }
 
         @Specialization

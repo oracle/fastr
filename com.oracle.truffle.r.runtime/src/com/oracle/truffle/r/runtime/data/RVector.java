@@ -367,25 +367,27 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         } else if (newDimNames != null) {
             int[] dimensions = getDimensionsFromAttrs();
             if (dimensions == null) {
-                throw RError.error(invokingNode, RError.Message.DIMNAMES_NONARRAY);
+                throw invokingNode.error(RError.Message.DIMNAMES_NONARRAY);
             }
             int newDimNamesLength = newDimNames.getLength();
             if (newDimNamesLength > dimensions.length) {
-                throw RError.error(invokingNode, RError.Message.DIMNAMES_DONT_MATCH_DIMS, newDimNamesLength, dimensions.length);
+                throw invokingNode.error(RError.Message.DIMNAMES_DONT_MATCH_DIMS, newDimNamesLength, dimensions.length);
             }
             for (int i = 0; i < newDimNamesLength; i++) {
                 Object dimObject = newDimNames.getDataAt(i);
                 if (dimObject != RNull.instance) {
                     if (dimObject instanceof String) {
                         if (dimensions[i] != 1) {
-                            throw RError.error(invokingNode, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+                            CompilerDirectives.transferToInterpreter();
+                            throw invokingNode.error(RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
                         }
                     } else {
                         RStringVector dimVector = (RStringVector) dimObject;
                         if (dimVector == null) {
                             newDimNames.updateDataAt(i, RNull.instance, null);
                         } else if (dimVector.getLength() != dimensions[i]) {
-                            throw RError.error(invokingNode, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+                            CompilerDirectives.transferToInterpreter();
+                            throw invokingNode.error(RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
                         }
                     }
                 }
@@ -783,17 +785,14 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         int length = 1;
         for (int i = 0; i < newDimensions.length; i++) {
             if (RRuntime.isNA(newDimensions[i])) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.error(invokingNode, RError.Message.DIMS_CONTAIN_NA);
+                throw invokingNode.error(RError.Message.DIMS_CONTAIN_NA);
             } else if (newDimensions[i] < 0) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.error(invokingNode, RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
+                throw invokingNode.error(RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
             }
             length *= newDimensions[i];
         }
         if (length != vectorLength && vectorLength > 0) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(invokingNode, RError.Message.DIMS_DONT_MATCH_LENGTH, length, vectorLength);
+            throw invokingNode.error(RError.Message.DIMS_DONT_MATCH_LENGTH, length, vectorLength);
         }
     }
 

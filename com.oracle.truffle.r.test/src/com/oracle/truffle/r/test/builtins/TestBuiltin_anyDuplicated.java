@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -153,7 +153,7 @@ public class TestBuiltin_anyDuplicated extends TestBase {
         assertEval("{ anyDuplicated(c(1+1i, 4-6i, 4-6i, 6+7i)) }");
         assertEval("{ anyDuplicated(c(1, 4+6i, 7+7i, 1), incomparables = c(1, 2)) }");
 
-        assertEval(Output.IgnoreWarningContext, "{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }");
-        assertEval(Output.IgnoreWarningContext, "{ anyDuplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
+        assertEval("{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }");
+        assertEval("{ anyDuplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -129,7 +129,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public boolean op(String left, String right) {
-            throw RError.error(this, RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
+            throw error(RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
@@ -184,7 +184,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public boolean op(String left, String right) {
-            throw RError.error(this, RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
+            throw error(RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override

@@ -33,11 +33,10 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Adds methods to {@link InitialPhaseBuilder} that allow to set up the pipeline configuration.
- * Invocation of some methods means that the pre-initilization phase has been finishes, i.e.
+ * Invocation of some methods means that the pre-initialization phase has been finishes, i.e.
  * pipeline fully configured, those methods return this object cast to {@link InitialPhaseBuilder}
  * so that user then cannot invoke methods that change the pipeline configuration. Any method from
  * {@link InitialPhaseBuilder} returns that type, so once the user steps outside the configuration,
@@ -63,11 +62,7 @@ public final class PreinitialPhaseBuilder extends InitialPhaseBuilder<Object> {
     }
 
     public InitialPhaseBuilder<Object> mustNotBeNull(RError.Message errorMsg, Object... msgArgs) {
-        return mustBe(nullValue().not(), null, errorMsg, msgArgs);
-    }
-
-    public InitialPhaseBuilder<Object> mustNotBeNull(RBaseNode callObj, RError.Message errorMsg, Object... msgArgs) {
-        return mustBe(nullValue().not(), callObj, errorMsg, msgArgs);
+        return mustBe(nullValue().not(), errorMsg, msgArgs);
     }
 
     public InitialPhaseBuilder<Object> mapNull(Mapper<RNull, ?> mapper) {
@@ -83,11 +78,7 @@ public final class PreinitialPhaseBuilder extends InitialPhaseBuilder<Object> {
     }
 
     public InitialPhaseBuilder<Object> mustNotBeMissing(RError.Message errorMsg, Object... msgArgs) {
-        return mustBe(missingValue().not(), null, errorMsg, msgArgs);
-    }
-
-    public InitialPhaseBuilder<Object> mustNotBeMissing(RBaseNode callObj, RError.Message errorMsg, Object... msgArgs) {
-        return mustBe(missingValue().not(), callObj, errorMsg, msgArgs);
+        return mustBe(missingValue().not(), errorMsg, msgArgs);
     }
 
     public InitialPhaseBuilder<Object> mapMissing(Mapper<RMissing, ?> mapper) {
@@ -98,23 +89,13 @@ public final class PreinitialPhaseBuilder extends InitialPhaseBuilder<Object> {
         return returnIf(nullValue().or(missingValue()));
     }
 
-    @Override
-    public PreinitialPhaseBuilder defaultError(RBaseNode callObj, RError.Message message, Object... args) {
-        pipelineBuilder().getPipelineConfig().setDefaultError(new MessageData(callObj, message, args));
-        pipelineBuilder().appendDefaultErrorStep(callObj, message, args);
+    public PreinitialPhaseBuilder defaultError(RError.Message message, Object... args) {
+        pipelineBuilder().getPipelineConfig().setDefaultError(new MessageData(message, args));
         return this;
     }
 
-    @Override
-    public PreinitialPhaseBuilder defaultError(Message message, Object... args) {
-        defaultError(null, message, args);
-        return this;
-    }
-
-    @Override
-    public PreinitialPhaseBuilder defaultWarning(RBaseNode callObj, Message message, Object... args) {
-        pipelineBuilder().getPipelineConfig().setDefaultWarning(new MessageData(callObj, message, args));
-        pipelineBuilder().appendDefaultWarningStep(callObj, message, args);
+    public PreinitialPhaseBuilder defaultWarning(Message message, Object... args) {
+        pipelineBuilder().getPipelineConfig().setDefaultWarning(new MessageData(message, args));
         return this;
     }
 }

@@ -40,7 +40,7 @@ public abstract class IsSingle extends RBuiltinNode {
 
     @Specialization
     protected Object isSingle(@SuppressWarnings("unused") Object x) {
-        throw RError.error(this, RError.Message.UNIMPLEMENTED_TYPE_IN_R, "single");
+        throw error(RError.Message.UNIMPLEMENTED_TYPE_IN_R, "single");
     }
 
 }

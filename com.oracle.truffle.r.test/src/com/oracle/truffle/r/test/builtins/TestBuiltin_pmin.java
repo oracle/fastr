@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -76,19 +76,19 @@ public class TestBuiltin_pmin extends TestBase {
     public void testPMin() {
         assertEval("{ pmin(c(1L, 7L), c(42L, 1L)) }");
         assertEval("{ pmin(c(1L, 7L), integer()) }");
-        assertEval(Output.IgnoreWarningContext, "{ pmin(c(1L, 7L, 8L), c(1L), c(42L, 1L)) }");
+        assertEval("{ pmin(c(1L, 7L, 8L), c(1L), c(42L, 1L)) }");
         assertEval("{ pmin(c(1L, 7L), c(42L, as.integer(NA))) }");
         assertEval("{ pmin(c(1L, 7L), c(42L, as.integer(NA)), na.rm=TRUE) }");
 
         assertEval("{ pmin(c(1, 7), c(42, 1)) }");
         assertEval("{ pmin(c(1, 7), double()) }");
-        assertEval(Output.IgnoreWarningContext, "{ pmin(c(1, 7, 8), c(1), c(42, 1)) }");
+        assertEval("{ pmin(c(1, 7, 8), c(1), c(42, 1)) }");
         assertEval("{ pmin(c(1, 7), c(42, as.double(NA))) }");
         assertEval("{ pmin(c(1, 7), c(42, as.double(NA)), na.rm=TRUE) }");
 
         assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", \"1\")) }");
         assertEval("{ pmin(c(\"1\", \"7\"), character()) }");
-        assertEval(Output.IgnoreWarningContext, "{ pmin(c(\"1\", \"7\", \"8\"), c(\"1\"), c(\"42\", \"1\")) }");
+        assertEval("{ pmin(c(\"1\", \"7\", \"8\"), c(\"1\"), c(\"42\", \"1\")) }");
         assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", as.character(NA))) }");
         assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", as.character(NA)), na.rm=TRUE) }");
         assertEval("{ pmin(c(\"1\", as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");
@@ -98,8 +98,8 @@ public class TestBuiltin_pmin extends TestBase {
         assertEval("{ pmin(c(FALSE, TRUE), logical()) }");
         assertEval("{ pmin(c(FALSE, TRUE), c(FALSE, NA)) }");
 
-        assertEval(Output.IgnoreErrorContext, "{ pmin(as.raw(42)) }");
-        assertEval(Output.IgnoreErrorContext, "{ pmin(7+42i) }");
+        assertEval("{ pmin(as.raw(42)) }");
+        assertEval("{ pmin(7+42i) }");
     }
 
     @Test

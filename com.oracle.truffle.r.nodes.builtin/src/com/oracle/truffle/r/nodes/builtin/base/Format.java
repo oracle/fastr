@@ -90,12 +90,12 @@ public abstract class Format extends RBuiltinNode {
     static {
         Casts casts = new Casts(Format.class);
         casts.arg("x");
-        casts.arg("trim").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).notNA().map(toBoolean());
+        casts.arg("trim").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).mustNotBeNA().map(toBoolean());
         casts.arg("digits").asIntegerVector().findFirst(RRuntime.INT_NA).mustBe(intNA().or(gte(R_MIN_DIGITS_OPT).and(lte(R_MAX_DIGITS_OPT))));
         casts.arg("nsmall").asIntegerVector().findFirst(RRuntime.INT_NA).mustBe(intNA().or(gte(0).and(lte(20))));
-        casts.arg("width").asIntegerVector().findFirst(0).notNA();
+        casts.arg("width").asIntegerVector().findFirst(0).mustNotBeNA();
         casts.arg("justify").asIntegerVector().findFirst(RRuntime.INT_NA).mustBe(intNA().or(gte(0).and(lte(3))));
-        casts.arg("na.encode").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).notNA().map(toBoolean());
+        casts.arg("na.encode").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).mustNotBeNA().map(toBoolean());
         casts.arg("scientific").asIntegerVector().findFirst();
         casts.arg("decimal.mark").asStringVector().findFirst();
     }

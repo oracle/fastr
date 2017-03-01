@@ -84,6 +84,6 @@ public abstract class UpdateSubset extends RBuiltinNode {
     @Specialization(guards = "args.isEmpty()")
     @SuppressWarnings("unused")
     protected Object getNoInd(Object x, RArgsValuesAndNames args) {
-        throw RError.error(this, RError.Message.INVALID_ARG_NUMBER, "SubAssignArgs");
+        throw error(RError.Message.INVALID_ARG_NUMBER, "SubAssignArgs");
     }
 }

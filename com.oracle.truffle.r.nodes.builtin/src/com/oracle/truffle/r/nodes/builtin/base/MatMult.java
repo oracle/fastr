@@ -70,7 +70,6 @@ public abstract class MatMult extends RBuiltinNode {
     @Child private BinaryMapArithmeticFunctionNode add = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.ADD.createOperation());
     private final boolean promoteDimNames;
 
-    private final BranchProfile errorProfile = BranchProfile.create();
     private final LoopConditionProfile mainLoopProfile = LoopConditionProfile.createCountingProfile();
     private final LoopConditionProfile remainingLoopProfile = LoopConditionProfile.createCountingProfile();
 
@@ -175,8 +174,7 @@ public abstract class MatMult extends RBuiltinNode {
     public RDoubleVector doubleMatrixMultiply(RAbstractDoubleVector a, RAbstractDoubleVector b, int aRows, int aCols, int bRows, int bCols, int aRowStride, int aColStride, int bRowStride,
                     int bColStride, boolean mirrored) {
         if (aCols != bRows) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
+            throw error(RError.Message.NON_CONFORMABLE_ARGS);
         }
         double[] dataA = a.materialize().getDataWithoutCopying();
         double[] dataB = b.materialize().getDataWithoutCopying();
@@ -333,8 +331,7 @@ public abstract class MatMult extends RBuiltinNode {
                 return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols);
             } else {
                 if (a.getLength() != b.getLength()) {
-                    errorProfile.enter();
-                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
+                    throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }
                 double result = 0.0;
                 na.enable(a);
@@ -378,8 +375,7 @@ public abstract class MatMult extends RBuiltinNode {
                 final int aCols = aDimensions[1];
                 final int bRows = bDimensions[0];
                 if (aCols != bRows) {
-                    errorProfile.enter();
-                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
+                    throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }
                 final int aRows = aDimensions[0];
                 final int bCols = bDimensions[1];
@@ -403,8 +399,7 @@ public abstract class MatMult extends RBuiltinNode {
                 final int aCols = aDimensions[1];
                 final int aRows = aDimensions[0];
                 if (aCols != 1 && aCols != b.getLength()) {
-                    errorProfile.enter();
-                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
+                    throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }
                 na.enable(a);
                 na.enable(b);
@@ -438,8 +433,7 @@ public abstract class MatMult extends RBuiltinNode {
                 final int bRows = bDimensions[0];
                 final int bCols = bDimensions[1];
                 if (bRows != 1 && bRows != a.getLength()) {
-                    errorProfile.enter();
-                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
+                    throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }
                 na.enable(a);
                 na.enable(b);
@@ -469,8 +463,7 @@ public abstract class MatMult extends RBuiltinNode {
                 }
             } else {
                 if (a.getLength() != b.getLength()) {
-                    errorProfile.enter();
-                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
+                    throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }
                 RComplex result = RDataFactory.createComplexZero();
                 na.enable(a);
@@ -510,8 +503,7 @@ public abstract class MatMult extends RBuiltinNode {
                 int aCols = aDimensions[1];
                 int bRows = bDimensions[0];
                 if (aCols != bRows) {
-                    errorProfile.enter();
-                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
+                    throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }
                 int aRows = aDimensions[0];
                 int bCols = bDimensions[1];
@@ -533,8 +525,7 @@ public abstract class MatMult extends RBuiltinNode {
                 final int aCols = aDimensions[1];
                 final int aRows = aDimensions[0];
                 if (aCols != 1 && aCols != b.getLength()) {
-                    errorProfile.enter();
-                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
+                    throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }
                 na.enable(a);
                 na.enable(b);
@@ -566,8 +557,7 @@ public abstract class MatMult extends RBuiltinNode {
                 final int bCols = bDimensions[1];
                 final int bRows = bDimensions[0];
                 if (bRows != 1 && bRows != a.getLength()) {
-                    errorProfile.enter();
-                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
+                    throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }
                 na.enable(a);
                 na.enable(b);
@@ -595,8 +585,7 @@ public abstract class MatMult extends RBuiltinNode {
                 }
             } else {
                 if (a.getLength() != b.getLength()) {
-                    errorProfile.enter();
-                    throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
+                    throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }
                 int result = 0;
                 na.enable(result);
@@ -677,7 +666,7 @@ public abstract class MatMult extends RBuiltinNode {
     @Fallback
     @TruffleBoundary
     protected RDoubleVector doRaw(@SuppressWarnings("unused") Object a, @SuppressWarnings("unused") Object b) {
-        throw RError.error(this, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
+        throw error(RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
     }
 
     // guards

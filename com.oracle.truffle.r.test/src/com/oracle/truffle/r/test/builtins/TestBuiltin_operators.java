@@ -181,7 +181,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators33() {
-        assertEval(Output.IgnoreWarningContext, "argv <- list(c(20.8, 11.2, 6.2, 12.8, 43.4), c(10.4, 5.6, 3.1, 6.4, 21.7, 0, 10.4, 5.6, 3.1, 6.4, 21.7));`+`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(c(20.8, 11.2, 6.2, 12.8, 43.4), c(10.4, 5.6, 3.1, 6.4, 21.7, 0, 10.4, 5.6, 3.1, 6.4, 21.7));`+`(argv[[1]],argv[[2]]);");
     }
 
     @Test

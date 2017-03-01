@@ -30,7 +30,6 @@ import java.util.LinkedList;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
@@ -65,7 +64,6 @@ public abstract class Scan extends RBuiltinNode {
     private static final int NO_COMCHAR = 100000; /* won't occur even in Unicode */
 
     private final NACheck naCheck = NACheck.create();
-    private final BranchProfile errorProfile = BranchProfile.create();
     @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
 
     @Child private CastToVectorNode castVector;
@@ -106,18 +104,18 @@ public abstract class Scan extends RBuiltinNode {
 
         casts.arg("what").asVector();
 
-        casts.arg("nmax").asIntegerVector().findFirst(0).notNA(0).mapIf(lt(0), constant(0));
+        casts.arg("nmax").asIntegerVector().findFirst(0).replaceNA(0).mapIf(lt(0), constant(0));
 
         casts.arg("sep").allowNull().mustBe(stringValue()).asStringVector().findFirst("").mustBe(lengthLte(1), RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
 
-        casts.arg("dec").allowNull().defaultError(RError.Message.INVALID_DECIMAL_SEP).mustBe(stringValue()).asStringVector().findFirst(".").mustBe(length(1),
+        casts.arg("dec").defaultError(RError.Message.INVALID_DECIMAL_SEP).allowNull().mustBe(stringValue()).asStringVector().findFirst(".").mustBe(length(1),
                         RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
 
         casts.arg("quote").defaultError(RError.Message.INVALID_QUOTE_SYMBOL).mapNull(constant("")).mustBe(stringValue()).asStringVector().findFirst("");
 
-        casts.arg("skip").asIntegerVector().findFirst(0).notNA(0).mapIf(lt(0), constant(0));
+        casts.arg("skip").asIntegerVector().findFirst(0).replaceNA(0).mapIf(lt(0), constant(0));
 
-        casts.arg("nlines").asIntegerVector().findFirst(0).notNA(0).mapIf(lt(0), constant(0));
+        casts.arg("nlines").asIntegerVector().findFirst(0).replaceNA(0).mapIf(lt(0), constant(0));
 
         casts.arg("na.strings").mustBe(stringValue());
 
@@ -127,19 +125,19 @@ public abstract class Scan extends RBuiltinNode {
 
         casts.arg("strip.white").mustBe(logicalValue());
 
-        casts.arg("quiet").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).notNA(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg("quiet").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).replaceNA(RRuntime.LOGICAL_FALSE).map(toBoolean());
 
-        casts.arg("blank.lines.skip").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).notNA(RRuntime.LOGICAL_TRUE).map(toBoolean());
+        casts.arg("blank.lines.skip").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).replaceNA(RRuntime.LOGICAL_TRUE).map(toBoolean());
 
-        casts.arg("multi.line").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).notNA(RRuntime.LOGICAL_TRUE).map(toBoolean());
+        casts.arg("multi.line").asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).replaceNA(RRuntime.LOGICAL_TRUE).map(toBoolean());
 
-        casts.arg("comment.char").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustBe(lengthLte(1)).map(charAt0(RRuntime.INT_NA)).notNA(NO_COMCHAR);
+        casts.arg("comment.char").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustBe(lengthLte(1)).map(charAt0(RRuntime.INT_NA)).replaceNA(NO_COMCHAR);
 
-        casts.arg("allowEscapes").asLogicalVector().findFirst().notNA().map(toBoolean());
+        casts.arg("allowEscapes").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
 
         casts.arg("encoding").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
 
-        casts.arg("skipNull").asLogicalVector().findFirst().notNA().map(toBoolean());
+        casts.arg("skipNull").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
 
     }
 
@@ -164,8 +162,7 @@ public abstract class Scan extends RBuiltinNode {
         data.naStrings = naStringsVec;
 
         if (stripVec.getLength() != 1 && stripVec.getLength() != what.getLength()) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_LENGTH, "strip.white");
+            throw error(RError.Message.INVALID_LENGTH, "strip.white");
         }
         byte strip = stripVec.getDataAt(0);
 
@@ -199,7 +196,7 @@ public abstract class Scan extends RBuiltinNode {
                 return scanVector(what, nmax, nlines, flush, strip == RRuntime.LOGICAL_TRUE, blSkip, data);
             }
         } catch (IOException x) {
-            throw RError.error(this, RError.Message.CANNOT_READ_CONNECTION);
+            throw error(RError.Message.CANNOT_READ_CONNECTION);
         }
     }
 
@@ -322,15 +319,14 @@ public abstract class Scan extends RBuiltinNode {
 
         int nc = what.getLength();
         if (nc == 0) {
-            throw RError.error(this, RError.Message.EMPTY_WHAT);
+            throw error(RError.Message.EMPTY_WHAT);
         }
         int blockSize = maxRecords > 0 ? maxRecords : (maxLines > 0 ? maxLines : SCAN_BLOCKSIZE);
 
         RList list = RDataFactory.createList(new Object[nc]);
         for (int i = 0; i < nc; i++) {
             if (what.getDataAt(i) == RNull.instance) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "what");
+                throw error(RError.Message.INVALID_ARGUMENT, "what");
             } else {
                 RAbstractVector vec = castVector(what.getDataAt(i));
                 list.updateDataAt(i, vec.createEmptySameType(blockSize, RDataFactory.COMPLETE_VECTOR), null);
@@ -367,7 +363,7 @@ public abstract class Scan extends RBuiltinNode {
                         n = 0;
                         break;
                     } else if (!multiLine) {
-                        throw RError.error(this, RError.Message.LINE_ELEMENTS, lines + 1, nc);
+                        throw error(RError.Message.LINE_ELEMENTS, lines + 1, nc);
                     } else {
                         strItems = getItems(data, blSkip);
                         // Checkstyle: stop modified control variable check
@@ -417,7 +413,7 @@ public abstract class Scan extends RBuiltinNode {
 
         if (n > 0 && n < nc) {
             if (!fill) {
-                RError.warning(this, RError.Message.ITEMS_NOT_MULTIPLE);
+                warning(RError.Message.ITEMS_NOT_MULTIPLE);
             }
             fillEmpty(n, nc, records, list, data);
             records++;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,8 +58,6 @@ public class TestBuiltin_extract_dataframe extends TestBase {
     @Test
     public void extractDataFrameWithNULLNames() {
         assertEval("{ fr <- data.frame(1:3,4:6); attr(fr,'names') <- NULL; fr[1,2] }");
-        // N.B.: this warning is surprisingly formatted with extra new line before the contents of
-        // warning(...) invoked from R code
-        assertEval(Output.IgnoreWarningContext, "{ fr <- data.frame(1:3,4:6); attr(fr,'names') <- NULL; fr['col'] }");
+        assertEval("{ fr <- data.frame(1:3,4:6); attr(fr,'names') <- NULL; fr['col'] }");
     }
 }

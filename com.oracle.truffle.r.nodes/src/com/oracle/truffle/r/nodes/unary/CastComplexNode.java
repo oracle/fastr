@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
@@ -64,12 +63,8 @@ public abstract class CastComplexNode extends CastBaseNode {
 
     public abstract Object executeComplex(Object o);
 
-    protected CastComplexNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, RBaseNode messageCallerObj) {
-        super(preserveNames, preserveDimensions, preserveAttributes, messageCallerObj);
-    }
-
     protected CastComplexNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        this(preserveNames, preserveDimensions, preserveAttributes, false);
+        super(preserveNames, preserveDimensions, preserveAttributes);
     }
 
     protected CastComplexNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
@@ -138,8 +133,7 @@ public abstract class CastComplexNode extends CastBaseNode {
         }
         RComplex result = RRuntime.string2complexNoCheck(operand);
         if (RRuntime.isNA(result) && !operand.equals(RRuntime.STRING_NaN)) {
-            warningBranch.enter();
-            RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
+            warning(RError.Message.NA_INTRODUCED_COERCION);
         }
         return result;
     }
@@ -206,7 +200,7 @@ public abstract class CastComplexNode extends CastBaseNode {
             ddata[index + 1] = complexValue.getImaginaryPart();
         }
         if (warning) {
-            RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
+            warning(RError.Message.NA_INTRODUCED_COERCION);
         }
         RComplexVector ret = RDataFactory.createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);

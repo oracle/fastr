@@ -39,11 +39,11 @@ public abstract class Pretty extends RBuiltinNode {
         Casts casts = new Casts(Pretty.class);
         casts.arg("l").asDoubleVector().findFirst().mustBe(isFinite());
         casts.arg("u").asDoubleVector().findFirst().mustBe(isFinite());
-        casts.arg("n").asIntegerVector().findFirst().notNA().mustBe(gte0());
-        casts.arg("min.n").asIntegerVector().findFirst().notNA().mustBe(gte0());
+        casts.arg("n").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte0());
+        casts.arg("min.n").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte0());
         casts.arg("shrink.sml").asDoubleVector().findFirst().mustBe(and(isFinite(), gt(0.0)));
         casts.arg("hi").asDoubleVector().mustBe(size(2));
-        casts.arg("eps.correct").defaultError(RError.Message.GENERIC, "'eps.correct' must be 0, 1, or 2").asIntegerVector().findFirst().notNA().mustBe(and(gte0(), lte(2)));
+        casts.arg("eps.correct").defaultError(RError.Message.GENERIC, "'eps.correct' must be 0, 1, or 2").asIntegerVector().findFirst().mustNotBeNA().mustBe(and(gte0(), lte(2)));
     }
 
     @Specialization
@@ -52,10 +52,10 @@ public abstract class Pretty extends RBuiltinNode {
         double hi1 = hi.getDataAt(1);
 
         if (!RRuntime.isFinite(hi0) || hi0 < 0.0) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "high.u.bias");
+            throw error(RError.Message.INVALID_ARGUMENT, "high.u.bias");
         }
         if (!RRuntime.isFinite(hi1) || hi1 < 0.0) {
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "u5.bias");
+            throw error(RError.Message.INVALID_ARGUMENT, "u5.bias");
         }
         double[] lo = new double[]{l};
         double[] up = new double[]{u};
@@ -122,10 +122,10 @@ public abstract class Pretty extends RBuiltinNode {
         }
 
         if (cell < 20 * Double.MIN_VALUE) {
-            RError.warning(this, RError.Message.GENERIC, "Internal(pretty()): very small range.. corrected");
+            warning(RError.Message.GENERIC, "Internal(pretty()): very small range.. corrected");
             cell = 20 * Double.MIN_VALUE;
         } else if (cell * 10 > Double.MAX_VALUE) {
-            RError.warning(this, RError.Message.GENERIC, "Internal(pretty()): very large range.. corrected");
+            warning(RError.Message.GENERIC, "Internal(pretty()): very large range.. corrected");
             cell = .1 * Double.MAX_VALUE;
         }
         /*

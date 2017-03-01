@@ -25,7 +25,7 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(DoubleCentre.class);
-        casts.arg(0).mustBe(missingValue().not()).mustBe(nullValue().not(), RError.SHOW_CALLER, RError.Message.MACRO_CAN_BE_APPLIED_TO, "REAL()", "numeric", "NULL").asDoubleVector();
+        casts.arg(0).mustBe(missingValue().not()).mustBe(nullValue().not(), RError.Message.MACRO_CAN_BE_APPLIED_TO, "REAL()", "numeric", "NULL").asDoubleVector();
     }
 
     @Specialization

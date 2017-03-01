@@ -55,9 +55,9 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.map;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustNotBeNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.not;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullConstant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
@@ -66,7 +66,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElemen
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.squareMatrix;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -301,7 +300,7 @@ public class CastBuilderTest {
 
     @Test
     public void testSizeWarning() {
-        arg.defaultWarning(SHOW_CALLER, RError.Message.LENGTH_GT_1).asIntegerVector().shouldBe(singleElement());
+        arg.defaultWarning(RError.Message.LENGTH_GT_1).asIntegerVector().shouldBe(singleElement());
         RIntVector intVector = RDataFactory.createIntVector(new int[]{1, 2}, true);
         assertCastWarning(intVector, intVector, RError.Message.LENGTH_GT_1.message);
         testPipeline(NO_FILTER_EXPECT_EMPTY_SAMPLES);
@@ -324,7 +323,7 @@ public class CastBuilderTest {
     @Test
     public void testFindFirstWithDefaultError() {
         // findFirst takes the explicitly specified default error from pipeline
-        arg.asIntegerVector().defaultError(SHOW_CALLER, RError.Message.SEED_NOT_VALID_INT).findFirst();
+        arg.defaultError(RError.Message.SEED_NOT_VALID_INT).asIntegerVector().findFirst();
         assertCastFail(RNull.instance, Message.SEED_NOT_VALID_INT.message);
     }
 
@@ -344,7 +343,7 @@ public class CastBuilderTest {
 
     @Test
     public void testNoLogicalNA() {
-        arg.asLogicalVector().findFirst().notNA(RRuntime.LOGICAL_TRUE);
+        arg.asLogicalVector().findFirst().replaceNA(RRuntime.LOGICAL_TRUE);
 
         assertCastPreserves(RRuntime.LOGICAL_FALSE);
         assertEquals(RRuntime.LOGICAL_TRUE, cast(RRuntime.LOGICAL_NA));
@@ -353,7 +352,7 @@ public class CastBuilderTest {
 
     @Test
     public void testNoIntegerNA() {
-        arg.asIntegerVector().findFirst().notNA(1);
+        arg.asIntegerVector().findFirst().replaceNA(1);
 
         assertCastPreserves(42);
         assertEquals(1, cast(RRuntime.INT_NA));
@@ -362,7 +361,7 @@ public class CastBuilderTest {
 
     @Test
     public void testNoDoubleNA() {
-        arg.asDoubleVector().findFirst().notNA(1.1);
+        arg.asDoubleVector().findFirst().replaceNA(1.1);
 
         assertCastPreserves(3.142);
         assertEquals(1.1, cast(RRuntime.DOUBLE_NA));
@@ -371,7 +370,7 @@ public class CastBuilderTest {
 
     @Test
     public void testNoStringNA() {
-        arg.asStringVector().findFirst().notNA("A");
+        arg.asStringVector().findFirst().replaceNA("A");
 
         assertCastPreserves("hello world");
         assertEquals("A", cast(RRuntime.DOUBLE_NA));
@@ -475,7 +474,7 @@ public class CastBuilderTest {
             mapIf(instanceOf(RList.class).not(),
                chain(asLogicalVector()).
                   with(findFirst().logicalElement()).
-                  with(notNA()).
+                  with(mustNotBeNA()).
                   with(map(toBoolean())).
                   with(mustBe(instanceOf(Boolean.class))).
                   with(shouldBe(instanceOf(Object.class))).
@@ -541,7 +540,7 @@ public class CastBuilderTest {
     @Test
     public void testMessageArgumentAsLambda() {
         Function<Object, Object> argMsg = name -> "something";
-        arg.mustNotBeMissing(SHOW_CALLER, RError.Message.GENERIC, argMsg).mustBe(stringValue(), RError.Message.GENERIC, argMsg);
+        arg.mustNotBeMissing(RError.Message.GENERIC, argMsg).mustBe(stringValue(), RError.Message.GENERIC, argMsg);
 
         assertCastPreserves("abc");
         assertCastFail(RMissing.instance, "something");
@@ -643,7 +642,7 @@ public class CastBuilderTest {
 
     @Test
     public void testSampleNonNASequence() {
-        arg.notNA(RError.Message.GENERIC, "Error");
+        arg.mustNotBeNA(RError.Message.GENERIC, "Error");
         RIntSequence seq = RDataFactory.createIntSequence(1, 1, 1);
         Object res = cast(seq);
         Assert.assertSame(seq, res);
@@ -651,7 +650,7 @@ public class CastBuilderTest {
 
     @Test
     public void testSampleNAVector() {
-        arg.notNA("REPLACEMENT");
+        arg.replaceNA("REPLACEMENT");
         RDoubleVector vec = RDataFactory.createDoubleVector(new double[]{0, 1, RRuntime.DOUBLE_NA, 3}, false);
         Object res = cast(vec);
         Assert.assertEquals("REPLACEMENT", res);
@@ -674,7 +673,7 @@ public class CastBuilderTest {
 
     @Test
     public void defaultErrorForMustNotBeNull() {
-        arg.defaultError(RError.SHOW_CALLER, Message.SEED_NOT_VALID_INT).mustNotBeNull();
+        arg.defaultError(Message.SEED_NOT_VALID_INT).mustNotBeNull();
         assertCastFail(RNull.instance, Message.SEED_NOT_VALID_INT.message);
     }
 
@@ -857,7 +856,7 @@ public class CastBuilderTest {
     public void testWarningInElseBranchOfMapIf() {
         arg.mapIf(numericValue(),
                         chain(asIntegerVector()).with(findFirst().integerElement()).end(),
-                        chain(asIntegerVector()).with(Predef.shouldBe(anyValue().not(), RError.NO_CALLER, RError.Message.NA_INTRODUCED_COERCION)).end());
+                        chain(asIntegerVector()).with(Predef.shouldBe(anyValue().not(), RError.Message.NA_INTRODUCED_COERCION)).end());
 
         Assert.assertEquals(1, cast(1));
         Assert.assertEquals(1, cast("1"));
@@ -867,7 +866,7 @@ public class CastBuilderTest {
     @Test
     public void testWarningInTrueBranchOfMapIf() {
         arg.allowNull().mapIf(stringValue(), chain(asStringVector()).with(shouldBe(anyValue().not(),
-                        RError.SHOW_CALLER, RError.Message.NA_INTRODUCED_COERCION)).end(),
+                        RError.Message.NA_INTRODUCED_COERCION)).end(),
                         asIntegerVector());
         Assert.assertEquals("1", cast("1"));
         Assert.assertEquals(RError.Message.NA_INTRODUCED_COERCION.message, CastNode.getLastWarning());
@@ -928,11 +927,11 @@ public class CastBuilderTest {
      * This tests the pipeline sampling process: all positive samples are successful and all
      * negative cause an error.
      */
-    private void testPipeline() {
+    private static void testPipeline() {
         testPipeline(false);
     }
 
-    private void testPipeline(boolean emptyPositiveSamplesAllowed) {
+    private static void testPipeline(@SuppressWarnings("unused") boolean emptyPositiveSamplesAllowed) {
         if (!TEST_SAMPLING) {
             return;
         }
@@ -947,6 +946,7 @@ public class CastBuilderTest {
         return castNode;
     }
 
+    @SuppressWarnings("unused")
     private void testPipeline(Samples<?> samples) {
         if (!TEST_SAMPLING) {
             return;

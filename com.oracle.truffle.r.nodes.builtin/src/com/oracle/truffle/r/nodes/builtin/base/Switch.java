@@ -66,14 +66,14 @@ public abstract class Switch extends RBuiltinNode {
     @Specialization
     protected Object doSwitch(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         if (x.getLength() != 1) {
-            throw RError.error(this, RError.Message.EXPR_NOT_LENGTH_ONE);
+            throw error(RError.Message.EXPR_NOT_LENGTH_ONE);
         }
         return prepareResult(frame, doSwitchString(frame, x, optionalArgs));
     }
 
     private Object doSwitchString(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         if (noAlternativesProfile.profile(optionalArgs.getLength() == 0)) {
-            RError.warning(this, RError.Message.NO_ALTERNATIVES_IN_SWITCH);
+            warning(RError.Message.NO_ALTERNATIVES_IN_SWITCH);
             return null;
         }
         Object[] optionalArgValues = optionalArgs.getArguments();
@@ -116,7 +116,7 @@ public abstract class Switch extends RBuiltinNode {
                 suppliedArgNameIsNull.enter();
                 Object optionalArg = optionalArgValues[i];
                 if (currentDefaultProfile.profile(currentDefault != null)) {
-                    throw RError.error(this, RError.Message.DUPLICATE_SWITCH_DEFAULT, deparseDefault(currentDefault), deparseDefault(optionalArg));
+                    throw error(RError.Message.DUPLICATE_SWITCH_DEFAULT, deparseDefault(currentDefault), deparseDefault(optionalArg));
                 } else {
                     currentDefault = optionalArg;
                 }
@@ -162,12 +162,12 @@ public abstract class Switch extends RBuiltinNode {
     @Specialization
     protected Object doSwitch(RMissing x, RMissing optionalArgs) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, RError.Message.EXPR_MISSING);
+        throw error(RError.Message.EXPR_MISSING);
     }
 
     private Object doSwitchInt(VirtualFrame frame, int index, RArgsValuesAndNames optionalArgs) {
         if (noAlternativesProfile.profile(optionalArgs.getLength() == 0)) {
-            RError.warning(this, RError.Message.NO_ALTERNATIVES_IN_SWITCH);
+            warning(RError.Message.NO_ALTERNATIVES_IN_SWITCH);
             return null;
         }
         Object[] optionalArgValues = optionalArgs.getArguments();
@@ -176,7 +176,7 @@ public abstract class Switch extends RBuiltinNode {
             if (value != null) {
                 return value;
             }
-            throw RError.error(this, RError.Message.NO_ALTERNATIVE_IN_SWITCH);
+            throw error(RError.Message.NO_ALTERNATIVE_IN_SWITCH);
         }
         return null;
     }

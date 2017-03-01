@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -209,18 +209,18 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ 1:3 == TRUE }");
         assertEval("{ TRUE == 1:3 }");
 
-        assertEval(Output.IgnoreWarningContext, "{ c(1,2) < c(2,1,4) }");
-        assertEval(Output.IgnoreWarningContext, "{ c(2,1,4) < c(1,2) }");
-        assertEval(Output.IgnoreWarningContext, "{ c(1L,2L) < c(2L,1L,4L) }");
-        assertEval(Output.IgnoreWarningContext, "{ c(2L,1L,4L) < c(1L,2L) }");
-        assertEval(Output.IgnoreWarningContext, "{ c(TRUE,FALSE,FALSE) < c(TRUE,TRUE) }");
-        assertEval(Output.IgnoreWarningContext, "{ c(TRUE,TRUE) == c(TRUE,FALSE,FALSE) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1,2)) < as.raw(c(2,1,4)) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(2,1,4)) < as.raw(c(1,2)) }");
-        assertEval(Output.IgnoreWarningContext, "{ c(\"hi\",\"hello\",\"bye\") > c(\"cau\", \"ahoj\") }");
-        assertEval(Output.IgnoreWarningContext, "{ c(\"cau\", \"ahoj\") != c(\"hi\",\"hello\",\"bye\") }");
-        assertEval(Output.IgnoreWarningContext, "{ c(1+1i,2+2i) == c(2+1i,1+2i,1+1i) }");
-        assertEval(Output.IgnoreWarningContext, "{ c(2+1i,1+2i,1+1i) == c(1+1i, 2+2i) }");
+        assertEval("{ c(1,2) < c(2,1,4) }");
+        assertEval("{ c(2,1,4) < c(1,2) }");
+        assertEval("{ c(1L,2L) < c(2L,1L,4L) }");
+        assertEval("{ c(2L,1L,4L) < c(1L,2L) }");
+        assertEval("{ c(TRUE,FALSE,FALSE) < c(TRUE,TRUE) }");
+        assertEval("{ c(TRUE,TRUE) == c(TRUE,FALSE,FALSE) }");
+        assertEval("{ as.raw(c(1,2)) < as.raw(c(2,1,4)) }");
+        assertEval("{ as.raw(c(2,1,4)) < as.raw(c(1,2)) }");
+        assertEval("{ c(\"hi\",\"hello\",\"bye\") > c(\"cau\", \"ahoj\") }");
+        assertEval("{ c(\"cau\", \"ahoj\") != c(\"hi\",\"hello\",\"bye\") }");
+        assertEval("{ c(1+1i,2+2i) == c(2+1i,1+2i,1+1i) }");
+        assertEval("{ c(2+1i,1+2i,1+1i) == c(1+1i, 2+2i) }");
 
         assertEval("{ as.raw(c(2,1,4)) < raw() }");
         assertEval("{ raw() < as.raw(c(2,1,4)) }");

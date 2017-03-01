@@ -39,11 +39,11 @@ public final class CompleteCases extends RExternalBuiltinNode {
     }
 
     private RError invalidType(Object entry) {
-        throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, ((RTypedValue) entry).getRType().getName());
+        throw error(RError.Message.INVALID_TYPE_ARGUMENT, ((RTypedValue) entry).getRType().getName());
     }
 
     private RError lengthMismatch() {
-        throw RError.error(this, RError.Message.NOT_ALL_SAME_LENGTH);
+        throw error(RError.Message.NOT_ALL_SAME_LENGTH);
     }
 
     private int checkAbstractVectorLength(int len, Object obj) {
@@ -95,7 +95,7 @@ public final class CompleteCases extends RExternalBuiltinNode {
         }
 
         if (len < 0) {
-            throw RError.error(this, RError.Message.NO_INPUT_NUMBER_OF_CASES);
+            throw error(RError.Message.NO_INPUT_NUMBER_OF_CASES);
         }
 
         byte[] result = new byte[len];

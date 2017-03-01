@@ -232,6 +232,11 @@ public abstract class CallMatcherNode extends RBaseNode {
         }
 
         @Override
+        protected RBaseNode getErrorContext() {
+            return builtin == null ? super.getErrorContext() : builtin.getErrorContext();
+        }
+
+        @Override
         public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
             if (suppliedSignature == cachedSuppliedSignature && function == cachedFunction && checkLastArgSignature(cachedSuppliedSignature, suppliedArguments)) {
 

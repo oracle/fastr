@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,28 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
-import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.RInternalError;
 
 /**
  * Value type that holds data necessary for error/warning message from a cast pipeline.
  */
-@ValueType
 public final class MessageData {
-    private final RBaseNode callObj;
     private final RError.Message message;
     private final Object[] messageArgs;
 
-    public MessageData(RBaseNode callObj, Message message, Object... messageArgs) {
-        this.callObj = callObj;
+    public MessageData(Message message, Object... messageArgs) {
         this.message = message;
         this.messageArgs = messageArgs;
-    }
-
-    public RBaseNode getCallObj() {
-        return callObj;
+        assert message != null;
     }
 
     public Message getMessage() {
@@ -54,19 +47,15 @@ public final class MessageData {
         return messageArgs;
     }
 
-    public MessageData fixCallObj(RBaseNode callObjFix) {
-        if (callObj == null) {
-            return new MessageData(callObjFix, message, messageArgs);
-        } else {
-            return this;
-        }
-    }
-
     /**
      * Helper method for operation that is often performed with {@link MessageData}.
      */
-    public static MessageData getFirstNonNull(MessageData first, MessageData second, MessageData third) {
-        assert third != null : "at least the last one must not be null";
-        return first != null && first.getMessage() != null ? first : second != null && second.getMessage() != null ? second : third;
+    public static MessageData getFirstNonNull(MessageData... messages) {
+        for (MessageData message : messages) {
+            if (message != null) {
+                return message;
+            }
+        }
+        throw RInternalError.shouldNotReachHere("at least the last message must not be null");
     }
 }

@@ -58,7 +58,7 @@ public class RowsumFunctions {
 
             casts.arg("uniqueg").asVector();
 
-            casts.arg("snarm").asLogicalVector().findFirst().notNA(RError.Message.INVALID_LOGICAL).map(toBoolean());
+            casts.arg("snarm").asLogicalVector().findFirst().mustNotBeNA(RError.Message.INVALID_LOGICAL).map(toBoolean());
 
             casts.arg("rn").mustBe(stringValue(), RError.Message.ROWSUM_NAMES_NOT_CHAR).asStringVector();
         }

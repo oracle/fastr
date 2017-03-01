@@ -382,8 +382,8 @@ public class TestFunctions extends TestBase {
 
     @Test
     public void testDefaultArgs() {
-        assertEval(Output.IgnoreErrorContext, "{ array(dim=c(-2,2)); }");
-        assertEval(Output.IgnoreErrorContext, "{ array(dim=c(-2,-2)); }");
+        assertEval("{ array(dim=c(-2,2)); }");
+        assertEval("{ array(dim=c(-2,-2)); }");
         assertEval("{ length(array(dim=c(1,0,2,3))) }");
         assertEval("{ dim(array(dim=c(2.1,2.9,3.1,4.7))) }");
     }

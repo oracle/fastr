@@ -172,7 +172,7 @@ public class SysFunctions {
         @Specialization
         protected RLogicalVector doSysSetEnv(VirtualFrame frame, RAbstractStringVector names, RAbstractStringVector values) {
             if (names.getLength() != values.getLength()) {
-                throw RError.error(this, RError.Message.ARGUMENT_WRONG_LENGTH);
+                throw error(RError.Message.ARGUMENT_WRONG_LENGTH);
             }
             checkNSLoad(frame, names, values, true);
             return doSysSetEnv(names, values);
@@ -297,7 +297,7 @@ public class SysFunctions {
             Casts casts = new Casts(SysChmod.class);
             casts.arg("paths").mustBe(stringValue());
             casts.arg("octmode").asIntegerVector().mustBe(notEmpty(), RError.Message.MODE_LENGTH_ONE);
-            casts.arg("use_umask").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("use_umask").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @Specialization
@@ -375,7 +375,7 @@ public class SysFunctions {
         static {
             Casts casts = new Casts(SysGlob.class);
             casts.arg("paths").mustBe(stringValue()).asStringVector();
-            casts.arg("dirmask").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("dirmask").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @Specialization
@@ -404,7 +404,7 @@ public class SysFunctions {
         static {
             Casts casts = new Casts(SysSetFileTime.class);
             casts.arg("path").mustBe(stringValue()).asStringVector().findFirst();
-            casts.arg("time").asIntegerVector().findFirst().notNA();
+            casts.arg("time").asIntegerVector().findFirst().mustNotBeNA();
         }
 
         @Specialization

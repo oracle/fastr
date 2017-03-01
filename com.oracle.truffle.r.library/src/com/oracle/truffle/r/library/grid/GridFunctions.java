@@ -82,7 +82,7 @@ public class GridFunctions {
             for (int i = 0; i < data.length; i++) {
                 int code = convertUnit(units.getDataAt(i));
                 if (code < 0) {
-                    throw RError.error(this, RError.Message.GENERIC, "Invalid unit");
+                    throw error(RError.Message.GENERIC, "Invalid unit");
                 }
                 data[i] = code;
             }

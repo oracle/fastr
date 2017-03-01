@@ -25,8 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -91,7 +89,7 @@ public abstract class PMinMax extends RBuiltinNode {
 
     protected static Casts createCasts(Class<? extends PMinMax> extCls) {
         Casts casts = new Casts(extCls);
-        casts.arg("na.rm").defaultError(SHOW_CALLER, Message.INVALID_VALUE, "na.rm").mustBe(numericValue()).asLogicalVector().findFirst().mustBe(logicalNA().not()).map(toBoolean());
+        casts.arg("na.rm").defaultError(Message.INVALID_VALUE, "na.rm").mustBe(numericValue()).asLogicalVector().findFirst().mustBe(logicalNA().not()).map(toBoolean());
         return casts;
     }
 
@@ -178,7 +176,7 @@ public abstract class PMinMax extends RBuiltinNode {
                     RAbstractIntVector vec = (RAbstractIntVector) argValues[j];
                     na.enable(vec);
                     if (vec.getLength() > 1 && vec.getLength() < maxLength && !warningAdded) {
-                        RError.warning(RError.SHOW_CALLER2, RError.Message.ARG_RECYCYLED);
+                        warning(RError.Message.ARG_RECYCYLED);
                         warningAdded = true;
                     }
                     int v = vec.getDataAt(i % vec.getLength());
@@ -241,7 +239,7 @@ public abstract class PMinMax extends RBuiltinNode {
             naCheckX.enable(x);
             naCheckY.enable(y);
             if ((xLength > 1 && xLength < maxLength) || (yLength > 1 && yLength < maxLength)) {
-                RError.warning(RError.SHOW_CALLER2, RError.Message.ARG_RECYCYLED);
+                warning(RError.Message.ARG_RECYCYLED);
             }
             boolean profiledNaRm = naRmProfile.profile(naRm);
             double[] data = new double[maxLength];
@@ -282,7 +280,7 @@ public abstract class PMinMax extends RBuiltinNode {
                 RAbstractDoubleVector vec = (RAbstractDoubleVector) argValues[j];
                 na.enable(vec);
                 if (vec.getLength() > 1 && vec.getLength() < maxLength && !warningAdded) {
-                    RError.warning(RError.SHOW_CALLER2, RError.Message.ARG_RECYCYLED);
+                    warning(RError.Message.ARG_RECYCYLED);
                     warningAdded = true;
                 }
             }
@@ -336,7 +334,7 @@ public abstract class PMinMax extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     protected RRawVector pMinMaxRaw(Object naRm, Object args) {
-        throw RError.error(NO_CALLER, RError.Message.INVALID_INPUT_TYPE);
+        throw error(RError.Message.INVALID_INPUT_TYPE);
     }
 
     @RBuiltin(name = "pmax", kind = INTERNAL, parameterNames = {"na.rm", "..."}, behavior = PURE)
@@ -424,7 +422,7 @@ public abstract class PMinMax extends RBuiltinNode {
             byte warningAdded = warning;
             RAbstractStringVector vec = (RAbstractStringVector) argValues[offset];
             if (vec.getLength() > 1 && vec.getLength() < maxLength && warningAdded == RRuntime.LOGICAL_FALSE) {
-                RError.warning(RError.SHOW_CALLER2, RError.Message.ARG_RECYCYLED);
+                warning(RError.Message.ARG_RECYCYLED);
                 warningAdded = RRuntime.LOGICAL_TRUE;
             }
             String result = vec.getDataAt(ind % vec.getLength());
@@ -451,7 +449,7 @@ public abstract class PMinMax extends RBuiltinNode {
             for (int i = offset + 1; i < argValues.length; i++) {
                 vec = (RAbstractStringVector) argValues[i];
                 if (vec.getLength() > 1 && vec.getLength() < maxLength && warningAdded == RRuntime.LOGICAL_FALSE) {
-                    RError.warning(this, RError.Message.ARG_RECYCYLED);
+                    warning(RError.Message.ARG_RECYCYLED);
                     warningAdded = RRuntime.LOGICAL_TRUE;
                 }
 

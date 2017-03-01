@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARGUMENT;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_FIRST_ARGUMENT;
 import static com.oracle.truffle.r.runtime.RError.Message.USE_NULL_ENV_DEFUNCT;
@@ -60,24 +59,22 @@ public abstract class Rm extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Rm.class);
-        casts.arg("list").mustBe(stringValue(), SHOW_CALLER, INVALID_FIRST_ARGUMENT);
-        casts.arg("envir").mustNotBeNull(SHOW_CALLER, USE_NULL_ENV_DEFUNCT).mustBe(REnvironment.class, SHOW_CALLER, INVALID_ARGUMENT, "envir");
-        casts.arg("inherits").mustBe(numericValue(), SHOW_CALLER, INVALID_ARGUMENT, "inherits").asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("list").mustBe(stringValue(), INVALID_FIRST_ARGUMENT);
+        casts.arg("envir").mustNotBeNull(USE_NULL_ENV_DEFUNCT).mustBe(REnvironment.class, INVALID_ARGUMENT, "envir");
+        casts.arg("inherits").mustBe(numericValue(), INVALID_ARGUMENT, "inherits").asLogicalVector().findFirst().map(toBoolean());
     }
 
     // this specialization is for internal use only
     // TODO: what internal use? Does it still apply?
     @Specialization
-    @SuppressWarnings("unused")
-    protected Object rm(VirtualFrame frame, String name, RMissing envir, boolean inherits) {
+    protected Object rm(VirtualFrame frame, String name, @SuppressWarnings("unused") RMissing envir, @SuppressWarnings("unused") boolean inherits) {
         removeFromFrame(frame, name);
         return RNull.instance;
     }
 
     @Specialization
     @TruffleBoundary
-    @SuppressWarnings("unused")
-    protected Object rm(RAbstractStringVector list, REnvironment envir, boolean inherits) {
+    protected Object rm(RAbstractStringVector list, REnvironment envir, @SuppressWarnings("unused") boolean inherits) {
         try {
             for (int i = 0; i < list.getLength(); i++) {
                 if (envir == REnvironment.globalEnv()) {
@@ -87,7 +84,7 @@ public abstract class Rm extends RBuiltinNode {
                 }
             }
         } catch (PutException ex) {
-            throw RError.error(SHOW_CALLER, ex);
+            throw error(ex);
         }
         return RNull.instance;
     }
@@ -103,7 +100,7 @@ public abstract class Rm extends RBuiltinNode {
             }
         }
         if (fs == null) {
-            RError.warning(SHOW_CALLER, RError.Message.UNKNOWN_OBJECT, x);
+            warning(RError.Message.UNKNOWN_OBJECT, x);
         } else {
             // use null (not an R value) to represent "undefined"
             FrameSlotChangeMonitor.setObjectAndInvalidate(frame, fs, null, false, invalidateProfile);

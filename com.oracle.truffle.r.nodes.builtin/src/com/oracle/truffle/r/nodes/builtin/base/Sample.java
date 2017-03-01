@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARGUMENT;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_FIRST_ARGUMENT;
 import static com.oracle.truffle.r.runtime.RError.Message.VECTOR_SIZE_NA_NAN;
@@ -55,12 +54,12 @@ public abstract class Sample extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Sample.class);
-        casts.arg("x").defaultError(SHOW_CALLER, INVALID_FIRST_ARGUMENT).allowNull().mustBe(integerValue().or(doubleValue())).notNA(SHOW_CALLER, VECTOR_SIZE_NA_NAN).mapIf(doubleValue(),
-                        chain(asDoubleVector()).with(findFirst().doubleElement()).with(mustBe(isFinite(), SHOW_CALLER, VECTOR_SIZE_NA_NAN)).with(
-                                        mustBe(lt(4.5e15), SHOW_CALLER, VECTOR_SIZE_TOO_LARGE)).end()).asIntegerVector().findFirst().mustBe(gte0());
-        casts.arg("size").defaultError(SHOW_CALLER, INVALID_ARGUMENT, "size").mustBe(integerValue().or(doubleValue()).or(stringValue())).asIntegerVector().findFirst().defaultError(SHOW_CALLER,
-                        INVALID_ARGUMENT, "size").notNA().mustBe(gte0());
-        casts.arg("replace").mustBe(integerValue().or(doubleValue()).or(logicalValue())).asLogicalVector().mustBe(singleElement()).findFirst().notNA().map(toBoolean());
+        casts.arg("x").defaultError(INVALID_FIRST_ARGUMENT).allowNull().mustBe(integerValue().or(doubleValue())).mustNotBeNA(VECTOR_SIZE_NA_NAN).mapIf(doubleValue(),
+                        chain(asDoubleVector()).with(findFirst().doubleElement()).with(mustBe(isFinite(), VECTOR_SIZE_NA_NAN)).with(
+                                        mustBe(lt(4.5e15), VECTOR_SIZE_TOO_LARGE)).end()).asIntegerVector().findFirst().mustBe(gte0());
+        casts.arg("size").defaultError(INVALID_ARGUMENT, "size").mustBe(integerValue().or(doubleValue()).or(stringValue())).asIntegerVector().findFirst().mustNotBeNA(
+                        INVALID_ARGUMENT, "size").mustBe(gte0(), INVALID_ARGUMENT, "size");
+        casts.arg("replace").mustBe(integerValue().or(doubleValue()).or(logicalValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustNotBeNA().map(toBoolean());
         casts.arg("prob").asDoubleVector();
     }
 
@@ -79,21 +78,21 @@ public abstract class Sample extends RBuiltinNode {
     @SuppressWarnings("unused")
     protected RIntVector doSampleInvalidProb(final int x, final int size, final boolean isRepeatable, final RDoubleVector prob) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, RError.Message.INCORRECT_NUM_PROB);
+        throw error(RError.Message.INCORRECT_NUM_PROB);
     }
 
     @Specialization(guards = "largerPopulation(x, size, isRepeatable)")
     @SuppressWarnings("unused")
     protected RIntVector doSampleLargerPopulation(final int x, final int size, final boolean isRepeatable, final RDoubleVector prob) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, RError.Message.SAMPLE_LARGER_THAN_POPULATION);
+        throw error(RError.Message.SAMPLE_LARGER_THAN_POPULATION);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "largerPopulation(x, size, isRepeatable)")
     protected RIntVector doSampleInvalidLargerPopulation(final int x, final int size, final boolean isRepeatable, final RNull prob) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, RError.Message.INCORRECT_NUM_PROB);
+        throw error(RError.Message.INCORRECT_NUM_PROB);
     }
 
     // Actual specializations:
@@ -161,10 +160,10 @@ public abstract class Sample extends RBuiltinNode {
         double probSum = 0;
         for (double aProb : probArray) {
             if (!RRuntime.isFinite(aProb)) {
-                throw RError.error(this, RError.Message.NA_IN_PROB_VECTOR);
+                throw error(RError.Message.NA_IN_PROB_VECTOR);
             }
             if (aProb < 0) {
-                throw RError.error(this, RError.Message.NEGATIVE_PROBABILITY);
+                throw error(RError.Message.NEGATIVE_PROBABILITY);
             }
             if (aProb > 0) {
                 probSum += aProb;
@@ -172,7 +171,7 @@ public abstract class Sample extends RBuiltinNode {
             }
         }
         if (nonZeroProbCount == 0 || (!isRepeatable && size > nonZeroProbCount)) {
-            throw RError.error(this, RError.Message.TOO_FEW_POSITIVE_PROBABILITY);
+            throw error(RError.Message.TOO_FEW_POSITIVE_PROBABILITY);
         }
         for (int i = 0; i < x; i++) {
             probArray[i] /= probSum;

@@ -50,13 +50,13 @@ public abstract class Strtrim extends RBuiltinNode {
         int nw = width.getLength();
         if (nw == 0 || nw < len && (len % nw != 0)) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "width");
+            throw error(RError.Message.INVALID_ARGUMENT, "width");
         }
         for (int i = 0; i < nw; i++) {
             assert RRuntime.INT_NA < 0; // check for NA folded into < 0
             if (width.getDataAt(i) < 0) {
                 CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "width");
+                throw error(RError.Message.INVALID_ARGUMENT, "width");
             }
         }
         BiFunction<String, Integer, String> function = (element, i) -> {

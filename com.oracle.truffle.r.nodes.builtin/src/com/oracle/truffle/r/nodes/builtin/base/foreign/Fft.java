@@ -53,8 +53,7 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
                 int n = zVec.getLength();
                 factorNode.execute(n, maxf, maxp);
                 if (maxf[0] == 0) {
-                    errorProfile.enter();
-                    throw RError.error(this, RError.Message.FFT_FACTORIZATION);
+                    throw error(RError.Message.FFT_FACTORIZATION);
                 }
                 double[] work = new double[4 * maxf[0]];
                 int[] iwork = new int[maxp[0]];
@@ -68,8 +67,7 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
                     if (d[i] > 1) {
                         factorNode.execute(d[i], maxf, maxp);
                         if (maxf[0] == 0) {
-                            errorProfile.enter();
-                            throw RError.error(this, RError.Message.FFT_FACTORIZATION);
+                            throw error(RError.Message.FFT_FACTORIZATION);
                         }
                         if (maxf[0] > maxmaxf) {
                             maxmaxf = maxf[0];

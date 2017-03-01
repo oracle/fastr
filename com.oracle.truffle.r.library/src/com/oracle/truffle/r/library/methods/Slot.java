@@ -38,8 +38,8 @@ public class Slot {
 
         static {
             Casts casts = new Casts(R_getSlot.class);
-            casts.arg(1, "name").defaultError(RError.NO_CALLER, RError.Message.GENERIC, "invalid type or length for slot name").mustBe(stringValue()).asStringVector().mustBe(
-                            singleElement()).findFirst().mustBe(Predef.lengthGt(0), RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
+            casts.arg(1, "name").defaultError(RError.Message.GENERIC, "invalid type or length for slot name").mustBe(stringValue()).asStringVector().mustBe(
+                            singleElement()).findFirst().mustBe(Predef.lengthGt(0), RError.Message.ZERO_LENGTH_VARIABLE);
         }
 
         protected static String getInternedName(String name) {
@@ -66,8 +66,8 @@ public class Slot {
 
         static {
             Casts casts = new Casts(R_setSlot.class);
-            casts.arg(1, "name").defaultError(RError.NO_CALLER, RError.Message.GENERIC, "invalid type or length for slot name").mustBe(stringValue()).asStringVector().mustBe(
-                            singleElement()).findFirst().mustBe(Predef.lengthGt(0), RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
+            casts.arg(1, "name").defaultError(RError.Message.GENERIC, "invalid type or length for slot name").mustBe(stringValue()).asStringVector().mustBe(
+                            singleElement()).findFirst().mustBe(Predef.lengthGt(0), RError.Message.ZERO_LENGTH_VARIABLE);
         }
 
         protected static String getInternedName(String name) {

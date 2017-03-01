@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -54,7 +53,6 @@ abstract class CachedVectorNode extends RBaseNode {
      */
     protected final boolean recursive;
 
-    protected final BranchProfile errorBranch = BranchProfile.create();
     protected final int numberOfDimensions;
     private final int filteredPositionsLength;
 
@@ -75,7 +73,7 @@ abstract class CachedVectorNode extends RBaseNode {
         }
         if (!isSubsetable(vectorType)) {
             error = () -> {
-                throw RError.error(this, RError.Message.OBJECT_NOT_SUBSETTABLE, vectorType.getName());
+                throw error(RError.Message.OBJECT_NOT_SUBSETTABLE, vectorType.getName());
             };
         }
     }

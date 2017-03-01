@@ -600,7 +600,7 @@ public class ArgumentMatcher {
 
                     // one unused argument
                     CompilerDirectives.transferToInterpreter();
-                    throw RError.error(callingNode, RError.Message.UNUSED_ARGUMENT, errorString.apply(suppliedIndex));
+                    throw callingNode.error(RError.Message.UNUSED_ARGUMENT, errorString.apply(suppliedIndex));
                 }
 
                 CompilerDirectives.transferToInterpreter();
@@ -615,7 +615,7 @@ public class ArgumentMatcher {
                         str.append(errorString.apply(suppliedIndex));
                     }
                 }
-                throw RError.error(callingNode, RError.Message.UNUSED_ARGUMENTS, str);
+                throw callingNode.error(RError.Message.UNUSED_ARGUMENTS, str);
             }
             return new MatchPermutation(resultPermutation, ArgumentsSignature.get(resultSignature), null, null);
         }
@@ -661,7 +661,7 @@ public class ArgumentMatcher {
                             return MatchPermutation.UNMATCHED;
                         } else {
                             // Has already been matched: Error!
-                            throw RError.error(callingNode, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
+                            throw callingNode.error(RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
                         }
                     }
                     return i;
@@ -692,11 +692,11 @@ public class ArgumentMatcher {
                 if (formalName.startsWith(suppliedName) && ((varArgIndex != ArgumentsSignature.NO_VARARG && i < varArgIndex) || varArgIndex == ArgumentsSignature.NO_VARARG)) {
                     // partial-match only if the formal argument is positioned before ...
                     if (found >= 0) {
-                        throw RError.error(callingNode, RError.Message.ARGUMENT_MATCHES_MULTIPLE, 1 + suppliedIndex);
+                        throw callingNode.error(RError.Message.ARGUMENT_MATCHES_MULTIPLE, 1 + suppliedIndex);
                     }
                     found = i;
                     if (resultPermutation[found] != MatchPermutation.UNMATCHED) {
-                        throw RError.error(callingNode, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
+                        throw callingNode.error(RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
                     }
                 }
             }
@@ -704,6 +704,6 @@ public class ArgumentMatcher {
         if (found >= 0 || hasVarArgs) {
             return found;
         }
-        throw RError.error(callingNode, RError.Message.UNUSED_ARGUMENT, errorString.apply(suppliedIndex));
+        throw callingNode.error(RError.Message.UNUSED_ARGUMENT, errorString.apply(suppliedIndex));
     }
 }

@@ -16,7 +16,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -29,7 +28,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 @RBuiltin(name = "bincode", kind = INTERNAL, parameterNames = {"x", "breaks", "right", "include.lowest"}, behavior = PURE)
 public abstract class Bincode extends RBuiltinNode {
 
-    private final BranchProfile errorProfile = BranchProfile.create();
     private final NACheck naCheck = NACheck.create();
 
     static {
@@ -58,8 +56,7 @@ public abstract class Bincode extends RBuiltinNode {
         /* This relies on breaks being sorted, so wise to check that */
         for (int i = 1; i < nb; i++) {
             if (breaks.getDataAt(i - 1) > breaks.getDataAt(i)) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.GENERIC, "'breaks' is not sorted");
+                throw error(RError.Message.GENERIC, "'breaks' is not sorted");
             }
         }
 

@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodes;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
@@ -127,13 +126,12 @@ abstract class LookupAdapter extends RBuiltinNode {
         return (NativeCallInfo) extractSymbolInfoNode.execute(frame, symbol);
     }
 
-    protected String checkPackageArg(Object rPackage, BranchProfile errorProfile) {
+    protected String checkPackageArg(Object rPackage) {
         String libName = null;
         if (!(rPackage instanceof RMissing)) {
             libName = RRuntime.asString(rPackage);
             if (libName == null) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.ARGUMENT_MUST_BE_STRING, "PACKAGE");
+                throw error(RError.Message.ARGUMENT_MUST_BE_STRING, "PACKAGE");
             }
         }
         return libName;

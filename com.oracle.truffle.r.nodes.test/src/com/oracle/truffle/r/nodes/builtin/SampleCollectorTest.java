@@ -367,7 +367,7 @@ public class SampleCollectorTest {
 
     @Test
     public void testNonNA() {
-        arg.mustBe(atomicIntegerValue()).notNA(RError.Message.GENERIC, "abc");
+        arg.mustBe(atomicIntegerValue()).mustNotBeNA(RError.Message.GENERIC, "abc");
         assertSamples(RRuntime.STRING_NA);
     }
 

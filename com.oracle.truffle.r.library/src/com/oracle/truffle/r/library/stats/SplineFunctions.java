@@ -11,22 +11,22 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.runtime.RError.Message.NA_INTRODUCED_COERCION;
+import static com.oracle.truffle.r.runtime.RRuntime.INT_NA;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import static com.oracle.truffle.r.runtime.RError.Message.NA_INTRODUCED_COERCION;
-import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
-import static com.oracle.truffle.r.runtime.RRuntime.INT_NA;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -49,7 +49,7 @@ public class SplineFunctions {
             casts.arg(0).mapNull(constant(INT_NA)).mapIf(numericValue(),
                             chain(asIntegerVector()).with(findFirst().integerElement(INT_NA)).end(),
                             chain(asIntegerVector()).with(findFirst().integerElement(INT_NA)).with(
-                                            Predef.shouldBe(integerValue(), NO_CALLER, NA_INTRODUCED_COERCION)).end());
+                                            Predef.shouldBe(integerValue(), NA_INTRODUCED_COERCION)).end());
             casts.arg(1).mustNotBeMissing().asDoubleVector();
             casts.arg(2).mustNotBeMissing().asDoubleVector();
         }
@@ -57,25 +57,46 @@ public class SplineFunctions {
         @Specialization
         @TruffleBoundary
         protected Object splineCoef(int method, RAbstractDoubleVector x, RAbstractDoubleVector y) {
-            return SplineFunctions.splineCoef(method, x.materialize(), y.materialize());
+            return splineCoefImpl(method, x.materialize(), y.materialize());
         }
 
         @Specialization
         @TruffleBoundary
         protected Object splineCoef(int method, RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y) {
-            return SplineFunctions.splineCoef(method, x.materialize(), RDataFactory.createDoubleVector(0));
+            return splineCoefImpl(method, x.materialize(), RDataFactory.createDoubleVector(0));
         }
 
         @Specialization
         @TruffleBoundary
         protected Object splineCoef(int method, @SuppressWarnings("unused") RNull x, RAbstractDoubleVector y) {
-            return SplineFunctions.splineCoef(method, RDataFactory.createDoubleVector(0), y.materialize());
+            return splineCoefImpl(method, RDataFactory.createDoubleVector(0), y.materialize());
         }
 
         @Specialization
         @TruffleBoundary
         protected Object splineCoef(int method, @SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") RNull y) {
-            return SplineFunctions.splineCoef(method, RDataFactory.createDoubleVector(0), RDataFactory.createDoubleVector(0));
+            return splineCoefImpl(method, RDataFactory.createDoubleVector(0), RDataFactory.createDoubleVector(0));
+        }
+
+        private RList splineCoefImpl(int method, RDoubleVector x, RDoubleVector y) {
+            int n = x.getLength();
+            if (y.getLength() != n) {
+                throw error(RError.Message.INPUTS_DIFFERENT_LENGTHS);
+            }
+
+            double[] b = new double[n];
+            double[] c = new double[n];
+            double[] d = new double[n];
+
+            SplineFunctions.splineCoef(method, n, x.getDataWithoutCopying(), y.getDataWithoutCopying(), b, c, d);
+
+            final boolean complete = x.isComplete() && y.isComplete();
+            RDoubleVector bv = RDataFactory.createDoubleVector(b, complete);
+            RDoubleVector cv = RDataFactory.createDoubleVector(c, complete);
+            RDoubleVector dv = RDataFactory.createDoubleVector(d, complete);
+            Object[] resultData = new Object[]{method, n, x, y, bv, cv, dv};
+            RStringVector resultNames = RDataFactory.createStringVector(new String[]{"method", "n", "x", "y", "b", "c", "d"}, RDataFactory.COMPLETE_VECTOR);
+            return RDataFactory.createList(resultData, resultNames);
         }
     }
 
@@ -93,27 +114,6 @@ public class SplineFunctions {
             // This is called with the result of SplineCoef, so it is surely an RList
             return SplineFunctions.splineEval(xout.materialize(), z);
         }
-    }
-
-    private static RList splineCoef(int method, RDoubleVector x, RDoubleVector y) {
-        final int n = x.getLength();
-        if (y.getLength() != n) {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.INPUTS_DIFFERENT_LENGTHS);
-        }
-
-        double[] b = new double[n];
-        double[] c = new double[n];
-        double[] d = new double[n];
-
-        splineCoef(method, n, x.getDataWithoutCopying(), y.getDataWithoutCopying(), b, c, d);
-
-        final boolean complete = x.isComplete() && y.isComplete();
-        RDoubleVector bv = RDataFactory.createDoubleVector(b, complete);
-        RDoubleVector cv = RDataFactory.createDoubleVector(c, complete);
-        RDoubleVector dv = RDataFactory.createDoubleVector(d, complete);
-        Object[] resultData = new Object[]{method, n, x, y, bv, cv, dv};
-        RStringVector resultNames = RDataFactory.createStringVector(new String[]{"method", "n", "x", "y", "b", "c", "d"}, RDataFactory.COMPLETE_VECTOR);
-        return RDataFactory.createList(resultData, resultNames);
     }
 
     private static void splineCoef(int method, int n, double[] x, double[] y, double[] b, double[] c, double[] d) {

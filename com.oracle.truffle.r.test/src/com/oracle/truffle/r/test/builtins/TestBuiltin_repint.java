@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -164,14 +164,14 @@ public class TestBuiltin_repint extends TestBase {
         assertEval("{ rep.int(c(1,2,3),c(2,8,3)) }");
         assertEval("{ rep.int(seq_len(2), rep.int(8, 2)) }");
 
-        assertEval(Output.IgnoreErrorContext, "{ rep.int(c(1,2,3),c(2,8)) }");
+        assertEval("{ rep.int(c(1,2,3),c(2,8)) }");
 
         assertEval(Output.IgnoreErrorContext, "{ rep.int(function() 42, 7) }");
         assertEval("{ rep.int(7, character()) }");
         assertEval("{ rep.int(7, NULL) }");
         assertEval("{ rep.int(7, \"7\") }");
-        assertEval(Output.IgnoreErrorContext, "{ rep.int(7, c(7, 42)) }");
+        assertEval("{ rep.int(7, c(7, 42)) }");
         assertEval("{ rep_int(7, function() 42) }");
-        assertEval(Output.IgnoreErrorContext, "{ rep.int(7, NA)  }");
+        assertEval("{ rep.int(7, NA)  }");
     }
 }

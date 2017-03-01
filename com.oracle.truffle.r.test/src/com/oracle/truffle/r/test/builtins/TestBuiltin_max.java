@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -184,13 +184,13 @@ public class TestBuiltin_max extends TestBase {
         assertEval("{ max(\"42\", \"7\") }");
 
         assertEval("{ max(as.double(NA), na.rm=FALSE) }");
-        assertEval(Output.IgnoreWarningContext, "{ max(as.double(NA), as.double(NA), na.rm=TRUE) }");
+        assertEval("{ max(as.double(NA), as.double(NA), na.rm=TRUE) }");
         assertEval("{ max(as.double(NA), as.double(NA), na.rm=FALSE) }");
         assertEval("{ max(as.integer(NA), na.rm=FALSE) }");
         assertEval("{ max(as.integer(NA), as.integer(NA), na.rm=FALSE) }");
-        assertEval(Output.IgnoreWarningContext, "{ max(as.character(NA), na.rm=TRUE) }");
+        assertEval("{ max(as.character(NA), na.rm=TRUE) }");
         assertEval("{ max(as.character(NA), na.rm=FALSE) }");
-        assertEval(Output.IgnoreWarningContext, "{ max(as.character(NA), as.character(NA), na.rm=TRUE) }");
+        assertEval("{ max(as.character(NA), as.character(NA), na.rm=TRUE) }");
         assertEval("{ max(as.character(NA), as.character(NA), na.rm=FALSE) }");
         assertEval("{ max(42L, as.integer(NA), na.rm=TRUE) }");
         assertEval("{ max(42L, as.integer(NA), na.rm=FALSE) }");
@@ -216,7 +216,7 @@ public class TestBuiltin_max extends TestBase {
 
         assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(integer(0)) }");
         assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(integer()) }");
-        assertEval(Output.IgnoreWarningContext, "{ max(as.double(NA), na.rm=TRUE) }");
+        assertEval("{ max(as.double(NA), na.rm=TRUE) }");
         assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(as.integer(NA), na.rm=TRUE) }");
         assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
     }

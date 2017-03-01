@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.anyValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARGUMENT;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_NORMAL_TYPE_IN_RGNKIND;
 import static com.oracle.truffle.r.runtime.RError.Message.SEED_NOT_VALID_INT;
@@ -51,10 +50,10 @@ public class RNGFunctions {
 
         static {
             Casts casts = new Casts(SetSeed.class);
-            casts.arg("seed").allowNull().mustBe(numericValue(), SHOW_CALLER, SEED_NOT_VALID_INT).asIntegerVector().findFirst();
+            casts.arg("seed").allowNull().mustBe(numericValue(), SEED_NOT_VALID_INT).asIntegerVector().findFirst();
             CastsHelper.kindInteger(casts, "kind", INVALID_ARGUMENT, "kind");
             // TODO: implement normal.kind specializations with String
-            casts.arg("normal.kind").allowNull().mustBe(anyValue().not(), UNIMPLEMENTED_TYPE_IN_FUNCTION, "String", "set.seed").mustBe(stringValue(), SHOW_CALLER, INVALID_NORMAL_TYPE_IN_RGNKIND);
+            casts.arg("normal.kind").allowNull().mustBe(anyValue().not(), UNIMPLEMENTED_TYPE_IN_FUNCTION, "String", "set.seed").mustBe(stringValue(), INVALID_NORMAL_TYPE_IN_RGNKIND);
         }
 
         @SuppressWarnings("unused")
@@ -100,7 +99,7 @@ public class RNGFunctions {
 
     private static final class CastsHelper {
         public static void kindInteger(Casts casts, String name, Message error, Object... messageArgs) {
-            casts.arg(name).mapNull(constant(RRNG.NO_KIND_CHANGE)).mustBe(numericValue(), SHOW_CALLER, error, messageArgs).asIntegerVector().findFirst();
+            casts.arg(name).mapNull(constant(RRNG.NO_KIND_CHANGE)).mustBe(numericValue(), error, messageArgs).asIntegerVector().findFirst();
         }
     }
 }

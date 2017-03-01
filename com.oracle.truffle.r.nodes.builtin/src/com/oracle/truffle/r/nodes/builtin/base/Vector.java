@@ -46,14 +46,14 @@ public abstract class Vector extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Vector.class);
-        casts.arg("mode").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "mode").asStringVector().mustBe(singleElement()).findFirst();
-        casts.arg("length").defaultError(RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "length").asIntegerVector().mustBe(singleElement()).findFirst();
+        casts.arg("mode").defaultError(RError.Message.INVALID_ARGUMENT, "mode").asStringVector().mustBe(singleElement()).findFirst();
+        casts.arg("length").defaultError(RError.Message.INVALID_ARGUMENT, "length").asIntegerVector().mustBe(singleElement()).findFirst();
     }
 
     protected RType modeToType(String mode) {
         RType type = typeFromMode.execute(mode);
         if (type != RType.PairList && !type.isVector()) {
-            throw RError.error(this, RError.Message.CANNOT_MAKE_VECTOR_OF_MODE, mode);
+            throw error(RError.Message.CANNOT_MAKE_VECTOR_OF_MODE, mode);
         }
         return type;
     }

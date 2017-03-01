@@ -67,7 +67,7 @@ public abstract class Strrep extends RBuiltinNode {
                 data[i] = RRuntime.STRING_NA;
             } else {
                 if (times < 0) {
-                    throw RError.error(this, RError.Message.INVALID_VALUE, "times");
+                    throw error(RError.Message.INVALID_VALUE, "times");
                 }
                 if (times == 1) {
                     data[i] = x;

@@ -24,8 +24,6 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -40,9 +38,6 @@ public abstract class FirstStringNode extends CastNode {
         this.argumentName = argumentName;
     }
 
-    private final ConditionProfile lengthOneProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile errorProfile = BranchProfile.create();
-
     public final String executeString(Object argument) {
         return (String) execute(argument);
     }
@@ -54,16 +49,15 @@ public abstract class FirstStringNode extends CastNode {
 
     @Specialization(replaces = "firstScalar")
     protected String firstVector(RAbstractStringVector argument) {
-        if (!lengthOneProfile.profile(argument.getLength() == 1)) {
-            errorProfile.enter();
-            throw RError.error(RError.SHOW_CALLER, emptyError, argumentName);
+        if (argument.getLength() != 1) {
+            throw error(emptyError, argumentName);
         }
         return argument.getDataAt(0);
     }
 
     @Fallback
     protected String firstVectorFallback(@SuppressWarnings("unused") Object argument) {
-        throw RError.error(RError.SHOW_CALLER, emptyError, argumentName);
+        throw error(emptyError, argumentName);
     }
 
     public static FirstStringNode createWithError(RError.Message emptyError, String argumentName) {

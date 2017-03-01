@@ -38,8 +38,8 @@ public class ToolsText {
 
         static {
             Casts casts = new Casts(DoTabExpand.class);
-            casts.arg(0, "strings").defaultError(RError.NO_CALLER, RError.Message.MACRO_CAN_BE_APPLIED_TO, "STRING_ELT()", "character vector", typeName()).mustBe(stringValue());
-            casts.arg(1, "starts").defaultError(RError.NO_CALLER, RError.Message.MACRO_CAN_BE_APPLIED_TO, "INTEGER()", "integer", typeName()).mustBe(integerValue()).asIntegerVector();
+            casts.arg(0, "strings").defaultError(RError.Message.MACRO_CAN_BE_APPLIED_TO, "STRING_ELT()", "character vector", typeName()).mustBe(stringValue());
+            casts.arg(1, "starts").defaultError(RError.Message.MACRO_CAN_BE_APPLIED_TO, "INTEGER()", "integer", typeName()).mustBe(integerValue()).asIntegerVector();
         }
 
         @Specialization
@@ -110,7 +110,7 @@ public class ToolsText {
                             }
                             data[i] = RRuntime.LOGICAL_TRUE;
                         } catch (IOException ex) {
-                            RError.warning(this, RError.Message.GENERIC, "IO error during file append");
+                            warning(RError.Message.GENERIC, "IO error during file append");
                             // shouldn't happen, just continue with false result
                         }
                     }

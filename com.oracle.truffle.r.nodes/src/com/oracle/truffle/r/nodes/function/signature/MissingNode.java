@@ -40,7 +40,6 @@ import com.oracle.truffle.r.nodes.function.RMissingHelper;
 import com.oracle.truffle.r.nodes.function.signature.MissingNodeFactory.MissingCheckCacheNodeGen;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -199,11 +198,11 @@ public final class MissingNode extends OperatorNode {
         if (level == null && readVarArgs == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (args.length != 1) {
-                throw RError.error(this, Message.ARGUMENTS_PASSED, args.length, "'missing'", 1);
+                throw error(Message.ARGUMENTS_PASSED, args.length, "'missing'", 1);
             }
             RSyntaxElement arg = args[0];
             if (!(arg instanceof RSyntaxLookup)) {
-                throw RError.error(this, Message.INVALID_USE, "missing");
+                throw error(Message.INVALID_USE, "missing");
             }
             String identifier = ((RSyntaxLookup) arg).getIdentifier();
             if (ArgumentsSignature.VARARG_NAME.equals(identifier)) {
@@ -219,7 +218,7 @@ public final class MissingNode extends OperatorNode {
             RArgsValuesAndNames varArgs = (RArgsValuesAndNames) readVarArgs.execute(frame);
             if (varArgs == null) {
                 CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, Message.MISSING_ARGUMENTS);
+                throw error(Message.MISSING_ARGUMENTS);
             }
             return createResult(frame, varArgs.getLength() == 0);
         }

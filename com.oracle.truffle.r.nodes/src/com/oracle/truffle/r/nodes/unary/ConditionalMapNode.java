@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -31,8 +32,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 
 public abstract class ConditionalMapNode extends CastNode {
 
-    private final ArgumentFilter<?, ?> argFilter;
-    private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
+    private final ArgumentFilter<Object, Object> argFilter;
     private final boolean resultForNull;
     private final boolean resultForMissing;
     private final boolean returns;
@@ -40,8 +40,7 @@ public abstract class ConditionalMapNode extends CastNode {
     @Child private CastNode trueBranch;
     @Child private CastNode falseBranch;
 
-    protected ConditionalMapNode(ArgumentFilter<?, ?> argFilter, CastNode trueBranch, CastNode falseBranch, boolean resultForNull,
-                    boolean resultForMissing, boolean returns) {
+    protected ConditionalMapNode(ArgumentFilter<Object, Object> argFilter, CastNode trueBranch, CastNode falseBranch, boolean resultForNull, boolean resultForMissing, boolean returns) {
         this.argFilter = argFilter;
         this.trueBranch = trueBranch;
         this.falseBranch = falseBranch;
@@ -50,73 +49,37 @@ public abstract class ConditionalMapNode extends CastNode {
         this.returns = returns;
     }
 
-    public static ConditionalMapNode create(ArgumentFilter<?, ?> argFilter, CastNode trueBranch,
-                    CastNode falseBranch, boolean resultForNull,
-                    boolean resultForMissing, boolean returns) {
+    public static ConditionalMapNode create(ArgumentFilter<Object, Object> argFilter, CastNode trueBranch, CastNode falseBranch, boolean resultForNull, boolean resultForMissing, boolean returns) {
         return ConditionalMapNodeGen.create(argFilter, trueBranch, falseBranch, resultForNull, resultForMissing, returns);
     }
 
-    public boolean isReturns() {
-        return returns;
-    }
-
-    public ArgumentFilter<?, ?> getFilter() {
-        return argFilter;
-    }
-
-    public CastNode getTrueBranch() {
-        return trueBranch;
-    }
-
-    public CastNode getFalseBranch() {
-        return falseBranch;
+    private Object executeConditional(boolean isTrue, Object x) {
+        if (isTrue) {
+            Object result = trueBranch == null ? x : trueBranch.execute(x);
+            if (returns) {
+                throw new PipelineReturnException(result);
+            } else {
+                return result;
+            }
+        } else {
+            return falseBranch == null ? x : falseBranch.execute(x);
+        }
     }
 
     @Specialization
     protected Object executeNull(RNull x) {
-        if (resultForNull) {
-            Object result = trueBranch == null ? x : trueBranch.execute(x);
-            if (returns) {
-                throw new PipelineReturnException(result);
-            } else {
-                return result;
-            }
-        } else {
-            return falseBranch == null ? x : falseBranch.execute(x);
-        }
+        return executeConditional(resultForNull, x);
     }
 
     @Specialization
     protected Object executeMissing(RMissing x) {
-        if (resultForMissing) {
-            Object result = trueBranch == null ? x : trueBranch.execute(x);
-            if (returns) {
-                throw new PipelineReturnException(result);
-            } else {
-                return result;
-            }
-        } else {
-            return falseBranch == null ? x : falseBranch.execute(x);
-        }
+        return executeConditional(resultForMissing, x);
     }
 
-    protected static boolean isNotNullOrMissing(Object x) {
-        return x != RNull.instance && x != RMissing.instance;
-    }
-
-    @Specialization(guards = "isNotNullOrMissing(x)")
-    @SuppressWarnings("unchecked")
-    protected Object executeRest(Object x) {
-        if (conditionProfile.profile(((ArgumentFilter<Object, Object>) argFilter).test(x))) {
-            Object result = trueBranch == null ? x : trueBranch.execute(x);
-            if (returns) {
-                throw new PipelineReturnException(result);
-            } else {
-                return result;
-            }
-        } else {
-            return falseBranch == null ? x : falseBranch.execute(x);
-        }
+    @Specialization(guards = {"!isRNull(x)", "!isRMissing(x)"})
+    protected Object executeRest(Object x,
+                    @Cached("createBinaryProfile()") ConditionProfile conditionProfile) {
+        return executeConditional(conditionProfile.profile(argFilter.test(x)), x);
     }
 
     @SuppressWarnings("serial")

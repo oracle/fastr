@@ -129,7 +129,7 @@ public class TestBuiltin_shortRowNames extends TestBase {
 
     @Test
     public void testArgCasts() {
-        assertEval(Output.IgnoreErrorContext, ".Internal(shortRowNames(42, -2))");
+        assertEval(".Internal(shortRowNames(42, -2))");
         assertEval(".Internal(shortRowNames(42, '1'))");
     }
 }

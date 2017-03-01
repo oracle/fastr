@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
@@ -47,8 +46,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 @RBuiltin(name = "Recall", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"..."}, nonEvalArgs = {0}, behavior = COMPLEX)
 public abstract class Recall extends RBuiltinNode {
 
-    private final BranchProfile errorProfile = BranchProfile.create();
-
     @Child private LocalReadVariableNode readArgs = LocalReadVariableNode.create(ArgumentsSignature.VARARG_NAME, false);
 
     @Child private GetCallerFrameNode callerFrame = new GetCallerFrameNode();
@@ -64,8 +61,7 @@ public abstract class Recall extends RBuiltinNode {
         Frame cframe = callerFrame.execute(frame);
         RFunction function = RArguments.getFunction(cframe);
         if (function == null) {
-            errorProfile.enter();
-            throw RError.error(RError.SHOW_CALLER, RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
+            throw error(RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
         }
         /*
          * The args passed to the Recall internal are ignored, they are always "...". Instead, this

@@ -50,24 +50,25 @@ public interface NodeWithArgumentCasts {
 
     final class Casts {
         private static final ConcurrentHashMap<Class<?>, Casts> castsMap = new ConcurrentHashMap<>();
-        private static final Casts empty = new Casts(false);
+        private static final Casts empty = new Casts();
 
         protected final CastBuilder casts;
         private final boolean declaresNoCasts;
 
-        private Casts(boolean noCasts) {
+        private Casts() {
             casts = new CastBuilder();
-            this.declaresNoCasts = noCasts;
-        }
-
-        private Casts(Class<? extends NodeWithArgumentCasts> cls, boolean noCasts) {
-            castsMap.put(cls, this);
-            casts = new CastBuilder(cls.getAnnotation(RBuiltin.class));
-            this.declaresNoCasts = noCasts;
+            this.declaresNoCasts = false;
         }
 
         public Casts(Class<? extends NodeWithArgumentCasts> cls) {
-            this(cls, false);
+            castsMap.put(cls, this);
+            casts = new CastBuilder(cls.getAnnotation(RBuiltin.class));
+            this.declaresNoCasts = false;
+        }
+
+        private Casts(Class<? extends NodeWithArgumentCasts> cls, boolean declaresNoCasts) {
+            casts = new CastBuilder(cls.getAnnotation(RBuiltin.class));
+            this.declaresNoCasts = declaresNoCasts;
         }
 
         public static void noCasts(Class<? extends NodeWithArgumentCasts> cls) {

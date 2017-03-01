@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -38,8 +38,8 @@ public class TestBuiltin_factor extends TestBase {
 
         assertEval(Output.IgnoreErrorContext, "{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-NULL; as.character(x) }");
         assertEval(Output.IgnoreErrorContext, "{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-character(); as.character(x) }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-c(1,2,3); class(x)<-\"factor\"; x }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-c(\"1\",\"2\",\"3\"); class(x)<-\"factor\"; x }");
+        assertEval("{ x<-c(1,2,3); class(x)<-\"factor\"; x }");
+        assertEval("{ x<-c(\"1\",\"2\",\"3\"); class(x)<-\"factor\"; x }");
         assertEval(Output.IgnoreErrorContext, "{ x<-c(1L,2L,3L); class(x)<-\"factor\"; x }");
 
         assertEval(Output.IgnoreErrorContext, "{ x<-factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(7L, 42L); x  }");
@@ -62,8 +62,8 @@ public class TestBuiltin_factor extends TestBase {
 
         assertEval("{ x<-c(1L, 2L, 1L); class(x)<-c(\"ordered\", \"factor\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
 
-        assertEval(Output.IgnoreWarningContext, "{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-list(1); y[1]<-x; y }");
-        assertEval(Output.IgnoreWarningContext, "{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[1]<-x; y }");
+        assertEval("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-list(1); y[1]<-x; y }");
+        assertEval("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[1]<-x; y }");
         assertEval("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-list(1); y[[1]]<-x; y }");
         assertEval("{ x<-factor(c(\"c\", \"b\", \"a\", \"c\")); y<-c(1); y[[1]]<-x; y }");
 

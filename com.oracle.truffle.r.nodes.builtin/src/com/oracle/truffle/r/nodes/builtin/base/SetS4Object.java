@@ -47,9 +47,9 @@ public abstract class SetS4Object extends RBuiltinNode {
     static {
         Casts casts = new Casts(SetS4Object.class);
         casts.arg("object").asAttributable(true, true, true);
-        casts.arg("flag").asLogicalVector().mustBe(singleElement(), RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "flag").findFirst().map(toBoolean());
+        casts.arg("flag").asLogicalVector().mustBe(singleElement(), RError.Message.INVALID_ARGUMENT, "flag").findFirst().map(toBoolean());
         // "complete" can be a vector, unlike "flag"
-        casts.arg("complete").asIntegerVector().findFirst(RError.SHOW_CALLER, RError.Message.INVALID_ARGUMENT, "complete");
+        casts.arg("complete").asIntegerVector().findFirst(RError.Message.INVALID_ARGUMENT, "complete");
     }
 
     @Specialization
@@ -61,7 +61,7 @@ public abstract class SetS4Object extends RBuiltinNode {
             boolean wasS4 = RContext.getInstance().isNullS4Object();
             RContext.getInstance().setNullS4Object(false);
             if (wasS4) {
-                throw RError.error(this, RError.Message.GENERIC, "object of class \"NULL\" does not correspond to a valid S3 object");
+                throw error(RError.Message.GENERIC, "object of class \"NULL\" does not correspond to a valid S3 object");
             }
         }
         return object;

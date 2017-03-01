@@ -62,19 +62,19 @@ public class PrintFunctions {
             Casts casts = new Casts(PrintDefault.class);
             casts.arg("digits").allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(Format.R_MIN_DIGITS_OPT).and(lte(Format.R_MAX_DIGITS_OPT)));
 
-            casts.arg("quote").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("quote").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
 
             casts.arg("na.print").defaultError(RError.Message.INVALID_NA_PRINT_SPEC).allowNull().mustBe(stringValue()).asStringVector().findFirst();
 
             casts.arg("print.gap").defaultError(RError.Message.GAP_MUST_BE_NON_NEGATIVE).allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(0));
 
-            casts.arg("right").defaultError(RError.Message.INVALID_ARGUMENT, "right").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("right").defaultError(RError.Message.INVALID_ARGUMENT, "right").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
 
             casts.arg("max").allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(0));
 
-            casts.arg("useSource").defaultError(RError.Message.INVALID_ARGUMENT, "useSource").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("useSource").defaultError(RError.Message.INVALID_ARGUMENT, "useSource").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
 
-            casts.arg("noOpt").defaultError(RError.Message.GENERIC, "invalid 'tryS4' internal argument").asLogicalVector().findFirst().notNA().map(toBoolean());
+            casts.arg("noOpt").defaultError(RError.Message.GENERIC, "invalid 'tryS4' internal argument").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @Specialization(guards = "!isS4(o)")

@@ -72,12 +72,12 @@ public class MethodsListDispatch {
                     Function<Object, Integer> vecLenFn) {
         //@formatter:off
         casts.arg(argNum, argName).
-            defaultError(RError.NO_CALLER, RError.Message.SINGLE_STRING_WRONG_TYPE, msg, clsHierFn).
+            defaultError(RError.Message.SINGLE_STRING_WRONG_TYPE, msg, clsHierFn).
             mustBe(stringValue()).
             asStringVector().
-            mustBe(singleElement(), RError.NO_CALLER, RError.Message.SINGLE_STRING_TOO_LONG, msg, vecLenFn).
+            mustBe(singleElement(),  RError.Message.SINGLE_STRING_TOO_LONG, msg, vecLenFn).
             findFirst().
-            mustBe(nonEmpty ? lengthGt(0) : lengthGte(0), RError.NO_CALLER, RError.Message.NON_EMPTY_STRING, msg);
+            mustBe(nonEmpty ? lengthGt(0) : lengthGte(0),  RError.Message.NON_EMPTY_STRING, msg);
         //@formatter:on
     }
 
@@ -130,8 +130,7 @@ public class MethodsListDispatch {
         static {
             Casts casts = new Casts(R_getClassFromCache.class);
             casts.arg(0, "klass").defaultError(RError.Message.GENERIC, "class should be either a character-string name or a class definition").mustBe(stringValue().or(instanceOf(RS4Object.class)));
-
-            casts.arg(1, "table").mustNotBeNull(RError.NO_CALLER, RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
+            casts.arg(1, "table").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
         }
 
         protected GetFixedAttributeNode createPckgAttrAccess() {
@@ -146,7 +145,7 @@ public class MethodsListDispatch {
             String klassString = klass.getLength() == 0 ? RRuntime.STRING_NA : klass.getDataAt(0);
 
             if (klassString.length() == 0) {
-                throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
+                throw error(RError.Message.ZERO_LENGTH_VARIABLE);
             }
 
             Object value = table.get(klassString);
@@ -240,7 +239,7 @@ public class MethodsListDispatch {
                 String internalName = RRuntime.asString(initAccessSlotNode().executeAccess(op, "internal"));
                 opx = RContext.lookupBuiltin(internalName);
                 if (opx == null) {
-                    throw RError.error(this, RError.Message.GENERIC, "'internal' slot does not name an internal function: " + internalName);
+                    throw error(RError.Message.GENERIC, "'internal' slot does not name an internal function: " + internalName);
                 }
             }
 
@@ -248,7 +247,7 @@ public class MethodsListDispatch {
             return fnameString;
         }
 
-        private static void setPrimitiveMethodsInternal(Object op, String codeVec, RTypedValue fundef, Object mlist) {
+        private void setPrimitiveMethodsInternal(Object op, String codeVec, RTypedValue fundef, Object mlist) {
             MethodCode code;
             if (codeVec.charAt(0) == 'c') {
                 code = MethodCode.NO_METHODS;
@@ -259,10 +258,10 @@ public class MethodsListDispatch {
             } else if (codeVec.startsWith("su")) {
                 code = MethodCode.SUPPRESSED;
             } else {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.INVALID_PRIM_METHOD_CODE, codeVec);
+                throw error(RError.Message.INVALID_PRIM_METHOD_CODE, codeVec);
             }
             if (!(op instanceof RFunction) || !((RFunction) op).isBuiltin()) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, "invalid object: must be a primitive function");
+                throw error(RError.Message.GENERIC, "invalid object: must be a primitive function");
             }
             int primMethodIndex = ((RFunction) op).getRBuiltin().getPrimMethodIndex();
             assert primMethodIndex != PrimitiveMethodsInfo.INVALID_INDEX;
@@ -280,7 +279,7 @@ public class MethodsListDispatch {
                     primMethodsInfo.setPrimMethodList(primMethodIndex, null);
                 } else if (fundef != RNull.instance && value == null) {
                     if (!(fundef instanceof RFunction)) {
-                        throw RError.error(RError.SHOW_CALLER, RError.Message.PRIM_GENERIC_NOT_FUNCTION, fundef.getRType().getName());
+                        throw error(RError.Message.PRIM_GENERIC_NOT_FUNCTION, fundef.getRType().getName());
                     }
                     primMethodsInfo.setPrimGeneric(primMethodIndex, (RFunction) fundef);
                 }
@@ -340,9 +339,9 @@ public class MethodsListDispatch {
             if (value == RNull.instance) {
                 if (mustFind) {
                     if (env == RContext.getInstance().stateREnvironment.getGlobalEnv()) {
-                        throw RError.error(RError.NO_CALLER, RError.Message.NO_GENERIC_FUN, name);
+                        throw error(RError.Message.NO_GENERIC_FUN, name);
                     } else {
-                        throw RError.error(RError.NO_CALLER, RError.Message.NO_GENERIC_FUN_IN_ENV, name);
+                        throw error(RError.Message.NO_GENERIC_FUN_IN_ENV, name);
                     }
                 }
             }
@@ -408,11 +407,11 @@ public class MethodsListDispatch {
                 }
                 String s = vec.getDataAt(0);
                 if (nonEmpty && s.length() == 0) {
-                    throw RError.error(node, RError.Message.NON_EMPTY_STRING, what);
+                    throw node.error(RError.Message.NON_EMPTY_STRING, what);
                 }
                 return s;
             } else {
-                throw RError.error(node, RError.Message.SINGLE_STRING_WRONG_TYPE, what, classHierarchyNode.executeString(o));
+                throw node.error(RError.Message.SINGLE_STRING_WRONG_TYPE, what, classHierarchyNode.executeString(o));
             }
         }
 
@@ -453,7 +452,7 @@ public class MethodsListDispatch {
 
             RFunction op = (RFunction) readDotNextMethod.execute(null, ev.getFrame());
             if (op == null) {
-                throw RError.error(this, RError.Message.GENERIC, "internal error in 'callNextMethod': '.nextMethod' was not assigned in the frame of the method call");
+                throw error(RError.Message.GENERIC, "internal error in 'callNextMethod': '.nextMethod' was not assigned in the frame of the method call");
             }
             boolean primCase = op.isBuiltin();
             if (primCase) {

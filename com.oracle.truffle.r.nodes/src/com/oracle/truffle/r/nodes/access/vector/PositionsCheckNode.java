@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
@@ -124,18 +125,19 @@ final class PositionsCheckNode extends Node {
     }
 
     private RError dimensionsError() {
+        CompilerDirectives.transferToInterpreter();
         if (replace) {
             if (mode.isSubset()) {
                 if (getDimensions() == 2) {
-                    return RError.error(this, RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
+                    throw RError.error(this, RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
                 } else {
-                    return RError.error(this, RError.Message.INCORRECT_SUBSCRIPTS);
+                    throw RError.error(this, RError.Message.INCORRECT_SUBSCRIPTS);
                 }
             } else {
-                return RError.error(this, RError.Message.IMPROPER_SUBSCRIPT);
+                throw RError.error(this, RError.Message.IMPROPER_SUBSCRIPT);
             }
         } else {
-            return RError.error(this, RError.Message.INCORRECT_DIMENSIONS);
+            throw RError.error(this, RError.Message.INCORRECT_DIMENSIONS);
         }
     }
 

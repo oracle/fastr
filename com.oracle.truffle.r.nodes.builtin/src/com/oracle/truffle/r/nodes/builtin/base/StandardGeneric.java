@@ -67,12 +67,8 @@ public abstract class StandardGeneric extends RBuiltinNode {
     @Child private CollectGenericArgumentsNode collectArgumentsNode;
     @Child private DispatchGeneric dispatchGeneric = DispatchGenericNodeGen.create();
 
-    @Child private CastNode castIntScalar;
-    @Child private CastNode castStringScalar;
-    {
-        castIntScalar = newCastBuilder().asIntegerVector().findFirst(RRuntime.INT_NA).buildCastNode();
-        castStringScalar = newCastBuilder().asStringVector().findFirst(RRuntime.STRING_NA).buildCastNode();
-    }
+    @Child private CastNode castIntScalar = newCastBuilder().asIntegerVector().findFirst(RRuntime.INT_NA).buildCastNode();
+    @Child private CastNode castStringScalar = newCastBuilder().asStringVector().findFirst(RRuntime.STRING_NA).buildCastNode();
 
     private final BranchProfile noGenFunFound = BranchProfile.create();
     private final ConditionProfile sameNamesProfile = ConditionProfile.createBinaryProfile();
@@ -82,7 +78,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
         casts.arg("f").defaultError(RError.Message.GENERIC, "argument to 'standardGeneric' must be a non-empty character string").mustBe(
                         stringValue()).asStringVector().findFirst().mustBe(lengthGt(0));
         Function<Object, Object> argClass = ClassHierarchyScalarNode::get;
-        casts.arg("fdef").defaultError(RError.SHOW_CALLER, RError.Message.EXPECTED_GENERIC, argClass).allowMissing().asAttributable(true, true, true).mustBe(instanceOf(RFunction.class));
+        casts.arg("fdef").defaultError(RError.Message.EXPECTED_GENERIC, argClass).allowMissing().asAttributable(true, true, true).mustBe(instanceOf(RFunction.class));
     }
 
     private Object stdGenericInternal(VirtualFrame frame, String fname, RFunction fdef) {
@@ -99,7 +95,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
         RList sigArgs = (RList) readSigARgs.execute(null, fnFrame);
         int sigLength = (int) castIntScalar.execute(readSigLength.execute(null, fnFrame));
         if (sigLength > sigArgs.getLength()) {
-            throw RError.error(this, RError.Message.GENERIC, "'.SigArgs' is shorter than '.SigLength' says it should be");
+            throw error(RError.Message.GENERIC, "'.SigArgs' is shorter than '.SigLength' says it should be");
         }
         if (collectArgumentsNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -173,6 +169,6 @@ public abstract class StandardGeneric extends RBuiltinNode {
                 return fnObj;
             }
         }
-        throw RError.error(this, RError.Message.STD_GENERIC_WRONG_CALL, fname);
+        throw error(RError.Message.STD_GENERIC_WRONG_CALL, fname);
     }
 }

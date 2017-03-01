@@ -154,7 +154,7 @@ public class BitwiseFunctions {
         @Fallback
         @SuppressWarnings("unused")
         protected Object differentTypes(Object a, Object b) {
-            throw RError.error(this, RError.Message.SAME_TYPE, "a", "b");
+            throw error(RError.Message.SAME_TYPE, "a", "b");
         }
     }
 
@@ -175,7 +175,7 @@ public class BitwiseFunctions {
         @Fallback
         @SuppressWarnings("unused")
         protected Object differentTypes(Object a, Object b) {
-            throw RError.error(this, RError.Message.SAME_TYPE, "a", "b");
+            throw error(RError.Message.SAME_TYPE, "a", "b");
         }
     }
 
@@ -196,7 +196,7 @@ public class BitwiseFunctions {
         @Fallback
         @SuppressWarnings("unused")
         protected Object differentTypes(Object a, Object b) {
-            throw RError.error(this, RError.Message.SAME_TYPE, "a", "b");
+            throw error(RError.Message.SAME_TYPE, "a", "b");
         }
     }
 
@@ -232,9 +232,9 @@ public class BitwiseFunctions {
 
         static {
             Casts casts = new Casts(BitwiseShiftL.class);
-            casts.arg("a").defaultError(RError.ROOTNODE, RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.SHIFTL.name).mustBe(
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.SHIFTL.name).mustBe(
                             doubleValue().or(integerValue())).asIntegerVector();
-            casts.arg("n").allowNull().mapIf(stringValue(), chain(asStringVector()).with(shouldBe(anyValue().not(), RError.SHOW_CALLER, RError.Message.NA_INTRODUCED_COERCION)).end(),
+            casts.arg("n").allowNull().mapIf(stringValue(), chain(asStringVector()).with(shouldBe(anyValue().not(), RError.Message.NA_INTRODUCED_COERCION)).end(),
                             asIntegerVector());
         }
 

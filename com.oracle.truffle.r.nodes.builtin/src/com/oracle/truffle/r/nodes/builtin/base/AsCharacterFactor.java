@@ -42,12 +42,13 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "asCharacterFactor", kind = INTERNAL, parameterNames = "x", behavior = PURE)
 public abstract class AsCharacterFactor extends RBuiltinNode {
-    private final NACheck naCheck = NACheck.create();
     private static final RStringVector CLASS_FACTOR_VEC = RDataFactory.createStringVectorFromScalar(RRuntime.CLASS_FACTOR);
 
-    @Child InheritsNode inheritsNode = InheritsNodeGen.create();
-    @Child CastToVectorNode castToVectorNode = CastToVectorNode.create();
+    @Child private InheritsNode inheritsNode = InheritsNodeGen.create();
+    @Child private CastToVectorNode castToVectorNode = CastToVectorNode.create();
     @Child private GetFixedAttributeNode getLevelsAttrNode = GetFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
+
+    private final NACheck naCheck = NACheck.create();
 
     static {
         Casts.noCasts(AsCharacterFactor.class);
@@ -57,7 +58,7 @@ public abstract class AsCharacterFactor extends RBuiltinNode {
     protected RStringVector doAsCharacterFactor(Object x) {
         byte isFactor = (byte) inheritsNode.execute(x, CLASS_FACTOR_VEC, false);
         if (isFactor == RRuntime.LOGICAL_FALSE) {
-            throw RError.error(RError.SHOW_CALLER, RError.Message.COERCE_NON_FACTOR);
+            throw error(RError.Message.COERCE_NON_FACTOR);
         }
         RIntVector xVec = (RIntVector) x;
         int n = xVec.getLength();
@@ -65,7 +66,7 @@ public abstract class AsCharacterFactor extends RBuiltinNode {
         Object levsAttr = getLevelsAttrNode.execute(xVec);
         Object levs;
         if (levsAttr == null || !((levs = castToVectorNode.execute(levsAttr)) instanceof RAbstractStringVector)) {
-            throw RError.error(RError.SHOW_CALLER, RError.Message.MALFORMED_FACTOR);
+            throw error(RError.Message.MALFORMED_FACTOR);
         }
         RAbstractStringVector levsString = (RAbstractStringVector) levs;
         int nl = levsString.getLength();
@@ -77,7 +78,7 @@ public abstract class AsCharacterFactor extends RBuiltinNode {
             } else if (xi >= 1 && xi <= nl) {
                 data[i] = levsString.getDataAt(xi - 1);
             } else {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.MALFORMED_FACTOR);
+                throw error(RError.Message.MALFORMED_FACTOR);
             }
         }
         return RDataFactory.createStringVector(data, naCheck.neverSeenNA());

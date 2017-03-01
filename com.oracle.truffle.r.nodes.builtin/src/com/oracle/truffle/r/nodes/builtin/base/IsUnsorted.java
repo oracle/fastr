@@ -56,7 +56,7 @@ public abstract class IsUnsorted extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(IsUnsorted.class);
-        casts.arg("strictly").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).notNA().map(toBoolean());
+        casts.arg("strictly").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).mustNotBeNA().map(toBoolean());
     }
 
     @Specialization

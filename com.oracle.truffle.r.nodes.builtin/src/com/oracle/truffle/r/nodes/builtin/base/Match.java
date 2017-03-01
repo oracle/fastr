@@ -43,7 +43,6 @@ import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.nodes.helpers.RFactorNodes;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -156,7 +155,7 @@ public abstract class Match extends RBuiltinNode {
     @Fallback
     @SuppressWarnings("unused")
     protected RIntVector match(Object x, Object table, Object nomatch, Object incomparables) {
-        throw RError.error(this, MATCH_VECTOR_ARGS);
+        throw error(MATCH_VECTOR_ARGS);
     }
 
     protected abstract static class MatchInternalNode extends Node {

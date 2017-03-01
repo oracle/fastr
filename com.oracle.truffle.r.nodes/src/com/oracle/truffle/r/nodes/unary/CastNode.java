@@ -25,9 +25,9 @@ package com.oracle.truffle.r.nodes.unary;
 import java.util.Arrays;
 import java.util.function.Function;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Cast nodes behave like unary nodes, but in many cases it is useful to have a specific type for
@@ -54,30 +54,9 @@ public abstract class CastNode extends UnaryNode {
         lastWarning = null;
     }
 
-    @TruffleBoundary
-    protected static void handleArgumentError(Object arg, RBaseNode callObj, RError.Message message, Object[] messageArgs) {
-        if (isTesting) {
-            throw new IllegalArgumentException(String.format(message.message, substituteArgPlaceholder(arg, messageArgs)));
-        } else {
-            throw RError.error(callObj, message, substituteArgPlaceholder(arg, messageArgs));
-        }
-    }
-
-    @TruffleBoundary
-    protected static void handleArgumentWarning(Object arg, RBaseNode callObj, RError.Message message, Object[] messageArgs) {
-        if (message == null) {
-            return;
-        }
-
-        if (isTesting) {
-            lastWarning = String.format(message.message, substituteArgPlaceholder(arg, messageArgs));
-        } else {
-            RError.warning(callObj, message, substituteArgPlaceholder(arg, messageArgs));
-        }
-    }
-
     @SuppressWarnings({"unchecked"})
-    public static Object[] substituteArgPlaceholder(Object arg, Object[] messageArgs) {
+    private static Object[] substituteArgs(Object arg, MessageData message) {
+        Object[] messageArgs = message.getMessageArgs();
         Object[] newMsgArgs = Arrays.copyOf(messageArgs, messageArgs.length);
 
         for (int i = 0; i < messageArgs.length; i++) {
@@ -86,7 +65,29 @@ public abstract class CastNode extends UnaryNode {
                 newMsgArgs[i] = ((Function<Object, Object>) msgArg).apply(arg);
             }
         }
-
         return newMsgArgs;
+    }
+
+    protected RuntimeException handleArgumentError(Object arg, MessageData message) {
+        CompilerDirectives.transferToInterpreter();
+        Object[] args = substituteArgs(arg, message);
+        if (isTesting) {
+            throw new IllegalArgumentException(String.format(message.getMessage().message, args));
+        } else {
+            throw RError.error(getErrorContext(), message.getMessage(), args);
+        }
+    }
+
+    protected void handleArgumentWarning(Object arg, MessageData message) {
+        CompilerDirectives.transferToInterpreter();
+        if (message == null) {
+            return;
+        }
+        Object[] args = substituteArgs(arg, message);
+        if (isTesting) {
+            lastWarning = String.format(message.getMessage().message, args);
+        } else {
+            RError.warning(getErrorContext(), message.getMessage(), args);
+        }
     }
 }

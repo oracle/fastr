@@ -58,8 +58,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.AttributableCoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.BoxPrimitiveStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultErrorStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultWarningStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
@@ -238,16 +236,6 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<TypeExpr> implemen
             resType = resType.positiveSamples(step.getReplacement());
         }
         return resType;
-    }
-
-    @Override
-    public TypeExpr visit(DefaultErrorStep<?> step, TypeExpr inputType) {
-        return inputType;
-    }
-
-    @Override
-    public TypeExpr visit(DefaultWarningStep<?> step, TypeExpr inputType) {
-        return inputType;
     }
 
     @Override

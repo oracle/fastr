@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -205,10 +205,10 @@ public class TestBuiltin_rep extends TestBase {
         assertEval("{ rep(7, times=NULL) }");
         assertEval("{ rep(7, times=\"7\") }");
         assertEval("{ rep(7, length.out=\"7\") }");
-        assertEval(Output.IgnoreWarningContext, "{ rep(7, length.out=integer()) }");
+        assertEval("{ rep(7, length.out=integer()) }");
         assertEval("{ rep(7, length.out=NA) }");
         assertEval("{ rep(7, length.out=NULL) }");
-        assertEval(Output.IgnoreWarningContext, "{ rep(7, length.out=c(7, 42)) }");
+        assertEval("{ rep(7, length.out=c(7, 42)) }");
         assertEval("{ rep(7, each=\"7\") }");
         assertEval("{ rep(7, each=integer()) }");
         assertEval("{ rep(7, each=NA) }");

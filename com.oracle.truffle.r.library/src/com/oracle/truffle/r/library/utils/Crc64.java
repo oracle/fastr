@@ -34,8 +34,7 @@ public abstract class Crc64 extends RExternalBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(Crc64.class);
-        casts.arg(0).mustNotBeNull(RError.NO_CALLER,
-                        RError.Message.INPUT_MUST_BE_STRING).mustBe(stringValue(), RError.NO_CALLER, RError.Message.INPUT_MUST_BE_STRING);
+        casts.arg(0).mustNotBeNull(RError.Message.INPUT_MUST_BE_STRING).mustBe(stringValue(), RError.Message.INPUT_MUST_BE_STRING);
     }
 
     @Specialization

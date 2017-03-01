@@ -27,7 +27,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Defines fluent API methods for building cast pipeline steps for a value that has been taken as a
@@ -91,13 +90,8 @@ public final class HeadPhaseBuilder<T> extends ArgCastBuilder<T, HeadPhaseBuilde
         return new HeadPhaseBuilder<>(pipelineBuilder());
     }
 
-    public <S extends T> HeadPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-        pipelineBuilder().appendMustBeStep(argFilter, callObj, message, messageArgs);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
-    }
-
     public <S extends T> HeadPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
-        pipelineBuilder().appendMustBeStep(argFilter, null, message, messageArgs);
+        pipelineBuilder().appendMustBeStep(argFilter, message, messageArgs);
         return new HeadPhaseBuilder<>(pipelineBuilder());
     }
 
@@ -115,11 +109,6 @@ public final class HeadPhaseBuilder<T> extends ArgCastBuilder<T, HeadPhaseBuilde
         return new HeadPhaseBuilder<>(pipelineBuilder());
     }
 
-    public <S> HeadPhaseBuilder<S> shouldBe(Class<S> cls, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-        shouldBe(Predef.instanceOf(cls), callObj, message, messageArgs);
-        return new HeadPhaseBuilder<>(pipelineBuilder());
-    }
-
     public <S> HeadPhaseBuilder<S> shouldBe(Class<S> cls, RError.Message message, Object... messageArgs) {
         shouldBe(Predef.instanceOf(cls), message, messageArgs);
         return new HeadPhaseBuilder<>(pipelineBuilder());
@@ -130,33 +119,23 @@ public final class HeadPhaseBuilder<T> extends ArgCastBuilder<T, HeadPhaseBuilde
         return new HeadPhaseBuilder<>(pipelineBuilder());
     }
 
-    public HeadPhaseBuilder<T> notNA(RBaseNode callObj, RError.Message message, Object... messageArgs) {
-        pipelineBuilder().appendNotNA(null, callObj, message, messageArgs);
+    public HeadPhaseBuilder<T> mustNotBeNA(RError.Message message, Object... messageArgs) {
+        pipelineBuilder().appendNotNA(null, message, messageArgs);
         return this;
     }
 
-    public HeadPhaseBuilder<T> notNA(RError.Message message, Object... messageArgs) {
-        pipelineBuilder().appendNotNA(null, null, message, messageArgs);
+    public HeadPhaseBuilder<T> shouldNotBeNA(T naReplacement, RError.Message message, Object... messageArgs) {
+        pipelineBuilder().appendNotNA(naReplacement, message, messageArgs);
         return this;
     }
 
-    public HeadPhaseBuilder<T> notNA(T naReplacement, RBaseNode callObj, RError.Message message, Object... messageArgs) {
-        pipelineBuilder().appendNotNA(naReplacement, callObj, message, messageArgs);
+    public HeadPhaseBuilder<T> mustNotBeNA() {
+        pipelineBuilder().appendNotNA(null, null, null);
         return this;
     }
 
-    public HeadPhaseBuilder<T> notNA(T naReplacement, RError.Message message, Object... messageArgs) {
-        pipelineBuilder().appendNotNA(naReplacement, null, message, messageArgs);
-        return this;
-    }
-
-    public HeadPhaseBuilder<T> notNA() {
-        pipelineBuilder().appendNotNA(null, null, null, null);
-        return this;
-    }
-
-    public HeadPhaseBuilder<T> notNA(T naReplacement) {
-        pipelineBuilder().appendNotNA(naReplacement, null, null, null);
+    public HeadPhaseBuilder<T> replaceNA(T naReplacement) {
+        pipelineBuilder().appendNotNA(naReplacement, null, null);
         return this;
     }
 }

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -27,6 +27,6 @@ public class TestBuiltin_bitwiseNot extends TestBase {
         assertEval("{ bitwNot(c(17,24,34,48,51,66,72,99)) }");
         assertEval("{ bitwNot(c(0,100,200,50,70,20)) }");
 
-        assertEval(Output.IgnoreErrorContext, "{ bitwNot(TRUE) }");
+        assertEval("{ bitwNot(TRUE) }");
     }
 }

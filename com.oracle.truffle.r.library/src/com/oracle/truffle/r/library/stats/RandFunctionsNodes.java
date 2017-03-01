@@ -90,7 +90,7 @@ public final class RandFunctionsNodes {
         }
 
         private static void addLengthCast(Casts casts) {
-            casts.arg(0).defaultError(SHOW_CALLER, INVALID_UNNAMED_ARGUMENTS).mustBe(abstractVectorValue()).asVector();
+            casts.arg(0).defaultError(INVALID_UNNAMED_ARGUMENTS).mustBe(abstractVectorValue()).asVector();
         }
     }
 
@@ -99,7 +99,7 @@ public final class RandFunctionsNodes {
      * result vector, and similar. The random function is provided as implementation of
      * {@link RandFunction3_Double}.
      */
-    protected abstract static class RandFunctionExecutorBase extends Node {
+    protected abstract static class RandFunctionExecutorBase extends RBaseNode {
         static final class RandGenerationNodeData {
             final BranchProfile nanResult = BranchProfile.create();
             final BranchProfile nan = BranchProfile.create();
@@ -109,6 +109,11 @@ public final class RandFunctionsNodes {
             public static RandGenerationNodeData create() {
                 return new RandGenerationNodeData();
             }
+        }
+
+        @Override
+        protected RBaseNode getErrorContext() {
+            return RError.SHOW_CALLER;
         }
 
         public abstract Object execute(RAbstractVector length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider rand);
@@ -149,8 +154,8 @@ public final class RandFunctionsNodes {
             RRNG.putRNGState();
         }
 
-        static void showNAWarning() {
-            RError.warning(SHOW_CALLER, RError.Message.NA_PRODUCED);
+        void showNAWarning() {
+            warning(RError.Message.NA_PRODUCED);
         }
     }
 
@@ -262,9 +267,9 @@ public final class RandFunctionsNodes {
         static {
             Casts casts = new Casts(RandFunction3Node.class);
             ConvertToLength.addLengthCast(casts);
-            casts.arg(1).mustBe(nullValue().not(), RError.SHOW_CALLER, RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "a").asDoubleVector();
-            casts.arg(2).mustBe(nullValue().not(), RError.SHOW_CALLER, RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "b").asDoubleVector();
-            casts.arg(3).mustBe(nullValue().not(), RError.SHOW_CALLER, RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "c").asDoubleVector();
+            casts.arg(1).mustBe(nullValue().not(), RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "a").asDoubleVector();
+            casts.arg(2).mustBe(nullValue().not(), RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "b").asDoubleVector();
+            casts.arg(3).mustBe(nullValue().not(), RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "c").asDoubleVector();
         }
 
         @Specialization
@@ -292,8 +297,8 @@ public final class RandFunctionsNodes {
         static {
             Casts casts = new Casts(RandFunction2Node.class);
             ConvertToLength.addLengthCast(casts);
-            casts.arg(1).mustBe(nullValue().not(), RError.SHOW_CALLER, RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "a").asDoubleVector();
-            casts.arg(2).mustBe(nullValue().not(), RError.SHOW_CALLER, RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "b").asDoubleVector();
+            casts.arg(1).mustBe(nullValue().not(), RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "a").asDoubleVector();
+            casts.arg(2).mustBe(nullValue().not(), RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "b").asDoubleVector();
         }
 
         @Specialization
@@ -321,7 +326,7 @@ public final class RandFunctionsNodes {
         static {
             Casts casts = new Casts(RandFunction1Node.class);
             ConvertToLength.addLengthCast(casts);
-            casts.arg(1).mustBe(nullValue().not(), RError.SHOW_CALLER, RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "a").asDoubleVector();
+            casts.arg(1).mustBe(nullValue().not(), RError.Message.INVALID_UNNAMED_ARGUMENTS).mustBe(missingValue().not(), RError.Message.ARGUMENT_MISSING, "a").asDoubleVector();
         }
 
         @Specialization

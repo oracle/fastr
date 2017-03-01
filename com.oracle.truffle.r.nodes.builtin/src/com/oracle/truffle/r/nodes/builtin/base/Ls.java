@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARGUMENT;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -40,7 +39,7 @@ public abstract class Ls extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Ls.class);
-        casts.arg("envir").mustBe(REnvironment.class, NO_CALLER, INVALID_ARGUMENT, "envir");
+        casts.arg("envir").mustBe(REnvironment.class, INVALID_ARGUMENT, "envir");
         casts.arg("all.names").asLogicalVector().findFirst().map(toBoolean());
         casts.arg("sorted").asLogicalVector().findFirst().map(toBoolean());
     }

@@ -51,7 +51,7 @@ public class TestRandGenerationFunctions extends TestBase {
         assertEval("length(runif(c('a', 'b', 'b', 'd')))");
         assertEval("length(runif('3'))");
         // wrong size argument
-        assertEval(Output.IgnoreWarningContext, "runif('hello')");
+        assertEval("runif('hello')");
         // empty parameters
         assertEval("runif(2, numeric(), 2)");
         assertEval("runif(2, 2, numeric())");
@@ -92,7 +92,7 @@ public class TestRandGenerationFunctions extends TestBase {
         assertEval("set.seed(12); rmultinom('5', 3.1, c(2, 5, 10))");
         // test args validation
         assertEval("rmultinom(1, 1, -0.15)");
-        assertEval(Output.IgnoreErrorContext, Output.IgnoreErrorMessage, "rmultinom('string', 1, 0.15)");
+        assertEval("rmultinom('string', 1, 0.15)");
         assertEval("rmultinom(1, NA, 0.2)");
         assertEval("rmultinom(NA, 1, 0.2)");
     }

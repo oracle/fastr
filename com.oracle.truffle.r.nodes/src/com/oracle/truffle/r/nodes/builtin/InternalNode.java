@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -209,6 +210,11 @@ public abstract class InternalNode extends OperatorNode {
             if (varArgIndex != ArgumentsSignature.NO_VARARG) {
                 assert casts.length <= varArgIndex || casts[varArgIndex] == null : "no casts on '...' arguments to .Internals";
             }
+        }
+
+        @Override
+        protected RBaseNode getErrorContext() {
+            return builtin.getErrorContext();
         }
 
         protected abstract Object[] prepareArgs(VirtualFrame frame);

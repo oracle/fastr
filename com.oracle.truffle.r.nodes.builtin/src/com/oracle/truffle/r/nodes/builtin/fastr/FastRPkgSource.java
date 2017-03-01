@@ -73,7 +73,7 @@ public abstract class FastRPkgSource extends RBuiltinNode {
     static {
         Casts casts = new Casts(FastRPkgSource.class);
         casts.arg("pkgs").allowNull().mustBe(stringValue());
-        casts.arg("verbose").asLogicalVector().findFirst().notNA().map(toBoolean());
+        casts.arg("verbose").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
     }
 
     @Specialization
@@ -136,22 +136,22 @@ public abstract class FastRPkgSource extends RBuiltinNode {
         try {
             StdConnections.getStdout().writeString(msg, nl);
         } catch (IOException ex) {
-            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+            throw error(RError.Message.GENERIC, ex.getMessage());
         }
     }
 
     @TruffleBoundary
     private void notFound(String pkg) {
-        RError.warning(this, RError.Message.GENERIC, String.format("namespace '%s' not found - ignoring", pkg));
+        warning(RError.Message.GENERIC, String.format("namespace '%s' not found - ignoring", pkg));
     }
 
     @TruffleBoundary
     private void noDeparse(String pkg, String fname) {
-        RError.warning(this, RError.Message.GENERIC, String.format("function '%s::%s' failed to deparse - ignoring", pkg, fname));
+        warning(RError.Message.GENERIC, String.format("function '%s::%s' failed to deparse - ignoring", pkg, fname));
     }
 
     @TruffleBoundary
-    private static void saveSource(String pkg, String fname, String deparseResult) {
+    private void saveSource(String pkg, String fname, String deparseResult) {
         RSerialize.setSaveDeparse(false);
         try {
             Path target = targetPath(pkg, fname);
@@ -159,7 +159,7 @@ public abstract class FastRPkgSource extends RBuiltinNode {
                 wr.write(deparseResult);
             }
         } catch (IOException ex) {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, ex.getMessage());
+            throw error(RError.Message.GENERIC, ex.getMessage());
         }
     }
 

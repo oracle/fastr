@@ -158,7 +158,7 @@ public class TestSimpleLists extends TestBase {
         assertEval("a<- NULL; a <- `$<-`(a, \"a\", 1); dput(a)");
         assertEval("a<- NULL; a <- `[[<-`(a, \"a\", 1); dput(a)");
         assertEval("a<- NULL; a <- `[[<-`(a, 1, 1); dput(a)");
-        assertEval("a<- NULL; a <- `$<-`(a, 1, 1); dput(a)");
+        // FastR produces a better error context
+        assertEval(Output.IgnoreErrorContext, "a<- NULL; a <- `$<-`(a, 1, 1); dput(a)");
     }
-
 }

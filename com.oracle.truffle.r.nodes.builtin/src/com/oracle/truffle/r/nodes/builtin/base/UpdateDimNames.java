@@ -121,6 +121,6 @@ public abstract class UpdateDimNames extends RBuiltinNode {
     @Specialization(guards = "!isRList(c)")
     protected RAbstractContainer updateDimnamesError(@SuppressWarnings("unused") RAbstractContainer container, @SuppressWarnings("unused") Object c) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, RError.Message.DIMNAMES_LIST);
+        throw error(RError.Message.DIMNAMES_LIST);
     }
 }

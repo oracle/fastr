@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.primitive;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -234,8 +233,7 @@ public final class BinaryMapNode extends RBaseNode {
     private Object applyVectorized(RAbstractVector left, RAbstractVector leftCast, int leftLength, RAbstractVector right, RAbstractVector rightCast, int rightLength) {
         if (mayContainMetadata && (dimensionsProfile.profile(hasLeftDimNode.execute(left) && hasRightDimNode.execute(right)))) {
             if (differentDimensions(left, right)) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, RError.Message.NON_CONFORMABLE_ARRAYS);
+                throw error(RError.Message.NON_CONFORMABLE_ARRAYS);
             }
         }
 

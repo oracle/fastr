@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -61,17 +60,13 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     public abstract Object executeReduce(Object value, boolean naRm, boolean finite);
 
     @Child private MultiElemStringHandlerNode stringHandler;
-
-    private final BinaryArithmeticFactory factory;
-
     @Child private BinaryArithmetic arithmetic;
 
+    private final BinaryArithmeticFactory factory;
     protected final ReduceSemantics semantics;
 
     private final NACheck na = NACheck.create();
-
     private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile warningProfile = BranchProfile.create();
 
     protected UnaryArithmeticReduceNode(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.factory = factory;
@@ -89,15 +84,13 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     private void emptyWarning() {
         if (semantics.getEmptyWarning() != null) {
-            warningProfile.enter();
-            RError.warning(this, semantics.emptyWarning);
+            warning(semantics.emptyWarning);
         }
     }
 
     private void naResultWarning() {
         if (semantics.getNAResultWarning() != null) {
-            warningProfile.enter();
-            RError.warning(this, semantics.getNAResultWarning());
+            warning(semantics.getNAResultWarning());
         }
     }
 
@@ -180,8 +173,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
                 return na.check(operand) ? RRuntime.createComplexNA() : operand;
             }
         } else {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "complex");
+            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "complex");
         }
     }
 
@@ -202,16 +194,14 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
                 return na.check(operand) ? RRuntime.STRING_NA : operand;
             }
         } else {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected RRaw doString(RRaw operand, boolean naRm, boolean finite) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "raw");
+        throw error(RError.Message.INVALID_TYPE_ARGUMENT, "raw");
     }
 
     @Specialization
@@ -372,8 +362,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
             }
             return result;
         } else {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "complex");
+            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "complex");
 
         }
     }
@@ -390,8 +379,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
             }
             return semantics.getStringStart();
         } else {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(invokingNode, RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw invokingNode.error(RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -413,8 +401,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
             }
             return result;
         } else {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -423,16 +410,14 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         if (semantics.supportString) {
             return handleString(operand, naRm, finite, 0);
         } else {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected RRaw doString(RRawVector operand, boolean naRm, boolean finite) {
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "raw");
+        throw error(RError.Message.INVALID_TYPE_ARGUMENT, "raw");
     }
 
     public static final class ReduceSemantics {

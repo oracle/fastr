@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.unary.CastComplexNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
@@ -46,15 +45,21 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.builtin.RBuiltinBaseNode;
 
 @TypeSystemReference(RTypes.class)
-public abstract class RExternalBuiltinNode extends RBaseNode implements NodeWithArgumentCasts {
+public abstract class RExternalBuiltinNode extends RBuiltinBaseNode implements NodeWithArgumentCasts {
 
     public Object call(@SuppressWarnings("unused") VirtualFrame frame, RArgsValuesAndNames args) {
         return call(args);
     }
 
     protected abstract Object call(RArgsValuesAndNames args);
+
+    @Override
+    protected RBaseNode getErrorContext() {
+        return RError.NO_CALLER;
+    }
 
     // TODO: these should be in the build nodes
     @Child private CastLogicalNode castLogical;
@@ -63,8 +68,6 @@ public abstract class RExternalBuiltinNode extends RBaseNode implements NodeWith
     @Child private CastComplexNode castComplex;
     @Child private CastToVectorNode castVector;
     @Children private final CastNode[] argumentCasts;
-
-    protected final BranchProfile errorProfile = BranchProfile.create();
 
     public RExternalBuiltinNode() {
         this.argumentCasts = getCasts();
@@ -123,6 +126,7 @@ public abstract class RExternalBuiltinNode extends RBaseNode implements NodeWith
             if (name.endsWith("NodeGen")) {
                 name = name.substring(0, name.length() - 7);
             }
+            // this error always shows the .Call itself
             throw RError.error(this, Message.INCORRECT_NOF_ARGS, args.getLength(), expectedLength, name.toLowerCase());
         }
     }

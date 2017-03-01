@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import static com.oracle.truffle.r.runtime.RError.Message.MUST_BE_NONNULL_STRING;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -34,7 +33,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
@@ -63,8 +61,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "attr<-", kind = PRIMITIVE, parameterNames = {"x", "which", "value"}, behavior = PURE)
 public abstract class UpdateAttr extends RBuiltinNode {
-
-    private final BranchProfile errorProfile = BranchProfile.create();
 
     @Child private UpdateNames updateNames;
     @Child private UpdateDimNames updateDimNames;
@@ -100,7 +96,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
         // Note: cannot check 'attributability' easily because atomic values, e.g int, are not
         // RAttributable.
         casts.arg("x"); // disallows null
-        casts.arg("which").defaultError(SHOW_CALLER, MUST_BE_NONNULL_STRING, "name").mustBe(stringValue()).asStringVector().findFirst();
+        casts.arg("which").defaultError(MUST_BE_NONNULL_STRING, "name").mustBe(stringValue()).asStringVector().findFirst();
     }
 
     private RAbstractContainer updateNames(RAbstractContainer container, Object o) {
@@ -178,7 +174,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
         } else if (value instanceof String) {
             return RDataFactory.createStringVector((String) value);
         } else {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.SET_INVALID_CLASS_ATTR);
+            throw RError.error(RError.SHOW_CALLER, RError.Message.SET_INVALID_CLASS_ATTR);
         }
     }
 
@@ -191,8 +187,7 @@ public abstract class UpdateAttr extends RBuiltinNode {
         if (internedName == RRuntime.DIM_ATTR_KEY) {
             RAbstractIntVector dimsVector = castInteger(castVector(value));
             if (dimsVector.getLength() == 0) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.LENGTH_ZERO_DIM_INVALID);
+                throw error(RError.Message.LENGTH_ZERO_DIM_INVALID);
             }
             if (setDimNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();

@@ -55,8 +55,6 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.AttributableCoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.BoxPrimitiveStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultErrorStep;
-import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.DefaultWarningStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
@@ -165,20 +163,6 @@ public class SamplesCollector extends ExecutionPathVisitor<Consumer<Object>>
         previous.accept(RRuntime.LOGICAL_NA);
         previous.accept(RDataFactory.createComplex(RRuntime.COMPLEX_NA_REAL_PART, 0));
 
-        return s -> {
-            previous.accept(s);
-        };
-    }
-
-    @Override
-    public Consumer<Object> visit(DefaultErrorStep<?> step, Consumer<Object> previous) {
-        return s -> {
-            previous.accept(s);
-        };
-    }
-
-    @Override
-    public Consumer<Object> visit(DefaultWarningStep<?> step, Consumer<Object> previous) {
         return s -> {
             previous.accept(s);
         };

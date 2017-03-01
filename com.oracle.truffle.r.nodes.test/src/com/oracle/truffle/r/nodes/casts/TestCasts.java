@@ -370,7 +370,7 @@ public class TestCasts extends TestBase {
 
             protected Root(String name) {
                 super(name, setupAndGetCast(b -> b.arg(0).mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustBe(lengthLte(1)).map(
-                                charAt0(RRuntime.INT_NA)).notNA(100000)));
+                                charAt0(RRuntime.INT_NA)).replaceNA(100000)));
             }
 
             @Override

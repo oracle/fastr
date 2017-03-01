@@ -41,8 +41,8 @@ public abstract class Utf8ToInt extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Utf8ToInt.class);
-        casts.arg(0, "x").defaultError(RError.SHOW_CALLER, RError.Message.ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE, "x").mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(size(1),
-                        RError.SHOW_CALLER, RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE).findFirst();
+        casts.arg(0, "x").defaultError(RError.Message.ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE, "x").mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(size(1),
+                        RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE).findFirst();
     }
 
     @Specialization

@@ -52,7 +52,7 @@ public class DebugFunctions {
             // GnuR does not generate an error for builtins, but debug (obviously) has no effect
             if (!fun.isBuiltin()) {
                 if (!DebugHandling.enableDebug(fun, text, condition, once, false)) {
-                    throw RError.error(this, RError.Message.GENERIC, "failed to attach debug handler (not instrumented?)");
+                    throw error(RError.Message.GENERIC, "failed to attach debug handler (not instrumented?)");
                 }
             }
         }
@@ -100,7 +100,7 @@ public class DebugFunctions {
         @TruffleBoundary
         protected RNull undebug(RFunction func) {
             if (!DebugHandling.undebug(func)) {
-                throw RError.error(this, RError.Message.NOT_DEBUGGED);
+                throw error(RError.Message.NOT_DEBUGGED);
             }
             return RNull.instance;
         }

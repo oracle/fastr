@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
@@ -51,8 +50,6 @@ public class ReadVariadicComponentNode extends RSourceSectionNode implements RSy
     private final int index;
     private final String name;
 
-    private final BranchProfile errorBranch = BranchProfile.create();
-
     public ReadVariadicComponentNode(SourceSection src, int index) {
         super(src);
         this.index = index;
@@ -65,17 +62,14 @@ public class ReadVariadicComponentNode extends RSourceSectionNode implements RSy
 
         Object args = lookup.execute(frame);
         if (args == null) {
-            errorBranch.enter();
-            throw RError.error(this, RError.Message.NO_DOT_DOT, index + 1);
+            throw error(RError.Message.NO_DOT_DOT, index + 1);
         }
         RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) args;
         if (argsValuesAndNames.isEmpty()) {
-            errorBranch.enter();
-            throw RError.error(this, RError.Message.NO_LIST_FOR_CDR);
+            throw error(RError.Message.NO_LIST_FOR_CDR);
         }
         if (argsValuesAndNames.getLength() <= index) {
-            errorBranch.enter();
-            throw RError.error(this, RError.Message.DOT_DOT_SHORT, index + 1);
+            throw error(RError.Message.DOT_DOT_SHORT, index + 1);
         }
         Object ret = argsValuesAndNames.getArgument(index);
         return ret == null ? RMissing.instance : promiseHelper.checkEvaluate(frame, ret);

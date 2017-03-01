@@ -66,8 +66,7 @@ public abstract class Download extends RExternalBuiltinNode.Arg5 {
             }
             return 0;
         } catch (IOException e) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.GENERIC, e.getMessage());
+            throw error(RError.Message.GENERIC, e.getMessage());
         }
     }
 }

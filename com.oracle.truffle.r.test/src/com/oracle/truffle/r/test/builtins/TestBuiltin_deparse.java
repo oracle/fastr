@@ -225,7 +225,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse40() {
-        assertEval(Output.IgnoreWarningContext, "argv <- list(logical(0), logical(0), FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(logical(0), logical(0), FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test

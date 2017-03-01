@@ -103,7 +103,7 @@ public abstract class AccessField extends RBuiltinNode {
     protected Object access(VirtualFrame frame, Object container, String field) {
         if (!invalidAtomicVector.profile(container instanceof RAbstractListVector) && container instanceof RAbstractVector) {
             error.enter();
-            throw RError.error(this, RError.Message.DOLLAR_ATOMIC_VECTORS);
+            throw error(RError.Message.DOLLAR_ATOMIC_VECTORS);
         }
         return extract.applyAccessField(frame, container, field);
     }

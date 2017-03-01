@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public abstract class ShortRowNames extends RBuiltinNode {
 
     private final BranchProfile naValueMet = BranchProfile.create();
-    private final BranchProfile errorProfile = BranchProfile.create();
     private final ValueProfile operandTypeProfile = ValueProfile.createClassProfile();
 
     @Child private GetRowNamesAttributeNode getRowNamesNode = GetRowNamesAttributeNode.create();
@@ -98,8 +97,7 @@ public abstract class ShortRowNames extends RBuiltinNode {
         } else if (rowNames instanceof RAbstractContainer) {
             return ((RAbstractContainer) rowNames).getLength();
         } else {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "type");
+            throw error(RError.Message.INVALID_ARGUMENT, "type");
         }
     }
 }

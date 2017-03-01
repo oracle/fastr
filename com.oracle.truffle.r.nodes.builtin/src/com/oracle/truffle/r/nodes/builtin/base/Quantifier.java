@@ -62,8 +62,9 @@ public abstract class Quantifier extends RBuiltinNode {
         private final ValueProfile profile = ValueProfile.createClassProfile();
         @Child private CastNode next;
 
-        ProfileCastNode(CastNode next) {
-            this.next = next;
+        ProfileCastNode() {
+            this.next = newCastBuilder().allowNull().shouldBe(integerValue().or(logicalValue()).or(instanceOf(RAbstractVector.class).and(size(0))),
+                            RError.Message.COERCING_ARGUMENT, typeName(), "logical").asLogicalVector().buildCastNode();
         }
 
         @Override
@@ -84,12 +85,7 @@ public abstract class Quantifier extends RBuiltinNode {
     }
 
     private void createArgCast(int index) {
-        // @formatter:off
-        argCastNodes[index] = insert(new ProfileCastNode(newCastBuilder().allowNull().
-            shouldBe(integerValue().or(logicalValue()).or(instanceOf(RAbstractVector.class).and(size(0))),
-                    RError.Message.COERCING_ARGUMENT, typeName(), "logical").
-            asLogicalVector().buildCastNode()));
-        // @formatter:on
+        argCastNodes[index] = insert(new ProfileCastNode());
     }
 
     protected boolean emptyVectorResult() {

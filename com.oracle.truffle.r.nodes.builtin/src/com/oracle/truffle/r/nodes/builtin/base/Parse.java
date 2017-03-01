@@ -104,7 +104,7 @@ public abstract class Parse extends RBuiltinNode {
         Casts casts = new Casts(Parse.class);
         // Note: string is captured by the R wrapper and transformed to a file, other types not
         casts.arg("conn").defaultError(MUST_BE_STRING_OR_CONNECTION, "file").mustNotBeNull().asIntegerVector().findFirst();
-        casts.arg("n").asIntegerVector().findFirst(RRuntime.INT_NA).notNA(-1);
+        casts.arg("n").asIntegerVector().findFirst(RRuntime.INT_NA).replaceNA(-1);
         casts.arg("text").asStringVector();
         casts.arg("prompt").asStringVector().findFirst("?");
         casts.arg("encoding").mustBe(stringValue()).asStringVector().findFirst();
@@ -121,7 +121,7 @@ public abstract class Parse extends RBuiltinNode {
         try (RConnection openConn = connection.forceOpen("r")) {
             lines = openConn.readLines(0, false, false);
         } catch (IOException ex) {
-            throw RError.error(this, RError.Message.PARSE_ERROR);
+            throw error(RError.Message.PARSE_ERROR);
         }
         return doParse(connection, n, lines, prompt, srcFile, encoding);
     }
@@ -154,7 +154,7 @@ public abstract class Parse extends RBuiltinNode {
             }
             return exprs;
         } catch (ParseException ex) {
-            throw RError.error(this, RError.Message.PARSE_ERROR);
+            throw error(RError.Message.PARSE_ERROR);
         }
     }
 

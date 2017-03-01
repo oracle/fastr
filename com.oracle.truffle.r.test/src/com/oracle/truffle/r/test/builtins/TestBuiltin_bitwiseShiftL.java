@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -32,9 +32,7 @@ public class TestBuiltin_bitwiseShiftL extends TestBase {
         assertEval("{ bitwShiftL(TRUE, c(TRUE, FALSE)) }");
 
         assertEval("{ bitwShiftL(c(3+3i), c(3,2,4)) }");
-        // Warning message mismatch
-        assertEval(Output.IgnoreWarningContext, "{ bitwShiftL(c(3,2,4), c(3+3i)) }");
-        // No warning message printed for NAs produced by coercion
+        assertEval("{ bitwShiftL(c(3,2,4), c(3+3i)) }");
         assertEval("{ bitwShiftL(c(1,2,3,4), c(\"a\")) }");
     }
 }

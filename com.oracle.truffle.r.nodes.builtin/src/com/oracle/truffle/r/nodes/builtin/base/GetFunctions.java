@@ -79,7 +79,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  */
 public class GetFunctions {
     public abstract static class Adapter extends RBuiltinNode {
-        private final BranchProfile unknownObjectErrorProfile = BranchProfile.create();
         protected final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
         protected final BranchProfile recursiveProfile = BranchProfile.create();
         @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
@@ -88,11 +87,11 @@ public class GetFunctions {
         @CompilationFinal private boolean firstExecution = true;
 
         protected void unknownObject(String x, RType modeType, String modeString) throws RError {
-            unknownObjectErrorProfile.enter();
+            CompilerDirectives.transferToInterpreter();
             if (modeType == RType.Any) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.UNKNOWN_OBJECT, x);
+                throw error(RError.Message.UNKNOWN_OBJECT, x);
             } else {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.UNKNOWN_OBJECT_MODE, x, modeType == null ? modeString : modeType.getName());
+                throw error(RError.Message.UNKNOWN_OBJECT_MODE, x, modeType == null ? modeString : modeType.getName());
             }
         }
 
@@ -299,11 +298,11 @@ public class GetFunctions {
             State state = new State(xv, mode, ifNotFound);
             if (!(state.modeLength == 1 || state.modeLength == state.svLength)) {
                 wrongLengthErrorProfile.enter();
-                throw RError.error(this, RError.Message.WRONG_LENGTH_ARG, "mode");
+                throw error(RError.Message.WRONG_LENGTH_ARG, "mode");
             }
             if (!(state.ifNotFoundLength == 1 || state.ifNotFoundLength == state.svLength)) {
                 wrongLengthErrorProfile.enter();
-                throw RError.error(this, RError.Message.WRONG_LENGTH_ARG, "ifnotfound");
+                throw error(RError.Message.WRONG_LENGTH_ARG, "ifnotfound");
             }
             return state;
         }

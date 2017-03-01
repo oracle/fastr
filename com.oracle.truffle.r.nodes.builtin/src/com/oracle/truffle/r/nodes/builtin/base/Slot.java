@@ -61,7 +61,7 @@ public abstract class Slot extends RBuiltinNode {
             }
         }
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(this, RError.Message.GENERIC, "invalid type or length for slot name");
+        throw error(RError.Message.GENERIC, "invalid type or length for slot name");
     }
 
     @Specialization

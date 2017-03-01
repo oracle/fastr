@@ -78,7 +78,7 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDat
                 RDataFactory.addListener(this);
                 RDataFactory.setTracingState(true);
             } catch (IOException ex) {
-                throw RError.error(this, RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filename));
+                throw error(RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filename));
             }
         }
         return RNull.instance;

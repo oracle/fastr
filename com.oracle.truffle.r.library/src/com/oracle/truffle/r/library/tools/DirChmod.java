@@ -77,6 +77,6 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
     @SuppressWarnings("unused")
     @Fallback
     protected Object fallback(Object dir, Object gws) {
-        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "dir");
+        throw error(RError.Message.INVALID_ARGUMENT, "dir");
     }
 }
