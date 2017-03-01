@@ -153,7 +153,7 @@ public abstract class ConnectionFunctions {
         }
 
         private static HeadPhaseBuilder<String> descriptionInternal(InitialPhaseBuilder<Object> casts) {
-	    return casts.mustBe(stringValue()).asStringVector().shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").findFirst().mustNotBeNA();
+            return casts.mustBe(stringValue()).asStringVector().shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").findFirst().mustNotBeNA();
         }
 
         private static HeadPhaseBuilder<String> open(Casts casts) {
@@ -262,7 +262,7 @@ public abstract class ConnectionFunctions {
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);
             } catch (IllegalCharsetNameException ex) {
                 throw error(RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
-            } 
+            }
         }
     }
 
@@ -361,19 +361,8 @@ public abstract class ConnectionFunctions {
         }
 
         @Specialization
-<<<<<<< c511704667d1698f267ee975789ef5071f992da9
-        @TruffleBoundary
-        protected RAbstractIntVector textConnection(String description, RNull text, String open, REnvironment env, int encoding) {
-            if (open.length() == 0 || open.equals("r")) {
-                throw error(RError.Message.INVALID_ARGUMENT, "text");
-            } else {
-                throw RError.nyi(RError.SHOW_CALLER, "textConnection: NULL");
-            }
-=======
-        protected RAbstractIntVector textConnection(String description, @SuppressWarnings("unused") RNull text, String open,
-                        REnvironment env, int encoding) {
-            return this.textConnection(description, (RAbstractStringVector) null, open, env, encoding);
->>>>>>> Implemented support for anonymous text connections.
+        protected RAbstractIntVector textConnection(String description, @SuppressWarnings("unused") RNull text, String open, REnvironment env, int encoding) {
+            return textConnection(description, (RAbstractStringVector) null, open, env, encoding);
         }
     }
 
