@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,8 +39,10 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 /**
@@ -445,13 +447,26 @@ public class RPromise implements RTypedValue {
 
         private final RBaseNode expr;
         private final String symbol;
+        private final String stringConstant;
 
         private Closure(RBaseNode expr) {
             this.expr = expr;
             if (expr.asRSyntaxNode() instanceof RSyntaxLookup) {
-                this.symbol = ((RSyntaxLookup) expr.asRSyntaxNode()).getIdentifier();
+                this.symbol = ((RSyntaxLookup) expr.asRSyntaxNode()).getIdentifier().intern();
             } else {
                 this.symbol = null;
+            }
+            if (expr.asRSyntaxNode() instanceof RSyntaxConstant) {
+                Object constant = ((RSyntaxConstant) expr.asRSyntaxNode()).getValue();
+                if (constant instanceof String) {
+                    this.stringConstant = (String) constant;
+                } else if (constant instanceof RAbstractStringVector && ((RAbstractStringVector) constant).getLength() == 1) {
+                    this.stringConstant = ((RAbstractStringVector) constant).getDataAt(0);
+                } else {
+                    this.stringConstant = null;
+                }
+            } else {
+                this.stringConstant = null;
             }
         }
 
@@ -490,6 +505,10 @@ public class RPromise implements RTypedValue {
 
         public String asSymbol() {
             return symbol;
+        }
+
+        public String asStringConstant() {
+            return stringConstant;
         }
     }
 

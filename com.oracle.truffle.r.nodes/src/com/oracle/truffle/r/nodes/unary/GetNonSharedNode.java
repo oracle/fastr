@@ -27,8 +27,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -36,7 +34,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class GetNonSharedNode extends Node {
 
-    public static final class GetNonSharedSyntaxNode extends RNode implements RSyntaxNode {
+    public static final class GetNonSharedSyntaxNode extends RNode {
 
         @Child private RNode delegate;
         @Child private GetNonSharedNode nonShared = GetNonSharedNodeGen.create();
@@ -53,21 +51,6 @@ public abstract class GetNonSharedNode extends Node {
         @Override
         protected RSyntaxNode getRSyntaxNode() {
             return delegate.asRSyntaxNode();
-        }
-
-        @Override
-        public void setSourceSection(SourceSection sourceSection) {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public SourceSection getLazySourceSection() {
-            return RSyntaxNode.INTERNAL;
-        }
-
-        @Override
-        public SourceSection getSourceSection() {
-            return RSyntaxNode.INTERNAL;
         }
     }
 

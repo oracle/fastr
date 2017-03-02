@@ -15,7 +15,6 @@ package com.oracle.truffle.r.nodes.access;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -31,6 +30,8 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 // Transcribed from src/main/attrib.c file (R_do_slot_assign function)
 
 public abstract class UpdateSlotNode extends RBaseNode {
+
+    private static final String SET_DATA_PART = "setDataPart";
 
     public abstract Object executeUpdate(Object object, String name, Object value);
 
@@ -56,12 +57,9 @@ public abstract class UpdateSlotNode extends RBaseNode {
     protected Object updateSlotS4Data(RAttributable object, @SuppressWarnings("unused") String name, Object value) {
         // TODO: any way to cache it or use a mechanism similar to overrides?
         REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
-        String identifier = "setDataPart";
-        Object f = methodsNamespace.findFunction(identifier);
-        RFunction dataPart = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(identifier, f);
-        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(null, RASTUtils.getOriginalCall(this)), null, object,
-                        prepareValue(value),
-                        RRuntime.LOGICAL_TRUE);
+        Object f = methodsNamespace.findFunction(SET_DATA_PART);
+        RFunction dataPart = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(SET_DATA_PART, f);
+        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.createInvalid(null), null, object, prepareValue(value), RRuntime.LOGICAL_TRUE);
     }
 
     protected boolean isData(String name) {
