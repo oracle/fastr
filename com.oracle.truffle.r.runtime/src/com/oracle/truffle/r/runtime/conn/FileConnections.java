@@ -31,8 +31,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.FileChannel;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetEncoder;
 import java.nio.file.OpenOption;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -344,6 +347,7 @@ public class FileConnections {
     private static class FileReadWriteTextConnection extends DelegateReadWriteRConnection {
 
         private final FileChannel channel;
+        private final CharsetEncoder encoder;
         private long readOffset;
         private long writeOffset;
         private SeekRWMode lastMode = SeekRWMode.READ;
@@ -356,6 +360,7 @@ public class FileConnections {
             opts.add(StandardOpenOption.CREATE);
             opts.add(StandardOpenOption.TRUNCATE_EXISTING);
             channel = FileChannel.open(Paths.get(base.path), opts.toArray(new OpenOption[opts.size()]));
+            encoder = base.getEncoding().newEncoder();
         }
 
         @Override
@@ -363,9 +368,16 @@ public class FileConnections {
             setReadPosition();
             int value = super.getc();
             if (value != -1) {
-                readOffset++;
+                readOffset += getNumBytes(value);
             }
             return value;
+        }
+
+        private long getNumBytes(int value) throws CharacterCodingException {
+            // TODO We need to get the information about how much bytes have been consumed from the
+            // stream decoder. This is really bad!
+            ByteBuffer encode = encoder.encode(CharBuffer.wrap(new char[]{(char) value}));
+            return encode.position();
         }
 
         @Override
@@ -375,10 +387,11 @@ public class FileConnections {
 
         @Override
         public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            long result = channel.position();
+            long result;
+            boolean set = true;
             switch (seekMode) {
                 case ENQUIRE:
-                    return result;
+                    set = false;
                 case START:
                     break;
                 default:
@@ -387,17 +400,31 @@ public class FileConnections {
             switch (seekRWMode) {
                 case LAST:
                     if (lastMode == SeekRWMode.READ) {
-                        readOffset = offset;
+                        result = readOffset;
+                        if (set) {
+                            readOffset = offset;
+                        }
                     } else {
-                        writeOffset = offset;
+                        result = writeOffset;
+                        if (set) {
+                            writeOffset = offset;
+                        }
                     }
                     break;
                 case READ:
-                    readOffset = offset;
+                    result = readOffset;
+                    if (set) {
+                        readOffset = offset;
+                    }
                     break;
                 case WRITE:
-                    writeOffset = offset;
+                    result = writeOffset;
+                    if (set) {
+                        writeOffset = offset;
+                    }
                     break;
+                default:
+                    throw RError.nyi(RError.SHOW_CALLER, "seek mode");
             }
             return result;
         }
@@ -429,6 +456,9 @@ public class FileConnections {
             if (lastMode != SeekRWMode.READ) {
                 channel.position(readOffset);
                 lastMode = SeekRWMode.READ;
+
+                // re-initialize stream decoder if position changed
+                initDecoder(1);
             }
         }
 
@@ -523,10 +553,31 @@ public class FileConnections {
             return super.readLines(n, warn, skipNul);
         }
 
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            setReadPosition();
+            return super.readBin(buffer);
+        }
+
+        @Override
+        public String readChar(int nchars, boolean useBytes) throws IOException {
+            setReadPosition();
+            return super.readChar(nchars, useBytes);
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            setReadPosition();
+            return super.readBinChars();
+        }
+
         private void setReadPosition() throws IOException {
             if (lastMode != SeekRWMode.READ) {
                 raf.seek(readOffset);
                 lastMode = SeekRWMode.READ;
+
+                // re-initialize stream decoder if position changed
+                initDecoder(1);
             }
         }
 
@@ -547,6 +598,24 @@ public class FileConnections {
             setWritePosition();
             super.writeLines(lines, sep, useBytes);
             writeOffset = raf.getFilePointer();
+        }
+
+        @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            setWritePosition();
+            super.writeBin(buffer);
+        }
+
+        @Override
+        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
+            setWritePosition();
+            super.writeChar(s, pad, eos, useBytes);
+        }
+
+        @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            setWritePosition();
+            super.writeString(s, nl);
         }
 
         @Override

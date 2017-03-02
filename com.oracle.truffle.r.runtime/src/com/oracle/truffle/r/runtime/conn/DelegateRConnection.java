@@ -101,7 +101,7 @@ abstract class DelegateRConnection implements RConnection {
         base.setIncomplete(false);
         ArrayList<String> lines = new ArrayList<>();
         int totalRead = 0;
-        byte[] buffer = new byte[64];
+        char[] buffer = new char[64];
         int pushBack = 0;
         boolean nullRead = false;
         while (true) {
@@ -119,7 +119,7 @@ abstract class DelegateRConnection implements RConnection {
                      * GnuR says if non-blocking and in text mode, silently push back incomplete
                      * lines, otherwise keep data and output warning.
                      */
-                    final String incompleteFinalLine = new String(buffer, 0, totalRead, base.getEncoding());
+                    final String incompleteFinalLine = new String(buffer, 0, totalRead);
                     if (!base.isBlocking() && base.isTextMode()) {
                         base.pushBack(RDataFactory.createStringVector(incompleteFinalLine), false);
                         base.setIncomplete(true);
@@ -149,7 +149,7 @@ abstract class DelegateRConnection implements RConnection {
                 }
             }
             if (lineEnd) {
-                lines.add(new String(buffer, 0, totalRead, base.getEncoding()));
+                lines.add(new String(buffer, 0, totalRead));
                 if (n > 0 && lines.size() == n) {
                     break;
                 }
@@ -158,7 +158,7 @@ abstract class DelegateRConnection implements RConnection {
             } else {
                 if (!nullRead) {
                     buffer = DelegateRConnection.checkBuffer(buffer, totalRead);
-                    buffer[totalRead++] = (byte) (ch & 0xFF);
+                    buffer[totalRead++] = (char) (ch & 0xFFFF);
                 }
                 if (skipNul) {
                     nullRead = false;
@@ -368,6 +368,19 @@ abstract class DelegateRConnection implements RConnection {
     /**
      * Enlarges the buffer if necessary.
      */
+    private static char[] checkBuffer(char[] buffer, int n) {
+        if (n > buffer.length - 1) {
+            char[] newBuffer = new char[buffer.length + buffer.length / 2];
+            System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
+            return newBuffer;
+        } else {
+            return buffer;
+        }
+    }
+
+    /**
+     * Enlarges the buffer if necessary.
+     */
     private static byte[] checkBuffer(byte[] buffer, int n) {
         if (n > buffer.length - 1) {
             byte[] newBuffer = new byte[buffer.length + buffer.length / 2];
@@ -412,14 +425,14 @@ abstract class DelegateRConnection implements RConnection {
      */
     protected StreamDecoder getDecoder() throws IOException {
         if (decoder == null) {
-            initDecoder();
+            initDecoder(-1);
         }
         return decoder;
     }
 
-    private void initDecoder() throws IOException {
+    protected void initDecoder(int bufSize) throws IOException {
         CharsetDecoder charsetEncoder = base.getEncoding().newDecoder().onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE);
-        decoder = StreamDecoder.forDecoder(getChannel(), charsetEncoder, -1);
+        decoder = StreamDecoder.forDecoder(getChannel(), charsetEncoder, bufSize);
     }
 
     @Override
