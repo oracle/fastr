@@ -80,8 +80,12 @@ abstract class ReplacementNode extends OperatorNode {
         }
     }
 
-    private static String getTargetTmpName(int tempNamesStartIndex) {
-        return "*tmp*" + tempNamesStartIndex;
+    private static String getTargetTemp(int index) {
+        return "*tmp*" + index;
+    }
+
+    private static String getRHSTemp(int index) {
+        return "*rhs*" + index;
     }
 
     private static boolean hasOnlySpecialCalls(List<RSyntaxCall> calls) {
@@ -133,11 +137,6 @@ abstract class ReplacementNode extends OperatorNode {
         if (syntaxLHS instanceof RSyntaxLookup) {
             RSyntaxLookup lookupLHS = (RSyntaxLookup) syntaxLHS;
             String symbol = lookupLHS.getIdentifier();
-            if ("slot".equals(symbol) || "@".equals(symbol)) {
-                // this is pretty gross, but at this point seems like the only way to get setClass
-                // to work properly
-                argNodes[0] = new GetNonSharedNode.GetNonSharedSyntaxNode(argNodes[0].asRNode());
-            }
             newSyntaxLHS = builder.lookup(lookupLHS.getLazySourceSection(), symbol + "<-", true);
         } else {
             // data types (and lengths) are verified in isNamespaceLookupCall
@@ -171,8 +170,8 @@ abstract class ReplacementNode extends OperatorNode {
             super(source, operator, lhs);
             this.rhs = rhs;
 
-            this.storeRhs = WriteVariableNode.createAnonymous("*rhs*" + tempNamesStartIndex, WriteVariableNode.Mode.INVISIBLE, rhs);
-            this.removeRhs = RemoveAndAnswerNode.create("*rhs*" + tempNamesStartIndex);
+            this.storeRhs = WriteVariableNode.createAnonymous(getRHSTemp(tempNamesStartIndex), WriteVariableNode.Mode.INVISIBLE, rhs);
+            this.removeRhs = RemoveAndAnswerNode.create(getRHSTemp(tempNamesStartIndex));
         }
 
         @Override
@@ -243,7 +242,7 @@ abstract class ReplacementNode extends OperatorNode {
                 extractFunc = createSpecialFunctionQuery(calls.get(i), extractFunc.asRSyntaxNode(), codeBuilderContext);
                 ((RCallSpecialNode) extractFunc).setPropagateFullCallNeededException();
             }
-            this.replaceCall = (RCallSpecialNode) createFunctionUpdate(source, extractFunc.asRSyntaxNode(), ReadVariableNode.create("*rhs*" + tempNamesStartIndex), calls.get(0), codeBuilderContext);
+            this.replaceCall = (RCallSpecialNode) createFunctionUpdate(source, extractFunc.asRSyntaxNode(), ReadVariableNode.create(getRHSTemp(tempNamesStartIndex)), calls.get(0), codeBuilderContext);
             this.replaceCall.setPropagateFullCallNeededException();
         }
 
@@ -341,10 +340,9 @@ abstract class ReplacementNode extends OperatorNode {
      */
     private static final class GenericReplacementNode extends ReplacementWithRhsNode {
 
-        @Child private WriteVariableNode targetTmpWrite;
         @Child private RemoveAndAnswerNode targetTmpRemove;
 
-        @Children private final RNode[] updates;
+        @Children private final WriteVariableNode[] updates;
 
         GenericReplacementNode(SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls, String targetVarName, boolean isSuper,
                         int tempNamesStartIndex) {
@@ -353,8 +351,11 @@ abstract class ReplacementNode extends OperatorNode {
              * When there are more than two function calls in LHS, then we save some function calls
              * by saving the intermediate results into temporary variables and reusing them.
              */
-            List<RNode> instructions = new ArrayList<>();
+            List<WriteVariableNode> instructions = new ArrayList<>();
             CodeBuilderContext codeBuilderContext = new CodeBuilderContext(tempNamesStartIndex + calls.size() + 1);
+
+            int targetIndex = tempNamesStartIndex;
+            instructions.add(WriteVariableNode.createAnonymous(getTargetTemp(targetIndex), WriteVariableNode.Mode.INVISIBLE, wrapForSlotUpdate(target, calls.get(calls.size() - 1))));
             /*
              * Create the calls that extract inner components - only needed for complex replacements
              * like "a(b(x)) <- z" (where we would extract "b(x)"). The extracted values are saved
@@ -362,35 +363,49 @@ abstract class ReplacementNode extends OperatorNode {
              * + calls.size()-1), the first such temporary variable holds the "target" of the
              * replacement, 'x' in our example (the assignment from 'x' is not done in this loop).
              */
-            for (int i = calls.size() - 1, tmpIndex = 0; i >= 1; i--, tmpIndex++) {
-                ReadVariableNode newFirstArg = ReadVariableNode.create("*tmp*" + (tempNamesStartIndex + tmpIndex));
-                RNode update = createSpecialFunctionQuery(calls.get(i), newFirstArg, codeBuilderContext);
-                instructions.add(WriteVariableNode.createAnonymous("*tmp*" + (tempNamesStartIndex + tmpIndex + 1), WriteVariableNode.Mode.INVISIBLE, update));
+            for (int i = calls.size() - 1; i >= 1; i--) {
+                ReadVariableNode newFirstArg = ReadVariableNode.create(getTargetTemp(targetIndex));
+                RNode extract = createSpecialFunctionQuery(calls.get(i), newFirstArg, codeBuilderContext);
+                instructions.add(WriteVariableNode.createAnonymous(getTargetTemp(++targetIndex), WriteVariableNode.Mode.INVISIBLE, wrapForSlotUpdate(extract, calls.get(i - 1))));
             }
             /*
              * Create the update calls, for "a(b(x)) <- z", this would be `a<-` and `b<-`, the
-             * intermediate results are stored to temporary variables *tmpr*{index}.
+             * intermediate results are stored to temporary variables *rhs*{index}.
              */
+            int replacementIndex = tempNamesStartIndex;
             for (int i = 0; i < calls.size(); i++) {
-                int tmpIndex = tempNamesStartIndex + calls.size() - i - 1;
-                String tmprName = i == 0 ? ("*rhs*" + tempNamesStartIndex) : ("*tmpr*" + (tempNamesStartIndex + i - 1));
-                RNode update = createFunctionUpdate(source, ReadVariableNode.create("*tmp*" + tmpIndex), ReadVariableNode.create(tmprName), calls.get(i), codeBuilderContext);
+                RNode update = createFunctionUpdate(source, ReadVariableNode.create(getTargetTemp(targetIndex--)), ReadVariableNode.create(getRHSTemp(replacementIndex)), calls.get(i),
+                                codeBuilderContext);
                 if (i < calls.size() - 1) {
-                    instructions.add(WriteVariableNode.createAnonymous("*tmpr*" + (tempNamesStartIndex + i), WriteVariableNode.Mode.INVISIBLE, update));
+                    instructions.add(WriteVariableNode.createAnonymous(getRHSTemp(++replacementIndex), WriteVariableNode.Mode.INVISIBLE, update));
                 } else {
                     instructions.add(WriteVariableNode.createAnonymous(targetVarName, WriteVariableNode.Mode.REGULAR, update, isSuper));
                 }
             }
 
-            this.updates = instructions.toArray(new RNode[instructions.size()]);
-            this.targetTmpWrite = WriteVariableNode.createAnonymous(getTargetTmpName(tempNamesStartIndex), WriteVariableNode.Mode.INVISIBLE, target);
-            this.targetTmpRemove = RemoveAndAnswerNode.create(getTargetTmpName(tempNamesStartIndex));
+            this.updates = instructions.toArray(new WriteVariableNode[instructions.size()]);
+            this.targetTmpRemove = RemoveAndAnswerNode.create(getTargetTemp(tempNamesStartIndex));
+        }
+
+        /*
+         * This is complicated, but at this point seems like the only way to get setClass to work
+         * properly. the underlying problem is that slot<- and @<- modify shared values, whereas,
+         * e.g., [[<- does not.
+         */
+        private static RNode wrapForSlotUpdate(RNode target, RSyntaxCall call) {
+            RSyntaxElement syntaxLHS = call.getSyntaxLHS();
+            if (syntaxLHS instanceof RSyntaxLookup) {
+                String symbol = ((RSyntaxLookup) syntaxLHS).getIdentifier();
+                if ("slot".equals(symbol) || "@".equals(symbol)) {
+                    return new GetNonSharedNode.GetNonSharedSyntaxNode(target);
+                }
+            }
+            return target;
         }
 
         @Override
         @ExplodeLoop
         protected void executeReplacement(VirtualFrame frame) {
-            targetTmpWrite.execute(frame);
             for (RNode update : updates) {
                 update.execute(frame);
             }

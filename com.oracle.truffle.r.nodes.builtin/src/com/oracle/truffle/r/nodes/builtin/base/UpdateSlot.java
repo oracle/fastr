@@ -22,14 +22,12 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
-import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -38,105 +36,91 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = "@<-", kind = PRIMITIVE, parameterNames = {"", "", "value"}, nonEvalArgs = 1, behavior = COMPLEX)
 public abstract class UpdateSlot extends RBuiltinNode {
 
-    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("cl", "name", "valueClass");
-
-    @CompilationFinal private RFunction checkSlotAssignFunction;
-    @Child private ClassHierarchyNode objClassHierarchy;
-    @Child private ClassHierarchyNode valClassHierarchy;
     @Child private UpdateSlotNode updateSlotNode = com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen.create();
-    @Child private ReadVariableNode checkAtAssignmentFind = ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, "checkAtAssignment");
-    @Child private CallRFunctionNode checkAtAssignmentCall;
-    private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
 
     static {
         Casts casts = new Casts(UpdateSlot.class);
         casts.arg(0).asAttributable(true, true, true);
     }
 
-    protected String getName(Object nameObj) {
-        assert nameObj instanceof RPromise;
-        Object rep = ((RPromise) nameObj).getRep();
-        if (rep instanceof WrapArgumentNode) {
-            rep = ((WrapArgumentNode) rep).getOperand();
-        }
-        if (rep instanceof ConstantNode) {
-            Object val = ((ConstantNode) rep).getValue();
-            if (val instanceof String) {
-                return (String) val;
-            }
-            if (val instanceof RSymbol) {
-                return ((RSymbol) val).getName();
-            }
-        } else if (rep instanceof ReadVariableNode) {
-            return ((ReadVariableNode) rep).getIdentifier();
-        } else if (rep instanceof RCallNode) {
-            throw error(RError.Message.SLOT_INVALID_TYPE, "language");
-        }
-        // TODO: this is not quite correct, but I wonder if we even reach here (can also be
-        // augmented on demand)
-        throw error(RError.Message.SLOT_INVALID_TYPE, nameObj.getClass().toString());
-    }
-
-    private void checkSlotAssign(VirtualFrame frame, Object object, String name, Object value) {
-        // TODO: optimize using a mechanism similar to overrides?
-        if (checkSlotAssignFunction == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            checkSlotAssignFunction = (RFunction) checkAtAssignmentFind.execute(frame);
-        }
-        if (checkAtAssignmentCall == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            checkAtAssignmentCall = insert(CallRFunctionNode.create(checkSlotAssignFunction.getTarget()));
-        }
-        if (objClassHierarchy == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            objClassHierarchy = insert(ClassHierarchyNodeGen.create(true, false));
-        }
-        if (valClassHierarchy == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            valClassHierarchy = insert(ClassHierarchyNodeGen.create(true, false));
-        }
-        RStringVector objClass = objClassHierarchy.execute(object);
-        RStringVector valClass = valClassHierarchy.execute(value);
-        RFunction currentFunction = (RFunction) checkAtAssignmentFind.execute(frame);
-        if (cached.profile(currentFunction == checkSlotAssignFunction)) {
-            // TODO: technically, someone could override checkAtAssignment function and access the
-            // caller, but it's rather unlikely
-            checkAtAssignmentCall.execute(frame, checkSlotAssignFunction, RCaller.create(frame, getOriginalCall()), null, new Object[]{objClass, name, valClass}, SIGNATURE,
-                            checkSlotAssignFunction.getEnclosingFrame(), null);
+    protected String getName(RPromise nameObj) {
+        Closure closure = nameObj.getClosure();
+        if (closure.asSymbol() != null) {
+            return closure.asSymbol();
+        } else if (closure.asStringConstant() != null) {
+            return closure.asStringConstant();
         } else {
-            // slow path
-            RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, getOriginalCall()), null, objClass, name, valClass);
+            CompilerDirectives.transferToInterpreter();
+            RSyntaxElement element = closure.getExpr().asRSyntaxNode();
+            assert !(element instanceof RSyntaxLookup);
+            if (element instanceof RSyntaxConstant) {
+                throw error(RError.Message.SLOT_INVALID_TYPE, Predef.typeName().apply(((RSyntaxConstant) element).getValue()));
+            } else {
+                throw error(RError.Message.SLOT_INVALID_TYPE, "language");
+            }
         }
     }
 
-    /*
-     * Motivation for cached version is that in the operator form (foo@bar<-baz), the name is an
-     * interned string which allows us to avoid longer lookup
-     */
-    @Specialization(guards = "sameName(nameObj, nameObjCached)")
-    protected Object updateSlotCached(VirtualFrame frame, Object object, @SuppressWarnings("unused") Object nameObj, Object value, @SuppressWarnings("unused") @Cached("nameObj") Object nameObjCached,
-                    @Cached("getName(nameObjCached)") String name) {
-        checkSlotAssign(frame, object, name, value);
-        return updateSlotNode.executeUpdate(object, name, value);
+    public static final class CheckSlotAssignNode extends RBaseNode {
+
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("cl", "name", "valueClass");
+
+        @CompilationFinal private RFunction checkSlotAssignFunction;
+        @Child private ClassHierarchyNode objClassHierarchy;
+        @Child private ClassHierarchyNode valClassHierarchy;
+        @Child private ReadVariableNode checkAtAssignmentFind = ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, "checkAtAssignment");
+        @Child private CallRFunctionNode checkAtAssignmentCall;
+
+        private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
+
+        public void execute(VirtualFrame frame, Object object, String name, Object value) {
+            if (checkSlotAssignFunction == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                checkSlotAssignFunction = (RFunction) checkAtAssignmentFind.execute(frame);
+            }
+            if (checkAtAssignmentCall == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                checkAtAssignmentCall = insert(CallRFunctionNode.create(checkSlotAssignFunction.getTarget()));
+            }
+            if (objClassHierarchy == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                objClassHierarchy = insert(ClassHierarchyNodeGen.create(true, false));
+            }
+            if (valClassHierarchy == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                valClassHierarchy = insert(ClassHierarchyNodeGen.create(true, false));
+            }
+            RStringVector objClass = objClassHierarchy.execute(object);
+            RStringVector valClass = valClassHierarchy.execute(value);
+            RFunction currentFunction = (RFunction) checkAtAssignmentFind.execute(frame);
+            if (cached.profile(currentFunction == checkSlotAssignFunction)) {
+                // TODO: technically, someone could override checkAtAssignment function and access
+                // the caller, but it's rather unlikely
+                checkAtAssignmentCall.execute(frame, checkSlotAssignFunction, RCaller.createInvalid(frame), null, new Object[]{objClass, name, valClass}, SIGNATURE,
+                                checkSlotAssignFunction.getEnclosingFrame(), null);
+            } else {
+                // slow path
+                RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.createInvalid(frame), null, objClass, name, valClass);
+            }
+        }
     }
 
-    @Specialization(replaces = "updateSlotCached")
-    protected Object updateSlot(VirtualFrame frame, Object object, Object nameObj, Object value) {
+    @Specialization
+    protected Object updateSlot(VirtualFrame frame, Object object, RPromise nameObj, Object value,
+                    @Cached("new()") CheckSlotAssignNode check) {
         String name = getName(nameObj);
-        checkSlotAssign(frame, object, name, value);
+        check.execute(frame, object, name, value);
         return updateSlotNode.executeUpdate(object, name, value);
-    }
-
-    protected boolean sameName(Object nameObj, Object nameObjCached) {
-        assert nameObj instanceof RPromise;
-        assert nameObjCached instanceof RPromise;
-        return ((RPromise) nameObj).getRep() == ((RPromise) nameObjCached).getRep();
     }
 }
