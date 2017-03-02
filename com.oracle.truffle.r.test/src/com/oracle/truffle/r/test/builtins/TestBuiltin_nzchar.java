@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -76,6 +76,7 @@ public class TestBuiltin_nzchar extends TestBase {
     public void keepNATests() {
         assertEval("nzchar(c('asdasd', NA), keepNA=TRUE)");
         assertEval("nzchar(c('asdasd', NA), keepNA=FALSE)");
+        assertEval("nzchar(c('aasd', NA), keepNA=NA)");
     }
 
     @Test

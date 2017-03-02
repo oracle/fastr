@@ -326,7 +326,7 @@ public class MethodsListDispatch {
 
             checkSingleString(casts, 0, "f", "The argument \"f\" to getGeneric", true, clsHierFn, vecLenFn);
 
-            casts.arg(1, "mustFind").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+            casts.arg(1, "mustFind").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
 
             casts.arg(2, "env").mustBe(instanceOf(REnvironment.class));
 

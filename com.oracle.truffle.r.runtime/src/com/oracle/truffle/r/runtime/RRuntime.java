@@ -11,6 +11,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.math.BigInteger;
+
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -39,7 +41,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
-import java.math.BigInteger;
 
 public class RRuntime {
 
@@ -274,6 +275,10 @@ public class RRuntime {
 
     public static boolean fromLogical(byte b) {
         return b == LOGICAL_TRUE;
+    }
+
+    public static boolean fromLogical(byte b, boolean naValue) {
+        return naValue ? b != LOGICAL_FALSE : b == LOGICAL_TRUE;
     }
 
     // conversions from logical

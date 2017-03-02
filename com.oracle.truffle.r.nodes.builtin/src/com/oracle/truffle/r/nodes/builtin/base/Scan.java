@@ -119,9 +119,9 @@ public abstract class Scan extends RBuiltinNode {
 
         casts.arg("na.strings").mustBe(stringValue());
 
-        casts.arg("flush").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+        casts.arg("flush").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
 
-        casts.arg("fill").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+        casts.arg("fill").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
 
         casts.arg("strip.white").mustBe(logicalValue());
 

@@ -178,5 +178,7 @@ public class TestBuiltin_min extends TestBase {
         assertEval("{ min(as.double(NA), na.rm=TRUE) }");
         assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ min(as.integer(NA), na.rm=TRUE) }");
         assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ min(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+
+        assertEval("min(c(1,NA,2), na.rm=NA)");
     }
 }

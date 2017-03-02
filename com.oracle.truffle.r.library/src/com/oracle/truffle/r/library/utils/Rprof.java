@@ -86,11 +86,11 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
     static {
         Casts casts = new Casts(Rprof.class);
         casts.arg(0, "filename").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
-        casts.arg(1, "append_mode").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+        casts.arg(1, "append_mode").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         casts.arg(2, "dinterval").asDoubleVector().findFirst(RRuntime.DOUBLE_NA);
-        casts.arg(3, "mem_profiling").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
-        casts.arg(4, "gc_profiling").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
-        casts.arg(5, "line_profiling").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+        casts.arg(3, "mem_profiling").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg(4, "gc_profiling").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg(5, "line_profiling").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         casts.arg(6, "numfiles").asIntegerVector().findFirst().mustBe(gte(0));
         casts.arg(7, "bufsize").asIntegerVector().findFirst().mustBe(gte(0));
     }
@@ -165,8 +165,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
 
     private static String getPath(RSyntaxElement node) {
         Source source = node.getSourceSection().getSource();
-        String path = RSource.getPath(source);
-        return path;
+        return RSource.getPath(source);
     }
 
     private static final class ProfileThread extends Thread {

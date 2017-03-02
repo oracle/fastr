@@ -105,7 +105,7 @@ public abstract class Combine extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Combine.class);
-        casts.arg("recursive").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+        casts.arg("recursive").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
     }
 
     public abstract Object executeCombine(Object value, Object recursive);

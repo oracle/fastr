@@ -60,7 +60,7 @@ public abstract class Sum extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Sum.class);
-        casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+        casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
     }
 
     @Override

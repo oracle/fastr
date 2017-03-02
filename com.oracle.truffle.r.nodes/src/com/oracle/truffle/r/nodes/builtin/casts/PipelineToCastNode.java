@@ -595,7 +595,7 @@ public final class PipelineToCastNode {
 
         @Override
         public ValuePredicateArgumentMapper<Object, Object> visit(MapByteToBoolean mapper, ValuePredicateArgumentMapper<Object, Object> previous) {
-            return ValuePredicateArgumentMapper.fromLambda(x -> RRuntime.fromLogical((Byte) x));
+            return ValuePredicateArgumentMapper.fromLambda(x -> RRuntime.fromLogical((Byte) x, mapper.naReplacement));
         }
 
         @Override
