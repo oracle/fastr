@@ -111,6 +111,7 @@ public abstract class Bind extends RBaseNode {
     private final ConditionProfile emptyVectorProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile allEmptyVectorProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile nonNullNames = BranchProfile.create();
+    private final ConditionProfile dimNamesInComplete = ConditionProfile.createBinaryProfile();
     private final NACheck naCheck = NACheck.create();
     protected final ValueProfile resultProfile = ValueProfile.createClassProfile();
     protected final ValueProfile vectorProfile = ValueProfile.createClassProfile();
@@ -200,11 +201,11 @@ public abstract class Bind extends RBaseNode {
         }
 
         if (type == BindType.cbind) {
-            return genericCBind(promiseArgs, vectors, resultVec, resultDimensions, bindDims, rowsAndColumnsNotEqual, allEmpty, vecNames, naCheck.neverSeenNA(), deparseLevel, setDimNode,
-                            getDimNamesNode, getNamesNode);
+            return genericCBind(promiseArgs, vectors, resultVec, resultDimensions, bindDims, rowsAndColumnsNotEqual, allEmpty, vecNames, deparseLevel, setDimNode, getDimNamesNode,
+                            getNamesNode);
         } else {
-            return genericRBind(promiseArgs, vectors, resultVec, resultDimensions, bindDims, rowsAndColumnsNotEqual, allEmpty, vecNames, naCheck.neverSeenNA(), deparseLevel, setDimNode,
-                            getDimNamesNode, getNamesNode);
+            return genericRBind(promiseArgs, vectors, resultVec, resultDimensions, bindDims, rowsAndColumnsNotEqual, allEmpty, vecNames, deparseLevel, setDimNode, getDimNamesNode,
+                            getNamesNode);
         }
     }
 
@@ -472,8 +473,8 @@ public abstract class Bind extends RBaseNode {
     }
 
     public RVector<?> genericCBind(RArgsValuesAndNames promiseArgs, RAbstractVector[] vectors, RVector<?> result, int[] resultDimensions, int[] secondDims, boolean rowsAndColumnsNotEqual,
-                    boolean allEmpty, String[] vecNames, boolean vecNamesComplete, int deparseLevel,
-                    SetDimAttributeNode setDimNode, GetDimNamesAttributeNode getDimNamesNode, GetNamesAttributeNode getNamesNode) {
+                    boolean allEmpty, String[] vecNames, int deparseLevel, SetDimAttributeNode setDimNode,
+                    GetDimNamesAttributeNode getDimNamesNode, GetNamesAttributeNode getNamesNode) {
 
         int ind = 0;
         Object rowDimResultNames = RNull.instance;
@@ -516,7 +517,7 @@ public abstract class Bind extends RBaseNode {
                 }
             }
         }
-        Object colDimResultNames = allColDimNamesNull ? RNull.instance : RDataFactory.createStringVector(colDimNamesArray, vecNamesComplete);
+        Object colDimResultNames = allColDimNamesNull ? RNull.instance : RDataFactory.createStringVector(colDimNamesArray, dimResultNamesComplete(colDimNamesArray));
         setDimNode.setDimensions(result, resultDimensions);
         if (needsDimNames.profile(allEmpty || rowDimResultNames != RNull.instance || colDimResultNames != RNull.instance)) {
             setDimNames(result, RDataFactory.createList(new Object[]{rowDimResultNames, colDimResultNames}));
@@ -626,8 +627,8 @@ public abstract class Bind extends RBaseNode {
     }
 
     public RVector<?> genericRBind(RArgsValuesAndNames promiseArgs, RAbstractVector[] vectors, RVector<?> result, int[] resultDimensions, int[] firstDims, boolean rowsAndColumnsNotEqual,
-                    boolean allEmpty, String[] vecNames, boolean vecNamesComplete, int deparseLevel,
-                    SetDimAttributeNode setDimNode, GetDimNamesAttributeNode getDimNamesNode, GetNamesAttributeNode getNamesNode) {
+                    boolean allEmpty, String[] vecNames, int deparseLevel, SetDimAttributeNode setDimNode,
+                    GetDimNamesAttributeNode getDimNamesNode, GetNamesAttributeNode getNamesNode) {
 
         Object colDimResultNames = RNull.instance;
         String[] rowDimNamesArray = new String[resultDimensions[0]];
@@ -676,12 +677,21 @@ public abstract class Bind extends RBaseNode {
             dstRowInd += firstDims[i];
 
         }
-        Object rowDimResultNames = allRowDimNamesNull ? RNull.instance : RDataFactory.createStringVector(rowDimNamesArray, vecNamesComplete);
+        Object rowDimResultNames = allRowDimNamesNull ? RNull.instance : RDataFactory.createStringVector(rowDimNamesArray, dimResultNamesComplete(rowDimNamesArray));
         setDimNode.setDimensions(result, resultDimensions);
         if (needsDimNames.profile(allEmpty || rowDimResultNames != RNull.instance || colDimResultNames != RNull.instance)) {
             setDimNames(result, RDataFactory.createList(new Object[]{rowDimResultNames, colDimResultNames}));
         }
         return result;
+    }
+
+    private boolean dimResultNamesComplete(String[] rowDimNamesArray) {
+        for (String s : rowDimNamesArray) {
+            if (dimNamesInComplete.profile(s == RRuntime.STRING_NA)) {
+                return RDataFactory.INCOMPLETE_VECTOR;
+            }
+        }
+        return RDataFactory.COMPLETE_VECTOR;
     }
 
     private void setDimNames(RVector<?> result, RList dimNames) {
