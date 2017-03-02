@@ -421,4 +421,12 @@ abstract class DelegateRConnection implements RConnection {
         CharsetDecoder charsetEncoder = base.getEncoding().newDecoder().onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE);
         decoder = StreamDecoder.forDecoder(getChannel(), charsetEncoder, -1);
     }
+
+    @Override
+    public void truncate() throws IOException {
+        if (!isSeekable()) {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.TRUNCATE_NOT_ENABLED);
+        }
+        throw RError.nyi(RError.SHOW_CALLER, "truncate");
+    }
 }

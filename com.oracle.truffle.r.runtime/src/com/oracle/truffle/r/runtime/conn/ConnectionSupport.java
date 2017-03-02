@@ -482,6 +482,11 @@ public class ConnectionSupport {
         public ByteChannel getChannel() throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
+
+        @Override
+        public void truncate() throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
     }
 
     /**
@@ -1029,6 +1034,16 @@ public class ConnectionSupport {
             // Do not throw error at this position, since the error messages varies depending on the
             // connection.
             return seekInternal(offset, seekMode, seekRWMode);
+        }
+
+        @Override
+        public void truncate() throws IOException {
+            checkOpen();
+            if (!closed && opened) {
+                theConnection.truncate();
+            } else {
+                throw RError.error(RError.SHOW_CALLER, RError.Message.TRUNCATE_ONLY_OPEN_CONN);
+            }
         }
 
         /**

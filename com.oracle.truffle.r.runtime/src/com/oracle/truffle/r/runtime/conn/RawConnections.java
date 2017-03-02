@@ -192,6 +192,11 @@ public class RawConnections {
         public boolean isSeekable() {
             return true;
         }
+
+        @Override
+        public void truncate() throws IOException {
+            channel.truncate(channel.position());
+        }
     }
 
     private static class RawReadWriteConnection extends DelegateReadWriteRConnection {
@@ -225,6 +230,10 @@ public class RawConnections {
             return true;
         }
 
+        @Override
+        public void truncate() throws IOException {
+            channel.truncate(channel.position());
+        }
     }
 
 }

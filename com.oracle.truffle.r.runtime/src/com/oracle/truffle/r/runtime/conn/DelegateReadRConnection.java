@@ -128,4 +128,9 @@ public abstract class DelegateReadRConnection extends DelegateRConnection {
         close();
     }
 
+    @Override
+    public void truncate() {
+        throw RError.error(RError.SHOW_CALLER, RError.Message.TRUNCATE_ONLY_WRITE_CONNECTION);
+    }
+
 }

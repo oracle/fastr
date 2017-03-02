@@ -266,6 +266,7 @@ public class BasePackage extends RBuiltinPackage {
         add(ConnectionFunctions.ReadChar.class, ConnectionFunctionsFactory.ReadCharNodeGen::create);
         add(ConnectionFunctions.ReadLines.class, ConnectionFunctionsFactory.ReadLinesNodeGen::create);
         add(ConnectionFunctions.Seek.class, ConnectionFunctionsFactory.SeekNodeGen::create);
+        add(ConnectionFunctions.Truncate.class, ConnectionFunctionsFactory.TruncateNodeGen::create);
         add(ConnectionFunctions.SocketConnection.class, ConnectionFunctionsFactory.SocketConnectionNodeGen::create);
         add(ConnectionFunctions.RawConnection.class, ConnectionFunctionsFactory.RawConnectionNodeGen::create);
         add(ConnectionFunctions.RawConnectionValue.class, ConnectionFunctionsFactory.RawConnectionValueNodeGen::create);

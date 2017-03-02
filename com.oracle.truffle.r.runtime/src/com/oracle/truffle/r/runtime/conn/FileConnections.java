@@ -325,8 +325,18 @@ public class FileConnections {
         }
 
         @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            return DelegateRConnection.seek(channel, offset, seekMode, seekRWMode);
+        }
+
+        @Override
         public ByteChannel getChannel() {
             return channel;
+        }
+
+        @Override
+        public void truncate() throws IOException {
+            channel.truncate(0);
         }
 
     }
@@ -350,7 +360,7 @@ public class FileConnections {
 
         @Override
         public int getc() throws IOException {
-            channel.position(readOffset);
+            setReadPosition();
             int value = super.getc();
             if (value != -1) {
                 readOffset++;
@@ -394,7 +404,7 @@ public class FileConnections {
 
         @Override
         public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
-            channel.position(readOffset);
+            setReadPosition();
             return super.readLines(n, warn, skipNul);
         }
 
@@ -405,15 +415,37 @@ public class FileConnections {
 
         @Override
         public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            channel.position(writeOffset);
+            setWritePosition();
             super.writeLines(lines, sep, useBytes);
             writeOffset = channel.position();
-            lastMode = SeekRWMode.WRITE;
         }
 
         @Override
         public ByteChannel getChannel() {
             return channel;
+        }
+
+        private void setReadPosition() throws IOException {
+            if (lastMode != SeekRWMode.READ) {
+                channel.position(readOffset);
+                lastMode = SeekRWMode.READ;
+            }
+        }
+
+        private void setWritePosition() throws IOException {
+            if (lastMode != SeekRWMode.WRITE) {
+                channel.position(writeOffset);
+                lastMode = SeekRWMode.WRITE;
+            }
+        }
+
+        @Override
+        public void truncate() throws IOException {
+            channel.truncate(writeOffset);
+            lastMode = SeekRWMode.WRITE;
+            // GnuR also freshly queries the file pointer. It may happen that the file pointer is
+            // different as expected.
+            writeOffset = channel.position();
         }
 
     }
@@ -443,7 +475,7 @@ public class FileConnections {
 
         @Override
         public int getc() throws IOException {
-            setPosition(readOffset);
+            setReadPosition();
             int value = super.getc();
             if (value != -1) {
                 readOffset++;
@@ -487,13 +519,21 @@ public class FileConnections {
 
         @Override
         public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
-            setPosition(readOffset);
+            setReadPosition();
             return super.readLines(n, warn, skipNul);
         }
 
-        private void setPosition(long pos) throws IOException {
-            if (raf.getFilePointer() != pos) {
-                raf.seek(pos);
+        private void setReadPosition() throws IOException {
+            if (lastMode != SeekRWMode.READ) {
+                raf.seek(readOffset);
+                lastMode = SeekRWMode.READ;
+            }
+        }
+
+        private void setWritePosition() throws IOException {
+            if (lastMode != SeekRWMode.WRITE) {
+                raf.seek(writeOffset);
+                lastMode = SeekRWMode.WRITE;
             }
         }
 
@@ -504,15 +544,23 @@ public class FileConnections {
 
         @Override
         public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            setPosition(writeOffset);
+            setWritePosition();
             super.writeLines(lines, sep, useBytes);
             writeOffset = raf.getFilePointer();
-            lastMode = SeekRWMode.WRITE;
         }
 
         @Override
         public ByteChannel getChannel() {
             return raf.getChannel();
+        }
+
+        @Override
+        public void truncate() throws IOException {
+            raf.setLength(writeOffset);
+            lastMode = SeekRWMode.WRITE;
+            // GnuR also freshly queries the file pointer. It may happen that the file pointer is
+            // different as expected.
+            writeOffset = raf.getFilePointer();
         }
 
     }
@@ -579,6 +627,11 @@ public class FileConnections {
         @Override
         public ByteChannel getChannel() {
             return channel;
+        }
+
+        @Override
+        public void truncate() throws IOException {
+            throw RError.nyi(RError.SHOW_CALLER, "truncating compressed file not");
         }
     }
 

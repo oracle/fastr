@@ -240,6 +240,16 @@ public class TestConnections extends TestRBase {
         assertEval(Output.IgnoreErrorContext, Output.IgnoreWarningContext, "{ fn <- '___fifo_2367253765'; zz <- fifo(fn, 'r', blocking = TRUE); close(zz); unlink(fn) }");
     }
 
+    public void testTruncate() {
+        assertEval("truncate(pipe('ls'))");
+        assertEval("zz <- file(''); writeLines(c('Hello', 'wonderful', 'World'), zz); seek(zz, 0); truncate(zz); flush(zz); readLines(zz)");
+        assertEval("fn <- '__tmp_77253842367367'; zz <- file(fn, 'w'); writeLines(c('Hello', 'wonderful', 'World'), zz); seek(zz, 0); truncate(zz); close(zz); readLines(file(fn)); unlink(fn)");
+        assertEval("fn <- '__tmp_98723669834556'; zz <- file(fn, 'w'); writeLines(c('Hello', 'wonderful', 'World'), zz); close(zz); zz <- file(fn, 'r'); truncate(zz); unlink(fn)");
+        assertEval("zz <- rawConnection(raw(0), 'r+'); writeLines(c('hello', 'world'), zz); rawConnectionValue(zz); seek(zz, 5); truncate(zz); rawConnectionValue(zz); close(zz)");
+        assertEval("truncate(fifo('__fifo_872636743', 'w+')); unlink('__fifo_872636743')");
+        assertEval("truncate(fifo('__fifo_982346798', 'r')); unlink('__fifo_982346798')");
+    }
+
     private static final String[] LVAL = arr("T", "F");
 
     private static String[] arr(String... args) {

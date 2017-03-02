@@ -217,5 +217,10 @@ public interface RConnection extends AutoCloseable {
      */
     boolean isOpen();
 
+    /**
+     * Truncates the connection (if possible).
+     */
+    void truncate() throws IOException;
+
     void pushBack(RAbstractStringVector lines, boolean addNewLine);
 }
