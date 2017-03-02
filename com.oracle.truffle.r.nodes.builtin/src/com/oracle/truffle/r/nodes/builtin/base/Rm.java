@@ -36,13 +36,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -62,14 +60,6 @@ public abstract class Rm extends RBuiltinNode {
         casts.arg("list").mustBe(stringValue(), INVALID_FIRST_ARGUMENT);
         casts.arg("envir").mustNotBeNull(USE_NULL_ENV_DEFUNCT).mustBe(REnvironment.class, INVALID_ARGUMENT, "envir");
         casts.arg("inherits").mustBe(numericValue(), INVALID_ARGUMENT, "inherits").asLogicalVector().findFirst().map(toBoolean());
-    }
-
-    // this specialization is for internal use only
-    // TODO: what internal use? Does it still apply?
-    @Specialization
-    protected Object rm(VirtualFrame frame, String name, @SuppressWarnings("unused") RMissing envir, @SuppressWarnings("unused") boolean inherits) {
-        removeFromFrame(frame, name);
-        return RNull.instance;
     }
 
     @Specialization

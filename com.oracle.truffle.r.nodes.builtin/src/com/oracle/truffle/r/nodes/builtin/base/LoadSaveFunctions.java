@@ -13,7 +13,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
@@ -28,7 +27,6 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -36,7 +34,6 @@ import com.oracle.truffle.r.nodes.builtin.base.SerializeFunctions.Adapter;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -197,14 +194,14 @@ public class LoadSaveFunctions {
             Casts casts = new Casts(SaveToConn.class);
             casts.arg("list").mustBe(stringValue()).asStringVector();
             ConnectionFunctions.CastsHelper.connection(casts);
-            casts.arg("ascii").mustBe(logicalValue(), RError.Message.ASCII_NOT_LOGICAL);
-            casts.arg("version").allowNull().mustBe(integerValue());
+            casts.arg("ascii").mustBe(logicalValue(), RError.Message.ASCII_NOT_LOGICAL).asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("version").allowNull().asIntegerVector().findFirstOrNull();
             casts.arg("environment").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
             casts.arg("eval.promises").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @Specialization
-        protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, int con, byte asciiLogical, @SuppressWarnings("unused") RNull version, REnvironment envir, boolean evalPromises,
+        protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, int con, boolean ascii, @SuppressWarnings("unused") RNull version, REnvironment envir, boolean evalPromises,
                         @Cached("new()") PromiseCheckHelperNode promiseHelper) {
             RPairList prev = null;
             Object toSave = RNull.instance;
@@ -226,7 +223,6 @@ public class LoadSaveFunctions {
                 }
                 prev = pl;
             }
-            boolean ascii = RRuntime.fromLogical(asciiLogical);
             doSaveConn(toSave, RConnection.fromIndex(con), ascii);
             return RNull.instance;
         }
@@ -248,9 +244,9 @@ public class LoadSaveFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Fallback
-        protected Object saveToConn(Object list, Object con, Object ascii, Object version, Object envir, Object evaPromises) {
-            throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        @Specialization
+        protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, int con, boolean ascii, int version, REnvironment envir, boolean evalPromises) {
+            throw error(RError.Message.INVALID_ARG_TYPE, 5); // [TODO] implement "version" support
         }
     }
 }

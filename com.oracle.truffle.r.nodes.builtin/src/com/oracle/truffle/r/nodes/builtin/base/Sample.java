@@ -24,6 +24,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.isFinite;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -43,9 +44,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 @RBuiltin(name = "sample", kind = INTERNAL, parameterNames = {"x", "size", "replace", "prob"}, behavior = MODIFIES_STATE)
@@ -54,13 +55,13 @@ public abstract class Sample extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Sample.class);
-        casts.arg("x").defaultError(INVALID_FIRST_ARGUMENT).allowNull().mustBe(integerValue().or(doubleValue())).mustNotBeNA(VECTOR_SIZE_NA_NAN).mapIf(doubleValue(),
+        casts.arg("x").defaultError(INVALID_FIRST_ARGUMENT).mustBe(integerValue().or(doubleValue())).mustNotBeNA(VECTOR_SIZE_NA_NAN).mapIf(doubleValue(),
                         chain(asDoubleVector()).with(findFirst().doubleElement()).with(mustBe(isFinite(), VECTOR_SIZE_NA_NAN)).with(
                                         mustBe(lt(4.5e15), VECTOR_SIZE_TOO_LARGE)).end()).asIntegerVector().findFirst().mustBe(gte0());
-        casts.arg("size").defaultError(INVALID_ARGUMENT, "size").mustBe(integerValue().or(doubleValue()).or(stringValue())).asIntegerVector().findFirst().mustNotBeNA(
-                        INVALID_ARGUMENT, "size").mustBe(gte0(), INVALID_ARGUMENT, "size");
+        casts.arg("size").defaultError(INVALID_ARGUMENT, "size").mustBe(integerValue().or(doubleValue()).or(stringValue())).asIntegerVector().findFirst().mustNotBeNA(INVALID_ARGUMENT, "size").mustBe(
+                        gte0(), INVALID_ARGUMENT, "size");
         casts.arg("replace").mustBe(integerValue().or(doubleValue()).or(logicalValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustNotBeNA().map(toBoolean());
-        casts.arg("prob").asDoubleVector();
+        casts.arg("prob").mustNotBeMissing().mustBe(doubleValue().or(nullValue())).asDoubleVector();
     }
 
     // Validation that correlates two or more argument values (note: positiveness of prob is checked
@@ -70,20 +71,20 @@ public abstract class Sample extends RBuiltinNode {
         return !isRepeatable && size > x;
     }
 
-    protected static boolean invalidProb(final int x, final RDoubleVector prob) {
+    protected static boolean invalidProb(final int x, final RAbstractDoubleVector prob) {
         return prob.getLength() != x;
     }
 
     @Specialization(guards = "invalidProb(x, prob)")
     @SuppressWarnings("unused")
-    protected RIntVector doSampleInvalidProb(final int x, final int size, final boolean isRepeatable, final RDoubleVector prob) {
+    protected RIntVector doSampleInvalidProb(final int x, final int size, final boolean isRepeatable, final RAbstractDoubleVector prob) {
         CompilerDirectives.transferToInterpreter();
         throw error(RError.Message.INCORRECT_NUM_PROB);
     }
 
     @Specialization(guards = "largerPopulation(x, size, isRepeatable)")
     @SuppressWarnings("unused")
-    protected RIntVector doSampleLargerPopulation(final int x, final int size, final boolean isRepeatable, final RDoubleVector prob) {
+    protected RIntVector doSampleLargerPopulation(final int x, final int size, final boolean isRepeatable, final RAbstractDoubleVector prob) {
         CompilerDirectives.transferToInterpreter();
         throw error(RError.Message.SAMPLE_LARGER_THAN_POPULATION);
     }
@@ -99,10 +100,10 @@ public abstract class Sample extends RBuiltinNode {
 
     @Specialization(guards = {"!invalidProb(x, prob)", "!largerPopulation(x, size, isRepeatable)", "isRepeatable"})
     @TruffleBoundary
-    protected RIntVector doSampleWithReplacement(final int x, final int size, final boolean isRepeatable, final RDoubleVector prob) {
+    protected RIntVector doSampleWithReplacement(final int x, final int size, final boolean isRepeatable, final RAbstractDoubleVector prob) {
         // The following code is transcribed from GNU R src/main/random.c lines 493-501 in
         // function do_sample.
-        double[] probArray = prob.getDataCopy();
+        double[] probArray = prob.materialize().getDataCopy();
         fixupProbability(probArray, x, size, isRepeatable);
         int nc = 0;
         for (double aProb : probArray) {
@@ -120,8 +121,8 @@ public abstract class Sample extends RBuiltinNode {
 
     @Specialization(guards = {"!invalidProb(x, prob)", "!largerPopulation(x, size, isRepeatable)", "!isRepeatable"})
     @TruffleBoundary
-    protected RIntVector doSampleNoReplacement(final int x, final int size, final boolean isRepeatable, final RDoubleVector prob) {
-        double[] probArray = prob.getDataCopy();
+    protected RIntVector doSampleNoReplacement(final int x, final int size, final boolean isRepeatable, final RAbstractDoubleVector prob) {
+        double[] probArray = prob.materialize().getDataCopy();
         fixupProbability(probArray, x, size, isRepeatable);
         return RDataFactory.createIntVector(probSampleWithoutReplace(x, probArray, size), RDataFactory.COMPLETE_VECTOR);
     }

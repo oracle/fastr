@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -58,4 +58,23 @@ public class TestBuiltin_rowsum extends TestBase {
     public void testrowsum8() {
         assertEval("argv <- list(structure(c(1.33333333333333, -1.33333333333333, 1, 1.33333333333333, -2, 0.666666666666667, -0.666666666666667, 0.666666666666667, -0.666666666666667), .Dim = c(9L, 1L), .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9'), 'x')), structure(c(1, 1, 2, 2, 2, 2, 3, 4, 5), .Names = c('1', '2', '3', '4', '5', '6', '7', '8', '9')), c(1, 2, 3, 4, 5), FALSE, c('1', '2', '3', '4', '5')); .Internal(rowsum_matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
+
+    @Test
+    public void testRowsumArgCoverage() {
+        assertEval("x <- matrix(1:10, ncol=2); g <- c(1,2,3,2,1); ug <-unique(g); .Internal(rowsum_matrix(x, g, ug, FALSE, as.character(ug)))");
+        // 2nd parm function => GnuR Error: segfault
+        assertEvalFastR("{ x <- matrix(1:10, ncol=2); g <- c(1,2,3,2,1); ug <-unique(g); .Internal(rowsum_matrix(x, print, ug, FALSE, as.character(ug))); }",
+                        "cat(\"Error in rowsum_matrix(x, print, ug, FALSE, as.character(ug)) :\\n invalid 'g' argument\"");
+        // 3rd parm is function => GnuR Error: "Error: unimplemented type 'closure' in
+        // 'HashTableSetup'"
+        assertEval(Output.IgnoreErrorMessage, "x <- matrix(1:10, ncol=2); g <- c(1,2,3,2,1); ug <-unique(g); .Internal(rowsum_matrix(x, g, print, FALSE, as.character(ug)))");
+        // 2nd parm NULL => GnuR Error: segfault\n" +
+        assertEvalFastR("x <- matrix(1:10, ncol=2); g <- c(1,2,3,2,1); ug <-unique(g); .Internal(rowsum_matrix(x, NULL, ug, FALSE,as.character(ug)))",
+                        "cat(\"Error in rowsum_matrix(x, NULL, ug, FALSE, as.character(ug)) :\\n invalid 'g' argument\"");
+        // 3rd parm NULL => GnuR Error: Error: unimplemented type 'NULL' in 'HashTableSetup'
+        assertEval(Output.IgnoreErrorMessage, "x <- matrix(1:10, ncol=2); g <- c(1,2,3,2,1); ug <-unique(g); .Internal(rowsum_matrix(x, g, NULL, FALSE,as.character(ug)))");
+        assertEval(Output.IgnoreErrorMessage, "x <- matrix(1:10, ncol=2); g <- c(1,2,3,2,1); ug <-unique(g); .Internal(rowsum_matrix(x, , ug, FALSE,as.character(ug)))");
+        assertEval(Output.IgnoreErrorMessage, "x <- matrix(1:10, ncol=2); g <- c(1,2,3,2,1); ug <-unique(g); .Internal(rowsum_matrix(x, g, , FALSE,as.character(ug)))");
+    }
+
 }

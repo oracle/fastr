@@ -12,6 +12,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -39,7 +40,7 @@ public abstract class Strtrim extends RBuiltinNode {
     static {
         Casts casts = new Casts(Strtrim.class);
         casts.arg("x").defaultError(Message.REQUIRES_CHAR_VECTOR, "strtrim()").mustBe(stringValue()).asStringVector(true, true, true);
-        casts.arg("width").asIntegerVector();
+        casts.arg("width").mustNotBeMissing().mustBe(nullValue().not()).asIntegerVector();
     }
 
     @Specialization

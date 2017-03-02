@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,4 +34,15 @@ public class TestBuiltin_strrep extends TestBase {
         assertEval("{ strrep(c(\"A\", \"B\", \"C\"), 1 : 3) }");
         assertEval("{ strrep(\"X\", 1 : 5) }");
     }
+
+    @Test
+    public void testArgsCasts() {
+        // GnuR fails with segfault
+        assertEvalFastR("{ .Internal(strrep(NULL, 5) }", "cat(\"character(0)\")");
+        // GnuR - infinite loop
+        assertEvalFastR("{ .Internal(strrep('aa', NULL) }", "cat(\"character(0)\")");
+        assertEval("{ .Internal(strrep(, '') }");
+        assertEval("{ .Internal(strrep('', ) }");
+    }
+
 }

@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyDoubleVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -393,9 +394,9 @@ public class DatePOSIXFunctions {
 
         static {
             Casts casts = new Casts(StrPTime.class);
-            casts.arg("x").mapNull(emptyStringVector()).asStringVector();
-            casts.arg("format").mapNull(emptyStringVector()).asStringVector();
-            casts.arg("tz").mapNull(emptyStringVector()).asStringVector();
+            casts.arg("x").mapNull(emptyStringVector()).mustBe(missingValue().not()).asStringVector();
+            casts.arg("format").mapNull(emptyStringVector()).mustBe(missingValue().not()).asStringVector();
+            casts.arg("tz").mapNull(emptyStringVector()).mustBe(missingValue().not()).asStringVector();
         }
 
         @Specialization

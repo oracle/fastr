@@ -49,4 +49,19 @@ public class TestBuiltin_scan extends TestBase {
         assertEval("{ con<-textConnection(c(\"'foo'\")); scan(con, what=list(\"\")) }");
         assertEval("{ con<-textConnection(c(\"bar 'foo'\")); scan(con, what=list(\"\")) }");
     }
+
+    @Test
+    public void testArgsCasts() {
+        // Empty 2nd 'what' parameter
+        assertEval(Output.IgnoreErrorContext, "{ con<-textConnection(c(\"1 2 3\", \"4 5 6\")); .Internal(scan(con, , 2, ' ', '.', '\"', 0, 3, \"NA\", F, F, F, T, T, '', '#', T, 'utf8', F)) }");
+        // NULL 2nd 'what' parameter
+        assertEval("{ con<-textConnection(c(\"1 2 3\", \"4 5 6\")); .Internal(scan(con, NULL, 2, ' ', '.', '\"', 0, 3, \"NA\", F, F, F, T, T, '', '#', T, 'utf8', F)) }");
+        // function passed as 2nd 'what' parameter
+        assertEval("{ con<-textConnection(c(\"1 2 3\", \"4 5 6\")); .Internal(scan(con, print, 2, ' ', '.', '\"', 0, 3, \"NA\", F, F, F, T, T, '', '#', T, 'utf8', F)) }");
+        // NULL 4th 'sep' parameter
+        assertEval("{ con<-textConnection(c(\"1 2 3\", \"4 5 6\")); .Internal(scan(con, 1L, 2, NULL, '.', '\"', 0, 3, \"NA\", F, F, F, T, T, '', '#', T, 'utf8', F)) }");
+        // NULL 5th 'dec' parameter
+        assertEval("{ con<-textConnection(c(\"1.5 2.89 3\", \"4 5 6\")); .Internal(scan(con, 1.2, 2, ' ', NULL, '\"', 0, 3, \"NA\", F, F, F, T, T, '', '#', T, 'utf8', F)) }");
+
+    }
 }

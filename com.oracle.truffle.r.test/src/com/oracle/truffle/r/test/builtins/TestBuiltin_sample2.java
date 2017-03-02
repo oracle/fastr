@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ public class TestBuiltin_sample2 extends TestBase {
         assertEval("set.seed(42);  x <- .Internal(sample2(10L, 3L)); y <- .Internal(sample2(10L, 3L)); list(x, y); ");
         // test with n > MAX_INT
         assertEval("set.seed(42);  .Internal(sample2(4147483647, 10))");
+        assertEval("set.seed(42);  .Internal(sample2(NULL,3))");
     }
 
     @Test

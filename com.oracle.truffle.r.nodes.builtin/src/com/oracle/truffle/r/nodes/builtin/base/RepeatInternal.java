@@ -35,6 +35,8 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -42,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -135,6 +138,50 @@ public abstract class RepeatInternal extends RBuiltinNode {
     @Specialization
     protected RRawVector repInt(RAbstractRawVector value, RAbstractIntVector times) {
         return repInt(value, times, byte[]::new, (array, pos, val, index) -> array[pos] = val.getDataAt(index).getValue(), (array, complete) -> RDataFactory.createRawVector(array));
+    }
+
+    @Specialization
+    protected RComplexVector repComplex(RAbstractComplexVector value, RAbstractIntVector times) {
+        int timesLength = times.getLength();
+        int valueLength = value.getLength();
+        double[] resultArray;
+        if (timesOneProfile.profile(timesLength == 1)) {
+            int timesValue = times.getDataAt(0);
+            if (timesValue < 0) {
+                throw error(RError.Message.INVALID_VALUE, "times");
+            }
+            resultArray = new double[(timesValue * valueLength) << 1];
+            int pos = 0;
+            for (int i = 0; i < timesValue; i++) {
+                for (int j = 0; j < valueLength; j++) {
+                    RComplex complex = value.getDataAt(j);
+                    resultArray[pos++] = complex.getRealPart();
+                    resultArray[pos++] = complex.getImaginaryPart();
+                }
+            }
+        } else if (timesLength == valueLength) {
+            int count = 0;
+            for (int i = 0; i < timesLength; i++) {
+                int data = times.getDataAt(i);
+                if (data < 0) {
+                    throw error(RError.Message.INVALID_VALUE, "times");
+                }
+                count += data;
+            }
+            resultArray = new double[count << 1];
+            int pos = 0;
+            for (int i = 0; i < valueLength; i++) {
+                int num = times.getDataAt(i);
+                RComplex complex = value.getDataAt(i);
+                for (int j = 0; j < num; j++) {
+                    resultArray[pos++] = complex.getRealPart();
+                    resultArray[pos++] = complex.getImaginaryPart();
+                }
+            }
+        } else {
+            throw error(RError.Message.INVALID_VALUE, "times");
+        }
+        return RDataFactory.createComplexVector(resultArray, value.isComplete());
     }
 
     @Specialization

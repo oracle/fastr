@@ -14,10 +14,13 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.charAt0;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.length;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lengthLte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lt;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -44,6 +47,7 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -102,13 +106,13 @@ public abstract class Scan extends RBuiltinNode {
         Casts casts = new Casts(Scan.class);
         casts.arg("file").defaultError(Message.INVALID_CONNECTION).mustNotBeNull().asIntegerVector().findFirst();
 
-        casts.arg("what").asVector();
+        casts.arg("what").mustNotBeMissing().mustBe(nullValue().not()).mustBe(instanceOf(RFunction.class).not()).asVector();
 
         casts.arg("nmax").asIntegerVector().findFirst(0).replaceNA(0).mapIf(lt(0), constant(0));
 
-        casts.arg("sep").allowNull().mustBe(stringValue()).asStringVector().findFirst("").mustBe(lengthLte(1), RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
+        casts.arg("sep").mapNull(emptyStringVector()).mustBe(stringValue()).asStringVector().findFirst("").mustBe(lengthLte(1), RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
 
-        casts.arg("dec").defaultError(RError.Message.INVALID_DECIMAL_SEP).allowNull().mustBe(stringValue()).asStringVector().findFirst(".").mustBe(length(1),
+        casts.arg("dec").defaultError(RError.Message.INVALID_DECIMAL_SEP).mapNull(constant(".")).mustBe(stringValue()).asStringVector().findFirst(".").mustBe(length(1),
                         RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
 
         casts.arg("quote").defaultError(RError.Message.INVALID_QUOTE_SYMBOL).mapNull(constant("")).mustBe(stringValue()).asStringVector().findFirst("");

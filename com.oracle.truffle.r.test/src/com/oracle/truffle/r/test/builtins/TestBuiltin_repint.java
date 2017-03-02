@@ -173,5 +173,18 @@ public class TestBuiltin_repint extends TestBase {
         assertEval("{ rep.int(7, c(7, 42)) }");
         assertEval("{ rep_int(7, function() 42) }");
         assertEval("{ rep.int(7, NA)  }");
+        assertEval("{ rep.int(7, -4)  }");
+        assertEval("{ rep.int(c(7,1), c(1,-4))  }");
+        assertEval("{ rep.int(c(7,1), c(1,4,5))  }");
     }
+
+    @Test
+    public void testRepIntComplex() {
+        assertEval("{ rep.int(c(1+2i,20+30i,100-400i), 2) }");
+        assertEval("{ rep.int(c(1+2i,100-400i,20+30i), c(3,7,2)) }");
+        assertEval("{ rep.int(c(1+2i,20+30i,100-400i), -3) }");
+        assertEval("{ rep.int(c(1+2i,100-400i,20+30i), c(3,7)) }");
+        assertEval("{ rep.int(c(1+2i,100-400i,20+30i), c(3,-7)) }");
+    }
+
 }
