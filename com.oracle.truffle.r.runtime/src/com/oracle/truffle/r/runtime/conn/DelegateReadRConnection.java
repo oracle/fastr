@@ -23,10 +23,8 @@
 package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -34,8 +32,6 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public abstract class DelegateReadRConnection extends DelegateRConnection {
-
-    private final ByteBuffer tmp = ByteBuffer.allocate(1);
 
     protected DelegateReadRConnection(BaseRConnection base) {
         super(base);
@@ -62,42 +58,6 @@ public abstract class DelegateReadRConnection extends DelegateRConnection {
     }
 
     @Override
-    public int getc() throws IOException {
-        if (isTextMode()) {
-            return getDecoder().read();
-        } else {
-            tmp.clear();
-            int nread = getChannel().read(tmp);
-            tmp.rewind();
-            return nread > 0 ? tmp.get() : -1;
-        }
-    }
-
-    @Override
-    public String readChar(int nchars, boolean useBytes) throws IOException {
-        if (useBytes) {
-            return DelegateRConnection.readCharHelper(nchars, getChannel());
-        } else {
-            return DelegateRConnection.readCharHelper(nchars, getDecoder());
-        }
-    }
-
-    @Override
-    public int readBin(ByteBuffer buffer) throws IOException {
-        return getChannel().read(buffer);
-    }
-
-    @Override
-    public byte[] readBinChars() throws IOException {
-        return DelegateRConnection.readBinCharsHelper(getChannel());
-    }
-
-    @Override
-    public void flush() {
-        // nothing to do when reading
-    }
-
-    @Override
     public OutputStream getOutputStream() {
         throw RInternalError.shouldNotReachHere();
     }
@@ -110,22 +70,6 @@ public abstract class DelegateReadRConnection extends DelegateRConnection {
     @Override
     public boolean canWrite() {
         return false;
-    }
-
-    @Override
-    public InputStream getInputStream() throws IOException {
-        return Channels.newInputStream(getChannel());
-    }
-
-    @Override
-    public void close() throws IOException {
-        getChannel().close();
-    }
-
-    @Override
-    public void closeAndDestroy() throws IOException {
-        base.closed = true;
-        close();
     }
 
     @Override

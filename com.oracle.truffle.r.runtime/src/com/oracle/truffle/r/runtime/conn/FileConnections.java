@@ -31,11 +31,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.FileChannel;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CharsetEncoder;
 import java.nio.file.OpenOption;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -347,7 +344,6 @@ public class FileConnections {
     private static class FileReadWriteTextConnection extends DelegateReadWriteRConnection {
 
         private final FileChannel channel;
-        private final CharsetEncoder encoder;
         private long readOffset;
         private long writeOffset;
         private SeekRWMode lastMode = SeekRWMode.READ;
@@ -360,24 +356,16 @@ public class FileConnections {
             opts.add(StandardOpenOption.CREATE);
             opts.add(StandardOpenOption.TRUNCATE_EXISTING);
             channel = FileChannel.open(Paths.get(base.path), opts.toArray(new OpenOption[opts.size()]));
-            encoder = base.getEncoding().newEncoder();
         }
 
         @Override
-        public int getc() throws IOException {
+        public int read() throws IOException {
             setReadPosition();
-            int value = super.getc();
+            final int value = super.read();
             if (value != -1) {
-                readOffset += getNumBytes(value);
+                readOffset++;
             }
             return value;
-        }
-
-        private long getNumBytes(int value) throws CharacterCodingException {
-            // TODO We need to get the information about how much bytes have been consumed from the
-            // stream decoder. This is really bad!
-            ByteBuffer encode = encoder.encode(CharBuffer.wrap(new char[]{(char) value}));
-            return encode.position();
         }
 
         @Override
@@ -392,6 +380,7 @@ public class FileConnections {
             switch (seekMode) {
                 case ENQUIRE:
                     set = false;
+                    break;
                 case START:
                     break;
                 default:
@@ -456,9 +445,6 @@ public class FileConnections {
             if (lastMode != SeekRWMode.READ) {
                 channel.position(readOffset);
                 lastMode = SeekRWMode.READ;
-
-                // re-initialize stream decoder if position changed
-                initDecoder(1);
             }
         }
 
@@ -504,9 +490,9 @@ public class FileConnections {
         }
 
         @Override
-        public int getc() throws IOException {
+        public int read() throws IOException {
             setReadPosition();
-            int value = super.getc();
+            final int value = raf.read();
             if (value != -1) {
                 readOffset++;
             }
@@ -575,9 +561,6 @@ public class FileConnections {
             if (lastMode != SeekRWMode.READ) {
                 raf.seek(readOffset);
                 lastMode = SeekRWMode.READ;
-
-                // re-initialize stream decoder if position changed
-                initDecoder(1);
             }
         }
 
