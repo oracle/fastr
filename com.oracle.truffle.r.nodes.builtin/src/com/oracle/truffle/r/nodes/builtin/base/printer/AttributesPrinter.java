@@ -17,6 +17,7 @@ import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -62,7 +63,7 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
                     continue;
                 }
             }
-            if (value.hasClass(RRuntime.CLASS_DATA_FRAME)) {
+            if (ClassHierarchyNode.hasClass(value, RRuntime.CLASS_DATA_FRAME)) {
                 if (RRuntime.ROWNAMES_ATTR_KEY.equals(a.getName())) {
                     continue;
                 }

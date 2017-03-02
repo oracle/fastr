@@ -185,6 +185,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         @Child private CollectArgumentsNode collectArguments = CollectArgumentsNodeGen.create();
 
         @Child private PromiseHelperNode promiseHelper;
+        @Child private ClassHierarchyNode hierarchy;
 
         private final ConditionProfile emptyArgsProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile genericCallFrameNullProfile = ConditionProfile.createBinaryProfile();
@@ -292,8 +293,11 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             if (arg instanceof RPromise) {
                 arg = promiseHelper.evaluate(frame, (RPromise) arg);
             }
-            RAbstractContainer enclosingArg = (RAbstractContainer) arg;
-            return enclosingArg.getClassHierarchy();
+            if (hierarchy == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                hierarchy = insert(ClassHierarchyNode.createWithImplicit());
+            }
+            return hierarchy.execute(arg);
         }
     }
 }

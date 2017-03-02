@@ -173,11 +173,6 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public final RStringVector getClassHierarchy() {
-        return getImplicitClass();
-    }
-
-    @Override
     public final RTypedValue getNonShared() {
         return materialize().getNonShared();
     }

@@ -25,12 +25,9 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
 public final class RList extends RListBase implements RAbstractListVector {
-
-    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getClazz());
 
     public String elementNamePrefix;
 
@@ -83,8 +80,4 @@ public final class RList extends RListBase implements RAbstractListVector {
         return RDataFactory.createList(copyResizedData(size, fillNA), dimensions);
     }
 
-    @Override
-    public RStringVector getImplicitClass() {
-        return getClassHierarchyHelper(implicitClassHeader);
-    }
 }

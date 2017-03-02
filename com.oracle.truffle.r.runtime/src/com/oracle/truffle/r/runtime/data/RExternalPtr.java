@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,10 +92,4 @@ public class RExternalPtr extends RAttributeStorage implements RTypedValue {
         return RType.ExternalPtr;
     }
 
-    private static final RStringVector implicitClass = RDataFactory.createStringVector(RType.ExternalPtr.getName());
-
-    @Override
-    public final RStringVector getImplicitClass() {
-        return implicitClass;
-    }
 }

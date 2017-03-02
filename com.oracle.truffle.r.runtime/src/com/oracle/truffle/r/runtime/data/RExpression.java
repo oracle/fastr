@@ -30,8 +30,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class RExpression extends RListBase implements RAbstractVector {
 
-    private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Expression.getClazz());
-
     RExpression(Object[] data, int[] dims, RStringVector names) {
         super(data, dims, names);
     }
@@ -83,8 +81,4 @@ public final class RExpression extends RListBase implements RAbstractVector {
         return RDataFactory.createExpression(copyResizedData(size, fillNA), dimensions);
     }
 
-    @Override
-    public RStringVector getImplicitClass() {
-        return getClassHierarchyHelper(implicitClassHeader);
-    }
 }

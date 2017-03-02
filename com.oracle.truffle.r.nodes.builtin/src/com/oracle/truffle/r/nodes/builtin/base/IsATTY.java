@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
@@ -48,7 +49,7 @@ public abstract class IsATTY extends RBuiltinNode {
     @TruffleBoundary
     protected byte isATTYNonConnection(RAbstractIntVector con) {
         if (con.getLength() == 1) {
-            RStringVector clazz = con.getClassHierarchy();
+            RStringVector clazz = ClassHierarchyNode.getClassHierarchy(con);
             for (int i = 0; i < clazz.getLength(); i++) {
                 if ("connection".equals(clazz.getDataAt(i))) {
                     RConnection connection = RContext.getInstance().stateRConnection.getConnection(con.getDataAt(0), false);

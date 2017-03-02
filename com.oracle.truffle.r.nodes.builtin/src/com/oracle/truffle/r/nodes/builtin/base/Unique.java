@@ -33,6 +33,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -240,8 +241,10 @@ public abstract class Unique extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization
-    protected RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, int nmax) {
+    @Specialization(guards = "vecIn.getClass() == vecClass")
+    protected RIntVector doUniqueCached(RAbstractIntVector vecIn, byte incomparables, byte fromLast, int nmax,
+                    @Cached("vecIn.getClass()") Class<? extends RAbstractIntVector> vecClass) {
+        RAbstractIntVector vec = vecClass.cast(vecIn);
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             NonRecursiveHashSetInt set = new NonRecursiveHashSetInt();
             int[] data = new int[16];
@@ -266,6 +269,11 @@ public abstract class Unique extends RBuiltinNode {
             }
             return RDataFactory.createIntVector(dataList.toArray(), vec.isComplete());
         }
+    }
+
+    @Specialization(replaces = "doUniqueCached")
+    protected RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, int nmax) {
+        return doUniqueCached(vec, incomparables, fromLast, nmax, RAbstractIntVector.class);
     }
 
     @SuppressWarnings("unused")

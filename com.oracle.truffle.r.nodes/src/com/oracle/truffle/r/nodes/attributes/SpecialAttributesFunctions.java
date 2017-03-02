@@ -1116,11 +1116,5 @@ public final class SpecialAttributesFunctions {
         public final boolean isObject(Object x) {
             return getClassAttr(x) != null ? true : false;
         }
-
-        public final RStringVector getClassHierarchy(RAttributable x) {
-            Object v = execute(x);
-            RStringVector result = v instanceof RStringVector ? (RStringVector) v : x.getImplicitClass();
-            return result != null ? result : RDataFactory.createEmptyStringVector();
-        }
     }
 }

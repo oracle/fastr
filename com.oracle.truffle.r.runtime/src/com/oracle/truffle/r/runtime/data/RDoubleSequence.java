@@ -108,11 +108,6 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     }
 
     @Override
-    public RStringVector getImplicitClass() {
-        return RDoubleVector.implicitClassHeader;
-    }
-
-    @Override
     public RDoubleVector copyResized(int size, boolean fillNA) {
         double[] data = new double[size];
         populateVectorData(data);

@@ -24,9 +24,11 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -137,8 +139,9 @@ public abstract class ToStringNode extends RBaseNode {
     }
 
     @Specialization
-    protected String toString(RS4Object obj, @SuppressWarnings("unused") boolean quotes, String separator) {
-        RStringVector classHierarchy = obj.getClassHierarchy();
+    protected String toString(RS4Object obj, @SuppressWarnings("unused") boolean quotes, String separator,
+                    @Cached(value = "createWithImplicit()") ClassHierarchyNode hierarchy) {
+        RStringVector classHierarchy = hierarchy.execute(obj);
         Object clazz;
         if (classHierarchy.getLength() > 0) {
             clazz = toString(classHierarchy.getDataAt(0), true, separator);

@@ -151,16 +151,6 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public final RStringVector getClassHierarchy() {
-        return getVector().getClassHierarchy();
-    }
-
-    @Override
-    public RStringVector getImplicitClass() {
-        return getVector().getImplicitClass();
-    }
-
-    @Override
     public final RTypedValue getNonShared() {
         return getVector().getNonShared();
     }

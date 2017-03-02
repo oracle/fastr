@@ -30,15 +30,8 @@ import com.oracle.truffle.r.runtime.RType;
  */
 public final class RS4Object extends RSharingAttributeStorage {
 
-    private static final RStringVector implicitClass = RDataFactory.createStringVectorFromScalar("S4");
-
     public RS4Object() {
         setS4();
-    }
-
-    @Override
-    public RStringVector getImplicitClass() {
-        return implicitClass;
     }
 
     @Override

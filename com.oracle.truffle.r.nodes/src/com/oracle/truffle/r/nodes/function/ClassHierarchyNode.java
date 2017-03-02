@@ -38,19 +38,18 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.UnaryNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -58,10 +57,36 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class ClassHierarchyNode extends UnaryNode {
 
+    /**
+     * Returns the value of the {@code class} attribute or empty {@link RStringVector} if class
+     * attribute is not set.
+     */
+    @TruffleBoundary
+    public static RStringVector getClassHierarchy(RAttributable value) {
+        Object v = value.getAttr(RRuntime.CLASS_ATTR_KEY);
+        RStringVector result = v instanceof RStringVector ? (RStringVector) v : ImplicitClassHierarchyNode.getImplicitClass(value);
+        return result != null ? result : RDataFactory.createEmptyStringVector();
+    }
+
+    /**
+     * Returns {@code true} if the {@code class} attribute is set to {@link RStringVector} whose
+     * first element equals to the given className.
+     */
+    public static boolean hasClass(RAttributable value, String className) {
+        RStringVector v = getClassHierarchy(value);
+        for (int i = 0; i < v.getLength(); ++i) {
+            if (v.getDataAt(i).equals(className)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static final RStringVector truffleObjectClassHeader = RDataFactory.createStringVectorFromScalar("truffle.object");
 
     @Child private GetFixedAttributeNode access;
     @Child private S4Class s4Class;
+    @Child private ImplicitClassHierarchyNode implicit;
 
     private final boolean withImplicitTypes;
     private final boolean withS4;
@@ -78,41 +103,50 @@ public abstract class ClassHierarchyNode extends UnaryNode {
         return ClassHierarchyNodeGen.create(false, false);
     }
 
+    public static ClassHierarchyNode createWithImplicit() {
+        return ClassHierarchyNodeGen.create(true, false);
+    }
+
     public abstract RStringVector execute(Object arg);
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") byte arg) {
-        return withImplicitTypes ? RLogicalVector.implicitClassHeader : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Logical) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") String arg) {
-        return withImplicitTypes ? RStringVector.implicitClassHeader : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Character) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") int arg) {
-        return withImplicitTypes ? RIntVector.implicitClassHeader : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Integer) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") double arg) {
-        return withImplicitTypes ? RDoubleVector.implicitClassHeader : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Double) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RComplex arg) {
-        return withImplicitTypes ? RComplexVector.implicitClassHeader : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Complex) : null;
+    }
+
+    @Specialization
+    protected RStringVector getClassHr(@SuppressWarnings("unused") RRaw arg) {
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Raw) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RNull arg) {
-        return withImplicitTypes ? RNull.implicitClassHeader : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Null) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") REmpty arg) {
-        return withImplicitTypes ? RNull.implicitClassHeader : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Null) : null;
     }
 
     @Specialization
@@ -147,7 +181,15 @@ public abstract class ClassHierarchyNode extends UnaryNode {
                 return classHierarchy;
             }
         }
-        return withImplicitTypes ? argProfile.profile(arg).getImplicitClass() : null;
+        if (withImplicitTypes) {
+            if (implicit == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                implicit = insert(ImplicitClassHierarchyNodeGen.create());
+            }
+            return implicit.execute(arg);
+        } else {
+            return null;
+        }
     }
 
     protected static boolean isRTypedValue(Object obj) {

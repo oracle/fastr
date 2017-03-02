@@ -28,6 +28,7 @@ import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -118,7 +119,7 @@ final class ValuePrinters implements ValuePrinter<Object> {
 
     @TruffleBoundary
     private static boolean hasClass(Object x) {
-        return ((RAttributable) x).hasClass(RRuntime.CLASS_FACTOR);
+        return ClassHierarchyNode.hasClass((RAttributable) x, RRuntime.CLASS_FACTOR);
     }
 
     public static void printNewLine(PrintContext printCtx) {

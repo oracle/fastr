@@ -23,11 +23,13 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -93,7 +95,7 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
         }
         try (RConnection con = RConnection.fromIndex(file).forceOpen("wt")) {
             String tmp = null;
-            if (RRuntime.hasRClass(xx, RRuntime.CLASS_DATA_FRAME)) {
+            if (xx instanceof RAttributable && ClassHierarchyNode.hasClass((RAttributable) xx, RRuntime.CLASS_DATA_FRAME)) {
                 executeDataFrame(con, (RVector<?>) xx, nr, nc, rnames, csep, ceol, cna, cdec, qmethod, quoteCol, quoteRn);
             } else { /* A matrix */
 
@@ -284,9 +286,11 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
         throw RInternalError.unimplemented();
     }
 
+    @TruffleBoundary
     private static boolean isFactor(RAbstractContainer v) {
-        for (int i = 0; i < v.getClassHierarchy().getLength(); i++) {
-            if (v.getClassHierarchy().getDataAt(i).equals("factor")) {
+        RStringVector hierarchy = ClassHierarchyNode.getClassHierarchy(v);
+        for (int i = 0; i < hierarchy.getLength(); i++) {
+            if (hierarchy.getDataAt(i).equals("factor")) {
                 return true;
             }
         }

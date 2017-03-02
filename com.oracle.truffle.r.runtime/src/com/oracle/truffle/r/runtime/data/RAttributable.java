@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.Iterator;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -52,33 +51,6 @@ public interface RAttributable extends RTypedValue {
      * {@code null} if not initialized.
      */
     DynamicObject getAttributes();
-
-    /**
-     * Returns the value of the {@code class} attribute or empty {@link RStringVector} if class
-     * attribute is not set.
-     */
-    @TruffleBoundary
-    default RStringVector getClassHierarchy() {
-        Object v = getAttr(RRuntime.CLASS_ATTR_KEY);
-        RStringVector result = v instanceof RStringVector ? (RStringVector) v : getImplicitClass();
-        return result != null ? result : RDataFactory.createEmptyStringVector();
-    }
-
-    /**
-     * Returns {@code true} if the {@code class} attribute is set to {@link RStringVector} whose
-     * first element equals to the given className.
-     */
-    default boolean hasClass(String className) {
-        RStringVector v = getClassHierarchy();
-        for (int i = 0; i < v.getLength(); ++i) {
-            if (v.getDataAt(i).equals(className)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    RStringVector getImplicitClass();
 
     /**
      * Get the value of an attribute. Returns {@code null} if not set.
@@ -152,7 +124,6 @@ public interface RAttributable extends RTypedValue {
 
     /**
      * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.
-     * When {@code true}, it is possible to call {@link RAttributable#getClassHierarchy()}.
      */
     default boolean isObject() {
         return getClassAttr() != null ? true : false;

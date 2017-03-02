@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 
 /**
@@ -53,13 +52,6 @@ public final class RSymbol extends RAttributeStorage {
     @Override
     public String toString() {
         return name;
-    }
-
-    private static final RStringVector implicitClass = RDataFactory.createStringVectorFromScalar(RRuntime.CLASS_SYMBOL);
-
-    @Override
-    public RStringVector getImplicitClass() {
-        return implicitClass;
     }
 
     public boolean isMissing() {

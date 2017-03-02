@@ -105,13 +105,6 @@ import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
  */
 public abstract class REnvironment extends RAttributeStorage {
 
-    private static final RStringVector implicitClass = RDataFactory.createStringVectorFromScalar(RType.Environment.getName());
-
-    @Override
-    public final RStringVector getImplicitClass() {
-        return implicitClass;
-    }
-
     public static final class ContextStateImpl implements RContext.ContextState {
         private final MaterializedFrame globalFrame;
         @CompilationFinal private Base baseEnv;

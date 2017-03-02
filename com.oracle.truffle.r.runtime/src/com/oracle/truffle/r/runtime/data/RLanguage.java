@@ -226,11 +226,6 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public RStringVector getImplicitClass() {
-        return RDataFactory.createStringVector(RRuntime.CLASS_LANGUAGE);
-    }
-
-    @Override
     public RLanguage copy() {
         RLanguage l = new RLanguage(getRep(), this.length);
         if (this.attributes != null) {

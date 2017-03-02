@@ -133,11 +133,6 @@ public final class ValuePrinterNode extends RBaseNode {
                 }
 
                 @Override
-                public RStringVector getImplicitClass() {
-                    return RStringVector.implicitClassHeader;
-                }
-
-                @Override
                 public RStringVector materialize() {
                     throw RInternalError.shouldNotReachHere();
                 }
@@ -186,11 +181,6 @@ public final class ValuePrinterNode extends RBaseNode {
                             }
 
                             @Override
-                            public RStringVector getImplicitClass() {
-                                return RIntVector.implicitClassHeader;
-                            }
-
-                            @Override
                             public RLogicalVector materialize() {
                                 throw RInternalError.shouldNotReachHere();
                             }
@@ -220,11 +210,6 @@ public final class ValuePrinterNode extends RBaseNode {
                                     throw RInternalError.shouldNotReachHere(e);
                                 }
                                 return (Integer) value;
-                            }
-
-                            @Override
-                            public RStringVector getImplicitClass() {
-                                return RIntVector.implicitClassHeader;
                             }
 
                             @Override
@@ -260,11 +245,6 @@ public final class ValuePrinterNode extends RBaseNode {
                             }
 
                             @Override
-                            public RStringVector getImplicitClass() {
-                                return RDoubleVector.implicitClassHeader;
-                            }
-
-                            @Override
                             public RDoubleVector materialize() {
                                 throw RInternalError.shouldNotReachHere();
                             }
@@ -296,11 +276,6 @@ public final class ValuePrinterNode extends RBaseNode {
                                     throw RInternalError.shouldNotReachHere(e);
                                 }
                                 return value;
-                            }
-
-                            @Override
-                            public RStringVector getImplicitClass() {
-                                return RList.implicitClassHeader;
                             }
 
                             @Override
@@ -346,11 +321,6 @@ public final class ValuePrinterNode extends RBaseNode {
                                 throw RInternalError.shouldNotReachHere(e);
                             }
                             return value;
-                        }
-
-                        @Override
-                        public RStringVector getImplicitClass() {
-                            return RList.implicitClassHeader;
                         }
 
                         @Override
@@ -547,11 +517,6 @@ public final class ValuePrinterNode extends RBaseNode {
         @Override
         public void setRowNames(RAbstractVector rowNames) {
             throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public RStringVector getImplicitClass() {
-            return null;
         }
 
         @Override

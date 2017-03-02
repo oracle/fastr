@@ -24,17 +24,15 @@ package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -255,18 +253,6 @@ public abstract class RBaseNode extends Node {
 
     protected static boolean isRLanguage(Object value) {
         return value instanceof RLanguage;
-    }
-
-    protected static boolean isRFormula(Object value) {
-        if (value instanceof RLanguage) {
-            return hasFormulaClass(value);
-        }
-        return false;
-    }
-
-    @TruffleBoundary
-    private static boolean hasFormulaClass(Object value) {
-        return ((RAttributable) value).hasClass(RRuntime.FORMULA_CLASS);
     }
 
     protected static boolean isRExpression(Object value) {

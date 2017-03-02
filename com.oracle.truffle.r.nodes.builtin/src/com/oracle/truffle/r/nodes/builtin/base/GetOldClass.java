@@ -25,10 +25,12 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -45,9 +47,10 @@ public abstract class GetOldClass extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object getOldClass(RAbstractContainer arg) {
+    protected Object getOldClass(RAbstractContainer arg,
+                    @Cached("createWithImplicit()") ClassHierarchyNode hierarchy) {
         if (isObjectProfile.profile(getClassNode.isObject(arg))) {
-            return arg.getClassHierarchy();
+            return hierarchy.execute(arg);
         } else {
             return RNull.instance;
         }
