@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -332,7 +332,7 @@ typedef void (*c65func)(void *arg1, void *arg2, void *arg3, void *arg4, void *ar
 
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1C_c(JNIEnv *env, jclass c, jlong address, jobjectArray args) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1C_c(JNIEnv *env, jclass c, jlong address, jobjectArray args) {
 	int len = (*env)->GetArrayLength(env, args);
 	void *cargs[len];
 	jobject jarrays[len];

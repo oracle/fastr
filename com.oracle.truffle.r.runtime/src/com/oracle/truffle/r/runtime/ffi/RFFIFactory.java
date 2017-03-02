@@ -39,10 +39,10 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
  */
 public abstract class RFFIFactory {
     private enum Factory {
-        JNI("com.oracle.truffle.r.runtime.ffi.jni.JNI_RFFIFactory"),
-        LLVM("com.oracle.truffle.r.engine.interop.ffi.llvm.TruffleLLVM_RFFIFactory"),
-        MANAGED("com.oracle.truffle.r.runtime.ffi.managed.Managed_RFFIFactory"),
-        NFI("com.oracle.truffle.r.engine.interop.ffi.nfi.TruffleNFI_RFFIFactory");
+        JNI("com.oracle.truffle.r.ffi.impl.jni.JNI_RFFIFactory"),
+        LLVM("com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_RFFIFactory"),
+        MANAGED("com.oracle.truffle.r.ffi.impl.managed.Managed_RFFIFactory"),
+        NFI("com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_RFFIFactory");
 
         private final String klassName;
 

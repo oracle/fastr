@@ -27,10 +27,10 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-@MessageResolution(receiverType = RNull.class, language = TruffleRLanguage.class)
+@MessageResolution(receiverType = RNull.class)
 public class RNullMR {
     /**
      * Workaround to avoid NFI converting {@link RNull} to {@code null}.
@@ -58,6 +58,13 @@ public class RNullMR {
         }
     }
 
+    @Resolve(message = "TO_NATIVE")
+    public abstract static class RNullToNativeNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RNull receiver) {
+            return NativePointer.NULL_NATIVEPOINTER;
+        }
+    }
+
     @CanResolve
     public abstract static class RNullCheck extends Node {
 
@@ -66,7 +73,7 @@ public class RNullMR {
         }
     }
 
-    public static boolean setIsNull(boolean value) {
+    static boolean setIsNull(boolean value) {
         boolean prev = isNull;
         isNull = value;
         return prev;

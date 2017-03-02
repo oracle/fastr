@@ -22,22 +22,22 @@ void *pcre_compile(char *pattern, int options, char **errorMessage, int *errOffs
 int pcre_fullinfo(void *code, void *extra, int what, void *where);
 //void pcre_free(void *code);
 
-void call_compile(void *closure, char *pattern, int options, long tables) {
-	void (*call_makeresult)(long result, char *errMsg, int errOffset) = closure;
+void call_pcre_compile(void *closure, char *pattern, int options, long tables) {
+	void (*makeresult)(long result, char *errMsg, int errOffset) = closure;
 	char *errorMessage;
 	int errOffset;
 	void *pcre_result = pcre_compile(pattern, options, &errorMessage, &errOffset, (char*) tables);
-	call_makeresult((long) pcre_result, errorMessage, errOffset);
+	makeresult((long) pcre_result, errorMessage, errOffset);
 }
 
-int call_getcapturecount(long code, long extra) {
+int call_pcre_getcapturecount(long code, long extra) {
     int captureCount;
 	int rc = pcre_fullinfo((void*) code, (void*) extra, PCRE_INFO_CAPTURECOUNT, &captureCount);
     return rc < 0 ? rc : captureCount;
 }
 
-int call_getcapturenames(void *closure, long code, long extra) {
-	void (*call_setcapturename)(int i, char *name) = closure;
+int call_pcre_getcapturenames(void *closure, long code, long extra) {
+	void (*setcapturename)(int i, char *name) = closure;
     int nameCount;
     int nameEntrySize;
     char* nameTable;
@@ -58,8 +58,7 @@ int call_getcapturenames(void *closure, long code, long extra) {
 	for(int i = 0; i < nameCount; i++) {
 	    char* entry = nameTable + nameEntrySize * i;
 	    int captureNum = (entry[0] << 8) + entry[1] - 1;
-	    call_setcapturename(captureNum, entry + 2);
+	    setcapturename(captureNum, entry + 2);
     }
     return res;
-
 }

@@ -30,7 +30,9 @@
 #include <truffle.h>
 
 #define IMPORT_CALLHELPER() void *obj = truffle_import_cached("_fastr_rffi_callhelper")
+#define IMPORT_CALLHELPER_IMPL() void *obj = truffle_import_cached("_fastr_rffi_callhelper_impl")
 
+char *ensure_truffle_chararray(const char *x);
 SEXP unimplemented(char *name);
 
 #endif /* RFFIUTILS_H */

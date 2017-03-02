@@ -32,12 +32,12 @@ void init_pcre(JNIEnv *env) {
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeMaketables(JNIEnv *env, jclass c) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1PCRE_nativeMaketables(JNIEnv *env, jclass c) {
 	return (jlong) pcre_maketables();
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeCompile(JNIEnv *env, jclass c, jstring pattern, jint options, jlong tables) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1PCRE_nativeCompile(JNIEnv *env, jclass c, jstring pattern, jint options, jlong tables) {
 	const char *patternChars = (*env)->GetStringUTFChars(env, pattern, NULL);
 	char *errorMessage;
 	int errOffset;
@@ -51,14 +51,14 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeCompile(JNIEnv *env, j
 }
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeGetCaptureCount(JNIEnv *env, jclass c, jlong code, jlong extra) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1PCRE_nativeGetCaptureCount(JNIEnv *env, jclass c, jlong code, jlong extra) {
     int captureCount;
 	int rc = pcre_fullinfo((void *)code, (void *)extra, PCRE_INFO_CAPTURECOUNT, &captureCount);
     return rc < 0 ? rc : captureCount;
 }
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeGetCaptureNames(JNIEnv *env, jclass c, jlong code, jlong extra, jobjectArray ret) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1PCRE_nativeGetCaptureNames(JNIEnv *env, jclass c, jlong code, jlong extra, jobjectArray ret) {
     int nameCount;
     int nameEntrySize;
     char* nameTable;
@@ -85,7 +85,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeGetCaptureNames(JNIEnv
 }
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeExec(JNIEnv *env, jclass c, jlong code, jlong extra, jstring subject,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1PCRE_nativeExec(JNIEnv *env, jclass c, jlong code, jlong extra, jstring subject,
 	jint startOffset, jint options, jintArray ovector, jint ovectorLen) {
 	const char *subjectChars = (*env)->GetStringUTFChars(env, subject, NULL);
 	int subjectLength = (*env)->GetStringUTFLength(env, subject);

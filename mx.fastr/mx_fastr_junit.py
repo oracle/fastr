@@ -29,7 +29,8 @@ def junit(args, harness, parser=None, jdk_default=None):
     """run Junit tests"""
     suppliedParser = parser is not None
     parser = parser if suppliedParser else ArgumentParser(prog='mx junit')
-    parser.add_argument('--tests', action='store', help='pattern to match test classes')
+    parser.add_argument('--tests', action='store', help='pattern to match test packages')
+    parser.add_argument('--exclude', action='append', help='test classes to exclude')
     parser.add_argument('--J', dest='vm_args', action='append', help='target VM arguments (e.g. --J @-dsa)', metavar='@<args>')
     parser.add_argument('--jdk', action='store', help='jdk to use')
     if suppliedParser:
@@ -64,12 +65,18 @@ def junit(args, harness, parser=None, jdk_default=None):
 
     tests = [] if args.tests is None else [name for name in args.tests.split(',')]
     classes = []
+    excluded = args.exclude
+
     if len(tests) == 0:
         classes = candidates
     else:
         for t in tests:
             found = False
             for c in candidates:
+                if excluded:
+                    if c in excluded:
+                        print 'excluding '  + c
+                        continue
                 if t in c:
                     found = True
                     classes.append(c)
@@ -79,6 +86,8 @@ def junit(args, harness, parser=None, jdk_default=None):
     dists = ['FASTR', 'FASTR_UNIT_TESTS']
     if mx.suite('r-apptests', fatalIfMissing=False):
         dists.append('com.oracle.truffle.r.test.apps')
+    if mx_fastr._mx_sulong:
+        dists.append('SULONG')
     vmArgs += mx.get_runtime_jvm_args(dists, jdk=jdk)
 
     if len(classes) != 0:

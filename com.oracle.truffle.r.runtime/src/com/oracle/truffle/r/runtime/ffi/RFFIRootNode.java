@@ -29,7 +29,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 public abstract class RFFIRootNode<T extends Node> extends RootNode {
-    @Child T rffiNode;
+    @Child protected T rffiNode;
 
     @SuppressWarnings("deprecation")
     protected RFFIRootNode(T baseRFFINode) {

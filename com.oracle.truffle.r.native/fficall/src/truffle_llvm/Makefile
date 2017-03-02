@@ -52,22 +52,25 @@ GNUR_MAIN_SRC = $(GNUR_HOME)/src/main
 
 GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_APPL_C_FILES:.c=.o) $(GNUR_MAIN_C_FILES:.c=.o))
 LLVM_GNUR_C_OBJECTS := $(GNUR_C_OBJECTS:.o=_llvm.o)
-#$(info LLVM_GNUR_C_OBJECTS: $(LLVM_GNUR_C_OBJECTS))
+$(info LLVM_GNUR_C_OBJECTS: $(LLVM_GNUR_C_OBJECTS))
 
 GNUR_F_OBJECTS := $(addprefix $(OBJ)/, $(notdir $(GNUR_APPL_F_FILES:.f=.o)))
 LLVM_GNUR_F_OBJECTS := $(GNUR_F_OBJECTS:.o=_llvm.o)
-#$(info LLVM_GNUR_F_OBJECTS: $(LLVM_GNUR_F_OBJECTS))
+$(info LLVM_GNUR_F_OBJECTS: $(LLVM_GNUR_F_OBJECTS))
 
 C_HDRS := $(wildcard *.h)
 
 LOCAL_C_SOURCES := $(wildcard *.c) 
 COMMON_C_SOURCES := $(wildcard ../common/*.c)
-C_SOURCES := $(LOCAL_C_SOURCES) $(COMMON_C_SOURCES)
+SHARED_NFI_C_SOURCES := ../truffle_nfi/misc_rffi.c ../truffle_nfi/lapack_rffi.c ../truffle_nfi/appl_rffi.c
+C_SOURCES := $(LOCAL_C_SOURCES) $(COMMON_C_SOURCES) $(SHARED_NFI_C_SOURCES)
+$(info C_SOURCES=$(C_SOURCES))
 LOCAL_C_OBJECTS := $(addprefix $(OBJ)/, $(LOCAL_C_SOURCES:.c=.o))
 COMMON_C_OBJECTS := $(addprefix $(OBJ)/, $(notdir $(COMMON_C_SOURCES:.c=.o)))
-C_OBJECTS := $(LOCAL_C_OBJECTS) $(COMMON_C_OBJECTS)
+SHARED_NFI_C_OBJECTS := $(addprefix $(OBJ)/, $(notdir $(SHARED_NFI_C_SOURCES:.c=.o)))
+C_OBJECTS := $(LOCAL_C_OBJECTS) $(COMMON_C_OBJECTS) $(SHARED_NFI_C_OBJECTS)
 LLVM_C_OBJECTS := $(C_OBJECTS:.o=_llvm.o)
-#$(info LLVM_C_OBJECTS=$(LLVM_C_OBJECTS))
+$(info LLVM_C_OBJECTS=$(LLVM_C_OBJECTS))
 
 SULONG_DIR = $(abspath $(FASTR_R_HOME)/../sulong)
 
@@ -84,7 +87,7 @@ FFLAGS := -DFASTR_LLVM
 # uncomment to see exactly where headers are being read from
 #CFLAGS := $(CFLAGS) -H
 
-all: Makefile $(LLVM_C_OBJECTS) $(LLVM_GNUR_COBJECTS) $(LLVM_GNUR_F_OBJECTS)
+all: Makefile $(LLVM_C_OBJECTS) $(LLVM_GNUR_C_OBJECTS) $(LLVM_GNUR_F_OBJECTS)
 
 $(C_OBJECTS): | $(OBJ)
 
@@ -102,9 +105,12 @@ $(OBJ)/%_llvm.o: $(GNUR_MAIN_SRC)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
 $(OBJ)/%_llvm.o: %.c $(FASTR_NATIVE_DIR)/include/Rinternals.h rffiutils.h
-	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) -I../variable_defs $(SUPPRESS_WARNINGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
 $(OBJ)/%_llvm.o: ../common/%.c $(FASTR_NATIVE_DIR)/include/Rinternals.h
+	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
+
+$(OBJ)/%_llvm.o: ../truffle_nfi/%.c $(FASTR_NATIVE_DIR)/include/Rinternals.h
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
 $(OBJ)/%_llvm.o: $(GNUR_APPL_SRC)/%.f

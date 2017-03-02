@@ -27,14 +27,14 @@ extern void dqrdc2_(double *x, int *ldx, int *n, int *p, double *tol, int *rank,
 extern void dqrcf_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *b, int* info);
 extern void dqrls_(double *x, int *n, int *p, double *y, int *ny, double *tol, double *b, double *rsd, double *qty, int *k, int *jpvt, double *qraux, double *work);
 
-void call_dqrdc2(double *x, int ldx, int n, int p, double tol, int *rank, double *qraux, int* pivot, double *work) {
+void call_appl_dqrdc2(double *x, int ldx, int n, int p, double tol, int *rank, double *qraux, int* pivot, double *work) {
 	dqrdc2_(x, &ldx, &n, &p, &tol, rank, qraux, pivot, work);
 }
 
-void call_dqrcf(double *x, int n, int k, double *qraux, double *y, int ny, double *b, int* info) {
+void call_appl_dqrcf(double *x, int n, int k, double *qraux, double *y, int ny, double *b, int* info) {
 	dqrcf_(x, &n, &k, qraux, y, &ny, b, info);
 }
 
-void call_dqrls(double *x, int n, int p, double *y, int ny, double tol, double *b, double *rsd, double *qty, int *k, int *jpvt, double *qraux, double *work) {
+void call_appl_dqrls(double *x, int n, int p, double *y, int ny, double tol, double *b, double *rsd, double *qty, int *k, int *jpvt, double *qraux, double *work) {
 	dqrls_(x, &n, &p, y, &ny, &tol, b, rsd, qty, k, jpvt, qraux, work);
 }

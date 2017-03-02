@@ -170,7 +170,9 @@ def fc(args):
                 llvm_as = sulong.findLLVMProgram('llvm-as')
                 llvm_bc_file = os.path.splitext(analyzed_args.llvm_ir_file)[0] + '.bc'
                 rc = mx.run([llvm_as, analyzed_args.llvm_ir_file, '-o', llvm_bc_file])
-                rc = _embed_ir(llvm_bc_file)
+                rc = _mem2reg_opt(llvm_bc_file)
+                if rc == 0:
+                    rc = _embed_ir(llvm_bc_file)
     else:
         compiler = 'gfortran'
         rc = mx.run([compiler] + args, nonZeroIsFatal=False)
@@ -207,6 +209,7 @@ def cppcpp(args):
     return rc
 
 def _mem2reg_opt(llvm_ir_file):
+    _log('mem2reg', llvm_ir_file)
     filename = os.path.splitext(llvm_ir_file)[0]
     ext = os.path.splitext(llvm_ir_file)[1]
     opt_filename = filename + '.opt' + ext

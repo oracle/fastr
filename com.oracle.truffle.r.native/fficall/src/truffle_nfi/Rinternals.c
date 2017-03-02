@@ -22,12 +22,15 @@
  */
 #include <Rinterface.h>
 #include <rffiutils.h>
-#include <rffi_callbacks.h>
 #include <Rinternals_common.h>
+#include "../common/rffi_upcalls.h"
 
-void *callbacks[CALLBACK_TABLE_SIZE];
+void **callbacks = NULL;
 
 void Rinternals_addCallback(int index, void *closure) {
+	if (callbacks == NULL) {
+		callbacks = malloc(UPCALLS_TABLE_SIZE * sizeof(void*));
+	}
 	newClosureRef(closure);
 	callbacks[index] = closure;
 }
@@ -79,37 +82,12 @@ void return_FREE(void *address) {
 //	free(address);
 }
 
-// R_GlobalEnv et al are not a variables in FASTR as they are RContext specific
-SEXP FASTR_R_GlobalEnv() {
-	return ((call_R_GlobalEnv) callbacks[R_GlobalEnv_x])();
-}
-
-SEXP FASTR_R_BaseEnv() {
-	return ((call_R_BaseEnv) callbacks[R_BaseEnv_x])();
-}
-
-SEXP FASTR_R_BaseNamespace() {
-	return ((call_R_BaseNamespace) callbacks[R_BaseNamespace_x])();
-}
-
-SEXP FASTR_R_NamespaceRegistry() {
-	return ((call_R_NamespaceRegistry) callbacks[R_NamespaceRegistry_x])();
-}
-
-CTXT FASTR_GlobalContext() {
-	return ((call_R_GlobalContext) callbacks[R_GlobalContext_x])();
-}
-
-Rboolean FASTR_R_Interactive() {
-	return (int) ((call_R_Interactive) callbacks[R_Interactive_x])();
-}
-
 SEXP CAR(SEXP e) {
-	return ((call_CAR) callbacks[CAR_x])(e);
+	return checkRef(((call_CAR) callbacks[CAR_x])(e));
 }
 
 SEXP CDR(SEXP e) {
-	return ((call_CDR) callbacks[CDR_x])(e);
+	return checkRef(((call_CDR) callbacks[CDR_x])(e));
 }
 
 int *INTEGER(SEXP x) {
@@ -142,7 +120,7 @@ const char * R_CHAR(SEXP x) {
 }
 
 SEXP Rf_ScalarString(SEXP value) {
-	return ((call_Rf_ScalarString) callbacks[Rf_ScalarString_x])(value);
+	return checkRef(((call_Rf_ScalarString) callbacks[Rf_ScalarString_x])(value));
 }
 
 SEXP Rf_mkChar(const char *x) {
@@ -158,7 +136,7 @@ SEXP Rf_mkCharLen(const char *x, int y) {
 }
 
 SEXP Rf_mkCharLenCE(const char *x, int len, cetype_t enc) {
-	return ((call_Rf_mkCharLenCE) callbacks[Rf_mkCharLenCE_x])(x,len, enc);
+	return checkRef(((call_Rf_mkCharLenCE) callbacks[Rf_mkCharLenCE_x])(x,len, enc));
 }
 
 SEXP Rf_mkString(const char *s) {
@@ -170,15 +148,15 @@ void Rf_gsetVar(SEXP symbol, SEXP value, SEXP rho) {
 }
 
 SEXP Rf_coerceVector(SEXP x, SEXPTYPE mode) {
-	return ((call_Rf_coerceVector) callbacks[Rf_coerceVector_x])(x, mode);
+	return checkRef(((call_Rf_coerceVector) callbacks[Rf_coerceVector_x])(x, mode));
 }
 
 SEXP Rf_cons(SEXP car, SEXP cdr) {
-	return ((call_Rf_cons) callbacks[Rf_cons_x])(car, cdr);
+	return checkRef(((call_Rf_cons) callbacks[Rf_cons_x])(car, cdr));
 }
 
 SEXP Rf_GetOption1(SEXP tag) {
-	return ((call_Rf_GetOption1) callbacks[Rf_GetOption1_x])(tag);
+	return checkRef(((call_Rf_GetOption1) callbacks[Rf_GetOption1_x])(tag));
 }
 
 #define BUFSIZE 8192
@@ -270,15 +248,15 @@ void REvprintf(const char *format, va_list args) {
 
 
 SEXP Rf_ScalarInteger(int value) {
-	return ((call_Rf_ScalarInteger) callbacks[Rf_ScalarInteger_x])(value);
+	return checkRef(((call_Rf_ScalarInteger) callbacks[Rf_ScalarInteger_x])(value));
 }
 
 SEXP Rf_ScalarReal(double value) {
-	return ((call_Rf_ScalarReal) callbacks[Rf_ScalarDouble_x])(value);
+	return checkRef(((call_Rf_ScalarReal) callbacks[Rf_ScalarDouble_x])(value));
 }
 
 SEXP Rf_ScalarLogical(int value) {
-	return ((call_Rf_ScalarLogical) callbacks[Rf_ScalarLogical_x])(value);
+	return checkRef(((call_Rf_ScalarLogical) callbacks[Rf_ScalarLogical_x])(value));
 }
 
 SEXP Rf_allocVector3(SEXPTYPE t, R_xlen_t len, R_allocator_t* allocator) {
@@ -286,11 +264,11 @@ SEXP Rf_allocVector3(SEXPTYPE t, R_xlen_t len, R_allocator_t* allocator) {
   	    unimplemented("RF_allocVector with custom allocator");
 	    return NULL;
     }
-    return ((call_Rf_allocVector) callbacks[Rf_allocVector_x])(t, len);
+    return checkRef(((call_Rf_allocVector) callbacks[Rf_allocVector_x])(t, len));
 }
 
 SEXP Rf_allocArray(SEXPTYPE t, SEXP dims) {
-	return ((call_Rf_allocArray) callbacks[Rf_allocArray_x])(t, dims);
+	return checkRef(((call_Rf_allocArray) callbacks[Rf_allocArray_x])(t, dims));
 }
 
 SEXP Rf_alloc3DArray(SEXPTYPE t, int x, int y, int z) {
@@ -298,7 +276,7 @@ SEXP Rf_alloc3DArray(SEXPTYPE t, int x, int y, int z) {
 }
 
 SEXP Rf_allocMatrix(SEXPTYPE mode, int nrow, int ncol) {
-	return ((call_Rf_allocMatrix) callbacks[Rf_allocMatrix_x])(mode, nrow, ncol);
+	return checkRef(((call_Rf_allocMatrix) callbacks[Rf_allocMatrix_x])(mode, nrow, ncol));
 }
 
 SEXP Rf_allocList(int x) {
@@ -327,23 +305,23 @@ SEXP Rf_dimnamesgets(SEXP x, SEXP y) {
 }
 
 SEXP Rf_eval(SEXP expr, SEXP env) {
-	return ((call_Rf_eval) callbacks[Rf_eval_x])(expr, env);
+	return checkRef(((call_Rf_eval) callbacks[Rf_eval_x])(expr, env));
 }
 
 SEXP Rf_findFun(SEXP symbol, SEXP rho) {
-	return ((call_Rf_findFun) callbacks[Rf_findFun_x])(symbol, rho);
+	return checkRef(((call_Rf_findFun) callbacks[Rf_findFun_x])(symbol, rho));
 }
 
 SEXP Rf_findVar(SEXP sym, SEXP rho) {
-	return ((call_Rf_findVar) callbacks[Rf_findVar_x])(sym, rho);
+	return checkRef(((call_Rf_findVar) callbacks[Rf_findVar_x])(sym, rho));
 }
 
 SEXP Rf_findVarInFrame(SEXP rho, SEXP sym) {
-	return ((call_Rf_findVarInFrame) callbacks[Rf_findVarInFrame_x])(rho, sym);
+	return checkRef(((call_Rf_findVarInFrame) callbacks[Rf_findVarInFrame_x])(rho, sym));
 }
 
 SEXP Rf_findVarInFrame3(SEXP rho, SEXP sym, Rboolean b) {
-	return ((call_Rf_findVarInFrame3) callbacks[Rf_findVarInFrame3_x])(rho, sym, b);
+	return checkRef(((call_Rf_findVarInFrame3) callbacks[Rf_findVarInFrame3_x])(rho, sym, b));
 }
 
 SEXP Rf_getAttrib(SEXP vec, SEXP name) {
@@ -353,15 +331,15 @@ SEXP Rf_getAttrib(SEXP vec, SEXP name) {
 }
 
 SEXP Rf_setAttrib(SEXP vec, SEXP name, SEXP val) {
-	return ((call_Rf_setAttrib) callbacks[Rf_setAttrib_x])(vec, name, val);
+	return checkRef(((call_Rf_setAttrib) callbacks[Rf_setAttrib_x])(vec, name, val));
 }
 
 SEXP Rf_duplicate(SEXP x) {
-	return ((call_Rf_duplicate) callbacks[Rf_duplicate_x])(x, 1);
+	return checkRef(((call_Rf_duplicate) callbacks[Rf_duplicate_x])(x, 1));
 }
 
 SEXP Rf_shallow_duplicate(SEXP x) {
-	return ((call_Rf_duplicate) callbacks[Rf_duplicate_x])(x, 0);
+	return checkRef(((call_Rf_duplicate) callbacks[Rf_duplicate_x])(x, 0));
 }
 
 R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
@@ -403,11 +381,11 @@ void Rf_PrintValue(SEXP x) {
 }
 
 SEXP Rf_install(const char *name) {
-	return ((call_Rf_install) callbacks[Rf_install_x])(name);
+	return checkRef(((call_Rf_install) callbacks[Rf_install_x])(name));
 }
 
 SEXP Rf_installChar(SEXP charsxp) {
-	return ((call_Rf_installChar) callbacks[Rf_installChar_x])(charsxp);
+	return checkRef(((call_Rf_installChar) callbacks[Rf_installChar_x])(charsxp));
 }
 
 Rboolean Rf_isNull(SEXP s) {
@@ -474,11 +452,11 @@ void R_ProcessEvents(void) {
 
 // Tools package support, not in public API
 SEXP R_NewHashedEnv(SEXP parent, SEXP size) {
-	return ((call_R_NewHashedEnv) callbacks[R_NewHashedEnv_x])(parent, size);
+	return checkRef(((call_R_NewHashedEnv) callbacks[R_NewHashedEnv_x])(parent, size));
 }
 
 SEXP Rf_classgets(SEXP vec, SEXP klass) {
-	return ((call_Rf_classgets) callbacks[Rf_classgets_x])(vec, klass);
+	return checkRef(((call_Rf_classgets) callbacks[Rf_classgets_x])(vec, klass));
 }
 
 const char *Rf_translateChar(SEXP x) {
@@ -500,7 +478,7 @@ const char *Rf_translateCharUTF8(SEXP x) {
 }
 
 SEXP Rf_lengthgets(SEXP x, R_len_t y) {
-	return ((call_Rf_lengthgets) callbacks[Rf_lengthgets_x])(x, y);
+	return checkRef(((call_Rf_lengthgets) callbacks[Rf_lengthgets_x])(x, y));
 }
 
 SEXP Rf_xlengthgets(SEXP x, R_xlen_t y) {
@@ -512,7 +490,7 @@ SEXP R_lsInternal(SEXP env, Rboolean all) {
 }
 
 SEXP R_lsInternal3(SEXP env, Rboolean all, Rboolean sorted) {
-	return ((call_R_lsInternal3) callbacks[R_lsInternal3_x])(env, all, sorted);
+	return checkRef(((call_R_lsInternal3) callbacks[R_lsInternal3_x])(env, all, sorted));
 }
 
 SEXP Rf_namesgets(SEXP x, SEXP y) {
@@ -520,11 +498,11 @@ SEXP Rf_namesgets(SEXP x, SEXP y) {
 }
 
 SEXP TAG(SEXP e) {
-	return ((call_TAG) callbacks[TAG_x])(e);
+	return checkRef(((call_TAG) callbacks[TAG_x])(e));
 }
 
 SEXP PRINTNAME(SEXP e) {
-	return ((call_PRINTNAME) callbacks[PRINTNAME_x])(e);
+	return checkRef(((call_PRINTNAME) callbacks[PRINTNAME_x])(e));
 }
 
 
@@ -539,11 +517,11 @@ SEXP CDAR(SEXP e) {
 }
 
 SEXP CADR(SEXP e) {
-	return ((call_CADR) callbacks[CADR_x])(e);
+	return checkRef(((call_CADR) callbacks[CADR_x])(e));
 }
 
 SEXP CDDR(SEXP e) {
-	return ((call_CDDR) callbacks[CDDR_x])(e);
+	return checkRef(((call_CDDR) callbacks[CDDR_x])(e));
 }
 
 SEXP CDDDR(SEXP e) {
@@ -552,7 +530,7 @@ SEXP CDDDR(SEXP e) {
 }
 
 SEXP CADDR(SEXP e) {
-	return ((call_CADDR) callbacks[CADDR_x])(e);
+	return checkRef(((call_CADDR) callbacks[CADDR_x])(e));
 }
 
 SEXP CADDDR(SEXP e) {
@@ -579,15 +557,15 @@ void SET_TAG(SEXP x, SEXP y) {
 }
 
 SEXP SETCAR(SEXP x, SEXP y) {
-	return ((call_SETCAR) callbacks[SETCAR_x])(x, y);
+	return checkRef(((call_SETCAR) callbacks[SETCAR_x])(x, y));
 }
 
 SEXP SETCDR(SEXP x, SEXP y) {
-	return ((call_SETCDR) callbacks[SETCDR_x])(x, y);
+	return checkRef(((call_SETCDR) callbacks[SETCDR_x])(x, y));
 }
 
 SEXP SETCADR(SEXP x, SEXP y) {
-	return ((call_SETCADR) callbacks[SETCADR_x])(x, y);
+	return checkRef(((call_SETCADR) callbacks[SETCADR_x])(x, y));
 }
 
 SEXP SETCADDR(SEXP x, SEXP y) {
@@ -655,7 +633,7 @@ void SET_CLOENV(SEXP x, SEXP v) {
 }
 
 SEXP SYMVALUE(SEXP x) {
-	return ((call_SYMVALUE) callbacks[SYMVALUE_x])(x);
+	return checkRef(((call_SYMVALUE) callbacks[SYMVALUE_x])(x));
 }
 
 SEXP INTERNAL(SEXP x) {
@@ -684,7 +662,7 @@ SEXP FRAME(SEXP x) {
 }
 
 SEXP ENCLOS(SEXP x) {
-	return ((call_ENCLOS) callbacks[ENCLOS_x])(x);
+	return checkRef(((call_ENCLOS) callbacks[ENCLOS_x])(x));
 }
 
 SEXP HASHTAB(SEXP x) {
@@ -713,15 +691,15 @@ void SET_HASHTAB(SEXP x, SEXP v) {
 }
 
 SEXP PRCODE(SEXP x) {
-	return ((call_PRCODE) callbacks[PRCODE_x])(x);
+	return checkRef(((call_PRCODE) callbacks[PRCODE_x])(x));
 }
 
 SEXP PRENV(SEXP x) {
-	return ((call_PRENV) callbacks[PRENV_x])(x);
+	return checkRef(((call_PRENV) callbacks[PRENV_x])(x));
 }
 
 SEXP PRVALUE(SEXP x) {
-	return ((call_PRVALUE) callbacks[PRVALUE_x])(x);
+	return checkRef(((call_PRVALUE) callbacks[PRVALUE_x])(x));
 }
 
 int PRSEEN(SEXP x) {
@@ -795,12 +773,12 @@ Rcomplex *COMPLEX(SEXP x){
 }
 
 SEXP STRING_ELT(SEXP x, R_xlen_t i) {
-	return ((call_STRING_ELT) callbacks[STRING_ELT_x])(x, i);
+	return checkRef(((call_STRING_ELT) callbacks[STRING_ELT_x])(x, i));
 }
 
 
 SEXP VECTOR_ELT(SEXP x, R_xlen_t i){
-	return ((call_VECTOR_ELT) callbacks[VECTOR_ELT_x])(x, i);
+	return checkRef(((call_VECTOR_ELT) callbacks[VECTOR_ELT_x])(x, i));
 }
 
 void SET_STRING_ELT(SEXP x, R_xlen_t i, SEXP v){
@@ -809,7 +787,7 @@ void SET_STRING_ELT(SEXP x, R_xlen_t i, SEXP v){
 
 
 SEXP SET_VECTOR_ELT(SEXP x, R_xlen_t i, SEXP v){
-	return ((call_SET_VECTOR_ELT) callbacks[SET_VECTOR_ELT_x])(x, i, v);
+	return checkRef(((call_SET_VECTOR_ELT) callbacks[SET_VECTOR_ELT_x])(x, i, v));
 }
 
 SEXP *STRING_PTR(SEXP x){
@@ -823,11 +801,11 @@ SEXP * NORET VECTOR_PTR(SEXP x){
 }
 
 SEXP Rf_asChar(SEXP x){
-	return ((call_Rf_asChar) callbacks[Rf_asChar_x])(x);
+	return checkRef(((call_Rf_asChar) callbacks[Rf_asChar_x])(x));
 }
 
 SEXP Rf_PairToVectorList(SEXP x){
-	return ((call_Rf_PairToVectorList) callbacks[Rf_PairToVectorList_x])(x);
+	return checkRef(((call_Rf_PairToVectorList) callbacks[Rf_PairToVectorList_x])(x));
 }
 
 SEXP Rf_VectorToPairList(SEXP x){
@@ -852,7 +830,7 @@ double Rf_asReal(SEXP x) {
 }
 
 Rcomplex Rf_asComplex(SEXP x){
-	unimplemented("Rf_asLogical");
+	unimplemented("Rf_asComplex");
 	Rcomplex c; return c;
 }
 
@@ -892,7 +870,7 @@ void SET_TYPEOF(SEXP x, int v){
 }
 
 SEXP SET_TYPEOF_FASTR(SEXP x, int v){
-	return ((call_SET_TYPEOF_FASTR) callbacks[SET_TYPEOF_FASTR_x])(x, v);
+	return checkRef(((call_SET_TYPEOF_FASTR) callbacks[SET_TYPEOF_FASTR_x])(x, v));
 }
 
 void SET_NAMED(SEXP x, int v){
@@ -962,7 +940,7 @@ Rboolean R_IsNamespaceEnv(SEXP rho) {
 }
 
 SEXP R_FindNamespace(SEXP info) {
-	return ((call_R_FindNamespace) callbacks[R_FindNamespace_x])(info);
+	return checkRef(((call_R_FindNamespace) callbacks[R_FindNamespace_x])(info));
 }
 
 SEXP R_NamespaceEnvSpec(SEXP rho) {
@@ -1033,7 +1011,7 @@ double R_strtod(const char *c, char **end) {
 }
 
 SEXP R_PromiseExpr(SEXP x) {
-	return ((call_R_PromiseExpr) callbacks[R_PromiseExpr_x])(x);
+	return checkRef(((call_R_PromiseExpr) callbacks[R_PromiseExpr_x])(x));
 }
 
 SEXP R_ClosureExpr(SEXP x) {
@@ -1045,7 +1023,7 @@ SEXP R_forceAndCall(SEXP e, int n, SEXP rho) {
 }
 
 SEXP R_MakeExternalPtr(void *p, SEXP tag, SEXP prot) {
-	return ((call_R_MakeExternalPtr) callbacks[R_MakeExternalPtr_x])(p, tag, prot);
+	return checkRef(((call_R_MakeExternalPtr) callbacks[R_MakeExternalPtr_x])(p, tag, prot));
 }
 
 void *R_ExternalPtrAddr(SEXP s) {
@@ -1053,11 +1031,11 @@ void *R_ExternalPtrAddr(SEXP s) {
 }
 
 SEXP R_ExternalPtrTag(SEXP s) {
-	return ((call_R_ExternalPtrTag) callbacks[R_ExternalPtrTag_x])(s);
+	return checkRef(((call_R_ExternalPtrTag) callbacks[R_ExternalPtrTag_x])(s));
 }
 
 SEXP R_ExternalPtrProtected(SEXP s) {
-	return ((call_R_ExternalPtrProtected) callbacks[R_ExternalPtrProtected_x])(s);
+	return checkRef(((call_R_ExternalPtrProtected) callbacks[R_ExternalPtrProtected_x])(s));
 }
 
 void R_SetExternalPtrAddr(SEXP s, void *p) {
@@ -1117,11 +1095,11 @@ void R_RunWeakRefFinalizer(SEXP w) {
 }
 
 SEXP R_do_slot(SEXP obj, SEXP name) {
-	return ((call_R_do_slot) callbacks[R_do_slot_x])(obj, name);
+	return checkRef(((call_R_do_slot) callbacks[R_do_slot_x])(obj, name));
 }
 
 SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
-	return ((call_R_do_slot_assign) callbacks[R_do_slot_assign_x])(obj, name, value);
+	return checkRef(((call_R_do_slot_assign) callbacks[R_do_slot_assign_x])(obj, name, value));
 }
 
 int R_has_slot(SEXP obj, SEXP name) {
@@ -1129,7 +1107,7 @@ int R_has_slot(SEXP obj, SEXP name) {
 }
 
 SEXP R_do_MAKE_CLASS(const char *what) {
-	return ((call_R_do_MAKE_CLASS) callbacks[R_do_MAKE_CLASS_x])(what);
+	return checkRef(((call_R_do_MAKE_CLASS) callbacks[R_do_MAKE_CLASS_x])(what));
 }
 
 SEXP R_getClassDef (const char *what) {
@@ -1137,11 +1115,11 @@ SEXP R_getClassDef (const char *what) {
 }
 
 SEXP R_do_new_object(SEXP class_def) {
-	return ((call_R_do_new_object) callbacks[R_do_new_object_x])(class_def);
+	return checkRef(((call_R_do_new_object) callbacks[R_do_new_object_x])(class_def));
 }
 
 static SEXP nfiGetMethodsNamespace() {
-    return ((call_R_MethodsNamespace) callbacks[R_MethodsNamespace_x])();
+    return checkRef(((call_R_MethodsNamespace) callbacks[R_MethodsNamespace_x])());
 }
 
 int R_check_class_etc (SEXP x, const char **valid) {

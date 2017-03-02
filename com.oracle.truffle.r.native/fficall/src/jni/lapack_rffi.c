@@ -26,7 +26,7 @@
 extern void ilaver_(int *major, int *minor, int *patch);
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1ilaver(JNIEnv *env, jclass klass, jintArray jversion) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Lapack_native_1ilaver(JNIEnv *env, jclass klass, jintArray jversion) {
 	int major;
 	int minor;
 	int patch;
@@ -42,7 +42,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1ilaver(JNIEnv *env
 extern int dgeev_(char *jobVL, char *jobVR, int *n, double *a, int *lda, double *wr, double *wi, double *vl, int *ldvl, double *vr, int *ldvr, double *work, int *lwork, int *info);
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dgeev(JNIEnv *env, jclass klass,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Lapack_native_1dgeev(JNIEnv *env, jclass klass,
         char jobVL, char jobVR, int n, jdoubleArray ja, int lda, jdoubleArray jwr, jdoubleArray jwi, jdoubleArray jvl, int ldvl, jdoubleArray jvr, int ldvr, jdoubleArray jwork, int lwork) {
     double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
     double *wr = (*env)->GetPrimitiveArrayCritical(env, jwr, NULL);
@@ -64,7 +64,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dgeev(JNIEnv *env,
 extern int dgeqp3_(int *m, int *n, double *a, int *lda, int *jpvt, double *tau, double *work, int *lwork, int *info);
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dgeqp3(JNIEnv *env, jclass klass,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Lapack_native_1dgeqp3(JNIEnv *env, jclass klass,
         int m, int n, jdoubleArray ja, int lda, jintArray jjpvt, jdoubleArray jtau, jdoubleArray jwork, int lwork) {
     double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
     int *jpvt = (*env)->GetPrimitiveArrayCritical(env, jjpvt, NULL);
@@ -82,7 +82,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dgeqp3(JNIEnv *env
 extern int dormqr_(char *side, char *trans, int *m, int *n, int *k, double *a, int *lda, double *tau, double *c, int *ldc, double *work, int *lwork, int *info);
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dormqr(JNIEnv *env, jclass klass,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Lapack_native_1dormqr(JNIEnv *env, jclass klass,
         char side, char trans, int m, int n, int k, jdoubleArray ja, int lda, jdoubleArray jtau, jdoubleArray jc, int ldc, jdoubleArray jwork, int lwork) {
     double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
     double *tau = (*env)->GetPrimitiveArrayCritical(env, jtau, NULL);
@@ -100,7 +100,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dormqr(JNIEnv *env
 extern int dtrtrs_(char *uplo, char *trans, char *diag, int *n, int *nrhs, double *a, int *lda, double *b, int *ldb, int *info);
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dtrtrs(JNIEnv *env, jclass klass,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Lapack_native_1dtrtrs(JNIEnv *env, jclass klass,
         char uplo, char trans, char diag, int n, int nrhs, jdoubleArray ja, int lda, jdoubleArray jb, int ldb) {
     double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
     double *b = (*env)->GetPrimitiveArrayCritical(env, jb, NULL);
@@ -114,7 +114,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dtrtrs(JNIEnv *env
 extern int dgetrf_(int *m, int *n, double *a, int *lda, int *ipiv, int *info);
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dgetrf(JNIEnv *env, jclass klass,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Lapack_native_1dgetrf(JNIEnv *env, jclass klass,
         int m, int n, jdoubleArray ja, int lda, jintArray jipiv) {
     double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
     int *ipiv = (*env)->GetPrimitiveArrayCritical(env, jipiv, NULL);
@@ -128,7 +128,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dgetrf(JNIEnv *env
 extern int dpotrf_(char *uplo, int *n, double *a, int *lda, int *info);
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dpotrf(JNIEnv *env, jclass klass,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Lapack_native_1dpotrf(JNIEnv *env, jclass klass,
         char uplo, int n, jdoubleArray ja, int lda) {
     double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
     int info;
@@ -140,7 +140,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dpotrf(JNIEnv *env
 extern int dpotri_(char *uplo, int *n, double *a, int *lda, int *info);
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dpotri(JNIEnv *env, jclass klass,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Lapack_native_1dpotri(JNIEnv *env, jclass klass,
         char uplo, int n, jdoubleArray ja, int lda) {
     double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
     int info;
@@ -152,7 +152,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dpotri(JNIEnv *env
 extern int dpstrf_(char *uplo, int *n, double *a, int *lda, int *piv, int *rank, double *tol, double *work, int *info);
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dpstrf(JNIEnv *env, jclass klass,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Lapack_native_1dpstrf(JNIEnv *env, jclass klass,
         char uplo, int n, jdoubleArray ja, int lda, jintArray jpiv, jintArray jrank, double tol, jdoubleArray jwork) {
     double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
     int *piv = (*env)->GetPrimitiveArrayCritical(env, jpiv, NULL);
@@ -170,7 +170,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dpstrf(JNIEnv *env
 extern int dgesv_(int *n, int *nrhs, double *a, int *lda, int *ipiv, double *b, int *ldb, int *info);
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dgesv(JNIEnv *env, jclass klass,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Lapack_native_1dgesv(JNIEnv *env, jclass klass,
         int n, int nrhs, jdoubleArray ja, int lda, jintArray jipiv, jdoubleArray jb, int ldb) {
     double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
     int *ipiv = (*env)->GetPrimitiveArrayCritical(env, jipiv, NULL);
@@ -186,7 +186,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dgesv(JNIEnv *env,
 extern double dlange_(char *norm, int *m, int *n, double *a, int *lda, double *work);
 
 JNIEXPORT jdouble JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dlange(JNIEnv *env, jclass klass,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Lapack_native_1dlange(JNIEnv *env, jclass klass,
         char norm, int m, int n, jdoubleArray ja, int lda, jdoubleArray jwork) {
     double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
     double *work = jwork == NULL ? NULL : (*env)->GetPrimitiveArrayCritical(env, jwork, NULL);
@@ -199,7 +199,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dlange(JNIEnv *env
 extern int dgecon_(char *norm, int *n, double *a, int *lda, double *anorm, double *rcond, double *work, int *iwork, int *info);
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dgecon(JNIEnv *env, jclass klass,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Lapack_native_1dgecon(JNIEnv *env, jclass klass,
         char norm, int n, jdoubleArray ja, int lda, double anorm, jdoubleArray jrcond, jdoubleArray jwork, jintArray jiwork) {
     double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
     double *rcond = (*env)->GetPrimitiveArrayCritical(env, jrcond, NULL);
@@ -218,7 +218,7 @@ extern int dsyevr_(char *jobz, char *range, char *uplo, int *n, double* a, int *
                 double* z, int *ldz, int* isuppz, double* work, int *lwork, int* iwork, int *liwork, int* info);
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dsyevr(JNIEnv *env, jclass klass,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Lapack_native_1dsyevr(JNIEnv *env, jclass klass,
 		char jobz, char range, char uplo, int n, jdoubleArray ja, int lda, double vl, double vu, int il, int iu, double abstol, jintArray jm, jdoubleArray jw,
 		                    jdoubleArray jz, int ldz, jintArray jisuppz, jdoubleArray jwork, int lwork, jintArray jiwork, int liwork) {
     double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,11 @@
 
 #include <rffiutils.h>
 
-extern int compress(char *dest, long *destlen, char *source, long *sourcelen);
-extern int uncompress(char *dest, long *destlen, char *source, long *sourcelen);
+extern int compress(char *dest, long *destlen, char *source, long sourcelen);
+extern int uncompress(char *dest, long *destlen, char *source, long sourcelen);
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Zip_native_1compress(JNIEnv *env, jclass c,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Zip_native_1compress(JNIEnv *env, jclass c,
 		jbyteArray jdest, jlong destlen, jbyteArray jsource, jlong sourcelen) {
     char *dest = (*env)->GetPrimitiveArrayCritical(env, jdest, NULL);
     char *source = (*env)->GetPrimitiveArrayCritical(env, jsource, NULL);
@@ -38,7 +38,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Zip_native_1compress(JNIEnv *env,
 }
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Zip_native_1uncompress(JNIEnv *env, jclass c,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Zip_native_1uncompress(JNIEnv *env, jclass c,
 		jbyteArray jdest, jlong destlen, jbyteArray jsource, jlong sourcelen) {
     char *dest = (*env)->GetPrimitiveArrayCritical(env, jdest, NULL);
     char *source = (*env)->GetPrimitiveArrayCritical(env, jsource, NULL);

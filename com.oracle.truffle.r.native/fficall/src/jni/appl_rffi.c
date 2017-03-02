@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ extern void dqrcf_(double *x, int *n, int *k, double *qraux, double *y, int *ny,
 extern void dqrls_(double *x, int *n, int *p, double *y, int *ny, double *tol, double *b, double *rsd, double *qty, int *k, int *jpvt, double *qraux, double *work);
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1RAppl_native_1dqrdc2(JNIEnv *env, jclass c,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1RAppl_native_1dqrdc2(JNIEnv *env, jclass c,
 		jdoubleArray jx, jint ldx, jint n, jint p, jdouble tol, jintArray jrank, jdoubleArray jqraux,
 		jintArray jpivot, jdoubleArray jwork) {
 	double *x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
@@ -45,7 +45,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1RAppl_native_1dqrdc2(JNIEnv *env,
 }
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1RAppl_native_1dqrcf(JNIEnv *env, jclass c,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1RAppl_native_1dqrcf(JNIEnv *env, jclass c,
 		jdoubleArray jx, jint n, jint k, jdoubleArray jqraux, jdoubleArray jy, jint ny, jdoubleArray jb, jintArray jinfo) {
 	double *x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
 	double *qraux = (*env)->GetPrimitiveArrayCritical(env, jqraux, NULL);
@@ -61,7 +61,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1RAppl_native_1dqrcf(JNIEnv *env, 
 }
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1RAppl_native_1dqrls(JNIEnv *env, jclass c,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1RAppl_native_1dqrls(JNIEnv *env, jclass c,
 		jdoubleArray jx, int n, int p, jdoubleArray jy, int ny, double tol, jdoubleArray jb,
 		jdoubleArray jrsd, jdoubleArray jqty, jintArray jk, jintArray jjpvt, jdoubleArray jqraux, jdoubleArray jwork) {
 	double *x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);

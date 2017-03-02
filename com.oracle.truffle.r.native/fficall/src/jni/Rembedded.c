@@ -307,7 +307,7 @@ void uR_Busy(int x) {
 
 void uR_CleanUp(SA_TYPE x, int y, int z) {
 	JNIEnv *jniEnv = getEnv();
-	jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_CleanUp", "(III)V", 1);
+	jmethodID methodID = checkGetMethodID(jniEnv, UpCallsRFFIClass, "R_CleanUp", "(III)I", 1);
 	(*jniEnv)->CallStaticVoidMethod(jniEnv, UpCallsRFFIClass, methodID, x, y, z);
 }
 

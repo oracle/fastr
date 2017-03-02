@@ -24,66 +24,15 @@
 #include <Rinterface.h>
 #include <trufflenfi.h>
 #include <rffiutils.h>
+#include "../common/rffi_variablesindex.h"
 
-// Indices into RFFIVariables enum
-// The commented out entries are not used as they are remapped
-// as functions and the name clashes with the callback index for that
-#define R_Home_x 0
-#define R_TempDir_x 1
-#define R_NilValue_x 2
-#define R_UnboundValue_x 3
-#define R_MissingArg_x 4
-//#define R_GlobalEnv_x 5
-#define R_EmptyEnv_x 6
-//#define R_BaseEnv_x 7
-//#define R_BaseNamespace_x 8
-//#define R_NamespaceRegistry_x 9
-#define R_Srcref_x 10
-#define R_Bracket2Symbol_x 11
-#define R_BracketSymbol_x 12
-#define R_BraceSymbol_x 13
-#define R_ClassSymbol_x 14
-#define R_DeviceSymbol_x 15
-#define R_DevicesSymbol_x 16
-#define R_DimNamesSymbol_x 17
-#define R_DimSymbol_x 18
-#define R_DollarSymbol_x 19
-#define R_DotsSymbol_x 20
-#define R_DropSymbol_x 21
-#define R_LastvalueSymbol_x 22
-#define R_LevelsSymbol_x 23
-#define R_ModeSymbol_x 24
-#define R_NameSymbol_x 25
-#define R_NamesSymbol_x 26
-#define R_NaRmSymbol_x 27
-#define R_PackageSymbol_x 28
-#define R_QuoteSymbol_x 29
-#define R_RowNamesSymbol_x 30
-#define R_SeedsSymbol_x 31
-#define R_SourceSymbol_x 32
-#define R_TspSymbol_x 33
-#define R_dot_defined_x 34
-#define R_dot_Method_x 35
-#define R_dot_target_x 36
-#define R_SrcrefSymbol_x 37
-#define R_SrcfileSymbol_x 38
-#define R_NaString_x 39
-#define R_NaN_x 40
-#define R_PosInf_x 41
-#define R_NegInf_x 42
-#define R_NaReal_x 43
-#define R_NaInt_x 44
-#define R_BlankString_x 45
-#define R_BlankScalarString_x 46
-#define R_BaseSymbol_x 47
-#define R_NamespaceEnvSymbol_x 48
-#define R_RestartToken_x 49
 
 static const char *R_Home_static;
 static const char *R_TempDir_static;
 static SEXP R_EmptyEnv_static;
 static SEXP R_Srcref_static;
 static SEXP R_NilValue_static;
+static SEXP R_NilValue_static2;
 static SEXP R_UnboundValue_static;
 static SEXP R_MissingArg_static;
 static SEXP R_BaseSymbol_static;
@@ -149,6 +98,31 @@ int max_contour_segments = 25000;
 
 static InputHandler BasicInputHandler = {2, -1, NULL};
 InputHandler *R_InputHandlers = &BasicInputHandler;
+
+// R_GlobalEnv et al are not a variables in FASTR as they are RContext specific
+SEXP FASTR_R_GlobalEnv() {
+	return ((call_R_GlobalEnv) callbacks[R_GlobalEnv_x])();
+}
+
+SEXP FASTR_R_BaseEnv() {
+	return ((call_R_BaseEnv) callbacks[R_BaseEnv_x])();
+}
+
+SEXP FASTR_R_BaseNamespace() {
+	return ((call_R_BaseNamespace) callbacks[R_BaseNamespace_x])();
+}
+
+SEXP FASTR_R_NamespaceRegistry() {
+	return ((call_R_NamespaceRegistry) callbacks[R_NamespaceRegistry_x])();
+}
+
+CTXT FASTR_GlobalContext() {
+	return ((call_R_GlobalContext) callbacks[R_GlobalContext_x])();
+}
+
+Rboolean FASTR_R_Interactive() {
+	return (int) ((call_R_Interactive) callbacks[R_Interactive_x])();
+}
 
 char *FASTR_R_Home() {
 	return (char *) R_Home_static;
@@ -347,46 +321,47 @@ void Call_initvar_string(int index, char *value) {
 }
 
 void Call_initvar_obj(int index, void* value) {
+	init_utils();
 	switch (index) {
-    case R_NilValue_x: R_NilValue_static = newObjectRef(value); break;
-    case R_UnboundValue_x: R_UnboundValue_static = newObjectRef(value); break;
-    case R_MissingArg_x: R_MissingArg_static = newObjectRef(value); break;
-//    case R_Srcref_x: R_Srcref_static = newObjectRef(value); break;
-    case R_EmptyEnv_x: R_EmptyEnv_static = newObjectRef(value); break;
-    case R_Bracket2Symbol_x: R_Bracket2Symbol_static = newObjectRef(value); break;
-    case R_BracketSymbol_x: R_BracketSymbol_static = newObjectRef(value); break;
-    case R_BraceSymbol_x: R_BraceSymbol_static = newObjectRef(value); break;
-    case R_ClassSymbol_x: R_ClassSymbol_static = newObjectRef(value); break;
-    case R_DeviceSymbol_x: R_DeviceSymbol_static = newObjectRef(value); break;
-    case R_DevicesSymbol_x: R_DevicesSymbol_static = newObjectRef(value); break;
-    case R_DimNamesSymbol_x: R_DimNamesSymbol_static = newObjectRef(value); break;
-    case R_DimSymbol_x: R_DimSymbol_static = newObjectRef(value); break;
-    case R_DollarSymbol_x: R_DollarSymbol_static = newObjectRef(value); break;
-    case R_DotsSymbol_x: R_DotsSymbol_static = newObjectRef(value); break;
-    case R_DropSymbol_x: R_DropSymbol_static = newObjectRef(value); break;
-    case R_LastvalueSymbol_x: R_LastvalueSymbol_static = newObjectRef(value); break;
-    case R_LevelsSymbol_x: R_LevelsSymbol_static = newObjectRef(value); break;
-    case R_ModeSymbol_x: R_ModeSymbol_static = newObjectRef(value); break;
-    case R_NameSymbol_x: R_NameSymbol_static = newObjectRef(value); break;
-    case R_NamesSymbol_x: R_NamesSymbol_static = newObjectRef(value); break;
-    case R_NaRmSymbol_x: R_NaRmSymbol_static = newObjectRef(value); break;
-    case R_PackageSymbol_x: R_PackageSymbol_static = newObjectRef(value); break;
-    case R_QuoteSymbol_x: R_QuoteSymbol_static = newObjectRef(value); break;
-    case R_RowNamesSymbol_x: R_RowNamesSymbol_static = newObjectRef(value); break;
-    case R_SeedsSymbol_x: R_SeedsSymbol_static = newObjectRef(value); break;
-    case R_SourceSymbol_x: R_SourceSymbol_static = newObjectRef(value); break;
-    case R_TspSymbol_x: R_TspSymbol_static = newObjectRef(value); break;
-    case R_dot_defined_x: R_dot_defined_static = newObjectRef(value); break;
-    case R_dot_Method_x: R_dot_Method_static = newObjectRef(value); break;
-    case R_dot_target_x: R_dot_target_static = newObjectRef(value); break;
-    case R_SrcrefSymbol_x: R_SrcrefSymbol_static = newObjectRef(value); break;
-    case R_SrcfileSymbol_x: R_SrcfileSymbol_static = newObjectRef(value); break;
-    case R_NaString_x: R_NaString_static = newObjectRef(value); break;
-    case R_BlankString_x: R_BlankString_static = newObjectRef(value); break;
-    case R_BlankScalarString_x: R_BlankString_static = newObjectRef(value); break;
-    case R_BaseSymbol_x: R_BaseSymbol_static = newObjectRef(value); break;
-    case R_NamespaceEnvSymbol_x: R_NamespaceEnvSymbol_static = newObjectRef(value); break;
-    // case R_RestartToken_x: R_RestartToken_static = newObjectRef(value); break;
+    case R_NilValue_x: R_NilValue_static = createGlobalRef(value, 1); break;
+    case R_UnboundValue_x: R_UnboundValue_static = createGlobalRef(value, 1); break;
+    case R_MissingArg_x: R_MissingArg_static = createGlobalRef(value, 1); break;
+    case R_Srcref_x: R_Srcref_static = createGlobalRef(value, 1); break;
+    case R_EmptyEnv_x: R_EmptyEnv_static = createGlobalRef(value, 1); break;
+    case R_Bracket2Symbol_x: R_Bracket2Symbol_static = createGlobalRef(value, 1); break;
+    case R_BracketSymbol_x: R_BracketSymbol_static = createGlobalRef(value, 1); break;
+    case R_BraceSymbol_x: R_BraceSymbol_static = createGlobalRef(value, 1); break;
+    case R_ClassSymbol_x: R_ClassSymbol_static = createGlobalRef(value, 1); break;
+    case R_DeviceSymbol_x: R_DeviceSymbol_static = createGlobalRef(value, 1); break;
+    case R_DevicesSymbol_x: R_DevicesSymbol_static = createGlobalRef(value, 1); break;
+    case R_DimNamesSymbol_x: R_DimNamesSymbol_static = createGlobalRef(value, 1); break;
+    case R_DimSymbol_x: R_DimSymbol_static = createGlobalRef(value, 1); break;
+    case R_DollarSymbol_x: R_DollarSymbol_static = createGlobalRef(value, 1); break;
+    case R_DotsSymbol_x: R_DotsSymbol_static = createGlobalRef(value, 1); break;
+    case R_DropSymbol_x: R_DropSymbol_static = createGlobalRef(value, 1); break;
+    case R_LastvalueSymbol_x: R_LastvalueSymbol_static = createGlobalRef(value, 1); break;
+    case R_LevelsSymbol_x: R_LevelsSymbol_static = createGlobalRef(value, 1); break;
+    case R_ModeSymbol_x: R_ModeSymbol_static = createGlobalRef(value, 1); break;
+    case R_NameSymbol_x: R_NameSymbol_static = createGlobalRef(value, 1); break;
+    case R_NamesSymbol_x: R_NamesSymbol_static = createGlobalRef(value, 1); break;
+    case R_NaRmSymbol_x: R_NaRmSymbol_static = createGlobalRef(value, 1); break;
+    case R_PackageSymbol_x: R_PackageSymbol_static = createGlobalRef(value, 1); break;
+    case R_QuoteSymbol_x: R_QuoteSymbol_static = createGlobalRef(value, 1); break;
+    case R_RowNamesSymbol_x: R_RowNamesSymbol_static = createGlobalRef(value, 1); break;
+    case R_SeedsSymbol_x: R_SeedsSymbol_static = createGlobalRef(value, 1); break;
+    case R_SourceSymbol_x: R_SourceSymbol_static = createGlobalRef(value, 1); break;
+    case R_TspSymbol_x: R_TspSymbol_static = createGlobalRef(value, 1); break;
+    case R_dot_defined_x: R_dot_defined_static = createGlobalRef(value, 1); break;
+    case R_dot_Method_x: R_dot_Method_static = createGlobalRef(value, 1); break;
+    case R_dot_target_x: R_dot_target_static = createGlobalRef(value, 1); break;
+    case R_SrcrefSymbol_x: R_SrcrefSymbol_static = createGlobalRef(value, 1); break;
+    case R_SrcfileSymbol_x: R_SrcfileSymbol_static = createGlobalRef(value, 1); break;
+    case R_NaString_x: R_NaString_static = createGlobalRef(value, 1); break;
+    case R_BlankString_x: R_BlankString_static = createGlobalRef(value, 1); break;
+    case R_BlankScalarString_x: R_BlankString_static = createGlobalRef(value, 1); break;
+    case R_BaseSymbol_x: R_BaseSymbol_static = createGlobalRef(value, 1); break;
+    case R_NamespaceEnvSymbol_x: R_NamespaceEnvSymbol_static = createGlobalRef(value, 1); break;
+    // case R_RestartToken_x: R_RestartToken_static = createGlobalRef(value, 1); break;
     default:
     	printf("Call_initvar_obj: unimplemented index %d\n", index);
     	exit(1);

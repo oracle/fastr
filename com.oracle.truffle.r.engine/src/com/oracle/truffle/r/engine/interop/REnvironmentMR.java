@@ -31,6 +31,7 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
@@ -46,6 +47,14 @@ public class REnvironmentMR {
         protected Object access(@SuppressWarnings("unused") REnvironment receiver) {
             return false;
         }
+    }
+
+    @Resolve(message = "TO_NATIVE")
+    public abstract static class REnvironmentToNativeNode extends Node {
+        protected Object access(REnvironment receiver) {
+            return new NativePointer(receiver);
+        }
+
     }
 
     @Resolve(message = "HAS_SIZE")

@@ -223,15 +223,27 @@ suite = {
       "jacoco" : "include",
     },
 
-    "com.oracle.truffle.r.runtime.ffi" : {
+    "com.oracle.truffle.r.ffi.impl" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.truffle.r.nodes",
+         "com.oracle.truffle.r.ffi.processor",
+         "com.oracle.truffle.r.nodes"
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
+      "annotationProcessors" : [
+          "truffle:TRUFFLE_DSL_PROCESSOR",
+          "R_FFI_PROCESSOR",
+      ],
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
+    },
+
+    "com.oracle.truffle.r.ffi.processor" : {
+      "sourceDirs" : ["src"],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "1.8",
+      "workingSets" : "FastR",
     },
 
     "com.oracle.truffle.r.native" : {
@@ -251,7 +263,7 @@ suite = {
     "com.oracle.truffle.r.library" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.truffle.r.runtime.ffi",
+        "com.oracle.truffle.r.ffi.impl",
       ],
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",
@@ -274,7 +286,7 @@ suite = {
       "dependencies" : [
         "com.oracle.truffle.r.native",
         "com.oracle.truffle.r.engine",
-        "com.oracle.truffle.r.runtime.ffi"
+        "com.oracle.truffle.r.ffi.impl"
       ],
       "class" : "FastRNativeRecommendedProject",
       "native" : "true",
@@ -286,19 +298,23 @@ suite = {
   "distributions" : {
     "TRUFFLE_R_PARSER_PROCESSOR" : {
       "description" : "internal support for generating the R parser",
-      "subDir" : "truffle",
       "dependencies" : ["com.oracle.truffle.r.parser.processor"],
       "exclude" : [
         "ANTLR-3.5",
         "ANTLR-C-3.5",
        ],
        "maven" : "False",
+    },
 
+    "R_FFI_PROCESSOR" : {
+      "description" : "internal support for generating FFI classes",
+      "dependencies" : ["com.oracle.truffle.r.ffi.processor"],
+      "maven" : "False",
     },
 
     "FASTR" : {
       "description" : "class files for compiling against FastR in a separate suite",
-      "dependencies" : ["com.oracle.truffle.r.engine", "com.oracle.truffle.r.runtime.ffi"],
+      "dependencies" : ["com.oracle.truffle.r.engine", "com.oracle.truffle.r.ffi.impl"],
       "mainClass" : "com.oracle.truffle.r.engine.shell.RCommand",
       "exclude" : [
         "truffle:JLINE",

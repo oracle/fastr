@@ -81,13 +81,14 @@ fficall.done: common.done
 	touch fficall.done
 else
 ifeq ($(FASTR_RFFI),llvm)
-fficall.done: common.done
+fficall.done: common.done 
 	$(MAKE) -C src/truffle_llvm all
 	touch fficall.done
 else
 ifeq ($(FASTR_RFFI),jni)
 fficall.done: common.done $(JNIBOOT_LIB)
 	$(MAKE) -C src/jni all
+	touch fficall.done
 
 jniboot.done:
 	$(MAKE) -C src/jniboot all
@@ -100,11 +101,10 @@ ifeq ($(OS_NAME),Darwin)
 endif
 else
 	$(error unknown value for FASTR_RFFI)
-endif
-	touch fficall.done
-endif
-endif
-endif
+endif #jni
+endif #llvm
+endif #nfi
+endif #managed
 
 common.done:
 	$(MAKE) -C src/common all	

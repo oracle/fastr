@@ -34,6 +34,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactoryFactory.VectorReadNodeGen;
+import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
@@ -192,5 +193,31 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
     @Override
     public CallTarget accessKeyInfo() {
         return null;
+    }
+
+    @Override
+    public CallTarget accessIsPointer() {
+        return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+            @Override
+            public Object execute(VirtualFrame frame) {
+                return false;
+            }
+        });
+    }
+
+    @Override
+    public CallTarget accessAsPointer() {
+        return null;
+    }
+
+    @Override
+    public CallTarget accessToNative() {
+        return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+            @Override
+            public Object execute(VirtualFrame frame) {
+                RAbstractVector arg = (RAbstractVector) ForeignAccess.getReceiver(frame);
+                return new NativePointer(arg);
+            }
+        });
     }
 }

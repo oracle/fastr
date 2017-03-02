@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,19 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.context.RContext;
 
+/**
+ * A tagging interface that indicates that a {@link TruffleObject} belongs to the R language. There
+ * are actually two sets of such types; those that are reflected at the R language level and
+ * therefore suitable for passing to other peer languages, e.g. {@link RIntVector}, and those that
+ * are used within the implementation for handling the {@code R FFI}, which uses Truffle interop
+ * internally. The latter types should not leak to other languages.
+ *
+ * As a convenience the interface provides a default implementation of
+ * {@link TruffleObject#getForeignAccess()} that indirects through
+ * {@link RContext#getRForeignAccessFactory()}. This is entirely optional and can be overridden to
+ * use an alternate implementation.
+ *
+ */
 public interface RTruffleObject extends TruffleObject {
     @Override
     default ForeignAccess getForeignAccess() {
