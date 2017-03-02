@@ -234,6 +234,12 @@ public class TestConnections extends TestRBase {
         assertEval("{ zz <- rawConnection(raw(0), \"wb\"); x <- c(\"a\", \"this will be truncated\", \"abc\"); nc <- c(3, 10, 3); writeChar(x, zz, nc, eos = NULL); writeChar(x, zz, eos = \"\\r\\n\"); res <- rawConnectionValue(zz); close(zz); res }");
     }
 
+    @Test
+    public void testFifoOpenInexisting() {
+        assertEval("capabilities(\"fifo\")");
+        assertEval(Output.IgnoreErrorContext, Output.IgnoreWarningContext, "{ fn <- '___fifo_2367253765'; zz <- fifo(fn, 'r', blocking = TRUE); close(zz); unlink(fn) }");
+    }
+
     private static final String[] LVAL = arr("T", "F");
 
     private static String[] arr(String... args) {
