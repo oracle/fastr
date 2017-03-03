@@ -28,5 +28,4 @@ setMethod("inspect.vehicle",
  })
 
 inspect.vehicle(new("Car"), new("Inspector"))
-# BUG print should not be necessary
-print(removeGeneric("inspect.vehicle"))
+removeGeneric("inspect.vehicle")

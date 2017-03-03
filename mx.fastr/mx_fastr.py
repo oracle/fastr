@@ -404,7 +404,7 @@ def _test_subpackage(name):
     return '.'.join((_test_package(), name))
 
 def _simple_generated_unit_tests():
-    return ','.join(map(_test_subpackage, ['engine.shell', 'library.base', 'library.grid', 'library.methods', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'parser', 'S4', 'rng', 'runtime.data']))
+    return ','.join(map(_test_subpackage, ['engine.shell', 'library.base', 'library.grid', 'library.methods', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'parser', 'rng', 'runtime.data']))
 
 def _simple_unit_tests():
     return ','.join([_simple_generated_unit_tests(), _test_subpackage('tck')])
