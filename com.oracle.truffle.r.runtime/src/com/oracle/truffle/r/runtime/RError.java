@@ -845,7 +845,8 @@ public final class RError extends RuntimeException {
         TRUNCATE_ONLY_WRITE_CONNECTION("can only truncate connections open for writing"),
         TRUNCATE_ONLY_OPEN_CONN("can only truncate an open connection"),
         TRUNCATE_NOT_ENABLED("truncation not enabled for this connection"),
-        TRUNCATE_UNSUPPORTED_FOR_CONN("cannot truncate connection: %s");
+        TRUNCATE_UNSUPPORTED_FOR_CONN("cannot truncate connection: %s"),
+        INCOMPLETE_STRING_AT_EOF_DISCARDED("incomplete string at end of file has been discarded");
 
         public final String message;
         final boolean hasArgs;

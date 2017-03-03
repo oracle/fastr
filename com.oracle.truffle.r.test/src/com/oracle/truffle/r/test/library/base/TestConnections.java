@@ -93,10 +93,15 @@ public class TestConnections extends TestRBase {
         assertEval(TestBase.template("{ readChar(file(\"%0\"), 3) }", testDir.subDir("wc1")));
     }
 
-    @Test
+    @Test(timeout = 1000)
     public void testFileWriteReadBin() {
         assertEval(TestBase.template("{ writeBin(\"abc\", file(\"%0\", open=\"wb\")) }", testDir.subDir("wb1")));
         assertEval(TestBase.template("{ readBin(file(\"%0\", \"rb\"), 3) }", testDir.subDir("wb1")));
+
+        assertEval(TestBase.template("{ zz <- file(\"%0\", open=\"wb\"); writeChar(\"abc\", zz); close(zz); readBin(file(\"%0\", \"rb\"), character(), 4) }", testDir.subDir("wb2")));
+
+        // incomplete line at the end of file
+        assertEval(TestBase.template("{ cat('abc', file = '%0'); readBin(file('%0', 'rb'), character(), 2) }", testDir.subDir("wb3")));
     }
 
     @Test

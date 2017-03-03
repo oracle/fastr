@@ -246,29 +246,6 @@ abstract class DelegateRConnection implements RConnection {
     }
 
     /**
-     * Reads null-terminated character strings from a {@link ReadableByteChannel}.
-     */
-    public static byte[] readBinCharsHelper(ReadableByteChannel channel) throws IOException {
-        ByteBuffer buf = ByteBuffer.allocate(1);
-        int numRead = channel.read(buf);
-        if (numRead <= 0) {
-            return null;
-        }
-        int totalRead = 0;
-        byte[] buffer = new byte[64];
-        while (true) {
-            buffer = DelegateRConnection.checkBuffer(buffer, totalRead);
-            buffer[totalRead++] = (byte) (buf.get() & 0xFF);
-            if (numRead == 0) {
-                break;
-            }
-            buf.clear();
-            numRead = channel.read(buf);
-        }
-        return buffer;
-    }
-
-    /**
      * Reads a specified amount of characters.
      *
      * @param nchars Number of characters to read.
@@ -458,9 +435,29 @@ abstract class DelegateRConnection implements RConnection {
         return getChannel().read(buffer);
     }
 
+    /**
+     * Reads null-terminated character strings from a {@link ReadableByteChannel}.
+     */
     @Override
     public byte[] readBinChars() throws IOException {
-        return DelegateRConnection.readBinCharsHelper(getChannel());
+        int numRead = read();
+        if (numRead <= 0) {
+            return null;
+        }
+        int totalRead = 0;
+        byte[] buffer = new byte[64];
+        while (true) {
+            buffer = DelegateRConnection.checkBuffer(buffer, totalRead);
+            buffer[totalRead++] = (byte) numRead;
+            if (numRead == 0) {
+                break;
+            } else if (numRead == -1) {
+                RError.warning(RError.SHOW_CALLER, RError.Message.INCOMPLETE_STRING_AT_EOF_DISCARDED);
+                return null;
+            }
+            numRead = read();
+        }
+        return buffer;
     }
 
     @Override
