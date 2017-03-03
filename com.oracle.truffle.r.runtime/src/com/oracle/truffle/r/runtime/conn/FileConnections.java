@@ -139,12 +139,14 @@ public class FileConnections {
                 delegate = new FileWriteBinaryConnection(base, false);
                 break;
             case ReadWriteTrunc:
-                delegate = new FileReadWriteTextConnection(base);
+                delegate = new FileReadWriteTextConnection(base, false);
                 break;
             case ReadWriteTruncBinary:
                 delegate = new FileReadWriteBinaryConnection(base, false);
                 break;
             case ReadAppend:
+                delegate = new FileReadWriteTextConnection(base, true);
+                break;
             case ReadAppendBinary:
                 delegate = new FileReadWriteBinaryConnection(base, true);
                 break;
@@ -316,7 +318,6 @@ public class FileConnections {
                 opts.add(StandardOpenOption.TRUNCATE_EXISTING);
             }
             channel = FileChannel.open(Paths.get(base.path), opts.toArray(new OpenOption[opts.size()]));
-
         }
 
         @Override
@@ -336,7 +337,7 @@ public class FileConnections {
 
         @Override
         public void truncate() throws IOException {
-            channel.truncate(0);
+            channel.truncate(channel.position());
         }
 
     }
@@ -348,24 +349,33 @@ public class FileConnections {
         private long writeOffset;
         private SeekRWMode lastMode = SeekRWMode.READ;
 
-        FileReadWriteTextConnection(BasePathRConnection base) throws IOException {
+        FileReadWriteTextConnection(BasePathRConnection base, boolean append) throws IOException {
             super(base);
             List<OpenOption> opts = new ArrayList<>();
             opts.add(StandardOpenOption.READ);
             opts.add(StandardOpenOption.WRITE);
             opts.add(StandardOpenOption.CREATE);
-            opts.add(StandardOpenOption.TRUNCATE_EXISTING);
             channel = FileChannel.open(Paths.get(base.path), opts.toArray(new OpenOption[opts.size()]));
+            if (append) {
+                writeOffset = channel.size();
+            } else {
+                channel.truncate(0);
+            }
         }
 
         @Override
         public int read() throws IOException {
             setReadPosition();
-            final int value = super.read();
+            final int value = super.readInternal();
             if (value != -1) {
                 readOffset++;
             }
             return value;
+        }
+
+        @Override
+        protected void updateReadOffset(int nBytesConsumed) {
+            readOffset += nBytesConsumed;
         }
 
         @Override
@@ -425,6 +435,24 @@ public class FileConnections {
         }
 
         @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            setReadPosition();
+            return super.readBin(buffer);
+        }
+
+        @Override
+        public String readChar(int nchars, boolean useBytes) throws IOException {
+            setReadPosition();
+            return super.readChar(nchars, useBytes);
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            setReadPosition();
+            return super.readBinChars();
+        }
+
+        @Override
         public void close() throws IOException {
             channel.close();
         }
@@ -434,6 +462,24 @@ public class FileConnections {
             setWritePosition();
             super.writeLines(lines, sep, useBytes);
             writeOffset = channel.position();
+        }
+
+        @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            setWritePosition();
+            super.writeBin(buffer);
+        }
+
+        @Override
+        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
+            setWritePosition();
+            super.writeChar(s, pad, eos, useBytes);
+        }
+
+        @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            setWritePosition();
+            super.writeString(s, nl);
         }
 
         @Override
@@ -497,6 +543,11 @@ public class FileConnections {
                 readOffset++;
             }
             return value;
+        }
+
+        @Override
+        protected void updateReadOffset(int nBytesConsumed) {
+            readOffset += nBytesConsumed;
         }
 
         @Override

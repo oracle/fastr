@@ -765,7 +765,7 @@ public class ConnectionSupport {
         @Override
         public ByteChannel getChannel() throws IOException {
             checkOpen();
-            return theConnection.getChannel();
+            return theConnection;
         }
 
         @Override
