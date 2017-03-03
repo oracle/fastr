@@ -375,6 +375,11 @@ public class TestFunctions extends TestBase {
     }
 
     @Test
+    public void testFunctionResultPrinting() {
+        assertEval("{ foo <- function() { x <- 1; return(x) }; foo() }");
+    }
+
+    @Test
     public void testIsPrimitive() {
         assertEval("{ is.primitive(is.primitive) }");
         assertEval("{ is.primitive(is.function) }");
