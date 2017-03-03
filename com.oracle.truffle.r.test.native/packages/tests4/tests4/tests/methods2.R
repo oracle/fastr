@@ -1,5 +1,7 @@
 # test from Hadley Wickham's book
 
+stopifnot(require(methods))
+stopifnot(require(tests4))
 setGeneric("sides", function(object) {
   standardGeneric("sides")
 })
@@ -19,5 +21,6 @@ setMethod("sides", signature("Square"),   function(object) 4)
 setMethod("sides", signature("Circle"),   function(object) Inf)
 
 res<-print(showMethods(class = "Polygon"))
-removeGeneric("sides")
+# BUG print should not be necessary
+print(removeGeneric("sides"))
 print(res)

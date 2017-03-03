@@ -260,6 +260,10 @@ set.repos <- function() {
 	repos <- character()
 	needCran <- F
 	if ("BIOC" %in% repo.list) {
+		# source("http://bioconductor.org/biocLite.R")
+		# repos["BIOC"] <- biocinstallRepos()[1]
+		# above is correct but provokes bug:
+		# Error in read.table():  more columns than column names
 		repos["BIOC"] <- "https://bioconductor.org/packages/3.4/bioc"
 		needCran <- T
 	}

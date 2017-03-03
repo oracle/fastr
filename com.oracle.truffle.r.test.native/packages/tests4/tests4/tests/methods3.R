@@ -1,5 +1,7 @@
 # test from Hadley Wickham's book
 
+stopifnot(require(methods))
+stopifnot(require(tests4))
 setGeneric("sides", valueClass = "numeric", function(object) {
   standardGeneric("sides")
 })
@@ -11,4 +13,4 @@ setClass("Square", contains = "Polygon")
 # setClass("Circle", contains = "Shape")
 
 setMethod("sides", signature("Triangle"), function(object) "three")
-tryCatch({sides(new("Triangle"))}, error = function(e) { removeGeneric("sides"); stop(e) })
+try(tryCatch({sides(new("Triangle"))}, error = function(e) { removeGeneric("sides"); stop(e) }))
