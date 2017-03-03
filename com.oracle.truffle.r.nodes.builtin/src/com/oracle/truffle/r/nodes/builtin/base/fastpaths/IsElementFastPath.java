@@ -37,10 +37,14 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class IsElementFastPath extends RFastPathNode {
 
-    @Specialization(guards = "el.getLength() == 1")
-    protected Byte iselementOne(RAbstractStringVector el, RAbstractStringVector set,
+    @Specialization(guards = {"elIn.getLength() == 1", "elIn.getClass() == elClass", "setIn.getClass() == setClass"})
+    protected Byte iselementOneCachedString(RAbstractStringVector elIn, RAbstractStringVector setIn,
+                    @Cached("elIn.getClass()") Class<? extends RAbstractStringVector> elClass,
+                    @Cached("setIn.getClass()") Class<? extends RAbstractStringVector> setClass,
                     @Cached("create()") BranchProfile trueProfile,
                     @Cached("create()") BranchProfile falseProfile) {
+        RAbstractStringVector el = elClass.cast(elIn);
+        RAbstractStringVector set = setClass.cast(setIn);
         String element = el.getDataAt(0);
         int length = set.getLength();
         for (int i = 0; i < length; i++) {
@@ -51,6 +55,13 @@ public abstract class IsElementFastPath extends RFastPathNode {
         }
         falseProfile.enter();
         return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization(replaces = "iselementOneCachedString")
+    protected Byte iselementOne(RAbstractStringVector elIn, RAbstractStringVector setIn,
+                    @Cached("create()") BranchProfile trueProfile,
+                    @Cached("create()") BranchProfile falseProfile) {
+        return iselementOneCachedString(elIn, setIn, RAbstractStringVector.class, RAbstractStringVector.class, trueProfile, falseProfile);
     }
 
     @Specialization

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.function.ArgumentStatePush;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
@@ -46,8 +47,9 @@ public final class OptForcedEagerPromiseNode extends PromiseNode {
     @Child private RNode expr;
     @Child private PromiseHelperNode promiseHelper;
 
+    private final ConditionProfile firstPromise = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile promiseCallerProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile nonPromiseProfile = BranchProfile.create();
-    private final BranchProfile promiseCallerProfile = BranchProfile.create();
     private final RPromiseFactory factory;
     private final int wrapIndex;
 
@@ -83,9 +85,11 @@ public final class OptForcedEagerPromiseNode extends PromiseNode {
             nonPromiseProfile.enter();
         }
         RCaller call = RArguments.getCall(frame);
-        while (call.isPromise()) {
-            promiseCallerProfile.enter();
+        if (firstPromise.profile(call.isPromise())) {
             call = call.getParent();
+            while (promiseCallerProfile.profile(call.isPromise())) {
+                call = call.getParent();
+            }
         }
         return factory.createEagerSuppliedPromise(value, alwaysValidAssumption, call, null, wrapIndex);
     }
