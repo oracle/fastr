@@ -58,6 +58,8 @@ final class PeekLocalVariableNode extends RNode implements RSyntaxLookup {
     private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
     private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
+    @Child private SetVisibilityNode visibility;
+
     PeekLocalVariableNode(String name) {
         this.read = LocalReadVariableNode.create(name, false);
     }
@@ -76,6 +78,19 @@ final class PeekLocalVariableNode extends RNode implements RSyntaxLookup {
             return valueProfile.profile(promise.getValue());
         }
         return valueProfile.profile(value);
+    }
+
+    @Override
+    public Object visibleExecute(VirtualFrame frame) {
+        try {
+            return execute(frame);
+        } finally {
+            if (visibility == null) {
+                CompilerDirectives.transferToInterpreter();
+                visibility = insert(SetVisibilityNode.create());
+            }
+            visibility.execute(frame, true);
+        }
     }
 
     @Override
