@@ -217,6 +217,7 @@ public class RawConnections {
 
         @Override
         public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            invalidateCache();
             return RawRConnection.seek(channel, offset, seekMode, seekRWMode);
         }
 

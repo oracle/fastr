@@ -268,6 +268,12 @@ public class FileConnections {
         }
 
         @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            invalidateCache();
+            return DelegateRConnection.seek(channel, offset, seekMode, seekRWMode);
+        }
+
+        @Override
         public ByteChannel getChannel() {
             return channel;
         }
@@ -425,6 +431,7 @@ public class FileConnections {
                 default:
                     throw RError.nyi(RError.SHOW_CALLER, "seek mode");
             }
+            invalidateCache();
             return result;
         }
 
@@ -581,6 +588,7 @@ public class FileConnections {
                     writeOffset = offset;
                     break;
             }
+            invalidateCache();
             return result;
         }
 
