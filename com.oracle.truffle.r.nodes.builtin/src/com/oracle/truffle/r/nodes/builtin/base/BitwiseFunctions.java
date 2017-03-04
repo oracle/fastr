@@ -17,6 +17,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVect
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.shouldBe;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
@@ -205,8 +206,9 @@ public class BitwiseFunctions {
 
         static {
             Casts casts = new Casts(BitwiseShiftR.class);
-            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.SHIFTR.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
-            casts.arg("n").mapIf(stringValue(), asStringVector(), asIntegerVector());
+            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.SHIFTR.name).mustBe(missingValue().not()).mustBe(
+                            doubleValue().or(integerValue())).asIntegerVector();
+            casts.arg("n").allowNull().mustBe(missingValue().not()).mapIf(stringValue(), asStringVector(), asIntegerVector());
         }
 
         @Specialization
@@ -234,7 +236,7 @@ public class BitwiseFunctions {
             Casts casts = new Casts(BitwiseShiftL.class);
             casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.SHIFTL.name).mustBe(
                             doubleValue().or(integerValue())).asIntegerVector();
-            casts.arg("n").allowNull().mapIf(stringValue(), chain(asStringVector()).with(shouldBe(anyValue().not(), RError.Message.NA_INTRODUCED_COERCION)).end(),
+            casts.arg("n").allowNull().mustBe(missingValue().not()).mapIf(stringValue(), chain(asStringVector()).with(shouldBe(anyValue().not(), RError.Message.NA_INTRODUCED_COERCION)).end(),
                             asIntegerVector());
         }
 

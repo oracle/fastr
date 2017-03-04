@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -40,7 +42,7 @@ public abstract class AsRaw extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(AsRaw.class);
-        casts.arg("x").allowNull().asRawVector();
+        casts.arg("x").mustBe(missingValue().not(), RError.Message.ARGUMENTS_PASSED, 0, "'as.raw'", 1).asRawVector();
     }
 
     @Specialization

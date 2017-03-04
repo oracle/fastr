@@ -24,6 +24,8 @@ public class TestBuiltin_bitwiseShiftL extends TestBase {
 
     @Test
     public void testBitwiseFunctions() {
+        assertEval(Output.MayIgnoreErrorContext, "{ .Internal(bitwiseShiftL(, 1))}");
+        assertEval(Output.MayIgnoreErrorContext, "{ .Internal(bitwiseShiftL(200, ))}");
         assertEval("{ bitwShiftL(c(10,11,12,13,14,15), c(1,1,1,1,1,1)) }");
         assertEval("{ bitwShiftL(c(100,200,300), 1) }");
         assertEval("{ bitwShiftL(c(25,57,66), c(10,20,30,40,50,60)) }");

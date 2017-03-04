@@ -32,6 +32,10 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "break", kind = PRIMITIVE, parameterNames = {"x"}, behavior = COMPLEX)
 public abstract class BreakBuiltin extends RBuiltinNode {
+    static {
+        Casts.noCasts(BreakBuiltin.class);
+    }
+
     @Specialization
     protected Object doIt(@SuppressWarnings("unused") Object x) {
         throw RInternalError.unimplemented();

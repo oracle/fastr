@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -53,5 +53,11 @@ public class TestBuiltin_bincode extends TestBase {
         assertEval("{ x <- c(0, 0.01, 0.5, 0.99, 1); b <- c(0, 0, 1, 1); .bincode(x, b, FALSE) }");
         assertEval("{ x <- c(0, 0.01, 0.5, 0.99, 1); b <- c(0, 0, 1, 1); .bincode(x, b, TRUE, TRUE) }");
         assertEval("{ x <- c(0, 0.01, 0.5, 0.99, 1); b <- c(0, 0, 1, 1); .bincode(x, b, FALSE, TRUE) }");
+
+        assertEval("{ .Internal(bincode(NULL, 2, T, T)) }");
+        assertEval("{ .Internal(bincode(2, NULL, T, T)) }");
+
+        assertEval(Output.MayIgnoreErrorContext, "{ .Internal(bincode(, 1, T, T)) }");
+        assertEval(Output.MayIgnoreErrorContext, "{ .Internal(bincode(1, ,T, T)) }");
     }
 }

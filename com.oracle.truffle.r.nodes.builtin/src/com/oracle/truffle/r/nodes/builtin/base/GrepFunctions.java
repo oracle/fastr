@@ -11,7 +11,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -101,11 +103,11 @@ public class GrepFunctions {
         }
 
         protected static void castCosts(Casts casts) {
-            casts.arg("costs").asIntegerVector();
+            casts.arg("costs").defaultError(RError.Message.INVALID_ARG, "costs").mustBe((missingValue().or(nullValue()).not())).asIntegerVector();
         }
 
         protected static void castBounds(Casts casts) {
-            casts.arg("bounds").asDoubleVector();
+            casts.arg("bounds").defaultError(RError.Message.INVALID_ARG, "bounds").mustBe((missingValue().or(nullValue()).not())).asDoubleVector();
         }
 
         /**

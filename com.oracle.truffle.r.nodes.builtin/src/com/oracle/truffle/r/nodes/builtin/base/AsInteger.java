@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -29,8 +32,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @RBuiltin(name = "as.integer", kind = PRIMITIVE, parameterNames = {"x", "..."}, behavior = PURE)
@@ -40,16 +42,11 @@ public abstract class AsInteger extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(AsInteger.class);
-        casts.arg("x").asIntegerVector();
+        casts.arg("x").returnIf(missingValue().or(nullValue()), emptyIntegerVector()).asIntegerVector();
     }
 
     @Specialization
-    protected RAbstractIntVector asInteger(@SuppressWarnings("unused") RNull n) {
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @Specialization
-    protected RAbstractIntVector asInteger(RAbstractIntVector v) {
+    protected RAbstractIntVector asInteger(RAbstractIntVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot) {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {

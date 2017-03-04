@@ -249,6 +249,7 @@ public class TestBuiltin_ascharacter extends TestBase {
 
     @Test
     public void testAsCharacter() {
+        assertEval("{ as.character() }");
         assertEval("{ as.character(1) }");
         assertEval("{ as.character(1L) }");
         assertEval("{ as.character(TRUE) }");

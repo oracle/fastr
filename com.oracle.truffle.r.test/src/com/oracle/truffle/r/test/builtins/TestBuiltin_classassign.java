@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -13,6 +13,7 @@ package com.oracle.truffle.r.test.builtins;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.TestBase.Output;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_classassign extends TestBase {
@@ -126,6 +127,11 @@ public class TestBuiltin_classassign extends TestBase {
 
     @Test
     public void testUpdateClass() {
+        assertEval(Output.MayIgnoreErrorContext, "{`class<-`(, \"foo\") }");
+        assertEval(Output.MayIgnoreErrorContext, "{`class<-`(, ) }");
+        assertEval(Output.MayIgnoreErrorContext, "{x=1; `class<-`(x, ) }");
+        assertEval(Output.MayIgnoreErrorContext, "{`class<-`(NULL, \"first\") }");
+
         assertEval("{x=1; class(x)<-\"first\"; x;}");
 
         assertEval("{ x=1;class(x)<-\"character\"; x}");

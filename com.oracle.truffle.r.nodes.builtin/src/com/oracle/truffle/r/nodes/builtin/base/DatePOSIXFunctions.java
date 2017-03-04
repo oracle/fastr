@@ -179,8 +179,8 @@ public class DatePOSIXFunctions {
 
         static {
             Casts casts = new Casts(AsPOSIXlt.class);
-            casts.arg("x").mapNull(emptyDoubleVector()).asDoubleVector(true, false, false);
-            casts.arg("tz").asStringVector().findFirst("");
+            casts.arg("x").mapNull(emptyDoubleVector()).mustBe(missingValue().not()).asDoubleVector(true, false, false);
+            casts.arg("tz").mustNotBeMissing().asStringVector().findFirst("");
         }
 
         @Specialization

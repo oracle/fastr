@@ -22,6 +22,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -32,13 +33,31 @@ public abstract class Bincode extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(Bincode.class);
-        casts.arg("x").asDoubleVector();
+        casts.arg("x").mustNotBeMissing(RError.Message.ARGUMENT_EMPTY, 1).asDoubleVector();
 
-        casts.arg("breaks").asDoubleVector();
+        casts.arg("breaks").mustNotBeMissing(RError.Message.ARGUMENT_EMPTY, 2).asDoubleVector();
 
         casts.arg("right").asLogicalVector().findFirst().map(toBoolean());
 
         casts.arg("include.lowest").asLogicalVector().findFirst().map(toBoolean());
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    RIntVector formatC(RNull x, RAbstractDoubleVector breaks, boolean right, boolean includeBorder) {
+        return RDataFactory.createEmptyIntVector();
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    RIntVector formatC(RNull x, RNull breaks, boolean right, boolean includeBorder) {
+        return RDataFactory.createEmptyIntVector();
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    RIntVector formatC(RAbstractDoubleVector x, RNull breaks, boolean right, boolean includeBorder) {
+        return RDataFactory.createIntVector(x.getLength(), true);
     }
 
     @Specialization
