@@ -12,6 +12,5 @@ setMethod("foo", signature("A1", "A2"), function(a, b) "1-2")
 setMethod("foo", signature("A2", "A1"), function(a, b) "2-1")
 
 res<-print(foo(new("A2"), new("A2")))
-# BUG print shoukld not be necessary
-print(removeGeneric("foo"))
+removeGeneric("foo")
 print(res)

@@ -21,6 +21,5 @@ setMethod("sides", signature("Square"),   function(object) 4)
 setMethod("sides", signature("Circle"),   function(object) Inf)
 
 res<-print(showMethods(class = "Polygon"))
-# BUG print should not be necessary
-print(removeGeneric("sides"))
+removeGeneric("sides")
 print(res)

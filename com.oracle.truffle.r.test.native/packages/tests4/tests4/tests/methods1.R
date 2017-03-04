@@ -21,6 +21,5 @@ setMethod("sides", signature("Square"),   function(object) 4)
 # setMethod("sides", signature("Circle"),   function(object) Inf)
 
 res<-print(showMethods("sides"))
-# BUG ALERT:In FastR without the "print" the result from removeGeneric (TRUE) is not printed.
-print(removeGeneric("sides"))
+removeGeneric("sides")
 print(res)
