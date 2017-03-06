@@ -25,6 +25,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.library.fastrGrid.GridStateGetNode;
 import com.oracle.truffle.r.library.fastrGrid.GridStateSetNode;
 import com.oracle.truffle.r.library.fastrGrid.IgnoredGridExternal;
+import com.oracle.truffle.r.library.fastrGrid.LCircle;
 import com.oracle.truffle.r.library.fastrGrid.LGridDirty;
 import com.oracle.truffle.r.library.fastrGrid.LInitGrid;
 import com.oracle.truffle.r.library.fastrGrid.LInitViewPortStack;
@@ -696,6 +697,8 @@ public class CallAndExternalFunctions {
                     return LText.create();
                 case "L_segments":
                     return LSegments.create();
+                case "L_circle":
+                    return LCircle.create();
 
                 // Simple grid state access
                 case "L_getGPar":

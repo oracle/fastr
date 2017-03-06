@@ -33,9 +33,15 @@ public interface GridDevice {
 
     void drawRect(DrawingContext ctx, double leftX, double topY, double heigh, double width);
 
+    /**
+     * Connects given points with a line, there has to be at least two points in order to actually
+     * draw somethig.
+     */
     void drawPolyLines(DrawingContext ctx, double[] x, double[] y, int startIndex, int length);
 
-    void drawString(DrawingContext ctx, double x, double y, double rotation, String text);
+    void drawCircle(DrawingContext ctx, double centerX, double centerY, double radius);
+
+    void drawString(DrawingContext ctx, double leftX, double bottomY, double rotation, String text);
 
     /**
      * @return The width of the device in inches.

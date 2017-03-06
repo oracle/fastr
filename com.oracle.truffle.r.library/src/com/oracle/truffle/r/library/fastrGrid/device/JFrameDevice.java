@@ -25,7 +25,9 @@ package com.oracle.truffle.r.library.fastrGrid.device;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.util.function.Supplier;
@@ -51,6 +53,8 @@ public class JFrameDevice implements GridDevice {
             graphics.translate(0, currentFrame.getHeight());
             graphics.scale(72, -72); // doc: 72 points ~ 1 inch
             graphics.setStroke(new BasicStroke(1f / 72f));
+            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            graphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
         } else {
             noTranform(() -> {
                 graphics.clearRect(0, 0, currentFrame.getWidth(), currentFrame.getHeight());
@@ -79,11 +83,17 @@ public class JFrameDevice implements GridDevice {
     }
 
     @Override
-    public void drawString(DrawingContext ctx, double x, double y, double rotation, String text) {
+    public void drawCircle(DrawingContext ctx, double centerX, double centerY, double radius) {
+        setContext(ctx);
+        graphics.draw(new Ellipse2D.Double(centerX - radius, centerY - radius, radius * 2d, radius * 2d));
+    }
+
+    @Override
+    public void drawString(DrawingContext ctx, double leftX, double bottomY, double rotation, String text) {
         setContext(ctx);
         noTranform(() -> {
             graphics.rotate(rotation);
-            graphics.drawString(text, (float) x * 72f, (float) (currentFrame.getContentPane().getHeight() - y * 72f));
+            graphics.drawString(text, (float) leftX * 72f, (float) (currentFrame.getContentPane().getHeight() - bottomY * 72f));
             return null;
         });
     }
