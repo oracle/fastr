@@ -92,7 +92,7 @@ public class TextConnections {
         private int index;
 
         TextReadRConnection(TextRConnection base, RAbstractStringVector object) {
-            super(base);
+            super(base, 0);
             assert object != null;
             StringBuffer sb = new StringBuffer();
             for (int i = 0; i < object.getLength(); i++) {
@@ -314,7 +314,7 @@ public class TextConnections {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             throw RError.error(RError.SHOW_CALLER, RError.Message.SEEK_NOT_RELEVANT_FOR_TEXT_CON);
         }
 

@@ -30,4 +30,8 @@ abstract class DelegateReadWriteRConnection extends DelegateRConnection {
         super(base);
     }
 
+    protected DelegateReadWriteRConnection(BaseRConnection base, int cacheSize) {
+        super(base, cacheSize);
+    }
+
 }

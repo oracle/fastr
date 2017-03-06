@@ -62,10 +62,19 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
     private final ByteBuffer cache;
 
     DelegateRConnection(BaseRConnection base) {
+        this(base, DEFAULT_CACHE_SIZE);
+    }
+
+    DelegateRConnection(BaseRConnection base, int cacheSize) {
         this.base = Objects.requireNonNull(base);
-        cache = ByteBuffer.allocate(DEFAULT_CACHE_SIZE);
-        // indicate that there are no remaining bytes in the buffer
-        cache.flip();
+
+        if (cacheSize > 0) {
+            cache = ByteBuffer.allocate(cacheSize);
+            // indicate that there are no remaining bytes in the buffer
+            cache.flip();
+        } else {
+            cache = null;
+        }
     }
 
     @Override
@@ -88,12 +97,19 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
         return base.forceOpen(modeString);
     }
 
+    @SuppressWarnings("unused")
+    protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        throw RInternalError.shouldNotReachHere("seek has not been implemented for this connection");
+    }
+
     @Override
-    public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+    public final long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
         if (!isSeekable()) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.NOT_ENABLED_FOR_THIS_CONN, "seek");
         }
-        throw RInternalError.shouldNotReachHere("seek has not been implemented for this connection");
+        final long res = seekInternal(offset, seekMode, seekRWMode);
+        invalidateCache();
+        return res;
     }
 
     /**
@@ -410,7 +426,7 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
     /**
      * Creates the stream decoder on demand and returns it.
      */
-    protected StreamDecoder getDecoder(int bufSize) throws IOException {
+    protected StreamDecoder getDecoder(int bufSize) {
         CharsetDecoder charsetEncoder = base.getEncoding().newDecoder().onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE);
         return StreamDecoder.forDecoder(this, charsetEncoder, bufSize);
     }
@@ -446,19 +462,22 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
 
     @Override
     public int read(ByteBuffer dst) throws IOException {
-        final int bytesRequested = dst.remaining();
-        int totalBytesRead = 0;
-        int bytesToRead = 0;
-        boolean eof;
-        do {
-            eof = ensureDataAvailable(dst.remaining());
-            bytesToRead = Math.min(cache.remaining(), dst.remaining());
-            cache.get(dst.array(), dst.position(), bytesToRead);
-            dst.position(dst.position() + bytesToRead);
-            totalBytesRead += bytesToRead;
-        } while (totalBytesRead < bytesRequested && bytesToRead > 0);
-        return totalBytesRead == 0 && eof ? -1 : totalBytesRead;
-// return getChannel().read(dst);
+        if (cache != null) {
+            final int bytesRequested = dst.remaining();
+            int totalBytesRead = 0;
+            int bytesToRead = 0;
+            boolean eof;
+            do {
+                eof = ensureDataAvailable(dst.remaining());
+                bytesToRead = Math.min(cache.remaining(), dst.remaining());
+                cache.get(dst.array(), dst.position(), bytesToRead);
+                dst.position(dst.position() + bytesToRead);
+                totalBytesRead += bytesToRead;
+            } while (totalBytesRead < bytesRequested && bytesToRead > 0 && !eof);
+            return totalBytesRead == 0 && eof ? -1 : totalBytesRead;
+        } else {
+            return getChannel().read(dst);
+        }
     }
 
     @Override
@@ -469,29 +488,33 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
     /**
      * Reads one byte from the channel.<br>
      * <p>
-     * Should basically do the same job as {@link #read()} but is only used by internally by this
+     * Should basically do the same job as {@link #getc()} but is only used by internally by this
      * class or subclasses an may therefore produce an inconsistent state over several calls. For
      * example, updating the channel's cursor position can be collapsed.
      * </p>
      */
     protected int readInternal() throws IOException {
-        ensureDataAvailable(1);
-        if (!cache.hasRemaining()) {
-            return -1;
-        }
-        // consider byte to be unsigned
-        return cache.get() & 0xFF;
+        if (cache != null) {
+            ensureDataAvailable(1);
+            if (!cache.hasRemaining()) {
+                return -1;
+            }
+            // consider byte to be unsigned
+            return cache.get() & 0xFF;
+        } else {
 
-// ByteBuffer buf = ByteBuffer.allocate(1);
-// int n = getChannel().read(buf);
-// if (n <= 0) {
-// return -1;
-// }
-// buf.flip();
-// return buf.get() & 0xFF;
+            ByteBuffer buf = ByteBuffer.allocate(1);
+            int n = getChannel().read(buf);
+            if (n <= 0) {
+                return -1;
+            }
+            buf.flip();
+            return buf.get() & 0xFF;
+        }
     }
 
     private boolean ensureDataAvailable(int i) throws IOException {
+        assert cache != null;
         if (cache.remaining() < i) {
             byte[] rem = new byte[cache.remaining()];
             cache.get(rem);
@@ -505,12 +528,22 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
         return false;
     }
 
+    /**
+     * Invalidates the read cache by dropping cached data.<br>
+     * <p>
+     * This method is most useful if an operation like {@code seek} is performed that destroys the
+     * order data is read.
+     * </p>
+     */
     protected void invalidateCache() {
-        cache.clear();
+        if (cache != null) {
+            cache.clear();
+            cache.flip();
+        }
     }
 
     @Override
-    public int read() throws IOException {
+    public int getc() throws IOException {
         return readInternal();
     }
 

@@ -139,9 +139,12 @@ public interface RConnection extends AutoCloseable {
     long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException;
 
     /**
-     * Internal support for reading one byte at a time.
+     * Internal support for reading one byte at a time.<br>
+     * <p>
+     * <b>NOTE:</b> This method is also used from native code. Do not change the signature!
+     * </p>
      */
-    int read() throws IOException;
+    int getc() throws IOException;
 
     /**
      * Write the {@code lines} to the connection, with {@code sep} appended after each "line". N.B.

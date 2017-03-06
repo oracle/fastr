@@ -37,6 +37,10 @@ public abstract class DelegateReadRConnection extends DelegateRConnection {
         super(base);
     }
 
+    protected DelegateReadRConnection(BaseRConnection base, int cacheSize) {
+        super(base, cacheSize);
+    }
+
     @Override
     public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
         throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);

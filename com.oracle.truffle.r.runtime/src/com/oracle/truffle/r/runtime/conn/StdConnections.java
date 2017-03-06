@@ -215,7 +215,7 @@ public class StdConnections {
         }
 
         @Override
-        public int read() throws IOException {
+        public int getc() throws IOException {
             throw RInternalError.unimplemented("stdin getc");
         }
     }
@@ -240,7 +240,7 @@ public class StdConnections {
         }
 
         @Override
-        public int read() throws IOException {
+        public int getc() throws IOException {
             throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
         }
     }

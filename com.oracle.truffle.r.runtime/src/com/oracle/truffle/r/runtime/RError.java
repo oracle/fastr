@@ -841,7 +841,7 @@ public final class RError extends RuntimeException {
         UNABLE_TO_RESOLVE("unable to resolve '%s'"),
         LINE_CONTAINS_EMBEDDED_NULLS("line %d appears to contain an embedded nul"),
         UNSUPPORTED_URL_METHOD("method = \"%s\" is not supported"),
-        CANNOT_REPLICATE_NULL("cannot replicate NULL to a non-zero length");
+        CANNOT_REPLICATE_NULL("cannot replicate NULL to a non-zero length"),
         TRUNCATE_ONLY_WRITE_CONNECTION("can only truncate connections open for writing"),
         TRUNCATE_ONLY_OPEN_CONN("can only truncate an open connection"),
         TRUNCATE_NOT_ENABLED("truncation not enabled for this connection"),

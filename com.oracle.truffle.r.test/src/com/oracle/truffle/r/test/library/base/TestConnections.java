@@ -242,7 +242,7 @@ public class TestConnections extends TestRBase {
     @Test
     public void testFifoOpenInexisting() {
         assertEval("capabilities(\"fifo\")");
-        assertEval(Output.IgnoreErrorContext, Output.IgnoreWarningContext, "{ fn <- '___fifo_2367253765'; zz <- fifo(fn, 'r', blocking = TRUE); close(zz); unlink(fn) }");
+        assertEval("{ fn <- '___fifo_2367253765'; zz <- fifo(fn, 'r', blocking = TRUE); close(zz); unlink(fn) }");
     }
 
     public void testTruncate() {

@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 abstract class DelegateWriteRConnection extends DelegateRConnection {
 
     protected DelegateWriteRConnection(BaseRConnection base) {
-        super(base);
+        super(base, 0);
     }
 
     @Override
@@ -57,7 +57,7 @@ abstract class DelegateWriteRConnection extends DelegateRConnection {
     }
 
     @Override
-    public int read() throws IOException {
+    public int getc() throws IOException {
         throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
     }
 

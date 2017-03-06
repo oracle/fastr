@@ -409,7 +409,7 @@ public class ConnectionSupport {
         }
 
         @Override
-        public int read() throws IOException {
+        public int getc() throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
 
@@ -839,9 +839,9 @@ public class ConnectionSupport {
         }
 
         @Override
-        public int read() throws IOException {
+        public int getc() throws IOException {
             checkOpen();
-            return theConnection.read();
+            return theConnection.getc();
         }
 
         public long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {

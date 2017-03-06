@@ -268,8 +268,7 @@ public class FileConnections {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            invalidateCache();
+        public long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             return DelegateRConnection.seek(channel, offset, seekMode, seekRWMode);
         }
 
@@ -332,7 +331,7 @@ public class FileConnections {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             return DelegateRConnection.seek(channel, offset, seekMode, seekRWMode);
         }
 
@@ -370,7 +369,7 @@ public class FileConnections {
         }
 
         @Override
-        public int read() throws IOException {
+        public int getc() throws IOException {
             setReadPosition();
             final int value = super.readInternal();
             if (value != -1) {
@@ -390,7 +389,7 @@ public class FileConnections {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             long result;
             boolean set = true;
             switch (seekMode) {
@@ -431,7 +430,6 @@ public class FileConnections {
                 default:
                     throw RError.nyi(RError.SHOW_CALLER, "seek mode");
             }
-            invalidateCache();
             return result;
         }
 
@@ -543,7 +541,7 @@ public class FileConnections {
         }
 
         @Override
-        public int read() throws IOException {
+        public int getc() throws IOException {
             setReadPosition();
             final int value = raf.read();
             if (value != -1) {
@@ -563,7 +561,7 @@ public class FileConnections {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             long result = raf.getFilePointer();
             switch (seekMode) {
                 case ENQUIRE:
@@ -588,7 +586,6 @@ public class FileConnections {
                     writeOffset = offset;
                     break;
             }
-            invalidateCache();
             return result;
         }
 
@@ -719,7 +716,7 @@ public class FileConnections {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             if (seekable) {
                 // TODO GZIP is basically seekable; however, the output stream does not allow any
                 // seeking
