@@ -24,6 +24,7 @@ package com.oracle.truffle.r.test.library.base;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.channels.ByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,6 +36,10 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.oracle.truffle.api.interop.java.JavaInterop;
+import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
+import com.oracle.truffle.r.runtime.conn.SeekableMemoryByteChannel;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.TestRBase;
 
@@ -259,5 +264,23 @@ public class TestConnections extends TestRBase {
 
     private static String[] arr(String... args) {
         return args;
+    }
+
+    private static final SeekableMemoryByteChannel CHANNEL = new SeekableMemoryByteChannel();
+
+    @Test
+    public void testChannelConnection() throws IOException {
+
+        final String line0 = "Hello, World!\n";
+        final String line1 = "incomplete";
+        CHANNEL.write(line0.getBytes());
+        CHANNEL.write(line1.getBytes());
+        CHANNEL.position(0);
+        assertEval(" v <- .fastr.interop.import('_fastr_channel0'); zz <- .fastr.channelConnection('hello', v, 'r+', 'native.enc'); res <- readLines(zz); close(zz); res", line0 + line1);
+    }
+
+    @Override
+    public void addPolyglotSymbols(Builder builder) {
+        builder.globalSymbol("_fastr_channel0", JavaInterop.asTruffleObject("hehe"));
     }
 }
