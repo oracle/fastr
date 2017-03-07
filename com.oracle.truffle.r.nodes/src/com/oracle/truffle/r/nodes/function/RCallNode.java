@@ -86,14 +86,17 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -279,8 +282,12 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createWithError()") S3FunctionLookupNode dispatchLookup,
                     @Cached("createIdentityProfile()") ValueProfile builtinProfile,
                     @Cached("createBinaryProfile()") ConditionProfile implicitTypeProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile isAttributableProfile,
                     @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile,
-                    @Cached("create()") GetBaseEnvFrameNode getBaseEnvFrameNode) {
+                    @Cached("create()") GetBaseEnvFrameNode getBaseEnvFrameNode,
+                    @Cached("createBinaryProfile()") ConditionProfile isS4Profile, //
+                    @Cached("createEqualityProfile()") ValueProfile attrProfiles,
+                    @Cached("new()") PromiseCheckHelperNode promiseHelper) {
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         Object dispatchObject = dispatchArgument.execute(frame);
         // Cannot dispatch on REmpty
@@ -289,6 +296,23 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
         FrameSlot slot = dispatchTempSlot.initialize(frame, dispatchObject);
         try {
+            if (internalDispatchCall == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                internalDispatchCall = insert(FunctionDispatchNodeGen.create(this, false, slot));
+            }
+
+            if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
+                RList list = (RList) promiseHelper.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
+// int index = list.getElementIndexByName(attrProfiles, builtin.getName());
+                int index = 0;
+                if (index != -1) {
+                    RFunction basicFun = (RFunction) list.getDataAt(index);
+                    Object result = internalDispatchCall.execute(frame, basicFun, lookupVarArgs(frame), null, null);
+                    if (result != RRuntime.DEFERRED_DEFAULT_MARKER) {
+                        return result;
+                    }
+                }
+            }
             RStringVector type = classHierarchyNode.execute(dispatchObject);
             S3Args s3Args;
             RFunction resultFunction;

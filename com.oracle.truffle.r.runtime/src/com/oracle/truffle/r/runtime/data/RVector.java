@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -191,6 +192,20 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     @TruffleBoundary
     public final int getElementIndexByName(String name) {
+        if (getNames() == null) {
+            return -1;
+        }
+        RStringVector names = getNamesFromAttrs();
+        for (int i = 0; i < names.getLength(); i++) {
+            if (names.getDataAt(i).equals(name)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    @TruffleBoundary
+    public final int getElementIndexByName(ValueProfile profile, String name) {
         if (getNames() == null) {
             return -1;
         }

@@ -24,14 +24,16 @@ package com.oracle.truffle.r.test.S4;
 
 import org.junit.Test;
 
-import com.oracle.truffle.r.test.TestRBase;
+import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.TestBase.Ignored;
+import com.oracle.truffle.r.test.TestBase.Output;
 
 // Checkstyle: stop LineLength
 
 /**
  * Tests for the S4 object model implementation.
  */
-public class TestS4 extends TestRBase {
+public class TestS4 extends TestBase {
     @Test
     public void testSlotAccess() {
         assertEval("{ `@`(getClass(\"ClassUnionRepresentation\"), virtual) }");
@@ -123,11 +125,7 @@ public class TestS4 extends TestRBase {
         assertEval("{ standardGeneric(character()) }");
         assertEval("{ standardGeneric(\"\") }");
         assertEval("{ standardGeneric(\"foo\", 42) }");
-        assertEval("{ x<-42; class(x)<-character(); standardGeneric(\"foo\", x) }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-42; class(x)<-character(); standardGeneric(\"foo\", x) }");
     }
 
-    @Override
-    public String getTestDir() {
-        return "S4";
-    }
 }
