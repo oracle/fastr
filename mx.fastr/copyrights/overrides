@@ -773,7 +773,6 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LUpViewP
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LNewPage.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LInitGrid.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LInitViewPortStack.java,gnu_r_murrel_core.copyright
-com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LText.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/GPar.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/TransformMatrix.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LSegments.java,gnu_r_murrel_core.copyright
@@ -788,3 +787,5 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/ViewPort
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LGridDirty.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/ColorNames.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LCircle.java,gnu_r_murrel_core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/EdgeDetection.java,gnu_r_murrel_core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/GridTextNode.java,gnu_r_murrel_core.copyright

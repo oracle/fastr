@@ -20,6 +20,7 @@ public final class GridState {
     private RList gpar;
     private RList viewPort;
     private REnvironment gridEnv;
+    private double scale = 1;
     private boolean deviceInitialized;
 
     /**
@@ -79,4 +80,9 @@ public final class GridState {
     public void setCurrentGrob(Object currentGrob) {
         this.currentGrob = currentGrob;
     }
+
+    public double getScale() {
+        return scale;
+    }
+
 }

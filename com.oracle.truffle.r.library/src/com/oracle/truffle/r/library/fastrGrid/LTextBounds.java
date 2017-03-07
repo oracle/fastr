@@ -23,8 +23,9 @@
 package com.oracle.truffle.r.library.fastrGrid;
 
 import static com.oracle.truffle.r.library.fastrGrid.GridTextNode.addGridTextCasts;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -36,20 +37,20 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @NodeInfo(cost = NodeCost.NONE)
-public abstract class LText extends RExternalBuiltinNode.Arg7 {
+public abstract class LTextBounds extends RExternalBuiltinNode.Arg7 {
     static {
-        Casts casts = new Casts(LText.class);
+        Casts casts = new Casts(LTextBounds.class);
         addGridTextCasts(casts);
-        casts.arg(6).mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean());
+        casts.arg(6).returnIf(missingValue().or(nullValue()), constant(0)).asDoubleVector().findFirst();
     }
 
-    public static LText create() {
-        return LTextNodeGen.create();
+    public static LTextBounds create() {
+        return LTextBoundsNodeGen.create();
     }
 
     @Specialization
-    Object drawText(RAbstractStringVector text, RAbstractVector x, RAbstractVector y, RAbstractDoubleVector hjust, RAbstractDoubleVector vjust, RAbstractDoubleVector rotation, boolean checkOverlap,
-                    @Cached("createDraw()") GridTextNode gridText) {
-        return gridText.gridText(text, x, y, hjust, vjust, rotation, checkOverlap, 0);
+    public Object textBounds(RAbstractStringVector text, RAbstractVector x, RAbstractVector y, RAbstractDoubleVector hjust, RAbstractDoubleVector vjust, RAbstractDoubleVector rotation, double theta,
+                    @Cached("createCalculateBounds()") GridTextNode gridText) {
+        return gridText.gridText(text, x, y, hjust, vjust, rotation, false, theta);
     }
 }

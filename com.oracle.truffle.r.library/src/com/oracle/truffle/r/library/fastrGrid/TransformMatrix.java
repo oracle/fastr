@@ -11,6 +11,8 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_PI;
+
 /**
  * Operations on transformation (3x3) matrices.
  */
@@ -38,6 +40,21 @@ final class TransformMatrix {
         m[2][1] = m1[2][0] * m2[0][1] + m1[2][1] * m2[1][1] + m1[2][2] * m2[2][1];
         m[2][2] = m1[2][0] * m2[0][2] + m1[2][1] * m2[1][2] + m1[2][2] * m2[2][2];
         return m;
+    }
+
+    static double[][] rotation(double theta) {
+        double thetarad = theta / 180 * M_PI;
+        double costheta = Math.cos(thetarad);
+        double sintheta = Math.sin(thetarad);
+        double[][] result = identity();
+        if (theta == 0) {
+            return result;
+        }
+        result[0][0] = costheta;
+        result[0][1] = sintheta;
+        result[1][0] = -sintheta;
+        result[1][1] = costheta;
+        return result;
     }
 
     static double[][] identity() {

@@ -11,6 +11,9 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import static com.oracle.truffle.r.runtime.nmath.RMath.fmax2;
+import static com.oracle.truffle.r.runtime.nmath.RMath.fmin2;
+
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitLengthNode;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -43,6 +46,24 @@ final class GridUtils {
         int result = 0;
         for (RAbstractVector unit : units) {
             result = Math.max(result, unitLength.execute(unit));
+        }
+        return result;
+    }
+
+    @ExplodeLoop
+    static double fmax(double firstVal, double... vals) {
+        double result = firstVal;
+        for (double val : vals) {
+            result = fmax2(result, val);
+        }
+        return result;
+    }
+
+    @ExplodeLoop
+    static double fmin(double firstVal, double... vals) {
+        double result = firstVal;
+        for (double val : vals) {
+            result = fmin2(result, val);
         }
         return result;
     }

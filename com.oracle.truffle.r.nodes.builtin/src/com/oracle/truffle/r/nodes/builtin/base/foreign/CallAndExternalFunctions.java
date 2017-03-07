@@ -22,6 +22,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.library.fastrGrid.GridState;
 import com.oracle.truffle.r.library.fastrGrid.GridStateGetNode;
 import com.oracle.truffle.r.library.fastrGrid.GridStateSetNode;
 import com.oracle.truffle.r.library.fastrGrid.IgnoredGridExternal;
@@ -34,6 +35,7 @@ import com.oracle.truffle.r.library.fastrGrid.LNewPage;
 import com.oracle.truffle.r.library.fastrGrid.LRect;
 import com.oracle.truffle.r.library.fastrGrid.LSegments;
 import com.oracle.truffle.r.library.fastrGrid.LText;
+import com.oracle.truffle.r.library.fastrGrid.LTextBounds;
 import com.oracle.truffle.r.library.fastrGrid.LUpViewPort;
 import com.oracle.truffle.r.library.grDevices.DevicesCCalls;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls;
@@ -695,6 +697,8 @@ public class CallAndExternalFunctions {
                     return LLines.create();
                 case "L_text":
                     return LText.create();
+                case "L_textBounds":
+                    return LTextBounds.create();
                 case "L_segments":
                     return LSegments.create();
                 case "L_circle":
@@ -702,15 +706,15 @@ public class CallAndExternalFunctions {
 
                 // Simple grid state access
                 case "L_getGPar":
-                    return new GridStateGetNode(state -> state.getGpar());
+                    return new GridStateGetNode(GridState::getGpar);
                 case "L_setGPar":
                     return GridStateSetNode.create((state, val) -> state.setGpar((RList) val));
                 case "L_getCurrentGrob":
-                    return new GridStateGetNode(state -> state.getCurrentGrob());
+                    return new GridStateGetNode(GridState::getCurrentGrob);
                 case "L_setCurrentGrob":
-                    return GridStateSetNode.create((state, val) -> state.setCurrentGrob(val));
+                    return GridStateSetNode.create(GridState::setCurrentGrob);
                 case "L_currentViewport":
-                    return new GridStateGetNode(state -> state.getViewPort());
+                    return new GridStateGetNode(GridState::getViewPort);
 
                 // Display list stuff: not implemented atm
                 case "L_getDisplayList":
