@@ -139,7 +139,10 @@ public interface RConnection extends AutoCloseable {
     long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException;
 
     /**
-     * Internal support for reading one character at a time.
+     * Internal support for reading one byte at a time.<br>
+     * <p>
+     * <b>NOTE:</b> This method is also used from native code. Do not change the signature!
+     * </p>
      */
     int getc() throws IOException;
 
@@ -167,7 +170,7 @@ public interface RConnection extends AutoCloseable {
      * @param s string to output
      * @param pad number of (zero) pad bytes
      * @param eos string to append to s
-     * @param useBytes TODO
+     * @param useBytes
      */
     void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException;
 
@@ -216,6 +219,11 @@ public interface RConnection extends AutoCloseable {
      * Returns {@code true} iff this connection is open.
      */
     boolean isOpen();
+
+    /**
+     * Truncates the connection (if possible).
+     */
+    void truncate() throws IOException;
 
     void pushBack(RAbstractStringVector lines, boolean addNewLine);
 }

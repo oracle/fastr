@@ -24,8 +24,12 @@ package com.oracle.truffle.r.runtime.conn;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
+import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -52,12 +56,25 @@ import sun.nio.cs.StreamDecoder;
  * operations.
  * </p>
  */
-abstract class DelegateRConnection implements RConnection {
+abstract class DelegateRConnection implements RConnection, ByteChannel {
+    private static final int DEFAULT_CACHE_SIZE = 16 * 1024;
     protected final BaseRConnection base;
-    private StreamDecoder decoder;
+    private final ByteBuffer cache;
 
     DelegateRConnection(BaseRConnection base) {
+        this(base, DEFAULT_CACHE_SIZE);
+    }
+
+    DelegateRConnection(BaseRConnection base, int cacheSize) {
         this.base = Objects.requireNonNull(base);
+
+        if (cacheSize > 0) {
+            cache = ByteBuffer.allocate(cacheSize);
+            // indicate that there are no remaining bytes in the buffer
+            cache.flip();
+        } else {
+            cache = null;
+        }
     }
 
     @Override
@@ -80,12 +97,19 @@ abstract class DelegateRConnection implements RConnection {
         return base.forceOpen(modeString);
     }
 
+    @SuppressWarnings("unused")
+    protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        throw RInternalError.shouldNotReachHere("seek has not been implemented for this connection");
+    }
+
     @Override
-    public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+    public final long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
         if (!isSeekable()) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.NOT_ENABLED_FOR_THIS_CONN, "seek");
         }
-        throw RInternalError.shouldNotReachHere("seek has not been implemented for this connection");
+        final long res = seekInternal(offset, seekMode, seekRWMode);
+        invalidateCache();
+        return res;
     }
 
     /**
@@ -101,6 +125,7 @@ abstract class DelegateRConnection implements RConnection {
         base.setIncomplete(false);
         ArrayList<String> lines = new ArrayList<>();
         int totalRead = 0;
+        int nBytesConsumed = 0;
         byte[] buffer = new byte[64];
         int pushBack = 0;
         boolean nullRead = false;
@@ -110,7 +135,7 @@ abstract class DelegateRConnection implements RConnection {
                 ch = pushBack;
                 pushBack = 0;
             } else {
-                ch = getc();
+                ch = readInternal();
             }
             boolean lineEnd = false;
             if (ch < 0) {
@@ -120,6 +145,7 @@ abstract class DelegateRConnection implements RConnection {
                      * lines, otherwise keep data and output warning.
                      */
                     final String incompleteFinalLine = new String(buffer, 0, totalRead, base.getEncoding());
+                    nBytesConsumed += totalRead;
                     if (!base.isBlocking() && base.isTextMode()) {
                         base.pushBack(RDataFactory.createStringVector(incompleteFinalLine), false);
                         base.setIncomplete(true);
@@ -136,7 +162,7 @@ abstract class DelegateRConnection implements RConnection {
                 lineEnd = true;
             } else if (ch == '\r') {
                 lineEnd = true;
-                ch = getc();
+                ch = readInternal();
                 if (ch == '\n') {
                     // swallow the trailing lf
                 } else {
@@ -150,6 +176,7 @@ abstract class DelegateRConnection implements RConnection {
             }
             if (lineEnd) {
                 lines.add(new String(buffer, 0, totalRead, base.getEncoding()));
+                nBytesConsumed += totalRead;
                 if (n > 0 && lines.size() == n) {
                     break;
                 }
@@ -167,7 +194,30 @@ abstract class DelegateRConnection implements RConnection {
         }
         String[] result = new String[lines.size()];
         lines.toArray(result);
+        updateReadOffset(nBytesConsumed);
         return result;
+    }
+
+    /**
+     * Updates the read cursor.<br>
+     * <p>
+     * Called by methods using {@link #readInternal()} to tell how many bytes have been consumed to
+     * be able to update a read curosor if available.
+     * </p>
+     *
+     * @param nBytesConsumed Number of bytes consumed by a read operation.
+     */
+    protected void updateReadOffset(int nBytesConsumed) {
+        // default: nothing to do
+    }
+
+    @Override
+    public String readChar(int nchars, boolean useBytes) throws IOException {
+        if (useBytes) {
+            return DelegateRConnection.readCharHelper(nchars, this);
+        } else {
+            return DelegateRConnection.readCharHelper(nchars, getDecoder(nchars));
+        }
     }
 
     /**
@@ -231,29 +281,6 @@ abstract class DelegateRConnection implements RConnection {
         }
         buf.rewind();
         channel.write(buf);
-    }
-
-    /**
-     * Reads null-terminated character strings from a {@link ReadableByteChannel}.
-     */
-    public static byte[] readBinCharsHelper(ReadableByteChannel channel) throws IOException {
-        ByteBuffer buf = ByteBuffer.allocate(1);
-        int numRead = channel.read(buf);
-        if (numRead <= 0) {
-            return null;
-        }
-        int totalRead = 0;
-        byte[] buffer = new byte[64];
-        while (true) {
-            buffer = DelegateRConnection.checkBuffer(buffer, totalRead);
-            buffer[totalRead++] = (byte) (buf.get() & 0xFF);
-            if (numRead == 0) {
-                break;
-            }
-            buf.clear();
-            numRead = channel.read(buf);
-        }
-        return buffer;
     }
 
     /**
@@ -329,7 +356,10 @@ abstract class DelegateRConnection implements RConnection {
     }
 
     /**
-     * Implements standard seeking behavior.
+     * Implements standard seeking behavior.<br>
+     * <p>
+     * <it>Standard</it> means that there is a shared cursor between reading and writing operations.
+     * </p>
      */
     public static long seek(SeekableByteChannel channel, long offset, SeekMode seekMode, @SuppressWarnings("unused") SeekRWMode seekRWMode) throws IOException {
         long position = channel.position();
@@ -365,13 +395,27 @@ abstract class DelegateRConnection implements RConnection {
     }
 
     public static boolean writeLinesHelper(WritableByteChannel out, RAbstractStringVector lines, String sep, Charset encoding) throws IOException {
-        boolean incomplete = false;
-        for (int i = 0; i < lines.getLength(); i++) {
-            final String line = lines.getDataAt(i);
-            incomplete = DelegateRConnection.writeStringHelper(out, line, false, encoding);
-            incomplete = DelegateRConnection.writeStringHelper(out, sep, false, encoding) || incomplete;
+        if (sep != null && sep.contains("\n")) {
+            // fast path: we know that the line is complete
+            final ByteBuffer nlBuf = ByteBuffer.wrap(sep.getBytes(encoding));
+            for (int i = 0; i < lines.getLength(); i++) {
+                final String line = lines.getDataAt(i);
+                final ByteBuffer buf = ByteBuffer.wrap(line.getBytes(encoding));
+                out.write(buf);
+                nlBuf.rewind();
+                out.write(nlBuf);
+            }
+            return false;
+        } else {
+            // slow path: we have to scan every string if it contains a newline
+            boolean incomplete = false;
+            for (int i = 0; i < lines.getLength(); i++) {
+                final String line = lines.getDataAt(i);
+                incomplete = DelegateRConnection.writeStringHelper(out, line, false, encoding);
+                incomplete = DelegateRConnection.writeStringHelper(out, sep, false, encoding) || incomplete;
+            }
+            return incomplete;
         }
-        return incomplete;
     }
 
     @Override
@@ -382,11 +426,190 @@ abstract class DelegateRConnection implements RConnection {
     /**
      * Creates the stream decoder on demand and returns it.
      */
-    protected StreamDecoder getDecoder() throws IOException {
-        if (decoder == null) {
-            CharsetDecoder charsetEncoder = base.getEncoding().newDecoder().onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE);
-            decoder = StreamDecoder.forDecoder(getChannel(), charsetEncoder, -1);
+    protected StreamDecoder getDecoder(int bufSize) {
+        CharsetDecoder charsetEncoder = base.getEncoding().newDecoder().onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE);
+        return StreamDecoder.forDecoder(this, charsetEncoder, bufSize);
+    }
+
+    @Override
+    public void truncate() throws IOException {
+        if (!isSeekable()) {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.TRUNCATE_NOT_ENABLED);
         }
-        return decoder;
+        throw RError.nyi(RError.SHOW_CALLER, "truncate");
+    }
+
+    @Override
+    public void writeBin(ByteBuffer buffer) throws IOException {
+        write(buffer);
+    }
+
+    @Override
+    public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
+        DelegateRConnection.writeCharHelper(this, s, pad, eos);
+    }
+
+    @Override
+    public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+        boolean incomplete = DelegateRConnection.writeLinesHelper(this, lines, sep, base.getEncoding());
+        base.setIncomplete(incomplete);
+    }
+
+    @Override
+    public void writeString(String s, boolean nl) throws IOException {
+        DelegateRConnection.writeStringHelper(this, s, nl, base.getEncoding());
+    }
+
+    @Override
+    public int read(ByteBuffer dst) throws IOException {
+        if (cache != null) {
+            final int bytesRequested = dst.remaining();
+            int totalBytesRead = 0;
+            int bytesToRead = 0;
+            boolean eof;
+            do {
+                eof = ensureDataAvailable(dst.remaining());
+                bytesToRead = Math.min(cache.remaining(), dst.remaining());
+                cache.get(dst.array(), dst.position(), bytesToRead);
+                dst.position(dst.position() + bytesToRead);
+                totalBytesRead += bytesToRead;
+            } while (totalBytesRead < bytesRequested && bytesToRead > 0 && !eof);
+            return totalBytesRead == 0 && eof ? -1 : totalBytesRead;
+        } else {
+            return getChannel().read(dst);
+        }
+    }
+
+    @Override
+    public int write(ByteBuffer src) throws IOException {
+        return getChannel().write(src);
+    }
+
+    /**
+     * Reads one byte from the channel.<br>
+     * <p>
+     * Should basically do the same job as {@link #getc()} but is only used by internally by this
+     * class or subclasses an may therefore produce an inconsistent state over several calls. For
+     * example, updating the channel's cursor position can be collapsed.
+     * </p>
+     */
+    protected int readInternal() throws IOException {
+        if (cache != null) {
+            ensureDataAvailable(1);
+            if (!cache.hasRemaining()) {
+                return -1;
+            }
+            // consider byte to be unsigned
+            return cache.get() & 0xFF;
+        } else {
+
+            ByteBuffer buf = ByteBuffer.allocate(1);
+            int n = getChannel().read(buf);
+            if (n <= 0) {
+                return -1;
+            }
+            buf.flip();
+            return buf.get() & 0xFF;
+        }
+    }
+
+    private boolean ensureDataAvailable(int i) throws IOException {
+        assert cache != null;
+        if (cache.remaining() < i) {
+            byte[] rem = new byte[cache.remaining()];
+            cache.get(rem);
+            assert !cache.hasRemaining();
+            cache.clear();
+            cache.put(rem);
+            int read = getChannel().read(cache);
+            cache.flip();
+            return read == -1;
+        }
+        return false;
+    }
+
+    /**
+     * Invalidates the read cache by dropping cached data.<br>
+     * <p>
+     * This method is most useful if an operation like {@code seek} is performed that destroys the
+     * order data is read.
+     * </p>
+     */
+    protected void invalidateCache() {
+        if (cache != null) {
+            cache.clear();
+            cache.flip();
+        }
+    }
+
+    @Override
+    public int getc() throws IOException {
+        return readInternal();
+    }
+
+    @Override
+    public int readBin(ByteBuffer buffer) throws IOException {
+        return read(buffer);
+    }
+
+    /**
+     * Reads null-terminated character strings from a {@link ReadableByteChannel}.
+     */
+    @Override
+    public byte[] readBinChars() throws IOException {
+        int numRead = readInternal();
+        if (numRead <= 0) {
+            return null;
+        }
+        int totalRead = 0;
+        byte[] buffer = new byte[64];
+        while (true) {
+            buffer = DelegateRConnection.checkBuffer(buffer, totalRead);
+            buffer[totalRead++] = (byte) numRead;
+            if (numRead == 0) {
+                break;
+            } else if (numRead == -1) {
+                RError.warning(RError.SHOW_CALLER, RError.Message.INCOMPLETE_STRING_AT_EOF_DISCARDED);
+                return null;
+            }
+            numRead = readInternal();
+        }
+        return buffer;
+    }
+
+    @Override
+    public boolean canRead() {
+        return true;
+    }
+
+    @Override
+    public boolean canWrite() {
+        return true;
+    }
+
+    @Override
+    public void flush() throws IOException {
+        // nothing to do for channels
+    }
+
+    @Override
+    public OutputStream getOutputStream() throws IOException {
+        return Channels.newOutputStream(this);
+    }
+
+    @Override
+    public InputStream getInputStream() throws IOException {
+        return Channels.newInputStream(this);
+    }
+
+    @Override
+    public void close() throws IOException {
+        getChannel().close();
+    }
+
+    @Override
+    public void closeAndDestroy() throws IOException {
+        base.closed = true;
+        close();
     }
 }

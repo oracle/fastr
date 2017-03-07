@@ -241,7 +241,7 @@ public abstract class ConnectionFunctions {
                 // ignore and try to open file
             } catch (IOException e) {
                 RError.warning(RError.SHOW_CALLER, RError.Message.UNABLE_TO_RESOLVE, e.getMessage());
-                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_CONNECTION);
+                throw error(RError.Message.CANNOT_OPEN_CONNECTION);
             }
 
             if (path.length() == 0) {
@@ -295,7 +295,7 @@ public abstract class ConnectionFunctions {
             } catch (IOException ex) {
                 throw reportError(description, ex);
             } catch (IllegalCharsetNameException ex) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
+                throw error(RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
 
@@ -1258,10 +1258,10 @@ public abstract class ConnectionFunctions {
             try {
                 return new FifoRConnection(path, open, blocking, encoding).asVector();
             } catch (IOException ex) {
-                RError.warning(this, RError.Message.CANNOT_OPEN_FIFO, path);
-                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_CONNECTION);
+                warning(RError.Message.CANNOT_OPEN_FIFO, path);
+                throw error(RError.Message.CANNOT_OPEN_CONNECTION);
             } catch (IllegalCharsetNameException ex) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
+                throw error(RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
     }
@@ -1284,10 +1284,10 @@ public abstract class ConnectionFunctions {
             try {
                 return new PipeRConnection(path, open, encoding).asVector();
             } catch (IOException ex) {
-                RError.warning(this, RError.Message.CANNOT_OPEN_FIFO, path);
-                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_OPEN_CONNECTION);
+                warning(RError.Message.CANNOT_OPEN_FIFO, path);
+                throw error(RError.Message.CANNOT_OPEN_CONNECTION);
             } catch (IllegalCharsetNameException ex) {
-                throw RError.error(RError.SHOW_CALLER, RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
+                throw error(RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
             }
         }
     }
@@ -1306,6 +1306,27 @@ public abstract class ConnectionFunctions {
 
             final boolean res = RConnection.fromIndex(con).isIncomplete();
             return RDataFactory.createLogicalVectorFromScalar(res);
+        }
+    }
+
+    @RBuiltin(name = "truncate", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
+    public abstract static class Truncate extends RBuiltinNode {
+
+        static {
+            Casts casts = new Casts(Truncate.class);
+            CastsHelper.connection(casts);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RNull truncate(int con) {
+
+            try {
+                RConnection.fromIndex(con).truncate();
+            } catch (IOException e) {
+                throw error(RError.Message.TRUNCATE_UNSUPPORTED_FOR_CONN, e.getMessage());
+            }
+            return RNull.instance;
         }
     }
 }

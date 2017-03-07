@@ -54,7 +54,6 @@ import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BasePathRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.OpenMode;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class FileConnections {
@@ -140,8 +139,16 @@ public class FileConnections {
                 delegate = new FileWriteBinaryConnection(base, false);
                 break;
             case ReadWriteTrunc:
+                delegate = new FileReadWriteTextConnection(base, false);
+                break;
             case ReadWriteTruncBinary:
-                delegate = new FileReadWriteConnection(base);
+                delegate = new FileReadWriteBinaryConnection(base, false);
+                break;
+            case ReadAppend:
+                delegate = new FileReadWriteTextConnection(base, true);
+                break;
+            case ReadAppendBinary:
+                delegate = new FileReadWriteBinaryConnection(base, true);
                 break;
             default:
                 throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + base.getOpenMode());
@@ -261,6 +268,11 @@ public class FileConnections {
         }
 
         @Override
+        public long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            return DelegateRConnection.seek(channel, offset, seekMode, seekRWMode);
+        }
+
+        @Override
         public ByteChannel getChannel() {
             return channel;
         }
@@ -311,7 +323,6 @@ public class FileConnections {
                 opts.add(StandardOpenOption.TRUNCATE_EXISTING);
             }
             channel = FileChannel.open(Paths.get(base.path), opts.toArray(new OpenOption[opts.size()]));
-
         }
 
         @Override
@@ -320,13 +331,193 @@ public class FileConnections {
         }
 
         @Override
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            return DelegateRConnection.seek(channel, offset, seekMode, seekRWMode);
+        }
+
+        @Override
         public ByteChannel getChannel() {
             return channel;
         }
 
+        @Override
+        public void truncate() throws IOException {
+            channel.truncate(channel.position());
+        }
+
     }
 
-    private static class FileReadWriteConnection extends DelegateReadWriteRConnection {
+    private static class FileReadWriteTextConnection extends DelegateReadWriteRConnection {
+
+        private final FileChannel channel;
+        private long readOffset;
+        private long writeOffset;
+        private SeekRWMode lastMode = SeekRWMode.READ;
+
+        FileReadWriteTextConnection(BasePathRConnection base, boolean append) throws IOException {
+            super(base);
+            List<OpenOption> opts = new ArrayList<>();
+            opts.add(StandardOpenOption.READ);
+            opts.add(StandardOpenOption.WRITE);
+            opts.add(StandardOpenOption.CREATE);
+            channel = FileChannel.open(Paths.get(base.path), opts.toArray(new OpenOption[opts.size()]));
+            if (append) {
+                writeOffset = channel.size();
+            } else {
+                channel.truncate(0);
+            }
+        }
+
+        @Override
+        public int getc() throws IOException {
+            setReadPosition();
+            final int value = super.readInternal();
+            if (value != -1) {
+                readOffset++;
+            }
+            return value;
+        }
+
+        @Override
+        protected void updateReadOffset(int nBytesConsumed) {
+            readOffset += nBytesConsumed;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return true;
+        }
+
+        @Override
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            long result;
+            boolean set = true;
+            switch (seekMode) {
+                case ENQUIRE:
+                    set = false;
+                    break;
+                case START:
+                    break;
+                default:
+                    throw RError.nyi(RError.SHOW_CALLER, "seek mode");
+            }
+            switch (seekRWMode) {
+                case LAST:
+                    if (lastMode == SeekRWMode.READ) {
+                        result = readOffset;
+                        if (set) {
+                            readOffset = offset;
+                        }
+                    } else {
+                        result = writeOffset;
+                        if (set) {
+                            writeOffset = offset;
+                        }
+                    }
+                    break;
+                case READ:
+                    result = readOffset;
+                    if (set) {
+                        readOffset = offset;
+                    }
+                    break;
+                case WRITE:
+                    result = writeOffset;
+                    if (set) {
+                        writeOffset = offset;
+                    }
+                    break;
+                default:
+                    throw RError.nyi(RError.SHOW_CALLER, "seek mode");
+            }
+            return result;
+        }
+
+        @Override
+        public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
+            setReadPosition();
+            return super.readLines(n, warn, skipNul);
+        }
+
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            setReadPosition();
+            return super.readBin(buffer);
+        }
+
+        @Override
+        public String readChar(int nchars, boolean useBytes) throws IOException {
+            setReadPosition();
+            return super.readChar(nchars, useBytes);
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            setReadPosition();
+            return super.readBinChars();
+        }
+
+        @Override
+        public void close() throws IOException {
+            channel.close();
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+            setWritePosition();
+            super.writeLines(lines, sep, useBytes);
+            writeOffset = channel.position();
+        }
+
+        @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            setWritePosition();
+            super.writeBin(buffer);
+        }
+
+        @Override
+        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
+            setWritePosition();
+            super.writeChar(s, pad, eos, useBytes);
+        }
+
+        @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            setWritePosition();
+            super.writeString(s, nl);
+        }
+
+        @Override
+        public ByteChannel getChannel() {
+            return channel;
+        }
+
+        private void setReadPosition() throws IOException {
+            if (lastMode != SeekRWMode.READ) {
+                channel.position(readOffset);
+                lastMode = SeekRWMode.READ;
+            }
+        }
+
+        private void setWritePosition() throws IOException {
+            if (lastMode != SeekRWMode.WRITE) {
+                channel.position(writeOffset);
+                lastMode = SeekRWMode.WRITE;
+            }
+        }
+
+        @Override
+        public void truncate() throws IOException {
+            channel.truncate(writeOffset);
+            lastMode = SeekRWMode.WRITE;
+            // GnuR also freshly queries the file pointer. It may happen that the file pointer is
+            // different as expected.
+            writeOffset = channel.position();
+        }
+
+    }
+
+    private static class FileReadWriteBinaryConnection extends DelegateReadWriteRConnection {
         /*
          * This is a minimal implementation to support one specific use in package installation.
          *
@@ -339,29 +530,29 @@ public class FileConnections {
         private long writeOffset;
         private SeekRWMode lastMode = SeekRWMode.READ;
 
-        FileReadWriteConnection(BasePathRConnection base) throws IOException {
+        FileReadWriteBinaryConnection(BasePathRConnection base, boolean append) throws IOException {
             super(base);
-            OpenMode openMode = base.getOpenMode();
-            String rafMode = null;
-            switch (openMode.abstractOpenMode) {
-                case ReadWriteTrunc:
-                case ReadWriteTruncBinary:
-                    rafMode = "rw";
-                    break;
-                default:
-                    throw RInternalError.shouldNotReachHere();
+            raf = new RandomAccessFile(base.path, "rw");
+            if (append) {
+                writeOffset = raf.length();
+            } else {
+                raf.setLength(0);
             }
-            raf = new RandomAccessFile(base.path, rafMode);
         }
 
         @Override
         public int getc() throws IOException {
-            raf.seek(readOffset);
-            int value = raf.read();
+            setReadPosition();
+            final int value = raf.read();
             if (value != -1) {
                 readOffset++;
             }
             return value;
+        }
+
+        @Override
+        protected void updateReadOffset(int nBytesConsumed) {
+            readOffset += nBytesConsumed;
         }
 
         @Override
@@ -370,7 +561,7 @@ public class FileConnections {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             long result = raf.getFilePointer();
             switch (seekMode) {
                 case ENQUIRE:
@@ -400,8 +591,40 @@ public class FileConnections {
 
         @Override
         public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
-            raf.seek(readOffset);
+            setReadPosition();
             return super.readLines(n, warn, skipNul);
+        }
+
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            setReadPosition();
+            return super.readBin(buffer);
+        }
+
+        @Override
+        public String readChar(int nchars, boolean useBytes) throws IOException {
+            setReadPosition();
+            return super.readChar(nchars, useBytes);
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            setReadPosition();
+            return super.readBinChars();
+        }
+
+        private void setReadPosition() throws IOException {
+            if (lastMode != SeekRWMode.READ) {
+                raf.seek(readOffset);
+                lastMode = SeekRWMode.READ;
+            }
+        }
+
+        private void setWritePosition() throws IOException {
+            if (lastMode != SeekRWMode.WRITE) {
+                raf.seek(writeOffset);
+                lastMode = SeekRWMode.WRITE;
+            }
         }
 
         @Override
@@ -411,27 +634,41 @@ public class FileConnections {
 
         @Override
         public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            raf.seek(writeOffset);
-            byte[] sepData = sep.getBytes(base.getEncoding());
-            for (int i = 0; i < lines.getLength(); i++) {
-                writeString(lines.getDataAt(i), false);
-                raf.write(sepData);
-            }
+            setWritePosition();
+            super.writeLines(lines, sep, useBytes);
             writeOffset = raf.getFilePointer();
-            lastMode = SeekRWMode.WRITE;
+        }
+
+        @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            setWritePosition();
+            super.writeBin(buffer);
+        }
+
+        @Override
+        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
+            setWritePosition();
+            super.writeChar(s, pad, eos, useBytes);
         }
 
         @Override
         public void writeString(String s, boolean nl) throws IOException {
-            raf.write(s.getBytes(base.getEncoding()));
-            if (nl) {
-                raf.write(System.lineSeparator().getBytes(base.getEncoding()));
-            }
+            setWritePosition();
+            super.writeString(s, nl);
         }
 
         @Override
         public ByteChannel getChannel() {
             return raf.getChannel();
+        }
+
+        @Override
+        public void truncate() throws IOException {
+            raf.setLength(writeOffset);
+            lastMode = SeekRWMode.WRITE;
+            // GnuR also freshly queries the file pointer. It may happen that the file pointer is
+            // different as expected.
+            writeOffset = raf.getFilePointer();
         }
 
     }
@@ -479,7 +716,7 @@ public class FileConnections {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             if (seekable) {
                 // TODO GZIP is basically seekable; however, the output stream does not allow any
                 // seeking
@@ -498,6 +735,11 @@ public class FileConnections {
         @Override
         public ByteChannel getChannel() {
             return channel;
+        }
+
+        @Override
+        public void truncate() throws IOException {
+            throw RError.nyi(RError.SHOW_CALLER, "truncating compressed file not");
         }
     }
 

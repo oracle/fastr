@@ -200,12 +200,27 @@ public class SeekableMemoryByteChannel implements SeekableByteChannel {
 
     @Override
     public SeekableByteChannel truncate(long size) throws IOException {
-        // avoid security leak by nulling previous data
-        Arrays.fill(buf, (byte) 0);
+        if (size < 0) {
+            throw new IllegalArgumentException("'size' cannot be negative");
+        }
 
-        offset = 0;
-        position = 0;
-        endPos = 0;
+        // avoid security leak by nulling previous data
+        final int from;
+        final int to;
+        if (size < endPos) {
+            from = (int) (size - offset);
+            to = (int) (endPos - offset);
+        } else {
+            to = (int) (size - offset);
+            from = (int) (endPos - offset);
+
+            // need to enlarge buffer
+            ensureCapacity(to);
+        }
+        Arrays.fill(buf, from, to, (byte) 0);
+
+        position = Math.min(position, size);
+        endPos = size;
         return this;
     }
 

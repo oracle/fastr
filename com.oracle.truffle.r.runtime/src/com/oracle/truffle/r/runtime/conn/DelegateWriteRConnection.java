@@ -24,19 +24,16 @@ package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 abstract class DelegateWriteRConnection extends DelegateRConnection {
 
     protected DelegateWriteRConnection(BaseRConnection base) {
-        super(base);
+        super(base, 0);
     }
 
     @Override
@@ -78,48 +75,4 @@ abstract class DelegateWriteRConnection extends DelegateRConnection {
     public boolean canWrite() {
         return true;
     }
-
-    @Override
-    public void closeAndDestroy() throws IOException {
-        base.closed = true;
-        close();
-    }
-
-    @Override
-    public void flush() throws IOException {
-        // channels don't need any flushing
-    }
-
-    @Override
-    public void close() throws IOException {
-        flush();
-        getChannel().close();
-    }
-
-    @Override
-    public OutputStream getOutputStream() throws IOException {
-        return Channels.newOutputStream(getChannel());
-    }
-
-    @Override
-    public void writeBin(ByteBuffer buffer) throws IOException {
-        getChannel().write(buffer);
-    }
-
-    @Override
-    public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-        DelegateRConnection.writeCharHelper(getChannel(), s, pad, eos);
-    }
-
-    @Override
-    public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-        boolean incomplete = DelegateRConnection.writeLinesHelper(getChannel(), lines, sep, base.getEncoding());
-        base.setIncomplete(incomplete);
-    }
-
-    @Override
-    public void writeString(String s, boolean nl) throws IOException {
-        DelegateRConnection.writeStringHelper(getChannel(), s, nl, base.getEncoding());
-    }
-
 }

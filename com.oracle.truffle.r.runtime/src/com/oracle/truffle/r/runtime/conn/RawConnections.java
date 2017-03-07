@@ -118,7 +118,7 @@ public class RawConnections {
         private SeekableMemoryByteChannel channel;
 
         RawReadRConnection(BaseRConnection base, SeekableMemoryByteChannel channel) {
-            super(base);
+            super(base, 0);
             this.channel = channel;
             try {
                 channel.position(0L);
@@ -148,7 +148,7 @@ public class RawConnections {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        public long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             return RawRConnection.seek(channel, offset, seekMode, seekRWMode);
         }
 
@@ -179,7 +179,7 @@ public class RawConnections {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             return RawRConnection.seek(channel, offset, seekMode, seekRWMode);
         }
 
@@ -192,6 +192,11 @@ public class RawConnections {
         public boolean isSeekable() {
             return true;
         }
+
+        @Override
+        public void truncate() throws IOException {
+            channel.truncate(channel.position());
+        }
     }
 
     private static class RawReadWriteConnection extends DelegateReadWriteRConnection {
@@ -199,7 +204,7 @@ public class RawConnections {
         private final SeekableMemoryByteChannel channel;
 
         protected RawReadWriteConnection(BaseRConnection base, SeekableMemoryByteChannel channel, boolean append) {
-            super(base);
+            super(base, 0);
             this.channel = channel;
             if (append) {
                 try {
@@ -211,7 +216,7 @@ public class RawConnections {
         }
 
         @Override
-        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             return RawRConnection.seek(channel, offset, seekMode, seekRWMode);
         }
 
@@ -225,6 +230,10 @@ public class RawConnections {
             return true;
         }
 
+        @Override
+        public void truncate() throws IOException {
+            channel.truncate(channel.position());
+        }
     }
 
 }

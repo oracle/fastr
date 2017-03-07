@@ -93,10 +93,15 @@ public class TestConnections extends TestRBase {
         assertEval(TestBase.template("{ readChar(file(\"%0\"), 3) }", testDir.subDir("wc1")));
     }
 
-    @Test
+    @Test(timeout = 1000)
     public void testFileWriteReadBin() {
         assertEval(TestBase.template("{ writeBin(\"abc\", file(\"%0\", open=\"wb\")) }", testDir.subDir("wb1")));
         assertEval(TestBase.template("{ readBin(file(\"%0\", \"rb\"), 3) }", testDir.subDir("wb1")));
+
+        assertEval(TestBase.template("{ zz <- file(\"%0\", open=\"wb\"); writeChar(\"abc\", zz); close(zz); readBin(file(\"%0\", \"rb\"), character(), 4) }", testDir.subDir("wb2")));
+
+        // incomplete line at the end of file
+        assertEval(TestBase.template("{ cat('abc', file = '%0'); readBin(file('%0', 'rb'), character(), 2) }", testDir.subDir("wb3")));
     }
 
     @Test
@@ -237,7 +242,17 @@ public class TestConnections extends TestRBase {
     @Test
     public void testFifoOpenInexisting() {
         assertEval("capabilities(\"fifo\")");
-        assertEval(Output.IgnoreErrorContext, Output.IgnoreWarningContext, "{ fn <- '___fifo_2367253765'; zz <- fifo(fn, 'r', blocking = TRUE); close(zz); unlink(fn) }");
+        assertEval("{ fn <- '___fifo_2367253765'; zz <- fifo(fn, 'r', blocking = TRUE); close(zz); unlink(fn) }");
+    }
+
+    public void testTruncate() {
+        assertEval("truncate(pipe('ls'))");
+        assertEval("zz <- file(''); writeLines(c('Hello', 'wonderful', 'World'), zz); seek(zz, 0); truncate(zz); flush(zz); readLines(zz)");
+        assertEval("fn <- '__tmp_77253842367367'; zz <- file(fn, 'w'); writeLines(c('Hello', 'wonderful', 'World'), zz); seek(zz, 0); truncate(zz); close(zz); readLines(file(fn)); unlink(fn)");
+        assertEval("fn <- '__tmp_98723669834556'; zz <- file(fn, 'w'); writeLines(c('Hello', 'wonderful', 'World'), zz); close(zz); zz <- file(fn, 'r'); truncate(zz); unlink(fn)");
+        assertEval("zz <- rawConnection(raw(0), 'r+'); writeLines(c('hello', 'world'), zz); rawConnectionValue(zz); seek(zz, 5); truncate(zz); rawConnectionValue(zz); close(zz)");
+        assertEval("truncate(fifo('__fifo_872636743', 'w+', blocking=T)); unlink('__fifo_872636743')");
+        assertEval("truncate(fifo('__fifo_982346798', 'r', blocking=T)); unlink('__fifo_982346798')");
     }
 
     private static final String[] LVAL = arr("T", "F");

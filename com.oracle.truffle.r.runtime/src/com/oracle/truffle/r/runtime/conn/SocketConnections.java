@@ -82,7 +82,7 @@ public class SocketConnections {
         protected final RSocketConnection thisBase;
 
         protected RSocketReadWriteConnection(RSocketConnection base) {
-            super(base);
+            super(base, 0);
             this.thisBase = base;
         }
 
@@ -118,7 +118,7 @@ public class SocketConnections {
         private SocketChannel socketChannel;
 
         protected RSocketReadWriteNonBlockConnection(RSocketConnection base) {
-            super(base);
+            super(base, 0);
         }
 
         protected void openStreams(Socket socketArg) throws IOException {
