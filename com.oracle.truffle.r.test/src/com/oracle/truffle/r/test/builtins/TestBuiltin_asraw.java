@@ -49,6 +49,7 @@ public class TestBuiltin_asraw extends TestBase {
 
     @Test
     public void testAsRaw() {
+        assertEval("{ as.raw() }");
         assertEval("{ as.raw(NULL) }");
         assertEval("{ as.raw(1) }");
         assertEval("{ as.raw(1L) }");

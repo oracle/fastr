@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -13,6 +13,7 @@ package com.oracle.truffle.r.test.builtins;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.TestBase.Output;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_asPOSIXlt extends TestBase {
@@ -70,5 +71,11 @@ public class TestBuiltin_asPOSIXlt extends TestBase {
     @Test
     public void testasPOSIXlt11() {
         assertEval("argv <- list(NULL, ''); .Internal(as.POSIXlt(argv[[1]], argv[[2]]))");
+    }
+
+    @Test
+    public void testasPOSIXlt() {
+        assertEval(Output.MayIgnoreErrorContext, ".Internal(as.POSIXlt(, 1))");
+        assertEval(Output.MayIgnoreErrorContext, ".Internal(as.POSIXlt(2, ))");
     }
 }

@@ -24,6 +24,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringVector;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -34,8 +37,8 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -47,16 +50,11 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(AsCharacter.class);
-        casts.arg("x").mapIf(instanceOf(RAbstractListVector.class).not(), asStringVector());
+        casts.arg("x").returnIf(missingValue().or(nullValue()), emptyStringVector()).mapIf(instanceOf(RAbstractListVector.class).not(), asStringVector());
     }
 
     @Specialization
-    protected RAbstractStringVector asCharacter(@SuppressWarnings("unused") RNull n) {
-        return RDataFactory.createEmptyStringVector();
-    }
-
-    @Specialization
-    protected RAbstractStringVector asCharacter(RAbstractStringVector v) {
+    protected RAbstractStringVector asCharacter(RAbstractStringVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot) {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
@@ -65,7 +63,7 @@ public abstract class AsCharacter extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector asCharacter(RAbstractListVector list) {
+    protected RStringVector asCharacter(RAbstractListVector list, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot) {
         int len = list.getLength();
         boolean complete = RDataFactory.COMPLETE_VECTOR;
         String[] data = new String[len];

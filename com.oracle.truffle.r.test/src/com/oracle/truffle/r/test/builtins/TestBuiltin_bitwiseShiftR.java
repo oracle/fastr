@@ -13,6 +13,7 @@ package com.oracle.truffle.r.test.builtins;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.TestBase.Output;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_bitwiseShiftR extends TestBase {
@@ -24,6 +25,8 @@ public class TestBuiltin_bitwiseShiftR extends TestBase {
 
     @Test
     public void testBitwiseFunctions() {
+        assertEval(Output.MayIgnoreErrorContext, "{ .Internal(bitwiseShiftR(, 1))}");
+        assertEval(Output.MayIgnoreErrorContext, "{ .Internal(bitwiseShiftR(200, ))}");
         assertEval("{ bitwShiftR(c(10,11,12,13,14,15), c(1,1,1,1,1,1)) }");
         assertEval("{ bitwShiftR(c(100,200,300), 1) }");
         assertEval("{ bitwShiftR(c(25,57,66), c(10,20,30,40,50,60)) }");

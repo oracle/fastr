@@ -11,6 +11,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -52,8 +53,8 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(UpdateClass.class);
-        casts.arg("x"); // disallows null
-        casts.arg("value").asStringVector();
+        casts.arg("x").mustBe(missingValue().not(), RError.Message.ARGUMENT_EMPTY, 1);
+        casts.arg("value").mustBe(missingValue().not(), RError.Message.ARGUMENT_EMPTY, 2).asStringVector();
     }
 
     @Specialization
@@ -62,6 +63,11 @@ public abstract class UpdateClass extends RBuiltinNode {
         RAbstractContainer result = reuseNonShared(arg);
         setClassAttrNode.reset(result);
         return result;
+    }
+
+    @Specialization
+    protected Object setClass(@SuppressWarnings("unused") RNull arg, @SuppressWarnings("unused") Object className) {
+        throw error(RError.Message.SET_ATTRIBUTES_ON_NULL);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = "cachedClassName == className")
