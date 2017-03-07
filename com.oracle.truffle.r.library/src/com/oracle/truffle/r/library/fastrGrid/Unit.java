@@ -34,13 +34,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
  * enter our system.
  */
 public class Unit {
-    private static final String VALID_UNIT_ATTR = "valid.unit";
+    static final String VALID_UNIT_ATTR = "valid.unit";
 
-    private static final int NPC = 0;
+    public static final int NPC = 0;
     public static final int CM = 1;
     public static final int INCHES = 2;
-    private static final int LINES = 3;
-    private static final int NATIVE = 4;
+    public static final int LINES = 3;
+    public static final int NATIVE = 4;
     public static final int NULL = 5; /* only used in layout specifications (?) */
     public static final int SNPC = 6;
     public static final int MM = 7;
@@ -71,6 +71,7 @@ public class Unit {
     public static final int GROBHEIGHT = 22;
     public static final int GROBASCENT = 23;
     public static final int GROBDESCENT = 24;
+    public static final int LAST_NORMAL_UNIT = GROBDESCENT;
     /*
      * No longer used
      */
@@ -95,6 +96,65 @@ public class Unit {
 
     public static UnitToInchesNode createToInchesNode() {
         return UnitToInchesNode.create();
+    }
+
+    static double convertFromInches(double value, int unitId, double vpSize, double scalemin, double scalemax, DrawingContext drawingCtx) {
+        switch (unitId) {
+            case NATIVE:
+                return ((value + scalemin) * (scalemax - scalemin)) / vpSize;
+            case NPC:
+                return value / vpSize;
+            case CM:
+                return value * CM_IN_INCH;
+            case MM:
+                return value * CM_IN_INCH * 10;
+            case INCHES:
+                return value;
+            case POINTS:
+                return value * INCH_TO_POINTS_FACTOR;
+            case LINES:
+                return (value * INCH_TO_POINTS_FACTOR) / (drawingCtx.getFontSize() * drawingCtx.getLineHeight());
+            // following units are not supported even by original grid
+            case SNPC:
+            case MYCHAR:
+            case MYLINES:
+            case STRINGWIDTH:
+            case MYSTRINGWIDTH:
+            case STRINGHEIGHT:
+            case MYSTRINGHEIGHT:
+            case GROBX:
+            case GROBY:
+            case GROBWIDTH:
+            case GROBHEIGHT:
+            case NULL:
+            default:
+                throw RInternalError.unimplemented("unit type " + unitId + " in convertFromInches");
+        }
+    }
+
+    static double convertToInches(double value, int unitId, double vpSize, double scalemin, double scalemax, DrawingContext drawingCtx) {
+        switch (unitId) {
+            case NATIVE:
+                return ((value - scalemin) / (scalemax - scalemin)) * vpSize;
+            case NPC:
+                return value * vpSize;
+            case POINTS:
+                return value / INCH_TO_POINTS_FACTOR;
+            case CM:
+                return value / CM_IN_INCH;
+            case MM:
+                return value / (CM_IN_INCH * 10);
+            case LINES:
+            case MYLINES:
+                return (value * drawingCtx.getFontSize() * drawingCtx.getLineHeight()) / INCH_TO_POINTS_FACTOR;
+
+            default:
+                throw RInternalError.unimplemented("unit type " + unitId + " in convertToInches");
+        }
+    }
+
+    public static UnitElementAtNode createElementAtNode() {
+        return UnitElementAtNode.create();
     }
 
     public abstract static class UnitNodeBase extends Node {
@@ -191,7 +251,7 @@ public class Unit {
         @Specialization(guards = "!isArithmetic(value)")
         double doNormal(RAbstractContainer value, int index, double vpSize, double scalemin, double scalemax, DrawingContext drawingCtx) {
             int unitId = (Integer) castUnitId.execute(value.getAttr(VALID_UNIT_ATTR));
-            return convert(elementAtNode.execute(value, index % value.getLength()), unitId, vpSize, scalemin, scalemax, drawingCtx);
+            return convertToInches(elementAtNode.execute(value, index % value.getLength()), unitId, vpSize, scalemin, scalemax, drawingCtx);
         }
 
         @Specialization(guards = "isArithmetic(list)")
@@ -199,19 +259,5 @@ public class Unit {
             throw RInternalError.unimplemented("UnitToInches for arithmetic units");
         }
 
-        private static double convert(double value, int unitId, double vpSize, double scalemin, double scalemax, DrawingContext drawingCtx) {
-            switch (unitId) {
-                case NATIVE:
-                    return ((value - scalemin) / (scalemax - scalemin)) * vpSize;
-                case NPC:
-                    return value * vpSize;
-                case LINES:
-                case MYLINES:
-                    return (value * drawingCtx.getFontSize() * drawingCtx.getLineHeight()) / INCH_TO_POINTS_FACTOR;
-
-                default:
-                    throw RInternalError.unimplemented("unit type " + unitId + " in UnitToInches");
-            }
-        }
     }
 }

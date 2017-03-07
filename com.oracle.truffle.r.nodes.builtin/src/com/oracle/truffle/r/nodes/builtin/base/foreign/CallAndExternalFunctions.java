@@ -27,6 +27,7 @@ import com.oracle.truffle.r.library.fastrGrid.GridStateGetNode;
 import com.oracle.truffle.r.library.fastrGrid.GridStateSetNode;
 import com.oracle.truffle.r.library.fastrGrid.IgnoredGridExternal;
 import com.oracle.truffle.r.library.fastrGrid.LCircle;
+import com.oracle.truffle.r.library.fastrGrid.LConvert;
 import com.oracle.truffle.r.library.fastrGrid.LGridDirty;
 import com.oracle.truffle.r.library.fastrGrid.LInitGrid;
 import com.oracle.truffle.r.library.fastrGrid.LInitViewPortStack;
@@ -680,6 +681,8 @@ public class CallAndExternalFunctions {
                     return LInitGrid.create();
                 case "L_newpage":
                     return new LNewPage();
+                case "L_convert":
+                    return LConvert.create();
 
                 // Viewport management
                 case "L_upviewport":
