@@ -334,7 +334,8 @@ public class ConnectionSupport {
         RAW("rawConnection"),
         Internal("internal"),
         PIPE("pipe"),
-        FIFO("fifo");
+        FIFO("fifo"),
+        CHANNEL("Java Channel");
 
         private final String printName;
 

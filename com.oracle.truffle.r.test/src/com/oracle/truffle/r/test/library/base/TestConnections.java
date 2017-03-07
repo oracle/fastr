@@ -24,6 +24,8 @@ package com.oracle.truffle.r.test.library.base;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,11 +37,17 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.oracle.truffle.api.interop.java.JavaInterop;
+import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
+import com.oracle.truffle.r.runtime.conn.SeekableMemoryByteChannel;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.TestRBase;
 
 // Checkstyle: stop line length check
 public class TestConnections extends TestRBase {
+    private static final String CHANNEL_NAME = "_fastr_channel0";
+
     private static final class TestDir {
         private final Path testDirPath;
 
@@ -259,5 +267,47 @@ public class TestConnections extends TestRBase {
 
     private static String[] arr(String... args) {
         return args;
+    }
+
+    private static final SeekableMemoryByteChannel CHANNEL = new SeekableMemoryByteChannel();
+
+    @Test
+    public void testChannelConnection() throws IOException {
+
+        final String line0 = "Hello, World!\n";
+        final String line1 = "second line\n";
+        CHANNEL.write(line0.getBytes());
+        CHANNEL.write(line1.getBytes());
+        long oldPos = CHANNEL.position();
+        CHANNEL.position(0);
+        assertEvalFastR(String.format("v <- .fastr.interop.import('%s'); zz <- .fastr.channelConnection(v, 'r+', 'native.enc'); res <- readLines(zz); close(zz); res",
+                        CHANNEL_NAME),
+                        "c('Hello, World!', 'second line')");
+
+        if (!generatingExpected()) {
+            // test if FastR consumed the data
+            Assert.assertEquals(oldPos, CHANNEL.position());
+
+            // re-open channel
+            CHANNEL.setOpen(true);
+            CHANNEL.position(0);
+        }
+
+        final String response = "hi there";
+        assertEvalFastR(String.format("v <- .fastr.interop.import('%s'); zz <- .fastr.channelConnection(v, 'r+', 'native.enc'); writeLines('%s', zz); close(zz); NULL ", CHANNEL_NAME, response),
+                        "NULL");
+
+        if (!generatingExpected()) {
+            ByteBuffer buf = ByteBuffer.allocate(response.length());
+            CHANNEL.setOpen(true);
+            CHANNEL.position(0);
+            CHANNEL.read(buf);
+            Assert.assertEquals(response, new String(buf.array()));
+        }
+    }
+
+    @Override
+    public void addPolyglotSymbols(Builder builder) {
+        builder.globalSymbol(CHANNEL_NAME, JavaInterop.asTruffleObject(CHANNEL));
     }
 }
