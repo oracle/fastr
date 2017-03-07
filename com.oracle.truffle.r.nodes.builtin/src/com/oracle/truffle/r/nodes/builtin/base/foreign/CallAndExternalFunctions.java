@@ -29,6 +29,7 @@ import com.oracle.truffle.r.library.fastrGrid.IgnoredGridExternal;
 import com.oracle.truffle.r.library.fastrGrid.LCircle;
 import com.oracle.truffle.r.library.fastrGrid.LConvert;
 import com.oracle.truffle.r.library.fastrGrid.LGridDirty;
+import com.oracle.truffle.r.library.fastrGrid.LInitGPar;
 import com.oracle.truffle.r.library.fastrGrid.LInitGrid;
 import com.oracle.truffle.r.library.fastrGrid.LInitViewPortStack;
 import com.oracle.truffle.r.library.fastrGrid.LLines;
@@ -38,9 +39,8 @@ import com.oracle.truffle.r.library.fastrGrid.LSegments;
 import com.oracle.truffle.r.library.fastrGrid.LText;
 import com.oracle.truffle.r.library.fastrGrid.LTextBounds;
 import com.oracle.truffle.r.library.fastrGrid.LUpViewPort;
-import com.oracle.truffle.r.library.grDevices.DevicesCCalls;
+import com.oracle.truffle.r.library.fastrGrid.graphics.CPar;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls;
-import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_Par;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_PlotXY;
 import com.oracle.truffle.r.library.grid.GridFunctionsFactory.InitGridNodeGen;
 import com.oracle.truffle.r.library.grid.GridFunctionsFactory.ValidUnitsNodeGen;
@@ -71,10 +71,10 @@ import com.oracle.truffle.r.library.stats.RandFunctionsNodes.RandFunction3Node;
 import com.oracle.truffle.r.library.stats.SignrankFreeNode;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
-import com.oracle.truffle.r.library.stats.deriv.D;
-import com.oracle.truffle.r.library.stats.deriv.Deriv;
 import com.oracle.truffle.r.library.stats.StatsFunctionsNodes;
 import com.oracle.truffle.r.library.stats.WilcoxFreeNode;
+import com.oracle.truffle.r.library.stats.deriv.D;
+import com.oracle.truffle.r.library.stats.deriv.Deriv;
 import com.oracle.truffle.r.library.tools.C_ParseRdNodeGen;
 import com.oracle.truffle.r.library.tools.DirChmodNodeGen;
 import com.oracle.truffle.r.library.tools.Rmd5NodeGen;
@@ -258,8 +258,11 @@ public class CallAndExternalFunctions {
         @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
             String name = lookupName(symbol);
-            if (FastROptions.UseInternalGridGraphics.getBooleanValue() && name != null && name.startsWith("L_")) {
-                return lookupFastRGridBuiltin(name);
+            if (FastROptions.UseInternalGridGraphics.getBooleanValue() && name != null) {
+                RExternalBuiltinNode gridExternal = lookupFastRGridBuiltin(name);
+                if (gridExternal != null) {
+                    return gridExternal;
+                }
             }
             switch (name) {
                 // methods
@@ -718,6 +721,8 @@ public class CallAndExternalFunctions {
                     return GridStateSetNode.create(GridState::setCurrentGrob);
                 case "L_currentViewport":
                     return new GridStateGetNode(GridState::getViewPort);
+                case "L_initGPar":
+                    return new LInitGPar();
 
                 // Display list stuff: not implemented atm
                 case "L_getDisplayList":
@@ -741,7 +746,11 @@ public class CallAndExternalFunctions {
                 case "L_validUnits":
                     return null;
                 default:
-                    throw RInternalError.shouldNotReachHere("Unimplemented grid external " + name);
+                    if (name.startsWith("L_")) {
+                        throw RInternalError.shouldNotReachHere("Unimplemented grid external " + name);
+                    } else {
+                        return null;
+                    }
             }
         }
 
@@ -831,14 +840,10 @@ public class CallAndExternalFunctions {
         @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             String name = lookupName(f);
-            if (FastROptions.UseInternalGraphics.getBooleanValue()) {
+            if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
                 switch (name) {
-                    case "PDF":
-                        return new DevicesCCalls.C_PDF();
-                    case "devoff":
-                        return DevicesCCalls.C_DevOff.create();
-                    case "devcur":
-                        return new DevicesCCalls.C_DevCur();
+                    case "devholdflush":
+                        return new IgnoredGridExternal(RNull.instance);
                 }
             }
             switch (name) {
@@ -952,10 +957,10 @@ public class CallAndExternalFunctions {
         @Override
         @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
-            if (FastROptions.UseInternalGraphics.getBooleanValue()) {
+            if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
                 switch (lookupName(symbol)) {
                     case "C_par":
-                        return new C_Par();
+                        return new CPar();
                 }
             }
             String name = lookupName(symbol);

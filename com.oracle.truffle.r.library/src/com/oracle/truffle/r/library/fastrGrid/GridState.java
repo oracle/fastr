@@ -38,7 +38,7 @@ public final class GridState {
         initGPar(currentDevice);
     }
 
-    private void initGPar(GridDevice currentDevice) {
+    void initGPar(GridDevice currentDevice) {
         gpar = GPar.createNew();
         currentDevice.initDrawingContext(GPar.asDrawingContext(gpar));
     }
