@@ -226,7 +226,11 @@ public class SeekableMemoryByteChannel implements SeekableByteChannel {
 
     @Override
     public void close() throws IOException {
-        open = false;
+        setOpen(false);
+    }
+
+    public void setOpen(boolean open) {
+        this.open = open;
     }
 
     public InputStream getInputStream() {

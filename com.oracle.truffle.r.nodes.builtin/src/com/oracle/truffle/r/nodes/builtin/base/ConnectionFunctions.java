@@ -55,6 +55,7 @@ import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
 import java.nio.channels.ByteChannel;
+import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.util.ArrayList;
 
@@ -96,6 +97,7 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
@@ -1335,27 +1337,30 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = ".fastr.channelConnection", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"description", "channel", "open", "encoding"}, behavior = IO)
+    @RBuiltin(name = ".fastr.channelConnection", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"channel", "open", "encoding"}, behavior = IO)
     public abstract static class ChannelConnection extends RBuiltinNode {
 
         static {
             Casts casts = new Casts(ChannelConnection.class);
-            CastsHelper.description(casts);
             casts.arg("channel").mustNotBeMissing().mustBe(nullValue().not().and(instanceOf(TruffleObject.class)));
             CastsHelper.openMode(casts);
             CastsHelper.encoding(casts);
         }
 
+        @Override
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, Charset.defaultCharset().name()};
+        }
+
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector channelConnection(String description, TruffleObject channel, String open, String encoding) {
+        protected RAbstractIntVector channelConnection(TruffleObject channel, String open, String encoding) {
             try {
                 if (JavaInterop.isJavaObject(ByteChannel.class, channel)) {
                     ByteChannel ch = JavaInterop.asJavaObject(ByteChannel.class, channel);
-                    return new ChannelRConnection(description, ch, open, encoding).asVector();
+                    return new ChannelRConnection("", ch, open, encoding).asVector();
                 }
-                // TODO improve error handling
-                throw new RInternalError("invalid object type %s", JavaInterop.unbox(channel).getClass());
+                throw error(RError.Message.INVALID_CHANNEL_OBJECT, JavaInterop.unbox(channel).getClass());
             } catch (IOException ex) {
                 throw RInternalError.shouldNotReachHere();
             }

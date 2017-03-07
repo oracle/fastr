@@ -45,6 +45,7 @@ public class ChannelConnections {
             super(ConnectionClass.CHANNEL, modeString, AbstractOpenMode.Read, encoding);
             this.description = description;
             this.channel = Objects.requireNonNull(channel);
+            openNonLazyConnection();
         }
 
         @Override

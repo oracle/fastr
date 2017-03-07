@@ -846,7 +846,8 @@ public final class RError extends RuntimeException {
         TRUNCATE_ONLY_OPEN_CONN("can only truncate an open connection"),
         TRUNCATE_NOT_ENABLED("truncation not enabled for this connection"),
         TRUNCATE_UNSUPPORTED_FOR_CONN("cannot truncate connection: %s"),
-        INCOMPLETE_STRING_AT_EOF_DISCARDED("incomplete string at end of file has been discarded");
+        INCOMPLETE_STRING_AT_EOF_DISCARDED("incomplete string at end of file has been discarded"),
+        INVALID_CHANNEL_OBJECT("invalid channel object type: %s");
 
         public final String message;
         final boolean hasArgs;
