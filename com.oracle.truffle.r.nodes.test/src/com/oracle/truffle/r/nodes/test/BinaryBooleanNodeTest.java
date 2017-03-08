@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -274,7 +275,7 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
     }
 
     private static boolean isPrimitive(Object result) {
-        return result instanceof Integer || result instanceof Double || result instanceof Byte || result instanceof RComplex;
+        return result instanceof Integer || result instanceof Double || result instanceof Byte || result instanceof RComplex || result instanceof RRaw;
     }
 
     private NodeHandle<BinaryBooleanNode> handle;
