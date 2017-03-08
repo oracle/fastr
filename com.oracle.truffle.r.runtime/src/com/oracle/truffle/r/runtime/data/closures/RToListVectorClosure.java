@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -30,42 +29,49 @@ import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-abstract class RToComplexVectorClosure extends RToVectorClosure implements RAbstractComplexVector {
+abstract class RToListVectorClosure extends RToVectorClosure implements RAbstractListVector {
 
     @Override
-    public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createComplexVector(new double[newLength << 1], newIsComplete);
+    public Object getDataAtAsObject(int index) {
+        return getDataAt(index);
     }
 
     @Override
-    public final RComplexVector materialize() {
+    public RList materialize() {
         int length = getLength();
-        double[] result = new double[length << 1];
+        Object[] result = new Object[length];
         for (int i = 0; i < length; i++) {
-            RComplex data = getDataAt(i);
-            int index = i << 1;
-            result[index] = data.getRealPart();
-            result[index + 1] = data.getImaginaryPart();
+            Object data = getDataAt(i);
+            result[i] = data;
         }
-        return RDataFactory.createComplexVector(result, getVector().isComplete());
+        return RDataFactory.createList(result);
     }
 
     @Override
-    public final RComplexVector copyWithNewDimensions(int[] newDimensions) {
+    public RAbstractVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
+    }
+
+    @Override
+    public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createList(new Object[newLength]);
     }
 }
 
-final class RLogicalToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
+final class RLogicalToListVectorClosure extends RToListVectorClosure {
 
     private final RLogicalVector vector;
 
-    RLogicalToComplexVectorClosure(RLogicalVector vector) {
+    RLogicalToListVectorClosure(RLogicalVector vector) {
         this.vector = vector;
     }
 
@@ -75,17 +81,16 @@ final class RLogicalToComplexVectorClosure extends RToComplexVectorClosure imple
     }
 
     @Override
-    public RComplex getDataAt(int index) {
-        byte real = vector.getDataAt(index);
-        return RRuntime.isNA(real) ? RComplex.createNA() : RDataFactory.createComplex(real, 0.0);
+    public Byte getDataAt(int index) {
+        return vector.getDataAt(index);
     }
 }
 
-final class RIntToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
+final class RIntToListVectorClosure extends RToListVectorClosure {
 
     private final RIntVector vector;
 
-    RIntToComplexVectorClosure(RIntVector vector) {
+    RIntToListVectorClosure(RIntVector vector) {
         this.vector = vector;
     }
 
@@ -95,17 +100,16 @@ final class RIntToComplexVectorClosure extends RToComplexVectorClosure implement
     }
 
     @Override
-    public RComplex getDataAt(int index) {
-        int real = vector.getDataAt(index);
-        return RRuntime.isNA(real) ? RComplex.createNA() : RDataFactory.createComplex(real, 0.0);
+    public Integer getDataAt(int index) {
+        return vector.getDataAt(index);
     }
 }
 
-final class RIntSequenceToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
+final class RIntSequenceToListVectorClosure extends RToListVectorClosure {
 
     private final RIntSequence vector;
 
-    RIntSequenceToComplexVectorClosure(RIntSequence vector) {
+    RIntSequenceToListVectorClosure(RIntSequence vector) {
         this.vector = vector;
     }
 
@@ -115,17 +119,16 @@ final class RIntSequenceToComplexVectorClosure extends RToComplexVectorClosure i
     }
 
     @Override
-    public RComplex getDataAt(int index) {
-        int real = vector.getDataAt(index);
-        return RRuntime.isNA(real) ? RComplex.createNA() : RDataFactory.createComplex(real, 0.0);
+    public Integer getDataAt(int index) {
+        return vector.getDataAt(index);
     }
 }
 
-final class RDoubleToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
+final class RDoubleToListVectorClosure extends RToListVectorClosure {
 
     private final RDoubleVector vector;
 
-    RDoubleToComplexVectorClosure(RDoubleVector vector) {
+    RDoubleToListVectorClosure(RDoubleVector vector) {
         this.vector = vector;
     }
 
@@ -135,17 +138,16 @@ final class RDoubleToComplexVectorClosure extends RToComplexVectorClosure implem
     }
 
     @Override
-    public RComplex getDataAt(int index) {
-        double real = vector.getDataAt(index);
-        return Double.isNaN(real) ? RComplex.createNA() : RDataFactory.createComplex(real, 0.0);
+    public Double getDataAt(int index) {
+        return vector.getDataAt(index);
     }
 }
 
-final class RDoubleSequenceToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
+final class RDoubleSequenceToListVectorClosure extends RToListVectorClosure {
 
     private final RDoubleSequence vector;
 
-    RDoubleSequenceToComplexVectorClosure(RDoubleSequence vector) {
+    RDoubleSequenceToListVectorClosure(RDoubleSequence vector) {
         this.vector = vector;
     }
 
@@ -155,17 +157,54 @@ final class RDoubleSequenceToComplexVectorClosure extends RToComplexVectorClosur
     }
 
     @Override
-    public RComplex getDataAt(int index) {
-        double real = vector.getDataAt(index);
-        return Double.isNaN(real) ? RComplex.createNA() : RDataFactory.createComplex(real, 0.0);
+    public Double getDataAt(int index) {
+        return vector.getDataAt(index);
     }
 }
 
-final class RRawToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
+final class RComplexToListVectorClosure extends RToListVectorClosure {
+
+    private final RComplexVector vector;
+
+    RComplexToListVectorClosure(RComplexVector vector) {
+        this.vector = vector;
+    }
+
+    @Override
+    public RComplexVector getVector() {
+        return vector;
+    }
+
+    @Override
+    public RComplex getDataAt(int index) {
+        return vector.getDataAt(index);
+    }
+}
+
+final class RStringToListVectorClosure extends RToListVectorClosure {
+
+    private final RStringVector vector;
+
+    RStringToListVectorClosure(RStringVector vector) {
+        this.vector = vector;
+    }
+
+    @Override
+    public RStringVector getVector() {
+        return vector;
+    }
+
+    @Override
+    public String getDataAt(int index) {
+        return vector.getDataAt(index);
+    }
+}
+
+final class RRawToListVectorClosure extends RToListVectorClosure {
 
     private final RRawVector vector;
 
-    RRawToComplexVectorClosure(RRawVector vector) {
+    RRawToListVectorClosure(RRawVector vector) {
         this.vector = vector;
     }
 
@@ -175,7 +214,7 @@ final class RRawToComplexVectorClosure extends RToComplexVectorClosure implement
     }
 
     @Override
-    public RComplex getDataAt(int index) {
-        return RRuntime.raw2complex(vector.getDataAt(index));
+    public RRaw getDataAt(int index) {
+        return vector.getDataAt(index);
     }
 }

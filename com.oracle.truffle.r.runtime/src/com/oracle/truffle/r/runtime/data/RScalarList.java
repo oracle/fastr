@@ -20,51 +20,71 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.closures;
+package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-/**
- * In converting complex numbers to integers, this closure discards the imaginary parts.
- */
-final class RAbstactVectorToListClosure extends RToVectorClosure implements RAbstractListVector {
+@ValueType
+public final class RScalarList extends RScalarVector implements RAbstractListVector {
 
-    RAbstactVectorToListClosure(RAbstractVector vector) {
-        super(vector);
+    private final Object value;
+
+    private RScalarList(Object value) {
+        this.value = value;
     }
 
-    @Override
-    public Object getDataAtAsObject(int index) {
-        return vector.getDataAtAsObject(index);
+    public static RScalarList valueOf(Object value) {
+        return new RScalarList(value);
     }
 
     @Override
     public Object getDataAt(int index) {
-        return vector.getDataAtAsObject(index);
+        assert index == 0;
+        return value;
+    }
+
+    public Object getValue() {
+        return value;
+    }
+
+    @Override
+    public RType getRType() {
+        return RType.List;
+    }
+
+    @Override
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+        switch (type) {
+            case List:
+                return this;
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return value.toString();
     }
 
     @Override
     public RList materialize() {
-        int length = getLength();
-        Object[] result = new Object[length];
-        for (int i = 0; i < length; i++) {
-            Object data = getDataAtAsObject(i);
-            result[i] = data;
-        }
-        return RDataFactory.createList(result);
+        RList result = RDataFactory.createList(new Object[]{value});
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
     }
 
     @Override
-    public RAbstractVector copyWithNewDimensions(int[] newDimensions) {
-        return materialize().copyWithNewDimensions(newDimensions);
+    public Object getDataAtAsObject(int index) {
+        return getDataAt(index);
     }
 
     @Override
-    public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createList(newLength);
+    public boolean isNA() {
+        return false;
     }
 }

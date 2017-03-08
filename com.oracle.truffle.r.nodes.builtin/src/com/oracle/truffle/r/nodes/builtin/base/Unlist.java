@@ -714,14 +714,14 @@ public abstract class Unlist extends RBuiltinNode {
         } else if (dataAtAsObject instanceof Double) {
             double result = unlistValueDouble(dataAtAsObject);
             if (RRuntime.isNA(result)) {
-                return RRuntime.createComplexNA();
+                return RComplex.createNA();
             } else {
                 return RDataFactory.createComplex(result, 0.0);
             }
         } else {
             int result = unlistValueInt(dataAtAsObject);
             if (RRuntime.isNA(result)) {
-                return RRuntime.createComplexNA();
+                return RComplex.createNA();
             } else {
                 return RDataFactory.createComplex(result, 0.0);
             }

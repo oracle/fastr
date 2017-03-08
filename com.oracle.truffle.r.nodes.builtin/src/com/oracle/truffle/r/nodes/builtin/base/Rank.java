@@ -30,17 +30,19 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.OrderVector1NodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -89,7 +91,8 @@ public abstract class Rank extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object rank(RAbstractVector xa, int inN, String tiesMethod) {
+    protected Object rank(RAbstractVector xa, int inN, String tiesMethod,
+                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         int n = inN;
         if (n > xa.getLength()) {
             errorProfile.enter();
@@ -110,7 +113,7 @@ public abstract class Rank extends RBuiltinNode {
             indx[i] = i;
         }
         RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
-        RAbstractVector x = xa instanceof RAbstractLogicalVector ? RClosures.createLogicalToIntVector((RAbstractLogicalVector) xa) : xa;
+        RAbstractVector x = xa instanceof RAbstractLogicalVector ? xa.castSafe(RType.Integer, isNAProfile) : xa;
         initOrderVector1().execute(indxVec, x, RRuntime.LOGICAL_TRUE, false, rho);
         initOrderCmp();
         int j;

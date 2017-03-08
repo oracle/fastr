@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -47,7 +48,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -183,9 +183,10 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstLogicalPrecedence(args)"})
-    Object orderLogical(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
+    Object orderLogical(byte naLast, boolean decreasing, RArgsValuesAndNames args,
+                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         Object[] vectors = args.getArguments();
-        RAbstractIntVector v = RClosures.createLogicalToIntVector((RAbstractLogicalVector) castVector(vectors[0]));
+        RAbstractIntVector v = (RAbstractIntVector) castVector(vectors[0]).castSafe(RType.Integer, isNAProfile);
         return executeOrderVector1(v, naLast, decreasing);
     }
 

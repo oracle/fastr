@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,13 +55,13 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
             case Raw:
                 return this;
             case Integer:
-                return RClosures.createRawToIntVector(this);
+                return RClosures.createToIntVector(this);
             case Double:
-                return RClosures.createRawToDoubleVector(this);
+                return RClosures.createToDoubleVector(this);
             case Complex:
-                return RClosures.createRawToComplexVector(this);
+                return RClosures.createToComplexVector(this);
             case Character:
-                return RClosures.createRawToStringVector(this);
+                return RClosures.createToStringVector(this);
             default:
                 return null;
         }
@@ -105,7 +105,7 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     @Override
-    protected boolean internalVerify() {
+    public boolean verify() {
         return true;
     }
 
@@ -161,8 +161,8 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     @Override
-    protected RRawVector internalCopyResized(int size, boolean fillNA) {
-        return RDataFactory.createRawVector(copyResizedData(size, fillNA));
+    protected RRawVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        return RDataFactory.createRawVector(copyResizedData(size, fillNA), dimensions);
     }
 
     @Override

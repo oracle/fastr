@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
@@ -92,7 +91,7 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
     }
 
     @Override
-    protected final boolean internalVerify() {
+    public final boolean verify() {
         for (Object item : data) {
             if (item == null) {
                 return false;
@@ -144,25 +143,6 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
     public final void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RAbstractListVector other = (RAbstractListVector) fromVector;
         data[toIndex] = other.getDataAtAsObject(fromIndex);
-    }
-
-    @TruffleBoundary
-    public final Object getNameAt(int index) {
-        RStringVector names = getNamesFromAttrs();
-        if (names != null && names != null) {
-            String name = names.getDataAt(index);
-            if (name == RRuntime.STRING_NA) {
-                return "$" + RRuntime.NA_HEADER;
-            } else if (name.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
-                return "[[" + Integer.toString(index + 1) + "]]";
-            } else if (name.matches("^[a-zA-Z.][a-zA-Z0-9_.]*$")) {
-                return "$" + name;
-            } else {
-                return "$`" + name + "`";
-            }
-        } else {
-            return "[[" + Integer.toString(index + 1) + "]]";
-        }
     }
 
     /**

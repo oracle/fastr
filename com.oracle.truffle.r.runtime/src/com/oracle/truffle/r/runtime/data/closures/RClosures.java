@@ -22,14 +22,20 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDoubleSequence;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -37,102 +43,135 @@ public class RClosures {
 
     // Logical to ...
 
-    public static RAbstractIntVector createLogicalToIntVector(RAbstractLogicalVector vector) {
+    public static RAbstractIntVector createToIntVector(RLogicalVector vector) {
         return new RLogicalToIntVectorClosure(vector);
     }
 
-    public static RAbstractDoubleVector createLogicalToDoubleVector(RAbstractLogicalVector vector) {
+    public static RAbstractDoubleVector createToDoubleVector(RLogicalVector vector) {
         return new RLogicalToDoubleVectorClosure(vector);
     }
 
-    public static RAbstractComplexVector createLogicalToComplexVector(RAbstractLogicalVector vector) {
+    public static RAbstractComplexVector createToComplexVector(RLogicalVector vector) {
         return new RLogicalToComplexVectorClosure(vector);
     }
 
-    public static RAbstractStringVector createLogicalToStringVector(RAbstractLogicalVector vector) {
+    public static RAbstractStringVector createToStringVector(RLogicalVector vector) {
         return new RLogicalToStringVectorClosure(vector);
+    }
+
+    public static RAbstractListVector createToListVector(RLogicalVector vector) {
+        return new RLogicalToListVectorClosure(vector);
     }
 
     // Int to ...
 
-    public static RAbstractDoubleVector createIntToDoubleVector(RAbstractIntVector vector) {
+    public static RAbstractComplexVector createToComplexVector(RIntSequence vector) {
+        return new RIntSequenceToComplexVectorClosure(vector);
+    }
+
+    public static RAbstractStringVector createToStringVector(RIntSequence vector) {
+        return new RIntSequenceToStringVectorClosure(vector);
+    }
+
+    public static RAbstractListVector createToListVector(RIntSequence vector) {
+        return new RIntSequenceToListVectorClosure(vector);
+    }
+
+    public static RAbstractDoubleVector createToDoubleVector(RIntVector vector) {
         return new RIntToDoubleVectorClosure(vector);
     }
 
-    public static RAbstractComplexVector createIntToComplexVector(RAbstractIntVector vector) {
+    public static RAbstractComplexVector createToComplexVector(RIntVector vector) {
         return new RIntToComplexVectorClosure(vector);
     }
 
-    public static RAbstractStringVector createIntToStringVector(RAbstractIntVector vector) {
+    public static RAbstractStringVector createToStringVector(RIntVector vector) {
         return new RIntToStringVectorClosure(vector);
+    }
+
+    public static RAbstractListVector createToListVector(RIntVector vector) {
+        return new RIntToListVectorClosure(vector);
     }
 
     // Double to ...
 
-    public static RAbstractComplexVector createDoubleToComplexVector(RAbstractDoubleVector vector) {
+    public static RAbstractComplexVector createToComplexVector(RDoubleSequence vector) {
+        return new RDoubleSequenceToComplexVectorClosure(vector);
+    }
+
+    public static RAbstractStringVector createToStringVector(RDoubleSequence vector) {
+        return new RDoubleSequenceToStringVectorClosure(vector);
+    }
+
+    public static RAbstractIntVector createToIntVector(RDoubleSequence vector) {
+        return new RDoubleSequenceToIntVectorClosure(vector);
+    }
+
+    public static RAbstractListVector createToListVector(RDoubleSequence vector) {
+        return new RDoubleSequenceToListVectorClosure(vector);
+    }
+
+    public static RAbstractComplexVector createToComplexVector(RDoubleVector vector) {
         return new RDoubleToComplexVectorClosure(vector);
     }
 
-    public static RAbstractStringVector createDoubleToStringVector(RAbstractDoubleVector vector) {
+    public static RAbstractStringVector createToStringVector(RDoubleVector vector) {
         return new RDoubleToStringVectorClosure(vector);
     }
 
-    public static RAbstractIntVector createDoubleToIntVector(RAbstractDoubleVector vector) {
+    public static RAbstractIntVector createToIntVector(RDoubleVector vector) {
         return new RDoubleToIntVectorClosure(vector);
+    }
+
+    public static RAbstractListVector createToListVector(RDoubleVector vector) {
+        return new RDoubleToListVectorClosure(vector);
     }
 
     // Raw to ...
 
-    public static RAbstractIntVector createRawToIntVector(RAbstractRawVector vector) {
+    public static RAbstractIntVector createToIntVector(RRawVector vector) {
         return new RRawToIntVectorClosure(vector);
     }
 
-    public static RAbstractDoubleVector createRawToDoubleVector(RAbstractRawVector vector) {
+    public static RAbstractDoubleVector createToDoubleVector(RRawVector vector) {
         return new RRawToDoubleVectorClosure(vector);
     }
 
-    public static RAbstractComplexVector createRawToComplexVector(RAbstractRawVector vector) {
+    public static RAbstractComplexVector createToComplexVector(RRawVector vector) {
         return new RRawToComplexVectorClosure(vector);
     }
 
-    public static RAbstractStringVector createRawToStringVector(RAbstractRawVector vector) {
+    public static RAbstractStringVector createToStringVector(RRawVector vector) {
         return new RRawToStringVectorClosure(vector);
+    }
+
+    public static RAbstractListVector createToListVector(RRawVector vector) {
+        return new RRawToListVectorClosure(vector);
     }
 
     // Complex to ...
 
-    public static RAbstractStringVector createComplexToStringVector(RAbstractComplexVector vector) {
+    public static RAbstractStringVector createToStringVector(RComplexVector vector) {
         return new RComplexToStringVectorClosure(vector);
     }
 
-    // Vector to list
+    public static RAbstractListVector createToListVector(RComplexVector vector) {
+        return new RComplexToListVectorClosure(vector);
+    }
 
-    public static RAbstractListVector createAbstractVectorToListVector(RAbstractVector vector) {
-        return new RAbstactVectorToListClosure(vector);
+    // Character to ...
+
+    public static RAbstractListVector createToListVector(RStringVector vector) {
+        return new RStringToListVectorClosure(vector);
     }
 
     // Factor to vector
 
-    public static RAbstractVector createFactorToVector(RAbstractIntVector factor, boolean withNames, RVector<?> levels) {
-        if (levels == null) {
-            return new RFactorToStringVectorClosure(factor, null, withNames);
+    public static RAbstractVector createFactorToVector(RAbstractIntVector factor, boolean withNames, RAbstractVector levels) {
+        if (levels instanceof RAbstractStringVector) {
+            return new RFactorToStringVectorClosure(factor, (RAbstractStringVector) levels, withNames);
         } else {
-            switch (levels.getRType()) {
-                case Integer:
-                    return new RFactorToIntVectorClosure(factor, (RAbstractIntVector) levels, withNames);
-                case Double:
-                    return new RFactorToDoubleVectorClosure(factor, (RAbstractDoubleVector) levels, withNames);
-                case Logical:
-                    return new RFactorToIntVectorClosure(factor, createLogicalToIntVector((RAbstractLogicalVector) levels), withNames);
-                case Complex:
-                    return new RFactorToComplexVectorClosure(factor, (RAbstractComplexVector) levels, withNames);
-                case Character:
-                    return new RFactorToStringVectorClosure(factor, (RAbstractStringVector) levels, withNames);
-                case Raw:
-                    return new RFactorToIntVectorClosure(factor, createRawToIntVector((RAbstractRawVector) levels), withNames);
-                default:
-                    throw RInternalError.shouldNotReachHere();
-            }
+            throw RError.error(RError.SHOW_CALLER, Message.MALFORMED_FACTOR);
         }
     }
 }

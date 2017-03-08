@@ -73,16 +73,16 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         // TODO might be possible to implement some of these without closures
         switch (type) {
+            case Integer:
+                return RClosures.createToIntVector(this);
             case Double:
                 return this;
-            case Integer:
-                return RClosures.createDoubleToIntVector(this);
             case Complex:
-                return RClosures.createDoubleToComplexVector(this);
+                return RClosures.createToComplexVector(this);
             case Character:
-                return RClosures.createDoubleToStringVector(this);
+                return RClosures.createToStringVector(this);
             case List:
-                return RClosures.createAbstractVectorToListVector(this);
+                return RClosures.createToListVector(this);
             default:
                 return null;
         }
@@ -118,6 +118,15 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
         populateVectorData(data);
         RDoubleVector.resizeData(data, data, getLength(), fillNA);
         return RDataFactory.createDoubleVector(data, !(fillNA && size > getLength()));
+    }
+
+    @Override
+    public RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
+        int size = newDimensions[0] * newDimensions[1];
+        double[] data = new double[size];
+        populateVectorData(data);
+        RDoubleVector.resizeData(data, data, getLength(), fillNA);
+        return RDataFactory.createDoubleVector(data, !(fillNA && size > getLength()), newDimensions);
     }
 
     @Override

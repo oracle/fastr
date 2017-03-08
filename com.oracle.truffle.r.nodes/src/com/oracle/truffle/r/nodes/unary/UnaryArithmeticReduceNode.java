@@ -170,7 +170,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
                     return operand;
                 }
             } else {
-                return na.check(operand) ? RRuntime.createComplexNA() : operand;
+                return na.check(operand) ? RComplex.createNA() : operand;
             }
         } else {
             throw error(RError.Message.INVALID_TYPE_ARGUMENT, "complex");
@@ -350,7 +350,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
                     if (profiledNaRm) {
                         continue;
                     } else {
-                        return RRuntime.createComplexNA();
+                        return RComplex.createNA();
                     }
                 } else {
                     result = arithmetic.op(result.getRealPart(), result.getImaginaryPart(), current.getRealPart(), current.getImaginaryPart());

@@ -164,7 +164,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
                 // CORNER: Must throw error on modulo operation on complex numbers.
                 throw error(RError.Message.UNIMPLEMENTED_COMPLEX);
             }
-            return RRuntime.createComplexNA();
+            return RComplex.createNA();
         }
         if (rightNACheck.check(right)) {
             if (this.arithmetic instanceof BinaryArithmetic.Pow && left.isZero()) {
@@ -174,7 +174,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
                 // CORNER: Must throw error on modulo operation on complex numbers.
                 throw error(RError.Message.UNIMPLEMENTED_COMPLEX);
             }
-            return RRuntime.createComplexNA();
+            return RComplex.createNA();
         }
         try {
             RComplex value = arithmetic.op(left.getRealPart(), left.getImaginaryPart(), right.getRealPart(), right.getImaginaryPart());

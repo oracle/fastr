@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,16 +52,16 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     @Override
     public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
         switch (type) {
+            case Integer:
+                return RClosures.createToIntVector(this);
             case Double:
                 return this;
-            case Integer:
-                return RClosures.createDoubleToIntVector(this);
             case Complex:
-                return RClosures.createDoubleToComplexVector(this);
+                return RClosures.createToComplexVector(this);
             case Character:
-                return RClosures.createDoubleToStringVector(this);
+                return RClosures.createToStringVector(this);
             case List:
-                return RClosures.createAbstractVectorToListVector(this);
+                return RClosures.createToListVector(this);
             default:
                 return null;
         }
@@ -113,7 +113,7 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     }
 
     @Override
-    protected boolean internalVerify() {
+    public boolean verify() {
         if (isComplete()) {
             for (double d : data) {
                 if (d == RRuntime.DOUBLE_NA) {
@@ -185,9 +185,9 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     }
 
     @Override
-    protected RDoubleVector internalCopyResized(int size, boolean fillNA) {
+    protected RDoubleVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
         boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
-        return RDataFactory.createDoubleVector(copyResizedData(size, fillNA), isComplete);
+        return RDataFactory.createDoubleVector(copyResizedData(size, fillNA), isComplete, dimensions);
     }
 
     @Override
