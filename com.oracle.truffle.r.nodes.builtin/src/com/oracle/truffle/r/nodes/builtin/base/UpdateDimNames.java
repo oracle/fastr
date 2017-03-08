@@ -73,7 +73,7 @@ public abstract class UpdateDimNames extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVectorNode = insert(CastToVectorNodeGen.create(false));
         }
-        return ((RAbstractVector) castVectorNode.execute(value)).materialize();
+        return ((RAbstractVector) castVectorNode.execute(value));
     }
 
     public abstract RAbstractContainer executeRAbstractContainer(RAbstractContainer container, Object o);
