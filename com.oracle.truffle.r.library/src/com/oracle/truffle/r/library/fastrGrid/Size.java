@@ -22,6 +22,10 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
+import com.oracle.truffle.r.library.fastrGrid.Unit.UnitToInchesNode;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+
 public final class Size {
     private final double width;
     private final double height;
@@ -29,6 +33,12 @@ public final class Size {
     public Size(double width, double height) {
         this.width = width;
         this.height = height;
+    }
+
+    public static Size fromUnits(UnitToInchesNode unitToInches, RAbstractVector wVec, RAbstractVector hVec, int index, UnitConversionContext conversionCtx) {
+        double w = unitToInches.convertWidth(wVec, index, conversionCtx);
+        double h = unitToInches.convertHeight(hVec, index, conversionCtx);
+        return new Size(w, h);
     }
 
     public double getWidth() {

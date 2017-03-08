@@ -60,14 +60,13 @@ public abstract class LRect extends RExternalBuiltinNode.Arg6 {
 
         int length = GridUtils.maxLength(unitLength, xVec, yVec, wVec, hVec);
         for (int i = 0; i < length; i++) {
-            double w = unitToInches.convertX(wVec, i, conversionCtx);
-            double h = unitToInches.convertY(hVec, i, conversionCtx);
+            Size size = Size.fromUnits(unitToInches, wVec, hVec, i, conversionCtx);
             // Note: once this is factored to drawing/recording: this transformation is necessary
             // only for drawing
             Point origLoc = Point.fromUnits(unitToInches, xVec, yVec, i, conversionCtx);
             Point transLoc = TransformMatrix.transLocation(origLoc, vpTransform.transform);
-            Point loc = transLoc.justify(w, h, getDataAtMod(hjust, i), getDataAtMod(vjust, i));
-            dev.drawRect(drawingCtx, loc.x, loc.y, w, h);
+            Point loc = transLoc.justify(size, getDataAtMod(hjust, i), getDataAtMod(vjust, i));
+            dev.drawRect(drawingCtx, loc.x, loc.y, size.getWidth(), size.getHeight());
         }
         return RNull.instance;
     }

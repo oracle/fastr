@@ -12,21 +12,27 @@
 package com.oracle.truffle.r.library.fastrGrid;
 
 import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_TO_POINTS_FACTOR;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 
+import java.util.function.Function;
+
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.library.fastrGrid.UnitFactory.UnitElementAtNodeGen;
 import com.oracle.truffle.r.library.fastrGrid.UnitFactory.UnitLengthNodeGen;
 import com.oracle.truffle.r.library.fastrGrid.UnitFactory.UnitToInchesNodeGen;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Note: internally in FastR Grid everything is in inches. However, some lists that are exposed to
@@ -98,10 +104,11 @@ public class Unit {
         return UnitToInchesNode.create();
     }
 
-    static double convertFromInches(double value, int unitId, double vpSize, double scalemin, double scalemax, DrawingContext drawingCtx) {
+    static double convertFromInches(double value, int unitId, double vpSize, double scalemin, double scalemax, boolean isDimension, DrawingContext drawingCtx) {
         switch (unitId) {
             case NATIVE:
-                return ((value + scalemin) * (scalemax - scalemin)) / vpSize;
+                double tmp = isDimension ? value : (value + scalemin);
+                return (tmp * (scalemax - scalemin)) / vpSize;
             case NPC:
                 return value / vpSize;
             case CM:
@@ -132,10 +139,11 @@ public class Unit {
         }
     }
 
-    static double convertToInches(double value, int unitId, double vpSize, double scalemin, double scalemax, DrawingContext drawingCtx) {
+    static double convertToInches(double value, int unitId, double vpSize, double scalemin, double scalemax, boolean isDimension, DrawingContext drawingCtx) {
         switch (unitId) {
             case NATIVE:
-                return ((value - scalemin) / (scalemax - scalemin)) * vpSize;
+                double tmp = isDimension ? value : (value - scalemin);
+                return (tmp / (scalemax - scalemin)) * vpSize;
             case NPC:
                 return value * vpSize;
             case POINTS:
@@ -153,22 +161,73 @@ public class Unit {
         }
     }
 
-    public static UnitElementAtNode createElementAtNode() {
-        return UnitElementAtNode.create();
+    private static final class ArithmeticUnit {
+        public final String op;
+        public final RAbstractContainer arg1;
+        public final RAbstractContainer arg2;
+
+        ArithmeticUnit(String op, RAbstractContainer arg1, RAbstractContainer arg2) {
+            this.op = op;
+            this.arg1 = arg1;
+            this.arg2 = arg2;
+        }
+
+        public boolean isBinary() {
+            return arg2 != null;
+        }
     }
 
-    public abstract static class UnitNodeBase extends Node {
-        @Child private InheritsCheckNode inheritsCheckNode = new InheritsCheckNode("unit.arithmetic");
+    abstract static class UnitNodeBase extends RBaseNode {
+        @Child private InheritsCheckNode inheritsArithmeticCheckNode = new InheritsCheckNode("unit.arithmetic");
+        @Child private InheritsCheckNode inheritsUnitListCheckNode = new InheritsCheckNode("unit.list");
+        @Child private CastNode stringCast;
+        @Child private CastNode abstractContainerCast;
+
+        boolean isSimple(Object obj) {
+            return !inheritsArithmeticCheckNode.execute(obj) && !inheritsUnitListCheckNode.execute(obj);
+        }
 
         boolean isArithmetic(Object obj) {
-            return obj instanceof RList && inheritsCheckNode.execute(obj);
+            return inheritsArithmeticCheckNode.execute(obj);
+        }
+
+        boolean isUnitList(Object obj) {
+            return inheritsUnitListCheckNode.execute(obj);
+        }
+
+        ArithmeticUnit asArithmeticUnit(RList unit) {
+            if (unit.getLength() <= 1) {
+                throw error(Message.GENERIC, "Invalid arithmetic unit (length <= 1).");
+            }
+            if (stringCast == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                stringCast = newCastBuilder().asStringVector().findFirst().buildCastNode();
+            }
+            if (abstractContainerCast == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                abstractContainerCast = newCastBuilder().mustBe(abstractVectorValue()).boxPrimitive().buildCastNode();
+            }
+            // Note: the operator is usually of type character, however in the R code, grid compares
+            // it to symbols, e.g. `x`. Our implementation here should work with symbols too thanks
+            // to the asStringVector() conversion.
+            String op = (String) stringCast.execute(unit.getDataAt(0));
+            RAbstractContainer arg1 = (RAbstractContainer) abstractContainerCast.execute(unit.getDataAt(1));
+            if (op.equals("+") || op.equals("-") || op.equals("*")) {
+                if (unit.getLength() != 3) {
+                    throw error(Message.GENERIC, "Invalid arithmetic unit with binary operator and missing operand.");
+                }
+                return new ArithmeticUnit(op, arg1, (RAbstractContainer) abstractContainerCast.execute(unit.getDataAt(2)));
+            }
+            if (op.equals("max") || op.equals("min") || op.equals("sum")) {
+                return new ArithmeticUnit(op, arg1, null);
+            }
+            throw error(Message.GENERIC, "Unexpected unit operator " + op);
         }
     }
 
     /**
-     * A unit object can represent more or fewer values that the number of elements underlying list
-     * or vector. This node gives the length if the unit in a sense of the upper limit on what can
-     * be used as an index for {@link UnitElementAtNode}.
+     * Arithmetic unit objects can represent 'vectorized' expressions, in such case the 'length' is
+     * not simply the length of the underlying vector/list.
      */
     public abstract static class UnitLengthNode extends UnitNodeBase {
         public static UnitLengthNode create() {
@@ -183,31 +242,17 @@ public class Unit {
         }
 
         @Specialization(guards = "isArithmetic(list)")
-        int doArithmetic(RList list) {
-            throw RInternalError.unimplemented("Length for arithmetic units");
-        }
-    }
-
-    /**
-     * @see UnitLengthNode
-     */
-    public abstract static class UnitElementAtNode extends UnitNodeBase {
-        @Child private CastNode castToDouble = newCastBuilder().asDoubleVector().buildCastNode();
-
-        public static UnitElementAtNode create() {
-            return UnitElementAtNodeGen.create();
+        int doArithmetic(RList list,
+                        @Cached("create()") UnitLengthNode recursiveLen) {
+            ArithmeticUnit arithmeticUnit = asArithmeticUnit(list);
+            if (arithmeticUnit.isBinary()) {
+                return Math.max(recursiveLen.execute(arithmeticUnit.arg1), recursiveLen.execute(arithmeticUnit.arg2));
+            }
+            return 1;   // op is max, min, sum
         }
 
-        public abstract double execute(RAbstractContainer vector, int index);
-
-        @Specialization(guards = "!isArithmetic(value)")
-        double doNormal(RAbstractContainer value, int index) {
-            return ((RAbstractDoubleVector) castToDouble.execute(value)).getDataAt(index);
-        }
-
-        @Specialization(guards = "isArithmetic(list)")
-        double doArithmetic(RList list, int index) {
-            throw RInternalError.unimplemented("UnitElementAt for arithmetic units");
+        static CastNode createStringCast() {
+            return newCastBuilder().asStringVector().findFirst().buildCastNode();
         }
     }
 
@@ -228,36 +273,100 @@ public class Unit {
 
     /**
      * Normalizes grid unit object to a double value in inches. For convenience the index is
-     * interpreted as cyclic unlike in {@link UnitElementAtNode}.
+     * interpreted as cyclic.
      */
     public abstract static class UnitToInchesNode extends UnitNodeBase {
         @Child private CastNode castUnitId = newCastBuilder().mustBe(numericValue()).asIntegerVector().findFirst().buildCastNode();
-        @Child private UnitElementAtNode elementAtNode = UnitElementAtNode.create();
+        @Child private CastNode castDoubleVec = newCastBuilder().mustBe(numericValue()).boxPrimitive().asDoubleVector().buildCastNode();
 
         public static UnitToInchesNode create() {
             return UnitToInchesNodeGen.create();
         }
 
         public double convertX(RAbstractContainer vector, int index, UnitConversionContext conversionCtx) {
-            return execute(vector, index, conversionCtx.viewPortSize.getWidth(), conversionCtx.viewPortContext.xscalemin, conversionCtx.viewPortContext.xscalemax, conversionCtx.drawingContext);
+            return execute(vector, index, conversionCtx.viewPortSize.getWidth(), conversionCtx.viewPortContext.xscalemin, conversionCtx.viewPortContext.xscalemax, false, conversionCtx.drawingContext);
         }
 
         public double convertY(RAbstractContainer vector, int index, UnitConversionContext conversionCtx) {
-            return execute(vector, index, conversionCtx.viewPortSize.getHeight(), conversionCtx.viewPortContext.yscalemin, conversionCtx.viewPortContext.yscalemax, conversionCtx.drawingContext);
+            return execute(vector, index, conversionCtx.viewPortSize.getHeight(), conversionCtx.viewPortContext.yscalemin, conversionCtx.viewPortContext.yscalemax, false,
+                            conversionCtx.drawingContext);
         }
 
-        public abstract double execute(RAbstractContainer vector, int index, double vpSize, double scalemin, double scalemax, DrawingContext drawingCtx);
+        public double convertWidth(RAbstractContainer vector, int index, UnitConversionContext conversionCtx) {
+            return execute(vector, index, conversionCtx.viewPortSize.getWidth(), conversionCtx.viewPortContext.xscalemin, conversionCtx.viewPortContext.xscalemax, true, conversionCtx.drawingContext);
+        }
 
-        @Specialization(guards = "!isArithmetic(value)")
-        double doNormal(RAbstractContainer value, int index, double vpSize, double scalemin, double scalemax, DrawingContext drawingCtx) {
+        public double convertHeight(RAbstractContainer vector, int index, UnitConversionContext conversionCtx) {
+            return execute(vector, index, conversionCtx.viewPortSize.getHeight(), conversionCtx.viewPortContext.yscalemin, conversionCtx.viewPortContext.yscalemax, true, conversionCtx.drawingContext);
+        }
+
+        public abstract double execute(RAbstractContainer vector, int index, double vpSize, double scalemin, double scalemax, boolean isDimension, DrawingContext drawingCtx);
+
+        @Specialization(guards = "isSimple(value)")
+        double doNormal(RAbstractContainer value, int index, double vpSize, double scalemin, double scalemax, boolean isDimension, DrawingContext drawingCtx) {
             int unitId = (Integer) castUnitId.execute(value.getAttr(VALID_UNIT_ATTR));
-            return convertToInches(elementAtNode.execute(value, index % value.getLength()), unitId, vpSize, scalemin, scalemax, drawingCtx);
+            RAbstractDoubleVector vector = (RAbstractDoubleVector) castDoubleVec.execute(value);
+            return convertToInches(vector.getDataAt(index % vector.getLength()), unitId, vpSize, scalemin, scalemax, isDimension, drawingCtx);
+        }
+
+        @Specialization(guards = "isUnitList(value)")
+        double doList(RList value, int index, double vpSize, double scalemin, double scalemax, boolean isDimension, DrawingContext drawingCtx,
+                        @Cached("create()") UnitToInchesNode recursiveNode) {
+            Object unwrapped = value.getDataAt(index % value.getLength());
+            if (unwrapped instanceof RAbstractVector) {
+                return recursiveNode.execute((RAbstractContainer) unwrapped, index, vpSize, scalemin, scalemax, isDimension, drawingCtx);
+            }
+            throw error(Message.GENERIC, "Unexpected unit list with non-vector like element at index " + index);
         }
 
         @Specialization(guards = "isArithmetic(list)")
-        double doArithmetic(RList list, int index, double vpSize, double scalemin, double scalemax, DrawingContext drawingCtx) {
-            throw RInternalError.unimplemented("UnitToInches for arithmetic units");
+        double doArithmetic(RList list, int index, double vpSize, double scalemin, double scalemax, boolean isDimension, DrawingContext drawingCtx,
+                        @Cached("createAsDoubleCast()") CastNode asDoubleCast,
+                        @Cached("create()") UnitLengthNode unitLengthNode,
+                        @Cached("create()") UnitToInchesNode recursiveNode) {
+            ArithmeticUnit expr = asArithmeticUnit(list);
+            Function<RAbstractContainer, Double> recursive = x -> recursiveNode.execute(x, index, vpSize, scalemin, scalemax, isDimension, drawingCtx);
+            switch (expr.op) {
+                case "+":
+                    return recursive.apply(expr.arg1) + recursive.apply(expr.arg2);
+                case "-":
+                    return recursive.apply(expr.arg1) + recursive.apply(expr.arg2);
+                case "*":
+                    RAbstractDoubleVector left = (RAbstractDoubleVector) asDoubleCast.execute(expr.arg1);
+                    return left.getDataAt(index % left.getLength()) + recursive.apply(expr.arg2);
+                default:
+                    break;
+            }
+
+            // must be aggregate operation
+            int len = unitLengthNode.execute(expr.arg1);
+            double[] values = new double[len];
+            for (int i = 0; i < len; i++) {
+                values[i] = recursiveNode.execute(expr.arg1, i, vpSize, scalemin, scalemax, isDimension, drawingCtx);
+            }
+
+            switch (expr.op) {
+                case "min":
+                    return GridUtils.fmin(Double.MAX_VALUE, values);
+                case "max":
+                    return GridUtils.fmax(Double.MAX_VALUE, values);
+                case "sum":
+                    return sum(values);
+                default:
+                    throw RInternalError.shouldNotReachHere("The operation should have been validated in asArithmeticUnit method.");
+            }
         }
 
+        static CastNode createAsDoubleCast() {
+            return newCastBuilder().mustBe(numericValue()).asDoubleVector().buildCastNode();
+        }
+
+        static double sum(double[] values) {
+            double result = 0;
+            for (int i = 0; i < values.length; i++) {
+                result += values[i];
+            }
+            return result;
+        }
     }
 }

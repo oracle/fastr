@@ -23,6 +23,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nmath.RMath;
 
 public abstract class LCircle extends RExternalBuiltinNode.Arg3 {
     @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
@@ -54,7 +55,8 @@ public abstract class LCircle extends RExternalBuiltinNode.Arg3 {
 
         int length = GridUtils.maxLength(unitLength, xVec, yVec, radiusVec);
         for (int i = 0; i < length; i++) {
-            double radius = unitToInches.convertX(radiusVec, i, conversionCtx);
+            Size radiusSizes = Size.fromUnits(unitToInches, radiusVec, radiusVec, i, conversionCtx);
+            double radius = RMath.fmin2(radiusSizes.getWidth(), radiusSizes.getHeight());
             Point origLoc = Point.fromUnits(unitToInches, xVec, yVec, i, conversionCtx);
             Point loc = TransformMatrix.transLocation(origLoc, vpTransform.transform);
             dev.drawCircle(drawingCtx, loc.x, loc.y, radius);

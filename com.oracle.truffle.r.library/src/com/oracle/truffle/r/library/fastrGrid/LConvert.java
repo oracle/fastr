@@ -20,6 +20,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortContext.VPContextFromVPNode;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
@@ -37,6 +38,9 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
     @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
     @Child private VPContextFromVPNode vpContextFromVP = new VPContextFromVPNode();
+    private final ValueProfile unitToProfile = ValueProfile.createEqualityProfile();
+    private final ValueProfile axisToProfile = ValueProfile.createEqualityProfile();
+    private final ValueProfile axisFromProfile = ValueProfile.createEqualityProfile();
 
     static {
         Casts casts = new Casts(LConvert.class);
@@ -51,7 +55,11 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
     }
 
     @Specialization
-    Object doConvert(RAbstractVector units, int axisFrom, int axisTo, int unitTo) {
+    Object doConvert(RAbstractVector units, int axisFromIn, int axisToIn, int unitToIn) {
+        int axisFrom = axisFromProfile.profile(axisFromIn);
+        int axisTo = axisToProfile.profile(axisToIn);
+        int unitTo = unitToProfile.profile(unitToIn);
+
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();
 
@@ -71,20 +79,30 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
         }
 
         for (int i = 0; i < length; i++) {
-            double inches;
-            if (isXAxis(axisFrom)) {
-                inches = unitToInches.convertX(units, i, conversionCtx);
-            } else {
-                inches = unitToInches.convertY(units, i, conversionCtx);
-            }
-            if (isXAxis(axisTo)) {
-                result[i] = Unit.convertFromInches(inches, unitTo, vpTransform.size.getWidth(), vpContext.xscalemin, vpContext.xscalemax, drawingCtx);
-            } else {
-                result[i] = Unit.convertFromInches(inches, unitTo, vpTransform.size.getHeight(), vpContext.yscalemin, vpContext.yscalemax, drawingCtx);
-            }
+            double inches = toInches(units, i, axisFrom, conversionCtx);
+            double vpSize = isXAxis(axisTo) ? vpTransform.size.getWidth() : vpTransform.size.getHeight();
+            result[i] = Unit.convertFromInches(inches, unitTo, vpSize, vpContext.xscalemin, vpContext.xscalemax, isDimension(axisTo), drawingCtx);
         }
 
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    private double toInches(RAbstractVector units, int index, int axisFrom, UnitConversionContext conversionCtx) {
+        double inches;
+        if (isXAxis(axisFrom)) {
+            if (isDimension(axisFrom)) {
+                inches = unitToInches.convertWidth(units, index, conversionCtx);
+            } else {
+                inches = unitToInches.convertX(units, index, conversionCtx);
+            }
+        } else {
+            if (isDimension(axisFrom)) {
+                inches = unitToInches.convertHeight(units, index, conversionCtx);
+            } else {
+                inches = unitToInches.convertY(units, index, conversionCtx);
+            }
+        }
+        return inches;
     }
 
     private static boolean isRelative(int unitId) {
@@ -94,5 +112,9 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
     // what = 0 means x, 1 means y, 2 means width, 3 means height
     private static boolean isXAxis(int what) {
         return what % 2 == 0;
+    }
+
+    private static boolean isDimension(int what) {
+        return what >= 2;
     }
 }
