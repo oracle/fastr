@@ -26,7 +26,10 @@ import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.guarantee;
 import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.guaranteeInstanceOf;
 import static com.oracle.truffle.r.nodes.ffi.RFFIUtils.unimplemented;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -51,6 +54,8 @@ import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
+import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -1184,6 +1189,58 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         RPromise promise = RFFIUtils.guaranteeInstanceOf(x, RPromise.class);
         RSyntaxNode expr = RASTUtils.unwrap(promise.getRep()).asRSyntaxNode();
         return RASTUtils.createLanguageElement(expr);
+    }
+
+    @Override
+    public int R_ReadConnection(int fd, byte[] buf) {
+
+        try (BaseRConnection fromIndex = RConnection.fromIndex(fd)) {
+            Arrays.fill(buf, (byte) 0);
+            return fromIndex.readBin(ByteBuffer.wrap(buf));
+        } catch (IOException e) {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_READING_CONNECTION, e.getMessage());
+        }
+    }
+
+    @Override
+    public int R_WriteConnection(int fd, byte[] buf) {
+        try (BaseRConnection fromIndex = RConnection.fromIndex(fd)) {
+            Arrays.fill(buf, (byte) 0);
+            final ByteBuffer wrapped = ByteBuffer.wrap(buf);
+            fromIndex.writeBin(wrapped);
+            return wrapped.position();
+        } catch (IOException e) {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_WRITING_CONNECTION, e.getMessage());
+        }
+    }
+
+    @Override
+    public Object R_GetConnection(int fd) {
+        return RConnection.fromIndex(fd);
+    }
+
+    @Override
+    public String getSummaryDescription(Object x) {
+        BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
+        return conn.getSummaryDescription();
+    }
+
+    @Override
+    public String getConnectionClassString(Object x) {
+        BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
+        return conn.getConnectionClass().getPrintName();
+    }
+
+    @Override
+    public String getOpenModeString(Object x) {
+        BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
+        return conn.getOpenMode().toString();
+    }
+
+    @Override
+    public boolean isSeekable(Object x) {
+        BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
+        return conn.isSeekable();
     }
 
 }
