@@ -28,7 +28,7 @@ suite = {
     "suites" : [
             {
                "name" : "truffle",
-               "version" : "c02973969fb144b533ae0e53187674cb04c2aacc",
+               "version" : "1350be0c0c0c52b9b2d6136dfc07466d73ab217f",
                "urls" : [
                     {"url" : "https://github.com/graalvm/truffle", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
