@@ -39,7 +39,7 @@ public abstract class ForwardingStatus {
     };
     public static final ForwardingStatus FORWARDED = new Forwarded(null);
 
-    final Mapper<?, ?> mapper;
+    public final Mapper<?, ?> mapper;
     private final byte flag;
 
     protected ForwardingStatus(byte flag, Mapper<?, ?> mapper) {
@@ -97,7 +97,7 @@ public abstract class ForwardingStatus {
     }
 
     ForwardingStatus or(ForwardingStatus other) {
-        return fromFlag(or(this.flag, other.flag));
+        return fromFlag(or(this.flag, other.flag), this.mapper != null ? this.mapper : other.mapper);
     }
 
     ForwardingStatus not() {

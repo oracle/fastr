@@ -426,6 +426,10 @@ public final class CastBuilder {
             return new NotNAStep<>(null, null);
         }
 
+        public static <T> PipelineStep<T, T> boxPrimitive() {
+            return new PipelineStep.BoxPrimitiveStep<>();
+        }
+
         public static NullFilter nullValue() {
             return NullFilter.INSTANCE;
         }

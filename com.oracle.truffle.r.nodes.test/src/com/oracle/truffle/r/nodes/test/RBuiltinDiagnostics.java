@@ -431,13 +431,14 @@ public class RBuiltinDiagnostics {
             print(1, "\nUnhandled argument combinations: " + nonCoveredArgsSet.size());
             print(1, "");
 
-            printDeadSpecs();
-
             if (diagSuite.diagConfig.verbose) {
                 for (List<Type> uncoveredArgs : nonCoveredArgsSet) {
                     print(1, uncoveredArgs.stream().map(t -> typeName(t)).collect(Collectors.toList()));
                 }
             }
+            print(1, "");
+
+            printDeadSpecs();
         }
 
         private void printBuiltinHeader(int level) {

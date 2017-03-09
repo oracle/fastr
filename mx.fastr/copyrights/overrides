@@ -764,3 +764,5 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/p
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/ComplexVectorPrinter.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/LogicalVectorPrinter.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/printer/PairListPrinter.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/deriv/Deriv.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/deriv/DerivVisitor.java,gnu_r_gentleman_ihaka2.copyright

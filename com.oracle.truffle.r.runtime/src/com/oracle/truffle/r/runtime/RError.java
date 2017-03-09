@@ -847,7 +847,12 @@ public final class RError extends RuntimeException {
         TRUNCATE_NOT_ENABLED("truncation not enabled for this connection"),
         TRUNCATE_UNSUPPORTED_FOR_CONN("cannot truncate connection: %s"),
         INCOMPLETE_STRING_AT_EOF_DISCARDED("incomplete string at end of file has been discarded"),
-        INVALID_CHANNEL_OBJECT("invalid channel object type: %s");
+        INVALID_CHANNEL_OBJECT("invalid channel object type: %s"),
+        INVALID_TAG("invalid tag"),
+        INVALID_VARIABLE_NAMES("invalid variable names"),
+        INVALID_EXPRESSION("invalid expression in '%s'"),
+        INVALID_EXPRESSION_TYPE("expression must not be type '%s'"),
+        NOT_IN_DERIVATIVE_TABLE("Function '%s' is not in the derivatives table");
 
         public final String message;
         final boolean hasArgs;
