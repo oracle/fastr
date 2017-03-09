@@ -25,8 +25,7 @@ package com.oracle.truffle.r.runtime.context;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
@@ -39,7 +38,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
  * Use {@link #createVM()} to apply this information to a newly-built {@link PolyglotEngine}
  * instance (it will be stored in the "fastrContextInfo" global symbol).
  */
-public final class ContextInfo implements TruffleObject {
+public final class ContextInfo {
     public static final String GLOBAL_SYMBOL = "fastrContextInfo";
 
     private static final AtomicInteger contextInfoIds = new AtomicInteger();
@@ -69,13 +68,13 @@ public final class ContextInfo implements TruffleObject {
     }
 
     public PolyglotEngine createVM() {
-        PolyglotEngine newVM = PolyglotEngine.newBuilder().globalSymbol(GLOBAL_SYMBOL, this).build();
+        PolyglotEngine newVM = PolyglotEngine.newBuilder().globalSymbol(GLOBAL_SYMBOL, JavaInterop.asTruffleObject(this)).build();
         this.vm = newVM;
         return newVM;
     }
 
     public PolyglotEngine createVM(PolyglotEngine.Builder builder) {
-        PolyglotEngine newVM = builder.globalSymbol(GLOBAL_SYMBOL, this).build();
+        PolyglotEngine newVM = builder.globalSymbol(GLOBAL_SYMBOL, JavaInterop.asTruffleObject(this)).build();
         this.vm = newVM;
         return newVM;
     }
@@ -149,10 +148,5 @@ public final class ContextInfo implements TruffleObject {
 
     public PolyglotEngine getVM() {
         return vm;
-    }
-
-    @Override
-    public ForeignAccess getForeignAccess() {
-        throw new IllegalStateException("cannot access " + ContextInfo.class.getSimpleName() + " via Truffle");
     }
 }

@@ -39,8 +39,8 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.ExitException;
@@ -97,7 +97,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  *
  * Contexts can be destroyed
  */
-public final class RContext extends ExecutionContext implements TruffleObject {
+public final class RContext extends ExecutionContext {
 
     public static final int CONSOLE_WIDTH = 80;
 
@@ -445,7 +445,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * @param isInitial {@code true} if this is the initial (primordial) context.
      */
     private RContext(Env env, Instrumenter instrumenter, boolean isInitial) {
-        ContextInfo initialInfo = (ContextInfo) env.importSymbol(ContextInfo.GLOBAL_SYMBOL);
+        Object initialInfo = env.importSymbol(ContextInfo.GLOBAL_SYMBOL);
         if (initialInfo == null) {
             /*
              * This implies that FastR is being invoked initially from another Truffle language and
@@ -455,7 +455,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             this.info = ContextInfo.create(new RStartParams(RCmdOptions.parseArguments(Client.R, new String[]{"--no-restore"}, false), false), null,
                             ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env.in(), env.out()));
         } else {
-            this.info = initialInfo;
+            this.info = JavaInterop.asJavaObject(ContextInfo.class, (TruffleObject) initialInfo);
         }
 
         this.initial = isInitial;
@@ -832,11 +832,6 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public void setNamespaceName(String name) {
         nameSpaceName = name;
-    }
-
-    @Override
-    public ForeignAccess getForeignAccess() {
-        throw new IllegalStateException("cannot access " + RContext.class.getSimpleName() + " via Truffle");
     }
 
     public interface RCloseable extends Closeable {

@@ -36,6 +36,8 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -87,8 +89,8 @@ public class FastRContext {
     public abstract static class Get extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
-        protected Object get() {
-            return RContext.getInstance();
+        protected TruffleObject get() {
+            return JavaInterop.asTruffleObject(RContext.getInstance());
         }
     }
 
