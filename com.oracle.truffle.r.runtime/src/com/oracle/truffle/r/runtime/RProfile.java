@@ -60,7 +60,7 @@ public final class RProfile implements RContext.ContextState {
             }
             File siteProfileFile = new File(siteProfilePath);
             if (siteProfileFile.exists()) {
-                newSiteProfile = getProfile(siteProfilePath);
+                newSiteProfile = getProfile(siteProfilePath, false);
             }
         }
 
@@ -78,7 +78,7 @@ public final class RProfile implements RContext.ContextState {
             if (userProfilePath != null) {
                 File userProfileFile = new File(userProfilePath);
                 if (userProfileFile.exists()) {
-                    newUserProfile = getProfile(userProfilePath);
+                    newUserProfile = getProfile(userProfilePath, false);
                 }
             }
         }
@@ -92,7 +92,7 @@ public final class RProfile implements RContext.ContextState {
 
     public static Source systemProfile() {
         Path path = FileSystems.getDefault().getPath(REnvVars.rHome(), "library", "base", "R", "Rprofile");
-        Source source = getProfile(path.toString());
+        Source source = getProfile(path.toString(), true);
         if (source == null) {
             Utils.rSuicide("can't find system profile");
         }
@@ -107,9 +107,9 @@ public final class RProfile implements RContext.ContextState {
         return userProfile;
     }
 
-    private static Source getProfile(String path) {
+    private static Source getProfile(String path, boolean internal) {
         try {
-            return RSource.fromFileName(path);
+            return RSource.fromFileName(path, internal);
         } catch (IOException ex) {
             // GnuR does not report an error, just ignores
             return null;

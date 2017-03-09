@@ -263,7 +263,7 @@ public abstract class ConnectionFunctions {
                 }
             }
             try {
-                return new FileRConnection(description, path, open, blocking, encoding, raw).asVector();
+                return new FileRConnection(description, path, open, blocking, encoding, raw, true).asVector();
             } catch (IOException ex) {
                 warning(RError.Message.CANNOT_OPEN_FILE, description, ex.getMessage());
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);

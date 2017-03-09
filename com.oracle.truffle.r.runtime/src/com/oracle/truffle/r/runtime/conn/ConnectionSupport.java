@@ -881,6 +881,13 @@ public class ConnectionSupport {
             return descriptor;
         }
 
+        /**
+         * Determines if the sources created by this connection are marked as internal.
+         */
+        public boolean isInternal() {
+            return false;
+        }
+
         public OpenMode getOpenMode() {
             return openMode;
         }
