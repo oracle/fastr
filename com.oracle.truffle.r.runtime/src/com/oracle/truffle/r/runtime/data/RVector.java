@@ -204,20 +204,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         return -1;
     }
 
-    @TruffleBoundary
-    public final int getElementIndexByName(ValueProfile profile, String name) {
-        if (getNames() == null) {
-            return -1;
-        }
-        RStringVector names = getNamesFromAttrs();
-        for (int i = 0; i < names.getLength(); i++) {
-            if (names.getDataAt(i).equals(name)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
     /**
      * Find the first element in the names list that {@code name} is a prefix of, and return its
      * index. If there are no names, or none is found, or there are multiple inexact matches, return

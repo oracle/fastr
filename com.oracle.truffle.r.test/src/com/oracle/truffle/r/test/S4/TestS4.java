@@ -24,16 +24,20 @@ package com.oracle.truffle.r.test.S4;
 
 import org.junit.Test;
 
-import com.oracle.truffle.r.test.TestBase;
-import com.oracle.truffle.r.test.TestBase.Ignored;
-import com.oracle.truffle.r.test.TestBase.Output;
+import com.oracle.truffle.r.test.TestRBase;
 
 // Checkstyle: stop LineLength
 
 /**
  * Tests for the S4 object model implementation.
  */
-public class TestS4 extends TestBase {
+public class TestS4 extends TestRBase {
+
+    @Override
+    protected String getTestDir() {
+        return "S4";
+    }
+
     @Test
     public void testSlotAccess() {
         assertEval("{ `@`(getClass(\"ClassUnionRepresentation\"), virtual) }");
@@ -58,6 +62,9 @@ public class TestS4 extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ x<-NULL; `@`(x, foo) }");
         assertEval(Output.IgnoreErrorContext, "{ x<-NULL; x@foo }");
         assertEval("{ x<-paste0(\".\", \"Data\"); y<-42; slot(y, x) }");
+        assertEval("{ setClass('Person', representation(name = 'character', age = 'numeric')); getSlots('Person') }");
+        assertEval("{ setClass('Person', representation(name = 'character', age = 'numeric'), prototype(name = NA_character_, age = NA_real_)); hadley <- new('Person', name = 'Hadley'); hadley@age }");
+        assertEval("{ setClass('Person', representation(name = 'character', age = 'numeric')); hadley <- new('Person', name = 'Hadley'); hadley@age }");
     }
 
     @Test
@@ -66,7 +73,7 @@ public class TestS4 extends TestBase {
         assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); slot(x, \"virtual\", check=TRUE)<-TRUE; x@virtual }");
         assertEval("{ x<-initialize@valueClass; initialize@valueClass<-\"foo\"; initialize@valueClass<-x }");
 
-        assertEval(Output.IgnoreErrorContext, "{ x<-function() 42; attr(x, \"foo\")<-7; y@foo<-42 }");
+        assertEval(Output.IgnoreErrorContext, "{ x<-function() 42; attr(x, \"foo\")<-7; x@foo<-42 }");
         assertEval(Output.IgnoreErrorContext, "{ x<-function() 42; attr(x, \"foo\")<-7; slot(y, \"foo\")<-42 }");
         assertEval(Output.IgnoreErrorContext, "{ x<-function() 42; attr(x, \"foo\")<-7; y<-asS4(x); y@foo<-42 }");
         assertEval(Output.IgnoreErrorContext, "{ x<-NULL; `@<-`(x, foo, \"bar\") }");
@@ -87,7 +94,8 @@ public class TestS4 extends TestBase {
     public void testAllocation() {
         assertEval("{ new(\"numeric\") }");
         assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); new(\"foo\", j=42) }");
-
+        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); new(\"foo\", j='text') }");
+        assertEval(Output.IgnoreErrorContext, "{ setClass(\"foo\", representation(j=\"numeric\")); new(\"foo\", inexisting=42) }");
     }
 
     @Test
@@ -111,6 +119,10 @@ public class TestS4 extends TestBase {
         assertEval("{ setGeneric(\"gen\", function(o) standardGeneric(\"gen\")); res<-print(setGeneric(\"gen\", function(o) standardGeneric(\"gen\"))); removeGeneric(\"gen\"); res }");
 
         assertEval("{ setClass(\"foo\"); setMethod(\"diag<-\", \"foo\", function(x, value) 42); removeMethod(\"diag<-\", \"foo\"); removeGeneric(\"diag<-\"); removeClass(\"foo\") }");
+
+        assertEval("{ setClass('A'); setClass('A1', contains = 'A'); setClass('A2', contains = 'A1'); setGeneric('foo', function(a, b) standardGeneric('foo')); setMethod('foo', signature('A1', 'A2'), function(a, b) '1-2'); setMethod('foo', signature('A2', 'A1'), function(a, b) '2-1'); foo(new('A2'), new('A2')) }");
+
+        assertEval("setGeneric('do.call', signature = c('what', 'args'))");
     }
 
     @Test
@@ -124,8 +136,19 @@ public class TestS4 extends TestBase {
         assertEval("{ standardGeneric(42) }");
         assertEval("{ standardGeneric(character()) }");
         assertEval("{ standardGeneric(\"\") }");
-        assertEval("{ standardGeneric(\"foo\", 42) }");
+        assertEval(Output.IgnoreErrorContext, "{ standardGeneric(\"foo\", 42) }");
         assertEval(Output.IgnoreErrorContext, "{ x<-42; class(x)<-character(); standardGeneric(\"foo\", x) }");
+    }
+
+    @Test
+    public void testObjectValidity() {
+        assertEval("{ check <- function(object) length(object@n) == 1; setClass('SingleInt', representation(n = 'numeric'), validity = check); new('SingleInt', n = c(1, 2)) }");
+        assertEval("{ check <- function(object) length(object@n) == 1; setClass('SingleInt', representation(n = 'numeric'), validity = check); new('SingleInt', n = 1) }");
+    }
+
+    @Test
+    public void testObjectValueSemantics() {
+        assertEval("{ setClass('WrappedIntVec', representation(n = 'numeric')); x0 <- new('WrappedIntVec', n = 1); x1 <- x0; x1@n <- 2; x0@n == x1@n }");
     }
 
 }
