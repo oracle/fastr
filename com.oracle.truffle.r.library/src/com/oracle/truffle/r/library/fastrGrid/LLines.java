@@ -11,9 +11,8 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asIntVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
-import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
@@ -22,7 +21,6 @@ import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTrans
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -34,7 +32,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * {@link com.oracle.truffle.r.library.fastrGrid.Unit.UnitLengthNode}.
  */
 public abstract class LLines extends RExternalBuiltinNode.Arg4 {
-    @Child private CastNode toIntVector = newCastBuilder().mustBe(integerValue()).boxPrimitive().asIntegerVector().buildCastNode();
     @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
     @Child private VPContextFromVPNode vpContextFromVP = new VPContextFromVPNode();
@@ -66,7 +63,7 @@ public abstract class LLines extends RExternalBuiltinNode.Arg4 {
         RAbstractIntVector[] unitIndexesList = new RAbstractIntVector[lengths.getLength()];
         int maxIndexesLen = 0;
         for (int i = 0; i < lengths.getLength(); i++) {
-            unitIndexesList[i] = (RAbstractIntVector) toIntVector.execute(lengths.getDataAt(i));
+            unitIndexesList[i] = asIntVector(lengths.getDataAt(i));
             maxIndexesLen = Math.max(maxIndexesLen, unitIndexesList[i].getLength());
         }
 

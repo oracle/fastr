@@ -11,14 +11,21 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asAbstractContainer;
+import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asList;
+import static com.oracle.truffle.r.library.fastrGrid.GridUtils.sum;
 import static com.oracle.truffle.r.library.fastrGrid.TransformMatrix.flatten;
 import static com.oracle.truffle.r.library.fastrGrid.TransformMatrix.fromFlat;
 import static com.oracle.truffle.r.library.fastrGrid.TransformMatrix.identity;
 import static com.oracle.truffle.r.library.fastrGrid.TransformMatrix.multiply;
 import static com.oracle.truffle.r.library.fastrGrid.TransformMatrix.translation;
+import static com.oracle.truffle.r.library.fastrGrid.Unit.newUnit;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 
+import com.oracle.truffle.r.library.fastrGrid.Unit.IsRelativeUnitNode;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
+import com.oracle.truffle.r.library.fastrGrid.ViewPort.LayoutPos;
+import com.oracle.truffle.r.library.fastrGrid.ViewPort.LayoutSize;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortContext.VPContextFromVPNode;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortLocation.VPLocationFromVPNode;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
@@ -31,7 +38,9 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -43,6 +52,7 @@ class DoSetViewPort extends RBaseNode {
     @Child private Unit.UnitToInchesNode unitsToInches = Unit.UnitToInchesNode.create();
     @Child private VPLocationFromVPNode vpLocationFromVP = new VPLocationFromVPNode();
     @Child private VPContextFromVPNode vpContextFromVP = new VPContextFromVPNode();
+    @Child private IsRelativeUnitNode isRelativeUnit = new IsRelativeUnitNode();
 
     public RList doSetViewPort(RList pushedViewPort, boolean hasParent, boolean pushing) {
         GridState gridState = GridContext.getContext().getGridState();
@@ -55,7 +65,8 @@ class DoSetViewPort extends RBaseNode {
         }
 
         GridDevice currentDevice = GridContext.getContext().getCurrentDevice();
-        calcViewportTransform(pushedViewPort, pushedViewPort.getDataAt(ViewPort.PVP_PARENT), !hasParent, currentDevice, GPar.asDrawingContext(gridState.getGpar()));
+        DrawingContext deviceDrawingContext = GridState.getInitialGPar(currentDevice);
+        calcViewportTransform(pushedViewPort, pushedViewPort.getDataAt(ViewPort.PVP_PARENT), !hasParent, currentDevice, deviceDrawingContext);
 
         // TODO: clipping
         pushedVPData[ViewPort.PVP_CLIPRECT] = RDataFactory.createDoubleVector(new double[]{0, 0, 0, 0}, RDataFactory.COMPLETE_VECTOR);
@@ -64,40 +75,46 @@ class DoSetViewPort extends RBaseNode {
         return pushedViewPort;
     }
 
-    private void calcViewportTransform(RList viewPort, Object parent, boolean incremental, GridDevice device, DrawingContext drawingContext) {
+    private void calcViewportTransform(RList viewPort, Object parent, boolean incremental, GridDevice device, DrawingContext deviceDrawingContext) {
         double[][] parentTransform;
         ViewPortContext parentContext;
         ViewPortLocation vpl;
         Size parentSize;
+        DrawingContext drawingContext;
         if (parent == null || parent == RNull.instance) {
             parentTransform = TransformMatrix.identity();
             parentContext = ViewPortContext.createDefault();
             parentSize = new Size(device.getWidth(), device.getHeight());
             vpl = vpLocationFromVP.execute(viewPort);
+            drawingContext = deviceDrawingContext;
         } else {
             assert parent instanceof RList : "inconsistent data: parent of a viewport must be a list";
-            RList parentList = (RList) parent;
-            Object[] parentData = parentList.getDataWithoutCopying();
+            RList parentVPList = (RList) parent;
+            Object[] parentData = parentVPList.getDataWithoutCopying();
             if (!incremental) {
-                calcViewportTransform(parentList, parentData[ViewPort.PVP_PARENT], false, device, drawingContext);
+                calcViewportTransform(parentVPList, parentData[ViewPort.PVP_PARENT], false, device, deviceDrawingContext);
             }
             parentSize = new Size(Unit.cmToInches(castScalar(parentData[ViewPort.PVP_WIDTHCM])), Unit.cmToInches(castScalar(parentData[ViewPort.PVP_HEIGHTCM])));
             parentTransform = fromFlat(castDoubleVector(parentData[ViewPort.PVP_TRANS]).materialize().getDataWithoutCopying());
-            parentContext = vpContextFromVP.execute(parentList);
+            parentContext = vpContextFromVP.execute(parentVPList);
 
-            // TODO: gcontextFromgpar(viewportParentGPar(vp), 0, &parentgc, dd);
-            // TODO: if (....)
-            vpl = vpLocationFromVP.execute(viewPort);
+            drawingContext = GPar.asDrawingContext(asList(viewPort.getDataAt(ViewPort.PVP_PARENTGPAR)));
+            boolean noLayout = (isNull(viewPort.getDataAt(ViewPort.VP_VALIDLPOSROW)) && isNull(viewPort.getDataAt(ViewPort.VP_VALIDLPOSCOL))) || isNull(parentData[ViewPort.VP_LAYOUT]);
+            if (noLayout) {
+                vpl = vpLocationFromVP.execute(viewPort);
+            } else {
+                vpl = calcViewportLocationFromLayout(getLayoutPos(viewPort, parentVPList), parentVPList, parentSize);
+            }
         }
 
         UnitConversionContext conversionCtx = new UnitConversionContext(parentSize, parentContext, drawingContext);
         double xInches = unitsToInches.convertX(vpl.x, 0, conversionCtx);
         double yInches = unitsToInches.convertY(vpl.y, 0, conversionCtx);
-        double width = unitsToInches.convertX(vpl.width, 0, conversionCtx);
-        double height = unitsToInches.convertY(vpl.height, 0, conversionCtx);
+        double width = unitsToInches.convertWidth(vpl.width, 0, conversionCtx);
+        double height = unitsToInches.convertHeight(vpl.height, 0, conversionCtx);
 
         if (!Double.isFinite(xInches) || !Double.isFinite(yInches) || !Double.isFinite(width) || !Double.isFinite(height)) {
-            error(Message.GENERIC, "non-finite location and/or size for viewport");
+            throw error(Message.GENERIC, "non-finite location and/or size for viewport");
         }
 
         double xadj = GridUtils.justification(width, vpl.hjust);
@@ -119,13 +136,186 @@ class DoSetViewPort extends RBaseNode {
         // Sum up the rotation angles
         // TODO: rotationAngle = parentAngle + viewportAngle(vp);
         double rotationAngle = 0;
-        // TODO: Finally, allocate the rows and columns for this viewport's layout if it has one
+
+        // Finally, allocate the rows and columns for this viewport's layout if it has one
+        if (!isNull(viewPort.getDataAt(ViewPort.VP_LAYOUT))) {
+            ViewPortContext vpCtx = vpContextFromVP.execute(viewPort);
+            DrawingContext drawingCtx = GPar.asDrawingContext(asList(viewPort.getDataAt(ViewPort.PVP_GPAR)));
+            calcViewPortLayout(viewPort, new Size(width, height), vpCtx, drawingCtx);
+        }
 
         Object[] viewPortData = viewPort.getDataWithoutCopying();
         viewPortData[ViewPort.PVP_WIDTHCM] = scalar(Unit.inchesToCm(width));
         viewPortData[ViewPort.PVP_HEIGHTCM] = scalar(Unit.inchesToCm(height));
         viewPortData[ViewPort.PVP_ROTATION] = scalar(rotationAngle);
         viewPortData[ViewPort.PVP_TRANS] = RDataFactory.createDoubleVector(flatten(transform), RDataFactory.COMPLETE_VECTOR, new int[]{3, 3});
+    }
+
+    private void calcViewPortLayout(RList viewPort, Size size, ViewPortContext parentVPCtx, DrawingContext drawingCtx) {
+        LayoutSize layoutSize = LayoutSize.fromViewPort(viewPort);
+        double[] npcWidths = new double[layoutSize.ncol];
+        double[] npcHeights = new double[layoutSize.nrow];
+        boolean[] relativeWidths = new boolean[layoutSize.ncol];
+        boolean[] relativeHeights = new boolean[layoutSize.nrow];
+        UnitConversionContext conversionCtx = new UnitConversionContext(size, parentVPCtx, drawingCtx);
+
+        // For both dimensions we find out which units are other than "null" for those we can
+        // immediately calculate the physical size in npcWidth/npcHeights. The reducedWidth/Height
+        // gives us how much of width/height is left after we take up the space by physical units
+        Object[] layoutData = asList(viewPort.getDataAt(ViewPort.VP_LAYOUT)).getDataWithoutCopying();
+        RAbstractContainer layoutWidths = asAbstractContainer(layoutData[ViewPort.LAYOUT_WIDTHS]);
+        assert layoutWidths.getLength() == layoutSize.ncol : "inconsistent layout size with layout widths";
+        double reducedWidth = getReducedDimension(layoutWidths, npcWidths, relativeWidths, size.getWidth(), conversionCtx, true);
+
+        RAbstractContainer layoutHeights = asAbstractContainer(layoutData[ViewPort.LAYOUT_HEIGHTS]);
+        assert layoutHeights.getLength() == layoutSize.nrow : "inconsistent layout size with layout height";
+        double reducedHeight = getReducedDimension(layoutHeights, npcHeights, relativeHeights, size.getHeight(), conversionCtx, false);
+
+        // npcHeight (and npcWidth) has some 'holes' in them, at indexes with
+        // relativeHeights[index]==true, we will calculate the values for them now.
+        // Firstly allocate the respected widths/heights and calculate how much space remains
+        RList layoutAsList = asList(viewPort.getDataAt(ViewPort.VP_LAYOUT));
+        int respect = RRuntime.asInteger(layoutAsList.getDataAt(ViewPort.LAYOUT_VRESPECT));
+        int[] layoutRespectMat = ((RAbstractIntVector) layoutAsList.getDataAt(ViewPort.LAYOUT_MRESPECT)).materialize().getDataWithoutCopying();
+        if ((reducedHeight > 0 || reducedWidth > 0) && respect > 0) {
+            double sumRelWidth = sumRelativeDimension(layoutSize, layoutWidths, relativeWidths, parentVPCtx, drawingCtx, true);
+            double sumRelHeight = sumRelativeDimension(layoutSize, layoutHeights, relativeHeights, parentVPCtx, drawingCtx, false);
+            double tempWidth = reducedWidth;
+            double tempHeight = reducedHeight;
+            double denom;
+            double mult;
+            // Determine whether aspect ratio of available space is bigger or smaller than
+            // aspect ratio of layout
+            if (tempHeight * sumRelWidth > sumRelHeight * tempWidth) {
+                denom = sumRelWidth;
+                mult = tempWidth;
+            } else {
+                denom = sumRelHeight;
+                mult = tempHeight;
+            }
+            for (int i = 0; i < layoutSize.ncol; i++) {
+                if (relativeWidths[i] && colRespected(respect, i, layoutRespectMat, layoutSize)) {
+                    /*
+                     * Special case of respect, but sumHeight = 0. Action is to allocate widths as
+                     * if unrespected. Ok to test == 0 because will only be 0 if all relative
+                     * heights are actually exactly 0.
+                     */
+                    if (sumRelHeight == 0) {
+                        denom = sumRelWidth;
+                        mult = tempWidth;
+                    }
+                    // Build a unit SEXP with a single value and no data
+                    npcWidths[i] = Unit.pureNullUnitValue(layoutWidths, i) / denom * mult;
+                    reducedWidth -= npcWidths[i];
+                }
+            }
+            for (int i = 0; i < layoutSize.nrow; i++) {
+                if (relativeHeights[i] && rowRespected(respect, i, layoutRespectMat, layoutSize)) {
+                    if (sumRelWidth == 0) {
+                        denom = sumRelHeight;
+                        mult = tempHeight;
+                    }
+                    npcHeights[i] = Unit.pureNullUnitValue(layoutHeights, i) / denom * mult;
+                    reducedHeight -= npcHeights[i];
+                }
+            }
+        } else if (respect > 0) {
+            for (int i = 0; i < layoutSize.ncol; i++) {
+                if (relativeWidths[i] && colRespected(respect, i, layoutRespectMat, layoutSize)) {
+                    npcWidths[i] = 0;
+                }
+            }
+            for (int i = 0; i < layoutSize.nrow; i++) {
+                if (relativeHeights[i] && rowRespected(respect, i, layoutRespectMat, layoutSize)) {
+                    npcHeights[i] = 0;
+                }
+            }
+        }
+
+        // Secondly, allocate remaining relative widths and heights in the remaining space
+        allocateRelativeDim(layoutSize, layoutWidths, npcWidths, relativeWidths, reducedWidth, respect, layoutRespectMat, drawingCtx, parentVPCtx, true);
+        allocateRelativeDim(layoutSize, layoutHeights, npcHeights, relativeHeights, reducedHeight, respect, layoutRespectMat, drawingCtx, parentVPCtx, false);
+
+        // Create the result
+        Object[] vpData = viewPort.getDataWithoutCopying();
+        vpData[ViewPort.PVP_WIDTHS] = RDataFactory.createDoubleVector(npcWidths, RDataFactory.COMPLETE_VECTOR);
+        vpData[ViewPort.PVP_HEIGHTS] = RDataFactory.createDoubleVector(npcHeights, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    private void allocateRelativeDim(LayoutSize layoutSize, RAbstractContainer layoutItems, double[] npcItems, boolean[] relativeItems, double reducedDim, int respect, int[] layoutRespectMat,
+                    DrawingContext drawingCtx, ViewPortContext parentVPCtx, boolean isWidth) {
+        UnitConversionContext layoutModeCtx = new UnitConversionContext(new Size(0, 0), parentVPCtx, drawingCtx, 1, 0);
+        double totalUnrespectedSize = 0;
+        if (reducedDim > 0) {
+            for (int i = 0; i < layoutSize.ncol; i++) {
+                if (relativeItems[i] && !rowColRespected(respect, i, layoutRespectMat, layoutSize, isWidth)) {
+                    totalUnrespectedSize += unitsToInches.convertDimension(layoutItems, i, layoutModeCtx, isWidth);
+                }
+            }
+        }
+        // set the remaining width/height to zero or to proportion of totalUnrespectedSize
+        for (int i = 0; i < layoutSize.ncol; i++) {
+            if (relativeItems[i] && !rowColRespected(respect, i, layoutRespectMat, layoutSize, isWidth)) {
+                npcItems[i] = 0;
+                if (totalUnrespectedSize > 0) {
+                    // if there was some with left, then totalUnrespectedSize contains sum of it
+                    npcItems[i] = reducedDim * unitsToInches.convertDimension(layoutItems, i, layoutModeCtx, isWidth) / totalUnrespectedSize;
+                }
+            }
+        }
+    }
+
+    private boolean rowColRespected(int respected, int row, int[] layoutRespectMat, LayoutSize layoutSize, boolean isColumn) {
+        return isColumn ? colRespected(respected, respected, layoutRespectMat, layoutSize) : rowRespected(respected, row, layoutRespectMat, layoutSize);
+    }
+
+    private boolean rowRespected(int respected, int row, int[] layoutRespectMat, LayoutSize layoutSize) {
+        if (respected == 1) {
+            return true;
+        }
+        for (int i = 0; i < layoutSize.ncol; i++) {
+            if (layoutRespectMat[i * layoutSize.nrow + row] != 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean colRespected(int respected, int col, int[] layoutRespectMat, LayoutSize layoutSize) {
+        if (respected == 1) {
+            return true;
+        }
+        for (int i = 0; i < layoutSize.nrow; i++) {
+            if (layoutRespectMat[col * layoutSize.nrow + i] != 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private double sumRelativeDimension(LayoutSize layoutSize, RAbstractContainer layoutItems, boolean[] relativeItems, ViewPortContext parentVPCtx, DrawingContext drawingCtx, boolean isWidth) {
+        UnitConversionContext layoutModeCtx = new UnitConversionContext(new Size(0, 0), parentVPCtx, drawingCtx, 0, 1);
+        double totalWidth = 0;
+        for (int i = 0; i < layoutSize.ncol; i++) {
+            if (relativeItems[i]) {
+                totalWidth += unitsToInches.convertDimension(layoutItems, i, layoutModeCtx, isWidth);
+            }
+        }
+        return totalWidth;
+    }
+
+    private double getReducedDimension(RAbstractContainer layoutItems, double[] npcItems, boolean[] relativeItems, double initialSize, UnitConversionContext conversionCtx,
+                    boolean isWidth) {
+        double reducedSize = initialSize;
+        for (int i = 0; i < npcItems.length; i++) {
+            boolean currIsRel = isRelativeUnit.execute(layoutItems, i);
+            relativeItems[i] = currIsRel;
+            if (!currIsRel) {
+                npcItems[i] = unitsToInches.convertDimension(layoutItems, i, conversionCtx, isWidth);
+                reducedSize -= npcItems[i];
+            }
+        }
+        return reducedSize;
     }
 
     private RAbstractDoubleVector castDoubleVector(Object obj) {
@@ -144,7 +334,58 @@ class DoSetViewPort extends RBaseNode {
         try {
             children.put(RRuntime.asString(pushedVPDatum), pushedViewPort);
         } catch (PutException e) {
-            RInternalError.shouldNotReachHere("Cannot update children environment in a view port list");
+            throw RInternalError.shouldNotReachHere("Cannot update children environment in a view port list");
         }
+    }
+
+    // Note: unlike the GnuR conterpart of this method, we expect the LayoutPos to have the NULL
+    // positions replaced with nrow/ncol already.
+    private ViewPortLocation calcViewportLocationFromLayout(LayoutPos pos, RList parentVP, Size parentSize) {
+        // unlike in GnuR, we maintain parent viewport widths/heights in inches like anything else
+        double[] widths = castDoubleVector(parentVP.getDataAt(ViewPort.PVP_WIDTHS)).materialize().getDataWithoutCopying();
+        double[] heights = castDoubleVector(parentVP.getDataAt(ViewPort.PVP_HEIGHTS)).materialize().getDataWithoutCopying();
+        double totalWidth = sum(widths, 0, pos.layoutSize.ncol);
+        double totalHeight = sum(heights, 0, pos.layoutSize.nrow);
+        double width = sum(widths, pos.colMin, pos.colMax - pos.colMin + 1);
+        double height = sum(heights, pos.rowMin, pos.rowMax - pos.rowMin + 1);
+        double left = parentSize.getWidth() * pos.layoutSize.hjust - totalWidth * pos.layoutSize.hjust + sum(widths, 0, pos.colMin - 1);
+        double bottom = parentSize.getHeight() * pos.layoutSize.vjust + (1 - pos.layoutSize.vjust) * totalHeight - sum(heights, 0, pos.rowMax + 1);
+        ViewPortLocation result = new ViewPortLocation();
+        result.width = newUnit(width, Unit.INCHES);
+        result.height = newUnit(height, Unit.INCHES);
+        result.x = newUnit(left, Unit.INCHES);
+        result.y = newUnit(bottom, Unit.INCHES);
+        result.hjust = result.vjust = 0;
+        return result;
+    }
+
+    private LayoutPos getLayoutPos(RList vp, RList parent) {
+        LayoutSize size = LayoutSize.fromViewPort(parent);
+        Object rowObj = vp.getDataAt(ViewPort.VP_VALIDLPOSROW);
+        int rowMin = 1;
+        int rowMax = size.nrow;
+        if (rowObj instanceof RAbstractIntVector) {
+            rowMin = ((RAbstractIntVector) rowObj).getDataAt(0);
+            rowMax = ((RAbstractIntVector) rowObj).getDataAt(1);
+            if (rowMin < 1 || rowMax > size.nrow) {
+                throw error(Message.GENERIC, "invalid 'layout.pos.row'");
+            }
+        }
+        Object colObj = vp.getDataAt(ViewPort.VP_VALIDLPOSCOL);
+        int colMin = 1;
+        int colMax = size.ncol;
+        if (colObj instanceof RAbstractIntVector) {
+            colMin = ((RAbstractIntVector) colObj).getDataAt(0);
+            colMax = ((RAbstractIntVector) colObj).getDataAt(1);
+            if (colMin < 1 || colMax > size.ncol) {
+                throw error(Message.GENERIC, "invalid 'layout.pos.row'");
+            }
+        }
+        // the indexes in LayoutPos are to be interpreted as 0-based
+        return new LayoutPos(colMin - 1, colMax - 1, rowMin - 1, rowMax - 1, size);
+    }
+
+    private static boolean isNull(Object value) {
+        return value == null || value == RNull.instance;
     }
 }

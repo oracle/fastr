@@ -45,7 +45,7 @@ public final class Point {
         return justify(size.getWidth(), size.getHeight(), hjust, vjust);
     }
 
-    public Point justify(double width, double height, double hjust, double vjust) {
+    private Point justify(double width, double height, double hjust, double vjust) {
         return new Point(GridUtils.justify(x, width, hjust), GridUtils.justify(y, height, vjust));
     }
 

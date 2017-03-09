@@ -13,24 +13,22 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import static com.oracle.truffle.r.library.fastrGrid.Unit.NATIVE;
 import static com.oracle.truffle.r.library.fastrGrid.Unit.NPC;
-import static com.oracle.truffle.r.library.fastrGrid.Unit.VALID_UNIT_ATTR;
+import static com.oracle.truffle.r.library.fastrGrid.Unit.isArithmeticUnit;
+import static com.oracle.truffle.r.library.fastrGrid.Unit.isListUnit;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortContext.VPContextFromVPNode;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
@@ -38,16 +36,13 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
     @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
     @Child private VPContextFromVPNode vpContextFromVP = new VPContextFromVPNode();
-    private final ValueProfile unitToProfile = ValueProfile.createEqualityProfile();
-    private final ValueProfile axisToProfile = ValueProfile.createEqualityProfile();
-    private final ValueProfile axisFromProfile = ValueProfile.createEqualityProfile();
 
     static {
         Casts casts = new Casts(LConvert.class);
         casts.arg(0).mustBe(abstractVectorValue());
-        casts.arg(1).mustBe(numericValue()).asIntegerVector().findFirst().mustBe(gte(0).and(lte(3)));
-        casts.arg(2).mustBe(numericValue()).asIntegerVector().findFirst().mustBe(gte(0).and(lte(3)));
-        casts.arg(3).mustBe(numericValue()).asIntegerVector().findFirst().mustBe(gte(0).and(lte(Unit.LAST_NORMAL_UNIT)));
+        casts.arg(1).mustBe(numericValue()).asIntegerVector();
+        casts.arg(2).mustBe(numericValue()).asIntegerVector();
+        casts.arg(3).mustBe(numericValue()).asIntegerVector();
     }
 
     public static LConvert create() {
@@ -55,10 +50,7 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
     }
 
     @Specialization
-    Object doConvert(RAbstractVector units, int axisFromIn, int axisToIn, int unitToIn) {
-        int axisFrom = axisFromProfile.profile(axisFromIn);
-        int axisTo = axisToProfile.profile(axisToIn);
-        int unitTo = unitToProfile.profile(unitToIn);
+    Object doConvert(RAbstractVector units, RAbstractIntVector axisFromVec, RAbstractIntVector axisToVec, RAbstractIntVector unitToVec) {
 
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();
@@ -72,16 +64,41 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
         int length = unitLength.execute(units);
         double[] result = new double[length];
 
-        int fromUnitId = RRuntime.asInteger(units.getAttr(VALID_UNIT_ATTR));
-        boolean relativeUnits = isRelative(unitTo) || isRelative(fromUnitId);
-        if ((vpTransform.size.getHeight() < 1e-6 || vpTransform.size.getWidth() < 1e-6) && relativeUnits) {
-            throw RInternalError.unimplemented("L_convert: relative units with close to zero width or height");
-        }
+        RAbstractIntVector unitIds = GridUtils.asIntVector(units.getAttr(Unit.VALID_UNIT_ATTR));
+        boolean fromUnitIsSimple = !isArithmeticUnit(units) && !isListUnit(units);
 
         for (int i = 0; i < length; i++) {
-            double inches = toInches(units, i, axisFrom, conversionCtx);
-            double vpSize = isXAxis(axisTo) ? vpTransform.size.getWidth() : vpTransform.size.getHeight();
-            result[i] = Unit.convertFromInches(inches, unitTo, vpSize, vpContext.xscalemin, vpContext.xscalemax, isDimension(axisTo), drawingCtx);
+            // scalar values used in current iteration
+            int axisFrom = axisFromVec.getDataAt(i % axisFromVec.getLength());
+            int axisTo = axisToVec.getDataAt(i % axisToVec.getLength());
+            boolean compatibleAxes = axisFrom == axisTo ||
+                            (axisFrom == 0 && axisTo == 2) ||
+                            (axisFrom == 2 && axisTo == 0) ||
+                            (axisFrom == 1 && axisTo == 3) ||
+                            (axisFrom == 3 && axisTo == 1);
+            double vpToSize = isXAxis(axisTo) ? vpTransform.size.getWidth() : vpTransform.size.getHeight();
+            double vpFromSize = isXAxis(axisFrom) ? vpTransform.size.getWidth() : vpTransform.size.getHeight();
+            int unitTo = unitToVec.getDataAt(i % unitToVec.getLength());
+            int fromUnitId = unitIds.getDataAt(i % unitIds.getLength());
+
+            // actual conversion:
+            // if the units are both relative, we are converting compatible axes and the vpSize for
+            // 'from' axis is small, we will not convert through inches, but directly to avoid
+            // divide by zero, but still do something useful
+            boolean bothRelative = isRelative(unitTo) && isRelative(fromUnitId);
+            boolean realativeConversion = bothRelative && fromUnitIsSimple && compatibleAxes && vpFromSize < 1e-6;
+            if (realativeConversion) {
+                // if the unit is not "unit.arithmetic" or "unit.list", it must be double vector
+                RAbstractDoubleVector simpleUnits = (RAbstractDoubleVector) units;
+                double fromValue = simpleUnits.getDataAt(i % simpleUnits.getLength());
+                result[i] = transformFromNPC(tranfromToNPC(fromValue, fromUnitId, axisFrom, vpContext), unitTo, axisTo, vpContext);
+            } else {
+                double inches = toInches(units, i, axisFrom, conversionCtx);
+                boolean isX = isXAxis(axisTo);
+                double scalemin = isX ? vpContext.xscalemin : vpContext.yscalemin;
+                double scalemax = isX ? vpContext.xscalemax : vpContext.yscalemax;
+                result[i] = Unit.convertFromInches(inches, unitTo, vpToSize, scalemin, scalemax, isDimension(axisTo), drawingCtx);
+            }
         }
 
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
@@ -105,6 +122,38 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
         return inches;
     }
 
+    private static double tranfromToNPC(double value, int fromUnitId, int axisFrom, ViewPortContext vpContext) {
+        if (fromUnitId == Unit.NPC) {
+            return value;
+        }
+        assert fromUnitId == Unit.NATIVE : "relative conversion should only happen when units are NPC or NATIVE";
+        boolean isX = isXAxis(axisFrom);
+        double min = isX ? vpContext.xscalemin : vpContext.yscalemin;
+        double max = isX ? vpContext.xscalemax : vpContext.yscalemax;
+        if (isDimension(axisFrom)) {
+            return value / (max - min);
+        } else {
+            return (value - min) / (max - min);
+        }
+    }
+
+    private static double transformFromNPC(double value, int unitTo, int axisTo, ViewPortContext vpContext) {
+        if (unitTo == Unit.NPC) {
+            return value;
+        }
+        assert unitTo == Unit.NATIVE : "relative conversion should only happen when units are NPC or NATIVE";
+        boolean isX = isXAxis(axisTo);
+        double min = isX ? vpContext.xscalemin : vpContext.yscalemin;
+        double max = isX ? vpContext.xscalemax : vpContext.yscalemax;
+        if (isDimension(axisTo)) {
+            return value * (max - min);
+        } else {
+            return min + value * (max - min);
+        }
+    }
+
+    // Note: this is not relative in the same sense as IsRelativeUnitNode. The later checks for
+    // special NULL unit used only in layouting.
     private static boolean isRelative(int unitId) {
         return unitId == NPC || unitId == NATIVE;
     }

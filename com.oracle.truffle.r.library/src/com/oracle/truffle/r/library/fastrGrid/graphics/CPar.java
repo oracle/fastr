@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.graphics;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -31,7 +32,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 public class CPar extends RExternalBuiltinNode {
     static {
@@ -39,6 +39,7 @@ public class CPar extends RExternalBuiltinNode {
     }
 
     @Override
+    @TruffleBoundary
     protected Object call(RArgsValuesAndNames args) {
         if (args.getSignature().getNonNullCount() > 0) {
             throw error(Message.GENERIC, "Using par for setting device parameters is not supported in FastR grid emulation mode.");
@@ -46,18 +47,21 @@ public class CPar extends RExternalBuiltinNode {
 
         GridDevice device = GridContext.getContext().getCurrentDevice();
         Object[] names = args.getArguments();
+        // unwrap list if it is the first argument
         if (names.length == 1) {
             Object first = args.getArgument(0);
             if (first instanceof RList) {
                 names = ((RList) first).getDataWithoutCopying();
             }
-            if (names.length == 1) {
-                // if there is a single name, do not wrap the result in a list
-                return getParam(RRuntime.asString(names[0]), device);
-            }
         }
 
-        throw error(Message.GENERIC, "Querying par for anything else than 'din' is not supported in FastR grid emulation mode.");
+        Object[] result = new Object[names.length];
+        String[] resultNames = new String[names.length];
+        for (int i = 0; i < names.length; i++) {
+            resultNames[i] = RRuntime.asString(names[i]);
+            result[i] = getParam(resultNames[i], device);
+        }
+        return RDataFactory.createList(result, RDataFactory.createStringVector(resultNames, RDataFactory.COMPLETE_VECTOR));
     }
 
     private Object getParam(String name, GridDevice device) {

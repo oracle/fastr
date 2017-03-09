@@ -25,7 +25,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 /**
  * Contains static method related to edge detection for bounds calculations.
  */
-public final class EdgeDetection {
+final class EdgeDetection {
     private EdgeDetection() {
         // only static members
     }
@@ -34,7 +34,7 @@ public final class EdgeDetection {
      * Do two lines intersect? Algorithm from Paul Bourke
      * (http://www.swin.edu.au/astronomy/pbourke/geometry/lineline2d/index.html)
      */
-    static boolean linesIntersect(double x1, double x2, double x3, double x4,
+    private static boolean linesIntersect(double x1, double x2, double x3, double x4,
                     double y1, double y2, double y3, double y4) {
         double denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
         double ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3));
@@ -45,30 +45,30 @@ public final class EdgeDetection {
                 // If the lines are vertical ...
                 if (x1 == x2) {
                     // Compare y-values
-                    if (!((y1 < y3 && fmax2(y1, y2) < fmin2(y3, y4)) ||
-                                    (y3 < y1 && fmax2(y3, y4) < fmin2(y1, y2))))
+                    if (!((y1 < y3 && fmax2(y1, y2) < fmin2(y3, y4)) || (y3 < y1 && fmax2(y3, y4) < fmin2(y1, y2)))) {
                         return true;
+                    }
                 } else {
                     // Compare x-values
-                    if (!((x1 < x3 && fmax2(x1, x2) < fmin2(x3, x4)) ||
-                                    (x3 < x1 && fmax2(x3, x4) < fmin2(x1, x2))))
+                    if (!((x1 < x3 && fmax2(x1, x2) < fmin2(x3, x4)) || (x3 < x1 && fmax2(x3, x4) < fmin2(x1, x2)))) {
                         return true;
+                    }
                 }
             }
-        }
-        // ... otherwise, calculate where the lines intersect ...
-        else {
+        } else {
+            // ... otherwise, calculate where the lines intersect ...
             double ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3));
             ua = ua / denom;
             ub = ub / denom;
             // Check for overlap
-            if ((ua > 0 && ua < 1) && (ub > 0 && ub < 1))
+            if ((ua > 0 && ua < 1) && (ub > 0 && ub < 1)) {
                 return true;
+            }
         }
         return false;
     }
 
-    static boolean edgesIntersect(double x1, double x2, double y1, double y2, Rectangle r) {
+    private static boolean edgesIntersect(double x1, double x2, double y1, double y2, Rectangle r) {
         return linesIntersect(x1, x2, r.x[0], r.x[1], y1, y2, r.y[0], r.y[1]) ||
                         linesIntersect(x1, x2, r.x[1], r.x[2], y1, y2, r.y[1], r.y[2]) ||
                         linesIntersect(x1, x2, r.x[2], r.x[3], y1, y2, r.y[2], r.y[3]) ||
@@ -126,11 +126,11 @@ public final class EdgeDetection {
         // Special case zero-width or zero-height
         if (fabs(xmin - xmax) < 1e-6) {
             double resultY = theta == 90 ? ymax : theta == 270 ? ymin : ym;
-            return new Point(xmin, ymin);
+            return new Point(xmin, resultY);
         }
         if (fabs(ymin - ymax) < 1e-6) {
-            double resultY = theta == 0 ? xmax : theta == 180 ? xmin : xm;
-            return new Point(ymin, resultY);
+            double resultX = theta == 0 ? xmax : theta == 180 ? xmin : xm;
+            return new Point(resultX, ymin);
         }
 
         /*
@@ -208,7 +208,7 @@ public final class EdgeDetection {
         public final double[] x;
         public final double[] y;
 
-        public Rectangle(Point p1, Point p2, Point p3, Point p4) {
+        Rectangle(Point p1, Point p2, Point p3, Point p4) {
             x = new double[]{p1.x, p2.x, p3.x, p4.x};
             y = new double[]{p1.y, p2.y, p3.y, p4.y};
         }

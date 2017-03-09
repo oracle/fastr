@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -41,6 +42,12 @@ public final class GridState {
     void initGPar(GridDevice currentDevice) {
         gpar = GPar.createNew();
         currentDevice.initDrawingContext(GPar.asDrawingContext(gpar));
+    }
+
+    public static DrawingContext getInitialGPar(GridDevice device) {
+        DrawingContext result = GPar.asDrawingContext(GPar.createNew());
+        device.initDrawingContext(result);
+        return result;
     }
 
     public RList getGpar() {

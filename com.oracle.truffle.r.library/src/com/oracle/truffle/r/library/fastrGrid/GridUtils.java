@@ -16,7 +16,16 @@ import static com.oracle.truffle.r.runtime.nmath.RMath.fmin2;
 
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitLengthNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 final class GridUtils {
@@ -64,6 +73,84 @@ final class GridUtils {
         double result = firstVal;
         for (double val : vals) {
             result = fmin2(result, val);
+        }
+        return result;
+    }
+
+    static boolean hasRClass(RAttributable obj, String clazz) {
+        RStringVector classAttr = obj.getClassAttr();
+        if (classAttr == null) {
+            return false;
+        }
+        for (int i = 0; i < classAttr.getLength(); i++) {
+            if (classAttr.getDataAt(i).equals(clazz)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static RList asList(Object value) {
+        if (!(value instanceof RList)) {
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, "Expected list");
+        }
+        return (RList) value;
+    }
+
+    static double asDouble(Object val) {
+        if (val instanceof Double) {
+            return (double) val;
+        } else if (val instanceof RAbstractDoubleVector) {
+            if (((RAbstractDoubleVector) val).getLength() > 0) {
+                return ((RAbstractDoubleVector) val).getDataAt(0);
+            }
+        } else if (val instanceof Integer) {
+            return (int) val;
+        } else if (val instanceof RAbstractIntVector) {
+            if (((RAbstractIntVector) val).getLength() > 0) {
+                return ((RAbstractIntVector) val).getDataAt(0);
+            }
+        }
+        throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non double/integer value " + val.getClass().getSimpleName());
+    }
+
+    static RAbstractIntVector asIntVector(Object value) {
+        if (value instanceof Integer) {
+            return RInteger.valueOf((Integer) value);
+        } else if (value instanceof RAbstractIntVector) {
+            return (RAbstractIntVector) value;
+        }
+        throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non integer value " + value.getClass().getSimpleName());
+    }
+
+    public static RAbstractDoubleVector asDoubleVector(Object obj) {
+        if (obj instanceof Double) {
+            return RDouble.valueOf((Double) obj);
+        } else if (obj instanceof RAbstractDoubleVector) {
+            return (RAbstractDoubleVector) obj;
+        }
+        throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non double value " + obj.getClass().getSimpleName());
+    }
+
+    static RAbstractContainer asAbstractContainer(Object value) {
+        if (value instanceof Integer) {
+            return RInteger.valueOf((Integer) value);
+        } else if (value instanceof Double) {
+            return RDouble.valueOf((Double) value);
+        } else if (value instanceof RAbstractContainer) {
+            return (RAbstractContainer) value;
+        }
+        throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non abstract container type " + value.getClass().getSimpleName());
+    }
+
+    static double sum(double[] values) {
+        return sum(values, 0, values.length);
+    }
+
+    static double sum(double[] values, int from, int length) {
+        double result = 0;
+        for (int i = 0; i < length; i++) {
+            result += values[from + i];
         }
         return result;
     }

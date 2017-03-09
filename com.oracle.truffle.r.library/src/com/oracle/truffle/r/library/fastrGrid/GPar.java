@@ -14,15 +14,12 @@ package com.oracle.truffle.r.library.fastrGrid;
 import java.util.Arrays;
 
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 /**
  * In the context of grid package, GPar is a list that contains the parameters for the drawing, like
@@ -126,29 +123,13 @@ public final class GPar {
 
         @Override
         public double getFontSize() {
-            return asDouble(data[GP_FONTSIZE]) * asDouble(data[GP_CEX]);
+            return GridUtils.asDouble(data[GP_FONTSIZE]) * GridUtils.asDouble(data[GP_CEX]);
         }
 
         @Override
         public double getLineHeight() {
-            return asDouble(data[GP_LINEHEIGHT]);
+            return GridUtils.asDouble(data[GP_LINEHEIGHT]);
         }
 
-        private static double asDouble(Object val) {
-            if (val instanceof Double) {
-                return (double) val;
-            } else if (val instanceof RAbstractDoubleVector) {
-                if (((RAbstractDoubleVector) val).getLength() > 0) {
-                    return ((RAbstractDoubleVector) val).getDataAt(0);
-                }
-            } else if (val instanceof Integer) {
-                return (int) val;
-            } else if (val instanceof RAbstractIntVector) {
-                if (((RAbstractIntVector) val).getLength() > 0) {
-                    return ((RAbstractIntVector) val).getDataAt(0);
-                }
-            }
-            throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non double/integer value in GPar.");
-        }
     }
 }

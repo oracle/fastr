@@ -11,15 +11,19 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asList;
+
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 /**
  * There is a notion of a view point, which is an ordinary list that user creates to define a view
@@ -51,7 +55,7 @@ class ViewPort {
      * Additional structure of a pushedvp
      */
     public static final int PVP_PARENTGPAR = 17;
-    private static final int PVP_GPAR = 18;
+    public static final int PVP_GPAR = 18;
     public static final int PVP_TRANS = 19;
     public static final int PVP_WIDTHS = 20;
     public static final int PVP_HEIGHTS = 21;
@@ -63,6 +67,64 @@ class ViewPort {
     public static final int PVP_CHILDREN = 27;
     public static final int PVP_DEVWIDTHCM = 28;
     public static final int PVP_DEVHEIGHTCM = 29;
+    /*
+     * Structure of a layout
+     */
+    private static final int LAYOUT_NROW = 0;
+    private static final int LAYOUT_NCOL = 1;
+    public static final int LAYOUT_WIDTHS = 2;
+    public static final int LAYOUT_HEIGHTS = 3;
+    public static final int LAYOUT_RESPECT = 4;
+    public static final int LAYOUT_VRESPECT = 5;
+    public static final int LAYOUT_MRESPECT = 6;
+    public static final int LAYOUT_JUST = 7;
+    private static final int LAYOUT_VJUST = 8;
+
+    /**
+     * Represents the integer values extracted from {@link #LAYOUT_NCOL} and {@link #LAYOUT_NROW}.
+     * In the R world, RNulls are valid values for those, we convert them to -1 to keep type safety.
+     * The values should be interpreted as 0-based indexes.
+     */
+    public static final class LayoutPos {
+        public final int colMin;
+        public final int colMax;
+        public final int rowMin;
+        public final int rowMax;
+        public final LayoutSize layoutSize;
+
+        LayoutPos(int colMin, int colMax, int rowMin, int rowMax, LayoutSize layoutSize) {
+            this.colMin = colMin;
+            this.colMax = colMax;
+            this.rowMin = rowMin;
+            this.rowMax = rowMax;
+            this.layoutSize = layoutSize;
+        }
+    }
+
+    /**
+     * The values should be interpreted as 0-based indexes.
+     */
+    public static final class LayoutSize {
+        public final int ncol;
+        public final int nrow;
+        public final double hjust;
+        public final double vjust;
+
+        private LayoutSize(int nrow, int ncol, double hjust, double vjust) {
+            this.ncol = ncol;
+            this.nrow = nrow;
+            this.hjust = hjust;
+            this.vjust = vjust;
+        }
+
+        public static LayoutSize fromViewPort(RList vp) {
+            RList layout = asList(vp.getDataAt(ViewPort.VP_LAYOUT));
+            int ncol = RRuntime.asInteger(layout.getDataAt(ViewPort.LAYOUT_NCOL));
+            int nrow = RRuntime.asInteger(layout.getDataAt(ViewPort.LAYOUT_NROW));
+            RAbstractDoubleVector just = (RAbstractDoubleVector) layout.getDataAt(ViewPort.LAYOUT_VJUST);
+            return new LayoutSize(nrow, ncol, just.getDataAt(0), just.getDataAt(1));
+        }
+    }
 
     public static final class InitViewPortNode extends Node {
         @Child private ReadVariableNode readGridTopLevel = ReadVariableNode.create("grid.top.level.vp");

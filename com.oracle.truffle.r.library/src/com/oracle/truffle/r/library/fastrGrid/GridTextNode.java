@@ -154,8 +154,14 @@ public final class GridTextNode extends RBaseNode {
                     xmax = fmax(xmax, trect.x);
                     ymin = fmin(ymin, trect.y);
                     ymax = fmax(ymax, trect.y);
+                    double[] xxx = new double[4];
+                    double[] yyy = new double[4];
+                    for (int j = 0; j < 4; j++) {
+                        xxx[j] = trect.x[3 - j];
+                        yyy[j] = trect.y[3 - j];
+                    }
                     // Calculate edgex and edgey for case where this is the only rect
-                    edge = EdgeDetection.polygonEdge(trect.x, trect.y, 4, theta);
+                    edge = EdgeDetection.polygonEdge(xxx, yyy, 4, theta);
                     ntxt++;
                 }
             }

@@ -38,6 +38,8 @@ public final class ViewPortTransform {
         @Child private CastNode castScalarDouble = newCastBuilder().mustBe(numericValue()).asDoubleVector().findFirst().buildCastNode();
 
         public ViewPortTransform execute(RList viewPort) {
+            // TODO: if device has changed, recalculate the VP transform!!! Some code, e.g.
+            // GrobUnitToInches relies on that
             double width = Unit.cmToInches(getScalar(viewPort.getDataAt(ViewPort.PVP_WIDTHCM)));
             double height = Unit.cmToInches(getScalar(viewPort.getDataAt(ViewPort.PVP_HEIGHTCM)));
             double rotationAngle = getScalar(viewPort.getDataAt(ViewPort.VP_ANGLE));

@@ -69,7 +69,7 @@ public interface GridDevice {
      * parameters from the drawing context, but we allow the device to override this calculation
      * with something more precise.
      */
-    default double getStringHeight(DrawingContext ctx, String text) {
+    default double getStringHeight(DrawingContext ctx, @SuppressWarnings("unused") String text) {
         return (ctx.getLineHeight() * ctx.getFontSize()) / INCH_TO_POINTS_FACTOR;
     }
 }
