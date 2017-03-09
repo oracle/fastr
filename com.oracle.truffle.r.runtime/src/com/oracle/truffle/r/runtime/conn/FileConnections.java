@@ -64,10 +64,12 @@ public class FileConnections {
      */
     public static class FileRConnection extends BasePathRConnection {
         private final boolean raw;
+        private final boolean internal;
 
-        public FileRConnection(String description, String path, String modeString, boolean blocking, String encoding, boolean raw) throws IOException {
+        public FileRConnection(String description, String path, String modeString, boolean blocking, String encoding, boolean raw, boolean internal) throws IOException {
             super(description, checkTemp(path), ConnectionClass.File, modeString, blocking, encoding);
             this.raw = raw;
+            this.internal = internal;
             openNonLazyConnection();
         }
 
@@ -77,6 +79,11 @@ public class FileConnections {
             } else {
                 return path;
             }
+        }
+
+        @Override
+        public boolean isInternal() {
+            return internal;
         }
 
         @Override

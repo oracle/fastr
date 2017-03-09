@@ -193,7 +193,7 @@ public abstract class Parse extends RBuiltinNode {
                 } else {
                     path = fileName;
                 }
-                Source result = createFileSource(path, coalescedLines);
+                Source result = createFileSource(path, coalescedLines, false);
                 assert result != null : "Source created from environment should not be null";
                 return result;
             } else {
@@ -204,23 +204,28 @@ public abstract class Parse extends RBuiltinNode {
             if (srcFileText.equals("<text>")) {
                 return Source.newBuilder(coalescedLines).name("<parse>").mimeType(RRuntime.R_APP_MIME).build();
             } else {
-                return createFileSource(ConnectionSupport.removeFileURLPrefix(srcFileText), coalescedLines);
+                return createFileSource(ConnectionSupport.removeFileURLPrefix(srcFileText), coalescedLines, false);
             }
         }
     }
 
     private static Source createSource(RConnection conn, String coalescedLines) {
         // TODO check if file
-        String path = ConnectionSupport.getBaseConnection(conn).getSummaryDescription();
-        return createFileSource(path, coalescedLines);
+        ConnectionSupport.BaseRConnection bconn = ConnectionSupport.getBaseConnection(conn);
+        String path = bconn.getSummaryDescription();
+        return createFileSource(path, coalescedLines, bconn.isInternal());
     }
 
-    private static Source createFileSource(String path, String chars) {
+    private static Source createFileSource(String path, String chars, boolean internal) {
         try {
-            return RSource.fromFileName(chars, path);
+            return RSource.fromFileName(chars, path, internal);
         } catch (URISyntaxException e) {
             // Note: to be compatible with GnuR we construct Source even with a malformed path
-            return Source.newBuilder(chars).name(path).mimeType(RRuntime.R_APP_MIME).build();
+            Source.Builder<RuntimeException, RuntimeException, RuntimeException> builder = Source.newBuilder(chars).name(path).mimeType(RRuntime.R_APP_MIME);
+            if (internal) {
+                builder.internal();
+            }
+            return builder.build();
         }
     }
 

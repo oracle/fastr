@@ -90,10 +90,14 @@ public class RSource {
      * Create an (external) source from the {@code text} that is known to originate from the file
      * system path {@code path}. The simulates the behavior of {@link #fromFile}.
      */
-    public static Source fromFileName(String text, String path) throws URISyntaxException {
+    public static Source fromFileName(String text, String path, boolean internal) throws URISyntaxException {
         File file = new File(path).getAbsoluteFile();
         URI uri = new URI("file://" + file.getAbsolutePath());
-        return Source.newBuilder(text).name(file.getName()).uri(uri).mimeType(RRuntime.R_APP_MIME).build();
+        Source.Builder<RuntimeException, RuntimeException, RuntimeException> builder = Source.newBuilder(text).name(file.getName()).uri(uri).mimeType(RRuntime.R_APP_MIME);
+        if (internal) {
+            builder.internal();
+        }
+        return builder.build();
     }
 
     /**
@@ -137,8 +141,12 @@ public class RSource {
     /**
      * Create an (external) source from the file system path {@code path}.
      */
-    public static Source fromFileName(String path) throws IOException {
-        return Source.newBuilder(new File(path)).name(path).mimeType(RRuntime.R_APP_MIME).build();
+    public static Source fromFileName(String path, boolean internal) throws IOException {
+        Source.Builder<IOException, RuntimeException, RuntimeException> builder = Source.newBuilder(new File(path)).name(path).mimeType(RRuntime.R_APP_MIME);
+        if (internal) {
+            builder.internal();
+        }
+        return builder.build();
     }
 
     /**
