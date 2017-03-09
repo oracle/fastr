@@ -29,6 +29,7 @@
 #include <limits.h>
 #include <Rinternals.h>
 #include <setjmp.h>
+#include <Connections.h>
 
 #define VALIDATE_REFS 1
 
@@ -87,6 +88,7 @@ void init_random(JNIEnv *env);
 void init_parse(JNIEnv *env);
 void init_pcre(JNIEnv *env);
 void init_c(JNIEnv *env);
+void init_connections(JNIEnv *env);
 
 void setEmbedded(void);
 

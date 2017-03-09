@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -253,5 +254,19 @@ public interface StdUpCallsRFFI {
     Object PRCODE(Object x);
 
     Object R_CHAR(Object x);
+
+    int R_ReadConnection(int fd, byte[] buf);
+
+    int R_WriteConnection(int fd, byte[] buf);
+
+    Object R_GetConnection(int fd);
+
+    String getSummaryDescription(Object x);
+
+    String getConnectionClassString(Object x);
+
+    String getOpenModeString(Object x);
+
+    boolean isSeekable(Object x);
 
 }

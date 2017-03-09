@@ -741,4 +741,46 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
         return delegate.R_CHAR(x);
     }
 
+    @Override
+    public int R_ReadConnection(int fd, byte[] buf) {
+        RFFIUtils.traceUpCall("R_ReadConnection", fd, buf);
+        return delegate.R_ReadConnection(fd, buf);
+    }
+
+    @Override
+    public int R_WriteConnection(int fd, byte[] buf) {
+        RFFIUtils.traceUpCall("R_WriteConnection", fd, buf);
+        return delegate.R_WriteConnection(fd, buf);
+    }
+
+    @Override
+    public Object R_GetConnection(int fd) {
+        RFFIUtils.traceUpCall("R_GetConnection", fd);
+        return delegate.R_GetConnection(fd);
+    }
+
+    @Override
+    public String getSummaryDescription(Object x) {
+        RFFIUtils.traceUpCall("getSummaryDescription", x);
+        return delegate.getSummaryDescription(x);
+    }
+
+    @Override
+    public String getConnectionClassString(Object x) {
+        RFFIUtils.traceUpCall("getConnectionClassString", x);
+        return delegate.getConnectionClassString(x);
+    }
+
+    @Override
+    public String getOpenModeString(Object x) {
+        RFFIUtils.traceUpCall("getOpenModeString", x);
+        return delegate.getOpenModeString(x);
+    }
+
+    @Override
+    public boolean isSeekable(Object x) {
+        RFFIUtils.traceUpCall("isSeekable", x);
+        return delegate.isSeekable(x);
+    }
+
 }

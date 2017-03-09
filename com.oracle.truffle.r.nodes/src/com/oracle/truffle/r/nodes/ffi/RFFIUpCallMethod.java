@@ -63,6 +63,7 @@ public enum RFFIUpCallMethod {
     R_ExternalPtrProt("(object) : object"),
     R_ExternalPtrTag("(object) : object"),
     R_FindNamespace("(object) : object"),
+    R_GetConnection("(sint32) : object"),
     R_GlobalContext("() : object"),
     R_GlobalEnv("() : object"),
     R_HomeDir("() : object"),
@@ -72,10 +73,12 @@ public enum RFFIUpCallMethod {
     R_NewHashedEnv("(object, object) : object"),
     R_ParseVector("(object, sint32, object) : object"),
     R_PromiseExpr("(object) : object"),
+    R_ReadConnection("(sint32, object) : sint32"),
     R_SetExternalPtrAddr("(object, object) : void"),
     R_SetExternalPtrProt("(object, object) : void"),
     R_SetExternalPtrTag("(object, object) : void"),
     R_ToplevelExec("() : object"),
+    R_WriteConnection("(sint32, object) : sint32"),
     R_computeIdentical("(object, object, sint32) : sint32"),
     R_do_MAKE_CLASS("(string) : object"),
     R_getContextCall("(object) : object"),
@@ -146,6 +149,10 @@ public enum RFFIUpCallMethod {
     TAG("(object) : object"),
     TYPEOF("(object) : sint32"),
     VECTOR_ELT("(object, sint32) : object"),
+    getConnectionClassString("(object) : object"),
+    getOpenModeString("(object) : object"),
+    getSummaryDescription("(object) : object"),
+    isSeekable("(object) : object"),
     unif_rand("() : double");
 
     /**
