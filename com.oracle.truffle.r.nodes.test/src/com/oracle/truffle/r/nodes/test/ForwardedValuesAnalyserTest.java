@@ -22,6 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asLogicalVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.map;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -30,6 +36,7 @@ import org.junit.Test;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.AndFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter.ScalarValue;
+import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapByteToBoolean;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.DoubleFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.MissingFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.NotFilter;
@@ -42,6 +49,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapIfStep;
+import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardedValuesAnalyser;
 import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardingAnalysisResult;
 import com.oracle.truffle.r.runtime.RType;
@@ -406,4 +414,26 @@ public class ForwardedValuesAnalyserTest {
         assertFalse(result.isStringForwarded());
         assertFalse(result.isMissingForwarded());
     }
+
+    @Test
+    public void testReturnIfWithTrueBranchChain() {
+        //@formatter:off
+        PipelineStep<?, ?> findFirstBoolean = new CoercionStep<>(RType.Logical, false).setNext(new FindFirstStep<>(null, Byte.class, null)).setNext(new MapStep<>(new MapByteToBoolean(false)));
+        PipelineStep<?, ?> firstStep = new MapIfStep<>(new RTypeFilter<>(RType.Logical), // the condition
+                        findFirstBoolean, null, true);
+        //@formatter:on
+
+        ForwardedValuesAnalyser fwdAn = new ForwardedValuesAnalyser();
+        ForwardingAnalysisResult result = fwdAn.analyse(firstStep);
+        // TODO: change it to the positive assertion when the selected mappers (such as
+        // MapByteToBoolean) are supported
+        assertFalse(result.isLogicalForwarded());
+        assertTrue(result.logicalForwarded.mapper instanceof MapByteToBoolean);
+        assertTrue(result.isDoubleForwarded());
+        assertTrue(result.isIntegerForwarded());
+        assertTrue(result.isNullForwarded());
+        assertTrue(result.isStringForwarded());
+        assertTrue(result.isMissingForwarded());
+    }
+
 }

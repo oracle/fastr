@@ -101,6 +101,7 @@ public class ExtBuiltinsList {
                     com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_getGenericNodeGen.class,
                     com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_nextMethodCallNodeGen.class,
                     com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_externalPtrPrototypeObjectNodeGen.class,
+                    com.oracle.truffle.r.library.stats.deriv.DerivNodeGen.class,
     };
 
     @SuppressWarnings("unchecked")

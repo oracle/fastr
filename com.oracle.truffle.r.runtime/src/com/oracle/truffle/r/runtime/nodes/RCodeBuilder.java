@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -196,5 +196,12 @@ public interface RCodeBuilder<T> {
      */
     default T call(SourceSection source, T lhs, T argument1, T argument2, T argument3) {
         return call(source, lhs, Arrays.asList(argument(argument1), argument(argument2), argument(argument3)));
+    }
+
+    /**
+     * Helper function: create a call with four unnamed arguments.
+     */
+    default T call(SourceSection source, T lhs, T argument1, T argument2, T argument3, T argument4) {
+        return call(source, lhs, Arrays.asList(argument(argument1), argument(argument2), argument(argument3), argument(argument4)));
     }
 }

@@ -55,6 +55,8 @@ import com.oracle.truffle.r.library.stats.RandFunctionsNodes.RandFunction3Node;
 import com.oracle.truffle.r.library.stats.SignrankFreeNode;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
+import com.oracle.truffle.r.library.stats.deriv.D;
+import com.oracle.truffle.r.library.stats.deriv.Deriv;
 import com.oracle.truffle.r.library.stats.StatsFunctionsNodes;
 import com.oracle.truffle.r.library.stats.WilcoxFreeNode;
 import com.oracle.truffle.r.library.tools.C_ParseRdNodeGen;
@@ -744,6 +746,11 @@ public class CallAndExternalFunctions {
             switch (name) {
                 case "compcases":
                     return new CompleteCases();
+                // stats
+                case "doD":
+                    return D.create();
+                case "deriv":
+                    return Deriv.create();
                 // utils
                 case "countfields":
                     return CountFieldsNodeGen.create();
