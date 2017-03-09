@@ -15,12 +15,16 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -49,12 +53,53 @@ public abstract class Prod extends RBuiltinNode {
 
     @Specialization
     protected Object prod(RArgsValuesAndNames args) {
+        int argsLen = args.getLength();
+        if (argsLen == 0) {
+            return 1d;
+        }
         if (prodRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             prodRecursive = insert(ProdNodeGen.create());
         }
-        // TODO: eventually handle multiple vectors properly
-        return prodRecursive.executeObject(args.getArgument(0));
+        Object ret = prodRecursive.executeObject(args.getArgument(0));
+        if (argsLen != 1) {
+            double prodReal;
+            double prodImg;
+            boolean complex;
+            if (ret instanceof RComplex) {
+                RComplex c = (RComplex) ret;
+                prodReal = c.getRealPart();
+                prodImg = c.getImaginaryPart();
+                complex = true;
+            } else {
+                prodReal = (Double) ret;
+                prodImg = 0d;
+                complex = false;
+            }
+            for (int i = 1; i < argsLen; i++) {
+                Object aProd = prodRecursive.executeObject(args.getArgument(i));
+                double aProdReal;
+                double aProdImg;
+                if (aProd instanceof RComplex) {
+                    RComplex c = (RComplex) aProd;
+                    aProdReal = c.getRealPart();
+                    aProdImg = c.getImaginaryPart();
+                    complex = true;
+                } else {
+                    aProdReal = (Double) aProd;
+                    aProdImg = 0d;
+                }
+                if (complex) {
+                    RComplex c = prod.op(prodReal, prodImg, aProdReal, aProdImg);
+                    prodReal = c.getRealPart();
+                    prodImg = c.getImaginaryPart();
+                } else {
+                    prodReal = prod.op(prodReal, aProdReal);
+                }
+            }
+            ret = complex ? RComplex.valueOf(prodReal, prodImg) : prodReal;
+        }
+        return ret;
     }
 
     @Specialization
@@ -92,5 +137,15 @@ public abstract class Prod extends RBuiltinNode {
             product = prod.op(product.getRealPart(), product.getImaginaryPart(), a.getRealPart(), a.getImaginaryPart());
         }
         return product;
+    }
+
+    @Specialization
+    protected double prod(RNull n) {
+        return 1d;
+    }
+
+    @Fallback
+    protected Object prod(Object o) {
+        throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, ((RTypedValue) RRuntime.asAbstractVector(o)).getRType().getName());
     }
 }

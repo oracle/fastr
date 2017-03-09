@@ -118,6 +118,12 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object R_do_new_object(Object classDef) {
+        RFFIUtils.traceUpCall("R_do_new_object", classDef);
+        return delegate.R_do_new_object(classDef);
+    }
+
+    @Override
     public Object Rf_findVar(Object symbolArg, Object envArg) {
         RFFIUtils.traceUpCall("Rf_findVar", symbolArg, envArg);
         return delegate.Rf_findVar(symbolArg, envArg);
@@ -580,6 +586,18 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public void SET_S4_OBJECT(Object x) {
+        RFFIUtils.traceUpCall("setS4Object");
+        delegate.SET_S4_OBJECT(x);
+    }
+
+    @Override
+    public void UNSET_S4_OBJECT(Object x) {
+        RFFIUtils.traceUpCall("unsetS4Object");
+        delegate.UNSET_S4_OBJECT(x);
+    }
+
+    @Override
     public void Rprintf(Object message) {
         RFFIUtils.traceUpCall("Rprintf", message);
         delegate.Rprintf(message);
@@ -787,6 +805,24 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     public boolean isSeekable(Object x) {
         RFFIUtils.traceUpCall("isSeekable", x);
         return delegate.isSeekable(x);
+    }
+
+    @Override
+    public Object R_do_slot(Object o, Object name) {
+        RFFIUtils.traceUpCall("R_do_slot", o, name);
+        return delegate.R_do_slot(o, name);
+    }
+
+    @Override
+    public Object R_do_slot_assign(Object o, Object name, Object value) {
+        RFFIUtils.traceUpCall("R_do_slot", o, name, value);
+        return delegate.R_do_slot_assign(o, name, value);
+    }
+
+    @Override
+    public Object R_MethodsNamespace() {
+        RFFIUtils.traceUpCall("R_MethodsNamespace");
+        return delegate.R_MethodsNamespace();
     }
 
 }

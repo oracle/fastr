@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -72,6 +73,8 @@ public interface StdUpCallsRFFI {
     void Rf_defineVar(Object symbolArg, Object value, Object envArg);
 
     Object R_do_MAKE_CLASS(@RFFICstring Object clazz);
+
+    Object R_do_new_object(Object classDef);
 
     /**
      * WARNING: argument order reversed from Rf_findVarInFrame!
@@ -216,6 +219,10 @@ public interface StdUpCallsRFFI {
 
     int IS_S4_OBJECT(Object x);
 
+    void SET_S4_OBJECT(Object x);
+
+    void UNSET_S4_OBJECT(Object x);
+
     void Rprintf(@RFFICstring Object message);
 
     void GetRNGstate();
@@ -269,5 +276,11 @@ public interface StdUpCallsRFFI {
     String getOpenModeString(Object x);
 
     boolean isSeekable(Object x);
+
+    Object R_do_slot(Object o, Object name);
+
+    Object R_do_slot_assign(Object o, Object name, Object value);
+
+    Object R_MethodsNamespace();
 
 }

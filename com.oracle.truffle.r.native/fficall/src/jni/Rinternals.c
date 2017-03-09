@@ -91,6 +91,9 @@ jmethodID logNotCharSXPWrapperMethodID;
 static jmethodID STRING_ELT_MethodID;
 static jmethodID VECTOR_ELT_MethodID;
 static jmethodID LENGTH_MethodID;
+static jmethodID R_do_slot_MethodID;
+static jmethodID R_do_slot_assign_MethodID;
+static jmethodID R_MethodsNamespaceMethodID;
 static jmethodID Rf_asIntegerMethodID;
 static jmethodID Rf_asRealMethodID;
 static jmethodID Rf_asCharMethodID;
@@ -105,6 +108,8 @@ static jmethodID TYPEOF_MethodID;
 static jmethodID OBJECT_MethodID;
 static jmethodID DUPLICATE_ATTRIB_MethodID;
 static jmethodID IS_S4_OBJECTMethodID;
+static jmethodID SET_S4_OBJECTMethodID;
+static jmethodID UNSET_S4_OBJECTMethodID;
 static jmethodID R_tryEvalMethodID;
 static jmethodID RDEBUGMethodID;
 static jmethodID SET_RDEBUGMethodID;
@@ -114,6 +119,7 @@ static jmethodID ENCLOSMethodID;
 static jmethodID PRVALUEMethodID;
 static jmethodID R_lsInternal3MethodID;
 static jmethodID R_do_MAKE_CLASS_MethodID;
+static jmethodID R_do_new_object_MethodID;
 static jmethodID PRSEENMethodID;
 static jmethodID PRENVMethodID;
 static jmethodID R_PromiseExprMethodID;
@@ -171,6 +177,7 @@ void init_internals(JNIEnv *env) {
 	Rf_classgetsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_classgets", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	RprintfMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rprintf", "(Ljava/lang/Object;)V", 0);
 	R_do_MAKE_CLASS_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_do_MAKE_CLASS", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	R_do_new_object_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_do_new_object", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	R_FindNamespaceMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_FindNamespace", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	R_BindingIsLockedID = checkGetMethodID(env, UpCallsRFFIClass, "R_BindingIsLocked", "(Ljava/lang/Object;Ljava/lang/Object;)I", 0);
 	Rf_GetOption1MethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_GetOption1", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
@@ -201,6 +208,9 @@ void init_internals(JNIEnv *env) {
 	STRING_ELT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "STRING_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 	VECTOR_ELT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "VECTOR_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 	LENGTH_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "LENGTH", "(Ljava/lang/Object;)I", 0);
+	R_do_slot_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_do_slot", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	R_do_slot_assign_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_do_slot_assign", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	R_MethodsNamespaceMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_MethodsNamespace", "()Ljava/lang/Object;", 0);
 	Rf_asIntegerMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asInteger", "(Ljava/lang/Object;)I", 0);
 	Rf_asRealMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asReal", "(Ljava/lang/Object;)D", 0);
 	Rf_asCharMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asChar", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
@@ -214,6 +224,8 @@ void init_internals(JNIEnv *env) {
 	OBJECT_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "OBJECT", "(Ljava/lang/Object;)I", 0);
 	DUPLICATE_ATTRIB_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "DUPLICATE_ATTRIB", "(Ljava/lang/Object;Ljava/lang/Object;)V", 0);
 	IS_S4_OBJECTMethodID = checkGetMethodID(env, UpCallsRFFIClass, "IS_S4_OBJECT", "(Ljava/lang/Object;)I", 0);
+	SET_S4_OBJECTMethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_S4_OBJECT", "(Ljava/lang/Object;)V", 0);
+	UNSET_S4_OBJECTMethodID = checkGetMethodID(env, UpCallsRFFIClass, "UNSET_S4_OBJECT", "(Ljava/lang/Object;)V", 0);
 	R_tryEvalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_tryEval", "(Ljava/lang/Object;Ljava/lang/Object;Z)Ljava/lang/Object;", 0);
 	RDEBUGMethodID = checkGetMethodID(env, UpCallsRFFIClass, "RDEBUG", "(Ljava/lang/Object;)I", 0);
 	SET_RDEBUGMethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_RDEBUG", "(Ljava/lang/Object;I)V", 0);
@@ -477,6 +489,7 @@ SEXP Rf_install(const char *name) {
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, name);
 	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_installMethodID, string);
+        addGlobalRef(thisenv, result, 1);
 	return checkRef(thisenv, result);
 }
 
@@ -1377,10 +1390,13 @@ int IS_S4_OBJECT(SEXP x) {
 }
 
 void SET_S4_OBJECT(SEXP x) {
-	unimplemented("SET_S4_OBJECT");
+	JNIEnv *env = getEnv();
+	(*env)->CallVoidMethod(env, UpCallsRFFIObject, SET_S4_OBJECTMethodID, x);
 }
+
 void UNSET_S4_OBJECT(SEXP x) {
-	unimplemented("UNSET_S4_OBJECT");
+	JNIEnv *env = getEnv();
+	(*env)->CallVoidMethod(env, UpCallsRFFIObject, UNSET_S4_OBJECTMethodID, x);
 }
 
 Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
@@ -1595,11 +1611,17 @@ void R_RunWeakRefFinalizer(SEXP w) {
 }
 
 SEXP R_do_slot(SEXP obj, SEXP name) {
-	return unimplemented("R_do_slot");
+    TRACE(TARGp, obj, name);
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_do_slot_MethodID, obj, name);
+    return checkRef(thisenv, result);
 }
 
-SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
-	return unimplemented("R_do_slot_assign");
+SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) { // Same like R_set_slot
+    TRACE(TARGp, obj, name, value);
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_do_slot_assign_MethodID, obj, name, value);
+    return checkRef(thisenv, result);
 }
 
 int R_has_slot(SEXP obj, SEXP name) {
@@ -1615,17 +1637,84 @@ SEXP R_do_MAKE_CLASS(const char *what) {
 SEXP R_getClassDef (const char *what) {
 	return unimplemented("R_getClassDef");
 }
-
+    
 SEXP R_do_new_object(SEXP class_def) {
-	return unimplemented("R_do_new_object");
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_do_new_object_MethodID, class_def);
+    return checkRef(thisenv, result);
 }
 
 int R_check_class_and_super(SEXP x, const char **valid, SEXP rho) {
-	return (int) unimplemented("R_check_class_and_super");
+    int ans;
+    SEXP cl = PROTECT(asChar(getAttrib(x, R_ClassSymbol)));
+    const char *class = CHAR(cl);
+    for (ans = 0; ; ans++) {
+	if (!strlen(valid[ans])) // empty string
+	    break;
+	if (!strcmp(class, valid[ans])) {
+	    UNPROTECT(1); /* cl */
+	    return ans;
+	}
+    }
+    /* if not found directly, now search the non-virtual super classes :*/
+    if(IS_S4_OBJECT(x)) {
+	/* now try the superclasses, i.e.,  try   is(x, "....");  superCl :=
+	   .selectSuperClasses(getClass("....")@contains, dropVirtual=TRUE)  */
+	SEXP classExts, superCl, _call;
+        // install() results cached anyway so the following variables could be non-static if needed
+	static SEXP s_contains = NULL, s_selectSuperCl = NULL;
+	int i;
+	if(!s_contains) {
+	    s_contains      = install("contains");
+	    s_selectSuperCl = install(".selectSuperClasses");
+	}
+	SEXP classDef = PROTECT(R_getClassDef(class));
+	PROTECT(classExts = R_do_slot(classDef, s_contains));
+	PROTECT(_call = lang3(s_selectSuperCl, classExts,
+			      /* dropVirtual = */ ScalarLogical(1)));
+	superCl = eval(_call, rho);
+	UNPROTECT(3); /* _call, classExts, classDef */
+	PROTECT(superCl);
+	for(i=0; i < LENGTH(superCl); i++) {
+	    const char *s_class = CHAR(STRING_ELT(superCl, i));
+	    for (ans = 0; ; ans++) {
+		if (!strlen(valid[ans]))
+		    break;
+		if (!strcmp(s_class, valid[ans])) {
+		    UNPROTECT(2); /* superCl, cl */
+		    return ans;
+		}
+	    }
+	}
+	UNPROTECT(1); /* superCl */
+    }
+    UNPROTECT(1); /* cl */
+    return -1;
 }
 
 int R_check_class_etc (SEXP x, const char **valid) {
-	return (int) unimplemented("R_check_class_etc");
+    // install() results cached anyway so the following variables could be non-static if needed
+    static SEXP meth_classEnv = NULL;
+    SEXP cl = getAttrib(x, R_ClassSymbol), rho = R_GlobalEnv, pkg;
+    if (!meth_classEnv)
+        meth_classEnv = install(".classEnv");
+
+    pkg = getAttrib(cl, R_PackageSymbol); /* ==R== packageSlot(class(x)) */
+    if (!isNull(pkg)) { /* find  rho := correct class Environment */
+        SEXP clEnvCall;
+        // FIXME: fails if 'methods' is not loaded.
+        PROTECT(clEnvCall = lang2(meth_classEnv, cl));
+        JNIEnv *thisenv = getEnv();
+        SEXP methodsNamespace = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_MethodsNamespaceMethodID);
+        rho = eval(clEnvCall, methodsNamespace);
+        UNPROTECT(1);
+        if (!isEnvironment(rho))
+            error(_("could not find correct environment; please report!"));
+    }
+    PROTECT(rho);
+    int res = R_check_class_and_super(x, valid, rho);
+    UNPROTECT(1);
+    return res;
 }
 
 SEXP R_PreserveObject(SEXP x) {
@@ -1648,11 +1737,12 @@ Rboolean R_compute_identical(SEXP x, SEXP y, int flags) {
 }
 
 void Rf_copyListMatrix(SEXP s, SEXP t, Rboolean byrow) {
-	JNIEnv *thisenv = getEnv();
+    JNIEnv *thisenv = getEnv();
     (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_copyListMatrixMethodID, s, t, byrow);
 }
 
 void Rf_copyMatrix(SEXP s, SEXP t, Rboolean byrow) {
-	JNIEnv *thisenv = getEnv();
+    JNIEnv *thisenv = getEnv();
     (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_copyMatrixMethodID, s, t, byrow);
 }
+

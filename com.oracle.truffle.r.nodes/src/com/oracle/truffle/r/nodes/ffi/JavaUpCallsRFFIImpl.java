@@ -80,13 +80,20 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -99,6 +106,8 @@ import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This class provides a simple Java-based implementation of {@link UpCallsRFFI}, where all the
@@ -113,6 +122,8 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  * simple way to achieve the above).
  */
 public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
+
+    private final Map<String, Object> nameSymbolCache = new ConcurrentHashMap<>();
 
     // Checkstyle: stop method name check
 
@@ -195,6 +206,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         String name = "getClass";
         RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, REnvironment.getRegisteredNamespace("methods").get(name));
         return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), null, clazz);
+    }
+
+    @Override
+    public Object R_do_new_object(Object classDef) {
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallMethod.R_do_new_object).call(classDef);
     }
 
     @Override
@@ -319,7 +335,13 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object Rf_install(Object name) {
-        return RDataFactory.createSymbolInterned((String) name);
+        String nameStr = (String) name;
+        Object ret = nameSymbolCache.get(nameStr);
+        if (ret == null) {
+            ret = RDataFactory.createSymbolInterned(nameStr);
+            nameSymbolCache.put(nameStr, ret);
+        }
+        return ret;
     }
 
     @Override
@@ -798,13 +820,140 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public void Rf_copyListMatrix(Object s, Object t, int byrow) {
+    public void Rf_copyListMatrix(Object t, Object s, int byrow) {
         throw unimplemented();
     }
 
     @Override
-    public void Rf_copyMatrix(Object s, Object t, int byrow) {
-        throw unimplemented();
+    public void Rf_copyMatrix(Object t, Object s, int byRow) {
+        int tRows = RRuntime.nrows(t);
+        int tCols = RRuntime.ncols(t);
+        final Object sav = RRuntime.asAbstractVector(s);
+        ContainerItemCopier c;
+        if (sav instanceof RAbstractContainer) {
+            int sLen = ((RAbstractContainer) sav).getLength();
+            if (sav instanceof RAbstractIntVector) {
+                c = new ContainerItemCopier() {
+                    private final RAbstractIntVector sv = (RAbstractIntVector) sav;
+                    private final RAbstractIntVector tv = (RAbstractIntVector) t;
+                    private final Object tvStore = tv.getInternalStore();
+
+                    @Override
+                    public void copy(int sIdx, int tIdx) {
+                        tv.setDataAt(tvStore, tIdx, sv.getDataAt(sIdx));
+                    }
+                };
+            } else if (sav instanceof RAbstractDoubleVector) {
+                c = new ContainerItemCopier() {
+                    private final RAbstractDoubleVector sv = (RAbstractDoubleVector) sav;
+                    private final RAbstractDoubleVector tv = (RAbstractDoubleVector) t;
+                    private final Object tvStore = tv.getInternalStore();
+
+                    @Override
+                    public void copy(int sIdx, int tIdx) {
+                        tv.setDataAt(tvStore, tIdx, sv.getDataAt(sIdx));
+                    }
+                };
+            } else if (sav instanceof RAbstractLogicalVector) {
+                c = new ContainerItemCopier() {
+                    private final RAbstractLogicalVector sv = (RAbstractLogicalVector) sav;
+                    private final RAbstractLogicalVector tv = (RAbstractLogicalVector) t;
+                    private final Object tvStore = tv.getInternalStore();
+
+                    @Override
+                    public void copy(int sIdx, int tIdx) {
+                        tv.setDataAt(tvStore, tIdx, sv.getDataAt(sIdx));
+                    }
+                };
+            } else if (sav instanceof RAbstractComplexVector) {
+                c = new ContainerItemCopier() {
+                    private final RAbstractComplexVector sv = (RAbstractComplexVector) sav;
+                    private final RAbstractComplexVector tv = (RAbstractComplexVector) t;
+                    private final Object tvStore = tv.getInternalStore();
+
+                    @Override
+                    public void copy(int sIdx, int tIdx) {
+                        tv.setDataAt(tvStore, tIdx, sv.getDataAt(sIdx));
+                    }
+                };
+            } else if (sav instanceof RAbstractStringVector) {
+                c = new ContainerItemCopier() {
+                    private final RAbstractStringVector sv = (RAbstractStringVector) sav;
+                    private final RAbstractStringVector tv = (RAbstractStringVector) t;
+                    private final Object tvStore = tv.getInternalStore();
+
+                    @Override
+                    public void copy(int sIdx, int tIdx) {
+                        tv.setDataAt(tvStore, tIdx, sv.getDataAt(sIdx));
+                    }
+                };
+            } else if (sav instanceof RAbstractRawVector) {
+                c = new ContainerItemCopier() {
+                    private final RAbstractRawVector sv = (RAbstractRawVector) sav;
+                    private final RAbstractRawVector tv = (RAbstractRawVector) t;
+                    private final Object tvStore = tv.getInternalStore();
+
+                    @Override
+                    public void copy(int sIdx, int tIdx) {
+                        tv.setRawDataAt(tvStore, tIdx, sv.getRawDataAt(sIdx));
+                    }
+                };
+            } else if (sav instanceof RAbstractListBaseVector) {
+                c = new ContainerItemCopier() {
+                    private final RAbstractListBaseVector sv = (RAbstractListBaseVector) sav;
+                    private final RAbstractListBaseVector tv = (RAbstractListBaseVector) t;
+                    private final Object tvStore = tv.getInternalStore();
+
+                    @Override
+                    public void copy(int sIdx, int tIdx) {
+                        tv.setDataAt(tvStore, tIdx, sv.getDataAt(sIdx));
+                    }
+                };
+            } else {
+                throw unimplemented();
+            }
+            if (byRow != 0) {
+                int sIdx = 0;
+                for (int i = 0; i < tRows; i++) {
+                    int tIdx = i;
+                    for (int j = 0; j < tCols; j++) {
+                        c.copy(sIdx, tIdx);
+                        sIdx++;
+                        if (sIdx >= sLen) {
+                            sIdx -= sLen;
+                        }
+                        tIdx += tRows;
+                    }
+                }
+            } else { // Copy by column
+                int tLen = ((RAbstractContainer) t).getLength();
+                if (sLen >= tLen) {
+                    for (int i = 0; i < tLen; i++) {
+                        c.copy(i, i);
+                    }
+                } else { // Recycle needed
+                    int sIdx = 0;
+                    for (int i = 0; i < tLen; i++) {
+                        c.copy(sIdx, i);
+                        if (sIdx >= sLen) {
+                            sIdx -= sLen;
+                        }
+                    }
+                }
+            }
+
+        } else { // source is non-RAbstractContainer
+            throw unimplemented();
+        }
+    }
+
+    /**
+     * Helper interface for {@link #Rf_copyMatrix(java.lang.Object, java.lang.Object, int)} that
+     * copies from source index in an (internally held) source container into target index in a
+     * target container.
+     */
+    interface ContainerItemCopier {
+        void copy(int sIdx, int tIdx);
     }
 
     @Override
@@ -966,7 +1115,17 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int IS_S4_OBJECT(Object x) {
-        return x instanceof RS4Object ? 1 : 0;
+        return ((x instanceof RTypedValue) && ((RTypedValue) x).isS4()) ? 1 : 0;
+    }
+
+    @Override
+    public void SET_S4_OBJECT(Object x) {
+        guaranteeInstanceOf(x, RTypedValue.class).setS4();
+    }
+
+    @Override
+    public void UNSET_S4_OBJECT(Object x) {
+        guaranteeInstanceOf(x, RTypedValue.class).unsetS4();
     }
 
     @Override
@@ -1262,6 +1421,21 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public boolean isSeekable(Object x) {
         BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
         return conn.isSeekable();
+    }
+
+    @Override
+    public Object R_do_slot(Object o, Object name) {
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallMethod.R_do_slot).call(o, name);
+    }
+
+    @Override
+    public Object R_do_slot_assign(Object o, Object name, Object value) {
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallMethod.R_do_slot_assign).call(o, name, value);
+    }
+
+    @Override
+    public Object R_MethodsNamespace() {
+        return REnvironment.getRegisteredNamespace("methods");
     }
 
 }
