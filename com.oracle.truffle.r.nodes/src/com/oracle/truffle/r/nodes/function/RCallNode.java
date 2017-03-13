@@ -285,8 +285,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createBinaryProfile()") ConditionProfile isAttributableProfile,
                     @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile,
                     @Cached("create()") GetBaseEnvFrameNode getBaseEnvFrameNode,
-                    @Cached("createBinaryProfile()") ConditionProfile isS4Profile, //
-                    @Cached("createEqualityProfile()") ValueProfile attrProfiles,
+                    @Cached("createBinaryProfile()") ConditionProfile isS4Profile,
                     @Cached("new()") PromiseCheckHelperNode promiseHelper) {
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         Object dispatchObject = dispatchArgument.execute(frame);
@@ -303,8 +302,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
             if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
                 RList list = (RList) promiseHelper.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
-// int index = list.getElementIndexByName(attrProfiles, builtin.getName());
-                int index = 0;
+                // TODO create a node that looksup the name in the names attribute
+                int index = list.getElementIndexByName(builtin.getName());
                 if (index != -1) {
                     RFunction basicFun = (RFunction) list.getDataAt(index);
                     Object result = internalDispatchCall.execute(frame, basicFun, lookupVarArgs(frame), null, null);
@@ -344,14 +343,31 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createWithError()") S3FunctionLookupNode dispatchLookup,
                     @Cached("createIdentityProfile()") ValueProfile builtinProfile,
                     @Cached("createBinaryProfile()") ConditionProfile implicitTypeProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile isAttributableProfile,
                     @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile,
                     @Cached("createPromiseHelper()") PromiseCheckHelperNode promiseHelperNode,
                     @Cached("createUninitializedExplicitCall()") FunctionDispatch call,
+                    @Cached("createBinaryProfile()") ConditionProfile isS4Profile,
                     @Cached("create()") GetBaseEnvFrameNode getBaseEnvFrameNode) {
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         RArgsValuesAndNames argAndNames = (RArgsValuesAndNames) explicitArgs.execute(frame);
 
-        RStringVector type = argAndNames.isEmpty() ? null : classHierarchyNode.execute(promiseHelperNode.checkEvaluate(frame, argAndNames.getArgument(0)));
+        Object dispatchObject = argAndNames.getArgument(0);
+
+        if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
+            RList list = (RList) promiseHelperNode.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
+            // TODO create a node that looksup the name in the names attribute
+            int index = list.getElementIndexByName(builtin.getName());
+            if (index != -1) {
+                RFunction basicFun = (RFunction) list.getDataAt(index);
+                Object result = call.execute(frame, basicFun, argAndNames, null, null);
+                if (result != RRuntime.DEFERRED_DEFAULT_MARKER) {
+                    return result;
+                }
+            }
+        }
+
+        RStringVector type = argAndNames.isEmpty() ? null : classHierarchyNode.execute(promiseHelperNode.checkEvaluate(frame, dispatchObject));
         S3Args s3Args;
         RFunction resultFunction;
         if (implicitTypeProfile.profile(type != null)) {

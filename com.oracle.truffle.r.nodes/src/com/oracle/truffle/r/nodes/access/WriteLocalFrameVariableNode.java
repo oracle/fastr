@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -53,6 +56,7 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
 
     private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
     private final BranchProfile invalidateProfile = BranchProfile.create();
+    @CompilationFinal private Assumption containsNoActiveBinding;
 
     protected WriteLocalFrameVariableNode(Object name, Mode mode) {
         super(name);
@@ -87,8 +91,17 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
     @Specialization
     protected Object doObject(VirtualFrame frame, Object value,
                     @Cached("findOrAddFrameSlot(frame, Object)") FrameSlot frameSlot) {
-        Object newValue = shareObjectValue(frame, frameSlot, storedObjectProfile.profile(value), mode, false);
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameSlot, newValue, false, invalidateProfile);
+        if (containsNoActiveBinding == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            containsNoActiveBinding = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(frame.getFrameDescriptor());
+        }
+        if (containsNoActiveBinding != null && containsNoActiveBinding.isValid()) {
+            Object newValue = shareObjectValue(frame, frameSlot, storedObjectProfile.profile(value), mode, false);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameSlot, newValue, false, invalidateProfile);
+        } else {
+            // it's a local variable lookup; so use 'frame' for both, executing and looking up
+            return handleActiveBinding(frame, frame, value, frameSlot, invalidateProfile);
+        }
         return value;
     }
 }

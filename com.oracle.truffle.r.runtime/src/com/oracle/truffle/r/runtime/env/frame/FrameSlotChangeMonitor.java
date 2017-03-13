@@ -184,6 +184,7 @@ public final class FrameSlotChangeMonitor {
 
         private WeakReference<FrameDescriptor> enclosingFrameDescriptor = new WeakReference<>(null);
         private Assumption enclosingFrameDescriptorAssumption = Truffle.getRuntime().createAssumption("enclosing frame descriptor");
+        private Assumption containsNoActiveBindingAssumption = Truffle.getRuntime().createAssumption("contains no active binding");
 
         private FrameDescriptorMetaData(String name, MaterializedFrame singletonFrame) {
             this.name = name;
@@ -207,6 +208,10 @@ public final class FrameSlotChangeMonitor {
 
         public Assumption getEnclosingFrameDescriptorAssumption() {
             return enclosingFrameDescriptorAssumption;
+        }
+
+        public Assumption getContainsNoActiveBindingAssumption() {
+            return containsNoActiveBindingAssumption;
         }
     }
 
@@ -607,12 +612,23 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static void setObjectAndInvalidate(Frame frame, FrameSlot frameSlot, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
+        assert !ActiveBinding.isActiveBinding(newValue);
         frame.setObject(frameSlot, newValue);
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
         if (info.needsInvalidation()) {
             info.setValue(newValue, frameSlot);
         }
         checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
+    }
+
+    public static void setActiveBinding(Frame frame, FrameSlot frameSlot, ActiveBinding newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
+        frame.setObject(frameSlot, newValue);
+        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+        if (info.needsInvalidation()) {
+            info.setValue(newValue, frameSlot);
+        }
+        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
+        getContainsNoActiveBindingAssumption(frame.getFrameDescriptor()).invalidate();
     }
 
     /**
@@ -630,6 +646,17 @@ public final class FrameSlotChangeMonitor {
     public static synchronized Assumption getEnclosingFrameDescriptorAssumption(FrameDescriptor descriptor) {
         CompilerAsserts.neverPartOfCompilation();
         return frameDescriptors.get(descriptor).getEnclosingFrameDescriptorAssumption();
+    }
+
+    public static synchronized Assumption getContainsNoActiveBindingAssumption(FrameDescriptor descriptor) {
+        CompilerAsserts.neverPartOfCompilation();
+        final FrameDescriptorMetaData frameDescriptorMetaData = frameDescriptors.get(descriptor);
+        return frameDescriptorMetaData != null ? frameDescriptorMetaData.getContainsNoActiveBindingAssumption() : null;
+    }
+
+    public static synchronized boolean isContainsNoActiveBindingAssumptionValid(FrameDescriptor descriptor) {
+        Assumption assumption = getContainsNoActiveBindingAssumption(descriptor);
+        return assumption != null ? assumption.isValid() : true;
     }
 
     public static synchronized StableValue<Object> getStableValueAssumption(FrameDescriptor descriptor, FrameSlot frameSlot, Object value) {

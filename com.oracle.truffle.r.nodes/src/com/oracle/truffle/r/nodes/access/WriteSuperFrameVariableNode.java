@@ -24,7 +24,9 @@ package com.oracle.truffle.r.nodes.access;
 
 import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.findOrAddFrameSlot;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -73,6 +75,7 @@ abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
         private final ValueProfile enclosingFrameProfile = ValueProfile.createClassProfile();
 
         private final Mode mode;
+        @CompilationFinal private Assumption containsNoActiveBinding;
 
         public ResolvedWriteSuperFrameVariableNode(Object name, Mode mode) {
             super(name);
@@ -97,10 +100,18 @@ abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
         }
 
         @Specialization
-        protected void doObject(Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+        protected void doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             MaterializedFrame profiledFrame = enclosingFrameProfile.profile(enclosingFrame);
-            Object newValue = shareObjectValue(profiledFrame, frameSlot, storedObjectProfile.profile(value), mode, true);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(profiledFrame, frameSlot, newValue, true, invalidateProfile);
+            if (containsNoActiveBinding == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                containsNoActiveBinding = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(profiledFrame.getFrameDescriptor());
+            }
+            if (containsNoActiveBinding != null && containsNoActiveBinding.isValid()) {
+                Object newValue = shareObjectValue(profiledFrame, frameSlot, storedObjectProfile.profile(value), mode, true);
+                FrameSlotChangeMonitor.setObjectAndInvalidate(profiledFrame, frameSlot, newValue, true, invalidateProfile);
+            } else {
+                handleActiveBinding(frame, profiledFrame, value, frameSlot, invalidateProfile);
+            }
         }
     }
 

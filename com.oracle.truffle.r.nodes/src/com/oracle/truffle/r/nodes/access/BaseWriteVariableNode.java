@@ -28,11 +28,17 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @NodeChild(value = "rhs", type = RNode.class)
@@ -152,5 +158,31 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Handles an assignment to an active binding.
+     * 
+     * @param execFrame The frame to be used for executing the function associated with the symbol.
+     * @param lookupFrame The frame to lookup the symbol (must not be {@code null}).
+     * @param value The value to set.
+     * @param frameSlot The frame slot of the value.
+     * @param invalidateProfile The invalidation profile.
+     */
+    protected static Object handleActiveBinding(VirtualFrame execFrame, Frame lookupFrame, Object value, FrameSlot frameSlot, BranchProfile invalidateProfile) {
+        Object object;
+        try {
+            object = lookupFrame.getObject(frameSlot);
+        } catch (FrameSlotTypeException e) {
+            object = null;
+        }
+
+        if (object != null && ActiveBinding.isActiveBinding(object)) {
+            ActiveBinding binding = (ActiveBinding) object;
+            return RContext.getEngine().evalFunction(binding.getFunction(), REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), null, value);
+        } else {
+            FrameSlotChangeMonitor.setObjectAndInvalidate(lookupFrame, frameSlot, value, false, invalidateProfile);
+        }
+        return value;
     }
 }
