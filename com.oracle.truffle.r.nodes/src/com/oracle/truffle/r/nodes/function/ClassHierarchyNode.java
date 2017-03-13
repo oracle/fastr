@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class ClassHierarchyNode extends UnaryNode {
@@ -147,6 +148,12 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     protected static boolean isRTypedValue(Object obj) {
         return obj instanceof RTypedValue;
+    }
+
+    @Specialization(guards = "!isRTypedValue(object)")
+    protected RStringVector getClassHrActiveBinding(@SuppressWarnings("unused") ActiveBinding object) {
+        // TODO return appropriate class hierarchy
+        return withImplicitTypes ? RIntVector.implicitClassHeader : null;
     }
 
     @Specialization(guards = "!isRTypedValue(object)")

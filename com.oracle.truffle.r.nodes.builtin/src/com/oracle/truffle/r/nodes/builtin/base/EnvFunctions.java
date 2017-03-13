@@ -620,7 +620,7 @@ public class EnvFunctions {
             if (binding == null) {
                 if (!env.isLocked()) {
                     FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), name, FrameSlotKind.Object);
-                    FrameSlotChangeMonitor.setActiveBinding(frame, slot, new ActiveBinding(fun), false, frameSlotBranchProfile);
+                    FrameSlotChangeMonitor.setActiveBinding(frame, slot, new ActiveBinding(sym.getRType(), fun), false, frameSlotBranchProfile);
                     binding = ReadVariableNode.lookupAny(name, frame, true);
                     assert binding != null;
                     assert binding instanceof ActiveBinding;
@@ -634,7 +634,7 @@ public class EnvFunctions {
             } else {
                 // update active binding
                 FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(name);
-                FrameSlotChangeMonitor.setActiveBinding(frame, slot, new ActiveBinding(fun), false, frameSlotBranchProfile);
+                FrameSlotChangeMonitor.setActiveBinding(frame, slot, new ActiveBinding(sym.getRType(), fun), false, frameSlotBranchProfile);
             }
             return RNull.instance;
         }

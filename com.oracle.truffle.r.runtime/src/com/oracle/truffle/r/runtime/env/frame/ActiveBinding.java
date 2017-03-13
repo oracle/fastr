@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.env.frame;
 
 import java.util.Objects;
 
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
 /**
@@ -32,9 +33,11 @@ import com.oracle.truffle.r.runtime.data.RFunction;
  */
 public class ActiveBinding {
 
+    private final RType expectedType;
     private final RFunction function;
 
-    public ActiveBinding(RFunction fun) {
+    public ActiveBinding(RType expectedType, RFunction fun) {
+        this.expectedType = Objects.requireNonNull(expectedType);
         this.function = Objects.requireNonNull(fun);
     }
 
@@ -42,8 +45,17 @@ public class ActiveBinding {
         return function;
     }
 
+    public RType getExpectedType() {
+        return expectedType;
+    }
+
     public static boolean isActiveBinding(Object binding) {
         return binding instanceof ActiveBinding;
+    }
+
+    @Override
+    public String toString() {
+        return "active binding";
     }
 
 }
