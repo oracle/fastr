@@ -104,7 +104,7 @@ Packages are downloaded and installed from the repos given by the `repos` argume
 The directory in which to install the package can be specified either by setting the `R_LIBS_USER` environment variable or with the `--lib` command line argument. The former is recommended and indeed required for running tests after installation (the testing system does not honor the `--lib` argument).
 
 ##### Specifying packages to Install
-If the `--pkg-filelist` argument is provided then the associated file should contain a list of packages to install, one per line. Otherwise if a package pattern argument is given, then all packages matching the (R) regular expression are candidates for installation, otherwise all available packages are candidates, computed by invoking the `available.packages()` function. The candidate set can be adjusted with additional options.  The `--use-installed.pkgs` option will cause `install.packages` to analyze the package installation directory for existing successfully installed packages and remove those from the candidate set. Some convenience options implicitly set `--pkg-filelist`, namely:
+If the `--pkg-filelist` argument is provided then the associated file should contain a list of packages to install, one per line. Otherwise if a package pattern argument is given, then all packages matching the (R) regular expression are candidates for installation, otherwise all available packages are candidates, computed by invoking the `available.packages()` function. The candidate set can be adjusted with additional options.  The `--use-installed-pkgs` option will cause `install.packages` to analyze the package installation directory for existing successfully installed packages and remove those from the candidate set. Some convenience options implicitly set `--pkg-filelist`, namely:
 
     --ok-only: sets it to the file `com.oracle.truffle.r.test.packages.ok.packages`. This file is a list of packages that are known to install.
 
@@ -143,7 +143,7 @@ Testing packages requires that they are first installed, so all of the above is 
     --verbose | -v: output tracing on basic steps
     -V: more verbose tracing
     --dry-run: output what would be installed but don't actually install
-    --no-install | -n: suppress installation phase (useful for --create blacklist and --use-installed-packages/--run-tests)
+    --no-install | -n: suppress installation phase (useful for --create blacklist and --use-installed-pkgs/--run-tests)
     --random count: install count packages randomly chosen from the candidate set
     --testdir dir: store test output in dir (defaults to "test").
     --print-ok-installs: print the successfully installed packages
