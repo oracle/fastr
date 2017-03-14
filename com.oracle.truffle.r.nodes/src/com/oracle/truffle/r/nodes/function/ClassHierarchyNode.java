@@ -150,10 +150,11 @@ public abstract class ClassHierarchyNode extends UnaryNode {
         return obj instanceof RTypedValue;
     }
 
-    @Specialization(guards = "!isRTypedValue(object)")
-    protected RStringVector getClassHrActiveBinding(@SuppressWarnings("unused") ActiveBinding object) {
-        // TODO return appropriate class hierarchy
-        return withImplicitTypes ? RIntVector.implicitClassHeader : null;
+    @TruffleBoundary
+    @Specialization
+    protected RStringVector getClassHrActiveBinding(ActiveBinding object) {
+        Object result = RContext.getEngine().evalFunction(object.getFunction(), REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), RDataFactory.createEmptyStringVector());
+        return execute(result);
     }
 
     @Specialization(guards = "!isRTypedValue(object)")

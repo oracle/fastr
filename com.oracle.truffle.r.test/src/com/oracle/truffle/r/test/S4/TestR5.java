@@ -26,38 +26,54 @@ import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 
+// Checkstyle: stop LineLength
+
 public class TestR5 extends TestBase {
 
     @Test
     public void testAllocation() {
-        assertEval("{ Person <- setRefClass('Person'); Person$new() }");
-        assertEval("{ fooClass <- setRefClass('Foo', fields = list( a = 'numeric')); fooClass$new(a = 1) }");
-        assertEval(Ignored.ImplementationError, "{ fooClass <- setRefClass('Foo', fields = list( a = 'numeric')); fooClass$new(1) }");
+        assertEval("{ DummyClass0 <- setRefClass('DummyClass0'); DummyClass0$new() }");
+        assertEval("{ DummyClass1 <- setRefClass('DummyClass1'); is(DummyClass1, 'refClass') }");
+        assertEval("{ DummyClass2 <- setRefClass('DummyClass2'); obj <- DummyClass2$new(); is(obj, 'refObject') }");
+        assertEval("{ fooClass <- setRefClass('Foo6R5', fields = list( a = 'numeric')); fooClass$new(a = 1) }");
+        assertEval(Ignored.ImplementationError, "{ fooClass <- setRefClass('Foo7R5', fields = list( a = 'numeric')); fooClass$new(1) }");
     }
 
     @Test
     public void testAttributes() {
-        assertEval("{ Person <- setRefClass('Person'); Person$methods() }");
+        assertEval("{ clazz <- setRefClass('Foo13R5'); clazz$methods() }");
     }
 
     @Test
     public void testReferenceSemantics() {
-        assertEval("fooClass <- setRefClass('Foo', fields = list( a = 'numeric')); obj0 <- fooClass$new(a = 1); obj1 <- obj0; obj0$a; obj1$a; obj0$a <- 999; obj0$a; obj1$a");
+        assertEval("fooClass <- setRefClass('Foo12R5', fields = list( a = 'numeric')); obj0 <- fooClass$new(a = 1); obj1 <- obj0; obj0$a; obj1$a; obj0$a <- 999; obj0$a; obj1$a");
     }
 
     @Test
     public void testInstanceMethods() {
-        assertEval("{ clazz <- setRefClass('Foo', c('a', 'b')); clazz$methods(mean = function() { (a + b) / 2 }); obj <- clazz$new(a = 1, b = 5); obj$mean() }");
-        assertEval("{ clazz <- setRefClass('Foo', c('a', 'b')); obj <- clazz$new(a = 1, b = 5); cobj <- obj$copy(); obj$a; cobj$a; obj$a <- 10; obj$a; cobj$a}");
-        assertEval("clazz <- setRefClass('Foo', c('a', 'b')); obj <- clazz$new(a = 1, b = 5); obj$field('a'); obj$field('b')");
-        assertEval("clazz <- setRefClass('Foo', c('a', 'b')); obj <- clazz$new(); obj$initFields(a = 5, b = 6)");
-        assertEval(Output.IgnoreErrorContext, "{ clazz <- setRefClass('Foo', c('a', 'b')); clazz$accessors() }");
-        assertEval("{ clazz <- setRefClass('Foo', c('a', 'b')); obj <- clazz$new(a = 1, b = 5); attributes(obj$getRefClass())$className }");
+        assertEval("{ clazz <- setRefClass('Foo0R5', c('a', 'b')); clazz$methods(mean = function() { (a + b) / 2 }); obj <- clazz$new(a = 1, b = 5); obj$mean() }");
+        assertEval("{ clazz <- setRefClass('Foo1R5', c('a', 'b')); obj <- clazz$new(a = 1, b = 5); cobj <- obj$copy(); obj$a; cobj$a; obj$a <- 10; obj$a; cobj$a}");
+        assertEval("clazz <- setRefClass('Foo2R5', c('a', 'b')); obj <- clazz$new(a = 1, b = 5); obj$field('a'); obj$field('b')");
+        assertEval("clazz <- setRefClass('Foo3R5', c('a', 'b')); obj <- clazz$new(); obj$initFields(a = 5, b = 6)");
+        assertEval(Output.IgnoreErrorContext, "{ clazz <- setRefClass('Foo4R5', c('a', 'b')); clazz$accessors() }");
+        assertEval("{ clazz <- setRefClass('Foo5R5', c('a', 'b')); obj <- clazz$new(a = 1, b = 5); attributes(obj$getRefClass())$className }");
+        assertEval("{ clazz <- setRefClass('Foo12R5', fields = list(a = 'numeric'), methods = list(inc = function() { a <<- a+1 })); obj <- clazz$new(a = 0); obj$inc(); obj$a }");
     }
 
     @Test
     public void testCheckedAssign() {
-        assertEval("clazz <- setRefClass('Foo', fields = list(a = 'numeric')); obj <- clazz$new(); obj$a <- 10; obj$a; obj$a <- 'hello'; obj$a");
-        assertEval("clazz <- setRefClass('Foo', fields = list(a = 'character')); obj <- clazz$new(); obj$a <- 'hello'; obj$a; obj$a <- 10; obj$a");
+        assertEval("clazz <- setRefClass('Foo8R5', fields = list(a = 'numeric')); obj <- clazz$new(); bindingIsActive('a', as.environment(obj))");
+        assertEval("clazz <- setRefClass('Foo9R5', fields = list(a = 'numeric')); obj <- clazz$new(); bindingIsActive('a', as.environment(obj)); obj$a <- 123; bindingIsActive('a', as.environment(obj))");
+        assertEval("clazz <- setRefClass('Foo10R5', fields = list(a = 'numeric')); obj <- clazz$new(); obj$a <- 10; obj$a; obj$a <- 'hello'; obj$a");
+        assertEval("clazz <- setRefClass('Foo11R5', fields = list(a = 'character')); obj <- clazz$new(); obj$a <- 'hello'; obj$a; obj$a <- 10; obj$a");
+    }
+
+    @Test
+    public void testInheritance() {
+        assertEval("A0R5 <- setRefClass('A0R5', field = list(a = 'numeric')); B0R5 <- setRefClass('B0R5', contains = 'A0R5'); obj <- B0R5$new(a = 1); obj$a");
+        assertEval("A1R5 <- setRefClass('A1R5', methods = list(foo = function() { print('hello') })); B1R5 <- setRefClass('B1R5', contains = 'A1R5'); obj <- B1R5$new(); obj$foo()");
+        assertEval("A2R5 <- setRefClass('A2R5', methods = list(foo = function() { print('hello') })); B2R5 <- setRefClass('B2R5', methods = list(foo = function() { print('world') }), contains = 'A2R5'); obj <- B2R5$new(); obj$foo()");
+        assertEval(Ignored.ImplementationError,
+                        "A3R5 <- setRefClass('A3R5', methods = list(foo = function() { print('hello') })); B3R5 <- setRefClass('B3R5', methods = list(foo = function() { callSuper(); print('world') }), contains = 'A3R5'); obj <- B3R5$new(); obj$foo()");
     }
 }

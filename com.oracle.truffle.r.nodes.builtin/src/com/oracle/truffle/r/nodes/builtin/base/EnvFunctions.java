@@ -614,9 +614,9 @@ public class EnvFunctions {
                 frameSlotBranchProfile = BranchProfile.create();
             }
 
-            final String name = sym.getName();
-            Object binding = env.get(name);
-            final MaterializedFrame frame = env.getFrame();
+            String name = sym.getName();
+            MaterializedFrame frame = env.getFrame();
+            Object binding = ReadVariableNode.lookupAny(name, frame, true);
             if (binding == null) {
                 if (!env.isLocked()) {
                     FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), name, FrameSlotKind.Object);

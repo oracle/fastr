@@ -34,13 +34,9 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
@@ -121,8 +117,7 @@ public final class LocalReadVariableNode extends Node {
         }
         // special treatment for active binding: call bound function
         if (containsNoActiveBindingAssumption != null && !containsNoActiveBindingAssumption.isValid() && ActiveBinding.isActiveBinding(result)) {
-            ActiveBinding binding = (ActiveBinding) result;
-            result = RContext.getEngine().evalFunction(binding.getFunction(), REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), RDataFactory.createEmptyStringVector());
+            return ((ActiveBinding) result).readValue();
         }
 
         if (forceResult) {

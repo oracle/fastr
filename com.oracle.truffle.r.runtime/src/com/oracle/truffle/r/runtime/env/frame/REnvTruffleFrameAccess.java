@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -70,7 +71,12 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
         if (slot == null) {
             return null;
         } else {
-            return frame.getValue(slot);
+            Object value = frame.getValue(slot);
+            // TODO this could have tremendous performance impact !
+            if (ActiveBinding.isActiveBinding(value)) {
+                return ((ActiveBinding) value).readValue();
+            }
+            return value;
         }
     }
 
@@ -103,7 +109,18 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
                 FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, slot, (double) value, false, null);
                 break;
             case Object:
-                FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, value, false, null);
+                Object object;
+                try {
+                    object = frame.getObject(slot);
+                } catch (FrameSlotTypeException e) {
+                    object = null;
+                }
+
+                if (object != null && ActiveBinding.isActiveBinding(object)) {
+                    ((ActiveBinding) object).writeValue(value);
+                } else {
+                    FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, value, false, null);
+                }
                 break;
             case Illegal:
                 break;

@@ -24,8 +24,12 @@ package com.oracle.truffle.r.runtime.env.frame;
 
 import java.util.Objects;
 
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Represent an active binding of a function. This requires special treatment when reading and
@@ -56,6 +60,14 @@ public class ActiveBinding {
     @Override
     public String toString() {
         return "active binding";
+    }
+
+    public Object writeValue(Object value) {
+        return RContext.getEngine().evalFunction(function, REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), null, value);
+    }
+
+    public Object readValue() {
+        return RContext.getEngine().evalFunction(function, REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), RDataFactory.createEmptyStringVector());
     }
 
 }

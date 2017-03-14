@@ -467,6 +467,9 @@ public final class FrameSlotChangeMonitor {
         @CompilationFinal private StableValue<Object> stableValue;
         private int invalidationCount;
 
+        // TODO @CompilationFinal ?
+        @CompilationFinal private boolean activeBinding;
+
         FrameSlotInfoImpl(boolean isSingletonFrame, boolean isGlobalEnv, Object identifier) {
             if (isSingletonFrame) {
                 stableValue = new StableValue<>(null, identifier.toString());
@@ -506,6 +509,7 @@ public final class FrameSlotChangeMonitor {
             if (stableValue != null && stableValue.getValue() != value) {
                 invalidateStableValue(value, slot);
             }
+            activeBinding = ActiveBinding.isActiveBinding(value);
         }
 
         private void invalidateStableValue(Object value, FrameSlot slot) {
@@ -523,6 +527,10 @@ public final class FrameSlotChangeMonitor {
 
         public StableValue<Object> getStableValue() {
             return stableValue;
+        }
+
+        public boolean isActiveBinding() {
+            return activeBinding;
         }
     }
 
@@ -677,5 +685,9 @@ public final class FrameSlotChangeMonitor {
 
     public static boolean isValidFrameDescriptor(FrameDescriptor frameDesc) {
         return getMetaData(frameDesc) != null;
+    }
+
+    public static boolean isActiveBinding(FrameSlot slot) {
+        return ((FrameSlotInfoImpl) slot.getInfo()).isActiveBinding();
     }
 }

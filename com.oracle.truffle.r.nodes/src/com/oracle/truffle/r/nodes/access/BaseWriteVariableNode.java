@@ -32,11 +32,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RShareable;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -162,7 +159,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
 
     /**
      * Handles an assignment to an active binding.
-     * 
+     *
      * @param execFrame The frame to be used for executing the function associated with the symbol.
      * @param lookupFrame The frame to lookup the symbol (must not be {@code null}).
      * @param value The value to set.
@@ -178,8 +175,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
         }
 
         if (object != null && ActiveBinding.isActiveBinding(object)) {
-            ActiveBinding binding = (ActiveBinding) object;
-            return RContext.getEngine().evalFunction(binding.getFunction(), REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), null, value);
+            return ((ActiveBinding) object).writeValue(value);
         } else {
             FrameSlotChangeMonitor.setObjectAndInvalidate(lookupFrame, frameSlot, value, false, invalidateProfile);
         }

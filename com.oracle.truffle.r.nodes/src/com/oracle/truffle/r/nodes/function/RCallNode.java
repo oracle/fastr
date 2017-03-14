@@ -418,6 +418,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createBinaryProfile()") ConditionProfile resultIsBuiltinProfile,
                     @Cached("createBinaryProfile()") ConditionProfile summaryGroupNaRmProfile,
                     @Cached("createBinaryProfile()") ConditionProfile summaryGroupProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile isAttributableProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile isS4Profile,
                     @Cached("createPromiseHelper()") PromiseCheckHelperNode promiseHelperNode,
                     @Cached("createUninitializedExplicitCall()") FunctionDispatch call,
                     @Cached("create()") GetBaseEnvFrameNode getBaseEnvFrameNode) {
@@ -437,7 +439,20 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             typeXIdx = 1;
         }
 
-        RStringVector typeX = classHierarchyNodeX.execute(promiseHelperNode.checkEvaluate(frame, args[typeXIdx]));
+        Object dispatchObject = promiseHelperNode.checkEvaluate(frame, args[typeXIdx]);
+
+        if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
+            RList list = (RList) promiseHelperNode.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
+            int index = list.getElementIndexByName(builtin.getName());
+            if (index != -1) {
+                RFunction basicFun = (RFunction) list.getDataAt(index);
+                Object result = call.execute(frame, basicFun, new RArgsValuesAndNames(args, argsSignature), null, null);
+                if (result != RRuntime.DEFERRED_DEFAULT_MARKER) {
+                    return result;
+                }
+            }
+        }
+        RStringVector typeX = classHierarchyNodeX.execute(dispatchObject);
         Result resultX = null;
         if (implicitTypeProfileX.profile(typeX != null)) {
             resultX = dispatchLookupX.execute(frame, builtin.getName(), typeX, dispatch.getGroupGenericName(), frame.materialize(), getBaseEnvFrameNode.execute());
