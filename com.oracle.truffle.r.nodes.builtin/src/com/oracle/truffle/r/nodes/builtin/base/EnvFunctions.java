@@ -67,6 +67,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -417,7 +418,13 @@ public class EnvFunctions {
             RRootNode root = (RRootNode) fun.getTarget().getRootNode();
             RootCallTarget target = root.duplicateWithNewFrameDescriptor();
             FrameSlotChangeMonitor.initializeEnclosingFrame(target.getRootNode().getFrameDescriptor(), enclosingFrame);
-            return RDataFactory.createFunction(fun.getName(), fun.getPackageName(), target, null, enclosingFrame);
+
+            RFunction newFunction = RDataFactory.createFunction(fun.getName(), fun.getPackageName(), target, null, enclosingFrame);
+            if (fun.getAttributes() != null) {
+                newFunction.initAttributes(RAttributesLayout.copy(fun.getAttributes()));
+            }
+            newFunction.setTypedValueInfo(fun.getTypedValueInfo());
+            return newFunction;
         }
 
         @Specialization
