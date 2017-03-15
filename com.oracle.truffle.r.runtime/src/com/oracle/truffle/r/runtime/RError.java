@@ -74,6 +74,11 @@ public final class RError extends RuntimeException {
         private ErrorContext() {
             // private constructor
         }
+
+        @Override
+        protected RBaseNode getErrorContext() {
+            return this;
+        }
     }
 
     private static final class ErrorContextImpl extends ErrorContext {
