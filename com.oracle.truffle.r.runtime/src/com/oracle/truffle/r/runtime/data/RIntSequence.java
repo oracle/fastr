@@ -85,7 +85,7 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
 
     private RIntVector populateVectorData(int[] result) {
         int current = start;
-        for (int i = 0; i < getLength(); i++) {
+        for (int i = 0; i < result.length && i < getLength(); i++) {
             result[i] = current;
             current += stride;
         }

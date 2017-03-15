@@ -90,7 +90,7 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
 
     private RDoubleVector populateVectorData(double[] result) {
         double current = start;
-        for (int i = 0; i < getLength(); i++) {
+        for (int i = 0; i < result.length && i < getLength(); i++) {
             result[i] = current;
             current += stride;
         }
