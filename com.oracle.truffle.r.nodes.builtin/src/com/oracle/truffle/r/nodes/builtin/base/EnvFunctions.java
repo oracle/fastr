@@ -767,6 +767,11 @@ public class EnvFunctions {
             return env;
         }
 
+        @Specialization
+        Object copy(RS4Object o) {
+            return o.copy();
+        }
+
         @Fallback
         Object copy(@SuppressWarnings("unused") Object o) {
             throw RInternalError.unimplemented("copying of object in the environment not supported");
