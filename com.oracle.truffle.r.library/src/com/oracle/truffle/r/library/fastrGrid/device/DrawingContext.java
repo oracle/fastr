@@ -35,6 +35,12 @@ public interface DrawingContext {
     String getColor();
 
     /**
+     * Alows to set the color. The parameter may also be a synonym defined in
+     * {@link com.oracle.truffle.r.library.fastrGrid.ColorNames}.
+     */
+    void setColor(String hexCode);
+
+    /**
      * Gets the font size in points.
      *
      * @see #INCH_TO_POINTS_FACTOR
@@ -45,4 +51,16 @@ public interface DrawingContext {
      * Gets the height of a line in multiplies of the base line height.
      */
     double getLineHeight();
+
+    /**
+     * @return Hexadecimal string of the color with leading '#', e.g. '#FFA8B2'. Never returns a
+     *         synonym.
+     */
+    String getFillColor();
+
+    /**
+     * Alows to set the fill color. The parameter may also be a synonym defined in
+     * {@link com.oracle.truffle.r.library.fastrGrid.ColorNames}.
+     */
+    void setFillColor(String hexCode);
 }

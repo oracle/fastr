@@ -34,6 +34,7 @@ import com.oracle.truffle.r.library.fastrGrid.LInitGrid;
 import com.oracle.truffle.r.library.fastrGrid.LInitViewPortStack;
 import com.oracle.truffle.r.library.fastrGrid.LLines;
 import com.oracle.truffle.r.library.fastrGrid.LNewPage;
+import com.oracle.truffle.r.library.fastrGrid.LPoints;
 import com.oracle.truffle.r.library.fastrGrid.LRect;
 import com.oracle.truffle.r.library.fastrGrid.LSegments;
 import com.oracle.truffle.r.library.fastrGrid.LText;
@@ -709,6 +710,8 @@ public class CallAndExternalFunctions {
                     return LSegments.create();
                 case "L_circle":
                     return LCircle.create();
+                case "L_points":
+                    return LPoints.create();
 
                 // Simple grid state access
                 case "L_getGPar":

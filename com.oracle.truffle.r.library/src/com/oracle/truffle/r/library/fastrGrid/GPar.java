@@ -11,6 +11,8 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asDouble;
+
 import java.util.Arrays;
 
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
@@ -97,6 +99,10 @@ public final class GPar {
         return RDataFactory.createList(data, NAMES_VECTOR);
     }
 
+    public static double getCex(RList gpar) {
+        return asDouble(gpar.getDataAt(GP_CEX));
+    }
+
     public static DrawingContext asDrawingContext(RList gpar) {
         return new GParDrawingContext(gpar);
     }
@@ -114,22 +120,40 @@ public final class GPar {
 
         @Override
         public String getColor() {
-            String result = RRuntime.asString(data[GP_COL]);
+            return getHexColor(GP_COL);
+        }
+
+        @Override
+        public void setColor(String hexCode) {
+            data[GP_COL] = hexCode;
+        }
+
+        @Override
+        public double getFontSize() {
+            return asDouble(data[GP_FONTSIZE]) * asDouble(data[GP_CEX]);
+        }
+
+        @Override
+        public double getLineHeight() {
+            return asDouble(data[GP_LINEHEIGHT]);
+        }
+
+        @Override
+        public String getFillColor() {
+            return getHexColor(GP_FILL);
+        }
+
+        @Override
+        public void setFillColor(String hexCode) {
+            data[GP_FILL] = hexCode;
+        }
+
+        private String getHexColor(int index) {
+            String result = RRuntime.asString(data[index]);
             if (!result.startsWith("#")) {
                 result = ColorNames.findByName(result);
             }
             return result == null ? "#FFFFFF" : result;
         }
-
-        @Override
-        public double getFontSize() {
-            return GridUtils.asDouble(data[GP_FONTSIZE]) * GridUtils.asDouble(data[GP_CEX]);
-        }
-
-        @Override
-        public double getLineHeight() {
-            return GridUtils.asDouble(data[GP_LINEHEIGHT]);
-        }
-
     }
 }

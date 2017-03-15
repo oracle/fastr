@@ -19,8 +19,7 @@ import com.oracle.truffle.r.library.fastrGrid.Unit.UnitLengthNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -116,7 +115,7 @@ final class GridUtils {
 
     static RAbstractIntVector asIntVector(Object value) {
         if (value instanceof Integer) {
-            return RInteger.valueOf((Integer) value);
+            return RDataFactory.createIntVectorFromScalar((Integer) value);
         } else if (value instanceof RAbstractIntVector) {
             return (RAbstractIntVector) value;
         }
@@ -125,7 +124,7 @@ final class GridUtils {
 
     public static RAbstractDoubleVector asDoubleVector(Object obj) {
         if (obj instanceof Double) {
-            return RDouble.valueOf((Double) obj);
+            return RDataFactory.createDoubleVectorFromScalar((Double) obj);
         } else if (obj instanceof RAbstractDoubleVector) {
             return (RAbstractDoubleVector) obj;
         }
@@ -134,9 +133,9 @@ final class GridUtils {
 
     static RAbstractContainer asAbstractContainer(Object value) {
         if (value instanceof Integer) {
-            return RInteger.valueOf((Integer) value);
+            return RDataFactory.createIntVectorFromScalar((Integer) value);
         } else if (value instanceof Double) {
-            return RDouble.valueOf((Double) value);
+            return RDataFactory.createDoubleVectorFromScalar((Double) value);
         } else if (value instanceof RAbstractContainer) {
             return (RAbstractContainer) value;
         }
