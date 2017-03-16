@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,9 @@ public class TestR5 extends TestBase {
         assertEval("{ DummyClass1 <- setRefClass('DummyClass1'); is(DummyClass1, 'refClass') }");
         assertEval("{ DummyClass2 <- setRefClass('DummyClass2'); obj <- DummyClass2$new(); is(obj, 'refObject') }");
         assertEval("{ fooClass <- setRefClass('Foo6R5', fields = list( a = 'numeric')); fooClass$new(a = 1) }");
-        assertEval(Ignored.ImplementationError, "{ fooClass <- setRefClass('Foo7R5', fields = list( a = 'numeric')); fooClass$new(1) }");
+        assertEval("{ fooClass <- setRefClass('Foo7R5', fields = list( a = 'numeric')); fooClass$new(1) }");
+        assertEval("{ setRefClass('Foo16R5'); ls(topenv(parent.frame()), all.names = T) }");
+        assertEval("env0 <- new.env(); setRefClass('Foo17R5', where = env0); ls(topenv(parent.frame()), all.names = T); ls(env0, all.names = T)");
     }
 
     @Test
@@ -58,6 +60,15 @@ public class TestR5 extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ clazz <- setRefClass('Foo4R5', c('a', 'b')); clazz$accessors() }");
         assertEval("{ clazz <- setRefClass('Foo5R5', c('a', 'b')); obj <- clazz$new(a = 1, b = 5); attributes(obj$getRefClass())$className }");
         assertEval("{ clazz <- setRefClass('Foo12R5', fields = list(a = 'numeric'), methods = list(inc = function() { a <<- a+1 })); obj <- clazz$new(a = 0); obj$inc(); obj$a }");
+        assertEval("{ clazz <- setRefClass('Foo13R5'); obj <- clazz$new(); obj$inexistingMethod() }");
+        assertEval("{ clazz <- setRefClass('Foo28R5', fields = list(a = 'numeric'), methods = list(inc = function() { a <<- a+1 })); obj <- clazz$new(a = 0); obj$inc(); obj$a }");
+
+        // constructor
+        assertEval("{ clazz <- setRefClass('Foo15R5', fields = c('a'), methods = list(initialize = function() { a <<- 123 })); obj <- clazz$new(); obj$a }");
+        assertEval("{ setRefClass('A6R5', fields = c('a'), methods = list(initialize = function() { a <<- 'hello' })); clazz <- setRefClass('B6R5', fields = c('a'), contains = 'A6R5'); obj <- clazz$new(); obj$a }");
+
+        assertEval(Ignored.Unknown,
+                        "{ clazz <- setRefClass('Foo18R5', fields = c('a'), methods = list(initialize = function() a <<- 456, finalize = function() { print(sprintf('finalizer: %d', a)) } )); (function () { x <- clazz$new(); print('fun') })(); gc() }");
     }
 
     @Test
@@ -69,11 +80,37 @@ public class TestR5 extends TestBase {
     }
 
     @Test
+    public void testFieldAccess() {
+        assertEval("{ clazz <- setRefClass('Foo14R5'); obj <- clazz$new(); obj$inexistingMethod() }");
+        assertEval("{ clazz <- setRefClass('Foo14R5', fields = c('a')); obj <- clazz$new(); obj$a }");
+        assertEval("{ clazz <- setRefClass('Foo14R5', fields = c('a')); obj <- clazz$new(a = 1); print(obj$a); obj$a <- 'hello'; print(obj$a) }");
+
+        // list/modify methods
+        assertEval("{ clazz <- setRefClass('Foo19R5'); clazz$methods('inexistingMethod') }");
+        assertEval(Output.IgnoreWhitespace, "{ clazz <- setRefClass('Foo20R5', methods = list(foo = function() NULL)); clazz$methods('foo') }");
+        assertEval("clazz <- setRefClass('Foo21R5', methods = list(foo = function() NULL)); clazz$new()$foo(); clazz$methods(foo = function(x) x); clazz$new()$foo(3)");
+
+        // list available fields
+        assertEval("{ clazz <- setRefClass('Foo22R5'); clazz$fields() }");
+        assertEval("{ clazz <- setRefClass('Foo23R5', fields = c('a', 'b', 'c')); clazz$fields() }");
+        assertEval("{ clazz <- setRefClass('Foo24R5', fields = list(a = 'numeric')); clazz$fields() }");
+        assertEval("{ clazz <- setRefClass('Foo25R5', fields = list(a = 'numeric', b = 'character', c = 'raw')); clazz$fields() }");
+
+        // make field read-only; one assignment is allowed
+        assertEval("{ clazz <- setRefClass('Foo26R5', fields = list(a = 'numeric')); clazz$lock('a'); obj <- clazz$new(); obj$a <- 10; obj$a }");
+        assertEval("{ clazz <- setRefClass('Foo27R5', fields = list(a = 'numeric')); clazz$lock('a'); obj <- clazz$new(); obj$a <- 10; obj$a <- 20 }");
+
+        // generate getter and setter
+        assertEval(Ignored.ReferenceError, "{ clazz <- setRefClass('Foo28R5', fields = list(a = 'numeric', b = 'character')); clazz$accessors(); clazz$methods() }");
+    }
+
+    @Test
     public void testInheritance() {
         assertEval("A0R5 <- setRefClass('A0R5', field = list(a = 'numeric')); B0R5 <- setRefClass('B0R5', contains = 'A0R5'); obj <- B0R5$new(a = 1); obj$a");
         assertEval("A1R5 <- setRefClass('A1R5', methods = list(foo = function() { print('hello') })); B1R5 <- setRefClass('B1R5', contains = 'A1R5'); obj <- B1R5$new(); obj$foo()");
         assertEval("A2R5 <- setRefClass('A2R5', methods = list(foo = function() { print('hello') })); B2R5 <- setRefClass('B2R5', methods = list(foo = function() { print('world') }), contains = 'A2R5'); obj <- B2R5$new(); obj$foo()");
         assertEval("A3R5 <- setRefClass('A3R5', methods = list(foo = function() { print('hello') })); B3R5 <- setRefClass('B3R5', methods = list(foo = function() { callSuper(); print('world') }), contains = 'A3R5'); obj <- B3R5$new(); obj$foo()");
         assertEval("{ setRefClass('A4R5', fields = c('a')); setRefClass('B4R5', contains = 'A4R5', methods = list(set_a = function(a){ a <<- a })) }");
+        assertEval("A5R5 <- setRefClass('A5R5', field = c('a'), methods = list(initialize <- function() { a <<- 0 })); B5R5 <- setRefClass('B5R5', field = c('a'), methods = list(initialize <- function() { a <<- 'hello' })); C5R5 <- setRefClass('C5R5', contains = c('A5R5', 'B5R5')); obj <- C5R5$new(); obj$a <- raw(0)");
     }
 }
