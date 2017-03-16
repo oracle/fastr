@@ -25,12 +25,16 @@ package com.oracle.truffle.r.library.fastrGrid.device;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Paint;
 import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.util.function.Supplier;
+
+import javax.swing.UIManager;
 
 import com.oracle.truffle.r.library.graphics.FastRFrame;
 
@@ -66,7 +70,7 @@ public class JFrameDevice implements GridDevice {
     @Override
     public void drawRect(DrawingContext ctx, double leftX, double topY, double heigh, double width) {
         setContext(ctx);
-        graphics.draw(new Rectangle2D.Double(leftX, topY, heigh, width));
+        drawShape(ctx, new Rectangle2D.Double(leftX, topY, heigh, width));
     }
 
     @Override
@@ -85,7 +89,7 @@ public class JFrameDevice implements GridDevice {
     @Override
     public void drawCircle(DrawingContext ctx, double centerX, double centerY, double radius) {
         setContext(ctx);
-        graphics.draw(new Ellipse2D.Double(centerX - radius, centerY - radius, radius * 2d, radius * 2d));
+        drawShape(ctx, new Ellipse2D.Double(centerX - radius, centerY - radius, radius * 2d, radius * 2d));
     }
 
     @Override
@@ -127,9 +131,25 @@ public class JFrameDevice implements GridDevice {
         });
     }
 
+    @Override
+    public void initDrawingContext(DrawingContext ctx) {
+        Color color = UIManager.getColor("Panel.background");
+        if (color != null) {
+            ctx.setFillColor(toGridColor(color));
+        }
+    }
+
+    private void drawShape(DrawingContext drawingCtx, Shape shape) {
+        Paint paint = graphics.getPaint();
+        graphics.setPaint(fromGridColor(drawingCtx.getFillColor()));
+        graphics.fill(shape);
+        graphics.setPaint(paint);
+        graphics.draw(shape);
+    }
+
     private void setContext(DrawingContext ctx) {
         graphics.setFont(graphics.getFont().deriveFont((float) ctx.getFontSize()));
-        graphics.setColor(Color.decode(ctx.getColor()));
+        graphics.setColor(fromGridColor(ctx.getColor()));
     }
 
     private <T> T noTranform(Supplier<T> action) {
@@ -138,5 +158,13 @@ public class JFrameDevice implements GridDevice {
         T result = action.get();
         graphics.setTransform(transform);
         return result;
+    }
+
+    private static Color fromGridColor(GridColor color) {
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+    }
+
+    private static GridColor toGridColor(Color color) {
+        return new GridColor(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
     }
 }

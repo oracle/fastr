@@ -16,6 +16,7 @@ import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asDouble;
 import java.util.Arrays;
 
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
+import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -81,7 +82,7 @@ public final class GPar {
     public static RList createNew() {
         Object[] data = new Object[GP_LENGTH];
         Arrays.fill(data, RNull.instance);
-        data[GP_FILL] = "black";
+        data[GP_FILL] = "grey";
         data[GP_COL] = "black";
         data[GP_GAMMA] = newDoubleVec(0);
         data[GP_LTY] = "solid"; // TODO: LineType enum...
@@ -119,13 +120,13 @@ public final class GPar {
         }
 
         @Override
-        public String getColor() {
-            return getHexColor(GP_COL);
+        public GridColor getColor() {
+            return getGridColor(GP_COL);
         }
 
         @Override
-        public void setColor(String hexCode) {
-            data[GP_COL] = hexCode;
+        public void setColor(GridColor color) {
+            data[GP_COL] = GridColorUtils.gridColorToRString(color);
         }
 
         @Override
@@ -139,21 +140,17 @@ public final class GPar {
         }
 
         @Override
-        public String getFillColor() {
-            return getHexColor(GP_FILL);
+        public GridColor getFillColor() {
+            return getGridColor(GP_FILL);
         }
 
         @Override
-        public void setFillColor(String hexCode) {
-            data[GP_FILL] = hexCode;
+        public void setFillColor(GridColor color) {
+            data[GP_FILL] = GridColorUtils.gridColorToRString(color);
         }
 
-        private String getHexColor(int index) {
-            String result = RRuntime.asString(data[index]);
-            if (!result.startsWith("#")) {
-                result = ColorNames.findByName(result);
-            }
-            return result == null ? "#FFFFFF" : result;
+        private GridColor getGridColor(int index) {
+            return GridColorUtils.gridColorFromString(RRuntime.asString(data[index]));
         }
     }
 }

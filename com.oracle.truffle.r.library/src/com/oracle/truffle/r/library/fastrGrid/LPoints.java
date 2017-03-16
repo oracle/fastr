@@ -21,6 +21,7 @@ import com.oracle.truffle.r.library.fastrGrid.Unit.UnitToInchesNode;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortContext.VPContextFromVPNode;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
+import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -38,7 +39,6 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
     private static final double TRC0 = 1.55512030155621416073; /* sqrt(4 * pi/(3 * sqrt(3))) */
     private static final double TRC1 = 1.34677368708859836060; /* TRC0 * sqrt(3) / 2 */
     private static final double TRC2 = 0.77756015077810708036; /* TRC0 / 2 */
-    private static final String TRANSPARENT = "white";  // TODO: should be actually transparent
 
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
     @Child private VPContextFromVPNode vpContextFromVP = new VPContextFromVPNode();
@@ -112,9 +112,9 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
     private static void drawDot(DrawingContext drawingCtx, GridDevice dev, double cex, double x, double y) {
         // NOTE: we are *filling* a rect with the current colour (we are not drawing the border AND
         // we are not using the current fill colour)
-        String originalFill = drawingCtx.getFillColor();
+        GridColor originalFill = drawingCtx.getFillColor();
         drawingCtx.setFillColor(drawingCtx.getColor());
-        drawingCtx.setColor(TRANSPARENT);
+        drawingCtx.setColor(GridColor.TRANSPARENT);
 
         /*
          * The idea here is to use a 0.01" square, but to be of at least one device unit in each

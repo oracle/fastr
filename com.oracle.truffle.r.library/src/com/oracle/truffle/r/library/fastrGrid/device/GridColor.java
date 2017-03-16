@@ -23,34 +23,36 @@
 package com.oracle.truffle.r.library.fastrGrid.device;
 
 /**
- * Defines parameters for drawing, like color, line style etc.
+ * Simple color representation, so that the device interface does not have to depend on a specific
+ * GUI framework.
  */
-public interface DrawingContext {
-    double INCH_TO_POINTS_FACTOR = 72;
+public class GridColor {
+    public static final int OPAQUE_ALPHA = 0xff;
+    private static final int TRANSPARENT_ALPHA = 0;
+    public static final GridColor TRANSPARENT = new GridColor(0, 0, 0, TRANSPARENT_ALPHA);
 
-    GridColor getColor();
+    private final int value;
 
-    /**
-     * Alows to set the color drawing color of shape borders, lines and text.
-     */
-    void setColor(GridColor color);
+    public GridColor(int red, int green, int blue, int alpha) {
+        value = ((alpha & 0xFF) << 24) |
+                        ((red & 0xFF) << 16) |
+                        ((green & 0xFF) << 8) |
+                        (blue & 0xFF);
+    }
 
-    /**
-     * Gets the font size in points.
-     *
-     * @see #INCH_TO_POINTS_FACTOR
-     */
-    double getFontSize();
+    public int getRed() {
+        return (value >> 16) & 0xFF;
+    }
 
-    /**
-     * Gets the height of a line in multiplies of the base line height.
-     */
-    double getLineHeight();
+    public int getGreen() {
+        return (value >> 8) & 0xFF;
+    }
 
-    GridColor getFillColor();
+    public int getBlue() {
+        return value & 0xFF;
+    }
 
-    /**
-     * Alows to set the fill color of shapes.
-     */
-    void setFillColor(GridColor color);
+    public int getAlpha() {
+        return (value >> 24) & 0xff;
+    }
 }
