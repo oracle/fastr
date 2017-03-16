@@ -414,28 +414,34 @@ get.pkgs <- function() {
 
 	in.installed <- function(x) x["Package"] %in% installed.pkgs
 
-	basic.exclude <- function(x) {
-		in.installed(x) || in.blacklist(x)
+	basic.exclude <- function(x, exclude.installed = T) {
+		in.blacklist(x) || ifelse(exclude.installed, in.installed(x), F)
 	}
 
-	# either pkg.pattern is set or pkg.filelist but not both (checked earlier)
-	# if inverting, alter sense of the basic match but still exclude blacklist/installed
-	if (!is.na(pkg.filelistfile)) {
-		if (invert.pkgset) {
-			match.fun <- function(x) !in.filelist(x) && !basic.exclude(x)
+	set.match.fun <- function(exclude.installed = T) {
+		# either pkg.pattern is set or pkg.filelist but not both (checked earlier)
+		# if inverting, alter sense of the basic match but still exclude blacklist/installed
+		if (!is.na(pkg.filelistfile)) {
+			if (invert.pkgset) {
+				match.fun <- function(x) !in.filelist(x) && !basic.exclude(x, exclude.installed)
+			} else {
+				match.fun <- function(x) in.filelist(x) && !basic.exclude(x, exclude.installed)
+			}
 		} else {
-		    match.fun <- function(x) in.filelist(x) && !basic.exclude(x)
-	    }
-	} else {
-		if (invert.pkgset) {
-			match.fun <- function(x) !in.pattern(x) && !basic.exclude(x)
-		} else {
-		    match.fun <- function(x) in.pattern(x) && !basic.exclude(x)
+			if (invert.pkgset) {
+				match.fun <- function(x) !in.pattern(x) && !basic.exclude(x, exclude.installed)
+			} else {
+				match.fun <- function(x) in.pattern(x) && !basic.exclude(x, exclude.installed)
+			}
 		}
 	}
+
+	match.fun <- set.match.fun()
+
 	matched.avail.pkgs <- apply(avail.pkgs, 1, match.fun)
-	toinstall.pkgs <<-avail.pkgs[matched.avail.pkgs, , drop=F]
-	if (length(toinstall.pkgs) == 0) {
+	toinstall.pkgs <<- avail.pkgs[matched.avail.pkgs, , drop=F]
+
+	if (length(toinstall.pkgs) == 0 && !use.installed.pkgs) {
 		print("Fatal error: requested package(s) found in repo(s)")
 		quit(save="no", status=100)
 
@@ -450,15 +456,22 @@ get.pkgs <- function() {
 			test.pkgnames[[i]] <- test.avail.pkgnames[[rands[[i]]]]
 		}
 	} else {
-		test.pkgnames <- rownames(toinstall.pkgs)
-		if (!is.na(count.daily)) {
-			# extract count from index given by yday
-			npkgs <- length(test.pkgnames)
-			yday <- as.POSIXlt(Sys.Date())$yday
-			chunk <- as.integer(npkgs / count.daily)
-			start <- (yday %% chunk) * count.daily
-			end <- ifelse(start + count.daily > npkgs, npkgs, start + count.daily - 1)
-			test.pkgnames <- test.pkgnames[start:end]
+		if (length(toinstall.pkgs) == 0) {
+			# use.installed.pkgs == TRUE (see above)
+			match.fun <- set.match.fun(F)
+			matched.avail.pkgs <- apply(avail.pkgs, 1, match.fun)
+			test.pkgnames <- rownames(avail.pkgs[matched.avail.pkgs, , drop=F])
+		} else {
+			test.pkgnames <- rownames(toinstall.pkgs)
+			if (!is.na(count.daily)) {
+				# extract count from index given by yday
+				npkgs <- length(test.pkgnames)
+				yday <- as.POSIXlt(Sys.Date())$yday
+				chunk <- as.integer(npkgs / count.daily)
+				start <- (yday %% chunk) * count.daily
+				end <- ifelse(start + count.daily > npkgs, npkgs, start + count.daily - 1)
+				test.pkgnames <- test.pkgnames[start:end]
+			}
 		}
 	}
 
@@ -879,6 +892,9 @@ parse.args <- function() {
 	}
 	if (is.na(pkg.pattern) && is.na(pkg.filelistfile)) {
 	    pkg.pattern <<- "^.*"
+	}
+	if (!install) {
+		use.installed.pkgs <<- T
 	}
 	# list.versions is just that
     if (list.versions) {
