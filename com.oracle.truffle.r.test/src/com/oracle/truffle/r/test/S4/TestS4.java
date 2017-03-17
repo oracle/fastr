@@ -62,9 +62,10 @@ public class TestS4 extends TestRBase {
         assertEval(Output.IgnoreErrorContext, "{ x<-NULL; `@`(x, foo) }");
         assertEval(Output.IgnoreErrorContext, "{ x<-NULL; x@foo }");
         assertEval("{ x<-paste0(\".\", \"Data\"); y<-42; slot(y, x) }");
-        assertEval("{ setClass('Person', representation(name = 'character', age = 'numeric')); getSlots('Person') }");
-        assertEval("{ setClass('Person', representation(name = 'character', age = 'numeric'), prototype(name = NA_character_, age = NA_real_)); hadley <- new('Person', name = 'Hadley'); hadley@age }");
-        assertEval("{ setClass('Person', representation(name = 'character', age = 'numeric')); hadley <- new('Person', name = 'Hadley'); hadley@age }");
+        assertEval("{ setClass('A0', representation(name = 'character', age = 'numeric')); getSlots('A0') }");
+        assertEval("{ setClass('A1', representation(name = 'character', age = 'numeric'), prototype(name = NA_character_, age = NA_real_)); obj <- new('A1', name = 'FastR'); obj@age }");
+        assertEval("{ setClass('A2', representation(name = 'character', age = 'numeric')); obj <- new('A2', name = 'FastR'); obj@age }");
+        assertEval("{ setClass('A3', representation(name = 'character', age = 'numeric')); obj <- new('A3', name = 'FastR'); slot(obj, 'age') <- 5; obj@age }");
     }
 
     @Test
