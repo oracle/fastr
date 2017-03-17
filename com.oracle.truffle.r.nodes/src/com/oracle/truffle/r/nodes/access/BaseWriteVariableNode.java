@@ -167,14 +167,14 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
      * @param invalidateProfile The invalidation profile.
      */
     protected static Object handleActiveBinding(VirtualFrame execFrame, Frame lookupFrame, Object value, FrameSlot frameSlot, BranchProfile invalidateProfile) {
-        Object object;
-        try {
-            object = lookupFrame.getObject(frameSlot);
-        } catch (FrameSlotTypeException e) {
-            object = null;
-        }
-
-        if (object != null && ActiveBinding.isActiveBinding(object)) {
+        Object object = null;
+        if (FrameSlotChangeMonitor.isActiveBinding(frameSlot)) {
+            try {
+                object = lookupFrame.getObject(frameSlot);
+            } catch (FrameSlotTypeException e) {
+                // ignore
+            }
+            assert object != null && ActiveBinding.isActiveBinding(object);
             return ((ActiveBinding) object).writeValue(value);
         } else {
             FrameSlotChangeMonitor.setObjectAndInvalidate(lookupFrame, frameSlot, value, false, invalidateProfile);

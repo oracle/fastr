@@ -28,7 +28,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -55,6 +58,8 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
      */
     private Set<String> lockedBindings;
 
+    @CompilationFinal private Assumption containsNoActiveBindingAssumption;
+
     public REnvTruffleFrameAccess(MaterializedFrame frame) {
         this.frame = frame;
     }
@@ -71,9 +76,14 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
         if (slot == null) {
             return null;
         } else {
+
             Object value = frame.getValue(slot);
-            // TODO this could have tremendous performance impact !
-            if (ActiveBinding.isActiveBinding(value)) {
+            if (containsNoActiveBindingAssumption == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                containsNoActiveBindingAssumption = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(fd);
+            }
+            // special treatment for active binding: call bound function
+            if (containsNoActiveBindingAssumption != null && !containsNoActiveBindingAssumption.isValid() && ActiveBinding.isActiveBinding(value)) {
                 return ((ActiveBinding) value).readValue();
             }
             return value;
@@ -109,14 +119,14 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
                 FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, slot, (double) value, false, null);
                 break;
             case Object:
-                Object object;
-                try {
-                    object = frame.getObject(slot);
-                } catch (FrameSlotTypeException e) {
-                    object = null;
-                }
-
-                if (object != null && ActiveBinding.isActiveBinding(object)) {
+                if (FrameSlotChangeMonitor.isActiveBinding(slot)) {
+                    Object object;
+                    try {
+                        object = frame.getObject(slot);
+                    } catch (FrameSlotTypeException e) {
+                        object = null;
+                    }
+                    assert (object != null && ActiveBinding.isActiveBinding(object));
                     ((ActiveBinding) object).writeValue(value);
                 } else {
                     FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, value, false, null);
