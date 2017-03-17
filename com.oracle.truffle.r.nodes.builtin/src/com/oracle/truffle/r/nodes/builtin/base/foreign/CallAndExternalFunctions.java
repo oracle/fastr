@@ -35,6 +35,7 @@ import com.oracle.truffle.r.library.fastrGrid.LInitViewPortStack;
 import com.oracle.truffle.r.library.fastrGrid.LLines;
 import com.oracle.truffle.r.library.fastrGrid.LNewPage;
 import com.oracle.truffle.r.library.fastrGrid.LPoints;
+import com.oracle.truffle.r.library.fastrGrid.LPolygon;
 import com.oracle.truffle.r.library.fastrGrid.LRect;
 import com.oracle.truffle.r.library.fastrGrid.LSegments;
 import com.oracle.truffle.r.library.fastrGrid.LText;
@@ -702,6 +703,8 @@ public class CallAndExternalFunctions {
                     return LRect.create();
                 case "L_lines":
                     return LLines.create();
+                case "L_polygon":
+                    return LPolygon.create();
                 case "L_text":
                     return LText.create();
                 case "L_textBounds":

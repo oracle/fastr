@@ -68,7 +68,7 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
         double cex = GPar.getCex(gpar);
         ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP);
         ViewPortContext vpContext = vpContextFromVP.execute(currentVP);
-        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, drawingCtx);
+        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, drawingCtx);
 
         // Note: unlike in other drawing primitives, we only consider length of x
         int length = unitLength.execute(xVec);

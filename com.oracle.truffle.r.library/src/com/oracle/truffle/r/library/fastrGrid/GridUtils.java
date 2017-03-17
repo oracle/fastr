@@ -21,6 +21,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -87,6 +88,16 @@ final class GridUtils {
             }
         }
         return false;
+    }
+
+    static RList asListOrNull(Object value) {
+        if (value == null || value == RNull.instance) {
+            return null;
+        }
+        if (!(value instanceof RList)) {
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, "Expected list");
+        }
+        return (RList) value;
     }
 
     static RList asList(Object value) {

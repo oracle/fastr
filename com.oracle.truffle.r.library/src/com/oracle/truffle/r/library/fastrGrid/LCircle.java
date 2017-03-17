@@ -51,7 +51,7 @@ public abstract class LCircle extends RExternalBuiltinNode.Arg3 {
         DrawingContext drawingCtx = GPar.asDrawingContext(ctx.getGridState().getGpar());
         ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP);
         ViewPortContext vpContext = vpContextFromVP.execute(currentVP);
-        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, drawingCtx);
+        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, drawingCtx);
 
         int length = GridUtils.maxLength(unitLength, xVec, yVec, radiusVec);
         for (int i = 0; i < length; i++) {

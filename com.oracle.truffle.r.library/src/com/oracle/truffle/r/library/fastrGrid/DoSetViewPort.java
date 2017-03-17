@@ -107,7 +107,7 @@ class DoSetViewPort extends RBaseNode {
             }
         }
 
-        UnitConversionContext conversionCtx = new UnitConversionContext(parentSize, parentContext, drawingContext);
+        UnitConversionContext conversionCtx = new UnitConversionContext(parentSize, parentContext, device, drawingContext);
         double xInches = unitsToInches.convertX(vpl.x, 0, conversionCtx);
         double yInches = unitsToInches.convertY(vpl.y, 0, conversionCtx);
         double width = unitsToInches.convertWidth(vpl.width, 0, conversionCtx);
@@ -141,7 +141,7 @@ class DoSetViewPort extends RBaseNode {
         if (!isNull(viewPort.getDataAt(ViewPort.VP_LAYOUT))) {
             ViewPortContext vpCtx = vpContextFromVP.execute(viewPort);
             DrawingContext drawingCtx = GPar.asDrawingContext(asList(viewPort.getDataAt(ViewPort.PVP_GPAR)));
-            calcViewPortLayout(viewPort, new Size(width, height), vpCtx, drawingCtx);
+            calcViewPortLayout(viewPort, new Size(width, height), vpCtx, device, drawingCtx);
         }
 
         Object[] viewPortData = viewPort.getDataWithoutCopying();
@@ -151,13 +151,13 @@ class DoSetViewPort extends RBaseNode {
         viewPortData[ViewPort.PVP_TRANS] = RDataFactory.createDoubleVector(flatten(transform), RDataFactory.COMPLETE_VECTOR, new int[]{3, 3});
     }
 
-    private void calcViewPortLayout(RList viewPort, Size size, ViewPortContext parentVPCtx, DrawingContext drawingCtx) {
+    private void calcViewPortLayout(RList viewPort, Size size, ViewPortContext parentVPCtx, GridDevice device, DrawingContext drawingCtx) {
         LayoutSize layoutSize = LayoutSize.fromViewPort(viewPort);
         double[] npcWidths = new double[layoutSize.ncol];
         double[] npcHeights = new double[layoutSize.nrow];
         boolean[] relativeWidths = new boolean[layoutSize.ncol];
         boolean[] relativeHeights = new boolean[layoutSize.nrow];
-        UnitConversionContext conversionCtx = new UnitConversionContext(size, parentVPCtx, drawingCtx);
+        UnitConversionContext conversionCtx = new UnitConversionContext(size, parentVPCtx, device, drawingCtx);
 
         // For both dimensions we find out which units are other than "null" for those we can
         // immediately calculate the physical size in npcWidth/npcHeights. The reducedWidth/Height
@@ -178,8 +178,8 @@ class DoSetViewPort extends RBaseNode {
         int respect = RRuntime.asInteger(layoutAsList.getDataAt(ViewPort.LAYOUT_VRESPECT));
         int[] layoutRespectMat = ((RAbstractIntVector) layoutAsList.getDataAt(ViewPort.LAYOUT_MRESPECT)).materialize().getDataWithoutCopying();
         if ((reducedHeight > 0 || reducedWidth > 0) && respect > 0) {
-            double sumRelWidth = sumRelativeDimension(layoutSize, layoutWidths, relativeWidths, parentVPCtx, drawingCtx, true);
-            double sumRelHeight = sumRelativeDimension(layoutSize, layoutHeights, relativeHeights, parentVPCtx, drawingCtx, false);
+            double sumRelWidth = sumRelativeDimension(layoutSize, layoutWidths, relativeWidths, parentVPCtx, device, drawingCtx, true);
+            double sumRelHeight = sumRelativeDimension(layoutSize, layoutHeights, relativeHeights, parentVPCtx, device, drawingCtx, false);
             double tempWidth = reducedWidth;
             double tempHeight = reducedHeight;
             double denom;
@@ -233,8 +233,8 @@ class DoSetViewPort extends RBaseNode {
         }
 
         // Secondly, allocate remaining relative widths and heights in the remaining space
-        allocateRelativeDim(layoutSize, layoutWidths, npcWidths, relativeWidths, reducedWidth, respect, layoutRespectMat, drawingCtx, parentVPCtx, true);
-        allocateRelativeDim(layoutSize, layoutHeights, npcHeights, relativeHeights, reducedHeight, respect, layoutRespectMat, drawingCtx, parentVPCtx, false);
+        allocateRelativeDim(layoutSize, layoutWidths, npcWidths, relativeWidths, reducedWidth, respect, layoutRespectMat, device, drawingCtx, parentVPCtx, true);
+        allocateRelativeDim(layoutSize, layoutHeights, npcHeights, relativeHeights, reducedHeight, respect, layoutRespectMat, device, drawingCtx, parentVPCtx, false);
 
         // Create the result
         Object[] vpData = viewPort.getDataWithoutCopying();
@@ -243,8 +243,8 @@ class DoSetViewPort extends RBaseNode {
     }
 
     private void allocateRelativeDim(LayoutSize layoutSize, RAbstractContainer layoutItems, double[] npcItems, boolean[] relativeItems, double reducedDim, int respect, int[] layoutRespectMat,
-                    DrawingContext drawingCtx, ViewPortContext parentVPCtx, boolean isWidth) {
-        UnitConversionContext layoutModeCtx = new UnitConversionContext(new Size(0, 0), parentVPCtx, drawingCtx, 1, 0);
+                    GridDevice device, DrawingContext drawingCtx, ViewPortContext parentVPCtx, boolean isWidth) {
+        UnitConversionContext layoutModeCtx = new UnitConversionContext(new Size(0, 0), parentVPCtx, device, drawingCtx, 1, 0);
         double totalUnrespectedSize = 0;
         if (reducedDim > 0) {
             for (int i = 0; i < layoutSize.ncol; i++) {
@@ -293,8 +293,9 @@ class DoSetViewPort extends RBaseNode {
         return false;
     }
 
-    private double sumRelativeDimension(LayoutSize layoutSize, RAbstractContainer layoutItems, boolean[] relativeItems, ViewPortContext parentVPCtx, DrawingContext drawingCtx, boolean isWidth) {
-        UnitConversionContext layoutModeCtx = new UnitConversionContext(new Size(0, 0), parentVPCtx, drawingCtx, 0, 1);
+    private double sumRelativeDimension(LayoutSize layoutSize, RAbstractContainer layoutItems, boolean[] relativeItems, ViewPortContext parentVPCtx, GridDevice device, DrawingContext drawingCtx,
+                    boolean isWidth) {
+        UnitConversionContext layoutModeCtx = new UnitConversionContext(new Size(0, 0), parentVPCtx, device, drawingCtx, 0, 1);
         double totalWidth = 0;
         for (int i = 0; i < layoutSize.ncol; i++) {
             if (relativeItems[i]) {

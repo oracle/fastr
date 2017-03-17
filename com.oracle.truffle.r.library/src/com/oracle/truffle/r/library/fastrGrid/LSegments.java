@@ -55,7 +55,7 @@ public abstract class LSegments extends RExternalBuiltinNode.Arg5 {
         DrawingContext drawingCtx = GPar.asDrawingContext(ctx.getGridState().getGpar());
         ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP);
         ViewPortContext vpContext = vpContextFromVP.execute(currentVP);
-        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, drawingCtx);
+        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, drawingCtx);
 
         int length = GridUtils.maxLength(unitLength, x0, y0, x1, y1);
         double[] xx = new double[2];

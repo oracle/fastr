@@ -19,6 +19,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVect
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.library.fastrGrid.Unit.AxisOrDimension;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortContext.VPContextFromVPNode;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
@@ -59,7 +60,7 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
         DrawingContext drawingCtx = GPar.asDrawingContext(ctx.getGridState().getGpar());
         ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP);
         ViewPortContext vpContext = vpContextFromVP.execute(currentVP);
-        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, drawingCtx);
+        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, drawingCtx);
 
         int length = unitLength.execute(units);
         double[] result = new double[length];
@@ -69,15 +70,11 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
 
         for (int i = 0; i < length; i++) {
             // scalar values used in current iteration
-            int axisFrom = axisFromVec.getDataAt(i % axisFromVec.getLength());
-            int axisTo = axisToVec.getDataAt(i % axisToVec.getLength());
-            boolean compatibleAxes = axisFrom == axisTo ||
-                            (axisFrom == 0 && axisTo == 2) ||
-                            (axisFrom == 2 && axisTo == 0) ||
-                            (axisFrom == 1 && axisTo == 3) ||
-                            (axisFrom == 3 && axisTo == 1);
-            double vpToSize = isXAxis(axisTo) ? vpTransform.size.getWidth() : vpTransform.size.getHeight();
-            double vpFromSize = isXAxis(axisFrom) ? vpTransform.size.getWidth() : vpTransform.size.getHeight();
+            AxisOrDimension axisFrom = AxisOrDimension.fromInt(axisFromVec.getDataAt(i % axisFromVec.getLength()));
+            AxisOrDimension axisTo = AxisOrDimension.fromInt(axisToVec.getDataAt(i % axisToVec.getLength()));
+            boolean compatibleAxes = axisFrom.isHorizontal() == axisTo.isHorizontal();
+            double vpToSize = axisTo.isHorizontal() ? vpTransform.size.getWidth() : vpTransform.size.getHeight();
+            double vpFromSize = axisFrom.isHorizontal() ? vpTransform.size.getWidth() : vpTransform.size.getHeight();
             int unitTo = unitToVec.getDataAt(i % unitToVec.getLength());
             int fromUnitId = unitIds.getDataAt(i % unitIds.getLength());
 
@@ -94,26 +91,26 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
                 result[i] = transformFromNPC(tranfromToNPC(fromValue, fromUnitId, axisFrom, vpContext), unitTo, axisTo, vpContext);
             } else {
                 double inches = toInches(units, i, axisFrom, conversionCtx);
-                boolean isX = isXAxis(axisTo);
+                boolean isX = axisTo.isHorizontal();
                 double scalemin = isX ? vpContext.xscalemin : vpContext.yscalemin;
                 double scalemax = isX ? vpContext.xscalemax : vpContext.yscalemax;
-                result[i] = Unit.convertFromInches(inches, unitTo, vpToSize, scalemin, scalemax, isDimension(axisTo), drawingCtx);
+                result[i] = Unit.convertFromInches(inches, unitTo, vpToSize, scalemin, scalemax, axisTo.isDimension(), drawingCtx);
             }
         }
 
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
-    private double toInches(RAbstractVector units, int index, int axisFrom, UnitConversionContext conversionCtx) {
+    private double toInches(RAbstractVector units, int index, AxisOrDimension axisFrom, UnitConversionContext conversionCtx) {
         double inches;
-        if (isXAxis(axisFrom)) {
-            if (isDimension(axisFrom)) {
+        if (axisFrom.isHorizontal()) {
+            if (axisFrom.isDimension()) {
                 inches = unitToInches.convertWidth(units, index, conversionCtx);
             } else {
                 inches = unitToInches.convertX(units, index, conversionCtx);
             }
         } else {
-            if (isDimension(axisFrom)) {
+            if (axisFrom.isDimension()) {
                 inches = unitToInches.convertHeight(units, index, conversionCtx);
             } else {
                 inches = unitToInches.convertY(units, index, conversionCtx);
@@ -122,30 +119,30 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
         return inches;
     }
 
-    private static double tranfromToNPC(double value, int fromUnitId, int axisFrom, ViewPortContext vpContext) {
+    private static double tranfromToNPC(double value, int fromUnitId, AxisOrDimension axisFrom, ViewPortContext vpContext) {
         if (fromUnitId == Unit.NPC) {
             return value;
         }
         assert fromUnitId == Unit.NATIVE : "relative conversion should only happen when units are NPC or NATIVE";
-        boolean isX = isXAxis(axisFrom);
+        boolean isX = axisFrom.isHorizontal();
         double min = isX ? vpContext.xscalemin : vpContext.yscalemin;
         double max = isX ? vpContext.xscalemax : vpContext.yscalemax;
-        if (isDimension(axisFrom)) {
+        if (axisFrom.isDimension()) {
             return value / (max - min);
         } else {
             return (value - min) / (max - min);
         }
     }
 
-    private static double transformFromNPC(double value, int unitTo, int axisTo, ViewPortContext vpContext) {
+    private static double transformFromNPC(double value, int unitTo, AxisOrDimension axisTo, ViewPortContext vpContext) {
         if (unitTo == Unit.NPC) {
             return value;
         }
         assert unitTo == Unit.NATIVE : "relative conversion should only happen when units are NPC or NATIVE";
-        boolean isX = isXAxis(axisTo);
+        boolean isX = axisTo.isHorizontal();
         double min = isX ? vpContext.xscalemin : vpContext.yscalemin;
         double max = isX ? vpContext.xscalemax : vpContext.yscalemax;
-        if (isDimension(axisTo)) {
+        if (axisTo.isDimension()) {
             return value * (max - min);
         } else {
             return min + value * (max - min);
@@ -156,14 +153,5 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
     // special NULL unit used only in layouting.
     private static boolean isRelative(int unitId) {
         return unitId == NPC || unitId == NATIVE;
-    }
-
-    // what = 0 means x, 1 means y, 2 means width, 3 means height
-    private static boolean isXAxis(int what) {
-        return what % 2 == 0;
-    }
-
-    private static boolean isDimension(int what) {
-        return what >= 2;
     }
 }

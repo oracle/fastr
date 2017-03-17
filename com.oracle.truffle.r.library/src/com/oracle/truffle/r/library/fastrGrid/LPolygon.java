@@ -30,23 +30,22 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public abstract class LLines extends RExternalBuiltinNode.Arg4 {
-    @Child private GridLinesNode gridLinesNode = GridLinesNode.createLines();
+public abstract class LPolygon extends RExternalBuiltinNode.Arg3 {
+    @Child private GridLinesNode gridLinesNode = GridLinesNode.createPolygon();
 
     static {
-        Casts casts = new Casts(LLines.class);
+        Casts casts = new Casts(LPolygon.class);
         casts.arg(0).mustBe(abstractVectorValue());
         casts.arg(1).mustBe(abstractVectorValue());
         casts.arg(2).mustBe(RList.class);
     }
 
-    public static LLines create() {
-        return LLinesNodeGen.create();
+    public static LPolygon create() {
+        return LPolygonNodeGen.create();
     }
 
     @Specialization
-    Object doLines(RAbstractVector x, RAbstractVector y, RList lengths, @SuppressWarnings("unused") Object arrowIgnored) {
-        // TODO: implement arrows
+    Object doLines(RAbstractVector x, RAbstractVector y, RList lengths) {
         gridLinesNode.execute(x, y, lengths);
         return RNull.instance;
     }

@@ -15,6 +15,7 @@ import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asAbstractContain
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asDouble;
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asIntVector;
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asList;
+import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asListOrNull;
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.fmax;
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.fmin;
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.hasRClass;
@@ -34,6 +35,7 @@ import com.oracle.truffle.r.library.fastrGrid.UnitFactory.UnitToInchesNodeGen;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortContext.VPContextFromVPNode;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
+import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -177,13 +179,14 @@ public class Unit {
         }
     }
 
-    private static double convertToInches(double value, int unitId, double vpSize, double scalemin, double scalemax, int nullLMode, int nullAMode, boolean isDimension, DrawingContext drawingCtx) {
+    private static double convertToInches(double value, int unitId, RList data, UnitConversionContext ctx, AxisOrDimension axisOrDim) {
+        double vpSize = ctx.getViewPortSize(axisOrDim);
         switch (unitId) {
             case INCHES:
                 return value;
             case NATIVE:
-                double tmp = isDimension ? value : (value - scalemin);
-                return (tmp / (scalemax - scalemin)) * vpSize;
+                double tmp = axisOrDim.isDimension() ? value : (value - ctx.getScaleMin(axisOrDim));
+                return (tmp / (ctx.getScaleMax(axisOrDim) - ctx.getScaleMin(axisOrDim))) * vpSize;
             case NPC:
                 return value * vpSize;
             case POINTS:
@@ -194,12 +197,18 @@ public class Unit {
                 return value / (CM_IN_INCH * 10);
             case CHAR:
             case MYCHAR:
-                return (value * drawingCtx.getFontSize()) / INCH_TO_POINTS_FACTOR;
+                return (value * ctx.drawingContext.getFontSize()) / INCH_TO_POINTS_FACTOR;
             case LINES:
             case MYLINES:
-                return (value * drawingCtx.getFontSize() * drawingCtx.getLineHeight()) / INCH_TO_POINTS_FACTOR;
+                return (value * ctx.drawingContext.getFontSize() * ctx.drawingContext.getLineHeight()) / INCH_TO_POINTS_FACTOR;
+            case STRINGWIDTH:
+            case MYSTRINGWIDTH:
+                return ctx.device.getStringWidth(ctx.drawingContext, RRuntime.asString(data.getDataAt(0)));
+            case STRINGHEIGHT:
+            case MYSTRINGHEIGHT:
+                return ctx.device.getStringHeight(ctx.drawingContext, RRuntime.asString(data.getDataAt(0)));
             case NULL:
-                return evaluateNullUnit(value, vpSize, nullLMode, nullAMode);
+                return evaluateNullUnit(value, vpSize, ctx.nullLayoutMode, ctx.nullArithmeticMode);
             default:
                 throw RInternalError.unimplemented("unit type " + unitId + " in convertToInches");
         }
@@ -388,6 +397,33 @@ public class Unit {
     }
 
     /**
+     * Used to discriminate between x axis, y axis, width, and height when doing unit conversions.
+     * The order should be the same as used in e.g. {@code L_convert}, which is 0 means x, 1 means
+     * y, 2 means width, 3 means height.
+     */
+    public enum AxisOrDimension {
+        X,
+        Y,
+        WIDTH,
+        HEIGHT;
+
+        private static final AxisOrDimension[] enumValues = values();
+
+        static AxisOrDimension fromInt(int value) {
+            assert value >= 0 && value < 4;
+            return enumValues[value];
+        }
+
+        public boolean isHorizontal() {
+            return this == X || this == WIDTH;
+        }
+
+        public boolean isDimension() {
+            return this == WIDTH || this == HEIGHT;
+        }
+    }
+
+    /**
      * Wraps the data necessary for converting a unit to another unit. Note: {@code nullLMode} and
      * {@code nullAMode} is only used for converting 'NULL' units and is only explicitly set when
      * calculating layout. When e.g. drawing or calculating bounds, both should have default zero
@@ -397,19 +433,33 @@ public class Unit {
         public final Size viewPortSize;
         public final ViewPortContext viewPortContext;
         public final DrawingContext drawingContext;
+        public final GridDevice device;
         public final int nullLayoutMode;
         public final int nullArithmeticMode;
 
-        public UnitConversionContext(Size viewPortSize, ViewPortContext viewPortContext, DrawingContext drawingContext) {
-            this(viewPortSize, viewPortContext, drawingContext, 0, 0);
+        public UnitConversionContext(Size viewPortSize, ViewPortContext viewPortContext, GridDevice device, DrawingContext drawingContext) {
+            this(viewPortSize, viewPortContext, device, drawingContext, 0, 0);
         }
 
-        public UnitConversionContext(Size viewPortSize, ViewPortContext viewPortContext, DrawingContext drawingContext, int nullLMode, int nullAMode) {
+        public UnitConversionContext(Size viewPortSize, ViewPortContext viewPortContext, GridDevice device, DrawingContext drawingContext, int nullLMode, int nullAMode) {
             this.viewPortSize = viewPortSize;
             this.viewPortContext = viewPortContext;
+            this.device = device;
             this.drawingContext = drawingContext;
             this.nullLayoutMode = nullLMode;
             this.nullArithmeticMode = nullAMode;
+        }
+
+        public double getViewPortSize(AxisOrDimension forAxisOrDim) {
+            return forAxisOrDim.isHorizontal() ? viewPortSize.getWidth() : viewPortSize.getHeight();
+        }
+
+        public double getScaleMin(AxisOrDimension forAxisOrDim) {
+            return forAxisOrDim.isHorizontal() ? viewPortContext.xscalemin : viewPortContext.yscalemin;
+        }
+
+        public double getScaleMax(AxisOrDimension forAxisOrDim) {
+            return forAxisOrDim.isHorizontal() ? viewPortContext.xscalemax : viewPortContext.yscalemax;
         }
     }
 
@@ -425,34 +475,29 @@ public class Unit {
         }
 
         public double convertX(RAbstractContainer vector, int index, UnitConversionContext ctx) {
-            return execute(vector, index, ctx.viewPortSize.getWidth(), ctx.viewPortContext.xscalemin, ctx.viewPortContext.xscalemax, ctx.nullLayoutMode, ctx.nullArithmeticMode, false,
-                            ctx.drawingContext);
+            return execute(vector, index, ctx, AxisOrDimension.X);
         }
 
         public double convertY(RAbstractContainer vector, int index, UnitConversionContext ctx) {
-            return execute(vector, index, ctx.viewPortSize.getHeight(), ctx.viewPortContext.yscalemin, ctx.viewPortContext.yscalemax, ctx.nullLayoutMode, ctx.nullArithmeticMode, false,
-                            ctx.drawingContext);
+            return execute(vector, index, ctx, AxisOrDimension.Y);
         }
 
         public double convertWidth(RAbstractContainer vector, int index, UnitConversionContext ctx) {
-            return execute(vector, index, ctx.viewPortSize.getWidth(), ctx.viewPortContext.xscalemin, ctx.viewPortContext.xscalemax, ctx.nullLayoutMode, ctx.nullArithmeticMode, true,
-                            ctx.drawingContext);
+            return execute(vector, index, ctx, AxisOrDimension.WIDTH);
         }
 
         public double convertHeight(RAbstractContainer vector, int index, UnitConversionContext ctx) {
-            return execute(vector, index, ctx.viewPortSize.getHeight(), ctx.viewPortContext.yscalemin, ctx.viewPortContext.yscalemax, ctx.nullLayoutMode, ctx.nullArithmeticMode, true,
-                            ctx.drawingContext);
+            return execute(vector, index, ctx, AxisOrDimension.HEIGHT);
         }
 
         public double convertDimension(RAbstractContainer vector, int index, UnitConversionContext ctx, boolean isWidth) {
             return isWidth ? convertWidth(vector, index, ctx) : convertHeight(vector, index, ctx);
         }
 
-        public abstract double execute(RAbstractContainer vector, int index, double vpSize, double scalemin, double scalemax, int nullLMode, int nullAMode, boolean isDimension,
-                        DrawingContext drawingCtx);
+        public abstract double execute(RAbstractContainer vector, int index, UnitConversionContext ctx, AxisOrDimension axisOrDim);
 
         @Specialization(guards = "isSimple(value)")
-        double doNormal(RAbstractContainer value, int index, double vpSize, double scalemin, double scalemax, int nullLMode, int nullAMode, boolean isDimension, DrawingContext drawingCtx,
+        double doNormal(RAbstractContainer value, int index, UnitConversionContext ctx, AxisOrDimension axisOrDim,
                         @Cached("createAsDoubleCast()") CastNode asDoubleCast,
                         @Cached("create()") UnitUnitIdNode unitUnitId) {
             int unitId = unitUnitId.execute(value, index);
@@ -460,29 +505,27 @@ public class Unit {
             double scalarValue = vector.getDataAt(index % vector.getLength());
             if (isGrobUnit(unitId)) {
                 RList grobList = asList(vector.getAttr("data"));
-                return grobUnitToInches.execute(scalarValue, unitId, grobList.getDataAt(index % grobList.getLength()), nullLMode, nullAMode);
+                return grobUnitToInches.execute(scalarValue, unitId, grobList.getDataAt(index % grobList.getLength()), ctx);
             }
-            return convertToInches(scalarValue, unitId, vpSize, scalemin, scalemax, nullLMode, nullAMode, isDimension, drawingCtx);
+            return convertToInches(scalarValue, unitId, asListOrNull(vector.getAttr("data")), ctx, axisOrDim);
         }
 
         @Specialization(guards = "isUnitList(value)")
-        double doList(RList value, int index, double vpSize, double scalemin, double scalemax, int nullLMode, int nullAMode, boolean isDimension, DrawingContext drawingCtx,
+        double doList(RList value, int index, UnitConversionContext ctx, AxisOrDimension axisOrDim,
                         @Cached("create()") UnitToInchesNode recursiveNode) {
             Object unwrapped = value.getDataAt(index % value.getLength());
             if (unwrapped instanceof RAbstractVector) {
-                return recursiveNode.execute((RAbstractContainer) unwrapped, 0, vpSize, scalemin, scalemax, nullLMode, nullAMode, isDimension, drawingCtx);
+                return recursiveNode.execute((RAbstractContainer) unwrapped, 0, ctx, axisOrDim);
             }
             throw error(Message.GENERIC, "Unexpected unit list with non-vector like element at index " + index);
         }
 
         @Specialization(guards = "isArithmetic(list)")
-        double doArithmetic(RList list, int index, double vpSize, double scalemin, double scalemax, int nullLMode, int nullAMode, boolean isDimension, DrawingContext drawingCtx,
+        double doArithmetic(RList list, int index, UnitConversionContext ctx, AxisOrDimension axisOrDim,
                         @Cached("create()") UnitLengthNode unitLengthNode,
                         @Cached("create()") UnitToInchesNode recursiveNode) {
             ArithmeticUnit expr = ArithmeticUnit.asArithmeticUnit(list);
-            // Note the catch: newNullAMode is applied only if isDimension == true
-            BiFunction<RAbstractContainer, Integer, Double> recursive = (x, newNullAMode) -> recursiveNode.execute(x, index, vpSize, scalemin, scalemax, nullLMode,
-                            isDimension ? newNullAMode : nullAMode, isDimension, drawingCtx);
+            BiFunction<RAbstractContainer, Integer, Double> recursive = (x, newNullAMode) -> recursiveNode.execute(x, index, getNewCtx(ctx, axisOrDim, newNullAMode), axisOrDim);
             switch (expr.op) {
                 case "+":
                     return recursive.apply(expr.arg1, L_adding) + recursive.apply(expr.arg2, L_adding);
@@ -496,11 +539,11 @@ public class Unit {
             }
 
             // must be aggregate operation
-            int newNullAMode = isDimension ? getNullAMode(expr.op) : nullAMode;
+            UnitConversionContext newCtx = getNewCtx(ctx, axisOrDim, getNullAMode(expr.op));
             int len = unitLengthNode.execute(expr.arg1);
             double[] values = new double[len];
             for (int i = 0; i < len; i++) {
-                values[i] = recursiveNode.execute(expr.arg1, i, vpSize, scalemin, scalemax, nullLMode, newNullAMode, isDimension, drawingCtx);
+                values[i] = recursiveNode.execute(expr.arg1, i, newCtx, axisOrDim);
             }
 
             switch (expr.op) {
@@ -513,6 +556,12 @@ public class Unit {
                 default:
                     throw RInternalError.shouldNotReachHere("The operation should have been validated in asArithmeticUnit method.");
             }
+        }
+
+        // Note the catch: newNullAMode is applied only if the axisOrDim is dimension
+        private static UnitConversionContext getNewCtx(UnitConversionContext ctx, AxisOrDimension axisOrDim, int newNullAMode) {
+            return new UnitConversionContext(ctx.viewPortSize, ctx.viewPortContext, ctx.device, ctx.drawingContext, ctx.nullLayoutMode,
+                            axisOrDim.isDimension() ? newNullAMode : ctx.nullArithmeticMode);
         }
 
         private static int getNullAMode(String op) {
@@ -543,7 +592,7 @@ public class Unit {
 
         // transcribed from unit.c function evaluateGrobUnit
 
-        public double execute(double value, int unitId, Object grob, int nullLMode, int nullAMode) {
+        public double execute(double value, int unitId, Object grob, UnitConversionContext conversionCtx) {
             GridContext ctx = GridContext.getContext();
             RList currentVP = ctx.getGridState().getViewPort();
             getViewPortTransform.execute(currentVP);
@@ -571,10 +620,10 @@ public class Unit {
                 case GROBY:
                     if (unitId == GROBY && isRelativeUnit.execute(unitxy.getDataAt(1), 0)) {
                         double nullUnitValue = pureNullUnitValue((RAbstractContainer) unitxy.getDataAt(1), 0);
-                        result = evaluateNullUnit(nullUnitValue, vpTransform.size.getHeight(), nullLMode, nullAMode);
+                        result = evaluateNullUnit(nullUnitValue, vpTransform.size.getHeight(), conversionCtx.nullLayoutMode, conversionCtx.nullArithmeticMode);
                     } else if (isRelativeUnit.execute(unitxy.getDataAt(0), 0)) {
                         double nullUnitValue = pureNullUnitValue((RAbstractContainer) unitxy.getDataAt(0), 0);
-                        result = evaluateNullUnit(nullUnitValue, vpTransform.size.getWidth(), nullLMode, nullAMode);
+                        result = evaluateNullUnit(nullUnitValue, vpTransform.size.getWidth(), conversionCtx.nullLayoutMode, conversionCtx.nullArithmeticMode);
                     } else {
                         throw RInternalError.unimplemented("GrobUnitToInches from unit.c: 610");
                     }
@@ -585,16 +634,16 @@ public class Unit {
                         // Note: GnuR uses equivalent of vpTransform.size.getWidth() even for
                         // GROBHEIGHT, bug?
                         double nullUnitValue = pureNullUnitValue((RAbstractContainer) unitxy.getDataAt(0), 0);
-                        result = evaluateNullUnit(nullUnitValue, vpTransform.size.getWidth(), nullLMode, nullAMode);
+                        result = evaluateNullUnit(nullUnitValue, vpTransform.size.getWidth(), conversionCtx.nullLayoutMode, conversionCtx.nullArithmeticMode);
                     } else {
-                        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, GPar.asDrawingContext(currentGP));
+                        UnitConversionContext newConversionCtx = new UnitConversionContext(vpTransform.size, vpContext, conversionCtx.device, GPar.asDrawingContext(currentGP));
                         initUnitToInchesNode();
                         if (unitId == GROBWIDTH) {
-                            result = unitToInchesNode.convertWidth((RAbstractContainer) unitxy.getDataAt(0), 0, conversionCtx);
+                            result = unitToInchesNode.convertWidth((RAbstractContainer) unitxy.getDataAt(0), 0, newConversionCtx);
                         } else {
                             // Note: GnuR uses height transform for both grobascent, grobdescent and
                             // for height
-                            result = unitToInchesNode.convertHeight((RAbstractContainer) unitxy.getDataAt(0), 0, conversionCtx);
+                            result = unitToInchesNode.convertHeight((RAbstractContainer) unitxy.getDataAt(0), 0, newConversionCtx);
                         }
                     }
                     break;

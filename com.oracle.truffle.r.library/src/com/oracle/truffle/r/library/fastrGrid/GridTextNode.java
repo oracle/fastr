@@ -97,7 +97,7 @@ public final class GridTextNode extends RBaseNode {
         DrawingContext drawingCtx = GPar.asDrawingContext(ctx.getGridState().getGpar());
         ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP);
         ViewPortContext vpContext = vpContextFromVP.execute(currentVP);
-        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, drawingCtx);
+        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, drawingCtx);
 
         int length = GridUtils.maxLength(unitLength, x, y);
 
