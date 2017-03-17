@@ -45,6 +45,19 @@ L_setviewport <- function(vp, hasParent) {
     .Internal(.fastr.grid.doSetViewPort(pushedVP, hasParent, TRUE));
 }
 
+L_unsetviewport <- function(n) {
+    gvp <- .Call(grid:::L_currentViewport)
+    newVp <- gvp;
+    for (i in 1:n) {
+        gvp <- newVp;
+        newVp <- gvp$parent;
+        if (is.null(newVp)) {
+            error("cannot pop the top-level viewport ('grid' and 'graphics' output mixed?)")
+        }
+    }
+    # remove
+}
+
 ###################################################
 # Helper functions to deal with null and grob units
 # these functions are invoked from Java directly
@@ -80,7 +93,8 @@ isPureNullUnit <- function(unit, index) {
     } else if (inherits(unit, "unit.list")) {
         return(isPureNullUnit(unit[[indexMod(index, length(unit))]], 1))
     }
-    unitId <- attr(unit, "valid.unit")
+    unitIdVec <- attr(unit, "valid.unit")
+    unitId <- unitIdVec[[indexMod(index, length(unitIdVec))]]
     if (unitId == L_GROBWIDTH) {
         return(isPureNullUnitGrobDim(unit, index, grid:::width))
     } else if (unitId == L_GROBHEIGHT) {

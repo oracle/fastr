@@ -40,6 +40,7 @@ import com.oracle.truffle.r.library.fastrGrid.LRect;
 import com.oracle.truffle.r.library.fastrGrid.LSegments;
 import com.oracle.truffle.r.library.fastrGrid.LText;
 import com.oracle.truffle.r.library.fastrGrid.LTextBounds;
+import com.oracle.truffle.r.library.fastrGrid.LUnsetViewPort;
 import com.oracle.truffle.r.library.fastrGrid.LUpViewPort;
 import com.oracle.truffle.r.library.fastrGrid.graphics.CPar;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls;
@@ -694,6 +695,8 @@ public class CallAndExternalFunctions {
                     return LUpViewPort.create();
                 case "L_initViewportStack":
                     return new LInitViewPortStack();
+                case "L_unsetviewport":
+                    return LUnsetViewPort.create();
                 case "L_setviewport":
                 case "L_downviewport":
                     return getExternalFastRGridBuiltinNode(name);

@@ -11,11 +11,10 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
-import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
+import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asDoubleVector;
 
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
-import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
@@ -37,22 +36,20 @@ public final class ViewPortContext {
         return result;
     }
 
-    public static final class VPContextFromVPNode extends Node {
-        @Child private CastNode castVector = newCastBuilder().asDoubleVector().mustBe(Predef.size(2)).buildCastNode();
-
-        public ViewPortContext execute(RList viewPort) {
-            ViewPortContext result = new ViewPortContext();
-            RAbstractDoubleVector x = castVec(viewPort.getDataAt(ViewPort.VP_XSCALE));
-            result.xscalemin = x.getDataAt(0);
-            result.xscalemax = x.getDataAt(1);
-            RAbstractDoubleVector y = castVec(viewPort.getDataAt(ViewPort.VP_YSCALE));
-            result.yscalemin = y.getDataAt(0);
-            result.yscalemax = y.getDataAt(1);
-            return result;
+    public static ViewPortContext fromViewPort(RList viewPort) {
+        ViewPortContext result = new ViewPortContext();
+        RAbstractDoubleVector x = asDoubleVector(viewPort.getDataAt(ViewPort.VP_XSCALE));
+        if (x.getLength() != 2) {
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, "view-port xscale must be vector of size 2");
         }
-
-        private RAbstractDoubleVector castVec(Object val) {
-            return (RAbstractDoubleVector) castVector.execute(val);
+        result.xscalemin = x.getDataAt(0);
+        result.xscalemax = x.getDataAt(1);
+        RAbstractDoubleVector y = asDoubleVector(viewPort.getDataAt(ViewPort.VP_YSCALE));
+        if (y.getLength() != 2) {
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, "view-port yscale must be vector of size 2");
         }
+        result.yscalemin = y.getDataAt(0);
+        result.yscalemax = y.getDataAt(1);
+        return result;
     }
 }

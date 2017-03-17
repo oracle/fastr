@@ -18,7 +18,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitLengthNode;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitToInchesNode;
-import com.oracle.truffle.r.library.fastrGrid.ViewPortContext.VPContextFromVPNode;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
@@ -41,7 +40,7 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
     private static final double TRC2 = 0.77756015077810708036; /* TRC0 / 2 */
 
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
-    @Child private VPContextFromVPNode vpContextFromVP = new VPContextFromVPNode();
+
     @Child private UnitLengthNode unitLength = Unit.createLengthNode();
     @Child private UnitToInchesNode unitToInches = Unit.createToInchesNode();
 
@@ -66,8 +65,8 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
         RList gpar = ctx.getGridState().getGpar();
         DrawingContext drawingCtx = GPar.asDrawingContext(gpar);
         double cex = GPar.getCex(gpar);
-        ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP);
-        ViewPortContext vpContext = vpContextFromVP.execute(currentVP);
+        ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, dev);
+        ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, drawingCtx);
 
         // Note: unlike in other drawing primitives, we only consider length of x

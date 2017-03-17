@@ -36,8 +36,6 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.util.function.Supplier;
 
-import javax.swing.UIManager;
-
 import com.oracle.truffle.r.library.graphics.FastRFrame;
 
 public class JFrameDevice implements GridDevice {
@@ -71,9 +69,9 @@ public class JFrameDevice implements GridDevice {
     }
 
     @Override
-    public void drawRect(DrawingContext ctx, double leftX, double topY, double heigh, double width) {
+    public void drawRect(DrawingContext ctx, double leftX, double topY, double width, double height) {
         setContext(ctx);
-        drawShape(ctx, new Rectangle2D.Double(leftX, topY, heigh, width));
+        drawShape(ctx, new Rectangle2D.Double(leftX, topY, width, height));
     }
 
     @Override
@@ -139,14 +137,6 @@ public class JFrameDevice implements GridDevice {
         });
     }
 
-    @Override
-    public void initDrawingContext(DrawingContext ctx) {
-        Color color = UIManager.getColor("Panel.background");
-        if (color != null) {
-            ctx.setFillColor(toGridColor(color));
-        }
-    }
-
     private void drawShape(DrawingContext drawingCtx, Shape shape) {
         Paint paint = graphics.getPaint();
         graphics.setPaint(fromGridColor(drawingCtx.getFillColor()));
@@ -174,9 +164,5 @@ public class JFrameDevice implements GridDevice {
 
     private static Color fromGridColor(GridColor color) {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
-    }
-
-    private static GridColor toGridColor(Color color) {
-        return new GridColor(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
     }
 }

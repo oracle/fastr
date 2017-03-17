@@ -32,7 +32,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.library.fastrGrid.UnitFactory.UnitLengthNodeGen;
 import com.oracle.truffle.r.library.fastrGrid.UnitFactory.UnitToInchesNodeGen;
-import com.oracle.truffle.r.library.fastrGrid.ViewPortContext.VPContextFromVPNode;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
@@ -586,7 +585,7 @@ public class Unit {
         @Child private RGridCodeCall getUnitXY = new RGridCodeCall("grobConversionGetUnitXY");
         @Child private RGridCodeCall postDrawCode = new RGridCodeCall("grobConversionPostDraw");
         @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
-        @Child private VPContextFromVPNode vpContextFromVP = new VPContextFromVPNode();
+
         @Child private IsRelativeUnitNode isRelativeUnit = new IsRelativeUnitNode();
         @Child private UnitToInchesNode unitToInchesNode;
 
@@ -595,7 +594,7 @@ public class Unit {
         public double execute(double value, int unitId, Object grob, UnitConversionContext conversionCtx) {
             GridContext ctx = GridContext.getContext();
             RList currentVP = ctx.getGridState().getViewPort();
-            getViewPortTransform.execute(currentVP);
+            getViewPortTransform.execute(currentVP, conversionCtx.device);
 
             RList savedGPar = ctx.getGridState().getGpar();
             Object savedGrob = ctx.getGridState().getCurrentGrob();
@@ -609,8 +608,8 @@ public class Unit {
              */
             currentVP = ctx.getGridState().getViewPort();
             RList currentGP = ctx.getGridState().getGpar();
-            ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP);
-            ViewPortContext vpContext = vpContextFromVP.execute(currentVP);
+            ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, conversionCtx.device);
+            ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
 
             // getUnitXY returns a list with either one or two items
             RList unitxy = (RList) getUnitXY.execute(new RArgsValuesAndNames(new Object[]{updatedGrob, unitId}, ArgumentsSignature.empty(2)));

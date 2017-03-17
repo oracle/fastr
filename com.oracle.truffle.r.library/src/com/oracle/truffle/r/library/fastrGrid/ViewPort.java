@@ -11,7 +11,9 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asDouble;
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asList;
+import static com.oracle.truffle.r.library.fastrGrid.Unit.inchesToCm;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -79,6 +81,23 @@ class ViewPort {
     public static final int LAYOUT_MRESPECT = 6;
     public static final int LAYOUT_JUST = 7;
     private static final int LAYOUT_VJUST = 8;
+
+    /**
+     * Updates the device size in the viewport and returns {@code true} if the size has changed.
+     */
+    public static boolean updateDeviceSizeInVP(RList viewPort, GridDevice device) {
+        double devWidthCm = inchesToCm(device.getWidth());
+        boolean result = false;
+        if (Math.abs(devWidthCm - asDouble(viewPort.getDataAt(PVP_DEVWIDTHCM))) >= 1e-6) {
+            viewPort.setDataAt(viewPort.getInternalStore(), PVP_DEVWIDTHCM, devWidthCm);
+            result = true;
+        }
+        double devHeightCm = inchesToCm(device.getHeight());
+        if (Math.abs(devHeightCm - asDouble(viewPort.getDataAt(PVP_DEVHEIGHTCM))) >= 1e-6) {
+            viewPort.setDataAt(viewPort.getInternalStore(), PVP_DEVHEIGHTCM, devHeightCm);
+        }
+        return result;
+    }
 
     /**
      * Represents the integer values extracted from {@link #LAYOUT_NCOL} and {@link #LAYOUT_NROW}.

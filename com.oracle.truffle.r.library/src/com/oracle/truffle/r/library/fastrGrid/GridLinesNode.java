@@ -15,7 +15,6 @@ import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asIntVector;
 
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
-import com.oracle.truffle.r.library.fastrGrid.ViewPortContext.VPContextFromVPNode;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
@@ -43,7 +42,6 @@ public abstract class GridLinesNode extends Node {
 
     @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
-    @Child private VPContextFromVPNode vpContextFromVP = new VPContextFromVPNode();
 
     void execute(RAbstractVector x, RAbstractVector y, RList lengths) {
         GridContext ctx = GridContext.getContext();
@@ -51,8 +49,8 @@ public abstract class GridLinesNode extends Node {
 
         RList currentVP = ctx.getGridState().getViewPort();
         DrawingContext drawingCtx = GPar.asDrawingContext(ctx.getGridState().getGpar());
-        ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP);
-        ViewPortContext vpContext = vpContextFromVP.execute(currentVP);
+        ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, dev);
+        ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, drawingCtx);
 
         // Convert the list of vectors of indexes to type-safe array and calculate the max length of

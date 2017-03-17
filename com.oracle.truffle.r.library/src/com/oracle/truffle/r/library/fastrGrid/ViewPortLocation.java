@@ -11,13 +11,13 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
-import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
+import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asAbstractContainer;
+import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asDoubleVector;
 
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 /**
@@ -25,31 +25,25 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
  * for them. However, the unit object should contain only single value.
  */
 public class ViewPortLocation {
-    public RAbstractDoubleVector x;
-    public RAbstractDoubleVector y;
-    public RAbstractDoubleVector width;
-    public RAbstractDoubleVector height;
+    public RAbstractContainer x;
+    public RAbstractContainer y;
+    public RAbstractContainer width;
+    public RAbstractContainer height;
     public double hjust;
     public double vjust;
 
-    public static final class VPLocationFromVPNode extends Node {
-        @Child private CastNode castDoubleVector = newCastBuilder().mustBe(numericValue()).asDoubleVector().buildCastNode();
-        @Child private CastNode castJustVector = newCastBuilder().mustBe(numericValue()).asDoubleVector().mustBe(size(2)).buildCastNode();
-
-        public ViewPortLocation execute(RList viewPort) {
-            ViewPortLocation r = new ViewPortLocation();
-            r.x = vec(viewPort.getDataAt(ViewPort.VP_X));
-            r.y = vec(viewPort.getDataAt(ViewPort.VP_Y));
-            r.width = vec(viewPort.getDataAt(ViewPort.VP_WIDTH));
-            r.height = vec(viewPort.getDataAt(ViewPort.VP_HEIGHT));
-            RAbstractDoubleVector just = (RAbstractDoubleVector) castJustVector.execute(viewPort.getDataAt(ViewPort.VP_VALIDJUST));
-            r.hjust = just.getDataAt(0);
-            r.vjust = just.getDataAt(1);
-            return r;
+    public static ViewPortLocation fromViewPort(RList viewPort) {
+        ViewPortLocation r = new ViewPortLocation();
+        r.x = asAbstractContainer(viewPort.getDataAt(ViewPort.VP_X));
+        r.y = asAbstractContainer(viewPort.getDataAt(ViewPort.VP_Y));
+        r.width = asAbstractContainer(viewPort.getDataAt(ViewPort.VP_WIDTH));
+        r.height = asAbstractContainer(viewPort.getDataAt(ViewPort.VP_HEIGHT));
+        RAbstractDoubleVector just = asDoubleVector(viewPort.getDataAt(ViewPort.VP_VALIDJUST));
+        if (just.getLength() != 2) {
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected size of layout justification vector.");
         }
-
-        private RAbstractDoubleVector vec(Object val) {
-            return (RAbstractDoubleVector) castDoubleVector.execute(val);
-        }
+        r.hjust = just.getDataAt(0);
+        r.vjust = just.getDataAt(1);
+        return r;
     }
 }

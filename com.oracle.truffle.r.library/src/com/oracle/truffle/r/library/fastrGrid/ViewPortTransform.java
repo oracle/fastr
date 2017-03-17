@@ -14,7 +14,9 @@ package com.oracle.truffle.r.library.fastrGrid;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -36,16 +38,28 @@ public final class ViewPortTransform {
     public static final class GetViewPortTransformNode extends Node {
         @Child private CastNode castDoubleVector = newCastBuilder().mustBe(numericValue()).asDoubleVector().buildCastNode();
         @Child private CastNode castScalarDouble = newCastBuilder().mustBe(numericValue()).asDoubleVector().findFirst().buildCastNode();
+        @Child private DoSetViewPort doSetViewPort;
 
-        public ViewPortTransform execute(RList viewPort) {
-            // TODO: if device has changed, recalculate the VP transform!!! Some code, e.g.
-            // GrobUnitToInches relies on that
+        public ViewPortTransform execute(RList viewPort, GridDevice device) {
+            if (ViewPort.updateDeviceSizeInVP(viewPort, device)) {
+                // Note: GnuR sets incremental parameter to true, but don't we need to recalculate
+                // the parent(s) as well?
+                initDoSetViewportNode();
+                doSetViewPort.calcViewportTransform(viewPort, viewPort.getDataAt(ViewPort.PVP_PARENT), true, device, GridState.getInitialGPar(device));
+            }
             double width = Unit.cmToInches(getScalar(viewPort.getDataAt(ViewPort.PVP_WIDTHCM)));
             double height = Unit.cmToInches(getScalar(viewPort.getDataAt(ViewPort.PVP_HEIGHTCM)));
             double rotationAngle = getScalar(viewPort.getDataAt(ViewPort.VP_ANGLE));
             RAbstractDoubleVector trans = (RAbstractDoubleVector) castDoubleVector.execute(viewPort.getDataAt(ViewPort.PVP_TRANS));
             double[][] transform = TransformMatrix.fromFlat(trans.materialize().getDataWithoutCopying());
             return new ViewPortTransform(width, height, rotationAngle, transform);
+        }
+
+        private void initDoSetViewportNode() {
+            if (doSetViewPort == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                doSetViewPort = new DoSetViewPort();
+            }
         }
 
         private double getScalar(Object value) {

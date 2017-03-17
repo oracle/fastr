@@ -82,14 +82,14 @@ public final class GPar {
     public static RList createNew() {
         Object[] data = new Object[GP_LENGTH];
         Arrays.fill(data, RNull.instance);
-        data[GP_FILL] = "grey";
+        data[GP_FILL] = "transparent";
         data[GP_COL] = "black";
         data[GP_GAMMA] = newDoubleVec(0);
         data[GP_LTY] = "solid"; // TODO: LineType enum...
         data[GP_LWD] = newDoubleVec(1);
         data[GP_CEX] = newDoubleVec(1);
-        data[GP_FONTSIZE] = newDoubleVec(12);
-        data[GP_LINEHEIGHT] = newDoubleVec(1.0);
+        data[GP_FONTSIZE] = newDoubleVec(16);
+        data[GP_LINEHEIGHT] = newDoubleVec(1.2);
         data[GP_FONT] = RDataFactory.createIntVectorFromScalar(1);  // TODO: font constants?
         data[GP_FONTFAMILY] = ""; // means default font (probably)
         data[GP_ALPHA] = newDoubleVec(1);

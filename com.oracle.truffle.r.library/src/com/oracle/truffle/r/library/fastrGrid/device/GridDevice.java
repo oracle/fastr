@@ -31,7 +31,7 @@ import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_
 public interface GridDevice {
     void openNewPage();
 
-    void drawRect(DrawingContext ctx, double leftX, double topY, double heigh, double width);
+    void drawRect(DrawingContext ctx, double leftX, double topY, double width, double height);
 
     /**
      * Connects given points with a line, there has to be at least two points in order to actually
