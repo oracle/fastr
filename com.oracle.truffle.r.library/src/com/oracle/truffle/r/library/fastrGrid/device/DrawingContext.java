@@ -26,7 +26,7 @@ package com.oracle.truffle.r.library.fastrGrid.device;
  * Defines parameters for drawing, like color, line style etc.
  */
 public interface DrawingContext {
-    double INCH_TO_POINTS_FACTOR = 72;
+    double INCH_TO_POINTS_FACTOR = 72.27;
 
     GridColor getColor();
 

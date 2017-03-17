@@ -26,7 +26,7 @@ import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_
 
 /**
  * Abstract device that can draw primitive shapes and text. All sizes and coordinates are specified
- * in inches.
+ * in inches and angles in radians unless stated otherwise.
  */
 public interface GridDevice {
     void openNewPage();
@@ -41,7 +41,11 @@ public interface GridDevice {
 
     void drawCircle(DrawingContext ctx, double centerX, double centerY, double radius);
 
-    void drawString(DrawingContext ctx, double leftX, double bottomY, double rotation, String text);
+    /**
+     * Prints a string with left bottom corner at given position rotates by given angle anti clock
+     * wise, the centre of the rotation should be the bottom left corer.
+     */
+    void drawString(DrawingContext ctx, double leftX, double bottomY, double rotationAnticlockWise, String text);
 
     /**
      * @return The width of the device in inches.

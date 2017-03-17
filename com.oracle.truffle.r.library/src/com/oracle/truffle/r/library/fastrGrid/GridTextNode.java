@@ -247,7 +247,7 @@ public final class GridTextNode extends RBaseNode {
                 ybottom = yoff - (xadj) * width * sinRot - yadj * height * cosRot;
             }
 
-            device.drawString(drawingCtx, xleft, ybottom, rotation, lines[lineIdx]);
+            device.drawString(drawingCtx, xleft, ybottom, radRotation, lines[lineIdx]);
         }
     }
 }

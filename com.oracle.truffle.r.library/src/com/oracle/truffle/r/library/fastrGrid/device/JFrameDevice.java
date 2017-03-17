@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.device;
 
+import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_TO_POINTS_FACTOR;
+
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -44,6 +46,7 @@ public class JFrameDevice implements GridDevice {
     // coordinate system to the grid one. However, in the case of text rendering, we cannot simply
     // turn upside down the y-axis, because the text would be upside down too, so for text rendering
     // only, we reset the transformation completely and transform the coordinates ourselves
+    private static final double POINTS_IN_INCH = 72.;
 
     private FastRFrame currentFrame;
     private Graphics2D graphics;
@@ -55,8 +58,8 @@ public class JFrameDevice implements GridDevice {
             currentFrame.setVisible(true);
             graphics = (Graphics2D) currentFrame.getGraphics();
             graphics.translate(0, currentFrame.getHeight());
-            graphics.scale(72, -72); // doc: 72 points ~ 1 inch
-            graphics.setStroke(new BasicStroke(1f / 72f));
+            graphics.scale(POINTS_IN_INCH, -POINTS_IN_INCH);
+            graphics.setStroke(new BasicStroke((float) (1d / POINTS_IN_INCH)));
             graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             graphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
         } else {
@@ -93,31 +96,36 @@ public class JFrameDevice implements GridDevice {
     }
 
     @Override
-    public void drawString(DrawingContext ctx, double leftX, double bottomY, double rotation, String text) {
+    public void drawString(DrawingContext ctx, double leftX, double bottomY, double rotationAnticlockWise, String text) {
         setContext(ctx);
         noTranform(() -> {
-            graphics.rotate(rotation);
-            graphics.drawString(text, (float) leftX * 72f, (float) (currentFrame.getContentPane().getHeight() - bottomY * 72f));
+            AffineTransform tr = graphics.getTransform();
+            tr.translate((float) (leftX * POINTS_IN_INCH), (float) (currentFrame.getContentPane().getHeight() - bottomY * POINTS_IN_INCH));
+            tr.rotate(-rotationAnticlockWise);
+            graphics.setTransform(tr);
+            setFontSize(ctx);
+            graphics.drawString(text, 0, 0);
             return null;
         });
     }
 
     @Override
     public double getWidth() {
-        return currentFrame.getContentPane().getWidth() / 72.0;
+        return currentFrame.getContentPane().getWidth() / POINTS_IN_INCH;
     }
 
     @Override
     public double getHeight() {
-        return currentFrame.getContentPane().getHeight() / 72.0;
+        return currentFrame.getContentPane().getHeight() / POINTS_IN_INCH;
     }
 
     @Override
     public double getStringWidth(DrawingContext ctx, String text) {
         setContext(ctx);
         return noTranform(() -> {
+            setFontSize(ctx);
             int swingUnits = graphics.getFontMetrics(graphics.getFont()).stringWidth(text);
-            return swingUnits / 72.;
+            return swingUnits / POINTS_IN_INCH;
         });
     }
 
@@ -125,9 +133,9 @@ public class JFrameDevice implements GridDevice {
     public double getStringHeight(DrawingContext ctx, String text) {
         setContext(ctx);
         return noTranform(() -> {
-            // int swingUnits = graphics.getFontMetrics(graphics.getFont()).getHeight();
+            setFontSize(ctx);
             int swingUnits = graphics.getFont().getSize();
-            return swingUnits / 72.;
+            return swingUnits / POINTS_IN_INCH;
         });
     }
 
@@ -148,8 +156,12 @@ public class JFrameDevice implements GridDevice {
     }
 
     private void setContext(DrawingContext ctx) {
-        graphics.setFont(graphics.getFont().deriveFont((float) ctx.getFontSize()));
         graphics.setColor(fromGridColor(ctx.getColor()));
+    }
+
+    private void setFontSize(DrawingContext ctx) {
+        float fontSize = (float) ((ctx.getFontSize() / INCH_TO_POINTS_FACTOR) * POINTS_IN_INCH);
+        graphics.setFont(graphics.getFont().deriveFont(fontSize));
     }
 
     private <T> T noTranform(Supplier<T> action) {
