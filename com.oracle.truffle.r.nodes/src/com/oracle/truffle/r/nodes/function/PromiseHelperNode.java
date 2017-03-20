@@ -50,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromiseBase;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
+import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -237,6 +238,16 @@ public class PromiseHelperNode extends RBaseNode {
                     return promise.getValue();
                 }
                 Object obj = generateValueDefaultSlowPath(frame, promise);
+                // if the value is temporary, we increment the reference count. The reason is that
+                // temporary values are considered available to be reused and altered (e.g. as a
+                // result of arithmetic operation), which is what we do not want to happen to a
+                // value that we are saving as the promise result.
+                if (obj instanceof RShareable) {
+                    RShareable shareable = (RShareable) obj;
+                    if (shareable.isTemporary()) {
+                        shareable.incRefCount();
+                    }
+                }
                 promise.setValue(obj);
                 return obj;
             }
