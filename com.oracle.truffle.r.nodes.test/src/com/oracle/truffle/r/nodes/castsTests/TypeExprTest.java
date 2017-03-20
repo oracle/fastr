@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin;
+package com.oracle.truffle.r.nodes.castsTests;
 
 import static com.oracle.truffle.r.nodes.casts.Not.negateType;
 import static com.oracle.truffle.r.nodes.casts.TypeExpr.atom;

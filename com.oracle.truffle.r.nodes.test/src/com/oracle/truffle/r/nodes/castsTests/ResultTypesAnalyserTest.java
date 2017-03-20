@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin;
+package com.oracle.truffle.r.nodes.castsTests;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyIntegerVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullConstant;
@@ -62,12 +62,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.oracle.truffle.r.nodes.builtin.CastBuilderTest.DummyBuiltin;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PreinitialPhaseBuilder;
 import com.oracle.truffle.r.nodes.casts.MarkLookup;
 import com.oracle.truffle.r.nodes.casts.ResultTypesAnalyser;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
+import com.oracle.truffle.r.nodes.castsTests.CastBuilderTest.DummyBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;

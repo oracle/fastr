@@ -37,17 +37,24 @@ public final class ChainedCastNode extends CastNode {
     @Child private CastNode firstCast;
     @Child private CastNode secondCast;
 
-    public ChainedCastNode(CastNode firstCast, CastNode secondCast) {
+    private final boolean isFirstNode;
+
+    public ChainedCastNode(CastNode firstCast, CastNode secondCast, boolean isFirstNode) {
         this.firstCast = firstCast;
         this.secondCast = secondCast;
+        this.isFirstNode = isFirstNode;
     }
 
     @Override
     public Object execute(Object value) {
-        try {
+        if (isFirstNode) {
+            try {
+                return secondCast.execute(firstCast.execute(value));
+            } catch (PipelineReturnException ex) {
+                return ex.getResult();
+            }
+        } else {
             return secondCast.execute(firstCast.execute(value));
-        } catch (PipelineReturnException ex) {
-            return ex.getResult();
         }
     }
 
