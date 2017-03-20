@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,5 +41,11 @@ public class TestBuiltin_extract_replace extends TestBase {
     @Test
     public void replaceInLanguagePreservesAttributes() {
         assertEval("f <- quote(a+b); attr(f, 'mya') <- 42; f[[2]] <- quote(q); f");
+    }
+
+    @Test
+    public void replaceExpressionInLanguage() {
+        assertEval("e1 <- expression(x^2); l1 <- quote(y^2); l1[1] <- e1; l1[[1]]==e1[[1]]");
+        assertEval(Ignored.OutputFormatting, "e1 <- expression(x^2); l1 <- quote(y^2); l1[1] <- e1; l1");
     }
 }

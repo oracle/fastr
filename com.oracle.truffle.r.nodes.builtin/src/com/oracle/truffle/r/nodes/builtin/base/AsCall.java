@@ -68,6 +68,10 @@ public abstract class AsCall extends RBuiltinNode {
             return Call.makeCallSourceUnavailable(((RAbstractStringVector) x.getDataAt(0)).getDataAt(0), avn);
         } else if (x.getDataAt(0) instanceof RFunction) {
             return Call.makeCallSourceUnavailable((RFunction) x.getDataAt(0), avn);
+        } else if (x.getDataAt(0) instanceof Integer) {
+            return Call.makeCallSourceUnavailable((Integer) x.getDataAt(0), avn);
+        } else if (x.getDataAt(0) instanceof Double) {
+            return Call.makeCallSourceUnavailable((Double) x.getDataAt(0), avn);
         } else {
             throw RInternalError.unimplemented();
         }

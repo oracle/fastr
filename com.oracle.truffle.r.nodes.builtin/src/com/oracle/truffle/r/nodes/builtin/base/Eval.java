@@ -45,6 +45,7 @@ import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -146,6 +147,8 @@ public abstract class Eval extends RBuiltinNode {
         REnvironment environment = envCast.execute(frame, envir, enclos);
         try {
             return RContext.getEngine().eval(expr, environment, rCaller);
+        } catch (ReturnException ret) {
+            return ret.getResult();
         } finally {
             visibility.executeAfterCall(frame, rCaller);
         }
@@ -157,6 +160,8 @@ public abstract class Eval extends RBuiltinNode {
         REnvironment environment = envCast.execute(frame, envir, enclos);
         try {
             return RContext.getEngine().eval(expr, environment, rCaller);
+        } catch (ReturnException ret) {
+            return ret.getResult();
         } finally {
             visibility.executeAfterCall(frame, rCaller);
         }
