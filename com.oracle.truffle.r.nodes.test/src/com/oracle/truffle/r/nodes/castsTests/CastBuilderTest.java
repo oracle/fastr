@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin;
+package com.oracle.truffle.r.nodes.castsTests;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.anyValue;
@@ -78,6 +78,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.InitialPhaseBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PreinitialPhaseBuilder;
@@ -93,6 +96,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -331,10 +335,10 @@ public class CastBuilderTest {
     public void testFindFirstWithoutDefaultValue() {
         arg.asIntegerVector().findFirst();
 
-        assertCastFail(RNull.instance, "argument is of length zero");
-        assertCastFail(RMissing.instance, "argument is of length zero");
-        assertCastFail(RDataFactory.createIntVector(0), "argument is of length zero");
-        assertCastFail(RDataFactory.createList(), "argument is of length zero");
+        assertCastFail(RNull.instance, "invalid 'x' argument");
+        assertCastFail(RMissing.instance, "invalid 'x' argument");
+        assertCastFail(RDataFactory.createIntVector(0), "invalid 'x' argument");
+        assertCastFail(RDataFactory.createList(), "invalid 'x' argument");
         assertEquals(1, cast(1));
         assertEquals(1, cast(RDataFactory.createIntVector(new int[]{1, 2}, true)));
         assertEquals(1, cast("1"));
@@ -399,7 +403,7 @@ public class CastBuilderTest {
         arg.asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         assertEquals(Boolean.TRUE, cast(RRuntime.LOGICAL_TRUE));
         assertEquals(Boolean.FALSE, cast(RRuntime.LOGICAL_FALSE));
-        assertEquals(Boolean.FALSE, cast(RRuntime.LOGICAL_NA));
+        assertEquals(Boolean.TRUE, cast(RRuntime.LOGICAL_NA));
         assertEquals(Boolean.TRUE, cast(RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)));
         assertEquals(Boolean.FALSE, cast(RDataFactory.createLogicalVector(0)));
         testPipeline(NO_FILTER_EXPECT_EMPTY_SAMPLES);
@@ -870,6 +874,17 @@ public class CastBuilderTest {
                         asIntegerVector());
         Assert.assertEquals("1", cast("1"));
         Assert.assertEquals(RError.Message.NA_INTRODUCED_COERCION.message, CastNode.getLastWarning());
+    }
+
+    private static final RFunction DUMMY_FUNCTION = RDataFactory.createFunction(RFunction.NO_NAME, RFunction.NO_NAME, null, null, null);
+
+    @Test
+    public void testReturnIfFunction() {
+        arg.allowNull().returnIf(instanceOf(RFunction.class)).asVector(false);
+        RFunction f = DUMMY_FUNCTION;
+        Object o = cast(f);
+        assertEquals(f, o);
+        testPipeline();
     }
 
     /**

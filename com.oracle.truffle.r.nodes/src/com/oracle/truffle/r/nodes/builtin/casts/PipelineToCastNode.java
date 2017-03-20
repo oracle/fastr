@@ -147,7 +147,7 @@ public final class PipelineToCastNode {
                     prevCastNode = node;
                 } else {
                     CastNode finalPrevCastNode = prevCastNode;
-                    prevCastNode = new ChainedCastNode(finalPrevCastNode, node);
+                    prevCastNode = new ChainedCastNode(finalPrevCastNode, node, currCastStep.getNext() == null);
                 }
             }
 

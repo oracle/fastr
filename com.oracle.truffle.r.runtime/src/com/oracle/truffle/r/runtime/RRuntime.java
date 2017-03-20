@@ -277,8 +277,8 @@ public class RRuntime {
         return b == LOGICAL_TRUE;
     }
 
-    public static boolean fromLogical(byte b, boolean naValue) {
-        return naValue ? b != LOGICAL_FALSE : b == LOGICAL_TRUE;
+    public static boolean fromLogical(byte b, boolean naReplacement) {
+        return naReplacement ? b != LOGICAL_FALSE : b == LOGICAL_TRUE;
     }
 
     // conversions from logical
