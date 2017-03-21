@@ -25,7 +25,6 @@ package com.oracle.truffle.r.test.library.base;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.ByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,7 +37,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.oracle.truffle.api.interop.java.JavaInterop;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
 import com.oracle.truffle.r.runtime.conn.SeekableMemoryByteChannel;
 import com.oracle.truffle.r.test.TestBase;

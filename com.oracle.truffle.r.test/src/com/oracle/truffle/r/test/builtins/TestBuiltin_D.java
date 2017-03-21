@@ -35,6 +35,6 @@ public class TestBuiltin_D extends TestBase {
         assertEval("g<-quote(x^2);(df <- D(g, \"x\"));df(0)");
         assertEval("(df <- D(1, \"x\"));df(0)");
         assertEval("x<-1;(df <- D(x, \"x\"));df(0)");
+        assertEval("D(expression(), 'a')");
     }
-
 }

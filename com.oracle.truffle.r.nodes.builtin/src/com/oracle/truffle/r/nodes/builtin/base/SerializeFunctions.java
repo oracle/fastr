@@ -135,10 +135,11 @@ public class SerializeFunctions {
             return doSerializeToConnBase(object, conn, type, RRuntime.LOGICAL_NA, version, refhook);
         }
 
+        @SuppressWarnings("unused")
         @Specialization
         protected Object doSerializeToConn(Object object, int conn, byte asciiLogical, int version, Object refhook) {
-            throw RError.error(this, RError.Message.UNIMPLEMENTED_ARG_TYPE, 4); // [TODO] implement
-                                                                                // "version" support
+            // TODO: implement "version" support
+            throw RError.error(this, RError.Message.UNIMPLEMENTED_ARG_TYPE, 4);
         }
     }
 

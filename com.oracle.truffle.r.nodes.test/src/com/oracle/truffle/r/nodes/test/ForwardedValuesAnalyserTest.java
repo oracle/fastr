@@ -22,12 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asLogicalVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.map;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -36,7 +30,6 @@ import org.junit.Test;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.AndFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter.ScalarValue;
-import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapByteToBoolean;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.DoubleFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.MissingFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.NotFilter;
@@ -44,6 +37,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.Filter.NullFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.OrFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.RTypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapByteToBoolean;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;

@@ -13,7 +13,6 @@ package com.oracle.truffle.r.test.builtins;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
-import com.oracle.truffle.r.test.TestBase.Output;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_asPOSIXlt extends TestBase {

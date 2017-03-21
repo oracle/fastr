@@ -37,13 +37,11 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
@@ -88,6 +86,9 @@ public abstract class D extends RExternalBuiltinNode.Arg2 {
     @TruffleBoundary
     protected Object doD(RExpression expr, String var,
                     @Cached("create()") D dNode) {
+        if (expr.getLength() == 0) {
+            return RRuntime.DOUBLE_NA;
+        }
         return dNode.execute(expr.getDataAt(0), var);
     }
 
@@ -97,5 +98,4 @@ public abstract class D extends RExternalBuiltinNode.Arg2 {
         dExpr = Deriv.addParens(dExpr);
         return RASTUtils.createLanguageElement(dExpr);
     }
-
 }
