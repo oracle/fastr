@@ -36,7 +36,9 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.util.function.Supplier;
 
+import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineType;
 import com.oracle.truffle.r.library.graphics.FastRFrame;
+import com.oracle.truffle.r.runtime.RInternalError;
 
 public class JFrameDevice implements GridDevice {
     // Grid's coordinate system has origin in left bottom corner and y axis grows from bottom to
@@ -46,11 +48,20 @@ public class JFrameDevice implements GridDevice {
     // only, we reset the transformation completely and transform the coordinates ourselves
     private static final double POINTS_IN_INCH = 72.;
 
+    private static BasicStroke solidStroke;
+    private static BasicStroke blankStroke;
+    private static BasicStroke dashedStroke;
+    private static BasicStroke longdashedStroke;
+    private static BasicStroke twodashedStroke;
+    private static BasicStroke dotdashedStroke;
+    private static BasicStroke dottedStroke;
+
     private FastRFrame currentFrame;
     private Graphics2D graphics;
 
     @Override
     public void openNewPage() {
+        initStrokes();
         if (currentFrame == null) {
             currentFrame = new FastRFrame();
             currentFrame.setVisible(true);
@@ -147,6 +158,7 @@ public class JFrameDevice implements GridDevice {
 
     private void setContext(DrawingContext ctx) {
         graphics.setColor(fromGridColor(ctx.getColor()));
+        graphics.setStroke(fromGridLineType(ctx.getLineType()));
     }
 
     private void setFontSize(DrawingContext ctx) {
@@ -164,5 +176,42 @@ public class JFrameDevice implements GridDevice {
 
     private static Color fromGridColor(GridColor color) {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+    }
+
+    private static BasicStroke fromGridLineType(GridLineType type) {
+        switch (type) {
+            case SOLID:
+                return solidStroke;
+            case BLANK:
+                return blankStroke;
+            case DASHED:
+                return dashedStroke;
+            case DOTDASHED:
+                return dotdashedStroke;
+            case DOTTED:
+                return dottedStroke;
+            case TWODASH:
+                return twodashedStroke;
+            case LONGDASH:
+                return longdashedStroke;
+            default:
+                throw RInternalError.shouldNotReachHere("unexpected value of GridLineType enum");
+        }
+    }
+
+    private static void initStrokes() {
+        if (solidStroke != null) {
+            return;
+        }
+        float defaultWidth = (float) (1. / POINTS_IN_INCH);
+        float dashSize = (float) (10. / POINTS_IN_INCH);
+        float dotSize = (float) (2. / POINTS_IN_INCH);
+        solidStroke = new BasicStroke((float) (1f / POINTS_IN_INCH));
+        blankStroke = new BasicStroke(0f);
+        dashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{dashSize}, 0f);
+        dottedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{dotSize}, 0f);
+        dotdashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{dotSize, dashSize}, 0f);
+        twodashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{dashSize / 2f, dashSize}, 0f);
+        longdashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{2f * dashSize}, 0f);
     }
 }

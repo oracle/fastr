@@ -28,6 +28,30 @@ package com.oracle.truffle.r.library.fastrGrid.device;
 public interface DrawingContext {
     double INCH_TO_POINTS_FACTOR = 72.27;
 
+    enum GridLineType {
+        // The order is important!
+        BLANK,
+        SOLID,
+        DASHED,
+        DOTTED,
+        DOTDASHED,
+        LONGDASH,
+        TWODASH;
+
+        private static final int LINE_TYPES_COUNT = 7;
+        private static final GridLineType[] allValues = values();
+
+        public static GridLineType fromInt(int num) {
+            if (num == -1) {
+                return BLANK;
+            }
+            assert num >= 1;
+            return allValues[(num - 1) % LINE_TYPES_COUNT + 1];
+        }
+    }
+
+    GridLineType getLineType();
+
     GridColor getColor();
 
     /**

@@ -11,18 +11,23 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asAbstractContainer;
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asDouble;
 
 import java.util.Arrays;
 
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 /**
  * In the context of grid package, GPar is a list that contains the parameters for the drawing, like
@@ -85,7 +90,7 @@ public final class GPar {
         data[GP_FILL] = "transparent";
         data[GP_COL] = "black";
         data[GP_GAMMA] = newDoubleVec(0);
-        data[GP_LTY] = "solid"; // TODO: LineType enum...
+        data[GP_LTY] = "solid";
         data[GP_LWD] = newDoubleVec(1);
         data[GP_CEX] = newDoubleVec(1);
         data[GP_FONTSIZE] = newDoubleVec(16);
@@ -120,6 +125,35 @@ public final class GPar {
         }
 
         @Override
+        public GridLineType getLineType() {
+            Object lty = data[GP_LTY];
+            if (lty == null || lty == RNull.instance) {
+                return GridLineType.SOLID;
+            }
+            String name = RRuntime.asString(lty);
+            if (name != null) {
+                return lineTypeFromName(name);
+            }
+            RAbstractContainer ltyVec = asAbstractContainer(lty);
+            int num;
+            if (ltyVec.getLength() == 0) {
+                num = RRuntime.INT_NA;
+            } else if (ltyVec instanceof RAbstractDoubleVector) {
+                double realVal = ((RAbstractDoubleVector) ltyVec).getDataAt(0);
+                num = RRuntime.isNA(realVal) ? RRuntime.INT_NA : (int) realVal;
+            } else if (ltyVec instanceof RAbstractIntVector) {
+                num = ((RAbstractIntVector) ltyVec).getDataAt(0);
+            } else {
+                num = RRuntime.INT_NA;
+            }
+
+            if (RRuntime.isNA(num)) {
+                throw RError.error(RError.NO_CALLER, Message.GENERIC, "Invalid line type.");
+            }
+            return GridLineType.fromInt(num);
+        }
+
+        @Override
         public GridColor getColor() {
             return getGridColor(GP_COL);
         }
@@ -151,6 +185,28 @@ public final class GPar {
 
         private GridColor getGridColor(int index) {
             return GridColorUtils.gridColorFromString(RRuntime.asString(data[index]));
+        }
+
+        private GridLineType lineTypeFromName(String name) {
+            switch (name) {
+                case "solid":
+                    return GridLineType.SOLID;
+                case "dashed":
+                    return GridLineType.DASHED;
+                case "dotted":
+                    return GridLineType.DOTTED;
+                case "dotdashed":
+                    return GridLineType.DOTDASHED;
+                case "longdash":
+                    return GridLineType.LONGDASH;
+                case "twodash":
+                    return GridLineType.TWODASH;
+                case "blank":
+                    return GridLineType.BLANK;
+                default:
+                    // TODO: implement hex digits as line style
+                    throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected line type '" + name + "'.");
+            }
         }
     }
 }
