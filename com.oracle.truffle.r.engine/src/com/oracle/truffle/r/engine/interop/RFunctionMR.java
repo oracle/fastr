@@ -67,12 +67,10 @@ public class RFunctionMR {
 
             RArgsValuesAndNames actualArgs = new RArgsValuesAndNames(arguments, ArgumentsSignature.empty(arguments.length));
             try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
-                try {
-                    dummyFrame.setObject(slot, actualArgs);
-                    return call.execute(dummyFrame, receiver);
-                } finally {
-                    dummyFrame.setObject(slot, null);
-                }
+                dummyFrame.setObject(slot, actualArgs);
+                return call.execute(dummyFrame, receiver);
+            } finally {
+                dummyFrame.setObject(slot, null);
             }
         }
     }

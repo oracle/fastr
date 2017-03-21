@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,12 +30,15 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.ForeignAccess.Factory18;
 import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactoryFactory.VectorReadNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -60,6 +63,7 @@ public final class RAbstractVectorAccessFactory implements Factory18 {
         @CompilationFinal private boolean lengthAccess;
         @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
         @Child private RLengthNode lengthNode = RLengthNode.create();
+        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         VectorReadNode() {
             super(TruffleRLanguage.class, null, null);
@@ -67,10 +71,13 @@ public final class RAbstractVectorAccessFactory implements Factory18 {
         }
 
         @Override
+        @SuppressWarnings("try")
         public final Object execute(VirtualFrame frame) {
-            Object label = ForeignAccess.getArguments(frame).get(0);
-            Object receiver = ForeignAccess.getReceiver(frame);
-            return execute(frame, receiver, label);
+            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+                Object label = ForeignAccess.getArguments(frame).get(0);
+                Object receiver = ForeignAccess.getReceiver(frame);
+                return execute(frame, receiver, label);
+            }
         }
 
         protected abstract Object execute(VirtualFrame frame, Object reciever, Object label);
