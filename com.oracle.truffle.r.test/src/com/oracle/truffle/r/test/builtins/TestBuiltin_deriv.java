@@ -131,8 +131,7 @@ public class TestBuiltin_deriv extends TestBase {
 
     @Test
     public void testDeriveFunctions1() {
-        deriv1("log(x)").derive().eval(0).withHessian().derive(Ignored.OutputFormatting).eval(0).eval(1).eval(Ignored.MissingWarning,
-                        -1);
+        deriv1("log(x)").derive().eval(0).withHessian().derive(Ignored.OutputFormatting).eval(0).eval(1).eval(Ignored.MissingWarning, -1);
         assertDerivAndEval1("exp(x)");
         assertDerivAndEval1("cos(x)");
         assertDerivAndEval1("sin(x)");
@@ -166,25 +165,16 @@ public class TestBuiltin_deriv extends TestBase {
         assertDerivAndEval2("x + y");
         deriv2("x*y").derive().eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
         deriv2("2*x*y").derive().eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
-        deriv2("x/y/2").derive(Ignored.OutputFormatting).eval(0,
-                        0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
-        deriv2("2/x*y").derive(Ignored.OutputFormatting).eval(0,
-                        0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
-        deriv2("x^y").derive(Ignored.OutputFormatting).eval(0,
-                        0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
-        deriv2("(x+1)*(y+2)").derive().eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0,
-                        0);
+        deriv2("x/y/2").derive(Ignored.OutputFormatting).eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
+        deriv2("2/x*y").derive(Ignored.OutputFormatting).eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
+        deriv2("x^y").derive().eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
+        deriv2("(x+1)*(y+2)").derive().eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
         assertDerivAndEval2("(x+1)-(y+2)");
-        deriv2("-(x+1)+(y+2)").derive().eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0,
-                        0);
-        deriv2("-(x+1)-(y+2)").derive().eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0,
-                        0);
-        deriv2("(x+1)/(y+2)").derive(Ignored.OutputFormatting).eval(0,
-                        0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
-        deriv2("(x+1)*(y+2*(x-1))").derive().eval(0,
-                        0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
-        deriv2("(x+1)^(y+2)").derive().eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0,
-                        0).eval(1, 1);
+        deriv2("-(x+1)+(y+2)").derive().eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
+        deriv2("-(x+1)-(y+2)").derive().eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
+        deriv2("(x+1)/(y+2)").derive(Ignored.OutputFormatting).eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
+        deriv2("(x+1)*(y+2*(x-1))").derive().eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0);
+        deriv2("(x+1)^(y+2)").derive().eval(0, 0).withHessian().derive(Ignored.OutputFormatting).eval(0, 0).eval(1, 1);
     }
 
     @Test

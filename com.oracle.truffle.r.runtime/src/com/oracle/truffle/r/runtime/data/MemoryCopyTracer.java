@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,9 @@ import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -71,10 +73,16 @@ public final class MemoryCopyTracer {
      * no-op.
      */
     public static void reportCopying(RAbstractVector source, RAbstractVector dest) {
+        assert RContext.getInstance() != null : "valid context needed whenever copying could be reported";
         if (!noMemoryCopyTracingAssumption.isValid() && enabled) {
-            for (Listener listener : listeners) {
-                listener.reportCopying(source, dest);
-            }
+            notifyListeners(source, dest);
+        }
+    }
+
+    @TruffleBoundary
+    private static void notifyListeners(RAbstractVector source, RAbstractVector dest) {
+        for (Listener listener : listeners) {
+            listener.reportCopying(source, dest);
         }
     }
 
