@@ -42,8 +42,9 @@ public abstract class GridLinesNode extends Node {
 
     @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
+    @Child private DrawArrowsNode drawArrowsNode = new DrawArrowsNode();
 
-    void execute(RAbstractVector x, RAbstractVector y, RList lengths) {
+    void execute(RAbstractVector x, RAbstractVector y, RList lengths, RList arrow) {
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();
 
@@ -90,6 +91,11 @@ public abstract class GridLinesNode extends Node {
                         // it's last iteration. This seems slightly weird, but that's how GnuR seems
                         // to work
                         drawPolylines(dev, drawingCtx, yy, xx, start, (i - start) + 1);
+                        if (arrow != null) {
+                            // Can draw an arrow at the start if the points include the first point.
+                            // Draw an arrow at the end only if this is the last series
+                            drawArrowsNode.drawArrows(xx, yy, start, (i - start) + 1, unitIndex, arrow, start == 0, lastIter, conversionCtx);
+                        }
                     }
                 }
                 oldIsFinite = currIsFinite;

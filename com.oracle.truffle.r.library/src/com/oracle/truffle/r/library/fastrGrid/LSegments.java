@@ -31,6 +31,7 @@ public abstract class LSegments extends RExternalBuiltinNode.Arg5 {
     @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
     @Child private Unit.UnitLengthNode unitLength = Unit.createLengthNode();
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
+    @Child private DrawArrowsNode drawArrowsNode = new DrawArrowsNode();
 
     static {
         Casts casts = new Casts(LSegments.class);
@@ -38,6 +39,7 @@ public abstract class LSegments extends RExternalBuiltinNode.Arg5 {
         casts.arg(1).mustBe(abstractVectorValue());
         casts.arg(2).mustBe(abstractVectorValue());
         casts.arg(3).mustBe(abstractVectorValue());
+        casts.arg(4).allowNull().mustBe(RList.class);
     }
 
     public static LSegments create() {
@@ -45,7 +47,12 @@ public abstract class LSegments extends RExternalBuiltinNode.Arg5 {
     }
 
     @Specialization
-    Object doSegments(RAbstractVector x0, RAbstractVector y0, RAbstractVector x1, RAbstractVector y1, Object arrowIgnored) {
+    Object doSegments(RAbstractVector x0, RAbstractVector y0, RAbstractVector x1, RAbstractVector y1, RNull arrow) {
+        return doSegments(x0, y0, x1, y1, (RList) null);
+    }
+
+    @Specialization
+    Object doSegments(RAbstractVector x0, RAbstractVector y0, RAbstractVector x1, RAbstractVector y1, RList arrow) {
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();
 
@@ -69,6 +76,9 @@ public abstract class LSegments extends RExternalBuiltinNode.Arg5 {
             yy[0] = loc1.y;
             yy[1] = loc2.y;
             dev.drawPolyLines(drawingCtx, xx, yy, 0, 2);
+            if (arrow != null) {
+                drawArrowsNode.drawArrows(xx, yy, 0, 2, i, arrow, true, true, conversionCtx);
+            }
         }
         return RNull.instance;
     }

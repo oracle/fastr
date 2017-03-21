@@ -124,6 +124,30 @@ final class GridUtils {
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non double/integer value " + val.getClass().getSimpleName());
     }
 
+    static double asDouble(Object val, int cyclicIndex) {
+        if (val instanceof Double) {
+            return (int) val;
+        } else if (val instanceof RAbstractDoubleVector) {
+            RAbstractDoubleVector vec = (RAbstractDoubleVector) val;
+            if (vec.getLength() > 0) {
+                return vec.getDataAt(cyclicIndex % vec.getLength());
+            }
+        }
+        throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non double value " + val.getClass().getSimpleName());
+    }
+
+    static int asInt(Object val, int cyclicIndex) {
+        if (val instanceof Integer) {
+            return (int) val;
+        } else if (val instanceof RAbstractIntVector) {
+            RAbstractIntVector vec = (RAbstractIntVector) val;
+            if (vec.getLength() > 0) {
+                return vec.getDataAt(cyclicIndex % vec.getLength());
+            }
+        }
+        throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non integer value " + val.getClass().getSimpleName());
+    }
+
     static RAbstractIntVector asIntVector(Object value) {
         if (value instanceof Integer) {
             return RDataFactory.createIntVectorFromScalar((Integer) value);

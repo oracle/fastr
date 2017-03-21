@@ -38,6 +38,7 @@ public abstract class LLines extends RExternalBuiltinNode.Arg4 {
         casts.arg(0).mustBe(abstractVectorValue());
         casts.arg(1).mustBe(abstractVectorValue());
         casts.arg(2).mustBe(RList.class);
+        casts.arg(2).allowNull().mustBe(RList.class);
     }
 
     public static LLines create() {
@@ -45,9 +46,14 @@ public abstract class LLines extends RExternalBuiltinNode.Arg4 {
     }
 
     @Specialization
-    Object doLines(RAbstractVector x, RAbstractVector y, RList lengths, @SuppressWarnings("unused") Object arrowIgnored) {
-        // TODO: implement arrows
-        gridLinesNode.execute(x, y, lengths);
+    Object doLines(RAbstractVector x, RAbstractVector y, RList lengths, RNull arrowIgnored) {
+        gridLinesNode.execute(x, y, lengths, null);
+        return RNull.instance;
+    }
+
+    @Specialization
+    Object doLines(RAbstractVector x, RAbstractVector y, RList lengths, @SuppressWarnings("unused") RList arrow) {
+        gridLinesNode.execute(x, y, lengths, arrow);
         return RNull.instance;
     }
 }

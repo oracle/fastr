@@ -46,7 +46,7 @@ public abstract class LPolygon extends RExternalBuiltinNode.Arg3 {
 
     @Specialization
     Object doLines(RAbstractVector x, RAbstractVector y, RList lengths) {
-        gridLinesNode.execute(x, y, lengths);
+        gridLinesNode.execute(x, y, lengths, null);
         return RNull.instance;
     }
 }
