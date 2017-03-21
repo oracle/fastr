@@ -46,6 +46,11 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 @RBuiltin(name = "missing", kind = PRIMITIVE, nonEvalArgs = 0, parameterNames = {"x"}, behavior = COMPLEX)
 public abstract class Missing extends RBuiltinNode {
 
+    static {
+        Casts casts = new Casts(Missing.class);
+        casts.arg("x").allowMissing();
+    }
+
     @Specialization
     protected byte missing(VirtualFrame frame, RPromise promise,
                     @Cached("create(0)") MissingCheckCache cache) {

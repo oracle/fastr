@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -33,6 +33,26 @@ public class TestBuiltin_lapply extends TestBase {
         assertEval("{ l <- list(list(1),list(2),list(3)); f <- function(a) { lapply(a, function(x) lapply(x, function(y) print(y))) }; f(l)}");
 
         assertEval("{ .Internal(lapply(1:4, 42)) }");
+
+        assertEval("lapply(NULL, function(x){x})");
+        assertEval("lapply(NA, FUN=function(x){x})");
+        assertEval("lapply(FUN=function(x){x})");
+        assertEval("lapply(1:4, NULL)");
+        assertEval("lapply(1:4, NA)");
+        assertEval(Output.IgnoreErrorContext, "lapply(X=1:4)");
+        assertEval("lapply(X=function() {print('test')}, FUN=function(x){x})");
+        assertEval(Output.IgnoreWhitespace, "lapply(X=c(function() {print(\"test1\")}, function() {print(\"test2\")}), FUN=function(x){x})");
+        assertEval("lapply(X=environment(), FUN=function(x){x})");
+
+        assertEval("f <- function(...) { .Internal(lapply(NULL, function(x){x})) }; f()");
+        assertEval("f <- function(...) { .Internal(lapply(NA, FUN=function(x){x})) }; f()");
+        assertEval("f <- function(...) { .Internal(lapply(FUN=function(x){x})) }; f()");
+        assertEval("f <- function(...) { .Internal(lapply(1:4, NULL)) }; f()");
+        assertEval("f <- function(...) { .Internal(lapply(1:4, NA)) }; f()");
+        assertEval("f <- function(...) { .Internal(lapply(X=1:4)) }; f()");
+        assertEval(Output.IgnoreErrorContext, "f <- function(...) { .Internal(lapply(X=function() {print('test')}, FUN=function(x){x})) }; f()");
+        assertEval(Ignored.ImplementationError, "f <- function(...) { .Internal(lapply(X=c(function() {print('test1')}, function() {print('test2')}), FUN=function(x){x})) }; f()");
+        assertEval(Output.IgnoreErrorContext, "f <- function(...) { .Internal(lapply(X=environment(), FUN=function(x){x})) }; f()");
     }
 
     @Test

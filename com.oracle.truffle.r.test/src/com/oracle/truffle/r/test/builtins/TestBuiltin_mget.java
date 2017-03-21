@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -20,6 +20,7 @@ public class TestBuiltin_mget extends TestBase {
     @Test
     public void testMGet() {
         assertEval("{ a<- 1; b <- 2; mget(c(\"a\", \"b\")) }");
+        assertEval("{ a<- 1; b <- 2; mget(c('a', 'b'), envir=1) }");
         assertEval("{ a<- 1; b <- 2; f <- function() { mget(c(\"a\", \"b\"), inherits=TRUE)}; f() }");
         assertEval("{ a<- 1; mget(c(\"a\", \"b\"), ifnotfound=list(100)) }");
         assertEval("{ b <- 2; f <- function() { mget(c(\"a\", \"b\"), ifnotfound=list(100), inherits=TRUE)}; f() }");

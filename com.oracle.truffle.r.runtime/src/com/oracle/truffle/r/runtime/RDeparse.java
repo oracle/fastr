@@ -682,6 +682,8 @@ public class RDeparse {
                 append("<pointer: 0x").append(Long.toHexString(((RExternalPtr) value).getAddr().asAddress())).append('>');
             } else if (value instanceof REnvironment) {
                 append("<environment>");
+            } else if (value instanceof REmpty) {
+                append("");
             } else if (value instanceof TruffleObject) {
                 append("<truffle object>");
             } else {

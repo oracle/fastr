@@ -61,6 +61,9 @@ public class TestBuiltin_pmatch extends TestBase {
     public void testArgumentsCasts() {
         assertEval("pmatch(NULL, 1)");
         assertEval("pmatch(1, NULL)");
+        assertEval("pmatch(x=NULL, table=NULL)");
+        assertEval("pmatch(x=1)");
+        assertEval("pmatch(table=1)");
         assertEval("pmatch(1:5, c(1,3), nomatch=NULL)");
         assertEval("pmatch(1:5, c(1,3), nomatch='str')");
         assertEval("pmatch(1:5, c(1,3), duplicates.ok=42)");

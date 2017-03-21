@@ -253,8 +253,7 @@ public class GetFunctions {
         static {
             Casts casts = new Casts(MGet.class);
             casts.arg("x").mustBe(stringValue()).asStringVector();
-            casts.arg("envir").mustBe(instanceOf(REnvironment.class).or(integerValue()).or(doubleValue()).or(instanceOf(RS4Object.class))).mapIf(integerValue().or(doubleValue()),
-                            chain(asIntegerVector()).with(findFirst().integerElement()).end());
+            casts.arg("envir").mustBe(instanceOf(REnvironment.class).or(instanceOf(RS4Object.class)), RError.Message.MUST_BE_ENVIRON2, "second argument");
             casts.arg("mode").mustBe(stringValue()).asStringVector();
             casts.arg("ifnotfound").mustBe(RAbstractListVector.class);
             casts.arg("inherits").asLogicalVector().findFirst().map(toBoolean());

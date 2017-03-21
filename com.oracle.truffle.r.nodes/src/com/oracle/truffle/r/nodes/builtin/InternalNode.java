@@ -147,7 +147,8 @@ public abstract class InternalNode extends OperatorNode {
             // verify the number of arguments
             if (factory.getSignature().getVarArgCount() == 0) {
                 if (callArgs.length != factory.getSignature().getLength()) {
-                    throw RError.error(RError.SHOW_CALLER, Message.ARGUMENTS_PASSED, callArgs.length, ".Internal(" + name + ")", factory.getSignature().getLength());
+                    throw RError.error(RError.SHOW_CALLER, callArgs.length == 1 ? Message.ARGUMENT_PASSED : Message.ARGUMENTS_PASSED, callArgs.length, ".Internal(" + name + ")",
+                                    factory.getSignature().getLength());
                 }
                 for (int i = 0; i < callArgs.length; i++) {
                     if (callArgs[i] instanceof RSyntaxConstant && ((RSyntaxConstant) callArgs[i]).getValue() == REmpty.instance) {

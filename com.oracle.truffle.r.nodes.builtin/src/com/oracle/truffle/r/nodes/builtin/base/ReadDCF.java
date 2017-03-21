@@ -35,6 +35,7 @@ import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.DCF;
 import com.oracle.truffle.r.runtime.RError;
@@ -54,8 +55,8 @@ public abstract class ReadDCF extends RBuiltinNode {
     static {
         Casts casts = new Casts(ReadDCF.class);
         casts.arg("conn").defaultError(Message.INVALID_CONNECTION).asIntegerVector().findFirst();
-        casts.arg("fields").mapNull(emptyStringVector()).asStringVector();
-        casts.arg("keepwhite").mapNull(emptyStringVector()).asStringVector();
+        casts.arg("fields").mustNotBeMissing().mapIf(nullValue(), emptyStringVector()).asStringVector();
+        casts.arg("keepwhite").mustNotBeMissing().mapIf(nullValue(), emptyStringVector()).asStringVector();
     }
 
     @Specialization

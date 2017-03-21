@@ -99,4 +99,14 @@ public class TestBuiltin_nchar extends TestBase {
         assertEval("nchar('aasd', type='charsxzy')");
         assertEval("nchar('aasd', type='')");
     }
+
+    @Test
+    public void testNULLAndMissing() {
+        assertEval("nchar()");
+        assertEval("nchar(type = 'chars', allowNA = FALSE, keepNA = NA)");
+        assertEval("nchar(x=NULL)");
+        assertEval("nchar(x=NULL, type = 'chars', allowNA = FALSE, keepNA = NA)");
+        assertEval("nchar(wrongArg=\"a\")");
+        assertEval("nchar(wrongArg='a')");
+    }
 }

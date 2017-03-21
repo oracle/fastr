@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -30,11 +29,14 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "pmatch", kind = INTERNAL, parameterNames = {"x", "table", "nomatch", "duplicates.ok"}, behavior = PURE)
@@ -46,10 +48,25 @@ public abstract class PMatch extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(PMatch.class);
-        casts.arg("x").asStringVector();
-        casts.arg("table").asStringVector();
-        casts.arg("nomatch").mapNull(constant(RRuntime.INT_NA)).asIntegerVector();
+        casts.arg("x").mustNotBeMissing().asStringVector();
+        casts.arg("table").mustNotBeMissing().asStringVector();
+        casts.arg("nomatch").mustNotBeMissing().mapIf(nullValue(), constant(RRuntime.INT_NA)).asIntegerVector().findFirst();
         casts.arg("duplicates.ok").mustBe(numericValue()).asLogicalVector().findFirst().map(toBoolean());
+    }
+
+    @Specialization
+    protected RIntVector doPMatch(RNull x, RAbstractStringVector table, int nomatch, boolean duplicatesOk) {
+        return RDataFactory.createEmptyIntVector();
+    }
+
+    @Specialization
+    protected RIntVector doPMatch(RAbstractStringVector x, RNull table, int nomatch, boolean duplicatesOk) {
+        return RDataFactory.createEmptyIntVector();
+    }
+
+    @Specialization
+    protected RIntVector doPMatch(RNull x, RNull table, int nomatch, boolean duplicatesOk) {
+        return RDataFactory.createEmptyIntVector();
     }
 
     @Specialization

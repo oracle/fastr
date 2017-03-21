@@ -38,7 +38,7 @@ public abstract class IntToBits extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(IntToBits.class);
-        casts.arg("x").asIntegerVector();
+        casts.arg("x").mustNotBeMissing().asIntegerVector();
     }
 
     @Specialization

@@ -37,10 +37,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.nmath.GammaFunctions;
 import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -96,16 +93,6 @@ public class BaseGammaFunctions {
                 naValCheck.check(result[i]);
             }
             return RDataFactory.createDoubleVector(result, naValCheck.neverSeenNA());
-        }
-
-        @Specialization
-        protected RDoubleVector lgamma(RAbstractIntVector x) {
-            return lgamma(RClosures.createIntToDoubleVector(x));
-        }
-
-        @Specialization
-        protected RDoubleVector lgamma(RAbstractLogicalVector x) {
-            return lgamma(RClosures.createLogicalToDoubleVector(x));
         }
     }
 
