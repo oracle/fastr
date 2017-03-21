@@ -100,41 +100,41 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
         ForeignAccess foreignAccess = null;
         String name = clazz.getSimpleName();
         if (RNull.class.isAssignableFrom(clazz)) {
-            foreignAccess = RNullMRForeign.createAccess();
+            foreignAccess = RNullMRForeign.ACCESS;
         } else if (RList.class.isAssignableFrom(clazz)) {
-            foreignAccess = RListMRForeign.createAccess();
+            foreignAccess = RListMRForeign.ACCESS;
         } else if (REnvironment.class.isAssignableFrom(clazz)) {
-            foreignAccess = REnvironmentMRForeign.createAccess();
+            foreignAccess = REnvironmentMRForeign.ACCESS;
         } else if (RPairList.class.isAssignableFrom(clazz)) {
-            foreignAccess = RPairListMRForeign.createAccess();
+            foreignAccess = RPairListMRForeign.ACCESS;
         } else if (RFunction.class.isAssignableFrom(clazz)) {
-            foreignAccess = RFunctionMRForeign.createAccess();
+            foreignAccess = RFunctionMRForeign.ACCESS;
         } else if (DLL.DLLInfo.class.isAssignableFrom(clazz)) {
-            foreignAccess = DLLInfoMRForeign.createAccess();
+            foreignAccess = DLLInfoMRForeign.ACCESS;
         } else if (DLL.DotSymbol.class.isAssignableFrom(clazz)) {
-            foreignAccess = DLLDotSymbolMRForeign.createAccess();
+            foreignAccess = DLLDotSymbolMRForeign.ACCESS;
         } else if (RSymbol.class.isAssignableFrom(clazz)) {
-            foreignAccess = RSymbolMRForeign.createAccess();
+            foreignAccess = RSymbolMRForeign.ACCESS;
         } else if (RExternalPtr.class.isAssignableFrom(clazz)) {
-            foreignAccess = RExternalPtrMRForeign.createAccess();
+            foreignAccess = RExternalPtrMRForeign.ACCESS;
         } else if (RUnboundValue.class.isAssignableFrom(clazz)) {
-            foreignAccess = RUnboundValueMRForeign.createAccess();
+            foreignAccess = RUnboundValueMRForeign.ACCESS;
         } else if (NativeRawArray.class.isAssignableFrom(clazz)) {
-            foreignAccess = NativeRawArrayMRForeign.createAccess();
+            foreignAccess = NativeRawArrayMRForeign.ACCESS;
         } else if (NativeLogicalArray.class.isAssignableFrom(clazz)) {
-            foreignAccess = NativeLogicalArrayMRForeign.createAccess();
+            foreignAccess = NativeLogicalArrayMRForeign.ACCESS;
         } else if (NativeCharArray.class.isAssignableFrom(clazz)) {
-            foreignAccess = NativeCharArrayMRForeign.createAccess();
+            foreignAccess = NativeCharArrayMRForeign.ACCESS;
         } else if (NativeDoubleArray.class.isAssignableFrom(clazz)) {
-            foreignAccess = NativeDoubleArrayMRForeign.createAccess();
+            foreignAccess = NativeDoubleArrayMRForeign.ACCESS;
         } else if (NativeIntegerArray.class.isAssignableFrom(clazz)) {
-            foreignAccess = NativeIntegerArrayMRForeign.createAccess();
+            foreignAccess = NativeIntegerArrayMRForeign.ACCESS;
         } else if (RInteger.class.isAssignableFrom(clazz)) {
-            foreignAccess = RIntegerMRForeign.createAccess();
+            foreignAccess = RIntegerMRForeign.ACCESS;
         } else if (RDouble.class.isAssignableFrom(clazz)) {
-            foreignAccess = RDoubleMRForeign.createAccess();
+            foreignAccess = RDoubleMRForeign.ACCESS;
         } else if (CharSXPWrapper.class.isAssignableFrom(clazz)) {
-            foreignAccess = CharSXPWrapperMRForeign.createAccess();
+            foreignAccess = CharSXPWrapperMRForeign.ACCESS;
         } else {
             if (RAbstractVector.class.isAssignableFrom(clazz)) {
                 foreignAccess = ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
