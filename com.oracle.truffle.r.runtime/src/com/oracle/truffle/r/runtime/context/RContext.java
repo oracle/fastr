@@ -710,6 +710,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         s4ExtendsTable.put(key, value);
     }
 
+    @TruffleBoundary
     public PrimitiveMethodsInfo getPrimitiveMethodsInfo() {
         if (primitiveMethodsInfo == null) {
             // shared contexts do not run concurrently with their parent and re-use primitive

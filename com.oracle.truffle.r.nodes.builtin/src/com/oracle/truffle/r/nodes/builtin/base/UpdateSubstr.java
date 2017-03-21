@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -51,7 +53,8 @@ public abstract class UpdateSubstr extends RBuiltinNode {
     private final BranchProfile everSeenIllegalRange = BranchProfile.create();
 
     static {
-        Casts.noCasts(UpdateSubstr.class);
+        Casts casts = new Casts(UpdateSubstr.class);
+        casts.arg("x").mustBe(nullValue().not().and(stringValue()), RError.Message.REPLACING_IN_NON_CHAR_OBJ).asStringVector();
     }
 
     private static boolean rangeOk(String x, int start, int stop) {

@@ -12,7 +12,10 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingConstant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
@@ -420,7 +423,8 @@ public final class SeqFunctions {
         private static final double FLT_EPSILON = 1.19209290e-7;
 
         static {
-            Casts.noCasts(SeqInt.class);
+            Casts casts = new Casts(SeqInt.class);
+            casts.arg("length.out").allowMissing().mapIf(nullValue(), missingConstant());
         }
 
         protected abstract Object execute(VirtualFrame frame, Object start, Object to, Object by, Object lengthOut, Object alongWith);

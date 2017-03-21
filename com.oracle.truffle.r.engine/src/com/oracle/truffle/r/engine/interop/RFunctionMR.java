@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 @MessageResolution(receiverType = RFunction.class, language = TruffleRLanguage.class)
 public class RFunctionMR {
@@ -54,8 +55,12 @@ public class RFunctionMR {
     @Resolve(message = "EXECUTE")
     public abstract static class RFunctionExecuteNode extends Node {
         private static final FrameDescriptor emptyFrameDescriptor = new FrameDescriptor("R interop frame");
-        private final Object argsIdentifier = new Object();
-        private final FrameSlot slot = emptyFrameDescriptor.addFrameSlot(argsIdentifier, FrameSlotKind.Object);
+        private static final Object argsIdentifier = new Object();
+        private static final FrameSlot slot = emptyFrameDescriptor.addFrameSlot(argsIdentifier, FrameSlotKind.Object);
+
+        static {
+            FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<function>", emptyFrameDescriptor);
+        }
 
         @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier);
         @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();

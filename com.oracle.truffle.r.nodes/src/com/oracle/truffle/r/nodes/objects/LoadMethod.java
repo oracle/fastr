@@ -71,33 +71,38 @@ abstract class LoadMethod extends RBaseNode {
                     @Cached("createClassProfile()") ValueProfile regFrameAccessProfile,
                     @Cached("createClassProfile()") ValueProfile methodsFrameAccessProfile) {
         DynamicObject attributes = fdef.getAttributes();
-        assert attributes != null; // should have at least class attribute
+        assert fdef.isBuiltin() || attributes != null;
         int found;
-        Object nextMethodAttr = nextMethodAttrAccess.execute(attributes);
-        // it's an optimization only where it's expected that either 2 or 4 attributes total will be
-        // present - anything else triggers execution of a generic S4 function
-        if (noNextMethodAttr.profile(nextMethodAttr == null)) {
-            found = 4; // class attribute plus three others are expected
-            Object targetAttr = targetAttrAccess.execute(attributes);
-            if (noTargetAttr.profile(targetAttr == null)) {
-                found--;
+        if (attributes != null) {
+            Object nextMethodAttr = nextMethodAttrAccess.execute(attributes);
+            // it's an optimization only where it's expected that either 2 or 4 attributes total
+            // will be
+            // present - anything else triggers execution of a generic S4 function
+            if (noNextMethodAttr.profile(nextMethodAttr == null)) {
+                found = 4; // class attribute plus three others are expected
+                Object targetAttr = targetAttrAccess.execute(attributes);
+                if (noTargetAttr.profile(targetAttr == null)) {
+                    found--;
+                } else {
+                    writeRTarget.execute(frame, targetAttr);
+                }
+                Object definedAttr = definedAttrAccess.execute(attributes);
+                if (noDefinedAttr.profile(definedAttr == null)) {
+                    found--;
+                } else {
+                    writeRDefined.execute(frame, definedAttr);
+                }
+                Object sourceAttr = sourceAttrAccess.execute(attributes);
+                if (sourceAttr == null) {
+                    noSourceAttr.enter();
+                    found--;
+                }
             } else {
-                writeRTarget.execute(frame, targetAttr);
-            }
-            Object definedAttr = definedAttrAccess.execute(attributes);
-            if (noDefinedAttr.profile(definedAttr == null)) {
-                found--;
-            } else {
-                writeRDefined.execute(frame, definedAttr);
-            }
-            Object sourceAttr = sourceAttrAccess.execute(attributes);
-            if (sourceAttr == null) {
-                noSourceAttr.enter();
-                found--;
+                found = 2; // next method attribute and class attribute
+                writeRNextMethod.execute(frame, nextMethodAttr);
             }
         } else {
-            found = 2; // next method attribute and class attribute
-            writeRNextMethod.execute(frame, nextMethodAttr);
+            found = 0;
         }
 
         writeRMethod.execute(frame, fdef);
@@ -109,7 +114,7 @@ abstract class LoadMethod extends RBaseNode {
         }
         assert !fname.equals(RRuntime.R_LOAD_METHOD_NAME);
         RFunction ret;
-        if (moreAttributes.profile(found < fdef.getAttributes().size())) {
+        if (fdef.getAttributes() != null && moreAttributes.profile(found < fdef.getAttributes().size())) {
             RFunction currentFunction;
             REnvironment methodsEnv = (REnvironment) methodsEnvRead.execute(frame, REnvironment.getNamespaceRegistry().getFrame(regFrameAccessProfile));
             if (loadMethodFind == null) {

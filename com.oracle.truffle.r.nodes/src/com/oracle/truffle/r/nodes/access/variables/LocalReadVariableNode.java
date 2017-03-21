@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,8 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 public final class LocalReadVariableNode extends Node {
 
@@ -53,6 +55,7 @@ public final class LocalReadVariableNode extends Node {
 
     @CompilationFinal private FrameSlot frameSlot;
     @CompilationFinal private Assumption notInFrame;
+    @CompilationFinal private Assumption containsNoActiveBindingAssumption;
 
     private final ValueProfile frameProfile = ValueProfile.createClassProfile();
 
@@ -107,6 +110,16 @@ public final class LocalReadVariableNode extends Node {
         if (isNullProfile.profile(result == null) || isMissingProfile.profile(result == RMissing.instance)) {
             return null;
         }
+
+        if (containsNoActiveBindingAssumption == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            containsNoActiveBindingAssumption = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(profiledVariableFrame.getFrameDescriptor());
+        }
+        // special treatment for active binding: call bound function
+        if (!containsNoActiveBindingAssumption.isValid() && ActiveBinding.isActiveBinding(result)) {
+            return ((ActiveBinding) result).readValue();
+        }
+
         if (forceResult) {
             if (isPromiseProfile == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();

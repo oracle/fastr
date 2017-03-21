@@ -82,7 +82,14 @@ public abstract class StandardGeneric extends RBuiltinNode {
     }
 
     private Object stdGenericInternal(VirtualFrame frame, String fname, RFunction fdef) {
-        MaterializedFrame fnFrame = fdef.getEnclosingFrame();
+        RFunction def = fdef;
+        if (def.isBuiltin()) {
+            def = RContext.getInstance().getPrimitiveMethodsInfo().getPrimGeneric(def.getRBuiltin().getPrimMethodIndex());
+            if (def == null) {
+                return RRuntime.DEFERRED_DEFAULT_MARKER;
+            }
+        }
+        MaterializedFrame fnFrame = def.getEnclosingFrame();
         REnvironment mtable = (REnvironment) readMTableFirst.execute(frame, fnFrame);
         if (mtable == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -90,7 +97,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
             // and this slow path should not be executed again
             REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
             RFunction currentFunction = ReadVariableNode.lookupFunction(".getMethodsTable", methodsEnv.getFrame(), true, true);
-            mtable = (REnvironment) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, getOriginalCall()), null, fdef);
+            mtable = (REnvironment) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, getOriginalCall()), null, def);
         }
         RList sigArgs = (RList) readSigARgs.execute(null, fnFrame);
         int sigLength = (int) castIntScalar.execute(readSigLength.execute(null, fnFrame));
@@ -102,7 +109,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
             collectArgumentsNode = insert(CollectGenericArgumentsNodeGen.create(sigArgs.getDataWithoutCopying(), sigLength));
         }
         RStringVector classes = collectArgumentsNode.execute(frame, sigArgs, sigLength);
-        Object ret = dispatchGeneric.executeObject(frame, mtable, classes, fdef, fname);
+        Object ret = dispatchGeneric.executeObject(frame, mtable, classes, def, fname);
         return ret;
     }
 

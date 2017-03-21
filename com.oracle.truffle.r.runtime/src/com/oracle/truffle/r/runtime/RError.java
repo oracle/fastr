@@ -857,7 +857,12 @@ public final class RError extends RuntimeException {
         INVALID_VARIABLE_NAMES("invalid variable names"),
         INVALID_EXPRESSION("invalid expression in '%s'"),
         INVALID_EXPRESSION_TYPE("expression must not be type '%s'"),
-        NOT_IN_DERIVATIVE_TABLE("Function '%s' is not in the derivatives table");
+        NOT_IN_DERIVATIVE_TABLE("Function '%s' is not in the derivatives table"),
+        CANNOT_ADD_BINDINGS("cannot add bindings to a locked environment"),
+        SYMBOL_HAS_REGULAR_BINDING("symbol already has a regular binding"),
+        CANNOT_CHANGE_LOCKED_ACTIVE_BINDING("cannot change active binding if binding is locked"),
+        NO_BINDING_FOR("no binding for \"%s\""),
+        REPLACING_IN_NON_CHAR_OBJ("replacing substrings in a non-character object");
 
         public final String message;
         final boolean hasArgs;

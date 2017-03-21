@@ -42,11 +42,15 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -63,6 +67,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -79,6 +84,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 /**
@@ -412,7 +418,13 @@ public class EnvFunctions {
             RRootNode root = (RRootNode) fun.getTarget().getRootNode();
             RootCallTarget target = root.duplicateWithNewFrameDescriptor();
             FrameSlotChangeMonitor.initializeEnclosingFrame(target.getRootNode().getFrameDescriptor(), enclosingFrame);
-            return RDataFactory.createFunction(fun.getName(), fun.getPackageName(), target, null, enclosingFrame);
+
+            RFunction newFunction = RDataFactory.createFunction(fun.getName(), fun.getPackageName(), target, null, enclosingFrame);
+            if (fun.getAttributes() != null) {
+                newFunction.initAttributes(RAttributesLayout.copy(fun.getAttributes()));
+            }
+            newFunction.setTypedValueInfo(fun.getTypedValueInfo());
+            return newFunction;
         }
 
         @Specialization
@@ -600,11 +612,38 @@ public class EnvFunctions {
             casts.arg("env").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
         }
 
-        @SuppressWarnings("unused")
+        private BranchProfile frameSlotBranchProfile;
+
+        @TruffleBoundary
         @Specialization
-        protected Object makeActiveBinding(Object sym, Object fun, Object env) {
-            // TODO implement
-            throw RError.nyi(this, "makeActiveBinding");
+        protected Object makeActiveBinding(RSymbol sym, RFunction fun, REnvironment env) {
+            if (frameSlotBranchProfile == null) {
+                frameSlotBranchProfile = BranchProfile.create();
+            }
+
+            String name = sym.getName();
+            MaterializedFrame frame = env.getFrame();
+            Object binding = ReadVariableNode.lookupAny(name, frame, true);
+            if (binding == null) {
+                if (!env.isLocked()) {
+                    FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), name, FrameSlotKind.Object);
+                    FrameSlotChangeMonitor.setActiveBinding(frame, slot, new ActiveBinding(sym.getRType(), fun), false, frameSlotBranchProfile);
+                    binding = ReadVariableNode.lookupAny(name, frame, true);
+                    assert binding != null;
+                    assert binding instanceof ActiveBinding;
+                } else {
+                    throw error(RError.Message.CANNOT_ADD_BINDINGS);
+                }
+            } else if (!ActiveBinding.isActiveBinding(binding)) {
+                throw error(RError.Message.SYMBOL_HAS_REGULAR_BINDING);
+            } else if (env.bindingIsLocked(name)) {
+                throw error(RError.Message.CANNOT_CHANGE_LOCKED_ACTIVE_BINDING);
+            } else {
+                // update active binding
+                FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(name);
+                FrameSlotChangeMonitor.setActiveBinding(frame, slot, new ActiveBinding(sym.getRType(), fun), false, frameSlotBranchProfile);
+            }
+            return RNull.instance;
         }
     }
 
@@ -617,11 +656,13 @@ public class EnvFunctions {
             casts.arg("env").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object bindingIsActive(Object sym, Object env) {
-            // TODO implement
-            throw RError.nyi(this, "bindingIsActive");
+        protected Object bindingIsActive(RSymbol sym, REnvironment env) {
+            Object binding = ReadVariableNode.lookupAny(sym.getName(), env.getFrame(), true);
+            if (binding == null) {
+                throw error(RError.Message.NO_BINDING_FOR, sym.getName());
+            }
+            return RDataFactory.createLogicalVectorFromScalar(ActiveBinding.isActiveBinding(binding));
         }
     }
 
@@ -724,6 +765,11 @@ public class EnvFunctions {
         @Specialization
         Object copy(REnvironment env) {
             return env;
+        }
+
+        @Specialization
+        Object copy(RS4Object o) {
+            return o.copy();
         }
 
         @Fallback

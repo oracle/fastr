@@ -56,7 +56,6 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
@@ -69,7 +68,7 @@ import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 // TODO Implement completely, this is a simple implementation that works when the envir argument is ignored
-@RBuiltin(name = "do.call", visibility = CUSTOM, kind = RBuiltinKind.SUBSTITUTE, parameterNames = {"what", "args", "quote", "envir"}, behavior = COMPLEX)
+@RBuiltin(name = ".fastr.do.call", visibility = CUSTOM, kind = RBuiltinKind.INTERNAL, parameterNames = {"what", "args", "quote", "envir"}, behavior = COMPLEX)
 public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNodeChildren {
 
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
@@ -84,7 +83,7 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
         casts.arg("what").defaultError(Message.MUST_BE_STRING_OR_FUNCTION, "what").mustBe(instanceOf(RFunction.class).or(stringValue()));
         casts.arg("args").mustBe(RAbstractListVector.class, Message.SECOND_ARGUMENT_LIST);
         casts.arg("quote").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
-        casts.arg("envir").allowMissing().mustBe(REnvironment.class, Message.MUST_BE_ENVIRON, "envir");
+        casts.arg("envir").mustNotBeMissing().mustBe(REnvironment.class, Message.MUST_BE_ENVIRON, "envir");
     }
 
     protected static Get createGet() {
@@ -111,24 +110,14 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
     }
 
     @Specialization(limit = "3", guards = {"what.getLength() == 1", "read.getIdentifier() == what.getDataAt(0)"})
-    protected Object doCallCached(VirtualFrame frame, @SuppressWarnings("unused") RAbstractStringVector what, RList argsAsList, boolean quote, RMissing env,
+    protected Object doCallCached(VirtualFrame frame, @SuppressWarnings("unused") RAbstractStringVector what, RList argsAsList, boolean quote, REnvironment env,
                     @Cached("createRead(what)") ReadVariableNode read) {
         RFunction func = (RFunction) read.execute(frame);
         return doCall(frame, func, argsAsList, quote, env);
     }
 
     @Specialization(replaces = "doCallCached")
-    protected Object doCall(VirtualFrame frame, RAbstractStringVector what, RList argsAsList, boolean quote, RMissing env) {
-        if (what.getLength() != 1) {
-            CompilerDirectives.transferToInterpreter();
-            throw error(RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
-        }
-        RFunction func = ReadVariableNode.lookupFunction(what.getDataAt(0), frame.materialize());
-        return doCall(frame, func, argsAsList, quote, env);
-    }
-
-    @Specialization
-    protected Object doCall(VirtualFrame frame, RFunction func, RList argsAsList, boolean quote, @SuppressWarnings("unused") Object env) {
+    protected Object doCall(VirtualFrame frame, RFunction func, RList argsAsList, boolean quote, REnvironment env) {
         /*
          * To re-create the illusion of a normal call, turn the values in argsAsList into promises.
          */
@@ -151,14 +140,14 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
                 if (arg instanceof RLanguage) {
                     containsRLanguageProfile.enter();
                     RLanguage lang = (RLanguage) arg;
-                    argValues[i] = createRLanguagePromise(frame.materialize(), lang);
+                    argValues[i] = createRLanguagePromise(env.getFrame().materialize(), lang);
                 } else if (arg instanceof RSymbol) {
                     containsRSymbolProfile.enter();
                     RSymbol symbol = (RSymbol) arg;
                     if (symbol.getName().isEmpty()) {
                         argValues[i] = REmpty.instance;
                     } else {
-                        argValues[i] = createLookupPromise(frame.materialize(), symbol);
+                        argValues[i] = createLookupPromise(env.getFrame().materialize(), symbol);
                     }
                 }
             }

@@ -164,6 +164,8 @@ public class RRuntime {
 
     public static final String DOT_SIG_ARGS = ".SigArgs";
 
+    public static final RSymbol DEFERRED_DEFAULT_MARKER = new RSymbol("__Deferred_Default_Marker__");
+
     public static final String R_TARGET = "target";
     public static final String R_DOT_TARGET = ".target";
     public static final String R_DEFINED = "defined";

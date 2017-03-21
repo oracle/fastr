@@ -70,6 +70,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameAndSlotLookupResult;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.LookupResult;
@@ -131,6 +132,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     @CompilationFinal private boolean needsCopying;
 
     private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isActiveBindingProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile copyProfile;
     private final BranchProfile unexpectedMissingProfile = BranchProfile.create();
     private final ValueProfile superEnclosingFrameProfile = ValueProfile.createClassProfile();
@@ -229,6 +231,9 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
                 promiseHelper = insert(new PromiseHelperNode());
             }
             result = promiseHelper.evaluate(frame, (RPromise) result);
+        }
+        if (isActiveBindingProfile.profile(ActiveBinding.isActiveBinding(result))) {
+            return ((ActiveBinding) result).readValue();
         }
         return result;
     }
