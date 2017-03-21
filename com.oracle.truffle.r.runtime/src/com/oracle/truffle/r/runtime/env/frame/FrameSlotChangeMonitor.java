@@ -467,9 +467,6 @@ public final class FrameSlotChangeMonitor {
         @CompilationFinal private StableValue<Object> stableValue;
         private int invalidationCount;
 
-        // TODO @CompilationFinal ?
-        @CompilationFinal private boolean activeBinding;
-
         FrameSlotInfoImpl(boolean isSingletonFrame, boolean isGlobalEnv, Object identifier) {
             if (isSingletonFrame) {
                 stableValue = new StableValue<>(null, identifier.toString());
@@ -509,7 +506,6 @@ public final class FrameSlotChangeMonitor {
             if (stableValue != null && stableValue.getValue() != value) {
                 invalidateStableValue(value, slot);
             }
-            activeBinding = ActiveBinding.isActiveBinding(value);
         }
 
         private void invalidateStableValue(Object value, FrameSlot slot) {
@@ -527,10 +523,6 @@ public final class FrameSlotChangeMonitor {
 
         public StableValue<Object> getStableValue() {
             return stableValue;
-        }
-
-        public boolean isActiveBinding() {
-            return activeBinding;
         }
     }
 
@@ -658,13 +650,7 @@ public final class FrameSlotChangeMonitor {
 
     public static synchronized Assumption getContainsNoActiveBindingAssumption(FrameDescriptor descriptor) {
         CompilerAsserts.neverPartOfCompilation();
-        final FrameDescriptorMetaData frameDescriptorMetaData = frameDescriptors.get(descriptor);
-        return frameDescriptorMetaData != null ? frameDescriptorMetaData.getContainsNoActiveBindingAssumption() : null;
-    }
-
-    public static synchronized boolean isContainsNoActiveBindingAssumptionValid(FrameDescriptor descriptor) {
-        Assumption assumption = getContainsNoActiveBindingAssumption(descriptor);
-        return assumption != null ? assumption.isValid() : true;
+        return frameDescriptors.get(descriptor).getContainsNoActiveBindingAssumption();
     }
 
     public static synchronized StableValue<Object> getStableValueAssumption(FrameDescriptor descriptor, FrameSlot frameSlot, Object value) {
@@ -685,9 +671,5 @@ public final class FrameSlotChangeMonitor {
 
     public static boolean isValidFrameDescriptor(FrameDescriptor frameDesc) {
         return getMetaData(frameDesc) != null;
-    }
-
-    public static boolean isActiveBinding(FrameSlot slot) {
-        return ((FrameSlotInfoImpl) slot.getInfo()).isActiveBinding();
     }
 }

@@ -73,6 +73,7 @@ abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
         private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
         private final BranchProfile invalidateProfile = BranchProfile.create();
         private final ValueProfile enclosingFrameProfile = ValueProfile.createClassProfile();
+        private final ConditionProfile isActiveBindingProfile = ConditionProfile.createBinaryProfile();
 
         private final Mode mode;
         @CompilationFinal private Assumption containsNoActiveBinding;
@@ -110,7 +111,7 @@ abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
                 Object newValue = shareObjectValue(profiledFrame, frameSlot, storedObjectProfile.profile(value), mode, true);
                 FrameSlotChangeMonitor.setObjectAndInvalidate(profiledFrame, frameSlot, newValue, true, invalidateProfile);
             } else {
-                handleActiveBinding(frame, profiledFrame, value, frameSlot, invalidateProfile);
+                handleActiveBinding(frame, profiledFrame, value, frameSlot, invalidateProfile, isActiveBindingProfile);
             }
         }
     }

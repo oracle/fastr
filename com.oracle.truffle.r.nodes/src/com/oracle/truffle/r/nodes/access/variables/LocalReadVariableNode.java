@@ -116,7 +116,7 @@ public final class LocalReadVariableNode extends Node {
             containsNoActiveBindingAssumption = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(profiledVariableFrame.getFrameDescriptor());
         }
         // special treatment for active binding: call bound function
-        if (containsNoActiveBindingAssumption != null && !containsNoActiveBindingAssumption.isValid() && ActiveBinding.isActiveBinding(result)) {
+        if (!containsNoActiveBindingAssumption.isValid() && ActiveBinding.isActiveBinding(result)) {
             return ((ActiveBinding) result).readValue();
         }
 
