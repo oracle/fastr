@@ -54,7 +54,7 @@ Package developers can provide tests in several ways. To enable the full set of 
 
 ### Package Installation and Testing
 
-Package installation and testing is partly handled by a R script `install.packages.R` in the `com.oracle.truffle.r.test.packages` project and partly by an `mx` script. There are two relevant `mx` commands, `installpkgs` and `pkgtest`. The former is simply a wrapper to `install.packages.R`, whereas `pkgtest` contains additional code to gather and compare test outputs.
+Package installation and testing is partly handled by a R script `r/install.packages.R` in the `com.oracle.truffle.r.test.packages` project and partly by an `mx` script. There are two relevant `mx` commands, `installpkgs` and `pkgtest`. The former is simply a wrapper to `install.packages.R`, whereas `pkgtest` contains additional code to gather and compare test outputs.
 
 #### The install.packages.R script
 
@@ -93,9 +93,11 @@ Key concepts are discussed below.
 
 ##### Package Blacklist
 
-There are many packages that cannot be installed due to either missing functionality or fundamental limitations in FastR and this set is seeded from a a DCF file, `initial.package.blacklist`, in the `com.oracle.truffle.r.test.packages` project. `install.packages` operates in two modes, either creating a complete blacklist from an initial blacklist or reading a previously created blacklist file. In the latter case, if the blacklist file does not exist, it will be created. The complete blacklist file can specified in three ways:
+There are many packages that cannot be installed due to either missing functionality or fundamental limitations in FastR and this set is seeded from a a DCF file, `initial.package.blacklist`, in the `com.oracle.truffle.r.test.packages` project. `install.packages` operates in two modes, either creating a complete blacklist from an initial blacklist or reading a previously created blacklist file. In the latter case, if the blacklist file does not exist, it will be created. The complete blacklist file can be specified in three ways:
 
 1. using the command line argument `--blacklist-file`; if omitted defaults to the file `package.blacklist`
+2. TODO
+3. TODO
 
 ##### CRAN Mirror
 Packages are downloaded and installed from the repos given by the `repos` argument, a comma-separated list, that defaults to `CRAN`. CRAN packages are downloaded from a CRAN mirror. When the standard `utils::install_packages` function is run interactively, the user is prompted for a mirror. To avoid such interaction, `install.packages` has two ways for specifying a mirror. The default CRAN mirror is `http://cran.cnr.berkeley.edu/` but this can be changed either with the command line argument `--cran-mirror` or the environment variable `CRAN_MIRROR`.  The `FASTR` repo is internal to the source base and contains FastR-specific test packages. The BioConductor repo can be added by setting `--repos BIOC`. It also implies `CRAN`.
@@ -106,9 +108,9 @@ The directory in which to install the package can be specified either by setting
 ##### Specifying packages to Install
 If the `--pkg-filelist` argument is provided then the associated file should contain a list of packages to install, one per line. Otherwise if a package pattern argument is given, then all packages matching the (R) regular expression are candidates for installation, otherwise all available packages are candidates, computed by invoking the `available.packages()` function. The candidate set can be adjusted with additional options.  The `--use-installed-pkgs` option will cause `install.packages` to analyze the package installation directory for existing successfully installed packages and remove those from the candidate set for installation. This option is implied by `--no-install`. Some convenience options implicitly set `--pkg-filelist`, namely:
 
-    --ok-only: sets it to the file `com.oracle.truffle.r.test.packages.ok.packages`. This file is a list of packages that are known to install.
+    --ok-only: sets it to the file `com.oracle.truffle.r.test.packages/ok.packages`. This file is a list of packages that are known to install.
 
-N.B. The is file is updated only occasionally. Regressions, bug fixes, can render it inaccurate.
+N.B. This file is updated only occasionally. Regressions, bug fixes, can render it inaccurate.
 
 Two options are designed to be used for a daily package testing run. These are based on the day of the year and install/test a rolling set of packages:
 

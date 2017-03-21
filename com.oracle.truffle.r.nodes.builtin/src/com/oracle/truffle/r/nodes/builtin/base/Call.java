@@ -32,6 +32,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -103,6 +104,16 @@ public abstract class Call extends RBuiltinNode {
     @TruffleBoundary
     protected static RLanguage makeCallSourceUnavailable(String name, RArgsValuesAndNames args) {
         return "function".equals(name) ? makeFunction(args) : makeCall0(ReadVariableNode.createFunctionLookup(RSyntaxNode.LAZY_DEPARSE, name), true, args);
+    }
+
+    @TruffleBoundary
+    protected static RLanguage makeCallSourceUnavailable(int i, RArgsValuesAndNames args) {
+        return makeCall0(ConstantNode.create(i), true, args);
+    }
+
+    @TruffleBoundary
+    protected static RLanguage makeCallSourceUnavailable(double d, RArgsValuesAndNames args) {
+        return makeCall0(ConstantNode.create(d), true, args);
     }
 
     @TruffleBoundary

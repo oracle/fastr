@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -60,4 +60,10 @@ public class TestBuiltin_eval extends TestBase {
         assertEval("a <- 1; lang <- quote(list(a)); eval(lang, new.env(), new.env())");
         assertEval(Output.IgnoreErrorMessage, "y <- 2; x <- 2 ; eval(quote(x+y), c(-1, -2))");
     }
+
+    @Test
+    public void testReturnInEvalExpr() {
+        assertEval("f1 <- function(x) { eval(quote(if(x>2){return()}else 1)); 10 };f1(5);f1(0)");
+    }
+
 }
