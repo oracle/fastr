@@ -69,6 +69,7 @@ typedef struct nativeArrayTable_struct {
 static NativeArrayElem *nativeArrayTable;
 // hwm of nativeArrayTable
 static int nativeArrayTableHwm;
+static int nativeArrayTableLastIndex;
 static int nativeArrayTableLength;
 static void releaseNativeArray(JNIEnv *env, int index);
 
@@ -209,6 +210,16 @@ void updateNativeArrays(JNIEnv *env) {
 
 
 static void *findNativeArray(JNIEnv *env, SEXP x) {
+    if (nativeArrayTableLastIndex < nativeArrayTableHwm) {
+        NativeArrayElem cv = nativeArrayTable[nativeArrayTableLastIndex];
+        if (cv.obj != NULL && (cv.obj == x || (*env)->IsSameObject(env, cv.obj, x))) {
+            void *data = cv.data;
+#if TRACE_NATIVE_ARRAYS
+            fprintf(traceFile, "findNativeArray(%p): found %p (cached)\n", x, data);
+#endif
+            return data;
+        }
+    }
     int i;
     assert(isValidJNIRef(env, x));
     for (i = 0; i < nativeArrayTableHwm; i++) {
@@ -216,6 +227,7 @@ static void *findNativeArray(JNIEnv *env, SEXP x) {
         if (cv.obj != NULL) {
             assert(isValidJNIRef(env, cv.obj));
             if ((*env)->IsSameObject(env, cv.obj, x)) {
+                nativeArrayTableLastIndex = i;
                 void *data = cv.data;
 #if TRACE_NATIVE_ARRAYS
                 fprintf(traceFile, "findNativeArray(%p): found %p\n", x, data);
