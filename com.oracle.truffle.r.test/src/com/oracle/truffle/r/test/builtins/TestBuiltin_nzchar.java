@@ -83,5 +83,10 @@ public class TestBuiltin_nzchar extends TestBase {
     public void nonStringArgs() {
         assertEval("nzchar(list('x', 42, list('a'), list()))");
         assertEval("nzchar(NULL)");
+        assertEval("nzchar(NA)");
+        assertEval("nzchar(keepNA=F)");
+        assertEval("nzchar(keepNA=NA)");
+        assertEval("nchar(wrongArgName=\"a\")");
+        assertEval("nchar(wrongArgName='a')");
     }
 }

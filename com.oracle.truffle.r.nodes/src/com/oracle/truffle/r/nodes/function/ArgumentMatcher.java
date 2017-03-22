@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -59,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * <p>
@@ -270,14 +272,14 @@ public class ArgumentMatcher {
                 // TODO: this error handling code takes many assumptions about the argument types
                 RArgsValuesAndNames varArg = (RArgsValuesAndNames) frame.getObject(frame.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME));
                 RPromise promise = (RPromise) varArg.getArguments()[((VarArgNode) node).getIndex()];
-                return promise.getRep().asRSyntaxNode().getSourceSection().getCode();
+                return RDeparse.deparseSyntaxElement(promise.getRep().asRSyntaxNode());
             } catch (FrameSlotTypeException | ClassCastException e) {
                 throw RInternalError.shouldNotReachHere();
             }
         } else {
             String code;
             if (node.asRSyntaxNode().getSourceSection() != null) {
-                code = node.asRSyntaxNode().getSourceSection().getCode();
+                code = RDeparse.deparseSyntaxElement(node.asRSyntaxNode());
             } else {
                 code = "<unknown>"; // RDeparse.deparseForPrint(node.asRSyntaxNode());
             }

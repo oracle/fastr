@@ -28,10 +28,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -68,4 +70,10 @@ public abstract class NZChar extends RBuiltinNode {
         }
         return RDataFactory.createLogicalVector(result, /* complete: */ keepNA && !hasNA);
     }
+
+    @Specialization
+    protected RLogicalVector rev(@SuppressWarnings("unused") RMissing value, @SuppressWarnings("unused") boolean keepNA) {
+        throw RError.error(this, RError.Message.ARGUMENT_NOT_MATCH, "keepNA", "x");
+    }
+
 }

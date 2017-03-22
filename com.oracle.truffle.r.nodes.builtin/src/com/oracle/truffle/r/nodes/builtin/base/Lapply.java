@@ -74,7 +74,7 @@ public abstract class Lapply extends RBuiltinNode {
         // to make conversion of X parameter 100% correct, we'd need to match semantics of
         // asVector() to whatever GNU R is doing there; still this can be a problem only if the
         // internal is called directly (otherwise, it's guaranteed that it's a vector)
-        casts.arg("X").asVector();
+        casts.arg("X").returnIf(instanceOf(RAbstractVector.class).not()).asVector(false);
         casts.arg("FUN").mustBe(instanceOf(RFunction.class), RError.Message.APPLY_NON_FUNCTION);
     }
 
@@ -84,6 +84,12 @@ public abstract class Lapply extends RBuiltinNode {
         Object[] result = lapply.execute(frame, vec, fun);
         // set here else it gets overridden by the iterator evaluation
         return RDataFactory.createList(result, getNamesNode.getNames(vec));
+    }
+
+    @Specialization
+    protected Object lapply(VirtualFrame frame, Object x, RFunction fun) {
+        Object[] result = lapply.execute(frame, x, fun);
+        return RDataFactory.createList(result);
     }
 
     private static final class ExtractElementInternal extends RSourceSectionNode implements RSyntaxCall {

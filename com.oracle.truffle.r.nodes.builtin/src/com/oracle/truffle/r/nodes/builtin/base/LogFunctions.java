@@ -34,6 +34,8 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.binary.BinaryMapArithmeticFunctionNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -41,19 +43,26 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
+import java.util.Arrays;
+import java.util.function.Function;
 
 public class LogFunctions {
     @RBuiltin(name = "log", kind = PRIMITIVE, parameterNames = {"x", "base"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public abstract static class Log extends RBuiltinNode {
 
-        private final NAProfile naProfile = NAProfile.create();
+        private final NAProfile naX = NAProfile.create();
         private final BranchProfile nanProfile = BranchProfile.create();
 
         @Override
@@ -64,54 +73,216 @@ public class LogFunctions {
         static {
             Casts casts = new Casts(Log.class);
             casts.arg("x").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
-            casts.arg("base").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue()).asDoubleVector().findFirst();
+            casts.arg("base").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue())).mapIf(numericValue(), Predef.asDoubleVector(),
+                            Predef.asComplexVector()).asVector().findFirst();
+        }
+
+        static BinaryMapArithmeticFunctionNode createDivNode() {
+            return new BinaryMapArithmeticFunctionNode(BinaryArithmetic.DIV.createOperation());
         }
 
         @Specialization
-        protected double log(int x, double base) {
-            return logb(x, base);
+        protected double log(byte x, double base,
+                        @Cached("create()") NAProfile naBase) {
+            if (naX.isNA(x)) {
+                return RRuntime.DOUBLE_NA;
+            }
+            return logb(x, base, naBase);
         }
 
         @Specialization
-        protected double log(double x, double base) {
-            return logb(x, base);
+        protected double log(int x, double base,
+                        @Cached("create()") NAProfile naBase) {
+            if (naX.isNA(x)) {
+                return RRuntime.DOUBLE_NA;
+            }
+            return logb(x, base, naBase);
+        }
+
+        @Specialization
+        protected double log(double x, double base,
+                        @Cached("create()") NAProfile naBase) {
+            if (naX.isNA(x)) {
+                return RRuntime.DOUBLE_NA;
+            }
+            return logb(x, base, naBase);
+        }
+
+        @Specialization
+        protected RComplex log(RComplex x, double base,
+                        @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
+                        @Cached("create()") NAProfile naBase) {
+            if (naX.isNA(x)) {
+                return x;
+            }
+            return logb(x, RComplex.valueOf(base, 0), divNode, naBase);
+        }
+
+        @Specialization
+        protected RComplex log(byte x, RComplex base,
+                        @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
+                        @Cached("create()") NAProfile naBase) {
+            if (naX.isNA(x)) {
+                return RRuntime.createComplexNA();
+            }
+            return logb(RComplex.valueOf(x, 0), base, divNode, naBase);
+        }
+
+        @Specialization
+        protected RComplex log(int x, RComplex base,
+                        @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
+                        @Cached("create()") NAProfile naBase) {
+            if (naX.isNA(x)) {
+                return RRuntime.createComplexNA();
+            }
+            return logb(RComplex.valueOf(x, 0), base, divNode, naBase);
+        }
+
+        @Specialization
+        protected RComplex log(double x, RComplex base,
+                        @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
+                        @Cached("create()") NAProfile naBase) {
+            if (naX.isNA(x)) {
+                return RRuntime.createComplexNA();
+            }
+            return logb(RComplex.valueOf(x, 0), base, divNode, naBase);
+        }
+
+        @Specialization
+        protected RComplex log(RComplex x, RComplex base,
+                        @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
+                        @Cached("create()") NAProfile naBase) {
+            if (naX.isNA(x)) {
+                return RRuntime.createComplexNA();
+            }
+            return logb(x, base, divNode, naBase);
         }
 
         @Specialization
         protected RDoubleVector log(RAbstractIntVector vector, double base,
                         @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
                         @Cached("create()") GetNamesAttributeNode getNamesNode,
-                        @Cached("create()") GetDimAttributeNode getDimsNode) {
-            double[] resultVector = new double[vector.getLength()];
-            for (int i = 0; i < vector.getLength(); i++) {
-                int inputValue = vector.getDataAt(i);
-                double result = RRuntime.DOUBLE_NA;
-                if (!naProfile.isNA(inputValue)) {
-                    result = logb(inputValue, base);
-                }
-                resultVector[i] = result;
-            }
-            return createResult(vector, resultVector, base, copyAttrsNode, getNamesNode, getDimsNode);
+                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("create()") NACheck xNACheck,
+                        @Cached("create()") NACheck baseNACheck) {
+            return log(vector, base, index -> xNACheck.convertIntToDouble(vector.getDataAt(index)), copyAttrsNode, getNamesNode, getDimsNode, xNACheck, baseNACheck);
         }
 
         @Specialization
         protected RDoubleVector log(RAbstractDoubleVector vector, double base,
                         @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
                         @Cached("create()") GetNamesAttributeNode getNamesNode,
-                        @Cached("create()") GetDimAttributeNode getDimsNode) {
-            double[] doubleVector = new double[vector.getLength()];
-            for (int i = 0; i < vector.getLength(); i++) {
-                double value = vector.getDataAt(i);
-                if (!RRuntime.isNA(value)) {
-                    value = logb(value, base);
-                }
-                doubleVector[i] = value;
-            }
-            return createResult(vector, doubleVector, base, copyAttrsNode, getNamesNode, getDimsNode);
+                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("create()") NACheck xNACheck,
+                        @Cached("create()") NACheck baseNACheck) {
+            return log(vector, base, index -> checkDouble(vector.getDataAt(index), xNACheck), copyAttrsNode, getNamesNode, getDimsNode, xNACheck, baseNACheck);
         }
 
-        private double logb(double x, double base) {
-            if (naProfile.isNA(base)) {
+        private double checkDouble(double d, NACheck na) {
+            na.check(d);
+            return d;
+        }
+
+        @Specialization
+        protected RDoubleVector log(RAbstractLogicalVector vector, double base,
+                        @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
+                        @Cached("create()") GetNamesAttributeNode getNamesNode,
+                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("create()") NACheck xNACheck,
+                        @Cached("create()") NACheck baseNACheck) {
+            return log(vector, base, index -> xNACheck.convertLogicalToDouble(vector.getDataAt(index)), copyAttrsNode, getNamesNode, getDimsNode, xNACheck, baseNACheck);
+        }
+
+        @Specialization
+        protected RComplexVector log(RAbstractComplexVector vector, double base,
+                        @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
+                        @Cached("create()") GetNamesAttributeNode getNamesNode,
+                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
+                        @Cached("create()") NACheck xNACheck,
+                        @Cached("create()") NACheck baseNACheck) {
+            return log(vector, RComplex.valueOf(base, 0), copyAttrsNode, getNamesNode, getDimsNode, divNode, xNACheck, baseNACheck);
+        }
+
+        @Specialization
+        protected RAbstractComplexVector log(RAbstractIntVector vector, RComplex base,
+                        @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
+                        @Cached("create()") GetNamesAttributeNode getNamesNode,
+                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
+                        @Cached("create()") NACheck xNACheck,
+                        @Cached("create()") NACheck baseNACheck) {
+            return log(vector, base, index -> xNACheck.convertIntToComplex(vector.getDataAt(index)), divNode, getDimsNode, getNamesNode, copyAttrsNode, xNACheck, baseNACheck);
+        }
+
+        @Specialization
+        protected RAbstractComplexVector log(RAbstractDoubleVector vector, RComplex base,
+                        @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
+                        @Cached("create()") GetNamesAttributeNode getNamesNode,
+                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
+                        @Cached("create()") NACheck xNACheck,
+                        @Cached("create()") NACheck baseNACheck) {
+            return log(vector, base, index -> xNACheck.convertDoubleToComplex(vector.getDataAt(index)), divNode, getDimsNode, getNamesNode, copyAttrsNode, xNACheck, baseNACheck);
+        }
+
+        @Specialization
+        protected RAbstractComplexVector log(RAbstractLogicalVector vector, RComplex base,
+                        @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
+                        @Cached("create()") GetNamesAttributeNode getNamesNode,
+                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
+                        @Cached("create()") NACheck xNACheck,
+                        @Cached("create()") NACheck baseNACheck) {
+            return log(vector, base, index -> xNACheck.convertLogicalToComplex(vector.getDataAt(index)), divNode, getDimsNode, getNamesNode, copyAttrsNode, xNACheck, baseNACheck);
+        }
+
+        @Specialization
+        protected RComplexVector log(RAbstractComplexVector vector, RComplex base,
+                        @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
+                        @Cached("create()") GetNamesAttributeNode getNamesNode,
+                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
+                        @Cached("create()") NACheck xNACheck,
+                        @Cached("create()") NACheck baseNACheck) {
+            return log(vector, base, index -> checkComplex(vector.getDataAt(index), xNACheck), divNode, getDimsNode, getNamesNode, copyAttrsNode, xNACheck, baseNACheck);
+        }
+
+        private RComplex checkComplex(RComplex rc, NACheck xNACheck) {
+            xNACheck.check(rc);
+            return rc;
+        }
+
+        private RDoubleVector log(RAbstractVector vector, double base, Function<Integer, Double> toDouble, CopyOfRegAttributesNode copyAttrsNode, GetNamesAttributeNode getNamesNode,
+                        GetDimAttributeNode getDimsNode, NACheck xNACheck, NACheck baseNACheck) {
+            baseNACheck.enable(base);
+            double[] resultVector = new double[vector.getLength()];
+            if (baseNACheck.check(base)) {
+                Arrays.fill(resultVector, 0, resultVector.length, base);
+            } else if (Double.isNaN(base)) {
+                nanProfile.enter();
+                Arrays.fill(resultVector, 0, resultVector.length, Double.NaN);
+            } else {
+                xNACheck.enable(vector);
+                Runnable[] warningResult = new Runnable[1];
+                for (int i = 0; i < vector.getLength(); i++) {
+                    double value = toDouble.apply(i);
+                    if (!naX.isNA(value)) {
+                        resultVector[i] = logb(value, base, warningResult);
+                    } else {
+                        resultVector[i] = value;
+                    }
+                }
+                if (warningResult[0] != null) {
+                    warningResult[0].run();
+                }
+            }
+            boolean complete = xNACheck.neverSeenNA() && baseNACheck.neverSeenNA();
+            return createResult(vector, resultVector, complete, copyAttrsNode, getNamesNode, getDimsNode);
+        }
+
+        private double logb(double x, double base, NAProfile naBase) {
+            if (naBase.isNA(base)) {
                 return RRuntime.DOUBLE_NA;
             }
 
@@ -119,15 +290,117 @@ public class LogFunctions {
                 nanProfile.enter();
                 return base;
             }
-
-            return Math.log(x) / Math.log(base);
+            Runnable[] warningResult = new Runnable[1];
+            double ret = logb(x, base, warningResult);
+            if (warningResult[0] != null) {
+                warningResult[0].run();
+            }
+            return ret;
         }
 
-        private static RDoubleVector createResult(RAbstractVector source, double[] resultData, double base, CopyOfRegAttributesNode copyAttrsNode, GetNamesAttributeNode getNamesNode,
+        private double logb(double x, double base, Runnable[] warningResult) {
+            double logx = Math.log(x);
+            if (Double.isNaN(logx)) {
+                warningResult[0] = () -> RError.warning(this, RError.Message.NAN_PRODUCED);
+            }
+            if (base == Math.E) {
+                return logx;
+            }
+
+            double result = logx / Math.log(base);
+            if (warningResult[0] == null && Double.isNaN(result)) {
+                warningResult[0] = () -> RError.warning(RError.SHOW_CALLER, RError.Message.NAN_PRODUCED);
+            }
+
+            return result;
+        }
+
+        private RComplexVector log(RAbstractVector vector, RComplex base, Function<Integer, RComplex> toComplex, BinaryMapArithmeticFunctionNode divNode, GetDimAttributeNode getDimsNode,
+                        GetNamesAttributeNode getNamesNode, CopyOfRegAttributesNode copyAttrsNode, NACheck xNACheck, NACheck baseNACheck) {
+            baseNACheck.enable(base);
+            double[] complexVector = new double[vector.getLength() * 2];
+            if (baseNACheck.check(base)) {
+                Arrays.fill(complexVector, 0, complexVector.length, RRuntime.DOUBLE_NA);
+            } else if (Double.isNaN(base.getRealPart()) || Double.isNaN(base.getImaginaryPart())) {
+                nanProfile.enter();
+                Arrays.fill(complexVector, 0, complexVector.length, Double.NaN);
+            } else {
+                xNACheck.enable(vector);
+                boolean seenNaN = false;
+                for (int i = 0; i < vector.getLength(); i++) {
+                    RComplex value = toComplex.apply(i);
+                    if (!naX.isNA(value)) {
+                        RComplex rc = logb(value, base, divNode, false);
+                        seenNaN = isNaN(rc);
+                        fill(complexVector, i * 2, rc);
+                    } else {
+                        fill(complexVector, i * 2, value);
+                    }
+                }
+                if (seenNaN) {
+                    RError.warning(this, RError.Message.NAN_PRODUCED_IN_FUNCTION, "log");
+                }
+            }
+            boolean complete = xNACheck.neverSeenNA() && baseNACheck.neverSeenNA();
+            return createResult(vector, complexVector, complete, getDimsNode, getNamesNode, copyAttrsNode);
+        }
+
+        private void fill(double[] array, int i, RComplex rc) {
+            array[i] = rc.getRealPart();
+            array[i + 1] = rc.getImaginaryPart();
+        }
+
+        private RComplex logb(RComplex x, RComplex base, BinaryMapArithmeticFunctionNode div, NAProfile naBase) {
+            if (naBase.isNA(base)) {
+                return RRuntime.createComplexNA();
+            }
+            if (isNaN(base)) {
+                nanProfile.enter();
+                return base;
+            }
+            return logb(x, base, div, true);
+        }
+
+        private RComplex logb(RComplex x, RComplex base, BinaryMapArithmeticFunctionNode div, boolean nanWarning) {
+            RComplex logx = logb(x);
+            if (base.getRealPart() == Math.E) {
+                return logx;
+            }
+
+            RComplex logbase = logb(base);
+            RComplex ret = div.applyComplex(logx, logbase);
+            if (nanWarning && isNaN(ret)) {
+                RError.warning(this, RError.Message.NAN_PRODUCED_IN_FUNCTION, "log");
+            }
+            return ret;
+        }
+
+        private RComplex logb(RComplex x) {
+            double re = x.getRealPart();
+            double im = x.getImaginaryPart();
+
+            double mod = RComplex.abs(re, im);
+            double arg = Math.atan2(im, re);
+
+            return RComplex.valueOf(Math.log(mod), arg);
+        }
+
+        private static RDoubleVector createResult(RAbstractVector source, double[] resultData, boolean complete, CopyOfRegAttributesNode copyAttrsNode, GetNamesAttributeNode getNamesNode,
                         GetDimAttributeNode getDimsNode) {
-            RDoubleVector result = RDataFactory.createDoubleVector(resultData, source.isComplete() && !RRuntime.isNA(base), getDimsNode.getDimensions(source), getNamesNode.getNames(source));
+            RDoubleVector result = RDataFactory.createDoubleVector(resultData, complete, getDimsNode.getDimensions(source), getNamesNode.getNames(source));
             copyAttrsNode.execute(source, result);
             return result;
+        }
+
+        private RComplexVector createResult(RAbstractVector source, double[] resultData, boolean complete, GetDimAttributeNode getDimsNode, GetNamesAttributeNode getNamesNode,
+                        CopyOfRegAttributesNode copyAttrsNode) {
+            RComplexVector result = RDataFactory.createComplexVector(resultData, complete, getDimsNode.getDimensions(source), getNamesNode.getNames(source));
+            copyAttrsNode.execute(source, result);
+            return result;
+        }
+
+        private boolean isNaN(RComplex base) {
+            return Double.isNaN(base.getRealPart()) || Double.isNaN(base.getImaginaryPart());
         }
     }
 

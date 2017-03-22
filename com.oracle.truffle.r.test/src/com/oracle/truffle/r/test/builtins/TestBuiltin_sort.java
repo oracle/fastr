@@ -130,4 +130,24 @@ public class TestBuiltin_sort extends TestBase {
         assertEval("{ .Internal(sort(NULL, FALSE)) }");
         assertEval("{ lv<-list(a=5,b=c(1,2)); .Internal(sort(lv,FALSE)) }");
     }
+
+    @Test
+    public void testQSort() {
+        assertEval("{ .Internal(qsort(NULL, F)) }");
+        assertEval("{ .Internal(qsort(NULL, NULL)) }");
+        // seems that when the value provided for decreased is whatever else than FALSE
+        // then it is interpreted as TRUE. In such a case qsort returns a list containing
+        // two vectors: the values sorted as in decreased=F and the original indices giving
+        // the decreased order. NOTE that even though the FastR impl of qsort always returns
+        // only 1 increasing/decreasing vector, it has no effect on the overall sort function.
+        assertEval(Ignored.ImplementationError, "{ .Internal(qsort(1, decreased=NULL)) }");
+        assertEval(Ignored.ImplementationError, "{ .Internal(qsort(c(4, 2, 3), T)) }");
+        assertEval(Ignored.ImplementationError, "{ .Internal(qsort(c(4, 2, 3), 1)) }");
+        assertEval(Ignored.ImplementationError, "{ .Internal(qsort(c(4, 2, 3), 'a')) }");
+        assertEval(Ignored.ImplementationError, "{ .Internal(qsort(c(4, 2, 3), c('a'))) }");
+        assertEval(Ignored.ImplementationError, "{ .Internal(qsort(c(4, 2, 3), list('a'))) }");
+        assertEval("{ .Internal(qsort(list(1), F)) }");
+        assertEval("{ .Internal(qsort(1, F)) }");
+        assertEval("{ .Internal(qsort(c(1), F)) }");
+    }
 }

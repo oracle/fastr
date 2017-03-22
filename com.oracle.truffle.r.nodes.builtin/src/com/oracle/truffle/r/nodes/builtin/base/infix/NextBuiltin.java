@@ -26,12 +26,18 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import static com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts.noCasts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "next", kind = PRIMITIVE, parameterNames = {"x"}, behavior = COMPLEX)
 public abstract class NextBuiltin extends RBuiltinNode {
+
+    static {
+        noCasts(NextBuiltin.class);
+    }
+
     @Specialization
     protected Object doIt(@SuppressWarnings("unused") Object x) {
         throw RInternalError.unimplemented();

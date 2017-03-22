@@ -44,7 +44,7 @@ public abstract class IntToUtf8 extends RBuiltinNode {
 
     static {
         Casts casts = new Casts(IntToUtf8.class);
-        casts.arg("x").asIntegerVector();
+        casts.arg("x").mustNotBeMissing().asIntegerVector();
         casts.arg("multiple").mustNotBeNull().asLogicalVector().findFirst().map(toBoolean());
     }
 

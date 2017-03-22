@@ -38,8 +38,13 @@ import java.util.Collections;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import static com.oracle.truffle.r.runtime.RError.Message.NOT_NUMERIC_VECTOR;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -55,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * The internal functions mandated by {@code base/sort.R}. N.B. We use the standard JDK sorting
@@ -200,8 +206,8 @@ public class SortFunctions {
 
         static {
             Casts casts = new Casts(QSort.class);
-            addCastForX(casts);
-            addCastForDecreasing(casts);
+            casts.arg("x").defaultError(NOT_NUMERIC_VECTOR).mustBe(instanceOf(RAbstractListVector.class).not()).mustBe(integerValue().or(doubleValue()));
+            casts.arg("decreasing").mapIf(numericValue().not(), Predef.constant(RRuntime.LOGICAL_TRUE)).asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization
@@ -245,6 +251,17 @@ public class SortFunctions {
         @Specialization
         protected RLogicalVector sort(RAbstractLogicalVector vec, Object partial) {
             return jdkSort(vec, false);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected RLogicalVector sort(RAbstractComplexVector vec, Object partial) {
+            throw RError.error(this, RError.Message.UNIMPLEMENTED_ARG_TYPE, 1); // [TODO] implement
+        }
+
+        @Specialization
+        protected RNull sort(RNull vec, Object partial) {
+            return RNull.instance;
         }
     }
 
