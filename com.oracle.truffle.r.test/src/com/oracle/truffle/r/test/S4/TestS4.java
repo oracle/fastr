@@ -126,6 +126,8 @@ public class TestS4 extends TestRBase {
         assertEval("setGeneric('do.call', signature = c('what', 'args'))");
 
         assertEval("{ setClass('A1', representation(a='numeric')); setMethod('length', 'A1', function(x) x@a); obj <- new('A1'); obj@a <- 10; length(obj) }");
+
+        assertEval("{ setClass('A2', representation(a = 'numeric')); setMethod('rep', 'A2', function(x, a, b, c) { c(x@a, a, b, c) }); setMethod('ifelse', c(yes = 'A2'), function(test, yes, no) print(test)) }");
     }
 
     @Test
