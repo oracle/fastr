@@ -31,6 +31,21 @@ import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_
 public interface GridDevice {
     void openNewPage();
 
+    /**
+     * If the device is capable of buffering, calling {@code hold} should start buffering, e.g.
+     * nothing is displayed on the device, until {@link #flush()} is called.
+     */
+    default void hold() {
+    }
+
+    /**
+     * Should display the whole buffer at once.
+     *
+     * @see #hold()
+     */
+    default void flush() {
+    }
+
     void drawRect(DrawingContext ctx, double leftX, double topY, double width, double height);
 
     /**

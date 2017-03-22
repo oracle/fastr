@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import com.oracle.truffle.r.library.fastrGrid.device.BufferedJFrameDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.JFrameDevice;
 
@@ -43,7 +44,7 @@ public final class GridContext {
 
     public GridDevice getCurrentDevice() {
         if (currentDevice == null) {
-            currentDevice = new JFrameDevice();
+            currentDevice = new BufferedJFrameDevice(new JFrameDevice());
         }
         return currentDevice;
     }

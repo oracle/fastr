@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import com.oracle.truffle.r.library.fastrGrid.grDevices.DevHoldFlush;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.InitWindowedDevice;
 import com.oracle.truffle.r.library.fastrGrid.graphics.CPar;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -42,7 +43,7 @@ public class FastRGridExternalLookup {
     public static RExternalBuiltinNode lookupDotExternal(String name) {
         switch (name) {
             case "devholdflush":
-                return new IgnoredGridExternal(RNull.instance);
+                return DevHoldFlush.create();
             case "PDF":
                 return new IgnoredGridExternal(RNull.instance);
             default:

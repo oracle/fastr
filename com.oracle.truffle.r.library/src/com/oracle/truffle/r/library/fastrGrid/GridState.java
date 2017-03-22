@@ -23,6 +23,7 @@ public final class GridState {
     private REnvironment gridEnv;
     private double scale = 1;
     private boolean deviceInitialized;
+    private int devHoldCount;
 
     /**
      * Current grob being drawn (for determining the list of grobs to search when evaluating a
@@ -31,6 +32,15 @@ public final class GridState {
     private Object currentGrob;
 
     GridState() {
+    }
+
+    public int getDevHoldCount() {
+        return devHoldCount;
+    }
+
+    public int setDevHoldCount(int devHoldCount) {
+        this.devHoldCount = devHoldCount;
+        return devHoldCount;
     }
 
     public void init(REnvironment gridEnv, GridDevice currentDevice) {
