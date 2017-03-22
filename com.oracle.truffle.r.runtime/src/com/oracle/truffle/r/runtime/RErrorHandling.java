@@ -321,7 +321,7 @@ public class RErrorHandling {
         result.setClassAttr(RESTART_CLASS);
     }
 
-    public static Object invokeRestart(RList restart, Object args) {
+    public static void invokeRestart(RList restart, Object args) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         Object exit = restartExit(restart);
         if (exit == RNull.instance) {
@@ -338,7 +338,6 @@ public class RErrorHandling {
                 }
                 errorHandlingState.restartStack = pList.cdr();
             }
-            return null;
         }
     }
 
@@ -346,23 +345,26 @@ public class RErrorHandling {
     public static void signalCondition(RList cond, String msg, Object call) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         Object oldStack = errorHandlingState.handlerStack;
-        RPairList pList;
-        while ((pList = findConditionHandler(cond)) != null) {
-            RList entry = (RList) pList.car();
-            errorHandlingState.handlerStack = pList.cdr();
-            if (isCallingEntry(entry)) {
-                Object h = entry.getDataAt(ENTRY_HANDLER);
-                if (h == RESTART_TOKEN) {
-                    errorcallDfltWithCall(fromCall(call), Message.GENERIC, msg);
+        try {
+            RPairList pList;
+            while ((pList = findConditionHandler(cond)) != null) {
+                RList entry = (RList) pList.car();
+                errorHandlingState.handlerStack = pList.cdr();
+                if (isCallingEntry(entry)) {
+                    Object h = entry.getDataAt(ENTRY_HANDLER);
+                    if (h == RESTART_TOKEN) {
+                        errorcallDfltWithCall(fromCall(call), Message.GENERIC, msg);
+                    } else {
+                        RFunction hf = (RFunction) h;
+                        RContext.getEngine().evalFunction(hf, null, null, null, cond);
+                    }
                 } else {
-                    RFunction hf = (RFunction) h;
-                    RContext.getEngine().evalFunction(hf, null, null, null, cond);
+                    throw gotoExitingHandler(cond, call, entry);
                 }
-            } else {
-                throw gotoExitingHandler(cond, call, entry);
             }
+        } finally {
+            errorHandlingState.handlerStack = oldStack;
         }
-        errorHandlingState.handlerStack = oldStack;
     }
 
     /**
@@ -374,24 +376,27 @@ public class RErrorHandling {
         String fMsg = formatMessage(msg, args);
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         Object oldStack = errorHandlingState.handlerStack;
-        RPairList pList;
-        while ((pList = findSimpleErrorHandler()) != null) {
-            RList entry = (RList) pList.car();
-            errorHandlingState.handlerStack = pList.cdr();
-            errorHandlingState.errMsg = fMsg;
-            if (isCallingEntry(entry)) {
-                if (entry.getDataAt(ENTRY_HANDLER) == RESTART_TOKEN) {
-                    return;
+        try {
+            RPairList pList;
+            while ((pList = findSimpleErrorHandler()) != null) {
+                RList entry = (RList) pList.car();
+                errorHandlingState.handlerStack = pList.cdr();
+                errorHandlingState.errMsg = fMsg;
+                if (isCallingEntry(entry)) {
+                    if (entry.getDataAt(ENTRY_HANDLER) == RESTART_TOKEN) {
+                        return;
+                    } else {
+                        RFunction handler = (RFunction) entry.getDataAt(2);
+                        RStringVector errorMsgVec = RDataFactory.createStringVectorFromScalar(fMsg);
+                        RContext.getRRuntimeASTAccess().callback(handler, new Object[]{errorMsgVec, call});
+                    }
                 } else {
-                    RFunction handler = (RFunction) entry.getDataAt(2);
-                    RStringVector errorMsgVec = RDataFactory.createStringVectorFromScalar(fMsg);
-                    RContext.getRRuntimeASTAccess().callback(handler, new Object[]{errorMsgVec, call});
+                    throw gotoExitingHandler(RNull.instance, call, entry);
                 }
-            } else {
-                throw gotoExitingHandler(RNull.instance, call, entry);
             }
+        } finally {
+            errorHandlingState.handlerStack = oldStack;
         }
-        errorHandlingState.handlerStack = oldStack;
     }
 
     private static ReturnException gotoExitingHandler(Object cond, Object call, RList entry) throws ReturnException {

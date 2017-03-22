@@ -181,11 +181,9 @@ public class ConditionFunctions {
         @TruffleBoundary
         protected RNull invokeRestart(RList restart, Object args) {
             checkLength(restart);
-            if (RErrorHandling.invokeRestart(restart, args) == null) {
-                throw error(RError.Message.RESTART_NOT_ON_STACK);
-            } else {
-                return RNull.instance; // not reached
-            }
+            RErrorHandling.invokeRestart(restart, args);
+            // invokeRestart is expected to always return via a ReturnException
+            throw error(RError.Message.RESTART_NOT_ON_STACK);
         }
     }
 
