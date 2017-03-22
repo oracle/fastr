@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,5 +61,11 @@ public class TestPromiseOptimizations extends TestBase {
 
         // "delayedAssign" RFunction: (Special case of but handled by: delayedAssign)
         assertEval("{ f <- function(x) { delayedAssign('b', function() {x}, sys.frame(sys.nframe()), parent.frame()); } ; a <- 1 ; f( a ) ; a <- 10 ; b() }");
+
+        // the value of 'pi' promise may look like temporary vector, but the arithmetic operation
+        // must not re-use it for the result
+        assertEval("{ pi/180; pi }");
+        // similar situation as above
+        assertEval("{ delayedAssign('x', c(1,2,3)); x/180; x }");
     }
 }
