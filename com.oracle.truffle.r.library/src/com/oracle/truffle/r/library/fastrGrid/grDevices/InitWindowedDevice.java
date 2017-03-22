@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.GridState;
 import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
@@ -40,6 +41,7 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
     }
 
     @Override
+    @TruffleBoundary
     protected Object call(RArgsValuesAndNames args) {
         GridState gridState = GridContext.getContext().getGridState();
         if (!gridState.isDeviceInitialized()) {

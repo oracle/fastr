@@ -13,6 +13,7 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
@@ -52,6 +53,7 @@ public abstract class LSegments extends RExternalBuiltinNode.Arg5 {
     }
 
     @Specialization
+    @TruffleBoundary
     Object doSegments(RAbstractVector x0, RAbstractVector y0, RAbstractVector x1, RAbstractVector y1, RList arrow) {
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();

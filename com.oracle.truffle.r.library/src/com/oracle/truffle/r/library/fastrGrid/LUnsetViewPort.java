@@ -15,6 +15,7 @@ import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asList;
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asListOrNull;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -39,6 +40,7 @@ public abstract class LUnsetViewPort extends RExternalBuiltinNode.Arg1 {
     }
 
     @Specialization
+    @TruffleBoundary
     Object unsetViewPort(int n) {
         GridContext ctx = GridContext.getContext();
         GridState gridState = ctx.getGridState();

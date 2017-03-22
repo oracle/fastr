@@ -14,6 +14,7 @@ package com.oracle.truffle.r.library.fastrGrid;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitLengthNode;
@@ -57,6 +58,7 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
     }
 
     @Specialization
+    @TruffleBoundary
     public Object doPoints(RAbstractVector xVec, RAbstractVector yVec, RAbstractIntVector pchVec, RAbstractVector sizeVec) {
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();

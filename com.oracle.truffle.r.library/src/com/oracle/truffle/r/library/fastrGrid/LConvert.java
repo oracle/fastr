@@ -18,6 +18,7 @@ import static com.oracle.truffle.r.library.fastrGrid.Unit.isListUnit;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.Unit.AxisOrDimension;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
@@ -49,6 +50,7 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
     }
 
     @Specialization
+    @TruffleBoundary
     Object doConvert(RAbstractVector units, RAbstractIntVector axisFromVec, RAbstractIntVector axisToVec, RAbstractIntVector unitToVec) {
 
         GridContext ctx = GridContext.getContext();

@@ -24,6 +24,7 @@ import static com.oracle.truffle.r.library.fastrGrid.TransformMatrix.translation
 import static com.oracle.truffle.r.library.fastrGrid.Unit.newUnit;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.Unit.IsRelativeUnitNode;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.ViewPort.LayoutPos;
@@ -52,6 +53,7 @@ class DoSetViewPort extends RBaseNode {
     @Child private Unit.UnitToInchesNode unitsToInches = Unit.UnitToInchesNode.create();
     @Child private IsRelativeUnitNode isRelativeUnit = new IsRelativeUnitNode();
 
+    @TruffleBoundary
     public RList doSetViewPort(RList pushedViewPort, boolean hasParent, boolean pushing) {
         GridState gridState = GridContext.getContext().getGridState();
         Object[] pushedVPData = pushedViewPort.getDataWithoutCopying();
@@ -88,6 +90,7 @@ class DoSetViewPort extends RBaseNode {
      * @param deviceDrawingContext This method needs to know the device default drawing context in
      *            order to convert units for the top level view port
      */
+    @TruffleBoundary
     public void calcViewportTransform(RList viewPort, Object parent, boolean incremental, GridDevice device, DrawingContext deviceDrawingContext) {
         double[][] parentTransform;
         ViewPortContext parentContext;

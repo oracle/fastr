@@ -13,6 +13,7 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asIntVector;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
@@ -44,6 +45,7 @@ public abstract class GridLinesNode extends Node {
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
     @Child private DrawArrowsNode drawArrowsNode = new DrawArrowsNode();
 
+    @TruffleBoundary
     void execute(RAbstractVector x, RAbstractVector y, RList lengths, RList arrow) {
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();

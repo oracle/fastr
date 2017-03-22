@@ -31,6 +31,7 @@ import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.library.fastrGrid.EdgeDetection.Rectangle;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
@@ -82,6 +83,7 @@ public final class GridTextNode extends RBaseNode {
         return new GridTextNode(false);
     }
 
+    @TruffleBoundary
     public Object gridText(RAbstractStringVector textVec, RAbstractVector x, RAbstractVector y, RAbstractDoubleVector hjustVec, RAbstractDoubleVector vjustVec, RAbstractDoubleVector rotationVec,
                     boolean checkOverlapIn, double theta) {
         if (textVec.getLength() == 0) {

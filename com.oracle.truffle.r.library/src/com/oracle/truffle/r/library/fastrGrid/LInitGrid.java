@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -27,6 +28,7 @@ public abstract class LInitGrid extends RExternalBuiltinNode.Arg1 {
     }
 
     @Specialization
+    @TruffleBoundary
     public Object doEnv(REnvironment gridEnv) {
         GridContext context = GridContext.getContext();
         context.getGridState().init(gridEnv, context.getCurrentDevice());

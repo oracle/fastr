@@ -15,6 +15,7 @@ import static com.oracle.truffle.r.library.fastrGrid.GridUtils.getDataAtMod;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
@@ -46,6 +47,7 @@ public abstract class LRect extends RExternalBuiltinNode.Arg6 {
     }
 
     @Specialization
+    @TruffleBoundary
     public Object execute(RAbstractVector xVec, RAbstractVector yVec, RAbstractVector wVec, RAbstractVector hVec, RAbstractDoubleVector hjust, RAbstractDoubleVector vjust) {
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -32,6 +33,7 @@ class LInitGPar extends RExternalBuiltinNode {
     }
 
     @Override
+    @TruffleBoundary
     protected Object call(RArgsValuesAndNames args) {
         GridContext.getContext().getGridState().initGPar(GridContext.getContext().getCurrentDevice());
         return RNull.instance;

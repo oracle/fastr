@@ -13,6 +13,7 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
@@ -41,6 +42,7 @@ public abstract class LCircle extends RExternalBuiltinNode.Arg3 {
     }
 
     @Specialization
+    @TruffleBoundary
     Object doCircle(RAbstractVector xVec, RAbstractVector yVec, RAbstractVector radiusVec) {
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();

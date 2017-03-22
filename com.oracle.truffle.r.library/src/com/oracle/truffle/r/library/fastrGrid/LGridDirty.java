@@ -37,6 +37,7 @@ class LGridDirty extends RExternalBuiltinNode {
         }
         if (initViewPortProfile.profile(gridState.getViewPort() == null)) {
             // this rarely happens, but we do not have a slow-path implementation (yet)
+            CompilerDirectives.transferToInterpreter();
             gridState.setViewPort(initViewPort.execute(frame));
         }
         return RNull.instance;
