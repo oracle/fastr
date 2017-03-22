@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -406,7 +406,18 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
             return prependBlanks(w, id);
         } else if (e != 0) {
             String fmt = String.format((d != 0) ? "%%#%d.%de" : "%%%d.%de", Math.min(w, (NB - 1)), d);
-            return snprintf(NB, fmt, x).replace('.', cdec);
+            String result;
+            if (Math.abs(x) < 1e-300 && Math.abs(x) >= Double.MIN_VALUE) {
+                // work around java formatting bug for small numbers like 1.53160350210786e-322
+                result = snprintf(NB, fmt, x * 1e100);
+                StringBuilder str = new StringBuilder(result);
+                assert str.charAt(str.length() - 3) == '2';
+                str.setCharAt(str.length() - 3, '3');
+                result = str.toString();
+            } else {
+                result = snprintf(NB, fmt, x);
+            }
+            return result.replace('.', cdec);
         } else { /* e = 0 */
             DecimalFormat df = null;
             if (d < CACHED_FORMATS.length) {

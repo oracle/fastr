@@ -101,7 +101,7 @@ public class TestR5 extends TestBase {
         assertEval("{ clazz <- setRefClass('Foo27R5', fields = list(a = 'numeric')); clazz$lock('a'); obj <- clazz$new(); obj$a <- 10; obj$a <- 20 }");
 
         // generate getter and setter
-        assertEval(Ignored.ReferenceError, "{ clazz <- setRefClass('Foo28R5', fields = list(a = 'numeric', b = 'character')); clazz$accessors(); clazz$methods() }");
+        assertEval(Output.ImprovedErrorContext, "{ clazz <- setRefClass('Foo28R5', fields = list(a = 'numeric', b = 'character')); clazz$accessors(); clazz$methods() }");
     }
 
     @Test

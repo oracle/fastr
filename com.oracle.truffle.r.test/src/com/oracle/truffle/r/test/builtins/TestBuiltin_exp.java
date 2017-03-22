@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -64,7 +64,7 @@ public class TestBuiltin_exp extends TestBase {
 
     @Test
     public void testexp11() {
-        assertEval(Ignored.Unknown, "argv <- list(c(-745, -744, -743, -742, -741, -740, -730, -720, -710, -709, -708, -707, -706, -705));exp(argv[[1]]);");
+        assertEval("argv <- list(c(-745, -744, -743, -742, -741, -740, -730, -720, -710, -709, -708, -707, -706, -705));exp(argv[[1]]);");
     }
 
     @Test
