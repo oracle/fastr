@@ -14,7 +14,7 @@ package com.oracle.truffle.r.library.fastrGrid;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-public class LNewPage extends RExternalBuiltinNode.Arg0 {
+class LNewPage extends RExternalBuiltinNode.Arg0 {
     static {
         Casts.noCasts(LNewPage.class);
     }

@@ -20,20 +20,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastrGrid;
+package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
+import com.oracle.truffle.r.library.fastrGrid.GridContext;
+import com.oracle.truffle.r.library.fastrGrid.GridState;
+import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-class LInitGPar extends RExternalBuiltinNode {
+/**
+ * Node that handles the {@code C_X11} external calls. Those calls may be initiated from either the
+ * {@code X11} function or FastR specific {@code awt} function. In either case the result is that
+ * the AWT window is opened and ready for drawing.
+ */
+public final class InitWindowedDevice extends RExternalBuiltinNode {
     static {
-        Casts.noCasts(LInitGPar.class);
+        Casts.noCasts(InitWindowedDevice.class);
     }
 
     @Override
     protected Object call(RArgsValuesAndNames args) {
-        GridContext.getContext().getGridState().initGPar(GridContext.getContext().getCurrentDevice());
+        GridState gridState = GridContext.getContext().getGridState();
+        if (!gridState.isDeviceInitialized()) {
+            GridContext.getContext().getCurrentDevice().openNewPage();
+            gridState.setDeviceInitialized();
+        }
+        RGridGraphicsAdapter.setCurrentDevice(args.getLength() == 0 ? "awt" : "X11cairo");
         return RNull.instance;
     }
 }

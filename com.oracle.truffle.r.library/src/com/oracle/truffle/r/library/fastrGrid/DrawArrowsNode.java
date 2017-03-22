@@ -23,15 +23,15 @@ import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
-public class DrawArrowsNode extends Node {
+class DrawArrowsNode extends Node {
     // Structure of an arrow description
-    public static final int ARROWANGLE = 0;
-    public static final int ARROWLENGTH = 1;
-    public static final int ARROWENDS = 2;
-    public static final int ARROWTYPE = 3;
+    private static final int ARROWANGLE = 0;
+    private static final int ARROWLENGTH = 1;
+    private static final int ARROWENDS = 2;
+    private static final int ARROWTYPE = 3;
     // known values of ARROWTYPE
-    public static final int ARROWTYPE_LINES = 1;
-    public static final int ARROWTYPE_POLYGON = 2;
+    private static final int ARROWTYPE_LINES = 1;
+    private static final int ARROWTYPE_POLYGON = 2;
 
     @Child private UnitToInchesNode unitToInches = Unit.createToInchesNode();
 

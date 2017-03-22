@@ -29,14 +29,14 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
  * A node for externals that we ignore, becuase we do not need to implement them or because they
  * support functionallity we do not implement yet, especially record/replay.
  */
-public class IgnoredGridExternal extends RExternalBuiltinNode {
+class IgnoredGridExternal extends RExternalBuiltinNode {
     private final Object result;
 
     static {
         Casts.noCasts(IgnoredGridExternal.class);
     }
 
-    public IgnoredGridExternal(Object result) {
+    IgnoredGridExternal(Object result) {
         this.result = result;
     }
 

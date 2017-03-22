@@ -18,7 +18,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-public class LInitViewPortStack extends RExternalBuiltinNode {
+class LInitViewPortStack extends RExternalBuiltinNode {
     @Child private InitViewPortNode initViewPortNode = new InitViewPortNode();
     static {
         Casts.noCasts(LInitViewPortStack.class);

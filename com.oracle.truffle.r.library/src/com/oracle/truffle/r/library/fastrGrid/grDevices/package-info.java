@@ -20,20 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastrGrid;
-
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RNull;
-
-class LInitGPar extends RExternalBuiltinNode {
-    static {
-        Casts.noCasts(LInitGPar.class);
-    }
-
-    @Override
-    protected Object call(RArgsValuesAndNames args) {
-        GridContext.getContext().getGridState().initGPar(GridContext.getContext().getCurrentDevice());
-        return RNull.instance;
-    }
-}
+/**
+ * Compatibility layer for grDevices packages.
+ *
+ * With FastR grid we use {@link com.oracle.truffle.r.library.fastrGrid.device.GridDevice} instead
+ * of the abstraction used by GnuR. This is compatibility layer that provides implementation of some
+ * of the externals that manipulate the device and forwards them to corresponding methods on FastR
+ * grid side.
+ */
+package com.oracle.truffle.r.library.fastrGrid.grDevices;

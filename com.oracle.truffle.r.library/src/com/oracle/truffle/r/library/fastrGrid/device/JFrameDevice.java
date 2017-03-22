@@ -25,19 +25,27 @@ package com.oracle.truffle.r.library.fastrGrid.device;
 import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_TO_POINTS_FACTOR;
 
 import java.awt.BasicStroke;
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.HeadlessException;
 import java.awt.Paint;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.Toolkit;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.util.function.Supplier;
 
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineType;
-import com.oracle.truffle.r.library.graphics.FastRFrame;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 public class JFrameDevice implements GridDevice {
@@ -213,5 +221,42 @@ public class JFrameDevice implements GridDevice {
         dotdashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{dotSize, dashSize}, 0f);
         twodashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{dashSize / 2f, dashSize}, 0f);
         longdashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{2f * dashSize}, 0f);
+    }
+
+    private static class FastRFrame extends JFrame {
+        private static final long serialVersionUID = 1L;
+        private final Dimension framePreferredSize = new Dimension(720, 720);
+        private final JPanel fastRComponent = new JPanel();
+
+        FastRFrame() throws HeadlessException {
+            super("FastR");
+            addCloseListener();
+            createUI();
+            center();
+        }
+
+        private void createUI() {
+            setLayout(new BorderLayout());
+            setSize(framePreferredSize);
+            add(fastRComponent, BorderLayout.CENTER);
+            fastRComponent.setPreferredSize(getSize());
+        }
+
+        private void addCloseListener() {
+            addWindowFocusListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    dispose();
+                }
+            });
+        }
+
+        private void center() {
+            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+            Dimension frameSize = getSize();
+            int x = (screenSize.width - frameSize.width) / 2;
+            int y = (screenSize.height - frameSize.height) / 2;
+            setLocation(x, y);
+        }
     }
 }

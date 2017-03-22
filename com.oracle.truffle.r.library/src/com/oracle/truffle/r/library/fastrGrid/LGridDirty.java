@@ -19,7 +19,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-public class LGridDirty extends RExternalBuiltinNode {
+class LGridDirty extends RExternalBuiltinNode {
     @Child private InitViewPortNode initViewPort = new InitViewPortNode();
     private final ConditionProfile initViewPortProfile = ConditionProfile.createCountingProfile();
 

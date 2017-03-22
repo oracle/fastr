@@ -22,31 +22,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.library.fastrGrid.GridState;
-import com.oracle.truffle.r.library.fastrGrid.GridStateGetNode;
-import com.oracle.truffle.r.library.fastrGrid.GridStateSetNode;
-import com.oracle.truffle.r.library.fastrGrid.IgnoredGridExternal;
-import com.oracle.truffle.r.library.fastrGrid.LCircle;
-import com.oracle.truffle.r.library.fastrGrid.LConvert;
-import com.oracle.truffle.r.library.fastrGrid.LGridDirty;
-import com.oracle.truffle.r.library.fastrGrid.LInitGPar;
-import com.oracle.truffle.r.library.fastrGrid.LInitGrid;
-import com.oracle.truffle.r.library.fastrGrid.LInitViewPortStack;
-import com.oracle.truffle.r.library.fastrGrid.LLines;
-import com.oracle.truffle.r.library.fastrGrid.LNewPage;
-import com.oracle.truffle.r.library.fastrGrid.LPoints;
-import com.oracle.truffle.r.library.fastrGrid.LPolygon;
-import com.oracle.truffle.r.library.fastrGrid.LRect;
-import com.oracle.truffle.r.library.fastrGrid.LSegments;
-import com.oracle.truffle.r.library.fastrGrid.LText;
-import com.oracle.truffle.r.library.fastrGrid.LTextBounds;
-import com.oracle.truffle.r.library.fastrGrid.LUnsetViewPort;
-import com.oracle.truffle.r.library.fastrGrid.LUpViewPort;
-import com.oracle.truffle.r.library.fastrGrid.graphics.CPar;
-import com.oracle.truffle.r.library.graphics.GraphicsCCalls;
-import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_PlotXY;
-import com.oracle.truffle.r.library.grid.GridFunctionsFactory.InitGridNodeGen;
-import com.oracle.truffle.r.library.grid.GridFunctionsFactory.ValidUnitsNodeGen;
+import com.oracle.truffle.r.library.fastrGrid.FastRGridExternalLookup;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_M_setPrimitiveMethodsNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_externalPtrPrototypeObjectNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_getClassFromCacheNodeGen;
@@ -99,7 +75,6 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -262,7 +237,7 @@ public class CallAndExternalFunctions {
         protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
             String name = lookupName(symbol);
             if (FastROptions.UseInternalGridGraphics.getBooleanValue() && name != null) {
-                RExternalBuiltinNode gridExternal = lookupFastRGridBuiltin(name);
+                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotCall(name);
                 if (gridExternal != null) {
                     return gridExternal;
                 }
@@ -657,109 +632,7 @@ public class CallAndExternalFunctions {
                 case "mc_is_child":
                     return MCIsChildNodeGen.create();
                 default:
-                    return FastROptions.UseInternalGraphics.getBooleanValue() ? lookupGraphicsBuiltin(name) : null;
-            }
-        }
-
-        private static RExternalBuiltinNode lookupGraphicsBuiltin(String name) {
-            switch (name) {
-                // grDevices
-                case "cairoProps":
-                    return CairoPropsNodeGen.create();
-                case "makeQuartzDefault":
-                    return new MakeQuartzDefault();
-
-                // grid
-                case "L_initGrid":
-                    return InitGridNodeGen.create();
-                case "L_validUnits":
-                    return ValidUnitsNodeGen.create();
-                default:
                     return null;
-            }
-        }
-
-        private RExternalBuiltinNode lookupFastRGridBuiltin(String name) {
-            switch (name) {
-                case "L_gridDirty":
-                    return new LGridDirty();
-                case "L_initGrid":
-                    return LInitGrid.create();
-                case "L_newpage":
-                    return new LNewPage();
-                case "L_convert":
-                    return LConvert.create();
-
-                // Viewport management
-                case "L_upviewport":
-                    return LUpViewPort.create();
-                case "L_initViewportStack":
-                    return new LInitViewPortStack();
-                case "L_unsetviewport":
-                    return LUnsetViewPort.create();
-                case "L_setviewport":
-                case "L_downviewport":
-                    return getExternalFastRGridBuiltinNode(name);
-
-                // Drawing primitives
-                case "L_rect":
-                    return LRect.create();
-                case "L_lines":
-                    return LLines.create();
-                case "L_polygon":
-                    return LPolygon.create();
-                case "L_text":
-                    return LText.create();
-                case "L_textBounds":
-                    return LTextBounds.create();
-                case "L_segments":
-                    return LSegments.create();
-                case "L_circle":
-                    return LCircle.create();
-                case "L_points":
-                    return LPoints.create();
-
-                // Simple grid state access
-                case "L_getGPar":
-                    return new GridStateGetNode(GridState::getGpar);
-                case "L_setGPar":
-                    return GridStateSetNode.create((state, val) -> state.setGpar((RList) val));
-                case "L_getCurrentGrob":
-                    return new GridStateGetNode(GridState::getCurrentGrob);
-                case "L_setCurrentGrob":
-                    return GridStateSetNode.create(GridState::setCurrentGrob);
-                case "L_currentViewport":
-                    return new GridStateGetNode(GridState::getViewPort);
-                case "L_initGPar":
-                    return new LInitGPar();
-
-                // Display list stuff: not implemented atm
-                case "L_getDisplayList":
-                    return new IgnoredGridExternal(RDataFactory.createList());
-                case "L_getDLindex":
-                    return new IgnoredGridExternal(0);
-                case "L_getDLon":
-                case "L_getEngineDLon":
-                    return new IgnoredGridExternal(RRuntime.LOGICAL_FALSE);
-                case "L_initDisplayList":
-                case "L_newpagerecording":
-                case "L_setDisplayList":
-                case "L_setDLelt":
-                case "L_setDLindex":
-                case "L_setDLon":
-                    return new IgnoredGridExternal(RNull.instance);
-
-                // These methods do not use graphics system or any global state. For now,
-                // we can re-use the native implementation, which in the future should be rewritten
-                // to managed code.
-                case "L_validUnits":
-                    return null;
-                default:
-                    if (name.startsWith("L_")) {
-                        throw RInternalError.shouldNotReachHere("Unimplemented grid external " + name);
-                    } else {
-                        return null;
-                    }
             }
         }
 
@@ -850,9 +723,9 @@ public class CallAndExternalFunctions {
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             String name = lookupName(f);
             if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
-                switch (name) {
-                    case "devholdflush":
-                        return new IgnoredGridExternal(RNull.instance);
+                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal(name);
+                if (gridExternal != null) {
+                    return gridExternal;
                 }
             }
             switch (name) {
@@ -966,13 +839,13 @@ public class CallAndExternalFunctions {
         @Override
         @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
+            String name = lookupName(symbol);
             if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
-                switch (lookupName(symbol)) {
-                    case "C_par":
-                        return new CPar();
+                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal2(name);
+                if (gridExternal != null) {
+                    return gridExternal;
                 }
             }
-            String name = lookupName(symbol);
             switch (name) {
                 // tools
                 case "writetable":
@@ -1041,14 +914,6 @@ public class CallAndExternalFunctions {
         @Override
         @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
-            if (FastROptions.UseInternalGraphics.getBooleanValue()) {
-                switch (lookupName(f)) {
-                    case "C_mtext":
-                        return new GraphicsCCalls.C_mtext();
-                    case "C_plotXY":
-                        return new C_PlotXY();
-                }
-            }
             return null;
         }
 
