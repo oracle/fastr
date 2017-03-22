@@ -21,6 +21,10 @@ import com.oracle.truffle.r.test.TestBase;
 // Checkstyle: stop line length check
 public class TestBuiltin_deparse extends TestBase {
 
+    private void assertEvalDeparsed(String snippet) {
+        assertEval(Output.IgnoreWhitespace, "cat({" + snippet + "})");
+    }
+
     @Test
     public void testdeparse1() {
         assertEval("argv <- list(quote(rsp), 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
@@ -53,7 +57,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse7() {
-        assertEval(Ignored.Unknown,
+        assertEvalDeparsed(
                         "argv <- list(quote(y ~ ((g1) * exp((log(g2/g1)) * (1 - exp(-k * (x - Ta)))/(1 - exp(-k * (Tb - Ta)))))), 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
@@ -114,7 +118,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse19() {
-        assertEval(Ignored.Unknown,
+        assertEvalDeparsed(
                         "argv <- list(structure(list(Sex = structure(c(2L, 2L, 1L, 1L, 2L, 2L), .Label = c('Female', 'Male'), class = 'factor'), age = c(15, 20, 10, 12, 2, 4), Subject = structure(c(2L, 2L, 1L, 1L, 3L, 3L), .Label = c('F30', 'M01', 'M04'), class = 'factor')), .Names = c('Sex', 'age', 'Subject'), row.names = c(NA, -6L), class = 'data.frame'), 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
@@ -140,7 +144,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse24() {
-        assertEval(Ignored.Unknown,
+        assertEvalDeparsed(
                         "argv <- list(c(7.4, 8, 12.6, 11.5, 14.3, 14.9, 8.6, 13.8, 20.1, 8.6, 6.9, 9.7, 9.2, 10.9, 13.2, 11.5, 12, 18.4, 11.5, 9.7, 9.7, 16.6, 9.7, 12, 16.6, 14.9, 8, 12, 14.9, 5.7, 7.4, 8.6, 9.7, 16.1, 9.2, 8.6, 14.3, 9.7, 6.9, 13.8, 11.5, 10.9, 9.2, 8, 13.8, 11.5, 14.9, 20.7, 9.2, 11.5, 10.3, 6.3, 1.7, 4.6, 6.3, 8, 8, 10.3, 11.5, 14.9, 8, 6.9, 13.8, 7.4, 6.9, 7.4, 4.6, 4, 10.3, 8, 8.6, 11.5, 11.5, 11.5, 9.7, 11.5, 10.3, 6.3, 7.4, 10.9, 10.3, 15.5, 14.3, 12.6, 9.7, 3.4, 8, 5.7, 9.7, 2.3, 6.3, 6.3, 6.9, 5.1, 2.8, 4.6, 7.4, 15.5, 10.9, 10.3, 10.9, 9.7, 14.9, 15.5, 6.3, 10.9, 11.5, 6.9, 13.8, 10.3, 10.3, 8, 12.6, 9.2, 10.3, 10.3, 16.6, 6.9, 13.2, 14.3, 8, 11.5), 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
@@ -151,7 +155,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse26() {
-        assertEval(Ignored.Unknown,
+        assertEvalDeparsed(
                         "argv <- list(structure(list(distance = c(26, 25, 29, 31, 21.5, 22.5), age = c(8, 10, 12, 14, 8, 10), Subject = structure(c(2L, 2L, 2L, 2L, 1L, 1L), .Label = c('M02', 'M01'), class = c('ordered', 'factor')), Sex = structure(c(1L, 1L, 1L, 1L, 1L, 1L), .Label = c('Male', 'Female'), class = 'factor')), .Names = c('distance', 'age', 'Subject', 'Sex'), row.names = c('1', '2', '3', '4', '5', '6'), class = 'data.frame'), 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
@@ -177,13 +181,13 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse31() {
-        assertEval(Ignored.Unknown,
+        assertEvalDeparsed(
                         "argv <- list(c(0, 0.587785252292473, 0.951056516295154, 0.951056516295154, 0.587785252292473, 1.22464679914735e-16, -0.587785252292473, -0.951056516295154, -0.951056516295154, -0.587785252292473, -2.44929359829471e-16, 0.587785252292473, 0.951056516295154), 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
     public void testdeparse32() {
-        assertEval(Ignored.Unknown,
+        assertEvalDeparsed(
                         "argv <- list(structure(c(39.384847580955, 40.3469409309138, 42.6018205723052, 46.6665176252597, 51.3438205965467, 60.0069972599329, 64.6480892875058, 62.5709232928432, 57.679739382496, 49.5060394945433, 43.474726406114, 39.8236314289602, 38.361391396627, 37.9275637097922, 43.6868952734483, 45.1919846859641, 51.722520194987, 59.3399821539983, 61.9345241730145, 62.1515308754468, 57.6561604617486, 49.2849925780811, 42.606775772378, 39.6394677676018, 38.6328048791077, 38.4418602988203, 43.1520834957543, 45.6551746936999, 51.7999631155049, 59.5021948495759, 62.9217123388139, 62.0751910659837, 57.8048619656866, 49.5091658164884, 42.8045075272742, 40.2515159054665), .Tsp = c(1937, 1939.91666666667, 12), class = 'ts'), 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
@@ -199,7 +203,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse35() {
-        assertEval(Ignored.Unknown,
+        assertEvalDeparsed(
                         "argv <- list(structure(c(112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118, 115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140, 145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166, 171, 180, 193, 181, 183, 218, 230, 242, 209, 191, 172, 194, 196, 196, 236, 235, 229, 243, 264, 272, 237, 211, 180, 201, 204, 188, 235, 227, 234, 264, 302, 293, 259, 229, 203, 229, 242, 233, 267, 269, 270, 315, 364, 347, 312, 274, 237, 278, 284, 277, 317, 313, 318, 374, 413, 405, 355, 306, 271, 306, 315, 301, 356, 348, 355, 422, 465, 467, 404, 347, 305, 336, 340, 318, 362, 348, 363, 435, 491, 505, 404, 359, 310, 337, 360, 342, 406, 396, 420, 472, 548, 559, 463, 407, 362, 405, 417, 391, 419, 461, 472, 535, 622, 606, 508, 461, 390, 432, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 419.147602949539, 391.474665943444, 435.919286153217, 443.935203034261, 455.023399013445, 517.28707821144, 589.71337277669, 582.999919227301, 484.573388713116, 428.878182738437, 368.526582998452, 406.728709993152, 415.660571294428, 388.716535970235, 433.006017658935, 440.885684396326, 451.651900136866, 513.051252429496, 584.327164324967, 577.055407135124, 479.076505013118, 423.494870357491, 363.43932958967, 400.592058645117, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 484.030717075782, 462.954959541421, 526.353307750503, 546.165638262644, 569.502470928676, 657.838443307596, 761.241730163307, 763.280655335144, 642.989004951864, 576.423799567567, 501.429012064338, 559.981301364233, 591.700754553767, 565.210772316967, 642.377841008703, 666.682421047093, 695.547100430962, 804.065022775202, 931.340589597203, 934.837830059897, 788.422986194072, 707.666678543854, 616.37838266375, 689.250456425465), .Dim = c(168L, 3L), .Dimnames = list(NULL, c('structure(c(112, 118, 132, 129, 121, 135, 148, 148, 136, 119, ', 'structure(c(419.147602949539, 391.474665943444, 435.919286153217, ', 'structure(c(484.030717075782, 462.954959541421, 526.353307750503, ')), .Tsp = c(1949, 1962.91666666667, 12), class = c('mts', 'ts', 'matrix')), 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
@@ -245,7 +249,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse44() {
-        assertEval(Ignored.Unknown,
+        assertEvalDeparsed(
                         "argv <- list(quote(lm(formula = 1000/MPG.city ~ Weight + Cylinders + Type + EngineSize + DriveTrain, data = Cars93)), 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
@@ -286,7 +290,7 @@ public class TestBuiltin_deparse extends TestBase {
     public void testDeparse() {
         assertEval(template("deparse(%0)", VALUES));
         assertEval(template("deparse(quote(cat(%0)))", VALUES));
-        assertEval(Ignored.OutputFormatting, "deparse(1.53160350210786e-322)");
+        assertEval("deparse(1.53160350210786e-322)");
         assertEval("{ deparse(new.env()) }");
         assertEval("{ k <- 2 ; deparse(k) }");
         assertEval("{ deparse(round) }");
