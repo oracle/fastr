@@ -108,7 +108,10 @@ public abstract class AllNames extends RBuiltinNode {
         protected Void visit(RSyntaxCall element) {
             accept(element.getSyntaxLHS());
             for (RSyntaxElement arg : element.getSyntaxArguments()) {
-                accept(arg);
+                // unmatched arguments may still be null
+                if (arg != null) {
+                    accept(arg);
+                }
             }
             return null;
         }
