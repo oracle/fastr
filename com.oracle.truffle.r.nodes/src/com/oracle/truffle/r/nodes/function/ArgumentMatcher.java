@@ -213,10 +213,10 @@ public class ArgumentMatcher {
     }
 
     /**
-     * Used for the implementation of the 'UseMethod' builtin. Reorders the arguments passed into
-     * the called, generic function and prepares them to be passed into the specific function
+     * Used for matching varargs to an internally defined signature. Reorders the arguments passed
+     * into the called, generic function and prepares them to be passed into the specific function
      *
-     * @param target The 'Method' which is going to be 'Use'd
+     * @param formals The formal arguments to match to.
      * @param evaluatedArgs The arguments which are already in evaluated form (as they are directly
      *            taken from the stack)
      * @param s3DefaultArguments default values carried over from S3 group dispatch method (e.g.
@@ -225,8 +225,7 @@ public class ArgumentMatcher {
      * @return A Fresh {@link RArgsValuesAndNames} containing the arguments rearranged and stuffed
      *         with default values (in the form of {@link RPromise}s where needed)
      */
-    public static RArgsValuesAndNames matchArgumentsEvaluated(RRootNode target, RArgsValuesAndNames evaluatedArgs, S3DefaultArguments s3DefaultArguments, RBaseNode callingNode) {
-        FormalArguments formals = target.getFormalArguments();
+    public static RArgsValuesAndNames matchArgumentsEvaluated(FormalArguments formals, RArgsValuesAndNames evaluatedArgs, S3DefaultArguments s3DefaultArguments, RBaseNode callingNode) {
         MatchPermutation match = permuteArguments(evaluatedArgs.getSignature(), formals.getSignature(), callingNode, index -> {
             throw RInternalError.unimplemented("S3Dispatch should not have arg length mismatch");
         }, index -> evaluatedArgs.getSignature().getName(index), null);
@@ -261,6 +260,23 @@ public class ArgumentMatcher {
             }
         }
         return new RArgsValuesAndNames(evaledArgs, formals.getSignature());
+    }
+
+    /**
+     * Used for the implementation of the 'UseMethod' builtin. Reorders the arguments passed into
+     * the called, generic function and prepares them to be passed into the specific function
+     *
+     * @param target The 'Method' which is going to be 'Use'd
+     * @param evaluatedArgs The arguments which are already in evaluated form (as they are directly
+     *            taken from the stack)
+     * @param s3DefaultArguments default values carried over from S3 group dispatch method (e.g.
+     *            from max to Summary.factor). {@code null} if there are no such arguments.
+     * @param callingNode The {@link Node} invoking the match
+     * @return A Fresh {@link RArgsValuesAndNames} containing the arguments rearranged and stuffed
+     *         with default values (in the form of {@link RPromise}s where needed)
+     */
+    public static RArgsValuesAndNames matchArgumentsEvaluated(RRootNode target, RArgsValuesAndNames evaluatedArgs, S3DefaultArguments s3DefaultArguments, RBaseNode callingNode) {
+        return matchArgumentsEvaluated(target.getFormalArguments(), evaluatedArgs, s3DefaultArguments, callingNode);
     }
 
     private static String getErrorForArgument(RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, int index) {
