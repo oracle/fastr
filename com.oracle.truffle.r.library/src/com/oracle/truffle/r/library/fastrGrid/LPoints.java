@@ -173,6 +173,21 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
         }
 
         @Override
+        public GridLineJoin getLineJoin() {
+            return inner.getLineJoin();
+        }
+
+        @Override
+        public GridLineEnd getLineEnd() {
+            return inner.getLineEnd();
+        }
+
+        @Override
+        public double getLineMitre() {
+            return inner.getLineMitre();
+        }
+
+        @Override
         public GridColor getColor() {
             return color;
         }

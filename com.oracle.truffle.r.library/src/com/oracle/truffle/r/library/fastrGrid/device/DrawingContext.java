@@ -55,6 +55,36 @@ public interface DrawingContext {
         }
     }
 
+    enum GridLineJoin {
+        ROUND,
+        MITRE,
+        BEVEL;
+
+        public static final int LAST_VALUE = BEVEL.ordinal();
+
+        /**
+         * Return enum's value corresponding to R's value.
+         */
+        public static GridLineJoin fromInt(int num) {
+            return values()[num];
+        }
+    }
+
+    enum GridLineEnd {
+        ROUND,
+        BUTT,
+        SQUARE;
+
+        public static final int LAST_VALUE = SQUARE.ordinal();
+
+        /**
+         * Return enum's value corresponding to R's value.
+         */
+        public static GridLineEnd fromInt(int num) {
+            return values()[num];
+        }
+    }
+
     /**
      * Returns either one of the constants {@link #GRID_LINE_BLANK} or {@link #GRID_LINE_SOLID} or
      * an array with a pattern consisting of lengths. Lengths at odd positions are dashes and
@@ -69,6 +99,16 @@ public interface DrawingContext {
      * Line width in multiplies of what is considered the basic "thin" line for given device.
      */
     double getLineWidth();
+
+    GridLineJoin getLineJoin();
+
+    GridLineEnd getLineEnd();
+
+    /**
+     * The mitre limit, larger than 1, default is 10. The unit should be interpreted the way as in
+     * {@link #getLineType()}.
+     */
+    double getLineMitre();
 
     /**
      * Drawing color of shape borders, lines and text.

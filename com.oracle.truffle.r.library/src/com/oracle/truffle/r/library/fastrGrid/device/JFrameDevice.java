@@ -48,6 +48,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridFontStyle;
+import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineEnd;
+import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineJoin;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 public class JFrameDevice implements GridDevice {
@@ -230,16 +232,48 @@ public class JFrameDevice implements GridDevice {
     private static BasicStroke getStrokeFromCtx(DrawingContext ctx) {
         byte[] type = ctx.getLineType();
         double width = ctx.getLineWidth();
+        int lineJoin = fromGridLineJoin(ctx.getLineJoin());
+        float lineMitre = (float) ctx.getLineMitre();
+        int endCap = fromGridLineEnd(ctx.getLineEnd());
         if (type == DrawingContext.GRID_LINE_BLANK) {
             return blankStroke;
         } else if (type == DrawingContext.GRID_LINE_SOLID) {
-            return width == 1. ? solidStroke : new BasicStroke((float) (width / POINTS_IN_INCH));
+            if (width == 1. && solidStroke.getLineJoin() == lineJoin && solidStroke.getMiterLimit() == lineMitre && solidStroke.getEndCap() == endCap) {
+                return solidStroke;
+            }
+            return new BasicStroke((float) (width / POINTS_IN_INCH), endCap, lineJoin, lineMitre);
         }
         float[] pattern = new float[type.length];
         for (int i = 0; i < pattern.length; i++) {
             pattern[i] = (float) (type[i] / POINTS_IN_INCH);
         }
-        return new BasicStroke((float) (width / POINTS_IN_INCH), BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, pattern, 0f);
+        return new BasicStroke((float) (width / POINTS_IN_INCH), endCap, lineJoin, lineMitre, pattern, 0f);
+    }
+
+    private static int fromGridLineEnd(GridLineEnd lineEnd) {
+        switch (lineEnd) {
+            case ROUND:
+                return BasicStroke.CAP_ROUND;
+            case BUTT:
+                return BasicStroke.CAP_BUTT;
+            case SQUARE:
+                return BasicStroke.CAP_SQUARE;
+            default:
+                throw RInternalError.shouldNotReachHere("unexpected value of GridLineEnd enum");
+        }
+    }
+
+    private static int fromGridLineJoin(GridLineJoin lineJoin) {
+        switch (lineJoin) {
+            case BEVEL:
+                return BasicStroke.JOIN_BEVEL;
+            case MITRE:
+                return BasicStroke.JOIN_MITER;
+            case ROUND:
+                return BasicStroke.JOIN_ROUND;
+            default:
+                throw RInternalError.shouldNotReachHere("unexpected value of GridLineJoin enum");
+        }
     }
 
     private static void initStrokes() {

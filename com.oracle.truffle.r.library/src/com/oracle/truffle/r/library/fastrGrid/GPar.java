@@ -11,11 +11,12 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
-import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asAbstractContainer;
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asDouble;
+import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asString;
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.getDataAtMod;
 
 import java.util.Arrays;
+import java.util.function.Function;
 
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContextDefaults;
@@ -68,12 +69,18 @@ public final class GPar {
      * fontsize*cex*lineheight.
      */
     private static final int GP_LINEHEIGHT = 7;
+    /**
+     * In fact means font style: bold, italic, bolditalic or normal.
+     */
     private static final int GP_FONT = 8;
     private static final int GP_FONTFAMILY = 9;
     private static final int GP_ALPHA = 10;
     private static final int GP_LINEEND = 11;
     private static final int GP_LINEJOIN = 12;
     private static final int GP_LINEMITRE = 13;
+    /**
+     * Multiplier of line width {@link #GP_LWD}.
+     */
     private static final int GP_LEX = 14;
 
     // Note: there is last slot "fontface" which is either unused at all, or only used in R code
@@ -138,14 +145,14 @@ public final class GPar {
         Arrays.fill(data, RNull.instance);
         data[GP_COL] = defaults.color;
         data[GP_FILL] = defaults.fillColor;
-        data[GP_GAMMA] = newDoubleVec(0);
+        data[GP_GAMMA] = newDoubleVec(0);   // Note: we do not use this parameter
         data[GP_LTY] = "solid";
         data[GP_LWD] = newDoubleVec(1);
         data[GP_CEX] = newDoubleVec(1);
         data[GP_FONTSIZE] = newDoubleVec(16);
         data[GP_LINEHEIGHT] = newDoubleVec(1.2);
-        data[GP_FONT] = RDataFactory.createIntVectorFromScalar(1);  // TODO: font constants?
-        data[GP_FONTFAMILY] = ""; // means default font (probably)
+        data[GP_FONT] = RDataFactory.createIntVectorFromScalar(1);
+        data[GP_FONTFAMILY] = ""; // means default font
         data[GP_ALPHA] = newDoubleVec(1);
         data[GP_LINEEND] = "round";
         data[GP_LINEJOIN] = "round";
@@ -171,39 +178,31 @@ public final class GPar {
 
         @Override
         public byte[] getLineType() {
-            Object lty = data[GP_LTY];
-            if (lty == null || lty == RNull.instance) {
-                return DrawingContext.GRID_LINE_SOLID;
-            }
-            // convert string values
-            if (lty instanceof String || lty instanceof RAbstractStringVector) {
-                String name = GridUtils.asString(lty, index);
-                if (name != null) {
-                    return lineTypeFromName(name);
-                }
-            }
-            // convert numeric values
-            RAbstractContainer ltyVec = asAbstractContainer(lty);
-            int num; // NA will indicate error
-            if (ltyVec.getLength() == 0) {
-                num = RRuntime.INT_NA;
-            } else if (ltyVec instanceof RAbstractDoubleVector) {
-                double realVal = getDataAtMod((RAbstractDoubleVector) ltyVec, index);
-                num = RRuntime.isNA(realVal) ? RRuntime.INT_NA : (int) realVal;
-            } else if (ltyVec instanceof RAbstractIntVector) {
-                num = getDataAtMod((RAbstractIntVector) ltyVec, index);
-            } else {
-                num = RRuntime.INT_NA;
-            }
-            if (RRuntime.isNA(num) || num < 0 || num >= LINE_STYLES.length) {
-                throw RError.error(RError.NO_CALLER, Message.GENERIC, "Invalid line type.");
-            }
-            return LINE_STYLES[num];
+            return convertNamedValue(data[GP_LTY], LINE_STYLES.length - 1, "line type", GParDrawingContext::lineTypeFromName, num -> LINE_STYLES[num]);
         }
 
         @Override
         public double getLineWidth() {
-            return asDouble(data[GP_LWD], index);
+            return asDouble(data[GP_LWD], index) * asDouble(data[GP_LEX], index);
+        }
+
+        @Override
+        public GridLineJoin getLineJoin() {
+            return convertNamedValue(data[GP_LINEJOIN], GridLineJoin.LAST_VALUE, "line join", GParDrawingContext::lineJoinFromName, GridLineJoin::fromInt);
+        }
+
+        @Override
+        public GridLineEnd getLineEnd() {
+            return convertNamedValue(data[GP_LINEEND], GridLineEnd.LAST_VALUE, "line end", GParDrawingContext::lineEndFromName, GridLineEnd::fromInt);
+        }
+
+        @Override
+        public double getLineMitre() {
+            double value = asDouble(data[GP_LINEMITRE], index);
+            if (value < 1.) {
+                throw RError.error(RError.NO_CALLER, Message.GENERIC, "Invalid line mitre.");
+            }
+            return value;
         }
 
         @Override
@@ -236,6 +235,34 @@ public final class GPar {
             return getGridColor(GP_FILL);
         }
 
+        /**
+         * Converts value to given enum type using either {@code nameMapper} for String values or
+         * {@code valueMapper} for integer value, which is first validated to be greater or equal to
+         * 0 and less or equal to the {@code maxValue} parameter. If {@code nameMapper} returns
+         * {@code null} or integer validation fails, error with given {@code propertyName} in the
+         * message is thrown.
+         */
+        public <T> T convertNamedValue(Object value, int maxValue, String propertyName, Function<String, T> nameMapper, Function<Integer, T> valueMapper) {
+            T result = null;
+            if (isStringValue(value)) {
+                String name = asString(value, index);
+                if (name != null) {
+                    result = nameMapper.apply(name);
+                }
+            } else {
+                int num = getIntAtMod(value, index);
+                if (RRuntime.isNA(num) || num < 0 || num > maxValue) {
+                    result = null;
+                } else {
+                    result = valueMapper.apply(num);
+                }
+            }
+            if (result == null) {
+                throw RError.error(RError.NO_CALLER, Message.GENERIC, "Invalid " + propertyName);
+            }
+            return result;
+        }
+
         private GridColor getGridColor(int listIndex) {
             GridColor color = GridColorUtils.gridColorFromString(GridUtils.asString(data[listIndex], index));
             double alpha = asDouble(data[GP_ALPHA], index);
@@ -254,7 +281,7 @@ public final class GPar {
         private static final byte[] TWODASH_LINE = new byte[]{2, 2, 6, 2};
         private static final byte[][] LINE_STYLES = new byte[][]{DrawingContext.GRID_LINE_BLANK, DrawingContext.GRID_LINE_SOLID, DASHED_LINE, DOTTED_LINE, DOTDASH_LINE, LONGDASH_LINE, TWODASH_LINE};
 
-        private byte[] lineTypeFromName(String name) {
+        private static byte[] lineTypeFromName(String name) {
             switch (name) {
                 case "solid":
                     return DrawingContext.GRID_LINE_SOLID;
@@ -275,10 +302,63 @@ public final class GPar {
             for (int i = 0; i < name.length(); i++) {
                 result[i] = (byte) Character.digit(name.charAt(i), 16);
                 if (result[i] == -1) {
-                    throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected line type '" + name + "'.");
+                    return null;
                 }
             }
             return result;
+        }
+
+        private static GridLineEnd lineEndFromName(String name) {
+            switch (name) {
+                case "round":
+                    return GridLineEnd.ROUND;
+                case "butt":
+                    return GridLineEnd.BUTT;
+                case "square":
+                    return GridLineEnd.SQUARE;
+                default:
+                    return null;
+            }
+        }
+
+        private static GridLineJoin lineJoinFromName(String name) {
+            switch (name) {
+                case "round":
+                    return GridLineJoin.ROUND;
+                case "mitre":
+                    return GridLineJoin.MITRE;
+                case "bevel":
+                    return GridLineJoin.BEVEL;
+                default:
+                    return null;
+            }
+        }
+
+        private static boolean isStringValue(Object lty) {
+            return lty instanceof String || lty instanceof RAbstractStringVector;
+        }
+
+        // NA indicates error
+        private static int getIntAtMod(Object obj, int index) {
+            if (obj instanceof Integer) {
+                return (int) obj;
+            } else if (obj instanceof Double) {
+                return (int) ((double) obj);
+            } else if (!(obj instanceof RAbstractContainer)) {
+                return RRuntime.INT_NA;
+            }
+
+            RAbstractContainer value = (RAbstractContainer) obj;
+            if (value.getLength() == 0) {
+                return RRuntime.INT_NA;
+            } else if (value instanceof RAbstractDoubleVector) {
+                double realVal = getDataAtMod((RAbstractDoubleVector) value, index);
+                return RRuntime.isNA(realVal) ? RRuntime.INT_NA : (int) realVal;
+            } else if (value instanceof RAbstractIntVector) {
+                return getDataAtMod((RAbstractIntVector) value, index);
+            } else {
+                return RRuntime.INT_NA;
+            }
         }
     }
 }
