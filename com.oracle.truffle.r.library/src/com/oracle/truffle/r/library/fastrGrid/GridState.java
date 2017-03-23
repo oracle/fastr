@@ -23,6 +23,7 @@ public final class GridState {
     private REnvironment gridEnv;
     private double scale = 1;
     private boolean deviceInitialized;
+    private int devHoldCount;
 
     /**
      * Current grob being drawn (for determining the list of grobs to search when evaluating a
@@ -33,6 +34,15 @@ public final class GridState {
     GridState() {
     }
 
+    public int getDevHoldCount() {
+        return devHoldCount;
+    }
+
+    public int setDevHoldCount(int devHoldCount) {
+        this.devHoldCount = devHoldCount;
+        return devHoldCount;
+    }
+
     public void init(REnvironment gridEnv, GridDevice currentDevice) {
         this.gridEnv = gridEnv;
         this.currentGrob = RNull.instance;
@@ -40,14 +50,11 @@ public final class GridState {
     }
 
     void initGPar(GridDevice currentDevice) {
-        gpar = GPar.createNew();
-        currentDevice.initDrawingContext(GPar.asDrawingContext(gpar));
+        gpar = GPar.createNew(currentDevice);
     }
 
     public static DrawingContext getInitialGPar(GridDevice device) {
-        DrawingContext result = GPar.asDrawingContext(GPar.createNew());
-        device.initDrawingContext(result);
-        return result;
+        return GPar.asDrawingContext(GPar.createNew(device));
     }
 
     public RList getGpar() {

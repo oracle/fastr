@@ -31,6 +31,21 @@ import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_
 public interface GridDevice {
     void openNewPage();
 
+    /**
+     * If the device is capable of buffering, calling {@code hold} should start buffering, e.g.
+     * nothing is displayed on the device, until {@link #flush()} is called.
+     */
+    default void hold() {
+    }
+
+    /**
+     * Should display the whole buffer at once.
+     *
+     * @see #hold()
+     */
+    default void flush() {
+    }
+
     void drawRect(DrawingContext ctx, double leftX, double topY, double width, double height);
 
     /**
@@ -58,12 +73,11 @@ public interface GridDevice {
     double getHeight();
 
     /**
-     * May change the default values the of the initial drawing context instance.
-     * 
-     * @param ctx instance of drawing context to be altered.
+     * May change the default values the of the initial drawing context instance. Must return
+     * non-null value.
      */
-    default void initDrawingContext(DrawingContext ctx) {
-        // nop
+    default DrawingContextDefaults getDrawingContextDefaults() {
+        return new DrawingContextDefaults();
     }
 
     double getStringWidth(DrawingContext ctx, String text);

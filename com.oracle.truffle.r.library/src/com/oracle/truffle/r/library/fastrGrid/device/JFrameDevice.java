@@ -28,6 +28,7 @@ import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.HeadlessException;
 import java.awt.Paint;
@@ -73,12 +74,7 @@ public class JFrameDevice implements GridDevice {
         if (currentFrame == null) {
             currentFrame = new FastRFrame();
             currentFrame.setVisible(true);
-            graphics = (Graphics2D) currentFrame.getGraphics();
-            graphics.translate(0, currentFrame.getHeight());
-            graphics.scale(POINTS_IN_INCH, -POINTS_IN_INCH);
-            graphics.setStroke(new BasicStroke((float) (1d / POINTS_IN_INCH)));
-            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            graphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+            initGraphics(currentFrame.getGraphics());
         } else {
             noTranform(() -> {
                 graphics.clearRect(0, 0, currentFrame.getWidth(), currentFrame.getHeight());
@@ -156,6 +152,22 @@ public class JFrameDevice implements GridDevice {
         });
     }
 
+    FastRFrame getCurrentFrame() {
+        return currentFrame;
+    }
+
+    void initGraphics(Graphics newGraphics) {
+        if (graphics != null) {
+            graphics.dispose();
+        }
+        graphics = (Graphics2D) newGraphics;
+        graphics.translate(0, currentFrame.getHeight());
+        graphics.scale(POINTS_IN_INCH, -POINTS_IN_INCH);
+        graphics.setStroke(new BasicStroke((float) (1d / POINTS_IN_INCH)));
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        graphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+    }
+
     private void drawShape(DrawingContext drawingCtx, Shape shape) {
         Paint paint = graphics.getPaint();
         graphics.setPaint(fromGridColor(drawingCtx.getFillColor()));
@@ -223,7 +235,7 @@ public class JFrameDevice implements GridDevice {
         longdashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{2f * dashSize}, 0f);
     }
 
-    private static class FastRFrame extends JFrame {
+    static class FastRFrame extends JFrame {
         private static final long serialVersionUID = 1L;
         private final Dimension framePreferredSize = new Dimension(720, 720);
         private final JPanel fastRComponent = new JPanel();

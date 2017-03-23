@@ -55,4 +55,17 @@ public class GridColor {
     public int getAlpha() {
         return (value >> 24) & 0xff;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof GridColor)) {
+            return false;
+        }
+        return value == ((GridColor) obj).value;
+    }
+
+    @Override
+    public int hashCode() {
+        return value;
+    }
 }

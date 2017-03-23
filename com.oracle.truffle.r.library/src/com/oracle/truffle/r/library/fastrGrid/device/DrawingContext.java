@@ -23,7 +23,8 @@
 package com.oracle.truffle.r.library.fastrGrid.device;
 
 /**
- * Defines parameters for drawing, like color, line style etc.
+ * Defines parameters for drawing, like color, line style etc. The implementations must be
+ * immutable.
  */
 public interface DrawingContext {
     double INCH_TO_POINTS_FACTOR = 72.27;
@@ -52,12 +53,10 @@ public interface DrawingContext {
 
     GridLineType getLineType();
 
-    GridColor getColor();
-
     /**
-     * Alows to set the color drawing color of shape borders, lines and text.
+     * Drawing color of shape borders, lines and text.
      */
-    void setColor(GridColor color);
+    GridColor getColor();
 
     /**
      * Gets the font size in points.
@@ -71,10 +70,8 @@ public interface DrawingContext {
      */
     double getLineHeight();
 
-    GridColor getFillColor();
-
     /**
-     * Alows to set the fill color of shapes.
+     * The fill color of shapes.
      */
-    void setFillColor(GridColor color);
+    GridColor getFillColor();
 }

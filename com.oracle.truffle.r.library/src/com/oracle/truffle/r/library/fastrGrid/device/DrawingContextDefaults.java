@@ -20,32 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastrGrid;
-
-import com.oracle.truffle.r.library.fastrGrid.device.BufferedJFrameDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.JFrameDevice;
+package com.oracle.truffle.r.library.fastrGrid.device;
 
 /**
- * Encapsulated the acces to the global grid state.
+ * Allows the device to communicate the default values for its initial {@link DrawingContext}. The
+ * format of the values is the same as accepted by the {@code gpar()} function in R.
  */
-public final class GridContext {
-    private static final GridContext INSTANCE = new GridContext();
-    private final GridState gridState = new GridState();
-    private GridDevice currentDevice;
-
-    public static GridContext getContext() {
-        return INSTANCE;
-    }
-
-    public GridState getGridState() {
-        return gridState;
-    }
-
-    public GridDevice getCurrentDevice() {
-        if (currentDevice == null) {
-            currentDevice = new BufferedJFrameDevice(new JFrameDevice());
-        }
-        return currentDevice;
-    }
+public class DrawingContextDefaults {
+    public String fillColor = "transparent";
+    public String color = "black";
 }
