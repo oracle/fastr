@@ -865,11 +865,6 @@ public class RRuntime {
             return RDataFactory.createLogicalVectorFromScalar((Byte) obj);
         } else if (obj instanceof String) {
             return RDataFactory.createStringVectorFromScalar((String) obj);
-        } else if (obj instanceof RComplex) {
-            RComplex complex = (RComplex) obj;
-            return RDataFactory.createComplexVector(new double[]{complex.getRealPart(), complex.getImaginaryPart()}, RDataFactory.COMPLETE_VECTOR);
-        } else if (obj instanceof RRaw) {
-            return RDataFactory.createRawVector(new byte[]{((RRaw) obj).getValue()});
         } else {
             return obj;
         }

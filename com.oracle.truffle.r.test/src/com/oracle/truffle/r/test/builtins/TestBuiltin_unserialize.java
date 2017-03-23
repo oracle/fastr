@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,8 +29,8 @@ import com.oracle.truffle.r.test.TestBase;
 
 public class TestBuiltin_unserialize extends TestBase {
     private static final String[] BASIC_TYPE_VALUES = new String[]{
-                    "c(1,2,3,4)", "3L", "42", "\"Hello world\"", "3+2i", "TRUE", "head(mtcars)",
-                    "data.frame(col1=c(9,8,7), col2=1:3)", "expression(x+1)", "list(1,2)", "NULL"
+                    "c(1,2,3,4)", "3L", "c(1L,2L,99L,NA)", "1:15", "(1:15)+0.1", "42", "\"Hello world\"", "3+2i", "c(3+2i, 5+944i, NA)", "TRUE", "c(TRUE, FALSE, NA, FALSE, TRUE)",
+                    "head(mtcars)", "data.frame(col1=c(9,8,7), col2=1:3)", "expression(x+1)", "list(1,2)", "NULL"
     };
 
     @Test
@@ -88,7 +88,7 @@ public class TestBuiltin_unserialize extends TestBase {
         assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(function(x,y,...) { 1 }), connection=NULL))");
         assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(function(x,y=1,...) { NA }), connection=NULL))");
         assertEval("options(keep.source=FALSE); unserialize(serialize(quote(function(x={1 + a},y,...) { NA }), connection=NULL))");
-        assertEval(Ignored.OutputFormatting, "options(keep.source=FALSE); unserialize(serialize(quote(function(x={1 + a},y,...) { !!NA }), connection=NULL))");
+        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(function(x={1 + a},y,...) { !!NA }), connection=NULL))");
         assertEval("options(keep.source=FALSE); unserialize(serialize(quote(function(x={1 + a},y,...) { !1+5i }), connection=NULL))");
         assertEval("options(keep.source=FALSE); unserialize(serialize(quote(function(x={1 + a},y=c(1,2,3),z=\"foo\",...) { !1+5i }), connection=NULL))");
 

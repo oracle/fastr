@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,24 @@ public class TestBuiltin_serialize extends TestBase {
         assertEval("options(keep.source=FALSE); serialize(quote(111+8i), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote(111+11), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote(a+b), connection=NULL)");
+
+        assertEval("options(keep.source=FALSE); serialize(TRUE, connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(FALSE, connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(c(TRUE, FALSE, TRUE, NA, TRUE), connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize('asdf', connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(NA_character_, connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(NA_complex_, connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(NA_integer_, connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(NA_real_, connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(111L, connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(c(111L, 11L, 990000L, NA_integer_), connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(111+8i, connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(c(111+8i, 55+9i, NA), connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(111, connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(c(111, 99, NA, 44), connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(as.raw(10), connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(as.raw(210), connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(as.raw(c(1, 55, 210)), connection=NULL)");
 
         assertEval("options(keep.source=FALSE); serialize(quote((a+b)), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote((a %asdf% b)), connection=NULL)");
