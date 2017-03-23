@@ -41,16 +41,13 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -839,10 +836,7 @@ public class RSerialize {
 
         /**
          * GnuR uses a pairlist to represent attributes, whereas FastR uses the abstract RAttributes
-         * class. FastR also uses different types to represent data/frame and factor which is
-         * handled in the setClassAttr. N.B. In theory connections can be unserialized but they are
-         * unusable, so we don't go to the trouble of converting the {@link RIntVector}
-         * representation into an {@link RConnection}.
+         * class.
          */
         @TruffleBoundary
         private static Object setAttributes(final Object object, Object attr) {
@@ -1461,46 +1455,56 @@ public class RSerialize {
                                 stream.writeInt(1);
                                 writeCHARSXP((String) obj);
                             } else {
-                                outStringVec((RStringVector) obj, true);
+                                outStringVec((RAbstractStringVector) obj, true);
                             }
                             break;
                         }
 
                         case INTSXP: {
-                            RAbstractIntVector vec = (RAbstractIntVector) obj;
-                            stream.writeInt(vec.getLength());
-                            for (int i = 0; i < vec.getLength(); i++) {
-                                stream.writeInt(vec.getDataAt(i));
-                            }
-                            break;
-                        }
-
-                        case REALSXP: {
-                            RAbstractDoubleVector vec = (RAbstractDoubleVector) obj;
-                            stream.writeInt(vec.getLength());
-                            for (int i = 0; i < vec.getLength(); i++) {
-                                stream.writeDouble(vec.getDataAt(i));
-                            }
-                            break;
-                        }
-
-                        case LGLSXP: {
-                            // Output as ints
-                            RLogicalVector vec = (RLogicalVector) obj;
-                            stream.writeInt(vec.getLength());
-                            for (int i = 0; i < vec.getLength(); i++) {
-                                byte val = vec.getDataAt(i);
-                                if (RRuntime.isNA(val)) {
-                                    stream.writeInt(RRuntime.INT_NA);
-                                } else {
+                            if (obj instanceof Integer) {
+                                stream.writeInt(1);
+                                stream.writeInt((int) obj);
+                            } else {
+                                RAbstractIntVector vec = (RAbstractIntVector) obj;
+                                stream.writeInt(vec.getLength());
+                                for (int i = 0; i < vec.getLength(); i++) {
                                     stream.writeInt(vec.getDataAt(i));
                                 }
                             }
                             break;
                         }
 
+                        case REALSXP: {
+                            if (obj instanceof Double) {
+                                stream.writeInt(1);
+                                stream.writeDouble((double) obj);
+                            } else {
+                                RAbstractDoubleVector vec = (RAbstractDoubleVector) obj;
+                                stream.writeInt(vec.getLength());
+                                for (int i = 0; i < vec.getLength(); i++) {
+                                    stream.writeDouble(vec.getDataAt(i));
+                                }
+                            }
+                            break;
+                        }
+
+                        case LGLSXP: {
+                            // Output as ints
+                            if (obj instanceof Byte) {
+                                stream.writeInt(1);
+                                stream.writeInt(RRuntime.logical2int((byte) obj));
+                            } else {
+                                RAbstractLogicalVector vec = (RAbstractLogicalVector) obj;
+                                stream.writeInt(vec.getLength());
+                                for (int i = 0; i < vec.getLength(); i++) {
+                                    stream.writeInt(RRuntime.logical2int(vec.getDataAt(i)));
+                                }
+                            }
+                            break;
+                        }
+
                         case CPLXSXP: {
-                            RComplexVector vec = (RComplexVector) obj;
+                            RAbstractComplexVector vec = (RAbstractComplexVector) obj;
                             stream.writeInt(vec.getLength());
                             for (int i = 0; i < vec.getLength(); i++) {
                                 RComplex val = vec.getDataAt(i);
@@ -1548,55 +1552,6 @@ public class RSerialize {
                         }
 
                         case S4SXP: {
-                            break;
-                        }
-
-                        /*
-                         * FastR scalar, (length 1) "vectors"
-                         */
-
-                        case FASTR_INT: {
-                            Integer value = (Integer) obj;
-                            stream.writeInt(1);
-                            stream.writeInt(value);
-                            break;
-                        }
-
-                        case FASTR_DOUBLE: {
-                            Double value = (Double) obj;
-                            stream.writeInt(1);
-                            stream.writeDouble(value);
-                            break;
-                        }
-
-                        case FASTR_BYTE: {
-                            Byte value = (Byte) obj;
-                            stream.writeInt(1);
-                            if (RRuntime.isNA(value)) {
-                                stream.writeInt(RRuntime.INT_NA);
-                            } else {
-                                stream.writeInt(value);
-                            }
-                            break;
-                        }
-
-                        case FASTR_COMPLEX: {
-                            RComplex value = (RComplex) obj;
-                            stream.writeInt(1);
-                            if (RRuntime.isNA(value)) {
-                                stream.writeDouble(RRuntime.DOUBLE_NA);
-                                stream.writeDouble(RRuntime.DOUBLE_NA);
-                            } else {
-                                stream.writeDouble(value.getRealPart());
-                                stream.writeDouble(value.getImaginaryPart());
-                            }
-                            break;
-                        }
-
-                        case FASTR_CONNECTION: {
-                            RConnection con = (RConnection) obj;
-                            stream.writeInt(1);
-                            stream.writeInt(con.getDescriptor());
                             break;
                         }
 
@@ -1725,7 +1680,7 @@ public class RSerialize {
             return result;
         }
 
-        private void outStringVec(RStringVector vec, boolean strsxp) throws IOException {
+        private void outStringVec(RAbstractStringVector vec, boolean strsxp) throws IOException {
             if (!strsxp) {
                 stream.writeInt(0);
             }

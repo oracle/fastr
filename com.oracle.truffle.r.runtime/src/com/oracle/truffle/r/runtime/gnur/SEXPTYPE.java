@@ -14,9 +14,7 @@ package com.oracle.truffle.r.runtime.gnur;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -48,18 +46,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public enum SEXPTYPE {
 
-    /*
-     * FastR scalar variants of GnuR vector types (other than String) These could be removed in a
-     * similar way to String, but there is no pressing need.
-     */
-    FASTR_DOUBLE(300, Double.class),
-    FASTR_INT(301, Integer.class),
-    FASTR_BYTE(302, Byte.class),
-    FASTR_COMPLEX(303, RComplex.class),
-    // very special case
-    FASTR_SOURCESECTION(306, SourceSection.class),
-    FASTR_CONNECTION(307, RConnection.class),
-
     NILSXP(0, RNull.class), /* nil ()NULL */
     SYMSXP(1, RSymbol.class), /* symbols */
     LISTSXP(2, RPairList.class), /* lists of dotted pairs */
@@ -70,10 +56,10 @@ public enum SEXPTYPE {
     SPECIALSXP(7), /* special forms */
     BUILTINSXP(8), /* builtin non-special forms */
     CHARSXP(9), /* "scalar" string type (GnuR internal only) */
-    LGLSXP(10, RLogicalVector.class), /* logical vectors */
-    INTSXP(13, RIntVector.class, RIntSequence.class), /* integer vectors */
-    REALSXP(14, RDoubleVector.class, RDoubleSequence.class), /* real variables */
-    CPLXSXP(15, RComplexVector.class), /* complex variables */
+    LGLSXP(10, RLogicalVector.class, Byte.class), /* logical vectors */
+    INTSXP(13, RIntVector.class, RIntSequence.class, Integer.class), /* integer vectors */
+    REALSXP(14, RDoubleVector.class, RDoubleSequence.class, Double.class), /* real variables */
+    CPLXSXP(15, RComplexVector.class, RComplex.class), /* complex variables */
     STRSXP(16, RStringVector.class, String.class), /* string vectors */
     DOTSXP(17, RArgsValuesAndNames.class), /* dot-dot-dot object */
     ANYSXP(18), /* make "any" args work */
@@ -142,11 +128,9 @@ public enum SEXPTYPE {
                 }
             }
         }
-        // (only) promises, environments and connections have subtypes
+        // (only) promises and environments have subtypes
         if (REnvironment.class.isAssignableFrom(fastRClass)) {
             return ENVSXP;
-        } else if (RConnection.class.isAssignableFrom(fastRClass)) {
-            return FASTR_CONNECTION;
         } else if (RPromise.class.isAssignableFrom(fastRClass)) {
             return PROMSXP;
         }
@@ -174,52 +158,22 @@ public enum SEXPTYPE {
      */
     public static SEXPTYPE gnuRType(SEXPTYPE type, Object obj) {
         switch (type) {
-            case FUNSXP: {
+            case FUNSXP:
                 RFunction func = (RFunction) obj;
                 if (func.isBuiltin()) {
                     return SEXPTYPE.BUILTINSXP;
                 } else {
                     return SEXPTYPE.CLOSXP;
                 }
-            }
-
-            case LISTSXP: {
+            case LISTSXP:
                 RPairList pl = (RPairList) obj;
                 if (pl.getType() != null && pl.getType() == SEXPTYPE.LANGSXP) {
                     return SEXPTYPE.LANGSXP;
                 } else {
                     return type;
                 }
-            }
-
-            case FASTR_INT:
-                return SEXPTYPE.INTSXP;
-            case FASTR_DOUBLE:
-                return SEXPTYPE.REALSXP;
-            case FASTR_BYTE:
-                return SEXPTYPE.LGLSXP;
-            case FASTR_COMPLEX:
-                return SEXPTYPE.CPLXSXP;
-            case FASTR_CONNECTION:
-                return SEXPTYPE.INTSXP;
             default:
                 return type;
-        }
-    }
-
-    public static SEXPTYPE convertFastRScalarType(SEXPTYPE type) {
-        switch (type) {
-            case FASTR_DOUBLE:
-                return SEXPTYPE.REALSXP;
-            case FASTR_INT:
-                return SEXPTYPE.INTSXP;
-            case FASTR_BYTE:
-                return SEXPTYPE.LGLSXP;
-            case FASTR_COMPLEX:
-                return SEXPTYPE.CPLXSXP;
-            default:
-                assert false;
-                return null;
         }
     }
 }

@@ -244,7 +244,7 @@ public class TestConnections extends TestRBase {
         assertEval(Ignored.ImplementationError, "{ s <- \"äöüß\"; rc <- rawConnection(raw(0), \"wb\"); write(charToRaw(s), rc); res <- rawConnectionValue(rc); close(rc); res }");
         assertEval("{ zz <- rawConnection(raw(0), \"wb\"); x <- c(\"a\", \"this will be truncated\", \"abc\"); nc <- c(3, 10, 3); writeChar(x, zz, nc, eos = NULL); writeChar(x, zz, eos = \"\\r\\n\"); res <- rawConnectionValue(zz); close(zz); res }");
 
-        assertEval(Ignored.ImplementationError, "conn <- rawConnection(raw(0), \"wb\"); value <- list(a=c(1,2,3), b='foo'); save(value, file=conn); rawConnectionValue(conn)");
+        assertEval("conn <- rawConnection(raw(0), \"wb\"); value <- list(a=c(1,2,3), b='foo'); save(value, file=conn); rawConnectionValue(conn)");
         // ignored because save refuses to write to a rawConnection that is not configured to binary
         assertEval(Ignored.ImplementationError, "conn <- rawConnection(raw(0), \"w\"); value <- c(1,2,3); save(value, file=conn); rawConnectionValue(conn)");
     }
