@@ -178,7 +178,7 @@ public class LogFunctions {
             return log(vector, base, index -> checkDouble(vector.getDataAt(index), xNACheck), copyAttrsNode, getNamesNode, getDimsNode, xNACheck, baseNACheck);
         }
 
-        private double checkDouble(double d, NACheck na) {
+        private static double checkDouble(double d, NACheck na) {
             na.check(d);
             return d;
         }
@@ -248,7 +248,7 @@ public class LogFunctions {
             return log(vector, base, index -> checkComplex(vector.getDataAt(index), xNACheck), divNode, getDimsNode, getNamesNode, copyAttrsNode, xNACheck, baseNACheck);
         }
 
-        private RComplex checkComplex(RComplex rc, NACheck xNACheck) {
+        private static RComplex checkComplex(RComplex rc, NACheck xNACheck) {
             xNACheck.check(rc);
             return rc;
         }
@@ -345,7 +345,7 @@ public class LogFunctions {
             return createResult(vector, complexVector, complete, getDimsNode, getNamesNode, copyAttrsNode);
         }
 
-        private void fill(double[] array, int i, RComplex rc) {
+        private static void fill(double[] array, int i, RComplex rc) {
             array[i] = rc.getRealPart();
             array[i + 1] = rc.getImaginaryPart();
         }
@@ -375,7 +375,7 @@ public class LogFunctions {
             return ret;
         }
 
-        private RComplex logb(RComplex x) {
+        private static RComplex logb(RComplex x) {
             double re = x.getRealPart();
             double im = x.getImaginaryPart();
 
@@ -392,14 +392,14 @@ public class LogFunctions {
             return result;
         }
 
-        private RComplexVector createResult(RAbstractVector source, double[] resultData, boolean complete, GetDimAttributeNode getDimsNode, GetNamesAttributeNode getNamesNode,
+        private static RComplexVector createResult(RAbstractVector source, double[] resultData, boolean complete, GetDimAttributeNode getDimsNode, GetNamesAttributeNode getNamesNode,
                         CopyOfRegAttributesNode copyAttrsNode) {
             RComplexVector result = RDataFactory.createComplexVector(resultData, complete, getDimsNode.getDimensions(source), getNamesNode.getNames(source));
             copyAttrsNode.execute(source, result);
             return result;
         }
 
-        private boolean isNaN(RComplex base) {
+        private static boolean isNaN(RComplex base) {
             return Double.isNaN(base.getRealPart()) || Double.isNaN(base.getImaginaryPart());
         }
     }

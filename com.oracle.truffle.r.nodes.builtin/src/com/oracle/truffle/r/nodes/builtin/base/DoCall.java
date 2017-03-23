@@ -28,7 +28,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -36,7 +35,6 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctions.Get;
@@ -67,7 +65,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-// TODO Implement completely, this is a simple implementation that works when the envir argument is ignored
 @RBuiltin(name = ".fastr.do.call", visibility = CUSTOM, kind = RBuiltinKind.INTERNAL, parameterNames = {"what", "args", "quote", "envir"}, behavior = COMPLEX)
 public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNodeChildren {
 
@@ -90,33 +87,17 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
         return GetNodeGen.create();
     }
 
-    protected ReadVariableNode createRead(RAbstractStringVector what) {
-        if (what.getLength() != 1) {
-            CompilerDirectives.transferToInterpreter();
-            throw error(RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
-        }
-        return ReadVariableNode.createForcedFunctionLookup(RSyntaxNode.INTERNAL, what.getDataAt(0));
-    }
-
     @Specialization
     protected Object doCall(VirtualFrame frame, RAbstractStringVector what, RList argsAsList, boolean quote, REnvironment env,
                     @Cached("createGet()") Get getNode) {
         if (what.getLength() != 1) {
-            CompilerDirectives.transferToInterpreter();
             throw error(RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
         }
         RFunction func = (RFunction) getNode.execute(frame, what.getDataAt(0), env, RType.Function.getName(), true);
         return doCall(frame, func, argsAsList, quote, env);
     }
 
-    @Specialization(limit = "3", guards = {"what.getLength() == 1", "read.getIdentifier() == what.getDataAt(0)"})
-    protected Object doCallCached(VirtualFrame frame, @SuppressWarnings("unused") RAbstractStringVector what, RList argsAsList, boolean quote, REnvironment env,
-                    @Cached("createRead(what)") ReadVariableNode read) {
-        RFunction func = (RFunction) read.execute(frame);
-        return doCall(frame, func, argsAsList, quote, env);
-    }
-
-    @Specialization(replaces = "doCallCached")
+    @Specialization
     protected Object doCall(VirtualFrame frame, RFunction func, RList argsAsList, boolean quote, REnvironment env) {
         /*
          * To re-create the illusion of a normal call, turn the values in argsAsList into promises.
