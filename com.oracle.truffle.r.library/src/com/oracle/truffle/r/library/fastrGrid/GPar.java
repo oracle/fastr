@@ -232,7 +232,14 @@ public final class GPar {
         }
 
         private GridColor getGridColor(int listIndex) {
-            return GridColorUtils.gridColorFromString(GridUtils.asString(data[listIndex], index));
+            GridColor color = GridColorUtils.gridColorFromString(GridUtils.asString(data[listIndex], index));
+            double alpha = asDouble(data[GP_ALPHA], index);
+            if (alpha != 1.) {
+                int newAlpha = Math.min(255, (int) (alpha * ((color.getAlpha() / 255.0) * 255)));
+                return new GridColor(color.getRed(), color.getGreen(), color.getBlue(), newAlpha);
+            } else {
+                return color;
+            }
         }
 
         private static final byte[] DASHED_LINE = new byte[]{4, 4};
