@@ -58,12 +58,11 @@ public interface GridDevice {
     double getHeight();
 
     /**
-     * May change the default values the of the initial drawing context instance.
-     * 
-     * @param ctx instance of drawing context to be altered.
+     * May change the default values the of the initial drawing context instance. Must return
+     * non-null value.
      */
-    default void initDrawingContext(DrawingContext ctx) {
-        // nop
+    default DrawingContextDefaults getDrawingContextDefaults() {
+        return new DrawingContextDefaults();
     }
 
     double getStringWidth(DrawingContext ctx, String text);

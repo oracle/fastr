@@ -40,14 +40,11 @@ public final class GridState {
     }
 
     void initGPar(GridDevice currentDevice) {
-        gpar = GPar.createNew();
-        currentDevice.initDrawingContext(GPar.asDrawingContext(gpar));
+        gpar = GPar.createNew(currentDevice);
     }
 
     public static DrawingContext getInitialGPar(GridDevice device) {
-        DrawingContext result = GPar.asDrawingContext(GPar.createNew());
-        device.initDrawingContext(result);
-        return result;
+        return GPar.asDrawingContext(GPar.createNew(device));
     }
 
     public RList getGpar() {

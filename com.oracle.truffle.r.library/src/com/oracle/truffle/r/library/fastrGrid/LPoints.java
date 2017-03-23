@@ -73,11 +73,12 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
 
         // Note: unlike in other drawing primitives, we only consider length of x
         int length = unitLength.execute(xVec);
+        PointDrawingContext pointDrawingCtx = new PointDrawingContext(drawingCtx, drawingCtx.getFillColor(), drawingCtx.getFillColor());
         for (int i = 0; i < length; i++) {
             Point loc = TransformMatrix.transLocation(Point.fromUnits(unitToInches, xVec, yVec, i, conversionCtx), vpTransform.transform);
             double size = unitToInches.convertWidth(sizeVec, i, conversionCtx);
             if (loc.isFinite() && Double.isFinite(size)) {
-                drawSymbol(drawingCtx, dev, cex, pchVec.getDataAt(i % pchVec.getLength()), size, loc.x, loc.y);
+                pointDrawingCtx = drawSymbol(pointDrawingCtx, dev, cex, pchVec.getDataAt(i % pchVec.getLength()), size, loc.x, loc.y);
             }
         }
         return RNull.instance;
@@ -85,38 +86,31 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
 
     // transcribed from engine.c function GESymbol
 
-    private void drawSymbol(DrawingContext drawingCtx, GridDevice dev, double cex, int pch, double size, double x, double y) {
+    private PointDrawingContext drawSymbol(PointDrawingContext drawingCtx, GridDevice dev, double cex, int pch, double size, double x, double y) {
         // pch 0 - 25 are interpreted as geometrical shapes, pch from ascii code of ' ' are
         // interpreted as corresponding ascii character, which should be drawn
         switch (pch) {
             case 46:
-                drawDot(drawingCtx, dev, cex, x, y);
-                break;
+                return drawDot(drawingCtx, dev, cex, x, y);
             case 1:
-                drawOctahedron(drawingCtx, dev, GridColor.TRANSPARENT, size, x, y);
-                break;
+                return drawOctahedron(drawingCtx, dev, GridColor.TRANSPARENT, size, x, y);
             case 16:
-                drawOctahedron(drawingCtx, dev, drawingCtx.getColor(), size, x, y);
-                break;
+                return drawOctahedron(drawingCtx, dev, drawingCtx.getWrapped().getColor(), size, x, y);
             default:
                 throw RInternalError.unimplemented("grid.points unimplemented symbol " + pch);
         }
     }
 
-    private static void drawOctahedron(DrawingContext drawingCtx, GridDevice dev, GridColor fill, double size, double x, double y) {
-        GridColor originalFill = drawingCtx.getFillColor();
-        drawingCtx.setFillColor(fill);
+    private static PointDrawingContext drawOctahedron(PointDrawingContext drawingCtxIn, GridDevice dev, GridColor fill, double size, double x, double y) {
+        PointDrawingContext drawingCtx = drawingCtxIn.update(drawingCtxIn.getWrapped().getColor(), fill);
         dev.drawCircle(drawingCtx, x, y, RADIUS * size);
-        drawingCtx.setFillColor(originalFill);
+        return drawingCtx;
     }
 
-    private static void drawDot(DrawingContext drawingCtx, GridDevice dev, double cex, double x, double y) {
+    private static PointDrawingContext drawDot(PointDrawingContext drawingCtxIn, GridDevice dev, double cex, double x, double y) {
         // NOTE: we are *filling* a rect with the current colour (we are not drawing the border AND
         // we are not using the current fill colour)
-        GridColor originalFill = drawingCtx.getFillColor();
-        drawingCtx.setFillColor(drawingCtx.getColor());
-        drawingCtx.setColor(GridColor.TRANSPARENT);
-
+        PointDrawingContext drawingCtx = drawingCtxIn.update(GridColor.TRANSPARENT, drawingCtxIn.getWrapped().getColor());
         /*
          * The idea here is to use a 0.01" square, but to be of at least one device unit in each
          * direction, assuming that corresponds to pixels. That may be odd if pixels are not square,
@@ -135,8 +129,57 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
             yc = 0.5;
         }
         dev.drawRect(drawingCtx, x - xc, y - yc, x + xc, y + yc);
+        return drawingCtx;
+    }
 
-        drawingCtx.setColor(drawingCtx.getFillColor());
-        drawingCtx.setFillColor(originalFill);
+    private static final class PointDrawingContext implements DrawingContext {
+        private final DrawingContext inner;
+        private final GridColor color;
+        private final GridColor fillColor;
+
+        private PointDrawingContext(DrawingContext inner, GridColor color, GridColor fillColor) {
+            this.inner = inner;
+            this.color = color;
+            this.fillColor = fillColor;
+        }
+
+        // This allows to re-use the existing instance if it would have the same parameters. The
+        // assumption is that the users will actually draw many points in a row with the same
+        // parameters.
+        private PointDrawingContext update(GridColor color, GridColor fillColor) {
+            if (this.color.equals(color) && this.fillColor.equals(fillColor)) {
+                return this;
+            }
+            return new PointDrawingContext(inner, color, fillColor);
+        }
+
+        @Override
+        public GridLineType getLineType() {
+            return inner.getLineType();
+        }
+
+        @Override
+        public GridColor getColor() {
+            return color;
+        }
+
+        @Override
+        public double getFontSize() {
+            return inner.getFontSize();
+        }
+
+        @Override
+        public double getLineHeight() {
+            return inner.getLineHeight();
+        }
+
+        @Override
+        public GridColor getFillColor() {
+            return fillColor;
+        }
+
+        private DrawingContext getWrapped() {
+            return inner;
+        }
     }
 }

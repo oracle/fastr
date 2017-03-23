@@ -17,7 +17,9 @@ import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asDouble;
 import java.util.Arrays;
 
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
+import com.oracle.truffle.r.library.fastrGrid.device.DrawingContextDefaults;
 import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
+import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -84,11 +86,12 @@ public final class GPar {
     };
     private static final RStringVector NAMES_VECTOR = (RStringVector) RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR).makeSharedPermanent();
 
-    public static RList createNew() {
+    public static RList createNew(GridDevice device) {
         Object[] data = new Object[GP_LENGTH];
+        DrawingContextDefaults defaults = device.getDrawingContextDefaults();
         Arrays.fill(data, RNull.instance);
-        data[GP_FILL] = "transparent";
-        data[GP_COL] = "black";
+        data[GP_COL] = defaults.color;
+        data[GP_FILL] = defaults.fillColor;
         data[GP_GAMMA] = newDoubleVec(0);
         data[GP_LTY] = "solid";
         data[GP_LWD] = newDoubleVec(1);
@@ -102,7 +105,9 @@ public final class GPar {
         data[GP_LINEJOIN] = "round";
         data[GP_LINEMITRE] = newDoubleVec(10);
         data[GP_LEX] = newDoubleVec(1);
-        return RDataFactory.createList(data, NAMES_VECTOR);
+        RList result = RDataFactory.createList(data, NAMES_VECTOR);
+        result.makeSharedPermanent();
+        return result;
     }
 
     public static double getCex(RList gpar) {
@@ -122,6 +127,7 @@ public final class GPar {
 
         private GParDrawingContext(RList list) {
             data = list.getDataWithoutCopying();
+            list.makeSharedPermanent();
         }
 
         @Override
@@ -159,11 +165,6 @@ public final class GPar {
         }
 
         @Override
-        public void setColor(GridColor color) {
-            data[GP_COL] = GridColorUtils.gridColorToRString(color);
-        }
-
-        @Override
         public double getFontSize() {
             return asDouble(data[GP_FONTSIZE]) * asDouble(data[GP_CEX]);
         }
@@ -176,11 +177,6 @@ public final class GPar {
         @Override
         public GridColor getFillColor() {
             return getGridColor(GP_FILL);
-        }
-
-        @Override
-        public void setFillColor(GridColor color) {
-            data[GP_FILL] = GridColorUtils.gridColorToRString(color);
         }
 
         private GridColor getGridColor(int index) {
