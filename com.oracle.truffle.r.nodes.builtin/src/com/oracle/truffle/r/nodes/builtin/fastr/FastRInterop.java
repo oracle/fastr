@@ -40,9 +40,14 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
@@ -55,9 +60,15 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class FastRInterop {
 
@@ -248,6 +259,75 @@ public class FastRInterop {
         @Specialization
         public boolean toBoolean(boolean value) {
             return value;
+        }
+    }
+
+    @RBuiltin(name = ".fastr.java.class", visibility = ON, kind = PRIMITIVE, parameterNames = {"class"}, behavior = COMPLEX)
+    public abstract static class JavaClass extends RBuiltinNode {
+
+        static {
+            Casts casts = new Casts(JavaClass.class);
+            casts.arg("class").mustBe(stringValue()).asStringVector().mustBe(Predef.singleElement()).findFirst();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        public TruffleObject javaClass(String clazz) {
+            try {
+                return JavaInterop.asTruffleObject(Class.forName(clazz));
+            } catch (ClassNotFoundException | SecurityException | IllegalArgumentException e) {
+                throw error(Message.GENERIC, "error while accessing Java class: " + e.getMessage());
+            }
+        }
+    }
+
+    @ImportStatic({com.oracle.truffle.api.interop.Message.class, RRuntime.class})
+    @RBuiltin(name = ".fastr.interop.new", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "..."}, behavior = COMPLEX)
+    public abstract static class InteropNew extends RBuiltinNode {
+
+        static {
+            Casts.noCasts(InteropNew.class);
+        }
+
+        private static Object toJava(Object value) {
+            Object vector = RRuntime.asAbstractVector(value);
+            if (vector instanceof RAbstractAtomicVector && ((RAbstractAtomicVector) vector).getLength() == 1) {
+                if (vector instanceof RAbstractDoubleVector) {
+                    RAbstractDoubleVector v = (RAbstractDoubleVector) vector;
+                    return v.getDataAt(0);
+                } else if (vector instanceof RAbstractLogicalVector) {
+                    RAbstractLogicalVector v = (RAbstractLogicalVector) vector;
+                    return v.getDataAt(0) == RRuntime.LOGICAL_TRUE;
+                } else if (vector instanceof RAbstractRawVector) {
+                    RAbstractRawVector v = (RAbstractRawVector) vector;
+                    return v.getDataAt(0).getValue();
+                } else if (vector instanceof RAbstractStringVector) {
+                    RAbstractStringVector v = (RAbstractStringVector) vector;
+                    return v.getDataAt(0);
+                }
+            }
+            return value;
+        }
+
+        @Specialization(limit = "99", guards = {"isForeignObject(clazz)", "length == args.getLength()"})
+        @TruffleBoundary
+        public Object interopNew(TruffleObject clazz, RArgsValuesAndNames args,
+                        @SuppressWarnings("unused") @Cached("args.getLength()") int length,
+                        @Cached("createNew(length).createNode()") Node sendNew) {
+            try {
+                Object[] argValues = new Object[args.getLength()];
+                for (int i = 0; i < argValues.length; i++) {
+                    argValues[i] = toJava(args.getArgument(i));
+                }
+                return ForeignAccess.sendNew(sendNew, clazz, argValues);
+            } catch (SecurityException | IllegalArgumentException | UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
+                throw error(Message.GENERIC, "error during Java object instantiation: " + e.getMessage());
+            }
+        }
+
+        @Fallback
+        public Object interopNew(@SuppressWarnings("unused") Object clazz, @SuppressWarnings("unused") Object args) {
+            throw error(Message.GENERIC, "interop object needed as receiver of NEW message");
         }
     }
 }

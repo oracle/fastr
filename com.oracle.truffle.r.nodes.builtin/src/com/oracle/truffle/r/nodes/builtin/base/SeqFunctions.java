@@ -15,7 +15,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingConstant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
