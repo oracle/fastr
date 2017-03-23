@@ -236,7 +236,7 @@ public class LoadSaveFunctions {
                 if (!ascii && openConn.isTextMode()) {
                     throw error(RError.Message.CONN_XDR);
                 }
-                openConn.writeChar(ascii ? ASCII_HEADER : XDR_HEADER, 0, "", false);
+                openConn.writeChar(ascii ? ASCII_HEADER : XDR_HEADER, 0, null, false);
                 RSerialize.serialize(openConn, toSave, ascii ? RSerialize.ASCII : RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
             } catch (IOException ex) {
                 throw error(RError.Message.GENERIC, ex.getMessage());
