@@ -28,6 +28,7 @@ import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.HeadlessException;
@@ -46,6 +47,7 @@ import java.util.function.Supplier;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridFontStyle;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineType;
 import com.oracle.truffle.r.runtime.RInternalError;
 
@@ -116,7 +118,7 @@ public class JFrameDevice implements GridDevice {
             tr.translate((float) (leftX * POINTS_IN_INCH), (float) (currentFrame.getContentPane().getHeight() - bottomY * POINTS_IN_INCH));
             tr.rotate(-rotationAnticlockWise);
             graphics.setTransform(tr);
-            setFontSize(ctx);
+            setFont(ctx);
             graphics.drawString(text, 0, 0);
             return null;
         });
@@ -136,7 +138,7 @@ public class JFrameDevice implements GridDevice {
     public double getStringWidth(DrawingContext ctx, String text) {
         setContext(ctx);
         return noTranform(() -> {
-            setFontSize(ctx);
+            setFont(ctx);
             int swingUnits = graphics.getFontMetrics(graphics.getFont()).stringWidth(text);
             return swingUnits / POINTS_IN_INCH;
         });
@@ -146,7 +148,7 @@ public class JFrameDevice implements GridDevice {
     public double getStringHeight(DrawingContext ctx, String text) {
         setContext(ctx);
         return noTranform(() -> {
-            setFontSize(ctx);
+            setFont(ctx);
             int swingUnits = graphics.getFont().getSize();
             return swingUnits / POINTS_IN_INCH;
         });
@@ -181,9 +183,42 @@ public class JFrameDevice implements GridDevice {
         graphics.setStroke(fromGridLineType(ctx.getLineType()));
     }
 
-    private void setFontSize(DrawingContext ctx) {
+    private void setFont(DrawingContext ctx) {
         float fontSize = (float) ((ctx.getFontSize() / INCH_TO_POINTS_FACTOR) * POINTS_IN_INCH);
-        graphics.setFont(graphics.getFont().deriveFont(fontSize));
+        Font font = new Font(getFontName(ctx.getFontFamily()), getAwtFontStyle(ctx.getFontStyle()), 1).deriveFont(fontSize);
+        graphics.setFont(font);
+    }
+
+    private String getFontName(String gridFontFamily) {
+        if (gridFontFamily == null) {
+            return null;
+        }
+        switch (gridFontFamily) {
+            case DrawingContext.FONT_FAMILY_MONO:
+                return Font.MONOSPACED;
+            case DrawingContext.FONT_FAMILY_SANS:
+                return Font.SANS_SERIF;
+            case DrawingContext.FONT_FAMILY_SERIF:
+                return Font.SERIF;
+            case "":
+                return null;
+        }
+        return gridFontFamily;
+    }
+
+    private int getAwtFontStyle(GridFontStyle fontStyle) {
+        switch (fontStyle) {
+            case PLAIN:
+                return Font.PLAIN;
+            case BOLD:
+                return Font.BOLD;
+            case ITALIC:
+                return Font.ITALIC;
+            case BOLDITALIC:
+                return Font.BOLD | Font.ITALIC;
+            default:
+                throw RInternalError.shouldNotReachHere("unexpected value of GridFontStyle enum");
+        }
     }
 
     private <T> T noTranform(Supplier<T> action) {

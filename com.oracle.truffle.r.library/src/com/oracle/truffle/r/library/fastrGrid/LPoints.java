@@ -169,6 +169,16 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
         }
 
         @Override
+        public GridFontStyle getFontStyle() {
+            return inner.getFontStyle();
+        }
+
+        @Override
+        public String getFontFamily() {
+            return inner.getFontFamily();
+        }
+
+        @Override
         public double getLineHeight() {
             return inner.getLineHeight();
         }

@@ -64,7 +64,8 @@ public final class GPar {
     private static final int GP_LINEJOIN = 12;
     private static final int GP_LINEMITRE = 13;
     private static final int GP_LEX = 14;
-    private static final int GP_FONTFACE = 15;
+
+    // Note: there is last slot "fontface" which is either unused at all, or only used in R code
     private static final int GP_LENGTH = 16;
     private static final String[] NAMES = new String[]{
                     "fill",
@@ -82,7 +83,7 @@ public final class GPar {
                     "linejoin",
                     "linemitre",
                     "lex",
-                    "fontface"  // TODO: could not find this name in grid sources
+                    "fontface"
     };
     private static final RStringVector NAMES_VECTOR = (RStringVector) RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR).makeSharedPermanent();
 
@@ -167,6 +168,16 @@ public final class GPar {
         @Override
         public double getFontSize() {
             return asDouble(data[GP_FONTSIZE]) * asDouble(data[GP_CEX]);
+        }
+
+        @Override
+        public GridFontStyle getFontStyle() {
+            return GridFontStyle.fromInt(RRuntime.asInteger(data[GP_FONT]));
+        }
+
+        @Override
+        public String getFontFamily() {
+            return RRuntime.asString(data[GP_FONTFAMILY]);
         }
 
         @Override

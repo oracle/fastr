@@ -29,6 +29,10 @@ package com.oracle.truffle.r.library.fastrGrid.device;
 public interface DrawingContext {
     double INCH_TO_POINTS_FACTOR = 72.27;
 
+    String FONT_FAMILY_MONO = "mono";
+    String FONT_FAMILY_SANS = "sans";
+    String FONT_FAMILY_SERIF = "serif";
+
     enum GridLineType {
         // The order is important!
         BLANK,
@@ -51,6 +55,25 @@ public interface DrawingContext {
         }
     }
 
+    enum GridFontStyle {
+        PLAIN,
+        BOLD,
+        ITALIC,
+        BOLDITALIC,
+        /**
+         * Supposed to be symbol font in Adobe symbol encoding.
+         */
+        SYMBOL;
+
+        /**
+         * Return enum's value corresponding to R's value.
+         */
+        public static GridFontStyle fromInt(int num) {
+            assert num > 0 && num <= SYMBOL.ordinal() + 1;
+            return values()[num - 1];
+        }
+    }
+
     GridLineType getLineType();
 
     /**
@@ -64,6 +87,15 @@ public interface DrawingContext {
      * @see #INCH_TO_POINTS_FACTOR
      */
     double getFontSize();
+
+    GridFontStyle getFontStyle();
+
+    /**
+     * Gets the font family name. The standard values that any device must implement are "serif",
+     * "sans" and "mono". On top of that the device can recognize name of any font that it can
+     * support.
+     */
+    String getFontFamily();
 
     /**
      * Gets the height of a line in multiplies of the base line height.
