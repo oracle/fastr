@@ -13,6 +13,7 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asAbstractContainer;
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asDouble;
+import static com.oracle.truffle.r.library.fastrGrid.GridUtils.getDataAtMod;
 
 import java.util.Arrays;
 
@@ -30,10 +31,20 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * In the context of grid package, GPar is a list that contains the parameters for the drawing, like
- * line style, color, etc. This class wraps the list and provides type-safe access to its elements.
+ * line style, color, etc. This class wraps the list and provides way to convert it to
+ * {@link DrawingContext}. First create instance of {@link GPar} and then use
+ * {@link #getDrawingContext(int)} to get the drawing context. Note that grid's gpar can
+ * theoretically contain vector as the value of some graphical parameters, in such case, when
+ * drawing i-th element, e.g. i-th rectangle in {@link LRect}, we should use i-th (mod length)
+ * element of such vector. Note that this is sort of ignored in layout calculations, where we always
+ * take the first element. In other words, instance of {@link GPar} represents grid's gpar where the
+ * graphical parameter may be vectors, whereas {@link DrawingContext} is flattened view where it is
+ * already determined which index is used to access the vectors.
  */
 public final class GPar {
     private static final int GP_FILL = 0;
@@ -86,6 +97,40 @@ public final class GPar {
                     "fontface"
     };
     private static final RStringVector NAMES_VECTOR = (RStringVector) RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR).makeSharedPermanent();
+    private final RList gpar;
+    // majority of gpar instances contains only scalar values, for those we make sure we do not
+    // create a new drawing context instance for every index.
+    private final boolean singleDrawingCtx;
+    private DrawingContext indexZeroDrawingCtx;
+
+    public GPar(RList gpar, boolean singleDrawingCtx) {
+        this.gpar = gpar;
+        this.gpar.makeSharedPermanent();
+        this.singleDrawingCtx = singleDrawingCtx;
+        indexZeroDrawingCtx = new GParDrawingContext(gpar, 0);
+    }
+
+    public static double getCex(RList gpar) {
+        return asDouble(gpar.getDataAt(GP_CEX));
+    }
+
+    public static GPar create(RList gpar) {
+        boolean singleDrawingCtx = true;
+        for (int i = 0; i < gpar.getLength(); i++) {
+            Object item = gpar.getDataAt(i);
+            if (item instanceof RAbstractVector) {
+                singleDrawingCtx &= ((RAbstractVector) item).getLength() == 1;
+            }
+        }
+        return new GPar(gpar, singleDrawingCtx);
+    }
+
+    public DrawingContext getDrawingContext(int cyclicIndex) {
+        if (singleDrawingCtx || cyclicIndex == 0) {
+            return indexZeroDrawingCtx;
+        }
+        return new GParDrawingContext(gpar, cyclicIndex);
+    }
 
     public static RList createNew(GridDevice device) {
         Object[] data = new Object[GP_LENGTH];
@@ -111,24 +156,17 @@ public final class GPar {
         return result;
     }
 
-    public static double getCex(RList gpar) {
-        return asDouble(gpar.getDataAt(GP_CEX));
-    }
-
-    public static DrawingContext asDrawingContext(RList gpar) {
-        return new GParDrawingContext(gpar);
-    }
-
     private static RAbstractDoubleVector newDoubleVec(double val) {
         return RDataFactory.createDoubleVectorFromScalar(val);
     }
 
     private static final class GParDrawingContext implements DrawingContext {
         private final Object[] data;
+        private final int index;
 
-        private GParDrawingContext(RList list) {
+        private GParDrawingContext(RList list, int index) {
             data = list.getDataWithoutCopying();
-            list.makeSharedPermanent();
+            this.index = index;
         }
 
         @Override
@@ -137,24 +175,27 @@ public final class GPar {
             if (lty == null || lty == RNull.instance) {
                 return DrawingContext.GRID_LINE_SOLID;
             }
-            String name = RRuntime.asString(lty);
-            if (name != null) {
-                return lineTypeFromName(name);
+            // convert string values
+            if (lty instanceof String || lty instanceof RAbstractStringVector) {
+                String name = GridUtils.asString(lty, index);
+                if (name != null) {
+                    return lineTypeFromName(name);
+                }
             }
+            // convert numeric values
             RAbstractContainer ltyVec = asAbstractContainer(lty);
-            int num;
+            int num; // NA will indicate error
             if (ltyVec.getLength() == 0) {
                 num = RRuntime.INT_NA;
             } else if (ltyVec instanceof RAbstractDoubleVector) {
-                double realVal = ((RAbstractDoubleVector) ltyVec).getDataAt(0);
+                double realVal = getDataAtMod((RAbstractDoubleVector) ltyVec, index);
                 num = RRuntime.isNA(realVal) ? RRuntime.INT_NA : (int) realVal;
             } else if (ltyVec instanceof RAbstractIntVector) {
-                num = ((RAbstractIntVector) ltyVec).getDataAt(0);
+                num = getDataAtMod((RAbstractIntVector) ltyVec, index);
             } else {
                 num = RRuntime.INT_NA;
             }
-
-            if (RRuntime.isNA(num) || num < LINE_STYLES.length) {
+            if (RRuntime.isNA(num) || num < 0 || num >= LINE_STYLES.length) {
                 throw RError.error(RError.NO_CALLER, Message.GENERIC, "Invalid line type.");
             }
             return LINE_STYLES[num];
@@ -167,22 +208,22 @@ public final class GPar {
 
         @Override
         public double getFontSize() {
-            return asDouble(data[GP_FONTSIZE]) * asDouble(data[GP_CEX]);
+            return asDouble(data[GP_FONTSIZE], index) * asDouble(data[GP_CEX], index);
         }
 
         @Override
         public GridFontStyle getFontStyle() {
-            return GridFontStyle.fromInt(RRuntime.asInteger(data[GP_FONT]));
+            return GridFontStyle.fromInt(GridUtils.asInt(data[GP_FONT], index));
         }
 
         @Override
         public String getFontFamily() {
-            return RRuntime.asString(data[GP_FONTFAMILY]);
+            return GridUtils.asString(data[GP_FONTFAMILY], index);
         }
 
         @Override
         public double getLineHeight() {
-            return asDouble(data[GP_LINEHEIGHT]);
+            return asDouble(data[GP_LINEHEIGHT], index);
         }
 
         @Override
@@ -190,8 +231,8 @@ public final class GPar {
             return getGridColor(GP_FILL);
         }
 
-        private GridColor getGridColor(int index) {
-            return GridColorUtils.gridColorFromString(RRuntime.asString(data[index]));
+        private GridColor getGridColor(int listIndex) {
+            return GridColorUtils.gridColorFromString(GridUtils.asString(data[listIndex], index));
         }
 
         private static final byte[] DASHED_LINE = new byte[]{4, 4};

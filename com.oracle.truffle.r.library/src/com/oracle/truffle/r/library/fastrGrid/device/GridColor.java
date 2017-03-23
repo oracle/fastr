@@ -58,10 +58,7 @@ public class GridColor {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof GridColor)) {
-            return false;
-        }
-        return value == ((GridColor) obj).value;
+        return obj instanceof GridColor && value == ((GridColor) obj).value;
     }
 
     @Override

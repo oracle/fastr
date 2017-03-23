@@ -26,6 +26,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 final class GridUtils {
@@ -159,6 +160,18 @@ final class GridUtils {
             }
         }
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non integer value " + val.getClass().getSimpleName());
+    }
+
+    static String asString(Object val, int cyclicIndex) {
+        if (val instanceof String) {
+            return (String) val;
+        } else if (val instanceof RAbstractStringVector) {
+            RAbstractStringVector vec = (RAbstractStringVector) val;
+            if (vec.getLength() > 0) {
+                return vec.getDataAt(cyclicIndex % vec.getLength());
+            }
+        }
+        throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non character value " + val.getClass().getSimpleName());
     }
 
     static RAbstractIntVector asIntVector(Object value) {

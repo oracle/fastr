@@ -66,7 +66,7 @@ class DrawArrowsNode extends Node {
         arrowLength = Math.max(arrowLength, unitToInches.convertWidth(lengthVec, parentIndex, conversionCtx));
         // draw the arrows
         GridDevice device = conversionCtx.device;
-        DrawingContext drawingCtx = conversionCtx.drawingContext;
+        DrawingContext drawingCtx = conversionCtx.gpar.getDrawingContext(parentIndex);
         if (first && start) {
             drawArrow(drawingCtx, device, arrowType, x[startIndex], y[startIndex], x[startIndex + 1], y[startIndex + 1], angle, arrowLength);
         }

@@ -23,7 +23,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.Unit.AxisOrDimension;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
-import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -57,10 +56,10 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
         GridDevice dev = ctx.getCurrentDevice();
 
         RList currentVP = ctx.getGridState().getViewPort();
-        DrawingContext drawingCtx = GPar.asDrawingContext(ctx.getGridState().getGpar());
+        GPar gpar = GPar.create(ctx.getGridState().getGpar());
         ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, dev);
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
-        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, drawingCtx);
+        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
         int length = unitLength.execute(units);
         double[] result = new double[length];
@@ -94,7 +93,7 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
                 boolean isX = axisTo.isHorizontal();
                 double scalemin = isX ? vpContext.xscalemin : vpContext.yscalemin;
                 double scalemax = isX ? vpContext.xscalemax : vpContext.yscalemax;
-                result[i] = Unit.convertFromInches(inches, unitTo, vpToSize, scalemin, scalemax, axisTo.isDimension(), drawingCtx);
+                result[i] = Unit.convertFromInches(inches, unitTo, vpToSize, scalemin, scalemax, axisTo.isDimension(), gpar.getDrawingContext(i));
             }
         }
 

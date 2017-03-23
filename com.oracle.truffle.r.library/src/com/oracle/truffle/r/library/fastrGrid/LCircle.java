@@ -17,7 +17,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
-import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -48,10 +47,10 @@ public abstract class LCircle extends RExternalBuiltinNode.Arg3 {
         GridDevice dev = ctx.getCurrentDevice();
 
         RList currentVP = ctx.getGridState().getViewPort();
-        DrawingContext drawingCtx = GPar.asDrawingContext(ctx.getGridState().getGpar());
+        GPar gpar = GPar.create(ctx.getGridState().getGpar());
         ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, dev);
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
-        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, drawingCtx);
+        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
         int length = GridUtils.maxLength(unitLength, xVec, yVec, radiusVec);
         for (int i = 0; i < length; i++) {
@@ -59,7 +58,7 @@ public abstract class LCircle extends RExternalBuiltinNode.Arg3 {
             double radius = RMath.fmin2(radiusSizes.getWidth(), radiusSizes.getHeight());
             Point origLoc = Point.fromUnits(unitToInches, xVec, yVec, i, conversionCtx);
             Point loc = TransformMatrix.transLocation(origLoc, vpTransform.transform);
-            dev.drawCircle(drawingCtx, loc.x, loc.y, radius);
+            dev.drawCircle(gpar.getDrawingContext(i), loc.x, loc.y, radius);
         }
         return RNull.instance;
     }
