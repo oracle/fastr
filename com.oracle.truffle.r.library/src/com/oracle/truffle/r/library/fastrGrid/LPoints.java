@@ -154,7 +154,7 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
         }
 
         @Override
-        public GridLineType getLineType() {
+        public byte[] getLineType() {
             return inner.getLineType();
         }
 

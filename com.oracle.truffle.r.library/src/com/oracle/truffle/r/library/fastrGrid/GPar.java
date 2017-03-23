@@ -132,10 +132,10 @@ public final class GPar {
         }
 
         @Override
-        public GridLineType getLineType() {
+        public byte[] getLineType() {
             Object lty = data[GP_LTY];
             if (lty == null || lty == RNull.instance) {
-                return GridLineType.SOLID;
+                return DrawingContext.GRID_LINE_SOLID;
             }
             String name = RRuntime.asString(lty);
             if (name != null) {
@@ -154,10 +154,10 @@ public final class GPar {
                 num = RRuntime.INT_NA;
             }
 
-            if (RRuntime.isNA(num)) {
+            if (RRuntime.isNA(num) || num < LINE_STYLES.length) {
                 throw RError.error(RError.NO_CALLER, Message.GENERIC, "Invalid line type.");
             }
-            return GridLineType.fromInt(num);
+            return LINE_STYLES[num];
         }
 
         @Override
@@ -194,26 +194,38 @@ public final class GPar {
             return GridColorUtils.gridColorFromString(RRuntime.asString(data[index]));
         }
 
-        private GridLineType lineTypeFromName(String name) {
+        private static final byte[] DASHED_LINE = new byte[]{4, 4};
+        private static final byte[] DOTTED_LINE = new byte[]{1, 3};
+        private static final byte[] DOTDASH_LINE = new byte[]{1, 3, 4, 3};
+        private static final byte[] LONGDASH_LINE = new byte[]{7, 3};
+        private static final byte[] TWODASH_LINE = new byte[]{2, 2, 6, 2};
+        private static final byte[][] LINE_STYLES = new byte[][]{DrawingContext.GRID_LINE_BLANK, DrawingContext.GRID_LINE_SOLID, DASHED_LINE, DOTTED_LINE, DOTDASH_LINE, LONGDASH_LINE, TWODASH_LINE};
+
+        private byte[] lineTypeFromName(String name) {
             switch (name) {
                 case "solid":
-                    return GridLineType.SOLID;
+                    return DrawingContext.GRID_LINE_SOLID;
                 case "dashed":
-                    return GridLineType.DASHED;
+                    return DASHED_LINE;
                 case "dotted":
-                    return GridLineType.DOTTED;
+                    return DOTTED_LINE;
                 case "dotdashed":
-                    return GridLineType.DOTDASHED;
+                    return DOTDASH_LINE;
                 case "longdash":
-                    return GridLineType.LONGDASH;
+                    return LONGDASH_LINE;
                 case "twodash":
-                    return GridLineType.TWODASH;
+                    return TWODASH_LINE;
                 case "blank":
-                    return GridLineType.BLANK;
-                default:
-                    // TODO: implement hex digits as line style
-                    throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected line type '" + name + "'.");
+                    return DrawingContext.GRID_LINE_BLANK;
             }
+            byte[] result = new byte[name.length()];
+            for (int i = 0; i < name.length(); i++) {
+                result[i] = (byte) Character.digit(name.charAt(i), 16);
+                if (result[i] == -1) {
+                    throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected line type '" + name + "'.");
+                }
+            }
+            return result;
         }
     }
 }

@@ -33,27 +33,8 @@ public interface DrawingContext {
     String FONT_FAMILY_SANS = "sans";
     String FONT_FAMILY_SERIF = "serif";
 
-    enum GridLineType {
-        // The order is important!
-        BLANK,
-        SOLID,
-        DASHED,
-        DOTTED,
-        DOTDASHED,
-        LONGDASH,
-        TWODASH;
-
-        private static final int LINE_TYPES_COUNT = 7;
-        private static final GridLineType[] allValues = values();
-
-        public static GridLineType fromInt(int num) {
-            if (num == -1) {
-                return BLANK;
-            }
-            assert num >= 1;
-            return allValues[(num - 1) % LINE_TYPES_COUNT + 1];
-        }
-    }
+    byte[] GRID_LINE_BLANK = null;
+    byte[] GRID_LINE_SOLID = new byte[0];
 
     enum GridFontStyle {
         PLAIN,
@@ -74,7 +55,15 @@ public interface DrawingContext {
         }
     }
 
-    GridLineType getLineType();
+    /**
+     * Returns either one of the constants {@link #GRID_LINE_BLANK} or {@link #GRID_LINE_SOLID} or
+     * an array with a pattern consisting of lengths. Lengths at odd positions are dashes and
+     * lengths at the even positions are spaces between them, the pattern should be interpreted as
+     * cyclic. Example: '3,2,10,1' means 3 units of line, 2 units of space, 10 units of line, 1 unit
+     * of space and repeat. The unit here can be device dependent, but should be something "small",
+     * like a pixel.
+     */
+    byte[] getLineType();
 
     /**
      * Drawing color of shape borders, lines and text.

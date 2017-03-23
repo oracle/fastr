@@ -48,7 +48,6 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridFontStyle;
-import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineType;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 public class JFrameDevice implements GridDevice {
@@ -61,11 +60,6 @@ public class JFrameDevice implements GridDevice {
 
     private static BasicStroke solidStroke;
     private static BasicStroke blankStroke;
-    private static BasicStroke dashedStroke;
-    private static BasicStroke longdashedStroke;
-    private static BasicStroke twodashedStroke;
-    private static BasicStroke dotdashedStroke;
-    private static BasicStroke dottedStroke;
 
     private FastRFrame currentFrame;
     private Graphics2D graphics;
@@ -233,41 +227,25 @@ public class JFrameDevice implements GridDevice {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
     }
 
-    private static BasicStroke fromGridLineType(GridLineType type) {
-        switch (type) {
-            case SOLID:
-                return solidStroke;
-            case BLANK:
-                return blankStroke;
-            case DASHED:
-                return dashedStroke;
-            case DOTDASHED:
-                return dotdashedStroke;
-            case DOTTED:
-                return dottedStroke;
-            case TWODASH:
-                return twodashedStroke;
-            case LONGDASH:
-                return longdashedStroke;
-            default:
-                throw RInternalError.shouldNotReachHere("unexpected value of GridLineType enum");
+    private static BasicStroke fromGridLineType(byte[] type) {
+        if (type == DrawingContext.GRID_LINE_BLANK) {
+            return blankStroke;
+        } else if (type == DrawingContext.GRID_LINE_SOLID) {
+            return solidStroke;
         }
+        float[] pattern = new float[type.length];
+        for (int i = 0; i < pattern.length; i++) {
+            pattern[i] = (float) (type[i] / POINTS_IN_INCH);
+        }
+        return new BasicStroke((float) (1. / POINTS_IN_INCH), BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, pattern, 0f);
     }
 
     private static void initStrokes() {
         if (solidStroke != null) {
             return;
         }
-        float defaultWidth = (float) (1. / POINTS_IN_INCH);
-        float dashSize = (float) (10. / POINTS_IN_INCH);
-        float dotSize = (float) (2. / POINTS_IN_INCH);
         solidStroke = new BasicStroke((float) (1f / POINTS_IN_INCH));
         blankStroke = new BasicStroke(0f);
-        dashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{dashSize}, 0f);
-        dottedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{dotSize}, 0f);
-        dotdashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{dotSize, dashSize}, 0f);
-        twodashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{dashSize / 2f, dashSize}, 0f);
-        longdashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{2f * dashSize}, 0f);
     }
 
     static class FastRFrame extends JFrame {
