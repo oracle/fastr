@@ -48,10 +48,14 @@ public class TestSimpleLists extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ l <- list(1,2,3) ; l[[0]] }");
 
         assertEval("{ l <- list(1,2,3) ; l[[NA]] }");
+        assertEval("{ l <- list(1,2,3) ; l[[NaN]] }");
         assertEval("{ l <- list(1,2,3) ; typeof(l[[NA]]) }");
+        assertEval("{ l <- list(1,2,3) ; typeof(l[[NaN]]) }");
 
         assertEval("{ l <- list(1,2,3) ; l[NA] }");
+        assertEval("{ l <- list(1,2,3) ; l[NaN] }");
         assertEval("{ l <- list(1,2,3) ; typeof(l[NA]) }");
+        assertEval("{ l <- list(1,2,3) ; typeof(l[NaN]) }");
 
         assertEval("{ l <- list(1,2,3) ; l[-2] }");
         assertEval("{ l <- list(1,2,3) ; typeof(l[-2]) }");

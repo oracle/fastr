@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,8 +82,11 @@ public class TestSimpleMatrix extends TestBase {
         assertEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"c\", \"d\")); x[1, c(1,3)] }", TESTED_4L_VECTORS));
         assertEval(template("{ x<-%0; dim(x)<-c(1,4); dimnames(x)<-list(\"z\", c(\"a\", \"b\", \"d\", \"e\")); x[1, c(1,3)] }", TESTED_4L_VECTORS));
         assertEval(template("{ x<-%0; dim(x)<-c(2,2); x[c(1, NA), ] }", TESTED_4L_VECTORS));
+        assertEval(template("{ x<-%0; dim(x)<-c(2,2); x[c(1, NaN), ] }", TESTED_4L_VECTORS));
         assertEval(template("{ x<-%0; dim(x)<-c(2,2); x[c(TRUE, NA), ] }", TESTED_4L_VECTORS));
+        assertEval(template("{ x<-%0; dim(x)<-c(2,2); x[c(TRUE, NaN), ] }", TESTED_4L_VECTORS));
         assertEval(template("{ x<-%0; x<-1:4; dim(x)<-c(2,2); x[NA, ] }", TESTED_4L_VECTORS));
+        assertEval(template("{ x<-%0; x<-1:4; dim(x)<-c(2,2); x[NaN, ] }", TESTED_4L_VECTORS));
         // A misalignment error similar to those in TestSimpleVector (testIgnored1-3)
         WhiteList wl = WhiteList.create("matrix formatting1");
         wl.add("{ x<-c(as.raw(1),as.raw(2),as.raw(3),as.raw(4)); dim(x)<-c(2,2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); x[c(1,NA), 1] }",

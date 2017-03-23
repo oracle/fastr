@@ -642,7 +642,7 @@ public class RDeparse {
                 }
             } else if (value instanceof RPairList) {
                 RPairList arglist = (RPairList) value;
-                assert arglist.getType() == SEXPTYPE.LISTSXP;
+                assert arglist.getType() == null || arglist.getType() == SEXPTYPE.LISTSXP : arglist.getType();
                 append("pairlist(");
                 int i = 0;
                 boolean lbreak = false;

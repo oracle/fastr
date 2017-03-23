@@ -162,6 +162,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-3:1; x[1L] }");
         assertEval("{ x<-3:1; x[2L] }");
         assertEval("{ x<-3:1; x[3L] }");
+        assertEval("{ x<-3:1; x[NA_integer_] }");
     }
 
     @Test
@@ -192,6 +193,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-3:1; x[1.1] }");
         assertEval("{ x<-3:1; x[2.1] }");
         assertEval("{ x<-3:1; x[3.1] }");
+        assertEval("{ x<-3:1; x[NaN] }");
+        assertEval("{ x<-3:1; x[NA_real_] }");
     }
 
     @Test
@@ -225,6 +228,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-NULL; x[1L] }");
         assertEval("{ x<-NULL; x[2L] }");
         assertEval("{ x<-NULL; x[3L] }");
+        assertEval("{ x<-NULL; x[NaN] }");
         assertEval("{ x<-1.1:3.1; x[1L] }");
         assertEval("{ x<-1.1:3.1; x[2L] }");
         assertEval("{ x<-1.1:3.1; x[3L] }");
@@ -242,7 +246,10 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-1L; x[-2L] }");
         assertEval("{ x<-1L; x[TRUE] }");
         assertEval("{ x<-1L; x[FALSE] }");
+        assertEval("{ x<-1L; x[NA_real_] }");
+        assertEval("{ x<-1L; x[NA_integer_] }");
         assertEval("{ x<-1L; x[NA] }");
+        assertEval("{ x<-1L; x[NaN] }");
     }
 
     @Test
@@ -262,6 +269,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-1; x[TRUE] }");
         assertEval("{ x<-1; x[FALSE] }");
         assertEval("{ x<-1; x[NA] }");
+        assertEval("{ x<-1; x[NaN] }");
     }
 
     @Test
@@ -399,6 +407,10 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ x<-7; x[[0]]<-42; x }");
         assertEval("{ x<-1:4;  x[c(1, 0)]<-42; x }");
         assertEval("{ x<-1:4;  x[c(0, 1)]<-42; x }");
+        assertEval("{ x<-1:4;  x[c(1, NA)]<-42; x }");
+        assertEval("{ x<-1:4;  x[c(1, NaN)]<-42; x }");
+        assertEval("{ x<-1:4;  x[c(NA, 1)]<-42; x }");
+        assertEval("{ x<-1:4;  x[c(NaN, 1)]<-42; x }");
         assertEval("{ x<-1:4;  x[c(1, 0)]<-c(7, 42); x }");
         assertEval("{ x<-1:4;  x[c(0, 1)]<-c(7, 42); x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[NULL]<-42; x }");
@@ -407,7 +419,9 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1,4)]<-c(42, 43); x }");
         assertEval(Output.IgnoreErrorContext, "{ x<-1:4; dim(x)<-c(2,2); x[[c(1,4)]]<-c(42, 43); x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1,NA)]<-c(42, 43); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1,NaN)]<-c(42, 43); x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(NA,1)]<-c(42, 43); x }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(NaN,1)]<-c(42, 43); x }");
         assertEval(Output.IgnoreErrorContext, "{ x<-1:4; dim(x)<-c(2,2); x[[c(1,0)]]<-c(42, 43); x }");
         assertEval("{ x<-1:4; dim(x)<-c(2,2); x[c(1,0)]<-c(42, 43); x }");
         assertEval(Output.IgnoreErrorContext, "{ x<-1:4; dim(x)<-c(2,2); x[[c(1,0,0)]]<-c(42, 43); x }");
@@ -689,6 +703,9 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ e <- quote(f(x=a, y=b)); names(e[-1]) }");
 
         assertEval("{ x<-quote(function(x, y) 42); x[[2]] }");
+        assertEval("{ x<-quote(function(x, y) 42); x[2] }");
+        assertEval("{ x<-quote(function(x, y) 42); x[NA] }");
+        assertEval("{ x<-quote(function(x, y) 42); x[NaN] }");
         assertEval("{ x<-quote(function(x, y) 42); typeof(x[[2]][[1]]) }");
         assertEval("{ x<-quote(function(x, y) 42); names(x[[2]]) }");
         assertEval("{ x<-quote(function(x, y=7) 42); x[[2]] }");
