@@ -144,7 +144,6 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("create()") GetNamesAttributeNode getNamesNode,
                     @Cached("create()") SetNamesAttributeNode setNamesNode) {
         RAbstractIntVector intPosition = RDataFactory.createIntVector(positionLength);
-        intPosition.setComplete(position.isComplete());
         // requires names preservation
         RStringVector names = hasNamesProfile.profile(getNamesNode.getNames(position));
         if (names != null) {
@@ -204,6 +203,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
             }
             intPosition.setDataAt(convertedStore, i, intPositionValue);
         }
+        intPosition.setComplete(!hasSeenNA);
         return doIntegerProfiled(profile, dimensionLength, intPosition, positionLength, hasSeenPositive, hasSeenNegative, hasSeenNA, outOfBoundsCount, zeroCount, maxOutOfBoundsIndex);
 
     }
