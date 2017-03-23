@@ -27,17 +27,27 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropException;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
+@ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
 @RBuiltin(name = "names", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Names extends RBuiltinNode {
 
@@ -62,6 +72,35 @@ public abstract class Names extends RBuiltinNode {
     @TruffleBoundary
     protected Object getNames(REnvironment env) {
         return env.ls(true, null, false);
+    }
+
+    @Specialization(guards = "isForeignObject(obj)")
+    protected Object getNames(TruffleObject obj,
+                    @Cached("GET_SIZE.createNode()") Node getSizeNode,
+                    @Cached("KEYS.createNode()") Node keysNode,
+                    @Cached("READ.createNode()") Node readNode,
+                    @Cached("IS_BOXED.createNode()") Node isBoxedNode,
+                    @Cached("UNBOX.createNode()") Node unboxNode) {
+
+        try {
+            TruffleObject keys = (TruffleObject) ForeignAccess.send(keysNode, obj);
+            if (keys != null) {
+                int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, keys);
+                String[] names = new String[size];
+                for (int i = 0; i < size; i++) {
+                    Object value;
+                    value = ForeignAccess.sendRead(readNode, keys, i);
+                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
+                        value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
+                    }
+                    names[i] = (String) value;
+                }
+                return RDataFactory.createStringVector(names, true);
+            }
+            return RNull.instance;
+        } catch (InteropException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
     }
 
     @Fallback

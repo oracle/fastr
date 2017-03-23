@@ -1360,12 +1360,10 @@ public abstract class ConnectionFunctions {
                     ByteChannel ch = JavaInterop.asJavaObject(ByteChannel.class, channel);
                     return new ChannelRConnection("", ch, open, encoding).asVector();
                 }
-                throw error(RError.Message.INVALID_CHANNEL_OBJECT, JavaInterop.unbox(channel).getClass());
+                throw error(RError.Message.INVALID_CHANNEL_OBJECT);
             } catch (IOException ex) {
                 throw RInternalError.shouldNotReachHere();
             }
         }
-
     }
-
 }

@@ -855,7 +855,7 @@ public final class RError extends RuntimeException {
         TRUNCATE_NOT_ENABLED("truncation not enabled for this connection"),
         TRUNCATE_UNSUPPORTED_FOR_CONN("cannot truncate connection: %s"),
         INCOMPLETE_STRING_AT_EOF_DISCARDED("incomplete string at end of file has been discarded"),
-        INVALID_CHANNEL_OBJECT("invalid channel object type: %s"),
+        INVALID_CHANNEL_OBJECT("invalid channel object (ByteChannel expected)"),
         INVALID_TAG("invalid tag"),
         INVALID_VARIABLE_NAMES("invalid variable names"),
         INVALID_EXPRESSION("invalid expression in '%s'"),
