@@ -50,6 +50,10 @@ final class GridUtils {
         return vec.getDataAt(idx % vec.getLength());
     }
 
+    static int getDataAtMod(RAbstractIntVector vec, int idx) {
+        return vec.getDataAt(idx % vec.getLength());
+    }
+
     @ExplodeLoop
     static int maxLength(UnitLengthNode unitLength, RAbstractVector... units) {
         int result = 0;
@@ -105,6 +109,15 @@ final class GridUtils {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "Expected list");
         }
         return (RList) value;
+    }
+
+    static double getDoubleAt(RAbstractVector vector, int index) {
+        if (vector instanceof RAbstractDoubleVector) {
+            return ((RAbstractDoubleVector) vector).getDataAt(index);
+        } else if (vector instanceof RAbstractIntVector) {
+            return ((RAbstractIntVector) vector).getDataAt(index);
+        }
+        throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non double/integer value");
     }
 
     static double asDouble(Object val) {
