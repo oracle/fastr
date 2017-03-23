@@ -174,7 +174,7 @@ public class JFrameDevice implements GridDevice {
 
     private void setContext(DrawingContext ctx) {
         graphics.setColor(fromGridColor(ctx.getColor()));
-        graphics.setStroke(fromGridLineType(ctx.getLineType()));
+        graphics.setStroke(getStrokeFromCtx(ctx));
     }
 
     private void setFont(DrawingContext ctx) {
@@ -227,17 +227,19 @@ public class JFrameDevice implements GridDevice {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
     }
 
-    private static BasicStroke fromGridLineType(byte[] type) {
+    private static BasicStroke getStrokeFromCtx(DrawingContext ctx) {
+        byte[] type = ctx.getLineType();
+        double width = ctx.getLineWidth();
         if (type == DrawingContext.GRID_LINE_BLANK) {
             return blankStroke;
         } else if (type == DrawingContext.GRID_LINE_SOLID) {
-            return solidStroke;
+            return width == 1. ? solidStroke : new BasicStroke((float) (width / POINTS_IN_INCH));
         }
         float[] pattern = new float[type.length];
         for (int i = 0; i < pattern.length; i++) {
             pattern[i] = (float) (type[i] / POINTS_IN_INCH);
         }
-        return new BasicStroke((float) (1. / POINTS_IN_INCH), BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, pattern, 0f);
+        return new BasicStroke((float) (width / POINTS_IN_INCH), BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, pattern, 0f);
     }
 
     private static void initStrokes() {

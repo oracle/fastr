@@ -202,6 +202,11 @@ public final class GPar {
         }
 
         @Override
+        public double getLineWidth() {
+            return asDouble(data[GP_LWD], index);
+        }
+
+        @Override
         public GridColor getColor() {
             return getGridColor(GP_COL);
         }

@@ -66,6 +66,11 @@ public interface DrawingContext {
     byte[] getLineType();
 
     /**
+     * Line width in multiplies of what is considered the basic "thin" line for given device.
+     */
+    double getLineWidth();
+
+    /**
      * Drawing color of shape borders, lines and text.
      */
     GridColor getColor();

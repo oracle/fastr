@@ -168,6 +168,11 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
         }
 
         @Override
+        public double getLineWidth() {
+            return inner.getLineWidth();
+        }
+
+        @Override
         public GridColor getColor() {
             return color;
         }
