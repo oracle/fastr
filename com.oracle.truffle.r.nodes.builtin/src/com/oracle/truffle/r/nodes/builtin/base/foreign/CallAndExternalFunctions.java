@@ -22,12 +22,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.library.grDevices.DevicesCCalls;
-import com.oracle.truffle.r.library.graphics.GraphicsCCalls;
-import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_Par;
-import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_PlotXY;
-import com.oracle.truffle.r.library.grid.GridFunctionsFactory.InitGridNodeGen;
-import com.oracle.truffle.r.library.grid.GridFunctionsFactory.ValidUnitsNodeGen;
+import com.oracle.truffle.r.library.fastrGrid.FastRGridExternalLookup;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_M_setPrimitiveMethodsNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_externalPtrPrototypeObjectNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_getClassFromCacheNodeGen;
@@ -55,10 +50,10 @@ import com.oracle.truffle.r.library.stats.RandFunctionsNodes.RandFunction3Node;
 import com.oracle.truffle.r.library.stats.SignrankFreeNode;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeGen;
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
-import com.oracle.truffle.r.library.stats.deriv.D;
-import com.oracle.truffle.r.library.stats.deriv.Deriv;
 import com.oracle.truffle.r.library.stats.StatsFunctionsNodes;
 import com.oracle.truffle.r.library.stats.WilcoxFreeNode;
+import com.oracle.truffle.r.library.stats.deriv.D;
+import com.oracle.truffle.r.library.stats.deriv.Deriv;
 import com.oracle.truffle.r.library.tools.C_ParseRdNodeGen;
 import com.oracle.truffle.r.library.tools.DirChmodNodeGen;
 import com.oracle.truffle.r.library.tools.Rmd5NodeGen;
@@ -79,6 +74,7 @@ import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalCode;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -240,6 +236,12 @@ public class CallAndExternalFunctions {
         @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
             String name = lookupName(symbol);
+            if (FastROptions.UseInternalGridGraphics.getBooleanValue() && name != null) {
+                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotCall(name);
+                if (gridExternal != null) {
+                    return gridExternal;
+                }
+            }
             switch (name) {
                 // methods
                 case "R_initMethodDispatch":
@@ -630,24 +632,6 @@ public class CallAndExternalFunctions {
                 case "mc_is_child":
                     return MCIsChildNodeGen.create();
                 default:
-                    return FastROptions.UseInternalGraphics.getBooleanValue() ? lookupGraphicsBuiltin(name) : null;
-            }
-        }
-
-        private static RExternalBuiltinNode lookupGraphicsBuiltin(String name) {
-            switch (name) {
-                // grDevices
-                case "cairoProps":
-                    return CairoPropsNodeGen.create();
-                case "makeQuartzDefault":
-                    return new MakeQuartzDefault();
-
-                // grid
-                case "L_initGrid":
-                    return InitGridNodeGen.create();
-                case "L_validUnits":
-                    return ValidUnitsNodeGen.create();
-                default:
                     return null;
             }
         }
@@ -656,7 +640,7 @@ public class CallAndExternalFunctions {
          * {@code .NAME = NativeSymbolInfo} implemented as a builtin.
          */
         @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
+        @Specialization(limit = "99", guards = {"cached == symbol", "builtin != null"})
         protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
                         @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
@@ -668,9 +652,10 @@ public class CallAndExternalFunctions {
          * package)
          */
         @SuppressWarnings("unused")
-        @Specialization(limit = "2", guards = {"cached == symbol"})
+        @Specialization(limit = "2", guards = {"cached == symbol", "builtin == null"})
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
+                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
                         @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
             return callRFFINode.execute(nativeCallInfo, args.getArguments());
         }
@@ -680,8 +665,12 @@ public class CallAndExternalFunctions {
          * such cases there is this generic version.
          */
         @SuppressWarnings("unused")
-        @Specialization(replaces = "callNamedFunction")
+        @Specialization(replaces = {"callNamedFunction", "doExternal"})
         protected Object callNamedFunctionGeneric(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName) {
+            RExternalBuiltinNode builtin = lookupBuiltin(symbol);
+            if (builtin != null) {
+                throw RInternalError.shouldNotReachHere("Cache for .Calls with FastR reimplementation (lookupBuiltin(...) != null) exceeded the limit");
+            }
             NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
             return callRFFINode.execute(nativeCallInfo, args.getArguments());
         }
@@ -733,14 +722,10 @@ public class CallAndExternalFunctions {
         @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             String name = lookupName(f);
-            if (FastROptions.UseInternalGraphics.getBooleanValue()) {
-                switch (name) {
-                    case "PDF":
-                        return new DevicesCCalls.C_PDF();
-                    case "devoff":
-                        return DevicesCCalls.C_DevOff.create();
-                    case "devcur":
-                        return new DevicesCCalls.C_DevCur();
+            if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
+                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal(name);
+                if (gridExternal != null) {
+                    return gridExternal;
                 }
             }
             switch (name) {
@@ -854,13 +839,13 @@ public class CallAndExternalFunctions {
         @Override
         @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
-            if (FastROptions.UseInternalGraphics.getBooleanValue()) {
-                switch (lookupName(symbol)) {
-                    case "C_par":
-                        return new C_Par();
+            String name = lookupName(symbol);
+            if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
+                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal2(name);
+                if (gridExternal != null) {
+                    return gridExternal;
                 }
             }
-            String name = lookupName(symbol);
             switch (name) {
                 // tools
                 case "writetable":
@@ -929,14 +914,6 @@ public class CallAndExternalFunctions {
         @Override
         @TruffleBoundary
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
-            if (FastROptions.UseInternalGraphics.getBooleanValue()) {
-                switch (lookupName(f)) {
-                    case "C_mtext":
-                        return new GraphicsCCalls.C_mtext();
-                    case "C_plotXY":
-                        return new C_PlotXY();
-                }
-            }
             return null;
         }
 

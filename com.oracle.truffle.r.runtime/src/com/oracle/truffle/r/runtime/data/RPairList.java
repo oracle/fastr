@@ -211,6 +211,17 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         return type;
     }
 
+    /**
+     * Appends given value as the last element of the pairlist.
+     */
+    public void appendToEnd(RPairList value) {
+        RPairList last = null;
+        for (RPairList item : this) {
+            last = item;
+        }
+        last.setCdr(value);
+    }
+
     @Override
     public boolean isComplete() {
         // TODO: is it important to get more precise information here?
