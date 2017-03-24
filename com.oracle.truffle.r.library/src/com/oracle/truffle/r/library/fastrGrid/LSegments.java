@@ -17,7 +17,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
-import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -59,10 +58,10 @@ public abstract class LSegments extends RExternalBuiltinNode.Arg5 {
         GridDevice dev = ctx.getCurrentDevice();
 
         RList currentVP = ctx.getGridState().getViewPort();
-        DrawingContext drawingCtx = GPar.asDrawingContext(ctx.getGridState().getGpar());
+        GPar gpar = GPar.create(ctx.getGridState().getGpar());
         ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, dev);
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
-        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, drawingCtx);
+        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
         int length = GridUtils.maxLength(unitLength, x0, y0, x1, y1);
         double[] xx = new double[2];
@@ -77,7 +76,7 @@ public abstract class LSegments extends RExternalBuiltinNode.Arg5 {
             xx[1] = loc2.x;
             yy[0] = loc1.y;
             yy[1] = loc2.y;
-            dev.drawPolyLines(drawingCtx, xx, yy, 0, 2);
+            dev.drawPolyLines(gpar.getDrawingContext(i), xx, yy, 0, 2);
             if (arrow != null) {
                 drawArrowsNode.drawArrows(xx, yy, 0, 2, i, arrow, true, true, conversionCtx);
             }

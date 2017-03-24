@@ -29,29 +29,86 @@ package com.oracle.truffle.r.library.fastrGrid.device;
 public interface DrawingContext {
     double INCH_TO_POINTS_FACTOR = 72.27;
 
-    enum GridLineType {
-        // The order is important!
-        BLANK,
-        SOLID,
-        DASHED,
-        DOTTED,
-        DOTDASHED,
-        LONGDASH,
-        TWODASH;
+    String FONT_FAMILY_MONO = "mono";
+    String FONT_FAMILY_SANS = "sans";
+    String FONT_FAMILY_SERIF = "serif";
 
-        private static final int LINE_TYPES_COUNT = 7;
-        private static final GridLineType[] allValues = values();
+    byte[] GRID_LINE_BLANK = null;
+    byte[] GRID_LINE_SOLID = new byte[0];
 
-        public static GridLineType fromInt(int num) {
-            if (num == -1) {
-                return BLANK;
-            }
-            assert num >= 1;
-            return allValues[(num - 1) % LINE_TYPES_COUNT + 1];
+    enum GridFontStyle {
+        PLAIN,
+        BOLD,
+        ITALIC,
+        BOLDITALIC,
+        /**
+         * Supposed to be symbol font in Adobe symbol encoding.
+         */
+        SYMBOL;
+
+        /**
+         * Return enum's value corresponding to R's value.
+         */
+        public static GridFontStyle fromInt(int num) {
+            assert num > 0 && num <= SYMBOL.ordinal() + 1;
+            return values()[num - 1];
         }
     }
 
-    GridLineType getLineType();
+    enum GridLineJoin {
+        ROUND,
+        MITRE,
+        BEVEL;
+
+        public static final int LAST_VALUE = BEVEL.ordinal();
+
+        /**
+         * Return enum's value corresponding to R's value.
+         */
+        public static GridLineJoin fromInt(int num) {
+            return values()[num];
+        }
+    }
+
+    enum GridLineEnd {
+        ROUND,
+        BUTT,
+        SQUARE;
+
+        public static final int LAST_VALUE = SQUARE.ordinal();
+
+        /**
+         * Return enum's value corresponding to R's value.
+         */
+        public static GridLineEnd fromInt(int num) {
+            return values()[num];
+        }
+    }
+
+    /**
+     * Returns either one of the constants {@link #GRID_LINE_BLANK} or {@link #GRID_LINE_SOLID} or
+     * an array with a pattern consisting of lengths. Lengths at odd positions are dashes and
+     * lengths at the even positions are spaces between them, the pattern should be interpreted as
+     * cyclic. Example: '3,2,10,1' means 3 units of line, 2 units of space, 10 units of line, 1 unit
+     * of space and repeat. The unit here can be device dependent, but should be something "small",
+     * like a pixel.
+     */
+    byte[] getLineType();
+
+    /**
+     * Line width in multiplies of what is considered the basic "thin" line for given device.
+     */
+    double getLineWidth();
+
+    GridLineJoin getLineJoin();
+
+    GridLineEnd getLineEnd();
+
+    /**
+     * The mitre limit, larger than 1, default is 10. The unit should be interpreted the way as in
+     * {@link #getLineType()}.
+     */
+    double getLineMitre();
 
     /**
      * Drawing color of shape borders, lines and text.
@@ -64,6 +121,15 @@ public interface DrawingContext {
      * @see #INCH_TO_POINTS_FACTOR
      */
     double getFontSize();
+
+    GridFontStyle getFontStyle();
+
+    /**
+     * Gets the font family name. The standard values that any device must implement are "serif",
+     * "sans" and "mono". On top of that the device can recognize name of any font that it can
+     * support.
+     */
+    String getFontFamily();
 
     /**
      * Gets the height of a line in multiplies of the base line height.

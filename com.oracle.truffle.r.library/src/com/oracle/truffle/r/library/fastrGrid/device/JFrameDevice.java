@@ -28,6 +28,7 @@ import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.HeadlessException;
@@ -46,7 +47,9 @@ import java.util.function.Supplier;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineType;
+import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridFontStyle;
+import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineEnd;
+import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineJoin;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 public class JFrameDevice implements GridDevice {
@@ -59,11 +62,6 @@ public class JFrameDevice implements GridDevice {
 
     private static BasicStroke solidStroke;
     private static BasicStroke blankStroke;
-    private static BasicStroke dashedStroke;
-    private static BasicStroke longdashedStroke;
-    private static BasicStroke twodashedStroke;
-    private static BasicStroke dotdashedStroke;
-    private static BasicStroke dottedStroke;
 
     private FastRFrame currentFrame;
     private Graphics2D graphics;
@@ -116,7 +114,7 @@ public class JFrameDevice implements GridDevice {
             tr.translate((float) (leftX * POINTS_IN_INCH), (float) (currentFrame.getContentPane().getHeight() - bottomY * POINTS_IN_INCH));
             tr.rotate(-rotationAnticlockWise);
             graphics.setTransform(tr);
-            setFontSize(ctx);
+            setFont(ctx);
             graphics.drawString(text, 0, 0);
             return null;
         });
@@ -136,7 +134,7 @@ public class JFrameDevice implements GridDevice {
     public double getStringWidth(DrawingContext ctx, String text) {
         setContext(ctx);
         return noTranform(() -> {
-            setFontSize(ctx);
+            setFont(ctx);
             int swingUnits = graphics.getFontMetrics(graphics.getFont()).stringWidth(text);
             return swingUnits / POINTS_IN_INCH;
         });
@@ -146,7 +144,7 @@ public class JFrameDevice implements GridDevice {
     public double getStringHeight(DrawingContext ctx, String text) {
         setContext(ctx);
         return noTranform(() -> {
-            setFontSize(ctx);
+            setFont(ctx);
             int swingUnits = graphics.getFont().getSize();
             return swingUnits / POINTS_IN_INCH;
         });
@@ -178,12 +176,45 @@ public class JFrameDevice implements GridDevice {
 
     private void setContext(DrawingContext ctx) {
         graphics.setColor(fromGridColor(ctx.getColor()));
-        graphics.setStroke(fromGridLineType(ctx.getLineType()));
+        graphics.setStroke(getStrokeFromCtx(ctx));
     }
 
-    private void setFontSize(DrawingContext ctx) {
+    private void setFont(DrawingContext ctx) {
         float fontSize = (float) ((ctx.getFontSize() / INCH_TO_POINTS_FACTOR) * POINTS_IN_INCH);
-        graphics.setFont(graphics.getFont().deriveFont(fontSize));
+        Font font = new Font(getFontName(ctx.getFontFamily()), getAwtFontStyle(ctx.getFontStyle()), 1).deriveFont(fontSize);
+        graphics.setFont(font);
+    }
+
+    private String getFontName(String gridFontFamily) {
+        if (gridFontFamily == null) {
+            return null;
+        }
+        switch (gridFontFamily) {
+            case DrawingContext.FONT_FAMILY_MONO:
+                return Font.MONOSPACED;
+            case DrawingContext.FONT_FAMILY_SANS:
+                return Font.SANS_SERIF;
+            case DrawingContext.FONT_FAMILY_SERIF:
+                return Font.SERIF;
+            case "":
+                return null;
+        }
+        return gridFontFamily;
+    }
+
+    private int getAwtFontStyle(GridFontStyle fontStyle) {
+        switch (fontStyle) {
+            case PLAIN:
+                return Font.PLAIN;
+            case BOLD:
+                return Font.BOLD;
+            case ITALIC:
+                return Font.ITALIC;
+            case BOLDITALIC:
+                return Font.BOLD | Font.ITALIC;
+            default:
+                throw RInternalError.shouldNotReachHere("unexpected value of GridFontStyle enum");
+        }
     }
 
     private <T> T noTranform(Supplier<T> action) {
@@ -198,24 +229,50 @@ public class JFrameDevice implements GridDevice {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
     }
 
-    private static BasicStroke fromGridLineType(GridLineType type) {
-        switch (type) {
-            case SOLID:
+    private static BasicStroke getStrokeFromCtx(DrawingContext ctx) {
+        byte[] type = ctx.getLineType();
+        double width = ctx.getLineWidth();
+        int lineJoin = fromGridLineJoin(ctx.getLineJoin());
+        float lineMitre = (float) ctx.getLineMitre();
+        int endCap = fromGridLineEnd(ctx.getLineEnd());
+        if (type == DrawingContext.GRID_LINE_BLANK) {
+            return blankStroke;
+        } else if (type == DrawingContext.GRID_LINE_SOLID) {
+            if (width == 1. && solidStroke.getLineJoin() == lineJoin && solidStroke.getMiterLimit() == lineMitre && solidStroke.getEndCap() == endCap) {
                 return solidStroke;
-            case BLANK:
-                return blankStroke;
-            case DASHED:
-                return dashedStroke;
-            case DOTDASHED:
-                return dotdashedStroke;
-            case DOTTED:
-                return dottedStroke;
-            case TWODASH:
-                return twodashedStroke;
-            case LONGDASH:
-                return longdashedStroke;
+            }
+            return new BasicStroke((float) (width / POINTS_IN_INCH), endCap, lineJoin, lineMitre);
+        }
+        float[] pattern = new float[type.length];
+        for (int i = 0; i < pattern.length; i++) {
+            pattern[i] = (float) (type[i] / POINTS_IN_INCH);
+        }
+        return new BasicStroke((float) (width / POINTS_IN_INCH), endCap, lineJoin, lineMitre, pattern, 0f);
+    }
+
+    private static int fromGridLineEnd(GridLineEnd lineEnd) {
+        switch (lineEnd) {
+            case ROUND:
+                return BasicStroke.CAP_ROUND;
+            case BUTT:
+                return BasicStroke.CAP_BUTT;
+            case SQUARE:
+                return BasicStroke.CAP_SQUARE;
             default:
-                throw RInternalError.shouldNotReachHere("unexpected value of GridLineType enum");
+                throw RInternalError.shouldNotReachHere("unexpected value of GridLineEnd enum");
+        }
+    }
+
+    private static int fromGridLineJoin(GridLineJoin lineJoin) {
+        switch (lineJoin) {
+            case BEVEL:
+                return BasicStroke.JOIN_BEVEL;
+            case MITRE:
+                return BasicStroke.JOIN_MITER;
+            case ROUND:
+                return BasicStroke.JOIN_ROUND;
+            default:
+                throw RInternalError.shouldNotReachHere("unexpected value of GridLineJoin enum");
         }
     }
 
@@ -223,16 +280,8 @@ public class JFrameDevice implements GridDevice {
         if (solidStroke != null) {
             return;
         }
-        float defaultWidth = (float) (1. / POINTS_IN_INCH);
-        float dashSize = (float) (10. / POINTS_IN_INCH);
-        float dotSize = (float) (2. / POINTS_IN_INCH);
         solidStroke = new BasicStroke((float) (1f / POINTS_IN_INCH));
         blankStroke = new BasicStroke(0f);
-        dashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{dashSize}, 0f);
-        dottedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{dotSize}, 0f);
-        dotdashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{dotSize, dashSize}, 0f);
-        twodashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{dashSize / 2f, dashSize}, 0f);
-        longdashedStroke = new BasicStroke(defaultWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, new float[]{2f * dashSize}, 0f);
     }
 
     static class FastRFrame extends JFrame {

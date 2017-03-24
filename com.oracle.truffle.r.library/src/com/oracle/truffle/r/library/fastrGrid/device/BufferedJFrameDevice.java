@@ -30,7 +30,7 @@ import java.util.ArrayList;
  * methods open/draw a 2D graphics buffer, while the buffer is open, any drawing is done in the
  * buffer not on the screen and we also record any drawing code to be able to replay it if the
  * buffer happens to loose contents, which is a possibility mentioned in the documentation. Note: we
- * rely on the fact that {@linkl DrawingContext} is immutable.
+ * rely on the fact that {@link DrawingContext} is immutable.
  */
 public class BufferedJFrameDevice implements GridDevice {
     private final JFrameDevice inner;

@@ -51,10 +51,10 @@ public abstract class GridLinesNode extends Node {
         GridDevice dev = ctx.getCurrentDevice();
 
         RList currentVP = ctx.getGridState().getViewPort();
-        DrawingContext drawingCtx = GPar.asDrawingContext(ctx.getGridState().getGpar());
+        GPar gpar = GPar.create(ctx.getGridState().getGpar());
         ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, dev);
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
-        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, drawingCtx);
+        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
         // Convert the list of vectors of indexes to type-safe array and calculate the max length of
         // the vectors.
@@ -67,7 +67,9 @@ public abstract class GridLinesNode extends Node {
 
         double[] xx = new double[maxIndexesLen + 1];    // plus one for polygons
         double[] yy = new double[maxIndexesLen + 1];
-        for (RAbstractIntVector unitIndexes : unitIndexesList) {
+        for (int unitIndexesListIdx = 0; unitIndexesListIdx < unitIndexesList.length; unitIndexesListIdx++) {
+            RAbstractIntVector unitIndexes = unitIndexesList[unitIndexesListIdx];
+            DrawingContext drawingCtx = gpar.getDrawingContext(unitIndexesListIdx);
             boolean oldIsFinite = false;
             int start = 0;
             int unitIndexesLen = unitIndexes.getLength();

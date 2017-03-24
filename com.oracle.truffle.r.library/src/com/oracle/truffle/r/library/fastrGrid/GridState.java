@@ -11,7 +11,6 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
-import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -53,8 +52,12 @@ public final class GridState {
         gpar = GPar.createNew(currentDevice);
     }
 
-    public static DrawingContext getInitialGPar(GridDevice device) {
-        return GPar.asDrawingContext(GPar.createNew(device));
+    /**
+     * Returns something like a canonical gpar, or top level gpar. This is used when we need a
+     * context to do e.g. unit conversion, but we are in a situation that no context is available.
+     */
+    public static GPar getInitialGPar(GridDevice device) {
+        return GPar.create(GPar.createNew(device));
     }
 
     public RList getGpar() {

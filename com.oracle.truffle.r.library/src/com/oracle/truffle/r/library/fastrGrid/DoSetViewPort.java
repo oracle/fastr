@@ -29,7 +29,6 @@ import com.oracle.truffle.r.library.fastrGrid.Unit.IsRelativeUnitNode;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.ViewPort.LayoutPos;
 import com.oracle.truffle.r.library.fastrGrid.ViewPort.LayoutSize;
-import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -65,11 +64,11 @@ class DoSetViewPort extends RBaseNode {
         }
 
         GridDevice currentDevice = GridContext.getContext().getCurrentDevice();
-        DrawingContext deviceDrawingContext = GridState.getInitialGPar(currentDevice);
+        GPar gpar = GridState.getInitialGPar(currentDevice);
 
         RList parent = asListOrNull(pushedViewPort.getDataAt(ViewPort.PVP_PARENT));
         boolean doNotRecalculateParent = hasParent && !ViewPort.updateDeviceSizeInVP(parent, currentDevice);
-        calcViewportTransform(pushedViewPort, parent, doNotRecalculateParent, currentDevice, deviceDrawingContext);
+        calcViewportTransform(pushedViewPort, parent, doNotRecalculateParent, currentDevice, gpar);
 
         // TODO: clipping
         pushedVPData[ViewPort.PVP_CLIPRECT] = RDataFactory.createDoubleVector(new double[]{0, 0, 0, 0}, RDataFactory.COMPLETE_VECTOR);
@@ -87,37 +86,37 @@ class DoSetViewPort extends RBaseNode {
      * @param incremental If {@code true} it is assumed that we can just take the transformation
      *            matrix and other values from the parent without re-calculating them recursively.
      * @param device This method needs the device in order to convert units
-     * @param deviceDrawingContext This method needs to know the device default drawing context in
+     * @param deviceTopLevelGpar This method needs to know the device default drawing context in
      *            order to convert units for the top level view port
      */
     @TruffleBoundary
-    public void calcViewportTransform(RList viewPort, Object parent, boolean incremental, GridDevice device, DrawingContext deviceDrawingContext) {
+    public void calcViewportTransform(RList viewPort, Object parent, boolean incremental, GridDevice device, GPar deviceTopLevelGpar) {
         double[][] parentTransform;
         ViewPortContext parentContext;
         ViewPortLocation vpl;
         Size parentSize;
-        DrawingContext drawingContext;
+        GPar drawingContext;
         double parentAngle;
         if (parent == null || parent == RNull.instance) {
             parentTransform = TransformMatrix.identity();
             parentContext = ViewPortContext.createDefault();
             parentSize = new Size(device.getWidth(), device.getHeight());
             vpl = ViewPortLocation.fromViewPort(viewPort);
-            drawingContext = deviceDrawingContext;
+            drawingContext = deviceTopLevelGpar;
             parentAngle = 0;
         } else {
             assert parent instanceof RList : "inconsistent data: parent of a viewport must be a list";
             RList parentVPList = (RList) parent;
             Object[] parentData = parentVPList.getDataWithoutCopying();
             if (!incremental) {
-                calcViewportTransform(parentVPList, parentData[ViewPort.PVP_PARENT], false, device, deviceDrawingContext);
+                calcViewportTransform(parentVPList, parentData[ViewPort.PVP_PARENT], false, device, deviceTopLevelGpar);
             }
             parentSize = new Size(Unit.cmToInches(castScalar(parentData[ViewPort.PVP_WIDTHCM])), Unit.cmToInches(castScalar(parentData[ViewPort.PVP_HEIGHTCM])));
             parentTransform = fromFlat(castDoubleVector(parentData[ViewPort.PVP_TRANS]).materialize().getDataWithoutCopying());
             parentContext = ViewPortContext.fromViewPort(parentVPList);
             parentAngle = asDouble(parentData[ViewPort.PVP_ROTATION]);
 
-            drawingContext = GPar.asDrawingContext(asList(viewPort.getDataAt(ViewPort.PVP_PARENTGPAR)));
+            drawingContext = GPar.create(asList(viewPort.getDataAt(ViewPort.PVP_PARENTGPAR)));
             boolean noLayout = (isNull(viewPort.getDataAt(ViewPort.VP_VALIDLPOSROW)) && isNull(viewPort.getDataAt(ViewPort.VP_VALIDLPOSCOL))) || isNull(parentData[ViewPort.VP_LAYOUT]);
             if (noLayout) {
                 vpl = ViewPortLocation.fromViewPort(viewPort);
@@ -157,8 +156,7 @@ class DoSetViewPort extends RBaseNode {
         // Finally, allocate the rows and columns for this viewport's layout if it has one
         if (!isNull(viewPort.getDataAt(ViewPort.VP_LAYOUT))) {
             ViewPortContext vpCtx = ViewPortContext.fromViewPort(viewPort);
-            DrawingContext drawingCtx = GPar.asDrawingContext(asList(viewPort.getDataAt(ViewPort.PVP_GPAR)));
-            calcViewPortLayout(viewPort, new Size(width, height), vpCtx, device, drawingCtx);
+            calcViewPortLayout(viewPort, new Size(width, height), vpCtx, device, GPar.create(asList(viewPort.getDataAt(ViewPort.PVP_GPAR))));
         }
 
         Object[] viewPortData = viewPort.getDataWithoutCopying();
@@ -168,13 +166,13 @@ class DoSetViewPort extends RBaseNode {
         viewPortData[ViewPort.PVP_TRANS] = RDataFactory.createDoubleVector(flatten(transform), RDataFactory.COMPLETE_VECTOR, new int[]{3, 3});
     }
 
-    private void calcViewPortLayout(RList viewPort, Size size, ViewPortContext parentVPCtx, GridDevice device, DrawingContext drawingCtx) {
+    private void calcViewPortLayout(RList viewPort, Size size, ViewPortContext parentVPCtx, GridDevice device, GPar gpar) {
         LayoutSize layoutSize = LayoutSize.fromViewPort(viewPort);
         double[] npcWidths = new double[layoutSize.ncol];
         double[] npcHeights = new double[layoutSize.nrow];
         boolean[] relativeWidths = new boolean[layoutSize.ncol];
         boolean[] relativeHeights = new boolean[layoutSize.nrow];
-        UnitConversionContext conversionCtx = new UnitConversionContext(size, parentVPCtx, device, drawingCtx);
+        UnitConversionContext conversionCtx = new UnitConversionContext(size, parentVPCtx, device, gpar);
 
         // For both dimensions we find out which units are other than "null" for those we can
         // immediately calculate the physical size in npcWidth/npcHeights. The reducedWidth/Height
@@ -195,8 +193,8 @@ class DoSetViewPort extends RBaseNode {
         int respect = RRuntime.asInteger(layoutAsList.getDataAt(ViewPort.LAYOUT_VRESPECT));
         int[] layoutRespectMat = ((RAbstractIntVector) layoutAsList.getDataAt(ViewPort.LAYOUT_MRESPECT)).materialize().getDataWithoutCopying();
         if ((reducedHeight > 0 || reducedWidth > 0) && respect > 0) {
-            double sumRelWidth = sumRelativeDimension(layoutWidths, relativeWidths, parentVPCtx, device, drawingCtx, true);
-            double sumRelHeight = sumRelativeDimension(layoutHeights, relativeHeights, parentVPCtx, device, drawingCtx, false);
+            double sumRelWidth = sumRelativeDimension(layoutWidths, relativeWidths, parentVPCtx, device, gpar, true);
+            double sumRelHeight = sumRelativeDimension(layoutHeights, relativeHeights, parentVPCtx, device, gpar, false);
             double tempWidth = reducedWidth;
             double tempHeight = reducedHeight;
             double denom;
@@ -250,8 +248,8 @@ class DoSetViewPort extends RBaseNode {
         }
 
         // Secondly, allocate remaining relative widths and heights in the remaining space
-        allocateRelativeDim(layoutSize, layoutWidths, npcWidths, relativeWidths, reducedWidth, respect, layoutRespectMat, device, drawingCtx, parentVPCtx, true);
-        allocateRelativeDim(layoutSize, layoutHeights, npcHeights, relativeHeights, reducedHeight, respect, layoutRespectMat, device, drawingCtx, parentVPCtx, false);
+        allocateRelativeDim(layoutSize, layoutWidths, npcWidths, relativeWidths, reducedWidth, respect, layoutRespectMat, device, gpar, parentVPCtx, true);
+        allocateRelativeDim(layoutSize, layoutHeights, npcHeights, relativeHeights, reducedHeight, respect, layoutRespectMat, device, gpar, parentVPCtx, false);
 
         // Create the result
         Object[] vpData = viewPort.getDataWithoutCopying();
@@ -260,9 +258,9 @@ class DoSetViewPort extends RBaseNode {
     }
 
     private void allocateRelativeDim(LayoutSize layoutSize, RAbstractContainer layoutItems, double[] npcItems, boolean[] relativeItems, double reducedDim, int respect, int[] layoutRespectMat,
-                    GridDevice device, DrawingContext drawingCtx, ViewPortContext parentVPCtx, boolean isWidth) {
+                    GridDevice device, GPar gpar, ViewPortContext parentVPCtx, boolean isWidth) {
         assert relativeItems.length == npcItems.length;
-        UnitConversionContext layoutModeCtx = new UnitConversionContext(new Size(0, 0), parentVPCtx, device, drawingCtx, 1, 0);
+        UnitConversionContext layoutModeCtx = new UnitConversionContext(new Size(0, 0), parentVPCtx, device, gpar, 1, 0);
         double totalUnrespectedSize = 0;
         if (reducedDim > 0) {
             for (int i = 0; i < relativeItems.length; i++) {
@@ -311,9 +309,9 @@ class DoSetViewPort extends RBaseNode {
         return false;
     }
 
-    private double sumRelativeDimension(RAbstractContainer layoutItems, boolean[] relativeItems, ViewPortContext parentVPCtx, GridDevice device, DrawingContext drawingCtx,
+    private double sumRelativeDimension(RAbstractContainer layoutItems, boolean[] relativeItems, ViewPortContext parentVPCtx, GridDevice device, GPar gpar,
                     boolean isWidth) {
-        UnitConversionContext layoutModeCtx = new UnitConversionContext(new Size(0, 0), parentVPCtx, device, drawingCtx, 1, 0);
+        UnitConversionContext layoutModeCtx = new UnitConversionContext(new Size(0, 0), parentVPCtx, device, gpar, 1, 0);
         double totalWidth = 0;
         for (int i = 0; i < relativeItems.length; i++) {
             if (relativeItems[i]) {

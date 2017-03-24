@@ -64,20 +64,22 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
         GridDevice dev = ctx.getCurrentDevice();
 
         RList currentVP = ctx.getGridState().getViewPort();
-        RList gpar = ctx.getGridState().getGpar();
-        DrawingContext drawingCtx = GPar.asDrawingContext(gpar);
-        double cex = GPar.getCex(gpar);
+        RList gparList = ctx.getGridState().getGpar();
+        GPar gpar = GPar.create(gparList);
+        double cex = GPar.getCex(gparList);
         ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, dev);
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
-        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, drawingCtx);
+        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
         // Note: unlike in other drawing primitives, we only consider length of x
         int length = unitLength.execute(xVec);
-        PointDrawingContext pointDrawingCtx = new PointDrawingContext(drawingCtx, drawingCtx.getFillColor(), drawingCtx.getFillColor());
+        DrawingContext initialDrawingCtx = gpar.getDrawingContext(0);
+        PointDrawingContext pointDrawingCtx = new PointDrawingContext(initialDrawingCtx, initialDrawingCtx.getFillColor(), initialDrawingCtx.getFillColor());
         for (int i = 0; i < length; i++) {
             Point loc = TransformMatrix.transLocation(Point.fromUnits(unitToInches, xVec, yVec, i, conversionCtx), vpTransform.transform);
             double size = unitToInches.convertWidth(sizeVec, i, conversionCtx);
             if (loc.isFinite() && Double.isFinite(size)) {
+                pointDrawingCtx = pointDrawingCtx.update(gpar.getDrawingContext(i));
                 pointDrawingCtx = drawSymbol(pointDrawingCtx, dev, cex, pchVec.getDataAt(i % pchVec.getLength()), size, loc.x, loc.y);
             }
         }
@@ -153,9 +155,36 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
             return new PointDrawingContext(inner, color, fillColor);
         }
 
+        private PointDrawingContext update(DrawingContext inner) {
+            if (this.inner == inner) {
+                return this;
+            }
+            return new PointDrawingContext(inner, this.color, this.fillColor);
+        }
+
         @Override
-        public GridLineType getLineType() {
+        public byte[] getLineType() {
             return inner.getLineType();
+        }
+
+        @Override
+        public double getLineWidth() {
+            return inner.getLineWidth();
+        }
+
+        @Override
+        public GridLineJoin getLineJoin() {
+            return inner.getLineJoin();
+        }
+
+        @Override
+        public GridLineEnd getLineEnd() {
+            return inner.getLineEnd();
+        }
+
+        @Override
+        public double getLineMitre() {
+            return inner.getLineMitre();
         }
 
         @Override
@@ -166,6 +195,16 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
         @Override
         public double getFontSize() {
             return inner.getFontSize();
+        }
+
+        @Override
+        public GridFontStyle getFontStyle() {
+            return inner.getFontStyle();
+        }
+
+        @Override
+        public String getFontFamily() {
+            return inner.getFontFamily();
         }
 
         @Override

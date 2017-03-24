@@ -11,7 +11,6 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.library.fastrGrid.ViewPort.InitViewPortNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;

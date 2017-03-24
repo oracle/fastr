@@ -95,10 +95,10 @@ public final class GridTextNode extends RBaseNode {
         GridDevice dev = ctx.getCurrentDevice();
 
         RList currentVP = ctx.getGridState().getViewPort();
-        DrawingContext drawingCtx = GPar.asDrawingContext(ctx.getGridState().getGpar());
+        GPar gpar = GPar.create(ctx.getGridState().getGpar());
         ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, dev);
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
-        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, drawingCtx);
+        UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
         int length = GridUtils.maxLength(unitLength, x, y);
 
@@ -131,7 +131,7 @@ public final class GridTextNode extends RBaseNode {
             boolean doDraw = true;
             Rectangle trect = null;
             if (checkOverlap || !draw) {
-                trect = textRect(loc, hjust, vjust, rotation, text, drawingCtx, dev);
+                trect = textRect(loc, hjust, vjust, rotation, text, gpar.getDrawingContext(i), dev);
                 for (int j = 0; j < boundsCount; j++) {
                     if (trect.intersects(bounds[j])) {
                         doDraw = false;
@@ -145,7 +145,7 @@ public final class GridTextNode extends RBaseNode {
 
             // actual drawing
             if (draw && doDraw) {
-                text(loc.x, loc.y, text, hjust, vjust, rotation, drawingCtx, dev);
+                text(loc.x, loc.y, text, hjust, vjust, rotation, gpar.getDrawingContext(i), dev);
             }
 
             // or bounds checking

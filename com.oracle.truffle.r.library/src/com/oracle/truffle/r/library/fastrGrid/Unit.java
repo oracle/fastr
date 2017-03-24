@@ -183,7 +183,7 @@ public class Unit {
         }
     }
 
-    private static double convertToInches(double value, int unitId, RList data, UnitConversionContext ctx, AxisOrDimension axisOrDim) {
+    private static double convertToInches(double value, int index, int unitId, RList data, UnitConversionContext ctx, AxisOrDimension axisOrDim) {
         double vpSize = ctx.getViewPortSize(axisOrDim);
         switch (unitId) {
             case INCHES:
@@ -201,16 +201,16 @@ public class Unit {
                 return value / (CM_IN_INCH * 10);
             case CHAR:
             case MYCHAR:
-                return (value * ctx.drawingContext.getFontSize()) / INCH_TO_POINTS_FACTOR;
+                return (value * ctx.gpar.getDrawingContext(index).getFontSize()) / INCH_TO_POINTS_FACTOR;
             case LINES:
             case MYLINES:
-                return (value * ctx.drawingContext.getFontSize() * ctx.drawingContext.getLineHeight()) / INCH_TO_POINTS_FACTOR;
+                return (value * ctx.gpar.getDrawingContext(index).getFontSize() * ctx.gpar.getDrawingContext(index).getLineHeight()) / INCH_TO_POINTS_FACTOR;
             case STRINGWIDTH:
             case MYSTRINGWIDTH:
-                return ctx.device.getStringWidth(ctx.drawingContext, RRuntime.asString(data.getDataAt(0)));
+                return ctx.device.getStringWidth(ctx.gpar.getDrawingContext(index), RRuntime.asString(data.getDataAt(0)));
             case STRINGHEIGHT:
             case MYSTRINGHEIGHT:
-                return ctx.device.getStringHeight(ctx.drawingContext, RRuntime.asString(data.getDataAt(0)));
+                return ctx.device.getStringHeight(ctx.gpar.getDrawingContext(index), RRuntime.asString(data.getDataAt(0)));
             case NULL:
                 return evaluateNullUnit(value, vpSize, ctx.nullLayoutMode, ctx.nullArithmeticMode);
             default:
@@ -423,20 +423,20 @@ public class Unit {
     public static final class UnitConversionContext {
         public final Size viewPortSize;
         public final ViewPortContext viewPortContext;
-        public final DrawingContext drawingContext;
+        public final GPar gpar;
         public final GridDevice device;
         public final int nullLayoutMode;
         public final int nullArithmeticMode;
 
-        public UnitConversionContext(Size viewPortSize, ViewPortContext viewPortContext, GridDevice device, DrawingContext drawingContext) {
-            this(viewPortSize, viewPortContext, device, drawingContext, 0, 0);
+        public UnitConversionContext(Size viewPortSize, ViewPortContext viewPortContext, GridDevice device, GPar gpar) {
+            this(viewPortSize, viewPortContext, device, gpar, 0, 0);
         }
 
-        public UnitConversionContext(Size viewPortSize, ViewPortContext viewPortContext, GridDevice device, DrawingContext drawingContext, int nullLMode, int nullAMode) {
+        public UnitConversionContext(Size viewPortSize, ViewPortContext viewPortContext, GridDevice device, GPar gpar, int nullLMode, int nullAMode) {
             this.viewPortSize = viewPortSize;
             this.viewPortContext = viewPortContext;
             this.device = device;
-            this.drawingContext = drawingContext;
+            this.gpar = gpar;
             this.nullLayoutMode = nullLMode;
             this.nullArithmeticMode = nullAMode;
         }
@@ -495,7 +495,7 @@ public class Unit {
                 RList grobList = asList(value.getAttr(UNIT_ATTR_DATA));
                 return getGrobUnitToInchesNode().execute(scalarValue, unitId, grobList.getDataAt(index % grobList.getLength()), ctx);
             }
-            return convertToInches(scalarValue, unitId, asListOrNull(value.getAttr(UNIT_ATTR_DATA)), ctx, axisOrDim);
+            return convertToInches(scalarValue, index, unitId, asListOrNull(value.getAttr(UNIT_ATTR_DATA)), ctx, axisOrDim);
         }
 
         @Specialization(guards = "isUnitList(value)")
@@ -548,7 +548,7 @@ public class Unit {
 
         // Note the catch: newNullAMode is applied only if the axisOrDim is dimension
         private static UnitConversionContext getNewCtx(UnitConversionContext ctx, AxisOrDimension axisOrDim, int newNullAMode) {
-            return new UnitConversionContext(ctx.viewPortSize, ctx.viewPortContext, ctx.device, ctx.drawingContext, ctx.nullLayoutMode,
+            return new UnitConversionContext(ctx.viewPortSize, ctx.viewPortContext, ctx.device, ctx.gpar, ctx.nullLayoutMode,
                             axisOrDim.isDimension() ? newNullAMode : ctx.nullArithmeticMode);
         }
 
@@ -628,7 +628,7 @@ public class Unit {
                         double nullUnitValue = pureNullUnitValue((RAbstractContainer) unitxy.getDataAt(0), 0);
                         result = evaluateNullUnit(nullUnitValue, vpTransform.size.getWidth(), conversionCtx.nullLayoutMode, conversionCtx.nullArithmeticMode);
                     } else {
-                        UnitConversionContext newConversionCtx = new UnitConversionContext(vpTransform.size, vpContext, conversionCtx.device, GPar.asDrawingContext(currentGP));
+                        UnitConversionContext newConversionCtx = new UnitConversionContext(vpTransform.size, vpContext, conversionCtx.device, GPar.create(currentGP));
                         initUnitToInchesNode();
                         if (unitId == GROBWIDTH) {
                             result = unitToInchesNode.convertWidth((RAbstractContainer) unitxy.getDataAt(0), 0, newConversionCtx);
