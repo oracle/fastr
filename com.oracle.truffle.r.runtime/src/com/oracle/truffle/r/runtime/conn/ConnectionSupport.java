@@ -335,7 +335,9 @@ public class ConnectionSupport {
         Internal("internal"),
         PIPE("pipe"),
         FIFO("fifo"),
-        CHANNEL("Java Channel");
+        CHANNEL("Java Channel"),
+        NATIVE("custom"),
+        INVALID("invalid");
 
         private final String printName;
 
@@ -358,7 +360,11 @@ public class ConnectionSupport {
         }
     }
 
-    public static final class InvalidConnection implements RConnection {
+    public static final class InvalidConnection extends BaseRConnection {
+
+        protected InvalidConnection() {
+            super(ConnectionClass.INVALID, null);
+        }
 
         public static final InvalidConnection instance = new InvalidConnection();
 
@@ -395,7 +401,7 @@ public class ConnectionSupport {
         }
 
         @Override
-        public RConnection forceOpen(String modeString) throws IOException {
+        public BaseRConnection forceOpen(String modeString) throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
 
@@ -470,11 +476,6 @@ public class ConnectionSupport {
         }
 
         @Override
-        public void pushBack(RAbstractStringVector lines, boolean addNewLine) {
-            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
-        }
-
-        @Override
         public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
@@ -486,6 +487,16 @@ public class ConnectionSupport {
 
         @Override
         public void truncate() throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        protected void createDelegateConnection() throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public String getSummaryDescription() {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
     }
@@ -639,8 +650,8 @@ public class ConnectionSupport {
             this.openMode = mode;
         }
 
-        public final ConnectionClass getConnectionClass() {
-            return conClass;
+        public String getConnectionClass() {
+            return conClass.getPrintName();
         }
 
         /**
@@ -730,11 +741,10 @@ public class ConnectionSupport {
          * This is used exclusively by the {@code open} builtin.
          */
         public void open(String modeString) throws IOException {
-            if (openMode.abstractOpenMode == AbstractOpenMode.Lazy) {
-                // modeString may override the default
-                openMode = new OpenMode(modeString == null ? openMode.modeString : modeString);
+            openMode = new OpenMode(modeString == null ? openMode.modeString : modeString);
+            if (!isOpen()) {
+                createDelegateConnection();
             }
-            createDelegateConnection();
         }
 
         protected void checkOpen() {
@@ -1067,7 +1077,7 @@ public class ConnectionSupport {
         }
 
         public final RAbstractIntVector asVector() {
-            String[] classes = new String[]{ConnectionSupport.getBaseConnection(this).getConnectionClass().getPrintName(), "connection"};
+            String[] classes = new String[]{ConnectionSupport.getBaseConnection(this).getConnectionClass(), "connection"};
 
             RAbstractIntVector result = RDataFactory.createIntVector(new int[]{getDescriptor()}, true);
 

@@ -177,6 +177,11 @@ public class TestConnections extends TestRBase {
     }
 
     @Test
+    public void testReopen() {
+        assertEval("{ con <- rawConnection(charToRaw('hello\\nworld\\n')); readLines(con, 1); open(con, 'rb'); bin <- readBin(con, raw(), 999); close(con); rawToChar(bin) }");
+    }
+
+    @Test
     public void testFileOpenRaw() {
         Assert.assertTrue("Could not create required temp file for test.", Files.exists(tempFileGzip));
         assertEval("{ zz <- file(\"" + tempFileGzip + "\", \"r\", raw=T); res <- readBin(zz, raw(), 4); close(zz); res }");
