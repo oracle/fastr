@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
 package com.oracle.truffle.r.runtime.conn;
 
 import java.io.IOException;
@@ -13,6 +35,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
+import com.oracle.truffle.r.runtime.conn.RConnection.SeekMode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -73,6 +96,13 @@ public class NativeConnections {
                 case WriteBinary:
                     delegate = new WriteNativeConnection(this);
                     break;
+                case ReadWrite:
+                case ReadWriteBinary:
+                case ReadWriteTrunc:
+                case ReadWriteTruncBinary:
+                    delegate = new ReadWriteNativeConnection(this);
+                    break;
+
             }
             setDelegate(delegate);
         }
@@ -91,6 +121,16 @@ public class NativeConnections {
             return addr;
         }
 
+        @Override
+        public boolean canRead() {
+            return getFlag("canread");
+        }
+
+        @Override
+        public boolean canWrite() {
+            return getFlag("canwrite");
+        }
+
         public boolean getFlag(String name) {
             NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(GET_FLAG_NATIVE_CONNECTION);
             RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
@@ -104,14 +144,54 @@ public class NativeConnections {
         }
     }
 
+    /**
+     * @param addr Native address of the Rconnection data structure.
+     * @param offset seek offset
+     * @param seekMode seek anchor
+     * @param rw seek mode (read=1, write=2, last)
+     * @return the old cursor position
+     */
+    private static long seekSingleMode(long addr, long offset, SeekMode seekMode, int rw) {
+        RDoubleVector where = RDataFactory.createDoubleVectorFromScalar(offset);
+        RIntVector seekCode;
+        switch (seekMode) {
+            case CURRENT:
+                seekCode = RDataFactory.createIntVectorFromScalar(1);
+                break;
+            case END:
+                seekCode = RDataFactory.createIntVectorFromScalar(2);
+                break;
+            case START:
+                seekCode = RDataFactory.createIntVectorFromScalar(0);
+                break;
+            default:
+                seekCode = RDataFactory.createIntVectorFromScalar(-1);
+                break;
+        }
+        RIntVector rwCode = RDataFactory.createIntVectorFromScalar(rw);
+
+        NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(SEEK_NATIVE_CONNECTION);
+        RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
+        RIntVector addrVec = convertAddrToIntVec(addr);
+        Object result = nativeCallTarget.call(ni, new Object[]{addrVec, where, seekCode, rwCode});
+        if (result instanceof RDoubleVector) {
+            return (long) ((RDoubleVector) result).getDataAt(0);
+        }
+        throw RInternalError.shouldNotReachHere("unexpected result type");
+    }
+
     static class ReadNativeConnection extends DelegateReadRConnection {
 
         private final ByteChannel ch;
+        private final boolean seekable;
 
         protected ReadNativeConnection(NativeRConnection base) throws IOException {
             super(base, 4096);
             ch = new NativeChannel(base);
             NativeConnections.openNative(base.addr);
+
+            // In theory, the flag could change any time, but this makes no sense.
+            seekable = base.getFlag("canseek");
         }
 
         @Override
@@ -121,48 +201,28 @@ public class NativeConnections {
 
         @Override
         protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            RDoubleVector where = RDataFactory.createDoubleVectorFromScalar(offset);
-            RIntVector seekCode;
-            switch (seekMode) {
-                case CURRENT:
-                    seekCode = RDataFactory.createIntVectorFromScalar(1);
-                    break;
-                case END:
-                    seekCode = RDataFactory.createIntVectorFromScalar(2);
-                    break;
-                case START:
-                    seekCode = RDataFactory.createIntVectorFromScalar(0);
-                    break;
-                default:
-                    seekCode = RDataFactory.createIntVectorFromScalar(-1);
-                    break;
-            }
-            RIntVector rwCode = RDataFactory.createIntVectorFromScalar(1);
-
-            NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(SEEK_NATIVE_CONNECTION);
-            RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
-            RIntVector addrVec = convertAddrToIntVec(((NativeRConnection) base).addr);
-            Object result = nativeCallTarget.call(ni, new Object[]{addrVec, where, seekCode, rwCode});
-            if (result instanceof RDoubleVector) {
-                return (long) ((RDoubleVector) result).getDataAt(0);
-            }
-            throw RInternalError.shouldNotReachHere("unexpected result type");
+            // seek mode read -> rw = 1
+            return seekSingleMode(((NativeRConnection) base).addr, offset, seekMode, 1);
         }
 
         @Override
         public boolean isSeekable() {
-            return ((NativeRConnection) base).getFlag("canseek");
+            return seekable;
         }
     }
 
     static class WriteNativeConnection extends DelegateWriteRConnection {
 
         private final ByteChannel ch;
+        private final boolean seekable;
 
         protected WriteNativeConnection(NativeRConnection base) throws IOException {
             super(base);
             ch = new NativeChannel(base);
             NativeConnections.openNative(base.addr);
+
+            // In theory, the flag could change any time, but this makes no sense.
+            seekable = base.getFlag("canseek");
         }
 
         @Override
@@ -171,8 +231,58 @@ public class NativeConnections {
         }
 
         @Override
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            // seek mode write -> rw = 2
+            return seekSingleMode(((NativeRConnection) base).addr, offset, seekMode, 2);
+        }
+
+        @Override
         public boolean isSeekable() {
-            return ((NativeRConnection) base).getFlag("canseek");
+            return seekable;
+        }
+    }
+
+    static class ReadWriteNativeConnection extends DelegateWriteRConnection {
+
+        private final ByteChannel ch;
+        private final boolean seekable;
+        private int lastSeekMode = 1;
+
+        protected ReadWriteNativeConnection(NativeRConnection base) throws IOException {
+            super(base);
+            ch = new NativeChannel(base);
+            NativeConnections.openNative(base.addr);
+
+            // In theory, the flag could change any time, but this makes no sense.
+            seekable = base.getFlag("canseek");
+        }
+
+        @Override
+        public ByteChannel getChannel() throws IOException {
+            return ch;
+        }
+
+        @Override
+        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            int rwMode;
+            switch (seekRWMode) {
+                case READ:
+                    rwMode = 1;
+                    break;
+                case WRITE:
+                    rwMode = 2;
+                    break;
+                default:
+                    rwMode = lastSeekMode;
+
+            }
+            lastSeekMode = rwMode;
+            return seekSingleMode(((NativeRConnection) base).addr, offset, seekMode, rwMode);
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return seekable;
         }
     }
 
@@ -191,7 +301,7 @@ public class NativeConnections {
 
         private final NativeRConnection base;
 
-        public NativeChannel(NativeRConnection base) {
+        NativeChannel(NativeRConnection base) {
             this.base = base;
         }
 

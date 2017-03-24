@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <assert.h>
 
+
 /*
  * All calls pass through one of the call(N) methods in rfficall.c, which carry the JNIEnv value,
  * that needs to be saved for reuse in the many R functions such as Rf_allocVector.
@@ -72,6 +73,9 @@ static int nativeArrayTableHwm;
 static int nativeArrayTableLastIndex;
 static int nativeArrayTableLength;
 static void releaseNativeArray(JNIEnv *env, int index);
+
+static jfieldID CharSXPWrapperContentsFieldID;
+extern jmethodID logNotCharSXPWrapperMethodID;
 
 static int isEmbedded = 0;
 void setEmbedded() {
@@ -143,6 +147,9 @@ void init_utils(JNIEnv *env, jobject upCallsInstance) {
     nativeArrayTable = calloc(NATIVE_ARRAY_TABLE_INITIAL_SIZE, sizeof(NativeArrayElem));
     nativeArrayTableLength = NATIVE_ARRAY_TABLE_INITIAL_SIZE;
     nativeArrayTableHwm = 0;
+
+	CharSXPWrapperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/CharSXPWrapper");
+	CharSXPWrapperContentsFieldID = checkGetFieldID(env, CharSXPWrapperClass, "contents", "Ljava/lang/String;", 0);
 }
 
 const char *stringToChars(JNIEnv *jniEnv, jstring string) {
@@ -296,7 +303,7 @@ void *getNativeArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
         }
 
         case LGLSXP: {
-            // Special treatment becuase R FFI wants int* and FastR represents using byte[]
+            // Special treatment because R FFI wants int* and FastR represents using byte[]
             jbyteArray byteArray = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, LOGICAL_MethodID, x);
             int len = (*thisenv)->GetArrayLength(thisenv, byteArray);
             jbyte* internalData = (*thisenv)->GetByteArrayElements(thisenv, byteArray, &isCopy);
@@ -308,6 +315,13 @@ void *getNativeArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
             (*thisenv)->ReleaseByteArrayElements(thisenv, byteArray, internalData, JNI_ABORT);
             jArray = byteArray;
             data = idata;
+            break;
+        }
+
+        case CHARSXP: {
+        	jstring string = stringFromCharSXP(thisenv, x);
+        	data = (void *) stringToChars(thisenv, string);
+            jArray = string;
             break;
         }
 
@@ -367,6 +381,13 @@ static void releaseNativeArray(JNIEnv *env, int i) {
         case RAWSXP: {
             jbyteArray byteArray = (jbyteArray) cv.jArray;
             (*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, 0);
+            break;
+
+        }
+
+        case CHARSXP: {
+            jstring string = (jstring) cv.jArray;
+            (*env)->ReleaseStringUTFChars(env, string, (const char *)cv.data);
             break;
 
         }
@@ -535,4 +556,16 @@ jfieldID checkGetFieldID(JNIEnv *env, jclass klass, const char *name, const char
         (*env)->FatalError(env, buf);
     }
     return fieldID;
+}
+
+jstring stringFromCharSXP(JNIEnv *thisenv, SEXP charsxp) {
+#if VALIDATE_REFS
+	validateRef(thisenv, charsxp, "stringFromCharSXP");
+	if (!(*thisenv)->IsInstanceOf(thisenv, charsxp, CharSXPWrapperClass)) {
+
+	    (*thisenv)->CallStaticVoidMethod(thisenv, JNIUpCallsRFFIImplClass, logNotCharSXPWrapperMethodID, charsxp);
+	    fatalError("only CharSXPWrapper expected in stringFromCharSXP");
+	}
+#endif
+	return (*thisenv)->GetObjectField(thisenv, charsxp, CharSXPWrapperContentsFieldID);
 }

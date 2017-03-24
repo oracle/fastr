@@ -46,18 +46,14 @@ static jbyteArray wrap(JNIEnv *thisenv, void* buf, size_t n) {
  * Otherwise an error is issued.
  */
 static int getFd(Rconnection con) {
-	if(strstr(con->class, "file") != NULL ) {
-		return *((int*)(con->private));
-	}
-	error(_("cannot get file descriptor for non-file connection"));
-	return -1;
+	return con->id;
 }
 
 /*
  * Sets the file descriptor for the connection.
  */
 static void setFd(Rconnection con, jint fd) {
-	*((int*)(con->private)) = fd;
+	con->id = fd;
 }
 
 
@@ -194,9 +190,7 @@ SEXP R_new_custom_connection(const char *description, const char *mode, const ch
 	jstring jsDescription = (*thisenv)->NewStringUTF(thisenv, description);
 	jstring jsMode = (*thisenv)->NewStringUTF(thisenv, mode);
 	jstring jsClassName = (*thisenv)->NewStringUTF(thisenv, class_name);
-	printf("New conn addr = %llx\n", (jlong)new);
 	ans = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, newCustomConnectionMethodID, jsDescription, jsMode, jsClassName, (jlong)new);
-	printf("native fd = %d\n", asInteger(ans));
 	if (ans) {
 
 		new->class = (char *) malloc(strlen(class_name) + 1);
@@ -421,13 +415,6 @@ Rconnection R_GetConnection(SEXP sConn) {
 	new->class = sConnClass;
 	new->canseek = seekable;
 
-	/* The private field is forbidden to be used by any user. So we can use it to store the file descriptor. However, we should also use Rfileconn in future. */
-	new->private = (void *) malloc(sizeof(int));
-	if (!new->private) {
-		free(new);
-		error(_("allocation of file connection failed"));
-		/* for Solaris 12.5 */new = NULL;
-	}
 	setFd(new, fd);
 
 // TODO implement up-call functions and set them
