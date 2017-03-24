@@ -25,7 +25,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
  * Holds the data of a viewport needed to perform transformations.
  */
 public final class ViewPortTransform {
-    private final double rotationAngle;
+    /**
+     * Angle in radians.
+     */
+    public final double rotationAngle;
     public final double[][] transform;
     public final Size size;
 

@@ -86,10 +86,10 @@ public final class BufferedJFrameDevice implements GridDevice {
     }
 
     @Override
-    public void drawRect(DrawingContext ctx, double leftX, double topY, double width, double height) {
-        inner.drawRect(ctx, leftX, topY, width, height);
+    public void drawRect(DrawingContext ctx, double leftX, double topY, double width, double height, double rotationAnticlockWise) {
+        inner.drawRect(ctx, leftX, topY, width, height, rotationAnticlockWise);
         if (buffer != null) {
-            drawActions.add(() -> inner.drawRect(ctx, leftX, topY, width, height));
+            drawActions.add(() -> inner.drawRect(ctx, leftX, topY, width, height, rotationAnticlockWise));
         }
     }
 

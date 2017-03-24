@@ -83,9 +83,19 @@ public final class JFrameDevice implements GridDevice {
     }
 
     @Override
-    public void drawRect(DrawingContext ctx, double leftX, double topY, double width, double height) {
+    public void drawRect(DrawingContext ctx, double leftX, double topY, double width, double height, double rotationAnticlockWise) {
         setContext(ctx);
-        drawShape(ctx, new Rectangle2D.Double(leftX, topY, width, height));
+        if (rotationAnticlockWise == 0.) {
+            drawShape(ctx, new Rectangle2D.Double(leftX, topY, width, height));
+            return;
+        }
+        AffineTransform oldTr = graphics.getTransform();
+        AffineTransform newTr = new AffineTransform(oldTr);
+        newTr.translate(leftX + width / 2, topY + height / 2);
+        newTr.rotate(rotationAnticlockWise);
+        graphics.setTransform(newTr);
+        drawShape(ctx, new Rectangle2D.Double(-(width / 2), -(height / 2), width, height));
+        graphics.setTransform(oldTr);
     }
 
     @Override

@@ -145,7 +145,7 @@ public final class GridTextNode extends RBaseNode {
 
             // actual drawing
             if (draw && doDraw) {
-                text(loc.x, loc.y, text, hjust, vjust, rotation, gpar.getDrawingContext(i), dev);
+                text(loc.x, loc.y, text, hjust, vjust, rotation + vpTransform.rotationAngle, gpar.getDrawingContext(i), dev);
             }
 
             // or bounds checking
@@ -210,13 +210,13 @@ public final class GridTextNode extends RBaseNode {
 
     // transcribed from engine.c
 
-    private void text(double x, double y, String text, double xadjIn, double yadj, double rotation, DrawingContext drawingCtx, GridDevice device) {
+    private void text(double x, double y, String text, double xadjIn, double yadj, double rotationDegrees, DrawingContext drawingCtx, GridDevice device) {
         if (!Double.isFinite(yadj)) {
             throw RInternalError.unimplemented("'exact' vertical centering, see engine.c:1700");
         }
         double xadj = Double.isFinite(xadjIn) ? xadjIn : 0.5;
 
-        double radRotation = Math.toRadians(rotation);
+        double radRotation = Math.toRadians(rotationDegrees);
         double cosRot = Math.cos(radRotation);
         double sinRot = Math.sin(radRotation);
         String[] lines = text.split("\n");

@@ -46,7 +46,11 @@ public interface GridDevice {
     default void flush() {
     }
 
-    void drawRect(DrawingContext ctx, double leftX, double topY, double width, double height);
+    /**
+     * Draws a rectangle at given position, the center of the rotation should be the center of the
+     * rectangle. The rotation is given in radians.
+     */
+    void drawRect(DrawingContext ctx, double leftX, double topY, double width, double height, double rotationAnticlockWise);
 
     /**
      * Connects given points with a line, there has to be at least two points in order to actually
