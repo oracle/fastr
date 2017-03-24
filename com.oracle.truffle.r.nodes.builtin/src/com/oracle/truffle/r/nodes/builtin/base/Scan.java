@@ -44,16 +44,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -506,53 +500,45 @@ public abstract class Scan extends RBuiltinNode {
     }
 
     private static Object extractItem(RAbstractVector what, String buffer, LocalData data) {
-        if (what.getElementClass() == RLogical.class) {
-            if (isNaString(buffer, 0, data)) {
-                return RRuntime.LOGICAL_NA;
-            } else {
-                return RRuntime.string2logicalNoCheck(buffer);
-            }
+        switch (what.getRType()) {
+            case Logical:
+                if (isNaString(buffer, 0, data)) {
+                    return RRuntime.LOGICAL_NA;
+                } else {
+                    return RRuntime.string2logicalNoCheck(buffer);
+                }
+            case Integer:
+                if (isNaString(buffer, 0, data)) {
+                    return RRuntime.INT_NA;
+                } else {
+                    return RRuntime.string2intNoCheck(buffer);
+                }
+            case Double:
+                if (isNaString(buffer, 0, data)) {
+                    return RRuntime.DOUBLE_NA;
+                } else {
+                    return RRuntime.string2doubleNoCheck(buffer);
+                }
+            case Complex:
+                if (isNaString(buffer, 0, data)) {
+                    return RRuntime.createComplexNA();
+                } else {
+                    return RRuntime.string2complexNoCheck(buffer);
+                }
+            case Character:
+                if (isNaString(buffer, 1, data)) {
+                    return RRuntime.STRING_NA;
+                } else {
+                    return buffer;
+                }
+            case Raw:
+                if (isNaString(buffer, 0, data)) {
+                    return RDataFactory.createRaw((byte) 0);
+                } else {
+                    return RRuntime.string2raw(buffer);
+                }
+            default:
+                throw RInternalError.shouldNotReachHere();
         }
-        if (what.getElementClass() == RInteger.class) {
-            if (isNaString(buffer, 0, data)) {
-                return RRuntime.INT_NA;
-            } else {
-                return RRuntime.string2intNoCheck(buffer);
-            }
-        }
-
-        if (what.getElementClass() == RDouble.class) {
-            if (isNaString(buffer, 0, data)) {
-                return RRuntime.DOUBLE_NA;
-            } else {
-                return RRuntime.string2doubleNoCheck(buffer);
-            }
-        }
-
-        if (what.getElementClass() == RComplex.class) {
-            if (isNaString(buffer, 0, data)) {
-                return RRuntime.createComplexNA();
-            } else {
-                return RRuntime.string2complexNoCheck(buffer);
-            }
-        }
-
-        if (what.getElementClass() == RString.class) {
-            if (isNaString(buffer, 1, data)) {
-                return RRuntime.STRING_NA;
-            } else {
-                return buffer;
-            }
-        }
-
-        if (what.getElementClass() == RRaw.class) {
-            if (isNaString(buffer, 0, data)) {
-                return RDataFactory.createRaw((byte) 0);
-            } else {
-                return RRuntime.string2raw(buffer);
-            }
-        }
-
-        throw RInternalError.shouldNotReachHere();
     }
 }

@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public interface RAbstractStringVector extends RAbstractAtomicVector {
@@ -61,10 +60,5 @@ public interface RAbstractStringVector extends RAbstractAtomicVector {
     @Override
     default RType getRType() {
         return RType.Character;
-    }
-
-    @Override
-    default Class<?> getElementClass() {
-        return RString.class;
     }
 }

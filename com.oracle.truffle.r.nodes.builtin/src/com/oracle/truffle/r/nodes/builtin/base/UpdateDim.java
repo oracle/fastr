@@ -56,7 +56,7 @@ public abstract class UpdateDim extends RBuiltinNode {
 
     @Specialization
     protected RAbstractVector updateDim(RAbstractVector vector, @SuppressWarnings("unused") RNull dimensions) {
-        RVector<?> result = ((RAbstractVector) reuse.execute(vector)).materialize();
+        RVector<?> result = reuse.execute(vector);
         result.resetDimensions(null);
         return result;
     }
@@ -69,7 +69,7 @@ public abstract class UpdateDim extends RBuiltinNode {
         RIntVector dimensionsMaterialized = dimensions.materialize();
         int[] dimsData = dimensionsMaterialized.getDataCopy();
         RVector.verifyDimensions(vector.getLength(), dimsData, this);
-        RVector<?> result = ((RAbstractVector) reuse.execute(vector)).materialize();
+        RVector<?> result = reuse.execute(vector);
         removeNames.execute(result);
 
         DynamicObject attrs = result.getAttributes();

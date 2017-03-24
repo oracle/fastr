@@ -658,7 +658,6 @@ com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_sub
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_subset2.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_substitute.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_substr.java,purdue.copyright
-com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_substrassign_.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_substrassign.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_substring.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_sum.java,purdue.copyright

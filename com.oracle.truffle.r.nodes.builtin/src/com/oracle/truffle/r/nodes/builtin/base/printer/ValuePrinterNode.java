@@ -515,11 +515,6 @@ public final class ValuePrinterNode extends RBaseNode {
         }
 
         @Override
-        public Class<?> getElementClass() {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
         public RTypedValue getNonShared() {
             throw RInternalError.shouldNotReachHere();
         }

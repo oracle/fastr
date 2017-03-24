@@ -22,47 +22,74 @@
  */
 package com.oracle.truffle.r.nodes.function.opt;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * Internal node that should be used whenever you want to alter some data: if the data is shared,
  * then it creates a copy, otherwise it returns the data. It does not increment the reference count
  * of the result in either case, but that is typically handled by write variable node, put container
  * element node or by put attribute node.
+ *
+ * This node also makes sure that the returned value is an actual RVector in which individual
+ * elements can be modified (as opposed to sequences, etc.) by calling materialize.
  */
 public abstract class ReuseNonSharedNode extends Node {
+
+    protected static final int LIMIT = 5;
 
     public static ReuseNonSharedNode create() {
         return ReuseNonSharedNodeGen.create();
     }
 
-    public abstract Object execute(Object value);
+    public abstract RVector<?> execute(RAbstractVector value);
 
-    @Specialization(guards = "!value.isShared()")
-    protected RShareable reuseNonShared(RSharingAttributeStorage value) {
-        return value;
-    }
-
-    @Specialization(guards = {"value.isShared()", "value.getClass() == valueClass"})
-    protected RSharingAttributeStorage reuseShared(RSharingAttributeStorage value,
-                    @Cached("value.getClass()") Class<? extends RSharingAttributeStorage> valueClass) {
-        RSharingAttributeStorage res = valueClass.cast(value).copy();
-        assert res.isTemporary();
-        return res;
-    }
-
-    protected static boolean isRShareable(Object value) {
-        return value instanceof RSharingAttributeStorage;
+    @Specialization(limit = "LIMIT", guards = "value.getClass() == valueClass")
+    protected RVector<?> reuseNonShareable(RAbstractVector value,
+                    @Cached("value.getClass()") Class<? extends RAbstractVector> valueClass,
+                    @Cached("createBinaryProfile()") ConditionProfile isSharedProfile) {
+        RAbstractVector profiledValue = valueClass.cast(value);
+        if (RShareable.class.isAssignableFrom(valueClass)) {
+            RShareable shareable = (RShareable) profiledValue;
+            if (isSharedProfile.profile(shareable.isShared())) {
+                RShareable res = shareable.copy();
+                assert res.isTemporary();
+                return (RVector<?>) res;
+            } else {
+                return (RVector<?>) profiledValue;
+            }
+        } else {
+            RVector<?> res = profiledValue.materialize();
+            assert res.isTemporary();
+            return res;
+        }
     }
 
     @Fallback
-    protected static Object getNonShareable(Object value) {
+    @TruffleBoundary
+    public static RVector<?> reuseSlow(RAbstractVector value) {
         RSharingAttributeStorage.verify(value);
-        return value;
+        if (value instanceof RSharingAttributeStorage) {
+            RShareable shareable = (RShareable) value;
+            if (shareable.isShared()) {
+                RShareable res = shareable.copy();
+                assert res.isTemporary();
+                return (RVector<?>) res;
+            } else {
+                return (RVector<?>) value;
+            }
+        } else {
+            RVector<?> res = value.materialize();
+            assert res.isTemporary();
+            return res;
+        }
     }
 }

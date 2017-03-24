@@ -58,9 +58,4 @@ public interface RAbstractRawVector extends RAbstractAtomicVector {
     default RType getRType() {
         return RType.Raw;
     }
-
-    @Override
-    default Class<?> getElementClass() {
-        return RRaw.class;
-    }
 }

@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.data.model;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RInteger;
 
 public interface RAbstractIntVector extends RAbstractAtomicVector {
 
@@ -61,10 +60,5 @@ public interface RAbstractIntVector extends RAbstractAtomicVector {
     @Override
     default RType getRType() {
         return RType.Integer;
-    }
-
-    @Override
-    default Class<?> getElementClass() {
-        return RInteger.class;
     }
 }

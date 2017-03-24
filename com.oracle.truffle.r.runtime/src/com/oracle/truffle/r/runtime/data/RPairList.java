@@ -262,11 +262,6 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     }
 
     @Override
-    public Class<?> getElementClass() {
-        return null;
-    }
-
-    @Override
     public RSharingAttributeStorage copy() {
         RPairList result = new RPairList();
         Object original = this;

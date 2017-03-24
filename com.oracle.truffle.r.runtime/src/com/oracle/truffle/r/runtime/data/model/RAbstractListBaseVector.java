@@ -34,18 +34,13 @@ public interface RAbstractListBaseVector extends RAbstractVector {
 
     Object getDataAt(int index);
 
-    @Override
-    default boolean checkCompleteness() {
-        return true;
-    }
-
-    @Override
-    default Class<?> getElementClass() {
-        return Object.class;
-    }
-
     @SuppressWarnings("unused")
     default void setDataAt(Object store, int index, Object value) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    default boolean checkCompleteness() {
+        return true;
     }
 }

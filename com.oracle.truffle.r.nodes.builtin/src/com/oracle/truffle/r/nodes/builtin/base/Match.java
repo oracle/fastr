@@ -34,7 +34,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -59,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 /*
@@ -158,7 +158,7 @@ public abstract class Match extends RBuiltinNode {
         throw error(MATCH_VECTOR_ARGS);
     }
 
-    protected abstract static class MatchInternalNode extends Node {
+    protected abstract static class MatchInternalNode extends RBaseNode {
 
         private static final int TABLE_SIZE_FACTOR = 10;
 
@@ -467,7 +467,7 @@ public abstract class Match extends RBuiltinNode {
             return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
         }
 
-        @Specialization(guards = "!isStringVectorTable(table)")
+        @Specialization(guards = "!isRAbstractStringVector(table)")
         protected RIntVector match(RAbstractStringVector x, RAbstractVector table, int nomatch) {
             int[] result = initResult(x.getLength(), nomatch);
             boolean matchAll = true;
@@ -521,10 +521,6 @@ public abstract class Match extends RBuiltinNode {
                 }
             }
             return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
-        }
-
-        protected boolean isStringVectorTable(RAbstractVector table) {
-            return table.getElementClass() == String.class;
         }
 
         private static int[] initResult(int length, int nomatch) {

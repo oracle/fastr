@@ -865,6 +865,7 @@ public final class RError extends RuntimeException {
         SYMBOL_HAS_REGULAR_BINDING("symbol already has a regular binding"),
         CANNOT_CHANGE_LOCKED_ACTIVE_BINDING("cannot change active binding if binding is locked"),
         NO_BINDING_FOR("no binding for \"%s\""),
+        INVALID_SUBSTRING_ARGS("invalid substring arguments"),
         REPLACING_IN_NON_CHAR_OBJ("replacing substrings in a non-character object");
 
         public final String message;

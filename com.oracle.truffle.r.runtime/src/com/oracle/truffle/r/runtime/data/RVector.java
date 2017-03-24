@@ -513,14 +513,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
             for (int i = 0; i < classAttr.getLength(); i++) {
                 String attr = classAttr.getDataAt(i);
                 if (RRuntime.CLASS_FACTOR.equals(attr)) {
-                    vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
-                    if (vector.getElementClass() != RInteger.class) {
-                        // N.B. there used to be conversion to integer under certain circumstances.
-                        // However, it seems that it was dead/obsolete code so it was removed.
-                        // Notes: this can only happen if the class is set by hand to some
-                        // non-integral vector, i.e. attr(doubles, 'class') <- 'factor'. GnuR also
-                        // does not update the 'class' attr with other, possibly
-                        // valid classes when it reaches this error.
+                    if (!(vector instanceof RAbstractIntVector)) {
                         throw RError.error(RError.SHOW_CALLER2, RError.Message.ADDING_INVALID_CLASS, "factor");
                     }
                 }

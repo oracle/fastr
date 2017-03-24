@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 
 public interface RAbstractLogicalVector extends RAbstractAtomicVector {
@@ -61,10 +60,5 @@ public interface RAbstractLogicalVector extends RAbstractAtomicVector {
     @Override
     default RType getRType() {
         return RType.Logical;
-    }
-
-    @Override
-    default Class<?> getElementClass() {
-        return RLogical.class;
     }
 }

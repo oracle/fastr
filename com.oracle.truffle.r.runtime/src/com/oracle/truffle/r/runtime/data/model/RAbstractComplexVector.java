@@ -62,9 +62,4 @@ public interface RAbstractComplexVector extends RAbstractAtomicVector {
     default RType getRType() {
         return RType.Complex;
     }
-
-    @Override
-    default Class<?> getElementClass() {
-        return RComplex.class;
-    }
 }

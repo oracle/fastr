@@ -22,12 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RInteger;
-import com.oracle.truffle.r.runtime.data.RLogical;
-import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -122,19 +117,21 @@ public class RClosures {
         if (levels == null) {
             return new RFactorToStringVectorClosure(factor, null, withNames);
         } else {
-            if (levels.getElementClass() == RInteger.class) {
-                return new RFactorToIntVectorClosure(factor, (RAbstractIntVector) levels, withNames);
-            } else if (levels.getElementClass() == RDouble.class) {
-                return new RFactorToDoubleVectorClosure(factor, (RAbstractDoubleVector) levels, withNames);
-            } else if (levels.getElementClass() == RLogical.class) {
-                return new RFactorToIntVectorClosure(factor, createLogicalToIntVector((RAbstractLogicalVector) levels), withNames);
-            } else if (levels.getElementClass() == RComplex.class) {
-                return new RFactorToComplexVectorClosure(factor, (RAbstractComplexVector) levels, withNames);
-            } else if (levels.getElementClass() == RString.class) {
-                return new RFactorToStringVectorClosure(factor, (RAbstractStringVector) levels, withNames);
-            } else {
-                assert levels.getElementClass() == RRaw.class;
-                return new RFactorToIntVectorClosure(factor, createRawToIntVector((RAbstractRawVector) levels), withNames);
+            switch (levels.getRType()) {
+                case Integer:
+                    return new RFactorToIntVectorClosure(factor, (RAbstractIntVector) levels, withNames);
+                case Double:
+                    return new RFactorToDoubleVectorClosure(factor, (RAbstractDoubleVector) levels, withNames);
+                case Logical:
+                    return new RFactorToIntVectorClosure(factor, createLogicalToIntVector((RAbstractLogicalVector) levels), withNames);
+                case Complex:
+                    return new RFactorToComplexVectorClosure(factor, (RAbstractComplexVector) levels, withNames);
+                case Character:
+                    return new RFactorToStringVectorClosure(factor, (RAbstractStringVector) levels, withNames);
+                case Raw:
+                    return new RFactorToIntVectorClosure(factor, createRawToIntVector((RAbstractRawVector) levels), withNames);
+                default:
+                    throw RInternalError.shouldNotReachHere();
             }
         }
     }

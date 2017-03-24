@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -1063,20 +1062,8 @@ public final class SpecialAttributesFunctions {
                 for (int i = 0; i < classAttr.getLength(); i++) {
                     String attr = classAttr.getDataAt(i);
                     if (RRuntime.CLASS_FACTOR.equals(attr)) {
-                        // TODO: Isn't this redundant when the same operation is done after the
-                        // loop?
-                        if (!initializeAttrs) {
-                            super.setAttrInAttributable(vector, classAttr, nullAttrProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
-                        }
-                        if (vector.getElementClass() != RInteger.class) {
-                            // N.B. there used to be conversion to integer under certain
-                            // circumstances.
-                            // However, it seems that it was dead/obsolete code so it was removed.
-                            // Notes: this can only happen if the class is set by hand to some
-                            // non-integral vector, i.e. attr(doubles, 'class') <- 'factor'. GnuR
-                            // also
-                            // does not update the 'class' attr with other, possibly
-                            // valid classes when it reaches this error.
+                        if (!(vector instanceof RAbstractIntVector)) {
+                            CompilerDirectives.transferToInterpreter();
                             throw error(RError.Message.ADDING_INVALID_CLASS, "factor");
                         }
                     }

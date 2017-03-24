@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 
 public interface RAbstractDoubleVector extends RAbstractAtomicVector {
@@ -61,10 +60,5 @@ public interface RAbstractDoubleVector extends RAbstractAtomicVector {
     @Override
     default RType getRType() {
         return RType.Double;
-    }
-
-    @Override
-    default Class<?> getElementClass() {
-        return RDouble.class;
     }
 }
