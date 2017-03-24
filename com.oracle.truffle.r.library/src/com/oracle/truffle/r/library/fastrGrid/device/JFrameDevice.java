@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.library.fastrGrid.device;
 
 import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_TO_POINTS_FACTOR;
+import static java.awt.geom.Path2D.WIND_EVEN_ODD;
 
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
@@ -89,15 +90,16 @@ public class JFrameDevice implements GridDevice {
 
     @Override
     public void drawPolyLines(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
-        assert startIndex >= 0 && startIndex < x.length && startIndex < y.length : "startIndex out of bounds";
-        assert length > 0 && (startIndex + length) <= Math.min(x.length, y.length) : "length out of bounds";
+        Path2D.Double path = getPath2D(x, y, startIndex, length);
         setContext(ctx);
-        Path2D.Double path = new Path2D.Double();
-        path.moveTo(x[startIndex], y[startIndex]);
-        for (int i = startIndex + 1; i < length; i++) {
-            path.lineTo(x[i], y[i]);
-        }
         graphics.draw(path);
+    }
+
+    @Override
+    public void drawPolygon(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
+        Path2D.Double path = getPath2D(x, y, startIndex, length);
+        setContext(ctx);
+        drawShape(ctx, path);
     }
 
     @Override
@@ -164,6 +166,17 @@ public class JFrameDevice implements GridDevice {
         graphics.setStroke(new BasicStroke((float) (1d / POINTS_IN_INCH)));
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         graphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+    }
+
+    private Path2D.Double getPath2D(double[] x, double[] y, int startIndex, int length) {
+        assert startIndex >= 0 && startIndex < x.length && startIndex < y.length : "startIndex out of bounds";
+        assert length > 0 && (startIndex + length) <= Math.min(x.length, y.length) : "length out of bounds";
+        Path2D.Double path = new Path2D.Double(WIND_EVEN_ODD, x.length);
+        path.moveTo(x[startIndex], y[startIndex]);
+        for (int i = startIndex + 1; i < length; i++) {
+            path.lineTo(x[i], y[i]);
+        }
+        return path;
     }
 
     private void drawShape(DrawingContext drawingCtx, Shape shape) {

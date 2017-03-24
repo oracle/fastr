@@ -102,6 +102,14 @@ public class BufferedJFrameDevice implements GridDevice {
     }
 
     @Override
+    public void drawPolygon(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
+        inner.drawPolygon(ctx, x, y, startIndex, length);
+        if (buffer != null) {
+            drawActions.add(() -> inner.drawPolygon(ctx, x, y, startIndex, length));
+        }
+    }
+
+    @Override
     public void drawCircle(DrawingContext ctx, double centerX, double centerY, double radius) {
         inner.drawCircle(ctx, centerX, centerY, radius);
         if (buffer != null) {
