@@ -29,7 +29,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 /**
  * Gets a specified attribute of current {@link GridState}.
  */
-class GridStateGetNode extends RExternalBuiltinNode.Arg0 {
+final class GridStateGetNode extends RExternalBuiltinNode.Arg0 {
     private final Function<GridState, Object> getter;
 
     static {

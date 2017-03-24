@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * interactive sessions, or some image format device for batch sessions. We should also honor the
  * R_INTERACTIVE_DEVICE and R_DEFAULT_DEVICE environment variables.
  */
-public class RGridGraphicsAdapter {
+public final class RGridGraphicsAdapter {
     private static final String NULL_DEVICE = "null device";
     /**
      * The graphics devices system maintains two variables .Device and .Devices in the base
@@ -49,6 +49,10 @@ public class RGridGraphicsAdapter {
      */
     private static final String DOT_DEVICE = ".Device";
     private static final String DOT_DEVICES = ".Devices";
+
+    private RGridGraphicsAdapter() {
+        // only static members
+    }
 
     public static void initialize() {
         setCurrentDevice(NULL_DEVICE);

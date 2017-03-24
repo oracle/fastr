@@ -32,7 +32,7 @@ import java.util.ArrayList;
  * buffer happens to loose contents, which is a possibility mentioned in the documentation. Note: we
  * rely on the fact that {@link DrawingContext} is immutable.
  */
-public class BufferedJFrameDevice implements GridDevice {
+public final class BufferedJFrameDevice implements GridDevice {
     private final JFrameDevice inner;
     private BufferStrategy buffer;
     private ArrayList<Runnable> drawActions;

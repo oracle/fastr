@@ -53,7 +53,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineEnd;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineJoin;
 import com.oracle.truffle.r.runtime.RInternalError;
 
-public class JFrameDevice implements GridDevice {
+public final class JFrameDevice implements GridDevice {
     // Grid's coordinate system has origin in left bottom corner and y axis grows from bottom to
     // top. Moreover, the grid system uses inches as units. We use transformation to adjust the java
     // coordinate system to the grid one. However, in the case of text rendering, we cannot simply
@@ -75,7 +75,7 @@ public class JFrameDevice implements GridDevice {
             currentFrame.setVisible(true);
             initGraphics(currentFrame.getGraphics());
         } else {
-            noTranform(() -> {
+            noTransform(() -> {
                 graphics.clearRect(0, 0, currentFrame.getWidth(), currentFrame.getHeight());
                 return null;
             });
@@ -111,7 +111,7 @@ public class JFrameDevice implements GridDevice {
     @Override
     public void drawString(DrawingContext ctx, double leftX, double bottomY, double rotationAnticlockWise, String text) {
         setContext(ctx);
-        noTranform(() -> {
+        noTransform(() -> {
             AffineTransform tr = graphics.getTransform();
             tr.translate((float) (leftX * POINTS_IN_INCH), (float) (currentFrame.getContentPane().getHeight() - bottomY * POINTS_IN_INCH));
             tr.rotate(-rotationAnticlockWise);
@@ -135,7 +135,7 @@ public class JFrameDevice implements GridDevice {
     @Override
     public double getStringWidth(DrawingContext ctx, String text) {
         setContext(ctx);
-        return noTranform(() -> {
+        return noTransform(() -> {
             setFont(ctx);
             int swingUnits = graphics.getFontMetrics(graphics.getFont()).stringWidth(text);
             return swingUnits / POINTS_IN_INCH;
@@ -145,7 +145,7 @@ public class JFrameDevice implements GridDevice {
     @Override
     public double getStringHeight(DrawingContext ctx, String text) {
         setContext(ctx);
-        return noTranform(() -> {
+        return noTransform(() -> {
             setFont(ctx);
             int swingUnits = graphics.getFont().getSize();
             return swingUnits / POINTS_IN_INCH;
@@ -230,7 +230,7 @@ public class JFrameDevice implements GridDevice {
         }
     }
 
-    private <T> T noTranform(Supplier<T> action) {
+    private <T> T noTransform(Supplier<T> action) {
         AffineTransform transform = graphics.getTransform();
         graphics.setTransform(new AffineTransform());
         T result = action.get();

@@ -38,7 +38,11 @@ import com.oracle.truffle.r.runtime.data.RNull;
 /**
  * Implements the lookup for externals replaced by the FastR grid package.
  */
-public class FastRGridExternalLookup {
+public final class FastRGridExternalLookup {
+
+    private FastRGridExternalLookup() {
+        // only static members
+    }
 
     public static RExternalBuiltinNode lookupDotExternal(String name) {
         switch (name) {

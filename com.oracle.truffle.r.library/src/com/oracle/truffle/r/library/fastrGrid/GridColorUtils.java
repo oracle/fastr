@@ -18,8 +18,12 @@ import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 
-public class GridColorUtils {
+public final class GridColorUtils {
     private static HashMap<String, Object> synonymToColor;
+
+    private GridColorUtils() {
+        // only static members
+    }
 
     /**
      * Converts the representation of color used within R, e.g. as value for

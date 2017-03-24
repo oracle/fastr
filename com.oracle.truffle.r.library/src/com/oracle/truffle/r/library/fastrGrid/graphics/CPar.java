@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 
-public class CPar extends RExternalBuiltinNode {
+public final class CPar extends RExternalBuiltinNode {
     static {
         Casts.noCasts(CPar.class);
     }
@@ -69,7 +69,7 @@ public class CPar extends RExternalBuiltinNode {
             case "din":
                 return RDataFactory.createDoubleVector(new double[]{device.getWidth(), device.getHeight()}, RDataFactory.COMPLETE_VECTOR);
             default:
-                throw RError.nyi(RError.NO_CALLER, "C_Par paramter '" + name + "'");
+                throw RError.nyi(RError.NO_CALLER, "C_Par parameter '" + name + "'");
         }
     }
 }

@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-class DoSetViewPort extends RBaseNode {
+final class DoSetViewPort extends RBaseNode {
     @Child private CastNode castScalarDouble = newCastBuilder().asDoubleVector().findFirst().buildCastNode();
     @Child private CastNode castDoubleVector = newCastBuilder().asDoubleVector().buildCastNode();
     @Child private CastNode castChildrenEnv = newCastBuilder().mustBe(REnvironment.class).buildCastNode();
