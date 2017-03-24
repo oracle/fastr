@@ -63,7 +63,7 @@ The command has a rather daunting set of options but, for normal use, most of th
 
 ##### Usage
 
-    mx installpkgs [--repos list] [--cran-mirror url]
+    mx installpkgs [--repos list]
                    [--verbose | -v] [-V]
                    [--dryrun]
                    [--no-install | -n]
@@ -100,7 +100,7 @@ There are many packages that cannot be installed due to either missing functiona
 3. TODO
 
 ##### CRAN Mirror
-Packages are downloaded and installed from the repos given by the `repos` argument, a comma-separated list, that defaults to `CRAN`. CRAN packages are downloaded from a CRAN mirror. When the standard `utils::install_packages` function is run interactively, the user is prompted for a mirror. To avoid such interaction, `install.packages` has two ways for specifying a mirror. The default CRAN mirror is `http://cran.cnr.berkeley.edu/` but this can be changed either with the command line argument `--cran-mirror` or the environment variable `CRAN_MIRROR`.  The `FASTR` repo is internal to the source base and contains FastR-specific test packages. The BioConductor repo can be added by setting `--repos BIOC`. It also implies `CRAN`.
+Packages are downloaded and installed from the repos given by the `repos` argument, a comma-separated list of `name[=value]` pairs, that defaults to `CRAN`. CRAN packages are downloaded from a CRAN mirror. When the standard `utils::install_packages` function is run interactively, the user is prompted for a mirror. To avoid such interaction, `install.packages` has two ways for specifying a mirror. The default CRAN mirror is `http://cran.cnr.berkeley.edu/` but this can be changed either with `CRAN=url` or the environment variable `CRAN_MIRROR`.  The `FASTR` repo is internal to the source base and contains FastR-specific test packages. The BioConductor repo can be added by setting `--repos BIOC`. User defined repos can be specified by `USERNAME=url`. N.B. For file system paths this must be a `file:` URL.
 
 ##### Installation Directory
 The directory in which to install the package can be specified either by setting the `R_LIBS_USER` environment variable or with the `--lib` command line argument. The former is recommended and indeed required for running tests after installation (the testing system does not honor the `--lib` argument).
@@ -159,6 +159,10 @@ Testing packages requires that they are first installed, so all of the above is 
     $ mx installpkgs --pkg-pattern '^A3$'
 
 Install the `A3` package (and its dependents) in `$R_LIBS_USER`, creating the `package.blacklist` file first if it does not exist. The dependents (`xtable`, `pbapply`) will be installed implicitly by the  underlying R install.packages function
+
+    $ mx installpkgs --repos CRAN=file://path-to-local-cran-mirror --pkg-pattern '^A3$'
+
+Similar to above but uses a local CRAN mirror stored in `path-to-local-cran-mirror`.
 
     $ mx installpkgs --install-dependents-first--pkg-pattern '^A3$'
 
