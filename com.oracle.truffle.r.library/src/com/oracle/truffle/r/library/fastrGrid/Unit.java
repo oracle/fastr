@@ -56,7 +56,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Note: internally in FastR Grid everything is in inches. However, some lists that are exposed to
- * the R code should contain values in centimeters, we convert such values immediatelly once they
+ * the R code should contain values in centimeters, we convert such values immediately once they
  * enter our system.
  */
 public final class Unit {

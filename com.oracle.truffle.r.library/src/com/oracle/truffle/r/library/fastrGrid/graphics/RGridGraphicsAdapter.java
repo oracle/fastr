@@ -62,6 +62,7 @@ public final class RGridGraphicsAdapter {
     }
 
     public static void initialize() {
+        addDevice(NULL_DEVICE);
         setCurrentDevice(NULL_DEVICE);
         ROptions.ContextStateImpl options = RContext.getInstance().stateROptions;
         try {
@@ -71,7 +72,27 @@ public final class RGridGraphicsAdapter {
         }
     }
 
+    public static void removeDevice(int index) {
+        assert index > 0 : "cannot remove null device";
+        REnvironment baseEnv = REnvironment.baseEnv();
+        RPairList devices = (RPairList) baseEnv.get(DOT_DEVICES);
+        assert index < devices.getLength() : "wrong index in removeDevice";
+        RPairList prev = devices;
+        for (int i = 0; i < index - 1; ++i) {
+            prev = (RPairList) prev.cdr();
+        }
+        RPairList toRemove = (RPairList) prev.cdr();
+        prev.setCdr(toRemove.cdr());
+        setCurrentDevice((String) prev.car());
+    }
+
     public static void setCurrentDevice(String name) {
+        REnvironment baseEnv = REnvironment.baseEnv();
+        assert contains((RPairList) baseEnv.get(DOT_DEVICES), name) : "setCurrentDevice can be invoked only after the device is added with addDevice";
+        baseEnv.safePut(DOT_DEVICE, name);
+    }
+
+    public static void addDevice(String name) {
         REnvironment baseEnv = REnvironment.baseEnv();
         baseEnv.safePut(DOT_DEVICE, name);
         Object dotDevices = baseEnv.get(DOT_DEVICES);
@@ -99,5 +120,14 @@ public final class RGridGraphicsAdapter {
     public static String getDeviceName(int index) {
         RPairList dotDevices = (RPairList) REnvironment.baseEnv().get(DOT_DEVICES);
         return RRuntime.asString(dotDevices.getDataAtAsObject(index));
+    }
+
+    private static boolean contains(RPairList devices, String name) {
+        for (RPairList dev : devices) {
+            if (dev.car().equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

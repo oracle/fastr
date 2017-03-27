@@ -24,6 +24,7 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevCurr;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevHoldFlush;
+import com.oracle.truffle.r.library.fastrGrid.grDevices.DevOff;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.InitWindowedDevice;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.SavePlot;
 import com.oracle.truffle.r.library.fastrGrid.graphics.CPar;
@@ -52,6 +53,8 @@ public final class FastRGridExternalLookup {
                 return DevHoldFlush.create();
             case "devcur":
                 return new DevCurr();
+            case "devoff":
+                return DevOff.create();
             case "PDF":
                 return new IgnoredGridExternal(RNull.instance);
             default:

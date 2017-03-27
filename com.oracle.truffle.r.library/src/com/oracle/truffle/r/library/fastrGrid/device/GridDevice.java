@@ -47,14 +47,24 @@ public interface GridDevice {
     }
 
     /**
+     * Gets called when the device is closed from R. This is the point where non-interactive devices
+     * should save their output into a file.
+     *
+     * @throws DeviceCloseException if the closing was not successful e.g. because the file could
+     *             not be written.
+     */
+    default void close() throws DeviceCloseException {
+    }
+
+    /**
      * Draws a rectangle at given position, the center of the rotation should be the center of the
      * rectangle. The rotation is given in radians.
      */
-    void drawRect(DrawingContext ctx, double leftX, double topY, double width, double height, double rotationAnticlockWise);
+    void drawRect(DrawingContext ctx, double leftX, double bottomY, double width, double height, double rotationAnticlockWise);
 
     /**
      * Connects given points with a line, there has to be at least two points in order to actually
-     * draw somethig.
+     * draw something.
      */
     void drawPolyLines(DrawingContext ctx, double[] x, double[] y, int startIndex, int length);
 
@@ -100,7 +110,25 @@ public interface GridDevice {
      * parameters from the drawing context, but we allow the device to override this calculation
      * with something more precise.
      */
-    default double getStringHeight(DrawingContext ctx, @SuppressWarnings("unused") String text) {
+    default double getStringHeight(DrawingContext ctx, String text) {
         return (ctx.getLineHeight() * ctx.getFontSize()) / INCH_TO_POINTS_FACTOR;
+    }
+
+    final class DeviceCloseException extends Exception {
+        private static final long serialVersionUID = 1182697755931636214L;
+
+        public DeviceCloseException(Throwable cause) {
+            super(cause);
+        }
+
+        @Override
+        public String getMessage() {
+            return getCause().getMessage();
+        }
+
+        @Override
+        public synchronized Throwable fillInStackTrace() {
+            return this;
+        }
     }
 }

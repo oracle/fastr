@@ -26,8 +26,8 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 
 /**
- * A node for externals that we ignore, becuase we do not need to implement them or because they
- * support functionallity we do not implement yet, especially record/replay.
+ * A node for externals that we ignore, because we do not need to implement them or because they
+ * support features we do not implement yet, especially record/replay.
  */
 final class IgnoredGridExternal extends RExternalBuiltinNode {
     private final Object result;

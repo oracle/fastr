@@ -24,15 +24,16 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import java.util.ArrayList;
 
-import com.oracle.truffle.r.library.fastrGrid.device.BufferedJFrameDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.JFrameDevice;
+import com.oracle.truffle.r.library.fastrGrid.device.GridDevice.DeviceCloseException;
+import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedJFrameDevice;
+import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
 import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 
 /**
- * Encapsulated the acces to the global grid state.
+ * Encapsulated the access to the global grid state.
  */
 public final class GridContext {
     private static final GridContext INSTANCE = new GridContext();
@@ -60,12 +61,17 @@ public final class GridContext {
         return currentDeviceIdx;
     }
 
+    public int getDevicesSize() {
+        return devices.size();
+    }
+
     public GridDevice getCurrentDevice() {
         assert currentDeviceIdx >= 0 : "accessing devices before they were initialized";
         return devices.get(currentDeviceIdx);
     }
 
     public void setCurrentDevice(String name, GridDevice currentDevice) {
+        RGridGraphicsAdapter.addDevice(name);
         RGridGraphicsAdapter.setCurrentDevice(name);
         currentDeviceIdx = this.devices.size();
         this.devices.add(currentDevice);
@@ -75,11 +81,21 @@ public final class GridContext {
     public void openDefaultDevice() {
         String defaultDev = RGridGraphicsAdapter.getDefaultDevice();
         if (defaultDev.equals("awt") || defaultDev.startsWith("X11")) {
-            BufferedJFrameDevice result = new BufferedJFrameDevice(new JFrameDevice());
+            BufferedJFrameDevice result = new BufferedJFrameDevice(JFrameDevice.create());
             setCurrentDevice(defaultDev, result);
         } else {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "FastR does not support device '" + defaultDev + "'.");
         }
         assert devices.size() == RGridGraphicsAdapter.getDevicesCount();
+    }
+
+    public void closeDevice(int which) throws DeviceCloseException {
+        assert which >= 0 && which < devices.size();
+        devices.get(which).close();
+        RGridGraphicsAdapter.removeDevice(which);
+        devices.remove(which);
+        if (currentDeviceIdx >= which) {
+            currentDeviceIdx--;
+        }
     }
 }

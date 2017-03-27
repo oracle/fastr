@@ -20,12 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastrGrid.device;
+package com.oracle.truffle.r.library.fastrGrid.device.awt;
 
-import static com.oracle.truffle.r.library.fastrGrid.device.JFrameDevice.POINTS_IN_INCH;
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
@@ -35,12 +35,16 @@ import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
+import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
+import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
+import com.oracle.truffle.r.library.fastrGrid.device.ImageSaver;
+
 /**
  * Decorator for {@link JFrameDevice} that implements {@link #hold()} and {@link #flush()}
  * functionality and implements the {@link ImageSaver} device.
  *
  * Methods {@link #hold()} and {@link #flush()} open/draw a 2D graphics buffer, while the buffer is
- * open, any drawing is done in the buffer not on the screen and the buffer is dumped to the sceen
+ * open, any drawing is done in the buffer not on the screen and the buffer is dumped to the screen
  * once {@link #flush()} is called.
  *
  * We also record any drawing code to be able to replay it if the buffer happens to loose its
@@ -81,7 +85,7 @@ public final class BufferedJFrameDevice implements GridDevice, ImageSaver {
             buffer = inner.getCurrentFrame().getBufferStrategy();
         }
         drawActions.clear();
-        inner.initGraphics(buffer.getDrawGraphics());
+        setGraphics(buffer.getDrawGraphics());
     }
 
     @Override
@@ -93,34 +97,42 @@ public final class BufferedJFrameDevice implements GridDevice, ImageSaver {
         buffer.show();
         // re-draw the buffer if the contents were lost
         while (buffer.contentsLost()) {
-            inner.initGraphics(buffer.getDrawGraphics());
+            setGraphics(buffer.getDrawGraphics());
             for (Runnable drawAction : drawActions) {
                 drawAction.run();
             }
             buffer.show();
         }
 
-        inner.initGraphics(inner.getCurrentFrame().getGraphics());
+        setGraphics(inner.getCurrentFrame().getGraphics());
         buffer.dispose();
         buffer = null;
     }
 
     @Override
-    public void drawRect(DrawingContext ctx, double leftX, double topY, double width, double height, double rotationAnticlockWise) {
-        inner.drawRect(ctx, leftX, topY, width, height, rotationAnticlockWise);
-        drawActions.add(() -> inner.drawRect(ctx, leftX, topY, width, height, rotationAnticlockWise));
+    public void drawRect(DrawingContext ctx, double leftX, double bottomY, double width, double height, double rotationAnticlockWise) {
+        inner.drawRect(ctx, leftX, bottomY, width, height, rotationAnticlockWise);
+        drawActions.add(() -> inner.drawRect(ctx, leftX, bottomY, width, height, rotationAnticlockWise));
     }
 
     @Override
     public void drawPolyLines(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
         inner.drawPolyLines(ctx, x, y, startIndex, length);
-        drawActions.add(() -> inner.drawPolyLines(ctx, x, y, startIndex, length));
+        double[] xCopy = new double[x.length];
+        double[] yCopy = new double[y.length];
+        System.arraycopy(x, 0, xCopy, 0, x.length);
+        System.arraycopy(y, 0, yCopy, 0, y.length);
+        drawActions.add(() -> inner.drawPolyLines(ctx, xCopy, yCopy, startIndex, length));
     }
 
     @Override
     public void drawPolygon(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
         inner.drawPolygon(ctx, x, y, startIndex, length);
-        drawActions.add(() -> inner.drawPolygon(ctx, x, y, startIndex, length));
+        double[] xCopy = new double[x.length];
+        double[] yCopy = new double[y.length];
+        System.arraycopy(x, 0, xCopy, 0, x.length);
+        System.arraycopy(y, 0, yCopy, 0, y.length);
+        drawActions.add(() -> inner.drawPolygon(ctx, xCopy, yCopy, startIndex, length));
     }
 
     @Override
@@ -157,17 +169,23 @@ public final class BufferedJFrameDevice implements GridDevice, ImageSaver {
 
     @Override
     public void save(String path, String fileType) throws IOException {
-        int realWidth = (int) (getWidth() * POINTS_IN_INCH);
-        int readHeight = (int) (getHeight() * POINTS_IN_INCH);
+        int realWidth = (int) (getWidth() * JFrameDevice.AWT_POINTS_IN_INCH);
+        int readHeight = (int) (getHeight() * JFrameDevice.AWT_POINTS_IN_INCH);
         BufferedImage image = new BufferedImage(realWidth, readHeight, TYPE_INT_RGB);
         Graphics2D imageGraphics = (Graphics2D) image.getGraphics();
         imageGraphics.setBackground(new Color(255, 255, 255));
         imageGraphics.clearRect(0, 0, realWidth, readHeight);
-        inner.initGraphics(imageGraphics);
+        setGraphics(imageGraphics);
         for (Runnable drawAction : drawActions) {
             drawAction.run();
         }
         ImageIO.write(image, fileType, new File(path));
-        inner.initGraphics(inner.getCurrentFrame().getGraphics());
+        setGraphics(inner.getCurrentFrame().getGraphics());
+    }
+
+    private void setGraphics(Graphics graphics) {
+        JFrameDevice.defaultInitGraphics((Graphics2D) graphics);
+        inner.getGraphics2D().dispose();
+        inner.setGraphics2D((Graphics2D) graphics);
     }
 }

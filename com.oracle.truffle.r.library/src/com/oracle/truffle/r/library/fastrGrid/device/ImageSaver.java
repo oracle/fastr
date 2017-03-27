@@ -25,8 +25,9 @@ package com.oracle.truffle.r.library.fastrGrid.device;
 import java.io.IOException;
 
 /**
- * Devices that support saving their current state into a file should implement this inteface. Note:
- * this only makes sense for interactive devices. Devices like SVG are already saving into a file.
+ * Devices that support saving their current state into a file should implement this interface.
+ * Note: this only makes sense for interactive devices. Devices like SVG are already saving into a
+ * file.
  */
 public interface ImageSaver {
     void save(String path, String fileType) throws IOException;
