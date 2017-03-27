@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -137,11 +137,6 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
     public final void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RAbstractListVector other = (RAbstractListVector) fromVector;
         data[toIndex] = other.getDataAtAsObject(fromIndex);
-    }
-
-    @Override
-    public final Class<?> getElementClass() {
-        return Object.class;
     }
 
     @TruffleBoundary

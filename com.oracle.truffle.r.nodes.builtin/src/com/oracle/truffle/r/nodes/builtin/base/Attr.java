@@ -48,12 +48,10 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "attr", kind = PRIMITIVE, parameterNames = {"x", "which", "exact"}, behavior = PURE)
 public abstract class Attr extends RBuiltinNode {
@@ -147,9 +145,13 @@ public abstract class Attr extends RBuiltinNode {
         if (a == RNull.instance) {
             return RNull.instance;
         } else {
-            RAbstractVector rowNames = (RAbstractVector) a;
-            return rowNames.getElementClass() == RInteger.class && rowNames.getLength() == 2 && RRuntime.isNA(((RAbstractIntVector) rowNames).getDataAt(0)) ? RDataFactory.createIntSequence(1, 1,
-                            Math.abs(((RAbstractIntVector) rowNames).getDataAt(1))) : a;
+            if (a instanceof RAbstractIntVector) {
+                RAbstractIntVector rowNames = (RAbstractIntVector) a;
+                if (rowNames.getLength() == 2 && RRuntime.isNA(rowNames.getDataAt(0))) {
+                    return RDataFactory.createIntSequence(1, 1, Math.abs(rowNames.getDataAt(1)));
+                }
+            }
+            return a;
         }
     }
 

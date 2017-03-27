@@ -43,8 +43,6 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
 
     void setDimensions(int[] newDimensions);
 
-    Class<?> getElementClass();
-
     RTypedValue getNonShared();
 
     RAbstractContainer materialize();

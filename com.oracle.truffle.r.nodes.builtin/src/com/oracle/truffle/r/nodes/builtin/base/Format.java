@@ -21,7 +21,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.AnyVectorToStringVectorWriter;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
@@ -31,7 +30,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -119,7 +117,7 @@ public abstract class Format extends RBuiltinNode {
         assert sciVec.getLength() > 0;
         int tmp = castInteger(sciVec).getDataAt(0);
         int ret;
-        if (sciVec.getElementClass() == RLogical.class) {
+        if (sciVec instanceof RAbstractLogicalVector) {
             if (RRuntime.isNA(tmp)) {
                 ret = tmp;
             } else {

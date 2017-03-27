@@ -36,7 +36,6 @@ import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -52,7 +51,7 @@ public abstract class UpdateOldClass extends RBuiltinNode {
         Casts.noCasts(UpdateOldClass.class);
     }
 
-    @Specialization(guards = "!isStringVector(className)")
+    @Specialization(guards = "!isRAbstractStringVector(className)")
     protected Object setOldClass(RAbstractContainer arg, RAbstractVector className) {
         if (className.getLength() == 0) {
             return setOldClass(arg, RNull.instance);
@@ -89,9 +88,5 @@ public abstract class UpdateOldClass extends RBuiltinNode {
         RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
         setClassAttributeNode.reset(result);
         return result;
-    }
-
-    protected boolean isStringVector(RAbstractVector className) {
-        return className.getElementClass() == RString.class;
     }
 }

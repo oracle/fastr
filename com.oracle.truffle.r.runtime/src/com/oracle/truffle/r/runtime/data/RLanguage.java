@@ -160,11 +160,6 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public Class<?> getElementClass() {
-        return RLanguage.class;
-    }
-
-    @Override
     public RLanguage materialize() {
         // TODO is copy necessary?
         return copy();
