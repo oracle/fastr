@@ -42,8 +42,10 @@
 
 # BioConductor has it's own install mechanism but it is layered on the CRAN model.
 
-# By default, we use the CRAN mirror specified by --cran-mirror or env var CRAN_MIRROR.
-# If unset, it defaults to "http://cran.cnr.berkeley.edu/"
+# A list of repos can be provided  with the --repos argument, which ia comma separated string of name=value pairs.
+# The names "CRAN", "BIOC" and "FASTR" are understood and have default values.
+# By default, we use the CRAN mirror specified in the --repos argument or env var CRAN_MIRROR.
+# The default value for --repos is "CRAN=http://cran.cnr.berkeley.edu"
 
 # Packages are installed into the directory specified by the --lib arg (or R_LIBS_USER env var)
 
@@ -102,7 +104,8 @@
 args <- commandArgs(TRUE)
 
 usage <- function() {
-	cat(paste("usage: Rscript [--cran-mirror url] ",
+	cat(paste("usage: Rscript ",
+					  "[--repos name=value,...]",
                       "[--verbose | -v] [-V] [--dryrun]",
                       "[--no-install | -n] ",
 				      "[--create-blacklist] [--blacklist-file file] [--ignore-blacklist]",
@@ -258,26 +261,35 @@ set.repos <- function() {
 	# Based on the value of repos.list we set the "repos" option
 	# which is used by available.packages etc.
 	repos <- character()
-	needCran <- F
-	if ("BIOC" %in% repo.list) {
-		# source("http://bioconductor.org/biocLite.R")
-		# repos["BIOC"] <- biocinstallRepos()[1]
-		# above is correct but provokes bug:
-		# Error in read.table():  more columns than column names
-		repos["BIOC"] <- "https://bioconductor.org/packages/3.4/bioc"
-		needCran <- T
-	}
-	if (needCran || "CRAN" %in% repo.list) {
-		# set from the cran-mirror value
-		if (is.na(cran.mirror)) {
-			# not set on command line
-			cran.mirror <<- Sys.getenv("CRAN_MIRROR", unset = "http://cran.cnr.berkeley.edu/")
+	for (repo in repo.list) {
+		parts <- strsplit(repo, "=", fixed=T)[[1]]
+		name <- parts[[1]]
+		if (length(parts) > 1) {
+			uri <- parts[[2]]
+		} else {
+			uri <- NA_character_
 		}
-		repos["CRAN"] <- cran.mirror
-	}
-	if ("FASTR" %in% repo.list) {
-		# set the FastR internal repo
-		repos["FASTR"] <- paste0("file://", normalizePath("com.oracle.truffle.r.test.native/packages/repo"))
+		if (name == "BIOC") {
+			# source("http://bioconductor.org/biocLite.R")
+			# repos["BIOC"] <- biocinstallRepos()[1]
+			# above is correct but provokes bug:
+			# Error in read.table():  more columns than column names
+			repos[["BIOC"]] <- "https://bioconductor.org/packages/3.4/bioc"
+		} else if (name == "CRAN") {
+			if (is.na(uri)) {
+				# not set on command line
+				cran.mirror <<- Sys.getenv("CRAN_MIRROR", unset = "http://cran.cnr.berkeley.edu/")
+			} else {
+				cran.mirror <- uri
+			}
+			repos[["CRAN"]] <- cran.mirror
+		} else if (name == "FASTR") {
+			# set the FastR internal repo
+			repos[["FASTR"]] <- paste0("file://", normalizePath("com.oracle.truffle.r.test.native/packages/repo"))
+		} else {
+			# User defined
+			repos[[name]] <- uri
+		}
 	}
 	options(repos = repos)
 }
@@ -833,8 +845,6 @@ parse.args <- function() {
 			initial.blacklist.file <<- get.argvalue()
 		} else if (a == "--repos") {
 			repo.list <<- strsplit(get.argvalue(), ",")[[1]]
-		} else if (a == "--cran-mirror") {
-			cran.mirror <<- get.argvalue()
 		} else if (a == "--random") {
 			random.count <<- as.integer(get.argvalue())
 			if (is.na(random.count)) {
