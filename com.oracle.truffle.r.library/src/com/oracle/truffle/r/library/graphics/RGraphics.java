@@ -35,7 +35,7 @@ public class RGraphics {
             if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
                 RGridGraphicsAdapter.initialize();
             } else {
-                DLL.DLLInfo dllInfo = DLL.findLibrary("graphics");
+                DLL.DLLInfo dllInfo = DLL.findLibraryContainingSymbol("InitGraphics");
                 DLL.SymbolHandle symbolHandle = DLL.findSymbol("InitGraphics", dllInfo);
                 assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
                 CallRFFI.InvokeVoidCallRootNode.create().getCallTarget().call(new NativeCallInfo("InitGraphics", symbolHandle, dllInfo), new Object[0]);
