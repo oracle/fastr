@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import com.oracle.truffle.r.library.fastrGrid.grDevices.DevCurr;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevHoldFlush;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.InitWindowedDevice;
+import com.oracle.truffle.r.library.fastrGrid.grDevices.SavePlot;
 import com.oracle.truffle.r.library.fastrGrid.graphics.CPar;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
@@ -48,6 +50,8 @@ public final class FastRGridExternalLookup {
         switch (name) {
             case "devholdflush":
                 return DevHoldFlush.create();
+            case "devcur":
+                return new DevCurr();
             case "PDF":
                 return new IgnoredGridExternal(RNull.instance);
             default:
@@ -59,6 +63,8 @@ public final class FastRGridExternalLookup {
         switch (name) {
             case "C_par":
                 return new CPar();
+            case "savePlot":
+                return SavePlot.create();
             case "X11":
                 return new InitWindowedDevice();
             default:

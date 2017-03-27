@@ -27,4 +27,20 @@ eval(expression({
     awt <- function(...) {
         .External2(grDevices:::C_X11)
     }
+    # GnuR version only works with "X11cairo" device. Our version of savePlot
+    # works with "awt" device and "X11cairo", which is for us only alias for
+    # "awt". Moreover, we only support formats that awt supports.
+    savePlot <- function (filename = paste("Rplot", type, sep = "."), type = c("png", "jpeg", "bmp"), device = dev.cur()) {
+        type <- match.arg(type)
+        devlist <- dev.list()
+        devcur <- match(device, devlist, NA)
+        if (is.na(devcur)) {
+            stop("no such device")
+        }
+        devname <- names(devlist)[devcur]
+        if (devname != "X11cairo" && devname != "awt") {
+            stop("can only copy from 'X11(type=\"*cairo\")' or 'awt' devices")
+        }
+        invisible(.External2(C_savePlot, filename, type, device))
+    }
 }), asNamespace("grDevices"))

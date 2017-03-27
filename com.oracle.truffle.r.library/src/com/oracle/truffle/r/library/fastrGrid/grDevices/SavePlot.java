@@ -22,28 +22,41 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
+import java.io.IOException;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
-import com.oracle.truffle.r.library.fastrGrid.device.BufferedJFrameDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.JFrameDevice;
+import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
+import com.oracle.truffle.r.library.fastrGrid.device.ImageSaver;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-/**
- * Node that handles the {@code C_X11} external calls. Those calls may be initiated from either the
- * {@code X11} function or FastR specific {@code awt} function. In either case the result is that
- * the AWT window is opened and ready for drawing.
- */
-public final class InitWindowedDevice extends RExternalBuiltinNode {
+public abstract class SavePlot extends RExternalBuiltinNode.Arg3 {
     static {
-        Casts.noCasts(InitWindowedDevice.class);
+        Casts casts = new Casts(SavePlot.class);
+        casts.arg(0).asStringVector().findFirst();
+        casts.arg(1).asStringVector().findFirst();
     }
 
-    @Override
+    public static SavePlot create() {
+        return SavePlotNodeGen.create();
+    }
+
+    @Specialization
     @TruffleBoundary
-    protected Object call(RArgsValuesAndNames args) {
-        GridContext.getContext().setCurrentDevice(args.getLength() == 0 ? "awt" : "X11cairo", new BufferedJFrameDevice(new JFrameDevice()));
+    Object savePlot(String filename, String type) {
+        GridDevice device = GridContext.getContext().getCurrentDevice();
+        if (!(device instanceof ImageSaver)) {
+            throw error(Message.GENERIC, "Current device does not support plot saving. " +
+                            "Note that FastR savePlot function ignores the device argument and always uses the current device.");
+        }
+        try {
+            ((ImageSaver) device).save(filename, type);
+        } catch (IOException e) {
+            throw error(Message.GENERIC, "I/O error occured when saving the image.");
+        }
         return RNull.instance;
     }
 }

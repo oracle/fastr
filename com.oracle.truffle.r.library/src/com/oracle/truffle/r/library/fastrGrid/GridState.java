@@ -42,10 +42,9 @@ public final class GridState {
         return devHoldCount;
     }
 
-    public void init(REnvironment gridEnv, GridDevice currentDevice) {
+    public void init(REnvironment gridEnv) {
         this.gridEnv = gridEnv;
         this.currentGrob = RNull.instance;
-        initGPar(currentDevice);
     }
 
     void initGPar(GridDevice currentDevice) {
@@ -70,6 +69,9 @@ public final class GridState {
         this.gpar = gpar;
     }
 
+    /**
+     * Has the current device been initialized for use by grid?
+     */
     public boolean isDeviceInitialized() {
         return deviceInitialized;
     }

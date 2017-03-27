@@ -13,15 +13,14 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.library.fastrGrid.ViewPort.InitViewPortNode;
+import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 final class LGridDirty extends RExternalBuiltinNode {
     @Child private InitViewPortNode initViewPort = new InitViewPortNode();
-    private final ConditionProfile initViewPortProfile = ConditionProfile.createCountingProfile();
 
     static {
         Casts.noCasts(LGridDirty.class);
@@ -30,16 +29,30 @@ final class LGridDirty extends RExternalBuiltinNode {
     @Override
     public Object call(VirtualFrame frame, RArgsValuesAndNames args) {
         GridState gridState = GridContext.getContext().getGridState();
-        if (!gridState.isDeviceInitialized()) {
-            CompilerDirectives.transferToInterpreter();
-            GridContext.getContext().getCurrentDevice().openNewPage();
-            gridState.setDeviceInitialized();
+        if (gridState.isDeviceInitialized()) {
+            return RNull.instance;
         }
-        if (initViewPortProfile.profile(gridState.getViewPort() == null)) {
-            // this rarely happens, but we do not have a slow-path implementation (yet)
-            CompilerDirectives.transferToInterpreter();
+
+        // the rest only takes place if the device has been changed since the last time
+        CompilerDirectives.transferToInterpreter();
+
+        // if no device has been opened yet, open the default one and make it current
+        if (GridContext.getContext().getCurrentDevice() == null) {
+            GridContext.getContext().openDefaultDevice();
+        }
+
+        // the current device has not been initialized yet...
+        GridDevice device = GridContext.getContext().getCurrentDevice();
+        device.openNewPage();
+        gridState.setViewPort(initViewPort.execute(frame));
+        gridState.setDeviceInitialized();
+        if (gridState.getGpar() == null) {
+            gridState.initGPar(device);
+        }
+        if (gridState.getViewPort() == null) {
             gridState.setViewPort(initViewPort.execute(frame));
         }
+
         return RNull.instance;
     }
 

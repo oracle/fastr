@@ -19,6 +19,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.ROptions.OptionsException;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -38,8 +39,14 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * tries to open the default device it uses 'awt'. If the future this should be either 'awt' for
  * interactive sessions, or some image format device for batch sessions. We should also honor the
  * R_INTERACTIVE_DEVICE and R_DEFAULT_DEVICE environment variables.
+ *
+ * The responsibility of this class if to provide convenient access to those R-level variables. The
+ * actual devices instances are maintained in
+ * {@link com.oracle.truffle.r.library.fastrGrid.GridContext} since we only have grid devices and no
+ * generic graphics devices.
  */
 public final class RGridGraphicsAdapter {
+    private static final String DEFAULT_DEVICE_OPTION = "device";
     private static final String NULL_DEVICE = "null device";
     /**
      * The graphics devices system maintains two variables .Device and .Devices in the base
@@ -58,7 +65,7 @@ public final class RGridGraphicsAdapter {
         setCurrentDevice(NULL_DEVICE);
         ROptions.ContextStateImpl options = RContext.getInstance().stateROptions;
         try {
-            options.setValue("device", "awt");
+            options.setValue(DEFAULT_DEVICE_OPTION, "awt");
         } catch (OptionsException e) {
             RError.warning(RError.NO_CALLER, Message.GENERIC, "FastR could not set the 'device' options to awt.");
         }
@@ -67,11 +74,30 @@ public final class RGridGraphicsAdapter {
     public static void setCurrentDevice(String name) {
         REnvironment baseEnv = REnvironment.baseEnv();
         baseEnv.safePut(DOT_DEVICE, name);
-        Object devices = baseEnv.get(DOT_DEVICES);
-        if (devices instanceof RPairList) {
-            ((RPairList) devices).appendToEnd(RDataFactory.createPairList(name));
+        Object dotDevices = baseEnv.get(DOT_DEVICES);
+        if (dotDevices instanceof RPairList) {
+            ((RPairList) dotDevices).appendToEnd(RDataFactory.createPairList(name));
         } else {
             baseEnv.safePut(DOT_DEVICES, RDataFactory.createPairList(name));
         }
+    }
+
+    public static String getDefaultDevice() {
+        ROptions.ContextStateImpl options = RContext.getInstance().stateROptions;
+        String defaultDev = RRuntime.asString(options.getValue(DEFAULT_DEVICE_OPTION));
+        if (RRuntime.isNA(defaultDev)) {
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, "FastR does only supports character value as the default 'device' option");
+        }
+        return defaultDev;
+    }
+
+    public static int getDevicesCount() {
+        Object dotDevices = REnvironment.baseEnv().get(DOT_DEVICES);
+        return dotDevices instanceof RPairList ? ((RPairList) dotDevices).getLength() : 0;
+    }
+
+    public static String getDeviceName(int index) {
+        RPairList dotDevices = (RPairList) REnvironment.baseEnv().get(DOT_DEVICES);
+        return RRuntime.asString(dotDevices.getDataAtAsObject(index));
     }
 }

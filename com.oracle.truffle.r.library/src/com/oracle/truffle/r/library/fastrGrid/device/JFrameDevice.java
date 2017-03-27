@@ -59,27 +59,27 @@ public final class JFrameDevice implements GridDevice {
     // coordinate system to the grid one. However, in the case of text rendering, we cannot simply
     // turn upside down the y-axis, because the text would be upside down too, so for text rendering
     // only, we reset the transformation completely and transform the coordinates ourselves
-    private static final double POINTS_IN_INCH = 72.;
+    static final double POINTS_IN_INCH = 72.;
 
     private static BasicStroke solidStroke;
     private static BasicStroke blankStroke;
 
-    private FastRFrame currentFrame;
+    private final FastRFrame currentFrame;
     private Graphics2D graphics;
+
+    public JFrameDevice() {
+        initStrokes();
+        currentFrame = new FastRFrame();
+        currentFrame.setVisible(true);
+        initGraphics(currentFrame.getGraphics());
+    }
 
     @Override
     public void openNewPage() {
-        initStrokes();
-        if (currentFrame == null) {
-            currentFrame = new FastRFrame();
-            currentFrame.setVisible(true);
-            initGraphics(currentFrame.getGraphics());
-        } else {
-            noTransform(() -> {
-                graphics.clearRect(0, 0, currentFrame.getWidth(), currentFrame.getHeight());
-                return null;
-            });
-        }
+        noTransform(() -> {
+            graphics.clearRect(0, 0, currentFrame.getWidth(), currentFrame.getHeight());
+            return null;
+        });
     }
 
     @Override

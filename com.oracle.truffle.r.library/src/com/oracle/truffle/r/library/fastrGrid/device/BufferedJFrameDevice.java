@@ -22,20 +22,36 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.device;
 
+import static com.oracle.truffle.r.library.fastrGrid.device.JFrameDevice.POINTS_IN_INCH;
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
+import javax.imageio.ImageIO;
+
 /**
- * Decorator for {@link JFrameDevice} that implements {@link #hold()} and {@link #flush()}. Those
- * methods open/draw a 2D graphics buffer, while the buffer is open, any drawing is done in the
- * buffer not on the screen and we also record any drawing code to be able to replay it if the
- * buffer happens to loose contents, which is a possibility mentioned in the documentation. Note: we
- * rely on the fact that {@link DrawingContext} is immutable.
+ * Decorator for {@link JFrameDevice} that implements {@link #hold()} and {@link #flush()}
+ * functionality and implements the {@link ImageSaver} device.
+ *
+ * Methods {@link #hold()} and {@link #flush()} open/draw a 2D graphics buffer, while the buffer is
+ * open, any drawing is done in the buffer not on the screen and the buffer is dumped to the sceen
+ * once {@link #flush()} is called.
+ *
+ * We also record any drawing code to be able to replay it if the buffer happens to loose its
+ * contents, which is a possibility mentioned in the documentation. Moreover, this record of drawing
+ * can be used in {@link #save(String, String)} to replay the drawing in a {@code BufferedImage}.
+ * Note: here we rely on the fact that {@link DrawingContext} is immutable.
  */
-public final class BufferedJFrameDevice implements GridDevice {
+public final class BufferedJFrameDevice implements GridDevice, ImageSaver {
     private final JFrameDevice inner;
+    private final ArrayList<Runnable> drawActions = new ArrayList<>(200);
     private BufferStrategy buffer;
-    private ArrayList<Runnable> drawActions;
 
     public BufferedJFrameDevice(JFrameDevice inner) {
         this.inner = inner;
@@ -44,6 +60,14 @@ public final class BufferedJFrameDevice implements GridDevice {
     @Override
     public void openNewPage() {
         inner.openNewPage();
+        drawActions.clear();
+        if (buffer != null) {
+            // if new page is opened while we are on hold, we should throw away current buffer. In
+            // other words that is like starting new hold without previous flush.
+            buffer.dispose();
+            buffer = null;
+            hold();
+        }
     }
 
     @Override
@@ -56,11 +80,7 @@ public final class BufferedJFrameDevice implements GridDevice {
             inner.getCurrentFrame().createBufferStrategy(2);
             buffer = inner.getCurrentFrame().getBufferStrategy();
         }
-        if (drawActions == null) {
-            drawActions = new ArrayList<>();
-        } else {
-            drawActions.clear();
-        }
+        drawActions.clear();
         inner.initGraphics(buffer.getDrawGraphics());
     }
 
@@ -88,41 +108,31 @@ public final class BufferedJFrameDevice implements GridDevice {
     @Override
     public void drawRect(DrawingContext ctx, double leftX, double topY, double width, double height, double rotationAnticlockWise) {
         inner.drawRect(ctx, leftX, topY, width, height, rotationAnticlockWise);
-        if (buffer != null) {
-            drawActions.add(() -> inner.drawRect(ctx, leftX, topY, width, height, rotationAnticlockWise));
-        }
+        drawActions.add(() -> inner.drawRect(ctx, leftX, topY, width, height, rotationAnticlockWise));
     }
 
     @Override
     public void drawPolyLines(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
         inner.drawPolyLines(ctx, x, y, startIndex, length);
-        if (buffer != null) {
-            drawActions.add(() -> inner.drawPolyLines(ctx, x, y, startIndex, length));
-        }
+        drawActions.add(() -> inner.drawPolyLines(ctx, x, y, startIndex, length));
     }
 
     @Override
     public void drawPolygon(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
         inner.drawPolygon(ctx, x, y, startIndex, length);
-        if (buffer != null) {
-            drawActions.add(() -> inner.drawPolygon(ctx, x, y, startIndex, length));
-        }
+        drawActions.add(() -> inner.drawPolygon(ctx, x, y, startIndex, length));
     }
 
     @Override
     public void drawCircle(DrawingContext ctx, double centerX, double centerY, double radius) {
         inner.drawCircle(ctx, centerX, centerY, radius);
-        if (buffer != null) {
-            drawActions.add(() -> inner.drawCircle(ctx, centerX, centerY, radius));
-        }
+        drawActions.add(() -> inner.drawCircle(ctx, centerX, centerY, radius));
     }
 
     @Override
     public void drawString(DrawingContext ctx, double leftX, double bottomY, double rotationAnticlockWise, String text) {
         inner.drawString(ctx, leftX, bottomY, rotationAnticlockWise, text);
-        if (buffer != null) {
-            drawActions.add(() -> inner.drawString(ctx, leftX, bottomY, rotationAnticlockWise, text));
-        }
+        drawActions.add(() -> inner.drawString(ctx, leftX, bottomY, rotationAnticlockWise, text));
     }
 
     @Override
@@ -143,5 +153,21 @@ public final class BufferedJFrameDevice implements GridDevice {
     @Override
     public double getStringHeight(DrawingContext ctx, String text) {
         return inner.getStringHeight(ctx, text);
+    }
+
+    @Override
+    public void save(String path, String fileType) throws IOException {
+        int realWidth = (int) (getWidth() * POINTS_IN_INCH);
+        int readHeight = (int) (getHeight() * POINTS_IN_INCH);
+        BufferedImage image = new BufferedImage(realWidth, readHeight, TYPE_INT_RGB);
+        Graphics2D imageGraphics = (Graphics2D) image.getGraphics();
+        imageGraphics.setBackground(new Color(255, 255, 255));
+        imageGraphics.clearRect(0, 0, realWidth, readHeight);
+        inner.initGraphics(imageGraphics);
+        for (Runnable drawAction : drawActions) {
+            drawAction.run();
+        }
+        ImageIO.write(image, fileType, new File(path));
+        inner.initGraphics(inner.getCurrentFrame().getGraphics());
     }
 }

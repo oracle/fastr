@@ -22,28 +22,22 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
-import com.oracle.truffle.r.library.fastrGrid.device.BufferedJFrameDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.JFrameDevice;
+import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
-/**
- * Node that handles the {@code C_X11} external calls. Those calls may be initiated from either the
- * {@code X11} function or FastR specific {@code awt} function. In either case the result is that
- * the AWT window is opened and ready for drawing.
- */
-public final class InitWindowedDevice extends RExternalBuiltinNode {
+public final class DevCurr extends RExternalBuiltinNode.Arg0 {
     static {
-        Casts.noCasts(InitWindowedDevice.class);
+        Casts.noCasts(DevCurr.class);
     }
 
     @Override
-    @TruffleBoundary
-    protected Object call(RArgsValuesAndNames args) {
-        GridContext.getContext().setCurrentDevice(args.getLength() == 0 ? "awt" : "X11cairo", new BufferedJFrameDevice(new JFrameDevice()));
-        return RNull.instance;
+    public RAbstractIntVector execute() {
+        int index = GridContext.getContext().getCurrentDeviceIndex();
+        RStringVector names = RDataFactory.createStringVectorFromScalar(RGridGraphicsAdapter.getDeviceName(index));
+        return RDataFactory.createIntVector(new int[]{index + 1}, RDataFactory.COMPLETE_VECTOR, names);
     }
 }
