@@ -47,7 +47,7 @@ public abstract class LSegments extends RExternalBuiltinNode.Arg5 {
     }
 
     @Specialization
-    Object doSegments(RAbstractVector x0, RAbstractVector y0, RAbstractVector x1, RAbstractVector y1, RNull arrow) {
+    Object doSegments(RAbstractVector x0, RAbstractVector y0, RAbstractVector x1, RAbstractVector y1, @SuppressWarnings("unused") RNull arrow) {
         return doSegments(x0, y0, x1, y1, (RList) null);
     }
 

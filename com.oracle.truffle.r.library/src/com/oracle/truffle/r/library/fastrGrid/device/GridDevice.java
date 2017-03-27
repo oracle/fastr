@@ -54,6 +54,15 @@ public interface GridDevice {
      */
     void drawPolyLines(DrawingContext ctx, double[] x, double[] y, int startIndex, int length);
 
+    /**
+     * Version of {@link #drawPolyLines(DrawingContext, double[], double[], int, int)}, which should
+     * fill in the area bounded by the lines. Note that it is responsibility of the caller to
+     * connect the first and the last point if the caller wishes to draw actual polygon.
+     *
+     * @see DrawingContext#getFillColor()
+     */
+    void drawPolygon(DrawingContext ctx, double[] x, double[] y, int startIndex, int length);
+
     void drawCircle(DrawingContext ctx, double centerX, double centerY, double radius);
 
     /**

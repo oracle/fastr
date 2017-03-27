@@ -121,7 +121,7 @@ public abstract class GridLinesNode extends Node {
         void drawPolylines(GridDevice dev, DrawingContext drawingCtx, double[] yy, double[] xx, int start, int length) {
             xx[start + length] = xx[start];
             yy[start + length] = yy[start];
-            dev.drawPolyLines(drawingCtx, xx, yy, start, length + 1);
+            dev.drawPolygon(drawingCtx, xx, yy, start, length + 1);
         }
     }
 }

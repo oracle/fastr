@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.library.fastrGrid.device;
 
 import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_TO_POINTS_FACTOR;
+import static java.awt.geom.Path2D.WIND_EVEN_ODD;
 
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
@@ -52,7 +53,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineEnd;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineJoin;
 import com.oracle.truffle.r.runtime.RInternalError;
 
-public class JFrameDevice implements GridDevice {
+public final class JFrameDevice implements GridDevice {
     // Grid's coordinate system has origin in left bottom corner and y axis grows from bottom to
     // top. Moreover, the grid system uses inches as units. We use transformation to adjust the java
     // coordinate system to the grid one. However, in the case of text rendering, we cannot simply
@@ -74,7 +75,7 @@ public class JFrameDevice implements GridDevice {
             currentFrame.setVisible(true);
             initGraphics(currentFrame.getGraphics());
         } else {
-            noTranform(() -> {
+            noTransform(() -> {
                 graphics.clearRect(0, 0, currentFrame.getWidth(), currentFrame.getHeight());
                 return null;
             });
@@ -89,15 +90,16 @@ public class JFrameDevice implements GridDevice {
 
     @Override
     public void drawPolyLines(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
-        assert startIndex >= 0 && startIndex < x.length && startIndex < y.length : "startIndex out of bounds";
-        assert length > 0 && (startIndex + length) <= Math.min(x.length, y.length) : "length out of bounds";
+        Path2D.Double path = getPath2D(x, y, startIndex, length);
         setContext(ctx);
-        Path2D.Double path = new Path2D.Double();
-        path.moveTo(x[startIndex], y[startIndex]);
-        for (int i = startIndex + 1; i < length; i++) {
-            path.lineTo(x[i], y[i]);
-        }
         graphics.draw(path);
+    }
+
+    @Override
+    public void drawPolygon(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
+        Path2D.Double path = getPath2D(x, y, startIndex, length);
+        setContext(ctx);
+        drawShape(ctx, path);
     }
 
     @Override
@@ -109,7 +111,7 @@ public class JFrameDevice implements GridDevice {
     @Override
     public void drawString(DrawingContext ctx, double leftX, double bottomY, double rotationAnticlockWise, String text) {
         setContext(ctx);
-        noTranform(() -> {
+        noTransform(() -> {
             AffineTransform tr = graphics.getTransform();
             tr.translate((float) (leftX * POINTS_IN_INCH), (float) (currentFrame.getContentPane().getHeight() - bottomY * POINTS_IN_INCH));
             tr.rotate(-rotationAnticlockWise);
@@ -133,7 +135,7 @@ public class JFrameDevice implements GridDevice {
     @Override
     public double getStringWidth(DrawingContext ctx, String text) {
         setContext(ctx);
-        return noTranform(() -> {
+        return noTransform(() -> {
             setFont(ctx);
             int swingUnits = graphics.getFontMetrics(graphics.getFont()).stringWidth(text);
             return swingUnits / POINTS_IN_INCH;
@@ -143,7 +145,7 @@ public class JFrameDevice implements GridDevice {
     @Override
     public double getStringHeight(DrawingContext ctx, String text) {
         setContext(ctx);
-        return noTranform(() -> {
+        return noTransform(() -> {
             setFont(ctx);
             int swingUnits = graphics.getFont().getSize();
             return swingUnits / POINTS_IN_INCH;
@@ -164,6 +166,17 @@ public class JFrameDevice implements GridDevice {
         graphics.setStroke(new BasicStroke((float) (1d / POINTS_IN_INCH)));
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         graphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+    }
+
+    private Path2D.Double getPath2D(double[] x, double[] y, int startIndex, int length) {
+        assert startIndex >= 0 && startIndex < x.length && startIndex < y.length : "startIndex out of bounds";
+        assert length > 0 && (startIndex + length) <= Math.min(x.length, y.length) : "length out of bounds";
+        Path2D.Double path = new Path2D.Double(WIND_EVEN_ODD, x.length);
+        path.moveTo(x[startIndex], y[startIndex]);
+        for (int i = startIndex + 1; i < length; i++) {
+            path.lineTo(x[i], y[i]);
+        }
+        return path;
     }
 
     private void drawShape(DrawingContext drawingCtx, Shape shape) {
@@ -217,7 +230,7 @@ public class JFrameDevice implements GridDevice {
         }
     }
 
-    private <T> T noTranform(Supplier<T> action) {
+    private <T> T noTransform(Supplier<T> action) {
         AffineTransform transform = graphics.getTransform();
         graphics.setTransform(new AffineTransform());
         T result = action.get();

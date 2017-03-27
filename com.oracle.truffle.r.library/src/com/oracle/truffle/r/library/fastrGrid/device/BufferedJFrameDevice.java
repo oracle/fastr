@@ -32,7 +32,7 @@ import java.util.ArrayList;
  * buffer happens to loose contents, which is a possibility mentioned in the documentation. Note: we
  * rely on the fact that {@link DrawingContext} is immutable.
  */
-public class BufferedJFrameDevice implements GridDevice {
+public final class BufferedJFrameDevice implements GridDevice {
     private final JFrameDevice inner;
     private BufferStrategy buffer;
     private ArrayList<Runnable> drawActions;
@@ -98,6 +98,14 @@ public class BufferedJFrameDevice implements GridDevice {
         inner.drawPolyLines(ctx, x, y, startIndex, length);
         if (buffer != null) {
             drawActions.add(() -> inner.drawPolyLines(ctx, x, y, startIndex, length));
+        }
+    }
+
+    @Override
+    public void drawPolygon(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
+        inner.drawPolygon(ctx, x, y, startIndex, length);
+        if (buffer != null) {
+            drawActions.add(() -> inner.drawPolygon(ctx, x, y, startIndex, length));
         }
     }
 

@@ -15,7 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-class LNewPage extends RExternalBuiltinNode.Arg0 {
+final class LNewPage extends RExternalBuiltinNode.Arg0 {
     static {
         Casts.noCasts(LNewPage.class);
     }

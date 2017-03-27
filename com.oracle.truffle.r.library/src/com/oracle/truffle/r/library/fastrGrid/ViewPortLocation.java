@@ -24,7 +24,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
  * The vectors in this class represent a unit objects, therefore we cannot just have a double value
  * for them. However, the unit object should contain only single value.
  */
-public class ViewPortLocation {
+public final class ViewPortLocation {
     public RAbstractContainer x;
     public RAbstractContainer y;
     public RAbstractContainer width;

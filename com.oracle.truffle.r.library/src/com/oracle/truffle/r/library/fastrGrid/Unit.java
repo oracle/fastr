@@ -59,7 +59,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * the R code should contain values in centimeters, we convert such values immediatelly once they
  * enter our system.
  */
-public class Unit {
+public final class Unit {
     static final String VALID_UNIT_ATTR = "valid.unit";
 
     public static final int NPC = 0;

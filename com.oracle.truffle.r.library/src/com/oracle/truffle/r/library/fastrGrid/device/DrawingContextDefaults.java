@@ -26,7 +26,7 @@ package com.oracle.truffle.r.library.fastrGrid.device;
  * Allows the device to communicate the default values for its initial {@link DrawingContext}. The
  * format of the values is the same as accepted by the {@code gpar()} function in R.
  */
-public class DrawingContextDefaults {
+public final class DrawingContextDefaults {
     public String fillColor = "transparent";
     public String color = "black";
 }

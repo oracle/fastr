@@ -27,7 +27,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-class LInitGPar extends RExternalBuiltinNode {
+final class LInitGPar extends RExternalBuiltinNode {
     static {
         Casts.noCasts(LInitGPar.class);
     }

@@ -26,7 +26,7 @@ package com.oracle.truffle.r.library.fastrGrid.device;
  * Simple color representation, so that the device interface does not have to depend on a specific
  * GUI framework.
  */
-public class GridColor {
+public final class GridColor {
     public static final int OPAQUE_ALPHA = 0xff;
     private static final int TRANSPARENT_ALPHA = 0;
     public static final GridColor TRANSPARENT = new GridColor(0, 0, 0, TRANSPARENT_ALPHA);

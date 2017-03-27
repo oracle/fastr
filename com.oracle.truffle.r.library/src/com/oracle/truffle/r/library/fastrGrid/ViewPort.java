@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
  * port. One such list is pushed using {@code pushViewpoint} it is transformed to a 'pushed
  * viewpoint', which is a copy of the original view point and it has some additional attributes.
  */
-class ViewPort {
+final class ViewPort {
     /*
      * Structure of a viewport
      */

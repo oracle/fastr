@@ -23,7 +23,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
-class DrawArrowsNode extends Node {
+final class DrawArrowsNode extends Node {
     // Structure of an arrow description
     private static final int ARROWANGLE = 0;
     private static final int ARROWLENGTH = 1;

@@ -46,7 +46,7 @@ public abstract class LLines extends RExternalBuiltinNode.Arg4 {
     }
 
     @Specialization
-    Object doLines(RAbstractVector x, RAbstractVector y, RList lengths, RNull arrowIgnored) {
+    Object doLines(RAbstractVector x, RAbstractVector y, RList lengths, @SuppressWarnings("unused") RNull arrowIgnored) {
         gridLinesNode.execute(x, y, lengths, null);
         return RNull.instance;
     }

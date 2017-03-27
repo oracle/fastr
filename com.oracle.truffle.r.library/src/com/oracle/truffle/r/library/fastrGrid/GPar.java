@@ -108,7 +108,7 @@ public final class GPar {
     // majority of gpar instances contains only scalar values, for those we make sure we do not
     // create a new drawing context instance for every index.
     private final boolean singleDrawingCtx;
-    private DrawingContext indexZeroDrawingCtx;
+    private final DrawingContext indexZeroDrawingCtx;
 
     public GPar(RList gpar, boolean singleDrawingCtx) {
         this.gpar = gpar;

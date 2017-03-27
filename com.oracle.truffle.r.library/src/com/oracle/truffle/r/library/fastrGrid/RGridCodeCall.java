@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 /**
  * Allows to call arbitrary R function from {@code fastrGrid.R} source.
  */
-class RGridCodeCall extends Node {
+final class RGridCodeCall extends Node {
     private static final FrameDescriptor emptyFrameDescriptor = new FrameDescriptor("<fastrGrid.R tmp frame>");
     @Child private RInternalCodeBuiltinNode child;
 
