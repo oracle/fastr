@@ -81,7 +81,7 @@ void init_connections(JNIEnv *env) {
 	getOpenModeMethodID = checkGetMethodID(env, UpCallsRFFIClass, "getOpenModeString", "(Ljava/lang/Object;)Ljava/lang/String;", 0);
 
 	/* int R_new_custom_connection(String, String, String) */
-	newCustomConnectionMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_new_custom_connection", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;J)Ljava/lang/Object;", 0);
+	newCustomConnectionMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_new_custom_connection", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
 }
 
 static char *connStringToChars(JNIEnv *env, jstring string) {
@@ -190,7 +190,8 @@ SEXP R_new_custom_connection(const char *description, const char *mode, const ch
 	jstring jsDescription = (*thisenv)->NewStringUTF(thisenv, description);
 	jstring jsMode = (*thisenv)->NewStringUTF(thisenv, mode);
 	jstring jsClassName = (*thisenv)->NewStringUTF(thisenv, class_name);
-	ans = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, newCustomConnectionMethodID, jsDescription, jsMode, jsClassName, (jlong)new);
+	jobject addrObj = R_MakeExternalPtr(new, R_NilValue, R_NilValue);
+	ans = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, newCustomConnectionMethodID, jsDescription, jsMode, jsClassName, addrObj);
 	if (ans) {
 
 		new->class = (char *) malloc(strlen(class_name) + 1);
@@ -236,19 +237,12 @@ SEXP R_new_custom_connection(const char *description, const char *mode, const ch
  * Position 0 is the lower part and position 1 is the higher part of the address.
  * This currently assumes max. 64-bit addresses !
  */
-static Rconnection convertToAddress(SEXP intVec) {
-	if(!Rf_isVector(intVec)) {
+static Rconnection convertToAddress(SEXP addrObj) {
+	if(!inherits(addrObj, "externalptr")) {
 		error(_("invalid address object"));
 	}
+    return (Rconnection) R_ExternalPtrAddr(addrObj);
 
-	// convert integer vector to array
-    int *arr = INTEGER(intVec);
-
-    // bit-fiddle address
-    jlong ptr = (jlong) arr[1];
-    ptr = (ptr<<32) | ((jlong)arr[0] & 0xFFFFFFFFl);
-
-    return (Rconnection) ptr;
 }
 
 /*
@@ -279,7 +273,7 @@ SEXP __GetFlagNativeConnection(SEXP rConnAddrObj, jstring jname) {
 	}
 	free(name);
 
-	return Rf_ScalarLogical(result);
+	return ScalarLogical(result);
 }
 
 /*
@@ -290,7 +284,7 @@ SEXP __GetFlagNativeConnection(SEXP rConnAddrObj, jstring jname) {
 SEXP __OpenNativeConnection(SEXP rConnAddrObj) {
 	Rconnection con = convertToAddress(rConnAddrObj);
 	Rboolean success = con->open(con);
-	return Rf_ScalarLogical(success);
+	return ScalarLogical(success);
 }
 
 /*
@@ -317,7 +311,7 @@ SEXP __ReadNativeConnection(SEXP rConnAddrObj, jbyteArray bufObj, SEXP nVec) {
 	size_t nread = con->read(tmp_buf, 1, n, con);
 	// copy back and release buffer
 	(*thisenv)->ReleaseByteArrayElements(thisenv, bufObj, tmp_buf, JNI_COMMIT);
-	return Rf_ScalarInteger(nread);
+	return ScalarInteger(nread);
 }
 
 /*
@@ -333,7 +327,7 @@ SEXP __WriteNativeConnection(SEXP rConnAddrObj, jbyteArray bufObj, SEXP nVec) {
 	size_t nwritten = con->write(bytes, 1, n, con);
 	// just release buffer
 	(*thisenv)->ReleaseByteArrayElements(thisenv, bufObj, bytes, JNI_ABORT);
-	return Rf_ScalarInteger(nwritten);
+	return ScalarInteger(nwritten);
 }
 
 /*
@@ -343,11 +337,11 @@ SEXP __WriteNativeConnection(SEXP rConnAddrObj, jbyteArray bufObj, SEXP nVec) {
  */
 SEXP __SeekNativeConnection(SEXP rConnAddrObj, SEXP whereObj, SEXP originObj, SEXP rwObj) {
 	Rconnection con = convertToAddress(rConnAddrObj);
-    double where = adDouble(whereObj);
+    double where = asReal(whereObj);
     int origin = asInteger(originObj);
     int rw = asInteger(rwObj);
 	double oldPos = con->seek(con, where, origin, rw);
-	return Rf_ScalarReal(oldPos);
+	return ScalarReal(oldPos);
 }
 
 size_t R_ReadConnection(Rconnection con, void *buf, size_t n) {

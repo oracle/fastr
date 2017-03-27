@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
 import com.oracle.truffle.r.runtime.conn.RConnection.SeekMode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
@@ -75,9 +76,9 @@ public class NativeConnections {
     public static class NativeRConnection extends BaseRConnection {
         private final String customConClass;
         private final String description;
-        private final long addr;
+        private final RExternalPtr addr;
 
-        public NativeRConnection(String description, String modeString, String customConClass, long addr) throws IOException {
+        public NativeRConnection(String description, String modeString, String customConClass, RExternalPtr addr) throws IOException {
             super(ConnectionClass.NATIVE, modeString, AbstractOpenMode.Read);
             this.customConClass = Objects.requireNonNull(customConClass);
             this.description = Objects.requireNonNull(description);
@@ -117,7 +118,7 @@ public class NativeConnections {
             return customConClass;
         }
 
-        public long getNativeAddress() {
+        public RExternalPtr getNativeAddress() {
             return addr;
         }
 
@@ -135,8 +136,7 @@ public class NativeConnections {
             NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(GET_FLAG_NATIVE_CONNECTION);
             RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
 
-            RIntVector addrVec = convertAddrToIntVec(addr);
-            Object result = nativeCallTarget.call(ni, new Object[]{addrVec, name});
+            Object result = nativeCallTarget.call(ni, new Object[]{addr, name});
             if (result instanceof RLogicalVector) {
                 return ((RLogicalVector) result).getDataAt(0) == RRuntime.LOGICAL_TRUE;
             }
@@ -151,7 +151,7 @@ public class NativeConnections {
      * @param rw seek mode (read=1, write=2, last)
      * @return the old cursor position
      */
-    private static long seekSingleMode(long addr, long offset, SeekMode seekMode, int rw) {
+    private static long seekSingleMode(RExternalPtr addr, long offset, SeekMode seekMode, int rw) {
         RDoubleVector where = RDataFactory.createDoubleVectorFromScalar(offset);
         RIntVector seekCode;
         switch (seekMode) {
@@ -172,8 +172,7 @@ public class NativeConnections {
 
         NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(SEEK_NATIVE_CONNECTION);
         RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
-        RIntVector addrVec = convertAddrToIntVec(addr);
-        Object result = nativeCallTarget.call(ni, new Object[]{addrVec, where, seekCode, rwCode});
+        Object result = nativeCallTarget.call(ni, new Object[]{addr, where, seekCode, rwCode});
         if (result instanceof RDoubleVector) {
             return (long) ((RDoubleVector) result).getDataAt(0);
         }
@@ -286,12 +285,11 @@ public class NativeConnections {
         }
     }
 
-    private static void openNative(long addr) throws IOException {
+    private static void openNative(RExternalPtr addr) throws IOException {
         NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(OPEN_NATIVE_CONNECTION);
         RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
 
-        RIntVector addrVec = convertAddrToIntVec(addr);
-        Object result = nativeCallTarget.call(ni, new Object[]{addrVec});
+        Object result = nativeCallTarget.call(ni, new Object[]{addr});
         if (!(result instanceof RLogicalVector && ((RLogicalVector) result).getDataAt(0) == RRuntime.LOGICAL_TRUE)) {
             throw new IOException("could not open connection");
         }
@@ -309,8 +307,7 @@ public class NativeConnections {
         public int read(ByteBuffer dst) throws IOException {
             NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(READ_NATIVE_CONNECTION);
             RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
-            RIntVector vec = NativeConnections.convertAddrToIntVec(base.addr);
-            Object call = nativeCallTarget.call(ni, new Object[]{vec, dst.array(), dst.remaining()});
+            Object call = nativeCallTarget.call(ni, new Object[]{base.addr, dst.array(), dst.remaining()});
 
             if (call instanceof RIntVector) {
                 int nread = ((RIntVector) call).getDataAt(0);
@@ -331,8 +328,7 @@ public class NativeConnections {
         public void close() throws IOException {
             NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(CLOSE_NATIVE_CONNECTION);
             RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
-            RIntVector vec = NativeConnections.convertAddrToIntVec(base.addr);
-            nativeCallTarget.call(ni, new Object[]{vec});
+            nativeCallTarget.call(ni, new Object[]{base.addr});
         }
 
         @Override
@@ -340,8 +336,7 @@ public class NativeConnections {
             NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(WRITE_NATIVE_CONNECTION);
             RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
 
-            RIntVector vec = NativeConnections.convertAddrToIntVec(base.addr);
-            Object result = nativeCallTarget.call(ni, new Object[]{vec, src.array(), src.remaining()});
+            Object result = nativeCallTarget.call(ni, new Object[]{base.addr, src.array(), src.remaining()});
 
             if (result instanceof RIntVector) {
                 return ((RIntVector) result).getDataAt(0);
@@ -349,12 +344,5 @@ public class NativeConnections {
 
             throw RInternalError.shouldNotReachHere("unexpected result type");
         }
-    }
-
-    static RIntVector convertAddrToIntVec(long addr) {
-        int high = (int) (addr >> 32);
-        int low = (int) addr;
-        RIntVector vec = RDataFactory.createIntVector(new int[]{low, high}, true);
-        return vec;
     }
 }

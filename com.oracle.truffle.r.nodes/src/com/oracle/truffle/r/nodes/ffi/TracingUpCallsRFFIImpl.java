@@ -742,7 +742,7 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object R_new_custom_connection(Object description, Object mode, Object className, long readAddr) {
+    public Object R_new_custom_connection(Object description, Object mode, Object className, Object readAddr) {
         RFFIUtils.traceUpCall("R_new_custom_connection", description, mode, className, readAddr);
         return delegate.R_new_custom_connection(description, mode, className, readAddr);
     }

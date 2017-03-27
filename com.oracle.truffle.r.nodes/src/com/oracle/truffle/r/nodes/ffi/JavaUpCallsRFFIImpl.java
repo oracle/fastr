@@ -1204,13 +1204,14 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object R_new_custom_connection(Object description, Object mode, Object className, long readAddr) {
+    public Object R_new_custom_connection(Object description, Object mode, Object className, Object connAddrObj) {
         // TODO handle encoding properly !
         String strDescription = (String) description;
         String strMode = (String) mode;
         String strClassName = (String) className;
+        RExternalPtr connAddr = guaranteeInstanceOf(connAddrObj, RExternalPtr.class);
         try {
-            return new NativeRConnection(strDescription, strMode, strClassName, readAddr).asVector();
+            return new NativeRConnection(strDescription, strMode, strClassName, connAddr).asVector();
         } catch (IOException e) {
             return InvalidConnection.instance.asVector();
         }

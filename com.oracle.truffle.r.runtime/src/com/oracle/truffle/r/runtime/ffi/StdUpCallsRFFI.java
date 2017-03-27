@@ -254,7 +254,7 @@ public interface StdUpCallsRFFI {
 
     Object R_CHAR(Object x);
 
-    Object R_new_custom_connection(@RFFICstring Object description, @RFFICstring Object mode, @RFFICstring Object className, long readAddr);
+    Object R_new_custom_connection(@RFFICstring Object description, @RFFICstring Object mode, @RFFICstring Object className, Object readAddr);
 
     int R_ReadConnection(int fd, byte[] buf);
 
