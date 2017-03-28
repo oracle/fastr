@@ -27,12 +27,12 @@ import static com.oracle.truffle.r.runtime.nmath.RMath.fmax2;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.BaseGammaFunctionsFactory.DpsiFnCalcNodeGen;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -44,75 +44,11 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class BaseGammaFunctions {
 
-    @RBuiltin(name = "gamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-    public abstract static class Gamma extends RBuiltinNode {
-
-        static {
-            Casts casts = new Casts(Gamma.class);
-            casts.arg("x").mustNotBeMissing(RError.Message.ARGUMENTS_PASSED, 0, "'gamma'", 1).mustBe(numericValue(), RError.Message.NON_NUMERIC_MATH).asDoubleVector().findFirst();
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected RDoubleVector lgamma(@SuppressWarnings("unused") RAbstractDoubleVector x) {
-            throw RError.nyi(this, "gamma");
-        }
-    }
-
-    @RBuiltin(name = "trigamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-    public abstract static class TriGamma extends RBuiltinNode {
-        static {
-            Casts.noCasts(TriGamma.class);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected RDoubleVector trigamma(@SuppressWarnings("unused") RAbstractDoubleVector x) {
-            // Note: this is actually unimplemented even in GnuR
-            throw RError.nyi(this, "trigamma");
-        }
-    }
-
-    @RBuiltin(name = "lgamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-    public abstract static class Lgamma extends RBuiltinNode {
+    public abstract static class GammaBase extends RBuiltinNode {
 
         private final NACheck naValCheck = NACheck.create();
 
-        static {
-            Casts casts = new Casts(Lgamma.class);
-            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue()).asDoubleVector();
-        }
-
-        @Specialization
-        protected RDoubleVector lgamma(RAbstractDoubleVector x) {
-            naValCheck.enable(true);
-            double[] result = new double[x.getLength()];
-            for (int i = 0; i < x.getLength(); i++) {
-                double xv = x.getDataAt(i);
-                result[i] = GammaFunctions.lgammafn(xv);
-                naValCheck.check(result[i]);
-            }
-            return RDataFactory.createDoubleVector(result, naValCheck.neverSeenNA());
-        }
-    }
-
-    @RBuiltin(name = "digamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-    public abstract static class DiGamma extends RBuiltinNode {
-
-        @Child private DpsiFnCalc dpsiFnCalc;
-
-        private final NACheck naValCheck = NACheck.create();
-
-        private double dpsiFnCalc(double x, int n, int kode, double ans) {
-            if (dpsiFnCalc == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                dpsiFnCalc = insert(DpsiFnCalcNodeGen.create());
-            }
-            return dpsiFnCalc.executeDouble(x, n, kode, ans);
-        }
-
-        static {
-            Casts casts = new Casts(DiGamma.class);
+        protected static void casts(Casts casts) {
             casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue()).asDoubleVector();
         }
 
@@ -123,22 +59,78 @@ public class BaseGammaFunctions {
             boolean warnNaN = false;
             for (int i = 0; i < x.getLength(); i++) {
                 double xv = x.getDataAt(i);
+                double val;
                 if (naValCheck.check(xv)) {
-                    result[i] = xv;
+                    val = RRuntime.DOUBLE_NA;
                 } else {
-                    double val = dpsiFnCalc(xv, 0, 1, 0);
+                    val = scalarFunction(xv);
                     if (Double.isNaN(val)) {
-                        result[i] = val;
                         warnNaN = true;
-                    } else {
-                        result[i] = -val;
                     }
                 }
+                result[i] = val;
             }
             if (warnNaN) {
                 warning(RError.Message.NAN_PRODUCED);
             }
             return RDataFactory.createDoubleVector(result, naValCheck.neverSeenNA());
+        }
+
+        protected double scalarFunction(@SuppressWarnings("unused") double xv) {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @RBuiltin(name = "gamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
+    public abstract static class Gamma extends GammaBase {
+
+        static {
+            casts(new Casts(Gamma.class));
+        }
+
+        @Override
+        protected double scalarFunction(double xv) {
+            return GammaFunctions.gammafn(xv);
+        }
+    }
+
+    @RBuiltin(name = "trigamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
+    public abstract static class TriGamma extends GammaBase {
+        static {
+            casts(new Casts(TriGamma.class));
+        }
+
+        @Override
+        protected double scalarFunction(double xv) {
+            throw RError.nyi(this, "trigamma");
+        }
+    }
+
+    @RBuiltin(name = "lgamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
+    public abstract static class Lgamma extends GammaBase {
+
+        static {
+            casts(new Casts(Lgamma.class));
+        }
+
+        @Override
+        protected double scalarFunction(double xv) {
+            return GammaFunctions.lgammafn(xv);
+        }
+    }
+
+    @RBuiltin(name = "digamma", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
+    public abstract static class DiGamma extends GammaBase {
+
+        @Child private DpsiFnCalc dpsiFnCalc = DpsiFnCalcNodeGen.create();
+
+        static {
+            casts(new Casts(DiGamma.class));
+        }
+
+        @Override
+        protected double scalarFunction(double xv) {
+            return -dpsiFnCalc.executeDouble(xv, 0, 1, 0);
         }
     }
 
