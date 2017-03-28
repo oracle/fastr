@@ -47,7 +47,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
@@ -539,8 +538,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Child private Node foreignCall;
         @CompilationFinal private int foreignCallArgCount;
 
-        private final BranchProfile errorProfile = BranchProfile.create();
-
         public ForeignCall(CallArgumentsNode arguments) {
             this.arguments = arguments;
         }
@@ -561,7 +558,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 }
                 return result;
             } catch (Throwable e) {
-                errorProfile.enter();
+                CompilerDirectives.transferToInterpreter();
                 throw RError.interopError(RError.findParentRBase(this), e, function);
             }
         }

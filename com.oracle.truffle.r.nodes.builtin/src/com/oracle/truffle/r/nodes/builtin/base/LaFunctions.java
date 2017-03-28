@@ -30,7 +30,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
@@ -83,7 +82,6 @@ public class LaFunctions {
 
     private abstract static class RsgRBuiltinNode extends RBuiltinNode {
         protected static final String[] NAMES = new String[]{"values", "vectors"};
-        protected final BranchProfile errorProfile = BranchProfile.create();
 
         protected static Casts createCasts(Class<? extends RsgRBuiltinNode> extClass) {
             Casts casts = new Casts(extClass);

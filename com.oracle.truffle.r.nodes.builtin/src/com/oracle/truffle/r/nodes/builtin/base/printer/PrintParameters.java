@@ -139,7 +139,7 @@ public final class PrintParameters {
     }
 
     public void setDefaults() {
-        this.naString = RRuntime.STRING_NA;
+        this.naString = "NA";
         this.naStringNoquote = "<NA>";
         this.naWidth = this.naString.length();
         this.naWidthNoquote = this.naStringNoquote.length();

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -36,22 +36,22 @@ public class TestBuiltin_lm extends TestBase {
 
     @Test
     public void testlm334() {
-        assertEval(Ignored.Unknown, "require(stats);" + "lm(data = LifeCycleSavings, formula = sr ~ pop15 + pop75 + dpi + ddpi)");
+        assertEval("require(stats);" + "lm(data = LifeCycleSavings, formula = sr ~ pop15 + pop75 + dpi + ddpi)");
     }
 
     @Test
     public void testlm445() {
-        assertEval(Ignored.Unknown, "require(stats);" + "lm(data = attitude, formula = rating ~ .)");
+        assertEval("require(stats);" + "lm(data = attitude, formula = rating ~ .)");
     }
 
     @Test
     public void testlm875() {
-        assertEval(Ignored.Unknown, "require(stats); lm(data = mtcars, formula = 100/mpg ~ disp + hp + wt + am)");
+        assertEval("require(stats); lm(data = mtcars, formula = 100/mpg ~ disp + hp + wt + am)");
     }
 
     @Test
     public void testlm876() {
-        assertEval(Ignored.Unknown, "require(stats); lm(data = npk, formula = yield ~ block + N * P * K, singular.ok = TRUE)");
+        assertEval("require(stats); lm(data = npk, formula = yield ~ block + N * P * K, singular.ok = TRUE)");
     }
 
     @Test

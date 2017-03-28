@@ -77,7 +77,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
     }
 
     @TruffleBoundary
-    static DoubleVectorMetrics formatDoubleVector(RAbstractDoubleVector x, int offs, int n, int nsmall, int digits, int sciPen, int naWidth) {
+    public static DoubleVectorMetrics formatDoubleVector(RAbstractDoubleVector x, int offs, int n, int nsmall, int digits, int sciPen, int naWidth) {
         int left;
         int right;
         int sleft;
@@ -438,8 +438,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
     }
 
     private static String prependBlanks(int width, String id) {
-        assert id.length() <= width;
-        if (id.length() == width) {
+        if (id.length() >= width) {
             return id;
         }
         StringBuilder str = new StringBuilder(width);
@@ -447,5 +446,16 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
             str.append(' ');
         }
         return str.append(id).toString();
+    }
+
+    public static String[] format(RAbstractDoubleVector value, boolean trim, int nsmall, int width, char decimalMark, PrintParameters pp) {
+        DoubleVectorMetrics dfm = formatDoubleVector(value, 0, value.getLength(), nsmall, pp);
+        int w = Math.max(trim ? 1 : dfm.maxWidth, width);
+
+        String[] result = new String[value.getLength()];
+        for (int i = 0; i < value.getLength(); i++) {
+            result[i] = encodeReal(value.getDataAt(i), w, dfm.d, dfm.e, decimalMark, pp);
+        }
+        return result;
     }
 }

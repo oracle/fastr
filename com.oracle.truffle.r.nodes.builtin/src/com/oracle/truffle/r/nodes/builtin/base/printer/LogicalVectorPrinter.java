@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -21,7 +21,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 //Transcribed from GnuR, src/main/printutils.c, src/main/format.c
 
-final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVector> {
+public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVector> {
 
     static final LogicalVectorPrinter INSTANCE = new LogicalVectorPrinter();
 
@@ -95,5 +95,22 @@ final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVector> {
         } else {
             return snprintf(NB, fmt, "FALSE");
         }
+    }
+
+    public static String[] format(RAbstractLogicalVector value, boolean trim, int width, PrintParameters pp) {
+        int w;
+        if (trim) {
+            w = 1;
+        } else {
+            FormatMetrics metrics = formatLogicalVector(value, 0, value.getLength(), pp.getNaWidth());
+            w = metrics.maxWidth;
+        }
+        w = Math.max(w, width);
+
+        String[] result = new String[value.getLength()];
+        for (int i = 0; i < value.getLength(); i++) {
+            result[i] = encodeLogical(value.getDataAt(i), w, pp);
+        }
+        return result;
     }
 }
