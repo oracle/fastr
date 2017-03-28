@@ -170,16 +170,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         this.explicitArgs = null;
         this.varArgIndexes = getVarArgIndexes(arguments);
         this.lookupVarArgs = varArgIndexes.length == 0 ? null : ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any);
-
-        for (String name : signature) {
-            if (name != null && name.isEmpty()) {
-                /*
-                 * In GnuR this is evidently output by the parser, so very early, and never with a
-                 * caller in the message.
-                 */
-                throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
-            }
-        }
         this.signature = signature;
     }
 

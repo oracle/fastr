@@ -106,6 +106,30 @@ public class TestParser extends TestBase {
     }
 
     @Test
+    public void testEmptySymbols() {
+        assertEval("names(e)");
+        assertEval("e <- quote(b(f=1,foo)); names(e) <- c('','f',''); e");
+        assertEval("e <- quote(b(f=1,foo)); names(e) <- c('','',''); e");
+        assertEval("f <- function(){ function(``=1) 1 }");
+        assertEval("f <- function(){ function(``=1) cat(``=1) }");
+        assertEval("f <- function(){ function() cat(``=1) }");
+        assertEval("f <- function(){ function() cat(asdf=1) }");
+        assertEval("f <- function(){ function(``) cat(asdf=1) }");
+        assertEval(Output.IgnoreErrorMessage, "f <- function(){ function('') cat(asdf=1) }");
+        assertEval("``(1)");
+        assertEval("quote(``(1))");
+        assertEval("quote(a$b)");
+        assertEval("quote(a$``)");
+        assertEval("quote(a$'')");
+        assertEval("quote(``:::a)");
+        assertEval("quote(a:::a)");
+        assertEval("quote(a:::``)");
+        assertEval("quote(x <- 1)");
+        assertEval(Output.IgnoreErrorMessage, "e <- quote(x <- 1); e[[2]] <- as.symbol(''); ");
+        assertEval("as.symbol(''))");
+    }
+
+    @Test
     public void testLexerError() {
         // FastR provides a more accurate error message
         assertEval(Output.IgnoreErrorMessage, "%0");
