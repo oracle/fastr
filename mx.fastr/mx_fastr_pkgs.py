@@ -106,6 +106,13 @@ def _packages_test_project():
 def _packages_test_project_dir():
     return mx.project(_packages_test_project()).dir
 
+def _ensure_R_on_PATH(env, bindir):
+    '''
+    Some packages (e.g. stringi) require that 'R' is actually on the PATH
+    '''
+    env['PATH'] = join(bindir) + os.pathsep + os.environ['PATH']
+
+
 def installpkgs(args):
     _installpkgs(args)
 
@@ -120,10 +127,18 @@ def _installpkgs(args, **kwargs):
     by the FASTR_GRAALVM environment variable, we can't use mx to invoke
     FastR, but instead have to invoke the command directly.
     '''
+    if kwargs.has_key('env'):
+        env = kwargs['env']
+    else:
+        env = os.environ.copy()
+        kwargs['env'] = env
+
     script = _installpkgs_script()
     if _graalvm() is None:
+        _ensure_R_on_PATH(env, join(_fastr_suite_dir(), 'bin'))
         return mx_fastr.rscript([script] + args, **kwargs)
     else:
+        _ensure_R_on_PATH(env, os.path.dirname(_graalvm_rscript()))
         return mx.run([_graalvm_rscript(), script] + args, **kwargs)
 
 
@@ -352,8 +367,10 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     args += ['--testdir', 'test.gnur']
     _log_step('BEGIN', 'install/test', 'GnuR')
     if _graalvm():
+        _ensure_R_on_PATH(env, os.path.dirname(_gnur_rscript()))
         mx.run(args, nonZeroIsFatal=False, env=env)
     else:
+        _ensure_R_on_PATH(env, mx_fastr._gnur_path())
         mx_fastr.gnu_rscript(args, env=env)
     _log_step('END', 'install/test', 'GnuR')
 
