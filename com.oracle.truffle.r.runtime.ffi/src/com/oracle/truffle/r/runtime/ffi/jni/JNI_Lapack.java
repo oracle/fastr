@@ -82,6 +82,14 @@ public class JNI_Lapack implements LapackRFFI {
         }
     }
 
+    private static class JNI_DpotriNode extends DpotriNode {
+        @Override
+        @TruffleBoundary
+        public int execute(char uplo, int n, double[] a, int lda) {
+            return native_dpotri(uplo, n, a, lda);
+        }
+    }
+
     private static class JNI_DpstrfNode extends DpstrfNode {
         @Override
         @TruffleBoundary
@@ -158,6 +166,11 @@ public class JNI_Lapack implements LapackRFFI {
     }
 
     @Override
+    public DpotriNode createDpotriNode() {
+        return new JNI_DpotriNode();
+    }
+
+    @Override
     public DpstrfNode createDpstrfNode() {
         return new JNI_DpstrfNode();
     }
@@ -197,6 +210,8 @@ public class JNI_Lapack implements LapackRFFI {
     private static native int native_dgetrf(int m, int n, double[] a, int lda, int[] ipiv);
 
     private static native int native_dpotrf(char uplo, int n, double[] a, int lda);
+
+    private static native int native_dpotri(char uplo, int n, double[] a, int lda);
 
     private static native int native_dpstrf(char uplo, int n, double[] a, int lda, int[] piv, int[] rank, double tol, double[] work);
 

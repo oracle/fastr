@@ -137,6 +137,18 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dpotrf(JNIEnv *env
     return info;
 }
 
+extern int dpotri_(char *uplo, int *n, double *a, int *lda, int *info);
+
+JNIEXPORT jint JNICALL
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dpotri(JNIEnv *env, jclass klass,
+        char uplo, int n, jdoubleArray ja, int lda) {
+    double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
+    int info;
+    dpotri_(&uplo, &n, a, &lda, &info);
+    (*env)->ReleasePrimitiveArrayCritical(env, ja, a, 0);
+    return info;
+}
+
 extern int dpstrf_(char *uplo, int *n, double *a, int *lda, int *piv, int *rank, double *tol, double *work, int *info);
 
 JNIEXPORT jint JNICALL

@@ -491,6 +491,7 @@ public class BasePackage extends RBuiltinPackage {
         add(IsUnsorted.class, IsUnsortedNodeGen::create);
         add(LaFunctions.DetGeReal.class, LaFunctionsFactory.DetGeRealNodeGen::create);
         add(LaFunctions.LaChol.class, LaFunctionsFactory.LaCholNodeGen::create);
+        add(LaFunctions.LaChol2Inv.class, LaFunctionsFactory.LaChol2InvNodeGen::create);
         add(LaFunctions.Qr.class, LaFunctionsFactory.QrNodeGen::create);
         add(LaFunctions.QrCoefReal.class, LaFunctionsFactory.QrCoefRealNodeGen::create);
         add(LaFunctions.Rg.class, LaFunctionsFactory.RgNodeGen::create);

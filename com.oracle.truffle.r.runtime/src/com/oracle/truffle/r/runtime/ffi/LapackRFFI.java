@@ -110,6 +110,18 @@ public interface LapackRFFI {
         }
     }
 
+    abstract class DpotriNode extends Node {
+
+        /**
+         * See <a href="http://www.netlib.org/lapack/explore-html/d0/d8a/dpotri_8f.html">spec</a>.
+         */
+        public abstract int execute(char uplo, int n, double[] a, int lda);
+
+        public static DpotriNode create() {
+            return RFFIFactory.getRFFI().getLapackRFFI().createDpotriNode();
+        }
+    }
+
     abstract class DpstrfNode extends Node {
         /**
          * See <a href="http://www.netlib.org/lapack/explore-html/dd/dad/dpstrf_8f.html">spec</a>.
@@ -179,6 +191,8 @@ public interface LapackRFFI {
     DgetrfNode createDgetrfNode();
 
     DpotrfNode createDpotrfNode();
+
+    DpotriNode createDpotriNode();
 
     DpstrfNode createDpstrfNode();
 
