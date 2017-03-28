@@ -77,6 +77,12 @@ public class TestBuiltin_grep extends TestBase {
     }
 
     @Test
+    public void testgrep13() {
+        // grep('.__T__[[<-:', data, fixed = TRUE)
+        assertEval("argv <- list('.__T__[[<-:', '.__T__[[<-:base', FALSE, FALSE, FALSE, TRUE, FALSE, FALSE); .Internal(grep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+    }
+
+    @Test
     public void testGrep() {
         assertEval("{ txt<-c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"); grep(\"foo\", txt) }");
         assertEval("{ txt<-c(\"is\", \"intended\", \"to\", \"guarantee\", \"your\", \"freedom\"); grep(\"[gu]\", txt) }");

@@ -15,6 +15,8 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -74,32 +76,38 @@ public class GrepFunctions {
                             "pattern");
         }
 
+        protected static void castPatternSingle(Casts casts) {
+            // with default error message, NO_CALLER does not work
+            casts.arg("pattern").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "pattern").asVector().mustBe(notEmpty(), RError.Message.INVALID_ARGUMENT,
+                            "pattern").shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST, "pattern").findFirst();
+        }
+
         protected static void castText(Casts casts, String textId) {
             casts.arg(textId).mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, textId);
         }
 
         protected static void castIgnoreCase(Casts casts) {
-            casts.arg("ignore.case").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+            casts.arg("ignore.case").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         }
 
         protected static void castPerl(Casts casts) {
-            casts.arg("perl").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+            casts.arg("perl").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         }
 
         protected static void castFixed(Casts casts, byte defaultValue) {
-            casts.arg("fixed").asLogicalVector().findFirst(defaultValue);
+            casts.arg("fixed").asLogicalVector().findFirst(defaultValue).map(toBoolean());
         }
 
         protected static void castValue(Casts casts) {
-            casts.arg("value").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+            casts.arg("value").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         }
 
         protected static void castUseBytes(Casts casts) {
-            casts.arg("useBytes").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+            casts.arg("useBytes").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         }
 
         protected static void castInvert(Casts casts) {
-            casts.arg("invert").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+            casts.arg("invert").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         }
 
         protected static void castCosts(Casts casts) {
@@ -116,13 +124,13 @@ public class GrepFunctions {
          * then an NYI error will be thrown (in the first one). If any of the arguments do not
          * apply, pass {@link RRuntime#LOGICAL_FALSE}.
          */
-        protected void checkExtraArgs(byte ignoreCase, byte perl, byte fixed, @SuppressWarnings("unused") byte useBytes, byte invert) {
-            checkNotImplemented(RRuntime.fromLogical(ignoreCase), "ignoreCase", true);
-            checkNotImplemented(RRuntime.fromLogical(perl), "perl", true);
-            checkNotImplemented(RRuntime.fromLogical(fixed), "fixed", true);
+        protected void checkExtraArgs(boolean ignoreCase, boolean perl, boolean fixed, @SuppressWarnings("unused") boolean useBytes, boolean invert) {
+            checkNotImplemented(ignoreCase, "ignoreCase", true);
+            checkNotImplemented(perl, "perl", true);
+            checkNotImplemented(fixed, "fixed", true);
             // We just ignore useBytes
             // checkNotImplemented(RRuntime.fromLogical(useBytes), "useBytes", true);
-            checkNotImplemented(RRuntime.fromLogical(invert), "invert", true);
+            checkNotImplemented(invert, "invert", true);
         }
 
         protected void checkCaseFixed(boolean ignoreCase, boolean fixed) {
@@ -140,23 +148,14 @@ public class GrepFunctions {
             }
         }
 
-        protected String checkLength(RAbstractStringVector arg, String name) {
-            if (arg.getLength() < 1) {
-                throw error(RError.Message.INVALID_ARGUMENT, name);
-            } else if (arg.getLength() > 1) {
-                warning(RError.Message.ARGUMENT_ONLY_FIRST, name);
-            }
-            return arg.getDataAt(0);
-        }
-
         /**
          * Temporary check for the {@code value} argument, which is only applicable to {@code grep}
          * and {@code agrep} (so not included in {@code checkExtraArgs}.
          *
          * @param value
          */
-        protected void valueCheck(byte value) {
-            if (RRuntime.fromLogical(value)) {
+        protected void valueCheck(boolean value) {
+            if (value) {
                 throw RError.nyi(this, "value == true");
             }
         }
@@ -180,10 +179,6 @@ public class GrepFunctions {
                 }
                 return result;
             }
-        }
-
-        protected boolean isTrue(byte fixed) {
-            return RRuntime.fromLogical(fixed);
         }
 
         protected RStringVector allStringNAResult(int len) {
@@ -217,25 +212,21 @@ public class GrepFunctions {
     private abstract static class GrepAdapter extends CommonCodeAdapter {
         @Child PCRERFFI.ExecNode execNode = RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
 
-        protected Object doGrep(RAbstractStringVector patternArgVec, RAbstractStringVector vector, byte ignoreCaseLogical, byte valueLogical, byte perlLogical, byte fixedLogical,
-                        @SuppressWarnings("unused") byte useBytes, byte invertLogical, boolean grepl) {
-            boolean value = RRuntime.fromLogical(valueLogical);
-            boolean invert = RRuntime.fromLogical(invertLogical);
-            boolean perl = RRuntime.fromLogical(perlLogical);
-            boolean ignoreCase = RRuntime.fromLogical(ignoreCaseLogical);
-            boolean fixed = RRuntime.fromLogical(fixedLogical);
-            perl = checkPerlFixed(RRuntime.fromLogical(perlLogical), fixed);
+        protected Object doGrep(String patternArg, RAbstractStringVector vector, boolean ignoreCase, boolean value, boolean perlPar, boolean fixed,
+                        @SuppressWarnings("unused") boolean useBytes, boolean invert, boolean grepl) {
+            boolean perl = perlPar;
+            perl = checkPerlFixed(perlPar, fixed);
             checkCaseFixed(ignoreCase, fixed);
 
-            String pattern = checkLength(patternArgVec, "pattern");
+            String pattern = patternArg;
             int len = vector.getLength();
             if (RRuntime.isNA(pattern)) {
                 return value ? allStringNAResult(len) : allIntNAResult(len);
             }
             boolean[] matches = new boolean[len];
-            if (fixed && !perl) {
+            if (!perl) {
                 // TODO case
-                if (fixed) {
+                if (!fixed) {
                     pattern = RegExp.checkPreDefinedClasses(pattern);
                 }
                 findAllMatches(matches, pattern, vector, fixed, ignoreCase);
@@ -325,7 +316,7 @@ public class GrepFunctions {
 
         static {
             Casts casts = new Casts(Grep.class);
-            castPattern(casts);
+            castPatternSingle(casts);
             castText(casts, "text");
             castIgnoreCase(casts);
             castValue(casts);
@@ -335,10 +326,39 @@ public class GrepFunctions {
             castInvert(casts);
         }
 
+        protected boolean checkContains(boolean value, boolean perl, boolean fixed, boolean useBytes) {
+            return fixed && !useBytes && !value && !perl;
+        }
+
+        @Specialization(guards = {"checkContains(value, perl, fixed, useBytes)"})
+        @TruffleBoundary
+        protected Object grepValueFixed(String patternPar, RAbstractStringVector vector, boolean ignoreCase, @SuppressWarnings("unused") boolean value,
+                        @SuppressWarnings("unused") boolean perl,
+                        @SuppressWarnings("unused") boolean fixed, @SuppressWarnings("unused") boolean useBytes, boolean invert) {
+
+            String pattern = ignoreCase ? patternPar.toLowerCase() : patternPar;
+
+            int[] matchIndices = new int[vector.getLength()];
+            int matches = 0;
+            for (int i = 0; i < vector.getLength(); i++) {
+                String s = vector.getDataAt(i);
+                if (ignoreCase) {
+                    s = s.toLowerCase();
+                }
+
+                if (s.contains(pattern) == !invert) {
+                    // don't forget: R indices are 1-based
+                    matchIndices[matches++] = i + 1;
+                }
+            }
+
+            return RDataFactory.createIntVector(Arrays.copyOf(matchIndices, matches), true);
+        }
+
         @Specialization
         @TruffleBoundary
-        protected Object grepValueFalse(RAbstractStringVector patternArgVec, RAbstractStringVector vector, byte ignoreCaseLogical, byte valueLogical, byte perlLogical, byte fixedLogical,
-                        byte useBytes, byte invertLogical) {
+        protected Object grepValueFalse(String patternArgVec, RAbstractStringVector vector, boolean ignoreCaseLogical, boolean valueLogical, boolean perlLogical, boolean fixedLogical,
+                        boolean useBytes, boolean invertLogical) {
             return doGrep(patternArgVec, vector, ignoreCaseLogical, valueLogical, perlLogical, fixedLogical, useBytes, invertLogical, false);
         }
     }
@@ -348,7 +368,7 @@ public class GrepFunctions {
 
         static {
             Casts casts = new Casts(GrepL.class);
-            castPattern(casts);
+            castPatternSingle(casts);
             castText(casts, "text");
             castIgnoreCase(casts);
             castValue(casts);
@@ -360,10 +380,10 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object grepl(RAbstractStringVector patternArgVec, RAbstractStringVector vector, byte ignoreCaseLogical, byte valueLogical, byte perlLogical, byte fixedLogical, byte useBytes,
-                        byte invertLogical) {
+        protected Object grepl(String pattern, RAbstractStringVector vector, boolean ignoreCaseLogical, boolean valueLogical, boolean perlLogical, boolean fixedLogical,
+                        boolean useBytes, boolean invertLogical) {
             // invert is passed but is always FALSE
-            return doGrep(patternArgVec, vector, ignoreCaseLogical, valueLogical, perlLogical, fixedLogical, useBytes, invertLogical, true);
+            return doGrep(pattern, vector, ignoreCaseLogical, valueLogical, perlLogical, fixedLogical, useBytes, invertLogical, true);
         }
     }
 
@@ -372,20 +392,20 @@ public class GrepFunctions {
 
         protected static void castReplacement(Casts casts) {
             // with default error message, NO_CALLER does not work
-            casts.arg("replacement").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "replacement").asVector().mustBe(notEmpty(), RError.Message.INVALID_ARGUMENT, "replacement");
+            casts.arg("replacement").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "replacement").asVector().mustBe(notEmpty(), RError.Message.INVALID_ARGUMENT, "replacement").shouldBe(
+                            singleElement(), RError.Message.ARGUMENT_ONLY_FIRST, "replacement").findFirst();
         }
 
-        protected RStringVector doSub(RAbstractStringVector patternArgVec, RAbstractStringVector replacementVec, RAbstractStringVector vector, byte ignoreCaseLogical, byte perlLogical,
-                        byte fixedLogical, @SuppressWarnings("unused") byte useBytes, boolean gsub) {
+        protected RStringVector doSub(String patternArg, String replacementArg, RAbstractStringVector vector, boolean ignoreCase, boolean perlPar,
+                        boolean fixedPar, @SuppressWarnings("unused") boolean useBytes, boolean gsub) {
             try {
-                boolean perl = RRuntime.fromLogical(perlLogical);
-                boolean fixed = RRuntime.fromLogical(fixedLogical);
-                boolean ignoreCase = RRuntime.fromLogical(ignoreCaseLogical);
+                boolean perl = perlPar;
+                boolean fixed = fixedPar;
                 checkNotImplemented(!(perl || fixed) && ignoreCase, "ignoreCase", true);
                 checkCaseFixed(ignoreCase, fixed);
                 perl = checkPerlFixed(perl, fixed);
-                String pattern = checkLength(patternArgVec, "pattern");
-                String replacement = checkLength(replacementVec, "replacement");
+                String pattern = patternArg;
+                String replacement = replacementArg;
 
                 int len = vector.getLength();
                 if (RRuntime.isNA(pattern)) {
@@ -647,7 +667,7 @@ public class GrepFunctions {
 
         static {
             Casts casts = new Casts(Sub.class);
-            castPattern(casts);
+            castPatternSingle(casts);
             castReplacement(casts);
             castText(casts, "text");
             castIgnoreCase(casts);
@@ -658,8 +678,8 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector subRegexp(RAbstractStringVector patternArgVec, RAbstractStringVector replacementVec, RAbstractStringVector x, byte ignoreCaseLogical, byte perlLogical,
-                        byte fixedLogical, byte useBytes) {
+        protected RStringVector subRegexp(String patternArgVec, String replacementVec, RAbstractStringVector x, boolean ignoreCaseLogical, boolean perlLogical,
+                        boolean fixedLogical, boolean useBytes) {
             return doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, false);
         }
     }
@@ -669,7 +689,7 @@ public class GrepFunctions {
 
         static {
             Casts casts = new Casts(GSub.class);
-            castPattern(casts);
+            castPatternSingle(casts);
             castReplacement(casts);
             castText(casts, "text");
             castIgnoreCase(casts);
@@ -680,8 +700,8 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector gsub(RAbstractStringVector patternArgVec, RAbstractStringVector replacementVec, RAbstractStringVector x, byte ignoreCaseLogical, byte perlLogical, byte fixedLogical,
-                        byte useBytes) {
+        protected RStringVector gsub(String patternArgVec, String replacementVec, RAbstractStringVector x, boolean ignoreCaseLogical, boolean perlLogical,
+                        boolean fixedLogical, boolean useBytes) {
             return doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, true);
         }
     }
@@ -736,11 +756,11 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCaseL, byte perlL, byte fixedL, byte useBytesL) {
-            checkExtraArgs(RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytesL, RRuntime.LOGICAL_FALSE);
-            boolean ignoreCase = RRuntime.fromLogical(ignoreCaseL);
-            boolean fixed = RRuntime.fromLogical(fixedL);
-            boolean perl = RRuntime.fromLogical(perlL);
+        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, boolean ignoreCaseL, boolean perlL, boolean fixedL, boolean useBytesL) {
+            checkExtraArgs(false, false, false, useBytesL, false);
+            boolean ignoreCase = ignoreCaseL;
+            boolean fixed = fixedL;
+            boolean perl = perlL;
             if (patternArg.getLength() > 1) {
                 throw RInternalError.unimplemented("multi-element patterns in regexpr not implemented yet");
             }
@@ -915,11 +935,11 @@ public class GrepFunctions {
         @Specialization
         @TruffleBoundary
         @Override
-        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCaseL, byte perlL, byte fixedL, byte useBytesL) {
-            checkExtraArgs(RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytesL, RRuntime.LOGICAL_FALSE);
-            boolean ignoreCase = RRuntime.fromLogical(ignoreCaseL);
-            boolean fixed = RRuntime.fromLogical(fixedL);
-            boolean perl = RRuntime.fromLogical(perlL);
+        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, boolean ignoreCaseL, boolean perlL, boolean fixedL, boolean useBytesL) {
+            checkExtraArgs(false, false, false, useBytesL, false);
+            boolean ignoreCase = ignoreCaseL;
+            boolean fixed = fixedL;
+            boolean perl = perlL;
             if (patternArg.getLength() > 1) {
                 throw RInternalError.unimplemented("multi-element patterns in gregexpr not implemented yet");
             }
@@ -1028,7 +1048,7 @@ public class GrepFunctions {
 
         static {
             Casts casts = new Casts(AGrep.class);
-            castPattern(casts);
+            castPatternSingle(casts);
             castText(casts, "x");
             castIgnoreCase(casts);
             castValue(casts);
@@ -1041,15 +1061,15 @@ public class GrepFunctions {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, RAbstractIntVector costs, RAbstractDoubleVector bounds, byte useBytes,
-                        byte fixed) {
+        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RAbstractIntVector costs, RAbstractDoubleVector bounds,
+                        boolean useBytes,
+                        boolean fixed) {
             // TODO implement completely; this is a very basic implementation for fixed=TRUE only.
-            checkExtraArgs(ignoreCase, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
+            checkExtraArgs(ignoreCase, false, false, useBytes, false);
             valueCheck(value);
-            checkNotImplemented(!RRuntime.fromLogical(fixed), "fixed", false);
+            checkNotImplemented(!fixed, "fixed", false);
             int[] tmp = new int[vector.getLength()];
             int numMatches = 0;
-            String pattern = patternArg.getDataAt(0);
             long maxDistance = Math.round(pattern.length() * bounds.getDataAt(0));
             for (int i = 0; i < vector.getLength(); i++) {
                 int ld = ld(pattern, vector.getDataAt(i));
@@ -1144,7 +1164,7 @@ public class GrepFunctions {
 
         static {
             Casts casts = new Casts(AGrepL.class);
-            castPattern(casts);
+            castPatternSingle(casts);
             castText(casts, "x");
             castIgnoreCase(casts);
             castValue(casts);
@@ -1157,12 +1177,12 @@ public class GrepFunctions {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object aGrep(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte value, RAbstractIntVector costs, RAbstractDoubleVector bounds, byte useBytes,
-                        byte fixed) {
+        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RAbstractIntVector costs, RAbstractDoubleVector bounds,
+                        boolean useBytes,
+                        boolean fixed) {
             // TODO implement properly, this only supports strict equality!
-            checkExtraArgs(ignoreCase, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, useBytes, RRuntime.LOGICAL_FALSE);
+            checkExtraArgs(ignoreCase, false, false, useBytes, false);
             byte[] data = new byte[vector.getLength()];
-            String pattern = patternArg.getDataAt(0);
             for (int i = 0; i < vector.getLength(); i++) {
                 data[i] = RRuntime.asLogical(pattern.equals(vector.getDataAt(i)));
             }
@@ -1187,9 +1207,9 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RList split(RAbstractStringVector x, RAbstractStringVector splitArg, byte fixedLogical, byte perlLogical, @SuppressWarnings("unused") byte useBytes) {
-            boolean fixed = RRuntime.fromLogical(fixedLogical);
-            boolean perl = checkPerlFixed(RRuntime.fromLogical(perlLogical), fixed);
+        protected RList split(RAbstractStringVector x, RAbstractStringVector splitArg, boolean fixedLogical, boolean perlLogical, @SuppressWarnings("unused") boolean useBytes) {
+            boolean fixed = fixedLogical;
+            boolean perl = checkPerlFixed(perlLogical, fixed);
             RStringVector[] result = new RStringVector[x.getLength()];
             // treat split = NULL as split = ""
             RAbstractStringVector split = splitArg.getLength() == 0 ? RDataFactory.createStringVectorFromScalar("") : splitArg;
