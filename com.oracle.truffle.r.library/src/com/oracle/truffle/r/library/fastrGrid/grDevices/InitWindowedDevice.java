@@ -22,18 +22,24 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
+import java.io.IOException;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
-import com.oracle.truffle.r.library.fastrGrid.GridState;
-import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
+import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice;
+import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice.NotSupportedImageFormatException;
+import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedJFrameDevice;
+import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
  * Node that handles the {@code C_X11} external calls. Those calls may be initiated from either the
- * {@code X11} function or FastR specific {@code awt} function. In either case the result is that
- * the AWT window is opened and ready for drawing.
+ * {@code X11}, {@code jpeg}, {@code bmp}, {@code png} functions and from FastR specific {@code awt}
+ * . The arguments determine which device should be opened.
  */
 public final class InitWindowedDevice extends RExternalBuiltinNode {
     static {
@@ -43,12 +49,28 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
     @Override
     @TruffleBoundary
     protected Object call(RArgsValuesAndNames args) {
-        GridState gridState = GridContext.getContext().getGridState();
-        if (!gridState.isDeviceInitialized()) {
-            GridContext.getContext().getCurrentDevice().openNewPage();
-            gridState.setDeviceInitialized();
+        // if the first argument is a String, then it may describes the image format and filename to
+        // use, the format is e.g. "jpeg::quality:filename"
+        if (args.getLength() >= 1) {
+            String name = RRuntime.asString(args.getArgument(0));
+            if (!RRuntime.isNA(name) && name.contains("::")) {
+                return openImageDevice(name);
+            }
         }
-        RGridGraphicsAdapter.setCurrentDevice(args.getLength() == 0 ? "awt" : "X11cairo");
+        // otherwise the
+        GridContext.getContext().setCurrentDevice(args.getLength() == 0 ? "awt" : "X11cairo", new BufferedJFrameDevice(JFrameDevice.create()));
+        return RNull.instance;
+    }
+
+    private Object openImageDevice(String name) {
+        String formatName = name.substring(0, name.indexOf("::"));
+        String filename = name.substring(name.lastIndexOf(':') + 1);
+        try {
+            BufferedImageDevice device = BufferedImageDevice.open(filename, formatName, 700, 700);
+            GridContext.getContext().setCurrentDevice(formatName, device);
+        } catch (NotSupportedImageFormatException e) {
+            throw error(Message.GENERIC, String.format("Format '%s' is not supported.", formatName));
+        }
         return RNull.instance;
     }
 }

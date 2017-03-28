@@ -20,28 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastrGrid;
+package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
+import com.oracle.truffle.r.library.fastrGrid.GridContext;
+import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
-/**
- * A node for externals that we ignore, because we do not need to implement them or because they
- * support features we do not implement yet, especially record/replay.
- */
-final class IgnoredGridExternal extends RExternalBuiltinNode {
-    private final Object result;
-
+public final class DevCurr extends RExternalBuiltinNode.Arg0 {
     static {
-        Casts.noCasts(IgnoredGridExternal.class);
-    }
-
-    IgnoredGridExternal(Object result) {
-        this.result = result;
+        Casts.noCasts(DevCurr.class);
     }
 
     @Override
-    protected Object call(RArgsValuesAndNames args) {
-        return result;
+    public RAbstractIntVector execute() {
+        int index = GridContext.getContext().getCurrentDeviceIndex();
+        RStringVector names = RDataFactory.createStringVectorFromScalar(RGridGraphicsAdapter.getDeviceName(index));
+        return RDataFactory.createIntVector(new int[]{index + 1}, RDataFactory.COMPLETE_VECTOR, names);
     }
 }

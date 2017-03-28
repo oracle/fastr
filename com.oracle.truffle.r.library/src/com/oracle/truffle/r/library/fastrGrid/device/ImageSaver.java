@@ -20,28 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastrGrid;
+package com.oracle.truffle.r.library.fastrGrid.device;
 
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import java.io.IOException;
 
 /**
- * A node for externals that we ignore, because we do not need to implement them or because they
- * support features we do not implement yet, especially record/replay.
+ * Devices that support saving their current state into a file should implement this interface.
+ * Note: this only makes sense for interactive devices. Devices like SVG are already saving into a
+ * file.
  */
-final class IgnoredGridExternal extends RExternalBuiltinNode {
-    private final Object result;
-
-    static {
-        Casts.noCasts(IgnoredGridExternal.class);
-    }
-
-    IgnoredGridExternal(Object result) {
-        this.result = result;
-    }
-
-    @Override
-    protected Object call(RArgsValuesAndNames args) {
-        return result;
-    }
+public interface ImageSaver {
+    void save(String path, String fileType) throws IOException;
 }

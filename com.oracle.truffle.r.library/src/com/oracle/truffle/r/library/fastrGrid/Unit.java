@@ -56,7 +56,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Note: internally in FastR Grid everything is in inches. However, some lists that are exposed to
- * the R code should contain values in centimeters, we convert such values immediatelly once they
+ * the R code should contain values in centimeters, we convert such values immediately once they
  * enter our system.
  */
 public final class Unit {
@@ -185,6 +185,9 @@ public final class Unit {
 
     private static double convertToInches(double value, int index, int unitId, RList data, UnitConversionContext ctx, AxisOrDimension axisOrDim) {
         double vpSize = ctx.getViewPortSize(axisOrDim);
+        String str;
+        String[] lines;
+        double result = 0;
         switch (unitId) {
             case INCHES:
                 return value;
@@ -207,10 +210,20 @@ public final class Unit {
                 return (value * ctx.gpar.getDrawingContext(index).getFontSize() * ctx.gpar.getDrawingContext(index).getLineHeight()) / INCH_TO_POINTS_FACTOR;
             case STRINGWIDTH:
             case MYSTRINGWIDTH:
-                return ctx.device.getStringWidth(ctx.gpar.getDrawingContext(index), RRuntime.asString(data.getDataAt(0)));
+                str = RRuntime.asString(data.getDataAt(0));
+                lines = str.split("\n");
+                for (int i = 0; i < lines.length; i++) {
+                    result = Math.max(result, ctx.device.getStringWidth(ctx.gpar.getDrawingContext(index), lines[i]));
+                }
+                return result;
             case STRINGHEIGHT:
             case MYSTRINGHEIGHT:
-                return ctx.device.getStringHeight(ctx.gpar.getDrawingContext(index), RRuntime.asString(data.getDataAt(0)));
+                str = RRuntime.asString(data.getDataAt(0));
+                lines = str.split("\n");
+                for (int i = 0; i < lines.length; i++) {
+                    result += ctx.device.getStringHeight(ctx.gpar.getDrawingContext(index), lines[i]);
+                }
+                return result;
             case NULL:
                 return evaluateNullUnit(value, vpSize, ctx.nullLayoutMode, ctx.nullArithmeticMode);
             default:

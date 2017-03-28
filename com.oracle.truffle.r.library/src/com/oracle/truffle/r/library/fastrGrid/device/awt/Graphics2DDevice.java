@@ -20,82 +20,86 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastrGrid.device;
+package com.oracle.truffle.r.library.fastrGrid.device.awt;
 
 import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_TO_POINTS_FACTOR;
 import static java.awt.geom.Path2D.WIND_EVEN_ODD;
 
 import java.awt.BasicStroke;
-import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
-import java.awt.HeadlessException;
 import java.awt.Paint;
-import java.awt.RenderingHints;
 import java.awt.Shape;
-import java.awt.Toolkit;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
-import java.util.function.Supplier;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-
+import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridFontStyle;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineEnd;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineJoin;
+import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
+import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.runtime.RInternalError;
 
-public final class JFrameDevice implements GridDevice {
+/**
+ * A device that draws to given {@code Graphics2D} object regardless of whether it was created for
+ * e.g. an image, or window. This device only used by other devices and not exposed at the R level.
+ * Note: it is responsibility of the use to handle resources management, i.e. calling
+ * {@code dispose} on the graphics object once it is not needed anymore.
+ */
+public class Graphics2DDevice implements GridDevice {
     // Grid's coordinate system has origin in left bottom corner and y axis grows from bottom to
-    // top. Moreover, the grid system uses inches as units. We use transformation to adjust the java
-    // coordinate system to the grid one. However, in the case of text rendering, we cannot simply
-    // turn upside down the y-axis, because the text would be upside down too, so for text rendering
-    // only, we reset the transformation completely and transform the coordinates ourselves
-    private static final double POINTS_IN_INCH = 72.;
+    // top. Moreover, the grid system uses inches as units. We do not use builtin transformations,
+    // because (a) text rendering gets affected badly (upside down text), (b) the user of this call
+    // may wish to apply his/her own transformations to the graphics object and we should not
+    // interfere with these. In cases we do use transformation, we make sure to set back the
+    // original one after we're done.
+    static final double AWT_POINTS_IN_INCH = 72.;
 
-    private static BasicStroke solidStroke;
     private static BasicStroke blankStroke;
 
-    private FastRFrame currentFrame;
+    private final int width;
+    private final int height;
     private Graphics2D graphics;
+    private final boolean graphicsIsExclusive;
+    private DrawingContext cachedContext;
 
-    @Override
-    public void openNewPage() {
+    /**
+     * @param graphics Object that should be used for the drawing.
+     * @param width Width of the drawing area in AWT units.
+     * @param height Height of the drawing area in AWT units.
+     * @param graphicsIsExclusive If the graphics object is exclusively used for drawing only by
+     *            this class, then it can optimize some things.
+     */
+    Graphics2DDevice(Graphics2D graphics, int width, int height, boolean graphicsIsExclusive) {
         initStrokes();
-        if (currentFrame == null) {
-            currentFrame = new FastRFrame();
-            currentFrame.setVisible(true);
-            initGraphics(currentFrame.getGraphics());
-        } else {
-            noTransform(() -> {
-                graphics.clearRect(0, 0, currentFrame.getWidth(), currentFrame.getHeight());
-                return null;
-            });
-        }
+        setGraphics2D(graphics);
+        this.width = width;
+        this.height = height;
+        this.graphicsIsExclusive = graphicsIsExclusive;
     }
 
     @Override
-    public void drawRect(DrawingContext ctx, double leftX, double topY, double width, double height, double rotationAnticlockWise) {
+    public void openNewPage() {
+        graphics.clearRect(0, 0, width, height);
+    }
+
+    @Override
+    public void drawRect(DrawingContext ctx, double leftXIn, double bottomYIn, double widthIn, double heightIn, double rotationAnticlockWise) {
+        int leftX = transX(leftXIn);
+        int topY = transY(bottomYIn + heightIn);
+        int width = transDim(widthIn);
+        int height = transDim(heightIn);
         setContext(ctx);
         if (rotationAnticlockWise == 0.) {
             drawShape(ctx, new Rectangle2D.Double(leftX, topY, width, height));
             return;
         }
-        AffineTransform oldTr = graphics.getTransform();
-        AffineTransform newTr = new AffineTransform(oldTr);
-        newTr.translate(leftX + width / 2, topY + height / 2);
-        newTr.rotate(rotationAnticlockWise);
-        graphics.setTransform(newTr);
-        drawShape(ctx, new Rectangle2D.Double(-(width / 2), -(height / 2), width, height));
-        graphics.setTransform(oldTr);
+        transformed(leftX + width / 2, topY + height / 2, rotationAnticlockWise, () -> drawShape(ctx, new Rectangle2D.Double(-(width / 2), -(height / 2), width, height)));
     }
 
     @Override
@@ -113,78 +117,93 @@ public final class JFrameDevice implements GridDevice {
     }
 
     @Override
-    public void drawCircle(DrawingContext ctx, double centerX, double centerY, double radius) {
+    public void drawCircle(DrawingContext ctx, double centerXIn, double centerYIn, double radiusIn) {
         setContext(ctx);
+        int centerX = transX(centerXIn);
+        int centerY = transY(centerYIn);
+        int radius = transDim(radiusIn);
         drawShape(ctx, new Ellipse2D.Double(centerX - radius, centerY - radius, radius * 2d, radius * 2d));
     }
 
     @Override
-    public void drawString(DrawingContext ctx, double leftX, double bottomY, double rotationAnticlockWise, String text) {
-        setContext(ctx);
-        noTransform(() -> {
-            AffineTransform tr = graphics.getTransform();
-            tr.translate((float) (leftX * POINTS_IN_INCH), (float) (currentFrame.getContentPane().getHeight() - bottomY * POINTS_IN_INCH));
-            tr.rotate(-rotationAnticlockWise);
-            graphics.setTransform(tr);
-            setFont(ctx);
-            graphics.drawString(text, 0, 0);
-            return null;
-        });
+    public void drawString(DrawingContext ctx, double leftXIn, double bottomYIn, double rotationAnticlockWise, String text) {
+        setContextAndFont(ctx);
+        int leftX = transX(leftXIn);
+        FontMetrics fontMetrics = graphics.getFontMetrics(graphics.getFont());
+        int bottomY = transY(bottomYIn) - fontMetrics.getDescent();
+        transformed(leftX, bottomY, rotationAnticlockWise, () -> graphics.drawString(text, 0, 0));
     }
 
     @Override
     public double getWidth() {
-        return currentFrame.getContentPane().getWidth() / POINTS_IN_INCH;
+        return width / AWT_POINTS_IN_INCH;
     }
 
     @Override
     public double getHeight() {
-        return currentFrame.getContentPane().getHeight() / POINTS_IN_INCH;
+        return height / AWT_POINTS_IN_INCH;
     }
 
     @Override
     public double getStringWidth(DrawingContext ctx, String text) {
-        setContext(ctx);
-        return noTransform(() -> {
-            setFont(ctx);
-            int swingUnits = graphics.getFontMetrics(graphics.getFont()).stringWidth(text);
-            return swingUnits / POINTS_IN_INCH;
-        });
+        setContextAndFont(ctx);
+        int swingUnits = graphics.getFontMetrics(graphics.getFont()).stringWidth(text);
+        return swingUnits / AWT_POINTS_IN_INCH;
     }
 
     @Override
     public double getStringHeight(DrawingContext ctx, String text) {
-        setContext(ctx);
-        return noTransform(() -> {
-            setFont(ctx);
-            int swingUnits = graphics.getFont().getSize();
-            return swingUnits / POINTS_IN_INCH;
-        });
+        setContextAndFont(ctx);
+        FontMetrics fontMetrics = graphics.getFontMetrics(graphics.getFont());
+        double swingUnits = fontMetrics.getAscent() + fontMetrics.getDescent();
+        return swingUnits / AWT_POINTS_IN_INCH;
     }
 
-    FastRFrame getCurrentFrame() {
-        return currentFrame;
+    void setGraphics2D(Graphics2D newGraphics) {
+        assert newGraphics != null;
+        graphics = newGraphics;
     }
 
-    void initGraphics(Graphics newGraphics) {
-        if (graphics != null) {
-            graphics.dispose();
+    public Graphics2D getGraphics2D() {
+        return graphics;
+    }
+
+    private int transY(double y) {
+        return height - (int) (y * AWT_POINTS_IN_INCH);
+    }
+
+    private static int transX(double x) {
+        return (int) (x * AWT_POINTS_IN_INCH);
+    }
+
+    private static int transDim(double widthOrHeight) {
+        return (int) (widthOrHeight * AWT_POINTS_IN_INCH);
+    }
+
+    private static void initStrokes() {
+        if (blankStroke != null) {
+            return;
         }
-        graphics = (Graphics2D) newGraphics;
-        graphics.translate(0, currentFrame.getHeight());
-        graphics.scale(POINTS_IN_INCH, -POINTS_IN_INCH);
-        graphics.setStroke(new BasicStroke((float) (1d / POINTS_IN_INCH)));
-        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        graphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+        blankStroke = new BasicStroke(0f);
+    }
+
+    private void transformed(int centreX, int centreY, double radiansAnticlockwise, Runnable action) {
+        AffineTransform oldTransform = graphics.getTransform();
+        AffineTransform newTr = new AffineTransform(oldTransform);
+        newTr.translate(centreX, centreY);
+        newTr.rotate(-radiansAnticlockwise);
+        graphics.setTransform(newTr);
+        action.run();
+        graphics.setTransform(oldTransform);
     }
 
     private Path2D.Double getPath2D(double[] x, double[] y, int startIndex, int length) {
         assert startIndex >= 0 && startIndex < x.length && startIndex < y.length : "startIndex out of bounds";
         assert length > 0 && (startIndex + length) <= Math.min(x.length, y.length) : "length out of bounds";
         Path2D.Double path = new Path2D.Double(WIND_EVEN_ODD, x.length);
-        path.moveTo(x[startIndex], y[startIndex]);
+        path.moveTo(transX(x[startIndex]), transY(y[startIndex]));
         for (int i = startIndex + 1; i < length; i++) {
-            path.lineTo(x[i], y[i]);
+            path.lineTo(transX(x[i]), transY(y[i]));
         }
         return path;
     }
@@ -198,15 +217,25 @@ public final class JFrameDevice implements GridDevice {
     }
 
     private void setContext(DrawingContext ctx) {
+        if (graphicsIsExclusive && cachedContext == ctx) {
+            return;
+        }
         graphics.setColor(fromGridColor(ctx.getColor()));
         graphics.setStroke(getStrokeFromCtx(ctx));
+        cachedContext = ctx;
     }
 
-    private void setFont(DrawingContext ctx) {
-        float fontSize = (float) ((ctx.getFontSize() / INCH_TO_POINTS_FACTOR) * POINTS_IN_INCH);
+    private void setContextAndFont(DrawingContext ctx) {
+        if (graphicsIsExclusive && cachedContext == ctx) {
+            return;
+        }
+        setContext(ctx);
+        float fontSize = (float) ((ctx.getFontSize() / INCH_TO_POINTS_FACTOR) * AWT_POINTS_IN_INCH);
         Font font = new Font(getFontName(ctx.getFontFamily()), getAwtFontStyle(ctx.getFontStyle()), 1).deriveFont(fontSize);
         graphics.setFont(font);
     }
+
+    // Transformation of DrawingContext data types to AWT constants
 
     private String getFontName(String gridFontFamily) {
         if (gridFontFamily == null) {
@@ -240,19 +269,11 @@ public final class JFrameDevice implements GridDevice {
         }
     }
 
-    private <T> T noTransform(Supplier<T> action) {
-        AffineTransform transform = graphics.getTransform();
-        graphics.setTransform(new AffineTransform());
-        T result = action.get();
-        graphics.setTransform(transform);
-        return result;
-    }
-
     private static Color fromGridColor(GridColor color) {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
     }
 
-    private static BasicStroke getStrokeFromCtx(DrawingContext ctx) {
+    private BasicStroke getStrokeFromCtx(DrawingContext ctx) {
         byte[] type = ctx.getLineType();
         double width = ctx.getLineWidth();
         int lineJoin = fromGridLineJoin(ctx.getLineJoin());
@@ -261,16 +282,13 @@ public final class JFrameDevice implements GridDevice {
         if (type == DrawingContext.GRID_LINE_BLANK) {
             return blankStroke;
         } else if (type == DrawingContext.GRID_LINE_SOLID) {
-            if (width == 1. && solidStroke.getLineJoin() == lineJoin && solidStroke.getMiterLimit() == lineMitre && solidStroke.getEndCap() == endCap) {
-                return solidStroke;
-            }
-            return new BasicStroke((float) (width / POINTS_IN_INCH), endCap, lineJoin, lineMitre);
+            return new BasicStroke((float) (width), endCap, lineJoin, lineMitre);
         }
         float[] pattern = new float[type.length];
         for (int i = 0; i < pattern.length; i++) {
-            pattern[i] = (float) (type[i] / POINTS_IN_INCH);
+            pattern[i] = (float) (type[i]);
         }
-        return new BasicStroke((float) (width / POINTS_IN_INCH), endCap, lineJoin, lineMitre, pattern, 0f);
+        return new BasicStroke((float) (width), endCap, lineJoin, lineMitre, pattern, 0f);
     }
 
     private static int fromGridLineEnd(GridLineEnd lineEnd) {
@@ -296,51 +314,6 @@ public final class JFrameDevice implements GridDevice {
                 return BasicStroke.JOIN_ROUND;
             default:
                 throw RInternalError.shouldNotReachHere("unexpected value of GridLineJoin enum");
-        }
-    }
-
-    private static void initStrokes() {
-        if (solidStroke != null) {
-            return;
-        }
-        solidStroke = new BasicStroke((float) (1f / POINTS_IN_INCH));
-        blankStroke = new BasicStroke(0f);
-    }
-
-    static class FastRFrame extends JFrame {
-        private static final long serialVersionUID = 1L;
-        private final Dimension framePreferredSize = new Dimension(720, 720);
-        private final JPanel fastRComponent = new JPanel();
-
-        FastRFrame() throws HeadlessException {
-            super("FastR");
-            addCloseListener();
-            createUI();
-            center();
-        }
-
-        private void createUI() {
-            setLayout(new BorderLayout());
-            setSize(framePreferredSize);
-            add(fastRComponent, BorderLayout.CENTER);
-            fastRComponent.setPreferredSize(getSize());
-        }
-
-        private void addCloseListener() {
-            addWindowFocusListener(new WindowAdapter() {
-                @Override
-                public void windowClosing(WindowEvent e) {
-                    dispose();
-                }
-            });
-        }
-
-        private void center() {
-            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-            Dimension frameSize = getSize();
-            int x = (screenSize.width - frameSize.width) / 2;
-            int y = (screenSize.height - frameSize.height) / 2;
-            setLocation(x, y);
         }
     }
 }

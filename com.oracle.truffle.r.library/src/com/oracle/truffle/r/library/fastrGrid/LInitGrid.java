@@ -31,7 +31,7 @@ public abstract class LInitGrid extends RExternalBuiltinNode.Arg1 {
     @TruffleBoundary
     public Object doEnv(REnvironment gridEnv) {
         GridContext context = GridContext.getContext();
-        context.getGridState().init(gridEnv, context.getCurrentDevice());
+        context.getGridState().init(gridEnv);
         return RNull.instance;
     }
 }

@@ -17,12 +17,8 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public final class GridState {
-    private RList gpar;
-    private RList viewPort;
     private REnvironment gridEnv;
-    private double scale = 1;
-    private boolean deviceInitialized;
-    private int devHoldCount;
+    private GridDeviceState devState;
 
     /**
      * Current grob being drawn (for determining the list of grobs to search when evaluating a
@@ -33,23 +29,26 @@ public final class GridState {
     GridState() {
     }
 
+    void setDeviceState(GridDeviceState state) {
+        devState = state;
+    }
+
     public int getDevHoldCount() {
-        return devHoldCount;
+        return devState.devHoldCount;
     }
 
     public int setDevHoldCount(int devHoldCount) {
-        this.devHoldCount = devHoldCount;
+        devState.devHoldCount = devHoldCount;
         return devHoldCount;
     }
 
-    public void init(REnvironment gridEnv, GridDevice currentDevice) {
+    public void init(REnvironment gridEnv) {
         this.gridEnv = gridEnv;
         this.currentGrob = RNull.instance;
-        initGPar(currentDevice);
     }
 
     void initGPar(GridDevice currentDevice) {
-        gpar = GPar.createNew(currentDevice);
+        devState.gpar = GPar.createNew(currentDevice);
     }
 
     /**
@@ -62,28 +61,33 @@ public final class GridState {
 
     public RList getGpar() {
         assert gridEnv != null : "GridState not initialized";
-        return gpar;
+        return devState.gpar;
     }
 
     public void setGpar(RList gpar) {
         assert gridEnv != null : "GridState not initialized";
-        this.gpar = gpar;
+        devState.gpar = gpar;
     }
 
+    /**
+     * Has the current device been initialized for use by grid? Note: the null device should never
+     * get initialized. The code initializing device should check if any device is open and if not,
+     * it should open the default device and initialize it.
+     */
     public boolean isDeviceInitialized() {
-        return deviceInitialized;
+        return devState.isDeviceInitialized;
     }
 
     public void setDeviceInitialized() {
-        this.deviceInitialized = true;
+        devState.isDeviceInitialized = true;
     }
 
     public RList getViewPort() {
-        return viewPort;
+        return devState.viewPort;
     }
 
     public void setViewPort(RList viewPort) {
-        this.viewPort = viewPort;
+        devState.viewPort = viewPort;
     }
 
     public REnvironment getGridEnv() {
@@ -99,7 +103,14 @@ public final class GridState {
     }
 
     public double getScale() {
-        return scale;
+        return devState.scale;
     }
 
+    static final class GridDeviceState {
+        private boolean isDeviceInitialized = false;
+        private RList gpar;
+        private RList viewPort;
+        private double scale = 1;
+        private int devHoldCount;
+    }
 }

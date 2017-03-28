@@ -355,7 +355,7 @@ final class DoSetViewPort extends RBaseNode {
         }
     }
 
-    // Note: unlike the GnuR conterpart of this method, we expect the LayoutPos to have the NULL
+    // Note: unlike the GnuR counterpart of this method, we expect the LayoutPos to have the NULL
     // positions replaced with nrow/ncol already.
     private ViewPortLocation calcViewportLocationFromLayout(LayoutPos pos, RList parentVP, Size parentSize) {
         // unlike in GnuR, we maintain parent viewport widths/heights in inches like anything else

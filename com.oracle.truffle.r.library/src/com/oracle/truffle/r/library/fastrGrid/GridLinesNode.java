@@ -76,7 +76,7 @@ public abstract class GridLinesNode extends Node {
             // following loop finds series of valid points (finite x and y values) and draws each
             // such series as a polyline
             for (int i = 0; i < unitIndexesLen; i++) {
-                int unitIndex = unitIndexes.getDataAt(i) - 1;   // coverting R's 1-based index
+                int unitIndex = unitIndexes.getDataAt(i) - 1;   // converting R's 1-based index
                 Point origLoc = Point.fromUnits(unitToInches, x, y, unitIndex, conversionCtx);
                 Point loc = TransformMatrix.transLocation(origLoc, vpTransform.transform);
                 xx[i] = loc.x;

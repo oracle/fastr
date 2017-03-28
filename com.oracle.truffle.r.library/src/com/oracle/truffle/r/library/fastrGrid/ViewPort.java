@@ -153,6 +153,7 @@ final class ViewPort {
         public RList execute(VirtualFrame frame) {
             RFunction gridTopLevel = (RFunction) readGridTopLevel.execute(frame);
             RList topVP = (RList) callNode.execute(frame, gridTopLevel, RArgsValuesAndNames.EMPTY);
+            topVP.makeSharedPermanent();
 
             GridDevice device = GridContext.getContext().getCurrentDevice();
             // TODO: properly set the scale according to the current device
