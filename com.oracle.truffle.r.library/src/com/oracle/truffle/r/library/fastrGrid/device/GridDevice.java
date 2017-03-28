@@ -106,13 +106,11 @@ public interface GridDevice {
     double getStringWidth(DrawingContext ctx, String text);
 
     /**
-     * Gets the height of a line of text in inches, the default implementation uses only the
-     * parameters from the drawing context, but we allow the device to override this calculation
-     * with something more precise.
+     * Gets the height of a line of text in inches. This should include ascent and descent, i.e.
+     * from the very bottom to the very top of the tallest letter(s). The text is guaranteed to not
+     * contain any new lines.
      */
-    default double getStringHeight(DrawingContext ctx, String text) {
-        return (ctx.getLineHeight() * ctx.getFontSize()) / INCH_TO_POINTS_FACTOR;
-    }
+    double getStringHeight(DrawingContext ctx, String text);
 
     final class DeviceCloseException extends Exception {
         private static final long serialVersionUID = 1182697755931636214L;

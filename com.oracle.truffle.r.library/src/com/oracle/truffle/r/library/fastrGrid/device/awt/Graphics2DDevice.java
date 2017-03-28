@@ -28,6 +28,7 @@ import static java.awt.geom.Path2D.WIND_EVEN_ODD;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Shape;
@@ -128,7 +129,8 @@ public class Graphics2DDevice implements GridDevice {
     public void drawString(DrawingContext ctx, double leftXIn, double bottomYIn, double rotationAnticlockWise, String text) {
         setContextAndFont(ctx);
         int leftX = transX(leftXIn);
-        int bottomY = transY(bottomYIn);
+        FontMetrics fontMetrics = graphics.getFontMetrics(graphics.getFont());
+        int bottomY = transY(bottomYIn) - fontMetrics.getDescent();
         transformed(leftX, bottomY, rotationAnticlockWise, () -> graphics.drawString(text, 0, 0));
     }
 
@@ -152,7 +154,8 @@ public class Graphics2DDevice implements GridDevice {
     @Override
     public double getStringHeight(DrawingContext ctx, String text) {
         setContextAndFont(ctx);
-        int swingUnits = graphics.getFont().getSize();
+        FontMetrics fontMetrics = graphics.getFontMetrics(graphics.getFont());
+        double swingUnits = fontMetrics.getAscent() + fontMetrics.getDescent();
         return swingUnits / AWT_POINTS_IN_INCH;
     }
 
