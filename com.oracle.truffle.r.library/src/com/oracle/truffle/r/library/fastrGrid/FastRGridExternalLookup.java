@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import com.oracle.truffle.r.library.fastrGrid.DisplayList.LGetDisplayListElement;
+import com.oracle.truffle.r.library.fastrGrid.DisplayList.LInitDisplayList;
+import com.oracle.truffle.r.library.fastrGrid.DisplayList.LSetDisplayListOn;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevCurr;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevHoldFlush;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevOff;
@@ -34,7 +37,6 @@ import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -129,20 +131,28 @@ public final class FastRGridExternalLookup {
             case "L_initGPar":
                 return new LInitGPar();
 
-            // Display list stuff: not implemented atm
+            // Display list stuff
             case "L_getDisplayList":
-                return new IgnoredGridExternal(RDataFactory.createList());
+                return new GridStateGetNode(GridState::getDisplayList);
+            case "L_setDisplayList":
+                return GridStateSetNode.create((state, val) -> state.setDisplayList((RList) val));
             case "L_getDLindex":
-                return new IgnoredGridExternal(0);
+                return new GridStateGetNode(GridState::getDisplayListIndex);
+            case "L_setDLindex":
+                return GridStateSetNode.create((state, val) -> state.setDisplayListIndex(RRuntime.asInteger(val)));
+            case "L_setDLelt":
+                return GridStateSetNode.create(GridState::setDisplayListElement);
+            case "L_getDLelt":
+                return LGetDisplayListElement.create();
+            case "L_setDLon":
+                return LSetDisplayListOn.create();
             case "L_getDLon":
+                return new GridStateGetNode(state -> RRuntime.asLogical(state.isDisplayListOn()));
             case "L_getEngineDLon":
                 return new IgnoredGridExternal(RRuntime.LOGICAL_FALSE);
             case "L_initDisplayList":
+                return new LInitDisplayList();
             case "L_newpagerecording":
-            case "L_setDisplayList":
-            case "L_setDLelt":
-            case "L_setDLindex":
-            case "L_setDLon":
                 return new IgnoredGridExternal(RNull.instance);
 
             // These methods do not use graphics system or any global state. For now,

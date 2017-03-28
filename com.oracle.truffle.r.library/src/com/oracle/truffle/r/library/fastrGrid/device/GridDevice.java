@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.device;
 
-import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_TO_POINTS_FACTOR;
-
 /**
  * Abstract device that can draw primitive shapes and text. All sizes and coordinates are specified
  * in inches and angles in radians unless stated otherwise.

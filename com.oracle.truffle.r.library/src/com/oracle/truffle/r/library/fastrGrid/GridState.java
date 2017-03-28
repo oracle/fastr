@@ -42,6 +42,39 @@ public final class GridState {
         return devHoldCount;
     }
 
+    public RList getDisplayList() {
+        if (devState.displayList == null) {
+            devState.displayList = DisplayList.createInitialDisplayList();
+        }
+        return devState.displayList;
+    }
+
+    public void setDisplayList(RList newList) {
+        newList.makeSharedPermanent();
+        devState.displayList = newList;
+    }
+
+    public void setDisplayListElement(Object element) {
+        Object[] data = devState.displayList.getDataWithoutCopying();
+        data[devState.displayListIndex] = element;
+    }
+
+    public boolean isDisplayListOn() {
+        return devState.isDisplayListOn;
+    }
+
+    public void setIsDisplayListOn(boolean flag) {
+        devState.isDisplayListOn = flag;
+    }
+
+    public int getDisplayListIndex() {
+        return devState.displayListIndex;
+    }
+
+    public void setDisplayListIndex(int newValue) {
+        devState.displayListIndex = newValue;
+    }
+
     public void init(REnvironment gridEnv) {
         this.gridEnv = gridEnv;
         this.currentGrob = RNull.instance;
@@ -112,5 +145,8 @@ public final class GridState {
         private RList viewPort;
         private double scale = 1;
         private int devHoldCount;
+        private boolean isDisplayListOn = true;
+        private RList displayList;
+        private int displayListIndex = 0;
     }
 }

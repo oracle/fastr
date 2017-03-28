@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
-import java.io.IOException;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice;
