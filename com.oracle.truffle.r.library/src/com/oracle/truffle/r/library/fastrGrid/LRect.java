@@ -65,7 +65,7 @@ public abstract class LRect extends RExternalBuiltinNode.Arg6 {
             Point origLoc = Point.fromUnits(unitToInches, xVec, yVec, i, conversionCtx);
             Point transLoc = TransformMatrix.transLocation(origLoc, vpTransform.transform);
             Point loc = transLoc.justify(size, getDataAtMod(hjust, i), getDataAtMod(vjust, i));
-            dev.drawRect(gpar.getDrawingContext(i), loc.x, loc.y, size.getWidth(), size.getHeight());
+            dev.drawRect(gpar.getDrawingContext(i), loc.x, loc.y, size.getWidth(), size.getHeight(), Math.toRadians(vpTransform.rotationAngle));
         }
         return RNull.instance;
     }

@@ -130,7 +130,7 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
         if (cex > 0 && yc < 0.5) {
             yc = 0.5;
         }
-        dev.drawRect(drawingCtx, x - xc, y - yc, x + xc, y + yc);
+        dev.drawRect(drawingCtx, x - xc, y - yc, x + xc, y + yc, 0);
         return drawingCtx;
     }
 
