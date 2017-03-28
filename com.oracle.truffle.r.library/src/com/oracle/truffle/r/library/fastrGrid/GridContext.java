@@ -24,6 +24,7 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import java.util.ArrayList;
 
+import com.oracle.truffle.r.library.fastrGrid.GridState.GridDeviceState;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice.DeviceCloseException;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedJFrameDevice;
@@ -38,15 +39,14 @@ import com.oracle.truffle.r.runtime.RError.Message;
 public final class GridContext {
     private static final GridContext INSTANCE = new GridContext();
     private final GridState gridState = new GridState();
-
     /**
      * This list should correspond to the names inside {@code .Devices} variable in R.
      */
-    private final ArrayList<GridDevice> devices = new ArrayList<>(2);
+    private final ArrayList<DeviceAndState> devices = new ArrayList<>(2);
     private int currentDeviceIdx = 0;
 
     private GridContext() {
-        devices.add(null);
+        devices.add(new DeviceAndState(null));
     }
 
     public static GridContext getContext() {
@@ -54,6 +54,7 @@ public final class GridContext {
     }
 
     public GridState getGridState() {
+        gridState.setDeviceState(devices.get(currentDeviceIdx).state);
         return gridState;
     }
 
@@ -67,14 +68,14 @@ public final class GridContext {
 
     public GridDevice getCurrentDevice() {
         assert currentDeviceIdx >= 0 : "accessing devices before they were initialized";
-        return devices.get(currentDeviceIdx);
+        return devices.get(currentDeviceIdx).device;
     }
 
     public void setCurrentDevice(String name, GridDevice currentDevice) {
         RGridGraphicsAdapter.addDevice(name);
         RGridGraphicsAdapter.setCurrentDevice(name);
         currentDeviceIdx = this.devices.size();
-        this.devices.add(currentDevice);
+        this.devices.add(new DeviceAndState(currentDevice));
         assert devices.size() == RGridGraphicsAdapter.getDevicesCount();
     }
 
@@ -91,11 +92,21 @@ public final class GridContext {
 
     public void closeDevice(int which) throws DeviceCloseException {
         assert which >= 0 && which < devices.size();
-        devices.get(which).close();
+        devices.get(which).device.close();
         RGridGraphicsAdapter.removeDevice(which);
         devices.remove(which);
         if (currentDeviceIdx >= which) {
             currentDeviceIdx--;
+        }
+    }
+
+    private static final class DeviceAndState {
+        final GridDevice device;
+        final GridDeviceState state;
+
+        DeviceAndState(GridDevice device) {
+            this.device = device;
+            this.state = new GridDeviceState();
         }
     }
 }

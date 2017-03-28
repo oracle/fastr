@@ -39,6 +39,8 @@ final class LGridDirty extends RExternalBuiltinNode {
         // if no device has been opened yet, open the default one and make it current
         if (GridContext.getContext().getCurrentDevice() == null) {
             GridContext.getContext().openDefaultDevice();
+            gridState = GridContext.getContext().getGridState();    // grid state is device
+                                                                    // dependent
         }
 
         // the current device has not been initialized yet...

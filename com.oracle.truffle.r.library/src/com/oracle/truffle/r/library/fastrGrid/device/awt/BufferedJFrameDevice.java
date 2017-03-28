@@ -110,6 +110,11 @@ public final class BufferedJFrameDevice implements GridDevice, ImageSaver {
     }
 
     @Override
+    public void close() throws DeviceCloseException {
+        inner.close();
+    }
+
+    @Override
     public void drawRect(DrawingContext ctx, double leftX, double bottomY, double width, double height, double rotationAnticlockWise) {
         inner.drawRect(ctx, leftX, bottomY, width, height, rotationAnticlockWise);
         drawActions.add(() -> inner.drawRect(ctx, leftX, bottomY, width, height, rotationAnticlockWise));
