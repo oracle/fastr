@@ -565,6 +565,8 @@ public class CastBuilderTest {
     public void testMustBeSquareMatrix() {
         arg.asDoubleVector(true, true, true).mustBe(squareMatrix());
 
+        assertCastFail(1.0);
+
         RIntVector vec = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{2, 2});
         Object res = cast(vec);
         assertTrue(res instanceof RAbstractDoubleVector);

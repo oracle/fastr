@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -107,6 +108,11 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RNull arg) {
+        return withImplicitTypes ? RNull.implicitClassHeader : null;
+    }
+
+    @Specialization
+    protected RStringVector getClassHr(@SuppressWarnings("unused") REmpty arg) {
         return withImplicitTypes ? RNull.implicitClassHeader : null;
     }
 

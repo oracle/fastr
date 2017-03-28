@@ -767,3 +767,4 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LCircle.
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/EdgeDetection.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/GridTextNode.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LConvert.java,gnu_r_murrel_core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/Download.java,gnu_r_gentleman_ihaka2.copyright
