@@ -186,7 +186,9 @@ Override the blacklist and attempt to install the `Rcpp` package. N.B. The regul
 
 #### The mx pkgtest command
 
-The `mx pkgtest` command is a wrapper on `mx installpkgs` that forces the `--run-tests` option and also executes the same tests under GnuR and compares the results. In order to run the tests under GnuR, the `gnur` suite must be installed as a sibling to `fastr`.
+The `mx pkgtest` command is a wrapper on `mx installpkgs` that forces the `--run-tests` option and also executes the same tests under GnuR and compares the results. The packages are installed into `lib.install.packages.fastr` and `lib.install.packages.gnur`, respectively and the test results are stored in `test.fastr` and `test.gnur`, respectively. The differences between the results, computed using `diff -r`,  are stored per package in the `test.diffs` directory. All these directories are cleaned and re-created at the start of the run.
+
+By default the local build of FastR and the internal GNU R that is built as part of the FastR build are used to run the tests. However, when `FASTR_GRAALVM` is set to the location of a `GraalVM` binary installation, that is used for FastR and the `gnur` suite must be installed and built as a sibling to `fastr`.
 
 #### Running/Debugging Tests Locally
 

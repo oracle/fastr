@@ -91,10 +91,14 @@ def _create_libinstall(rvm, test_installed):
 #    install_tmp = join(_fastr_suite_dir(), "install.tmp")
     shutil.rmtree(install_tmp, ignore_errors=True)
     os.mkdir(install_tmp)
+    _create_testdot(rvm)
+    return libinstall, install_tmp
+
+def _create_testdot(rvm):
     testdir = join(_fastr_suite_dir(), "test." + rvm)
     shutil.rmtree(testdir, ignore_errors=True)
     os.mkdir(testdir)
-    return libinstall, install_tmp, testdir
+    return testdir
 
 def _log_step(state, step, rvariant):
     if not quiet:
@@ -149,8 +153,8 @@ def pkgtest(args):
     '''
 
     test_installed = '--no-install' in args
-    fastr_libinstall, fastr_install_tmp, fastr_testdir = _create_libinstall('fastr', test_installed)
-    gnur_libinstall, gnur_install_tmp, gnur_testdir = _create_libinstall('gnur', test_installed)
+    fastr_libinstall, fastr_install_tmp = _create_libinstall('fastr', test_installed)
+    gnur_libinstall, gnur_install_tmp = _create_libinstall('gnur', test_installed)
 
     if "--quiet" in args:
         global quiet
@@ -227,7 +231,7 @@ def pkgtest(args):
             install_args += ['--print-install-status']
 
     _log_step('BEGIN', 'install/test', 'FastR')
-    # Currently installpkgs does not set a return code (in install.packages.packages.R)
+    # Currently installpkgs does not set a return code (in install.packages.R)
     rc = _installpkgs(install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
     if rc == 100:
         # fatal error connecting to package repo
@@ -253,35 +257,13 @@ def pkgtest(args):
                 rc = rc | 2
             print '{0}: {1}'.format(pkg, test_status.status)
 
-        # tar up the test results
-        tar_tests(fastr_testdir)
-        tar_tests(gnur_testdir)
+        diffdir = _create_testdot('diffs')
+        for pkg, _ in out.test_info.iteritems():
+            diff_file = join(diffdir, pkg)
+            subprocess.call(['diff', '-r', _pkg_testdir('fastr', pkg), _pkg_testdir('gnur', pkg)], stdout=open(diff_file, 'w'))
 
     shutil.rmtree(fastr_install_tmp, ignore_errors=True)
     return rc
-
-def tar_tests(testdir):
-    if os.environ.has_key('FASTR_TEST_GZIP'):
-        test_tar = testdir + '.tar'
-        subprocess.call(['tar', 'cf', test_tar, os.path.basename(testdir)])
-        if os.path.exists(test_tar + '.gz'):
-            os.remove(test_tar + '.gz')
-        subprocess.call(['gzip', test_tar])
-    else:
-        # workaround for lack of support for accessing gz files
-        with open(testdir + '.agg', 'w') as o:
-            for root, _, files in os.walk(testdir):
-                for f in files:
-                    ext = os.path.splitext(f)[1]
-                    if f == 'test_time' or f == 'testfile_status' or ext == '.pdf' or ext == '.prev' or ext == '.save':
-                        continue
-                    absfile = join(root, f)
-                    relfile = relpath(absfile, _fastr_suite_dir())
-                    o.write('#### ' + relfile + '\n')
-                    with open(absfile) as inp:
-                        text = inp.read()
-                        o.write(text)
-
 
 class TestFileStatus:
     '''
@@ -341,7 +323,7 @@ def _args_to_forward_to_gnur(args):
 
 def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     '''
-    Install/test with GNU R  exactly those packages that installe3d correctly with FastR.
+    Install/test with GNU R  exactly those packages that installed correctly with FastR.
     N.B. That means that regardless of how the packages were specified to pkgtest
     we always use a --pkg-filelist' arg to GNU R
     '''
