@@ -123,7 +123,9 @@ extern FILE *traceFile;
 #define _(Source) (Source)
 
 // convert a string into a char*
+jstring stringFromCharSXP(JNIEnv *thisenv, SEXP charsxp);
 const char *stringToChars(JNIEnv *jniEnv, jstring string);
+
 
 extern jmethodID INTEGER_MethodID;
 extern jmethodID LOGICAL_MethodID;

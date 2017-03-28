@@ -87,6 +87,7 @@ jmethodID RAW_MethodID;
 jmethodID INTEGER_MethodID;
 jmethodID REAL_MethodID;
 jmethodID LOGICAL_MethodID;
+jmethodID logNotCharSXPWrapperMethodID;
 static jmethodID STRING_ELT_MethodID;
 static jmethodID VECTOR_ELT_MethodID;
 static jmethodID LENGTH_MethodID;
@@ -104,7 +105,6 @@ static jmethodID TYPEOF_MethodID;
 static jmethodID OBJECT_MethodID;
 static jmethodID DUPLICATE_ATTRIB_MethodID;
 static jmethodID IS_S4_OBJECTMethodID;
-static jmethodID logNotCharSXPWrapperMethodID;
 static jmethodID R_tryEvalMethodID;
 static jmethodID RDEBUGMethodID;
 static jmethodID SET_RDEBUGMethodID;
@@ -137,7 +137,6 @@ static jmethodID Rf_nrowsMethodID;
 static jmethodID Rf_ncolsMethodID;
 
 static jclass CharSXPWrapperClass;
-static jfieldID CharSXPWrapperContentsFieldID;
 jclass JNIUpCallsRFFIImplClass;
 
 jmethodID setCompleteMethodID;
@@ -238,9 +237,6 @@ void init_internals(JNIEnv *env) {
 	R_SetExternalPtrTagMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_SetExternalPtrTag", "(Ljava/lang/Object;Ljava/lang/Object;)V", 0);
 	R_SetExternalPtrProtMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_SetExternalPtrProt", "(Ljava/lang/Object;Ljava/lang/Object;)V", 0);
 
-	CharSXPWrapperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/CharSXPWrapper");
-	CharSXPWrapperContentsFieldID = checkGetFieldID(env, CharSXPWrapperClass, "contents", "Ljava/lang/String;", 0);
-
     R_computeIdenticalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_computeIdentical", "(Ljava/lang/Object;Ljava/lang/Object;I)I", 0);
     Rf_copyListMatrixMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_copyListMatrix", "(Ljava/lang/Object;Ljava/lang/Object;I)V", 0);
     Rf_copyMatrixMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_copyMatrix", "(Ljava/lang/Object;Ljava/lang/Object;I)V", 0);
@@ -249,21 +245,9 @@ void init_internals(JNIEnv *env) {
 
     // static JNI-specific methods
 	JNIUpCallsRFFIImplClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jni/JNIUpCallsRFFIImpl");
-	logNotCharSXPWrapperMethodID = checkGetMethodID(env, JNIUpCallsRFFIImplClass, "logNotCharSXPWrapper", "(Ljava/lang/Object;)V", 1);
 	restoreHandlerStacksMethodID = checkGetMethodID(env, JNIUpCallsRFFIImplClass, "R_ToplevelExecRestoreErrorHandlerStacks", "(Ljava/lang/Object;)V", 1);
     setCompleteMethodID = checkGetMethodID(env, JNIUpCallsRFFIImplClass, "setComplete", "(Ljava/lang/Object;Z)V", 1);
-}
-
-static jstring stringFromCharSXP(JNIEnv *thisenv, SEXP charsxp) {
-#if VALIDATE_REFS
-	validateRef(thisenv, charsxp, "stringFromCharSXP");
-	if (!(*thisenv)->IsInstanceOf(thisenv, charsxp, CharSXPWrapperClass)) {
-
-	    (*thisenv)->CallStaticVoidMethod(thisenv, JNIUpCallsRFFIImplClass, logNotCharSXPWrapperMethodID, charsxp);
-	    fatalError("only CharSXPWrapper expected in stringFromCharSXP");
-	}
-#endif
-	return (*thisenv)->GetObjectField(thisenv, charsxp, CharSXPWrapperContentsFieldID);
+	logNotCharSXPWrapperMethodID = checkGetMethodID(env, JNIUpCallsRFFIImplClass, "logNotCharSXPWrapper", "(Ljava/lang/Object;)V", 1);
 }
 
 SEXP Rf_ScalarInteger(int value) {
@@ -1355,8 +1339,7 @@ char *dngettext(const char *domainname, const char *msgid, const char * msgid_pl
 const char *R_CHAR(SEXP charsxp) {
 	TRACE("%s(%p)", charsxp);
 	JNIEnv *thisenv = getEnv();
-	jstring string = stringFromCharSXP(thisenv, charsxp);
-	char *copyChars = (char *) stringToChars(thisenv, string);
+	const char *copyChars = (const char *) getNativeArray(thisenv, charsxp, CHARSXP);
 	TRACE(" %s(%s)\n", copyChars);
 	return copyChars;
 }

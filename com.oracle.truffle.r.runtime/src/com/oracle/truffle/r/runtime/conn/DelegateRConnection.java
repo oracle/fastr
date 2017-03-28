@@ -549,7 +549,8 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
 
     @Override
     public int readBin(ByteBuffer buffer) throws IOException {
-        return read(buffer);
+        int read = read(buffer);
+        return read < 0 ? 0 : read;
     }
 
     /**

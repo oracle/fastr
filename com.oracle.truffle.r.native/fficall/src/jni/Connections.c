@@ -33,6 +33,7 @@ static jmethodID getConnClassMethodID;
 static jmethodID getSummaryDescMethodID;
 static jmethodID isSeekableMethodID;
 static jmethodID getOpenModeMethodID;
+static jmethodID newCustomConnectionMethodID;
 
 static jbyteArray wrap(JNIEnv *thisenv, void* buf, size_t n) {
     jbyteArray barr = (*thisenv)->NewByteArray(thisenv, n);
@@ -45,18 +46,14 @@ static jbyteArray wrap(JNIEnv *thisenv, void* buf, size_t n) {
  * Otherwise an error is issued.
  */
 static int getFd(Rconnection con) {
-	if(strstr(con->class, "file") != NULL ) {
-		return *((int*)(con->private));
-	}
-	error(_("cannot get file descriptor for non-file connection"));
-	return -1;
+	return con->id;
 }
 
 /*
  * Sets the file descriptor for the connection.
  */
 static void setFd(Rconnection con, jint fd) {
-	*((int*)(con->private)) = fd;
+	con->id = fd;
 }
 
 
@@ -82,6 +79,9 @@ void init_connections(JNIEnv *env) {
 
 	/* String getOpenModeString(BaseRConnection) */
 	getOpenModeMethodID = checkGetMethodID(env, UpCallsRFFIClass, "getOpenModeString", "(Ljava/lang/Object;)Ljava/lang/String;", 0);
+
+	/* int R_new_custom_connection(String, String, String) */
+	newCustomConnectionMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_new_custom_connection", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
 }
 
 static char *connStringToChars(JNIEnv *env, jstring string) {
@@ -179,7 +179,169 @@ static void init_con(Rconnection new, char *description, int enc,
 }
 
 SEXP R_new_custom_connection(const char *description, const char *mode, const char *class_name, Rconnection *ptr) {
-	return unimplemented("R_new_custom_connection");
+	JNIEnv *thisenv = getEnv();
+	Rconnection new;
+	SEXP ans, class;
+
+	new = (Rconnection) malloc(sizeof(struct Rconn));
+	if (!new)
+		error(_("allocation of %s connection failed"), class_name);
+
+	jstring jsDescription = (*thisenv)->NewStringUTF(thisenv, description);
+	jstring jsMode = (*thisenv)->NewStringUTF(thisenv, mode);
+	jstring jsClassName = (*thisenv)->NewStringUTF(thisenv, class_name);
+	jobject addrObj = R_MakeExternalPtr(new, R_NilValue, R_NilValue);
+	ans = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, newCustomConnectionMethodID, jsDescription, jsMode, jsClassName, addrObj);
+	if (ans) {
+
+		new->class = (char *) malloc(strlen(class_name) + 1);
+		if (!new->class) {
+			free(new);
+			error(_("allocation of %s connection failed"), class_name);
+		}
+		strcpy(new->class, class_name);
+		new->description = (char *) malloc(strlen(description) + 1);
+		if (!new->description) {
+			free(new->class);
+			free(new);
+			error(_("allocation of %s connection failed"), class_name);
+		}
+		init_con(new, description, CE_NATIVE, mode);
+		/* all ptrs are init'ed to null_* so no need to repeat that,
+		 but the following two are useful tools which could not be accessed otherwise */
+		// TODO dummy_vfprintf and dummy_fgetc not implemented yet
+//    new->vfprintf = &dummy_vfprintf;
+//    new->fgetc = &dummy_fgetc;
+
+		/* new->blocking = block; */
+		new->encname[0] = 0; /* "" (should have the same effect as "native.enc") */
+		new->ex_ptr = R_MakeExternalPtr(new->id, install("connection"), R_NilValue);
+
+		class = allocVector(STRSXP, 2);
+		SET_STRING_ELT(class, 0, mkChar(class_name));
+		SET_STRING_ELT(class, 1, mkChar("connection"));
+		classgets(ans, class);
+//		setAttrib(ans, R_ConnIdSymbol, new->ex_ptr);
+
+		if (ptr) {
+			ptr[0] = new;
+		}
+	}
+
+	return ans;
+}
+
+/*
+ * The address of the Rconnection struct is passed to Java.
+ * Since down calls can only have Object parameters, we put the address into an int vector.
+ * Position 0 is the lower part and position 1 is the higher part of the address.
+ * This currently assumes max. 64-bit addresses !
+ */
+static Rconnection convertToAddress(SEXP addrObj) {
+	if(!inherits(addrObj, "externalptr")) {
+		error(_("invalid address object"));
+	}
+    return (Rconnection) R_ExternalPtrAddr(addrObj);
+
+}
+
+/*
+ * This function is used as Java down call function to query the value of a connection's flag.
+ * DO NOT CHANGE ITS SIGNATURE !
+ * If changing the signature is unavoidable, adapt it in class 'NativeConnections'.
+ */
+SEXP __GetFlagNativeConnection(SEXP rConnAddrObj, jstring jname) {
+    JNIEnv *thisenv = getEnv();
+	Rconnection con = convertToAddress(rConnAddrObj);
+	const char *name = connStringToChars(thisenv, jname);
+	Rboolean result = 0;
+
+	if(strcmp(name, "text") == 0) {
+		result = con->text;
+	} else if(strcmp(name, "isopen") == 0) {
+		result = con->isopen;
+	}else if(strcmp(name, "incomplete") == 0) {
+		result = con->incomplete;
+	}else if(strcmp(name, "canread") == 0) {
+		result = con->canread;
+	}else if(strcmp(name, "canwrite") == 0) {
+		result = con->canwrite;
+	}else if(strcmp(name, "canseek") == 0) {
+		result = con->canseek;
+	}else if(strcmp(name, "blocking") == 0) {
+		result = con->blocking;
+	}
+	free(name);
+
+	return ScalarLogical(result);
+}
+
+/*
+ * This function is used as Java down call function to invoke the open function of a natively created connection.
+ * DO NOT CHANGE ITS SIGNATURE !
+ * If changing the signature is unavoidable, adapt it in class 'NativeConnections'.
+ */
+SEXP __OpenNativeConnection(SEXP rConnAddrObj) {
+	Rconnection con = convertToAddress(rConnAddrObj);
+	Rboolean success = con->open(con);
+	return ScalarLogical(success);
+}
+
+/*
+ * This function is used as Java down call function to invoke the open function of a natively created connection.
+ * DO NOT CHANGE ITS SIGNATURE !
+ * If changing the signature is unavoidable, adapt it in class 'NativeConnections'.
+ */
+SEXP __CloseNativeConnection(SEXP rConnAddrObj) {
+	Rconnection con = convertToAddress(rConnAddrObj);
+	con->close(con);
+	return NULL;
+}
+
+/*
+ * This function is used as Java down call function to invoke the read function of a natively created connection.
+ * DO NOT CHANGE ITS SIGNATURE !
+ * If changing the signature is unavoidable, adapt it in class 'NativeConnections'.
+ */
+SEXP __ReadNativeConnection(SEXP rConnAddrObj, jbyteArray bufObj, SEXP nVec) {
+    JNIEnv *thisenv = getEnv();
+    int n = asInteger(nVec);
+	Rconnection con = convertToAddress(rConnAddrObj);
+	void *tmp_buf = (*thisenv)->GetByteArrayElements(thisenv, bufObj, NULL);
+	size_t nread = con->read(tmp_buf, 1, n, con);
+	// copy back and release buffer
+	(*thisenv)->ReleaseByteArrayElements(thisenv, bufObj, tmp_buf, JNI_COMMIT);
+	return ScalarInteger(nread);
+}
+
+/*
+ * This function is used as Java down call function to invoke the write function of a natively created connection.
+ * DO NOT CHANGE ITS SIGNATURE !
+ * If changing the signature is unavoidable, adapt it in class 'NativeConnections'.
+ */
+SEXP __WriteNativeConnection(SEXP rConnAddrObj, jbyteArray bufObj, SEXP nVec) {
+    JNIEnv *thisenv = getEnv();
+    int n = asInteger(nVec);
+	Rconnection con = convertToAddress(rConnAddrObj);
+	void *bytes = (*thisenv)->GetByteArrayElements(thisenv, bufObj, NULL);
+	size_t nwritten = con->write(bytes, 1, n, con);
+	// just release buffer
+	(*thisenv)->ReleaseByteArrayElements(thisenv, bufObj, bytes, JNI_ABORT);
+	return ScalarInteger(nwritten);
+}
+
+/*
+ * This function is used as Java down call function to invoke the seek function of a natively created connection.
+ * DO NOT CHANGE ITS SIGNATURE !
+ * If changing the signature is unavoidable, adapt it in class 'NativeConnections'.
+ */
+SEXP __SeekNativeConnection(SEXP rConnAddrObj, SEXP whereObj, SEXP originObj, SEXP rwObj) {
+	Rconnection con = convertToAddress(rConnAddrObj);
+    double where = asReal(whereObj);
+    int origin = asInteger(originObj);
+    int rw = asInteger(rwObj);
+	double oldPos = con->seek(con, where, origin, rw);
+	return ScalarReal(oldPos);
 }
 
 size_t R_ReadConnection(Rconnection con, void *buf, size_t n) {
@@ -247,13 +409,6 @@ Rconnection R_GetConnection(SEXP sConn) {
 	new->class = sConnClass;
 	new->canseek = seekable;
 
-	/* The private field is forbidden to be used by any user. So we can use it to store the file descriptor. However, we should also use Rfileconn in future. */
-	new->private = (void *) malloc(sizeof(int));
-	if (!new->private) {
-		free(new);
-		error(_("allocation of file connection failed"));
-		/* for Solaris 12.5 */new = NULL;
-	}
 	setFd(new, fd);
 
 // TODO implement up-call functions and set them

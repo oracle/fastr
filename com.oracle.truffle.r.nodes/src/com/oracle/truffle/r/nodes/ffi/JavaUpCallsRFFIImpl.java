@@ -55,6 +55,8 @@ import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.InvalidConnection;
+import com.oracle.truffle.r.runtime.conn.NativeConnections.NativeRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -381,7 +383,10 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             case LGLSXP:
                 return RDataFactory.createLogicalVector(new byte[n], RDataFactory.COMPLETE_VECTOR);
             case STRSXP:
-                return RDataFactory.createStringVector(new String[n], RDataFactory.COMPLETE_VECTOR);
+                // fill list with empty strings
+                String[] data = new String[n];
+                Arrays.fill(data, "");
+                return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
             case CPLXSXP:
                 return RDataFactory.createComplexVector(new double[2 * n], RDataFactory.COMPLETE_VECTOR);
             case RAWSXP:
@@ -437,7 +442,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             case LGLSXP:
                 return RDataFactory.createLogicalVector(new byte[nrow * ncol], RDataFactory.COMPLETE_VECTOR, dims);
             case STRSXP:
-                return RDataFactory.createStringVector(new String[nrow * ncol], RDataFactory.COMPLETE_VECTOR, dims);
+                String[] data = new String[nrow * ncol];
+                Arrays.fill(data, "");
+                return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR, dims);
             case CPLXSXP:
                 return RDataFactory.createComplexVector(new double[2 * (nrow * ncol)], RDataFactory.COMPLETE_VECTOR, dims);
             default:
@@ -1197,6 +1204,20 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object R_new_custom_connection(Object description, Object mode, Object className, Object connAddrObj) {
+        // TODO handle encoding properly !
+        String strDescription = (String) description;
+        String strMode = (String) mode;
+        String strClassName = (String) className;
+        RExternalPtr connAddr = guaranteeInstanceOf(connAddrObj, RExternalPtr.class);
+        try {
+            return new NativeRConnection(strDescription, strMode, strClassName, connAddr).asVector();
+        } catch (IOException e) {
+            return InvalidConnection.instance.asVector();
+        }
+    }
+
+    @Override
     public int R_ReadConnection(int fd, byte[] buf) {
 
         try (BaseRConnection fromIndex = RConnection.fromIndex(fd)) {
@@ -1233,7 +1254,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public String getConnectionClassString(Object x) {
         BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
-        return conn.getConnectionClass().getPrintName();
+        return conn.getConnectionClass();
     }
 
     @Override

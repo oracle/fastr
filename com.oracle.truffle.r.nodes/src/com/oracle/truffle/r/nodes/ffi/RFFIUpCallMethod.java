@@ -91,6 +91,7 @@ public enum RFFIUpCallMethod {
     R_isEqual("(object, object) : sint32"),
     R_isGlobal("(object) : sint32"),
     R_lsInternal3("(object, sint32, sint32) : object"),
+    R_new_custom_connection("(string, string, string, object) : object"),
     R_tryEval("(object, object, object) : object"),
     Rf_GetOption1("(object) : object"),
     Rf_PairToVectorList("(object) : object"),
