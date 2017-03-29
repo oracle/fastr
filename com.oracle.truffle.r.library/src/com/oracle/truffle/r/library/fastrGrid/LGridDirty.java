@@ -54,7 +54,7 @@ final class LGridDirty extends RExternalBuiltinNode {
         if (gridState.getViewPort() == null) {
             gridState.setViewPort(initViewPort.execute(frame));
         }
-
+        DisplayList.initDisplayList(gridState);
         return RNull.instance;
     }
 

@@ -58,6 +58,7 @@ public final class JFrameDevice extends Graphics2DDevice {
     public static JFrameDevice create() {
         FastRFrame frame = new FastRFrame();
         frame.setVisible(true);
+        frame.pack();
         Graphics2D graphics = (Graphics2D) frame.getGraphics();
         defaultInitGraphics(graphics);
         return new JFrameDevice(frame, graphics, true);
