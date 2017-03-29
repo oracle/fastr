@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -160,10 +161,10 @@ public final class REnvVars implements RContext.ContextState {
     private static String rHome;
 
     /**
-     * Returns a file that only exists in a FastR {@code R_HOME}.
+     * Returns a file that serves to distinguish a FastR {@code R_HOME}.
      */
     private static String markerFile() {
-        return "libjniboot." + (isMacOS() ? "dylib" : "so");
+        return "Makeconf";
     }
 
     /**
@@ -217,8 +218,23 @@ public final class REnvVars implements RContext.ContextState {
         if (path == null) {
             return false;
         }
-        Path lib = path.resolve("lib");
-        return Files.exists(lib) && Files.isDirectory(lib) && Files.exists(lib.resolve(markerFile));
+        Path etc = path.resolve("etc");
+        Path absMarkerFile = etc.resolve(markerFile);
+        return Files.exists(etc) && Files.isDirectory(etc) && Files.exists(absMarkerFile) && isFastR(absMarkerFile);
+    }
+
+    private static boolean isFastR(Path makeconf) {
+        try {
+            List<String> lines = Files.readAllLines(makeconf);
+            for (String line : lines) {
+                if (line.startsWith("CFLAGS")) {
+                    return line.contains("-DFASTR");
+                }
+            }
+        } catch (IOException ex) {
+            throw RInternalError.shouldNotReachHere();
+        }
+        return false;
     }
 
     private void checkRHome() {
