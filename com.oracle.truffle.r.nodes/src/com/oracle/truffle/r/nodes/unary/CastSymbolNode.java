@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError;
@@ -88,7 +89,10 @@ public abstract class CastSymbolNode extends CastBaseNode {
     @Specialization
     @TruffleBoundary
     protected RSymbol doString(String value) {
-        // TODO: see if this is going to hit us performance-wise
+        if (value.isEmpty()) {
+            CompilerDirectives.transferToInterpreter();
+            throw error(RError.Message.ZERO_LENGTH_VARIABLE);
+        }
         return RDataFactory.createSymbolInterned(value);
     }
 

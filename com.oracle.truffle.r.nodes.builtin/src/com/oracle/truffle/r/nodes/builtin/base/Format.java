@@ -19,10 +19,17 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.AnyVectorToStringVectorWriter;
+import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorPrinter;
+import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorMetrics;
+import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
+import com.oracle.truffle.r.nodes.builtin.base.printer.IntegerVectorPrinter;
+import com.oracle.truffle.r.nodes.builtin.base.printer.LogicalVectorPrinter;
+import com.oracle.truffle.r.nodes.builtin.base.printer.PrintParameters;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -46,36 +53,13 @@ public abstract class Format extends RBuiltinNode {
     @Child private CastIntegerNode castInteger;
     @Child protected ValuePrinterNode valuePrinter = new ValuePrinterNode();
 
-    protected final BranchProfile errorProfile = BranchProfile.create();
-
-    public static final int R_MAX_DIGITS_OPT = 22;
     public static final int R_MIN_DIGITS_OPT = 0;
+    public static final int R_MAX_DIGITS_OPT = 22;
 
-    private static Config printConfig;
-
-    private static Config setPrintDefaults() {
-        if (printConfig == null) {
-            printConfig = new Config();
-        }
-        printConfig.width = (int) RContext.getInstance().stateROptions.getValue("width");
-        printConfig.naWidth = RRuntime.STRING_NA.length();
-        printConfig.naWidthNoQuote = RRuntime.NA_HEADER.length();
-        printConfig.digits = 7 /* default */;
-        printConfig.scipen = 0 /* default */;
-        printConfig.gap = 1;
-        printConfig.quote = 1;
-        printConfig.right = Adjustment.LEFT;
-        printConfig.max = 99999 /* default */;
-        printConfig.naString = RRuntime.STRING_NA;
-        printConfig.naStringNoQuote = RRuntime.NA_HEADER;
-        printConfig.useSource = 8 /* default */;
-        printConfig.cutoff = 60;
-        return printConfig;
-    }
-
-    private static Config getConfig() {
-        return setPrintDefaults();
-    }
+    public static final int JUSTIFY_LEFT = 0;
+    public static final int JUSTIFY_RIGHT = 1;
+    public static final int JUSTIFY_CENTER = 2;
+    public static final int JUSTIFY_NONE = 3;
 
     private RAbstractIntVector castInteger(Object operand) {
         if (castInteger == null) {
@@ -92,90 +76,116 @@ public abstract class Format extends RBuiltinNode {
         casts.arg("digits").asIntegerVector().findFirst(RRuntime.INT_NA).mustBe(intNA().or(gte(R_MIN_DIGITS_OPT).and(lte(R_MAX_DIGITS_OPT))));
         casts.arg("nsmall").asIntegerVector().findFirst(RRuntime.INT_NA).mustBe(intNA().or(gte(0).and(lte(20))));
         casts.arg("width").asIntegerVector().findFirst(0).mustNotBeNA();
-        casts.arg("justify").asIntegerVector().findFirst(RRuntime.INT_NA).mustBe(intNA().or(gte(0).and(lte(3))));
+        casts.arg("justify").asIntegerVector().findFirst(RRuntime.INT_NA).mustBe(intNA().or(gte(JUSTIFY_LEFT).and(lte(JUSTIFY_NONE))));
         casts.arg("na.encode").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).mustNotBeNA().map(toBoolean());
         casts.arg("scientific").asIntegerVector().findFirst();
         casts.arg("decimal.mark").asStringVector().findFirst();
     }
 
-    @Specialization
-    protected RStringVector format(RAbstractLogicalVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
-                    String decimalMark) {
-        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
+    private static char getDecimalMark(String decimalMark) {
+        return decimalMark.length() == 0 ? '.' : decimalMark.charAt(0);
     }
 
-    @Specialization
-    protected RStringVector format(RAbstractIntVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
-                    String decimalMark) {
-        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
-    }
-
-    // TODO: even though format's arguments are not used at this point, their processing mirrors
-    // what GNU R does
-
-    private int computeSciArg(RAbstractVector sciVec) {
-        assert sciVec.getLength() > 0;
-        int tmp = castInteger(sciVec).getDataAt(0);
-        int ret;
-        if (sciVec instanceof RAbstractLogicalVector) {
-            if (RRuntime.isNA(tmp)) {
-                ret = tmp;
-            } else {
-                ret = tmp > 0 ? -100 : 100;
-            }
-        } else {
-            ret = tmp;
+    private static PrintParameters getParameters(int digits, int scientific) {
+        PrintParameters pp = new PrintParameters();
+        pp.setDefaults();
+        if (!RRuntime.isNA(digits)) {
+            pp.setDigits(digits);
         }
-        if (!RRuntime.isNA(ret)) {
-            getConfig().scipen = ret;
+        if (!RRuntime.isNA(scientific)) {
+            pp.setScipen(scientific);
         }
-        return ret;
+        return pp;
+    }
+
+    private static RStringVector createResult(RAbstractVector value, String[] array) {
+        RStringVector result = RDataFactory.createStringVector(array, value.isComplete(), value.getDimensions(), value.getNames());
+        result.setDimNames(value.getDimNames());
+        return result;
     }
 
     @Specialization
-    protected RStringVector format(RAbstractDoubleVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
-                    String decimalMark) {
-        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
+    @TruffleBoundary
+    protected RStringVector format(RAbstractLogicalVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific, String decimalMark) {
+        String[] result = LogicalVectorPrinter.format(value, trim, width, getParameters(digits, scientific));
+        return createResult(value, result);
     }
 
     @Specialization
-    protected RStringVector format(RAbstractComplexVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
-                    String decimalMark) {
-        return (RStringVector) valuePrinter.prettyPrint(value, AnyVectorToStringVectorWriter::new);
+    @TruffleBoundary
+    protected RStringVector format(RAbstractIntVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific, String decimalMark) {
+        String[] result = IntegerVectorPrinter.format(value, trim, width, getParameters(digits, scientific));
+        return createResult(value, result);
     }
 
     @Specialization
-    protected RStringVector format(REnvironment value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific,
-                    String decimalMark) {
+    @TruffleBoundary
+    protected RStringVector format(RAbstractDoubleVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific, String decimalMark) {
+        String[] result = DoubleVectorPrinter.format(value, trim, nsmall, width, getDecimalMark(decimalMark), getParameters(digits, scientific));
+        return createResult(value, result);
+    }
+
+    @Specialization
+    @TruffleBoundary
+    protected RStringVector format(RAbstractComplexVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific, String decimalMark) {
+        String[] result = ComplexVectorPrinter.format(value, trim, nsmall, width, getDecimalMark(decimalMark), getParameters(digits, scientific));
+        return createResult(value, result);
+    }
+
+    @Specialization
+    protected RStringVector format(REnvironment value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific, String decimalMark) {
         return RDataFactory.createStringVector(value.getPrintName());
     }
 
     @Specialization
+    @TruffleBoundary
     protected RStringVector format(RAbstractStringVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific, String decimalMark) {
-        // TODO: implement full semantics
-        return value.materialize();
-    }
-
-    private static class Config {
-        public int width;
-        public int naWidth;
-        public int naWidthNoQuote;
-        public int digits;
-        public int scipen;
-        public int gap;
-        public int quote;
-        public Adjustment right;
-        public int max;
-        public String naString;
-        public String naStringNoQuote;
-        public int useSource;
-        public int cutoff;
-    }
-
-    private enum Adjustment {
-        LEFT,
-        RIGHT,
-        CENTRE,
-        NONE;
+        PrintParameters pp = getParameters(digits, scientific);
+        int w;
+        if (justify == JUSTIFY_NONE) {
+            w = 0;
+        } else {
+            w = width;
+            for (int i = 0; i < value.getLength(); i++) {
+                String element = value.getDataAt(i);
+                if (RRuntime.isNA(element)) {
+                    if (naEncode) {
+                        w = Math.max(w, pp.getNaWidth());
+                    }
+                } else {
+                    w = Math.max(w, element.length());
+                }
+            }
+        }
+        String[] result = new String[value.getLength()];
+        for (int i = 0; i < value.getLength(); i++) {
+            String element = value.getDataAt(i);
+            if (!naEncode && RRuntime.isNA(element)) {
+                result[i] = RRuntime.STRING_NA;
+            } else {
+                String s0;
+                if (RRuntime.isNA(element)) {
+                    element = pp.getNaString();
+                }
+                int il = element.length();
+                int b = w - il;
+                StringBuilder str = new StringBuilder(Math.max(w, il));
+                if (b > 0 && justify != JUSTIFY_LEFT) {
+                    int b0 = (justify == JUSTIFY_CENTER) ? b / 2 : b;
+                    for (int j = 0; j < b0; j++) {
+                        str.append(' ');
+                    }
+                    b -= b0;
+                }
+                str.append(element);
+                if (b > 0 && justify != JUSTIFY_RIGHT) {
+                    for (int j = 0; j < b; j++) {
+                        str.append(' ');
+                    }
+                }
+                result[i] = str.toString();
+            }
+        }
+        return createResult(value, result);
     }
 }

@@ -30,7 +30,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
@@ -38,11 +37,12 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNa
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -82,12 +82,11 @@ public class LaFunctions {
 
     private abstract static class RsgRBuiltinNode extends RBuiltinNode {
         protected static final String[] NAMES = new String[]{"values", "vectors"};
-        protected final BranchProfile errorProfile = BranchProfile.create();
 
         protected static Casts createCasts(Class<? extends RsgRBuiltinNode> extClass) {
             Casts casts = new Casts(extClass);
-            casts.arg("matrix").asDoubleVector(false, true, false).mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_NUMERIC, "x");
-            casts.arg("onlyValues").defaultError(RError.Message.INVALID_ARGUMENT, "only.values").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("matrix").asDoubleVector(false, true, false).mustBe(squareMatrix(), Message.MUST_BE_SQUARE_NUMERIC, "x");
+            casts.arg("onlyValues").defaultError(Message.INVALID_ARGUMENT, "only.values").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
             return casts;
         }
     }
@@ -124,14 +123,14 @@ public class LaFunctions {
             // ask for optimal size of work array
             int info = dgeevNode.execute(jobVL, jobVR, n, a, n, wr, wi, left, n, right, n, work, -1);
             if (info != 0) {
-                throw error(RError.Message.LAPACK_ERROR, info, "dgeev");
+                throw error(Message.LAPACK_ERROR, info, "dgeev");
             }
             // now allocate work array and make the actual call
             int lwork = (int) work[0];
             work = new double[lwork];
             info = dgeevNode.execute(jobVL, jobVR, n, a, n, wr, wi, left, n, right, n, work, lwork);
             if (info != 0) {
-                throw error(RError.Message.LAPACK_ERROR, info, "dgeev");
+                throw error(Message.LAPACK_ERROR, info, "dgeev");
             }
             // result is a list containing "values" and "vectors" (unless only.values is TRUE)
             boolean complexValues = false;
@@ -229,7 +228,7 @@ public class LaFunctions {
             int[] iwork = new int[1];
             int info = dsyevrNode.execute(jobv, range, uplo, n, x, n, vl, vu, il, iu, abstol, m, values, z, n, isuppz, work, lwork, iwork, liwork);
             if (info != 0) {
-                throw error(RError.Message.LAPACK_ERROR, info, "dysevr");
+                throw error(Message.LAPACK_ERROR, info, "dysevr");
             }
             lwork = (int) work[0];
             liwork = iwork[0];
@@ -237,7 +236,7 @@ public class LaFunctions {
             iwork = new int[liwork];
             info = dsyevrNode.execute(jobv, range, uplo, n, x, n, vl, vu, il, iu, abstol, m, values, z, n, isuppz, work, lwork, iwork, liwork);
             if (info != 0) {
-                throw error(RError.Message.LAPACK_ERROR, info, "dysevr");
+                throw error(Message.LAPACK_ERROR, info, "dysevr");
             }
             Object[] data = new Object[onlyValues ? 1 : 2];
             RStringVector names;
@@ -260,7 +259,7 @@ public class LaFunctions {
 
         static {
             Casts casts = new Casts(Qr.class);
-            casts.arg("in").asDoubleVector(false, true, false).mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
+            casts.arg("in").asDoubleVector(false, true, false).mustBe(matrix(), Message.MUST_BE_NUMERIC_MATRIX, "a");
         }
 
         @Specialization
@@ -280,13 +279,13 @@ public class LaFunctions {
             // ask for optimal size of work array
             int info = dgeqp3Node.execute(m, n, a, m, jpvt, tau, work, -1);
             if (info < 0) {
-                throw error(RError.Message.LAPACK_ERROR, info, "dgeqp3");
+                throw error(Message.LAPACK_ERROR, info, "dgeqp3");
             }
             int lwork = (int) work[0];
             work = new double[lwork];
             info = dgeqp3Node.execute(m, n, a, m, jpvt, tau, work, lwork);
             if (info < 0) {
-                throw error(RError.Message.LAPACK_ERROR, info, "dgeqp3");
+                throw error(Message.LAPACK_ERROR, info, "dgeqp3");
             }
             Object[] data = new Object[4];
             // TODO check complete
@@ -310,7 +309,7 @@ public class LaFunctions {
         static {
             Casts casts = new Casts(QrCoefReal.class);
             casts.arg("q").mustBe(instanceOf(RList.class));
-            casts.arg("b").asDoubleVector(false, true, false).mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "b");
+            casts.arg("b").asDoubleVector(false, true, false).mustBe(matrix(), Message.MUST_BE_NUMERIC_MATRIX, "b");
         }
 
         @Specialization
@@ -331,7 +330,7 @@ public class LaFunctions {
             int[] qrDims = getQDimsNode.getDimensions(qr);
             int n = qrDims[0];
             if (bDims[0] != n) {
-                throw error(RError.Message.RHS_SHOULD_HAVE_ROWS, n, bDims[0]);
+                throw error(Message.RHS_SHOULD_HAVE_ROWS, n, bDims[0]);
             }
             int nrhs = bDims[1];
             double[] work = new double[1];
@@ -343,17 +342,17 @@ public class LaFunctions {
             // ask for optimal size of work array
             int info = dormqrNode.execute(SIDE, TRANS, n, nrhs, k, qrData, n, tauData, bData, n, work, -1);
             if (info < 0) {
-                throw error(RError.Message.LAPACK_ERROR, info, "dormqr");
+                throw error(Message.LAPACK_ERROR, info, "dormqr");
             }
             int lwork = (int) work[0];
             work = new double[lwork];
             info = dormqrNode.execute(SIDE, TRANS, n, nrhs, k, qrData, n, tauData, bData, n, work, lwork);
             if (info < 0) {
-                throw error(RError.Message.LAPACK_ERROR, info, "dormqr");
+                throw error(Message.LAPACK_ERROR, info, "dormqr");
             }
             info = dtrtrsNode.execute('U', 'N', 'N', k, nrhs, qrData, n, bData, n);
             if (info < 0) {
-                throw error(RError.Message.LAPACK_ERROR, info, "dtrtrs");
+                throw error(Message.LAPACK_ERROR, info, "dtrtrs");
             }
             // TODO check complete
             return b;
@@ -374,9 +373,9 @@ public class LaFunctions {
 
         static {
             Casts casts = new Casts(DetGeReal.class);
-            casts.arg("a").asDoubleVector(false, true, false).mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_MATRIX, "a");
+            casts.arg("a").asDoubleVector(false, true, false).mustBe(matrix(), Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(squareMatrix(), Message.MUST_BE_SQUARE_MATRIX, "a");
 
-            casts.arg("uselog").defaultError(RError.Message.MUST_BE_LOGICAL, "logarithm").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("uselog").defaultError(Message.MUST_BE_LOGICAL, "logarithm").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @Specialization
@@ -392,7 +391,7 @@ public class LaFunctions {
             int info = dgetrfNode.execute(n, n, aData, n, ipiv);
             int sign = 1;
             if (info < 0) {
-                throw error(RError.Message.LAPACK_ERROR, info, "dgetrf");
+                throw error(Message.LAPACK_ERROR, info, "dgetrf");
             } else if (infoGreaterZero.profile(info > 0)) {
                 modulus = useLog ? Double.NEGATIVE_INFINITY : 0;
             } else {
@@ -451,8 +450,8 @@ public class LaFunctions {
 
         static {
             Casts casts = new Casts(LaChol.class);
-            casts.arg("a").asDoubleVector(false, true, false).mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_MATRIX, "a").mustBe(
-                            dimGt(1, 0), RError.Message.DIMS_GT_ZERO, "a");
+            casts.arg("a").asDoubleVector(false, true, false).mustBe(matrix(), Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(squareMatrix(), Message.MUST_BE_SQUARE_MATRIX, "a").mustBe(
+                            dimGt(1, 0), Message.DIMS_GT_ZERO, "a");
 
             casts.arg("pivot").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
 
@@ -482,7 +481,7 @@ public class LaFunctions {
                 info = dpotrfNode.execute('U', m, aData, m);
                 if (info != 0) {
                     // TODO informative error message (aka GnuR)
-                    throw error(RError.Message.LAPACK_ERROR, info, "dpotrf");
+                    throw error(Message.LAPACK_ERROR, info, "dpotrf");
                 }
             } else {
                 int[] ipiv = new int[m];
@@ -491,7 +490,7 @@ public class LaFunctions {
                 info = dpstrfNode.execute('U', n, aData, n, ipiv, rank, tol, work);
                 if (info != 0) {
                     // TODO informative error message (aka GnuR)
-                    throw error(RError.Message.LAPACK_ERROR, info, "dpotrf");
+                    throw error(Message.LAPACK_ERROR, info, "dpotrf");
                 }
                 setPivotAttrNode.execute(a, RRuntime.asLogical(piv));
                 setRankAttrNode.execute(a, rank[0]);
@@ -509,6 +508,55 @@ public class LaFunctions {
         }
     }
 
+    @RBuiltin(name = "La_chol2inv", kind = INTERNAL, parameterNames = {"a", "size"}, behavior = PURE)
+    public abstract static class LaChol2Inv extends RBuiltinNode {
+
+        @Child private SetFixedAttributeNode setPivotAttrNode = SetFixedAttributeNode.create("pivot");
+        @Child private SetFixedAttributeNode setRankAttrNode = SetFixedAttributeNode.create("rank");
+
+        static {
+            Casts casts = new Casts(LaChol2Inv.class);
+            casts.arg("a").asDoubleVector(false, true, false).mustBe(matrix(), Message.MUST_BE_NUMERIC_MATRIX, "a");
+            casts.arg("size").asIntegerVector().mustBe(Predef.notEmpty()).findFirst().mustBe(Predef.gt(0), Message.MUST_BE_POSITIVE_INT);
+        }
+
+        @Specialization
+        protected RDoubleVector chol2inv(RAbstractDoubleVector a, int size,
+                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("create()") LapackRFFI.DpotriNode dpotriNode) {
+
+            int[] aDims = getDimsNode.getDimensions(a);
+            int m = aDims[0];
+            int n = aDims[1];
+
+            if (size > n) {
+                throw error(Message.CANNOT_EXCEED_X, "size", "ncol", n);
+            }
+            if (size > m) {
+                throw error(Message.CANNOT_EXCEED_X, "size", "nrow", n);
+            }
+            double[] result = new double[size * size];
+            for (int j = 0; j < size; j++) {
+                for (int i = 0; i <= j; i++) {
+                    result[i + j * size] = a.getDataAt(i + j * m);
+                }
+            }
+            int info = dpotriNode.execute('U', size, result, size);
+            if (info != 0) {
+                if (info > 0) {
+                    throw error(Message.LAPACK_ZERO_INVERSE, info, info);
+                }
+                throw error(Message.LAPACK_INVALID_VALUE, -info, "dpotri");
+            }
+            for (int j = 0; j < size; j++) {
+                for (int i = j + 1; i < size; i++) {
+                    result[i + j * size] = result[j + i * size];
+                }
+            }
+            return RDataFactory.createDoubleVector(result, true, new int[]{size, size});
+        }
+    }
+
     @RBuiltin(name = "La_solve", kind = INTERNAL, parameterNames = {"a", "bin", "tolin"}, behavior = PURE)
     public abstract static class LaSolve extends RBuiltinNode {
         @Child private CastDoubleNode castDouble = CastDoubleNodeGen.create(false, false, false);
@@ -519,10 +567,10 @@ public class LaFunctions {
 
         static {
             Casts casts = new Casts(LaSolve.class);
-            casts.arg("a").mustBe(numericValue()).asVector().mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(not(dimEq(0, 0)),
-                            RError.Message.GENERIC, "'a' is 0-diml").mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_MATRIX_SPEC, "a", getDimVal(0), getDimVal(1));
+            casts.arg("a").mustBe(numericValue()).asVector().mustBe(matrix(), Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(not(dimEq(0, 0)),
+                            Message.GENERIC, "'a' is 0-diml").mustBe(squareMatrix(), Message.MUST_BE_SQUARE_MATRIX_SPEC, "a", getDimVal(0), getDimVal(1));
 
-            casts.arg("bin").asDoubleVector(false, true, false).mustBe(or(not(matrix()), not(dimEq(1, 0))), RError.Message.GENERIC, "no right-hand side in 'b'");
+            casts.arg("bin").asDoubleVector(false, true, false).mustBe(or(not(matrix()), not(dimEq(1, 0))), Message.GENERIC, "no right-hand side in 'b'");
 
             casts.arg("tolin").asDoubleVector().findFirst(RRuntime.DOUBLE_NA);
         }
@@ -542,11 +590,11 @@ public class LaFunctions {
             int[] aDims = getADimsNode.getDimensions(a);
             int n = aDims[0];
             if (n == 0) {
-                throw error(RError.Message.GENERIC, "'a' is 0-diml");
+                throw error(Message.GENERIC, "'a' is 0-diml");
             }
             int n2 = aDims[1];
             if (n2 != n) {
-                throw error(RError.Message.MUST_BE_SQUARE, "a", n, n2);
+                throw error(Message.MUST_BE_SQUARE, "a", n, n2);
             }
             RList aDn = getADimNamesNode.getDimNames(a);
             int p;
@@ -556,11 +604,11 @@ public class LaFunctions {
                 int[] bDims = getBinDimsNode.getDimensions(bin);
                 p = bDims[1];
                 if (p == 0) {
-                    throw error(RError.Message.GENERIC, "no right-hand side in 'b'");
+                    throw error(Message.GENERIC, "no right-hand side in 'b'");
                 }
                 int p2 = bDims[0];
                 if (p2 != n) {
-                    throw error(RError.Message.MUST_BE_SQUARE_COMPATIBLE, "b", p2, p, "a", n, n);
+                    throw error(Message.MUST_BE_SQUARE_COMPATIBLE, "b", p2, p, "a", n, n);
                 }
                 bData = new double[n * p];
                 b = RDataFactory.createDoubleVector(bData, RDataFactory.COMPLETE_VECTOR);
@@ -583,7 +631,7 @@ public class LaFunctions {
             } else {
                 p = 1;
                 if (bin.getLength() != n) {
-                    throw error(RError.Message.MUST_BE_SQUARE_COMPATIBLE, "b", bin.getLength(), p, "a", n, n);
+                    throw error(Message.MUST_BE_SQUARE_COMPATIBLE, "b", bin.getLength(), p, "a", n, n);
                 }
                 bData = new double[n];
                 b = RDataFactory.createDoubleVector(bData, RDataFactory.COMPLETE_VECTOR);
@@ -606,10 +654,10 @@ public class LaFunctions {
             }
             int info = dgesvNode.execute(n, p, avals, n, ipiv, bData, n);
             if (info < 0) {
-                throw error(RError.Message.LAPACK_INVALID_VALUE, -info, "dgesv");
+                throw error(Message.LAPACK_INVALID_VALUE, -info, "dgesv");
             }
             if (info > 0) {
-                throw error(RError.Message.LAPACK_EXACTLY_SINGULAR, "dgesv", info, info);
+                throw error(Message.LAPACK_EXACTLY_SINGULAR, "dgesv", info, info);
             }
             if (tol > 0) {
                 double anorm = dlangeNode.execute('1', n, n, avals, n, null);
@@ -617,7 +665,7 @@ public class LaFunctions {
                 double[] rcond = new double[1];
                 dgeconNode.execute('1', n, avals, n, anorm, rcond, work, ipiv);
                 if (rcond[0] < tol) {
-                    throw error(RError.Message.SYSTEM_COMP_SINGULAR, rcond[0]);
+                    throw error(Message.SYSTEM_COMP_SINGULAR, rcond[0]);
                 }
             }
             return b;

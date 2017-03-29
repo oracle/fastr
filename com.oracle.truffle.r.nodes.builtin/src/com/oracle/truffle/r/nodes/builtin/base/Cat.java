@@ -26,8 +26,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asBoolean;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.atomicLogicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt0;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
@@ -82,9 +80,7 @@ public abstract class Cat extends RBuiltinNode {
 
         casts.arg("file").defaultError(Message.INVALID_CONNECTION).mustNotBeNull().asIntegerVector().findFirst();
 
-        casts.arg("fill").mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().shouldBe(
-                        instanceOf(Byte.class).or(instanceOf(Integer.class).and(gt0())),
-                        Message.NON_POSITIVE_FILL).mapIf(atomicLogicalValue(), asBoolean(), asInteger());
+        casts.arg("fill").mustBe(numericValue()).asVector().mustBe(singleElement()).findFirst().mapIf(atomicLogicalValue(), asBoolean(), asInteger());
 
         casts.arg("labels").mapNull(emptyStringVector()).mustBe(stringValue()).asStringVector();
 
@@ -106,7 +102,9 @@ public abstract class Cat extends RBuiltinNode {
     @Specialization
     protected RNull cat(RList args, int file, RAbstractStringVector sepVec, int givenFillWidth, RAbstractStringVector labels, boolean append) {
         int fillWidth = -1;
-        if (givenFillWidth >= 1) {
+        if (givenFillWidth < 0) {
+            warning(Message.NON_POSITIVE_FILL);
+        } else if (givenFillWidth >= 1) {
             fillWidth = givenFillWidth;
         }
         return output(args, file, sepVec, fillWidth, labels, append);

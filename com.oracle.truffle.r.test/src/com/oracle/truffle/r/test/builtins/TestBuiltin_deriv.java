@@ -131,7 +131,7 @@ public class TestBuiltin_deriv extends TestBase {
 
     @Test
     public void testDeriveFunctions1() {
-        deriv1("log(x)").derive().eval(0).withHessian().derive(Ignored.OutputFormatting).eval(0).eval(1).eval(Ignored.MissingWarning, -1);
+        deriv1("log(x)").derive().eval(0).withHessian().derive(Ignored.OutputFormatting).eval(0).eval(1).eval(-1);
         assertDerivAndEval1("exp(x)");
         assertDerivAndEval1("cos(x)");
         assertDerivAndEval1("sin(x)");
@@ -145,7 +145,7 @@ public class TestBuiltin_deriv extends TestBase {
         assertDerivAndEval1("asin(x)");
         assertDerivAndEval1(Ignored.OutputFormatting, "acos(x)");
         deriv1("atan(x)").derive().eval(0).withHessian().derive(Ignored.OutputFormatting).eval(0);
-        assertDeriv1("gamma(x)").eval(Ignored.Unimplemented, 0);
+        assertDeriv1("gamma(x)").eval(0);
         assertDeriv1("lgamma(x)").eval(0.5);
         assertDeriv1("digamma(x)").eval(Ignored.Unimplemented, 0);
         assertDeriv1("trigamma(x)").eval(Ignored.Unimplemented, 0);

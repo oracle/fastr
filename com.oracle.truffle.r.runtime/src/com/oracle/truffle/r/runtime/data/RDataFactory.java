@@ -437,7 +437,7 @@ public final class RDataFactory {
         if (FastROptions.noEagerEval()) {
             throw RInternalError.shouldNotReachHere();
         }
-        return traceDataCreated(new RPromise.PromisedPromise(exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback));
+        return traceDataCreated(new RPromise.EagerPromise(PromiseState.Promised, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, -1));
     }
 
     public static Object createLangPairList(int size) {

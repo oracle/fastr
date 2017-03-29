@@ -101,9 +101,7 @@ public class TestS4 extends TestRBase {
 
     @Test
     public void testClassCreation() {
-        // output slightly different from GNU R even though we use R's "show" method to print it
-        assertEval(Ignored.OutputFormatting, "{ setClass(\"foo\", representation(j=\"numeric\")); getClass(\"foo\") }");
-
+        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); getClass(\"foo\") }");
         assertEval("{ setClass(\"foo\"); setClass(\"bar\", representation(j = \"numeric\"), contains = \"foo\"); is.null(getClass(\"foo\")@prototype) }");
     }
 

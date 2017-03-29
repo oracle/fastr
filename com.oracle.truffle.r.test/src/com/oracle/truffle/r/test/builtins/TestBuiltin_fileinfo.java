@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -19,11 +19,11 @@ public class TestBuiltin_fileinfo extends TestBase {
 
     @Test
     public void testfileinfo1() {
-        assertEval(Ignored.Unknown, "argv <- list('/home/lzhao/hg/r-instrumented/library/codetools/data'); .Internal(file.info(argv[[1]]))");
+        assertEval("argv <- list('/home/lzhao/hg/r-instrumented/library/codetools/data'); .Internal(file.info(argv[[1]]))");
     }
 
     @Test
     public void testfileinfo2() {
-        assertEval(Ignored.Unknown, "argv <- list(character(0)); .Internal(file.info(argv[[1]]))");
+        assertEval("argv <- list(character(0)); .Internal(file.info(argv[[1]]))");
     }
 }

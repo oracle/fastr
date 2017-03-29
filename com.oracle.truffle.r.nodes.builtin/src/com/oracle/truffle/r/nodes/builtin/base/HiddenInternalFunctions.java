@@ -424,7 +424,7 @@ public class HiddenInternalFunctions {
             } catch (Throwable ex) {
                 // Exceptions have been observed that were masked and very hard to find
                 ex.printStackTrace();
-                throw RInternalError.shouldNotReachHere("lazyLoadDBinsertValue exception");
+                throw RInternalError.shouldNotReachHere(ex, "lazyLoadDBinsertValue exception");
             }
         }
 

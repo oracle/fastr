@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -133,6 +133,18 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dpotrf(JNIEnv *env
     double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
     int info;
     dpotrf_(&uplo, &n, a, &lda, &info);
+    (*env)->ReleasePrimitiveArrayCritical(env, ja, a, 0);
+    return info;
+}
+
+extern int dpotri_(char *uplo, int *n, double *a, int *lda, int *info);
+
+JNIEXPORT jint JNICALL
+Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Lapack_native_1dpotri(JNIEnv *env, jclass klass,
+        char uplo, int n, jdoubleArray ja, int lda) {
+    double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);
+    int info;
+    dpotri_(&uplo, &n, a, &lda, &info);
     (*env)->ReleasePrimitiveArrayCritical(env, ja, a, 0);
     return info;
 }

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -43,9 +43,8 @@ public class TestBuiltin_print extends TestBase {
 
     @Test
     public void testprint5() {
-        assertEval(Ignored.Unknown,
-                        "argv <- structure(list(x = structure(list(statistic = structure(0.87901108669074,     .Names = 't'), parameter = structure(19, .Names = 'df'),     p.value = 0.390376937081292, conf.int = structure(c(-0.332667989442433,         0.814407243771461), conf.level = 0.95), estimate = structure(0.240869627164514,         .Names = 'mean of x'), null.value = structure(0, .Names = 'mean'),     alternative = 'two.sided', method = 'One Sample t-test',     data.name = 'x'), .Names = c('statistic', 'parameter', 'p.value',     'conf.int', 'estimate', 'null.value', 'alternative', 'method',     'data.name'), class = 'htest')), .Names = 'x');" +
-                                        "do.call('print', argv)");
+        assertEval("argv <- structure(list(x = structure(list(statistic = structure(0.87901108669074,     .Names = 't'), parameter = structure(19, .Names = 'df'),     p.value = 0.390376937081292, conf.int = structure(c(-0.332667989442433,         0.814407243771461), conf.level = 0.95), estimate = structure(0.240869627164514,         .Names = 'mean of x'), null.value = structure(0, .Names = 'mean'),     alternative = 'two.sided', method = 'One Sample t-test',     data.name = 'x'), .Names = c('statistic', 'parameter', 'p.value',     'conf.int', 'estimate', 'null.value', 'alternative', 'method',     'data.name'), class = 'htest')), .Names = 'x');" +
+                        "do.call('print', argv)");
     }
 
     @Test

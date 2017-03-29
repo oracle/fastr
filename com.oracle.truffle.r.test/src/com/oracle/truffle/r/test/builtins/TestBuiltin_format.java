@@ -19,7 +19,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat1() {
-        assertEval(Ignored.Unknown,
+        assertEval(Output.IgnoreErrorMessage,
                         "argv <- list(structure(c(0, 72.7, 56.4, 72.7, 0, 63.3, 56.4, 63.3, 0), .Dim = c(3L, 3L), .Dimnames = list(c('Girth', 'Height', 'Volume'), c('Girth', 'Height', 'Volume'))), FALSE, 7L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]], , argv[[9]]))");
     }
 
@@ -30,14 +30,12 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat3() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c('Inf', '-Inf', 'NaN', 'NA'), FALSE, NULL, 0L, 4, 1L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(c('Inf', '-Inf', 'NaN', 'NA'), FALSE, NULL, 0L, 4, 1L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
     public void testformat4() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c('axx', 'b', 'c', 'd', 'e', 'f', 'g', 'h'), .Dim = c(2L, 4L)), FALSE, NULL, 0L, NULL, 1L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c('axx', 'b', 'c', 'd', 'e', 'f', 'g', 'h'), .Dim = c(2L, 4L)), FALSE, NULL, 0L, NULL, 1L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -47,8 +45,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat7() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c('a', 'NA', NA, 'b'), FALSE, NULL, 0L, NULL, 0L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(c('a', 'NA', NA, 'b'), FALSE, NULL, 0L, NULL, 0L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -73,8 +70,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat12() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c('Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.'), FALSE, NULL, 0L, NULL, 0L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(c('Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.'), FALSE, NULL, 0L, NULL, 0L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -84,14 +80,12 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat14() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(NA, 1, 1, 1), .Names = c('<none>', '- x4', '- x2', '- x1')), FALSE, 5L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c(NA, 1, 1, 1), .Names = c('<none>', '- x4', '- x2', '- x1')), FALSE, 5L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
     public void testformat15() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(2.22044604925031e-16, FALSE, 1, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(2.22044604925031e-16, FALSE, 1, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -121,14 +115,12 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat23() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(NA, 2L, 4L, 7L), FALSE, NULL, 0L, NULL, 3L, FALSE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(c(NA, 2L, 4L, 7L), FALSE, NULL, 0L, NULL, 3L, FALSE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
     public void testformat24() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(1.1+0i, NA, 3+0i), FALSE, NULL, 0L, NULL, 3L, FALSE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(c(1.1+0i, NA, 3+0i), FALSE, NULL, 0L, NULL, 3L, FALSE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -143,26 +135,22 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat27() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(142L, 104L, 71L, 250L), .Dim = 4L, .Dimnames = structure(list(c('(1) Approve STRONGLY', '(2) Approve SOMEWHAT', '(3) Disapprove SOMEWHAT', '(4) Disapprove STRONGLY')), .Names = '')), FALSE, 7L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c(142L, 104L, 71L, 250L), .Dim = 4L, .Dimnames = structure(list(c('(1) Approve STRONGLY', '(2) Approve SOMEWHAT', '(3) Disapprove SOMEWHAT', '(4) Disapprove STRONGLY')), .Names = '')), FALSE, 7L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
     public void testformat28() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c('***', '*', ' ', ' ', ' '), legend = '0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1', class = 'noquote'), FALSE, NULL, 0L, NULL, 0L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c('***', '*', ' ', ' ', ' '), legend = '0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1', class = 'noquote'), FALSE, NULL, 0L, NULL, 0L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
     public void testformat29() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(0, 5, 118, 57, 0, 1, 4, 140, 0, 11, 154, 14, 0, 13, 13, 80, 35, 13, 387, 75, 17, 14, 89, 76, 0, 0, 670, 192, 0, 0, 3, 20), .Dim = c(1L, 32L), row.vars = structure(list(), .Names = character(0)), col.vars = structure(list(Class = c('1st', '2nd', '3rd', 'Crew'), Sex = c('Male', 'Female'), Age = c('Child', 'Adult'), Survived = c('No', 'Yes')), .Names = c('Class', 'Sex', 'Age', 'Survived'))), FALSE, 7L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c(0, 5, 118, 57, 0, 1, 4, 140, 0, 11, 154, 14, 0, 13, 13, 80, 35, 13, 387, 75, 17, 14, 89, 76, 0, 0, 670, 192, 0, 0, 3, 20), .Dim = c(1L, 32L), row.vars = structure(list(), .Names = character(0)), col.vars = structure(list(Class = c('1st', '2nd', '3rd', 'Crew'), Sex = c('Male', 'Female'), Age = c('Child', 'Adult'), Survived = c('No', 'Yes')), .Names = c('Class', 'Sex', 'Age', 'Survived'))), FALSE, 7L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
     public void testformat30() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c('', '', '\\\'Adult\\\'', '\\\'No\\\'', '', '387'), FALSE, NULL, 0L, NULL, 1L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(c('', '', '\\\'Adult\\\'', '\\\'No\\\'', '', '387'), FALSE, NULL, 0L, NULL, 1L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -172,8 +160,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat32() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(-0.318309886183791+0i, 0-0.564189583547756i, 1+0i, 0+1.77245385090552i, -3.14159265358979+0i), TRUE, 2, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(c(-0.318309886183791+0i, 0-0.564189583547756i, 1+0i, 0+1.77245385090552i, -3.14159265358979+0i), TRUE, 2, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -198,8 +185,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat37() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(213198964, 652424.52183908), .Names = c('null.deviance', 'deviance')), FALSE, 5L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c(213198964, 652424.52183908), .Names = c('null.deviance', 'deviance')), FALSE, 5L, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -224,14 +210,12 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat42() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(2.5, 97.5), TRUE, 3, 0L, NULL, 3L, TRUE, FALSE, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(c(2.5, 97.5), TRUE, 3, 0L, NULL, 3L, TRUE, FALSE, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
     public void testformat43() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(9.4, 10.2, 9.2, 4.4, 3.5, 2.7), .Dim = c(3L, 2L), .Dimnames = list(NULL, c('Estimate', 'Std.Err'))), FALSE, 2, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(structure(c(9.4, 10.2, 9.2, 4.4, 3.5, 2.7), .Dim = c(3L, 2L), .Dimnames = list(NULL, c('Estimate', 'Std.Err'))), FALSE, 2, 0L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -246,8 +230,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat47() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(-0.01234+3.14159265358979i, FALSE, NULL, 14L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(-0.01234+3.14159265358979i, FALSE, NULL, 14L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -257,8 +240,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat49() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(3.141, FALSE, NULL, 13L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(3.141, FALSE, NULL, 13L, NULL, 3L, TRUE, NA, \".\"); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test
@@ -293,7 +275,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat56() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(x = 0.04, digits = 3, nsmall = 3), .Names = c('x',     'digits', 'nsmall'));do.call('format', argv)");
+        assertEval("argv <- structure(list(x = 0.04, digits = 3, nsmall = 3), .Names = c('x',     'digits', 'nsmall'));do.call('format', argv)");
     }
 
     /**

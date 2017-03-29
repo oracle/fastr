@@ -58,7 +58,7 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         @Override
         protected void printElement(int i, FormatMetrics fm) throws IOException {
             ComplexVectorMetrics cfm = (ComplexVectorMetrics) fm;
-            String v = encodeComplex(vector.getDataAt(i), cfm, printCtx.parameters());
+            String v = encodeComplex(vector.getDataAt(i), cfm, '.', printCtx.parameters());
             out.print(v);
         }
 
@@ -401,20 +401,20 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
     @TruffleBoundary
     public static String encodeComplex(RComplex x, int digits, int sciPen, String naString) {
         ComplexVectorMetrics cvm = formatComplexVector(x, 0, 1, 0, digits, sciPen, naString.length());
-        return encodeComplex(x, cvm, digits, naString);
+        return encodeComplex(x, cvm, '.', digits, naString);
     }
 
     @TruffleBoundary
-    static String encodeComplex(RComplex x, ComplexVectorMetrics cvm, PrintParameters pp) {
-        return encodeComplex(x, cvm, pp.getDigits(), pp.getNaString());
+    static String encodeComplex(RComplex x, ComplexVectorMetrics cvm, char cdec, PrintParameters pp) {
+        return encodeComplex(x, cvm, cdec, pp.getDigits(), pp.getNaString());
     }
 
     @TruffleBoundary
-    static String encodeComplex(RComplex x, ComplexVectorMetrics cvm, int digits, String naString) {
+    static String encodeComplex(RComplex x, ComplexVectorMetrics cvm, char cdec, int digits, String naString) {
         if (x.isNA()) {
-            return DoubleVectorPrinter.encodeReal(RRuntime.DOUBLE_NA, cvm.maxWidth, 0, 0, '.', naString);
+            return DoubleVectorPrinter.encodeReal(RRuntime.DOUBLE_NA, cvm.maxWidth, 0, 0, cdec, naString);
         } else {
-            String s = encodeComplex(x, cvm.wr, cvm.dr, cvm.er, cvm.wi, cvm.di, cvm.ei, '.', digits, naString);
+            String s = encodeComplex(x, cvm.wr, cvm.dr, cvm.er, cvm.wi, cvm.di, cvm.ei, cdec, digits, naString);
             int g = cvm.maxWidth - cvm.wr - cvm.wi - 2;
             if (g > 0) {
                 // fill the remaining space by blanks to fit the maxWidth
@@ -474,5 +474,16 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
             buff = snprintf(NB, "%s%s%si", re, flagNegIm ? "-" : "+", im);
         }
         return buff;
+    }
+
+    public static String[] format(RAbstractComplexVector value, boolean trim, int nsmall, int width, char decimalMark, PrintParameters pp) {
+        ComplexVectorMetrics dfm = formatComplexVector(value, 0, value.getLength(), nsmall, pp);
+        ComplexVectorMetrics adjusted = new ComplexVectorMetrics(Math.max(trim ? 1 : dfm.wr, width), dfm.dr, dfm.er, Math.max(trim ? 1 : dfm.wi, width), dfm.di, dfm.ei);
+
+        String[] result = new String[value.getLength()];
+        for (int i = 0; i < value.getLength(); i++) {
+            result[i] = encodeComplex(value.getDataAt(i), adjusted, decimalMark, pp);
+        }
+        return result;
     }
 }

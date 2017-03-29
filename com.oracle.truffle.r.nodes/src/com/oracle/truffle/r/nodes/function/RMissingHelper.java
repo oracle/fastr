@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.EagerPromiseBase;
+import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 
 /**
  * This class implements the behavior for {@link RMissing} which is needed inside this module, as it
@@ -135,8 +135,8 @@ public class RMissingHelper {
                 }
                 promise.setUnderEvaluation();
                 // TODO Profile necessary here???
-                if (promise instanceof EagerPromiseBase) {
-                    EagerPromiseBase eagerPromise = (EagerPromiseBase) promise;
+                if (promise instanceof EagerPromise) {
+                    EagerPromise eagerPromise = (EagerPromise) promise;
                     if (!eagerPromise.isDeoptimized()) {
                         Object eagerValue = eagerPromise.getEagerValue();
                         if (eagerValue instanceof RPromise) {

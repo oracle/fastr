@@ -113,7 +113,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                         pbuf = DoubleVectorPrinter.encodeReal(RRuntime.DOUBLE_NA, pp.getNaWidth(), 0, 0, '.', pp);
                     } else {
                         ComplexVectorMetrics cvm = ComplexVectorPrinter.formatComplexVector(x, 0, 1, 0, pp);
-                        pbuf = ComplexVectorPrinter.encodeComplex(x, cvm, pp);
+                        pbuf = ComplexVectorPrinter.encodeComplex(x, cvm, '.', pp);
                     }
                 } else {
                     pbuf = "Complex," + cv.getLength();

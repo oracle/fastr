@@ -47,7 +47,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
@@ -171,16 +170,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         this.explicitArgs = null;
         this.varArgIndexes = getVarArgIndexes(arguments);
         this.lookupVarArgs = varArgIndexes.length == 0 ? null : ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any);
-
-        for (String name : signature) {
-            if (name != null && name.isEmpty()) {
-                /*
-                 * In GnuR this is evidently output by the parser, so very early, and never with a
-                 * caller in the message.
-                 */
-                throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
-            }
-        }
         this.signature = signature;
     }
 
@@ -539,8 +528,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Child private Node foreignCall;
         @CompilationFinal private int foreignCallArgCount;
 
-        private final BranchProfile errorProfile = BranchProfile.create();
-
         public ForeignCall(CallArgumentsNode arguments) {
             this.arguments = arguments;
         }
@@ -561,7 +548,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 }
                 return result;
             } catch (Throwable e) {
-                errorProfile.enter();
+                CompilerDirectives.transferToInterpreter();
                 throw RError.interopError(RError.findParentRBase(this), e, function);
             }
         }

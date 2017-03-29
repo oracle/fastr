@@ -53,7 +53,7 @@ import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.DefaultConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
-import com.oracle.truffle.r.runtime.data.RPromise.EagerPromiseBase;
+import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 public class FastRDebugTest {
@@ -302,8 +302,8 @@ public class FastRDebugTest {
 
     Object getRValue(Object value) {
         // This will only work in simple cases
-        if (value instanceof EagerPromiseBase) {
-            return ((EagerPromiseBase) value).getValue();
+        if (value instanceof EagerPromise) {
+            return ((EagerPromise) value).getValue();
         }
         return value;
     }

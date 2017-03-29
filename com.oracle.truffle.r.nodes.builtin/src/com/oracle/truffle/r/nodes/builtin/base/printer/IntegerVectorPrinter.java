@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -20,7 +20,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 //Transcribed from GnuR, src/main/printutils.c, src/main/format.c
 
-final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector> {
+public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector> {
 
     static final IntegerVectorPrinter INSTANCE = new IntegerVectorPrinter();
 
@@ -66,7 +66,7 @@ final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector> {
         }
     }
 
-    static FormatMetrics formatIntVector(RAbstractIntVector x, int offs, int n, int naWidth) {
+    public static FormatMetrics formatIntVector(RAbstractIntVector x, int offs, int n, int naWidth) {
         int xmin = RRuntime.INT_MAX_VALUE;
         int xmax = RRuntime.INT_MIN_VALUE;
         boolean naflag = false;
@@ -114,11 +114,28 @@ final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector> {
      */
     static int NB = 1000;
 
-    static String encodeInteger(int x, int w, PrintParameters pp) {
+    public static String encodeInteger(int x, int w, PrintParameters pp) {
         if (x == RRuntime.INT_NA) {
             return Utils.snprintf(NB, "%" + Utils.asBlankArg(Math.min(w, (NB - 1))) + "s", pp.getNaString());
         } else {
             return Utils.snprintf(NB, "%" + Utils.asBlankArg(Math.min(w, (NB - 1))) + "d", x);
         }
+    }
+
+    public static String[] format(RAbstractIntVector value, boolean trim, int width, PrintParameters pp) {
+        int w;
+        if (trim) {
+            w = 1;
+        } else {
+            FormatMetrics metrics = formatIntVector(value, 0, value.getLength(), pp.getNaWidth());
+            w = metrics.maxWidth;
+        }
+        w = Math.max(w, width);
+
+        String[] result = new String[value.getLength()];
+        for (int i = 0; i < value.getLength(); i++) {
+            result[i] = encodeInteger(value.getDataAt(i), w, pp);
+        }
+        return result;
     }
 }

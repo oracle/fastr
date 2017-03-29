@@ -372,8 +372,12 @@ final class REngine implements Engine, Engine.Timings {
         for (int i = 0; i < exprs.getLength(); i++) {
             Object obj = exprs.getDataAt(i);
             if (obj instanceof RSymbol) {
-                result = ReadVariableNode.lookupAny(((RSymbol) obj).getName(), envir.getFrame(), false);
+                String identifier = ((RSymbol) obj).getName();
+                result = ReadVariableNode.lookupAny(identifier, envir.getFrame(), false);
                 caller.setVisibility(true);
+                if (result == null) {
+                    throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, identifier);
+                }
             } else if (obj instanceof RLanguage) {
                 result = evalNode(((RLanguage) obj).getRep().asRSyntaxNode(), envir, caller);
             } else {

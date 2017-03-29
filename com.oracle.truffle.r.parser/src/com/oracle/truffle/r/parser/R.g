@@ -48,6 +48,8 @@ import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 @lexer::header {
 //@formatter:off
 package com.oracle.truffle.r.parser;
+
+import com.oracle.truffle.r.runtime.RError;
 }
 
 @rulecatch {
@@ -81,8 +83,18 @@ package com.oracle.truffle.r.parser;
      * Helper function to create a function lookup for the symbol in a given token.
      */
     private T operator(Token op) {
-        return builder.lookup(src(op), op.getText(), true);
+        return builder.lookup(src(op), argName(op.getText()), true);
     }
+    
+    /**
+     * Helper to check for empty lookups.
+     */
+     private String argName(String name) {
+         if (name.length() == 0) {
+             throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
+         } 
+         return name;
+     }
     
     /**
      * Create a {@link SourceSection} from a single token.
@@ -487,8 +499,8 @@ args [T firstArg] returns [List<Argument<T>> v]
 arg_expr [List<Argument<T>> l]
     @init { Token start = input.LT(1); }
     : e=expr                                                   { $l.add(RCodeBuilder.argument(src(start, last()), (String) null, $e.v)); }
-    | name=(ID | VARIADIC | NULL | STRING) n_ ASSIGN n_ e=expr { $l.add(RCodeBuilder.argument(src($name, last()), $name.text, $e.v)); }
-    | name=(ID | VARIADIC | NULL | STRING) n_ a=ASSIGN         { $l.add(RCodeBuilder.argument(src($name, $a), $name.text, null)); }
+    | name=(ID | VARIADIC | NULL | STRING) n_ ASSIGN n_ e=expr { $l.add(RCodeBuilder.argument(src($name, last()), argName($name.text), $e.v)); }
+    | name=(ID | VARIADIC | NULL | STRING) n_ a=ASSIGN         { $l.add(RCodeBuilder.argument(src($name, $a), argName($name.text), null)); }
     ;
 
 ///
@@ -606,7 +618,12 @@ fragment BACKTICK_NAME
         | i = ~( '\\' | '`' ) { buf.appendCodePoint(i); }
         )*
         '`'
-        { setText(buf.toString()); }
+        {
+          if (buf.length() == 0) {
+            throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
+          }
+          setText(buf.toString());
+        }
       )
     ;
 

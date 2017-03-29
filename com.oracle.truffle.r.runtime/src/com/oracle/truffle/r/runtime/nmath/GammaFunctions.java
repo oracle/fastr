@@ -126,7 +126,7 @@ public abstract class GammaFunctions {
 
     private static final double M_LN_SQRT_2PI = 0.918938533204672741780329736406;
 
-    static double gammafn(double x) {
+    public static double gammafn(double x) {
         int i;
         int n;
         double y;
