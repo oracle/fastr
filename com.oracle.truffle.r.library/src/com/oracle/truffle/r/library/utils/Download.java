@@ -68,7 +68,7 @@ public abstract class Download extends RExternalBuiltinNode.Arg5 {
 
                     StdConnections.getStderr().writeString(String.format("Content type '%s'", contentType != null ? contentType : "unknown"), false);
                     if (len > 1024 * 1024) {
-                        StdConnections.getStderr().writeString(String.format(" length %0.0f bytes (%0.1f MB)", (double) len, len / 1024.0 / 1024.0), true);
+                        StdConnections.getStderr().writeString(String.format(" length %d bytes (%.1f MB)", len, len / 1024.0 / 1024.0), true);
                     } else if (len > 10240) {
                         StdConnections.getStderr().writeString(String.format(" length %d bytes (%d KB)", len, len / 1024), true);
                     } else if (len >= 0) {
