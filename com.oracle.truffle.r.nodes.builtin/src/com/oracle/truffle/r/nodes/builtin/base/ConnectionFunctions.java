@@ -54,6 +54,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
@@ -860,7 +861,7 @@ public abstract class ConnectionFunctions {
                         if (size == RRuntime.INT_NA) {
                             size = 4;
                         }
-                        if (size == 1 || size == 4) {
+                        if (size == 1 || size == 4 || size == 2) {
                             result = readInteger(connection, n, size, swap, signed);
                         } else {
                             throw RError.nyi(RError.SHOW_CALLER, "readBin \"int\" size not implemented");
@@ -916,6 +917,11 @@ public abstract class ConnectionFunctions {
                     byte b = buffer.get();
                     int d = signed ? b : b & 0xFF;
                     data[i] = d;
+                }
+            } else if (size == 2) {
+                ShortBuffer shortBuffer = buffer.asShortBuffer();
+                for (int i = 0; i < nInts; i++) {
+                    data[i] = shortBuffer.get();
                 }
             }
             return RDataFactory.createIntVector(data, complete);
