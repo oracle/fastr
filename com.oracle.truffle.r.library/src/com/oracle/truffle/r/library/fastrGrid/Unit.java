@@ -215,7 +215,7 @@ public final class Unit {
                 for (int i = 0; i < lines.length; i++) {
                     result = Math.max(result, ctx.device.getStringWidth(ctx.gpar.getDrawingContext(index), lines[i]));
                 }
-                return result;
+                return value * result;
             case STRINGHEIGHT:
             case MYSTRINGHEIGHT:
                 str = RRuntime.asString(data.getDataAt(0));
@@ -223,7 +223,7 @@ public final class Unit {
                 for (int i = 0; i < lines.length; i++) {
                     result += ctx.device.getStringHeight(ctx.gpar.getDrawingContext(index), lines[i]);
                 }
-                return result;
+                return value * result;
             case NULL:
                 return evaluateNullUnit(value, vpSize, ctx.nullLayoutMode, ctx.nullArithmeticMode);
             default:
@@ -551,7 +551,7 @@ public final class Unit {
                 case "min":
                     return GridUtils.fmin(Double.MAX_VALUE, values);
                 case "max":
-                    return GridUtils.fmax(Double.MAX_VALUE, values);
+                    return GridUtils.fmax(Double.MIN_VALUE, values);
                 case "sum":
                     return GridUtils.sum(values);
                 default:
