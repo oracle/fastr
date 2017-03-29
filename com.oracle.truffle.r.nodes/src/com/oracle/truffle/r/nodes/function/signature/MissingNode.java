@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
@@ -201,10 +202,14 @@ public final class MissingNode extends OperatorNode {
                 throw error(Message.ARGUMENTS_PASSED, args.length, "'missing'", 1);
             }
             RSyntaxElement arg = args[0];
-            if (!(arg instanceof RSyntaxLookup)) {
+            String identifier;
+            if (arg instanceof RSyntaxConstant && ((RSyntaxConstant) arg).getValue() instanceof String) {
+                identifier = (String) ((RSyntaxConstant) arg).getValue();
+            } else if (arg instanceof RSyntaxLookup) {
+                identifier = ((RSyntaxLookup) arg).getIdentifier();
+            } else {
                 throw error(Message.INVALID_USE, "missing");
             }
-            String identifier = ((RSyntaxLookup) arg).getIdentifier();
             if (ArgumentsSignature.VARARG_NAME.equals(identifier)) {
                 readVarArgs = insert(LocalReadVariableNode.create(ArgumentsSignature.VARARG_NAME, false));
             } else {
