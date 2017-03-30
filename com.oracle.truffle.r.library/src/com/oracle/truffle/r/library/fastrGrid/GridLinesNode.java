@@ -90,15 +90,17 @@ public abstract class GridLinesNode extends Node {
                     // (1) current is invalid point. Note: in (one of) the next iteration(s), the
                     // oldIsFinite will be false and we will update the start and start a new series
                     // (2) we are in the last iteration
-                    if (lastIter || i - start > 1) {
-                        // we draw only if the previous series of points was at least of length 3 or
-                        // it's last iteration. This seems slightly weird, but that's how GnuR seems
-                        // to work
-                        drawPolylines(dev, drawingCtx, yy, xx, start, (i - start) + 1);
+                    int length = i - start;
+                    if (currIsFinite) {
+                        // the length either includes the last only if it is finite (last iteration)
+                        length++;
+                    }
+                    if (length > 1) {
+                        drawPolylines(dev, drawingCtx, yy, xx, start, length);
                         if (arrow != null) {
                             // Can draw an arrow at the start if the points include the first point.
                             // Draw an arrow at the end only if this is the last series
-                            drawArrowsNode.drawArrows(xx, yy, start, (i - start) + 1, unitIndex, arrow, start == 0, lastIter, conversionCtx);
+                            drawArrowsNode.drawArrows(xx, yy, start, length, unitIndex, arrow, start == 0, lastIter, conversionCtx);
                         }
                     }
                 }
