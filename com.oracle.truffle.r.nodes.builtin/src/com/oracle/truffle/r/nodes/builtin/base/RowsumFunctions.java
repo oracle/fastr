@@ -137,13 +137,12 @@ public class RowsumFunctions {
                 }
                 result = RDataFactory.createDoubleVector(ansd, complete, new int[]{ng, p});
             }
-            Object[] dimNamesData = new Object[2];
-            dimNamesData[0] = rn;
             RList dn2 = xv.materialize().getDimNames();
+            Object dn2Obj = RNull.instance;
             if (dn2 != null && dn2.getLength() >= 2 && dn2.getDataAt(1) != RNull.instance) {
-                dimNamesData[1] = dn2.getDataAt(1);
+                dn2Obj = dn2.getDataAt(1);
             }
-            RList dimNames = RDataFactory.createList(dimNamesData);
+            RList dimNames = RDataFactory.createList(new Object[]{rn, dn2Obj});
             result.setDimNames(dimNames);
             return result;
         }

@@ -375,11 +375,31 @@ public final class RDataFactory {
     }
 
     public static RList createList(int n) {
-        return createList(new Object[n], null, null);
+        return createList(createRNullArray(n), null, null);
+    }
+
+    public static RList createList(int size, RStringVector names) {
+        if (names == null) {
+            return createList(size);
+        }
+        assert size == names.getLength();
+        return createList(createRNullArray(names.getLength()), null, names);
     }
 
     public static RList createList(Object[] data, int[] newDimensions, RStringVector names) {
         return traceDataCreated(new RList(data, newDimensions, names));
+    }
+
+    public static RExpression createExpression(int size) {
+        return createExpression(createRNullArray(size));
+    }
+
+    public static RExpression createExpression(int size, RStringVector names) {
+        if (names == null) {
+            return createExpression(size);
+        }
+        assert size == names.getLength();
+        return createExpression(createRNullArray(size), names);
     }
 
     public static RExpression createExpression(Object[] data, int[] newDimensions) {
@@ -557,5 +577,11 @@ public final class RDataFactory {
      */
     public static void addListener(Listener listener) {
         listeners.addLast(listener);
+    }
+
+    private static Object[] createRNullArray(int size) {
+        Object[] data = new Object[size];
+        Arrays.fill(data, RNull.instance);
+        return data;
     }
 }
