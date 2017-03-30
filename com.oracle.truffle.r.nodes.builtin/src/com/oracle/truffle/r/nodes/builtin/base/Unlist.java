@@ -27,6 +27,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.UnlistNodeGen.RecursiveLengthNodeGen;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -40,11 +41,12 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-@RBuiltin(name = "unlist", kind = INTERNAL, parameterNames = {"x", "recursive", "use.names"}, behavior = PURE)
+@RBuiltin(name = "unlist", kind = INTERNAL, dispatch = RDispatch.INTERNAL_GENERIC, parameterNames = {"x", "recursive", "use.names"}, behavior = PURE)
 public abstract class Unlist extends RBuiltinNode {
 
     // portions of the algorithm were transcribed from GNU R
@@ -93,6 +95,11 @@ public abstract class Unlist extends RBuiltinNode {
 
         @Specialization
         protected int getLength(@SuppressWarnings("unused") RFunction l) {
+            return 1;
+        }
+
+        @Specialization
+        protected int getLength(@SuppressWarnings("unused") RSymbol s) {
             return 1;
         }
 
