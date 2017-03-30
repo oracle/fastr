@@ -82,7 +82,7 @@ public final class GridContext {
     public void openDefaultDevice() {
         String defaultDev = RGridGraphicsAdapter.getDefaultDevice();
         if (defaultDev.equals("awt") || defaultDev.startsWith("X11")) {
-            BufferedJFrameDevice result = new BufferedJFrameDevice(JFrameDevice.create());
+            BufferedJFrameDevice result = new BufferedJFrameDevice(JFrameDevice.create(GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT));
             setCurrentDevice(defaultDev, result);
         } else {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "FastR does not support device '" + defaultDev + "'.");

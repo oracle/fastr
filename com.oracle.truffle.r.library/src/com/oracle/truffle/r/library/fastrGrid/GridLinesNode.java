@@ -92,7 +92,7 @@ public abstract class GridLinesNode extends Node {
                     // (2) we are in the last iteration
                     int length = i - start;
                     if (currIsFinite) {
-                        // the length either includes the last only if it is finite (last iteration)
+                        // the length includes the last point only if the point is finite
                         length++;
                     }
                     if (length > 1) {

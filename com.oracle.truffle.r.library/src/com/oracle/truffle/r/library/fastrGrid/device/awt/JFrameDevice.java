@@ -26,7 +26,6 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.HeadlessException;
-import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -35,6 +34,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 public final class JFrameDevice extends Graphics2DDevice {
+
     private final JFrame currentFrame;
     private final boolean disposeResources;
 
@@ -55,8 +55,8 @@ public final class JFrameDevice extends Graphics2DDevice {
      * Creates a standalone device that manages the window itself and closes it once
      * {@link #close()} gets called.
      */
-    public static JFrameDevice create() {
-        FastRFrame frame = new FastRFrame();
+    public static JFrameDevice create(int width, int height) {
+        FastRFrame frame = new FastRFrame(width, height);
         frame.setVisible(true);
         frame.pack();
         Graphics2D graphics = (Graphics2D) frame.getGraphics();
@@ -76,26 +76,20 @@ public final class JFrameDevice extends Graphics2DDevice {
         return currentFrame;
     }
 
-    static void defaultInitGraphics(Graphics2D graphics) {
-        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        graphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-    }
-
     static class FastRFrame extends JFrame {
         private static final long serialVersionUID = 1L;
-        private final Dimension framePreferredSize = new Dimension(720, 720);
         private final JPanel fastRComponent = new JPanel();
 
-        FastRFrame() throws HeadlessException {
+        FastRFrame(int width, int height) throws HeadlessException {
             super("FastR");
             addCloseListener();
-            createUI();
+            createUI(width, height);
             center();
         }
 
-        private void createUI() {
+        private void createUI(int width, int height) {
             setLayout(new BorderLayout());
-            setSize(framePreferredSize);
+            setSize(new Dimension(width, height));
             add(fastRComponent, BorderLayout.CENTER);
             fastRComponent.setPreferredSize(getSize());
         }

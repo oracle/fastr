@@ -189,7 +189,7 @@ public final class BufferedJFrameDevice implements GridDevice, ImageSaver {
     }
 
     private void setGraphics(Graphics graphics) {
-        JFrameDevice.defaultInitGraphics((Graphics2D) graphics);
+        Graphics2DDevice.defaultInitGraphics((Graphics2D) graphics);
         inner.getGraphics2D().dispose();
         inner.setGraphics2D((Graphics2D) graphics);
     }
