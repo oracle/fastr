@@ -37,12 +37,14 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EvalNodeGen.EvalEnvCastNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.FrameFunctions.SysFrame;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctions.Get;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
@@ -62,6 +64,11 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  */
 @RBuiltin(name = "eval", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"expr", "envir", "enclos"}, behavior = COMPLEX)
 public abstract class Eval extends RBuiltinNode {
+
+    /**
+     * Profiling for catching {@link ReturnException}s.
+     */
+    private final ConditionProfile returnTopLevelProfile = ConditionProfile.createBinaryProfile();
 
     /**
      * Eval takes two arguments that specify the environment where the expression should be
@@ -148,7 +155,11 @@ public abstract class Eval extends RBuiltinNode {
         try {
             return RContext.getEngine().eval(expr, environment, rCaller);
         } catch (ReturnException ret) {
-            return ret.getResult();
+            if (returnTopLevelProfile.profile(ret.getTarget() == rCaller)) {
+                return ret.getResult();
+            } else {
+                throw ret;
+            }
         } finally {
             visibility.executeAfterCall(frame, rCaller);
         }
@@ -161,7 +172,11 @@ public abstract class Eval extends RBuiltinNode {
         try {
             return RContext.getEngine().eval(expr, environment, rCaller);
         } catch (ReturnException ret) {
-            return ret.getResult();
+            if (returnTopLevelProfile.profile(ret.getTarget() == rCaller)) {
+                return ret.getResult();
+            } else {
+                throw ret;
+            }
         } finally {
             visibility.executeAfterCall(frame, rCaller);
         }
