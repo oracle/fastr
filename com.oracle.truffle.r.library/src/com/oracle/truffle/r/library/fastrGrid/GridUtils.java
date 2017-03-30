@@ -140,7 +140,7 @@ final class GridUtils {
 
     static double asDouble(Object val, int cyclicIndex) {
         if (val instanceof Double) {
-            return (int) val;
+            return (double) val;
         } else if (val instanceof RAbstractDoubleVector) {
             RAbstractDoubleVector vec = (RAbstractDoubleVector) val;
             if (vec.getLength() > 0) {

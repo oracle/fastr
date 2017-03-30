@@ -382,9 +382,9 @@ public abstract class Combine extends RBuiltinNode {
             case RAW_PRECEDENCE:
                 return RDataFactory.createRawVector(new byte[size], names);
             case EXPRESSION_PRECEDENCE:
-                return RDataFactory.createExpression(new Object[size], names);
+                return RDataFactory.createExpression(size, names);
             case LIST_PRECEDENCE:
-                return RDataFactory.createList(new Object[size], names);
+                return RDataFactory.createList(size, names);
             case NO_PRECEDENCE:
                 return null;
             default:

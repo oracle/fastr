@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -229,14 +230,15 @@ public abstract class MatMult extends RBuiltinNode {
             return resultVec;
         }
 
-        Object[] newDimsNames = new Object[2];
+        Object dimName1 = RNull.instance;
         if (aDimNames != null && aDimNames.getLength() > 0) {
-            newDimsNames[0] = aDimNames.getDataAt(0);
+            dimName1 = aDimNames.getDataAt(0);
         }
+        Object dimName2 = RNull.instance;
         if (bDimNames != null && bDimNames.getLength() > 1) {
-            newDimsNames[1] = bDimNames.getDataAt(1);
+            dimName2 = bDimNames.getDataAt(1);
         }
-        setDimNamesNode.setDimNames(resultVec, RDataFactory.createList(newDimsNames));
+        setDimNamesNode.setDimNames(resultVec, RDataFactory.createList(new Object[]{dimName1, dimName2}));
         return resultVec;
     }
 

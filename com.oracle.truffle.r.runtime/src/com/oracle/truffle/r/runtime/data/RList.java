@@ -70,7 +70,7 @@ public final class RList extends RListBase implements RAbstractListVector {
 
     @Override
     public RList createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createList(new Object[newLength]);
+        return RDataFactory.createList(newLength);
     }
 
     @Override

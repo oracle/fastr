@@ -151,28 +151,24 @@ public abstract class Merge extends RBuiltinNode {
         int[] ansXData = new int[nans];
         int[] ansYData = new int[nans];
 
-        RList ans = RDataFactory.createList(new Object[4], RDataFactory.createStringVector(new String[]{"xi", "yi", "x.alone", "y.alone"}, RDataFactory.COMPLETE_VECTOR));
-        ans.updateDataAt(0, RDataFactory.createIntVector(ansXData, RDataFactory.COMPLETE_VECTOR), null);
-        ans.updateDataAt(1, RDataFactory.createIntVector(ansYData, RDataFactory.COMPLETE_VECTOR), null);
+        Object[] ansData = new Object[]{RDataFactory.createIntVector(ansXData, RDataFactory.COMPLETE_VECTOR), RDataFactory.createIntVector(ansYData, RDataFactory.COMPLETE_VECTOR), RNull.instance,
+                        RNull.instance};
+        RList ans = RDataFactory.createList(ansData, RDataFactory.createStringVector(new String[]{"xi", "yi", "x.alone", "y.alone"}, RDataFactory.COMPLETE_VECTOR));
 
         if (allX) {
             int[] xLoneData = new int[nxLone];
-            ans.updateDataAt(2, RDataFactory.createIntVector(xLoneData, RDataFactory.COMPLETE_VECTOR), null);
+            ansData[2] = RDataFactory.createIntVector(xLoneData, RDataFactory.COMPLETE_VECTOR);
             for (int i = 0, ll = 0; i < nxLone; i++) {
                 xLoneData[ll++] = ix[i];
             }
-        } else {
-            ans.updateDataAt(2, RNull.instance, null);
         }
 
         if (allY) {
             int[] yLoneData = new int[nyLone];
-            ans.updateDataAt(3, RDataFactory.createIntVector(yLoneData, RDataFactory.COMPLETE_VECTOR), null);
+            ansData[3] = RDataFactory.createIntVector(yLoneData, RDataFactory.COMPLETE_VECTOR);
             for (int i = 0, ll = 0; i < nyLone; i++) {
                 yLoneData[ll++] = iy[i];
             }
-        } else {
-            ans.updateDataAt(3, RNull.instance, null);
         }
 
         j = nyLone;

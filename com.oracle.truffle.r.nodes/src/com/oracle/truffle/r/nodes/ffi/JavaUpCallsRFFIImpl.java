@@ -392,12 +392,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             case RAWSXP:
                 return RDataFactory.createRawVector(new byte[n]);
             case VECSXP:
-                // fill list with "NULL" values
-                RList list = RDataFactory.createList(n);
-                for (int i = 0; i < n; i++) {
-                    list.setElement(i, RNull.instance);
-                }
-                return list;
+                return RDataFactory.createList(n);
             case LANGSXP:
                 return RDataFactory.createLangPairList(n);
             default:

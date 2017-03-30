@@ -321,7 +321,7 @@ public abstract class Scan extends RBuiltinNode {
         }
         int blockSize = maxRecords > 0 ? maxRecords : (maxLines > 0 ? maxLines : SCAN_BLOCKSIZE);
 
-        RList list = RDataFactory.createList(new Object[nc]);
+        RList list = RDataFactory.createList(nc);
         for (int i = 0; i < nc; i++) {
             if (what.getDataAt(i) == RNull.instance) {
                 throw error(RError.Message.INVALID_ARGUMENT, "what");

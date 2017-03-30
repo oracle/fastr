@@ -70,7 +70,7 @@ public final class RExpression extends RListBase implements RAbstractVector {
 
     @Override
     public RExpression createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createExpression(new Object[newLength]);
+        return RDataFactory.createExpression(newLength);
     }
 
     @Override

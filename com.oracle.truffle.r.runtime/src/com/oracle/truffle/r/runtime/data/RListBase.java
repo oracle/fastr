@@ -80,6 +80,7 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
 
     @Override
     public void setDataAt(Object store, int index, Object valueArg) {
+        assert valueArg != null : "lists must not contain nulls";
         Object value = valueArg;
         assert store == data;
         ((Object[]) store)[index] = value;
@@ -92,6 +93,11 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
 
     @Override
     protected final boolean internalVerify() {
+        for (Object item : data) {
+            if (item == null) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -123,6 +129,7 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
 
     public final RListBase updateDataAt(int i, Object right, @SuppressWarnings("unused") NACheck rightNACheck) {
         assert !this.isShared() : "data in shared list must not be updated, make a copy";
+        assert right != null : "lists must not contain nulls";
         data[i] = right;
         return this;
     }

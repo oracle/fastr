@@ -617,14 +617,10 @@ public class LaFunctions {
                 // This is somewhat odd, but Matrix relies on dropping NULL dimnames
                 if (aDn != null || binDn != null) {
                     // rownames(ans) = colnames(A), colnames(ans) = colnames(Bin)
-                    Object[] bDnData = new Object[2];
-                    if (aDn != null) {
-                        bDnData[0] = aDn.getDataAt(1);
-                    }
-                    if (binDn != null) {
-                        bDnData[1] = binDn.getDataAt(1);
-                    }
-                    if (bDnData[0] != null || bDnData[1] != null) {
+                    if (aDn != null || binDn != null) {
+                        Object[] bDnData = new Object[2];
+                        bDnData[0] = aDn == null ? RNull.instance : aDn.getDataAt(1);
+                        bDnData[1] = binDn == null ? RNull.instance : binDn.getDataAt(1);
                         setBDimNamesNode.setDimNames(b, RDataFactory.createList(bDnData));
                     }
                 }
