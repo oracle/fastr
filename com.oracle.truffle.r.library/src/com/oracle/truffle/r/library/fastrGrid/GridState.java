@@ -82,6 +82,7 @@ public final class GridState {
 
     void initGPar(GridDevice currentDevice) {
         devState.gpar = GPar.createNew(currentDevice);
+        assert devState.gpar.verify();
     }
 
     /**
@@ -120,6 +121,7 @@ public final class GridState {
     }
 
     public void setViewPort(RList viewPort) {
+        assert viewPort.verify();
         devState.viewPort = viewPort;
     }
 

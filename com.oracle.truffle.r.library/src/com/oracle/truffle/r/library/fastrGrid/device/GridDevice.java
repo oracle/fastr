@@ -27,6 +27,9 @@ package com.oracle.truffle.r.library.fastrGrid.device;
  * in inches and angles in radians unless stated otherwise.
  */
 public interface GridDevice {
+    int DEFAULT_WIDTH = 720;
+    int DEFAULT_HEIGHT = 720;
+
     void openNewPage();
 
     /**

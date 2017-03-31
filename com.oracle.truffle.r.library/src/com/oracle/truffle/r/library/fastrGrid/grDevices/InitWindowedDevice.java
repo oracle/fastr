@@ -24,6 +24,7 @@ package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
+import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice.NotSupportedImageFormatException;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedJFrameDevice;
@@ -40,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
  * . The arguments determine which device should be opened.
  */
 public final class InitWindowedDevice extends RExternalBuiltinNode {
+
     static {
         Casts.noCasts(InitWindowedDevice.class);
     }
@@ -47,28 +49,43 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
     @Override
     @TruffleBoundary
     protected Object call(RArgsValuesAndNames args) {
+        int width = getIntOrDefault(args, 1, GridDevice.DEFAULT_WIDTH);
+        int height = getIntOrDefault(args, 2, GridDevice.DEFAULT_HEIGHT);
         // if the first argument is a String, then it may describes the image format and filename to
         // use, the format is e.g. "jpeg::quality:filename"
         if (args.getLength() >= 1) {
             String name = RRuntime.asString(args.getArgument(0));
             if (!RRuntime.isNA(name) && name.contains("::")) {
-                return openImageDevice(name);
+                return openImageDevice(name, width, height);
             }
         }
-        // otherwise the
-        GridContext.getContext().setCurrentDevice(args.getLength() == 0 ? "awt" : "X11cairo", new BufferedJFrameDevice(JFrameDevice.create()));
+        // otherwise the windowed device
+        BufferedJFrameDevice device = new BufferedJFrameDevice(JFrameDevice.create(width, height));
+        String name = args.getArgument(0).equals(".FASTR.AWT") ? "awt" : "X11cairo";
+        GridContext.getContext().setCurrentDevice(name, device);
         return RNull.instance;
     }
 
-    private Object openImageDevice(String name) {
+    private Object openImageDevice(String name, int width, int height) {
         String formatName = name.substring(0, name.indexOf("::"));
         String filename = name.substring(name.lastIndexOf(':') + 1);
         try {
-            BufferedImageDevice device = BufferedImageDevice.open(filename, formatName, 700, 700);
+            BufferedImageDevice device = BufferedImageDevice.open(filename, formatName, width, height);
             GridContext.getContext().setCurrentDevice(formatName, device);
         } catch (NotSupportedImageFormatException e) {
             throw error(Message.GENERIC, String.format("Format '%s' is not supported.", formatName));
         }
         return RNull.instance;
+    }
+
+    private static int getIntOrDefault(RArgsValuesAndNames args, int index, int defaultValue) {
+        if (index >= args.getLength()) {
+            return defaultValue;
+        }
+        int value = RRuntime.asInteger(args.getArgument(index));
+        if (RRuntime.isNA(value)) {
+            return defaultValue;
+        }
+        return value;
     }
 }

@@ -74,6 +74,8 @@ final class DoSetViewPort extends RBaseNode {
         pushedVPData[ViewPort.PVP_CLIPRECT] = RDataFactory.createDoubleVector(new double[]{0, 0, 0, 0}, RDataFactory.COMPLETE_VECTOR);
         pushedVPData[ViewPort.PVP_DEVWIDTHCM] = scalar(Unit.inchesToCm(currentDevice.getWidth()));
         pushedVPData[ViewPort.PVP_DEVHEIGHTCM] = scalar(Unit.inchesToCm(currentDevice.getHeight()));
+
+        assert pushedViewPort.verify();
         return pushedViewPort;
     }
 

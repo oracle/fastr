@@ -31,6 +31,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
+import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
@@ -81,6 +82,11 @@ public class Graphics2DDevice implements GridDevice {
         this.width = width;
         this.height = height;
         this.graphicsIsExclusive = graphicsIsExclusive;
+    }
+
+    static void defaultInitGraphics(Graphics2D graphics) {
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        graphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
     }
 
     @Override

@@ -51,7 +51,9 @@ public final class BufferedImageDevice extends Graphics2DDevice {
             throw new NotSupportedImageFormatException();
         }
         BufferedImage image = new BufferedImage(width, height, TYPE_INT_RGB);
-        return new BufferedImageDevice(filename, fileType, image, (Graphics2D) image.getGraphics(), width, height);
+        Graphics2D graphics = (Graphics2D) image.getGraphics();
+        defaultInitGraphics(graphics);
+        return new BufferedImageDevice(filename, fileType, image, graphics, width, height);
     }
 
     @Override
