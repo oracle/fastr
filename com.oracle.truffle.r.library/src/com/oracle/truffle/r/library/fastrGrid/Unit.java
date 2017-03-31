@@ -163,6 +163,16 @@ public final class Unit {
                 return value;
             case POINTS:
                 return value * INCH_TO_POINTS_FACTOR;
+            case PICAS:
+                return value / 12 * INCH_TO_POINTS_FACTOR;
+            case BIGPOINTS:
+                return value * 72;
+            case DIDA:
+                return value / 1238 * 1157 * INCH_TO_POINTS_FACTOR;
+            case CICERO:
+                return value / 1238 * 1157 * INCH_TO_POINTS_FACTOR / 12;
+            case SCALEDPOINTS:
+                return value * 65536 * INCH_TO_POINTS_FACTOR;
             case LINES:
                 return (value * INCH_TO_POINTS_FACTOR) / (drawingCtx.getFontSize() * drawingCtx.getLineHeight());
             // following units are not supported even by original grid
@@ -184,6 +194,7 @@ public final class Unit {
     }
 
     private static double convertToInches(double value, int index, int unitId, RList data, UnitConversionContext ctx, AxisOrDimension axisOrDim) {
+        // Note: grob units are converted in a dedicated node
         double vpSize = ctx.getViewPortSize(axisOrDim);
         String str;
         String[] lines;
@@ -202,6 +213,16 @@ public final class Unit {
                 return value / CM_IN_INCH;
             case MM:
                 return value / (CM_IN_INCH * 10);
+            case PICAS:
+                return (value * 12) / INCH_TO_POINTS_FACTOR;
+            case BIGPOINTS:
+                return value / 72;
+            case DIDA:
+                return value / 1157 * 1238 / INCH_TO_POINTS_FACTOR;
+            case CICERO:
+                return value * 12 / 1157 * 1238 / INCH_TO_POINTS_FACTOR;
+            case SCALEDPOINTS:
+                return value / 65536 / INCH_TO_POINTS_FACTOR;
             case CHAR:
             case MYCHAR:
                 return (value * ctx.gpar.getDrawingContext(index).getFontSize()) / INCH_TO_POINTS_FACTOR;
