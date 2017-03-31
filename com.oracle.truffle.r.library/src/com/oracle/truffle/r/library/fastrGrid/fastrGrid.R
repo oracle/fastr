@@ -1,26 +1,44 @@
+#
+# This material is distributed under the GNU General Public License
+# Version 2. You may review the terms of this license at
+# http://www.gnu.org/licenses/gpl-2.0.html
+#
+# Copyright (C) 2001-3 Paul Murrell
+# Copyright (c) 1998-2015, The R Core Team
+# Copyright (c) 2017, Oracle and/or its affiliates
+#
+# All rights reserved.
+#
+
+# This file contains internal R helper functions that are invoked from grid externals implementations.
+# Where original grid implementation uses many Rf_eval calls to call back to R, we rewrite the whole
+# logic to R. Some functions implement whole externals, like L_downvppath, some implement coherent
+# parts of the logic and the rest is in Java.
 
 # Returns list with elements [[1]] - depth, zero if not found, [[2]] - the viewport, NULL if not found
-find.viewport <- function(name, strict, pvp, depth) {
+# We are searching for child "name" in "pvp", if the "path" is not missing,
+# then also pathMatch(path, currPath) must hold.
+find.viewport <- function(path, name, strict, currPath, pvp, depth) {
     if (length(ls(env=pvp$children)) == 0) {
         return(list(FALSE, NULL))
-    } else if (exists(name, env=pvp$children, inherits=FALSE)) {
+    } else if (exists(name, env=pvp$children, inherits=FALSE) && (missing(path) || grid:::pathMatch(path, currPath, strict))) {
         return(list(depth, get(name, env=pvp$children, inherits=FALSE)))
-    } else if (strict) {
+    } else if (strict && missing(path)) {
         return(list(FALSE, NULL))
     } else {
-        return(find.in.children(name, pvp$children, depth + 1L))
+        return(find.in.children(path, name, strict, currPath, pvp$children, depth + 1L))
     }
 }
 
-# Note: in GnuR this takes "strict" from find.viewport and forwards it to recursive calls to find.viewport,
-# however, strict must be constant FALSE if find.in.children is called, so we leave it out.
-find.in.children <- function(name, children, depth) {
+find.in.children <- function(path, name, strict, currPath, children, depth) {
   cpvps <- ls(env=children)
   ncpvp <- length(cpvps)
   count <- 0L
   found <- FALSE
   while (count < ncpvp && !found) {
-    result <- find.viewport(name, FALSE, get(cpvps[count + 1L], env=children), depth)
+    child <- get(cpvps[count + 1L], env=children)
+    nextCurrPath <- if (missing(path)) NULL else grid:::growPath(currPath, child$name)
+    result <- find.viewport(path, name, strict, nextCurrPath, child, depth)
     if (result[[1L]]) {
         return(result);
     }
@@ -29,15 +47,22 @@ find.in.children <- function(name, children, depth) {
   list(FALSE, NULL) # not found
 }
 
-L_downviewport <- function(name, strict) {
+# path is a string, e.g. "A::B::C", or NULL if we are not searching for particular path
+# name is a string, the name of child we are looking for
+L_downvppath <- function(path, name, strict) {
     currVp <- .Call(grid:::L_currentViewport)
-    result <- find.viewport(name, strict, currVp, 1L);
+    result <- find.viewport(path, name, strict, NULL, currVp, 1L);
     if (result[[1]]) {
         .Internal(.fastr.grid.doSetViewPort(result[[2L]], FALSE, FALSE));
         return(result[[1L]])
     } else {
         stop(paste0("Viewport '", name, "' was not found"));
     }
+}
+
+L_downviewport <- function(name, strict) {
+    # note: first argument is "missing"
+    L_downvppath(, name, strict)
 }
 
 L_setviewport <- function(vp, hasParent) {

@@ -99,6 +99,7 @@ public final class FastRGridExternalLookup {
                 return LUnsetViewPort.create();
             case "L_setviewport":
             case "L_downviewport":
+            case "L_downvppath":
                 return getExternalFastRGridBuiltinNode(name);
 
             // Drawing primitives
