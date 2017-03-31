@@ -24,6 +24,7 @@ package com.oracle.truffle.r.test.tools;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -36,8 +37,23 @@ import com.oracle.truffle.r.runtime.ffi.UpCallsRFFI;
  */
 public class RFFIUpCallMethodGenerate {
 
-    public static void main(String[] args) {
-        Method[] methods = UpCallsRFFI.class.getMethods();
+    public static void main(String[] args) throws Exception {
+        String klassName = "com.oracle.truffle.r.runtime.ffi.UpCallsRFFI";
+        boolean klassArg = false;
+
+        int i = 0;
+        while (i < args.length) {
+            String arg = args[i];
+            if (arg.equals("--class")) {
+                i++;
+                klassName = args[i];
+                klassArg = true;
+            }
+            i++;
+        }
+
+        Class<?> klass = Class.forName(klassName);
+        Method[] methods = klassArg ? klass.getDeclaredMethods() : klass.getMethods();
 
         Arrays.sort(methods, new Comparator<Method>() {
 
@@ -47,8 +63,11 @@ public class RFFIUpCallMethodGenerate {
             }
 
         });
-        for (int i = 0; i < methods.length; i++) {
+        for (i = 0; i < methods.length; i++) {
             Method m = methods[i];
+            if (klassArg && (Modifier.isStatic(m.getModifiers()))) {
+                continue;
+            }
             String sig = getNFISignature(m);
             System.out.printf("%s(\"%s\")%s%n", m.getName(), sig, i == methods.length - 1 ? ";" : ",");
         }
@@ -92,12 +111,20 @@ public class RFFIUpCallMethodGenerate {
                 } else {
                     return rffiCstring.convert() ? "string" : "pointer";
                 }
+            case "char":
+                return "uint8";
             case "int":
                 return "sint32";
             case "double":
                 return "double";
             case "void":
                 return "void";
+            case "int[]":
+                return "[sint32]";
+            case "double[]":
+                return "[double]";
+            case "byte[]":
+                return "[uint8]";
             default:
                 return "object";
         }

@@ -1,0 +1,26 @@
+#include <rffiutils.h>
+
+typedef void (*callVoid0func)();
+
+Call_callVoid0(long address) {
+//	jmp_buf error_jmpbuf;
+//	callEnter(env, &error_jmpbuf);
+//	if (!setjmp(error_jmpbuf)) {
+		callVoid0func call1 = (callVoid0func) address;
+		(*call1)();
+//	}
+//	callExit(env);
+}
+
+typedef void (*callVoid1func)(SEXP arg1);
+
+
+Call_callVoid1(long address, TruffleObject *arg1) {
+//	jmp_buf error_jmpbuf;
+//	callEnter(env, &error_jmpbuf);
+//	if (!setjmp(error_jmpbuf)) {
+		callVoid0func call1 = (callVoid0func) address;
+		(*call1)(arg1);
+//	}
+//	callExit(env);
+}

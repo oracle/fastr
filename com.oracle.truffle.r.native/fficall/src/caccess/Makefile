@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,31 +21,14 @@
 # questions.
 #
 
-.PHONY: all clean
-
-export TOPDIR = $(CURDIR)
-# all output goes into the com.oracle.truffle.r.test project for packaging into a single distribution
-export MX_OUTPUT_DIR = $(abspath $(TOPDIR)/../mxbuild/com.oracle.truffle.r.test/bin/com/oracle/truffle/r/test)
-export REPO_DIR := $(TOPDIR)/packages/repo/src/contrib
-OSNAME := $(shell uname)
-
-all:
-	mkdir -p $(REPO_DIR)
-	cp packages/PACKAGES $(REPO_DIR)
-	$(MAKE) -C urand
-	$(MAKE) -C packages
-ifneq ($(OSNAME), SunOS)
-ifeq ($(FASTR_RFFI),jni)
-	$(MAKE) -C embedded
-endif
+ifneq ($(MAKECMDGOALS),clean)
+include $(TOPDIR)/platform.mk
 endif
 
-clean:
-	$(MAKE) -C urand clean
-	$(MAKE) -C packages clean
-ifneq ($(OSNAME), SunOS)
-ifeq ($(FASTR_RFFI),jni)
-	$(MAKE) -C embedded clean
-endif
-endif
-	rm -f $(REPO_DIR)/*
+
+.PHONY: all
+
+all: caccess.o
+
+caccess.o: caccess.c
+	$(CC) $(CFLAGS) -c caccess.c -o $@

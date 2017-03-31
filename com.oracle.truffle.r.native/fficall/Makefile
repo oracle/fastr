@@ -39,9 +39,8 @@ R_LIBNAME := libR$(DYLIB_EXT)
 R_LIB := $(FASTR_LIB_DIR)/$(R_LIBNAME)
 JNIBOOT_LIBNAME := libjniboot$(DYLIB_EXT)
 JNIBOOT_LIB := $(FASTR_LIB_DIR)/$(JNIBOOT_LIBNAME)
-
-FASTR_COMPILERS_DIR := $(FASTR_R_HOME)/mx.fastr/compilers
-HAVE_SULONG := $(shell $(FASTR_COMPILERS_DIR)/have_sulong)
+CACCESS_LIBNAME := libcaccess$(DYLIB_EXT)
+CACCESS_LIB := $(FASTR_LIB_DIR)/$(CACCESS_LIBNAME)
 
 ifeq ($(OS_NAME), Darwin)
 VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
@@ -50,13 +49,13 @@ endif
 BLAS_TARGET := $(FASTR_LIB_DIR)/libRblas$(DYLIB_EXT)
 LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
 
-all: $(R_LIB) $(JNIBOOT_LIB)
+all: $(R_LIB)
 
 # use sentinels to avoid (usually unnecessary) rebuilds.
 # N.B. if things change in the subdirs, a clean must be invoked
 # to remove the sentinels
 
-$(R_LIB): jni.done 
+$(R_LIB): fficall.done 
 ifeq ($(OS_NAME),Darwin)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
 	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
@@ -68,31 +67,58 @@ else
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz
 endif
 
-jni.done:
-	$(MAKE) -C src/common all
-	$(MAKE) -C src/jni all
-ifeq ($(HAVE_SULONG),yes)
+ifeq ($(FASTR_RFFI),nfi)
+fficall.done: common.done
+	$(MAKE) -C src/truffle_nfi all
+	touch fficall.done
+else
+ifeq ($(FASTR_RFFI),llvm)
+fficall.done: common.done
 	$(MAKE) -C src/truffle_llvm all
-endif
-	touch jni.done
+	touch fficall.done
+else
+ifeq ($(FASTR_RFFI),jni)
+fficall.done: common.done $(JNIBOOT_LIB)
+	$(MAKE) -C src/jni all
+
+jniboot.done:
+	$(MAKE) -C src/jniboot all
+	touch jniboot.done
 
 $(JNIBOOT_LIB): jniboot.done
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(JNIBOOT_LIB) src/jniboot/jniboot.o $(VERSION_FLAGS)
 ifeq ($(OS_NAME),Darwin)
 	install_name_tool -id @rpath/libjniboot.dylib $(JNIBOOT_LIB)
 endif
+else
+	$(error unknown value for FASTR_RFFI)
+endif
+	touch fficall.done
+endif
+endif
 
-jniboot.done:
-	$(MAKE) -C src/jniboot all
-	touch jniboot.done
+common.done:
+	$(MAKE) -C src/common all	
+
+$(CACCESS_LIB): src/caccess/caccess.o
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(CACCESS_LIB) src/caccess/caccess.o $(VERSION_FLAGS)
+ifeq ($(OS_NAME),Darwin)
+	install_name_tool -id @rpath/libcaccess.dylib $(CACCESS_LIB)
+endif
 
 clean:
 	$(MAKE) -C src/common clean
-	$(MAKE) -C src/jni clean
-ifeq ($(HAVE_SULONG),yes)
+ifeq ($(FASTR_RFFI),nfi)
+	$(MAKE) -C src/truffle_nfi clean
+else
+ifeq ($(FASTR_RFFI),llvm)
 	$(MAKE) -C src/truffle_llvm clean
+else
+	$(MAKE) -C src/jni clean
+endif
 endif
 	rm -rf $(R_LIB)
 	rm -rf $(JNIBOOT_LIB)
-	rm -rf jni.done jniboot.done
+	rm -rf $(CACCESS_LIB)
+	rm -rf fficall.done
 

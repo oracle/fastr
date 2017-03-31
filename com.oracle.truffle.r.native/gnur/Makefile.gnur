@@ -40,12 +40,12 @@
 
 OSNAME := $(shell uname)
 
-ifdef FASTR_TRUFFLE_RFFI
+ifeq ($(FASTR_RFFI),llvm)
 FC_DIR := $(abspath $(TOPDIR)/../mx.fastr/compilers)
 FASTR_COMPILERS := CC=$(FC_DIR)/fastr-cc FC=$(FC_DIR)/fastr-fc F77=$(FC_DIR)/fastr-fc CXX=$(FC_DIR)/fastr-c++ CXXCPP=$(FC_DIR)/fastr-cpp OBJC=$(FC_DIR)/fastr-cc
 endif
 
-ifndef FASTR_TRUFFLE_RFFI
+ifneq ($(FASTR_RFFI),llvm)
 # LLVM text parser and -g don't get on
 OPT_FLAGS := -g -O2
 OPT_FLAGS := -O2

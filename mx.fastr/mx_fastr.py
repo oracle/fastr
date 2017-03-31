@@ -29,7 +29,7 @@ import mx_fastr_pkgs
 import mx_fastr_compile
 import mx_fastr_dists
 import mx_fastr_junit
-from mx_fastr_dists import FastRNativeProject, FastRTestNativeProject, FastRReleaseProject, FastRNativeRecommendedProject #pylint: disable=unused-import
+from mx_fastr_dists import FastRTestNativeProject, FastRReleaseProject, FastRNativeRecommendedProject #pylint: disable=unused-import
 import mx_copylib
 import mx_fastr_mkgramrd
 import mx_fastr_edinclude

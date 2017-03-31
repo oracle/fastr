@@ -115,6 +115,9 @@ com.oracle.truffle.r.native/fficall/src/include/rlocale.h,gnu_r_gentleman_ihaka.
 com.oracle.truffle.r.native/fficall/src/jni/Memory.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/jni/pcre_rffi.c,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.native/fficall/src/jni/Rdynload_fastr.c,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/src/truffle_nfi/Rdynload_fastr.c,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/src/truffle_nfi/Memory.c,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/src/truffle_nfi/pcre_rffi.c,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.native/fficall/src/truffle_llvm/Rdynload_fastr.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/jni/Rembedded.c,gnu_r.copyright
 com.oracle.truffle.r.native/include/src/libintl.h,no.copyright

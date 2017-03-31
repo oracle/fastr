@@ -1,7 +1,8 @@
 # The R FFI Implementation
 
 # Introduction
-FastR interfaces to native C and Fortran code in a number of ways, for example, access to C library APIs not supported by the Java JDK, access to LaPack functions, and the `.Call`, `.Fortran`, `.C` builtins. Each of these are defined by a Java interface,e.g. `CallRFFI` for the `.Call` builtin. To facilitate experimentation and different implementations, the implementation of these interfaces is defined by a factory class, `RFFIFactory`, that is chosen at run time via the `fastr.ffi.factory.class` system property. The factory is responsible for creating an instance of the `RFFI` interface that in turn provides access to implementations of the underlying interfaces such as `CallRFFI`. This structure allows
+FastR interfaces to native C and Fortran code in a number of ways, for example, access to C library APIs not supported by the Java JDK, access to LaPack functions, and the `.Call`, `.Fortran`, `.C` builtins. Each of these are defined by a Java interface,e.g. `CallRFFI` for the `.Call` builtin. To facilitate experimentation and different implementations, the implementation of these interfaces is defined by a factory class, `RFFIFactory`, that is chosen at run time via the `fastr.ffi.factory.class` system property, or the `FASTR_RFFI` environment variable.
+The factory is responsible for creating an instance of the `RFFI` interface that in turn provides access to implementations of the underlying interfaces such as `CallRFFI`. This structure allows
 for each of the individual interfaces to be implemented by a different mechanism. Currently the default factory class is `JNI_RFFIFactory` which uses the Java JNI system to implement the transition to native code.
 
 # Native Implementation
@@ -10,10 +11,11 @@ the `com.oracle/truffle.r.native` project`. It's actually a bit more than that a
 simple that it is neither necessary nor desirable to implement in Java. As this has evolved a better name for `fficall` would probably be `main`
 for compatibility with GNU R.
 
- There are four sub-directories in `fficall/src`:
+ There are five sub-directories in `fficall/src`:
  * `include`
  * `common`
  * `jni`
+ * `truffle_nfi`
  * `truffle_llvm`
 
 ## The `fficall/include` directory
@@ -44,7 +46,11 @@ copied/included from GNU R. N.B. Some modified files have a `_fastr` suffix to a
 the Makefile rule for compiling directly from the GNU R file.
 
 ## The `jni` directory
-`jni` contains the implementation that is based on and has explicit dependencies on Java JNI. It is described in more detail [here](jni_ffi.md)
+`jni` contains the implementation that is based on and has explicit dependencies on Java JNI. It is described in more detail [here](jni_ffi.md). This is the default implementation.
+
+## The `truffle_nfi` directory.
+`truffle_nfi` contains the implementation that is based on the Truffle Native Function Interface. It is enabled by setting `FASTR_RFFIU=nfi` and doing a clean build.
+The implementation is currently incomplete.
 
 ## The `truffle_llvm` directory
 

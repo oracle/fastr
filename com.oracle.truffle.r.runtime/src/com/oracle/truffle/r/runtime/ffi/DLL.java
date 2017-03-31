@@ -309,12 +309,16 @@ public class DLL {
      * Abstracts the way that DLL function symbols are represented, either as a machine address (
      * {@link Long}) or a {@link TruffleObject}. At the present time, both forms can exists within a
      * single VM, so the class is defined as a "union" for simplicity.
+     *
+     * N.B. It is explicitly allowed to register a {@code null} value as the base package registers
+     * some (Fortran) functions that are implemented in Java but have a bogus (zero) native symbol
+     * definition. Any use of {@code null} is failed
      */
     public static final class SymbolHandle {
         public final Object value;
 
         public SymbolHandle(Object value) {
-            assert value instanceof Long || value instanceof TruffleObject;
+            assert value == null || value instanceof Long || value instanceof TruffleObject;
             this.value = value;
         }
 
