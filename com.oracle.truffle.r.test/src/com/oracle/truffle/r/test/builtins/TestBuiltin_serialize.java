@@ -101,5 +101,14 @@ public class TestBuiltin_serialize extends TestBase {
         assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$d <- TRUE; serialize(val, connection=NULL)");
         assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$e <- 5+9i; serialize(val, connection=NULL)");
         assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$f <- NA; serialize(val, connection=NULL)");
+
+        // active bindings
+        assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); makeActiveBinding('a', function(x) print('hello'), val); serialize(val, connection=NULL)");
+        assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); makeActiveBinding('a', function(x) print('hello'), val); data <- serialize(val, connection=NULL); newenv <- unserialize(rawConnection(data)); newenv$a");
+
+        assertEval("options(keep.source=FALSE); mc <- setClass('FooSerial0', representation(a = 'call')); obj <- new('FooSerial0'); serialize(obj, connection=NULL)");
+        assertEval(Ignored.ImplementationError, "options(keep.source=FALSE); fc <- setClass('FooSerial1', representation(a = 'call')); serialize(fc, connection=NULL)");
+
+        assertEval("{ options(keep.source=FALSE); f <- function() NULL; attributes(f) <- list(skeleton=quote(`<undef>`())); data <- serialize(f, conn=NULL); unserialize(conn=data) }");
     }
 }

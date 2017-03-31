@@ -103,6 +103,7 @@ public class TestS4 extends TestRBase {
     public void testClassCreation() {
         assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); getClass(\"foo\") }");
         assertEval("{ setClass(\"foo\"); setClass(\"bar\", representation(j = \"numeric\"), contains = \"foo\"); is.null(getClass(\"foo\")@prototype) }");
+        assertEval("{ setClass('foo', contains='standardGeneric'); getClass('foo') }");
     }
 
     @Test
