@@ -63,17 +63,17 @@ public final class Unit {
     static final String VALID_UNIT_ATTR = "valid.unit";
 
     public static final int NPC = 0;
-    private static final int CM = 1;
+    public static final int CM = 1;
     public static final int INCHES = 2;
-    private static final int LINES = 3;
+    public static final int LINES = 3;
     public static final int NATIVE = 4;
-    private static final int NULL = 5; /* only used in layout specifications */
-    private static final int SNPC = 6;
-    private static final int MM = 7;
+    public static final int NULL = 5; /* only used in layout specifications */
+    public static final int SNPC = 6;
+    public static final int MM = 7;
     /*
      * Some units based on TeX's definition thereof
      */
-    private static final int POINTS = 8; /* 72.27 pt = 1 in */
+    public static final int POINTS = 8; /* 72.27 pt = 1 in */
     public static final int PICAS = 9; /* 1 pc = 12 pt */
     public static final int BIGPOINTS = 10; /* 72 bp = 1 in */
     public static final int DIDA = 11; /* 1157 dd = 1238 pt */
@@ -82,28 +82,28 @@ public final class Unit {
     /*
      * Some units which require an object to query for a value.
      */
-    private static final int STRINGWIDTH = 14;
-    private static final int STRINGHEIGHT = 15;
+    public static final int STRINGWIDTH = 14;
+    public static final int STRINGHEIGHT = 15;
     public static final int STRINGASCENT = 16;
     public static final int STRINGDESCENT = 17;
     /*
      * LINES now means multiples of the line height. This is multiples of the font size.
      */
-    private static final int CHAR = 18;
-    private static final int GROBX = 19;
-    private static final int GROBY = 20;
-    private static final int GROBWIDTH = 21;
-    private static final int GROBHEIGHT = 22;
+    public static final int CHAR = 18;
+    public static final int GROBX = 19;
+    public static final int GROBY = 20;
+    public static final int GROBWIDTH = 21;
+    public static final int GROBHEIGHT = 22;
     public static final int GROBASCENT = 23;
-    private static final int GROBDESCENT = 24;
+    public static final int GROBDESCENT = 24;
     private static final int LAST_NORMAL_UNIT = GROBDESCENT;
     /*
      * No longer used
      */
-    private static final int MYLINES = 103;
-    private static final int MYCHAR = 104;
-    private static final int MYSTRINGWIDTH = 105;
-    private static final int MYSTRINGHEIGHT = 106;
+    public static final int MYLINES = 103;
+    public static final int MYCHAR = 104;
+    public static final int MYSTRINGWIDTH = 105;
+    public static final int MYSTRINGHEIGHT = 106;
 
     // null layout arithmetic mode
     private static final int L_adding = 1;
