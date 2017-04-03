@@ -760,6 +760,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LUnsetVi
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/ViewPort.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/GridUtils.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/Unit.java,gnu_r_murrel_core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LValidUnit.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/ViewPortLocation.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/ViewPortContext.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/GridLinesNode.java,gnu_r_murrel_core.copyright

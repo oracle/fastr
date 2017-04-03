@@ -87,6 +87,8 @@ public final class FastRGridExternalLookup {
                 return new LNewPage();
             case "L_convert":
                 return LConvert.create();
+            case "L_validUnits":
+                return LValidUnit.create();
 
             // Viewport management
             case "L_upviewport":
@@ -97,6 +99,7 @@ public final class FastRGridExternalLookup {
                 return LUnsetViewPort.create();
             case "L_setviewport":
             case "L_downviewport":
+            case "L_downvppath":
                 return getExternalFastRGridBuiltinNode(name);
 
             // Drawing primitives
@@ -155,11 +158,6 @@ public final class FastRGridExternalLookup {
             case "L_newpagerecording":
                 return new IgnoredGridExternal(RNull.instance);
 
-            // These methods do not use graphics system or any global state. For now,
-            // we can re-use the native implementation, which in the future should be rewritten
-            // to managed code.
-            case "L_validUnits":
-                return null;
             default:
                 if (name.startsWith("L_")) {
                     throw RInternalError.shouldNotReachHere("Unimplemented grid external " + name);
