@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -14,14 +14,12 @@ package com.oracle.truffle.r.nodes.objects;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
-import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.signature.CollectArgumentsNode;
 import com.oracle.truffle.r.nodes.function.signature.CollectArgumentsNodeGen;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S4Args;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -45,12 +43,8 @@ final class ExecuteMethod extends RBaseNode {
             callMatcher = insert(CallMatcherNode.create(false));
         }
 
-        FormalArguments formals = ((RRootNode) fdef.getRootNode()).getFormalArguments();
-        ArgumentsSignature signature = formals.getSignature();
-        Object[] oldArgs = collectArgs.execute(frame, signature);
-
         S4Args s4Args = new S4Args(readDefined.execute(frame), readMethod.execute(frame), readTarget.execute(frame), readGeneric.execute(frame), readMethods.execute(frame));
 
-        return callMatcher.execute(frame, signature, oldArgs, fdef, fname, s4Args);
+        return callMatcher.execute(frame, RArguments.getSignature(frame), RArguments.getArguments(frame), fdef, fname, s4Args);
     }
 }
