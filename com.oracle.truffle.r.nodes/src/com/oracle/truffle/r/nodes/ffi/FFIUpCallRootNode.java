@@ -35,6 +35,9 @@ import com.oracle.truffle.r.nodes.ffi.ListAccessNodesFactory.CARNodeGen;
 import com.oracle.truffle.r.nodes.ffi.ListAccessNodesFactory.CDDRNodeGen;
 import com.oracle.truffle.r.nodes.ffi.ListAccessNodesFactory.CDRNodeGen;
 import com.oracle.truffle.r.nodes.ffi.MiscNodesFactory.LENGTHNodeGen;
+import com.oracle.truffle.r.nodes.ffi.MiscNodesFactory.RDoNewObjectNodeGen;
+import com.oracle.truffle.r.nodes.ffi.MiscNodesFactory.RDoSlotNodeGen;
+import com.oracle.truffle.r.nodes.ffi.MiscNodesFactory.RDoSlotAssignNodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 
@@ -91,6 +94,9 @@ public final class FFIUpCallRootNode extends RootNode {
         FFIUpCallRootNode.add(RFFIUpCallMethod.CADDR, CADDRNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallMethod.CDDR, CDDRNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallMethod.LENGTH, LENGTHNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallMethod.R_do_new_object, RDoNewObjectNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallMethod.R_do_slot, RDoSlotNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallMethod.R_do_slot_assign, RDoSlotAssignNodeGen::create);
     }
 
 }

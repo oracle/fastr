@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -82,6 +82,16 @@ public class TestBuiltin_prod extends TestBase {
         assertEval("{prod(c(1+2i,1+3i,1+45i))}");
         assertEval("{prod(c(TRUE, TRUE))}");
         assertEval("{prod(c(TRUE, FALSE))}");
+        assertEval("{prod()}");
+        assertEval("{prod(NULL)}");
+        assertEval("{prod(c())}");
+        assertEval("{prod(c(),c())}");
+        assertEval("{prod(2+3i,c())}");
+        assertEval("{prod(2+3i,42+5i)}");
+        assertEval("{prod(2+3i,42)}");
+        assertEval("{prod(42,2+3i)}");
+        assertEval("{prod('a')}");
+        assertEval("{prod(list())}");
     }
 
     @Test

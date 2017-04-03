@@ -26,8 +26,15 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.r.nodes.access.AccessSlotNode;
+import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
+import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
+import com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen;
+import com.oracle.truffle.r.nodes.objects.NewObject;
+import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
@@ -80,4 +87,63 @@ public final class MiscNodes {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.LENGTH_MISAPPLIED, SEXPTYPE.gnuRTypeForObject(obj).name());
         }
     }
+
+    @TypeSystemReference(RTypes.class)
+    abstract static class RDoSlotNode extends FFIUpCallNode.Arg2 {
+
+        @Child private AccessSlotNode accessSlotNode;
+
+        RDoSlotNode() {
+            accessSlotNode = AccessSlotNodeGen.create(false);
+        }
+
+        @Specialization
+        Object doSlot(Object o, RSymbol nameSym) {
+            return accessSlotNode.executeAccess(o, nameSym.getName());
+        }
+
+        @Fallback
+        Object doSlot(@SuppressWarnings("unused") Object o, @SuppressWarnings("unused") Object name) {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.INVALID_ARGUMENT_OF_TYPE, "name", SEXPTYPE.gnuRTypeForObject(name).name());
+        }
+
+    }
+
+    @TypeSystemReference(RTypes.class)
+    abstract static class RDoSlotAssignNode extends FFIUpCallNode.Arg3 {
+
+        @Child private UpdateSlotNode updateSlotNode;
+
+        RDoSlotAssignNode() {
+            updateSlotNode = UpdateSlotNodeGen.create();
+        }
+
+        @Specialization
+        Object doSlotAssign(Object o, String name, Object value) {
+            return updateSlotNode.executeUpdate(o, name, value);
+        }
+
+        @Fallback
+        Object doSlot(@SuppressWarnings("unused") Object o, Object name, @SuppressWarnings("unused") Object value) {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.INVALID_ARGUMENT_OF_TYPE, "name", SEXPTYPE.gnuRTypeForObject(name).name());
+        }
+
+    }
+
+    @TypeSystemReference(RTypes.class)
+    abstract static class RDoNewObjectNode extends FFIUpCallNode.Arg1 {
+
+        @Child private NewObject newObjectNode;
+
+        RDoNewObjectNode() {
+            newObjectNode = NewObjectNodeGen.create();
+        }
+
+        @Specialization
+        Object doNewObject(Object classDef) {
+            return newObjectNode.execute(classDef);
+        }
+
+    }
+
 }
