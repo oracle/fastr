@@ -181,11 +181,11 @@ final class DoSetViewPort extends RBaseNode {
         // gives us how much of width/height is left after we take up the space by physical units
         Object[] layoutData = asList(viewPort.getDataAt(ViewPort.VP_LAYOUT)).getDataWithoutCopying();
         RAbstractContainer layoutWidths = asAbstractContainer(layoutData[ViewPort.LAYOUT_WIDTHS]);
-        assert layoutWidths.getLength() == layoutSize.ncol : "inconsistent layout size with layout widths";
+        assert Unit.getLength(layoutWidths) == layoutSize.ncol : "inconsistent layout size with layout widths";
         double reducedWidth = getReducedDimension(layoutWidths, npcWidths, relativeWidths, size.getWidth(), conversionCtx, true);
 
         RAbstractContainer layoutHeights = asAbstractContainer(layoutData[ViewPort.LAYOUT_HEIGHTS]);
-        assert layoutHeights.getLength() == layoutSize.nrow : "inconsistent layout size with layout height";
+        assert Unit.getLength(layoutHeights) == layoutSize.nrow : "inconsistent layout size with layout height";
         double reducedHeight = getReducedDimension(layoutHeights, npcHeights, relativeHeights, size.getHeight(), conversionCtx, false);
 
         // npcHeight (and npcWidth) has some 'holes' in them, at indexes with

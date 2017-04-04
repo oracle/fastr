@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -322,6 +323,20 @@ public final class Unit {
         throw RInternalError.shouldNotReachHere("unexpected arithmetic unit type");
     }
 
+    public static boolean isSimpleUnit(RAbstractContainer unit) {
+        RStringVector classAttr = unit.getClassAttr();
+        if (classAttr == null || classAttr.getLength() == 0) {
+            return true;
+        }
+        for (int i = 0; i < classAttr.getLength(); i++) {
+            String x = classAttr.getDataAt(i);
+            if (Unit.UNIT_ARITHMETIC_CLASS.equals(x) || Unit.UNIT_LIST_CLASS.equals(x)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static final class ArithmeticUnit {
         public final String op;
         public final RAbstractContainer arg1;
@@ -357,6 +372,55 @@ public final class Unit {
         public boolean isBinary() {
             return arg2 != null;
         }
+    }
+
+    private abstract static class UnitVisitor<T> {
+        public T visit(RAbstractContainer unit) {
+            RStringVector clazz = unit.getClassAttr();
+            if (clazz == null || clazz.getLength() == 0) {
+                return visitSimpleUnit((RAbstractVector) unit);
+            }
+            for (int i = 0; i < clazz.getLength(); i++) {
+                String className = clazz.getDataAt(i);
+                if (UNIT_ARITHMETIC_CLASS.equals(className)) {
+                    return visitArithmeticUnit(ArithmeticUnit.asArithmeticUnit(asList(unit)));
+                }
+                if (UNIT_LIST_CLASS.equals(className)) {
+                    return visitListUnit(asList(unit));
+                }
+            }
+            return visitSimpleUnit((RAbstractVector) unit);
+        }
+
+        protected abstract T visitListUnit(RList unit);
+
+        protected abstract T visitArithmeticUnit(ArithmeticUnit unit);
+
+        protected abstract T visitSimpleUnit(RAbstractVector unit);
+    }
+
+    private static final class UnitLengthVisitor extends UnitVisitor<Integer> {
+        private static final UnitLengthVisitor INSTANCE = new UnitLengthVisitor();
+
+        @Override
+        protected Integer visitListUnit(RList unit) {
+            return unit.getLength();
+        }
+
+        @Override
+        protected Integer visitArithmeticUnit(ArithmeticUnit unit) {
+            // length of aggregate functions, max, min, etc. is 1
+            return unit.isBinary() ? Math.max(visit(unit.arg1), visit(unit.arg2)) : 1;
+        }
+
+        @Override
+        protected Integer visitSimpleUnit(RAbstractVector unit) {
+            return unit.getLength();
+        }
+    }
+
+    public static int getLength(RAbstractContainer unit) {
+        return UnitLengthVisitor.INSTANCE.visit(unit);
     }
 
     abstract static class UnitNodeBase extends RBaseNode {
