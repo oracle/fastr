@@ -15,6 +15,15 @@
 # logic to R. Some functions implement whole externals, like L_downvppath, some implement coherent
 # parts of the logic and the rest is in Java.
 
+
+# chull from grDevices package is used in EdgeDetection.java
+# Note: chull calls to native function, which we may consider
+# porting or calling directly in the future.
+chullWrapper <- function(x, y) {
+    library(grDevices)
+    grDevices:::chull(x, y)
+}
+
 # Returns list with elements [[1]] - depth, zero if not found, [[2]] - the viewport, NULL if not found
 # We are searching for child "name" in "pvp", if the "path" is not missing,
 # then also pathMatch(path, currPath) must hold.

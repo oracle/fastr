@@ -13,6 +13,11 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_PI;
 
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
+
+// transcribed from matrix.c
+
 /**
  * Operations on transformation (3x3) matrices.
  */
@@ -114,5 +119,25 @@ final class TransformMatrix {
             }
         }
         return res;
+    }
+
+    public static double[][] inversion(double[][] t) {
+        double det = t[0][0] * (t[2][2] * t[1][1] - t[2][1] * t[1][2]) -
+                        t[1][0] * (t[2][2] * t[0][1] - t[2][1] * t[0][2]) +
+                        t[2][0] * (t[1][2] * t[0][1] - t[1][1] * t[0][2]);
+        if (det == 0) {
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, "singular transformation matrix");
+        }
+        double[][] invt = new double[3][3];
+        invt[0][0] = 1 / det * (t[2][2] * t[1][1] - t[2][1] * t[1][2]);
+        invt[0][1] = -1 / det * (t[2][2] * t[0][1] - t[2][1] * t[0][2]);
+        invt[0][2] = 1 / det * (t[1][2] * t[0][1] - t[1][1] * t[0][2]);
+        invt[1][0] = -1 / det * (t[2][2] * t[1][0] - t[2][0] * t[1][2]);
+        invt[1][1] = 1 / det * (t[2][2] * t[0][0] - t[2][0] * t[0][2]);
+        invt[1][2] = -1 / det * (t[1][2] * t[0][0] - t[1][0] * t[0][2]);
+        invt[2][0] = 1 / det * (t[2][1] * t[1][0] - t[2][0] * t[1][1]);
+        invt[2][1] = -1 / det * (t[2][1] * t[0][0] - t[2][0] * t[0][1]);
+        invt[2][2] = 1 / det * (t[1][1] * t[0][0] - t[1][0] * t[0][1]);
+        return invt;
     }
 }

@@ -48,4 +48,8 @@ public final class Size {
     public double getHeight() {
         return height;
     }
+
+    public boolean isFinite() {
+        return Double.isFinite(width) && Double.isFinite(height);
+    }
 }

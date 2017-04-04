@@ -120,6 +120,14 @@ public final class FastRGridExternalLookup {
             case "L_points":
                 return LPoints.create();
 
+            // Bounds primitive:
+            case "L_rectBounds":
+                return LRectBounds.create();
+            case "L_locnBounds":
+                return LLocnBounds.create();
+            case "L_circleBounds":
+                return LCircleBounds.create();
+
             // Simple grid state access
             case "L_getGPar":
                 return new GridStateGetNode(GridState::getGpar);

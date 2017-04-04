@@ -21,6 +21,9 @@ import static com.oracle.truffle.r.runtime.nmath.TOMS708.fabs;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 /**
  * Contains static method related to edge detection for bounds calculations.
@@ -106,9 +109,9 @@ final class EdgeDetection {
                 }
             } else { /* Intersect with top/bottom */
                 if (sinTheta > 0) { /* Top */
-                    return new Point(ymax, xm + dy / tanTheta);
+                    return new Point(xm + dy / tanTheta, ymax);
                 } else { /* Bottom */
-                    return new Point(ymin, xm - dy / tanTheta);
+                    return new Point(xm - dy / tanTheta, ymin);
                 }
             }
         }
@@ -200,6 +203,25 @@ final class EdgeDetection {
         return new Point(xm + ua * (x2 - xm), ym + ua * (y2 - ym));
     }
 
+    public static Point hullEdge(GridContext ctx, double[] xx, double[] yy, double theta) {
+        RDoubleVector xVec = RDataFactory.createDoubleVector(xx, RDataFactory.COMPLETE_VECTOR);
+        RDoubleVector yVec = RDataFactory.createDoubleVector(yy, RDataFactory.COMPLETE_VECTOR);
+        Object hullObj = ctx.evalInternalRFunction("chullWrapper", xVec, yVec);
+        RAbstractIntVector hull = GridUtils.asIntVector(hullObj);
+        double[] newXX = new double[hull.getLength()];
+        double[] newYY = new double[hull.getLength()];
+        for (int i = 0; i < hull.getLength(); i++) {
+            newXX[i] = xx[hull.getDataAt(i) - 1];
+            newYY[i] = yy[hull.getDataAt(i) - 1];
+        }
+        return polygonEdge(newXX, newYY, newXX.length, theta);
+    }
+
+    public static Point circleEdge(Point loc, double radius, double theta) {
+        double angle = theta / 180 * Math.PI;
+        return new Point(loc.x + radius * Math.cos(angle), loc.y + radius * Math.sin(angle));
+    }
+
     /**
      * An arbitrarily-oriented rectangle. The vertices are assumed to be in order going
      * anticlockwise around the rectangle.
@@ -218,6 +240,40 @@ final class EdgeDetection {
                             edgesIntersect(this.x[1], this.x[2], this.y[1], this.y[2], r2) ||
                             edgesIntersect(this.x[2], this.x[3], this.y[2], this.y[3], r2) ||
                             edgesIntersect(this.x[3], this.x[0], this.y[3], this.y[0], r2);
+        }
+    }
+
+    /**
+     * Represents min and max value for X and Y coordinates and provides convenient methods to
+     * update them.
+     */
+    public static final class Bounds {
+        public double minX = Double.MAX_VALUE;
+        public double maxX = Double.MIN_VALUE;
+        public double minY = Double.MAX_VALUE;
+        public double maxY = Double.MIN_VALUE;
+
+        public void update(Point p) {
+            updateX(p.x);
+            updateY(p.y);
+        }
+
+        public void updateX(double... values) {
+            minX = GridUtils.fmin(minX, values);
+            maxX = GridUtils.fmax(maxX, values);
+        }
+
+        public void updateY(double... values) {
+            minY = GridUtils.fmin(minY, values);
+            maxY = GridUtils.fmax(maxY, values);
+        }
+
+        public double getWidth() {
+            return maxX - minX;
+        }
+
+        public double getHeight() {
+            return maxY - minY;
         }
     }
 }

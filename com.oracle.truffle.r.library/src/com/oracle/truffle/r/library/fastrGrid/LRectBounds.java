@@ -11,47 +11,41 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import static com.oracle.truffle.r.library.fastrGrid.EdgeDetection.rectEdge;
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.getDataAtMod;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.library.fastrGrid.EdgeDetection.Bounds;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public abstract class LRect extends RExternalBuiltinNode.Arg6 {
+public abstract class LRectBounds extends RExternalBuiltinNode.Arg7 {
     @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
     @Child private Unit.UnitLengthNode unitLength = Unit.createLengthNode();
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
 
     static {
-        Casts casts = new Casts(LRect.class);
-        addRectCasts(casts);
+        Casts casts = new Casts(LRectBounds.class);
+        LRect.addRectCasts(casts);
+        casts.arg(6).mustBe(numericValue()).asDoubleVector().findFirst();
     }
 
-    static void addRectCasts(Casts casts) {
-        casts.arg(0).mustBe(abstractVectorValue());
-        casts.arg(1).mustBe(abstractVectorValue());
-        casts.arg(2).mustBe(abstractVectorValue());
-        casts.arg(3).mustBe(abstractVectorValue());
-        casts.arg(4).mustBe(numericValue()).asDoubleVector();
-        casts.arg(5).mustBe(numericValue()).asDoubleVector();
-    }
-
-    public static LRect create() {
-        return LRectNodeGen.create();
+    public static LRectBounds create() {
+        return LRectBoundsNodeGen.create();
     }
 
     @Specialization
     @TruffleBoundary
-    public Object execute(RAbstractVector xVec, RAbstractVector yVec, RAbstractVector wVec, RAbstractVector hVec, RAbstractDoubleVector hjust, RAbstractDoubleVector vjust) {
+    Object execute(RAbstractVector xVec, RAbstractVector yVec, RAbstractVector wVec, RAbstractVector hVec, RAbstractDoubleVector hjust, RAbstractDoubleVector vjust, double theta) {
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();
 
@@ -62,13 +56,26 @@ public abstract class LRect extends RExternalBuiltinNode.Arg6 {
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
         int length = GridUtils.maxLength(unitLength, xVec, yVec, wVec, hVec);
+        Bounds bounds = new Bounds();
+        int nrect = 0;
         for (int i = 0; i < length; i++) {
             Size size = Size.fromUnits(unitToInches, wVec, hVec, i, conversionCtx);
             Point origLoc = Point.fromUnits(unitToInches, xVec, yVec, i, conversionCtx);
-            Point transLoc = TransformMatrix.transLocation(origLoc, vpTransform.transform);
-            Point loc = transLoc.justify(size, getDataAtMod(hjust, i), getDataAtMod(vjust, i));
-            dev.drawRect(gpar.getDrawingContext(i), loc.x, loc.y, size.getWidth(), size.getHeight(), Math.toRadians(vpTransform.rotationAngle));
+            // just calculate the bounds, no transformation necessary
+            Point loc = origLoc.justify(size, getDataAtMod(hjust, i), getDataAtMod(vjust, i));
+            if (size.isFinite() && loc.isFinite()) {
+                bounds.updateX(loc.x, loc.x + size.getWidth());
+                bounds.updateY(loc.y, loc.y + size.getHeight());
+                nrect++;
+            }
         }
-        return RNull.instance;
+
+        if (nrect == 0) {
+            return RNull.instance;
+        }
+
+        Point edge = rectEdge(bounds.minX, bounds.minY, bounds.maxX, bounds.maxY, theta);
+        double scale = ctx.getGridState().getScale();
+        return RDataFactory.createDoubleVector(new double[]{edge.x / scale, edge.y / scale, bounds.getWidth() / scale, bounds.getHeight() / scale}, RDataFactory.COMPLETE_VECTOR);
     }
 }
