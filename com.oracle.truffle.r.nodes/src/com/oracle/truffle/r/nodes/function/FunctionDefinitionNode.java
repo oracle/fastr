@@ -324,12 +324,19 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                      * We do not need to preserve visibility, since visibility.executeEndOfFunction
                      * was already called.
                      */
-                    for (Object expr : current) {
-                        if (!(expr instanceof RNode)) {
-                            RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
+                    try {
+                        for (Object expr : current) {
+                            if (!(expr instanceof RNode)) {
+                                RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
+                            }
+                            onExitExpressionCache.execute(frame, expr);
                         }
-                        RNode node = (RNode) expr;
-                        onExitExpressionCache.execute(frame, node);
+                    } catch (ReturnException ex) {
+                        if (returnTopLevelProfile.profile(ex.getTarget() == RArguments.getCall(frame))) {
+                            return ex.getResult();
+                        } else {
+                            throw ex;
+                        }
                     }
                 }
             }
