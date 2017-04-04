@@ -103,6 +103,7 @@ public class TestS4 extends TestRBase {
     public void testClassCreation() {
         assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); getClass(\"foo\") }");
         assertEval("{ setClass(\"foo\"); setClass(\"bar\", representation(j = \"numeric\"), contains = \"foo\"); is.null(getClass(\"foo\")@prototype) }");
+        assertEval("{ setClass('foo', contains='standardGeneric'); getClass('foo') }");
     }
 
     @Test
@@ -141,6 +142,7 @@ public class TestS4 extends TestRBase {
         assertEval("{ standardGeneric(\"\") }");
         assertEval(Output.IgnoreErrorContext, "{ standardGeneric(\"foo\", 42) }");
         assertEval(Output.IgnoreErrorContext, "{ x<-42; class(x)<-character(); standardGeneric(\"foo\", x) }");
+        assertEval("{ setClass('A4', representation(a = 'numeric')); setMethod('[[', 'A4', function(x, i, j, ...) NULL); obj <- new('A4'); obj[[1]] }");
     }
 
     @Test

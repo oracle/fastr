@@ -33,6 +33,10 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.conn.RConnection;
@@ -71,6 +75,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -115,6 +120,7 @@ public class RSerialize {
         static final int LEVELS_SHIFT = 12;
         static final int CACHED_MASK = 1 << 5;
         static final int HASHASH_MASK = 1;
+        static final int IS_ACTIVE_BINDING_MASK = 1 << 15;
 
         private Flags() {
             // prevent construction
@@ -140,6 +146,10 @@ public class RSerialize {
 
         public static boolean hasTag(int flagsValue) {
             return (flagsValue & HAS_TAG_BIT_MASK) != 0;
+        }
+
+        public static boolean isActiveBinding(int levs) {
+            return (levs & IS_ACTIVE_BINDING_MASK) != 0;
         }
 
         public static int packFlags(SEXPTYPE type, int gpbits, boolean isObj, boolean hasAttr, boolean hasTag) {
@@ -490,14 +500,13 @@ public class RSerialize {
                                 if (val == RNull.instance) {
                                     continue;
                                 }
-                                RPairList pl = (RPairList) val;
-                                env.safePut(((RSymbol) pl.getTag()).getName(), pl.car());
+                                safePutToEnv(env, (RPairList) val);
                             }
                         }
                     } else {
                         while (frame != RNull.instance) {
                             RPairList pl = (RPairList) frame;
-                            env.safePut(((RSymbol) pl.getTag()).getName(), pl.car());
+                            safePutToEnv(env, pl);
                             frame = pl.cdr();
                         }
                     }
@@ -534,7 +543,13 @@ public class RSerialize {
                     Object attrItem = RNull.instance;
                     Object tagItem = RNull.instance;
                     if (Flags.hasAttr(flags)) {
+                        // create new language parsing context
+                        int safedLangDepth = langDepth;
+                        langDepth = 0;
                         attrItem = readItem();
+
+                        // restore language parsing context
+                        langDepth = safedLangDepth;
 
                     }
                     if (Flags.hasTag(flags)) {
@@ -622,6 +637,10 @@ public class RSerialize {
                         }
 
                         case LISTSXP:
+                            if (Flags.isActiveBinding(levs)) {
+                                assert carItem instanceof RFunction;
+                                carItem = new ActiveBinding(RType.Any, (RFunction) carItem);
+                            }
                             RPairList pairList = RDataFactory.createPairList(carItem, cdrItem, tagItem, type);
                             result = pairList;
                             if (attrItem != RNull.instance) {
@@ -827,6 +846,17 @@ public class RSerialize {
             }
 
             return checkResult(result);
+        }
+
+        private static void safePutToEnv(REnvironment env, RPairList pl) {
+            String name = ((RSymbol) pl.getTag()).getName();
+            Object car = pl.car();
+            if (ActiveBinding.isActiveBinding(car)) {
+                FrameSlot frameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(env.getFrame().getFrameDescriptor(), name, FrameSlotKind.Object);
+                FrameSlotChangeMonitor.setActiveBinding(env.getFrame(), frameSlot, (ActiveBinding) car, false, null);
+            } else {
+                env.safePut(name, car);
+            }
         }
 
         private static Object checkResult(Object result) {
@@ -1422,7 +1452,7 @@ public class RSerialize {
                          */
                         String[] bindings = env.ls(true, null, false).getDataWithoutCopying();
                         for (String binding : bindings) {
-                            Object value = env.get(binding);
+                            Object value = getValueIgnoreActiveBinding(env.getFrame(), binding);
                             writePairListEntry(binding, value);
                         }
                         terminatePairList();
@@ -1655,6 +1685,16 @@ public class RSerialize {
             } while (tailCall);
         }
 
+        private static Object getValueIgnoreActiveBinding(Frame frame, String key) {
+            FrameDescriptor fd = frame.getFrameDescriptor();
+            FrameSlot slot = fd.findFrameSlot(key);
+            if (slot == null) {
+                return null;
+            } else {
+                return frame.getValue(slot);
+            }
+        }
+
         private Object getPersistentName(Object obj) {
             if (hook == null) {
                 return RNull.instance;
@@ -1728,7 +1768,8 @@ public class RSerialize {
         }
 
         private void writePairListEntry(String name, Object value) throws IOException {
-            stream.writeInt(Flags.packFlags(SEXPTYPE.LISTSXP, 0, false, false, true));
+            boolean isActiveBinding = ActiveBinding.isActiveBinding(value);
+            stream.writeInt(Flags.packFlags(SEXPTYPE.LISTSXP, isActiveBinding ? Flags.IS_ACTIVE_BINDING_MASK : 0, false, false, true));
             RSymbol sym = state.findSymbol(name);
             int refIndex;
             if ((refIndex = getRefIndex(sym)) != -1) {
@@ -1736,7 +1777,11 @@ public class RSerialize {
             } else {
                 writeSymbol(sym);
             }
-            writeItem(value);
+            if (isActiveBinding) {
+                writeItem(((ActiveBinding) value).getFunction());
+            } else {
+                writeItem(value);
+            }
         }
 
         private void writeSymbol(RSymbol name) throws IOException {
