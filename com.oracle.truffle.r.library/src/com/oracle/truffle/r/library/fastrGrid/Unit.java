@@ -444,6 +444,11 @@ public final class Unit {
         @Child private RGridCodeCall isPureNullCall = new RGridCodeCall("isPureNullUnit");
 
         public boolean execute(Object unit, int index) {
+            GridState gridState = GridContext.getContext().getGridState();
+            return gridState.runWithoutRecording(() -> executeImpl(unit, index));
+        }
+
+        private boolean executeImpl(Object unit, int index) {
             // Note: converting 0-based java index to 1-based R index
             Object result = isPureNullCall.execute(new RArgsValuesAndNames(new Object[]{unit, index + 1}, ArgumentsSignature.empty(2)));
             byte resultByte;
@@ -684,6 +689,11 @@ public final class Unit {
         // transcribed from unit.c function evaluateGrobUnit
 
         public double execute(double value, int unitId, Object grob, UnitConversionContext conversionCtx) {
+            GridState gridState = GridContext.getContext().getGridState();
+            return gridState.runWithoutRecording(() -> executeImpl(value, unitId, grob, conversionCtx));
+        }
+
+        private double executeImpl(double value, int unitId, Object grob, UnitConversionContext conversionCtx) {
             GridContext ctx = GridContext.getContext();
             RList currentVP = ctx.getGridState().getViewPort();
             getViewPortTransform.execute(currentVP, conversionCtx.device);

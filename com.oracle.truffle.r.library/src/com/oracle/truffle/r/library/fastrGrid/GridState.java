@@ -11,6 +11,8 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import java.util.function.Supplier;
+
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -27,6 +29,16 @@ public final class GridState {
     private Object currentGrob;
 
     GridState() {
+    }
+
+    <T> T runWithoutRecording(Supplier<T> code) {
+        boolean recording = isDisplayListOn();
+        setIsDisplayListOn(false);
+        try {
+            return code.get();
+        } finally {
+            setIsDisplayListOn(recording);
+        }
     }
 
     void setDeviceState(GridDeviceState state) {
