@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -154,6 +154,7 @@ public abstract class BrowserInteractNode extends RNode {
                             } catch (IncompleteSourceException e) {
                                 // read another line of input
                                 ch.setPrompt("+ ");
+                                sb.append('\n');
                                 sb.append(ch.readLine());
                                 // The only continuation in the while loop
                                 continue;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,10 +67,8 @@ public interface ConsoleHandler {
     void printError(String s);
 
     /**
-     * Read a line of input, newline included in result. Returns null if {@link #isInteractive() ==
-     * false}. The rationale for including the readline is to ensure that the accumulated input,
-     * whether it be from a file or the console accurately reflects the the source. TODO worry about
-     * "\r\n"?
+     * Read a line of input, newline is <b>NOT</b> included in result. Returns null if
+     * {@link #isInteractive() == false}. TODO worry about "\r\n"?
      */
     @TruffleBoundary
     String readLine();

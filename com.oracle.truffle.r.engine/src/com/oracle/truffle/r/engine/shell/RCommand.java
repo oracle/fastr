@@ -243,6 +243,7 @@ public class RCommand {
                             if (additionalInput == null) {
                                 throw new EOFException();
                             }
+                            sb.append('\n');
                             sb.append(additionalInput);
                             source = RSource.fromTextInternal(sb.toString(), RSource.Internal.SHELL_INPUT);
                             // The only continuation in the while loop
