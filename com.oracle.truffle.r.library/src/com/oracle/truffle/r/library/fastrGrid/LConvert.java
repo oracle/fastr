@@ -15,6 +15,7 @@ import static com.oracle.truffle.r.library.fastrGrid.Unit.NATIVE;
 import static com.oracle.truffle.r.library.fastrGrid.Unit.NPC;
 import static com.oracle.truffle.r.library.fastrGrid.Unit.isArithmeticUnit;
 import static com.oracle.truffle.r.library.fastrGrid.Unit.isListUnit;
+import static com.oracle.truffle.r.library.fastrGrid.Unit.isSimpleUnit;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 
@@ -64,7 +65,10 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
         int length = unitLength.execute(units);
         double[] result = new double[length];
 
-        RAbstractIntVector unitIds = GridUtils.asIntVector(units.getAttr(Unit.VALID_UNIT_ATTR));
+        RAbstractIntVector unitIds = null;
+        if (isSimpleUnit(units)) {
+            unitIds = GridUtils.asIntVector(units.getAttr(Unit.VALID_UNIT_ATTR));
+        }
         boolean fromUnitIsSimple = !isArithmeticUnit(units) && !isListUnit(units);
 
         for (int i = 0; i < length; i++) {
@@ -75,7 +79,10 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
             double vpToSize = axisTo.isHorizontal() ? vpTransform.size.getWidth() : vpTransform.size.getHeight();
             double vpFromSize = axisFrom.isHorizontal() ? vpTransform.size.getWidth() : vpTransform.size.getHeight();
             int unitTo = unitToVec.getDataAt(i % unitToVec.getLength());
-            int fromUnitId = unitIds.getDataAt(i % unitIds.getLength());
+            int fromUnitId = -1;    // invalid, and definitely not relative unit
+            if (unitIds != null) {
+                fromUnitId = unitIds.getDataAt(i % unitIds.getLength());
+            }
 
             // actual conversion:
             // if the units are both relative, we are converting compatible axes and the vpSize for
