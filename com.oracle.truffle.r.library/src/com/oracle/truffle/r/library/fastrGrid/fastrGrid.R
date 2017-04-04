@@ -181,9 +181,9 @@ grobConversionPreDraw <- function(grobIn) {
     grid:::preDraw(grob)
 }
 
-grobConversionGetUnitXY <- function(grob, unitId) {
+grobConversionGetUnitXY <- function(grob, unitId, theta) {
     if (unitId == L_GROBX || unitId == L_GROBY) {
-        return(list(grid:::xDetails(grob), grid:::yDetails(grob)))
+        return(list(grid:::xDetails(grob, theta), grid:::yDetails(grob, theta)))
     } else if (unitId == L_GROBWIDTH) {
         return(list(grid:::width(grob)))
     } else if (unitId == L_GROBHEIGHT) {

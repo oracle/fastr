@@ -676,6 +676,7 @@ public final class Unit {
         @Child private RGridCodeCall getUnitXY = new RGridCodeCall("grobConversionGetUnitXY");
         @Child private RGridCodeCall postDrawCode = new RGridCodeCall("grobConversionPostDraw");
         @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
+        @Child private UnitToInchesNode unitToInches = createToInchesNode();
 
         @Child private IsRelativeUnitNode isRelativeUnit = new IsRelativeUnitNode();
         @Child private UnitToInchesNode unitToInchesNode;
@@ -703,7 +704,7 @@ public final class Unit {
             ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
 
             // getUnitXY returns a list with either one or two items
-            RList unitxy = (RList) getUnitXY.execute(new RArgsValuesAndNames(new Object[]{updatedGrob, unitId}, ArgumentsSignature.empty(2)));
+            RList unitxy = (RList) getUnitXY.execute(new RArgsValuesAndNames(new Object[]{updatedGrob, unitId, value}, ArgumentsSignature.empty(3)));
             double result;
             switch (unitId) {
                 case GROBX:
@@ -715,11 +716,15 @@ public final class Unit {
                         double nullUnitValue = pureNullUnitValue((RAbstractContainer) unitxy.getDataAt(0), 0);
                         result = evaluateNullUnit(nullUnitValue, vpTransform.size.getWidth(), conversionCtx.nullLayoutMode, conversionCtx.nullArithmeticMode);
                     } else {
-                        throw RInternalError.unimplemented("GrobUnitToInches from unit.c: 610");
+                        double[][] inversed = TransformMatrix.inversion(vpTransform.transform);
+                        Point loc = Point.fromUnits(unitToInches, (RAbstractVector) unitxy.getDataAt(0), (RAbstractVector) unitxy.getDataAt(1), 0, conversionCtx);
+                        Point transLoc = TransformMatrix.transLocation(loc, vpTransform.transform);
+                        Point p = TransformMatrix.transLocation(transLoc, inversed);
+                        result = unitId == GROBX ? p.x : p.y;
                     }
                     break;
                 default:
-                    // should still be GROB_SOMETHING unit
+                    // should still be GROB_SOMETHING unit: width, height, ascent, descent
                     if (isRelativeUnit.execute(unitxy.getDataAt(0), 0)) {
                         // Note: GnuR uses equivalent of vpTransform.size.getWidth() even for
                         // GROBHEIGHT, bug?
@@ -736,13 +741,14 @@ public final class Unit {
                             result = unitToInchesNode.convertHeight((RAbstractContainer) unitxy.getDataAt(0), 0, newConversionCtx);
                         }
                     }
+                    result *= value;
                     break;
             }
 
             postDrawCode.call(updatedGrob);
             ctx.getGridState().setGpar(savedGPar);
             ctx.getGridState().setCurrentGrob(savedGrob);
-            return value * result;
+            return result;
         }
 
         private void initUnitToInchesNode() {
