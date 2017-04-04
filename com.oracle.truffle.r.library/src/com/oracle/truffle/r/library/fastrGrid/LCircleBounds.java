@@ -27,7 +27,6 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 
 public abstract class LCircleBounds extends RExternalBuiltinNode.Arg4 {
     @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
-    @Child private Unit.UnitLengthNode unitLength = Unit.createLengthNode();
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
 
     static {
@@ -52,7 +51,7 @@ public abstract class LCircleBounds extends RExternalBuiltinNode.Arg4 {
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
-        int length = GridUtils.maxLength(unitLength, xVec, yVec, radiusVec);
+        int length = GridUtils.maxLength(xVec, yVec, radiusVec);
         Bounds bounds = new Bounds();
         int count = 0;
         Point loc = null;  // we remember the last position and radius

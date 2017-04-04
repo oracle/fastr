@@ -15,7 +15,6 @@ import static com.oracle.truffle.r.runtime.nmath.RMath.fmax2;
 import static com.oracle.truffle.r.runtime.nmath.RMath.fmin2;
 
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.r.library.fastrGrid.Unit.UnitLengthNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -57,10 +56,10 @@ final class GridUtils {
     }
 
     @ExplodeLoop
-    static int maxLength(UnitLengthNode unitLength, RAbstractVector... units) {
+    static int maxLength(RAbstractVector... units) {
         int result = 0;
         for (RAbstractVector unit : units) {
-            result = Math.max(result, unitLength.execute(unit));
+            result = Math.max(result, Unit.getLength(unit));
         }
         return result;
     }

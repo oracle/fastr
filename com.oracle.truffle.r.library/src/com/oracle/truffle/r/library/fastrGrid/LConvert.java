@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
-    @Child private Unit.UnitLengthNode unitLength = Unit.createLengthNode();
     @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
 
@@ -62,7 +61,7 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
-        int length = unitLength.execute(units);
+        int length = Unit.getLength(units);
         double[] result = new double[length];
 
         RAbstractIntVector unitIds = null;

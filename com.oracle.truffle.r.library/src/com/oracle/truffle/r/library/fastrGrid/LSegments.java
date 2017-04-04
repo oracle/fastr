@@ -29,7 +29,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  */
 public abstract class LSegments extends RExternalBuiltinNode.Arg5 {
     @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
-    @Child private Unit.UnitLengthNode unitLength = Unit.createLengthNode();
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
     @Child private DrawArrowsNode drawArrowsNode = new DrawArrowsNode();
 
@@ -63,7 +62,7 @@ public abstract class LSegments extends RExternalBuiltinNode.Arg5 {
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
-        int length = GridUtils.maxLength(unitLength, x0, y0, x1, y1);
+        int length = GridUtils.maxLength(x0, y0, x1, y1);
         double[] xx = new double[2];
         double[] yy = new double[2];
         for (int i = 0; i < length; i++) {

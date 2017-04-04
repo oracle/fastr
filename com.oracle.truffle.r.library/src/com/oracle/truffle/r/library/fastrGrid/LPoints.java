@@ -17,7 +17,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
-import com.oracle.truffle.r.library.fastrGrid.Unit.UnitLengthNode;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitToInchesNode;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
@@ -42,7 +41,6 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
 
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
 
-    @Child private UnitLengthNode unitLength = Unit.createLengthNode();
     @Child private UnitToInchesNode unitToInches = Unit.createToInchesNode();
 
     static {
@@ -72,7 +70,7 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
         // Note: unlike in other drawing primitives, we only consider length of x
-        int length = unitLength.execute(xVec);
+        int length = Unit.getLength(xVec);
         DrawingContext initialDrawingCtx = gpar.getDrawingContext(0);
         PointDrawingContext pointDrawingCtx = new PointDrawingContext(initialDrawingCtx, initialDrawingCtx.getFillColor(), initialDrawingCtx.getFillColor());
         for (int i = 0; i < length; i++) {

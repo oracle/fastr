@@ -31,7 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.library.fastrGrid.UnitFactory.UnitLengthNodeGen;
 import com.oracle.truffle.r.library.fastrGrid.UnitFactory.UnitToInchesNodeGen;
 import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
@@ -139,10 +138,6 @@ public final class Unit {
         result.setAttr(UNIT_ATTR_UNIT_ID, unitId);
         result.setAttr(UNIT_ATTR_DATA, RNull.instance);
         return result;
-    }
-
-    public static UnitLengthNode createLengthNode() {
-        return UnitLengthNode.create();
     }
 
     public static UnitToInchesNode createToInchesNode() {
@@ -419,6 +414,11 @@ public final class Unit {
         }
     }
 
+    /**
+     * Arithmetic unit objects can represent 'vectorized' expressions, e.g.
+     * {@code 3*c(unit(1,'cm'), unit(2,'mm'))}, in such case the 'length' is not simply the length
+     * of the underlying vector/list.
+     */
     public static int getLength(RAbstractContainer unit) {
         return UnitLengthVisitor.INSTANCE.visit(unit);
     }
@@ -460,33 +460,6 @@ public final class Unit {
                 throw RInternalError.shouldNotReachHere("unexpected result type form isPuteNullUnit");
             }
             return RRuntime.fromLogical(resultByte);
-        }
-    }
-
-    /**
-     * Arithmetic unit objects can represent 'vectorized' expressions, in such case the 'length' is
-     * not simply the length of the underlying vector/list.
-     */
-    public abstract static class UnitLengthNode extends UnitNodeBase {
-        public static UnitLengthNode create() {
-            return UnitLengthNodeGen.create();
-        }
-
-        public abstract int execute(RAbstractContainer vector);
-
-        @Specialization(guards = "!isArithmetic(value)")
-        int doNormal(RAbstractContainer value) {
-            return value.getLength();
-        }
-
-        @Specialization(guards = "isArithmetic(list)")
-        int doArithmetic(RList list,
-                        @Cached("create()") UnitLengthNode recursiveLen) {
-            ArithmeticUnit arithmeticUnit = ArithmeticUnit.asArithmeticUnit(list);
-            if (arithmeticUnit.isBinary()) {
-                return Math.max(recursiveLen.execute(arithmeticUnit.arg1), recursiveLen.execute(arithmeticUnit.arg2));
-            }
-            return 1;   // op is max, min, sum
         }
     }
 
@@ -613,7 +586,6 @@ public final class Unit {
 
         @Specialization(guards = "isArithmetic(list)")
         double doArithmetic(RList list, int index, UnitConversionContext ctx, AxisOrDimension axisOrDim,
-                        @Cached("create()") UnitLengthNode unitLengthNode,
                         @Cached("create()") UnitToInchesNode recursiveNode) {
             ArithmeticUnit expr = ArithmeticUnit.asArithmeticUnit(list);
             BiFunction<RAbstractContainer, Integer, Double> recursive = (x, newNullAMode) -> recursiveNode.execute(x, index, getNewCtx(ctx, axisOrDim, newNullAMode), axisOrDim);
@@ -631,7 +603,7 @@ public final class Unit {
 
             // must be aggregate operation
             UnitConversionContext newCtx = getNewCtx(ctx, axisOrDim, getNullAMode(expr.op));
-            int len = unitLengthNode.execute(expr.arg1);
+            int len = getLength(expr.arg1);
             double[] values = new double[len];
             for (int i = 0; i < len; i++) {
                 values[i] = recursiveNode.execute(expr.arg1, i, newCtx, axisOrDim);

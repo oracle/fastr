@@ -20,6 +20,7 @@ import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTrans
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -28,9 +29,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * lines, but only the later connects the last point with the first point and only the former draws
  * arrows (which is not implemented yet). Note: the third parameter contains sequences
  * {@code 1:max(length(x),length(y))}, where the 'length' dispatches to S3 method giving us unit
- * length like {@link com.oracle.truffle.r.library.fastrGrid.Unit.UnitLengthNode}. This means that
- * we do not have to use the {@link com.oracle.truffle.r.library.fastrGrid.Unit.UnitLengthNode} to
- * get the length.
+ * length like {@link com.oracle.truffle.r.library.fastrGrid.Unit#getLength(RAbstractContainer)}.
+ * This means that we do not have to use the
+ * {@link com.oracle.truffle.r.library.fastrGrid.Unit#getLength(RAbstractContainer)} to get the
+ * length.
  */
 public abstract class GridLinesNode extends Node {
     public static GridLinesNode createLines() {

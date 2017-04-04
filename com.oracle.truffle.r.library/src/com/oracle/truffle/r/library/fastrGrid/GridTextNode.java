@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -52,11 +53,11 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * Implements what is in the original grid code implemented by {@code gridText} function.
  *
  * Note: the third parameter contains sequences {@code 1:max(length(x),length(y))}, where the
- * 'length' dispatches to S3 method giving us unit length like {@link Unit.UnitLengthNode}.
+ * 'length' dispatches to S3 method giving us unit length like
+ * {@link com.oracle.truffle.r.library.fastrGrid.Unit#getLength(RAbstractContainer)}.
  */
 public final class GridTextNode extends RBaseNode {
     @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
-    @Child private Unit.UnitLengthNode unitLength = Unit.createLengthNode();
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
 
     private final ConditionProfile checkOverlapProfile = ConditionProfile.createBinaryProfile();
@@ -100,7 +101,7 @@ public final class GridTextNode extends RBaseNode {
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
-        int length = GridUtils.maxLength(unitLength, x, y);
+        int length = GridUtils.maxLength(x, y);
 
         // following variables will hold the (intermediate) results of bounds checking
         int boundsCount = 0;

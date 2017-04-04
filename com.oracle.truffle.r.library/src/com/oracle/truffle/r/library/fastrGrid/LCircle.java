@@ -26,7 +26,6 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 
 public abstract class LCircle extends RExternalBuiltinNode.Arg3 {
     @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
-    @Child private Unit.UnitLengthNode unitLength = Unit.createLengthNode();
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
 
     static {
@@ -56,7 +55,7 @@ public abstract class LCircle extends RExternalBuiltinNode.Arg3 {
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
-        int length = GridUtils.maxLength(unitLength, xVec, yVec, radiusVec);
+        int length = GridUtils.maxLength(xVec, yVec, radiusVec);
         for (int i = 0; i < length; i++) {
             Size radiusSizes = Size.fromUnits(unitToInches, radiusVec, radiusVec, i, conversionCtx);
             double radius = RMath.fmin2(radiusSizes.getWidth(), radiusSizes.getHeight());

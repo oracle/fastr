@@ -30,7 +30,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class LRectBounds extends RExternalBuiltinNode.Arg7 {
     @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
-    @Child private Unit.UnitLengthNode unitLength = Unit.createLengthNode();
     @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
 
     static {
@@ -55,7 +54,7 @@ public abstract class LRectBounds extends RExternalBuiltinNode.Arg7 {
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
-        int length = GridUtils.maxLength(unitLength, xVec, yVec, wVec, hVec);
+        int length = GridUtils.maxLength(xVec, yVec, wVec, hVec);
         Bounds bounds = new Bounds();
         int nrect = 0;
         for (int i = 0; i < length; i++) {
