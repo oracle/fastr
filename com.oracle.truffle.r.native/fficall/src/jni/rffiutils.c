@@ -85,7 +85,7 @@ void setEmbedded() {
 #ifdef TRACE_ENABLED
 // Helper for debugging purposes: prints out (into the trace file) the java
 // class name for given SEXP
-static const char* fastRInspect(JNIEnv *env, SEXP v) {
+static void fastRInspect(JNIEnv *env, SEXP v) {
     // this invokes getClass().getName()
     jclass cls = (*env)->GetObjectClass(env, v);
     jmethodID getClassMethodID = checkGetMethodID(env, cls, "getClass", "()Ljava/lang/Class;", 0);
@@ -104,7 +104,24 @@ static const char* fastRInspect(JNIEnv *env, SEXP v) {
 #endif
 
 static int isValidJNIRef(JNIEnv *env, SEXP ref) {
+#if VALIDATE_REFS
     return (*env)->GetObjectRefType(env, ref) != JNIInvalidRefType;
+#else
+    return TRUE;
+#endif
+}
+
+static jboolean fast_IsSameObject(jobject a, jobject b) {
+    // this takes some assumptions about jni handles, but it is much faster
+    void** pA = (void**) a;
+    void** pB = (void**) b;
+    if (pA == NULL && pB == NULL) {
+        return TRUE;
+    } else if (pA == NULL || pB == NULL) {
+        return FALSE;
+    } else {
+        return *pA == *pB;
+    }
 }
 
 // native down call depth, indexes nativeArrayTableHwmStack
@@ -193,7 +210,7 @@ void invalidateNativeArray(JNIEnv *env, SEXP oldObj) {
     assert(isValidJNIRef(env, oldObj));
     for (int i = 0; i < nativeArrayTableHwm; i++) {
         NativeArrayElem cv = nativeArrayTable[i];
-        if ((*env)->IsSameObject(env, cv.obj, oldObj)) {
+        if (fast_IsSameObject(cv.obj, oldObj)) {
 #if TRACE_NATIVE_ARRAYS
             fprintf(traceFile, "invalidateNativeArray(%p): found\n", oldObj);
 #endif
@@ -219,7 +236,7 @@ void updateNativeArrays(JNIEnv *env) {
 static void *findNativeArray(JNIEnv *env, SEXP x) {
     if (nativeArrayTableLastIndex < nativeArrayTableHwm) {
         NativeArrayElem cv = nativeArrayTable[nativeArrayTableLastIndex];
-        if (cv.obj != NULL && (cv.obj == x || (*env)->IsSameObject(env, cv.obj, x))) {
+        if (cv.obj != NULL && (cv.obj == x || fast_IsSameObject(cv.obj, x))) {
             void *data = cv.data;
 #if TRACE_NATIVE_ARRAYS
             fprintf(traceFile, "findNativeArray(%p): found %p (cached)\n", x, data);
@@ -233,7 +250,7 @@ static void *findNativeArray(JNIEnv *env, SEXP x) {
         NativeArrayElem cv = nativeArrayTable[i];
         if (cv.obj != NULL) {
             assert(isValidJNIRef(env, cv.obj));
-            if ((*env)->IsSameObject(env, cv.obj, x)) {
+            if (fast_IsSameObject(cv.obj, x)) {
                 nativeArrayTableLastIndex = i;
                 void *data = cv.data;
 #if TRACE_NATIVE_ARRAYS
@@ -409,7 +426,7 @@ static SEXP findCachedGlobalRef(JNIEnv *env, SEXP obj) {
         if (elem.gref == NULL) {
             continue;
         }
-        if ((*env)->IsSameObject(env, elem.gref, obj)) {
+        if (fast_IsSameObject(elem.gref, obj)) {
 #if TRACE_REF_CACHE
             fprintf(traceFile, "gref: cache hit: %d\n", i);
 #endif
@@ -470,7 +487,7 @@ void releaseGlobalRef(JNIEnv *env, SEXP obj) {
         if (elem.gref == NULL || elem.permanent) {
             continue;
         }
-        if ((*env)->IsSameObject(env, elem.gref, obj)) {
+        if (fast_IsSameObject(elem.gref, obj)) {
 #if TRACE_REF_CACHE
             fprintf(traceFile, "gref: release: index %d, gref: %p\n", i, elem.gref);
 #endif
@@ -481,12 +498,14 @@ void releaseGlobalRef(JNIEnv *env, SEXP obj) {
 }
 
 void validateRef(JNIEnv *env, SEXP x, const char *msg) {
+#ifdef VALIDATE_REFS
     jobjectRefType t = (*env)->GetObjectRefType(env, x);
     if (t == JNIInvalidRefType) {
         char buf[1000];
         sprintf(buf, "%s %p", msg,x);
         fatalError(buf);
     }
+#endif
 }
 
 JNIEnv *getEnv() {
