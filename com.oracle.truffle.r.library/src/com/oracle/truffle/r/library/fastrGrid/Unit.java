@@ -279,28 +279,29 @@ public final class Unit {
         return unitId >= GROBX && unitId <= GROBDESCENT;
     }
 
-    static double pureNullUnitValue(RAbstractContainer unit, int index) {
-        // TODO: convert to unit visitor
-        if (unit instanceof RAbstractDoubleVector) {
-            RAbstractDoubleVector simpleUnit = (RAbstractDoubleVector) unit;
-            return simpleUnit.getDataAt(index % simpleUnit.getLength());
-        } else if (isListUnit(unit)) {
-            return pureNullUnitValue((RAbstractContainer) ((RList) unit).getDataAt(index % unit.getLength()), 0);
-        } else if (isArithmeticUnit(unit)) {
-            ArithmeticUnit expr = ArithmeticUnit.asArithmeticUnit((RList) unit);
+    private static final class PureNullUniValueVisitor extends UnitVisitor<Double, Integer> {
+        private static final PureNullUniValueVisitor INSTANCE = new PureNullUniValueVisitor();
+
+        @Override
+        protected Double visitListUnit(RList unit, Integer index) {
+            return visit(asAbstractContainer(unit.getDataAt(index % unit.getLength())), 0);
+        }
+
+        @Override
+        protected Double visitArithmeticUnit(ArithmeticUnit expr, Integer index) {
             switch (expr.op) {
                 case "+":
-                    return pureNullUnitValue(expr.arg1, index) + pureNullUnitValue(expr.arg2, index);
+                    return visit(expr.arg1, index) + visit(expr.arg2, index);
                 case "-":
-                    return pureNullUnitValue(expr.arg1, index) - pureNullUnitValue(expr.arg2, index);
+                    return visit(expr.arg1, index) - visit(expr.arg2, index);
                 case "*":
-                    return asDouble(expr.arg1) * pureNullUnitValue(expr.arg2, index);
+                    return asDouble(expr.arg1) * visit(expr.arg2, index);
                 case "min":
                 case "max":
                 case "sum":
                     double[] values = new double[expr.arg1.getLength()];
                     for (int i = 0; i < values.length; i++) {
-                        values[i] = pureNullUnitValue(expr.arg1, i);
+                        values[i] = visit(expr.arg1, i);
                     }
                     switch (expr.op) {
                         case "min":
@@ -309,13 +310,19 @@ public final class Unit {
                             return fmax(Double.MIN_VALUE, values);
                         case "sum":
                             return sum(values);
-                        default:
-                            throw RInternalError.shouldNotReachHere("unexpected arithmetic unit operation");
                     }
             }
-
+            throw RInternalError.shouldNotReachHere("unexpected arithmetic unit operation");
         }
-        throw RInternalError.shouldNotReachHere("unexpected arithmetic unit type");
+
+        @Override
+        protected Double visitSimpleUnit(RAbstractVector unit, Integer index) {
+            return GridUtils.getDoubleAt(unit, index);
+        }
+    }
+
+    static double pureNullUnitValue(RAbstractContainer unit, int index) {
+        return PureNullUniValueVisitor.INSTANCE.visit(unit, index);
     }
 
     public static boolean isSimpleUnit(RAbstractContainer unit) {
@@ -369,32 +376,54 @@ public final class Unit {
         }
     }
 
-    private abstract static class UnitVisitor<T> {
-        public T visit(RAbstractContainer unit) {
+    private abstract static class UnitVisitor<T, R> {
+        public T visit(RAbstractContainer unit, R arg) {
             RStringVector clazz = unit.getClassAttr();
             if (clazz == null || clazz.getLength() == 0) {
-                return visitSimpleUnit((RAbstractVector) unit);
+                return visitSimpleUnit((RAbstractVector) unit, arg);
             }
             for (int i = 0; i < clazz.getLength(); i++) {
                 String className = clazz.getDataAt(i);
                 if (UNIT_ARITHMETIC_CLASS.equals(className)) {
-                    return visitArithmeticUnit(ArithmeticUnit.asArithmeticUnit(asList(unit)));
+                    return visitArithmeticUnit(ArithmeticUnit.asArithmeticUnit(asList(unit)), arg);
                 }
                 if (UNIT_LIST_CLASS.equals(className)) {
-                    return visitListUnit(asList(unit));
+                    return visitListUnit(asList(unit), arg);
                 }
             }
-            return visitSimpleUnit((RAbstractVector) unit);
+            return visitSimpleUnit((RAbstractVector) unit, arg);
         }
 
-        protected abstract T visitListUnit(RList unit);
+        public T visit(RAbstractContainer unit) {
+            return visit(unit, null);
+        }
 
-        protected abstract T visitArithmeticUnit(ArithmeticUnit unit);
+        protected T visitListUnit(RList unit) {
+            throw RInternalError.shouldNotReachHere();
+        }
 
-        protected abstract T visitSimpleUnit(RAbstractVector unit);
+        protected T visitArithmeticUnit(ArithmeticUnit unit) {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        protected T visitSimpleUnit(RAbstractVector unit) {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        protected T visitListUnit(RList unit, R arg) {
+            return visitListUnit(unit);
+        }
+
+        protected T visitArithmeticUnit(ArithmeticUnit unit, R arg) {
+            return visitArithmeticUnit(unit);
+        }
+
+        protected T visitSimpleUnit(RAbstractVector unit, R arg) {
+            return visitSimpleUnit(unit);
+        }
     }
 
-    private static final class UnitLengthVisitor extends UnitVisitor<Integer> {
+    private static final class UnitLengthVisitor extends UnitVisitor<Integer, Object> {
         private static final UnitLengthVisitor INSTANCE = new UnitLengthVisitor();
 
         @Override
