@@ -25,7 +25,6 @@ import static com.oracle.truffle.r.library.fastrGrid.Unit.newUnit;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.library.fastrGrid.Unit.IsRelativeUnitNode;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.ViewPort.LayoutPos;
 import com.oracle.truffle.r.library.fastrGrid.ViewPort.LayoutSize;
@@ -50,7 +49,6 @@ final class DoSetViewPort extends RBaseNode {
     @Child private CastNode castDoubleVector = newCastBuilder().asDoubleVector().buildCastNode();
     @Child private CastNode castChildrenEnv = newCastBuilder().mustBe(REnvironment.class).buildCastNode();
     @Child private Unit.UnitToInchesNode unitsToInches = Unit.UnitToInchesNode.create();
-    @Child private IsRelativeUnitNode isRelativeUnit = new IsRelativeUnitNode();
 
     @TruffleBoundary
     public RList doSetViewPort(RList pushedViewPort, boolean hasParent, boolean pushing) {
@@ -327,7 +325,7 @@ final class DoSetViewPort extends RBaseNode {
                     boolean isWidth) {
         double reducedSize = initialSize;
         for (int i = 0; i < npcItems.length; i++) {
-            boolean currIsRel = isRelativeUnit.execute(layoutItems, i);
+            boolean currIsRel = Unit.isRelativeUnit(GridContext.getContext(), layoutItems, i);
             relativeItems[i] = currIsRel;
             if (!currIsRel) {
                 npcItems[i] = unitsToInches.convertDimension(layoutItems, i, conversionCtx, isWidth);

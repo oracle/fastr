@@ -50,7 +50,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -469,27 +468,17 @@ public final class Unit {
         }
     }
 
-    public static final class IsRelativeUnitNode extends UnitNodeBase {
-        @Child private RGridCodeCall isPureNullCall = new RGridCodeCall("isPureNullUnit");
-
-        public boolean execute(Object unit, int index) {
-            GridState gridState = GridContext.getContext().getGridState();
-            return gridState.runWithoutRecording(() -> executeImpl(unit, index));
-        }
-
-        private boolean executeImpl(Object unit, int index) {
-            // Note: converting 0-based java index to 1-based R index
-            Object result = isPureNullCall.execute(new RArgsValuesAndNames(new Object[]{unit, index + 1}, ArgumentsSignature.empty(2)));
-            byte resultByte;
-            if (result instanceof Byte) {
-                resultByte = (Byte) result;
-            } else if (result instanceof RAbstractLogicalVector) {
-                resultByte = ((RAbstractLogicalVector) result).getDataAt(0);
-            } else {
-                throw RInternalError.shouldNotReachHere("unexpected result type form isPuteNullUnit");
-            }
-            return RRuntime.fromLogical(resultByte);
-        }
+    /**
+     * Returns {@code true} if the given unit object represents a unit without actual unit type,
+     * i.e. the unit type is {@link #NULL}. Such units are used internally for layouting, and the
+     * interpretation is to take-up all the left space (evenly if there are more such units).
+     */
+    public static boolean isRelativeUnit(GridContext ctx, Object unit, int index) {
+        GridState gridState = ctx.getGridState();
+        return gridState.runWithoutRecording(() -> {
+            Object result = ctx.evalInternalRFunction("isPureNullUnit", unit, index + 1);
+            return RRuntime.fromLogical(RRuntime.asLogicalObject(result));
+        });
     }
 
     /**
@@ -684,7 +673,6 @@ public final class Unit {
         @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
         @Child private UnitToInchesNode unitToInches = createToInchesNode();
 
-        @Child private IsRelativeUnitNode isRelativeUnit = new IsRelativeUnitNode();
         @Child private UnitToInchesNode unitToInchesNode;
 
         // transcribed from unit.c function evaluateGrobUnit
@@ -720,10 +708,10 @@ public final class Unit {
             switch (unitId) {
                 case GROBX:
                 case GROBY:
-                    if (unitId == GROBY && isRelativeUnit.execute(unitxy.getDataAt(1), 0)) {
+                    if (unitId == GROBY && isRelativeUnit(ctx, unitxy.getDataAt(1), 0)) {
                         double nullUnitValue = pureNullUnitValue((RAbstractContainer) unitxy.getDataAt(1), 0);
                         result = evaluateNullUnit(nullUnitValue, vpTransform.size.getHeight(), conversionCtx.nullLayoutMode, conversionCtx.nullArithmeticMode);
-                    } else if (isRelativeUnit.execute(unitxy.getDataAt(0), 0)) {
+                    } else if (isRelativeUnit(ctx, unitxy.getDataAt(0), 0)) {
                         double nullUnitValue = pureNullUnitValue((RAbstractContainer) unitxy.getDataAt(0), 0);
                         result = evaluateNullUnit(nullUnitValue, vpTransform.size.getWidth(), conversionCtx.nullLayoutMode, conversionCtx.nullArithmeticMode);
                     } else {
@@ -736,7 +724,7 @@ public final class Unit {
                     break;
                 default:
                     // should still be GROB_SOMETHING unit: width, height, ascent, descent
-                    if (isRelativeUnit.execute(unitxy.getDataAt(0), 0)) {
+                    if (isRelativeUnit(ctx, unitxy.getDataAt(0), 0)) {
                         // Note: GnuR uses equivalent of vpTransform.size.getWidth() even for
                         // GROBHEIGHT, bug?
                         double nullUnitValue = pureNullUnitValue((RAbstractContainer) unitxy.getDataAt(0), 0);
