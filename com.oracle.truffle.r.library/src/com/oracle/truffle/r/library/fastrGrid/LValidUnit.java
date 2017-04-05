@@ -47,7 +47,7 @@ public abstract class LValidUnit extends RExternalBuiltinNode.Arg1 {
         return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
-    protected int convertSingle(String name) {
+    private int convertSingle(String name) {
         if (name.equals("npc")) {
             // seems to be by far the most common unit
             return Unit.NPC;

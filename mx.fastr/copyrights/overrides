@@ -747,7 +747,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LRect.ja
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LRectBounds.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LCircleBounds.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LLocnBounds.java,gnu_r_murrel_core.copyright
-com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/DrawArrowsNode.java,gnu_r_murrel_core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/Arrows.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LPoints.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/GridState.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/DoSetViewPortBuiltin.java,gnu_r_murrel_core.copyright

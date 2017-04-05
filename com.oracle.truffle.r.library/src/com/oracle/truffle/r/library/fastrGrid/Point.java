@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.library.fastrGrid;
 
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
-import com.oracle.truffle.r.library.fastrGrid.Unit.UnitToInchesNode;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class Point {
@@ -35,10 +34,8 @@ public final class Point {
         this.y = y;
     }
 
-    public static Point fromUnits(UnitToInchesNode unitToInches, RAbstractVector x, RAbstractVector y, int index, UnitConversionContext ctx) {
-        double newX = unitToInches.convertX(x, index, ctx);
-        double newY = unitToInches.convertY(y, index, ctx);
-        return new Point(newX, newY);
+    public static Point fromUnits(RAbstractVector x, RAbstractVector y, int index, UnitConversionContext ctx) {
+        return new Point(Unit.convertX(x, index, ctx), Unit.convertY(y, index, ctx));
     }
 
     public Point justify(Size size, double hjust, double vjust) {

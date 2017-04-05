@@ -33,7 +33,7 @@ final class LNewPage extends RExternalBuiltinNode {
             return RNull.instance;
         }
         // There are some exceptions to the rule that any external call from grid R code is
-        // preceeded by L_gridDirty call, L_newpage is one of them.
+        // preceded by L_gridDirty call, L_newpage is one of them.
         CompilerDirectives.transferToInterpreter();
         return gridDirty.call(frame, RArgsValuesAndNames.EMPTY);
     }

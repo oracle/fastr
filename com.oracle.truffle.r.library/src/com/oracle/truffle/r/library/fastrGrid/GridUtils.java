@@ -28,6 +28,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 final class GridUtils {
     private GridUtils() {
@@ -205,6 +206,13 @@ final class GridUtils {
             return (RAbstractContainer) value;
         }
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non abstract container type " + value.getClass().getSimpleName());
+    }
+
+    static REnvironment asEnvironment(Object value) {
+        if (value instanceof REnvironment) {
+            return (REnvironment) value;
+        }
+        throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected: value is not environment " + value.getClass().getSimpleName());
     }
 
     static double sum(double[] values) {
