@@ -31,7 +31,7 @@
 #include <setjmp.h>
 #include <Connections.h>
 
-#define VALIDATE_REFS 1
+#define VALIDATE_REFS 0
 
 JNIEnv *getEnv();
 void setEnv(JNIEnv *env);
