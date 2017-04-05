@@ -67,6 +67,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     private final BranchProfile error = BranchProfile.create();
     private final ConditionProfile notRemoveNAs = ConditionProfile.createBinaryProfile();
+    private final ValueProfile vectorProfile = ValueProfile.createClassProfile();
 
     /**
      * For use by {@link RadixSort}.
@@ -79,7 +80,8 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return executeOrderVector1(v, naLast, dec, false);
     }
 
-    private RIntVector executeOrderVector1(RAbstractVector v, byte naLast, boolean dec, boolean needsStringCollation) {
+    private RIntVector executeOrderVector1(RAbstractVector vIn, byte naLast, boolean dec, boolean needsStringCollation) {
+        RAbstractVector v = vectorProfile.profile(vIn);
         int n = v.getLength();
         reportWork(n);
 
@@ -170,31 +172,27 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @Specialization(guards = {"oneVec(args)", "isFirstIntegerPrecedence(args)"})
     Object orderInt(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
-        Object[] vectors = args.getArguments();
-        RAbstractIntVector v = (RAbstractIntVector) castVector(vectors[0]);
+        RAbstractIntVector v = (RAbstractIntVector) castVector(args.getArgument(0));
         return executeOrderVector1(v, naLast, decreasing);
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstDoublePrecedence(args)"})
     Object orderDouble(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
-        Object[] vectors = args.getArguments();
-        RAbstractDoubleVector v = (RAbstractDoubleVector) castVector(vectors[0]);
+        RAbstractDoubleVector v = (RAbstractDoubleVector) castVector(args.getArgument(0));
         return executeOrderVector1(v, naLast, decreasing);
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstLogicalPrecedence(args)"})
     Object orderLogical(byte naLast, boolean decreasing, RArgsValuesAndNames args,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
-        Object[] vectors = args.getArguments();
-        RAbstractIntVector v = (RAbstractIntVector) castVector(vectors[0]).castSafe(RType.Integer, isNAProfile);
+        RAbstractIntVector v = (RAbstractIntVector) castVector(args.getArgument(0)).castSafe(RType.Integer, isNAProfile);
         return executeOrderVector1(v, naLast, decreasing);
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstStringPrecedence(args)"})
     Object orderString(byte naLast, boolean decreasing, RArgsValuesAndNames args,
                     @Cached("create()") BranchProfile collationProfile) {
-        Object[] vectors = args.getArguments();
-        RAbstractStringVector v = (RAbstractStringVector) castVector(vectors[0]);
+        RAbstractStringVector v = (RAbstractStringVector) castVector(args.getArgument(0));
         int n = v.getLength();
         boolean needsCollation = false;
         outer: for (int i = 0; i < n; i++) {
@@ -214,8 +212,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @Specialization(guards = {"oneVec(args)", "isFirstComplexPrecedence( args)"})
     Object orderComplex(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
-        Object[] vectors = args.getArguments();
-        RAbstractComplexVector v = (RAbstractComplexVector) castVector(vectors[0]);
+        RAbstractComplexVector v = (RAbstractComplexVector) castVector(args.getArgument(0));
         return executeOrderVector1(v, naLast, decreasing);
     }
 
