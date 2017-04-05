@@ -185,6 +185,7 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/L
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Merge.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Order.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Pretty.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/PrettyIntevals.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Quit.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Rank.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Prod.java,purdue.copyright
@@ -744,6 +745,7 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/p
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/deriv/Deriv.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/deriv/DerivVisitor.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LRect.java,gnu_r_murrel_core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LPretty.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LRectBounds.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LCircleBounds.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LLocnBounds.java,gnu_r_murrel_core.copyright
