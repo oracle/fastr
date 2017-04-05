@@ -33,13 +33,15 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
-import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.RepeatNodeGen.FastRInternalRepeatNodeGen;
@@ -53,6 +55,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -94,17 +97,6 @@ public abstract class Repeat extends RBuiltinNode {
     private static final int ARG_IDX_LENGHT_OUT;
     private static final int ARG_IDX_EACH;
 
-    @Child private FastRInternalRepeat internalNode = FastRInternalRepeatNodeGen.create();
-    @Child private CastNode castTimes = PB_TIMES.buildNode();
-    @Child private CastNode castLengthOut = PB_LENGTH_OUT.buildNode();
-    @Child private CastNode castEach = PB_EACH.buildNode();
-    @Child private PrepareMatchInternalArguments prepareArgs = PrepareMatchInternalArgumentsNodeGen.create(FORMALS, this);
-
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY};
-    }
-
     static {
         Casts casts = new Casts(Repeat.class);
         casts.arg("x").mustBe(abstractVectorValue(), RError.Message.ATTEMPT_TO_REPLICATE, typeName());
@@ -130,6 +122,17 @@ public abstract class Repeat extends RBuiltinNode {
         FORMALS = FormalArguments.createForBuiltin(new Object[]{1, RRuntime.INT_NA, 1}, signature);
     }
 
+    @Child private FastRInternalRepeat internalNode = FastRInternalRepeatNodeGen.create();
+    @Child private CastNode castTimes = PB_TIMES.buildNode();
+    @Child private CastNode castLengthOut = PB_LENGTH_OUT.buildNode();
+    @Child private CastNode castEach = PB_EACH.buildNode();
+    @Child private PrepareMatchInternalArguments prepareArgs = PrepareMatchInternalArgumentsNodeGen.create(FORMALS, this);
+
+    @Override
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY};
+    }
+
     @Specialization
     protected Object repeat(VirtualFrame frame, RAbstractVector x, RArgsValuesAndNames args) {
         RArgsValuesAndNames margs = prepareArgs.execute(args, null);
@@ -144,87 +147,73 @@ public abstract class Repeat extends RBuiltinNode {
 
     @TypeSystemReference(RTypes.class)
     abstract static class FastRInternalRepeat extends RBaseNode {
+
         private final ConditionProfile lengthOutOrTimes = ConditionProfile.createBinaryProfile();
         private final ConditionProfile oneTimeGiven = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile replicateOnce = ConditionProfile.createBinaryProfile();
 
         @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
 
+        @CompilationFinal private boolean trySimple = true;
+
         public abstract RAbstractVector execute(VirtualFrame frame, Object... args);
 
-        protected boolean hasNames(RAbstractVector x) {
-            return getNames.getNames(x) != null;
+        @Specialization
+        protected RAbstractVector rep(RAbstractVector xIn, RAbstractIntVector timesIn, int lengthOutIn, int eachIn,
+                        @Cached("createClassProfile()") ValueProfile xProfile,
+                        @Cached("createClassProfile()") ValueProfile timesProfile,
+                        @Cached("createEqualityProfile()") PrimitiveValueProfile lengthOutProfile,
+                        @Cached("createEqualityProfile()") PrimitiveValueProfile eachProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
+            RAbstractVector x = xProfile.profile(xIn);
+            RAbstractIntVector times = timesProfile.profile(timesIn);
+            int lengthOut = lengthOutProfile.profile(lengthOutIn);
+            int each = eachProfile.profile(eachIn);
+
+            // fast path for very simple case of filling with a single double values:
+            if (trySimple) {
+                if (x instanceof RAbstractDoubleVector && x.getLength() == 1 && times.getLength() == 1 && each == 1 && getNames.getNames(x) == null) {
+                    RAbstractDoubleVector doubleVector = (RAbstractDoubleVector) x;
+                    int t = times.getDataAt(0);
+                    if (t < 0) {
+                        throw error(RError.Message.INVALID_ARGUMENT, "times");
+                    }
+                    int length = lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut)) ? lengthOut : t;
+                    double[] data = new double[length];
+                    Arrays.fill(data, doubleVector.getDataAt(0));
+                    return RDataFactory.createDoubleVector(data, !RRuntime.isNA(doubleVector.getDataAt(0)));
+                } else {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    trySimple = false;
+                }
+            }
+            return repInternal(x, times, lengthOut, each, hasNamesProfile);
         }
 
-        @Specialization(guards = {"x.getLength() == 1", "times.getLength() == 1", "each <= 1", "!hasNames(x)"})
-        protected RAbstractVector repNoEachNoNamesSimple(RAbstractDoubleVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
-            int t = times.getDataAt(0);
-            if (t < 0) {
-                throw error(RError.Message.INVALID_ARGUMENT, "times");
+        private RAbstractVector repInternal(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each, ConditionProfile hasNamesProfile) {
+            RAbstractVector input = x;
+            if (each != 1) {
+                if (each <= 0) {
+                    throw error(RError.Message.INVALID_ARGUMENT, "times");
+                }
+                if (times.getLength() > 1) {
+                    throw error(RError.Message.INVALID_ARGUMENT, "times");
+                }
+                input = handleEach(input, each);
             }
-            int length = lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut)) ? lengthOut : t;
-            double[] data = new double[length];
-            Arrays.fill(data, x.getDataAt(0));
-            return RDataFactory.createDoubleVector(data, !RRuntime.isNA(x.getDataAt(0)));
-        }
-
-        @Specialization(guards = {"each > 1", "!hasNames(x)"})
-        protected RAbstractVector repEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
-            if (times.getLength() > 1) {
-                throw error(RError.Message.INVALID_ARGUMENT, "times");
-            }
-            RAbstractVector input = handleEach(x, each);
-            if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
-                return handleLengthOut(input, lengthOut, false);
-            } else {
-                return handleTimes(input, times, false);
-            }
-        }
-
-        @Specialization(guards = {"each <= 1", "!hasNames(x)"})
-        protected RAbstractVector repNoEachNoNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
-            if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
-                return handleLengthOut(x, lengthOut, true);
-            } else {
-                return handleTimes(x, times, true);
-            }
-        }
-
-        @Specialization(guards = {"each > 1", "hasNames(x)"})
-        protected RAbstractVector repEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each,
-                        @Cached("create()") InitAttributesNode initAttributes,
-                        @Cached("createNames()") SetFixedAttributeNode putNames) {
-            if (times.getLength() > 1) {
-                throw error(RError.Message.INVALID_ARGUMENT, "times");
-            }
-            RAbstractVector input = handleEach(x, each);
-            RStringVector names = (RStringVector) handleEach(getNames.getNames(x), each);
             RVector<?> r;
-            if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
-                names = (RStringVector) handleLengthOut(names, lengthOut, false);
-                r = handleLengthOut(input, lengthOut, false);
+            if (lengthOutOrTimes.profile(RRuntime.isNA(lengthOut))) {
+                r = handleTimes(input, times);
             } else {
-                names = (RStringVector) handleTimes(names, times, false);
-                r = handleTimes(input, times, false);
+                r = handleLengthOut(input, lengthOut);
             }
-            putNames.execute(initAttributes.execute(r), names);
-            return r;
-        }
-
-        @Specialization(guards = {"each <= 1", "hasNames(x)"})
-        protected RAbstractVector repNoEachNames(RAbstractVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each,
-                        @Cached("create()") InitAttributesNode initAttributes,
-                        @Cached("createNames()") SetFixedAttributeNode putNames) {
-            RStringVector names;
-            RVector<?> r;
-            if (lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut))) {
-                names = (RStringVector) handleLengthOut(getNames.getNames(x), lengthOut, true);
-                r = handleLengthOut(x, lengthOut, true);
-            } else {
-                names = (RStringVector) handleTimes(getNames.getNames(x), times, true);
-                r = handleTimes(x, times, true);
+            if (hasNamesProfile != null) {
+                RStringVector names = getNames.getNames(x);
+                if (hasNamesProfile.profile(names != null)) {
+                    // handle names - passing null as hasNamesProfile stops the recursion
+                    names = (RStringVector) repInternal(names, times, lengthOut, each, null);
+                    r.initAttributes(RAttributesLayout.createNames(names));
+                }
             }
-            putNames.execute(initAttributes.execute(r), names);
             return r;
         }
 
@@ -244,28 +233,21 @@ public abstract class Repeat extends RBuiltinNode {
         /**
          * Extend or truncate the vector to a specified length.
          */
-        private static RVector<?> handleLengthOut(RAbstractVector x, int lengthOut, boolean copyIfSameSize) {
-            if (x.getLength() == lengthOut) {
-                return (RVector<?>) (copyIfSameSize ? x.copy() : x);
-            }
+        private static RVector<?> handleLengthOut(RAbstractVector x, int lengthOut) {
             return x.copyResized(lengthOut, false);
         }
 
         /**
          * Replicate the vector a given number of times.
          */
-        private RVector<?> handleTimes(RAbstractVector x, RAbstractIntVector times, boolean copyIfSameSize) {
+        private RVector<?> handleTimes(RAbstractVector x, RAbstractIntVector times) {
             if (oneTimeGiven.profile(times.getLength() == 1)) {
                 // only one times value is given
-                final int howManyTimes = times.getDataAt(0);
+                int howManyTimes = times.getDataAt(0);
                 if (howManyTimes < 0) {
                     throw error(RError.Message.INVALID_ARGUMENT, "times");
                 }
-                if (replicateOnce.profile(howManyTimes == 1)) {
-                    return (RVector<?>) (copyIfSameSize ? x.copy() : x);
-                } else {
-                    return x.copyResized(x.getLength() * howManyTimes, false);
-                }
+                return x.copyResized(x.getLength() * howManyTimes, false);
             } else {
                 // times is a vector with several elements
                 if (x.getLength() != times.getLength()) {

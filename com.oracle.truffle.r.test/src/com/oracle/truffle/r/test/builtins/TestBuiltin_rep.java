@@ -224,5 +224,12 @@ public class TestBuiltin_rep extends TestBase {
         assertEval("{ rep(7, times=-1) }");
         assertEval("{ rep(c(7, 42), times=c(2, NA)) }");
         assertEval(Output.IgnoreWarningContext, "{ rep(7, times=\"foo\") }");
+
+        assertEval("v <- 1; class(v) <- 'asdf'; names(v) <- 'asdf'; rep(v, 1)");
+        assertEval("v <- 1; class(v) <- 'asdf'; names(v) <- 'asdf'; rep(v, 2)");
+        assertEval("v <- 1; names(v) <- 'asdf'; rep(v, 1)");
+        assertEval("v <- 1; names(v) <- 'asdf'; rep(v, 2)");
+        assertEval("v <- 1; class(v) <- 'asdf'; rep(v, 1)");
+        assertEval("v <- 1; class(v) <- 'asdf'; rep(v, 2)");
     }
 }
