@@ -81,7 +81,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final BranchProfile warningBranch = BranchProfile.create();
     private final ConditionProfile valueIsNA = ConditionProfile.createBinaryProfile();
     private final BranchProfile resizeProfile = BranchProfile.create();
-    private final BranchProfile sharedProfile = BranchProfile.create();
     private final ConditionProfile rlanguageAttributesProfile = ConditionProfile.createBinaryProfile();
 
     private final ConditionProfile valueLengthOneProfile = ConditionProfile.createBinaryProfile();
@@ -509,8 +508,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         if (returnVector instanceof RShareable) {
             RShareable shareable = (RShareable) returnVector;
             // TODO find out if we need to copy always in the recursive case
-            if (sharedConditionProfile.execute(shareable.isShared()) || recursive || valueEqualsVectorProfile.profile(vector == value)) {
-                sharedProfile.enter();
+            if (recursive || sharedConditionProfile.execute(shareable.isShared()) || valueEqualsVectorProfile.profile(vector == value)) {
                 shareable = (RShareable) returnVector.copy();
                 returnVector = (RAbstractVector) shareable;
                 assert shareable.isTemporary();
@@ -523,7 +521,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         return returnVector;
     }
 
-    // TODO (chumer) this is way to compilicated at the moment
+    // TODO (chumer) this is way to complicated at the moment
     // not yet worth compiling. we should introduce some nodes for this
     @TruffleBoundary
     private static void copyAttributes(RAbstractVector vector, RList result) {
