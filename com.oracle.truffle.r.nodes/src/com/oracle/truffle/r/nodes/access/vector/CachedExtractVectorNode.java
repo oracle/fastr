@@ -329,7 +329,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                     } else if (positionsCheckNode.isEmptyPosition(i, positions[i])) {
                         result = RNull.instance;
                     } else {
-                        result = extract(i, (RAbstractStringVector) dataAt, positions[i], positionProfile[i]);
+                        result = extract(i, (RAbstractStringVector) RRuntime.asAbstractVector(dataAt), positions[i], positionProfile[i]);
                     }
                     newDimNames[dimIndex] = result;
                     if (newDimNamesNames != null) {
