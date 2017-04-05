@@ -145,8 +145,7 @@ public class RASTUtils {
             return value;
         } else if (element instanceof RSyntaxLookup) {
             String id = ((RSyntaxLookup) element).getIdentifier();
-            assert Utils.isInterned(id);
-            return RDataFactory.createSymbol(id);
+            return RDataFactory.createSymbolInterned(id);
         } else {
             assert element instanceof RSyntaxCall || element instanceof RSyntaxFunction;
             return RDataFactory.createLanguage(((RSyntaxNode) element).asRNode());
