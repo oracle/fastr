@@ -1008,7 +1008,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[[list(1), 1]] }");
         assertEval(Output.IgnoreErrorMessage, "{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[[list(1,2), 1]] }");
 
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ z<-1:4; z[[list()]]<-NULL }");
+        assertEval(Output.IgnoreErrorMessage, "{ z<-1:4; z[[list()]]<-NULL }");
     }
 
     @Test
@@ -2186,7 +2186,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.IgnoreErrorMessage, "{ x <- NULL; x[[c(1,0)]] <- c(1,5); x; }");
         assertEval(Output.IgnoreErrorMessage, "{ x <- NULL; x[[c(1,2)]] <- c(1,5); x; }");
 
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[1]] <- c(1,5); x; }");
+        assertEval(Ignored.Unimplemented, "{ x <- NULL; x[[1]] <- c(1,5); x; }");
     }
 
     @Test

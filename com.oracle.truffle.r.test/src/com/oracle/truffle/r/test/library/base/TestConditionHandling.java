@@ -40,7 +40,13 @@ public class TestConditionHandling extends TestRBase {
         assertEval("{ e <- simpleError(\"test error\"); f <- function() { tryCatch(1, finally = print(\"Hello\")); stop(e)}; f() }");
         assertEval(Output.IgnoreErrorContext, "{ tryCatch(stop(\"fred\"), finally = print(\"Hello\")) }");
         assertEval("{ e <- simpleError(\"test error\"); tryCatch(stop(e), error = function(e) e, finally = print(\"Hello\"))}");
-        assertEval(Ignored.Unknown, "{ tryCatch(stop(\"fred\"), error = function(e) e, finally = print(\"Hello\"))}");
+        // FIXME missing "in doTryCatch(return(expr), name, parentenv, handler)"
+        // in FastR error description
+        // Expected output: [1] "Hello"
+        // <simpleError in doTryCatch(return(expr), name, parentenv, handler): fred>
+        // FastR output: [1] "Hello"
+        // <simpleError: fred>
+        assertEval(Ignored.ImplementationError, "{ tryCatch(stop(\"fred\"), error = function(e) e, finally = print(\"Hello\"))}");
         assertEval("{ f <- function() { tryCatch(1, error = function(e) print(\"Hello\")); stop(\"fred\")}; f() }");
         assertEval("{ f <- function() { tryCatch(stop(\"fred\"), error = function(e) print(\"Hello\"))}; f() }");
         assertEval("{ tryCatch(stop(\"xyz\"), error=function(e) { cat(\"<error>\");123L }, finally=function() { cat(\"<finally>\")}) }");

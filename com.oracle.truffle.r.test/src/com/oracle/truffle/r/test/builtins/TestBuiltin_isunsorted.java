@@ -49,7 +49,11 @@ public class TestBuiltin_isunsorted extends TestBase {
 
     @Test
     public void testisunsorted7() {
-        assertEval(Ignored.Unknown,
+        // FIXME we should fix it since ?is.unsorted says: "All objects of length 0 or 1 are
+        // sorted."
+        // Expected output: [1] FALSE
+        // FastR output: [1] NA
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), FALSE); .Internal(is.unsorted(argv[[1]], argv[[2]]))");
     }
 
@@ -82,8 +86,15 @@ public class TestBuiltin_isunsorted extends TestBase {
 
     @Test
     public void testisunsorted14() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(list(x = 3:4, y = 1:2),     .Names = c('x', 'y'), row.names = c(NA, -2L), class = 'data.frame')),     .Names = 'x');" +
-                        "do.call('is.unsorted', argv)");
+        // FIXME decide whether we want to fix this since the ?is.unsorted says:
+        // "This function is designed for objects with one-dimensional
+        // indices, as described above. Data frames, matrices and other
+        // arrays may give surprising results."
+        // Expected output: [1] TRUE
+        // FastR output: [1] NA
+        assertEval(Ignored.ImplementationError,
+                        "argv <- structure(list(x = structure(list(x = 3:4, y = 1:2),     .Names = c('x', 'y'), row.names = c(NA, -2L), class = 'data.frame')),     .Names = 'x');" +
+                                        "do.call('is.unsorted', argv)");
     }
 
     @Test

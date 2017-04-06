@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -19,11 +19,13 @@ public class TestBuiltin_gcinfo extends TestBase {
 
     @Test
     public void testgcinfo1() {
-        assertEval(Ignored.Unknown, "argv <- list(list()); .Internal(gcinfo(argv[[1]]))");
+        // FIXME com.oracle.truffle.r.runtime.RInternalError: not implemented: .Internal gcinfo
+        assertEval(Ignored.Unimplemented, "argv <- list(list()); .Internal(gcinfo(argv[[1]]))");
     }
 
     @Test
     public void testgcinfo2() {
-        assertEval(Ignored.Unknown, "argv <- list(FALSE); .Internal(gcinfo(argv[[1]]))");
+        // FIXME com.oracle.truffle.r.runtime.RInternalError: not implemented: .Internal gcinfo
+        assertEval(Ignored.Unimplemented, "argv <- list(FALSE); .Internal(gcinfo(argv[[1]]))");
     }
 }

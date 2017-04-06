@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -19,11 +19,11 @@ public class TestBuiltin_bindtextdomain extends TestBase {
 
     @Test
     public void testbindtextdomain1() {
-        assertEval(Ignored.Unknown, "argv <- list('splines', '/home/roman/r-instrumented/library/translations'); .Internal(bindtextdomain(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.MissingBuiltin, "argv <- list('splines', '/home/roman/r-instrumented/library/translations'); .Internal(bindtextdomain(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testbindtextdomain2() {
-        assertEval(Ignored.Unknown, "argv <- list('utils', '/home/lzhao/hg/r-instrumented/library/translations'); .Internal(bindtextdomain(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.MissingBuiltin, "argv <- list('utils', '/home/lzhao/hg/r-instrumented/library/translations'); .Internal(bindtextdomain(argv[[1]], argv[[2]]))");
     }
 }

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -59,7 +59,10 @@ public class TestBuiltin_paste0 extends TestBase {
 
     @Test
     public void testpaste011() {
-        assertEval(Ignored.Unknown, "argv <- list(list(character(0), character(0), character(0)), NULL); .Internal(paste0(argv[[1]], argv[[2]]))");
+        // FIXME:
+        // FastR output: '[1] ""'
+        // GnuR output: 'character(0)'
+        assertEval(Ignored.ImplementationError, "argv <- list(list(character(0), character(0), character(0)), NULL); .Internal(paste0(argv[[1]], argv[[2]]))");
     }
 
     @Test

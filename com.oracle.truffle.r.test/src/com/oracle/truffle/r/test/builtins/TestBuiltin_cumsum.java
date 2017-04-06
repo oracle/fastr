@@ -111,9 +111,9 @@ public class TestBuiltin_cumsum extends TestBase {
         assertEval("{ cumsum(rep(1e308, 3) ) }");
         assertEval("{ cumsum(c(1e308, 1e308, NA, 1, 2)) }");
         // FIXME missing warning
-        assertEval(Ignored.Unknown, "{ cumsum(c(2000000000L, 2000000000L)) }");
+        assertEval(Output.MissingWarning, "{ cumsum(c(2000000000L, 2000000000L)) }");
         // FIXME missing warning
-        assertEval(Ignored.Unknown, "{ cumsum(c(-2147483647L, -1L)) }");
+        assertEval(Output.MissingWarning, "{ cumsum(c(-2147483647L, -1L)) }");
 
         assertEval("values <- c(1,2,NaN,1, NA); cumsum(values); cumsum(as.integer(values))");
         assertEval("values <- c(1,2,NA,1, NaN); cumsum(values); cumsum(as.integer(values))");

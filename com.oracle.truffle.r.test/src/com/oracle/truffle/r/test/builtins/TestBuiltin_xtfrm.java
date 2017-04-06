@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -39,7 +39,10 @@ public class TestBuiltin_xtfrm extends TestBase {
 
     @Test
     public void testxtfrm5() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL);xtfrm(argv[[1]]);");
+        // FIXME: looks like we do not handle RNull properly in rank()
+        // FastR output: Error in rank(x, ties.method = "min", na.last = "keep") :
+        // unimplemented type 'RNull'
+        assertEval(Ignored.ImplementationError, "argv <- list(NULL);xtfrm(argv[[1]]);");
     }
 
     @Test

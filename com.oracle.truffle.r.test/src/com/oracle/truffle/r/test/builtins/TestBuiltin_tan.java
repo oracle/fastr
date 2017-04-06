@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,7 +29,8 @@ public class TestBuiltin_tan extends TestBase {
 
     @Test
     public void testtan3() {
-        assertEval(Ignored.Unknown, "argv <- list(Inf);tan(argv[[1]]);");
+        // Extra warning in GnuR: "In tan(argv[[1]]) : NaNs produced"
+        assertEval(Output.IgnoreWarningMessage, "argv <- list(Inf);tan(argv[[1]]);");
     }
 
     @Test
@@ -39,7 +40,8 @@ public class TestBuiltin_tan extends TestBase {
 
     @Test
     public void testtan5() {
-        assertEval(Ignored.Unknown, "argv <- list(1+1000i);tan(argv[[1]]);");
+        // FIXME FastR seems unable to compute the complex tan() output: NaN+NaNi
+        assertEval(Ignored.ImplementationError, "argv <- list(1+1000i);tan(argv[[1]]);");
     }
 
     @Test

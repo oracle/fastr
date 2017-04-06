@@ -74,25 +74,29 @@ public class TestBuiltin_sub extends TestBase {
 
     @Test
     public void testsub12() {
-        assertEval(Ignored.Unknown,
+        // FIXME trailing whitespace in output in FastR
+        assertEval(Output.IgnoreWhitespace,
                         "argv <- list('.* : ', '', structure('Error in rnorm(2, c(1, NA)) : (converted from warning) NAs produced\\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(2, c(1, NA)))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
     public void testsub13() {
-        assertEval(Ignored.Unknown,
+        // FIXME trailing whitespace in output in FastR
+        assertEval(Output.IgnoreWhitespace,
                         "argv <- list('.* : ', '', structure('Error in rexp(2, numeric()) : (converted from warning) NAs produced\\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rexp(2, numeric()))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
     public void testsub14() {
-        assertEval(Ignored.Unknown,
+        // FIXME trailing whitespace in output in FastR
+        assertEval(Output.IgnoreWhitespace,
                         "argv <- list('.* : ', '', structure('Error in rnorm(2, numeric()) : (converted from warning) NAs produced\\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(2, numeric()))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
     public void testsub15() {
-        assertEval(Ignored.Unknown,
+        // FIXME trailing whitespace in output in FastR
+        assertEval(Output.IgnoreWhitespace,
                         "argv <- list('.* : ', '', structure('Error in rnorm(1, sd = Inf) : (converted from warning) NAs produced\\n', class = 'try-error', condition = structure(list(message = '(converted from warning) NAs produced', call = quote(rnorm(1, sd = Inf))), .Names = c('message', 'call'), class = c('simpleError', 'error', 'condition'))), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
@@ -151,8 +155,9 @@ public class TestBuiltin_sub extends TestBase {
         assertEval("{ sub(pattern = 'a*', replacement = 'x', x = 'ÄaÄ', perl = TRUE) }");
         assertEval("{ sub(pattern = 'a*', replacement = 'x', x = 'ÄaaaaÄ', perl = TRUE) }");
 
+        // FIXME
         // Expected output: [1] "xaÄÄÄÄÄb"
         // FastR output: [1] "axÄÄÄÄb"
-        assertEval(Ignored.Unknown, "{ sub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
+        assertEval(Ignored.ImplementationError, "{ sub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
     }
 }

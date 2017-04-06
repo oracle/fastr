@@ -70,8 +70,7 @@ public class TestBuiltin_dfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn11() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('Invalid file name(s) for R code in ./myTst/R:\\n  file55711ba85492\\n are now renamed to z<name>.R', quote(package.skeleton('myTst', code_files = tmp))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('Invalid file name(s) for R code in ./myTst/R:\\n  file55711ba85492\\n are now renamed to z<name>.R', quote(package.skeleton('myTst', code_files = tmp))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test

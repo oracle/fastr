@@ -64,6 +64,16 @@ import com.oracle.truffle.r.test.generate.TestOutputManager;
 public class TestBase {
 
     public static final boolean ProcessFailedTests = Boolean.getBoolean("ProcessFailedTests");
+    /**
+     * When {@link #ProcessFailedTests} is set to true this flag further limits the tests executed
+     * to those with {@link Ignored#Unknown} flag.
+     */
+    public static final boolean IgnoredUnknownOnlyTests = Boolean.getBoolean("IgnoredUnknownOnlyTests");
+    /**
+     * When {@link #ProcessFailedTests} is set to true show the same results like for regular tests
+     * (normally just statistical info would be shown).
+     */
+    public static final boolean ShowFailedTestsResults = Boolean.getBoolean("ShowFailedTestsResults");
 
     /**
      * See {@link com.oracle.truffle.r.test.builtins.TestTestBase} for examples.
@@ -73,8 +83,10 @@ public class TestBase {
         IgnoreErrorContext, // the error context is ignored (e.g., "a+b" vs. "a + b")
         IgnoreErrorMessage, // the actual error message is ignored
         IgnoreWarningContext, // the warning context is ignored
+        IgnoreWarningMessage, // the warning message is ignored
         MayIgnoreErrorContext, // like IgnoreErrorContext, but no warning if the messages match
         MayIgnoreWarningContext,
+        MissingWarning, // Test output is correct but a warning msg is missing in FastR output
         ContainsReferences, // replaces references in form of 0xbcdef1 for numbers
         IgnoreWhitespace, // removes all whitespace from the whole output
         IgnoreCase, // ignores upper/lower case differences
@@ -97,7 +109,6 @@ public class TestBase {
         ImplementationError("tests that fail because of bugs in other parts of the runtime"),
         ReferenceError("tests that fail because of faulty behavior in the reference implementation that we don't want to emulate"),
         SideEffects("tests that are ignored because they would interfere with other tests"),
-        MissingWarning("tests that fail because of missing warnings"),
         MissingBuiltin("tests that fail because of missing builtins"),
         Unimplemented("tests that fail because of missing functionality");
 
@@ -469,12 +480,12 @@ public class TestBase {
     }
 
     // support testing of FastR-only functionality (equivalent GNU R output provided separately)
-    protected void assertEvalFastR(TestTrait trait1, String input, String gnuROutput) {
-        evalAndCompare(getAssertEvalFastR(gnuROutput, input), trait1);
+    protected boolean assertEvalFastR(TestTrait trait1, String input, String gnuROutput) {
+        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), trait1);
     }
 
-    protected void assertEvalFastR(String input, String gnuROutput) {
-        evalAndCompare(getAssertEvalFastR(gnuROutput, input));
+    protected boolean assertEvalFastR(String input, String gnuROutput) {
+        return evalAndCompare(getAssertEvalFastR(gnuROutput, input));
     }
 
     private static String[] getAssertEvalFastR(String gnuROutput, String input) {
@@ -552,7 +563,7 @@ public class TestBase {
     }
 
     private static void microTestFailed() {
-        if (!ProcessFailedTests) {
+        if (!ProcessFailedTests || ShowFailedTestsResults) {
             System.err.printf("%nMicro-test failure: %s%n", getTestContext());
             System.err.printf("%16s %s%n", "Expression:", microTestInfo.expression);
             System.err.printf("%16s %s", "Expected output:", microTestInfo.expectedOutput);
@@ -603,7 +614,8 @@ public class TestBase {
             output.addAll(Arrays.asList(TestTrait.collect(traits, Output.class)));
             context.addAll(Arrays.asList(TestTrait.collect(traits, Context.class)));
             containsError = (!FULL_COMPARE_ERRORS && (output.contains(Output.IgnoreErrorContext) || output.contains(Output.ImprovedErrorContext) || output.contains(Output.IgnoreErrorMessage)));
-            isIgnored = ignored.size() > 0 ^ (ProcessFailedTests && !(ignored.contains(Ignored.Unstable) || ignored.contains(Ignored.SideEffects)));
+            isIgnored = ignored.size() > 0 ^ (ProcessFailedTests && (!IgnoredUnknownOnlyTests || (IgnoredUnknownOnlyTests && ignored.contains(Ignored.Unknown))) &&
+                            !(ignored.contains(Ignored.Unstable) || ignored.contains(Ignored.SideEffects)));
             assert !output.contains(Output.IgnoreWhitespace) || output.size() == 1 : "IgnoreWhitespace trait does not work with any other Output trait";
 
         }
@@ -628,15 +640,16 @@ public class TestBase {
         }
     }
 
-    private void evalAndCompare(String[] inputs, TestTrait... traitsList) {
+    private boolean evalAndCompare(String[] inputs, TestTrait... traitsList) {
         WhiteList[] whiteLists = TestTrait.collect(traitsList, WhiteList.class);
         TestTraitsSet traits = new TestTraitsSet(traitsList);
         ContextInfo contextInfo = traits.context.contains(Context.NonShared) ? fastROutputManager.fastRSession.createContextInfo(ContextKind.SHARE_NOTHING) : null;
         int index = 1;
         boolean allOk = true;
+        boolean skipFastREval = traits.isIgnored || generatingExpected();
         for (String input : inputs) {
             String expected = expectedEval(input, traitsList);
-            if (traits.isIgnored || generatingExpected()) {
+            if (skipFastREval) {
                 ignoredInputCount++;
             } else {
                 String result = fastREval(input, contextInfo, traits.context.contains(Context.LongTimeout));
@@ -683,6 +696,7 @@ public class TestBase {
         } else {
             failedTestCount++;
         }
+        return !skipFastREval;
     }
 
     private static class CheckResult {
@@ -707,14 +721,22 @@ public class TestBase {
             if (traits.containsError && !traits.output.contains(Output.IgnoreErrorMessage)) {
                 System.out.println("unexpected correct error message: " + getTestContext());
             }
-            if (traits.output.contains(Output.IgnoreWarningContext)) {
+            if (traits.output.contains(Output.IgnoreWarningContext) || traits.output.contains(Output.IgnoreWarningMessage)) {
                 System.out.println("unexpected correct warning message: " + getTestContext());
             }
         } else {
-            if (traits.output.contains(Output.IgnoreWarningContext) || (traits.output.contains(Output.MayIgnoreWarningContext) && expected.contains(WARNING))) {
+            if (traits.output.contains(Output.MissingWarning)) {
+                boolean expectedContainsWarning = expected.contains(WARNING);
+                if (!expectedContainsWarning) {
+                    System.out.println("unexpected missing warning message:" + getTestContext());
+                }
+                ok = expectedContainsWarning && !result.contains(WARNING);
+                expected = getOutputWithoutWarning(expected);
+            } else if (traits.output.contains(Output.IgnoreWarningContext) || traits.output.contains(Output.IgnoreWarningMessage) ||
+                            (traits.output.contains(Output.MayIgnoreWarningContext) && expected.contains(WARNING))) {
                 String resultWarning = getWarningMessage(result);
                 String expectedWarning = getWarningMessage(expected);
-                ok = resultWarning.equals(expectedWarning);
+                ok = resultWarning.equals(expectedWarning) || traits.output.contains(Output.IgnoreWarningMessage);
                 result = getOutputWithoutWarning(result);
                 expected = getOutputWithoutWarning(expected);
             } else {
@@ -905,7 +927,7 @@ public class TestBase {
             Integer count = exceptionCounts.get(clazz);
             exceptionCounts.put(clazz, count == null ? 1 : count + 1);
             result = e.toString();
-            if (!ProcessFailedTests) {
+            if (!ProcessFailedTests || ShowFailedTestsResults) {
                 e.printStackTrace();
             }
         }

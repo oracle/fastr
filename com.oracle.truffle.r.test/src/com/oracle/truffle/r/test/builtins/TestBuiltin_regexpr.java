@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -24,7 +24,8 @@ public class TestBuiltin_regexpr extends TestBase {
 
     @Test
     public void testregexpr2() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR ignores useBytes == TRUE (then resulting index must be expressed in bytes)
+        assertEval(Ignored.ImplementationError,
                         "argv <- list('éè', '«Latin-1 accented chars»: éè øØ å<Å æ<Æ é éè', FALSE, FALSE, TRUE, TRUE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
@@ -70,19 +71,28 @@ public class TestBuiltin_regexpr extends TestBase {
 
     @Test
     public void testregexpr12() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(pattern = '\\d', text = c('1', 'B', '3')),     .Names = c('pattern', 'text'));do.call('regexpr', argv)");
+        // Expected output: Error: '\d' is an unrecognized escape in character string starting "'\d"
+        // FastR output: Error: unexpected 'd' in "argv <- structure(list(pattern = '\d"
+        assertEval(Output.IgnoreErrorMessage, "argv <- structure(list(pattern = '\\d', text = c('1', 'B', '3')),     .Names = c('pattern', 'text'));do.call('regexpr', argv)");
     }
 
     @Test
     public void testregexpr13() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(pattern = '[a-z]', text = NA), .Names = c('pattern',     'text'));do.call('regexpr', argv)");
+        // FIXME according to ?regexpr the GnuR is correct and NA should be returned
+        // Expected output: [1] NA
+        // FastR output: [1] -1
+        assertEval(Ignored.ImplementationError, "regexpr('a', NA)");
+        assertEval(Ignored.ImplementationError, "argv <- structure(list(pattern = '[a-z]', text = NA), .Names = c('pattern',     'text'));do.call('regexpr', argv)");
     }
 
     @Test
     public void testRegExpr() {
         assertEval("regexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))");
         // NOTE: this is without attributes
-        assertEval(Ignored.Unknown, "regexpr(\"(a)[^a]\\\\1\", c(\"andrea apart\", \"amadeus\", NA))");
+        // FIXME NA should be the match for NA (not -1)
+        // Expected output: [1] 6 1 NA
+        // FastR output: [1] 6 1 -1
+        assertEval(Ignored.ImplementationError, "regexpr(\"(a)[^a]\\\\1\", c(\"andrea apart\", \"amadeus\", NA))");
 
         assertEval("{ regexpr(\"aaa\", \"bbbaaaccc\", fixed=TRUE)  }");
         assertEval("{ regexpr(\"aaa\", c(\"bbbaaaccc\", \"haaah\"), fixed=TRUE) }");

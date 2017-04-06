@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -24,7 +24,10 @@ public class TestBuiltin_iconv extends TestBase {
 
     @Test
     public void testiconv2() {
-        assertEval(Ignored.Unknown, "argv <- list('façile'   , 'latin1', 'ASCII', NA_character_, TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        // FIXME ç is not an ASCII char (although it's an extended ASCII char wit code==135)
+        // and NA_character_ replacement leads to whole output to become NA
+        assertEval(Ignored.ImplementationError,
+                        "argv <- list('façile'   , 'latin1', 'ASCII', NA_character_, TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
@@ -44,23 +47,32 @@ public class TestBuiltin_iconv extends TestBase {
 
     @Test
     public void testiconv6() {
-        assertEval(Ignored.Unknown, "argv <- list(list(), 'latin1', 'ASCII', NA_character_, TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        // FIXME According to GnuR docs x parm can be a list with NULLs or raws
+        // btw current impl of IConv does not honor 'sub', 'mark' and 'toRaw' params at all
+        assertEval(Ignored.ImplementationError,
+                        "argv <- list(list(), 'latin1', 'ASCII', NA_character_, TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testiconv7() {
-        assertEval(Ignored.Unknown, "argv <- list('façile'   , 'latin1', 'ASCII', '', TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        // FIXME ç is not an ASCII char (although it's an extended ASCII char wit code==135)
+        // so GnuR elimination of ç character is correct.
+        assertEval(Ignored.ImplementationError, "argv <- list('façile'   , 'latin1', 'ASCII', '', TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testiconv8() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR does not carry extra Rd_tag attr in its output
+        // which is required according to iconv() GnuR docs.
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure('Prediction matrix for soap film smooth', Rd_tag = 'TEXT'), 'UTF-8', 'ASCII', NA_character_, FALSE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testiconv9() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR does not carry extra .Names attr in its output
+        // which is required according to iconv() GnuR docs.
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(c('Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance'), .Names = c('Q1_MISSING_NONE', 'Q1_MISSING_1', 'Q1_MISSING_2', 'Q1_MISSING_3', 'Q1_MISSING_RANGE', 'Q1_MISSING_LOW', 'Q1_MISSING_HIGH', 'Q1_MISSING_RANGE_1', 'Q1_MISSING_LOW_1', 'Q1_MISSING_HIGH_1')), 'latin1', '', NA_character_, TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 

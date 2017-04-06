@@ -54,7 +54,8 @@ public class TestBuiltin_dimassign extends TestBase {
 
     @Test
     public void testdimassign8() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL, NULL);`dim<-`(argv[[1]],argv[[2]]);");
+        // FIXME Missing specialization in UpdateDimNode
+        assertEval(Ignored.Unimplemented, "argv <- list(NULL, NULL);`dim<-`(argv[[1]],argv[[2]]);");
     }
 
     @Test

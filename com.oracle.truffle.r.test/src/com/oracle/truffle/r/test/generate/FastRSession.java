@@ -231,7 +231,7 @@ public final class FastRSession implements RSession {
         } catch (RError e) {
             // nothing to do
         } catch (Throwable t) {
-            if (!TestBase.ProcessFailedTests) {
+            if (!TestBase.ProcessFailedTests || TestBase.ShowFailedTestsResults) {
                 if (t instanceof RInternalError) {
                     RInternalError.reportError(t);
                 }

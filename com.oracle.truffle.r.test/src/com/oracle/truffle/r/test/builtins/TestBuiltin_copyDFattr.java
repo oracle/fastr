@@ -59,7 +59,8 @@ public class TestBuiltin_copyDFattr extends TestBase {
 
     @Test
     public void testcopyDFattr9() {
-        assertEval(Ignored.Unknown,
+        // FIXME RInternalError: java.lang.ArrayIndexOutOfBoundsException: 0
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(list(Version = c('2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0', '2.11.0'), Date = c(NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_, NA_character_), Category = c('BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES', 'BUG FIXES'), Text = c('Using with(), eval() etc with a list with some unnamed elements now\\n works.  (PR#14035)', 'cor(A, B) where A is n x 1 and B a 1-dimensional array segfaulted or\\n gave an internal error.  (The case cor(B, A) was PR#7116.)', 'cut.POSIXt() applied to a start value after the DST transition on a\\n DST-change day could give the wrong time for argument breaks in\\n units of days or longer.  (PR#14208)', 'do_par() UNPROTECTed too early (PR#14214)', 'Subassignment x[[....]] <- y didn\\'t check for a zero-length right\\n hand side, and inserted a rubbish value.  (PR#14217)', 'Extreme tail behavior of, pbeta() {and hence pf()}, e.g., pbeta(x,\\n 3, 2200, lower.tail=FALSE, log.p=TRUE) now returns finite values\\n instead of jumping to -Inf too early.  (PR#14230).', 'read.fwf() misread multi-line records when n was specified.\\n (PR#14241)', 'gzcon( <textConnection> ), an error, no longer damages the\\n connection (in a way to have it segfault).  (PR#14237)', 'If xy[z].coords (used internally by many graphics functions) are\\n given a list as x, they now check that the list has suitable names\\n and give a more informative error message.  (PR#13936)')), .Names = c('Version', 'Date', 'Category', 'Text'), bad = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), package = 'R', row.names = c(1473L, 1483L, 1484L, 1485L, 1486L, 1493L, 1499L, 1503L, 1505L), class = c('news_db_from_Rd', 'news_db', 'data.frame')), structure(list(Version = NULL, Date = NULL, Category = NULL, Text = NULL), .Names = c('Version', 'Date', 'Category', 'Text'), bad = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), package = 'R', row.names = c(1473L, 1483L, 1484L, 1485L, 1486L, 1493L, 1499L, 1503L, 1505L), class = c('news_db_from_Rd', 'news_db', 'data.frame'))); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
     }
 
@@ -81,7 +82,8 @@ public class TestBuiltin_copyDFattr extends TestBase {
 
     @Test
     public void testcopyDFattr13() {
-        assertEval(Ignored.Unknown,
+        // GnuR extra attr(,"class") in output - not sure if appropriate
+        assertEval(Ignored.ReferenceError,
                         "argv <- list(structure(list(x = 1:10, y = c(-0.626453810742332, 0.183643324222082, -0.835628612410047, 1.59528080213779, 0.329507771815361, -0.820468384118015, 0.487429052428485, 0.738324705129217, 0.575781351653492, -0.305388387156356), z = structure(c(9L, 3L, 6L, 2L, 10L, 5L, 1L, 4L, 8L, 7L), .Label = c('a', 'c', 'f', 'h', 'i', 'p', 'v', 'x', 'y', 'z'), class = 'factor')), .Names = c('x', 'y', 'z'), row.names = c(NA, 10L), .S3Class = 'data.frame', timestamps = structure(1386392033.84327, class = c('POSIXct', 'POSIXt')), class = structure('myFrame', package = '.GlobalEnv')), structure(list(x = NULL, y = NULL, z = NULL), .Names = c('x', 'y', 'z'), row.names = c(NA, 10L), .S3Class = 'data.frame', timestamps = structure(1386392033.84327, class = c('POSIXct', 'POSIXt')), class = structure('myFrame', package = '.GlobalEnv'))); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
     }
 

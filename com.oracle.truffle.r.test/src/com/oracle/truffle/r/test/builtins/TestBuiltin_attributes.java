@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -129,7 +129,8 @@ public class TestBuiltin_attributes extends TestBase {
 
     @Test
     public void testattributes23() {
-        assertEval(Ignored.Unknown,
+        // FIXME several differences in output
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(list(), .Names = character(0), arguments = structure('object', simpleOnly = TRUE), signatures = list(), generic = structure(function (object) standardGeneric('show'), generic = structure('show', package = 'methods'), package = 'methods', group = list(), valueClass = character(0), signature = structure('object', simpleOnly = TRUE), default = structure(function (object) showDefault(object, FALSE), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'object', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'object', package = 'methods'), generic = structure('show', package = 'methods'), class = structure('derivedDefaultMethod', package = 'methods')), skeleton = quote((function (object) showDefault(object, FALSE))(object)), class = structure('standardGeneric', package = 'methods')), class = structure('listOfMethods', package = 'methods')));attributes(argv[[1]]);");
     }
 
