@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -49,5 +49,15 @@ public class TestBuiltin_switch extends TestBase {
         assertEval("{ a <- NULL ; switch(mode(a), NULL=) }");
         assertEval(Output.IgnoreErrorContext, "{ x <- \"!\"; v <- switch(x, v77, \"<=\" =, \"<\" =, \">\" = 99, v55)}");
         assertEval("{ x <- \"!\"; v <- switch(x, \"\"=v77, \"<=\" =, \"<\" =, \">\" = 99, v55)}");
+    }
+
+    @Test
+    public void testSwitchInvalidExpr() {
+        assertEval("{ x <- switch(NA, 1, 2, 3); x }");
+        assertEval("{ switch(quote(a), 1, 2, 3) }");
+        assertEval("{ x <- switch(expression(quote(1)), 1, 2, 3); x }");
+        assertEval("{ x <- switch(expression(quote(1), quote(2)), 1, 2, 3); x }");
+        assertEval("{ x <- switch(list(2), 1, 2, 3); x }");
+        assertEval("{ x <- switch(list(1,2,3), 1, 2, 3); x }");
     }
 }
