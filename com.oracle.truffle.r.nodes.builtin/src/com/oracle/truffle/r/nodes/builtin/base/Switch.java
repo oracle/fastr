@@ -11,6 +11,12 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.atomicIntegerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -24,17 +30,18 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.RMissingHelper;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 /**
  * The {@code switch} builtin. When called directly, the "..." arguments are not evaluated before
@@ -47,7 +54,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 @RBuiltin(name = "switch", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"EXPR", "..."}, nonEvalArgs = 1, behavior = COMPLEX)
 public abstract class Switch extends RBuiltinNode {
 
-    @Child private CastIntegerNode castIntNode;
     @Child private PromiseCheckHelperNode promiseHelper = new PromiseCheckHelperNode();
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
@@ -60,24 +66,45 @@ public abstract class Switch extends RBuiltinNode {
     private final ConditionProfile noAlternativesProfile = ConditionProfile.createBinaryProfile();
 
     static {
-        Casts.noCasts(Switch.class);
+        // @formatter:off
+        Casts casts = new Casts(Switch.class);
+        // first argument must be list or expression or vector of size 1, if it is not String, cast it to integer
+        casts.arg("EXPR").defaultError(RError.Message.EXPR_NOT_LENGTH_ONE).
+                returnIf(atomicIntegerValue().or(instanceOf(String.class)).or(instanceOf(RExpression.class))).
+                mustBe(abstractVectorValue()).boxPrimitive().mustBe(size(1)).
+                returnIf(stringValue(), findFirst().stringElement()).
+                returnIf(instanceOf(RList.class)).
+                asIntegerVector().findFirst();
+        // @formatter:on
+    }
+
+    // Note: GnuR returns NULL for lists/expressions, even if they contain a signle number, which
+    // could be interpreted as integer
+
+    @Specialization
+    protected Object doSwitchList(VirtualFrame frame, RList list, @SuppressWarnings("unused") RArgsValuesAndNames optionalArgs) {
+        return prepareResult(frame, null);
     }
 
     @Specialization
-    protected Object doSwitch(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
-        if (x.getLength() != 1) {
-            throw error(RError.Message.EXPR_NOT_LENGTH_ONE);
+    protected Object doSwitchExpr(VirtualFrame frame, RExpression expr, @SuppressWarnings("unused") RArgsValuesAndNames optionalArgs) {
+        if (expr.getLength() != 1) {
+            throw error(Message.EXPR_NOT_LENGTH_ONE);
         }
+        return prepareResult(frame, null);
+    }
+
+    @Specialization
+    protected Object doSwitch(VirtualFrame frame, String x, RArgsValuesAndNames optionalArgs) {
         return prepareResult(frame, doSwitchString(frame, x, optionalArgs));
     }
 
-    private Object doSwitchString(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
+    private Object doSwitchString(VirtualFrame frame, String xStr, RArgsValuesAndNames optionalArgs) {
         if (noAlternativesProfile.profile(optionalArgs.getLength() == 0)) {
             warning(RError.Message.NO_ALTERNATIVES_IN_SWITCH);
             return null;
         }
         Object[] optionalArgValues = optionalArgs.getArguments();
-        final String xStr = x.getDataAt(0);
         ArgumentsSignature signature = optionalArgs.getSignature();
         for (int i = 0; i < signature.getLength(); i++) {
             final String suppliedArgName = signature.getName(i);
@@ -141,21 +168,12 @@ public abstract class Switch extends RBuiltinNode {
 
     @Specialization
     protected Object doSwitch(VirtualFrame frame, int x, RArgsValuesAndNames optionalArgs) {
-        return prepareResult(frame, doSwitchInt(frame, x, optionalArgs));
-    }
-
-    @Specialization
-    protected Object doSwitch(VirtualFrame frame, Object x, RArgsValuesAndNames optionalArgs) {
-        if (castIntNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castIntNode = insert(CastIntegerNodeGen.create(false, false, false));
-        }
-        Object objIndex = castIntNode.execute(x);
-        if (!(objIndex instanceof Integer)) {
+        if (RRuntime.isNA(x)) {
+            // cast pipeline gives us NA for non-integer value
             notIntType.enter();
-            return null;
+            return prepareResult(frame, null);
         }
-        return prepareResult(frame, doSwitchInt(frame, (int) objIndex, optionalArgs));
+        return prepareResult(frame, doSwitchInt(frame, x, optionalArgs));
     }
 
     @SuppressWarnings("unused")
