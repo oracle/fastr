@@ -24,10 +24,13 @@ package com.oracle.truffle.r.nodes.builtin.base.fastpaths;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -40,13 +43,108 @@ public abstract class IntersectFastPath extends RFastPathNode {
 
     private static final int[] EMPTY_INT_ARRAY = new int[0];
 
-    @Specialization(limit = "TYPE_LIMIT", guards = {"x.getLength() > 0", "y.getLength() > 0", "x.getClass() == xClass", "y.getClass() == yClass"})
-    protected RAbstractIntVector intersect(RAbstractIntVector x, RAbstractIntVector y,
+    protected static final class IntersectSortedNode extends Node {
+
+        private final boolean isSorted;
+
+        private final ConditionProfile resizeProfile = ConditionProfile.createCountingProfile();
+        private final ConditionProfile valueEqualsProfile = ConditionProfile.createCountingProfile();
+        private final ConditionProfile valueSmallerProfile = ConditionProfile.createCountingProfile();
+        private final ConditionProfile exit1Profile = ConditionProfile.createCountingProfile();
+        private final ConditionProfile exit2Profile = ConditionProfile.createCountingProfile();
+        private final ConditionProfile exit3Profile = ConditionProfile.createCountingProfile();
+        private final ConditionProfile exit4Profile = ConditionProfile.createCountingProfile();
+        private final ConditionProfile exit5Profile = ConditionProfile.createCountingProfile();
+        private final ConditionProfile exit6Profile = ConditionProfile.createCountingProfile();
+        private final ConditionProfile resultLengthMatchProfile = ConditionProfile.createBinaryProfile();
+
+        protected IntersectSortedNode(boolean isSorted) {
+            this.isSorted = isSorted;
+        }
+
+        @Override
+        public NodeCost getCost() {
+            return NodeCost.NONE;
+        }
+
+        private int[] execute(RAbstractIntVector x, int xLength, int yLength, RAbstractIntVector y) {
+            int[] result = EMPTY_INT_ARRAY;
+            int maxResultLength = Math.min(xLength, yLength);
+            int count = 0;
+            int xPos = 0;
+            int yPos = 0;
+            int xValue = x.getDataAt(xPos);
+            int yValue = y.getDataAt(yPos);
+            while (true) {
+                if (valueEqualsProfile.profile(xValue == yValue)) {
+                    if (resizeProfile.profile(count >= result.length)) {
+                        result = Arrays.copyOf(result, Math.min(maxResultLength, Math.max(result.length * 2, 8)));
+                    }
+                    result[count++] = xValue;
+                    // advance over similar entries
+                    while (true) {
+                        if (exit1Profile.profile(xPos >= xLength - 1)) {
+                            break;
+                        }
+                        int nextValue = x.getDataAt(xPos + 1);
+                        if (exit2Profile.profile(xValue != nextValue)) {
+                            break;
+                        }
+                        xPos++;
+                        xValue = nextValue;
+                    }
+                    if (exit3Profile.profile(++xPos >= xLength) || exit4Profile.profile(++yPos >= yLength)) {
+                        break;
+                    }
+                    xValue = getNextValue(x, xPos, xValue);
+                    yValue = getNextValue(y, yPos, yValue);
+                } else if (valueSmallerProfile.profile(xValue < yValue)) {
+                    if (exit5Profile.profile(++xPos >= xLength)) {
+                        break;
+                    }
+                    xValue = getNextValue(x, xPos, xValue);
+                } else {
+                    if (exit6Profile.profile(++yPos >= yLength)) {
+                        break;
+                    }
+                    yValue = getNextValue(y, yPos, yValue);
+                }
+            }
+            if (!isSorted) {
+                // check remaining array entries
+                while (++xPos < xLength) {
+                    xValue = getNextValue(x, xPos, xValue);
+                }
+                while (++yPos < yLength) {
+                    yValue = getNextValue(y, yPos, yValue);
+                }
+            }
+            return resultLengthMatchProfile.profile(count == result.length) ? result : Arrays.copyOf(result, count);
+        }
+
+        private int getNextValue(RAbstractIntVector vector, int pos, int oldValue) {
+            int newValue = vector.getDataAt(pos);
+            if (!isSorted && newValue < oldValue) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                throw new IllegalArgumentException();
+            }
+            return newValue;
+        }
+    }
+
+    protected static int length(RAbstractIntVector v, Class<? extends RAbstractIntVector> clazz) {
+        return clazz.cast(v).getLength();
+    }
+
+    protected static IntersectSortedNode createMaybeSorted() {
+        return new IntersectSortedNode(false);
+    }
+
+    @Specialization(limit = "TYPE_LIMIT", guards = {"x.getClass() == xClass", "y.getClass() == yClass", "length(x, xClass) > 0", "length(y, yClass) > 0"}, rewriteOn = IllegalArgumentException.class)
+    protected RAbstractIntVector intersectMaybeSorted(RAbstractIntVector x, RAbstractIntVector y,
                     @Cached("x.getClass()") Class<? extends RAbstractIntVector> xClass,
                     @Cached("y.getClass()") Class<? extends RAbstractIntVector> yClass,
-                    @Cached("createBinaryProfile()") ConditionProfile isXSortedProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile isYSortedProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile resultLengthMatchProfile) {
+                    @Cached("createMaybeSorted()") IntersectSortedNode intersect) {
         // apply the type profiles:
         RAbstractIntVector profiledX = xClass.cast(x);
         RAbstractIntVector profiledY = yClass.cast(y);
@@ -55,9 +153,31 @@ public abstract class IntersectFastPath extends RFastPathNode {
         int yLength = profiledY.getLength();
         RBaseNode.reportWork(this, xLength + yLength);
 
-        int count = 0;
-        int[] result = EMPTY_INT_ARRAY;
-        int maxResultLength = Math.min(xLength, yLength);
+        int[] result = intersect.execute(profiledX, xLength, yLength, profiledY);
+        return RDataFactory.createIntVector(result, profiledX.isComplete() | profiledY.isComplete());
+    }
+
+    protected static IntersectSortedNode createSorted() {
+        return new IntersectSortedNode(true);
+    }
+
+    @Specialization(limit = "TYPE_LIMIT", guards = {"x.getClass() == xClass", "y.getClass() == yClass", "length(x, xClass) > 0", "length(y, yClass) > 0"})
+    protected RAbstractIntVector intersect(RAbstractIntVector x, RAbstractIntVector y,
+                    @Cached("x.getClass()") Class<? extends RAbstractIntVector> xClass,
+                    @Cached("y.getClass()") Class<? extends RAbstractIntVector> yClass,
+                    @Cached("createBinaryProfile()") ConditionProfile isXSortedProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile isYSortedProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile resultLengthMatchProfile,
+                    @Cached("createSorted()") IntersectSortedNode intersect) {
+        // apply the type profiles:
+        RAbstractIntVector profiledX = xClass.cast(x);
+        RAbstractIntVector profiledY = yClass.cast(y);
+
+        int xLength = profiledX.getLength();
+        int yLength = profiledY.getLength();
+        RBaseNode.reportWork(this, xLength + yLength);
+
+        int[] result;
         if (isXSortedProfile.profile(isSorted(profiledX))) {
             RAbstractIntVector tempY;
             if (isYSortedProfile.profile(isSorted(profiledY))) {
@@ -70,46 +190,10 @@ public abstract class IntersectFastPath extends RFastPathNode {
                 sort(temp);
                 tempY = RDataFactory.createIntVector(temp, profiledY.isComplete());
             }
-            int xPos = 0;
-            int yPos = 0;
-            int xValue = profiledX.getDataAt(xPos);
-            int yValue = tempY.getDataAt(yPos);
-            while (true) {
-                if (xValue == yValue) {
-                    if (count >= result.length) {
-                        result = Arrays.copyOf(result, Math.min(maxResultLength, Math.max(result.length * 2, 8)));
-                    }
-                    result[count++] = xValue;
-                    // advance over similar entries
-                    while (true) {
-                        if (xPos >= xLength - 1) {
-                            break;
-                        }
-                        int nextValue = profiledX.getDataAt(xPos + 1);
-                        if (xValue != nextValue) {
-                            break;
-                        }
-                        xPos++;
-                        xValue = nextValue;
-                    }
-                    if (++xPos >= xLength || ++yPos >= yLength) {
-                        break;
-                    }
-                    xValue = profiledX.getDataAt(xPos);
-                    yValue = tempY.getDataAt(yPos);
-                } else if (xValue < yValue) {
-                    if (++xPos >= xLength) {
-                        break;
-                    }
-                    xValue = profiledX.getDataAt(xPos);
-                } else {
-                    if (++yPos >= yLength) {
-                        break;
-                    }
-                    yValue = tempY.getDataAt(yPos);
-                }
-            }
+            result = intersect.execute(profiledX, xLength, yLength, tempY);
         } else {
+            result = EMPTY_INT_ARRAY;
+            int maxResultLength = Math.min(xLength, yLength);
             int[] temp = new int[yLength];
             boolean[] used = new boolean[yLength];
             for (int i = 0; i < yLength; i++) {
@@ -117,6 +201,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
             }
             sort(temp);
 
+            int count = 0;
             for (int i = 0; i < xLength; i++) {
                 int value = profiledX.getDataAt(i);
                 int pos = Arrays.binarySearch(temp, value);
@@ -128,8 +213,9 @@ public abstract class IntersectFastPath extends RFastPathNode {
                     result[count++] = value;
                 }
             }
+            result = resultLengthMatchProfile.profile(count == result.length) ? result : Arrays.copyOf(result, count);
         }
-        return RDataFactory.createIntVector(resultLengthMatchProfile.profile(count == result.length) ? result : Arrays.copyOf(result, count), profiledX.isComplete() | profiledY.isComplete());
+        return RDataFactory.createIntVector(result, profiledX.isComplete() | profiledY.isComplete());
     }
 
     private static boolean isSorted(RAbstractIntVector vector) {

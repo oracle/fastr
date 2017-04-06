@@ -41,16 +41,16 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.CombineNodeGen.CombineInputCastNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -76,7 +76,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"...", "recursive"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
@@ -90,10 +89,11 @@ public abstract class Combine extends RBuiltinNode {
 
     protected static final int COMBINE_CACHED_LIMIT = PrecedenceNode.NUMBER_OF_PRECEDENCES;
 
-    private static final int MAX_PROFILES = 4;
+    private static final int MAX_PROFILES = 8;
 
     @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
-    @Child private CombineInputCast inputCast = CombineInputCastNodeGen.create(null);
+    @Children private final CombineInputCast[] inputCasts = new CombineInputCast[MAX_PROFILES];
+    @Child private CombineInputCast overflowInputCast;
     @Child private CastToVectorNode castVector;
 
     private final BranchProfile naBranch = BranchProfile.create();
@@ -101,7 +101,6 @@ public abstract class Combine extends RBuiltinNode {
     private final ConditionProfile fastNamesMerge = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isAbstractVectorProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile hasNewNamesProfile = ConditionProfile.createBinaryProfile();
-    @CompilationFinal private final ValueProfile[] argProfiles = new ValueProfile[MAX_PROFILES];
 
     static {
         Casts casts = new Casts(Combine.class);
@@ -119,10 +118,24 @@ public abstract class Combine extends RBuiltinNode {
         return args.getArgument(0);
     }
 
+    private CombineInputCast getCast(int index) {
+        CombineInputCast cast = index < MAX_PROFILES ? inputCasts[index] : overflowInputCast;
+        if (cast == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            cast = insert(new CombineInputCast());
+            if (index < MAX_PROFILES) {
+                inputCasts[index] = cast;
+            } else {
+                overflowInputCast = cast;
+            }
+        }
+        return cast;
+    }
+
     @Specialization(replaces = "combineSimple", limit = "1", guards = {"!recursive", "args.getSignature() == cachedSignature", "cachedPrecedence == precedence(args, cachedSignature.getLength())"})
     protected Object combineCached(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
                     @Cached("args.getSignature()") ArgumentsSignature cachedSignature,
-                    @Cached("precedence( args, cachedSignature.getLength())") int cachedPrecedence,
+                    @Cached("precedence(args, cachedSignature.getLength())") int cachedPrecedence,
                     @Cached("createCast(cachedPrecedence)") CastNode cast,
                     @Cached("create()") BranchProfile naNameBranch,
                     @Cached("create()") NACheck naNameCheck,
@@ -172,9 +185,7 @@ public abstract class Combine extends RBuiltinNode {
         return combineRecursive(args, recursiveCombine, useNewArgsProfile);
     }
 
-    @SuppressWarnings("static-method")
-    @ExplodeLoop
-    private Object combineRecursive(RArgsValuesAndNames args, Combine recursiveCombine, ConditionProfile useNewArgsProfile) {
+    private static Object combineRecursive(RArgsValuesAndNames args, Combine recursiveCombine, ConditionProfile useNewArgsProfile) {
         Object[] argsArray = args.getArguments();
         Object[] newArgsArray = new Object[argsArray.length];
         boolean useNewArgs = false;
@@ -202,14 +213,10 @@ public abstract class Combine extends RBuiltinNode {
     private int prepareElements(Object[] args, CastNode cast, int precedence, Object[] elements) {
         int size = 0;
         for (int i = 0; i < elements.length; i++) {
-            Object element = readAndCast(cast, args[i], precedence);
-            if (i < argProfiles.length) {
-                if (argProfiles[i] == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    argProfiles[i] = ValueProfile.createClassProfile();
-                }
-                element = argProfiles[i].profile(element);
-            }
+            CombineInputCast inputCast = getCast(i);
+            Object value = args[i];
+            Object element = (precedence == EXPRESSION_PRECEDENCE && value instanceof RLanguage) ? value : cast.execute(inputCast.cast(value));
+            element = inputCast.valueProfile.profile(element);
             elements[i] = element;
             size += getElementSize(element);
         }
@@ -230,10 +237,7 @@ public abstract class Combine extends RBuiltinNode {
     @ExplodeLoop
     private boolean hasNames(Object[] elements, GetNamesAttributeNode getNamesNode) {
         for (int i = 0; i < elements.length; i++) {
-            Object element = elements[i];
-            if (i < argProfiles.length) {
-                element = argProfiles[i].profile(element);
-            }
+            Object element = getCast(i).valueProfile.profile(elements[i]);
             if (element instanceof RAbstractVector) {
                 RAbstractVector vector = (RAbstractVector) element;
                 if (getNamesNode.getNames(vector) != null) {
@@ -250,10 +254,7 @@ public abstract class Combine extends RBuiltinNode {
         result.incRefCount();
         int pos = 0;
         for (int i = 0; i < elements.length; i++) {
-            Object element = elements[i];
-            if (i < argProfiles.length) {
-                element = argProfiles[i].profile(element);
-            }
+            Object element = getCast(i).valueProfile.profile(elements[i]);
             pos += processNamesElement(naNameBranch, naNameCheck, result, pos, element, i, signature, getNamesNode);
         }
         return result;
@@ -302,7 +303,8 @@ public abstract class Combine extends RBuiltinNode {
     private RVector<?> foldContents(int cachedPrecedence, Object[] elements, int size, RStringVector namesVector) {
         RVector<?> result = createResultVector(cachedPrecedence, size, namesVector);
         int pos = 0;
-        for (Object element : elements) {
+        for (int i = 0; i < elements.length; i++) {
+            Object element = getCast(i).valueProfile.profile(elements[i]);
             pos += processContentElement(result, pos, element);
         }
         return result;
@@ -337,11 +339,6 @@ public abstract class Combine extends RBuiltinNode {
     protected Object nonArguments(Object args, boolean recursive,
                     @Cached("create()") Combine combine) {
         return combine.executeCombine(new RArgsValuesAndNames(new Object[]{args}, EMPTY_SIGNATURE), recursive);
-    }
-
-    private Object readAndCast(CastNode castNode, Object arg, int precedence) {
-        Object value = inputCast.execute(arg);
-        return (precedence == EXPRESSION_PRECEDENCE && value instanceof RLanguage) ? value : castNode.execute(value);
     }
 
     protected int precedence(RArgsValuesAndNames args) {
@@ -455,49 +452,59 @@ public abstract class Combine extends RBuiltinNode {
         return names;
     }
 
-    @NodeChild
-    protected abstract static class CombineInputCast extends RNode {
+    protected static final class CombineInputCast extends Node {
 
-        @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
-        @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
+        @Child private GetDimNamesAttributeNode getDimNamesNode;
+        @Child private GetNamesAttributeNode getNamesNode;
 
-        public abstract Object execute(Object operand);
+        private final ValueProfile valueProfile = ValueProfile.createClassProfile();
+        private final ValueProfile inputValueProfile = ValueProfile.createClassProfile();
 
-        @Specialization(guards = "!isVector(operand)")
-        protected Object pass(Object operand) {
-            return operand;
-        }
+        @CompilationFinal private ConditionProfile hasNamesProfile;
+        @CompilationFinal private ConditionProfile hasDimNamesProfile;
 
-        protected static boolean isVector(Object operand) {
-            return operand instanceof RVector;
-        }
-
-        @Specialization(guards = "needsCopy(vector)")
-        protected RAbstractVector noCopy(RAbstractVector vector,
-                        @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile hasDimNamesProfile) {
-            RVector<?> materialized = vector.materialize();
-            RVector<?> result = materialized.copyDropAttributes();
-
-            RStringVector vecNames = getNamesNode.getNames(materialized);
-            if (hasNamesProfile.profile(vecNames != null)) {
-                result.initAttributes(RAttributesLayout.createNames(vecNames));
-            } else {
-                RList dimNames = getDimNamesNode.getDimNames(materialized);
-                if (hasDimNamesProfile.profile(dimNames != null)) {
-                    result.initAttributes(RAttributesLayout.createDimNames(dimNames));
+        public Object cast(Object operand) {
+            Object profiled = inputValueProfile.profile(operand);
+            if (profiled instanceof RVector<?>) {
+                RVector<?> vector = (RVector<?>) profiled;
+                if (vector.getAttributes() != null) {
+                    if (getNamesNode == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        getNamesNode = insert(GetNamesAttributeNode.create());
+                    }
+                    if (hasNamesProfile == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        hasNamesProfile = ConditionProfile.createBinaryProfile();
+                    }
+                    RStringVector vecNames = getNamesNode.getNames(vector);
+                    if (hasNamesProfile.profile(vecNames != null)) {
+                        RVector<?> result = vector.copyDropAttributes();
+                        result.initAttributes(RAttributesLayout.createNames(vecNames));
+                        return result;
+                    } else {
+                        if (getDimNamesNode == null) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            getDimNamesNode = insert(GetDimNamesAttributeNode.create());
+                        }
+                        if (hasDimNamesProfile == null) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            hasDimNamesProfile = ConditionProfile.createBinaryProfile();
+                        }
+                        RList dimNames = getDimNamesNode.getDimNames(vector);
+                        if (hasDimNamesProfile.profile(dimNames != null)) {
+                            RVector<?> result = vector.copyDropAttributes();
+                            result.initAttributes(RAttributesLayout.createDimNames(dimNames));
+                            return result;
+                        }
+                    }
                 }
             }
-            return result;
+            return profiled;
         }
 
-        @Specialization(guards = "!needsCopy(vector)")
-        protected RAbstractVector prepareVector(RAbstractVector vector) {
-            return vector;
-        }
-
-        protected boolean needsCopy(RAbstractVector vector) {
-            return vector.getAttributes() != null || getNamesNode.getNames(vector) != null || getDimNamesNode.getDimNames(vector) != null;
+        @Override
+        public NodeCost getCost() {
+            return NodeCost.NONE;
         }
     }
 }

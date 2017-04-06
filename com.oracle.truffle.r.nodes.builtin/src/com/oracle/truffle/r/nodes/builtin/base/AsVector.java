@@ -64,11 +64,13 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @RBuiltin(name = "as.vector", kind = INTERNAL, parameterNames = {"x", "mode"}, dispatch = INTERNAL_GENERIC, behavior = COMPLEX)
 public abstract class AsVector extends RBuiltinNode {
@@ -169,7 +171,7 @@ public abstract class AsVector extends RBuiltinNode {
             return drop.execute(cast == null ? x : cast.execute(x));
         }
 
-        public abstract static class DropAttributesNode extends Node {
+        public abstract static class DropAttributesNode extends RBaseNode {
 
             public abstract Object execute(Object o);
 
@@ -181,15 +183,23 @@ public abstract class AsVector extends RBuiltinNode {
                 return clazz.cast(o).getAttributes() != null;
             }
 
-            @Specialization(guards = {"o.getClass() == oClass", "hasAttributes(oClass, o)"})
-            protected RAbstractVector dropCached(RAbstractAtomicVector o,
-                            @Cached("o.getClass()") Class<? extends RAbstractAtomicVector> oClass) {
-                return oClass.cast(o).copyDropAttributes();
+            @Specialization(guards = "o.getAttributes() == null")
+            protected static RSharingAttributeStorage drop(RSharingAttributeStorage o) {
+                // quickly reject any RSharingAttributeStorage without attributes
+                return o;
             }
 
-            @Specialization(replaces = "dropCached", guards = "o.getAttributes() != null")
-            protected RAbstractVector drop(RAbstractAtomicVector o) {
-                return o.copyDropAttributes();
+            @Specialization(guards = "o.getClass() == oClass")
+            protected RAbstractVector dropCached(RAbstractAtomicVector o,
+                            @Cached("o.getClass()") Class<? extends RAbstractAtomicVector> oClass,
+                            @Cached("createBinaryProfile()") ConditionProfile profile) {
+                return profile.profile(hasAttributes(oClass, o)) ? oClass.cast(o).copyDropAttributes() : o;
+            }
+
+            @Specialization(replaces = "dropCached")
+            protected RAbstractVector drop(RAbstractAtomicVector o,
+                            @Cached("createBinaryProfile()") ConditionProfile profile) {
+                return profile.profile(o.getAttributes() != null) ? o.copyDropAttributes() : o;
             }
 
             @Specialization(guards = "o.getAttributes() != null")

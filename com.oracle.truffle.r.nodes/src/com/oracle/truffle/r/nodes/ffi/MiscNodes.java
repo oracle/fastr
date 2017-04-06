@@ -103,7 +103,7 @@ public final class MiscNodes {
         }
 
         @Fallback
-        Object doSlot(@SuppressWarnings("unused") Object o, @SuppressWarnings("unused") Object name) {
+        Object doSlot(@SuppressWarnings("unused") Object o, Object name) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.INVALID_ARGUMENT_OF_TYPE, "name", SEXPTYPE.gnuRTypeForObject(name).name());
         }
 
