@@ -89,6 +89,8 @@ public final class FastRGridExternalLookup {
                 return LConvert.create();
             case "L_validUnits":
                 return LValidUnit.create();
+            case "L_pretty":
+                return LPretty.create();
 
             // Viewport management
             case "L_upviewport":
