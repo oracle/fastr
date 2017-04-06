@@ -23,7 +23,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.Unit.AxisOrDimension;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
-import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -33,9 +32,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
-    @Child private Unit.UnitLengthNode unitLength = Unit.createLengthNode();
-    @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
-    @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
 
     static {
         Casts casts = new Casts(LConvert.class);
@@ -58,11 +54,11 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
 
         RList currentVP = ctx.getGridState().getViewPort();
         GPar gpar = GPar.create(ctx.getGridState().getGpar());
-        ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, dev);
+        ViewPortTransform vpTransform = ViewPortTransform.get(currentVP, dev);
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
-        int length = unitLength.execute(units);
+        int length = Unit.getLength(units);
         double[] result = new double[length];
 
         RAbstractIntVector unitIds = null;
@@ -111,15 +107,15 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
         double inches;
         if (axisFrom.isHorizontal()) {
             if (axisFrom.isDimension()) {
-                inches = unitToInches.convertWidth(units, index, conversionCtx);
+                inches = Unit.convertWidth(units, index, conversionCtx);
             } else {
-                inches = unitToInches.convertX(units, index, conversionCtx);
+                inches = Unit.convertX(units, index, conversionCtx);
             }
         } else {
             if (axisFrom.isDimension()) {
-                inches = unitToInches.convertHeight(units, index, conversionCtx);
+                inches = Unit.convertHeight(units, index, conversionCtx);
             } else {
-                inches = unitToInches.convertY(units, index, conversionCtx);
+                inches = Unit.convertY(units, index, conversionCtx);
             }
         }
         return inches;

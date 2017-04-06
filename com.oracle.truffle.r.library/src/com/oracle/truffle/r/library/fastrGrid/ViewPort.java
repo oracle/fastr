@@ -148,7 +148,6 @@ final class ViewPort {
     public static final class InitViewPortNode extends Node {
         @Child private ReadVariableNode readGridTopLevel = ReadVariableNode.create("grid.top.level.vp");
         @Child private RExplicitCallNode callNode = RExplicitCallNode.create();
-        @Child private DoSetViewPort doSetViewPort = new DoSetViewPort();
 
         public RList execute(VirtualFrame frame) {
             RFunction gridTopLevel = (RFunction) readGridTopLevel.execute(frame);
@@ -161,7 +160,7 @@ final class ViewPort {
             data[ViewPort.VP_XSCALE] = RDataFactory.createDoubleVector(new double[]{0, device.getWidth()}, RDataFactory.COMPLETE_VECTOR);
             data[ViewPort.VP_YSCALE] = RDataFactory.createDoubleVector(new double[]{0, device.getHeight()}, RDataFactory.COMPLETE_VECTOR);
             data[ViewPort.PVP_GPAR] = GridContext.getContext().getGridState().getGpar();
-            return doSetViewPort.doSetViewPort(topVP, false, true);
+            return DoSetViewPort.doSetViewPort(topVP, false, true);
         }
     }
 }

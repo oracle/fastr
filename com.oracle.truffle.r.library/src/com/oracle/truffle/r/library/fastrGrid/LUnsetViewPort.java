@@ -28,8 +28,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 public abstract class LUnsetViewPort extends RExternalBuiltinNode.Arg1 {
-    @Child private DoSetViewPort doSetViewPort = new DoSetViewPort();
-
     static {
         Casts casts = new Casts(LUnsetViewPort.class);
         casts.arg(0).mustBe(numericValue()).asIntegerVector().findFirst();
@@ -67,7 +65,7 @@ public abstract class LUnsetViewPort extends RExternalBuiltinNode.Arg1 {
         if (ViewPort.updateDeviceSizeInVP(newVp, device)) {
             // Note: like in other places calling this, why incremental == true, given that the
             // device has changed? Don't we want to recalculate the whole tree?
-            doSetViewPort.calcViewportTransform(newVp, newVp.getDataAt(ViewPort.PVP_PARENT), true, device, GridState.getInitialGPar(device));
+            DoSetViewPort.calcViewportTransform(newVp, newVp.getDataAt(ViewPort.PVP_PARENT), true, device, GridState.getInitialGPar(device));
         }
 
         gridState.setGpar(asList(newVp.getDataAt(ViewPort.PVP_GPAR)));

@@ -19,7 +19,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.EdgeDetection.Bounds;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
-import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -29,9 +28,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class LRectBounds extends RExternalBuiltinNode.Arg7 {
-    @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
-    @Child private Unit.UnitLengthNode unitLength = Unit.createLengthNode();
-    @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
 
     static {
         Casts casts = new Casts(LRectBounds.class);
@@ -51,16 +47,16 @@ public abstract class LRectBounds extends RExternalBuiltinNode.Arg7 {
 
         RList currentVP = ctx.getGridState().getViewPort();
         GPar gpar = GPar.create(ctx.getGridState().getGpar());
-        ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, dev);
+        ViewPortTransform vpTransform = ViewPortTransform.get(currentVP, dev);
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
-        int length = GridUtils.maxLength(unitLength, xVec, yVec, wVec, hVec);
+        int length = GridUtils.maxLength(xVec, yVec, wVec, hVec);
         Bounds bounds = new Bounds();
         int nrect = 0;
         for (int i = 0; i < length; i++) {
-            Size size = Size.fromUnits(unitToInches, wVec, hVec, i, conversionCtx);
-            Point origLoc = Point.fromUnits(unitToInches, xVec, yVec, i, conversionCtx);
+            Size size = Size.fromUnits(wVec, hVec, i, conversionCtx);
+            Point origLoc = Point.fromUnits(xVec, yVec, i, conversionCtx);
             // just calculate the bounds, no transformation necessary
             Point loc = origLoc.justify(size, getDataAtMod(hjust, i), getDataAtMod(vjust, i));
             if (size.isFinite() && loc.isFinite()) {

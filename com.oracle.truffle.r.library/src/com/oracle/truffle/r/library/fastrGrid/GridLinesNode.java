@@ -16,10 +16,10 @@ import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asIntVector;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
-import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -28,9 +28,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * lines, but only the later connects the last point with the first point and only the former draws
  * arrows (which is not implemented yet). Note: the third parameter contains sequences
  * {@code 1:max(length(x),length(y))}, where the 'length' dispatches to S3 method giving us unit
- * length like {@link com.oracle.truffle.r.library.fastrGrid.Unit.UnitLengthNode}. This means that
- * we do not have to use the {@link com.oracle.truffle.r.library.fastrGrid.Unit.UnitLengthNode} to
- * get the length.
+ * length like {@link com.oracle.truffle.r.library.fastrGrid.Unit#getLength(RAbstractContainer)}.
+ * This means that we do not have to use the
+ * {@link com.oracle.truffle.r.library.fastrGrid.Unit#getLength(RAbstractContainer)} to get the
+ * length.
  */
 public abstract class GridLinesNode extends Node {
     public static GridLinesNode createLines() {
@@ -41,10 +42,6 @@ public abstract class GridLinesNode extends Node {
         return new GridLinesPolygon();
     }
 
-    @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
-    @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
-    @Child private DrawArrowsNode drawArrowsNode = new DrawArrowsNode();
-
     @TruffleBoundary
     void execute(RAbstractVector x, RAbstractVector y, RList lengths, RList arrow) {
         GridContext ctx = GridContext.getContext();
@@ -52,7 +49,7 @@ public abstract class GridLinesNode extends Node {
 
         RList currentVP = ctx.getGridState().getViewPort();
         GPar gpar = GPar.create(ctx.getGridState().getGpar());
-        ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, dev);
+        ViewPortTransform vpTransform = ViewPortTransform.get(currentVP, dev);
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
@@ -77,7 +74,7 @@ public abstract class GridLinesNode extends Node {
             // such series as a polyline
             for (int i = 0; i < unitIndexesLen; i++) {
                 int unitIndex = unitIndexes.getDataAt(i) - 1;   // converting R's 1-based index
-                Point origLoc = Point.fromUnits(unitToInches, x, y, unitIndex, conversionCtx);
+                Point origLoc = Point.fromUnits(x, y, unitIndex, conversionCtx);
                 Point loc = TransformMatrix.transLocation(origLoc, vpTransform.transform);
                 xx[i] = loc.x;
                 yy[i] = loc.y;
@@ -100,7 +97,7 @@ public abstract class GridLinesNode extends Node {
                         if (arrow != null) {
                             // Can draw an arrow at the start if the points include the first point.
                             // Draw an arrow at the end only if this is the last series
-                            drawArrowsNode.drawArrows(xx, yy, start, length, unitIndex, arrow, start == 0, lastIter, conversionCtx);
+                            Arrows.drawArrows(xx, yy, start, length, unitIndex, arrow, start == 0, lastIter, conversionCtx);
                         }
                     }
                 }

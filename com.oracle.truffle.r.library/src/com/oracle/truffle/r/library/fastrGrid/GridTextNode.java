@@ -35,7 +35,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.library.fastrGrid.EdgeDetection.Rectangle;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
-import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
@@ -43,6 +42,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -52,12 +52,10 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * Implements what is in the original grid code implemented by {@code gridText} function.
  *
  * Note: the third parameter contains sequences {@code 1:max(length(x),length(y))}, where the
- * 'length' dispatches to S3 method giving us unit length like {@link Unit.UnitLengthNode}.
+ * 'length' dispatches to S3 method giving us unit length like
+ * {@link com.oracle.truffle.r.library.fastrGrid.Unit#getLength(RAbstractContainer)}.
  */
 public final class GridTextNode extends RBaseNode {
-    @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
-    @Child private Unit.UnitLengthNode unitLength = Unit.createLengthNode();
-    @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
 
     private final ConditionProfile checkOverlapProfile = ConditionProfile.createBinaryProfile();
     private final boolean draw;
@@ -96,11 +94,11 @@ public final class GridTextNode extends RBaseNode {
 
         RList currentVP = ctx.getGridState().getViewPort();
         GPar gpar = GPar.create(ctx.getGridState().getGpar());
-        ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, dev);
+        ViewPortTransform vpTransform = ViewPortTransform.get(currentVP, dev);
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
-        int length = GridUtils.maxLength(unitLength, x, y);
+        int length = GridUtils.maxLength(x, y);
 
         // following variables will hold the (intermediate) results of bounds checking
         int boundsCount = 0;
@@ -116,7 +114,7 @@ public final class GridTextNode extends RBaseNode {
         }
 
         for (int i = 0; i < length; i++) {
-            Point loc = Point.fromUnits(unitToInches, x, y, i, conversionCtx);
+            Point loc = Point.fromUnits(x, y, i, conversionCtx);
             if (draw) {
                 // transformation not necessary for bounds calculation
                 loc = transLocation(loc, vpTransform.transform);

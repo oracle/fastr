@@ -18,7 +18,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.EdgeDetection.Bounds;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
-import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -26,9 +25,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class LLocnBounds extends RExternalBuiltinNode.Arg3 {
-    @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
-    @Child private Unit.UnitLengthNode unitLength = Unit.createLengthNode();
-    @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
 
     static {
         Casts casts = new Casts(LLocnBounds.class);
@@ -49,11 +45,11 @@ public abstract class LLocnBounds extends RExternalBuiltinNode.Arg3 {
 
         RList currentVP = ctx.getGridState().getViewPort();
         GPar gpar = GPar.create(ctx.getGridState().getGpar());
-        ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, dev);
+        ViewPortTransform vpTransform = ViewPortTransform.get(currentVP, dev);
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
-        int length = Math.max(Unit.getLength(xVec), Unit.getLength(yVec));
+        int length = GridUtils.maxLength(xVec, yVec);
         if (length == 0) {
             return RNull.instance;
         }
@@ -63,7 +59,7 @@ public abstract class LLocnBounds extends RExternalBuiltinNode.Arg3 {
         Bounds bounds = new Bounds();
         int count = 0;
         for (int i = 0; i < length; i++) {
-            Point loc = Point.fromUnits(unitToInches, xVec, yVec, i, conversionCtx);
+            Point loc = Point.fromUnits(xVec, yVec, i, conversionCtx);
             xx[i] = loc.x;
             yy[i] = loc.y;
             if (loc.isFinite()) {

@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import static com.oracle.truffle.r.library.fastrGrid.DoSetViewPort.doSetViewPort;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
@@ -29,7 +30,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
  */
 @RBuiltin(name = ".fastr.grid.doSetViewPort", parameterNames = {"vp", "hasParent", "pushing"}, kind = RBuiltinKind.INTERNAL, behavior = RBehavior.COMPLEX)
 public abstract class DoSetViewPortBuiltin extends RBuiltinNode {
-    @Child private DoSetViewPort doSetViewPort = new DoSetViewPort();
 
     static {
         Casts casts = new Casts(DoSetViewPortBuiltin.class);
@@ -40,7 +40,7 @@ public abstract class DoSetViewPortBuiltin extends RBuiltinNode {
 
     @Specialization
     RNull doIt(RList pushedVP, boolean hasParent, boolean pushing) {
-        RList vp = doSetViewPort.doSetViewPort(pushedVP, hasParent, pushing);
+        RList vp = doSetViewPort(pushedVP, hasParent, pushing);
         GridContext.getContext().getGridState().setViewPort(vp);
         return RNull.instance;
     }

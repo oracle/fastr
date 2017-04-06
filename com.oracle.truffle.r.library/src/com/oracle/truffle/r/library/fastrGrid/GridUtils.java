@@ -15,7 +15,6 @@ import static com.oracle.truffle.r.runtime.nmath.RMath.fmax2;
 import static com.oracle.truffle.r.runtime.nmath.RMath.fmin2;
 
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.r.library.fastrGrid.Unit.UnitLengthNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -29,6 +28,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 final class GridUtils {
     private GridUtils() {
@@ -57,10 +57,10 @@ final class GridUtils {
     }
 
     @ExplodeLoop
-    static int maxLength(UnitLengthNode unitLength, RAbstractVector... units) {
+    static int maxLength(RAbstractVector... units) {
         int result = 0;
         for (RAbstractVector unit : units) {
-            result = Math.max(result, unitLength.execute(unit));
+            result = Math.max(result, Unit.getLength(unit));
         }
         return result;
     }
@@ -206,6 +206,13 @@ final class GridUtils {
             return (RAbstractContainer) value;
         }
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non abstract container type " + value.getClass().getSimpleName());
+    }
+
+    static REnvironment asEnvironment(Object value) {
+        if (value instanceof REnvironment) {
+            return (REnvironment) value;
+        }
+        throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected: value is not environment " + value.getClass().getSimpleName());
     }
 
     static double sum(double[] values) {

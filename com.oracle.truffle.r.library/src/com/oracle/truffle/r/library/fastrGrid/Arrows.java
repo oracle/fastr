@@ -15,15 +15,13 @@ import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asAbstractContain
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asDouble;
 import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asInt;
 
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
-import com.oracle.truffle.r.library.fastrGrid.Unit.UnitToInchesNode;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
-final class DrawArrowsNode extends Node {
+final class Arrows {
     // Structure of an arrow description
     private static final int ARROWANGLE = 0;
     private static final int ARROWLENGTH = 1;
@@ -32,8 +30,6 @@ final class DrawArrowsNode extends Node {
     // known values of ARROWTYPE
     private static final int ARROWTYPE_LINES = 1;
     private static final int ARROWTYPE_POLYGON = 2;
-
-    @Child private UnitToInchesNode unitToInches = Unit.createToInchesNode();
 
     /**
      * Draws arrows at the start and end of given lines.
@@ -49,7 +45,7 @@ final class DrawArrowsNode extends Node {
      * @param end should we draw end arrow if the arrow list says so. Otherwise never draw it.
      * @param conversionCtx needed for unit conversions.
      */
-    public void drawArrows(double[] x, double[] y, int startIndex, int length, int parentIndex, RList arrow, boolean start, boolean end, UnitConversionContext conversionCtx) {
+    public static void drawArrows(double[] x, double[] y, int startIndex, int length, int parentIndex, RList arrow, boolean start, boolean end, UnitConversionContext conversionCtx) {
         assert x.length == y.length;
         int endsVal = asInt(arrow.getDataAt(ARROWENDS), parentIndex);
         boolean first = endsVal != 2;
@@ -62,8 +58,8 @@ final class DrawArrowsNode extends Node {
         double angle = asDouble(arrow.getDataAt(ARROWANGLE), parentIndex);
         int arrowType = asInt(arrow.getDataAt(ARROWTYPE), parentIndex);
         RAbstractContainer lengthVec = asAbstractContainer(arrow.getDataAt(ARROWLENGTH));
-        double arrowLength = unitToInches.convertHeight(lengthVec, parentIndex, conversionCtx);
-        arrowLength = Math.max(arrowLength, unitToInches.convertWidth(lengthVec, parentIndex, conversionCtx));
+        double arrowLength = Unit.convertHeight(lengthVec, parentIndex, conversionCtx);
+        arrowLength = Math.max(arrowLength, Unit.convertWidth(lengthVec, parentIndex, conversionCtx));
         // draw the arrows
         GridDevice device = conversionCtx.device;
         DrawingContext drawingCtx = conversionCtx.gpar.getDrawingContext(parentIndex);
@@ -76,7 +72,7 @@ final class DrawArrowsNode extends Node {
         }
     }
 
-    private void drawArrow(DrawingContext drawingCtx, GridDevice device, int arrowType, double x0, double y0, double x1, double y1, double angle, double length) {
+    private static void drawArrow(DrawingContext drawingCtx, GridDevice device, int arrowType, double x0, double y0, double x1, double y1, double angle, double length) {
         double a = Math.toRadians(angle);
         double xc = x1 - x0;
         double yc = y1 - y0;

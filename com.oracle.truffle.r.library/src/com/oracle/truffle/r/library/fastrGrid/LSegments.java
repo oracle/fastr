@@ -16,7 +16,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVect
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
-import com.oracle.truffle.r.library.fastrGrid.ViewPortTransform.GetViewPortTransformNode;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -28,11 +27,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * which gets a vector of points and connects them all.
  */
 public abstract class LSegments extends RExternalBuiltinNode.Arg5 {
-    @Child private Unit.UnitToInchesNode unitToInches = Unit.createToInchesNode();
-    @Child private Unit.UnitLengthNode unitLength = Unit.createLengthNode();
-    @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
-    @Child private DrawArrowsNode drawArrowsNode = new DrawArrowsNode();
-
     static {
         Casts casts = new Casts(LSegments.class);
         casts.arg(0).mustBe(abstractVectorValue());
@@ -59,16 +53,16 @@ public abstract class LSegments extends RExternalBuiltinNode.Arg5 {
 
         RList currentVP = ctx.getGridState().getViewPort();
         GPar gpar = GPar.create(ctx.getGridState().getGpar());
-        ViewPortTransform vpTransform = getViewPortTransform.execute(currentVP, dev);
+        ViewPortTransform vpTransform = ViewPortTransform.get(currentVP, dev);
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
 
-        int length = GridUtils.maxLength(unitLength, x0, y0, x1, y1);
+        int length = GridUtils.maxLength(x0, y0, x1, y1);
         double[] xx = new double[2];
         double[] yy = new double[2];
         for (int i = 0; i < length; i++) {
-            Point loc1 = TransformMatrix.transLocation(Point.fromUnits(unitToInches, x0, y0, i, conversionCtx), vpTransform.transform);
-            Point loc2 = TransformMatrix.transLocation(Point.fromUnits(unitToInches, x1, y1, i, conversionCtx), vpTransform.transform);
+            Point loc1 = TransformMatrix.transLocation(Point.fromUnits(x0, y0, i, conversionCtx), vpTransform.transform);
+            Point loc2 = TransformMatrix.transLocation(Point.fromUnits(x1, y1, i, conversionCtx), vpTransform.transform);
             if (!loc1.isFinite() || !loc2.isFinite()) {
                 continue;
             }
@@ -78,7 +72,7 @@ public abstract class LSegments extends RExternalBuiltinNode.Arg5 {
             yy[1] = loc2.y;
             dev.drawPolyLines(gpar.getDrawingContext(i), xx, yy, 0, 2);
             if (arrow != null) {
-                drawArrowsNode.drawArrows(xx, yy, 0, 2, i, arrow, true, true, conversionCtx);
+                Arrows.drawArrows(xx, yy, 0, 2, i, arrow, true, true, conversionCtx);
             }
         }
         return RNull.instance;
