@@ -27,12 +27,15 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -131,6 +134,18 @@ public abstract class ToStringNode extends RBaseNode {
     @Specialization
     protected String toString(byte operand, boolean quotes, String separator) {
         return RRuntime.logicalToString(operand);
+    }
+
+    @Specialization
+    protected String toString(RS4Object obj, @SuppressWarnings("unused") boolean quotes, String separator) {
+        RStringVector classHierarchy = obj.getClassHierarchy();
+        Object clazz;
+        if (classHierarchy.getLength() > 0) {
+            clazz = toString(classHierarchy.getDataAt(0), true, separator);
+        } else {
+            throw RInternalError.shouldNotReachHere("S4 object has no class");
+        }
+        return String.format("<S4 object of class %s>", clazz);
     }
 
     @FunctionalInterface
