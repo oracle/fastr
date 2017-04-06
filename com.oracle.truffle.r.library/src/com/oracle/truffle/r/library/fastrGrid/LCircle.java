@@ -31,6 +31,10 @@ public abstract class LCircle extends RExternalBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(LCircle.class);
+        addCircleCasts(casts);
+    }
+
+    static void addCircleCasts(Casts casts) {
         casts.arg(0).mustBe(abstractVectorValue());
         casts.arg(1).mustBe(abstractVectorValue());
         casts.arg(2).mustBe(abstractVectorValue());

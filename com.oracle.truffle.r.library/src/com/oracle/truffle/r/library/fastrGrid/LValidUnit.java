@@ -59,7 +59,7 @@ public abstract class LValidUnit extends RExternalBuiltinNode.Arg1 {
     private int convertSingleSlowPath(String name) {
         Integer result = NamesHolder.NAMES.get(name);
         if (result == null) {
-            error(Message.GENERIC, "invalid unit");
+            throw error(Message.GENERIC, "invalid unit");
         }
         return result;
     }

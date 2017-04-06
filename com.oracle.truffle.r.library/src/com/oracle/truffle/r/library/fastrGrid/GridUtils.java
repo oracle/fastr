@@ -20,6 +20,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -80,6 +81,10 @@ final class GridUtils {
             result = fmin2(result, val);
         }
         return result;
+    }
+
+    static RDoubleVector createDoubleVector(double... values) {
+        return RDataFactory.createDoubleVector(values, RDataFactory.COMPLETE_VECTOR);
     }
 
     static boolean hasRClass(RAttributable obj, String clazz) {

@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -322,6 +323,20 @@ public final class Unit {
         throw RInternalError.shouldNotReachHere("unexpected arithmetic unit type");
     }
 
+    public static boolean isSimpleUnit(RAbstractContainer unit) {
+        RStringVector classAttr = unit.getClassAttr();
+        if (classAttr == null || classAttr.getLength() == 0) {
+            return true;
+        }
+        for (int i = 0; i < classAttr.getLength(); i++) {
+            String x = classAttr.getDataAt(i);
+            if (Unit.UNIT_ARITHMETIC_CLASS.equals(x) || Unit.UNIT_LIST_CLASS.equals(x)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static final class ArithmeticUnit {
         public final String op;
         public final RAbstractContainer arg1;
@@ -359,6 +374,55 @@ public final class Unit {
         }
     }
 
+    private abstract static class UnitVisitor<T> {
+        public T visit(RAbstractContainer unit) {
+            RStringVector clazz = unit.getClassAttr();
+            if (clazz == null || clazz.getLength() == 0) {
+                return visitSimpleUnit((RAbstractVector) unit);
+            }
+            for (int i = 0; i < clazz.getLength(); i++) {
+                String className = clazz.getDataAt(i);
+                if (UNIT_ARITHMETIC_CLASS.equals(className)) {
+                    return visitArithmeticUnit(ArithmeticUnit.asArithmeticUnit(asList(unit)));
+                }
+                if (UNIT_LIST_CLASS.equals(className)) {
+                    return visitListUnit(asList(unit));
+                }
+            }
+            return visitSimpleUnit((RAbstractVector) unit);
+        }
+
+        protected abstract T visitListUnit(RList unit);
+
+        protected abstract T visitArithmeticUnit(ArithmeticUnit unit);
+
+        protected abstract T visitSimpleUnit(RAbstractVector unit);
+    }
+
+    private static final class UnitLengthVisitor extends UnitVisitor<Integer> {
+        private static final UnitLengthVisitor INSTANCE = new UnitLengthVisitor();
+
+        @Override
+        protected Integer visitListUnit(RList unit) {
+            return unit.getLength();
+        }
+
+        @Override
+        protected Integer visitArithmeticUnit(ArithmeticUnit unit) {
+            // length of aggregate functions, max, min, etc. is 1
+            return unit.isBinary() ? Math.max(visit(unit.arg1), visit(unit.arg2)) : 1;
+        }
+
+        @Override
+        protected Integer visitSimpleUnit(RAbstractVector unit) {
+            return unit.getLength();
+        }
+    }
+
+    public static int getLength(RAbstractContainer unit) {
+        return UnitLengthVisitor.INSTANCE.visit(unit);
+    }
+
     abstract static class UnitNodeBase extends RBaseNode {
         @Child private InheritsCheckNode inheritsArithmeticCheckNode = new InheritsCheckNode(UNIT_ARITHMETIC_CLASS);
         @Child private InheritsCheckNode inheritsUnitListCheckNode = new InheritsCheckNode(UNIT_LIST_CLASS);
@@ -380,6 +444,11 @@ public final class Unit {
         @Child private RGridCodeCall isPureNullCall = new RGridCodeCall("isPureNullUnit");
 
         public boolean execute(Object unit, int index) {
+            GridState gridState = GridContext.getContext().getGridState();
+            return gridState.runWithoutRecording(() -> executeImpl(unit, index));
+        }
+
+        private boolean executeImpl(Object unit, int index) {
             // Note: converting 0-based java index to 1-based R index
             Object result = isPureNullCall.execute(new RArgsValuesAndNames(new Object[]{unit, index + 1}, ArgumentsSignature.empty(2)));
             byte resultByte;
@@ -612,6 +681,7 @@ public final class Unit {
         @Child private RGridCodeCall getUnitXY = new RGridCodeCall("grobConversionGetUnitXY");
         @Child private RGridCodeCall postDrawCode = new RGridCodeCall("grobConversionPostDraw");
         @Child private GetViewPortTransformNode getViewPortTransform = new GetViewPortTransformNode();
+        @Child private UnitToInchesNode unitToInches = createToInchesNode();
 
         @Child private IsRelativeUnitNode isRelativeUnit = new IsRelativeUnitNode();
         @Child private UnitToInchesNode unitToInchesNode;
@@ -619,6 +689,11 @@ public final class Unit {
         // transcribed from unit.c function evaluateGrobUnit
 
         public double execute(double value, int unitId, Object grob, UnitConversionContext conversionCtx) {
+            GridState gridState = GridContext.getContext().getGridState();
+            return gridState.runWithoutRecording(() -> executeImpl(value, unitId, grob, conversionCtx));
+        }
+
+        private double executeImpl(double value, int unitId, Object grob, UnitConversionContext conversionCtx) {
             GridContext ctx = GridContext.getContext();
             RList currentVP = ctx.getGridState().getViewPort();
             getViewPortTransform.execute(currentVP, conversionCtx.device);
@@ -639,7 +714,7 @@ public final class Unit {
             ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
 
             // getUnitXY returns a list with either one or two items
-            RList unitxy = (RList) getUnitXY.execute(new RArgsValuesAndNames(new Object[]{updatedGrob, unitId}, ArgumentsSignature.empty(2)));
+            RList unitxy = (RList) getUnitXY.execute(new RArgsValuesAndNames(new Object[]{updatedGrob, unitId, value}, ArgumentsSignature.empty(3)));
             double result;
             switch (unitId) {
                 case GROBX:
@@ -651,11 +726,15 @@ public final class Unit {
                         double nullUnitValue = pureNullUnitValue((RAbstractContainer) unitxy.getDataAt(0), 0);
                         result = evaluateNullUnit(nullUnitValue, vpTransform.size.getWidth(), conversionCtx.nullLayoutMode, conversionCtx.nullArithmeticMode);
                     } else {
-                        throw RInternalError.unimplemented("GrobUnitToInches from unit.c: 610");
+                        double[][] inversed = TransformMatrix.inversion(vpTransform.transform);
+                        Point loc = Point.fromUnits(unitToInches, (RAbstractVector) unitxy.getDataAt(0), (RAbstractVector) unitxy.getDataAt(1), 0, conversionCtx);
+                        Point transLoc = TransformMatrix.transLocation(loc, vpTransform.transform);
+                        Point p = TransformMatrix.transLocation(transLoc, inversed);
+                        result = unitId == GROBX ? p.x : p.y;
                     }
                     break;
                 default:
-                    // should still be GROB_SOMETHING unit
+                    // should still be GROB_SOMETHING unit: width, height, ascent, descent
                     if (isRelativeUnit.execute(unitxy.getDataAt(0), 0)) {
                         // Note: GnuR uses equivalent of vpTransform.size.getWidth() even for
                         // GROBHEIGHT, bug?
@@ -672,13 +751,14 @@ public final class Unit {
                             result = unitToInchesNode.convertHeight((RAbstractContainer) unitxy.getDataAt(0), 0, newConversionCtx);
                         }
                     }
+                    result *= value;
                     break;
             }
 
             postDrawCode.call(updatedGrob);
             ctx.getGridState().setGpar(savedGPar);
             ctx.getGridState().setCurrentGrob(savedGrob);
-            return value * result;
+            return result;
         }
 
         private void initUnitToInchesNode() {

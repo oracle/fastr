@@ -30,14 +30,21 @@ import com.oracle.truffle.r.library.fastrGrid.device.GridDevice.DeviceCloseExcep
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedJFrameDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
 import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalCode;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Encapsulated the access to the global grid state.
  */
 public final class GridContext {
     private static final GridContext INSTANCE = new GridContext();
+
+    private RInternalCode internalCode;
     private final GridState gridState = new GridState();
     /**
      * This list should correspond to the names inside {@code .Devices} variable in R.
@@ -98,6 +105,17 @@ public final class GridContext {
         if (currentDeviceIdx >= which) {
             currentDeviceIdx--;
         }
+    }
+
+    /**
+     * Runs arbitrary function from 'fastrGrid.R' file and returns its result.
+     */
+    public Object evalInternalRFunction(String functionName, Object... args) {
+        if (internalCode == null) {
+            internalCode = RInternalCode.lookup(RContext.getInstance(), "grid", RInternalCode.loadSourceRelativeTo(LInitGrid.class, "fastrGrid.R"));
+        }
+        RFunction redrawAll = internalCode.lookupFunction(functionName);
+        return RContext.getEngine().evalFunction(redrawAll, REnvironment.baseEnv().getFrame(), RCaller.topLevel, null, args);
     }
 
     private static final class DeviceAndState {
