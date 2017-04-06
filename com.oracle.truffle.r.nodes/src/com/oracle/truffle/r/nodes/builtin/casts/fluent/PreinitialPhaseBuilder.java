@@ -25,8 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 
-import java.util.function.Consumer;
-
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.runtime.RError;
@@ -48,45 +46,49 @@ public final class PreinitialPhaseBuilder extends InitialPhaseBuilder<Object> {
         super(pipelineBuilder);
     }
 
-    public PreinitialPhaseBuilder conf(Consumer<PipelineConfigBuilder> cfgLambda) {
-        cfgLambda.accept(pipelineBuilder().getPipelineConfig());
+    public PreinitialPhaseBuilder allowNull() {
+        returnIf(nullValue());
         return this;
     }
 
-    public InitialPhaseBuilder<Object> allowNull() {
-        return returnIf(nullValue());
+    public PreinitialPhaseBuilder mustNotBeNull() {
+        mustBe(nullValue().not());
+        return this;
     }
 
-    public InitialPhaseBuilder<Object> mustNotBeNull() {
-        return mustBe(nullValue().not());
+    public PreinitialPhaseBuilder mustNotBeNull(RError.Message errorMsg, Object... msgArgs) {
+        mustBe(nullValue().not(), errorMsg, msgArgs);
+        return this;
     }
 
-    public InitialPhaseBuilder<Object> mustNotBeNull(RError.Message errorMsg, Object... msgArgs) {
-        return mustBe(nullValue().not(), errorMsg, msgArgs);
+    public PreinitialPhaseBuilder mapNull(Mapper<RNull, ?> mapper) {
+        mapIf(nullValue(), mapper);
+        return this;
     }
 
-    public InitialPhaseBuilder<Object> mapNull(Mapper<RNull, ?> mapper) {
-        return mapIf(nullValue(), mapper);
+    public PreinitialPhaseBuilder allowMissing() {
+        returnIf(missingValue());
+        return this;
     }
 
-    public InitialPhaseBuilder<Object> allowMissing() {
-        return returnIf(missingValue());
+    public PreinitialPhaseBuilder mustNotBeMissing() {
+        mustBe(missingValue().not());
+        return this;
     }
 
-    public InitialPhaseBuilder<Object> mustNotBeMissing() {
-        return mustBe(missingValue().not());
+    public PreinitialPhaseBuilder mustNotBeMissing(RError.Message errorMsg, Object... msgArgs) {
+        mustBe(missingValue().not(), errorMsg, msgArgs);
+        return this;
     }
 
-    public InitialPhaseBuilder<Object> mustNotBeMissing(RError.Message errorMsg, Object... msgArgs) {
-        return mustBe(missingValue().not(), errorMsg, msgArgs);
+    public PreinitialPhaseBuilder mapMissing(Mapper<RMissing, ?> mapper) {
+        mapIf(missingValue(), mapper);
+        return this;
     }
 
-    public InitialPhaseBuilder<Object> mapMissing(Mapper<RMissing, ?> mapper) {
-        return mapIf(missingValue(), mapper);
-    }
-
-    public InitialPhaseBuilder<Object> allowNullAndMissing() {
-        return returnIf(nullValue().or(missingValue()));
+    public PreinitialPhaseBuilder allowNullAndMissing() {
+        returnIf(nullValue().or(missingValue()));
+        return this;
     }
 
     public PreinitialPhaseBuilder defaultError(RError.Message message, Object... args) {

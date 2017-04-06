@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
@@ -106,7 +105,7 @@ public final class PipelineToCastNode {
         // nop: static class
     }
 
-    public static CastNode convert(PipelineConfig config, PipelineStep<?, ?> firstStepIn, Optional<ForwardingAnalysisResult> fwdAnalysisResult) {
+    public static CastNode convert(PipelineConfig config, PipelineStep<?, ?> firstStepIn, ForwardingAnalysisResult fwdAnalysisResult) {
         if (firstStepIn == null) {
             return null;
         }
@@ -122,9 +121,8 @@ public final class PipelineToCastNode {
             return originalPipelineFactory.get();
         }
 
-        ForwardingAnalysisResult fwdRes = fwdAnalysisResult.get();
-        if (fwdRes != null && fwdRes.isAnythingForwarded()) {
-            return ValueForwardingNodeGen.create(fwdRes, originalPipelineFactory);
+        if (fwdAnalysisResult.isAnythingForwarded()) {
+            return ValueForwardingNodeGen.create(fwdAnalysisResult, originalPipelineFactory);
         } else {
             return originalPipelineFactory.get();
         }

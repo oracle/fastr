@@ -41,7 +41,7 @@ public final class ForwardingAnalysisResult {
     public final ForwardingStatus missingForwarded;
     public final boolean invalid;
 
-    static final ForwardingAnalysisResult INVALID = new ForwardingAnalysisResult(UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, true);
+    public static final ForwardingAnalysisResult INVALID = new ForwardingAnalysisResult(UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, true);
 
     ForwardingAnalysisResult() {
         this(UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, false);
@@ -103,7 +103,7 @@ public final class ForwardingAnalysisResult {
     }
 
     public boolean isAnythingForwarded() {
-        return isNullForwarded() || isMissingForwarded() || isIntegerForwarded() || isLogicalForwarded() || isDoubleForwarded() || isComplexForwarded() || isStringForwarded();
+        return !invalid && (isNullForwarded() || isMissingForwarded() || isIntegerForwarded() || isLogicalForwarded() || isDoubleForwarded() || isComplexForwarded() || isStringForwarded());
     }
 
     ForwardingAnalysisResult setForwardedType(Class<?> tp, ForwardingStatus status) {

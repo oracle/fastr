@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * cast to any specific type yet. Any method that represents casting of the argument to a specific
  * type returns instance of {@link CoercedPhaseBuilder} with its generic parameters set accordingly.
  */
+@SuppressWarnings("unchecked")
 public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilder<T>> {
 
     public InitialPhaseBuilder(PipelineBuilder builder) {
@@ -52,7 +53,7 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
 
     public <S extends T> InitialPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter, RError.Message message, Object... messageArgs) {
         pipelineBuilder().appendMustBeStep(argFilter, message, messageArgs);
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<S>) this;
     }
 
     public <S extends T> InitialPhaseBuilder<S> mustBe(Filter<? super T, S> argFilter) {
@@ -61,72 +62,72 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
 
     public <S extends T> InitialPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {
         mustBe(Predef.instanceOf(cls), message, messageArgs);
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<S>) this;
     }
 
     public <S extends T> InitialPhaseBuilder<S> mustBe(Class<S> cls) {
         mustBe(Predef.instanceOf(cls));
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<S>) this;
     }
 
     public <S> InitialPhaseBuilder<S> shouldBe(Class<S> cls, RError.Message message, Object... messageArgs) {
         shouldBe(Predef.instanceOf(cls), message, messageArgs);
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<S>) this;
     }
 
     public <S> InitialPhaseBuilder<S> shouldBe(Class<S> cls) {
         shouldBe(Predef.instanceOf(cls));
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<S>) this;
     }
 
     public <S> InitialPhaseBuilder<S> map(Mapper<T, S> mapFn) {
         pipelineBuilder().appendMap(mapFn);
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<S>) this;
     }
 
     public InitialPhaseBuilder<Object> returnIf(Filter<? super T, ?> argFilter) {
         pipelineBuilder().appendMapIf(argFilter, (PipelineStep<?, ?>) null, (PipelineStep<?, ?>) null, true);
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<? super S, R> trueBranchMapper) {
         pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, false);
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> InitialPhaseBuilder<Object> returnIf(Filter<? super T, S> argFilter, Mapper<? super S, R> trueBranchMapper) {
         pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, true);
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, Mapper<? super S, R> trueBranchMapper, Mapper<? super T, ?> falseBranchMapper) {
         pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, falseBranchMapper, false);
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> InitialPhaseBuilder<Object> returnIf(Filter<? super T, S> argFilter, Mapper<? super S, R> trueBranchMapper, Mapper<? super T, ?> falseBranchMapper) {
         pipelineBuilder().appendMapIf(argFilter, trueBranchMapper, falseBranchMapper, true);
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<?, ?> trueBranch) {
         pipelineBuilder().appendMapIf(argFilter, trueBranch, false);
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> InitialPhaseBuilder<Object> returnIf(Filter<? super T, S> argFilter, PipelineStep<?, ?> trueBranch) {
         pipelineBuilder().appendMapIf(argFilter, trueBranch, true);
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> InitialPhaseBuilder<Object> mapIf(Filter<? super T, S> argFilter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch) {
         pipelineBuilder().appendMapIf(argFilter, trueBranch, falseBranch, false);
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<Object>) this;
     }
 
     public <S extends T, R> InitialPhaseBuilder<Object> returnIf(Filter<? super T, S> argFilter, PipelineStep<?, ?> trueBranch, PipelineStep<?, ?> falseBranch) {
         pipelineBuilder().appendMapIf(argFilter, trueBranch, falseBranch, true);
-        return new InitialPhaseBuilder<>(pipelineBuilder());
+        return (InitialPhaseBuilder<Object>) this;
     }
 
     public InitialPhaseBuilder<T> mustNotBeNA(RError.Message message, Object... messageArgs) {

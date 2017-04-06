@@ -25,8 +25,6 @@ package com.oracle.truffle.r.nodes.test;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
-import java.util.Optional;
-
 import org.junit.Test;
 
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
@@ -35,6 +33,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
+import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardingAnalysisResult;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineConfigBuilder;
 import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNode;
@@ -85,6 +84,6 @@ public class PipelineToCastNodeTests {
     private static CastNode createPipeline(PipelineStep<?, ?> lastStep) {
         PipelineConfigBuilder configBuilder = new PipelineConfigBuilder("x");
         configBuilder.setValueForwarding(false);
-        return PipelineToCastNode.convert(configBuilder.build(), lastStep, Optional.empty());
+        return PipelineToCastNode.convert(configBuilder.build(), lastStep, ForwardingAnalysisResult.INVALID);
     }
 }
