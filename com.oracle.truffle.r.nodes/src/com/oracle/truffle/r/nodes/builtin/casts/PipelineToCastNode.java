@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.casts;
 
 import java.util.function.Supplier;
 
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter.ArgumentTypeFilter;
@@ -298,15 +299,43 @@ public final class PipelineToCastNode {
         @Override
         public ArgumentFilter<?, ?> visit(RTypeFilter<?> filter, ArgumentFilter<?, ?> previous) {
             if (filter.getType() == RType.Integer) {
-                return x -> x instanceof Integer || x instanceof RAbstractIntVector;
+                return new ArgumentFilter<Object, Object>() {
+                    private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
+                    @Override
+                    public boolean test(Object x) {
+                        return profile.profile(x instanceof Integer) || x instanceof RAbstractIntVector;
+                    }
+                };
             } else if (filter.getType() == RType.Double) {
-                return x -> x instanceof Double || x instanceof RAbstractDoubleVector;
+                return new ArgumentFilter<Object, Object>() {
+                    private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
+                    @Override
+                    public boolean test(Object x) {
+                        return profile.profile(x instanceof Double) || x instanceof RAbstractDoubleVector;
+                    }
+                };
             } else if (filter.getType() == RType.Logical) {
-                return x -> x instanceof Byte || x instanceof RAbstractLogicalVector;
+                return new ArgumentFilter<Object, Object>() {
+                    private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
+                    @Override
+                    public boolean test(Object x) {
+                        return profile.profile(x instanceof Byte) || x instanceof RAbstractLogicalVector;
+                    }
+                };
             } else if (filter.getType() == RType.Complex) {
                 return x -> x instanceof RAbstractComplexVector;
             } else if (filter.getType() == RType.Character) {
-                return x -> x instanceof String || x instanceof RAbstractStringVector;
+                return new ArgumentFilter<Object, Object>() {
+                    private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
+                    @Override
+                    public boolean test(Object x) {
+                        return profile.profile(x instanceof String) || x instanceof RAbstractStringVector;
+                    }
+                };
             } else if (filter.getType() == RType.Raw) {
                 return x -> x instanceof RAbstractRawVector;
             } else {
@@ -324,11 +353,16 @@ public final class PipelineToCastNode {
         public ArgumentFilter<?, ?> visit(AndFilter<?, ?> filter, ArgumentFilter<?, ?> previous) {
             ArgumentFilter leftFilter = filter.getLeft().accept(this, previous);
             ArgumentFilter rightFilter = filter.getRight().accept(this, previous);
-            return (ArgumentTypeFilter<Object, Object>) arg -> {
-                if (!leftFilter.test(arg)) {
-                    return false;
-                } else {
-                    return rightFilter.test(arg);
+            return new ArgumentTypeFilter<Object, Object>() {
+                private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
+                @Override
+                public boolean test(Object arg) {
+                    if (profile.profile(leftFilter.test(arg))) {
+                        return rightFilter.test(arg);
+                    } else {
+                        return false;
+                    }
                 }
             };
         }
@@ -338,11 +372,16 @@ public final class PipelineToCastNode {
         public ArgumentFilter<?, ?> visit(OrFilter<?> filter, ArgumentFilter<?, ?> previous) {
             ArgumentFilter leftFilter = filter.getLeft().accept(this, previous);
             ArgumentFilter rightFilter = filter.getRight().accept(this, previous);
-            return (ArgumentTypeFilter<Object, Object>) arg -> {
-                if (leftFilter.test(arg)) {
-                    return true;
-                } else {
-                    return rightFilter.test(arg);
+            return new ArgumentTypeFilter<Object, Object>() {
+                private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
+                @Override
+                public boolean test(Object arg) {
+                    if (profile.profile(leftFilter.test(arg))) {
+                        return true;
+                    } else {
+                        return rightFilter.test(arg);
+                    }
                 }
             };
         }
