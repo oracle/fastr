@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.regex.Pattern;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -79,6 +80,7 @@ public abstract class Scan extends RBuiltinNode {
         RAbstractStringVector naStrings = null;
         boolean quiet = false;
         String sepchar = null;
+        String sepregex = null;
         char decchar = '.';
         String quoteset = null;
         int comchar = NO_COMCHAR;
@@ -150,6 +152,7 @@ public abstract class Scan extends RBuiltinNode {
 
         // TODO: some sort of character translation happens here?
         data.sepchar = sep.isEmpty() ? null : sep.substring(0, 1);
+        data.sepregex = sep.isEmpty() ? null : Pattern.quote(sep.substring(0, 1));
 
         // TODO: some sort of character translation happens here?
         data.decchar = dec.charAt(0);
@@ -248,7 +251,7 @@ public abstract class Scan extends RBuiltinNode {
                 // first iteration
                 if (quoteInd == -1) {
                     // no quotes at all
-                    return data.sepchar == null ? s.split("\\s+") : s.split(data.sepchar);
+                    return data.sepregex == null ? s.split("\\s+") : s.split(data.sepregex);
                 } else {
                     sb = new StringBuilder();
                 }
@@ -272,7 +275,7 @@ public abstract class Scan extends RBuiltinNode {
                 assert sepInd >= 0;
                 // everything from the beginning of str becomes part of this time and item
                 // processing is completed (also eat up separators)
-                String[] tuple = data.sepchar == null ? str.split("\\s+", 2) : str.split(data.sepchar, 2);
+                String[] tuple = data.sepregex == null ? str.split("\\s+", 2) : str.split(data.sepregex, 2);
                 assert tuple.length == 2;
                 sb.append(tuple[0]);
                 str = tuple[1];
@@ -295,7 +298,7 @@ public abstract class Scan extends RBuiltinNode {
                     continue;
                 } else {
                     if (data.quoteset.length() == 0) {
-                        return data.sepchar == null ? s.split("\\s+") : s.split(data.sepchar);
+                        return data.sepregex == null ? s.split("\\s+") : s.split(data.sepregex);
                     } else {
                         return getQuotedItems(data, s);
                     }

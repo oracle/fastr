@@ -48,6 +48,9 @@ public class TestBuiltin_scan extends TestBase {
         assertEval("{ con<-textConnection(c(\"bar'foo'\")); scan(con, what=list(\"\")) }");
         assertEval("{ con<-textConnection(c(\"'foo'\")); scan(con, what=list(\"\")) }");
         assertEval("{ con<-textConnection(c(\"bar 'foo'\")); scan(con, what=list(\"\")) }");
+
+        // sep should not be treated as a regex:
+        assertEval("con <- textConnection(\"A|B|C\\n1|2|3\\n4|5|6\"); read.csv(con, sep=\"|\")");
     }
 
     @Test
