@@ -50,6 +50,12 @@ public class TestBuiltin_cbind extends TestBase {
     }
 
     @Test
+    public void testcbind6() {
+        assertEval("cbind2(3, 4)");
+        assertEval("cbind2(matrix(1:10, 2, 2), matrix(11:20, 2, 2))");
+    }
+
+    @Test
     public void testCbind() {
         assertEval("{ cbind() }");
         assertEval("{ cbind(1:3,2) }");

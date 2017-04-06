@@ -585,7 +585,12 @@ public abstract class Bind extends RBaseNode {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     bind = insert(BindNodeGen.create(type));
                 }
-                return bind.execute(frame, deparseLevel, args.getArguments(), (RArgsValuesAndNames) RArguments.getArgument(frame, 0), precedence(args.getArguments()));
+                Object firstArg = RArguments.getArgument(frame, 0);
+                RArgsValuesAndNames promisedArgs = args;
+                if (firstArg instanceof RArgsValuesAndNames) {
+                    promisedArgs = (RArgsValuesAndNames) firstArg;
+                }
+                return bind.execute(frame, deparseLevel, args.getArguments(), promisedArgs, precedence(args.getArguments()));
             }
         }
 
