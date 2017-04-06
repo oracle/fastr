@@ -26,6 +26,7 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
+import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -35,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 @RBuiltin(name = "@", kind = PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = 1, behavior = COMPLEX)
 public abstract class Slot extends RBuiltinNode {
 
+    @Child private UpdateShareableChildValueNode sharedAttrUpdate = UpdateShareableChildValueNode.create();
     @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(true);
 
     static {
@@ -69,6 +71,10 @@ public abstract class Slot extends RBuiltinNode {
                     @Cached("createClassProfile()") ValueProfile nameObjProfile) {
         String name = getName(nameObjProfile.profile(nameObj));
         assert Utils.isInterned(name);
-        return accessSlotNode.executeAccess(object, name);
+        Object result = accessSlotNode.executeAccess(object, name);
+
+        // since we give the slot away, we probably have to increase the refCount
+        sharedAttrUpdate.execute(object, result);
+        return result;
     }
 }
