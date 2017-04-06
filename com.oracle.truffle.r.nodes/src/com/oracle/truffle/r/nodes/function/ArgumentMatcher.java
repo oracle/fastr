@@ -562,7 +562,7 @@ public class ArgumentMatcher {
                     }
                     if (!matchedSuppliedArgs[suppliedIndex]) {
                         String suppliedName = signature.getName(suppliedIndex);
-                        if (suppliedName == null || suppliedName.isEmpty()) {
+                        if (suppliedName == null || suppliedName.isEmpty() || formalSignature.getName(formalIndex).isEmpty()) {
                             // unnamed parameter, match by position
                             break;
                         }

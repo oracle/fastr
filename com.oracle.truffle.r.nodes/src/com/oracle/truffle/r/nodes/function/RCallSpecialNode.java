@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -61,7 +62,7 @@ final class PeekLocalVariableNode extends RNode implements RSyntaxLookup {
     @Child private SetVisibilityNode visibility;
 
     PeekLocalVariableNode(String name) {
-        this.read = LocalReadVariableNode.create(name, false);
+        this.read = LocalReadVariableNode.create(Utils.intern(name), false);
     }
 
     @Override

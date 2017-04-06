@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-@RBuiltin(name = "[<-", kind = PRIMITIVE, parameterNames = {"", "..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
+@RBuiltin(name = "[<-", kind = PRIMITIVE, parameterNames = {"..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class UpdateSubset extends RBuiltinNode {
 
     @Child private ReplaceVectorNode replaceNode = ReplaceVectorNode.create(ElementAccessMode.SUBSET, false);
@@ -69,21 +69,27 @@ public abstract class UpdateSubset extends RBuiltinNode {
         return null;
     }
 
-    @Specialization(guards = "!args.isEmpty()")
-    protected Object update(VirtualFrame frame, Object x, RArgsValuesAndNames args) {
+    @Specialization(guards = "args.getLength() >= 2")
+    protected Object update(VirtualFrame frame, RArgsValuesAndNames args) {
+        // first argument: object to assign to
+        Object x = args.getArgument(0);
+
+        // last argument: value to assign
         Object value = args.getArgument(args.getLength() - 1);
+
+        // arguments between first and last are assumed to be indices
         Object[] pos;
-        if (argsLengthLargerThanOneProfile.profile(args.getLength() > 1)) {
-            pos = Arrays.copyOf(args.getArguments(), args.getLength() - 1);
+        if (argsLengthLargerThanOneProfile.profile(args.getLength() > 2)) {
+            pos = Arrays.copyOfRange(args.getArguments(), 1, args.getLength() - 1);
         } else {
             pos = new Object[]{RMissing.instance};
         }
         return replaceNode.apply(frame, x, pos, value);
     }
 
-    @Specialization(guards = "args.isEmpty()")
+    @Specialization(guards = "args.getLength() < 2")
     @SuppressWarnings("unused")
-    protected Object getNoInd(Object x, RArgsValuesAndNames args) {
+    protected Object getNoInd(RArgsValuesAndNames args) {
         throw error(RError.Message.INVALID_ARG_NUMBER, "SubAssignArgs");
     }
 }
