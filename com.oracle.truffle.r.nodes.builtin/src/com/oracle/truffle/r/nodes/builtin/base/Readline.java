@@ -51,9 +51,6 @@ public abstract class Readline extends RBuiltinNode {
         String savedPrompt = consoleHandler.getPrompt();
         consoleHandler.setPrompt(prompt.getDataAt(0));
         String input = consoleHandler.readLine();
-        // The readLine method always appends the newline character, as opposed to the readline
-        // builtin. Therefore, the trailing newline must be cut off.
-        input = input.substring(0, input.length() - 1);
         consoleHandler.setPrompt(savedPrompt);
         return input;
     }

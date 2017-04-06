@@ -77,11 +77,7 @@ class JLineConsoleHandler implements ConsoleHandler {
     public String readLine() {
         try {
             console.getTerminal().init();
-            String line = console.readLine();
-            if (line != null) {
-                line += "\n";
-            }
-            return line;
+            return console.readLine();
         } catch (UserInterruptException e) {
             throw e;
         } catch (Exception ex) {
