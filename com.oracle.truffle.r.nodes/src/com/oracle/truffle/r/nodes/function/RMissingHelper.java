@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -83,6 +84,7 @@ public class RMissingHelper {
      *         type is not object.
      */
     public static Object getMissingValue(Frame frame, String name) {
+        CompilerAsserts.neverPartOfCompilation();
         // Check binding
         FrameSlot frameSlot = frame.getFrameDescriptor().findFrameSlot(name);
         if (frameSlot == null) {
