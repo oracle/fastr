@@ -55,13 +55,13 @@ public final class RBuiltinRootNode extends RRootNode {
     }
 
     @Override
-    public final FormalArguments getFormalArguments() {
+    public FormalArguments getFormalArguments() {
         initialize();
         return call.getFormals();
     }
 
     @Override
-    public final ArgumentsSignature getSignature() {
+    public ArgumentsSignature getSignature() {
         initialize();
         return call.getFormals().getSignature();
     }

@@ -154,12 +154,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     @Override
-    public final FormalArguments getFormalArguments() {
+    public FormalArguments getFormalArguments() {
         return formalArguments;
     }
 
     @Override
-    public final ArgumentsSignature getSignature() {
+    public ArgumentsSignature getSignature() {
         return formalArguments.getSignature();
     }
 
