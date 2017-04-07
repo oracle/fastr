@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 abstract class BaseWriteVariableNode extends WriteVariableNode {
 
-    protected BaseWriteVariableNode(Object name) {
+    protected BaseWriteVariableNode(String name) {
         super(name);
     }
 

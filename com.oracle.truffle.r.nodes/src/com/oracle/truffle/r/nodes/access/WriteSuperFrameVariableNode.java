@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
 
-    protected WriteSuperFrameVariableNode(Object name) {
+    protected WriteSuperFrameVariableNode(String name) {
         super(name);
     }
 
@@ -78,7 +78,7 @@ abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
         private final Mode mode;
         @CompilationFinal private Assumption containsNoActiveBinding;
 
-        public ResolvedWriteSuperFrameVariableNode(Object name, Mode mode) {
+        public ResolvedWriteSuperFrameVariableNode(String name, Mode mode) {
             super(name);
             this.mode = mode;
         }
@@ -122,7 +122,7 @@ abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
 
         private final Mode mode;
 
-        UnresolvedWriteSuperFrameVariableNode(Object name, Mode mode, RNode rhs) {
+        UnresolvedWriteSuperFrameVariableNode(String name, Mode mode, RNode rhs) {
             super(name);
             this.mode = mode;
             this.rhs = rhs;
@@ -175,7 +175,7 @@ abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
         private final ConditionProfile hasValueProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile nullSuperFrameProfile = ConditionProfile.createBinaryProfile();
 
-        WriteSuperFrameVariableConditionalNode(Object name, ResolvedWriteSuperFrameVariableNode writeNode, WriteSuperFrameVariableNode nextNode, RNode rhs) {
+        WriteSuperFrameVariableConditionalNode(String name, ResolvedWriteSuperFrameVariableNode writeNode, WriteSuperFrameVariableNode nextNode, RNode rhs) {
             super(name);
             this.writeNode = writeNode;
             this.nextNode = nextNode;
