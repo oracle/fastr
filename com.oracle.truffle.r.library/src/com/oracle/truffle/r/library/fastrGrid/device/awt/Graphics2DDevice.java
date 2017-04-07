@@ -76,7 +76,7 @@ public class Graphics2DDevice implements GridDevice {
      * @param graphicsIsExclusive If the graphics object is exclusively used for drawing only by
      *            this class, then it can optimize some things.
      */
-    Graphics2DDevice(Graphics2D graphics, int width, int height, boolean graphicsIsExclusive) {
+    public Graphics2DDevice(Graphics2D graphics, int width, int height, boolean graphicsIsExclusive) {
         initStrokes();
         setGraphics2D(graphics);
         this.width = width;

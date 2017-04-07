@@ -22,18 +22,24 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
+import java.awt.Graphics2D;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice.NotSupportedImageFormatException;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedJFrameDevice;
+import com.oracle.truffle.r.library.fastrGrid.device.awt.Graphics2DDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 /**
  * Node that handles the {@code C_X11} external calls. Those calls may be initiated from either the
@@ -51,6 +57,7 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
     protected Object call(RArgsValuesAndNames args) {
         int width = getIntOrDefault(args, 1, GridDevice.DEFAULT_WIDTH);
         int height = getIntOrDefault(args, 2, GridDevice.DEFAULT_HEIGHT);
+
         // if the first argument is a String, then it may describes the image format and filename to
         // use, the format is e.g. "jpeg::quality:filename"
         if (args.getLength() >= 1) {
@@ -59,9 +66,26 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
                 return openImageDevice(name, width, height);
             }
         }
+
         // otherwise the windowed device
+        // check if we got custom Graphics2D object as 3rd parameter
+        boolean isFastRDevice = args.getArgument(0).equals(".FASTR.AWT");
+        if (isFastRDevice && args.getLength() > 3) {
+            Object arg3 = args.getArgument(3);
+            boolean isTruffleObj = arg3 instanceof TruffleObject && !(arg3 instanceof RTypedValue);
+            if (isTruffleObj && JavaInterop.isJavaObject(Graphics2D.class, (TruffleObject) arg3)) {
+                Graphics2D graphics = JavaInterop.asJavaObject(Graphics2D.class, (TruffleObject) arg3);
+                Graphics2DDevice device = new Graphics2DDevice(graphics, width, height, false);
+                GridContext.getContext().setCurrentDevice("awt", device);
+                return RNull.instance;
+            } else if (isTruffleObj) {
+                warning(Message.GENERIC, "3rd argument is foreign object, but not of type Graphics2D.");
+            }
+        }
+
+        // otherwise create the window ourselves
         BufferedJFrameDevice device = new BufferedJFrameDevice(JFrameDevice.create(width, height));
-        String name = args.getArgument(0).equals(".FASTR.AWT") ? "awt" : "X11cairo";
+        String name = isFastRDevice ? "awt" : "X11cairo";
         GridContext.getContext().setCurrentDevice(name, device);
         return RNull.instance;
     }

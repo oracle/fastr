@@ -24,8 +24,8 @@ eval(expression({
     # For compatibility reasons, both X11 and awt end up calling C_X11.
     # In the future, this function may support extra parameters like a
     # reference to java 2D graphics object, which will be used for the drawing.
-    awt <- function(width = NULL, height = NULL) {
-        .External2(grDevices:::C_X11, ".FASTR.AWT", width, height)
+    awt <- function(width = NULL, height = NULL, graphicsObj = NULL) {
+        .External2(grDevices:::C_X11, ".FASTR.AWT", width, height, graphicsObj)
     }
     # GnuR version only works with "X11cairo" device. Our version of savePlot
     # works with "awt" device and "X11cairo", which is for us only alias for
