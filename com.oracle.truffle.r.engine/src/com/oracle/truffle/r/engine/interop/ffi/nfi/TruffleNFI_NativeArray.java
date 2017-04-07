@@ -28,7 +28,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.ffi.UpCallsRFFI;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 /**
