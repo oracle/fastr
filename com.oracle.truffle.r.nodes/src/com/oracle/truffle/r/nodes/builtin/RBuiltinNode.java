@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.GeneratedBy;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -114,6 +115,7 @@ public abstract class RBuiltinNode extends RBuiltinBaseNode implements NodeWithA
 
     @Children private final CastNode[] argumentCasts;
     @CompilationFinal(dimensions = 1) private final Class<?>[] argumentClasses;
+    private final ValueProfile castClassProfile = ValueProfile.createClassProfile();
 
     protected RBuiltinNode(int argCount) {
         argumentCasts = getCasts();
@@ -121,7 +123,12 @@ public abstract class RBuiltinNode extends RBuiltinBaseNode implements NodeWithA
     }
 
     protected Object castArg(Object[] args, int index) {
-        Object value = index < argumentCasts.length && argumentCasts[index] != null ? argumentCasts[index].execute(args[index]) : args[index];
+        Object value;
+        if (index < argumentCasts.length && argumentCasts[index] != null) {
+            value = argumentCasts[index].execute(castClassProfile.profile(args[index]));
+        } else {
+            value = args[index];
+        }
         Class<?> clazz = argumentClasses[index];
         if (clazz == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -130,6 +137,9 @@ public abstract class RBuiltinNode extends RBuiltinBaseNode implements NodeWithA
         } else if (clazz == Object.class) {
             return value;
         } else if (value.getClass() == clazz) {
+            if (CompilerDirectives.inInterpreter()) {
+                return value;
+            }
             return clazz.cast(value);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
