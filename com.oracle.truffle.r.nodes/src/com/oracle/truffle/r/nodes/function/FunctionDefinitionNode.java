@@ -299,18 +299,24 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             }
             if (runOnExitHandlers) {
                 visibility.executeEndOfFunction(frame);
-                if (!noHandlerStackSlot.isValid() && frame.isObject(handlerStackSlot)) {
-                    try {
-                        RErrorHandling.restoreHandlerStack(frame.getObject(handlerStackSlot));
-                    } catch (FrameSlotTypeException e) {
-                        throw RInternalError.shouldNotReachHere();
+                if (!noHandlerStackSlot.isValid()) {
+                    FrameSlot slot = getHandlerFrameSlot(frame);
+                    if (frame.isObject(slot)) {
+                        try {
+                            RErrorHandling.restoreHandlerStack(frame.getObject(slot));
+                        } catch (FrameSlotTypeException e) {
+                            throw RInternalError.shouldNotReachHere();
+                        }
                     }
                 }
-                if (!noRestartStackSlot.isValid() && frame.isObject(restartStackSlot)) {
-                    try {
-                        RErrorHandling.restoreRestartStack(frame.getObject(restartStackSlot));
-                    } catch (FrameSlotTypeException e) {
-                        throw RInternalError.shouldNotReachHere();
+                if (!noRestartStackSlot.isValid()) {
+                    FrameSlot slot = getRestartFrameSlot(frame);
+                    if (frame.isObject(slot)) {
+                        try {
+                            RErrorHandling.restoreRestartStack(frame.getObject(slot));
+                        } catch (FrameSlotTypeException e) {
+                            throw RInternalError.shouldNotReachHere();
+                        }
                     }
                 }
 
@@ -491,20 +497,24 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     public FrameSlot getRestartFrameSlot(VirtualFrame frame) {
         if (noRestartStackSlot.isValid()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            restartStackSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.RestartStack);
             noRestartStackSlot.invalidate();
         }
-        assert restartStackSlot != null;
+        if (restartStackSlot == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            restartStackSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.RestartStack);
+        }
         return restartStackSlot;
     }
 
     public FrameSlot getHandlerFrameSlot(VirtualFrame frame) {
         if (noHandlerStackSlot.isValid()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            handlerStackSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.HandlerStack);
             noHandlerStackSlot.invalidate();
         }
-        assert handlerStackSlot != null;
+        if (handlerStackSlot == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            handlerStackSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.HandlerStack);
+        }
         return handlerStackSlot;
     }
 }
