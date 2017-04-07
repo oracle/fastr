@@ -71,7 +71,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
         if (slot == null) {
             return null;
         } else {
-            Object value = frame.getValue(slot);
+            Object value = FrameSlotChangeMonitor.getValue(slot, frame);
             // special treatment for active binding: call bound function
             if (ActiveBinding.isActiveBinding(value)) {
                 return ((ActiveBinding) value).readValue();
@@ -159,7 +159,8 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
         ArrayList<String> matchedNamesList = new ArrayList<>(names.length);
         for (int i = 0; i < names.length; i++) {
             String name = names[i];
-            if (frame.getValue(fd.findFrameSlot(name)) == null) {
+            FrameSlot frameSlot = fd.findFrameSlot(name);
+            if (FrameSlotChangeMonitor.getValue(frameSlot, frame) == null) {
                 continue;
             }
             if (REnvironment.includeName(name, allNames, pattern)) {

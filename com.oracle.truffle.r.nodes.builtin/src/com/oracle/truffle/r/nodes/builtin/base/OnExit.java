@@ -22,52 +22,42 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.ArrayList;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
-import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
-/**
- * Placeholder. {@code on.exit} is special (cf {@code .Internal} in that {@code expr} is not
- * evaluated, but {@code add} is. TODO arrange for the {@code expr} be stored with the currently
- * evaluating function using a new slot in {@link RArguments} and run it on function exit.
- */
 @RBuiltin(name = "on.exit", visibility = OFF, kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = 0, behavior = COMPLEX)
 public abstract class OnExit extends RBuiltinNode {
 
-    @Child private FrameSlotNode onExitSlot = FrameSlotNode.create(RFrameSlot.OnExit, true);
+    @CompilationFinal private FrameSlot onExitSlot;
 
     private final ConditionProfile addProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile existingProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile newProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile emptyPromiseProfile = ConditionProfile.createBinaryProfile();
-    private final NAProfile na = NAProfile.create();
-
-    private final BranchProfile invalidateProfile = BranchProfile.create();
 
     static {
         Casts casts = new Casts(OnExit.class);
-        casts.arg("add").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+        casts.arg("add").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).mustNotBeNA().map(toBoolean());
     }
 
     @Override
@@ -75,43 +65,40 @@ public abstract class OnExit extends RBuiltinNode {
         return new Object[]{RNull.instance, RRuntime.LOGICAL_FALSE};
     }
 
+    @SuppressWarnings("unchecked")
     @Specialization
-    protected Object onExit(VirtualFrame frame, RPromise expr, byte add) {
+    protected Object onExit(VirtualFrame frame, RPromise expr, boolean add) {
 
-        if (na.isNA(add)) {
-            throw error(RError.Message.INVALID_ARGUMENT, "add");
+        if (onExitSlot == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            onExitSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.OnExit, FrameSlotKind.Object);
         }
 
         // the empty (RNull.instance) expression is used to clear on.exit
-        boolean empty = emptyPromiseProfile.profile(expr.isDefaultArgument());
-
-        assert !empty || expr.getRep() instanceof ConstantNode : "only ConstantNode expected for defaulted promise";
-        assert empty || !expr.isEvaluated() : "promise cannot already be evaluated";
-
-        ArrayList<Object> current;
-        FrameSlot slot = onExitSlot.executeFrameSlot(frame);
-        if (existingProfile.profile(onExitSlot.hasValue(frame))) {
-            current = getCurrentList(frame, slot);
-            if (addProfile.profile(!RRuntime.fromLogical(add))) {
-                // add is false, so clear the existing
-                current.clear();
-            }
+        if (emptyPromiseProfile.profile(expr.isDefaultArgument())) {
+            assert expr.getRep() instanceof ConstantNode : "only ConstantNode expected for defaulted promise";
+            frame.setObject(onExitSlot, new ArrayList<>());
         } else {
-            // initialize the list of exit handlers
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, current = new ArrayList<>(), false, invalidateProfile);
-        }
-        if (!empty) {
-            current.add(expr.getRep());
+            assert !expr.isEvaluated() : "promise cannot already be evaluated";
+            Object value;
+            try {
+                value = frame.getObject(onExitSlot);
+            } catch (FrameSlotTypeException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
+            ArrayList<Object> list;
+            if (newProfile.profile(value == null)) {
+                // initialize the list of exit handlers
+                frame.setObject(onExitSlot, list = new ArrayList<>());
+            } else {
+                list = (ArrayList<Object>) value;
+                if (addProfile.profile(!add)) {
+                    // add is false, so clear the existing list
+                    list.clear();
+                }
+            }
+            list.add(expr.getRep());
         }
         return RNull.instance;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static ArrayList<Object> getCurrentList(VirtualFrame frame, FrameSlot slot) {
-        try {
-            return (ArrayList<Object>) frame.getObject(slot);
-        } catch (FrameSlotTypeException e) {
-            throw RInternalError.shouldNotReachHere();
-        }
     }
 }

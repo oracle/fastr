@@ -77,6 +77,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -274,7 +275,7 @@ public class FrameFunctions {
             ArrayList<String> names = new ArrayList<>();
 
             FrameSlot varArgSlot = cframe.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
-            RArgsValuesAndNames varArgParameter = varArgSlot == null ? null : (RArgsValuesAndNames) cframe.getValue(varArgSlot);
+            RArgsValuesAndNames varArgParameter = varArgSlot == null ? null : (RArgsValuesAndNames) FrameSlotChangeMonitor.getValue(varArgSlot, cframe);
 
             for (int i = 0; i < sig.getLength(); i++) {
                 RNode arg = matchedArgNodes[i];

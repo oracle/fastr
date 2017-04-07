@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
@@ -194,7 +195,7 @@ public abstract class MatchFun extends RBuiltinNode {
             if (slot == null) {
                 return null;
             } else {
-                return frame.getValue(slot);
+                return FrameSlotChangeMonitor.getValue(slot, frame);
             }
         }
     }

@@ -565,6 +565,7 @@ public final class Utils {
     }
 
     private static void dumpFrame(StringBuilder str, CallTarget callTarget, Frame frame, boolean printFrameSlots, boolean isVirtual) {
+        CompilerAsserts.neverPartOfCompilation();
         try {
             CompilerAsserts.neverPartOfCompilation();
             if (str.length() > 0) {

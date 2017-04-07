@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
@@ -107,7 +108,7 @@ public abstract class Lapply extends RBuiltinNode {
         @Override
         public Object execute(VirtualFrame frame) {
             try {
-                return extractElementNode.apply(frame, frame.getObject(vectorSlot), new Object[]{frame.getInt(indexSlot)}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
+                return extractElementNode.apply(frame, FrameSlotChangeMonitor.getObject(vectorSlot, frame), new Object[]{frame.getInt(indexSlot)}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
             } catch (FrameSlotTypeException e) {
                 CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere("frame type mismatch in lapply");
@@ -138,11 +139,11 @@ public abstract class Lapply extends RBuiltinNode {
         public abstract Object[] execute(VirtualFrame frame, Object vector, RFunction function);
 
         protected static FrameSlot createIndexSlot(Frame frame) {
-            return frame.getFrameDescriptor().findOrAddFrameSlot(INDEX_NAME, FrameSlotKind.Int);
+            return FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), INDEX_NAME, FrameSlotKind.Int);
         }
 
         protected static FrameSlot createVectorSlot(Frame frame) {
-            return frame.getFrameDescriptor().findOrAddFrameSlot(VECTOR_NAME, FrameSlotKind.Object);
+            return FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), VECTOR_NAME, FrameSlotKind.Object);
         }
 
         @Specialization
@@ -154,7 +155,7 @@ public abstract class Lapply extends RBuiltinNode {
                         @Cached("createCallNode(vectorSlot, indexSlot)") RCallNode firstCallNode,
                         @Cached("createCallNode(vectorSlot, indexSlot)") RCallNode callNode) {
             // TODO: R switches to double if x.getLength() is greater than 2^31-1
-            frame.setObject(vectorSlot, vector);
+            FrameSlotChangeMonitor.setObject(frame, vectorSlot, vector);
             int length = lengthNode.executeInteger(frame, vector);
             Object[] result = new Object[length];
             if (length > 0) {

@@ -431,7 +431,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @SuppressWarnings("unchecked")
     private static ArrayList<Object> getCurrentOnExitList(VirtualFrame frame, FrameSlot slot) {
         try {
-            return (ArrayList<Object>) frame.getObject(slot);
+            return (ArrayList<Object>) FrameSlotChangeMonitor.getObject(slot, frame);
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere();
         }

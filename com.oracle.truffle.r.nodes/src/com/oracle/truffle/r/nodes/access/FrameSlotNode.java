@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.findOrAddFrameSlot;
-
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -37,6 +35,7 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -58,19 +57,23 @@ public abstract class FrameSlotNode extends RBaseNode {
         return new UnresolvedFrameSlotNode(name, createIfAbsent);
     }
 
-    public static FrameSlotNode createTemp(Object name, boolean createIfAbsent) {
-        return new UnresolvedFrameSlotNode(name, createIfAbsent);
-    }
-
     public static FrameSlotNode create(RFrameSlot slot, boolean createIfAbsent) {
         return new UnresolvedFrameSlotNode(slot, createIfAbsent);
     }
 
-    public static FrameSlotNode createInitialized(FrameDescriptor frameDescriptor, Object identifier, boolean createIfAbsent) {
+    public static FrameSlotNode createInitialized(FrameDescriptor frameDescriptor, RFrameSlot identifier, boolean createIfAbsent) {
+        return createInitializedInternal(frameDescriptor, identifier, createIfAbsent);
+    }
+
+    private static FrameSlotNode createInitializedInternal(FrameDescriptor frameDescriptor, Object identifier, boolean createIfAbsent) {
         FrameSlotNode newNode;
         FrameSlot frameSlot;
         if (createIfAbsent) {
-            frameSlot = findOrAddFrameSlot(frameDescriptor, identifier, FrameSlotKind.Illegal);
+            if (identifier instanceof String) {
+                frameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, (String) identifier, FrameSlotKind.Illegal);
+            } else {
+                frameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frameDescriptor, (RFrameSlot) identifier, FrameSlotKind.Illegal);
+            }
         } else {
             frameSlot = frameDescriptor.findFrameSlot(identifier);
         }
@@ -112,7 +115,7 @@ public abstract class FrameSlotNode extends RBaseNode {
         private FrameSlotNode resolveFrameSlot(Frame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-            FrameSlotNode newNode = createInitialized(frameDescriptor, identifier, createIfAbsent);
+            FrameSlotNode newNode = createInitializedInternal(frameDescriptor, identifier, createIfAbsent);
             return replace(newNode);
         }
     }
@@ -174,7 +177,8 @@ public abstract class FrameSlotNode extends RBaseNode {
         public boolean hasValue(Frame frame) {
             try {
                 Frame typedFrame = frameTypeProfile.profile(frame);
-                return !isObjectProfile.profile(typedFrame.isObject(frameSlot)) || isNullProfile.profile(typedFrame.getObject(frameSlot) != null);
+                return !isObjectProfile.profile(typedFrame.isObject(frameSlot)) ||
+                                isNullProfile.profile(FrameSlotChangeMonitor.getObject(frameSlot, typedFrame) != null);
             } catch (FrameSlotTypeException e) {
                 throw new IllegalStateException();
             }

@@ -118,7 +118,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
 
     private boolean isCurrentValue(Frame frame, FrameSlot frameSlot, Object value) {
         try {
-            return isObjectProfile.profile(frame.isObject(frameSlot)) && isCurrentProfile.profile(frame.getObject(frameSlot) == value);
+            return isObjectProfile.profile(frame.isObject(frameSlot)) && isCurrentProfile.profile(FrameSlotChangeMonitor.getObject(frameSlot, frame) == value);
         } catch (FrameSlotTypeException ex) {
             throw RInternalError.shouldNotReachHere();
         }

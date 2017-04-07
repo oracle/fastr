@@ -146,7 +146,7 @@ abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
                 writeNode = ResolvedWriteSuperFrameVariableNodeGen.create(getName(), mode, rhs, enclosingFrameNode,
                                 FrameSlotNode.create(findOrAddFrameSlot(enclosingFrame.getFrameDescriptor(), getName(), FrameSlotKind.Illegal)));
             } else {
-                ResolvedWriteSuperFrameVariableNode actualWriteNode = ResolvedWriteSuperFrameVariableNodeGen.create(getName(), mode, null, null, FrameSlotNode.createTemp(getName(), false));
+                ResolvedWriteSuperFrameVariableNode actualWriteNode = ResolvedWriteSuperFrameVariableNodeGen.create(getName(), mode, null, null, FrameSlotNode.create(getName(), false));
                 writeNode = new WriteSuperFrameVariableConditionalNode(getName(), actualWriteNode, new UnresolvedWriteSuperFrameVariableNode(getName(), mode, null), rhs);
             }
             replace(writeNode).execute(frame, value, enclosingFrame);

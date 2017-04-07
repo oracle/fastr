@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 /**
  * This class implements the behavior for {@link RMissing} which is needed inside this module, as it
@@ -91,7 +92,7 @@ public class RMissingHelper {
 
         // Read name's value
         try {
-            return frame.getObject(frameSlot);
+            return FrameSlotChangeMonitor.getObject(frameSlot, frame);
         } catch (FrameSlotTypeException e) {
             return null;
         }

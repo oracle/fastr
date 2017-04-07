@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,12 +31,37 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * Description of different internal frame slots used by FastR. This enum is used as an identifier,
  * so that these internal frame slots have non-string names.
  */
-public enum RFrameSlot {
+public final class RFrameSlot {
+    private final String name;
+    private final boolean multiSlot;
+
+    private RFrameSlot(String name, boolean multiSlot) {
+        this.name = name;
+        this.multiSlot = multiSlot;
+    }
+
+    @Override
+    public String toString() {
+        return name == null ? "TempFrameSlot" : name;
+    }
+
+    public boolean isTemp() {
+        return name == null;
+    }
+
+    public boolean isMultiSlot() {
+        return multiSlot;
+    }
+
+    public static RFrameSlot createTemp(boolean multiSlot) {
+        return new RFrameSlot(null, multiSlot);
+    }
+
     /**
      * This frame slot is used to store expressions installed as function exit handlers via on.exit.
      * It contains an {@link ArrayList} with {@link RNode} elements.
      */
-    OnExit,
+    public static final RFrameSlot OnExit = new RFrameSlot("OnExit", false);
     /**
      * This frame slot is used to track result visibility. It can contain one of three values:
      * <ul>
@@ -51,13 +76,17 @@ public enum RFrameSlot {
      * each call site, the value of {@link RCaller#getVisibility()} is extracted and stored into the
      * frame slot.
      */
-    Visibility,
+    public static final RFrameSlot Visibility = new RFrameSlot("Visibility", false);
     /**
      * Used to save the handler stack in frames that modify it.
      */
-    HandlerStack,
+    public static final RFrameSlot HandlerStack = new RFrameSlot("HandlerStack", false);
     /**
      * Used to save the restart stack in frames that modify it.
      */
-    RestartStack
+    public static final RFrameSlot RestartStack = new RFrameSlot("RestartStack", false);
+
+    public static RFrameSlot[] values() {
+        return new RFrameSlot[]{OnExit, Visibility, HandlerStack, RestartStack};
+    }
 }
