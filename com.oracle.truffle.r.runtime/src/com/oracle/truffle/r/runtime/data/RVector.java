@@ -96,23 +96,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         }
     }
 
-    private RList getDimNamesFromAttrs() {
-        if (attributes == null) {
-            return null;
-        } else {
-            return (RList) attributes.get(RRuntime.DIMNAMES_ATTR_KEY);
-        }
-    }
-
-    private Object getRowNamesFromAttrs() {
-        if (attributes == null) {
-            return null;
-        } else {
-            return attributes.get(RRuntime.ROWNAMES_ATTR_KEY);
-        }
-    }
-
-    protected final RStringVector getNamesFromAttrs() {
+    private RStringVector getNamesFromAttrs() {
         if (attributes == null) {
             return null;
         } else {
@@ -149,10 +133,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
      */
     public final ArrayT getDataTemp() {
         return isTemporary() ? getDataWithoutCopying() : getDataCopy();
-    }
-
-    public final int[] getInternalDimensions() {
-        return getDimensionsFromAttrs();
     }
 
     @Override
@@ -204,36 +184,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     }
 
     /**
-     * Find the first element in the names list that {@code name} is a prefix of, and return its
-     * index. If there are no names, or none is found, or there are multiple inexact matches, return
-     * -1.
-     */
-    @TruffleBoundary
-    public final int getElementIndexByNameInexact(String name) {
-        if (getNames() == null) {
-            return -1;
-        }
-        boolean oneMatch = false;
-        int match = -1;
-        RStringVector names = getNamesFromAttrs();
-        for (int i = 0; i < names.getLength(); i++) {
-            if (names.getDataAt(i).startsWith(name)) {
-                if (oneMatch) {
-                    return -1;
-                } else {
-                    match = i;
-                    oneMatch = true;
-                }
-            }
-        }
-        return match;
-    }
-
-    /**
      * Guarded method that checks whether {@code attributes} is initialized.
-     *
-     * @param attribute
-     * @param value
      */
     private void putAttribute(String attribute, Object value) {
         initAttributes().define(attribute, value);
@@ -292,20 +243,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         }
     }
 
-    /**
-     * Sets names attribute without doing any error checking - to be used sparingly.
-     *
-     * @param newNames
-     */
-    public final void setNamesNoCheck(RStringVector newNames) {
-        if (newNames == null) {
-            removeAttributeMapping(RRuntime.NAMES_ATTR_KEY);
-        } else {
-            putAttribute(RRuntime.NAMES_ATTR_KEY, newNames);
-        }
-        assert newNames != this;
-    }
-
     @Override
     public final void setNames(RStringVector newNames) {
         // TODO pass invoking Node
@@ -338,7 +275,11 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     @Override
     public final RList getDimNames() {
-        return getDimNamesFromAttrs();
+        if (attributes == null) {
+            return null;
+        } else {
+            return (RList) attributes.get(RRuntime.DIMNAMES_ATTR_KEY);
+        }
     }
 
     /**
@@ -409,8 +350,11 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     @Override
     public final Object getRowNames() {
-        Object rn = getRowNamesFromAttrs();
-        return rn == null ? RNull.instance : rn;
+        if (attributes == null) {
+            return RNull.instance;
+        } else {
+            return attributes.get(RRuntime.ROWNAMES_ATTR_KEY);
+        }
     }
 
     @Override
@@ -432,15 +376,15 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         return attributes == null ? false : attributes.containsKey(RRuntime.DIM_ATTR_KEY);
     }
 
-    public final boolean hasDimNames() {
+    private boolean hasDimNames() {
         return attributes == null ? false : attributes.containsKey(RRuntime.DIMNAMES_ATTR_KEY);
     }
 
-    public final boolean hasRowNames() {
+    private boolean hasRowNames() {
         return attributes == null ? false : attributes.containsKey(RRuntime.ROWNAMES_ATTR_KEY);
     }
 
-    public final boolean hasNames() {
+    private boolean hasNames() {
         return attributes == null ? false : attributes.containsKey(RRuntime.NAMES_ATTR_KEY);
     }
 
@@ -499,10 +443,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         return setClassAttrInternal(vector, classAttr);
     }
 
-    public abstract class CNode extends RBaseNode {
-
-    }
-
     private static RAbstractContainer setClassAttrInternal(RVector<?> vector, RStringVector classAttr) {
         if (vector.attributes == null && classAttr != null && classAttr.getLength() != 0) {
             vector.initAttributes();
@@ -554,26 +494,31 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     @Override
     public final RVector<ArrayT> copyResized(int size, boolean fillNA) {
-        return internalCopyResizedAndReport(size, fillNA);
+        RVector<ArrayT> result = internalCopyResized(size, fillNA, null);
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @Override
+    public final RVector<ArrayT> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
+        // TODO support for higher dimensions
+        assert newDimensions.length == 2;
+        RVector<ArrayT> result = internalCopyResized(newDimensions[0] * newDimensions[1], fillNA, newDimensions);
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
     }
 
     // *internalCopyAndReport* methods do just the copy and report it to MemoryTracer. These should
     // be used if additional logic in public interface *copy* method is not desired.
 
-    protected final RVector<ArrayT> internalCopyAndReport() {
+    private RVector<ArrayT> internalCopyAndReport() {
         RVector<ArrayT> result = internalCopy();
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 
-    protected final RVector<ArrayT> internalDeepCopyAndReport() {
+    private RVector<ArrayT> internalDeepCopyAndReport() {
         RVector<ArrayT> result = internalDeepCopy();
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
-    }
-
-    protected final RVector<ArrayT> internalCopyResizedAndReport(int size, boolean fillNA) {
-        RVector<ArrayT> result = internalCopyResized(size, fillNA);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
@@ -581,7 +526,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     // *internalCopy* methods should only be overridden, but never invoked from anywhere but
     // *internalCopyAndReport*
 
-    protected abstract RVector<ArrayT> internalCopyResized(int size, boolean fillNA);
+    protected abstract RVector<ArrayT> internalCopyResized(int size, boolean fillNA, int[] dimensions);
 
     // to be overridden by recursive structures
     protected RVector<ArrayT> internalDeepCopy() {
@@ -590,20 +535,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     protected abstract RVector<ArrayT> internalCopy();
 
-    @Override
-    public RVector<ArrayT> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        // TODO support for higher dimensions
-        assert newDimensions.length == 2;
-        RVector<ArrayT> result = copyResized(newDimensions[0] * newDimensions[1], fillNA);
-        result.setDimensions(newDimensions);
-        return result;
-    }
-
-    public final boolean verify() {
-        return internalVerify();
-    }
-
-    protected abstract boolean internalVerify();
+    public abstract boolean verify();
 
     /**
      * Update a data item in the vector. Possibly not as efficient as type-specific methods, but in
@@ -643,7 +575,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
      * Internal version without profiles used in a rare (and already slow) case of double-to-int
      * vector conversion when setting class attribute
      */
-    protected final RAttributable copyAttributesFromVector(RVector<?> vector) {
+    private RAttributable copyAttributesFromVector(RVector<?> vector) {
         DynamicObject vecAttributes = vector.getAttributes();
         if (vecAttributes != null) {
             initAttributes(RAttributesLayout.copy(vecAttributes));
@@ -791,7 +723,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     private static final int MAX_TOSTRING_LENGTH = 100;
 
-    protected String toString(Function<Integer, String> element) {
+    protected final String toString(Function<Integer, String> element) {
         CompilerAsserts.neverPartOfCompilation();
         StringBuilder str = new StringBuilder("[");
         for (int i = 0; i < getLength(); i++) {

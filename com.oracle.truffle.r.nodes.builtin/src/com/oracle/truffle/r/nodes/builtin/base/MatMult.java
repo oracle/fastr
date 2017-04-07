@@ -52,7 +52,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -604,25 +603,28 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization
     protected RIntVector multiply(RAbstractLogicalVector aOriginal, RAbstractLogicalVector bOriginal,
+                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
-        return intMultiply(RClosures.createLogicalToIntVector(aOriginal), RClosures.createLogicalToIntVector(bOriginal), aIsMatrix, bIsMatrix);
+        return intMultiply((RAbstractIntVector) aOriginal.castSafe(RType.Integer, isNAProfile), (RAbstractIntVector) bOriginal.castSafe(RType.Integer, isNAProfile), aIsMatrix, bIsMatrix);
     }
 
     // to int
 
     @Specialization
-    protected RIntVector multiply(RAbstractLogicalVector a, RAbstractIntVector b,
+    protected RIntVector multiply(RAbstractLogicalVector aOriginal, RAbstractIntVector b,
+                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
-        return intMultiply(RClosures.createLogicalToIntVector(a), b, aIsMatrix, bIsMatrix);
+        return intMultiply((RAbstractIntVector) aOriginal.castSafe(RType.Integer, isNAProfile), b, aIsMatrix, bIsMatrix);
     }
 
     @Specialization
-    protected RIntVector multiply(RAbstractIntVector a, RAbstractLogicalVector b,
+    protected RIntVector multiply(RAbstractIntVector a, RAbstractLogicalVector bOriginal,
+                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
-        return intMultiply(a, RClosures.createLogicalToIntVector(b), aIsMatrix, bIsMatrix);
+        return intMultiply(a, (RAbstractIntVector) bOriginal.castSafe(RType.Integer, isNAProfile), aIsMatrix, bIsMatrix);
     }
 
     // to double

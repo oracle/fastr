@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,9 +71,9 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
             case Complex:
                 return this;
             case Character:
-                return RClosures.createComplexToStringVector(this);
+                return RClosures.createToStringVector(this);
             case List:
-                return RClosures.createAbstractVectorToListVector(this);
+                return RClosures.createToListVector(this);
             default:
                 return null;
         }
@@ -106,7 +106,7 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
     }
 
     @Override
-    protected boolean internalVerify() {
+    public boolean verify() {
         if (isComplete()) {
             for (double d : data) {
                 if (d == RRuntime.DOUBLE_NA) {
@@ -172,9 +172,9 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
     }
 
     @Override
-    protected RComplexVector internalCopyResized(int size, boolean fillNA) {
+    protected RComplexVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
         boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
-        return RDataFactory.createComplexVector(copyResizedData(size, fillNA), isComplete);
+        return RDataFactory.createComplexVector(copyResizedData(size, fillNA), isComplete, dimensions);
     }
 
     @Override

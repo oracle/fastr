@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,17 +22,17 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 abstract class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDoubleVector {
-
-    RToDoubleVectorClosure(RAbstractVector vector) {
-        super(vector);
-    }
 
     @Override
     public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
@@ -47,11 +47,99 @@ abstract class RToDoubleVectorClosure extends RToVectorClosure implements RAbstr
             double data = getDataAt(i);
             result[i] = data;
         }
-        return RDataFactory.createDoubleVector(result, vector.isComplete());
+        return RDataFactory.createDoubleVector(result, getVector().isComplete());
     }
 
     @Override
     public final RDoubleVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
+    }
+}
+
+final class RLogicalToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
+
+    private final RLogicalVector vector;
+
+    RLogicalToDoubleVectorClosure(RLogicalVector vector) {
+        this.vector = vector;
+    }
+
+    @Override
+    public RLogicalVector getVector() {
+        return vector;
+    }
+
+    @Override
+    public double getDataAt(int index) {
+        byte data = vector.getDataAt(index);
+        if (RRuntime.isNA(data)) {
+            return RRuntime.DOUBLE_NA;
+        }
+        return RRuntime.logical2doubleNoCheck(data);
+    }
+}
+
+final class RIntToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
+
+    private final RIntVector vector;
+
+    RIntToDoubleVectorClosure(RIntVector vector) {
+        this.vector = vector;
+    }
+
+    @Override
+    public RIntVector getVector() {
+        return vector;
+    }
+
+    @Override
+    public double getDataAt(int index) {
+        int data = vector.getDataAt(index);
+        if (RRuntime.isNA(data)) {
+            return RRuntime.DOUBLE_NA;
+        }
+        return RRuntime.int2doubleNoCheck(data);
+    }
+}
+
+final class RIntSequenceToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
+
+    private final RIntSequence vector;
+
+    RIntSequenceToDoubleVectorClosure(RIntSequence vector) {
+        this.vector = vector;
+    }
+
+    @Override
+    public RIntSequence getVector() {
+        return vector;
+    }
+
+    @Override
+    public double getDataAt(int index) {
+        int data = vector.getDataAt(index);
+        if (RRuntime.isNA(data)) {
+            return RRuntime.DOUBLE_NA;
+        }
+        return RRuntime.int2doubleNoCheck(data);
+    }
+}
+
+final class RRawToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
+
+    private final RRawVector vector;
+
+    RRawToDoubleVectorClosure(RRawVector vector) {
+        this.vector = vector;
+    }
+
+    @Override
+    public RRawVector getVector() {
+        return vector;
+    }
+
+    @Override
+    public double getDataAt(int index) {
+        return RRuntime.raw2double(vector.getDataAt(index));
     }
 }

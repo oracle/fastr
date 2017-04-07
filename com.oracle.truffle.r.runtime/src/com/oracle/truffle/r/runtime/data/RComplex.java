@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -57,9 +57,9 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
             case Complex:
                 return this;
             case Character:
-                return RClosures.createComplexToStringVector(this);
+                return RString.valueOf(RContext.getRRuntimeASTAccess().encodeComplex(this));
             case List:
-                return RClosures.createAbstractVectorToListVector(this);
+                return RScalarList.valueOf(this);
             default:
                 return null;
         }

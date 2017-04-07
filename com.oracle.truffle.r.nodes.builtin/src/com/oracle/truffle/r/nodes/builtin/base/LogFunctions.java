@@ -123,7 +123,7 @@ public class LogFunctions {
                         @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
                         @Cached("create()") NAProfile naBase) {
             if (naX.isNA(x)) {
-                return RRuntime.createComplexNA();
+                return RComplex.createNA();
             }
             return logb(RComplex.valueOf(x, 0), base, divNode, naBase);
         }
@@ -133,7 +133,7 @@ public class LogFunctions {
                         @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
                         @Cached("create()") NAProfile naBase) {
             if (naX.isNA(x)) {
-                return RRuntime.createComplexNA();
+                return RComplex.createNA();
             }
             return logb(RComplex.valueOf(x, 0), base, divNode, naBase);
         }
@@ -143,7 +143,7 @@ public class LogFunctions {
                         @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
                         @Cached("create()") NAProfile naBase) {
             if (naX.isNA(x)) {
-                return RRuntime.createComplexNA();
+                return RComplex.createNA();
             }
             return logb(RComplex.valueOf(x, 0), base, divNode, naBase);
         }
@@ -153,7 +153,7 @@ public class LogFunctions {
                         @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
                         @Cached("create()") NAProfile naBase) {
             if (naX.isNA(x)) {
-                return RRuntime.createComplexNA();
+                return RComplex.createNA();
             }
             return logb(x, base, divNode, naBase);
         }
@@ -352,7 +352,7 @@ public class LogFunctions {
 
         private RComplex logb(RComplex x, RComplex base, BinaryMapArithmeticFunctionNode div, NAProfile naBase) {
             if (naBase.isNA(base)) {
-                return RRuntime.createComplexNA();
+                return RComplex.createNA();
             }
             if (isNaN(base)) {
                 nanProfile.enter();

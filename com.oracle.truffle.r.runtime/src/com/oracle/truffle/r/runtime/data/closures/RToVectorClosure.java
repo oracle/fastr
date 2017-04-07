@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -33,15 +33,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 abstract class RToVectorClosure implements RAbstractVector {
 
-    protected final RAbstractVector vector;
-
-    RToVectorClosure(RAbstractVector vector) {
-        this.vector = vector;
-    }
+    public abstract RAbstractVector getVector();
 
     @Override
     public int getLength() {
-        return vector.getLength();
+        return getVector().getLength();
     }
 
     @Override
@@ -51,142 +47,132 @@ abstract class RToVectorClosure implements RAbstractVector {
 
     @Override
     public final RAbstractContainer resize(int size) {
-        return vector.resize(size);
+        return getVector().resize(size);
     }
 
     @Override
     public final void setComplete(boolean complete) {
-        this.vector.setComplete(complete);
+        this.getVector().setComplete(complete);
     }
 
     @Override
     public final boolean isComplete() {
-        return vector.isComplete();
+        return getVector().isComplete();
     }
 
     @Override
     public final boolean hasDimensions() {
-        return vector.hasDimensions();
+        return getVector().hasDimensions();
     }
 
     @Override
     public final int[] getDimensions() {
-        return vector.getDimensions();
+        return getVector().getDimensions();
     }
 
     @Override
     public final void setDimensions(int[] newDimensions) {
-        vector.setDimensions(newDimensions);
+        getVector().setDimensions(newDimensions);
     }
 
     @Override
     public RStringVector getNames() {
-        return vector.getNames();
+        return getVector().getNames();
     }
 
     @Override
     public final void setNames(RStringVector newNames) {
-        vector.setNames(newNames);
+        getVector().setNames(newNames);
     }
 
     @Override
     public final RList getDimNames() {
-        return vector.getDimNames();
+        return getVector().getDimNames();
     }
 
     @Override
     public final void setDimNames(RList newDimNames) {
-        vector.setDimNames(newDimNames);
+        getVector().setDimNames(newDimNames);
     }
 
     @Override
     public final Object getRowNames() {
-        return vector.getRowNames();
+        return getVector().getRowNames();
     }
 
     @Override
     public final void setRowNames(RAbstractVector rowNames) {
-        vector.setRowNames(rowNames);
+        getVector().setRowNames(rowNames);
     }
 
     @Override
     public final DynamicObject initAttributes() {
-        return vector.initAttributes();
+        return getVector().initAttributes();
     }
 
     @Override
     public final void initAttributes(DynamicObject newAttributes) {
-        vector.initAttributes(newAttributes);
+        getVector().initAttributes(newAttributes);
     }
 
     @Override
     public final DynamicObject getAttributes() {
-        return vector.getAttributes();
+        return getVector().getAttributes();
     }
 
     @Override
     public final RAbstractVector copy() {
-        RAbstractVector result = vector.copy();
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
+        throw RInternalError.shouldNotReachHere();
     }
 
     @Override
     public final RVector<?> copyResized(int size, boolean fillNA) {
-        RVector<?> result = vector.copyResized(size, fillNA);
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
+        throw RInternalError.shouldNotReachHere();
     }
 
     @Override
     public final RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        // TODO support for higher dimensions
-        assert newDimensions.length == 2;
-        RVector<?> result = copyResized(newDimensions[0] * newDimensions[1], fillNA);
-        result.setDimensions(newDimensions);
-        return result;
+        throw RInternalError.shouldNotReachHere();
     }
 
     @Override
     public final RAbstractVector copyDropAttributes() {
-        RAbstractVector result = vector.copyDropAttributes();
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
+        throw RInternalError.shouldNotReachHere();
     }
 
     @Override
     public final boolean isMatrix() {
-        return vector.isMatrix();
+        return getVector().isMatrix();
     }
 
     @Override
     public final boolean isArray() {
-        return vector.isArray();
+        return getVector().isArray();
     }
 
     @Override
     public final RStringVector getClassHierarchy() {
-        return vector.getClassHierarchy();
+        return getVector().getClassHierarchy();
     }
 
     @Override
     public RStringVector getImplicitClass() {
-        return vector.getImplicitClass();
+        return getVector().getImplicitClass();
     }
 
     @Override
     public final RTypedValue getNonShared() {
-        return vector.getNonShared();
+        return getVector().getNonShared();
     }
 
     @Override
     public int getTypedValueInfo() {
-        return vector.getTypedValueInfo();
+        return getVector().getTypedValueInfo();
     }
 
     @Override
     public void setTypedValueInfo(int value) {
-        vector.setTypedValueInfo(value);
+        getVector().setTypedValueInfo(value);
     }
 
     @Override

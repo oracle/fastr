@@ -55,11 +55,11 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
             case Double:
                 return RDataFactory.createDoubleSequence(getStart(), getStride(), getLength());
             case Complex:
-                return RClosures.createIntToComplexVector(this);
+                return RClosures.createToComplexVector(this);
             case Character:
-                return RClosures.createIntToStringVector(this);
+                return RClosures.createToStringVector(this);
             case List:
-                return RClosures.createAbstractVectorToListVector(this);
+                return RClosures.createToListVector(this);
             default:
                 return null;
         }
@@ -123,6 +123,15 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         populateVectorData(data);
         RIntVector.resizeData(data, data, getLength(), fillNA);
         return RDataFactory.createIntVector(data, !(fillNA && size > getLength()));
+    }
+
+    @Override
+    public RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
+        int size = newDimensions[0] * newDimensions[1];
+        int[] data = new int[size];
+        populateVectorData(data);
+        RIntVector.resizeData(data, data, getLength(), fillNA);
+        return RDataFactory.createIntVector(data, !(fillNA && size > getLength()), newDimensions);
     }
 
     @Override

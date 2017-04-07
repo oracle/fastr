@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,7 +56,7 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
             case Character:
                 return this;
             case List:
-                return RClosures.createAbstractVectorToListVector(this);
+                return RClosures.createToListVector(this);
             default:
                 return null;
         }
@@ -111,7 +111,7 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
     }
 
     @Override
-    protected boolean internalVerify() {
+    public boolean verify() {
         if (isComplete()) {
             for (String b : data) {
                 if (b == RRuntime.STRING_NA) {
@@ -166,9 +166,9 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
     }
 
     @Override
-    protected RStringVector internalCopyResized(int size, boolean fillNA) {
+    protected RStringVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
         boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
-        return RDataFactory.createStringVector(copyResizedData(size, fillNA ? RRuntime.STRING_NA : null), isComplete);
+        return RDataFactory.createStringVector(copyResizedData(size, fillNA ? RRuntime.STRING_NA : null), isComplete, dimensions);
     }
 
     public RStringVector resizeWithEmpty(int size) {

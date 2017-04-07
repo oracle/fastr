@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,17 +22,20 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleSequence;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 abstract class RToIntVectorClosure extends RToVectorClosure implements RAbstractIntVector {
-
-    RToIntVectorClosure(RAbstractVector vector) {
-        super(vector);
-    }
 
     @Override
     public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
@@ -47,11 +50,136 @@ abstract class RToIntVectorClosure extends RToVectorClosure implements RAbstract
             int data = getDataAt(i);
             result[i] = data;
         }
-        return RDataFactory.createIntVector(result, vector.isComplete());
+        return RDataFactory.createIntVector(result, getVector().isComplete());
     }
 
     @Override
     public final RIntVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
+    }
+}
+
+final class RLogicalToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
+
+    private final RLogicalVector vector;
+
+    RLogicalToIntVectorClosure(RLogicalVector vector) {
+        this.vector = vector;
+    }
+
+    @Override
+    public RLogicalVector getVector() {
+        return vector;
+    }
+
+    @Override
+    public int getDataAt(int index) {
+        byte data = vector.getDataAt(index);
+        if (RRuntime.isNA(data)) {
+            return RRuntime.INT_NA;
+        }
+        return data;
+    }
+}
+
+final class RDoubleToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
+
+    private final RDoubleVector vector;
+
+    RDoubleToIntVectorClosure(RDoubleVector vector) {
+        this.vector = vector;
+    }
+
+    @Override
+    public RDoubleVector getVector() {
+        return vector;
+    }
+
+    @Override
+    public int getDataAt(int index) {
+        double value = vector.getDataAt(index);
+        if (Double.isNaN(value)) {
+            return RRuntime.INT_NA;
+        }
+        int result = (int) value;
+        if (result == Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+            RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION);
+            return RRuntime.INT_NA;
+        }
+        return result;
+    }
+}
+
+final class RDoubleSequenceToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
+
+    private final RDoubleSequence vector;
+
+    RDoubleSequenceToIntVectorClosure(RDoubleSequence vector) {
+        this.vector = vector;
+    }
+
+    @Override
+    public RDoubleSequence getVector() {
+        return vector;
+    }
+
+    @Override
+    public int getDataAt(int index) {
+        double value = vector.getDataAt(index);
+        if (Double.isNaN(value)) {
+            return RRuntime.INT_NA;
+        }
+        int result = (int) value;
+        if (result == Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+            RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION);
+            return RRuntime.INT_NA;
+        }
+        return result;
+    }
+}
+
+/**
+ * In converting complex numbers to integers, this closure discards the imaginary parts.
+ */
+final class RComplexToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
+
+    private final RComplexVector vector;
+
+    RComplexToIntVectorClosure(RComplexVector vector) {
+        this.vector = vector;
+    }
+
+    @Override
+    public RComplexVector getVector() {
+        return vector;
+    }
+
+    @Override
+    public int getDataAt(int index) {
+        RComplex right = vector.getDataAt(index);
+        if (RRuntime.isNA(right)) {
+            return RRuntime.INT_NA;
+        }
+        RError.warning(RError.SHOW_CALLER2, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+        return RRuntime.complex2intNoCheck(right);
+    }
+}
+
+final class RRawToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
+
+    private final RRawVector vector;
+
+    RRawToIntVectorClosure(RRawVector vector) {
+        this.vector = vector;
+    }
+
+    @Override
+    public RRawVector getVector() {
+        return vector;
+    }
+
+    @Override
+    public int getDataAt(int index) {
+        return RRuntime.raw2int(vector.getDataAt(index));
     }
 }

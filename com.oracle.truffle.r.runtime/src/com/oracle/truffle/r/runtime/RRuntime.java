@@ -205,10 +205,6 @@ public class RRuntime {
         return frame;
     }
 
-    public static RComplex createComplexNA() {
-        return RDataFactory.createComplex(COMPLEX_NA_REAL_PART, COMPLEX_NA_IMAGINARY_PART);
-    }
-
     /**
      * Since a distinguished NaN value is used for NA, checking for {@code isNaN} suffices.
      */
@@ -306,7 +302,7 @@ public class RRuntime {
     }
 
     public static RComplex logical2complex(byte value) {
-        return isNA(value) ? createComplexNA() : logical2complexNoCheck(value);
+        return isNA(value) ? RComplex.createNA() : logical2complexNoCheck(value);
     }
 
     public static String logicalToStringNoCheck(byte operand) {
@@ -484,14 +480,14 @@ public class RRuntime {
 
                 return RDataFactory.createComplex(realPart * (negativeReal ? -1 : 1), imaginaryPart * (negativeImaginary ? -1 : 1));
             } catch (NumberFormatException ex) {
-                return createComplexNA();
+                return RComplex.createNA();
             }
         }
     }
 
     @TruffleBoundary
     public static RComplex string2complex(String v) {
-        return isNA(v) ? createComplexNA() : string2complexNoCheck(v);
+        return isNA(v) ? RComplex.createNA() : string2complexNoCheck(v);
     }
 
     @TruffleBoundary
@@ -526,7 +522,7 @@ public class RRuntime {
     }
 
     public static RComplex int2complex(int i) {
-        return isNA(i) ? createComplexNA() : int2complexNoCheck(i);
+        return isNA(i) ? RComplex.createNA() : int2complexNoCheck(i);
     }
 
     public static String intToStringNoCheck(int operand) {
@@ -585,7 +581,7 @@ public class RRuntime {
     }
 
     public static RComplex double2complex(double d) {
-        return isNAorNaN(d) ? createComplexNA() : double2complexNoCheck(d);
+        return isNAorNaN(d) ? RComplex.createNA() : double2complexNoCheck(d);
     }
 
     public static int double2rawIntValue(double operand) {

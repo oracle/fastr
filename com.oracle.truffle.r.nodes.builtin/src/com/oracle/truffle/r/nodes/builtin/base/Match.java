@@ -46,6 +46,7 @@ import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -445,23 +446,27 @@ public abstract class Match extends RBuiltinNode {
         }
 
         @Specialization
-        protected RIntVector match(RAbstractLogicalVector x, RAbstractStringVector table, int nomatch) {
-            return match(RClosures.createLogicalToStringVector(x), table, nomatch);
+        protected RIntVector match(RAbstractLogicalVector x, RAbstractStringVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), table, nomatch);
         }
 
         @Specialization
-        protected RIntVector match(RAbstractRawVector x, RAbstractIntVector table, int nomatch) {
-            return match(RClosures.createRawToStringVector(x), RClosures.createIntToStringVector(table), nomatch);
+        protected RIntVector match(RAbstractRawVector x, RAbstractIntVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), (RAbstractStringVector) table.castSafe(RType.Character, isNAProfile), nomatch);
         }
 
         @Specialization
-        protected RIntVector match(RAbstractIntVector x, RAbstractStringVector table, int nomatch) {
-            return match(RClosures.createIntToStringVector(x), table, nomatch);
+        protected RIntVector match(RAbstractIntVector x, RAbstractStringVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), table, nomatch);
         }
 
         @Specialization
-        protected RIntVector match(RAbstractDoubleVector x, RAbstractStringVector table, int nomatch) {
-            return match(RClosures.createDoubleToStringVector(x), table, nomatch);
+        protected RIntVector match(RAbstractDoubleVector x, RAbstractStringVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), table, nomatch);
         }
 
         @Specialization

@@ -79,8 +79,8 @@ public final class RList extends RListBase implements RAbstractListVector {
     }
 
     @Override
-    protected RList internalCopyResized(int size, boolean fillNA) {
-        return RDataFactory.createList(copyResizedData(size, fillNA));
+    protected RList internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        return RDataFactory.createList(copyResizedData(size, fillNA), dimensions);
     }
 
     @Override

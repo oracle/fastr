@@ -466,7 +466,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         protected void setNames(RVector<?> container, RAbstractStringVector newNames) {
             RStringVector newNames1 = newNames.materialize();
             assert newNames1.getLength() <= container.getLength();
-            assert container.getInternalDimensions() == null;
+            assert container.getDimensions() == null;
             if (container.getAttributes() == null) {
                 // usual case
                 container.initAttributes(RAttributesLayout.createNames(newNames1));

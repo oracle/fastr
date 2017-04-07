@@ -79,8 +79,8 @@ public final class RExpression extends RListBase implements RAbstractVector {
     }
 
     @Override
-    protected RExpression internalCopyResized(int size, boolean fillNA) {
-        return RDataFactory.createExpression(copyResizedData(size, fillNA));
+    protected RExpression internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        return RDataFactory.createExpression(copyResizedData(size, fillNA), dimensions);
     }
 
     @Override

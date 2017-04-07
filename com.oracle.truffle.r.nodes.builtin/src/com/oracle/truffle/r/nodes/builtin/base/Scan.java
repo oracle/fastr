@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -524,7 +525,7 @@ public abstract class Scan extends RBuiltinNode {
                 }
             case Complex:
                 if (isNaString(buffer, 0, data)) {
-                    return RRuntime.createComplexNA();
+                    return RComplex.createNA();
                 } else {
                     return RRuntime.string2complexNoCheck(buffer);
                 }

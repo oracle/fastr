@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,16 +54,16 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
         switch (type) {
             case Logical:
                 return this;
-            case Double:
-                return RClosures.createLogicalToDoubleVector(this);
             case Integer:
-                return RClosures.createLogicalToIntVector(this);
+                return RClosures.createToIntVector(this);
+            case Double:
+                return RClosures.createToDoubleVector(this);
             case Complex:
-                return RClosures.createLogicalToComplexVector(this);
+                return RClosures.createToComplexVector(this);
             case Character:
-                return RClosures.createLogicalToStringVector(this);
+                return RClosures.createToStringVector(this);
             case List:
-                return RClosures.createAbstractVectorToListVector(this);
+                return RClosures.createToListVector(this);
             default:
                 return null;
         }
@@ -115,7 +115,7 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
     }
 
     @Override
-    protected boolean internalVerify() {
+    public boolean verify() {
         if (isComplete()) {
             for (byte b : data) {
                 if (b == RRuntime.LOGICAL_NA) {
@@ -164,9 +164,9 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
     }
 
     @Override
-    protected RLogicalVector internalCopyResized(int size, boolean fillNA) {
+    protected RLogicalVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
         boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
-        return RDataFactory.createLogicalVector(copyResizedData(size, fillNA), isComplete);
+        return RDataFactory.createLogicalVector(copyResizedData(size, fillNA), isComplete, dimensions);
     }
 
     @Override

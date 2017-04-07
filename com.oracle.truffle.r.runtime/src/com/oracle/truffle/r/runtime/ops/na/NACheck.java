@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -180,7 +180,7 @@ public final class NACheck {
 
     public RComplex convertLogicalToComplex(byte value) {
         if (check(value)) {
-            return RRuntime.createComplexNA();
+            return RComplex.createNA();
         }
         return RDataFactory.createComplex(value, 0);
     }
@@ -194,14 +194,14 @@ public final class NACheck {
 
     public RComplex convertDoubleToComplex(double value) {
         if (check(value)) {
-            return RRuntime.createComplexNA();
+            return RComplex.createNA();
         }
         return RDataFactory.createComplex(value, 0);
     }
 
     public RComplex convertIntToComplex(int value) {
         if (check(value)) {
-            return RRuntime.createComplexNA();
+            return RComplex.createNA();
         }
         return RDataFactory.createComplex(value, 0);
     }
@@ -252,7 +252,7 @@ public final class NACheck {
 
     public RComplex convertStringToComplex(String value) {
         if (check(value)) {
-            return RRuntime.createComplexNA();
+            return RComplex.createNA();
         }
         RComplex result = RRuntime.string2complexNoCheck(value);
         check(result); // can be NA
