@@ -25,14 +25,14 @@ chullWrapper <- function(x, y) {
 }
 
 # Returns list with elements [[1]] - depth, zero if not found, [[2]] - the viewport, NULL if not found
-# We are searching for child "name" in "pvp", if the "path" is not missing,
+# We are searching for child "name" in "pvp", if the "path" is not integer value 0,
 # then also pathMatch(path, currPath) must hold.
 find.viewport <- function(path, name, strict, currPath, pvp, depth) {
     if (length(ls(env=pvp$children)) == 0) {
         return(list(FALSE, NULL))
-    } else if (exists(name, env=pvp$children, inherits=FALSE) && (missing(path) || grid:::pathMatch(path, currPath, strict))) {
+    } else if (exists(name, env=pvp$children, inherits=FALSE) && (path == 0L || grid:::pathMatch(path, currPath, strict))) {
         return(list(depth, get(name, env=pvp$children, inherits=FALSE)))
-    } else if (strict && missing(path)) {
+    } else if (strict && path == 0L) {
         return(list(FALSE, NULL))
     } else {
         return(find.in.children(path, name, strict, currPath, pvp$children, depth + 1L))
@@ -46,7 +46,7 @@ find.in.children <- function(path, name, strict, currPath, children, depth) {
   found <- FALSE
   while (count < ncpvp && !found) {
     child <- get(cpvps[count + 1L], env=children)
-    nextCurrPath <- if (missing(path)) NULL else grid:::growPath(currPath, child$name)
+    nextCurrPath <- if (path == 0L) NULL else grid:::growPath(currPath, child$name)
     result <- find.viewport(path, name, strict, nextCurrPath, child, depth)
     if (result[[1L]]) {
         return(result);
@@ -70,8 +70,7 @@ L_downvppath <- function(path, name, strict) {
 }
 
 L_downviewport <- function(name, strict) {
-    # note: first argument is "missing"
-    L_downvppath(, name, strict)
+    L_downvppath(0L, name, strict)
 }
 
 L_setviewport <- function(vp, hasParent) {
