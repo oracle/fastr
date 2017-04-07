@@ -88,11 +88,38 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
                 return drawDot(drawingCtx, dev, cex, x, y);
             case 1:
                 return drawOctahedron(drawingCtx, dev, GridColor.TRANSPARENT, size, x, y);
+            case 19: /* R filled circle */
+                return drawFilledCircle(drawingCtx, dev, RADIUS * size, x, y);
+            case 20: /* R `Dot' (small circle) */
+                return drawFilledCircle(drawingCtx, dev, SMALL * size, x, y);
+            case 21: /* circles */
+                return drawCircle(drawingCtx, dev, size, x, y);
+            case 22: /* squares */
+                return drawSquare(drawingCtx, dev, size, x, y);
             case 16:
                 return drawOctahedron(drawingCtx, dev, drawingCtx.getWrapped().getColor(), size, x, y);
             default:
                 throw RInternalError.unimplemented("grid.points unimplemented symbol " + pch);
         }
+    }
+
+    private PointDrawingContext drawFilledCircle(PointDrawingContext drawingCtxIn, GridDevice dev, double radius, double x, double y) {
+        PointDrawingContext drawingCtx = drawingCtxIn.update(drawingCtxIn.getWrapped().getColor(), drawingCtxIn.getWrapped().getColor());
+        dev.drawCircle(drawingCtx, x, y, radius);
+        return drawingCtx;
+    }
+
+    private PointDrawingContext drawCircle(PointDrawingContext drawingCtx, GridDevice dev, double size, double x, double y) {
+        double xc = RADIUS * size;
+        dev.drawCircle(drawingCtx, x, y, xc);
+        return drawingCtx;
+    }
+
+    private PointDrawingContext drawSquare(PointDrawingContext drawingCtx, GridDevice dev, double size, double x, double y) {
+        double xc = RADIUS * SQRC * size;
+        double yc = RADIUS * SQRC * size;
+        dev.drawRect(drawingCtx, x - xc, y - yc, x + xc, y + yc, 0);
+        return drawingCtx;
     }
 
     private static PointDrawingContext drawOctahedron(PointDrawingContext drawingCtxIn, GridDevice dev, GridColor fill, double size, double x, double y) {
