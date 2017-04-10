@@ -81,8 +81,9 @@ public enum FastROptions {
 
     public boolean getBooleanValue() {
         assert isBoolean;
-        if (value instanceof Boolean) {
-            return (Boolean) value;
+        Object v = value;
+        if (v instanceof Boolean) {
+            return (boolean) v;
         } else {
             CompilerDirectives.transferToInterpreter();
             System.out.println("boolean option value expected with " + name() + " - forgot +/- ?");
@@ -93,8 +94,9 @@ public enum FastROptions {
 
     public String getStringValue() {
         assert !isBoolean;
-        if (value == null || value instanceof String) {
-            return (String) value;
+        Object v = value;
+        if (v == null || v instanceof String) {
+            return (String) v;
         } else {
             CompilerDirectives.transferToInterpreter();
             System.out.println("string option value expected with " + name());
@@ -105,13 +107,14 @@ public enum FastROptions {
 
     public int getNonNegativeIntValue() {
         assert !isBoolean;
-        if (value instanceof Integer) {
-            return (Integer) value;
+        Object v = value;
+        if (v instanceof Integer) {
+            return (Integer) v;
         }
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        if (value instanceof String) {
+        if (v instanceof String) {
             try {
-                int res = Integer.decode((String) value);
+                int res = Integer.decode((String) v);
                 if (res >= 0) {
                     value = res;
                     return res;
