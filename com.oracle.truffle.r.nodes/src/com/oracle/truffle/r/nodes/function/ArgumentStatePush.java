@@ -23,12 +23,14 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -44,7 +46,7 @@ public abstract class ArgumentStatePush extends Node {
 
     public abstract void executeObject(VirtualFrame frame, Object shareable);
 
-    @Child private WriteLocalFrameVariableNode write;
+    @CompilationFinal private FrameSlot frameSlot;
 
     private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
@@ -94,11 +96,11 @@ public abstract class ArgumentStatePush extends Node {
         if (isRefCountUpdateable.profile(!shareable.isSharedPermanent())) {
             shareable.incRefCount();
             if (writeArgMask != -1 && !FastROptions.RefCountIncrementOnly.getBooleanValue()) {
-                if (write == null) {
+                if (frameSlot == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    write = insert(WriteLocalFrameVariableNode.createForRefCount(Integer.valueOf(writeArgMask)));
+                    frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(writeArgMask, FrameSlotKind.Object);
                 }
-                write.execute(frame, shareable);
+                frame.setObject(frameSlot, shareable);
             }
         }
     }

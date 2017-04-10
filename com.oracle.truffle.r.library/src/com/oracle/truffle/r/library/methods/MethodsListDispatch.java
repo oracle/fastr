@@ -59,6 +59,7 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -419,7 +420,7 @@ public class MethodsListDispatch {
         private static Object slotRead(MaterializedFrame currentFrame, FrameDescriptor desc, String name) {
             FrameSlot slot = desc.findFrameSlot(name);
             if (slot != null) {
-                Object res = currentFrame.getValue(slot);
+                Object res = FrameSlotChangeMonitor.getValue(slot, currentFrame);
                 if (res != null) {
                     if (res instanceof RPromise) {
                         res = PromiseHelperNode.evaluateSlowPath(null, (RPromise) res);

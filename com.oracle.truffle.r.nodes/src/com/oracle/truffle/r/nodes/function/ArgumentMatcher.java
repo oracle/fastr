@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
@@ -58,6 +59,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -285,7 +287,8 @@ public class ArgumentMatcher {
             Frame frame = Utils.getActualCurrentFrame();
             try {
                 // TODO: this error handling code takes many assumptions about the argument types
-                RArgsValuesAndNames varArg = (RArgsValuesAndNames) frame.getObject(frame.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME));
+                FrameSlot frameSlot = frame.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
+                RArgsValuesAndNames varArg = (RArgsValuesAndNames) FrameSlotChangeMonitor.getObject(frameSlot, frame);
                 RPromise promise = (RPromise) varArg.getArguments()[((VarArgNode) node).getIndex()];
                 return RDeparse.deparseSyntaxElement(promise.getRep().asRSyntaxNode());
             } catch (FrameSlotTypeException | ClassCastException e) {

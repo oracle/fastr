@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,15 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.utilities.AssumedValue;
-import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -38,7 +42,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 public final class PostProcessArgumentsNode extends RNode {
 
-    @Children private final LocalReadVariableNode[] sequence;
+    @CompilationFinal(dimensions = 1) private final FrameSlot[] frameSlots;
 
     // stays the same during cloning
     private final AssumedValue<Integer> transArgsBitSet;
@@ -47,7 +51,7 @@ public final class PostProcessArgumentsNode extends RNode {
     private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
     private PostProcessArgumentsNode(int length) {
-        this.sequence = new LocalReadVariableNode[Math.min(length, ArgumentStatePush.MAX_COUNTED_ARGS)];
+        this.frameSlots = new FrameSlot[Math.min(length, ArgumentStatePush.MAX_COUNTED_ARGS)];
         this.transArgsBitSet = new AssumedValue<>("PostProcessArgumentsNode.transArgsBitSet", 0);
     }
 
@@ -56,7 +60,7 @@ public final class PostProcessArgumentsNode extends RNode {
     }
 
     public int getLength() {
-        return sequence.length;
+        return frameSlots.length;
     }
 
     @Override
@@ -64,14 +68,19 @@ public final class PostProcessArgumentsNode extends RNode {
     public Object execute(VirtualFrame frame) {
         int bits = transArgsBitSet.get();
         if (bits != 0) {
-            for (int i = 0; i < sequence.length; i++) {
+            for (int i = 0; i < frameSlots.length; i++) {
                 int mask = 1 << i;
                 if ((bits & mask) != 0) {
-                    if (sequence[i] == null) {
+                    if (frameSlots[i] == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        sequence[i] = insert(LocalReadVariableNode.create(Integer.valueOf(mask), false));
+                        frameSlots[i] = frame.getFrameDescriptor().findOrAddFrameSlot(mask, FrameSlotKind.Object);
                     }
-                    RShareable s = (RShareable) sequence[i].execute(frame);
+                    RShareable s;
+                    try {
+                        s = (RShareable) frame.getObject(frameSlots[i]);
+                    } catch (FrameSlotTypeException e) {
+                        throw RInternalError.shouldNotReachHere();
+                    }
                     if (isNonNull.profile(s != null)) {
                         if (isRefCountUpdateable.profile(!s.isSharedPermanent())) {
                             s.decRefCount();
@@ -84,7 +93,7 @@ public final class PostProcessArgumentsNode extends RNode {
     }
 
     public boolean updateBits(int index) {
-        if (index < sequence.length) {
+        if (index < frameSlots.length) {
             int bits = transArgsBitSet.get();
             int newBits = bits | (1 << index);
             if (newBits != bits) {

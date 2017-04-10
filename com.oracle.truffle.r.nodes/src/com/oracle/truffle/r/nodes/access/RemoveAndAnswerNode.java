@@ -104,7 +104,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
         protected Object doObject(VirtualFrame frame) {
             Object result;
             try {
-                result = frame.getObject(slot);
+                result = FrameSlotChangeMonitor.getObject(slot, frame);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }

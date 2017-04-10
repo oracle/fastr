@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class CollectArgumentsNode extends RBaseNode {
@@ -88,7 +89,7 @@ public abstract class CollectArgumentsNode extends RBaseNode {
             if (slot == null) {
                 result[i] = RMissing.instance;
             } else {
-                result[i] = frame.getValue(slot);
+                result[i] = FrameSlotChangeMonitor.getValue(slot, frame);
             }
         }
         return result;

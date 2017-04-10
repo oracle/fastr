@@ -22,50 +22,52 @@
  */
 package com.oracle.truffle.r.nodes.function.call;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 /**
  * Helper node that allows to call a given function with explicit arguments.
  */
 public abstract class RExplicitCallNode extends Node {
+
     public static RExplicitCallNode create() {
         return RExplicitCallNodeGen.create();
     }
 
     public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames args);
 
+    private final RFrameSlot argsIdentifier = RFrameSlot.createTemp(true);
+    @CompilationFinal private FrameSlot argsFrameSlot;
+
     @Specialization
-    Object doCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args,
-                    @SuppressWarnings("unused") @Cached("createArgsIdentifier()") Object argsIdentifier,
-                    @Cached("createExplicitCall(argsIdentifier)") RCallBaseNode call,
-                    @Cached("createFrameSlotNode(argsIdentifier)") FrameSlotNode argumentsSlot) {
-        FrameSlot argsFrameSlot = argumentsSlot.executeFrameSlot(frame);
+    protected Object doCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args,
+                    @Cached("createExplicitCall()") RCallBaseNode call) {
+        if (argsFrameSlot == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), argsIdentifier, FrameSlotKind.Object);
+        }
         try {
             frame.setObject(argsFrameSlot, args);
+            FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, args);
             return call.execute(frame, function);
         } finally {
-            frame.setObject(argsFrameSlot, null);
+            FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, null);
         }
     }
 
-    static Object createArgsIdentifier() {
-        return new Object();
-    }
-
-    static RCallBaseNode createExplicitCall(Object argsIdentifier) {
+    protected RCallBaseNode createExplicitCall() {
         return RCallNode.createExplicitCall(argsIdentifier);
-    }
-
-    static FrameSlotNode createFrameSlotNode(Object argsIdentifier) {
-        return FrameSlotNode.createTemp(argsIdentifier, true);
     }
 }

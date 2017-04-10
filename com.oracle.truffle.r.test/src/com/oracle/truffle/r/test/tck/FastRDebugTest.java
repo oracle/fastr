@@ -270,7 +270,7 @@ public class FastRDebugTest {
                 frame.forEach(var -> {
                     // skip synthetic slots
                     for (RFrameSlot slot : RFrameSlot.values()) {
-                        if (slot.name().equals(var.getName())) {
+                        if (slot.toString().equals(var.getName())) {
                             return;
                         }
                     }

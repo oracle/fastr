@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 @MessageResolution(receiverType = RFunction.class, language = TruffleRLanguage.class)
 public class RFunctionMR {
@@ -54,9 +55,9 @@ public class RFunctionMR {
 
     @Resolve(message = "EXECUTE")
     public abstract static class RFunctionExecuteNode extends Node {
-        private static final FrameDescriptor emptyFrameDescriptor = new FrameDescriptor("R interop frame");
-        private static final Object argsIdentifier = new Object();
-        private static final FrameSlot slot = emptyFrameDescriptor.addFrameSlot(argsIdentifier, FrameSlotKind.Object);
+        private static final FrameDescriptor emptyFrameDescriptor = FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<interop>", new FrameDescriptor("R interop frame"));
+        private static final RFrameSlot argsIdentifier = RFrameSlot.createTemp(false);
+        private static final FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(emptyFrameDescriptor, argsIdentifier, FrameSlotKind.Object);
 
         static {
             FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<function>", emptyFrameDescriptor);
@@ -72,10 +73,10 @@ public class RFunctionMR {
 
             RArgsValuesAndNames actualArgs = new RArgsValuesAndNames(arguments, ArgumentsSignature.empty(arguments.length));
             try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
-                dummyFrame.setObject(slot, actualArgs);
+                FrameSlotChangeMonitor.setObject(dummyFrame, slot, actualArgs);
                 return call.execute(dummyFrame, receiver);
             } finally {
-                dummyFrame.setObject(slot, null);
+                FrameSlotChangeMonitor.setObject(dummyFrame, slot, null);
             }
         }
     }

@@ -466,7 +466,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
                 }
             }
             if (frameSlot != null) {
-                Object value = variableFrame.getValue(frameSlot);
+                Object value = FrameSlotChangeMonitor.getObject(frameSlot, variableFrame);
                 if (checkType(frame, value, isNullProfile)) {
                     return value;
                 }
@@ -490,7 +490,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         @TruffleBoundary
         private Object getValue(MaterializedFrame current) {
             FrameSlot slot = current.getFrameDescriptor().findFrameSlot(identifier);
-            return slot == null ? null : current.getValue(slot);
+            return slot == null ? null : FrameSlotChangeMonitor.getValue(slot, current);
         }
 
         @Override
@@ -700,7 +700,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
             // see if the current frame has a value of the given name
             FrameSlot frameSlot = current.getFrameDescriptor().findFrameSlot(identifier);
             if (frameSlot != null) {
-                Object value = current.getValue(frameSlot);
+                Object value = FrameSlotChangeMonitor.getValue(frameSlot, current);
 
                 if (value != null) {
                     if (value == RMissing.instance) {
@@ -739,7 +739,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
             // see if the current frame has a value of the given name
             FrameSlot frameSlot = current.getFrameDescriptor().findFrameSlot(identifier);
             if (frameSlot != null) {
-                Object value = current.getValue(frameSlot);
+                Object value = FrameSlotChangeMonitor.getValue(frameSlot, current);
 
                 if (value != null) {
                     if (value == RMissing.instance) {
@@ -766,7 +766,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
             // see if the current frame has a value of the given name
             FrameSlot frameSlot = current.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
             if (frameSlot != null) {
-                Object value = current.getValue(frameSlot);
+                Object value = FrameSlotChangeMonitor.getValue(frameSlot, current);
 
                 if (value != null) {
                     if (value == RNull.instance) {
@@ -787,6 +787,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         assert variableFrame.getFrameDescriptor() == frameSlot.getFrameDescriptor();
         Object value = variableFrame.getValue(frameSlot);
         if (variableFrame.isObject(frameSlot)) {
+            value = FrameSlotChangeMonitor.getValue(frameSlot, variableFrame);
             seenValueKinds[FrameSlotKind.Object.ordinal()] = true;
         } else if (variableFrame.isByte(frameSlot)) {
             seenValueKinds[FrameSlotKind.Byte.ordinal()] = true;
@@ -802,7 +803,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         assert variableFrame.getFrameDescriptor() == frameSlot.getFrameDescriptor();
         try {
             if (seenValueKinds[FrameSlotKind.Object.ordinal()] && variableFrame.isObject(frameSlot)) {
-                return variableFrame.getObject(frameSlot);
+                return FrameSlotChangeMonitor.getObject(frameSlot, variableFrame);
             } else if (seenValueKinds[FrameSlotKind.Byte.ordinal()] && variableFrame.isByte(frameSlot)) {
                 return variableFrame.getByte(frameSlot);
             } else if (seenValueKinds[FrameSlotKind.Int.ordinal()] && variableFrame.isInt(frameSlot)) {

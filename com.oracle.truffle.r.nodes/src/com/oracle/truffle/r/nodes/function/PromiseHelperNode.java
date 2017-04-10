@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -101,7 +102,7 @@ public class PromiseHelperNode extends RBaseNode {
 
                 // Try to read it...
                 try {
-                    Object value = frame.getObject(slot);
+                    Object value = FrameSlotChangeMonitor.getObject(slot, frame);
 
                     // If it's a promise, deoptimize it!
                     if (value instanceof RPromise) {

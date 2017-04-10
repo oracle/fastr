@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 // transcribed from /src/library/methods/src/methods_list_dispatch.c (R_dispatch_generic function)
@@ -117,7 +118,7 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
             if (slot == null) {
                 result[i] = "missing";
             } else {
-                Object value = frame.getValue(slot);
+                Object value = FrameSlotChangeMonitor.getValue(slot, frame);
                 if (value instanceof RPromise) {
                     value = PromiseHelperNode.evaluateSlowPath(null, (RPromise) value);
                 }

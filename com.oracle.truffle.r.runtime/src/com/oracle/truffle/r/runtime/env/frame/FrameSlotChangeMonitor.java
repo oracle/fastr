@@ -40,6 +40,7 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -621,6 +622,10 @@ public final class FrameSlotChangeMonitor {
         checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
     }
 
+    public static void setObject(Frame frame, FrameSlot frameSlot, Object newValue) {
+        frame.setObject(frameSlot, newValue);
+    }
+
     public static void setActiveBinding(Frame frame, FrameSlot frameSlot, ActiveBinding newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         frame.setObject(frameSlot, newValue);
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
@@ -639,8 +644,10 @@ public final class FrameSlotChangeMonitor {
         frameDescriptors.put(handleBaseNamespaceEnv(frame), new FrameDescriptorMetaData(name, frame));
     }
 
-    public static synchronized void initializeFunctionFrameDescriptor(String name, FrameDescriptor frameDescriptor) {
+    public static synchronized FrameDescriptor initializeFunctionFrameDescriptor(String name, FrameDescriptor frameDescriptor) {
+        CompilerAsserts.neverPartOfCompilation();
         frameDescriptors.put(frameDescriptor, new FrameDescriptorMetaData(name, null));
+        return frameDescriptor;
     }
 
     public static synchronized Assumption getEnclosingFrameDescriptorAssumption(FrameDescriptor descriptor) {
@@ -671,5 +678,13 @@ public final class FrameSlotChangeMonitor {
 
     public static boolean isValidFrameDescriptor(FrameDescriptor frameDesc) {
         return getMetaData(frameDesc) != null;
+    }
+
+    public static Object getObject(FrameSlot slot, Frame frame) throws FrameSlotTypeException {
+        return frame.getObject(slot);
+    }
+
+    public static Object getValue(FrameSlot slot, Frame frame) {
+        return frame.getValue(slot);
     }
 }

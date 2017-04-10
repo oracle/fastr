@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class S3FunctionLookupNode extends RBaseNode {
@@ -437,7 +438,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
                     return null;
                 }
                 try {
-                    return genericDefFrame.getObject(slot);
+                    return FrameSlotChangeMonitor.getObject(slot, genericDefFrame);
                 } catch (FrameSlotTypeException e) {
                     throw RInternalError.shouldNotReachHere();
                 }

@@ -45,11 +45,11 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 @ImportStatic(FrameSlotKind.class)
 public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode {
 
-    public static WriteLocalFrameVariableNode create(Object name, Mode mode, RNode rhs) {
+    public static WriteLocalFrameVariableNode create(String name, Mode mode, RNode rhs) {
         return WriteLocalFrameVariableNodeGen.create(name, mode, rhs);
     }
 
-    public static WriteLocalFrameVariableNode createForRefCount(Object name) {
+    public static WriteLocalFrameVariableNode createForRefCount(String name) {
         return WriteLocalFrameVariableNodeGen.create(name, Mode.INVISIBLE, null);
     }
 
@@ -60,7 +60,7 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
     private final ConditionProfile isActiveBindingProfile = ConditionProfile.createBinaryProfile();
     @CompilationFinal private Assumption containsNoActiveBinding;
 
-    protected WriteLocalFrameVariableNode(Object name, Mode mode) {
+    protected WriteLocalFrameVariableNode(String name, Mode mode) {
         super(name);
         this.mode = mode;
     }

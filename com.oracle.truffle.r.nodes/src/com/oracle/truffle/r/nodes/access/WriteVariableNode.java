@@ -43,13 +43,13 @@ public abstract class WriteVariableNode extends RNode {
         INVISIBLE
     }
 
-    private final Object name;
+    private final String name;
 
-    protected WriteVariableNode(Object name) {
+    protected WriteVariableNode(String name) {
         this.name = name;
     }
 
-    public final Object getName() {
+    public final String getName() {
         return name;
     }
 
