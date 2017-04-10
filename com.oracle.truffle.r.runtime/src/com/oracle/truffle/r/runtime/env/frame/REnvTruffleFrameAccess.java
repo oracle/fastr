@@ -66,6 +66,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
 
     @Override
     public Object get(String key) {
+        CompilerAsserts.neverPartOfCompilation();
         FrameDescriptor fd = frame.getFrameDescriptor();
         FrameSlot slot = fd.findFrameSlot(key);
         if (slot == null) {

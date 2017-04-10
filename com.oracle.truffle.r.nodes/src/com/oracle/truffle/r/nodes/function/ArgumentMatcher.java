@@ -281,6 +281,7 @@ public class ArgumentMatcher {
     }
 
     private static String getErrorForArgument(RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, int index) {
+        CompilerAsserts.neverPartOfCompilation();
         RNode node = suppliedArgs[index];
         if (node instanceof VarArgNode) {
             CompilerAsserts.neverPartOfCompilation();
