@@ -75,6 +75,9 @@ public class FastRTrace {
             if (topEnv == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 topEnv = insert(TopEnvNodeGen.create());
+            }
+            if (parentFrame == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 parentFrame = insert(ParentFrameNodeGen.create());
             }
             return topEnv.executeBuiltin(frame, parentFrame.execute(frame, 1), RNull.instance);

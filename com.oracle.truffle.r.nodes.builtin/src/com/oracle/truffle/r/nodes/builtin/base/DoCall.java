@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctions.Get;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -133,7 +134,16 @@ public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNode
                 }
             }
         }
-        return call.execute(frame, func, new RArgsValuesAndNames(argValues, signature));
+        for (int i = 0; i < argValues.length; i++) {
+            ShareObjectNode.share(argValues[i]);
+        }
+        try {
+            return call.execute(frame, func, new RArgsValuesAndNames(argValues, signature));
+        } finally {
+            for (int i = 0; i < argValues.length; i++) {
+                ShareObjectNode.unshare(argValues[i]);
+            }
+        }
     }
 
     @TruffleBoundary

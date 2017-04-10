@@ -72,6 +72,9 @@ public abstract class Args extends RBuiltinNode {
         if (getNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             getNode = insert(GetNodeGen.create());
+        }
+        if (parentFrameNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             parentFrameNode = insert(ParentFrameNodeGen.create());
         }
         return args((RFunction) getNode.execute(frame, funName.getDataAt(0), parentFrameNode.execute(frame, 1), RType.Function.getName(), true));

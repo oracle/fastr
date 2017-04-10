@@ -33,7 +33,6 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -443,7 +442,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
     }
 
     static RSyntaxNode cloneElement(RSyntaxElement element) {
-        return (RSyntaxNode) RASTUtils.cloneNode(((RBaseNode) element));
+        return RContext.getASTBuilder().process(element);
     }
 
     private static RBaseNode d(RBaseNode expr, String var) {
