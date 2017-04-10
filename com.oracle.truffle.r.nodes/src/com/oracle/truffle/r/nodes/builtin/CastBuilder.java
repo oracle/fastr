@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import java.util.Arrays;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -157,8 +156,7 @@ public final class CastBuilder {
      *
      * In the pre-initial phase one can configure the overall behavior of the pipeline. Currently,
      * only the default handling of {@code RNull} and {@code RMissing} values can be overridden (the
-     * default behavior is explained below). The pipeline can be configured using
-     * {@link PreinitialPhaseBuilder#conf(Consumer)} or any other method of the
+     * default behavior is explained below). The pipeline can be configured using any method of the
      * {@link PreinitialPhaseBuilder} class, e.g. {@link PreinitialPhaseBuilder#allowNull()}.
      * </p>
      * <p>

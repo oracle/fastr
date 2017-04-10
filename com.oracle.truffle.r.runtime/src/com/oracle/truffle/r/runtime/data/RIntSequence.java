@@ -113,11 +113,6 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
     }
 
     @Override
-    public RStringVector getImplicitClass() {
-        return RIntVector.implicitClassHeader;
-    }
-
-    @Override
     public RIntVector copyResized(int size, boolean fillNA) {
         int[] data = new int[size];
         populateVectorData(data);

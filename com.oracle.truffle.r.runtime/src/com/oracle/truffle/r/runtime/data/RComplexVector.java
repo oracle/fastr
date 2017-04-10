@@ -35,8 +35,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RComplexVector extends RVector<double[]> implements RAbstractComplexVector {
 
-    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Complex.getClazz());
-
     private final double[] data;
 
     RComplexVector(double[] data, boolean complete, int[] dims, RStringVector names) {
@@ -194,10 +192,5 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
         RComplex value = other.getDataAt(fromIndex);
         data[toIndex2] = value.getRealPart();
         data[toIndex2 + 1] = value.getImaginaryPart();
-    }
-
-    @Override
-    public RStringVector getImplicitClass() {
-        return getClassHierarchyHelper(implicitClassHeader);
     }
 }

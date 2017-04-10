@@ -352,11 +352,6 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     }
 
     @Override
-    public RStringVector getImplicitClass() {
-        return RDataFactory.createStringVector(RType.PairList.getName());
-    }
-
-    @Override
     public boolean isObject() {
         return false;
     }

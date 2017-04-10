@@ -102,13 +102,6 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
         return enclosingFrame;
     }
 
-    private static final RStringVector implicitClass = RDataFactory.createStringVectorFromScalar(RType.Function.getName());
-
-    @Override
-    public RStringVector getImplicitClass() {
-        return implicitClass;
-    }
-
     @Override
     public String toString() {
         return target.toString();

@@ -32,16 +32,6 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     public abstract boolean isNA();
 
     @Override
-    public final RStringVector getClassHierarchy() {
-        return RDataFactory.createStringVector(getRType().getName());
-    }
-
-    @Override
-    public final RStringVector getImplicitClass() {
-        return RDataFactory.createStringVector(getRType().getName());
-    }
-
-    @Override
     public final RScalarVector copy() {
         return this;
     }

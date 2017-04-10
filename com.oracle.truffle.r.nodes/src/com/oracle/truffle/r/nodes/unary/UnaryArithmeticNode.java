@@ -65,6 +65,8 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         this(factory, error, RType.Integer);
     }
 
+    public abstract Object execute(Object value);
+
     @Specialization(guards = {"cachedNode != null", "cachedNode.isSupported(operand)"})
     protected Object doCached(Object operand,
                     @Cached("createCachedFast(operand)") UnaryMapNode cachedNode) {

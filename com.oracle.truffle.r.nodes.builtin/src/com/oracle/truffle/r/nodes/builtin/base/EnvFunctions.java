@@ -56,6 +56,7 @@ import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
@@ -371,25 +372,29 @@ public class EnvFunctions {
             return env;
         }
 
-        @Specialization(guards = "isRFormula(formula)")
-        protected Object environment(RLanguage formula) {
-            if (getEnvAttrNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getEnvAttrNode = insert(GetFixedAttributeNode.create(RRuntime.DOT_ENVIRONMENT));
-            }
-
-            Object result = getEnvAttrNode.execute(formula);
-            return result == null ? RNull.instance : result;
-        }
-
-        @Specialization(guards = {"!isRNull(fun)", "!isRFunction(fun)", "!isRFormula(fun)"})
-        protected Object environment(Object fun) {
-            if (attributable.profile(fun instanceof RAttributable)) {
+        @Specialization
+        @TruffleBoundary
+        protected Object environmentLanguage(RLanguage value) {
+            if (ClassHierarchyNode.hasClass(value, RRuntime.FORMULA_CLASS)) {
                 if (getEnvAttrNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     getEnvAttrNode = insert(GetFixedAttributeNode.create(RRuntime.DOT_ENVIRONMENT));
                 }
-                Object attr = getEnvAttrNode.execute(fun);
+                Object result = getEnvAttrNode.execute(value);
+                return result == null ? RNull.instance : result;
+            } else {
+                return environment(value);
+            }
+        }
+
+        @Specialization(guards = {"!isRNull(value)", "!isRFunction(value)", "!isRLanguage(value)"})
+        protected Object environment(Object value) {
+            if (attributable.profile(value instanceof RAttributable)) {
+                if (getEnvAttrNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    getEnvAttrNode = insert(GetFixedAttributeNode.create(RRuntime.DOT_ENVIRONMENT));
+                }
+                Object attr = getEnvAttrNode.execute(value);
                 return attr == null ? RNull.instance : attr;
             } else {
                 // Not an error according to GnuR

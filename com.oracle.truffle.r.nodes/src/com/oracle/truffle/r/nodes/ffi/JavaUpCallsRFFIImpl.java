@@ -41,6 +41,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.ffi.ParseResult.ParseStatus;
+import com.oracle.truffle.r.nodes.function.ImplicitClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
@@ -62,8 +63,6 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -299,26 +298,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     public static RStringVector getClassHr(Object v) {
-        RStringVector result;
-        if (v instanceof RAttributable) {
-            result = ((RAttributable) v).getClassHierarchy();
-        } else if (v instanceof Byte) {
-            result = RLogicalVector.implicitClassHeader;
-        } else if (v instanceof String) {
-            result = RStringVector.implicitClassHeader;
-        } else if (v instanceof Integer) {
-            result = RIntVector.implicitClassHeader;
-        } else if (v instanceof Double) {
-            result = RDoubleVector.implicitClassHeader;
-        } else if (v instanceof RComplex) {
-            result = RComplexVector.implicitClassHeader;
-        } else if (v instanceof RRaw) {
-            result = RRawVector.implicitClassHeader;
-        } else {
-            guaranteeInstanceOf(v, RNull.class);
-            result = RNull.implicitClassHeader;
-        }
-        return result;
+        return ImplicitClassHierarchyNode.getImplicitClass(v);
     }
 
     @Override

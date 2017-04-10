@@ -425,7 +425,7 @@ public class RErrorHandling {
 
     private static RPairList findConditionHandler(RList cond) {
         // GnuR checks whether this is a string vector - in FastR it's statically typed to be
-        RStringVector classes = cond.getClassHierarchy();
+        RAbstractStringVector classes = RContext.getRRuntimeASTAccess().getClassHierarchy(cond);
         Object list = getHandlerStack();
         while (list != RNull.instance) {
             RPairList pList = (RPairList) list;

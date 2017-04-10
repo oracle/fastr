@@ -42,6 +42,8 @@ public abstract class CastNode extends UnaryNode {
         isTesting = true;
     }
 
+    public abstract Object execute(Object value);
+
     /**
      * For testing purposes only, returns the last warning message (only when {@link #testingMode()}
      * was invoked before).

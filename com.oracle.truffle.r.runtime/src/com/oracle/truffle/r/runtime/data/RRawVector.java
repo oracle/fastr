@@ -35,8 +35,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RRawVector extends RVector<byte[]> implements RAbstractRawVector {
 
-    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Raw.getClazz());
-
     private final byte[] data;
 
     RRawVector(byte[] data, int[] dims, RStringVector names) {
@@ -180,10 +178,5 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     @Override
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
-    }
-
-    @Override
-    public RStringVector getImplicitClass() {
-        return getClassHierarchyHelper(implicitClassHeader);
     }
 }

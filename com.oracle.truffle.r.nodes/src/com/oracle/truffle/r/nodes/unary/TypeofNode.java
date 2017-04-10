@@ -34,7 +34,6 @@ public abstract class TypeofNode extends UnaryNode {
 
     protected static final int NUMBER_OF_CACHED_CLASSES = 5;
 
-    @Override
     public abstract RType execute(Object x);
 
     @Specialization

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -39,7 +39,6 @@ public final class IsFactorNode extends UnaryNode {
         return inheritsCheck.execute(x);
     }
 
-    @Override
     public Object execute(Object value) {
         return executeIsFactor(value);
     }

@@ -23,6 +23,7 @@ import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
+import com.oracle.truffle.r.nodes.function.ImplicitClassHierarchyNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -135,7 +136,7 @@ public abstract class AccessSlotNode extends RBaseNode {
                     @Cached("create()") GetClassAttributeNode getClassNode) {
         RStringVector classAttr = getClassNode.getClassAttr(object);
         if (classAttr == null) {
-            RStringVector implicitClassVec = object.getImplicitClass();
+            RStringVector implicitClassVec = ImplicitClassHierarchyNode.getImplicitClass(object);
             assert implicitClassVec.getLength() > 0;
             throw RError.error(this, RError.Message.SLOT_BASIC_CLASS, name, implicitClassVec.getDataAt(0));
         } else {

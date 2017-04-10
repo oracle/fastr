@@ -35,8 +35,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RLogicalVector extends RVector<byte[]> implements RAbstractLogicalVector {
 
-    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Logical.getClazz());
-
     private final byte[] data;
 
     RLogicalVector(byte[] data, boolean complete, int[] dims, RStringVector names) {
@@ -209,8 +207,4 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
         return getDataAt(index);
     }
 
-    @Override
-    public RStringVector getImplicitClass() {
-        return getClassHierarchyHelper(implicitClassHeader);
-    }
 }
