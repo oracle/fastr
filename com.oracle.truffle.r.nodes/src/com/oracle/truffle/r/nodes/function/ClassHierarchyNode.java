@@ -62,9 +62,13 @@ public abstract class ClassHierarchyNode extends UnaryNode {
      * attribute is not set.
      */
     @TruffleBoundary
-    public static RStringVector getClassHierarchy(RAttributable value) {
-        Object v = value.getAttr(RRuntime.CLASS_ATTR_KEY);
-        RStringVector result = v instanceof RStringVector ? (RStringVector) v : ImplicitClassHierarchyNode.getImplicitClass(value);
+    public static RStringVector getClassHierarchy(Object value) {
+        RStringVector result = null;
+        if (value instanceof RAttributable) {
+            Object v = ((RAttributable) value).getAttr(RRuntime.CLASS_ATTR_KEY);
+            result = v instanceof RStringVector ? (RStringVector) v : ImplicitClassHierarchyNode.getImplicitClass(value);
+        }
+
         return result != null ? result : RDataFactory.createEmptyStringVector();
     }
 

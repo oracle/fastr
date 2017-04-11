@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -41,7 +43,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.ffi.ParseResult.ParseStatus;
-import com.oracle.truffle.r.nodes.function.ImplicitClassHierarchyNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
@@ -105,8 +107,6 @@ import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This class provides a simple Java-based implementation of {@link UpCallsRFFI}, where all the
@@ -298,7 +298,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     public static RStringVector getClassHr(Object v) {
-        return ImplicitClassHierarchyNode.getImplicitClass(v);
+        return ClassHierarchyNode.getClassHierarchy(v);
     }
 
     @Override
