@@ -645,7 +645,7 @@ public class LaFunctions {
             if (a instanceof RAbstractDoubleVector) {
                 System.arraycopy(a.getInternalStore(), 0, avals, 0, n * n);
             } else {
-                RDoubleVector aDouble = (RDoubleVector) castDouble.execute(a);
+                RDoubleVector aDouble = (RDoubleVector) castDouble.doCast(a);
                 assert aDouble != a;
                 avals = aDouble.getInternalStore();
             }

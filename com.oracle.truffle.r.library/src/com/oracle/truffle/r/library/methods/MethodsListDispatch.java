@@ -379,7 +379,7 @@ public class MethodsListDispatch {
                         if (pckg.length() > 0) {
                             Object gpckgObj = getPckgAttrNode.execute(vl);
                             if (gpckgObj != null) {
-                                String gpckg = checkSingleString(castToVector.execute(gpckgObj), false, "The \"package\" slot in generic function object", this, classHierarchyNode);
+                                String gpckg = checkSingleString(castToVector.doCast(gpckgObj), false, "The \"package\" slot in generic function object", this, classHierarchyNode);
                                 ok = pckg.equals(gpckg);
                             }
                         } else {

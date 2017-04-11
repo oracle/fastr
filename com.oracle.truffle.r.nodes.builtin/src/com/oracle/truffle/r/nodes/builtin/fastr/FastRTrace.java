@@ -159,7 +159,7 @@ public class FastRTrace {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     castLogical = insert(CastLogicalNodeGen.create(false, false, false));
                 }
-                print = RRuntime.fromLogical((byte) castLogical.execute(printObj));
+                print = RRuntime.fromLogical((byte) castLogical.doCast(printObj));
             }
             complexCase(func, tracer, exit, at, print, signature);
             visibility.execute(frame, true);

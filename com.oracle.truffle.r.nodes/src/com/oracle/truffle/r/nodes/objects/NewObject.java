@@ -51,9 +51,9 @@ public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
     protected Object doNewObject(Object classDef) {
 
         Object e = accessSlotVirtual.executeAccess(classDef, RRuntime.S_VIRTUAL);
-        if (((byte) castLogicalScalar.execute(e)) != RRuntime.LOGICAL_FALSE) {
+        if (((byte) castLogicalScalar.doCast(e)) != RRuntime.LOGICAL_FALSE) {
             e = accessSlotClassName.executeAccess(classDef, RRuntime.S_CLASSNAME);
-            throw error(RError.Message.OBJECT_FROM_VIRTUAL, castStringScalar.execute(e));
+            throw error(RError.Message.OBJECT_FROM_VIRTUAL, castStringScalar.doCast(e));
         }
         e = accessSlotClassName.executeAccess(classDef, RRuntime.S_CLASSNAME);
         Object prototype = accessSlotPrototypeName.executeAccess(classDef, RRuntime.S_PROTOTYPE);

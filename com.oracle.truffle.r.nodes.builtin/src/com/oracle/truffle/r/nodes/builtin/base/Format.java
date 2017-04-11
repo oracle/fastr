@@ -62,7 +62,7 @@ public abstract class Format extends RBuiltinNode.Arg9 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeGen.create(true, false, false));
         }
-        return (RAbstractIntVector) castInteger.execute(operand);
+        return (RAbstractIntVector) castInteger.doCast(operand);
     }
 
     static {

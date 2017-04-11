@@ -65,7 +65,7 @@ public abstract class UpdateDimNames extends RBuiltinNode.Arg2 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castStringNode = insert(CastStringNodeGen.create(true, true, true));
         }
-        return castStringNode.execute(o);
+        return castStringNode.doCast(o);
     }
 
     private RAbstractVector castVector(Object value) {
@@ -73,7 +73,7 @@ public abstract class UpdateDimNames extends RBuiltinNode.Arg2 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVectorNode = insert(CastToVectorNodeGen.create(false));
         }
-        return ((RAbstractVector) castVectorNode.execute(value));
+        return ((RAbstractVector) castVectorNode.doCast(value));
     }
 
     public abstract RAbstractContainer executeRAbstractContainer(RAbstractContainer container, Object o);

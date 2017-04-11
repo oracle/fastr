@@ -60,8 +60,8 @@ public abstract class MatrixFastPath extends RFastPathNode {
                     @Cached("createClassProfile()") ValueProfile classProfile) {
         boolean rowMissing = rowMissingProfile.profile(nrow == RMissing.instance);
         boolean colMissing = colMissingProfile.profile(ncol == RMissing.instance);
-        int row = rowMissing ? 1 : firstRow.executeInt(castRow.execute(nrow));
-        int col = colMissing ? 1 : firstCol.executeInt(castCol.execute(ncol));
+        int row = rowMissing ? 1 : firstRow.executeInt(castRow.doCast(nrow));
+        int col = colMissing ? 1 : firstCol.executeInt(castCol.doCast(ncol));
         Object dim = dimMissingProfile.profile(dimnames == RMissing.instance) ? RNull.instance : dimnames;
         return matrix.execute(classProfile.profile(data), row, col, false, dim, rowMissing, colMissing);
     }

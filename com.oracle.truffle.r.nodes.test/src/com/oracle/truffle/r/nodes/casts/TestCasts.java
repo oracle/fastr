@@ -150,7 +150,7 @@ public class TestCasts extends TestBase {
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
                 // use "new Integer(...)" to avoid boxing logic
-                return new Integer((int) node.execute(value));
+                return new Integer((int) node.doCast(value));
             }
         }
         testCompilation(new Object[]{1, 2, 3}, new Root("FirstInteger"));
@@ -171,7 +171,7 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
-                int result = (int) node.execute(constant);
+                int result = (int) node.doCast(constant);
                 CompilerAsserts.compilationConstant(result);
                 return null;
             }
@@ -191,7 +191,7 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
-                Object res = node.execute(value);
+                Object res = node.doCast(value);
                 return res;
             }
         }
@@ -209,7 +209,7 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
-                Object res = node.execute(value);
+                Object res = node.doCast(value);
                 return res;
             }
         }
@@ -227,7 +227,7 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
-                Object res = node.execute(value);
+                Object res = node.doCast(value);
                 return res;
             }
         }
@@ -248,7 +248,7 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
-                Object res = node.execute(value);
+                Object res = node.doCast(value);
                 if (mustBeResultCompilationConstant) {
                     CompilerAsserts.compilationConstant(res);
                 }
@@ -272,7 +272,7 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
-                int result = (int) node.execute(constant);
+                int result = (int) node.doCast(constant);
                 CompilerAsserts.compilationConstant(result);
                 return null;
             }
@@ -293,7 +293,7 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
-                int result = (int) node.execute(constant);
+                int result = (int) node.doCast(constant);
                 CompilerAsserts.compilationConstant(result);
                 return null;
             }
@@ -315,8 +315,8 @@ public class TestCasts extends TestBase {
 
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
-                // return node.execute(value);
-                Object result = node.execute(constant);
+                // return node.doCast(value);
+                Object result = node.doCast(constant);
                 CompilerAsserts.compilationConstant(result);
                 return null;
             }
@@ -340,7 +340,7 @@ public class TestCasts extends TestBase {
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
                 @SuppressWarnings("unused")
-                Object res = node.execute(value);
+                Object res = node.doCast(value);
                 return null;
             }
         }
@@ -376,7 +376,7 @@ public class TestCasts extends TestBase {
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
                 @SuppressWarnings("unused")
-                Object res = node.execute(value);
+                Object res = node.doCast(value);
                 return null;
             }
         }
@@ -395,7 +395,7 @@ public class TestCasts extends TestBase {
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
                 @SuppressWarnings("unused")
-                Object res = node.execute(value);
+                Object res = node.doCast(value);
                 return null;
             }
         }
@@ -414,7 +414,7 @@ public class TestCasts extends TestBase {
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
                 @SuppressWarnings("unused")
-                Object res = node.execute(value);
+                Object res = node.doCast(value);
                 return null;
             }
         }
@@ -432,7 +432,7 @@ public class TestCasts extends TestBase {
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
                 @SuppressWarnings("unused")
-                Object res = node.execute(value);
+                Object res = node.doCast(value);
                 return null;
             }
         }
@@ -452,7 +452,7 @@ public class TestCasts extends TestBase {
             @Override
             protected Object execute(VirtualFrame frame, Object value) {
                 @SuppressWarnings("unused")
-                Object res = node.execute(value);
+                Object res = node.doCast(value);
                 return null;
             }
         }

@@ -106,7 +106,7 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(false));
         }
-        return ((RAbstractVector) castVector.execute(value)).materialize();
+        return ((RAbstractVector) castVector.doCast(value)).materialize();
     }
 
     private CastNode getIntegerCastNode() {
@@ -145,7 +145,7 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
                 return vecLength;
             }
             length = Math.max(length, vecLength);
-            argValues[i] = castNode.execute(v);
+            argValues[i] = castNode.doCast(v);
         }
         return length;
     }
@@ -228,8 +228,8 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
                     @Cached("create()") CastToVectorNode castVectorX,
                     @Cached("create()") CastToVectorNode castVectorY) {
         Object[] argValues = args.getArguments();
-        RAbstractDoubleVector x = (RAbstractDoubleVector) castVectorX.execute(castX.execute(argValues[0]));
-        RAbstractDoubleVector y = (RAbstractDoubleVector) castVectorY.execute(castY.execute(argValues[1]));
+        RAbstractDoubleVector x = (RAbstractDoubleVector) castVectorX.doCast(castX.doCast(argValues[0]));
+        RAbstractDoubleVector y = (RAbstractDoubleVector) castVectorY.doCast(castY.doCast(argValues[1]));
         int xLength = x.getLength();
         int yLength = y.getLength();
         int maxLength = Math.max(xLength, yLength);

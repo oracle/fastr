@@ -135,6 +135,7 @@ public abstract class S3DispatchFunctions {
          */
         private Object getEnclosingArg(VirtualFrame frame, String generic) {
             if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
+                CompilerDirectives.transferToInterpreter();
                 throw error(RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
             }
             Object enclosingArg = RArguments.getArgument(frame, 0);
@@ -195,6 +196,7 @@ public abstract class S3DispatchFunctions {
 
         private final ValueProfile parameterSignatureProfile = ValueProfile.createIdentityProfile();
         private final ValueProfile suppliedParameterSignatureProfile = ValueProfile.createIdentityProfile();
+        private final ValueProfile rootNodeProfile = ValueProfile.createClassProfile();
 
         static {
             Casts.noCasts(NextMethod.class);
@@ -237,7 +239,7 @@ public abstract class S3DispatchFunctions {
             // arguments passed to NextMethod, the later override the former on a name clash
             ArgumentsSignature finalSignature;
             ArgumentsSignature suppliedSignature = suppliedParameterSignatureProfile.profile(RArguments.getSuppliedSignature(frame));
-            Object[] suppliedArguments = collectArguments.execute(frame, parameterSignatureProfile.profile(RArguments.getSignature(frame)));
+            Object[] suppliedArguments = collectArguments.execute(frame, parameterSignatureProfile.profile(RArguments.getSignature(frame, rootNodeProfile)));
             if (emptyArgsProfile.profile(args == RArgsValuesAndNames.EMPTY)) {
                 finalSignature = suppliedSignature;
             } else {

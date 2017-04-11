@@ -65,7 +65,7 @@ public abstract class AsCharacterFactor extends RBuiltinNode.Arg1 {
         String[] data = new String[n];
         Object levsAttr = getLevelsAttrNode.execute(xVec);
         Object levs;
-        if (levsAttr == null || !((levs = castToVectorNode.execute(levsAttr)) instanceof RAbstractStringVector)) {
+        if (levsAttr == null || !((levs = castToVectorNode.doCast(levsAttr)) instanceof RAbstractStringVector)) {
             throw error(RError.Message.MALFORMED_FACTOR);
         }
         RAbstractStringVector levsString = (RAbstractStringVector) levs;

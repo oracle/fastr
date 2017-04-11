@@ -78,7 +78,7 @@ public abstract class RExternalBuiltinNode extends RBuiltinBaseNode implements N
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogical = insert(CastLogicalNodeGen.create(false, false, false));
         }
-        return ((RAbstractLogicalVector) castLogical.execute(operand)).getDataAt(0);
+        return ((RAbstractLogicalVector) castLogical.doCast(operand)).getDataAt(0);
     }
 
     protected int castInt(RAbstractVector operand) {
@@ -86,7 +86,7 @@ public abstract class RExternalBuiltinNode extends RBuiltinBaseNode implements N
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castInt = insert(CastIntegerNodeGen.create(false, false, false));
         }
-        return ((RAbstractIntVector) castInt.execute(operand)).getDataAt(0);
+        return ((RAbstractIntVector) castInt.doCast(operand)).getDataAt(0);
     }
 
     protected RAbstractDoubleVector castDouble(RAbstractVector operand) {
@@ -94,7 +94,7 @@ public abstract class RExternalBuiltinNode extends RBuiltinBaseNode implements N
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeGen.create(false, false, false));
         }
-        return (RAbstractDoubleVector) castDouble.execute(operand);
+        return (RAbstractDoubleVector) castDouble.doCast(operand);
     }
 
     protected RAbstractVector castVector(Object value) {
@@ -102,7 +102,7 @@ public abstract class RExternalBuiltinNode extends RBuiltinBaseNode implements N
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(false));
         }
-        return (RAbstractVector) castVector.execute(value);
+        return (RAbstractVector) castVector.doCast(value);
     }
 
     protected static String isString(Object arg) {
@@ -132,7 +132,7 @@ public abstract class RExternalBuiltinNode extends RBuiltinBaseNode implements N
     }
 
     protected Object castArg(RArgsValuesAndNames args, int index) {
-        return index < argumentCasts.length && argumentCasts[index] != null ? argumentCasts[index].execute(args.getArgument(index)) : args.getArgument(index);
+        return index < argumentCasts.length && argumentCasts[index] != null ? argumentCasts[index].doCast(args.getArgument(index)) : args.getArgument(index);
     }
 
     public abstract static class Arg0 extends RExternalBuiltinNode {

@@ -89,7 +89,7 @@ public abstract class GetS4DataSlot extends Node {
                     castToVector = insert(CastToVectorNode.create());
                 }
                 s3ClassAttrRemove.execute(obj.initAttributes());
-                setClassAttrNode.execute(obj, castToVector.execute(s3Class));
+                setClassAttrNode.execute(obj, castToVector.doCast(s3Class));
             } else {
                 setClassAttrNode.reset(obj);
             }

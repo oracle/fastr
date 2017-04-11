@@ -139,7 +139,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(false));
         }
-        return (RAbstractVector) castVector.execute(value);
+        return (RAbstractVector) castVector.doCast(value);
     }
 
     private RAbstractVector castVector2(Object value) {
@@ -147,7 +147,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector2 = insert(CastToVectorNodeGen.create(false));
         }
-        return (RAbstractVector) castVector2.execute(value);
+        return (RAbstractVector) castVector2.doCast(value);
     }
 
     static {

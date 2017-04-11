@@ -50,7 +50,7 @@ public abstract class CastTypeNode extends RBaseNode {
     protected static Object doCast(RAbstractVector value, RType type,
                     @Cached("type") RType cachedType,
                     @Cached("createCast(cachedType)") CastNode cast) {
-        return cast.execute(value);
+        return cast.doCast(value);
     }
 
     @SuppressWarnings("unused")

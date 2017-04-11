@@ -109,7 +109,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castComplex = insert(CastComplexNodeGen.create(true, preserveAllAttr, preserveAllAttr));
         }
-        return castComplex.execute(operand);
+        return castComplex.doCast(operand);
     }
 
     private Object castDouble(Object operand, boolean preserveAllAttr) {
@@ -117,7 +117,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeGen.create(true, preserveAllAttr, preserveAllAttr));
         }
-        return castDouble.execute(operand);
+        return castDouble.doCast(operand);
     }
 
     private Object castInteger(Object operand, boolean preserveAllAttr) {
@@ -125,7 +125,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeGen.create(true, preserveAllAttr, preserveAllAttr));
         }
-        return castInteger.execute(operand);
+        return castInteger.doCast(operand);
     }
 
     private Object castLogical(Object operand, boolean preserveAllAttr) {
@@ -133,7 +133,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogical = insert(CastLogicalNodeGen.create(true, preserveAllAttr, preserveAllAttr));
         }
-        return castLogical.execute(operand);
+        return castLogical.doCast(operand);
     }
 
     private Object castString(Object operand, boolean preserveAllAttr) {
@@ -141,7 +141,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castString = insert(CastStringNodeGen.create(true, preserveAllAttr, preserveAllAttr));
         }
-        return castString.execute(operand);
+        return castString.doCast(operand);
     }
 
     @Specialization

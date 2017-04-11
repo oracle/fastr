@@ -215,7 +215,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
         for (int i = 0; i < elements.length; i++) {
             CombineInputCast inputCast = getCast(i);
             Object value = args[i];
-            Object element = (precedence == EXPRESSION_PRECEDENCE && value instanceof RLanguage) ? value : cast.execute(inputCast.cast(value));
+            Object element = (precedence == EXPRESSION_PRECEDENCE && value instanceof RLanguage) ? value : cast.doCast(inputCast.cast(value));
             element = inputCast.valueProfile.profile(element);
             elements[i] = element;
             size += getElementSize(element);

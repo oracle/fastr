@@ -345,7 +345,7 @@ public final class SeqFunctions {
         protected RIntSequence seq(VirtualFrame frame, Object value,
                         @Cached("createLengthResultCast()") CastNode resultCast,
                         @Cached("createLengthDispatcher()") RExplicitBaseEnvCallDispatcher dispatcher) {
-            int result = (Integer) resultCast.execute(dispatcher.call(frame, value));
+            int result = (Integer) resultCast.doCast(dispatcher.call(frame, value));
             return RDataFactory.createIntSequence(1, 1, result);
         }
 

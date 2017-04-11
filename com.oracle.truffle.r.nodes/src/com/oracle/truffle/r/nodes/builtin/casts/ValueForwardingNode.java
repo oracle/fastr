@@ -89,6 +89,6 @@ public abstract class ValueForwardingNode extends CastNode {
 
     @Specialization
     protected Object executeOriginalPipeline(Object x, @Cached("createPipeline()") CastNode pipelineHeadNode) {
-        return pipelineHeadNode.execute(x);
+        return pipelineHeadNode.doCast(x);
     }
 }

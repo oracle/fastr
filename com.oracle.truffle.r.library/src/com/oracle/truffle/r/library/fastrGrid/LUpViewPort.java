@@ -39,7 +39,7 @@ public abstract class LUpViewPort extends RExternalBuiltinNode.Arg1 {
         GridState gridState = GridContext.getContext().getGridState();
         RList newViewPort = gridState.getViewPort();
         for (int i = 0; i < n; i++) {
-            newViewPort = (RList) castParentToViewPort.execute(newViewPort.getDataAt(ViewPort.PVP_PARENT));
+            newViewPort = (RList) castParentToViewPort.doCast(newViewPort.getDataAt(ViewPort.PVP_PARENT));
         }
         gridState.setViewPort(newViewPort);
 

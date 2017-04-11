@@ -120,7 +120,7 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeGen.create(true, false, false));
         }
-        return (RAbstractIntVector) castInteger.execute(vector);
+        return (RAbstractIntVector) castInteger.doCast(vector);
     }
 
     private RAbstractVector castVector(Object value) {
@@ -128,7 +128,7 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(false));
         }
-        return (RAbstractVector) castVector.execute(value);
+        return (RAbstractVector) castVector.doCast(value);
     }
 
     @Specialization

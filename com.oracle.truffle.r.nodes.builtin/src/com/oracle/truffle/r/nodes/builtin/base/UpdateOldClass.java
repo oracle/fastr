@@ -57,7 +57,7 @@ public abstract class UpdateOldClass extends RBuiltinNode.Arg2 {
             return setOldClass(arg, RNull.instance);
         }
         initCastStringNode();
-        Object result = castStringNode.execute(className);
+        Object result = castStringNode.doCast(className);
         return setOldClass(arg, (RStringVector) result);
     }
 

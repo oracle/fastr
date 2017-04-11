@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -270,6 +271,10 @@ public final class RArguments {
 
     public static MaterializedFrame getEnclosingFrame(Frame frame) {
         return (MaterializedFrame) frame.getArguments()[INDEX_ENCLOSING_FRAME];
+    }
+
+    public static ArgumentsSignature getSignature(Frame frame, ValueProfile functionProfile) {
+        return functionProfile.profile((HasSignature) getFunction(frame).getRootNode()).getSignature();
     }
 
     public static ArgumentsSignature getSignature(Frame frame) {

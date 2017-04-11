@@ -138,9 +138,9 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
         RArgsValuesAndNames margs = prepareArgs.execute(args, null);
 
         // cast arguments
-        Object times = castTimes.execute(margs.getArgument(ARG_IDX_TIMES));
-        Object lengthOut = castLengthOut.execute(margs.getArgument(ARG_IDX_LENGHT_OUT));
-        Object each = castEach.execute(margs.getArgument(ARG_IDX_EACH));
+        Object times = castTimes.doCast(margs.getArgument(ARG_IDX_TIMES));
+        Object lengthOut = castLengthOut.doCast(margs.getArgument(ARG_IDX_LENGHT_OUT));
+        Object each = castEach.doCast(margs.getArgument(ARG_IDX_EACH));
 
         return internalNode.execute(frame, x, times, lengthOut, each);
     }

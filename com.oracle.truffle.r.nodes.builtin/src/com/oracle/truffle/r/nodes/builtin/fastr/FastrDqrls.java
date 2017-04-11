@@ -61,7 +61,7 @@ public abstract class FastrDqrls extends RBuiltinNode.Arg7 {
 
     @Specialization(replaces = "doDouble")
     public RList doOther(RAbstractVector xVec, int n, int p, RAbstractVector yVec, int ny, double tol, RAbstractDoubleVector coeffVec, @Cached(value = "create()") CastDoubleNode castNode) {
-        return call(xVec, ((RAbstractDoubleVector) castNode.execute(xVec)).materialize(), n, p, yVec, ((RAbstractDoubleVector) castNode.execute(yVec)).materialize(), ny, tol, coeffVec);
+        return call(xVec, ((RAbstractDoubleVector) castNode.doCast(xVec)).materialize(), n, p, yVec, ((RAbstractDoubleVector) castNode.doCast(yVec)).materialize(), ny, tol, coeffVec);
     }
 
     private RList call(RAbstractVector originalXVec, RDoubleVector xVec, int n, int p, RAbstractVector originalYVec, RDoubleVector yVec, int ny, double tol, RAbstractDoubleVector coeffVec) {

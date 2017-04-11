@@ -87,7 +87,7 @@ public abstract class MatchArg extends RBuiltinNode.Arg3 {
         public abstract Object execute(Object arg, Object choices, Object severalOK);
 
         public final Object castAndExecute(Object arg, Object choices, Object severalOK) {
-            return execute(argCast.execute(arg), choicesCast.execute(choices), severalOKCast.execute(severalOK));
+            return execute(argCast.doCast(arg), choicesCast.doCast(choices), severalOKCast.doCast(severalOK));
         }
 
         @Specialization
