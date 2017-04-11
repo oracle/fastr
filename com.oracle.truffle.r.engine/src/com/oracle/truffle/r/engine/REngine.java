@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
@@ -142,8 +143,7 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     static REngine create(RContext context) {
-        REngine engine = new REngine(context);
-        return engine;
+        return new REngine(context);
     }
 
     @Override
@@ -294,8 +294,21 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     public CallTarget parseToCallTarget(Source source, MaterializedFrame executionFrame) throws ParseException {
-        List<RSyntaxNode> statements = parseImpl(source);
-        return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements, createSourceSection(source, statements), executionFrame));
+        if (source == Engine.GET_CONTEXT) {
+            /*
+             * The "get context" operations should be executed with as little influence on the
+             * actual engine as possible, therefore this special case takes care of it explicitly.
+             */
+            return Truffle.getRuntime().createCallTarget(new RootNode(TruffleRLanguage.class, source.createUnavailableSection(), new FrameDescriptor()) {
+                @Override
+                public Object execute(VirtualFrame frame) {
+                    return JavaInterop.asTruffleValue(context);
+                }
+            });
+        } else {
+            List<RSyntaxNode> statements = parseImpl(source);
+            return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements, createSourceSection(source, statements), executionFrame));
+        }
     }
 
     private static SourceSection createSourceSection(Source source, List<RSyntaxNode> statements) {

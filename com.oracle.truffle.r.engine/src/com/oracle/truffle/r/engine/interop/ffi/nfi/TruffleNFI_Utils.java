@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,13 +24,13 @@ package com.oracle.truffle.r.engine.interop.ffi.nfi;
 
 import java.nio.charset.StandardCharsets;
 
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.engine.interop.UnsafeAdapter;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -59,8 +59,8 @@ public class TruffleNFI_Utils {
 
     private static void initDefaultLibrary() {
         if (defaultLibrary == null) {
-            PolyglotEngine engine = RContext.getInstance().getVM();
-            defaultLibrary = engine.eval(Source.newBuilder("default").name("(load default)").mimeType("application/x-native").build()).as(TruffleObject.class);
+            Env env = RContext.getInstance().getEnv();
+            defaultLibrary = (TruffleObject) env.parse(Source.newBuilder("default").name("(load default)").mimeType("application/x-native").build()).call();
         }
 
     }

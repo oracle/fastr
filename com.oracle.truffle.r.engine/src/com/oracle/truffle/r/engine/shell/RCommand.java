@@ -77,8 +77,8 @@ public class RCommand {
     public static int doMain(String[] args, String[] env, boolean initial, InputStream inStream, OutputStream outStream) {
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
         options.printHelpAndVersion();
-        PolyglotEngine vm = createPolyglotEngineFromCommandLine(options, false, initial, inStream, outStream, env);
-        return readEvalPrint(vm);
+        ContextInfo info = createContextInfoFromCommandLine(options, false, initial, inStream, outStream, env);
+        return readEvalPrint(info.createVM(), info);
     }
 
     /**
@@ -88,7 +88,7 @@ public class RCommand {
         return input.replace("~+~", " ");
     }
 
-    static PolyglotEngine createPolyglotEngineFromCommandLine(RCmdOptions options, boolean embedded, boolean initial, InputStream inStream, OutputStream outStream, String[] env) {
+    static ContextInfo createContextInfoFromCommandLine(RCmdOptions options, boolean embedded, boolean initial, InputStream inStream, OutputStream outStream, String[] env) {
         RStartParams rsp = new RStartParams(options, embedded);
 
         String fileArg = options.getString(FILE);
@@ -184,7 +184,7 @@ public class RCommand {
                 }
             }
         }
-        return ContextInfo.create(rsp, env, ContextKind.SHARE_NOTHING, initial ? null : RContext.getInstance(), consoleHandler).createVM();
+        return ContextInfo.create(rsp, env, ContextKind.SHARE_NOTHING, initial ? null : RContext.getInstance(), consoleHandler);
     }
 
     private static final Source GET_ECHO = RSource.fromTextInternal("invisible(getOption('echo'))", RSource.Internal.GET_ECHO);
@@ -201,10 +201,9 @@ public class RCommand {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
-    static int readEvalPrint(PolyglotEngine vm) {
+    static int readEvalPrint(PolyglotEngine vm, ContextInfo info) {
         int lastStatus = 0;
-        ContextInfo contextInfo = ContextInfo.getContextInfo(vm);
-        ConsoleHandler consoleHandler = contextInfo.getConsoleHandler();
+        ConsoleHandler consoleHandler = info.getConsoleHandler();
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             REPL: for (;;) {
@@ -261,7 +260,7 @@ public class RCommand {
                         } catch (ExitException e) {
                             // usually from quit
                             int status = e.getStatus();
-                            if (contextInfo.getParent() == null) {
+                            if (info.getParent() == null) {
                                 vm.dispose();
                                 Utils.systemExit(status);
                             } else {
@@ -287,7 +286,7 @@ public class RCommand {
                 Utils.systemExit(0);
             } catch (ExitException e) {
                 // normal quit, but with exit code based on lastStatus
-                if (contextInfo.getParent() == null) {
+                if (info.getParent() == null) {
                     Utils.systemExit(lastStatus);
                 } else {
                     return lastStatus;

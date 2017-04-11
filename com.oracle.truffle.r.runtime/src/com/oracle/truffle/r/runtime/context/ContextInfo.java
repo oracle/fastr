@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.context;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
@@ -39,7 +38,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
  * instance (it will be stored in the "fastrContextInfo" global symbol).
  */
 public final class ContextInfo {
-    public static final String GLOBAL_SYMBOL = "fastrContextInfo";
+    static final String CONFIG_KEY = "fastrContextInfo";
 
     private static final AtomicInteger contextInfoIds = new AtomicInteger();
 
@@ -68,13 +67,13 @@ public final class ContextInfo {
     }
 
     public PolyglotEngine createVM() {
-        PolyglotEngine newVM = PolyglotEngine.newBuilder().globalSymbol(GLOBAL_SYMBOL, JavaInterop.asTruffleObject(this)).build();
+        PolyglotEngine newVM = PolyglotEngine.newBuilder().config("application/x-r", CONFIG_KEY, this).build();
         this.vm = newVM;
         return newVM;
     }
 
     public PolyglotEngine createVM(PolyglotEngine.Builder builder) {
-        PolyglotEngine newVM = builder.globalSymbol(GLOBAL_SYMBOL, JavaInterop.asTruffleObject(this)).build();
+        PolyglotEngine newVM = builder.config("application/x-r", CONFIG_KEY, this).build();
         this.vm = newVM;
         return newVM;
     }
@@ -112,10 +111,6 @@ public final class ContextInfo {
     public static ContextInfo createNoRestore(Client client, String[] env, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
         RStartParams params = new RStartParams(RCmdOptions.parseArguments(client, new String[]{"--no-restore"}, false), false);
         return create(params, env, kind, parent, consoleHandler);
-    }
-
-    public static ContextInfo getContextInfo(PolyglotEngine vm) {
-        return vm.findGlobalSymbol(ContextInfo.GLOBAL_SYMBOL).as(ContextInfo.class);
     }
 
     public RStartParams getStartParams() {

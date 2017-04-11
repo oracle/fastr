@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.engine.interop.ffi.nfi;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
@@ -30,7 +31,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -54,8 +54,8 @@ public class TruffleNFI_DLL implements DLLRFFI {
         @Override
         public Object execute(String path, boolean local, boolean now) {
             String libName = DLL.libName(path);
-            PolyglotEngine engine = RContext.getInstance().getVM();
-            TruffleObject libHandle = engine.eval(Source.newBuilder(prepareLibraryOpen(path, local, now)).name(path).mimeType("application/x-native").build()).as(TruffleObject.class);
+            Env env = RContext.getInstance().getEnv();
+            TruffleObject libHandle = (TruffleObject) env.parse(Source.newBuilder(prepareLibraryOpen(path, local, now)).name(path).mimeType("application/x-native").build()).call();
             return new NFIHandle(libName, libHandle);
         }
     }

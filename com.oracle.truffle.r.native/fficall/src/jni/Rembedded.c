@@ -20,7 +20,6 @@
 extern char **environ;
 
 static JavaVM *javaVM;
-static jobject engine;
 static int initialized = 0;
 static char *java_home;
 
@@ -163,15 +162,14 @@ int Rf_initialize_R(int argc, char *argv[]) {
 	rembeddedClass = checkFindClass(jniEnv, "com/oracle/truffle/r/engine/shell/REmbedded");
 	rStartParamsClass = checkFindClass(jniEnv, "com/oracle/truffle/r/runtime/RStartParams");
 	jclass stringClass = checkFindClass(jniEnv, "java/lang/String");
-	jmethodID initializeMethod = checkGetMethodID(jniEnv, rembeddedClass, "initializeR",
-			"([Ljava/lang/String;)Lcom/oracle/truffle/api/vm/PolyglotEngine;", 1);
+	jmethodID initializeMethod = checkGetMethodID(jniEnv, rembeddedClass, "initializeR", "([Ljava/lang/String;)V", 1);
 	jobjectArray argsArray = (*jniEnv)->NewObjectArray(jniEnv, argc, stringClass, NULL);
 	for (int i = 0; i < argc; i++) {
 		jstring arg = (*jniEnv)->NewStringUTF(jniEnv, argv[i]);
 		(*jniEnv)->SetObjectArrayElement(jniEnv, argsArray, i, arg);
 	}
 	// Can't TRACE this upcall as system not initialized
-	engine = checkRef(jniEnv, (*jniEnv)->CallStaticObjectMethod(jniEnv, rembeddedClass, initializeMethod, argsArray));
+	(*jniEnv)->CallStaticObjectMethod(jniEnv, rembeddedClass, initializeMethod, argsArray);
 	initialized++;
 	return 0;
 }
@@ -250,15 +248,15 @@ static void setupOverrides(void);
 
 void setup_Rmainloop(void) {
 	JNIEnv *jniEnv = getEnv();
-	jmethodID setupMethod = checkGetMethodID(jniEnv, rembeddedClass, "setupRmainloop", "(Lcom/oracle/truffle/api/vm/PolyglotEngine;)V", 1);
-	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, setupMethod, engine);
+	jmethodID setupMethod = checkGetMethodID(jniEnv, rembeddedClass, "setupRmainloop", "()V", 1);
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, setupMethod);
 }
 
 void run_Rmainloop(void) {
 	JNIEnv *jniEnv = getEnv();
 	setupOverrides();
-	jmethodID mainloopMethod = checkGetMethodID(jniEnv, rembeddedClass, "runRmainloop", "(Lcom/oracle/truffle/api/vm/PolyglotEngine;)V", 1);
-	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, mainloopMethod, engine);
+	jmethodID mainloopMethod = checkGetMethodID(jniEnv, rembeddedClass, "runRmainloop", "()V", 1);
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, rembeddedClass, mainloopMethod);
 }
 
 void Rf_mainloop(void) {

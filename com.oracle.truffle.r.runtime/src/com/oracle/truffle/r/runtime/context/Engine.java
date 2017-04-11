@@ -30,6 +30,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -38,6 +39,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public interface Engine {
+
+    Source GET_CONTEXT = RSource.fromTextInternal("<<<get_context>>>", RSource.Internal.GET_CONTEXT);
 
     class ParseException extends RuntimeException {
         private static final long serialVersionUID = 1L;
