@@ -28,9 +28,13 @@ import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
@@ -49,14 +53,10 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
-import java.util.Arrays;
-import java.util.function.Function;
 
 public class LogFunctions {
     @RBuiltin(name = "log", kind = PRIMITIVE, parameterNames = {"x", "base"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
@@ -158,103 +158,47 @@ public class LogFunctions {
             return logb(x, base, divNode, naBase);
         }
 
-        @Specialization
-        protected RDoubleVector log(RAbstractIntVector vector, double base,
+        @Specialization(guards = "!isRAbstractComplexVector(vector)")
+        protected RDoubleVector log(RAbstractVector vector, double base,
+                        @Cached("createClassProfile()") ValueProfile vectorProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
                         @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
                         @Cached("create()") GetNamesAttributeNode getNamesNode,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
                         @Cached("create()") NACheck xNACheck,
                         @Cached("create()") NACheck baseNACheck) {
-            return log(vector, base, index -> xNACheck.convertIntToDouble(vector.getDataAt(index)), copyAttrsNode, getNamesNode, getDimsNode, xNACheck, baseNACheck);
-        }
-
-        @Specialization
-        protected RDoubleVector log(RAbstractDoubleVector vector, double base,
-                        @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
-                        @Cached("create()") GetNamesAttributeNode getNamesNode,
-                        @Cached("create()") GetDimAttributeNode getDimsNode,
-                        @Cached("create()") NACheck xNACheck,
-                        @Cached("create()") NACheck baseNACheck) {
-            return log(vector, base, index -> checkDouble(vector.getDataAt(index), xNACheck), copyAttrsNode, getNamesNode, getDimsNode, xNACheck, baseNACheck);
-        }
-
-        private static double checkDouble(double d, NACheck na) {
-            na.check(d);
-            return d;
-        }
-
-        @Specialization
-        protected RDoubleVector log(RAbstractLogicalVector vector, double base,
-                        @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
-                        @Cached("create()") GetNamesAttributeNode getNamesNode,
-                        @Cached("create()") GetDimAttributeNode getDimsNode,
-                        @Cached("create()") NACheck xNACheck,
-                        @Cached("create()") NACheck baseNACheck) {
-            return log(vector, base, index -> xNACheck.convertLogicalToDouble(vector.getDataAt(index)), copyAttrsNode, getNamesNode, getDimsNode, xNACheck, baseNACheck);
+            RAbstractDoubleVector doubleVector = (RAbstractDoubleVector) vectorProfile.profile(vector).castSafe(RType.Double, isNAProfile);
+            return logInternal(doubleVector, base, copyAttrsNode, getNamesNode, getDimsNode, xNACheck, baseNACheck);
         }
 
         @Specialization
         protected RComplexVector log(RAbstractComplexVector vector, double base,
+                        @Cached("createClassProfile()") ValueProfile vectorProfile,
                         @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
                         @Cached("create()") GetNamesAttributeNode getNamesNode,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
                         @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
                         @Cached("create()") NACheck xNACheck,
                         @Cached("create()") NACheck baseNACheck) {
-            return log(vector, RComplex.valueOf(base, 0), copyAttrsNode, getNamesNode, getDimsNode, divNode, xNACheck, baseNACheck);
+            return logInternal(vectorProfile.profile(vector), RComplex.valueOf(base, 0), divNode, getDimsNode, getNamesNode, copyAttrsNode, xNACheck, baseNACheck);
         }
 
         @Specialization
-        protected RAbstractComplexVector log(RAbstractIntVector vector, RComplex base,
+        protected RAbstractComplexVector log(RAbstractVector vector, RComplex base,
+                        @Cached("createClassProfile()") ValueProfile vectorProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
                         @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
                         @Cached("create()") GetNamesAttributeNode getNamesNode,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
                         @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
                         @Cached("create()") NACheck xNACheck,
                         @Cached("create()") NACheck baseNACheck) {
-            return log(vector, base, index -> xNACheck.convertIntToComplex(vector.getDataAt(index)), divNode, getDimsNode, getNamesNode, copyAttrsNode, xNACheck, baseNACheck);
+            RAbstractComplexVector complexVector = (RAbstractComplexVector) vectorProfile.profile(vector).castSafe(RType.Complex, isNAProfile);
+            return logInternal(complexVector, base, divNode, getDimsNode, getNamesNode, copyAttrsNode, xNACheck, baseNACheck);
         }
 
-        @Specialization
-        protected RAbstractComplexVector log(RAbstractDoubleVector vector, RComplex base,
-                        @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
-                        @Cached("create()") GetNamesAttributeNode getNamesNode,
-                        @Cached("create()") GetDimAttributeNode getDimsNode,
-                        @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
-                        @Cached("create()") NACheck xNACheck,
-                        @Cached("create()") NACheck baseNACheck) {
-            return log(vector, base, index -> xNACheck.convertDoubleToComplex(vector.getDataAt(index)), divNode, getDimsNode, getNamesNode, copyAttrsNode, xNACheck, baseNACheck);
-        }
-
-        @Specialization
-        protected RAbstractComplexVector log(RAbstractLogicalVector vector, RComplex base,
-                        @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
-                        @Cached("create()") GetNamesAttributeNode getNamesNode,
-                        @Cached("create()") GetDimAttributeNode getDimsNode,
-                        @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
-                        @Cached("create()") NACheck xNACheck,
-                        @Cached("create()") NACheck baseNACheck) {
-            return log(vector, base, index -> xNACheck.convertLogicalToComplex(vector.getDataAt(index)), divNode, getDimsNode, getNamesNode, copyAttrsNode, xNACheck, baseNACheck);
-        }
-
-        @Specialization
-        protected RComplexVector log(RAbstractComplexVector vector, RComplex base,
-                        @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
-                        @Cached("create()") GetNamesAttributeNode getNamesNode,
-                        @Cached("create()") GetDimAttributeNode getDimsNode,
-                        @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
-                        @Cached("create()") NACheck xNACheck,
-                        @Cached("create()") NACheck baseNACheck) {
-            return log(vector, base, index -> checkComplex(vector.getDataAt(index), xNACheck), divNode, getDimsNode, getNamesNode, copyAttrsNode, xNACheck, baseNACheck);
-        }
-
-        private static RComplex checkComplex(RComplex rc, NACheck xNACheck) {
-            xNACheck.check(rc);
-            return rc;
-        }
-
-        private RDoubleVector log(RAbstractVector vector, double base, Function<Integer, Double> toDouble, CopyOfRegAttributesNode copyAttrsNode, GetNamesAttributeNode getNamesNode,
-                        GetDimAttributeNode getDimsNode, NACheck xNACheck, NACheck baseNACheck) {
+        private RDoubleVector logInternal(RAbstractDoubleVector vector, double base, CopyOfRegAttributesNode copyAttrsNode, GetNamesAttributeNode getNamesNode, GetDimAttributeNode getDimsNode,
+                        NACheck xNACheck, NACheck baseNACheck) {
             baseNACheck.enable(base);
             double[] resultVector = new double[vector.getLength()];
             if (baseNACheck.check(base)) {
@@ -266,12 +210,8 @@ public class LogFunctions {
                 xNACheck.enable(vector);
                 Runnable[] warningResult = new Runnable[1];
                 for (int i = 0; i < vector.getLength(); i++) {
-                    double value = toDouble.apply(i);
-                    if (!naX.isNA(value)) {
-                        resultVector[i] = logb(value, base, warningResult);
-                    } else {
-                        resultVector[i] = value;
-                    }
+                    double value = vector.getDataAt(i);
+                    resultVector[i] = xNACheck.check(value) ? RRuntime.DOUBLE_NA : logb(value, base, warningResult);
                 }
                 if (warningResult[0] != null) {
                     warningResult[0].run();
@@ -315,8 +255,8 @@ public class LogFunctions {
             return result;
         }
 
-        private RComplexVector log(RAbstractVector vector, RComplex base, Function<Integer, RComplex> toComplex, BinaryMapArithmeticFunctionNode divNode, GetDimAttributeNode getDimsNode,
-                        GetNamesAttributeNode getNamesNode, CopyOfRegAttributesNode copyAttrsNode, NACheck xNACheck, NACheck baseNACheck) {
+        private RComplexVector logInternal(RAbstractComplexVector vector, RComplex base, BinaryMapArithmeticFunctionNode divNode, GetDimAttributeNode getDimsNode, GetNamesAttributeNode getNamesNode,
+                        CopyOfRegAttributesNode copyAttrsNode, NACheck xNACheck, NACheck baseNACheck) {
             baseNACheck.enable(base);
             double[] complexVector = new double[vector.getLength() * 2];
             if (baseNACheck.check(base)) {
@@ -328,13 +268,13 @@ public class LogFunctions {
                 xNACheck.enable(vector);
                 boolean seenNaN = false;
                 for (int i = 0; i < vector.getLength(); i++) {
-                    RComplex value = toComplex.apply(i);
-                    if (!naX.isNA(value)) {
+                    RComplex value = vector.getDataAt(i);
+                    if (xNACheck.check(value)) {
+                        fill(complexVector, i * 2, value);
+                    } else {
                         RComplex rc = logb(value, base, divNode, false);
                         seenNaN = isNaN(rc);
                         fill(complexVector, i * 2, rc);
-                    } else {
-                        fill(complexVector, i * 2, value);
                     }
                 }
                 if (seenNaN) {

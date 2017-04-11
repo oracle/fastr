@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -65,8 +66,10 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     @Specialization
-    protected RStringVector doAbstractContainer(RAbstractContainer operand,
+    protected RStringVector doAbstractContainer(RAbstractContainer operandIn,
+                    @Cached("createClassProfile()") ValueProfile operandProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isLanguageProfile) {
+        RAbstractContainer operand = operandProfile.profile(operandIn);
         String[] sdata = new String[operand.getLength()];
         // conversions to character will not introduce new NAs
         for (int i = 0; i < operand.getLength(); i++) {
