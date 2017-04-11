@@ -53,6 +53,14 @@ public interface DrawingContext {
             assert num > 0 && num <= SYMBOL.ordinal() + 1;
             return values()[num - 1];
         }
+
+        public boolean isBold() {
+            return this == BOLD || this == BOLDITALIC;
+        }
+
+        public boolean isItalic() {
+            return this == ITALIC || this == BOLDITALIC;
+        }
     }
 
     enum GridLineJoin {
@@ -132,7 +140,8 @@ public interface DrawingContext {
     String getFontFamily();
 
     /**
-     * Gets the height of a line in multiplies of the base line height.
+     * Gets the height of a text line in multiplies of the base line height. This is typically not a
+     * concern of devices, since they always receive single line strings for drawing.
      */
     double getLineHeight();
 
@@ -140,4 +149,18 @@ public interface DrawingContext {
      * The fill color of shapes.
      */
     GridColor getFillColor();
+
+    static boolean areSame(DrawingContext ctx1, DrawingContext ctx2) {
+        return ctx1 == ctx2 || (ctx1.getColor().equals(ctx2.getColor()) &&
+                        ctx1.getLineEnd() == ctx2.getLineEnd() &&
+                        ctx1.getLineJoin() == ctx2.getLineJoin() &&
+                        ctx1.getLineType() == ctx2.getLineType() &&
+                        ctx1.getLineHeight() == ctx2.getLineHeight() &&
+                        ctx1.getFontStyle() == ctx2.getFontStyle() &&
+                        ctx1.getFontSize() == ctx2.getFontSize() &&
+                        ctx1.getFontFamily().equals(ctx2.getFontFamily()) &&
+                        ctx1.getLineWidth() == ctx2.getLineWidth() &&
+                        ctx1.getLineMitre() == ctx2.getLineMitre() &&
+                        ctx1.getFillColor().equals(ctx2.getFillColor()));
+    }
 }

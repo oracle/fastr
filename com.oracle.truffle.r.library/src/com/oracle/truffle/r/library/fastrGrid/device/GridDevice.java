@@ -81,7 +81,7 @@ public interface GridDevice {
     void drawCircle(DrawingContext ctx, double centerX, double centerY, double radius);
 
     /**
-     * Prints a string with left bottom corner at given position rotates by given angle anti clock
+     * Prints a string with left bottom corner at given position rotated by given angle anti clock
      * wise, the centre of the rotation should be the bottom left corer.
      */
     void drawString(DrawingContext ctx, double leftX, double bottomY, double rotationAnticlockWise, String text);

@@ -27,6 +27,14 @@ eval(expression({
     awt <- function(width = NULL, height = NULL, graphicsObj = NULL) {
         .External2(grDevices:::C_X11, ".FASTR.AWT", width, height, graphicsObj)
     }
+    # Allows to get the SVG code from SVG device, it also closes the device,
+    # but the contents are not saved to the given file.
+    svg.off <- function(which = dev.cur()) {
+        if (which == 1) {
+            stop("cannot shut down device 1 (the null device)")
+        }
+        .External(C_devoff, as.integer(-which))
+    }
     # GnuR version only works with "X11cairo" device. Our version of savePlot
     # works with "awt" device and "X11cairo", which is for us only alias for
     # "awt". Moreover, we only support formats that awt supports.
