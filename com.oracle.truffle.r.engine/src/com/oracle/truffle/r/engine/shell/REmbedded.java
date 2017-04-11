@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,6 @@ import com.oracle.truffle.r.runtime.RSource.Internal;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
-import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
@@ -55,11 +54,13 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * object which is itself stored as a global symbol in the associated {@link PolyglotEngine}
  * instance. The FastR {@link PolyglotEngine} is then partially initialized. The call to
  * {@code R_SetParams} will adjust the values stored in the {@link RStartParams} object and then
- * {@code Rf_mainloop}, which calls {@link #setupRmainloop(PolyglotEngine)} and then
- * {@link #runRmainloop(PolyglotEngine)}, which will complete the FastR initialization and enter the
- * read-eval-print loop.
+ * {@code Rf_mainloop}, which calls {@link #setupRmainloop()} and then {@link #runRmainloop()},
+ * which will complete the FastR initialization and enter the read-eval-print loop.
  */
 public class REmbedded {
+
+    private static ContextInfo info;
+    private static PolyglotEngine vm;
 
     /**
      * Creates the {@link PolyglotEngine} and initializes it. Called from native code when FastR is
@@ -67,12 +68,14 @@ public class REmbedded {
      * initialize FastR as we cannot do that until the embedding system has had a chance to adjust
      * the {@link RStartParams}, which happens after this call returns.
      */
-    private static PolyglotEngine initializeR(String[] args) {
+    private static void initializeR(String[] args) {
+        assert vm == null;
+        assert info == null;
         RContext.setEmbedded();
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, true);
-        PolyglotEngine vm = RCommand.createPolyglotEngineFromCommandLine(options, true, true, System.in, System.out, null);
+        info = RCommand.createContextInfoFromCommandLine(options, true, true, System.in, System.out, null);
+        vm = info.createVM();
         vm.eval(INIT);
-        return vm;
     }
 
     /**
@@ -86,32 +89,33 @@ public class REmbedded {
      * GnuR distinguishes {@code setup_Rmainloop} and {@code run_Rmainloop}. Currently we don't have
      * the equivalent separation in FastR.
      */
-    private static void setupRmainloop(@SuppressWarnings("unused") PolyglotEngine vm) {
+    private static void setupRmainloop() {
+        // nothing to do
     }
 
     /**
      * This is where we can complete the initialization based on what modifications were made by the
      * native code after {@link #initializeR} returned.
      */
-    private static void runRmainloop(PolyglotEngine vm) {
+    private static void runRmainloop() {
         RContext.getInstance().completeEmbeddedInitialization();
         if (!RContext.getInstance().getStartParams().getQuiet()) {
             RContext.getInstance().getConsoleHandler().println(RRuntime.WELCOME_MESSAGE);
         }
-        RCommand.readEvalPrint(vm);
+        RCommand.readEvalPrint(vm, info);
     }
 
     /**
      * Testing vehicle, emulates a native upcall.
      */
     public static void main(String[] args) {
-        PolyglotEngine vm = initializeR(args);
-        RStartParams startParams = vm.eval(Engine.GET_CONTEXT).as(RContext.class).getStartParams();
+        initializeR(args);
+        RStartParams startParams = info.getStartParams();
         startParams.setEmbedded();
         startParams.setLoadInitFile(false);
         startParams.setNoRenviron(true);
-        setupRmainloop(vm);
-        runRmainloop(vm);
+        setupRmainloop();
+        runRmainloop();
     }
 
     // Checkstyle: stop method name check
