@@ -620,9 +620,11 @@ public class DLL {
                 return f;
             }
 
-            if (!dllInfo.dynamicLookup) {
-                return SYMBOL_NOT_FOUND;
-            }
+            // TODO: there is a weird interaction with namespace environments that makes this not
+            // true in all cases
+            // if (!dllInfo.dynamicLookup) {
+            // return SYMBOL_NOT_FOUND;
+            // }
 
             String mName = name;
             // assume Fortran underscore, although GnuR has cc code for this

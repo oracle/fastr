@@ -436,10 +436,6 @@ public final class CastBuilder {
             return MissingFilter.INSTANCE;
         }
 
-        public static <T> CompareFilter<T> sameAs(T x) {
-            return new CompareFilter<>(CompareFilter.SAME, new CompareFilter.ScalarValue(x, RType.Any));
-        }
-
         public static <T> CompareFilter<T> equalTo(T x) {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ScalarValue(x, RType.Any));
         }
@@ -549,19 +545,19 @@ public final class CastBuilder {
         }
 
         public static CompareFilter<Integer> eq(int x) {
-            return new CompareFilter<>(CompareFilter.SAME, new CompareFilter.ScalarValue(x, RType.Integer));
+            return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ScalarValue(x, RType.Integer));
         }
 
         public static CompareFilter<Double> eq(double x) {
-            return new CompareFilter<>(CompareFilter.SAME, new CompareFilter.ScalarValue(x, RType.Double));
+            return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ScalarValue(x, RType.Double));
         }
 
         public static CompareFilter<Byte> eq(byte x) {
-            return new CompareFilter<>(CompareFilter.SAME, new CompareFilter.ScalarValue(x, RType.Logical));
+            return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ScalarValue(x, RType.Logical));
         }
 
         public static CompareFilter<String> eq(String x) {
-            return new CompareFilter<>(CompareFilter.SAME, new CompareFilter.ScalarValue(x, RType.Character));
+            return new CompareFilter<>(CompareFilter.STRING_EQ, new CompareFilter.ScalarValue(x, RType.Character));
         }
 
         public static NotFilter<Integer> neq(int x) {

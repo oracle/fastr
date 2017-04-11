@@ -361,13 +361,13 @@ public abstract class Filter<T, R extends T> {
         public static final byte LT = 2;
         public static final byte GE = 3;
         public static final byte LE = 4;
-        public static final byte SAME = 5;
+        public static final byte STRING_EQ = 5;
 
         private final byte operation;
         private final Subject subject;
 
         public CompareFilter(byte operation, Subject subject) {
-            assert operation <= SAME : "wrong operation value";
+            assert operation <= STRING_EQ : "wrong operation value";
             this.operation = operation;
             this.subject = subject;
         }
