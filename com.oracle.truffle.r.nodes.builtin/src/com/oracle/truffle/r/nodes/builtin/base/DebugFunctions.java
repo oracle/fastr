@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.runtime.RError;
@@ -37,29 +38,27 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public class DebugFunctions {
 
-    protected abstract static class ErrorAndFunAdapter extends RBuiltinNode {
+    protected static Casts createCasts(Class<? extends RBuiltinNode> extCls) {
+        Casts casts = new Casts(extCls);
+        casts.arg("fun").mustBe(RFunction.class, Message.ARG_MUST_BE_CLOSURE);
+        return casts;
+    }
 
-        protected static Casts createCasts(Class<? extends ErrorAndFunAdapter> extCls) {
-            Casts casts = new Casts(extCls);
-            casts.arg("fun").mustBe(RFunction.class, Message.ARG_MUST_BE_CLOSURE);
-            return casts;
-        }
-
-        protected void doDebug(RFunction fun, Object text, Object condition, boolean once) throws RError {
-            // GnuR does not generate an error for builtins, but debug (obviously) has no effect
-            if (!fun.isBuiltin()) {
-                if (!DebugHandling.enableDebug(fun, text, condition, once, false)) {
-                    throw error(RError.Message.GENERIC, "failed to attach debug handler (not instrumented?)");
-                }
+    protected static void doDebug(RBaseNode node, RFunction fun, Object text, Object condition, boolean once) throws RError {
+        // GnuR does not generate an error for builtins, but debug (obviously) has no effect
+        if (!fun.isBuiltin()) {
+            if (!DebugHandling.enableDebug(fun, text, condition, once, false)) {
+                throw node.error(RError.Message.GENERIC, "failed to attach debug handler (not instrumented?)");
             }
         }
     }
 
     @RBuiltin(name = "debug", visibility = OFF, kind = INTERNAL, parameterNames = {"fun", "text", "condition"}, behavior = COMPLEX)
-    public abstract static class Debug extends ErrorAndFunAdapter {
+    public abstract static class Debug extends RBuiltinNode.Arg3 {
 
         static {
             createCasts(Debug.class);
@@ -67,14 +66,14 @@ public class DebugFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RNull doDebug(RFunction fun, Object text, Object condition) {
-            doDebug(fun, text, condition, false);
+        protected RNull debug(RFunction fun, Object text, Object condition) {
+            doDebug(this, fun, text, condition, false);
             return RNull.instance;
         }
     }
 
     @RBuiltin(name = "debugonce", visibility = OFF, kind = INTERNAL, parameterNames = {"fun", "text", "condition"}, behavior = COMPLEX)
-    public abstract static class DebugOnce extends ErrorAndFunAdapter {
+    public abstract static class DebugOnce extends RBuiltinNode.Arg3 {
 
         static {
             createCasts(DebugOnce.class);
@@ -84,13 +83,13 @@ public class DebugFunctions {
         @TruffleBoundary
         protected RNull debugonce(RFunction fun, Object text, Object condition) {
             // TODO implement
-            doDebug(fun, text, condition, true);
+            doDebug(this, fun, text, condition, true);
             return RNull.instance;
         }
     }
 
     @RBuiltin(name = "undebug", visibility = OFF, kind = INTERNAL, parameterNames = {"fun"}, behavior = COMPLEX)
-    public abstract static class UnDebug extends ErrorAndFunAdapter {
+    public abstract static class UnDebug extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(UnDebug.class);
@@ -107,7 +106,7 @@ public class DebugFunctions {
     }
 
     @RBuiltin(name = "isdebugged", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
-    public abstract static class IsDebugged extends ErrorAndFunAdapter {
+    public abstract static class IsDebugged extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsDebugged.class);

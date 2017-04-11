@@ -79,7 +79,7 @@ public class HiddenInternalFunctions {
      * Transcribed from GnuR {@code do_makeLazy} in src/main/builtin.c.
      */
     @RBuiltin(name = "makeLazy", visibility = OFF, kind = INTERNAL, parameterNames = {"names", "values", "expr", "eval.env", "assign.env"}, behavior = COMPLEX)
-    public abstract static class MakeLazy extends RBuiltinNode {
+    public abstract static class MakeLazy extends RBuiltinNode.Arg5 {
         @Child private Eval eval;
 
         private void initEval() {
@@ -142,7 +142,7 @@ public class HiddenInternalFunctions {
      * possibly with different names. Promises are not forced and active bindings are preserved.
      */
     @RBuiltin(name = "importIntoEnv", kind = INTERNAL, parameterNames = {"impenv", "impnames", "expenv", "expnames"}, behavior = COMPLEX)
-    public abstract static class ImportIntoEnv extends RBuiltinNode {
+    public abstract static class ImportIntoEnv extends RBuiltinNode.Arg4 {
 
         static {
             Casts casts = new Casts(ImportIntoEnv.class);
@@ -184,7 +184,7 @@ public class HiddenInternalFunctions {
      * Transcribed from {@code lazyLoaadDBFetch} in src/serialize.c.
      */
     @RBuiltin(name = "lazyLoadDBfetch", kind = PRIMITIVE, parameterNames = {"key", "datafile", "compressed", "envhook"}, behavior = PURE)
-    public abstract static class LazyLoadDBFetch extends RBuiltinNode {
+    public abstract static class LazyLoadDBFetch extends RBuiltinNode.Arg4 {
 
         @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
 
@@ -274,7 +274,7 @@ public class HiddenInternalFunctions {
     }
 
     @RBuiltin(name = "getRegisteredRoutines", kind = INTERNAL, parameterNames = "info", behavior = COMPLEX)
-    public abstract static class GetRegisteredRoutines extends RBuiltinNode {
+    public abstract static class GetRegisteredRoutines extends RBuiltinNode.Arg1 {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{".C", ".Call", ".Fortran", ".External"}, RDataFactory.COMPLETE_VECTOR);
         private static final RStringVector NATIVE_ROUTINE_LIST = RDataFactory.createStringVectorFromScalar("NativeRoutineList");
 
@@ -324,7 +324,7 @@ public class HiddenInternalFunctions {
     }
 
     @RBuiltin(name = "getVarsFromFrame", kind = INTERNAL, parameterNames = {"vars", "e", "force"}, behavior = COMPLEX)
-    public abstract static class GetVarsFromFrame extends RBuiltinNode {
+    public abstract static class GetVarsFromFrame extends RBuiltinNode.Arg3 {
         @Child private PromiseHelperNode promiseHelper;
 
         static {
@@ -361,7 +361,7 @@ public class HiddenInternalFunctions {
     }
 
     @RBuiltin(name = "lazyLoadDBinsertValue", kind = INTERNAL, parameterNames = {"value", "file", "ascii", "compsxp", "hook"}, behavior = COMPLEX)
-    public abstract static class LazyLoadDBinsertValue extends RBuiltinNode {
+    public abstract static class LazyLoadDBinsertValue extends RBuiltinNode.Arg5 {
 
         @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
 
@@ -465,7 +465,7 @@ public class HiddenInternalFunctions {
     }
 
     @RBuiltin(name = "lazyLoadDBflush", kind = INTERNAL, parameterNames = "path", behavior = COMPLEX)
-    public abstract static class LazyLoadDBFlush extends RBuiltinNode {
+    public abstract static class LazyLoadDBFlush extends RBuiltinNode.Arg1 {
 
         static {
             Casts.noCasts(LazyLoadDBFlush.class);

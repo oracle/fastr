@@ -83,7 +83,7 @@ abstract class AccessFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
 }
 
 @RBuiltin(name = "$", kind = PRIMITIVE, parameterNames = {"", ""}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class AccessField extends RBuiltinNode {
+public abstract class AccessField extends RBuiltinNode.Arg2 {
 
     @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.FIELD_SUBSCRIPT, true);
 

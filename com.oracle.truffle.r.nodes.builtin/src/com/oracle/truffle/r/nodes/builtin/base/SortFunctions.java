@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
@@ -41,7 +42,7 @@ import java.util.Collections;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -66,88 +67,86 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  */
 public class SortFunctions {
 
-    private abstract static class Adapter extends RBuiltinNode {
-        protected static void addCastForX(Casts casts) {
-            casts.arg("x").allowNull().mustBe(rawValue().not(), RAW_SORT).mustBe(instanceOf(RAbstractListVector.class).not(), ONLY_ATOMIC_CAN_BE_SORTED).mustBe(
-                            abstractVectorValue(), ONLY_ATOMIC_CAN_BE_SORTED);
-        }
+    protected static void addCastForX(Casts casts) {
+        casts.arg("x").allowNull().mustBe(rawValue().not(), RAW_SORT).mustBe(instanceOf(RAbstractListVector.class).not(), ONLY_ATOMIC_CAN_BE_SORTED).mustBe(
+                        abstractVectorValue(), ONLY_ATOMIC_CAN_BE_SORTED);
+    }
 
-        protected static void addCastForDecreasing(Casts casts) {
-            casts.arg("decreasing").defaultError(INVALID_LOGICAL, "decreasing").mustBe(numericValue()).asLogicalVector().findFirst().map(toBoolean());
-        }
+    protected static void addCastForDecreasing(Casts casts) {
+        casts.arg("decreasing").defaultError(INVALID_LOGICAL, "decreasing").mustBe(numericValue()).asLogicalVector().findFirst().map(toBoolean());
+    }
 
-        @TruffleBoundary
-        private static double[] sort(double[] data, boolean decreasing) {
-            // no reverse comparator for primitives
+    @TruffleBoundary
+    private static double[] sort(double[] data, boolean decreasing) {
+        // no reverse comparator for primitives
+        Arrays.parallelSort(data);
+        if (decreasing) {
+            int len = data.length;
+            for (int i = len / 2 - 1; i >= 0; i--) {
+                double temp = data[i];
+                data[i] = data[len - i - 1];
+                data[len - i - 1] = temp;
+            }
+        }
+        return data;
+    }
+
+    @TruffleBoundary
+    private static int[] sort(int[] data, boolean decreasing) {
+        Arrays.parallelSort(data);
+        if (decreasing) {
+            int len = data.length;
+            for (int i = len / 2 - 1; i >= 0; i--) {
+                int temp = data[i];
+                data[i] = data[len - i - 1];
+                data[len - i - 1] = temp;
+            }
+        }
+        return data;
+    }
+
+    @TruffleBoundary
+    private static byte[] sort(byte[] data, boolean decreasing) {
+        Arrays.parallelSort(data);
+        if (decreasing) {
+            int len = data.length;
+            for (int i = len / 2 - 1; i >= 0; i--) {
+                byte temp = data[i];
+                data[i] = data[len - i - 1];
+                data[len - i - 1] = temp;
+            }
+        }
+        return data;
+    }
+
+    @TruffleBoundary
+    private static String[] sort(String[] data, boolean decreasing) {
+        if (decreasing) {
+            Arrays.parallelSort(data, Collections.reverseOrder());
+        } else {
             Arrays.parallelSort(data);
-            if (decreasing) {
-                int len = data.length;
-                for (int i = len / 2 - 1; i >= 0; i--) {
-                    double temp = data[i];
-                    data[i] = data[len - i - 1];
-                    data[len - i - 1] = temp;
-                }
-            }
-            return data;
         }
+        return data;
+    }
 
-        @TruffleBoundary
-        private static int[] sort(int[] data, boolean decreasing) {
-            Arrays.parallelSort(data);
-            if (decreasing) {
-                int len = data.length;
-                for (int i = len / 2 - 1; i >= 0; i--) {
-                    int temp = data[i];
-                    data[i] = data[len - i - 1];
-                    data[len - i - 1] = temp;
-                }
-            }
-            return data;
-        }
+    protected static RDoubleVector jdkSort(RAbstractDoubleVector vec, boolean decreasing) {
+        double[] data = vec.materialize().getDataCopy();
+        return RDataFactory.createDoubleVector(sort(data, decreasing), vec.isComplete());
+    }
 
-        @TruffleBoundary
-        private static byte[] sort(byte[] data, boolean decreasing) {
-            Arrays.parallelSort(data);
-            if (decreasing) {
-                int len = data.length;
-                for (int i = len / 2 - 1; i >= 0; i--) {
-                    byte temp = data[i];
-                    data[i] = data[len - i - 1];
-                    data[len - i - 1] = temp;
-                }
-            }
-            return data;
-        }
+    protected static RIntVector jdkSort(RAbstractIntVector vec, boolean decreasing) {
+        int[] data = vec.materialize().getDataCopy();
+        return RDataFactory.createIntVector(sort(data, decreasing), vec.isComplete());
+    }
 
-        @TruffleBoundary
-        private static String[] sort(String[] data, boolean decreasing) {
-            if (decreasing) {
-                Arrays.parallelSort(data, Collections.reverseOrder());
-            } else {
-                Arrays.parallelSort(data);
-            }
-            return data;
-        }
+    protected static RStringVector jdkSort(RAbstractStringVector vec, boolean decreasing) {
+        String[] data = vec.materialize().getDataCopy();
+        return RDataFactory.createStringVector(sort(data, decreasing), vec.isComplete());
+    }
 
-        protected RDoubleVector jdkSort(RAbstractDoubleVector vec, boolean decreasing) {
-            double[] data = vec.materialize().getDataCopy();
-            return RDataFactory.createDoubleVector(sort(data, decreasing), vec.isComplete());
-        }
-
-        protected RIntVector jdkSort(RAbstractIntVector vec, boolean decreasing) {
-            int[] data = vec.materialize().getDataCopy();
-            return RDataFactory.createIntVector(sort(data, decreasing), vec.isComplete());
-        }
-
-        protected RStringVector jdkSort(RAbstractStringVector vec, boolean decreasing) {
-            String[] data = vec.materialize().getDataCopy();
-            return RDataFactory.createStringVector(sort(data, decreasing), vec.isComplete());
-        }
-
-        protected RLogicalVector jdkSort(RAbstractLogicalVector vec, boolean decreasing) {
-            byte[] data = vec.materialize().getDataCopy();
-            return RDataFactory.createLogicalVector(sort(data, decreasing), vec.isComplete());
-        }
+    protected static RLogicalVector jdkSort(RAbstractLogicalVector vec, boolean decreasing) {
+        byte[] data = vec.materialize().getDataCopy();
+        return RDataFactory.createLogicalVector(sort(data, decreasing), vec.isComplete());
     }
 
     /**
@@ -158,7 +157,7 @@ public class SortFunctions {
      * N.B. The R code strips out {@code NA} and {@code NaN} values before calling the builtin.
      */
     @RBuiltin(name = "sort", kind = INTERNAL, parameterNames = {"x", "decreasing"}, behavior = PURE)
-    public abstract static class Sort extends Adapter {
+    public abstract static class Sort extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(Sort.class);
@@ -187,25 +186,25 @@ public class SortFunctions {
         }
 
         @Specialization
-        protected RLogicalVector sort(RAbstractComplexVector vec, boolean decreasing) {
-            throw RError.error(this, RError.Message.UNIMPLEMENTED_ARG_TYPE, 1); // [TODO] implement
-                                                                                // complex sort
+        protected RLogicalVector sort(@SuppressWarnings("unused") RAbstractComplexVector vec, @SuppressWarnings("unused") boolean decreasing) {
+            // TODO: implement complex sort
+            throw RError.error(this, RError.Message.UNIMPLEMENTED_ARG_TYPE, 1);
         }
 
         @Specialization
-        protected RNull sort(RNull vec, boolean decreasing) {
+        protected RNull sort(@SuppressWarnings("unused") RNull vec, @SuppressWarnings("unused") boolean decreasing) {
             return RNull.instance;
         }
 
     }
 
     @RBuiltin(name = "qsort", kind = INTERNAL, parameterNames = {"x", "decreasing"}, behavior = PURE)
-    public abstract static class QSort extends Adapter {
+    public abstract static class QSort extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(QSort.class);
             casts.arg("x").defaultError(NOT_NUMERIC_VECTOR).mustBe(instanceOf(RAbstractListVector.class).not()).mustBe(integerValue().or(doubleValue()));
-            casts.arg("decreasing").mapIf(numericValue().not(), Predef.constant(RRuntime.LOGICAL_TRUE)).asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("decreasing").mapIf(numericValue().not(), constant(RRuntime.LOGICAL_TRUE)).asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization
@@ -220,7 +219,7 @@ public class SortFunctions {
     }
 
     @RBuiltin(name = "psort", kind = INTERNAL, parameterNames = {"x", "partial"}, behavior = PURE)
-    public abstract static class PartialSort extends Adapter {
+    public abstract static class PartialSort extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(PartialSort.class);
@@ -258,7 +257,7 @@ public class SortFunctions {
         }
 
         @Specialization
-        protected RNull sort(RNull vec, Object partial) {
+        protected RNull sort(@SuppressWarnings("unused") RNull vec, @SuppressWarnings("unused") Object partial) {
             return RNull.instance;
         }
     }
@@ -270,7 +269,7 @@ public class SortFunctions {
      * now we delegate to {@code order} and do not implement the {@code retgrp} argument.
      */
     @RBuiltin(name = "radixsort", kind = INTERNAL, parameterNames = {"na.last", "decreasing", "retgrp", "sortstr", "..."}, behavior = PURE)
-    public abstract static class RadixSort extends Adapter {
+    public abstract static class RadixSort extends RBuiltinNode.Arg5 {
         @Child private Order orderNode = OrderNodeGen.create();
 
         static {

@@ -195,9 +195,9 @@ public abstract class Bind extends RBaseNode {
         boolean rowsAndColumnsNotEqual = getResultDimensions(vectors, resultDimensions, bindDims);
         RVector<?> resultVec;
         if (fromNotNullArgVector != null) {
-            resultVec = resultProfile.profile(fromNotNullArgVector.createEmptySameType(resultDimensions[0] * resultDimensions[1], complete));
+            resultVec = resultProfile.profile(vectorProfile.profile(fromNotNullArgVector).createEmptySameType(resultDimensions[0] * resultDimensions[1], complete));
         } else {
-            resultVec = resultProfile.profile(vectors[0].createEmptySameType(resultDimensions[0] * resultDimensions[1], complete));
+            resultVec = resultProfile.profile(vectorProfile.profile(vectors[0]).createEmptySameType(resultDimensions[0] * resultDimensions[1], complete));
         }
 
         if (type == BindType.cbind) {
@@ -547,7 +547,7 @@ public abstract class Bind extends RBaseNode {
         }
     }
 
-    protected abstract static class AbstractBind extends RBuiltinNode {
+    protected abstract static class AbstractBind extends RBuiltinNode.Arg2 {
         @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
         private final ConditionProfile hasClassProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile hasDispatchFunction = ConditionProfile.createBinaryProfile();

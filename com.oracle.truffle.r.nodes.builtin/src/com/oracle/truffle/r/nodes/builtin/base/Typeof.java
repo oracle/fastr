@@ -32,7 +32,7 @@ import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "typeof", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-public abstract class Typeof extends RBuiltinNode {
+public abstract class Typeof extends RBuiltinNode.Arg1 {
 
     @Child private TypeofNode typeofNode = TypeofNodeGen.create();
 

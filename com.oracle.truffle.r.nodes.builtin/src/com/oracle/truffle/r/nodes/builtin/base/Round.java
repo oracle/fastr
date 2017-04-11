@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "round", kind = PRIMITIVE, parameterNames = {"x", "digits"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-public abstract class Round extends RBuiltinNode {
+public abstract class Round extends RBuiltinNode.Arg2 {
 
     public static final UnaryArithmeticFactory ROUND = RoundArithmetic::new;
 

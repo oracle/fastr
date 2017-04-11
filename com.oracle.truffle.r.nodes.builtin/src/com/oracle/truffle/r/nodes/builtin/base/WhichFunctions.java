@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public class WhichFunctions {
 
     @RBuiltin(name = "which", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class Which extends RBuiltinNode {
+    public abstract static class Which extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(Which.class);
@@ -102,7 +102,7 @@ public class WhichFunctions {
         }
     }
 
-    public abstract static class WhichMinMax extends RBuiltinNode {
+    public abstract static class WhichMinMax extends RBuiltinNode.Arg1 {
 
         private final boolean isMax;
 

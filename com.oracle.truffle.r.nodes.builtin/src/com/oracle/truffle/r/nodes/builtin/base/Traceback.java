@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "traceback", kind = INTERNAL, parameterNames = {"x"}, behavior = COMPLEX)
-public abstract class Traceback extends RBuiltinNode {
+public abstract class Traceback extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(Traceback.class);

@@ -53,7 +53,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "rep.int", kind = INTERNAL, parameterNames = {"x", "times"}, behavior = PURE)
-public abstract class RepeatInternal extends RBuiltinNode {
+public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
 
     private final ConditionProfile timesOneProfile = ConditionProfile.createBinaryProfile();
 

@@ -68,7 +68,7 @@ import com.oracle.truffle.r.runtime.ops.na.NAProfile;
  * TODO: handle "incomparables" parameter.
  */
 @RBuiltin(name = "match", kind = INTERNAL, parameterNames = {"x", "table", "nomatch", "incomparables"}, behavior = PURE)
-public abstract class Match extends RBuiltinNode {
+public abstract class Match extends RBuiltinNode.Arg4 {
 
     protected abstract Object executeRIntVector(Object x, Object table, Object noMatch, Object incomparables);
 

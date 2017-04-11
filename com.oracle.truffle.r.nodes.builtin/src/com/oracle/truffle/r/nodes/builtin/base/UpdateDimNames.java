@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "dimnames<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class UpdateDimNames extends RBuiltinNode {
+public abstract class UpdateDimNames extends RBuiltinNode.Arg2 {
 
     protected static final String DIMNAMES_ATTR_KEY = RRuntime.DIMNAMES_ATTR_KEY;
 

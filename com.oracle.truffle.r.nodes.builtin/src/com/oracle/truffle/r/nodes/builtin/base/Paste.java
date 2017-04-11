@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"}, behavior = PURE)
-public abstract class Paste extends RBuiltinNode {
+public abstract class Paste extends RBuiltinNode.Arg3 {
 
     private static final String[] ONE_EMPTY_STRING = new String[]{""};
 

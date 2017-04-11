@@ -67,7 +67,7 @@ import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = ".fastr.do.call", visibility = CUSTOM, kind = RBuiltinKind.INTERNAL, parameterNames = {"what", "args", "quote", "envir"}, behavior = COMPLEX)
-public abstract class DoCall extends RBuiltinNode implements InternalRSyntaxNodeChildren {
+public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSyntaxNodeChildren {
 
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 

@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
@@ -34,6 +34,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNodeGen;
@@ -51,7 +52,7 @@ import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState
 public class BrowserFunctions {
 
     @RBuiltin(name = "browser", visibility = OFF, kind = PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"}, behavior = COMPLEX)
-    public abstract static class BrowserNode extends RBuiltinNode {
+    public abstract static class BrowserNode extends RBuiltinNode.Arg4 {
 
         @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
 
@@ -99,24 +100,21 @@ public class BrowserFunctions {
         }
     }
 
-    private abstract static class RetrieveAdapter extends RBuiltinNode {
+    protected static void casts(Class<? extends RBuiltinNode> builtinClass) {
+        Casts casts = new Casts(builtinClass);
+        casts.arg("n").asIntegerVector().findFirst(0).mustBe(gt(0), Message.POSITIVE_CONTEXTS);
+    }
 
-        protected static void casts(Class<? extends RetrieveAdapter> builtinClass) {
-            Casts casts = new Casts(builtinClass);
-            casts.arg("n").asIntegerVector().findFirst(0).mustBe(gt(0), Message.POSITIVE_CONTEXTS);
-        }
-
-        /**
-         * GnuR objects to indices <= 0 but allows positive indices that are out of range.
-         */
-        protected HelperState getHelperState(int n) {
-            BrowserState helperState = RContext.getInstance().stateInstrumentation.getBrowserState();
-            return helperState.get(n);
-        }
+    /**
+     * GnuR objects to indices <= 0 but allows positive indices that are out of range.
+     */
+    protected static HelperState getHelperState(int n) {
+        BrowserState helperState = RContext.getInstance().stateInstrumentation.getBrowserState();
+        return helperState.get(n);
     }
 
     @RBuiltin(name = "browserText", kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
-    public abstract static class BrowserText extends RetrieveAdapter {
+    public abstract static class BrowserText extends RBuiltinNode.Arg1 {
 
         static {
             casts(BrowserText.class);
@@ -130,7 +128,7 @@ public class BrowserFunctions {
     }
 
     @RBuiltin(name = "browserCondition", kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
-    public abstract static class BrowserCondition extends RetrieveAdapter {
+    public abstract static class BrowserCondition extends RBuiltinNode.Arg1 {
 
         static {
             casts(BrowserCondition.class);
@@ -144,7 +142,7 @@ public class BrowserFunctions {
     }
 
     @RBuiltin(name = "browserSetDebug", visibility = OFF, kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
-    public abstract static class BrowserSetDebug extends RetrieveAdapter {
+    public abstract static class BrowserSetDebug extends RBuiltinNode.Arg1 {
 
         static {
             casts(BrowserSetDebug.class);

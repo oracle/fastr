@@ -70,7 +70,7 @@ abstract class ColonSpecial extends RNode {
 
 // javac fails without fully qualified name
 @com.oracle.truffle.r.runtime.builtins.RBuiltin(name = ":", kind = PRIMITIVE, parameterNames = {"", ""}, behavior = PURE)
-public abstract class Colon extends RBuiltinNode {
+public abstract class Colon extends RBuiltinNode.Arg2 {
 
     public static RNode special(ArgumentsSignature signature, RNode[] arguments, boolean inReplacement) {
         if (signature.getNonNullCount() == 0 && arguments.length == 2 && !inReplacement) {

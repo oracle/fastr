@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "encodeString", kind = INTERNAL, parameterNames = {"x", "width", "quote", "justify", "na.encode"}, behavior = READS_STATE)
-public abstract class EncodeString extends RBuiltinNode {
+public abstract class EncodeString extends RBuiltinNode.Arg5 {
 
     private enum JUSTIFY {
         LEFT,

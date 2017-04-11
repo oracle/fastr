@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @RBuiltin(name = "utf8ToInt", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-public abstract class Utf8ToInt extends RBuiltinNode {
+public abstract class Utf8ToInt extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(Utf8ToInt.class);

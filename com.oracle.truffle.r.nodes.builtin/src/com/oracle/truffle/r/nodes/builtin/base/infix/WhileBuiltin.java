@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "while", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-public abstract class WhileBuiltin extends RBuiltinNode {
+public abstract class WhileBuiltin extends RBuiltinNode.Arg1 {
     static {
         noCasts(WhileBuiltin.class);
     }

@@ -73,7 +73,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @RBuiltin(name = "as.vector", kind = INTERNAL, parameterNames = {"x", "mode"}, dispatch = INTERNAL_GENERIC, behavior = COMPLEX)
-public abstract class AsVector extends RBuiltinNode {
+public abstract class AsVector extends RBuiltinNode.Arg2 {
 
     @Child private AsVectorInternal internal = AsVectorInternalNodeGen.create();
     @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);

@@ -34,7 +34,7 @@ import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "length", kind = PRIMITIVE, dispatch = INTERNAL_GENERIC, parameterNames = {"x"}, behavior = PURE)
-public abstract class Length extends RBuiltinNode {
+public abstract class Length extends RBuiltinNode.Arg1 {
 
     public abstract int executeInt(VirtualFrame frame, Object vector);
 

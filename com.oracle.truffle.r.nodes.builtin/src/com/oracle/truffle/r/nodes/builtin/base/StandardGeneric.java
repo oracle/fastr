@@ -55,7 +55,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 // transcribed from /src/library/methods/src/methods_list_dispatch.c (R_dispatch_generic function)
 
 @RBuiltin(name = "standardGeneric", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"f", "fdef"}, behavior = COMPLEX)
-public abstract class StandardGeneric extends RBuiltinNode {
+public abstract class StandardGeneric extends RBuiltinNode.Arg2 {
 
     // TODO: for now, we always go through generic dispatch
 

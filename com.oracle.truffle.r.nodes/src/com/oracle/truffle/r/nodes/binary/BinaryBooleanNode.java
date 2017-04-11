@@ -57,7 +57,7 @@ import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
  * operation is implemented by factory object given as a constructor parameter, e.g.
  * {@link com.oracle.truffle.r.runtime.ops.BinaryLogic.And}.
  */
-public abstract class BinaryBooleanNode extends RBuiltinNode {
+public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
 
     protected static final int CACHE_LIMIT = 5;
 
@@ -86,6 +86,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return factory == BinaryLogic.AND || factory == BinaryLogic.OR;
     }
 
+    @Override
     public abstract Object execute(VirtualFrame frame, Object left, Object right);
 
     public static BinaryBooleanNode create(BooleanOperationFactory factory) {

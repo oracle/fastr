@@ -28,7 +28,6 @@ import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -43,20 +42,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  */
 public class ConditionFunctions {
 
-    public abstract static class EvalAdapter extends RBuiltinNode {
-        @Child private PromiseHelperNode promiseHelper;
-
-        protected PromiseHelperNode initPromiseHelper() {
-            if (promiseHelper == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseHelper = insert(new PromiseHelperNode());
-            }
-            return promiseHelper;
-        }
-    }
-
     @RBuiltin(name = ".addCondHands", visibility = OFF, kind = INTERNAL, parameterNames = {"classes", "handlers", "parentenv", "target", "calling"}, behavior = COMPLEX)
-    public abstract static class AddCondHands extends RBuiltinNode {
+    public abstract static class AddCondHands extends RBuiltinNode.Arg5 {
 
         static {
             Casts casts = new Casts(AddCondHands.class);
@@ -100,7 +87,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = ".resetCondHands", visibility = OFF, kind = INTERNAL, parameterNames = {"stack"}, behavior = COMPLEX)
-    public abstract static class ResetCondHands extends RBuiltinNode {
+    public abstract static class ResetCondHands extends RBuiltinNode.Arg1 {
 
         static {
             Casts.noCasts(ResetCondHands.class);
@@ -114,24 +101,12 @@ public class ConditionFunctions {
         }
     }
 
-    public abstract static class RestartAdapter extends RBuiltinNode {
-        protected void checkLength(RList restart) {
-            if (restart.getLength() < 2) {
-                throw error(RError.Message.BAD_RESTART);
-            }
-        }
-
-        protected static void restart(Casts casts) {
-            casts.arg("restart").mustBe(instanceOf(RList.class), RError.Message.BAD_RESTART);
-        }
-    }
-
     @RBuiltin(name = ".addRestart", kind = INTERNAL, parameterNames = "restart", behavior = COMPLEX)
-    public abstract static class AddRestart extends RestartAdapter {
+    public abstract static class AddRestart extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(AddRestart.class);
-            restart(casts);
+            casts.arg("restart").mustBe(instanceOf(RList.class), RError.Message.BAD_RESTART);
         }
 
         protected FrameSlot createRestartFrameSlot(VirtualFrame frame) {
@@ -141,7 +116,9 @@ public class ConditionFunctions {
         @Specialization
         protected Object addRestart(VirtualFrame frame, RList restart,
                         @Cached("createRestartFrameSlot(frame)") FrameSlot restartFrameSlot) {
-            checkLength(restart);
+            if (restart.getLength() < 2) {
+                throw error(RError.Message.BAD_RESTART);
+            }
             try {
                 if (!frame.isObject(restartFrameSlot) || frame.getObject(restartFrameSlot) == null) {
                     frame.setObject(restartFrameSlot, RErrorHandling.getRestartStack());
@@ -155,7 +132,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = ".getRestart", kind = INTERNAL, parameterNames = "restart", behavior = COMPLEX)
-    public abstract static class GetRestart extends RBuiltinNode {
+    public abstract static class GetRestart extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(GetRestart.class);
@@ -170,17 +147,19 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = ".invokeRestart", kind = INTERNAL, parameterNames = {"restart", "args"}, behavior = COMPLEX)
-    public abstract static class InvokeRestart extends RestartAdapter {
+    public abstract static class InvokeRestart extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(InvokeRestart.class);
-            restart(casts);
+            casts.arg("restart").mustBe(instanceOf(RList.class), RError.Message.BAD_RESTART);
         }
 
         @Specialization
         @TruffleBoundary
         protected RNull invokeRestart(RList restart, Object args) {
-            checkLength(restart);
+            if (restart.getLength() < 2) {
+                throw error(RError.Message.BAD_RESTART);
+            }
             RErrorHandling.invokeRestart(restart, args);
             // invokeRestart is expected to always return via a ReturnException
             throw error(RError.Message.RESTART_NOT_ON_STACK);
@@ -188,7 +167,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = ".signalCondition", kind = INTERNAL, parameterNames = {"condition", "msg", "call"}, behavior = COMPLEX)
-    public abstract static class SignalCondition extends RBuiltinNode {
+    public abstract static class SignalCondition extends RBuiltinNode.Arg3 {
 
         static {
             Casts.noCasts(SignalCondition.class);
@@ -202,7 +181,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = "geterrmessage", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
-    public abstract static class Geterrmessage extends RBuiltinNode {
+    public abstract static class Geterrmessage extends RBuiltinNode.Arg0 {
         @Specialization
         protected String geterrmessage() {
             return RErrorHandling.geterrmessage();
@@ -210,7 +189,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = "seterrmessage", visibility = OFF, kind = INTERNAL, parameterNames = "msg", behavior = COMPLEX)
-    public abstract static class Seterrmessage extends RBuiltinNode {
+    public abstract static class Seterrmessage extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(Seterrmessage.class);
@@ -225,7 +204,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = ".dfltWarn", kind = INTERNAL, parameterNames = {"message", "call"}, behavior = COMPLEX)
-    public abstract static class DfltWarn extends RBuiltinNode {
+    public abstract static class DfltWarn extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(DfltWarn.class);
@@ -240,7 +219,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = ".dfltStop", kind = INTERNAL, parameterNames = {"message", "call"}, behavior = COMPLEX)
-    public abstract static class DfltStop extends RBuiltinNode {
+    public abstract static class DfltStop extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(DfltStop.class);
@@ -255,7 +234,7 @@ public class ConditionFunctions {
     }
 
     @RBuiltin(name = "printDeferredWarnings", visibility = OFF, kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
-    public abstract static class PrintDeferredWarnings extends RBuiltinNode {
+    public abstract static class PrintDeferredWarnings extends RBuiltinNode.Arg0 {
         @Specialization
         @TruffleBoundary
         protected RNull printDeferredWarnings() {

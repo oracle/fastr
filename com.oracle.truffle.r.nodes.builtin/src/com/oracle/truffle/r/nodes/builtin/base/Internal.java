@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
  * visible.
  */
 @RBuiltin(name = ".Internal", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = 0, behavior = COMPLEX)
-public abstract class Internal extends RBuiltinNode {
+public abstract class Internal extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(Internal.class);

@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "attributes", kind = PRIMITIVE, parameterNames = {"obj"}, behavior = PURE)
-public abstract class Attributes extends RBuiltinNode {
+public abstract class Attributes extends RBuiltinNode.Arg1 {
 
     private final BranchProfile rownamesBranch = BranchProfile.create();
     @Child private ArrayAttributeNode arrayAttrAccess = ArrayAttributeNode.create();

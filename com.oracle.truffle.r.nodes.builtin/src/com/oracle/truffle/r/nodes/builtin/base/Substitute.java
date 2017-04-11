@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "substitute", kind = PRIMITIVE, parameterNames = {"expr", "env"}, nonEvalArgs = 0, behavior = COMPLEX)
-public abstract class Substitute extends RBuiltinNode {
+public abstract class Substitute extends RBuiltinNode.Arg2 {
 
     @Child private Quote quote;
 

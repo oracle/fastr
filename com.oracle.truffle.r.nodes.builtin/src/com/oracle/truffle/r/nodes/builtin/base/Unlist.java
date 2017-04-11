@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "unlist", kind = INTERNAL, dispatch = RDispatch.INTERNAL_GENERIC, parameterNames = {"x", "recursive", "use.names"}, behavior = PURE)
-public abstract class Unlist extends RBuiltinNode {
+public abstract class Unlist extends RBuiltinNode.Arg3 {
 
     // portions of the algorithm were transcribed from GNU R
 

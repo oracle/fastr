@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-public abstract class Quantifier extends RBuiltinNode {
+public abstract class Quantifier extends RBuiltinNode.Arg2 {
     protected static final int MAX_CACHED_LENGTH = 10;
 
     private final NACheck naCheck = NACheck.create();

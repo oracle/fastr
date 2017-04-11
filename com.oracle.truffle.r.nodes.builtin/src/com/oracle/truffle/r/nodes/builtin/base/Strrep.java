@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "strrep", kind = INTERNAL, parameterNames = {"x", "times"}, behavior = PURE)
-public abstract class Strrep extends RBuiltinNode {
+public abstract class Strrep extends RBuiltinNode.Arg2 {
     private final NACheck naCheck = NACheck.create();
 
     static {

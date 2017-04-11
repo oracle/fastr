@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
  * Just a convenient way to inspect values in the Java debugger from the R shell.
  */
 @RBuiltin(name = ".fastr.inspect", visibility = OFF, kind = PRIMITIVE, parameterNames = {"..."}, behavior = COMPLEX)
-public abstract class FastRInspect extends RBuiltinNode {
+public abstract class FastRInspect extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(FastRInspect.class);

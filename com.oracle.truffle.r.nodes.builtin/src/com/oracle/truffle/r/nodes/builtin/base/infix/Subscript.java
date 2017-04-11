@@ -185,7 +185,7 @@ abstract class SubscriptSpecial2 extends SubscriptSpecial2Base {
 
 @RBuiltin(name = "[[", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 @TypeSystemReference(RTypes.class)
-public abstract class Subscript extends RBuiltinNode {
+public abstract class Subscript extends RBuiltinNode.Arg4 {
 
     @RBuiltin(name = ".subset2", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, behavior = PURE)
     public abstract class DefaultBuiltin {

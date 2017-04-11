@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "normalizePath", kind = INTERNAL, parameterNames = {"path", "winslash", "mustwork"}, behavior = IO)
-public abstract class NormalizePath extends RBuiltinNode {
+public abstract class NormalizePath extends RBuiltinNode.Arg3 {
 
     private final ConditionProfile doesNotNeedToWork = ConditionProfile.createBinaryProfile();
 

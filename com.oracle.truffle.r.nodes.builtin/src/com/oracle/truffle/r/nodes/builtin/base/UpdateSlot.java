@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = "@<-", kind = PRIMITIVE, parameterNames = {"", "", "value"}, nonEvalArgs = 1, behavior = COMPLEX)
-public abstract class UpdateSlot extends RBuiltinNode {
+public abstract class UpdateSlot extends RBuiltinNode.Arg3 {
 
     @Child private UpdateSlotNode updateSlotNode = com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen.create();
 

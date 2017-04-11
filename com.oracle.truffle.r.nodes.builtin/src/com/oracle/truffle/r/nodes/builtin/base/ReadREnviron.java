@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 @RBuiltin(name = "readRenviron", visibility = OFF, kind = INTERNAL, parameterNames = "x", behavior = COMPLEX)
-public abstract class ReadREnviron extends RBuiltinNode {
+public abstract class ReadREnviron extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(ReadREnviron.class);

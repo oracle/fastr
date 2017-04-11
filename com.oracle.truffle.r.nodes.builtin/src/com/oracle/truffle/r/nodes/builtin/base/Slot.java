@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 
 @RBuiltin(name = "@", kind = PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = 1, behavior = COMPLEX)
-public abstract class Slot extends RBuiltinNode {
+public abstract class Slot extends RBuiltinNode.Arg2 {
 
     @Child private UpdateShareableChildValueNode sharedAttrUpdate = UpdateShareableChildValueNode.create();
     @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(true);

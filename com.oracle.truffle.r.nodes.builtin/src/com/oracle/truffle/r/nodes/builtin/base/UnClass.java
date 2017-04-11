@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "unclass", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-public abstract class UnClass extends RBuiltinNode {
+public abstract class UnClass extends RBuiltinNode.Arg1 {
     private final BranchProfile objectProfile = BranchProfile.create();
     private final BranchProfile shareableProfile = BranchProfile.create();
 

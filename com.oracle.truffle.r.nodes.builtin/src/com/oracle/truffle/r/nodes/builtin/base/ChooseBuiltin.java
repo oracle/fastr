@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * Binomial coefficients (n, k) for real n and integral k (rounded with warning).
  */
 @RBuiltin(name = "choose", kind = INTERNAL, parameterNames = {"n", "k"}, behavior = PURE)
-public abstract class ChooseBuiltin extends RBuiltinNode {
+public abstract class ChooseBuiltin extends RBuiltinNode.Arg2 {
 
     private final NACheck na = NACheck.create();
 

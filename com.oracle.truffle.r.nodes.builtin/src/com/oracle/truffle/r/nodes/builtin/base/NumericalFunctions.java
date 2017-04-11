@@ -46,7 +46,7 @@ public class NumericalFunctions {
      * specialization, which would trigger the code generation performed by the annotation
      * processor.
      */
-    public abstract static class DummyNode extends RBuiltinNode {
+    public abstract static class DummyNode extends RBuiltinNode.Arg1 {
 
         @Specialization
         protected Object dummySpec(@SuppressWarnings("unused") Object value) {

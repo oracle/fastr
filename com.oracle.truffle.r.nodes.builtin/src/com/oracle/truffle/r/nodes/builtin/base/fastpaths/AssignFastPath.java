@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,25 +40,25 @@ public abstract class AssignFastPath extends RFastPathNode {
     @Specialization
     @SuppressWarnings("unused")
     protected Object assign(VirtualFrame frame, RAbstractStringVector x, Object value, RMissing pos, REnvironment envir, byte inherits, Object immediate) {
-        return assign.executeBuiltin(frame, x, value, envir, inherits);
+        return assign.execute(frame, x, value, envir, inherits);
     }
 
     @Specialization
     @SuppressWarnings("unused")
     protected Object assign(VirtualFrame frame, RAbstractStringVector x, Object value, RMissing pos, REnvironment envir, RMissing inherits, Object immediate) {
-        return assign.executeBuiltin(frame, x, value, envir, RRuntime.LOGICAL_FALSE);
+        return assign.execute(frame, x, value, envir, RRuntime.LOGICAL_FALSE);
     }
 
     @Specialization
     @SuppressWarnings("unused")
     protected Object assign(VirtualFrame frame, RAbstractStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, Object immediate) {
-        return assign.executeBuiltin(frame, x, value, pos, inherits);
+        return assign.execute(frame, x, value, pos, inherits);
     }
 
     @Specialization
     @SuppressWarnings("unused")
     protected Object assign(VirtualFrame frame, RAbstractStringVector x, Object value, REnvironment pos, RMissing envir, RMissing inherits, Object immediate) {
-        return assign.executeBuiltin(frame, x, value, pos, RRuntime.LOGICAL_FALSE);
+        return assign.execute(frame, x, value, pos, RRuntime.LOGICAL_FALSE);
     }
 
     @Fallback

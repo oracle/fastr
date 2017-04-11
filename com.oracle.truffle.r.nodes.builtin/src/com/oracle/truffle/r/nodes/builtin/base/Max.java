@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 @RBuiltin(name = "max", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE)
-public abstract class Max extends RBuiltinNode {
+public abstract class Max extends RBuiltinNode.Arg2 {
 
     private static final ReduceSemantics semantics = new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX,
                     RError.Message.NO_NONMISSING_MAX_NA, false, true);

@@ -53,7 +53,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class IsFiniteFunctions {
 
-    public abstract static class Adapter extends RBuiltinNode {
+    public abstract static class Adapter extends RBuiltinNode.Arg1 {
 
         @Child private GetDimAttributeNode getDims = GetDimAttributeNode.create();
         @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();

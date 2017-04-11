@@ -36,6 +36,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.vm.PolyglotEngine;
@@ -86,7 +87,7 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.context.get", kind = PRIMITIVE, parameterNames = {}, behavior = READS_STATE)
-    public abstract static class Get extends RBuiltinNode {
+    public abstract static class Get extends RBuiltinNode.Arg0 {
         @Specialization
         @TruffleBoundary
         protected TruffleObject get() {
@@ -101,7 +102,7 @@ public class FastRContext {
      *
      */
     @RBuiltin(name = ".fastr.context.spawn", kind = PRIMITIVE, parameterNames = {"exprs", "pc", "kind"}, behavior = COMPLEX)
-    public abstract static class Spawn extends RBuiltinNode {
+    public abstract static class Spawn extends RBuiltinNode.Arg3 {
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{RMissing.instance, 1, "SHARE_NOTHING"};
@@ -133,7 +134,7 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.context.join", visibility = OFF, kind = PRIMITIVE, parameterNames = {"handle"}, behavior = COMPLEX)
-    public abstract static class Join extends RBuiltinNode {
+    public abstract static class Join extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(Join.class);
@@ -173,7 +174,7 @@ public class FastRContext {
      * attribute "error" if the evaluation threw an exception, in which case the result will be NA.
      */
     @RBuiltin(name = ".fastr.context.eval", kind = PRIMITIVE, parameterNames = {"exprs", "pc", "kind"}, behavior = COMPLEX)
-    public abstract static class Eval extends RBuiltinNode {
+    public abstract static class Eval extends RBuiltinNode.Arg3 {
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{RMissing.instance, 1, "SHARE_NOTHING"};
@@ -224,7 +225,7 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.context.r", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "env", "intern"}, behavior = COMPLEX)
-    public abstract static class R extends RBuiltinNode {
+    public abstract static class R extends RBuiltinNode.Arg3 {
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};
@@ -236,6 +237,8 @@ public class FastRContext {
             casts.arg("env").allowMissing().mustBe(stringValue());
             casts.arg("intern").asLogicalVector().findFirst().map(toBoolean());
         }
+
+        public abstract Object execute(VirtualFrame frame, RAbstractStringVector args, RAbstractStringVector env, boolean intern);
 
         @Specialization
         @TruffleBoundary
@@ -257,7 +260,7 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.context.rscript", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "env", "intern"}, behavior = COMPLEX)
-    public abstract static class Rscript extends RBuiltinNode {
+    public abstract static class Rscript extends RBuiltinNode.Arg3 {
 
         public abstract Object execute(RAbstractStringVector args, RAbstractStringVector env, boolean intern);
 
@@ -291,7 +294,7 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.create", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)
-    public abstract static class CreateChannel extends RBuiltinNode {
+    public abstract static class CreateChannel extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(CreateChannel.class);
@@ -306,7 +309,7 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.get", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)
-    public abstract static class GetChannel extends RBuiltinNode {
+    public abstract static class GetChannel extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(GetChannel.class);
@@ -321,7 +324,7 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.close", visibility = OFF, kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
-    public abstract static class CloseChannel extends RBuiltinNode {
+    public abstract static class CloseChannel extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(CloseChannel.class);
@@ -337,7 +340,7 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.send", visibility = OFF, kind = PRIMITIVE, parameterNames = {"id", "data"}, behavior = COMPLEX)
-    public abstract static class ChannelSend extends RBuiltinNode {
+    public abstract static class ChannelSend extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(ChannelSend.class);
@@ -353,7 +356,7 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.receive", kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
-    public abstract static class ChannelReceive extends RBuiltinNode {
+    public abstract static class ChannelReceive extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(ChannelReceive.class);
@@ -368,7 +371,7 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.poll", kind = PRIMITIVE, parameterNames = {"id"}, behavior = COMPLEX)
-    public abstract static class ChannelPoll extends RBuiltinNode {
+    public abstract static class ChannelPoll extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(ChannelPoll.class);
@@ -383,7 +386,7 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.channel.select", kind = PRIMITIVE, parameterNames = {"ids"}, behavior = COMPLEX)
-    public abstract static class ChannelSelect extends RBuiltinNode {
+    public abstract static class ChannelSelect extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(ChannelSelect.class);

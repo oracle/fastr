@@ -60,7 +60,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "attr<-", kind = PRIMITIVE, parameterNames = {"x", "which", "value"}, behavior = PURE)
-public abstract class UpdateAttr extends RBuiltinNode {
+public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
 
     @Child private UpdateNames updateNames;
     @Child private UpdateDimNames updateDimNames;

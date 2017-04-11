@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 public class PrintFunctions {
 
     @RBuiltin(name = "print.default", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "digits", "quote", "na.print", "print.gap", "right", "max", "useSource", "noOpt"}, behavior = IO)
-    public abstract static class PrintDefault extends RBuiltinNode {
+    public abstract static class PrintDefault extends RBuiltinNode.Arg9 {
 
         @Child private GetClassAttributeNode getClassNode = GetClassAttributeNode.create();
 
@@ -106,7 +106,7 @@ public class PrintFunctions {
     }
 
     @RBuiltin(name = "print.function", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "useSource", "..."}, behavior = IO)
-    public abstract static class PrintFunction extends RBuiltinNode {
+    public abstract static class PrintFunction extends RBuiltinNode.Arg3 {
 
         @Child private ValuePrinterNode valuePrinter = new ValuePrinterNode();
 

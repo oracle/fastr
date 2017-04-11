@@ -28,7 +28,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -37,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 
 @RBuiltin(name = "gc", kind = INTERNAL, parameterNames = {"verbose", "reset"}, behavior = COMPLEX)
-public abstract class Gc extends RBuiltinNode {
+public abstract class Gc extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(Gc.class);
@@ -48,15 +47,13 @@ public abstract class Gc extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected RDoubleVector gc(boolean verbose, boolean reset) {
-        doGc();
+        /*
+         * It is rarely advisable to actually force a gc in Java, therefore we simply ignore this
+         * builtin.
+         */
         // TODO: somehow produce the (semi?) correct values
         double[] data = new double[14];
         Arrays.fill(data, RRuntime.DOUBLE_NA);
         return RDataFactory.createDoubleVector(data, RDataFactory.INCOMPLETE_VECTOR);
-    }
-
-    @TruffleBoundary
-    private static void doGc() {
-        System.gc();
     }
 }

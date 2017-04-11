@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "substr<-", kind = INTERNAL, parameterNames = {"x", "start", "stop", "value"}, behavior = PURE)
-public abstract class UpdateSubstr extends RBuiltinNode {
+public abstract class UpdateSubstr extends RBuiltinNode.Arg4 {
 
     private final NACheck na = NACheck.create();
 

@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 @RBuiltin(name = "storage.mode<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, behavior = PURE)
-public abstract class UpdateStorageMode extends RBuiltinNode {
+public abstract class UpdateStorageMode extends RBuiltinNode.Arg2 {
 
     @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
     @Child private TypeofNode typeof;
@@ -109,7 +109,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     private void initCastTypeNode() {
         if (castTypeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castTypeNode = insert(CastTypeNodeGen.create(null, null));
+            castTypeNode = insert(CastTypeNodeGen.create());
         }
     }
 

@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "cummax", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-public abstract class CumMax extends RBuiltinNode {
+public abstract class CumMax extends RBuiltinNode.Arg1 {
 
     private final NACheck na = NACheck.create();
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();

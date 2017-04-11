@@ -63,7 +63,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  * TODO complete. This is sufficient for the b25 benchmark use.
  */
 @RBuiltin(name = "array", kind = INTERNAL, parameterNames = {"data", "dim", "dimnames"}, behavior = PURE)
-public abstract class Array extends RBuiltinNode {
+public abstract class Array extends RBuiltinNode.Arg3 {
 
     @Child private UpdateDimNames updateDimNames;
 

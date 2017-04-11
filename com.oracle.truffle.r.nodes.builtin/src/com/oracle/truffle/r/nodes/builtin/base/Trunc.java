@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
 @RBuiltin(name = "trunc", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-public abstract class Trunc extends RBuiltinNode {
+public abstract class Trunc extends RBuiltinNode.Arg1 {
 
     private static final UnaryArithmeticFactory TRUNC = TruncArithmetic::new;
 

@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
  * message.
  */
 @RBuiltin(name = ".fastr.try", kind = PRIMITIVE, parameterNames = {""}, behavior = COMPLEX)
-public abstract class FastRTry extends RBuiltinNode {
+public abstract class FastRTry extends RBuiltinNode.Arg1 {
     @Child private RExplicitCallNode call = RExplicitCallNode.create();
 
     static {

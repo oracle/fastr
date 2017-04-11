@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
  * correctly, because the varargs are already handled by the argument matching.
  */
 @RBuiltin(name = "missing", kind = PRIMITIVE, nonEvalArgs = 0, parameterNames = {"x"}, behavior = COMPLEX)
-public abstract class Missing extends RBuiltinNode {
+public abstract class Missing extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(Missing.class);

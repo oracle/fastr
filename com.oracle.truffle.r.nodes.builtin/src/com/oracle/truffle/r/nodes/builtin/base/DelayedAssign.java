@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 @RBuiltin(name = "delayedAssign", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "value", "eval.env", "assign.env"}, behavior = COMPLEX)
-public abstract class DelayedAssign extends RBuiltinNode {
+public abstract class DelayedAssign extends RBuiltinNode.Arg4 {
 
     static {
         Casts casts = new Casts(DelayedAssign.class);

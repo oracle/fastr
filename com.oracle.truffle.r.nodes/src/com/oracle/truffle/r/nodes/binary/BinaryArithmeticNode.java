@@ -55,23 +55,25 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
  * operation is implemented by factory object given as a constructor parameter, e.g.
  * {@link com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Add}
  */
-public abstract class BinaryArithmeticNode extends RBuiltinNode {
+public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
 
     protected static final int CACHE_LIMIT = 5;
 
     protected final BinaryArithmeticFactory binary;
     private final UnaryArithmeticFactory unary;
 
-    public BinaryArithmeticNode(BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
-        this.binary = binaryFactory;
-        this.unary = unaryFactory;
-    }
-
     static {
         Casts casts = new Casts(BinaryArithmeticNode.class);
         casts.arg(0).boxPrimitive();
         casts.arg(1).boxPrimitive();
     }
+
+    public BinaryArithmeticNode(BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
+        this.binary = binaryFactory;
+        this.unary = unaryFactory;
+    }
+
+    public abstract Object execute(Object left, Object right);
 
     @Override
     public RBaseNode getErrorContext() {

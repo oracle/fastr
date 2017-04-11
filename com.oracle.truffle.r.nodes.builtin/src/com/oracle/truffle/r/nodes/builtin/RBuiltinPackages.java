@@ -37,7 +37,6 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
 import com.oracle.truffle.r.nodes.builtin.base.BaseVariables;
-import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -159,15 +158,8 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     private static RootCallTarget createArgumentsCallTarget(RBuiltinFactory builtin) {
         CompilerAsserts.neverPartOfCompilation();
 
-        RBuiltinNode node = builtin.getConstructor().get();
-        FormalArguments formals = FormalArguments.createForBuiltin(node.getDefaultParameterValues(), builtin.getSignature());
-        if (builtin.getKind() == RBuiltinKind.INTERNAL) {
-            assert node.getDefaultParameterValues().length == 0 : "INTERNAL builtins do not need default values";
-            assert builtin.getSignature().getVarArgCount() == 0 || builtin.getSignature().getVarArgIndex() == builtin.getSignature().getLength() - 1 : "only last argument can be vararg";
-        }
-
         FrameDescriptor frameDescriptor = new FrameDescriptor();
-        RBuiltinRootNode root = new RBuiltinRootNode(builtin, node, formals, frameDescriptor, null);
+        RBuiltinRootNode root = new RBuiltinRootNode(builtin, frameDescriptor, null);
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(builtin.getName(), frameDescriptor);
         return Truffle.getRuntime().createCallTarget(root);
     }

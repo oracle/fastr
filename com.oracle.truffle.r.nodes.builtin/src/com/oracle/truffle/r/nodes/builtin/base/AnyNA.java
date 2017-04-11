@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "anyNA", kind = PRIMITIVE, parameterNames = {"x", "recursive"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class AnyNA extends RBuiltinNode {
+public abstract class AnyNA extends RBuiltinNode.Arg2 {
 
     private final NACheck naCheck = NACheck.create();
 

@@ -114,7 +114,7 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
 }
 
 @RBuiltin(name = "$<-", kind = PRIMITIVE, parameterNames = {"", "", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class UpdateField extends RBuiltinNode {
+public abstract class UpdateField extends RBuiltinNode.Arg3 {
 
     @Child private ReplaceVectorNode update = ReplaceVectorNode.create(ElementAccessMode.FIELD_SUBSCRIPT, true);
     @Child private CastListNode castList;

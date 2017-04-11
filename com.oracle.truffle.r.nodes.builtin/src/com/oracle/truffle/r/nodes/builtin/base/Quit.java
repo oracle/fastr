@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = "quit", visibility = OFF, kind = INTERNAL, parameterNames = {"save", "status", "runLast"}, behavior = COMPLEX)
-public abstract class Quit extends RBuiltinNode {
+public abstract class Quit extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(Quit.class);

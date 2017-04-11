@@ -26,6 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.base.Matrix;
 import com.oracle.truffle.r.nodes.builtin.base.MatrixNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
@@ -55,13 +56,14 @@ public abstract class MatrixFastPath extends RFastPathNode {
                     @Cached("createBinaryProfile()") ConditionProfile rowMissingProfile,
                     @Cached("createBinaryProfile()") ConditionProfile colMissingProfile,
                     @Cached("createBinaryProfile()") ConditionProfile dimMissingProfile,
-                    @Cached("createMatrix()") Matrix matrix) {
+                    @Cached("createMatrix()") Matrix matrix,
+                    @Cached("createClassProfile()") ValueProfile classProfile) {
         boolean rowMissing = rowMissingProfile.profile(nrow == RMissing.instance);
         boolean colMissing = colMissingProfile.profile(ncol == RMissing.instance);
         int row = rowMissing ? 1 : firstRow.executeInt(castRow.execute(nrow));
         int col = colMissing ? 1 : firstCol.executeInt(castCol.execute(ncol));
         Object dim = dimMissingProfile.profile(dimnames == RMissing.instance) ? RNull.instance : dimnames;
-        return matrix.execute(data, row, col, false, dim, rowMissing, colMissing);
+        return matrix.execute(classProfile.profile(data), row, col, false, dim, rowMissing, colMissing);
     }
 
     @Fallback

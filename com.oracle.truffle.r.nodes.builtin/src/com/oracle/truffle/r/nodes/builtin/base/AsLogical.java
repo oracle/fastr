@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 @RBuiltin(name = "as.logical", kind = PRIMITIVE, parameterNames = {"x", "..."}, behavior = PURE)
-public abstract class AsLogical extends RBuiltinNode {
+public abstract class AsLogical extends RBuiltinNode.Arg2 {
 
     private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();
 

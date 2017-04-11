@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "<<-", visibility = RVisibility.OFF, kind = PRIMITIVE, parameterNames = {"x", "i"}, behavior = COMPLEX)
-public abstract class AssignOuterBuiltin extends RBuiltinNode {
+public abstract class AssignOuterBuiltin extends RBuiltinNode.Arg2 {
 
     static {
         Casts.noCasts(AssignOuterBuiltin.class);

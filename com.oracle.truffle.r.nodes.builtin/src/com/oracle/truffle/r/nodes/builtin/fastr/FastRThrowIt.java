@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = ".fastr.throw", kind = PRIMITIVE, parameterNames = {"name"}, behavior = COMPLEX)
-public abstract class FastRThrowIt extends RBuiltinNode {
+public abstract class FastRThrowIt extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(FastRThrowIt.class);

@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
 
 @RBuiltin(name = "setS4Object", kind = INTERNAL, parameterNames = {"object", "flag", "complete"}, behavior = PURE)
-public abstract class SetS4Object extends RBuiltinNode {
+public abstract class SetS4Object extends RBuiltinNode.Arg3 {
 
     @Child private AsS4 asS4 = AsS4NodeGen.create();
 

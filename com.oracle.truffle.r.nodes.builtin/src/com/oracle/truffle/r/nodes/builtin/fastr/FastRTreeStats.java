@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @RBuiltin(name = ".fastr.treestats", kind = PRIMITIVE, parameterNames = {"obj"}, behavior = COMPLEX)
-public abstract class FastRTreeStats extends RBuiltinNode {
+public abstract class FastRTreeStats extends RBuiltinNode.Arg1 {
 
     private static final RStringVector COLNAMES = RDataFactory.createStringVector(new String[]{"Total", "Syntax", "Non-Syntax"}, RDataFactory.COMPLETE_VECTOR);
 

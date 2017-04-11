@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "repeat", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-public abstract class RepeatBuiltin extends RBuiltinNode {
+public abstract class RepeatBuiltin extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(RepeatBuiltin.class);

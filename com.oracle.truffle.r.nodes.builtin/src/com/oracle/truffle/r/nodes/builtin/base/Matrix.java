@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "matrix", kind = INTERNAL, parameterNames = {"data", "nrow", "ncol", "byrow", "dimnames", "missingNr", "missingNc"}, behavior = PURE)
-public abstract class Matrix extends RBuiltinNode {
+public abstract class Matrix extends RBuiltinNode.Arg7 {
 
     @Child private Transpose transpose;
     @Child private UpdateDimNames updateDimNames;

@@ -68,7 +68,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  */
 public class IsTypeFunctions {
 
-    protected abstract static class MissingAdapter extends RBuiltinNode {
+    protected abstract static class MissingAdapter extends RBuiltinNode.Arg1 {
 
         protected static Casts createCasts(Class<? extends MissingAdapter> extCls) {
             Casts casts = new Casts(extCls);
@@ -553,7 +553,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.vector", kind = INTERNAL, parameterNames = {"x", "mode"}, behavior = PURE)
-    public abstract static class IsVector extends RBuiltinNode {
+    public abstract static class IsVector extends RBuiltinNode.Arg2 {
 
         private final ConditionProfile attrNull = ConditionProfile.createBinaryProfile();
         private final ConditionProfile attrEmpty = ConditionProfile.createBinaryProfile();

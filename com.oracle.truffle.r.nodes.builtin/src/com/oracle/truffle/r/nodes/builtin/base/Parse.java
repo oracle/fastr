@@ -91,7 +91,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * On the R side, GnuR adds similar R attributes to the result, which is important for R tooling.
  */
 @RBuiltin(name = "parse", kind = INTERNAL, parameterNames = {"conn", "n", "text", "prompt", "srcfile", "encoding"}, behavior = IO)
-public abstract class Parse extends RBuiltinNode {
+public abstract class Parse extends RBuiltinNode.Arg6 {
     @Child private CastIntegerNode castIntNode;
     @Child private CastStringNode castStringNode;
     @Child private CastToVectorNode castVectorNode;

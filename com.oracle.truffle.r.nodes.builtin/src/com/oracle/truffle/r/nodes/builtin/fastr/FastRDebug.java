@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = ".fastr.debug", visibility = OFF, kind = PRIMITIVE, parameterNames = {"values"}, behavior = COMPLEX)
-public abstract class FastRDebug extends RBuiltinNode {
+public abstract class FastRDebug extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(FastRDebug.class);

@@ -161,7 +161,7 @@ abstract class UpdateSubscriptSpecial2 extends SubscriptSpecial2Common {
 }
 
 @RBuiltin(name = "[[<-", kind = PRIMITIVE, parameterNames = {"", "..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class UpdateSubscript extends RBuiltinNode {
+public abstract class UpdateSubscript extends RBuiltinNode.Arg2 {
 
     @Child private ReplaceVectorNode replaceNode = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, false);
 

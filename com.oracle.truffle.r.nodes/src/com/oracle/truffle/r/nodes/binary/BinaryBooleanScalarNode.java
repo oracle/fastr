@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.ops.BooleanOperation;
 import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
+public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
 
     /*
      * As the execution of right depends on the left value and the right node might be arbitrarily

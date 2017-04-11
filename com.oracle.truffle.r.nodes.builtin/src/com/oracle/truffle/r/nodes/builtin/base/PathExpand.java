@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "path.expand", kind = INTERNAL, parameterNames = "path", behavior = IO)
-public abstract class PathExpand extends RBuiltinNode {
+public abstract class PathExpand extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(PathExpand.class);

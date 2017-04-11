@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public class RawFunctions {
 
     @RBuiltin(name = "charToRaw", kind = INTERNAL, parameterNames = "x", behavior = PURE)
-    public abstract static class CharToRaw extends RBuiltinNode {
+    public abstract static class CharToRaw extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(CharToRaw.class);
@@ -72,7 +72,7 @@ public class RawFunctions {
     }
 
     @RBuiltin(name = "rawToChar", kind = INTERNAL, parameterNames = {"x", "multiple"}, behavior = PURE)
-    public abstract static class RawToChar extends RBuiltinNode {
+    public abstract static class RawToChar extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(RawToChar.class);
@@ -106,7 +106,7 @@ public class RawFunctions {
     }
 
     @RBuiltin(name = "rawShift", kind = INTERNAL, parameterNames = {"x", "n"}, behavior = PURE)
-    public abstract static class RawShift extends RBuiltinNode {
+    public abstract static class RawShift extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(RawShift.class);

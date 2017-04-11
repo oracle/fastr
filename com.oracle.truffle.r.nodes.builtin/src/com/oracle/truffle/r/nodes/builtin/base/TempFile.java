@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "tempfile", kind = INTERNAL, parameterNames = {"pattern", "tempdir", "fileext"}, behavior = COMPLEX)
-public abstract class TempFile extends RBuiltinNode {
+public abstract class TempFile extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(TempFile.class);

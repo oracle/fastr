@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @RBuiltin(name = "rep_len", kind = INTERNAL, parameterNames = {"x", "length.out"}, behavior = PURE)
-public abstract class RepeatLength extends RBuiltinNode {
+public abstract class RepeatLength extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(RepeatLength.class);

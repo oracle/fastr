@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RMissing;
 
 @RBuiltin(name = ".fastr.methods.slotassign", visibility = ON, kind = PRIMITIVE, parameterNames = {"object", "name", "check", "value"}, behavior = COMPLEX)
-public abstract class FastRSlotAssign extends RBuiltinNode {
+public abstract class FastRSlotAssign extends RBuiltinNode.Arg4 {
 
     static {
         Casts casts = new Casts(FastRSlotAssign.class);

@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 @RBuiltin(name = "on.exit", visibility = OFF, kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = 0, behavior = COMPLEX)
-public abstract class OnExit extends RBuiltinNode {
+public abstract class OnExit extends RBuiltinNode.Arg2 {
 
     @CompilationFinal private FrameSlot onExitSlot;
 

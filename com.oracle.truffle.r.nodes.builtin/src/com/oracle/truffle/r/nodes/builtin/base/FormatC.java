@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "formatC", kind = INTERNAL, parameterNames = {"x", "mode", "width", "digits", "format", "flag", "i.strlen"}, behavior = PURE)
-public abstract class FormatC extends RBuiltinNode {
+public abstract class FormatC extends RBuiltinNode.Arg7 {
 
     @Child private RoundArithmetic round = new RoundArithmetic();
 

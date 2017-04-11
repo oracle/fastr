@@ -85,4 +85,8 @@ public abstract class TypeofNode extends UnaryNode {
         CompilerAsserts.neverPartOfCompilation();
         return ((RTypedValue) RRuntime.asAbstractVector(operand)).getRType();
     }
+
+    public static TypeofNode create() {
+        return TypeofNodeGen.create();
+    }
 }

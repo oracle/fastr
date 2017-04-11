@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
  * of the grid code in R.
  */
 @RBuiltin(name = ".fastr.grid.doSetViewPort", parameterNames = {"vp", "hasParent", "pushing"}, kind = RBuiltinKind.INTERNAL, behavior = RBehavior.COMPLEX)
-public abstract class DoSetViewPortBuiltin extends RBuiltinNode {
+public abstract class DoSetViewPortBuiltin extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(DoSetViewPortBuiltin.class);

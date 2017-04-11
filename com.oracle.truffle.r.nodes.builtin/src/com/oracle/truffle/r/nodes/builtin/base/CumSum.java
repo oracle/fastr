@@ -57,7 +57,7 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "cumsum", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-public abstract class CumSum extends RBuiltinNode {
+public abstract class CumSum extends RBuiltinNode.Arg1 {
 
     private final NACheck na = NACheck.create();
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();

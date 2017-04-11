@@ -43,7 +43,22 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class BitwiseFunctions {
 
-    public abstract static class BasicBitwise extends RBuiltinNode {
+    protected enum Operation {
+        AND("bitwAnd"),
+        OR("bitwOr"),
+        XOR("bitwXor"),
+        NOT("bitNot"),
+        SHIFTR("bitShiftR"),
+        SHIFTL("bitShiftL");
+
+        private final String name;
+
+        Operation(String name) {
+            this.name = name;
+        }
+    }
+
+    public abstract static class BasicBitwise extends RBuiltinNode.Arg2 {
 
         private final NACheck naCheckA = NACheck.create();
         private final NACheck naCheckB = NACheck.create();
@@ -51,21 +66,6 @@ public class BitwiseFunctions {
 
         @Child private TypeofNode typeofA = TypeofNodeGen.create();
         @Child private TypeofNode typeofB = TypeofNodeGen.create();
-
-        protected enum Operation {
-            AND("bitwAnd"),
-            OR("bitwOr"),
-            XOR("bitwXor"),
-            NOT("bitNot"),
-            SHIFTR("bitShiftR"),
-            SHIFTL("bitShiftL");
-
-            private final String name;
-
-            Operation(String name) {
-                this.name = name;
-            }
-        }
 
         protected Object basicBit(RAbstractIntVector aVec, RAbstractIntVector bVec, Operation op) {
             naCheckA.enable(aVec);
@@ -119,14 +119,6 @@ public class BitwiseFunctions {
             }
 
             return RDataFactory.createIntVector(ans, completeVector);
-        }
-
-        protected Object bitNot(RAbstractIntVector aVec) {
-            int[] ans = new int[aVec.getLength()];
-            for (int i = 0; i < aVec.getLength(); i++) {
-                ans[i] = ~aVec.getDataAt(i);
-            }
-            return RDataFactory.createIntVector(ans, RDataFactory.COMPLETE_VECTOR);
         }
 
         protected Object makeNA(int length) {
@@ -259,18 +251,20 @@ public class BitwiseFunctions {
     }
 
     @RBuiltin(name = "bitwiseNot", kind = INTERNAL, parameterNames = {"a"}, behavior = PURE)
-    public abstract static class BitwiseNot extends BasicBitwise {
+    public abstract static class BitwiseNot extends RBuiltinNode.Arg1 {
 
-        // @formatter:off
-    static {
-        Casts casts = new Casts(BitwiseNot.class);
+        static {
+            Casts casts = new Casts(BitwiseNot.class);
             casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.NOT.name).mustBe(doubleValue().or(integerValue())).asIntegerVector();
-    }
-        //@formatter:on
+        }
 
         @Specialization
         protected Object bitwNot(RAbstractIntVector a) {
-            return bitNot(a);
+            int[] ans = new int[a.getLength()];
+            for (int i = 0; i < a.getLength(); i++) {
+                ans[i] = ~a.getDataAt(i);
+            }
+            return RDataFactory.createIntVector(ans, RDataFactory.COMPLETE_VECTOR);
         }
     }
 }

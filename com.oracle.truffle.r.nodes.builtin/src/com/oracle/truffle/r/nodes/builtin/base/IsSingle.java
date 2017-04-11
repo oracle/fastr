@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "is.single", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-public abstract class IsSingle extends RBuiltinNode {
+public abstract class IsSingle extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(IsSingle.class);

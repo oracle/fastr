@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "complex", kind = INTERNAL, parameterNames = {"length.out", "real", "imaginary"}, behavior = PURE)
-public abstract class Complex extends RBuiltinNode {
+public abstract class Complex extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(Complex.class);

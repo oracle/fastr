@@ -50,7 +50,7 @@ final class ParensSpecial extends RNode {
 }
 
 @RBuiltin(name = "(", kind = PRIMITIVE, parameterNames = {""}, visibility = ON, behavior = PURE)
-public final class ParenBuiltin extends RBuiltinNode {
+public final class ParenBuiltin extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(ParenBuiltin.class);
@@ -64,7 +64,7 @@ public final class ParenBuiltin extends RBuiltinNode {
     }
 
     @Override
-    public Object executeBuiltin(VirtualFrame frame, Object... args) {
-        return args[0];
+    public Object execute(VirtualFrame frame, Object arg) {
+        return arg;
     }
 }

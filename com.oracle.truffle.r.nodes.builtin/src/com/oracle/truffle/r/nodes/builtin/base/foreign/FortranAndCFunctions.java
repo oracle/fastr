@@ -22,9 +22,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.foreign.LookupAdapter.ExtractNativeCallInfoNode;
+import com.oracle.truffle.r.nodes.builtin.base.foreign.LookupAdapterFactory.ExtractNativeCallInfoNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -51,7 +52,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  */
 public class FortranAndCFunctions {
 
-    protected abstract static class CRFFIAdapter extends LookupAdapter {
+    protected abstract static class CRFFIAdapter extends RBuiltinNode.Arg6 {
         private static final int SCALAR_DOUBLE = 0;
         private static final int SCALAR_INT = 1;
         private static final int SCALAR_LOGICAL = 2;
@@ -61,6 +62,7 @@ public class FortranAndCFunctions {
         private static final int VECTOR_LOGICAL = 12;
         @SuppressWarnings("unused") private static final int VECTOR_STRING = 12;
 
+        @Child protected ExtractNativeCallInfoNode extractSymbolInfo = ExtractNativeCallInfoNodeGen.create();
         @Child private CRFFI.InvokeCNode invokeCNode = RFFIFactory.getRFFI().getCRFFI().createInvokeCNode();
 
         @Override
@@ -189,7 +191,7 @@ public class FortranAndCFunctions {
      * FastR, otherwise the .Fortran interface uses the machinery that implements the .C interface.
      */
     @RBuiltin(name = ".Fortran", kind = PRIMITIVE, parameterNames = {".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"}, behavior = COMPLEX)
-    public abstract static class Fortran extends CRFFIAdapter {
+    public abstract static class Fortran extends CRFFIAdapter implements Lookup {
 
         static {
             Casts.noCasts(Fortran.class);
@@ -197,8 +199,8 @@ public class FortranAndCFunctions {
 
         @Override
         @TruffleBoundary
-        protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
-            switch (lookupName(symbol)) {
+        public RExternalBuiltinNode lookupBuiltin(RList symbol) {
+            switch (LookupAdapter.lookupName(symbol)) {
                 case "dqrdc2":
                     return Dqrdc2.create();
                 case "dqrcf":
@@ -219,14 +221,14 @@ public class FortranAndCFunctions {
         @Specialization(guards = "lookupBuiltin(symbol) == null")
         protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage,
                         @SuppressWarnings("unused") RMissing encoding) {
-            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(frame, symbol);
             return dispatch(this, nativeCallInfo, naok, dup, args);
         }
 
         @Specialization
         protected RList c(RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
-            String libName = checkPackageArg(rPackage);
+            String libName = LookupAdapter.checkPackageArg(rPackage);
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Fortran, null, null);
             DLL.SymbolHandle func = findSymbolNode.execute(symbol.getDataAt(0), libName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
@@ -238,7 +240,7 @@ public class FortranAndCFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object fallback(Object symbol, Object args, Object naok, Object dup, Object rPackage, Object encoding) {
-            throw fallback(symbol);
+            throw LookupAdapter.fallback(this, symbol);
         }
     }
 
@@ -249,15 +251,9 @@ public class FortranAndCFunctions {
             Casts.noCasts(DotC.class);
         }
 
-        @Override
-        @TruffleBoundary
-        protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
-            throw RInternalError.shouldNotReachHere();
-        }
-
         @Specialization
         protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage, @SuppressWarnings("unused") RMissing encoding) {
-            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(frame, symbol);
             return dispatch(this, nativeCallInfo, naok, dup, args);
         }
 

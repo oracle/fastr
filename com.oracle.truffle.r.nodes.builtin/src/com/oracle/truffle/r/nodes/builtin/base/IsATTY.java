@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @RBuiltin(name = "isatty", kind = INTERNAL, parameterNames = {"con"}, behavior = PURE)
-public abstract class IsATTY extends RBuiltinNode {
+public abstract class IsATTY extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(IsATTY.class);

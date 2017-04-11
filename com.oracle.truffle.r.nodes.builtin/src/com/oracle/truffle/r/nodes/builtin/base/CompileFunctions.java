@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 public class CompileFunctions {
     @RBuiltin(name = "compilePKGS", kind = INTERNAL, parameterNames = "enable", behavior = PURE)
-    public abstract static class CompilePKGS extends RBuiltinNode {
+    public abstract static class CompilePKGS extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(CompilePKGS.class);
@@ -49,7 +49,7 @@ public class CompileFunctions {
     }
 
     @RBuiltin(name = "enableJIT", kind = INTERNAL, parameterNames = "level", behavior = PURE)
-    public abstract static class EnableJIT extends RBuiltinNode {
+    public abstract static class EnableJIT extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(EnableJIT.class);

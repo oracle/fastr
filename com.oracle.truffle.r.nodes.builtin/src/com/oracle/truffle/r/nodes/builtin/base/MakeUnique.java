@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "make.unique", kind = INTERNAL, parameterNames = {"names", "sep"}, behavior = PURE)
-public abstract class MakeUnique extends RBuiltinNode {
+public abstract class MakeUnique extends RBuiltinNode.Arg2 {
 
     private final ConditionProfile namesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile duplicatesProfile = ConditionProfile.createBinaryProfile();

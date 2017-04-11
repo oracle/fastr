@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "drop", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-public abstract class Drop extends RBuiltinNode {
+public abstract class Drop extends RBuiltinNode.Arg1 {
 
     private final ConditionProfile nullDimensions = ConditionProfile.createBinaryProfile();
     private final ConditionProfile resultIsVector = ConditionProfile.createBinaryProfile();

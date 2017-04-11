@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @SuppressWarnings("unused")
 @RBuiltin(name = "format", kind = INTERNAL, parameterNames = {"x", "trim", "digits", "nsmall", "width", "justify", "na.encode", "scientific", "decimal.mark"}, behavior = PURE)
-public abstract class Format extends RBuiltinNode {
+public abstract class Format extends RBuiltinNode.Arg9 {
 
     @Child private CastIntegerNode castInteger;
     @Child protected ValuePrinterNode valuePrinter = new ValuePrinterNode();

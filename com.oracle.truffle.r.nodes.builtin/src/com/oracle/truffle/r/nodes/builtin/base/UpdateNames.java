@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "names<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class UpdateNames extends RBuiltinNode {
+public abstract class UpdateNames extends RBuiltinNode.Arg2 {
 
     @Child private CastStringNode castStringNode;
 

@@ -66,7 +66,7 @@ final class ReturnSpecial extends RNode {
  * {@link FunctionDefinitionNode}.
  */
 @RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX, nonEvalArgs = {0})
-public abstract class Return extends RBuiltinNode {
+public abstract class Return extends RBuiltinNode.Arg1 {
 
     public static RNode createSpecial(@SuppressWarnings("unused") ArgumentsSignature signature, RNode[] arguments, @SuppressWarnings("unused") boolean inReplacement) {
         return arguments.length == 1 ? new ReturnSpecial(arguments[0]) : null;

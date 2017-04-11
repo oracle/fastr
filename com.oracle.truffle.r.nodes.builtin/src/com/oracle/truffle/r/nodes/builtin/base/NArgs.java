@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 
 // TODO Figure out how to distinguish f(,,a) from f(a) - RMissing is used in both contexts
 @RBuiltin(name = "nargs", kind = PRIMITIVE, parameterNames = {}, behavior = RBehavior.READS_FRAME)
-public abstract class NArgs extends RBuiltinNode {
+public abstract class NArgs extends RBuiltinNode.Arg0 {
 
     private final BranchProfile isPromiseProfile = BranchProfile.create();
 

@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 
 @RBuiltin(name = ".fastr.tree", visibility = OFF, kind = PRIMITIVE, parameterNames = {"func", "verbose"}, behavior = IO)
-public abstract class FastRTree extends RBuiltinNode {
+public abstract class FastRTree extends RBuiltinNode.Arg2 {
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};

@@ -79,7 +79,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"...", "recursive"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class Combine extends RBuiltinNode {
+public abstract class Combine extends RBuiltinNode.Arg2 {
 
     public static Combine create() {
         return CombineNodeGen.create();

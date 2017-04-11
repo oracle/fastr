@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = "body", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
-public abstract class Body extends RBuiltinNode {
+public abstract class Body extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(Body.class);

@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 @RBuiltin(name = "isS4", kind = PRIMITIVE, parameterNames = {"object"}, behavior = PURE)
-public abstract class IsS4 extends RBuiltinNode {
+public abstract class IsS4 extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(IsS4.class);

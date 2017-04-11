@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "proc.time", kind = PRIMITIVE, parameterNames = {}, behavior = IO)
-public abstract class ProcTime extends RBuiltinNode {
+public abstract class ProcTime extends RBuiltinNode.Arg0 {
 
     private static final String[] NAMES = new String[]{"user.self", "sys.self", "elapsed", "user.child", "sys.child"};
     private static final RStringVector PROC_TIME_CLASS = RDataFactory.createStringVectorFromScalar("proc_time");

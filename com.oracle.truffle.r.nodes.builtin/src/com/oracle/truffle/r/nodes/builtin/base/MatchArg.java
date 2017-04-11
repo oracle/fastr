@@ -63,7 +63,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = "match.arg", kind = SUBSTITUTE, parameterNames = {"arg", "choices", "several.ok"}, nonEvalArgs = {0}, behavior = COMPLEX)
-public abstract class MatchArg extends RBuiltinNode {
+public abstract class MatchArg extends RBuiltinNode.Arg3 {
 
     static {
         Casts.noCasts(MatchArg.class);

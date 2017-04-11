@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "next", kind = PRIMITIVE, parameterNames = {"x"}, behavior = COMPLEX)
-public abstract class NextBuiltin extends RBuiltinNode {
+public abstract class NextBuiltin extends RBuiltinNode.Arg1 {
 
     static {
         noCasts(NextBuiltin.class);

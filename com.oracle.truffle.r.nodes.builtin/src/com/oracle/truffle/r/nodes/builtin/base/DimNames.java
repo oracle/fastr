@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 @RBuiltin(name = "dimnames", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class DimNames extends RBuiltinNode {
+public abstract class DimNames extends RBuiltinNode.Arg1 {
 
     private final ConditionProfile nullProfile = ConditionProfile.createBinaryProfile();
 

@@ -56,6 +56,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * This a FastR-specific version of the standard {@code trace} function which uses the
@@ -66,7 +67,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
  */
 public class FastRTrace {
 
-    protected abstract static class Helper extends RBuiltinNode {
+    static final class Helper extends RBaseNode {
         @Child private GetFunctions.Get getNode;
         @Child private EnvFunctions.TopEnv topEnv;
         @Child private FrameFunctions.ParentFrame parentFrame;
@@ -80,7 +81,7 @@ public class FastRTrace {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 parentFrame = insert(ParentFrameNodeGen.create());
             }
-            return topEnv.executeBuiltin(frame, parentFrame.execute(frame, 1), RNull.instance);
+            return topEnv.execute(frame, parentFrame.execute(frame, 1), RNull.instance);
         }
 
         protected Object getFunction(VirtualFrame frame, Object what, Object where) {
@@ -88,7 +89,7 @@ public class FastRTrace {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getNode = insert(GetNodeGen.create());
             }
-            return getNode.executeBuiltin(frame, what, where, RType.Function.getName(), true);
+            return getNode.execute(frame, what, where, RType.Function.getName(), true);
         }
 
         protected void checkWhat(Object what) {
@@ -112,11 +113,12 @@ public class FastRTrace {
     }
 
     @RBuiltin(name = ".fastr.trace", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"what", "tracer", "exit", "at", "print", "signature", "where"}, behavior = COMPLEX)
-    public abstract static class Trace extends Helper {
+    public abstract static class Trace extends RBuiltinNode.Arg7 {
 
         @Child private TraceFunctions.PrimTrace primTrace;
         @Child private CastLogicalNode castLogical;
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+        @Child private Helper helper = new Helper();
 
         static {
             Casts.noCasts(Trace.class);
@@ -125,16 +127,16 @@ public class FastRTrace {
         @Specialization
         protected Object trace(VirtualFrame frame, Object whatObj, Object tracer, Object exit, Object at, Object printObj, Object signature, Object whereObj) {
             Object what = whatObj;
-            checkWhat(what);
+            helper.checkWhat(what);
             Object where = whereObj;
             if (where == RMissing.instance) {
-                where = getWhere(frame);
+                where = helper.getWhere(frame);
             }
             String funcName = RRuntime.asString(what);
             if (funcName != null) {
-                what = getFunction(frame, what, where);
+                what = helper.getFunction(frame, what, where);
             }
-            RFunction func = checkFunction(what);
+            RFunction func = helper.checkFunction(what);
 
             if (tracer == RMissing.instance && exit == RMissing.instance && at == RMissing.instance && printObj == RMissing.instance && signature == RMissing.instance) {
                 // simple case, nargs() == 1, corresponds to .primTrace that has invisible output
@@ -143,7 +145,7 @@ public class FastRTrace {
                     primTrace = insert(PrimTraceNodeGen.create());
                 }
 
-                Object result = primTrace.executeBuiltin(frame, func);
+                Object result = primTrace.execute(frame, func);
                 visibility.execute(frame, false);
                 return result;
             }
@@ -181,9 +183,10 @@ public class FastRTrace {
     }
 
     @RBuiltin(name = ".fastr.untrace", visibility = OFF, kind = PRIMITIVE, parameterNames = {"what", "signature", "where"}, behavior = COMPLEX)
-    public abstract static class Untrace extends Helper {
+    public abstract static class Untrace extends RBuiltinNode.Arg3 {
 
         @Child private TraceFunctions.PrimUnTrace primUnTrace;
+        @Child private Helper helper = new Helper();
 
         static {
             Casts.noCasts(Untrace.class);
@@ -192,22 +195,22 @@ public class FastRTrace {
         @Specialization
         protected Object untrace(VirtualFrame frame, Object whatObj, Object signature, Object whereObj) {
             Object what = whatObj;
-            checkWhat(what);
+            helper.checkWhat(what);
             Object where = whereObj;
             if (where == RMissing.instance) {
-                where = getWhere(frame);
+                where = helper.getWhere(frame);
             }
             String funcName = RRuntime.asString(what);
             if (funcName != null) {
-                what = getFunction(frame, what, where);
+                what = helper.getFunction(frame, what, where);
             }
-            RFunction func = checkFunction(what);
+            RFunction func = helper.checkFunction(what);
             if (signature == RMissing.instance) {
                 if (primUnTrace == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     primUnTrace = insert(PrimUnTraceNodeGen.create());
                 }
-                primUnTrace.executeBuiltin(frame, func);
+                primUnTrace.execute(frame, func);
             } else {
                 throw RError.nyi(this, "method tracing");
             }

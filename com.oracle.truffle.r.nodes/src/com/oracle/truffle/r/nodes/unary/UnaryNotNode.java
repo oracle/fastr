@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 @RBuiltin(name = "!", kind = PRIMITIVE, parameterNames = {""}, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
-public abstract class UnaryNotNode extends RBuiltinNode {
+public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
 
     private final NACheck na = NACheck.create();
     private final NAProfile naProfile = NAProfile.create();

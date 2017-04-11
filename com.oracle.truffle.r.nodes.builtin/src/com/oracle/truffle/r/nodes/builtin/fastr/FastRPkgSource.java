@@ -61,7 +61,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * {@code Rpkgsource} directory., for use by e.g., a source-level debugger.
  */
 @RBuiltin(name = ".fastr.pkgsource", kind = PRIMITIVE, visibility = OFF, parameterNames = {"pkgs", "verbose"}, behavior = COMPLEX)
-public abstract class FastRPkgSource extends RBuiltinNode {
+public abstract class FastRPkgSource extends RBuiltinNode.Arg2 {
     public static final String PKGSOURCE_PROJECT = "Rpkgsource";
     private static final String SLASH_SWAP = "_slash_";
 

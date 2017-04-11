@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class StartsEndsWithFunctions {
 
-    private abstract static class Adapter extends RBuiltinNode {
+    private abstract static class Adapter extends RBuiltinNode.Arg2 {
         private final NACheck naCheck = NACheck.create();
         private final ConditionProfile singlePrefixProfile = ConditionProfile.createBinaryProfile();
 

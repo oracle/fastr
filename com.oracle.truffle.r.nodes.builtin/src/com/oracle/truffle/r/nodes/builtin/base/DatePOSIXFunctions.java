@@ -137,7 +137,7 @@ public class DatePOSIXFunctions {
     }
 
     @RBuiltin(name = "Date2POSIXlt", kind = INTERNAL, parameterNames = "x", behavior = PURE)
-    public abstract static class Date2POSIXlt extends RBuiltinNode {
+    public abstract static class Date2POSIXlt extends RBuiltinNode.Arg1 {
 
         @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
@@ -173,7 +173,7 @@ public class DatePOSIXFunctions {
     }
 
     @RBuiltin(name = "as.POSIXlt", kind = INTERNAL, parameterNames = {"x", "tz"}, behavior = READS_STATE)
-    public abstract static class AsPOSIXlt extends RBuiltinNode {
+    public abstract static class AsPOSIXlt extends RBuiltinNode.Arg2 {
 
         @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
@@ -215,7 +215,7 @@ public class DatePOSIXFunctions {
     }
 
     @RBuiltin(name = "as.POSIXct", kind = INTERNAL, parameterNames = {"x", "tz"}, behavior = READS_STATE)
-    public abstract static class AsPOSIXct extends RBuiltinNode {
+    public abstract static class AsPOSIXct extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(AsPOSIXct.class);
@@ -273,7 +273,7 @@ public class DatePOSIXFunctions {
     }
 
     @RBuiltin(name = "POSIXlt2Date", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class POSIXlt2Date extends RBuiltinNode {
+    public abstract static class POSIXlt2Date extends RBuiltinNode.Arg1 {
         private static final RStringVector CLASS_ATTR = (RStringVector) RDataFactory.createStringVectorFromScalar("Date").makeSharedPermanent();
 
         static {
@@ -324,7 +324,7 @@ public class DatePOSIXFunctions {
     }
 
     @RBuiltin(name = "format.POSIXlt", kind = INTERNAL, parameterNames = {"x", "format", "usetz"}, behavior = READS_STATE)
-    public abstract static class FormatPOSIXlt extends RBuiltinNode {
+    public abstract static class FormatPOSIXlt extends RBuiltinNode.Arg3 {
 
         private static final HashMap<String, String> TIME_ZONE_MAPPING = new HashMap<>();
 
@@ -390,7 +390,7 @@ public class DatePOSIXFunctions {
     }
 
     @RBuiltin(name = "strptime", kind = INTERNAL, parameterNames = {"x", "format", "tz"}, behavior = PURE)
-    public abstract static class StrPTime extends RBuiltinNode {
+    public abstract static class StrPTime extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(StrPTime.class);

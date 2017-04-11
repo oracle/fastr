@@ -93,11 +93,8 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  */
 public class EnvFunctions {
 
-    protected abstract static class Adapter extends RBuiltinNode {
-    }
-
     @RBuiltin(name = "as.environment", kind = PRIMITIVE, parameterNames = {"fun"}, dispatch = INTERNAL_GENERIC, behavior = COMPLEX)
-    public abstract static class AsEnvironment extends Adapter {
+    public abstract static class AsEnvironment extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(AsEnvironment.class);
@@ -200,7 +197,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "emptyenv", kind = PRIMITIVE, parameterNames = {}, behavior = PURE)
-    public abstract static class EmptyEnv extends RBuiltinNode {
+    public abstract static class EmptyEnv extends RBuiltinNode.Arg0 {
 
         @Specialization
         protected REnvironment emptyenv() {
@@ -209,7 +206,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "globalenv", kind = PRIMITIVE, parameterNames = {}, behavior = PURE)
-    public abstract static class GlobalEnv extends RBuiltinNode {
+    public abstract static class GlobalEnv extends RBuiltinNode.Arg0 {
 
         @Specialization
         protected Object globalenv() {
@@ -221,7 +218,7 @@ public class EnvFunctions {
      * Returns the "package:base" environment.
      */
     @RBuiltin(name = "baseenv", kind = PRIMITIVE, parameterNames = {}, behavior = PURE)
-    public abstract static class BaseEnv extends RBuiltinNode {
+    public abstract static class BaseEnv extends RBuiltinNode.Arg0 {
 
         @Specialization
         protected Object baseenv() {
@@ -230,13 +227,16 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "topenv", kind = INTERNAL, parameterNames = {"envir", "matchThisEnv"}, behavior = COMPLEX)
-    public abstract static class TopEnv extends Adapter {
+    public abstract static class TopEnv extends RBuiltinNode.Arg2 {
 
         static {
             Casts.noCasts(TopEnv.class);
         }
 
         @Child private FrameFunctions.ParentFrame parentFrameNode;
+
+        @Override
+        public abstract Object execute(VirtualFrame frame, Object execute, Object instance);
 
         @Specialization
         protected REnvironment topEnv(REnvironment env, REnvironment matchThisEnv) {
@@ -270,7 +270,7 @@ public class EnvFunctions {
         }
 
         @TruffleBoundary
-        private static REnvironment doTopEnv(REnvironment target, final REnvironment envArg) {
+        private static REnvironment doTopEnv(REnvironment target, REnvironment envArg) {
             REnvironment env = envArg;
             while (env != REnvironment.emptyEnv()) {
                 if (env == target || env == REnvironment.globalEnv() || env == REnvironment.baseEnv() || env == REnvironment.baseNamespaceEnv() || env.isPackageEnv() != null || env.isNamespaceEnv() ||
@@ -281,10 +281,11 @@ public class EnvFunctions {
             }
             return REnvironment.globalEnv();
         }
+
     }
 
     @RBuiltin(name = "parent.env", kind = INTERNAL, parameterNames = {"env"}, behavior = READS_FRAME)
-    public abstract static class ParentEnv extends Adapter {
+    public abstract static class ParentEnv extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(ParentEnv.class);
@@ -301,7 +302,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "parent.env<-", kind = INTERNAL, parameterNames = {"env", "value"}, behavior = COMPLEX)
-    public abstract static class SetParentEnv extends Adapter {
+    public abstract static class SetParentEnv extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(SetParentEnv.class);
@@ -321,7 +322,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "is.environment", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsEnvironment extends RBuiltinNode {
+    public abstract static class IsEnvironment extends RBuiltinNode.Arg1 {
 
         static {
             Casts.noCasts(IsEnvironment.class);
@@ -334,7 +335,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "environment", kind = INTERNAL, parameterNames = {"fun"}, behavior = COMPLEX)
-    public abstract static class Environment extends RBuiltinNode {
+    public abstract static class Environment extends RBuiltinNode.Arg1 {
 
         private final ConditionProfile attributable = ConditionProfile.createBinaryProfile();
         @Child private GetFixedAttributeNode getEnvAttrNode;
@@ -404,7 +405,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "environment<-", kind = PRIMITIVE, parameterNames = {"env", "value"}, behavior = COMPLEX)
-    public abstract static class UpdateEnvironment extends RBuiltinNode {
+    public abstract static class UpdateEnvironment extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(UpdateEnvironment.class);
@@ -484,7 +485,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "environmentName", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
-    public abstract static class EnvironmentName extends RBuiltinNode {
+    public abstract static class EnvironmentName extends RBuiltinNode.Arg1 {
 
         static {
             Casts.noCasts(EnvironmentName.class);
@@ -503,7 +504,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "new.env", kind = INTERNAL, parameterNames = {"hash", "parent", "size"}, behavior = COMPLEX)
-    public abstract static class NewEnv extends RBuiltinNode {
+    public abstract static class NewEnv extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(NewEnv.class);
@@ -522,7 +523,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "search", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
-    public abstract static class Search extends RBuiltinNode {
+    public abstract static class Search extends RBuiltinNode.Arg0 {
         @Specialization
         protected RStringVector search() {
             return RDataFactory.createStringVector(REnvironment.searchPath(), RDataFactory.COMPLETE_VECTOR);
@@ -530,7 +531,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "lockEnvironment", visibility = OFF, kind = INTERNAL, parameterNames = {"env", "bindings"}, behavior = COMPLEX)
-    public abstract static class LockEnvironment extends RBuiltinNode {
+    public abstract static class LockEnvironment extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(LockEnvironment.class);
@@ -547,7 +548,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "environmentIsLocked", kind = INTERNAL, parameterNames = {"env"}, behavior = PURE)
-    public abstract static class EnvironmentIsLocked extends RBuiltinNode {
+    public abstract static class EnvironmentIsLocked extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(EnvironmentIsLocked.class);
@@ -561,7 +562,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "lockBinding", visibility = OFF, kind = INTERNAL, parameterNames = {"sym", "env"}, behavior = COMPLEX)
-    public abstract static class LockBinding extends RBuiltinNode {
+    public abstract static class LockBinding extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(LockBinding.class);
@@ -577,7 +578,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "unlockBinding", visibility = OFF, kind = INTERNAL, parameterNames = {"sym", "env"}, behavior = COMPLEX)
-    public abstract static class UnlockBinding extends RBuiltinNode {
+    public abstract static class UnlockBinding extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(UnlockBinding.class);
@@ -593,7 +594,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "bindingIsLocked", kind = INTERNAL, parameterNames = {"sym", "env"}, behavior = PURE)
-    public abstract static class BindingIsLocked extends RBuiltinNode {
+    public abstract static class BindingIsLocked extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(BindingIsLocked.class);
@@ -608,7 +609,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "makeActiveBinding", visibility = OFF, kind = INTERNAL, parameterNames = {"sym", "fun", "env"}, behavior = COMPLEX)
-    public abstract static class MakeActiveBinding extends RBuiltinNode {
+    public abstract static class MakeActiveBinding extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(MakeActiveBinding.class);
@@ -653,7 +654,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "bindingIsActive", kind = INTERNAL, parameterNames = {"sym", "env"}, behavior = PURE)
-    public abstract static class BindingIsActive extends RBuiltinNode {
+    public abstract static class BindingIsActive extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(BindingIsActive.class);
@@ -672,7 +673,7 @@ public class EnvFunctions {
     }
 
     @RBuiltin(name = "env2list", kind = INTERNAL, parameterNames = {"x", "all.names", "sorted"}, behavior = PURE)
-    public abstract static class EnvToList extends RBuiltinNode {
+    public abstract static class EnvToList extends RBuiltinNode.Arg3 {
 
         @Child private CopyNode copy;
 

@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  * identical except for the argument type.
  */
 @RBuiltin(name = "split", kind = INTERNAL, parameterNames = {"x", "f"}, behavior = PURE)
-public abstract class Split extends RBuiltinNode {
+public abstract class Split extends RBuiltinNode.Arg2 {
 
     @Child private RFactorNodes.GetLevels getLevelNode = new RFactorNodes.GetLevels();
 

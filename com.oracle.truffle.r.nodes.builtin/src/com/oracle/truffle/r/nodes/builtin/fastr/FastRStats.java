@@ -73,7 +73,7 @@ public class FastRStats {
     }
 
     @RBuiltin(name = ".fastr.prof.attr", visibility = OFF, kind = PRIMITIVE, parameterNames = {"filename", "append"}, behavior = COMPLEX)
-    public abstract static class FastRProfAttr extends RBuiltinNode implements AttributeTracer.Listener {
+    public abstract static class FastRProfAttr extends RBuiltinNode.Arg2 implements AttributeTracer.Listener {
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{"Rprofattr.out", RRuntime.LOGICAL_FALSE};
@@ -158,7 +158,7 @@ public class FastRStats {
     }
 
     @RBuiltin(name = ".fastr.stats.typecounts", visibility = OFF, kind = PRIMITIVE, parameterNames = {"filename", "append"}, behavior = COMPLEX)
-    public abstract static class FastRProfTypecounts extends RBuiltinNode implements RDataFactory.Listener {
+    public abstract static class FastRProfTypecounts extends RBuiltinNode.Arg2 implements RDataFactory.Listener {
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{"Rproftypecounts.out", RRuntime.LOGICAL_FALSE};
@@ -289,7 +289,7 @@ public class FastRStats {
     }
 
     @RBuiltin(name = ".fastr.stats.funcounts", visibility = OFF, kind = PRIMITIVE, parameterNames = {"filename", "append", "timing", "threshold", "histograms"}, behavior = COMPLEX)
-    public abstract static class FastRProfFuncounts extends RBuiltinNode {
+    public abstract static class FastRProfFuncounts extends RBuiltinNode.Arg5 {
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{"Rproffuncounts.out", RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, 0, RRuntime.LOGICAL_FALSE};

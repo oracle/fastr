@@ -66,7 +66,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
  *
  */
 @RBuiltin(name = ".fastr.syntaxtree", visibility = OFF, kind = PRIMITIVE, parameterNames = {"func", "visitMode", "printSource", "printTags"}, behavior = IO)
-public abstract class FastRSyntaxTree extends RBuiltinNode {
+public abstract class FastRSyntaxTree extends RBuiltinNode.Arg4 {
 
     @Override
     public Object[] getDefaultParameterValues() {

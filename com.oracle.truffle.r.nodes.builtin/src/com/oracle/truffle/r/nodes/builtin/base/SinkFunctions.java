@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 
 public class SinkFunctions {
     @RBuiltin(name = "sink", visibility = OFF, kind = INTERNAL, parameterNames = {"file", "closeOnExit", "type", "split"}, behavior = IO)
-    public abstract static class Sink extends RBuiltinNode {
+    public abstract static class Sink extends RBuiltinNode.Arg4 {
 
         static {
             Casts casts = new Casts(Sink.class);
@@ -77,7 +77,7 @@ public class SinkFunctions {
     }
 
     @RBuiltin(name = "sink.number", kind = INTERNAL, parameterNames = {"type"}, behavior = IO)
-    public abstract static class SinkNumber extends RBuiltinNode {
+    public abstract static class SinkNumber extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(SinkNumber.class);

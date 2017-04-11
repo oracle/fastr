@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -23,7 +23,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
 @RBuiltin(name = "date", kind = INTERNAL, parameterNames = {}, behavior = IO)
-public abstract class Date extends RBuiltinNode {
+public abstract class Date extends RBuiltinNode.Arg0 {
 
     @Specialization
     @TruffleBoundary

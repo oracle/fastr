@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "crc64", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-public abstract class CRC64 extends RBuiltinNode {
+public abstract class CRC64 extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(CRC64.class);

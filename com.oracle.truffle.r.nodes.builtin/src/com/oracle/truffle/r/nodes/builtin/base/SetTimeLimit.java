@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = "setTimeLimit", kind = INTERNAL, parameterNames = {"cpu", "elapsed", "transient"}, visibility = OFF, behavior = COMPLEX)
-public abstract class SetTimeLimit extends RBuiltinNode {
+public abstract class SetTimeLimit extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(SetTimeLimit.class);

@@ -63,7 +63,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = "as.function.default", kind = INTERNAL, parameterNames = {"x", "envir"}, behavior = PURE)
-public abstract class AsFunction extends RBuiltinNode {
+public abstract class AsFunction extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(AsFunction.class);

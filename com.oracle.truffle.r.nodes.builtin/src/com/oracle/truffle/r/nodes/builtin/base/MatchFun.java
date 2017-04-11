@@ -58,7 +58,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = "match.fun", kind = SUBSTITUTE, parameterNames = {"fun", "descend"}, nonEvalArgs = 0, behavior = COMPLEX)
-public abstract class MatchFun extends RBuiltinNode {
+public abstract class MatchFun extends RBuiltinNode.Arg2 {
 
     @Override
     public Object[] getDefaultParameterValues() {

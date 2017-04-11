@@ -62,7 +62,7 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "%*%", kind = PRIMITIVE, parameterNames = {"", ""}, behavior = PURE)
-public abstract class MatMult extends RBuiltinNode {
+public abstract class MatMult extends RBuiltinNode.Arg2 {
 
     private static final int BLOCK_SIZE = 64;
 

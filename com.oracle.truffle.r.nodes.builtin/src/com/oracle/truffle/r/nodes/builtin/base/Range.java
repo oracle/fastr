@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 @RBuiltin(name = "range", kind = PRIMITIVE, parameterNames = {"...", "na.rm", "finite"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE)
-public abstract class Range extends RBuiltinNode {
+public abstract class Range extends RBuiltinNode.Arg3 {
 
     private static final ReduceSemantics minSemantics = new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.Message.NO_NONMISSING_MIN,
                     RError.Message.NO_NONMISSING_MIN_NA, false, true);

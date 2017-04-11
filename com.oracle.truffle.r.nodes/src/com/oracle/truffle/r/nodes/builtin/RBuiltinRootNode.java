@@ -33,8 +33,10 @@ import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.RCallNode.BuiltinCallNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
@@ -44,21 +46,31 @@ public final class RBuiltinRootNode extends RRootNode {
     @Children private final AccessArgumentNode[] args;
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
-    private final RBuiltinNode builtin;
     private final RBuiltinFactory factory;
 
-    RBuiltinRootNode(RBuiltinFactory factory, RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
-        super(formalArguments, frameDescriptor, fastPath);
+    RBuiltinRootNode(RBuiltinFactory factory, FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
+        super(frameDescriptor, fastPath);
         this.factory = factory;
-        this.builtin = builtin;
         this.args = new AccessArgumentNode[factory.getSignature().getLength()];
+    }
+
+    @Override
+    public FormalArguments getFormalArguments() {
+        initialize();
+        return call.getFormals();
+    }
+
+    @Override
+    public ArgumentsSignature getSignature() {
+        initialize();
+        return call.getFormals().getSignature();
     }
 
     @Override
     public RootCallTarget duplicateWithNewFrameDescriptor() {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("builtin", frameDescriptor);
-        return Truffle.getRuntime().createCallTarget(new RBuiltinRootNode(factory, (RBuiltinNode) builtin.deepCopy(), getFormalArguments(), frameDescriptor, getFastPath()));
+        return Truffle.getRuntime().createCallTarget(new RBuiltinRootNode(factory, frameDescriptor, getFastPath()));
     }
 
     @Override
@@ -71,14 +83,7 @@ public final class RBuiltinRootNode extends RRootNode {
     public Object execute(VirtualFrame frame) {
         verifyEnclosingAssumptions(frame);
         try {
-            if (call == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                this.call = insert(new BuiltinCallNode(builtin, factory, getFormalArguments(), null, true));
-                for (int i = 0; i < args.length; i++) {
-                    args[i] = insert(AccessArgumentNode.create(i));
-                    args[i].setFormals(getFormalArguments());
-                }
-            }
+            initialize();
             Object[] arguments = new Object[args.length];
             for (int i = 0; i < args.length; i++) {
                 arguments[i] = args[i].execute(frame);
@@ -93,8 +98,26 @@ public final class RBuiltinRootNode extends RRootNode {
         }
     }
 
+    private void initialize() {
+        if (call == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            RBuiltinNode builtin = factory.getConstructor().get();
+            FormalArguments formalArguments = FormalArguments.createForBuiltin(builtin.getDefaultParameterValues(), factory.getSignature());
+            if (factory.getKind() == RBuiltinKind.INTERNAL) {
+                assert builtin.getDefaultParameterValues().length == 0 : "INTERNAL builtins do not need default values";
+                assert factory.getSignature().getVarArgCount() == 0 || factory.getSignature().getVarArgIndex() == factory.getSignature().getLength() - 1 : "only last argument can be vararg";
+            }
+            call = insert(new BuiltinCallNode(builtin, factory, formalArguments, null, true));
+            for (int i = 0; i < args.length; i++) {
+                args[i] = insert(AccessArgumentNode.create(i));
+                args[i].setFormals(formalArguments);
+            }
+        }
+    }
+
     public RBuiltinNode getBuiltinNode() {
-        return builtin;
+        initialize();
+        return call.getBuiltin();
     }
 
     @Override
@@ -119,6 +142,6 @@ public final class RBuiltinRootNode extends RRootNode {
 
     @Override
     public String getName() {
-        return "RBuiltin(" + builtin + ")";
+        return "RBuiltin(" + factory.getName() + ")";
     }
 }

@@ -25,7 +25,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = ".cache_class", kind = PRIMITIVE, parameterNames = {"class", "extends"}, behavior = COMPLEX)
-public abstract class CacheClass extends RBuiltinNode {
+public abstract class CacheClass extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(CacheClass.class);

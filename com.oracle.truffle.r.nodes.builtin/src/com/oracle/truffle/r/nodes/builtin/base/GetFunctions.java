@@ -41,7 +41,6 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
@@ -73,14 +72,16 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * assert: not expected to be fast even when called as, e.g., {@code get("x")}.
  */
 public class GetFunctions {
-    public abstract static class Adapter extends RBuiltinNode {
-        protected final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
+    private static final class Helper extends RBaseNode {
+
         protected final BranchProfile recursiveProfile = BranchProfile.create();
+
         @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
         @Child protected TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
 
@@ -160,11 +161,13 @@ public class GetFunctions {
     }
 
     @RBuiltin(name = "get", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"}, behavior = COMPLEX)
-    public abstract static class Get extends Adapter {
+    public abstract static class Get extends RBuiltinNode.Arg4 {
+
+        @Child private Helper helper = new Helper();
 
         private final ConditionProfile inheritsProfile = ConditionProfile.createBinaryProfile();
 
-        public abstract Object execute(VirtualFrame frame, String x, REnvironment environment, String mode, boolean inherits);
+        public abstract Object execute(VirtualFrame frame, Object what, Object where, String name, boolean inherits);
 
         static {
             Casts casts = new Casts(Get.class);
@@ -177,11 +180,11 @@ public class GetFunctions {
 
         @Specialization
         public Object get(VirtualFrame frame, String x, REnvironment envir, String mode, boolean inherits) {
-            RType modeType = typeFromMode.execute(mode);
+            RType modeType = helper.typeFromMode.execute(mode);
             if (inheritsProfile.profile(inherits)) {
-                return getInherits(frame, x, envir, modeType, mode, true);
+                return helper.getInherits(frame, x, envir, modeType, mode, true);
             } else {
-                return getAndCheck(frame, x, envir, modeType, mode, true);
+                return helper.getAndCheck(frame, x, envir, modeType, mode, true);
             }
         }
 
@@ -196,10 +199,13 @@ public class GetFunctions {
         protected Object get(VirtualFrame frame, String x, int envir, String mode, boolean inherits) {
             throw RInternalError.unimplemented();
         }
+
     }
 
     @RBuiltin(name = "get0", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits", "ifnotfound"}, behavior = COMPLEX)
-    public abstract static class Get0 extends Adapter {
+    public abstract static class Get0 extends RBuiltinNode.Arg5 {
+
+        @Child private Helper helper = new Helper();
 
         private final ConditionProfile inheritsProfile = ConditionProfile.createBinaryProfile();
 
@@ -215,11 +221,11 @@ public class GetFunctions {
         @Specialization
         protected Object get0(VirtualFrame frame, String x, REnvironment envir, String mode, boolean inherits, Object ifnotfound) {
             Object result;
-            RType modeType = typeFromMode.execute(mode);
+            RType modeType = helper.typeFromMode.execute(mode);
             if (inheritsProfile.profile(inherits)) {
-                result = getInherits(frame, x, envir, modeType, mode, false);
+                result = helper.getInherits(frame, x, envir, modeType, mode, false);
             } else {
-                result = getAndCheck(frame, x, envir, modeType, mode, false);
+                result = helper.getAndCheck(frame, x, envir, modeType, mode, false);
             }
             if (result == null) {
                 result = ifnotfound;
@@ -241,7 +247,9 @@ public class GetFunctions {
     }
 
     @RBuiltin(name = "mget", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "ifnotfound", "inherits"}, behavior = COMPLEX)
-    public abstract static class MGet extends Adapter {
+    public abstract static class MGet extends RBuiltinNode.Arg5 {
+
+        @Child private Helper helper = new Helper();
 
         private final BranchProfile wrongLengthErrorProfile = BranchProfile.create();
 
@@ -317,12 +325,12 @@ public class GetFunctions {
                 if (inheritsProfile.profile(inherits)) {
                     Object r = envir.get(x);
                     if (r == null || !RRuntime.checkType(r, modeType)) {
-                        recursiveProfile.enter();
+                        helper.recursiveProfile.enter();
                         REnvironment env = envir;
                         while (env != REnvironment.emptyEnv()) {
                             env = env.getParent();
                             if (env != REnvironment.emptyEnv()) {
-                                r = checkPromise(frame, env.get(x), x);
+                                r = helper.checkPromise(frame, env.get(x), x);
                                 if (r != null && RRuntime.checkType(r, modeType)) {
                                     break;
                                 }
@@ -335,7 +343,7 @@ public class GetFunctions {
                         state.data[i] = r;
                     }
                 } else {
-                    Object r = checkPromise(frame, envir.get(x), x);
+                    Object r = helper.checkPromise(frame, envir.get(x), x);
                     if (r != null && RRuntime.checkType(r, modeType)) {
                         state.data[i] = r;
                     } else {

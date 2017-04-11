@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 @RBuiltin(name = "setwd", visibility = OFF, kind = INTERNAL, parameterNames = "path", behavior = IO)
-public abstract class Setwd extends RBuiltinNode {
+public abstract class Setwd extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(Setwd.class);

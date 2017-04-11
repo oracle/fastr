@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "intToUtf8", kind = INTERNAL, parameterNames = {"x", "multiple"}, behavior = PURE)
-public abstract class IntToUtf8 extends RBuiltinNode {
+public abstract class IntToUtf8 extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(IntToUtf8.class);

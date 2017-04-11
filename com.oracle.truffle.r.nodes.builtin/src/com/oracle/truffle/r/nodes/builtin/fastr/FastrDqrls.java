@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  * directly this Fortran routine.
  */
 @RBuiltin(name = ".fastr.dqrls", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x", "n", "p", "y", "ny", "tol", "coeff"}, behavior = PURE)
-public abstract class FastrDqrls extends RBuiltinNode {
+public abstract class FastrDqrls extends RBuiltinNode.Arg7 {
     @Child private RApplRFFI.DqrlsNode dqrlsNode = RFFIFactory.getRFFI().getRApplRFFI().createDqrlsNode();
 
     private static final String[] NAMES = new String[]{"qr", "coefficients", "residuals", "effects", "rank", "pivot", "qraux", "tol", "pivoted"};

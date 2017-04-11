@@ -324,7 +324,7 @@ public final class SeqFunctions {
 
     @TypeSystemReference(RTypes.class)
     @RBuiltin(name = "seq_along", kind = PRIMITIVE, parameterNames = {"along.with"}, behavior = PURE)
-    public abstract static class SeqAlong extends RBuiltinNode {
+    public abstract static class SeqAlong extends RBuiltinNode.Arg1 {
         @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNode.create();
 
         static {
@@ -366,7 +366,7 @@ public final class SeqFunctions {
 
     @TypeSystemReference(RTypes.class)
     @RBuiltin(name = "seq_len", kind = PRIMITIVE, parameterNames = {"length.out"}, behavior = PURE)
-    public abstract static class SeqLen extends RBuiltinNode {
+    public abstract static class SeqLen extends RBuiltinNode.Arg1 {
 
         static {
             Casts casts = new Casts(SeqLen.class);
@@ -403,12 +403,11 @@ public final class SeqFunctions {
      *
      * N.B. javac gives error "cannot find symbol" on plain "@RBuiltin".
      */
-    @TypeSystemReference(RTypes.class)
+    @SuppressWarnings("unused")
     @ImportStatic({AsRealNodeGen.class, SeqFunctions.class})
     @com.oracle.truffle.r.runtime.builtins.RBuiltin(name = "seq.int", kind = PRIMITIVE, parameterNames = {"from", "to", "by", "length.out", "along.with",
                     "..."}, dispatch = INTERNAL_GENERIC, genericName = "seq", behavior = PURE)
-    @SuppressWarnings("unused")
-    public abstract static class SeqInt extends RBuiltinNode {
+    public abstract static class SeqInt extends RBuiltinNode.Arg5 {
         private final BranchProfile error = BranchProfile.create();
         private final boolean seqFastPath;
 
@@ -426,7 +425,8 @@ public final class SeqFunctions {
             casts.arg("length.out").allowMissing().mapIf(nullValue(), missingConstant());
         }
 
-        protected abstract Object execute(VirtualFrame frame, Object start, Object to, Object by, Object lengthOut, Object alongWith);
+        @Override
+        public abstract Object execute(VirtualFrame frame, Object start, Object to, Object by, Object lengthOut, Object alongWith);
 
         protected SeqInt(boolean seqFastPath) {
             this.seqFastPath = seqFastPath;

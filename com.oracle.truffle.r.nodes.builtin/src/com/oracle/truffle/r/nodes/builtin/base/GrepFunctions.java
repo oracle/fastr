@@ -29,9 +29,14 @@ import java.util.regex.PatternSyntaxException;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -48,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
@@ -66,57 +72,58 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * Parts of this code, notably the perl support, were translated from GnuR grep.c.
  */
 public class GrepFunctions {
-    public abstract static class CommonCodeAdapter extends RBuiltinNode {
+    protected static void castPattern(Casts casts) {
+        // with default error message, NO_CALLER does not work
+        casts.arg("pattern").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "pattern").asVector().mustBe(notEmpty(), RError.Message.INVALID_ARGUMENT,
+                        "pattern");
+    }
+
+    protected static void castPatternSingle(Casts casts) {
+        // with default error message, NO_CALLER does not work
+        casts.arg("pattern").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "pattern").asVector().mustBe(notEmpty(), RError.Message.INVALID_ARGUMENT,
+                        "pattern").shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST, "pattern").findFirst();
+    }
+
+    protected static void castText(Casts casts, String textId) {
+        casts.arg(textId).mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, textId);
+    }
+
+    protected static void castIgnoreCase(Casts casts) {
+        casts.arg("ignore.case").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+    }
+
+    protected static void castPerl(Casts casts) {
+        casts.arg("perl").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+    }
+
+    protected static void castFixed(Casts casts, byte defaultValue) {
+        casts.arg("fixed").asLogicalVector().findFirst(defaultValue).map(toBoolean());
+    }
+
+    protected static void castValue(Casts casts) {
+        casts.arg("value").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+    }
+
+    protected static void castCosts(Casts casts) {
+        casts.arg("costs").defaultError(RError.Message.INVALID_ARG, "costs").mustBe((missingValue().or(nullValue()).not())).asIntegerVector();
+    }
+
+    protected static void castUseBytes(Casts casts) {
+        casts.arg("useBytes").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+    }
+
+    protected static void castInvert(Casts casts) {
+        casts.arg("invert").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+    }
+
+    protected static void castBounds(Casts casts) {
+        casts.arg("bounds").defaultError(RError.Message.INVALID_ARG, "bounds").mustBe((missingValue().or(nullValue()).not())).asDoubleVector();
+    }
+
+    @NodeInfo(cost = NodeCost.NONE)
+    public static class CommonCodeNode extends RBaseNode {
         @Child protected PCRERFFI.MaketablesNode maketablesNode = RFFIFactory.getRFFI().getPCRERFFI().createMaketablesNode();
         @Child protected PCRERFFI.CompileNode compileNode = RFFIFactory.getRFFI().getPCRERFFI().createCompileNode();
-
-        protected static void castPattern(Casts casts) {
-            // with default error message, NO_CALLER does not work
-            casts.arg("pattern").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "pattern").asVector().mustBe(notEmpty(), RError.Message.INVALID_ARGUMENT,
-                            "pattern");
-        }
-
-        protected static void castPatternSingle(Casts casts) {
-            // with default error message, NO_CALLER does not work
-            casts.arg("pattern").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "pattern").asVector().mustBe(notEmpty(), RError.Message.INVALID_ARGUMENT,
-                            "pattern").shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST, "pattern").findFirst();
-        }
-
-        protected static void castText(Casts casts, String textId) {
-            casts.arg(textId).mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, textId);
-        }
-
-        protected static void castIgnoreCase(Casts casts) {
-            casts.arg("ignore.case").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
-        }
-
-        protected static void castPerl(Casts casts) {
-            casts.arg("perl").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
-        }
-
-        protected static void castFixed(Casts casts, byte defaultValue) {
-            casts.arg("fixed").asLogicalVector().findFirst(defaultValue).map(toBoolean());
-        }
-
-        protected static void castValue(Casts casts) {
-            casts.arg("value").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
-        }
-
-        protected static void castUseBytes(Casts casts) {
-            casts.arg("useBytes").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
-        }
-
-        protected static void castInvert(Casts casts) {
-            casts.arg("invert").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
-        }
-
-        protected static void castCosts(Casts casts) {
-            casts.arg("costs").defaultError(RError.Message.INVALID_ARG, "costs").mustBe((missingValue().or(nullValue()).not())).asIntegerVector();
-        }
-
-        protected static void castBounds(Casts casts) {
-            casts.arg("bounds").defaultError(RError.Message.INVALID_ARG, "bounds").mustBe((missingValue().or(nullValue()).not())).asDoubleVector();
-        }
 
         /**
          * Temporary method that handles the check for the arguments that are common to the majority
@@ -209,7 +216,7 @@ public class GrepFunctions {
         }
     }
 
-    private abstract static class GrepAdapter extends CommonCodeAdapter {
+    protected static final class GrepCommonCodeNode extends CommonCodeNode {
         @Child PCRERFFI.ExecNode execNode = RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
 
         protected Object doGrep(String patternArg, RAbstractStringVector vector, boolean ignoreCase, boolean value, boolean perlPar, boolean fixed,
@@ -292,7 +299,7 @@ public class GrepFunctions {
             }
         }
 
-        protected void findAllMatches(boolean[] result, String pattern, RAbstractStringVector vector, boolean fixed, boolean ignoreCase) {
+        protected static void findAllMatches(boolean[] result, String pattern, RAbstractStringVector vector, boolean fixed, boolean ignoreCase) {
             for (int i = 0; i < result.length; i++) {
                 String text = vector.getDataAt(i);
                 if (!RRuntime.isNA(text)) {
@@ -311,8 +318,21 @@ public class GrepFunctions {
         }
     }
 
+    public static CommonCodeNode createCommon() {
+        return new CommonCodeNode();
+    }
+
+    public static GrepCommonCodeNode createGrepCommon() {
+        return new GrepCommonCodeNode();
+    }
+
+    public static SubCommonCodeNode createSubCommon() {
+        return new SubCommonCodeNode();
+    }
+
+    @ImportStatic(GrepFunctions.class)
     @RBuiltin(name = "grep", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "value", "perl", "fixed", "useBytes", "invert"}, behavior = PURE)
-    public abstract static class Grep extends GrepAdapter {
+    public abstract static class Grep extends RBuiltinNode.Arg8 {
 
         static {
             Casts casts = new Casts(Grep.class);
@@ -358,13 +378,15 @@ public class GrepFunctions {
         @Specialization
         @TruffleBoundary
         protected Object grepValueFalse(String patternArgVec, RAbstractStringVector vector, boolean ignoreCaseLogical, boolean valueLogical, boolean perlLogical, boolean fixedLogical,
-                        boolean useBytes, boolean invertLogical) {
-            return doGrep(patternArgVec, vector, ignoreCaseLogical, valueLogical, perlLogical, fixedLogical, useBytes, invertLogical, false);
+                        boolean useBytes, boolean invertLogical,
+                        @Cached("createGrepCommon()") GrepCommonCodeNode common) {
+            return common.doGrep(patternArgVec, vector, ignoreCaseLogical, valueLogical, perlLogical, fixedLogical, useBytes, invertLogical, false);
         }
     }
 
+    @ImportStatic(GrepFunctions.class)
     @RBuiltin(name = "grepl", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "value", "perl", "fixed", "useBytes", "invert"}, behavior = PURE)
-    public abstract static class GrepL extends GrepAdapter {
+    public abstract static class GrepL extends RBuiltinNode.Arg8 {
 
         static {
             Casts casts = new Casts(GrepL.class);
@@ -380,21 +402,22 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object grepl(String pattern, RAbstractStringVector vector, boolean ignoreCaseLogical, boolean valueLogical, boolean perlLogical, boolean fixedLogical,
-                        boolean useBytes, boolean invertLogical) {
+        protected Object grepl(String pattern, RAbstractStringVector vector, boolean ignoreCaseLogical, boolean valueLogical, boolean perlLogical, boolean fixedLogical, boolean useBytes,
+                        boolean invertLogical,
+                        @Cached("createGrepCommon()") GrepCommonCodeNode common) {
             // invert is passed but is always FALSE
-            return doGrep(pattern, vector, ignoreCaseLogical, valueLogical, perlLogical, fixedLogical, useBytes, invertLogical, true);
+            return common.doGrep(pattern, vector, ignoreCaseLogical, valueLogical, perlLogical, fixedLogical, useBytes, invertLogical, true);
         }
     }
 
-    protected abstract static class SubAdapter extends CommonCodeAdapter {
-        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
+    protected static void castReplacement(Casts casts) {
+        // with default error message, NO_CALLER does not work
+        casts.arg("replacement").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "replacement").asVector().mustBe(notEmpty(), RError.Message.INVALID_ARGUMENT, "replacement").shouldBe(
+                        singleElement(), RError.Message.ARGUMENT_ONLY_FIRST, "replacement").findFirst();
+    }
 
-        protected static void castReplacement(Casts casts) {
-            // with default error message, NO_CALLER does not work
-            casts.arg("replacement").mustBe(stringValue(), RError.Message.INVALID_ARGUMENT, "replacement").asVector().mustBe(notEmpty(), RError.Message.INVALID_ARGUMENT, "replacement").shouldBe(
-                            singleElement(), RError.Message.ARGUMENT_ONLY_FIRST, "replacement").findFirst();
-        }
+    protected static final class SubCommonCodeNode extends CommonCodeNode {
+        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
 
         protected RStringVector doSub(String patternArg, String replacementArg, RAbstractStringVector vector, boolean ignoreCase, boolean perlPar,
                         boolean fixedPar, @SuppressWarnings("unused") boolean useBytes, boolean gsub) {
@@ -662,8 +685,9 @@ public class GrepFunctions {
         }
     }
 
+    @ImportStatic(GrepFunctions.class)
     @RBuiltin(name = "sub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
-    public abstract static class Sub extends SubAdapter {
+    public abstract static class Sub extends RBuiltinNode.Arg7 {
 
         static {
             Casts casts = new Casts(Sub.class);
@@ -678,14 +702,15 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector subRegexp(String patternArgVec, String replacementVec, RAbstractStringVector x, boolean ignoreCaseLogical, boolean perlLogical,
-                        boolean fixedLogical, boolean useBytes) {
-            return doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, false);
+        protected RStringVector subRegexp(String patternArgVec, String replacementVec, RAbstractStringVector x, boolean ignoreCaseLogical, boolean perlLogical, boolean fixedLogical, boolean useBytes,
+                        @Cached("createSubCommon()") SubCommonCodeNode common) {
+            return common.doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, false);
         }
     }
 
+    @ImportStatic(GrepFunctions.class)
     @RBuiltin(name = "gsub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
-    public abstract static class GSub extends SubAdapter {
+    public abstract static class GSub extends RBuiltinNode.Arg7 {
 
         static {
             Casts casts = new Casts(GSub.class);
@@ -700,14 +725,15 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector gsub(String patternArgVec, String replacementVec, RAbstractStringVector x, boolean ignoreCaseLogical, boolean perlLogical,
-                        boolean fixedLogical, boolean useBytes) {
-            return doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, true);
+        protected RStringVector gsub(String patternArgVec, String replacementVec, RAbstractStringVector x, boolean ignoreCaseLogical, boolean perlLogical, boolean fixedLogical, boolean useBytes,
+                        @Cached("createSubCommon()") SubCommonCodeNode common) {
+            return common.doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, true);
         }
     }
 
+    @ImportStatic(GrepFunctions.class)
     @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
-    public abstract static class Regexp extends CommonCodeAdapter {
+    public abstract static class Regexp extends RBuiltinNode.Arg6 {
 
         @Child SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
         @Child SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
@@ -756,8 +782,9 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, boolean ignoreCaseL, boolean perlL, boolean fixedL, boolean useBytesL) {
-            checkExtraArgs(false, false, false, useBytesL, false);
+        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, boolean ignoreCaseL, boolean perlL, boolean fixedL, boolean useBytesL,
+                        @Cached("createCommon()") CommonCodeNode common) {
+            common.checkExtraArgs(false, false, false, useBytesL, false);
             boolean ignoreCase = ignoreCaseL;
             boolean fixed = fixedL;
             boolean perl = perlL;
@@ -782,7 +809,7 @@ public class GrepFunctions {
                 Arrays.fill(result, 1);
             } else {
                 for (int i = 0; i < vector.getLength(); i++) {
-                    Info res = getInfo(pattern, vector.getDataAt(i), ignoreCase, perl, fixed).get(0);
+                    Info res = getInfo(common, pattern, vector.getDataAt(i), ignoreCase, perl, fixed).get(0);
                     result[i] = res.index;
                     matchLength[i] = res.size;
                     if (res.hasCapture) {
@@ -827,7 +854,7 @@ public class GrepFunctions {
             return ret;
         }
 
-        protected List<Info> getInfo(String pattern, String text, boolean ignoreCase, boolean perl, boolean fixed) {
+        protected List<Info> getInfo(CommonCodeNode common, String pattern, String text, boolean ignoreCase, boolean perl, boolean fixed) {
             List<Info> list = new ArrayList<>();
             if (fixed) {
                 int index = 0;
@@ -844,7 +871,7 @@ public class GrepFunctions {
                     index += pattern.length();
                 }
             } else if (perl) {
-                PCRERFFI.Result pcre = compilePerlPattern(pattern, ignoreCase);
+                PCRERFFI.Result pcre = common.compilePerlPattern(pattern, ignoreCase);
                 int maxCaptureCount = getCaptureCountNode.execute(pcre.result, 0);
                 int[] ovector = new int[(maxCaptureCount + 1) * 3];
                 int offset = 0;
@@ -897,6 +924,7 @@ public class GrepFunctions {
         }
     }
 
+    @ImportStatic(GrepFunctions.class)
     @RBuiltin(name = "gregexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Gregexpr extends Regexp {
 
@@ -935,8 +963,9 @@ public class GrepFunctions {
         @Specialization
         @TruffleBoundary
         @Override
-        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, boolean ignoreCaseL, boolean perlL, boolean fixedL, boolean useBytesL) {
-            checkExtraArgs(false, false, false, useBytesL, false);
+        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, boolean ignoreCaseL, boolean perlL, boolean fixedL, boolean useBytesL,
+                        @Cached("createCommon()") CommonCodeNode common) {
+            common.checkExtraArgs(false, false, false, useBytesL, false);
             boolean ignoreCase = ignoreCaseL;
             boolean fixed = fixedL;
             boolean perl = perlL;
@@ -966,7 +995,7 @@ public class GrepFunctions {
                         setUseBytesAttrNode.execute(res, RRuntime.LOGICAL_TRUE);
                     }
                 } else {
-                    List<Info> l = getInfo(pattern, vector.getDataAt(i), ignoreCase, perl, fixed);
+                    List<Info> l = getInfo(common, pattern, vector.getDataAt(i), ignoreCase, perl, fixed);
                     res = toIndexOrSizeVector(l, true);
                     setMatchLengthAttrNode.execute(res, toIndexOrSizeVector(l, false));
                     if (useBytes) {
@@ -1043,8 +1072,9 @@ public class GrepFunctions {
         }
     }
 
+    @ImportStatic(GrepFunctions.class)
     @RBuiltin(name = "agrep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "value", "costs", "bounds", "useBytes", "fixed"}, behavior = PURE)
-    public abstract static class AGrep extends CommonCodeAdapter {
+    public abstract static class AGrep extends RBuiltinNode.Arg8 {
 
         static {
             Casts casts = new Casts(AGrep.class);
@@ -1061,13 +1091,12 @@ public class GrepFunctions {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RAbstractIntVector costs, RAbstractDoubleVector bounds,
-                        boolean useBytes,
-                        boolean fixed) {
+        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RAbstractIntVector costs, RAbstractDoubleVector bounds, boolean useBytes, boolean fixed,
+                        @Cached("createCommon()") CommonCodeNode common) {
             // TODO implement completely; this is a very basic implementation for fixed=TRUE only.
-            checkExtraArgs(ignoreCase, false, false, useBytes, false);
-            valueCheck(value);
-            checkNotImplemented(!fixed, "fixed", false);
+            common.checkExtraArgs(ignoreCase, false, false, useBytes, false);
+            common.valueCheck(value);
+            common.checkNotImplemented(!fixed, "fixed", false);
             int[] tmp = new int[vector.getLength()];
             int numMatches = 0;
             long maxDistance = Math.round(pattern.length() * bounds.getDataAt(0));
@@ -1078,7 +1107,7 @@ public class GrepFunctions {
                     numMatches++;
                 }
             }
-            tmp = trimIntResult(tmp, numMatches, tmp.length);
+            tmp = common.trimIntResult(tmp, numMatches, tmp.length);
             if (tmp == null) {
                 return RDataFactory.createEmptyIntVector();
             } else {
@@ -1159,8 +1188,9 @@ public class GrepFunctions {
         }
     }
 
+    @ImportStatic(GrepFunctions.class)
     @RBuiltin(name = "agrepl", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "value", "costs", "bounds", "useBytes", "fixed"}, behavior = PURE)
-    public abstract static class AGrepL extends CommonCodeAdapter {
+    public abstract static class AGrepL extends RBuiltinNode.Arg8 {
 
         static {
             Casts casts = new Casts(AGrepL.class);
@@ -1177,11 +1207,10 @@ public class GrepFunctions {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RAbstractIntVector costs, RAbstractDoubleVector bounds,
-                        boolean useBytes,
-                        boolean fixed) {
+        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RAbstractIntVector costs, RAbstractDoubleVector bounds, boolean useBytes, boolean fixed,
+                        @Cached("createCommon()") CommonCodeNode common) {
             // TODO implement properly, this only supports strict equality!
-            checkExtraArgs(ignoreCase, false, false, useBytes, false);
+            common.checkExtraArgs(ignoreCase, false, false, useBytes, false);
             byte[] data = new byte[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
                 data[i] = RRuntime.asLogical(pattern.equals(vector.getDataAt(i)));
@@ -1190,8 +1219,9 @@ public class GrepFunctions {
         }
     }
 
+    @ImportStatic(GrepFunctions.class)
     @RBuiltin(name = "strsplit", kind = INTERNAL, parameterNames = {"x", "split", "fixed", "perl", "useBytes"}, behavior = PURE)
-    public abstract static class Strsplit extends CommonCodeAdapter {
+    public abstract static class Strsplit extends RBuiltinNode.Arg5 {
         @Child PCRERFFI.ExecNode execNode = RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
 
         static {
@@ -1207,14 +1237,14 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RList split(RAbstractStringVector x, RAbstractStringVector splitArg, boolean fixedLogical, boolean perlLogical, @SuppressWarnings("unused") boolean useBytes) {
-            boolean fixed = fixedLogical;
-            boolean perl = checkPerlFixed(perlLogical, fixed);
+        protected RList split(RAbstractStringVector x, RAbstractStringVector splitArg, boolean fixed, boolean perlLogical, @SuppressWarnings("unused") boolean useBytes,
+                        @Cached("createCommon()") CommonCodeNode common) {
+            boolean perl = common.checkPerlFixed(perlLogical, fixed);
             RStringVector[] result = new RStringVector[x.getLength()];
             // treat split = NULL as split = ""
             RAbstractStringVector split = splitArg.getLength() == 0 ? RDataFactory.createStringVectorFromScalar("") : splitArg;
             String[] splits = new String[split.getLength()];
-            long pcreTables = perl ? maketablesNode.execute() : 0;
+            long pcreTables = perl ? common.maketablesNode.execute() : 0;
             PCRERFFI.Result[] pcreSplits = perl ? new PCRERFFI.Result[splits.length] : null;
 
             na.enable(x);
@@ -1223,7 +1253,7 @@ public class GrepFunctions {
                 splits[i] = fixed || perl ? split.getDataAt(i) : RegExp.checkPreDefinedClasses(split.getDataAt(i));
                 if (perl) {
                     if (!currentSplit.isEmpty()) {
-                        pcreSplits[i] = compileNode.execute(currentSplit, 0, pcreTables);
+                        pcreSplits[i] = common.compileNode.execute(currentSplit, 0, pcreTables);
                         if (pcreSplits[i].result == 0) {
                             // TODO output warning if pcre.errorMessage not NULL
                             throw error(RError.Message.INVALID_REGEXP, currentSplit);

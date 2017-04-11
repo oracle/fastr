@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.HasSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
@@ -46,16 +45,10 @@ public abstract class RRootNode extends RootNode implements HasSignature {
 
     private final ConditionProfile irregularFrameProfile = ConditionProfile.createBinaryProfile();
 
-    /**
-     * The formal arguments this function is supposed to take.
-     */
-    private final FormalArguments formalArguments;
-
     private FastPathFactory fastPath;
 
-    protected RRootNode(FormalArguments formalArguments, FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
+    protected RRootNode(FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
         super(RContext.getRForeignAccessFactory().getTruffleLanguage(), RSyntaxNode.SOURCE_UNAVAILABLE, frameDescriptor);
-        this.formalArguments = formalArguments;
         this.fastPath = fastPath;
     }
 
@@ -66,25 +59,6 @@ public abstract class RRootNode extends RootNode implements HasSignature {
         RArguments.setIsIrregular(vf, irregularFrameProfile.profile(RArguments.getIsIrregular(vf)));
     }
 
-    /**
-     * @return The number of parameters this functions expects
-     */
-    public final int getParameterCount() {
-        return formalArguments.getSignature().getLength();
-    }
-
-    /**
-     * @return {@link #formalArguments}
-     */
-    public final FormalArguments getFormalArguments() {
-        return formalArguments;
-    }
-
-    @Override
-    public final ArgumentsSignature getSignature() {
-        return formalArguments.getSignature();
-    }
-
     public final FastPathFactory getFastPath() {
         return fastPath;
     }
@@ -92,6 +66,8 @@ public abstract class RRootNode extends RootNode implements HasSignature {
     public final void setFastPath(FastPathFactory fastPath) {
         this.fastPath = fastPath;
     }
+
+    public abstract FormalArguments getFormalArguments();
 
     public abstract boolean needsSplitting();
 

@@ -55,7 +55,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *
  */
 @RBuiltin(name = "args", kind = INTERNAL, parameterNames = {"name"}, behavior = COMPLEX)
-public abstract class Args extends RBuiltinNode {
+public abstract class Args extends RBuiltinNode.Arg1 {
 
     @Child private GetFunctions.Get getNode;
     @Child private FrameFunctions.ParentFrame parentFrameNode;

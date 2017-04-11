@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 @RBuiltin(name = "pretty", kind = INTERNAL, parameterNames = {"l", "u", "n", "min.n", "shrink.sml", "hi", "eps.correct"}, behavior = PURE)
-public abstract class Pretty extends RBuiltinNode {
+public abstract class Pretty extends RBuiltinNode.Arg7 {
 
     private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"l", "u", "n"}, RDataFactory.COMPLETE_VECTOR);
 

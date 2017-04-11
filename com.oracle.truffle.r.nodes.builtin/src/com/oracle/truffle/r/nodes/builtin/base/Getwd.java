@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 @RBuiltin(name = "getwd", kind = INTERNAL, parameterNames = {}, behavior = IO)
-public abstract class Getwd extends RBuiltinNode {
+public abstract class Getwd extends RBuiltinNode.Arg0 {
 
     @Child private BaseRFFI.GetwdNode getwdNode = BaseRFFI.GetwdNode.create();
 

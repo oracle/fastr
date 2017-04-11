@@ -35,6 +35,7 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -46,52 +47,51 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public class SerializeFunctions {
 
-    public abstract static class Adapter extends RBuiltinNode {
-        @TruffleBoundary
-        protected Object doUnserializeFromConnBase(int connIndex, @SuppressWarnings("unused") REnvironment refhook) {
-            try (RConnection openConn = RConnection.fromIndex(connIndex).forceOpen("rb")) {
-                if (!openConn.canRead()) {
-                    throw error(RError.Message.CONNECTION_NOT_OPEN_READ);
-                }
-                return RSerialize.unserialize(openConn);
-            } catch (IOException ex) {
-                throw error(RError.Message.GENERIC, ex.getMessage());
+    @TruffleBoundary
+    protected static Object doUnserializeFromConnBase(RBaseNode node, int connIndex, @SuppressWarnings("unused") REnvironment refhook) {
+        try (RConnection openConn = RConnection.fromIndex(connIndex).forceOpen("rb")) {
+            if (!openConn.canRead()) {
+                throw node.error(RError.Message.CONNECTION_NOT_OPEN_READ);
             }
-        }
-
-        @TruffleBoundary
-        protected Object doUnserializeFromRaw(RAbstractRawVector data, @SuppressWarnings("unused") REnvironment refhook) {
-            return RSerialize.unserialize(data);
-        }
-
-        @TruffleBoundary
-        protected Object doSerializeToConnBase(Object object, int connIndex, int type, @SuppressWarnings("unused") byte xdrLogical, @SuppressWarnings("unused") RNull version,
-                        @SuppressWarnings("unused") RNull refhook) {
-            // xdr is only relevant if ascii is false
-            try (RConnection openConn = RConnection.fromIndex(connIndex).forceOpen(type != RSerialize.XDR ? "wt" : "wb")) {
-                if (!openConn.canWrite()) {
-                    throw error(RError.Message.CONNECTION_NOT_OPEN_WRITE);
-                }
-                if (type == RSerialize.XDR && openConn.isTextMode()) {
-                    throw error(RError.Message.BINARY_CONNECTION_REQUIRED);
-                }
-                RSerialize.serialize(openConn, object, type, RSerialize.DEFAULT_VERSION, null);
-                return RNull.instance;
-            } catch (IOException ex) {
-                throw error(RError.Message.GENERIC, ex.getMessage());
-            }
-        }
-
-        protected static void connection(Casts casts) {
-            casts.arg("con").mustBe(integerValue()).asIntegerVector().findFirst();
+            return RSerialize.unserialize(openConn);
+        } catch (IOException ex) {
+            throw node.error(RError.Message.GENERIC, ex.getMessage());
         }
     }
 
+    @TruffleBoundary
+    protected static Object doUnserializeFromRaw(RAbstractRawVector data, @SuppressWarnings("unused") REnvironment refhook) {
+        return RSerialize.unserialize(data);
+    }
+
+    @TruffleBoundary
+    protected static Object doSerializeToConnBase(RBaseNode node, Object object, int connIndex, int type, @SuppressWarnings("unused") byte xdrLogical, @SuppressWarnings("unused") RNull version,
+                    @SuppressWarnings("unused") RNull refhook) {
+        // xdr is only relevant if ascii is false
+        try (RConnection openConn = RConnection.fromIndex(connIndex).forceOpen(type != RSerialize.XDR ? "wt" : "wb")) {
+            if (!openConn.canWrite()) {
+                throw node.error(RError.Message.CONNECTION_NOT_OPEN_WRITE);
+            }
+            if (type == RSerialize.XDR && openConn.isTextMode()) {
+                throw node.error(RError.Message.BINARY_CONNECTION_REQUIRED);
+            }
+            RSerialize.serialize(openConn, object, type, RSerialize.DEFAULT_VERSION, null);
+            return RNull.instance;
+        } catch (IOException ex) {
+            throw node.error(RError.Message.GENERIC, ex.getMessage());
+        }
+    }
+
+    protected static void connection(Casts casts) {
+        casts.arg("con").mustBe(integerValue()).asIntegerVector().findFirst();
+    }
+
     @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"con", "refhook"}, behavior = IO)
-    public abstract static class UnserializeFromConn extends Adapter {
+    public abstract static class UnserializeFromConn extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(UnserializeFromConn.class);
@@ -100,18 +100,18 @@ public class SerializeFunctions {
 
         @Specialization
         protected Object doUnserializeFromConn(int conn, @SuppressWarnings("unused") RNull refhook) {
-            return doUnserializeFromConnBase(conn, null);
+            return doUnserializeFromConnBase(this, conn, null);
         }
 
         @Specialization
         protected Object doUnserializeFromConn(int conn, @SuppressWarnings("unused") REnvironment refhook) {
             // TODO figure out what this really means?
-            return doUnserializeFromConnBase(conn, null);
+            return doUnserializeFromConnBase(this, conn, null);
         }
     }
 
     @RBuiltin(name = "serializeToConn", visibility = OFF, kind = INTERNAL, parameterNames = {"object", "con", "ascii", "version", "refhook"}, behavior = IO)
-    public abstract static class SerializeToConn extends Adapter {
+    public abstract static class SerializeToConn extends RBuiltinNode.Arg5 {
 
         static {
             Casts casts = new Casts(SerializeToConn.class);
@@ -132,7 +132,7 @@ public class SerializeFunctions {
             } else {
                 type = RSerialize.XDR;
             }
-            return doSerializeToConnBase(object, conn, type, RRuntime.LOGICAL_NA, version, refhook);
+            return doSerializeToConnBase(this, object, conn, type, RRuntime.LOGICAL_NA, version, refhook);
         }
 
         @SuppressWarnings("unused")
@@ -144,7 +144,7 @@ public class SerializeFunctions {
     }
 
     @RBuiltin(name = "unserialize", kind = INTERNAL, parameterNames = {"con", "refhook"}, behavior = IO)
-    public abstract static class Unserialize extends Adapter {
+    public abstract static class Unserialize extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(Unserialize.class);
@@ -154,7 +154,7 @@ public class SerializeFunctions {
 
         @Specialization
         protected Object unSerialize(int conn, @SuppressWarnings("unused") RNull refhook) {
-            return doUnserializeFromConnBase(conn, null);
+            return doUnserializeFromConnBase(this, conn, null);
         }
 
         @Specialization
@@ -164,7 +164,7 @@ public class SerializeFunctions {
     }
 
     @RBuiltin(name = "serialize", kind = INTERNAL, parameterNames = {"object", "con", "type", "version", "refhook"}, behavior = IO)
-    public abstract static class Serialize extends Adapter {
+    public abstract static class Serialize extends RBuiltinNode.Arg5 {
 
         static {
             Casts casts = new Casts(Serialize.class);
@@ -174,7 +174,7 @@ public class SerializeFunctions {
 
         @Specialization
         protected Object serialize(Object object, int conn, int type, RNull version, RNull refhook) {
-            return doSerializeToConnBase(object, conn, type, RRuntime.LOGICAL_NA, version, refhook);
+            return doSerializeToConnBase(this, object, conn, type, RRuntime.LOGICAL_NA, version, refhook);
         }
 
         @SuppressWarnings("unused")
@@ -186,7 +186,7 @@ public class SerializeFunctions {
     }
 
     @RBuiltin(name = "serializeb", kind = INTERNAL, parameterNames = {"object", "con", "xdr", "version", "refhook"}, behavior = IO)
-    public abstract static class SerializeB extends Adapter {
+    public abstract static class SerializeB extends RBuiltinNode.Arg5 {
 
         static {
             Casts casts = new Casts(SerializeB.class);
@@ -199,7 +199,7 @@ public class SerializeFunctions {
             if (!RRuntime.fromLogical(xdrLogical)) {
                 throw RError.nyi(this, "xdr==FALSE");
             }
-            return doSerializeToConnBase(object, conn, RRuntime.LOGICAL_FALSE, xdrLogical, version, refhook);
+            return doSerializeToConnBase(this, object, conn, RRuntime.LOGICAL_FALSE, xdrLogical, version, refhook);
         }
     }
 }

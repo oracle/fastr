@@ -87,7 +87,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * </ol>
  */
 @RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-public abstract class Repeat extends RBuiltinNode {
+public abstract class Repeat extends RBuiltinNode.Arg2 {
 
     private static final PipelineBuilder PB_TIMES;
     private static final PipelineBuilder PB_LENGTH_OUT;

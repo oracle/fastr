@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * the recording like GnuR does.
  */
 @RBuiltin(name = "recordGraphics", kind = INTERNAL, parameterNames = {"expr", "list", "env"}, behavior = COMPLEX)
-public abstract class RecordGraphics extends RBuiltinNode {
+public abstract class RecordGraphics extends RBuiltinNode.Arg3 {
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
     @Child private RList2EnvNode list2EnvNode = new RList2EnvNode();
 

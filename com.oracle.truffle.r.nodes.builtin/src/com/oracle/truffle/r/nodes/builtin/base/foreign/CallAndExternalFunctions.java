@@ -200,10 +200,6 @@ public class CallAndExternalFunctions {
         return list;
     }
 
-    abstract static class CallRFFIAdapter extends LookupAdapter {
-        @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createInvokeCallNode();
-    }
-
     /**
      * Handles the generic case, but also many special case functions that are called from the
      * default packages.
@@ -221,7 +217,9 @@ public class CallAndExternalFunctions {
      * could be invoked by a string but experimentally that situation has never been encountered.
      */
     @RBuiltin(name = ".Call", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotCall extends CallRFFIAdapter {
+    public abstract static class DotCall extends LookupAdapter {
+
+        @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createInvokeCallNode();
 
         static {
             Casts.noCasts(DotCall.class);
@@ -234,7 +232,7 @@ public class CallAndExternalFunctions {
 
         @Override
         @TruffleBoundary
-        protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
+        public RExternalBuiltinNode lookupBuiltin(RList symbol) {
             String name = lookupName(symbol);
             if (FastROptions.UseInternalGridGraphics.getBooleanValue() && name != null) {
                 RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotCall(name);
@@ -656,7 +654,7 @@ public class CallAndExternalFunctions {
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
                         @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
-                        @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
+                        @Cached("extractSymbolInfo.execute(frame, symbol)") NativeCallInfo nativeCallInfo) {
             return callRFFINode.execute(nativeCallInfo, args.getArguments());
         }
 
@@ -671,7 +669,7 @@ public class CallAndExternalFunctions {
             if (builtin != null) {
                 throw RInternalError.shouldNotReachHere("Cache for .Calls with FastR reimplementation (lookupBuiltin(...) != null) exceeded the limit");
             }
-            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(frame, symbol);
             return callRFFINode.execute(nativeCallInfo, args.getArguments());
         }
 
@@ -703,7 +701,7 @@ public class CallAndExternalFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object dotCallFallback(Object symbol, Object args, Object packageName) {
-            throw fallback(symbol);
+            throw fallback(this, symbol);
         }
     }
 
@@ -712,7 +710,9 @@ public class CallAndExternalFunctions {
      * {@link DotCall}.
      */
     @RBuiltin(name = ".External", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotExternal extends CallRFFIAdapter {
+    public abstract static class DotExternal extends LookupAdapter {
+
+        @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createInvokeCallNode();
 
         static {
             Casts.noCasts(DotExternal.class);
@@ -720,7 +720,7 @@ public class CallAndExternalFunctions {
 
         @Override
         @TruffleBoundary
-        protected RExternalBuiltinNode lookupBuiltin(RList f) {
+        public RExternalBuiltinNode lookupBuiltin(RList f) {
             String name = lookupName(f);
             if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
                 RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal(name);
@@ -780,7 +780,7 @@ public class CallAndExternalFunctions {
         @Specialization(limit = "1", guards = {"cached == symbol"})
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
-                        @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
+                        @Cached("extractSymbolInfo.execute(frame, symbol)") NativeCallInfo nativeCallInfo) {
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
             return callRFFINode.execute(nativeCallInfo, new Object[]{list});
         }
@@ -806,12 +806,12 @@ public class CallAndExternalFunctions {
 
         @Fallback
         protected Object fallback(Object f, @SuppressWarnings("unused") Object args, @SuppressWarnings("unused") Object packageName) {
-            throw fallback(f);
+            throw fallback(this, f);
         }
     }
 
     @RBuiltin(name = ".External2", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotExternal2 extends CallRFFIAdapter {
+    public abstract static class DotExternal2 extends LookupAdapter {
         private static final Object CALL = "call";
         private static final Object RHO = "rho";
         /**
@@ -823,6 +823,8 @@ public class CallAndExternalFunctions {
          * .External2, becuase functions exported as .External do not take the "op" argument.
          */
         @CompilationFinal private static Object op = null;
+
+        @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createInvokeCallNode();
 
         static {
             Casts.noCasts(DotExternal2.class);
@@ -838,7 +840,7 @@ public class CallAndExternalFunctions {
 
         @Override
         @TruffleBoundary
-        protected RExternalBuiltinNode lookupBuiltin(RList symbol) {
+        public RExternalBuiltinNode lookupBuiltin(RList symbol) {
             String name = lookupName(symbol);
             if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
                 RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal2(name);
@@ -874,7 +876,7 @@ public class CallAndExternalFunctions {
         @Specialization(limit = "1", guards = {"cached == symbol"})
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
-                        @Cached("extractSymbolInfo(frame, symbol)") NativeCallInfo nativeCallInfo) {
+                        @Cached("extractSymbolInfo.execute(frame, symbol)") NativeCallInfo nativeCallInfo) {
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
             return callRFFINode.execute(nativeCallInfo, new Object[]{CALL, getOp(), list, RHO});
         }
@@ -900,12 +902,14 @@ public class CallAndExternalFunctions {
 
         @Fallback
         protected Object fallback(Object f, @SuppressWarnings("unused") Object args, @SuppressWarnings("unused") Object packageName) {
-            throw fallback(f);
+            throw fallback(this, f);
         }
     }
 
     @RBuiltin(name = ".External.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotExternalGraphics extends CallRFFIAdapter {
+    public abstract static class DotExternalGraphics extends LookupAdapter {
+
+        @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createInvokeCallNode();
 
         static {
             Casts.noCasts(DotExternalGraphics.class);
@@ -913,7 +917,7 @@ public class CallAndExternalFunctions {
 
         @Override
         @TruffleBoundary
-        protected RExternalBuiltinNode lookupBuiltin(RList f) {
+        public RExternalBuiltinNode lookupBuiltin(RList f) {
             return null;
         }
 
@@ -927,7 +931,7 @@ public class CallAndExternalFunctions {
 
         @Specialization
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(frame, symbol);
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
             return callRFFINode.execute(nativeCallInfo, new Object[]{list});
         }
@@ -952,12 +956,14 @@ public class CallAndExternalFunctions {
 
         @Fallback
         protected Object fallback(Object f, @SuppressWarnings("unused") Object args, @SuppressWarnings("unused") Object packageName) {
-            throw fallback(f);
+            throw fallback(this, f);
         }
     }
 
     @RBuiltin(name = ".Call.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotCallGraphics extends CallRFFIAdapter {
+    public abstract static class DotCallGraphics extends LookupAdapter {
+
+        @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createInvokeCallNode();
 
         static {
             Casts.noCasts(DotCallGraphics.class);
@@ -970,7 +976,7 @@ public class CallAndExternalFunctions {
 
         @Override
         @TruffleBoundary
-        protected RExternalBuiltinNode lookupBuiltin(RList f) {
+        public RExternalBuiltinNode lookupBuiltin(RList f) {
             switch (lookupName(f)) {
                 default:
                     return null;
@@ -987,7 +993,7 @@ public class CallAndExternalFunctions {
 
         @Specialization
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            NativeCallInfo nativeCallInfo = extractSymbolInfo(frame, symbol);
+            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(frame, symbol);
             return callRFFINode.execute(nativeCallInfo, args.getArguments());
         }
 
@@ -1011,7 +1017,7 @@ public class CallAndExternalFunctions {
 
         @Fallback
         protected Object dotCallFallback(Object fobj, @SuppressWarnings("unused") Object args, @SuppressWarnings("unused") Object packageName) {
-            throw fallback(fobj);
+            throw fallback(this, fobj);
         }
     }
 }
