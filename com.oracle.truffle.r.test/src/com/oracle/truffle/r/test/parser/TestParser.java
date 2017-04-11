@@ -106,6 +106,13 @@ public class TestParser extends TestBase {
     }
 
     @Test
+    public void testNewLinesInLiterals() {
+        assertEval("`asdf\nasdf` <- 1; `asdf\nasdf`");
+        assertEval("'foo\nbar\baz'");
+        assertEval("\"foo\nbar\baz\"");
+    }
+
+    @Test
     public void testEmptySymbols() {
         assertEval("names(e)");
         assertEval("e <- quote(b(f=1,foo)); names(e) <- c('','f',''); e");
