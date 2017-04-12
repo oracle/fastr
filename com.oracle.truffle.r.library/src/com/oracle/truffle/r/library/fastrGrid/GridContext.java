@@ -100,11 +100,19 @@ public final class GridContext {
     public void closeDevice(int which) throws DeviceCloseException {
         assert which >= 0 && which < devices.size();
         devices.get(which).device.close();
+        removeDevice(which);
+    }
+
+    public void removeDevice(int which) {
         RGridGraphicsAdapter.removeDevice(which);
         devices.remove(which);
         if (currentDeviceIdx >= which) {
             currentDeviceIdx--;
         }
+    }
+
+    public GridDevice getDevice(int index) {
+        return devices.get(index).device;
     }
 
     /**
