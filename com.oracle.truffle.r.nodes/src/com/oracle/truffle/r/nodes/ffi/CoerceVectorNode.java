@@ -64,7 +64,7 @@ public abstract class CoerceVectorNode extends FFIUpCallNode.Arg2 {
     Object doCached(Object value, @SuppressWarnings("unused") int mode,
                     @Cached("mode") @SuppressWarnings("unused") int cachedMode,
                     @Cached("createCastNode(cachedMode)") CastNode castNode) {
-        return castNode.execute(value);
+        return castNode.doCast(value);
     }
 
     // Lists are coerced with only preserved names unlike other types
@@ -72,7 +72,7 @@ public abstract class CoerceVectorNode extends FFIUpCallNode.Arg2 {
     Object doCached(RList value, @SuppressWarnings("unused") int mode,
                     @Cached("mode") @SuppressWarnings("unused") int cachedMode,
                     @Cached("createCastNodeForList(cachedMode)") CastNode castNode) {
-        return castNode.execute(value);
+        return castNode.doCast(value);
     }
 
     @Fallback

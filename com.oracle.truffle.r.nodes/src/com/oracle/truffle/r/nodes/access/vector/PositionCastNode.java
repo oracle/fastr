@@ -108,7 +108,7 @@ abstract class PositionCastNode extends Node {
                     @Cached("create()") BoxPrimitiveNode box) {
         if (mode.isSubscript()) {
             // double gets casted to integer for subscript
-            return (RAbstractVector) box.execute(cast.execute(position));
+            return (RAbstractVector) box.execute(cast.doCast(position));
         } else {
             // because we need to perform a special bounds check with doubles
             // we cannot yet convert the double array to int for subsets

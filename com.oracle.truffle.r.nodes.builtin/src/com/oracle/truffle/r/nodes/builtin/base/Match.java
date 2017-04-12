@@ -146,7 +146,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
     protected Object matchList(RAbstractListVector x, RAbstractVector table, int nomatchObj, @SuppressWarnings("unused") Object incomparables,
                     @Cached("create()") CastStringNode cast,
                     @Cached("createInternal()") ProfiledMatchInternalNode match) {
-        return match.execute((RAbstractVector) cast.execute(x), table, nomatchObj);
+        return match.execute((RAbstractVector) cast.doCast(x), table, nomatchObj);
     }
 
     @Specialization(guards = {"!isRAbstractListVector(x)", "!isRAbstractIntVector(x) || !isFactor(x)", "!isRAbstractIntVector(table) || !isFactor(table)"})
@@ -203,7 +203,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castString = insert(CastStringNodeGen.create(false, false, false));
             }
-            return (RAbstractStringVector) castString.execute(operand);
+            return (RAbstractStringVector) castString.doCast(operand);
         }
 
         @Specialization

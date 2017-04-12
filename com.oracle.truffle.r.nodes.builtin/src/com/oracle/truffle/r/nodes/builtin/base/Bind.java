@@ -133,7 +133,7 @@ public abstract class Bind extends RBaseNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(false));
         }
-        return (RAbstractVector) castVector.execute(value);
+        return (RAbstractVector) castVector.doCast(value);
     }
 
     protected Object castLogical(Object operand, boolean preserveAllAttr) {
@@ -141,7 +141,7 @@ public abstract class Bind extends RBaseNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogical = insert(CastLogicalNodeGen.create(true, preserveAllAttr, preserveAllAttr));
         }
-        return castLogical.execute(operand);
+        return castLogical.doCast(operand);
     }
 
     @SuppressWarnings("unused")
@@ -210,7 +210,7 @@ public abstract class Bind extends RBaseNode {
     }
 
     private RAbstractVector getVector(Object arg, CastNode castNode, boolean needsVectorCast) {
-        Object result = castNode.execute(arg);
+        Object result = castNode.doCast(arg);
         RAbstractVector vector;
         if (needsVectorCast) {
             vector = castVector(result);

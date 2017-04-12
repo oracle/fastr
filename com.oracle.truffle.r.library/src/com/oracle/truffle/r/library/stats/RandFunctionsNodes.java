@@ -76,7 +76,7 @@ public final class RandFunctionsNodes {
         public int lengthOne(RAbstractVector vector,
                         @Cached("createNonPreserving()") CastIntegerNode castNode,
                         @Cached("create()") BranchProfile seenNA) {
-            int result = ((RAbstractIntVector) castNode.execute(vector)).getDataAt(0);
+            int result = ((RAbstractIntVector) castNode.doCast(vector)).getDataAt(0);
             if (RRuntime.isNA(result) || result < 0) {
                 seenNA.enter();
                 throw RError.error(SHOW_CALLER, INVALID_UNNAMED_ARGUMENTS);

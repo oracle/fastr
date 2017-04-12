@@ -70,7 +70,7 @@ public abstract class Quantifier extends RBuiltinNode.Arg2 {
 
         @Override
         public Object execute(Object value) {
-            return profile.profile(next.execute(value));
+            return profile.profile(next.doCast(value));
         }
     }
 
@@ -146,7 +146,7 @@ public abstract class Quantifier extends RBuiltinNode.Arg2 {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 createArgCast(index);
             }
-            Object castValue = argCastNodes[index].execute(argValue);
+            Object castValue = argCastNodes[index].doCast(argValue);
             if (castValue instanceof RAbstractLogicalVector) {
                 RAbstractLogicalVector vector = (RAbstractLogicalVector) castValue;
                 naCheck.enable(vector);

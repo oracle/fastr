@@ -327,7 +327,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
     private void testPipeline(CastNode cn, Samples<?> samples) {
         NodeHandle<CastNode> argCastNodeHandle = TestUtilities.createHandle(cn, (node, args) -> {
-            return node.execute(args[0]);
+            return node.doCast(args[0]);
         });
 
         for (Object sample : samples.positiveSamples()) {

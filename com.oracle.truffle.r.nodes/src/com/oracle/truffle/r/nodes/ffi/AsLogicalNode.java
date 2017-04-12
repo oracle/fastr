@@ -54,7 +54,7 @@ public abstract class AsLogicalNode extends FFIUpCallNode.Arg1 {
     @Specialization(guards = "obj.getLength() > 0")
     protected int asLogical(RAbstractAtomicVector obj,
                     @Cached("createNonPreserving()") CastLogicalNode castLogicalNode) {
-        Object castObj = castLogicalNode.execute(obj);
+        Object castObj = castLogicalNode.doCast(obj);
         if (castObj instanceof Byte) {
             return (byte) castObj;
         } else if (castObj instanceof RAbstractLogicalVector) {

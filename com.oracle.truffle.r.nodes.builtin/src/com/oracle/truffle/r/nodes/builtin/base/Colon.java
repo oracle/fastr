@@ -64,7 +64,7 @@ abstract class ColonSpecial extends RNode {
 
     @Specialization
     protected Object colon(Object left, Object right) {
-        return internal.execute(leftCast.execute(left), rightCast.execute(right));
+        return internal.execute(leftCast.doCast(left), rightCast.doCast(right));
     }
 }
 
@@ -89,7 +89,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected RSequence colon(Object left, Object right) {
-        return internal.execute(leftCast.execute(left), rightCast.execute(right));
+        return internal.execute(leftCast.doCast(left), rightCast.doCast(right));
     }
 
     @NodeInfo(cost = NodeCost.NONE)

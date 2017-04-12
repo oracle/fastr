@@ -119,7 +119,7 @@ public abstract class ExtractVectorNode extends Node {
             } else if (position instanceof String) {
                 return ForeignAccess.send(foreignRead, object, new Object[]{position});
             } else if (position instanceof RAbstractStringVector) {
-                String string = firstString.executeString(castNode.execute(position));
+                String string = firstString.executeString(castNode.doCast(position));
                 return ForeignAccess.send(foreignRead, object, new Object[]{string});
             } else if (position instanceof RAbstractDoubleVector) {
                 return ForeignAccess.send(foreignRead, object, new Object[]{((RAbstractDoubleVector) position).getDataAt(0) - 1});

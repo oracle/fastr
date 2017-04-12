@@ -168,7 +168,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                         @Cached("fromMode(cachedMode)") RType type,
                         @Cached("createCast(type)") CastNode cast,
                         @Cached("create()") DropAttributesNode drop) {
-            return drop.execute(cast == null ? x : cast.execute(x));
+            return drop.execute(cast == null ? x : cast.doCast(x));
         }
 
         public abstract static class DropAttributesNode extends RBaseNode {

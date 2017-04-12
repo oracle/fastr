@@ -892,7 +892,7 @@ public class CastBuilderTest {
      */
     private Object cast(Object a) {
         CastNode.clearLastWarning();
-        NodeHandle<CastNode> argCastNodeHandle = TestUtilities.createHandle(getCastNode(), (node, args) -> node.execute(args[0]));
+        NodeHandle<CastNode> argCastNodeHandle = TestUtilities.createHandle(getCastNode(), (node, args) -> node.doCast(args[0]));
         return argCastNodeHandle.call(a);
     }
 

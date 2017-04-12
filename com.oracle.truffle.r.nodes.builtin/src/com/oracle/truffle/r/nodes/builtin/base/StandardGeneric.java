@@ -100,7 +100,7 @@ public abstract class StandardGeneric extends RBuiltinNode.Arg2 {
             mtable = (REnvironment) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, getOriginalCall()), null, def);
         }
         RList sigArgs = (RList) readSigARgs.execute(null, fnFrame);
-        int sigLength = (int) castIntScalar.execute(readSigLength.execute(null, fnFrame));
+        int sigLength = (int) castIntScalar.doCast(readSigLength.execute(null, fnFrame));
         if (sigLength > sigArgs.getLength()) {
             throw error(RError.Message.GENERIC, "'.SigArgs' is shorter than '.SigLength' says it should be");
         }
@@ -134,7 +134,7 @@ public abstract class StandardGeneric extends RBuiltinNode.Arg2 {
             noGenFunFound.enter();
             return null;
         }
-        String gen = (String) castStringScalar.execute(genObj);
+        String gen = (String) castStringScalar.doCast(genObj);
         if (sameNamesProfile.profile(gen == fname)) {
             return stdGenericInternal(frame, fname, fn);
         } else {

@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
@@ -80,10 +81,12 @@ public abstract class CastListNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RList doAbstractVector(RAbstractVector operand) {
-        Object[] data = new Object[operand.getLength()];
+    protected RList doAbstractVector(RAbstractVector operand,
+                    @Cached("createClassProfile()") ValueProfile vectorClassProfile) {
+        RAbstractVector profiledOperand = vectorClassProfile.profile(operand);
+        Object[] data = new Object[profiledOperand.getLength()];
         for (int i = 0; i < data.length; i++) {
-            data[i] = operand.getDataAtAsObject(i);
+            data[i] = profiledOperand.getDataAtAsObject(i);
         }
         RList ret = RDataFactory.createList(data, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);

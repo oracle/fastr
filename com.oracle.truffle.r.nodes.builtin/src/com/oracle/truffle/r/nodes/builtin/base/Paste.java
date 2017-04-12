@@ -93,11 +93,11 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         RStringVector classVec = getClassHierarchyNode().execute(result);
         if (hasNoClassProfile.profile(classVec == null || classVec.getLength() == 0)) {
             // coerce non-string result to string, i.e. do what 'as.character' would do
-            return getAsCharacterNode().execute(result);
+            return getAsCharacterNode().doCast(result);
         }
         // invoke the actual 'as.character' function (with its dispatch)
         ensureAsCharacterFuncNodes();
-        return castAsCharacterResultNode.execute(asCharacterDispatcher.call(frame, result));
+        return castAsCharacterResultNode.doCast(asCharacterDispatcher.call(frame, result));
     }
 
     @Specialization

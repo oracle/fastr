@@ -218,7 +218,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         PositionProfile[] positionProfiles = positionsCheckNode.executeCheck(vector, vectorDimensions, vectorLength, positions);
 
         if (castVectorNode != null) {
-            vector = (RAbstractVector) castVectorNode.execute(vector);
+            vector = (RAbstractVector) castVectorNode.doCast(vector);
         }
 
         int replacementLength = positionsCheckNode.getSelectedPositionsCount(positionProfiles);

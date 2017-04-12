@@ -73,7 +73,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(false));
         }
-        return ((RAbstractVector) castVector.execute(value)).materialize();
+        return ((RAbstractVector) castVector.doCast(value)).materialize();
     }
 
     @SuppressWarnings("unused")
