@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 @RBuiltin(name = "on.exit", visibility = OFF, kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = 0, behavior = COMPLEX)
@@ -71,7 +72,7 @@ public abstract class OnExit extends RBuiltinNode.Arg2 {
 
         if (onExitSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            onExitSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.OnExit, FrameSlotKind.Object);
+            onExitSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.OnExit, FrameSlotKind.Object);
         }
 
         // the empty (RNull.instance) expression is used to clear on.exit

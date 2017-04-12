@@ -32,6 +32,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 /**
@@ -52,7 +53,7 @@ public final class GetVisibilityNode extends Node {
     public boolean execute(Frame frame) {
         if (frameSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.Visibility, FrameSlotKind.Boolean);
+            frameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility, FrameSlotKind.Boolean);
         }
         try {
             return frame.getBoolean(frameSlot);
