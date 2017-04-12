@@ -24,7 +24,9 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -165,7 +167,11 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
      */
     private RCallSpecialNode callSpecialParent;
 
-    private RCallSpecialNode(SourceSection sourceSection, RNode functionNode, RFunction expectedFunction, RSyntaxNode[] arguments, ArgumentsSignature signature, RNode special) {
+    private final boolean inReplace;
+    private final int[] ignoredArguments;
+
+    private RCallSpecialNode(SourceSection sourceSection, RNode functionNode, RFunction expectedFunction, RSyntaxNode[] arguments, ArgumentsSignature signature, RNode special, boolean inReplace,
+                    int[] ignoredArguments) {
         this.sourceSection = sourceSection;
         this.expectedFunction = expectedFunction;
         this.special = special;
@@ -173,6 +179,8 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         this.arguments = arguments;
         this.signature = signature;
         this.visible = expectedFunction.getRBuiltin().getVisibility();
+        this.inReplace = inReplace;
+        this.ignoredArguments = ignoredArguments;
     }
 
     /**
@@ -264,7 +272,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         RFunction expectedFunction = RContext.lookupBuiltin(name);
         RInternalError.guarantee(expectedFunction != null);
 
-        RCallSpecialNode callSpecial = new RCallSpecialNode(sourceSection, functionNode, expectedFunction, arguments, signature, special);
+        RCallSpecialNode callSpecial = new RCallSpecialNode(sourceSection, functionNode, expectedFunction, arguments, signature, special, inReplace, ignoredArguments);
         for (int i = 0; i < arguments.length; i++) {
             if (!inReplace || !contains(ignoredArguments, i)) {
                 if (arguments[i] instanceof RCallSpecialNode) {
@@ -314,6 +322,23 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
             }
             return replace(callNode).execute(frame, function);
         }
+    }
+
+    @TruffleBoundary
+    private static void log(String format, Object... args) {
+        System.out.println(String.format(format, args));
+    }
+
+    @Override
+    public Node deepCopy() {
+        assert !inReplace && callSpecialParent == null && ignoredArguments.length == 0;
+        RCallSpecialNode node = (RCallSpecialNode) RContext.getASTBuilder().process(this).asRNode();
+        node.functionNode = node.insert(node.functionNode);
+        node.special = node.insert(node.special);
+        if (node.visibility != null) {
+            node.visibility = insert(node.visibility);
+        }
+        return node;
     }
 
     private RCallNode getRCallNode(RSyntaxNode[] newArguments) {

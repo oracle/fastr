@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
@@ -41,6 +42,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -48,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.NSBaseMaterializedFrame;
 import com.oracle.truffle.r.runtime.env.frame.REnvEmptyFrameAccess;
 import com.oracle.truffle.r.runtime.env.frame.REnvFrameAccess;
@@ -152,8 +155,15 @@ public abstract class REnvironment extends RAttributeStorage {
             beforeDestroyContext(context, this);
         }
 
-        public static ContextStateImpl newContextState() {
-            return new ContextStateImpl(RRuntime.createNonFunctionFrame("global"));
+        public static ContextStateImpl newContextState(RContext context) {
+            MaterializedFrame newGlobalFrame;
+            if (context.getKind() == ContextKind.SHARE_ALL) {
+                ContextStateImpl parentState = context.getParent().stateREnvironment;
+                newGlobalFrame = parentState.getGlobalFrame();
+            } else {
+                newGlobalFrame = RRuntime.createNonFunctionFrame("global");
+            }
+            return new ContextStateImpl(newGlobalFrame);
         }
 
         public void initialize(Base newBaseEnv, REnvironment newNamespaceRegistry, SearchPath newSearchPath) {
@@ -329,6 +339,7 @@ public abstract class REnvironment extends RAttributeStorage {
                 /* We make shallow copies of all the default package environments in the parent */
                 ContextStateImpl parentState = context.getParent().stateREnvironment;
                 SearchPath parentSearchPath = parentState.getSearchPath();
+                assert parentSearchPath.size() > 1;
                 // clone all the environments below global from the parent
                 REnvironment e = parentSearchPath.get(1).cloneEnv(globalFrame);
                 // create the new Global with clone top as parent
@@ -349,6 +360,15 @@ public abstract class REnvironment extends RAttributeStorage {
                 newBaseEnv.safePut(".GlobalEnv", newGlobalEnv);
                 SearchPath newSearchPath = initSearchList(newGlobalEnv);
                 contextState.initialize(newBaseEnv, newNamespaceRegistry, newSearchPath);
+                break;
+            }
+
+            case SHARE_ALL: {
+                ContextStateImpl parentState = context.getParent().stateREnvironment;
+                // TODO: may be worthwhile to assert for all environments on the search path there
+                // is 1:1 descriptor:frame mapping (as they are all meant to be shared in we rely on
+                // the single descriptor information to identify accesses to shared frames)
+                contextState.initialize(parentState.getBaseEnv(), parentState.getNamespaceRegistry(), parentState.getSearchPath());
                 break;
             }
 
@@ -747,7 +767,7 @@ public abstract class REnvironment extends RAttributeStorage {
      */
     public void setParent(REnvironment env) {
         if (getParent() != env) {
-            RArguments.setEnclosingFrame(getFrame(), env.getFrame());
+            RArguments.setEnclosingFrame(getFrame(), env.getFrame(), true);
         }
     }
 
@@ -888,6 +908,32 @@ public abstract class REnvironment extends RAttributeStorage {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return getPrintName();
+    }
+
+    public static void convertSearchpathToMultiSlot() {
+        CompilerAsserts.neverPartOfCompilation();
+        RContext.markNonSingle();
+        ContextStateImpl parentState = RContext.getInstance().stateREnvironment;
+        SearchPath searchPath = parentState.getSearchPath();
+        assert searchPath.size() > 0 && searchPath.get(0).getSearchName() == Global.SEARCHNAME;
+        // for global space don't replicate entries as all contexts should see their own values
+        FrameSlotChangeMonitor.handleAllMultiSlots(searchPath.get(0).getFrame(), false);
+        for (int i = 1; i < searchPath.size(); i++) {
+            FrameSlotChangeMonitor.handleAllMultiSlots(searchPath.get(i).getFrame(), true);
+        }
+        REnvironment namespaces = parentState.namespaceRegistry;
+        Frame namespacesFrame = namespaces.getFrame();
+        // make a copy avoid potential updates to the array iterated over
+        FrameSlot[] slots = new FrameSlot[namespacesFrame.getFrameDescriptor().getSlots().size()];
+        slots = namespacesFrame.getFrameDescriptor().getSlots().toArray(slots);
+        for (int i = 0; i < slots.length; i++) {
+            REnvironment namespaceEnv = (REnvironment) namespacesFrame.getValue(slots[i]);
+            if (namespaceEnv != Base.baseNamespaceEnv()) {
+                // base namespace frame redirects all accesses to base frame and this would
+                // result in processing the slots twice
+                FrameSlotChangeMonitor.handleAllMultiSlots(namespaceEnv.getFrame(), true);
+            }
+        }
     }
 
     private static final class BaseNamespace extends REnvironment {

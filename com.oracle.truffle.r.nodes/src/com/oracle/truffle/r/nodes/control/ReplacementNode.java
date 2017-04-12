@@ -60,6 +60,11 @@ abstract class ReplacementNode extends OperatorNode {
         this.lhs = lhs;
     }
 
+    @Override
+    public final Node deepCopy() {
+        return RContext.getASTBuilder().process(this).asRNode();
+    }
+
     public static ReplacementNode create(SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls,
                     String targetVarName, boolean isSuper, int tempNamesStartIndex, boolean isVoid) {
         CompilerAsserts.neverPartOfCompilation();
@@ -145,7 +150,7 @@ abstract class ReplacementNode extends OperatorNode {
             RSyntaxNode[] newArgs = new RSyntaxNode[2];
             newArgs[0] = (RSyntaxNode) oldArgs[0];
             newArgs[1] = builder.lookup(oldArgs[1].getLazySourceSection(), ((RSyntaxLookup) oldArgs[1]).getIdentifier() + "<-", true);
-            newSyntaxLHS = RCallSpecialNode.createCall(callLHS.getLazySourceSection(), ((RSyntaxNode) callLHS.getSyntaxLHS()).asRNode(), callLHS.getSyntaxSignature(), newArgs);
+            newSyntaxLHS = RCallSpecialNode.createCall(callLHS.getLazySourceSection(), builder.process(callLHS.getSyntaxLHS(), codeBuilderContext).asRNode(), callLHS.getSyntaxSignature(), newArgs);
         }
         return RCallSpecialNode.createCallInReplace(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes, 0, argNodes.length - 1).asRNode();
     }
@@ -346,7 +351,7 @@ abstract class ReplacementNode extends OperatorNode {
 
         GenericReplacementNode(SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls, String targetVarName, boolean isSuper,
                         int tempNamesStartIndex) {
-            super(source, operator, lhs, rhs, tempNamesStartIndex);
+            super(source, operator, lhs, RContext.getASTBuilder().process(rhs.asRSyntaxNode()).asRNode(), tempNamesStartIndex);
             /*
              * When there are more than two function calls in LHS, then we save some function calls
              * by saving the intermediate results into temporary variables and reusing them.

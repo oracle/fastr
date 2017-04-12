@@ -515,7 +515,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         }
         if (restartStackSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            restartStackSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.RestartStack);
+            restartStackSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.RestartStack, FrameSlotKind.Object);
         }
         return restartStackSlot;
     }
@@ -527,7 +527,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         }
         if (handlerStackSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            handlerStackSlot = frame.getFrameDescriptor().findOrAddFrameSlot(RFrameSlot.HandlerStack);
+            handlerStackSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.HandlerStack, FrameSlotKind.Object);
         }
         return handlerStackSlot;
     }

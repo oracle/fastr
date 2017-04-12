@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -134,7 +135,12 @@ public final class RContext extends ExecutionContext {
          * shallow copy of the environments associated with the default packages of the parent
          * context at the time the context is created.
          */
-        SHARE_PARENT_RO;
+        SHARE_PARENT_RO,
+
+        /**
+         * Shares all environments on the search path.
+         */
+        SHARE_ALL;
 
         public static final ContextKind[] VALUES = values();
     }
@@ -217,6 +223,7 @@ public final class RContext extends ExecutionContext {
         private final Source source;
         private final ContextInfo info;
         private RList evalResult;
+        private Semaphore init = new Semaphore(0);
 
         public static final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
 
@@ -235,11 +242,25 @@ public final class RContext extends ExecutionContext {
             } catch (Throwable t) {
                 throw new RInternalError(t, "error while initializing eval thread");
             }
+            init.release();
             try {
                 evalResult = run(vm, info, source);
             } finally {
                 vm.dispose();
                 threads.remove(info.getId());
+            }
+        }
+
+        /*
+         * Parent context uses this method to wait for initialization of the child to complete to
+         * prevent potential updates to runtime's meta data from interfering with program's
+         * execution.
+         */
+        public void waitForInit() {
+            try {
+                init.acquire();
+            } catch (InterruptedException x) {
+                throw new RInternalError(x, "error waiting to initialize eval thread");
             }
         }
 
@@ -387,6 +408,10 @@ public final class RContext extends ExecutionContext {
     private static final Assumption singleContextAssumption = Truffle.getRuntime().createAssumption("single RContext");
     @CompilationFinal private static RContext singleContext;
 
+    // need an additional flag as we don't want multi-slot processing to start until context
+    // initialization is fully complete - singleContext flag is not good enough for that
+    private static final Assumption isSingleContextAssumption = Truffle.getRuntime().createAssumption("is single RContext");
+
     private final Env env;
     private final HashMap<String, TruffleObject> exportedSymbols = new HashMap<>();
     private final boolean initial;
@@ -465,7 +490,7 @@ public final class RContext extends ExecutionContext {
         this.stateROptions = ROptions.ContextStateImpl.newContextState(stateREnvVars);
         this.stateRProfile = RProfile.newContextState(stateREnvVars);
         this.stateStdConnections = StdConnections.ContextStateImpl.newContextState();
-        this.stateREnvironment = REnvironment.ContextStateImpl.newContextState();
+        this.stateREnvironment = REnvironment.ContextStateImpl.newContextState(this);
         this.stateRErrorHandling = RErrorHandling.ContextStateImpl.newContextState();
         this.stateRConnection = ConnectionSupport.ContextStateImpl.newContextState();
         this.stateRNG = RRNG.ContextStateImpl.newContextState();
@@ -636,6 +661,14 @@ public final class RContext extends ExecutionContext {
         return info.getKind();
     }
 
+    public int getId() {
+        return info.getId();
+    }
+
+    public int getMultiSlotInd() {
+        return info.getMultiSlotInd();
+    }
+
     @TruffleBoundary
     public static RContext getThreadLocalInstance() {
         return threadLocalContext.get();
@@ -652,6 +685,14 @@ public final class RContext extends ExecutionContext {
         assert result != null;
         assert result.state.contains(State.ATTACHED);
         return result;
+    }
+
+    public static boolean isSingle() {
+        return isSingleContextAssumption.isValid();
+    }
+
+    public static void markNonSingle() {
+        isSingleContextAssumption.invalidate();
     }
 
     public static RContext getInstance() {

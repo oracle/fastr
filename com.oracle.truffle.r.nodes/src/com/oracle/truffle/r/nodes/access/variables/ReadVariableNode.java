@@ -74,6 +74,7 @@ import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameAndSlotLookupResult;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.LookupResult;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
@@ -570,8 +571,16 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
          */
         FrameSlot localSlot = variableFrame.getFrameDescriptor().findFrameSlot(identifier);
         // non-local reads can only be handled in a simple way if they are successful
-        if (localSlot != null && checkTypeSlowPath(frame, getValue(seenValueKinds, variableFrame, localSlot))) {
-            return new Match(localSlot);
+        if (localSlot != null) {
+            Object val = getValue(seenValueKinds, variableFrame, localSlot);
+            if (checkTypeSlowPath(frame, val)) {
+                if (val instanceof MultiSlotData) {
+                    RError.performanceWarning("polymorphic (slow path) lookup of symbol \"" + identifier + "\" from a multi slot");
+                    return new Polymorphic(variableFrame);
+                } else {
+                    return new Match(localSlot);
+                }
+            }
         }
 
         /*

@@ -194,6 +194,13 @@ public class RRuntime {
     }
 
     /**
+     * Create a {@link MaterializedFrame} for functions shared between different contexts.
+     */
+    public static MaterializedFrame createNewFrame(FrameDescriptor frameDescriptor) {
+        return Truffle.getRuntime().createMaterializedFrame(RArguments.createUnitialized(), frameDescriptor);
+    }
+
+    /**
      * Create an {@link VirtualFrame} for a non-function environment, e.g., a package frame or the
      * global environment.
      */

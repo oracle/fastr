@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,7 @@ public final class NSBaseMaterializedFrame implements MaterializedFrame {
     }
 
     public void updateGlobalFrame(MaterializedFrame globalFrame) {
-        RArguments.setEnclosingFrame(this, globalFrame);
+        RArguments.setEnclosingFrame(this, globalFrame, true);
     }
 
     public FrameDescriptor getMarkerFrameDescriptor() {

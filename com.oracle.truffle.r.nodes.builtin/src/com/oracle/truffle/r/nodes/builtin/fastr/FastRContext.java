@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.equalTo;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
@@ -42,6 +41,7 @@ import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RChannel;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
@@ -50,6 +50,8 @@ import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
+import com.oracle.truffle.r.runtime.context.RContext.EvalThread;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -57,6 +59,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * The FastR builtins that allow multiple "virtual" R sessions potentially executing in parallel.
@@ -70,11 +73,8 @@ public class FastRContext {
 
         private static void kind(Casts casts) {
             casts.arg("kind").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustNotBeNA().mustBe(
-                            equalTo(RContext.ContextKind.SHARE_NOTHING.name()).or(equalTo(RContext.ContextKind.SHARE_PARENT_RW.name()).or(equalTo(RContext.ContextKind.SHARE_PARENT_RO.name()))));
-        }
-
-        private static void pc(Casts casts) {
-            casts.arg("pc").asIntegerVector().findFirst().mustNotBeNA().mustBe(gt(0));
+                            equalTo(RContext.ContextKind.SHARE_NOTHING.name()).or(equalTo(RContext.ContextKind.SHARE_PARENT_RW.name()).or(
+                                            equalTo(RContext.ContextKind.SHARE_PARENT_RO.name()).or(equalTo(RContext.ContextKind.SHARE_ALL.name())))));
         }
 
         private static void key(Casts casts) {
@@ -95,39 +95,61 @@ public class FastRContext {
         }
     }
 
+    private static void handleSharedContexts(ContextKind contextKind) {
+        if (contextKind == ContextKind.SHARE_ALL) {
+            RContext current = RContext.getInstance();
+            if (EvalThread.threads.size() == 0 && (current.isInitial() || current.getKind() == ContextKind.SHARE_PARENT_RW)) {
+                ContextInfo.resetMultiSlotIndexGenerator();
+            } else {
+                throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Shared contexts can be created only if no other child contexts exist");
+            }
+        }
+    }
+
     /**
      * Similar to {@code .fastr.context.eval} but the invoking thread does not wait for completion,
      * which is done by {@code .fastr.context.join}. The result is a vector that should be passed to
      * {@code .fastr.context.join}.
      *
      */
-    @RBuiltin(name = ".fastr.context.spawn", kind = PRIMITIVE, parameterNames = {"exprs", "pc", "kind"}, behavior = COMPLEX)
-    public abstract static class Spawn extends RBuiltinNode.Arg3 {
+    @RBuiltin(name = ".fastr.context.spawn", kind = PRIMITIVE, parameterNames = {"exprs", "kind"}, behavior = COMPLEX)
+    public abstract static class Spawn extends RBuiltinNode.Arg2 {
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, 1, "SHARE_NOTHING"};
+            return new Object[]{RMissing.instance, FastROptions.SharedContexts.getBooleanValue() ? "SHARE_ALL" : "SHARE_NOTHING"};
         }
 
         static {
             Casts casts = new Casts(Spawn.class);
             CastsHelper.exprs(casts);
-            CastsHelper.pc(casts);
             CastsHelper.kind(casts);
         }
 
         @Specialization
         @TruffleBoundary
-        protected RIntVector spawn(RAbstractStringVector exprs, int pc, String kind) {
+        protected RIntVector spawn(RAbstractStringVector exprs, String kind) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
-            RContext.EvalThread[] threads = new RContext.EvalThread[pc];
-            int[] data = new int[pc];
-            for (int i = 0; i < pc; i++) {
+            if (FastROptions.SharedContexts.getBooleanValue() && contextKind != ContextKind.SHARE_ALL) {
+                throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Only shared contexts are allowed");
+            }
+            handleSharedContexts(contextKind);
+
+            int length = exprs.getLength();
+            RContext.EvalThread[] threads = new RContext.EvalThread[length];
+            int[] data = new int[length];
+            for (int i = 0; i < length; i++) {
                 ContextInfo info = createContextInfo(contextKind);
-                threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
+                threads[i] = new RContext.EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
                 data[i] = info.getId();
             }
-            for (int i = 0; i < pc; i++) {
+            if (contextKind == ContextKind.SHARE_ALL) {
+                REnvironment.convertSearchpathToMultiSlot();
+            }
+            for (int i = 0; i < length; i++) {
                 threads[i].start();
+            }
+            for (int i = 0; i < length; i++) {
+                threads[i].waitForInit();
             }
             return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
         }
@@ -173,46 +195,56 @@ public class FastRContext {
      * sublist contains the result of the evaluation with name "result". It may also have an
      * attribute "error" if the evaluation threw an exception, in which case the result will be NA.
      */
-    @RBuiltin(name = ".fastr.context.eval", kind = PRIMITIVE, parameterNames = {"exprs", "pc", "kind"}, behavior = COMPLEX)
-    public abstract static class Eval extends RBuiltinNode.Arg3 {
+    @RBuiltin(name = ".fastr.context.eval", kind = PRIMITIVE, parameterNames = {"exprs", "kind"}, behavior = COMPLEX)
+    public abstract static class Eval extends RBuiltinNode.Arg2 {
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, 1, "SHARE_NOTHING"};
+            return new Object[]{RMissing.instance, FastROptions.SharedContexts.getBooleanValue() ? "SHARE_ALL" : "SHARE_NOTHING"};
         }
 
         static {
             Casts casts = new Casts(Eval.class);
             CastsHelper.exprs(casts);
-            CastsHelper.pc(casts);
             CastsHelper.kind(casts);
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object eval(RAbstractStringVector exprs, int pc, String kind) {
+        protected Object eval(RAbstractStringVector exprs, String kind) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
+            if (FastROptions.SharedContexts.getBooleanValue() && contextKind != ContextKind.SHARE_ALL) {
+                throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Only shared contexts are allowed");
+            }
+            handleSharedContexts(contextKind);
 
-            Object[] results = new Object[pc];
-            if (pc == 1) {
+            int length = exprs.getLength();
+            Object[] results = new Object[length];
+            if (length == 1) {
                 ContextInfo info = createContextInfo(contextKind);
                 PolyglotEngine vm = info.createVM();
                 try {
-                    results[0] = RContext.EvalThread.run(vm, info, RSource.fromTextInternal(exprs.getDataAt(0), RSource.Internal.CONTEXT_EVAL));
+                    results[0] = RContext.EvalThread.run(vm, info, RSource.fromTextInternalInvisible(exprs.getDataAt(0), RSource.Internal.CONTEXT_EVAL));
                 } finally {
                     vm.dispose();
                 }
             } else {
                 // separate threads that run in parallel; invoking thread waits for completion
-                RContext.EvalThread[] threads = new RContext.EvalThread[pc];
-                for (int i = 0; i < pc; i++) {
+                RContext.EvalThread[] threads = new RContext.EvalThread[length];
+                for (int i = 0; i < length; i++) {
                     ContextInfo info = createContextInfo(contextKind);
-                    threads[i] = new RContext.EvalThread(info, RSource.fromTextInternal(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
+                    threads[i] = new RContext.EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
                 }
-                for (int i = 0; i < pc; i++) {
+                if (contextKind == ContextKind.SHARE_ALL) {
+                    REnvironment.convertSearchpathToMultiSlot();
+                }
+                for (int i = 0; i < length; i++) {
                     threads[i].start();
                 }
+                for (int i = 0; i < length; i++) {
+                    threads[i].waitForInit();
+                }
                 try {
-                    for (int i = 0; i < pc; i++) {
+                    for (int i = 0; i < length; i++) {
                         threads[i].join();
                         results[i] = threads[i].getEvalResult();
                     }

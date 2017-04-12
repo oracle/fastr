@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
@@ -41,6 +42,7 @@ public final class ContextInfo {
     static final String CONFIG_KEY = "fastrContextInfo";
 
     private static final AtomicInteger contextInfoIds = new AtomicInteger();
+    private static final AtomicInteger multiSlotInds = new AtomicInteger(-1);
 
     private final RStartParams startParams;
     private final String[] env;
@@ -54,16 +56,30 @@ public final class ContextInfo {
     private final RContext parent;
     private final ConsoleHandler consoleHandler;
     private final int id;
+    private final int multiSlotInd;
     private PolyglotEngine vm;
 
-    private ContextInfo(RStartParams startParams, String[] env, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone, int id) {
+    private ContextInfo(RStartParams startParams, String[] env, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone, int id, int multiSlotInd) {
         this.startParams = startParams;
         this.env = env;
         this.kind = kind;
         this.parent = parent;
         this.consoleHandler = consoleHandler;
         this.systemTimeZone = systemTimeZone;
+        this.multiSlotInd = multiSlotInd;
         this.id = id;
+    }
+
+    /**
+     * Correctness of this method relies on the fact that parallel contexts are started only after
+     * all of them (and their info) is created (in FastRContext).
+     */
+    public static int contextNum() {
+        return multiSlotInds.get() + 1;
+    }
+
+    public static void resetMultiSlotIndexGenerator() {
+        multiSlotInds.set(0); // to account for primordial context
     }
 
     public PolyglotEngine createVM() {
@@ -91,7 +107,17 @@ public final class ContextInfo {
      */
     public static ContextInfo create(RStartParams startParams, String[] env, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone) {
         int id = contextInfoIds.incrementAndGet();
-        return new ContextInfo(startParams, env, kind, parent, consoleHandler, systemTimeZone, id);
+        int multiSlotInd = multiSlotInds.get();
+        if (kind == ContextKind.SHARE_ALL || kind == ContextKind.SHARE_NOTHING) {
+            multiSlotInd = multiSlotInds.incrementAndGet();
+        }
+        // no increment for SHARE_PARENT_RW as it accesses the same data as its parent whose
+        // execution is suspended
+        if (kind == ContextKind.SHARE_PARENT_RO) {
+            throw RInternalError.shouldNotReachHere();
+        }
+        assert kind != ContextKind.SHARE_PARENT_RW || (kind == ContextKind.SHARE_PARENT_RW && parent.getKind() == ContextKind.SHARE_NOTHING && parent.getMultiSlotInd() == 0);
+        return new ContextInfo(startParams, env, kind, parent, consoleHandler, systemTimeZone, id, kind == ContextKind.SHARE_PARENT_RW ? 0 : multiSlotInd);
     }
 
     public static ContextInfo create(RStartParams startParams, String[] env, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
@@ -139,6 +165,10 @@ public final class ContextInfo {
 
     public int getId() {
         return id;
+    }
+
+    public int getMultiSlotInd() {
+        return multiSlotInd;
     }
 
     public PolyglotEngine getVM() {
