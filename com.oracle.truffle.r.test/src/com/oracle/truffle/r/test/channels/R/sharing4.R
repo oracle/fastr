@@ -10,7 +10,7 @@ if (length(grep("FastR", R.Version()$version.string)) == 1) {
     y <- .fastr.channel.receive(ch1)
     .fastr.context.join(cx)
     # create two child contexts
-    cx <- .fastr.context.spawn(code, 2)
+    cx <- .fastr.context.spawn(rep(code, 2))
     .fastr.channel.send(ch1, 42)
     .fastr.channel.send(ch1, 24)
     y <- .fastr.channel.receive(ch1)
