@@ -28,8 +28,10 @@ import java.util.concurrent.Semaphore;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -242,11 +244,15 @@ public class RChannel {
             // parent can be SerializedEnv or byte[]
             private final Object parent;
             private final DynamicObject attributes;
+            private final String name;
+            private final FrameDescriptor desc;
 
-            SerializedEnv(Bindings bindings, Object parent, DynamicObject attributes) {
+            SerializedEnv(Bindings bindings, Object parent, DynamicObject attributes, String name, FrameDescriptor desc) {
                 this.bindings = bindings;
                 this.parent = parent;
                 this.attributes = attributes;
+                this.name = name;
+                this.desc = desc;
             }
 
             public String[] getNames() {
@@ -263,6 +269,14 @@ public class RChannel {
 
             public DynamicObject getAttributes() {
                 return attributes;
+            }
+
+            public String getName() {
+                return name;
+            }
+
+            public FrameDescriptor getDesc() {
+                return desc;
             }
         }
 
@@ -294,12 +308,18 @@ public class RChannel {
         protected static class SerializedFunction {
             private final DynamicObject attributes;
             private final Object env;
-            private final RFunction serializedDef;
+            private final String name;
+            private final String packageName;
+            private final RBuiltinDescriptor builtinDesc;
+            private final RootCallTarget callTarget;
 
-            public SerializedFunction(DynamicObject attributes, Object env, RFunction serializedDef) {
+            public SerializedFunction(DynamicObject attributes, Object env, String name, String packageName, RBuiltinDescriptor builtinDesc, RootCallTarget callTarget) {
                 this.attributes = attributes;
                 this.env = env;
-                this.serializedDef = serializedDef;
+                this.name = name;
+                this.packageName = packageName;
+                this.builtinDesc = builtinDesc;
+                this.callTarget = callTarget;
             }
 
             public DynamicObject getAttributes() {
@@ -310,8 +330,20 @@ public class RChannel {
                 return env;
             }
 
-            public RFunction getSerializedDef() {
-                return serializedDef;
+            public String getName() {
+                return name;
+            }
+
+            public RBuiltinDescriptor getRBuiltin() {
+                return builtinDesc;
+            }
+
+            public RootCallTarget getTarget() {
+                return callTarget;
+            }
+
+            public String getPackageName() {
+                return packageName;
             }
         }
 
@@ -394,6 +426,7 @@ public class RChannel {
             }
         }
 
+        @TruffleBoundary
         private Object convertPrivateEnv(Object msg) throws IOException {
             int refInd = getRefIndex(msg);
             if (refInd != -1) {
@@ -408,7 +441,7 @@ public class RChannel {
             }
             SerializedEnv.Bindings bindings = createShareable(env);
 
-            return new SerializedEnv(bindings, convertPrivateSlow(env.getParent()), attributes);
+            return new SerializedEnv(bindings, convertPrivateSlow(env.getParent()), attributes, env.getName(), env.getFrame().getFrameDescriptor());
         }
 
         private SerializedPromise convertPrivatePromise(Object msg) throws IOException {
@@ -425,7 +458,7 @@ public class RChannel {
             RFunction fn = (RFunction) msg;
             Object env = convertPrivate(REnvironment.frameToEnvironment(fn.getEnclosingFrame()));
             DynamicObject attributes = fn.getAttributes();
-            return new SerializedFunction(attributes == null ? null : createShareableSlow(attributes, true), env, fn);
+            return new SerializedFunction(attributes == null ? null : createShareableSlow(attributes, true), env, fn.getName(), fn.getPackageName(), fn.getRBuiltin(), fn.getTarget());
         }
 
         private Object convertPrivateAttributable(Object msg) throws IOException {
@@ -603,7 +636,7 @@ public class RChannel {
             Object[] values = e.getValues();
             String[] names = e.getNames();
             assert values.length == names.length;
-            REnvironment.NewEnv env = RDataFactory.createNewEnv(null);
+            REnvironment.NewEnv env = RDataFactory.createNewEnv(e.getDesc(), e.getName());
             addReadRef(env);
             int ind = 0;
             for (String n : names) {
@@ -611,7 +644,7 @@ public class RChannel {
                 env.safePut(n, newValue);
             }
             REnvironment parent = (REnvironment) unserializeObject(e.getParent());
-            RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
+            RArguments.setEnclosingFrame(env.getFrame(), parent.getFrame(), false);
             DynamicObject attributes = e.getAttributes();
             if (attributes != null) {
                 env.initAttributes(attributes);
@@ -636,13 +669,17 @@ public class RChannel {
 
         @TruffleBoundary
         private RFunction unserializeFunction(SerializedFunction f) throws IOException {
-            RFunction fun = f.getSerializedDef();
             REnvironment env = (REnvironment) unserializeObject(f.getEnv());
             MaterializedFrame enclosingFrame = env.getFrame();
-            HasSignature root = (HasSignature) fun.getTarget().getRootNode();
-            RootCallTarget target = root.duplicateWithNewFrameDescriptor();
-            FrameSlotChangeMonitor.initializeEnclosingFrame(target.getRootNode().getFrameDescriptor(), enclosingFrame);
-            RFunction fn = RDataFactory.createFunction(fun.getName(), fun.getPackageName(), target, null, enclosingFrame);
+            RFunction fn;
+            if (FastROptions.SharedContexts.getBooleanValue()) {
+                fn = RDataFactory.createFunction(f.getName(), f.getPackageName(), f.getTarget(), f.getRBuiltin(), enclosingFrame);
+            } else {
+                HasSignature root = (HasSignature) f.getTarget().getRootNode();
+                RootCallTarget target = root.duplicateWithNewFrameDescriptor();
+                FrameSlotChangeMonitor.initializeEnclosingFrame(target.getRootNode().getFrameDescriptor(), enclosingFrame);
+                fn = RDataFactory.createFunction(f.getName(), f.getPackageName(), target, null, enclosingFrame);
+            }
             DynamicObject attributes = f.getAttributes();
             if (attributes != null) {
                 assert fn.getAttributes() == null;

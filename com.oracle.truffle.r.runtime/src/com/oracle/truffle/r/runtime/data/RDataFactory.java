@@ -31,6 +31,7 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -497,6 +498,11 @@ public final class RDataFactory {
     @TruffleBoundary
     public static REnvironment createInternalEnv() {
         return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<internal-env-" + environmentCount.incrementAndGet() + ">"), REnvironment.UNNAMED));
+    }
+
+    @TruffleBoundary
+    public static REnvironment.NewEnv createNewEnv(FrameDescriptor desc, String name) {
+        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNewFrame(desc), name));
     }
 
     @TruffleBoundary

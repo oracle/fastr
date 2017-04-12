@@ -38,31 +38,31 @@ recvOneData.SHAREDcluster <- function(cl) {
 }), asNamespace("parallel"))
 
 eval(expression(
-fastr.newSHAREDnode <- function(rank, options = defaultClusterOptions)
+fastr.newSHAREDnodes <- function(nnodes, debug, options = defaultClusterOptions)
 {
-	# Add the "debug" option defaulted to FALSE, if the user didn't specify
-	# If the user gives TRUE, print extra stuff during cluster setup
-	debug <- FALSE
-	tryCatch(
-		debug <- parallel:::getClusterOption("debug", options),
-		error = function(e) { }
-	)
-	options <- parallel:::addClusterOptions(options, list(debug = debug))
+	context_code <- vector("character", nnodes)
+	contexts <- vector("integer", nnodes)
+	channels <- vector("integer", nnodes)
+	for (i in 1:nnodes) {
+		# generate unique values for channel keys (addition factor is chosen based on how snow generates port numbers)
+		port <- as.integer(parallel:::getClusterOption("port", options) + i * 1000)
+		script <- file.path(R.home(), "com.oracle.truffle.r.native", "library", "parallel", "RSHAREDnode.R")
 
-	# generate unique values for channel keys (addition factor is chosen based on how snow generates port numbers)
-	port <- as.integer(parallel:::getClusterOption("port", options) + rank * 1000)
-	script <- file.path(R.home(), "com.oracle.truffle.r.native", "library", "parallel", "RSHAREDnode.R")
+    	context_code[[i]] <- paste0("commandArgs<-function() c('--args', 'PORT=", port, "'); source('", script, "')")
+		if (isTRUE(debug)) cat(sprintf("Starting context: %d with code %s\n", i, context_code[[i]]))
 
-    context_code <- paste0("commandArgs<-function() c('--args', 'PORT=", port, "'); source('", script, "')")
-	if (isTRUE(debug)) cat(sprintf("Starting context: %d with code %s\n", rank, context_code))
-
-    cx <- .fastr.context.spawn(context_code)
-
-	## Need to return a list here, in the same form as the
-	## "cluster" data structure.
-    channel <- .fastr.channel.create(port)
-	if (isTRUE(debug)) cat(sprintf("Context %d started!\n", rank))
-	structure(list(channel = channel, context=cx, rank = rank), class = "SHAREDnode")
+		## Need to return a list here, in the same form as the
+		## "cluster" data structure.
+    	channels[[i]] <- .fastr.channel.create(port)
+		if (isTRUE(debug)) cat(sprintf("Context %d started!\n", i))
+	}
+    contexts <- .fastr.context.spawn(context_code, nnodes)
+    cl <- vector("list", nnodes)
+	for (i in 1:nnodes) {
+		cl[[i]] <- structure(list(channel = channels[[i]], context=contexts[[i]], rank = i), class = "SHAREDnode")
+	}
+	cl
+	
 }), asNamespace("parallel"))
 
 makeForkClusterExpr <- expression({
@@ -72,8 +72,17 @@ makeForkCluster <- function(nnodes = getOption("mc.cores", 2L), options = defaul
     if(is.na(nnodes) || nnodes < 1L) stop("'nnodes' must be >= 1")
     .check_ncores(nnodes)
 	options <- addClusterOptions(options, list(...))
-    cl <- vector("list", nnodes)
-    for (i in seq_along(cl)) cl[[i]] <- fastr.newSHAREDnode(rank=i, options=options)
+
+	# Add the "debug" option defaulted to FALSE, if the user didn't specify
+	# If the user gives TRUE, print extra stuff during cluster setup
+	debug <- FALSE
+	tryCatch(
+		debug <- parallel:::getClusterOption("debug", options),
+		error = function(e) { }
+	)
+	options <- parallel:::addClusterOptions(options, list(debug = debug))
+	
+    cl <- fastr.newSHAREDnodes(nnodes, debug = debug, options=options)
 	class(cl) <- c("SHAREDcluster", "cluster")
 	cl
 }; environment(makeForkCluster)<-asNamespace("parallel")})

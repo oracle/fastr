@@ -288,12 +288,14 @@ public final class RArguments {
         frame.getArguments()[INDEX_IS_IRREGULAR] = isIrregularFrame;
     }
 
-    public static void setEnclosingFrame(Frame frame, MaterializedFrame newEnclosingFrame) {
+    public static void setEnclosingFrame(Frame frame, MaterializedFrame newEnclosingFrame, boolean updateDescriptors) {
         CompilerAsserts.neverPartOfCompilation();
         Object[] arguments = frame.getArguments();
         MaterializedFrame oldEnclosingFrame = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
         arguments[INDEX_ENCLOSING_FRAME] = newEnclosingFrame;
-        FrameSlotChangeMonitor.setEnclosingFrame(frame, newEnclosingFrame, oldEnclosingFrame);
+        if (updateDescriptors) {
+            FrameSlotChangeMonitor.setEnclosingFrame(frame, newEnclosingFrame, oldEnclosingFrame);
+        }
     }
 
     public static void initializeEnclosingFrame(Frame frame, MaterializedFrame newEnclosingFrame) {

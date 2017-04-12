@@ -60,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -594,12 +595,9 @@ public final class Utils {
                     FrameDescriptor frameDescriptor = unwrapped.getFrameDescriptor();
                     for (FrameSlot s : frameDescriptor.getSlots()) {
                         str.append("\n      ").append(s.getIdentifier()).append(" = ");
-                        Object value;
-                        try {
-                            value = unwrapped.getValue(s);
-                        } catch (Throwable t) {
-                            str.append("<exception ").append(t.getClass().getSimpleName()).append(" while acquiring slot ").append(s.getIdentifier()).append(">");
-                            continue;
+                        Object value = unwrapped.getValue(s);
+                        if (value instanceof MultiSlotData) {
+                            value = ((MultiSlotData) value).get(RContext.getInstance().getMultiSlotInd());
                         }
                         try {
                             if (value instanceof RAbstractContainer && ((RAbstractContainer) value).getLength() > 32) {

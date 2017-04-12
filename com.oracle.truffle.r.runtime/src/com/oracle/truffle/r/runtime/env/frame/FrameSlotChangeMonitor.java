@@ -35,6 +35,7 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -44,9 +45,12 @@ import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.StableValue;
+import com.oracle.truffle.r.runtime.context.ContextInfo;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPromise;
 
 /**
@@ -147,7 +151,7 @@ public final class FrameSlotChangeMonitor {
         public Object getValue() {
             // fast path execution should use getFrame / getSlot
             CompilerAsserts.neverPartOfCompilation("FrameAndSlotLookupResult.getValue() should not be used in fast path execution");
-            return frame.getValue(slot);
+            return FrameSlotChangeMonitor.getValue(slot, frame);
         }
 
         public MaterializedFrame getFrame() throws InvalidAssumptionException {
@@ -242,6 +246,7 @@ public final class FrameSlotChangeMonitor {
                 } else {
                     FrameDescriptorMetaData currentMetaData = getMetaData(current);
                     if (currentMetaData.singletonFrame == null) {
+                        // no stable value and no singleton frame
                         return null;
                     } else {
                         assert currentMetaData.singletonFrame.get() != null;
@@ -312,7 +317,8 @@ public final class FrameSlotChangeMonitor {
         return frame == null ? null : frame instanceof NSBaseMaterializedFrame ? ((NSBaseMaterializedFrame) frame).getMarkerFrameDescriptor() : frame.getFrameDescriptor();
     }
 
-    private static FrameDescriptorMetaData getMetaData(FrameDescriptor descriptor) {
+    private static synchronized FrameDescriptorMetaData getMetaData(FrameDescriptor descriptor) {
+        CompilerAsserts.neverPartOfCompilation();
         FrameDescriptorMetaData result = frameDescriptors.get(descriptor);
         assert result != null : "null metadata for " + descriptor;
         return result;
@@ -452,6 +458,24 @@ public final class FrameSlotChangeMonitor {
         // System.out.println(String.format(format, args));
     }
 
+    public static final class MultiSlotData {
+
+        private final Object[] data = new Object[ContextInfo.contextNum()];
+
+        public Object get(int ind) {
+            return data[ind];
+        }
+
+        public void set(int ind, Object val) {
+            data[ind] = val;
+        }
+
+        public void setAll(Object val) {
+            Arrays.fill(data, val);
+        }
+
+    }
+
     private static final class FrameSlotInfoImpl {
         /**
          * This is meant to monitor updates performed on {@link FrameSlot}. Each {@link FrameSlot}
@@ -464,11 +488,14 @@ public final class FrameSlotChangeMonitor {
          * comes into play.<br/>
          */
         private final Assumption nonLocalModifiedAssumption = Truffle.getRuntime().createAssumption();
+        private final Assumption noMultiSlot = Truffle.getRuntime().createAssumption();
 
-        @CompilationFinal private StableValue<Object> stableValue;
+        @CompilationFinal private volatile StableValue<Object> stableValue;
         private int invalidationCount;
+        private final boolean possibleMultiSlot;
 
-        FrameSlotInfoImpl(boolean isSingletonFrame, boolean isGlobalEnv, Object identifier) {
+        FrameSlotInfoImpl(boolean isSingletonFrame, boolean isGlobalEnv, Object identifier, boolean isNewEnv) {
+            this.possibleMultiSlot = isSingletonFrame && !isNewEnv;
             if (isSingletonFrame) {
                 stableValue = new StableValue<>(null, identifier.toString());
                 invalidationCount = isGlobalEnv ? MAX_GLOBAL_ENV_INVALIDATION_COUNT : MAX_INVALIDATION_COUNT;
@@ -481,29 +508,39 @@ public final class FrameSlotChangeMonitor {
             return stableValue != null;
         }
 
+        public boolean possibleMultiSlot() {
+            return possibleMultiSlot;
+        }
+
         /*
          * Special cases for primitive types to force value (instead of identity) comparison.
          */
 
-        public void setValue(byte value, FrameSlot slot) {
+        private void setValue(boolean value, FrameSlot slot) {
+            if (stableValue != null && (!(stableValue.getValue() instanceof Boolean) || ((boolean) stableValue.getValue()) != value)) {
+                invalidateStableValue(value, slot);
+            }
+        }
+
+        private void setValue(byte value, FrameSlot slot) {
             if (stableValue != null && (!(stableValue.getValue() instanceof Byte) || ((byte) stableValue.getValue()) != value)) {
                 invalidateStableValue(value, slot);
             }
         }
 
-        public void setValue(int value, FrameSlot slot) {
+        private void setValue(int value, FrameSlot slot) {
             if (stableValue != null && (!(stableValue.getValue() instanceof Integer) || ((int) stableValue.getValue()) != value)) {
                 invalidateStableValue(value, slot);
             }
         }
 
-        public void setValue(double value, FrameSlot slot) {
+        private void setValue(double value, FrameSlot slot) {
             if (stableValue != null && (!(stableValue.getValue() instanceof Double) || ((double) stableValue.getValue()) != value)) {
                 invalidateStableValue(value, slot);
             }
         }
 
-        public void setValue(Object value, FrameSlot slot) {
+        private void setValue(Object value, FrameSlot slot) {
             if (stableValue != null && stableValue.getValue() != value) {
                 invalidateStableValue(value, slot);
             }
@@ -524,6 +561,110 @@ public final class FrameSlotChangeMonitor {
 
         public StableValue<Object> getStableValue() {
             return stableValue;
+        }
+
+        private static void setNewMultiValue(Frame frame, FrameSlot slot, MultiSlotData data, Object newValue) {
+            int ind = RContext.getInstance().getMultiSlotInd();
+            data.set(ind, newValue);
+            frame.setObject(slot, data);
+        }
+
+        private static boolean evalAndSetPromise(Frame frame, FrameSlot slot, FrameSlotInfoImpl info) {
+            Object prevValue = info.stableValue.getValue();
+            if (prevValue instanceof RPromise) {
+                prevValue = RContext.getRRuntimeASTAccess().forcePromise("searchPathPromiseForce", prevValue);
+                if (prevValue instanceof Boolean) {
+                    frame.setBoolean(slot, (boolean) prevValue);
+                    info.setValue((boolean) prevValue, slot);
+                } else if (prevValue instanceof Byte) {
+                    frame.setByte(slot, (byte) prevValue);
+                    info.setValue((byte) prevValue, slot);
+                } else if (prevValue instanceof Integer) {
+                    frame.setInt(slot, (int) prevValue);
+                    info.setValue((int) prevValue, slot);
+                } else if (prevValue instanceof Double) {
+                    frame.setDouble(slot, (double) prevValue);
+                    info.setValue((double) prevValue, slot);
+                } else {
+                    frame.setObject(slot, prevValue);
+                    info.setValue(prevValue, slot);
+                }
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        public static void handleSearchPathMultiSlot(Frame frame, FrameSlot slot, boolean replicate) {
+            CompilerAsserts.neverPartOfCompilation();
+            while (true) {
+                FrameSlotInfoImpl info = (FrameSlotInfoImpl) slot.getInfo();
+                if (info.stableValue == null || !replicate) {
+                    // create a multi slot for slots whose stableValue is null but also for all
+                    // slots of
+                    // the global frame (which are marked as !replicate)
+                    info.stableValue = null;
+                    info.nonLocalModifiedAssumption.invalidate();
+                    info.noMultiSlot.invalidate();
+                    info.invalidationCount = 0;
+                    MultiSlotData data = new MultiSlotData();
+                    Object prevValue = frame.getValue(slot);
+                    // TODO: do we have to worry that prevValue can be invalid?
+                    if (prevValue instanceof MultiSlotData) {
+                        // this handles the case when we create share contexts for the second time -
+                        // existing multi slots are an artifact of the previous executions and must
+                        // be
+                        // discarded
+                        // TOOD: consider re-using multi slots but since we don't expect many of
+                        // them,
+                        // perhaps it's too much work for too little gain
+                        prevValue = ((MultiSlotData) prevValue).get(0);
+                    } else if (FastROptions.SearchPathForcePromises.getBooleanValue()) {
+                        prevValue = RContext.getRRuntimeASTAccess().forcePromise("searchPathPromiseForce", prevValue);
+                    }
+                    if (replicate) {
+                        data.setAll(prevValue);
+                    } else {
+                        data.set(0, prevValue);
+                    }
+                    frame.setObject(slot, data);
+                    break;
+                } else {
+                    if (!FastROptions.SearchPathForcePromises.getBooleanValue() || !evalAndSetPromise(frame, slot, info)) {
+                        break;
+                    }
+                    // otherwise stable value may get nullified and slot turned into multi slot
+                }
+
+            }
+        }
+
+        @TruffleBoundary
+        public synchronized void setMultiSlot(Frame frame, FrameSlot slot, Object newValue) {
+            // TODO: perhaps putting the whole thing behind the Truffle boundary an overkill, but on
+            // the other hand it shouldn't happen often and not on the fast path
+            MultiSlotData data;
+            if (stableValue == null) {
+                // already a multi slot - should be visible to all threads
+                data = (MultiSlotData) frame.getValue(slot);
+                int ind = RContext.getInstance().getMultiSlotInd();
+                data.set(ind, newValue);
+            } else {
+                nonLocalModifiedAssumption.invalidate();
+                invalidationCount = 0;
+                // TODO: is it necessary since we nullify stable value?
+                stableValue.getAssumption().invalidate();
+                noMultiSlot.invalidate();
+                data = new MultiSlotData();
+                Object prevValue = frame.getValue(slot);
+                // value was stable so this slot is set by primordial context
+                data.set(0, prevValue);
+                setNewMultiValue(frame, slot, data, newValue);
+                // this should create happens-before with stable value reads during lookup, thus
+                // making preceding update to the actual frame OK to read without additional
+                // synchronization
+                stableValue = null;
+            }
         }
     }
 
@@ -547,15 +688,29 @@ public final class FrameSlotChangeMonitor {
 
     // methods for creating new frame slots
 
-    public static synchronized FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind initialKind) {
+    public static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, String identifier, FrameSlotKind initialKind) {
+        return findOrAddFrameSlot(fd, (Object) identifier, initialKind);
+    }
+
+    public static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, RFrameSlot identifier, FrameSlotKind initialKind) {
+        return findOrAddFrameSlot(fd, (Object) identifier, initialKind);
+    }
+
+    private static synchronized FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind initialKind) {
         CompilerAsserts.neverPartOfCompilation();
+        assert identifier instanceof String || identifier instanceof RFrameSlot;
         FrameSlot frameSlot = fd.findFrameSlot(identifier);
         if (frameSlot != null) {
             return frameSlot;
         } else {
-            FrameDescriptorMetaData metaData = getMetaData(fd);
-            invalidateNames(metaData, Arrays.asList(identifier));
-            return fd.addFrameSlot(identifier, new FrameSlotInfoImpl(metaData.singletonFrame != null, "global".equals(metaData.name), identifier), initialKind);
+            if (identifier instanceof String || ((RFrameSlot) identifier).isMultiSlot()) {
+                FrameDescriptorMetaData metaData = getMetaData(fd);
+                invalidateNames(metaData, Arrays.asList(identifier));
+                return fd.addFrameSlot(identifier, new FrameSlotInfoImpl(metaData.singletonFrame != null, "global".equals(metaData.name), identifier, metaData.name.startsWith("<new-env-")),
+                                initialKind);
+            } else {
+                return fd.addFrameSlot(identifier, initialKind);
+            }
         }
     }
 
@@ -585,44 +740,124 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    public static void setByteAndInvalidate(Frame frame, FrameSlot frameSlot, byte newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
-        frame.setByte(frameSlot, newValue);
+    public static void setBooleanAndInvalidate(Frame frame, FrameSlot frameSlot, boolean newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (info.needsInvalidation()) {
-            info.setValue(newValue, frameSlot);
+        if (FastROptions.SharedContexts.getBooleanValue() && info.possibleMultiSlot() && !RContext.isSingle()) {
+            info.setMultiSlot(frame, frameSlot, newValue);
+        } else {
+            frame.setBoolean(frameSlot, newValue);
+            if (info.needsInvalidation()) {
+                info.setValue(newValue, frameSlot);
+            }
+            checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
         }
-        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
+    }
+
+    public static void setBoolean(Frame frame, FrameSlot frameSlot, boolean newValue) {
+        if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
+            FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+            if (info.possibleMultiSlot()) {
+                info.setMultiSlot(frame, frameSlot, newValue);
+                return;
+            }
+        }
+        frame.setBoolean(frameSlot, newValue);
+    }
+
+    public static void setByteAndInvalidate(Frame frame, FrameSlot frameSlot, byte newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
+        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+        if (FastROptions.SharedContexts.getBooleanValue() && info.possibleMultiSlot() && !RContext.isSingle()) {
+            info.setMultiSlot(frame, frameSlot, newValue);
+        } else {
+            frame.setByte(frameSlot, newValue);
+            if (info.needsInvalidation()) {
+                info.setValue(newValue, frameSlot);
+            }
+            checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
+        }
+    }
+
+    public static void setByte(Frame frame, FrameSlot frameSlot, byte newValue) {
+        if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
+            FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+            if (info.possibleMultiSlot()) {
+                info.setMultiSlot(frame, frameSlot, newValue);
+                return;
+            }
+        }
+        frame.setByte(frameSlot, newValue);
     }
 
     public static void setIntAndInvalidate(Frame frame, FrameSlot frameSlot, int newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
-        frame.setInt(frameSlot, newValue);
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (info.needsInvalidation()) {
-            info.setValue(newValue, frameSlot);
+        if (FastROptions.SharedContexts.getBooleanValue() && info.possibleMultiSlot() && !RContext.isSingle()) {
+            info.setMultiSlot(frame, frameSlot, newValue);
+        } else {
+            frame.setInt(frameSlot, newValue);
+            if (info.needsInvalidation()) {
+                info.setValue(newValue, frameSlot);
+            }
+            checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
         }
-        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
+    }
+
+    public static void setInt(Frame frame, FrameSlot frameSlot, int newValue) {
+        if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
+            FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+            if (info.possibleMultiSlot()) {
+                info.setMultiSlot(frame, frameSlot, newValue);
+                return;
+            }
+        }
+        frame.setInt(frameSlot, newValue);
     }
 
     public static void setDoubleAndInvalidate(Frame frame, FrameSlot frameSlot, double newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
-        frame.setDouble(frameSlot, newValue);
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (info.needsInvalidation()) {
-            info.setValue(newValue, frameSlot);
+        if (FastROptions.SharedContexts.getBooleanValue() && info.possibleMultiSlot() && !RContext.isSingle()) {
+            info.setMultiSlot(frame, frameSlot, newValue);
+        } else {
+            frame.setDouble(frameSlot, newValue);
+            if (info.needsInvalidation()) {
+                info.setValue(newValue, frameSlot);
+            }
+            checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
         }
-        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
+    }
+
+    public static void setDouble(Frame frame, FrameSlot frameSlot, double newValue) {
+        if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
+            FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+            if (info.possibleMultiSlot()) {
+                info.setMultiSlot(frame, frameSlot, newValue);
+                return;
+            }
+        }
+        frame.setDouble(frameSlot, newValue);
     }
 
     public static void setObjectAndInvalidate(Frame frame, FrameSlot frameSlot, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         assert !ActiveBinding.isActiveBinding(newValue);
-        frame.setObject(frameSlot, newValue);
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (info.needsInvalidation()) {
-            info.setValue(newValue, frameSlot);
+        if (FastROptions.SharedContexts.getBooleanValue() && info.possibleMultiSlot() && !RContext.isSingle()) {
+            info.setMultiSlot(frame, frameSlot, newValue);
+        } else {
+            frame.setObject(frameSlot, newValue);
+            if (info.needsInvalidation()) {
+                info.setValue(newValue, frameSlot);
+            }
+            checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
         }
-        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
     }
 
     public static void setObject(Frame frame, FrameSlot frameSlot, Object newValue) {
+        if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
+            FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+            if (info.possibleMultiSlot()) {
+                info.setMultiSlot(frame, frameSlot, newValue);
+                return;
+            }
+        }
         frame.setObject(frameSlot, newValue);
     }
 
@@ -641,6 +876,7 @@ public final class FrameSlotChangeMonitor {
      * intended to be used for a non-function frame (and thus will only ever be used for one frame).
      */
     public static synchronized void initializeNonFunctionFrameDescriptor(String name, MaterializedFrame frame) {
+        CompilerAsserts.neverPartOfCompilation();
         frameDescriptors.put(handleBaseNamespaceEnv(frame), new FrameDescriptorMetaData(name, frame));
     }
 
@@ -680,11 +916,61 @@ public final class FrameSlotChangeMonitor {
         return getMetaData(frameDesc) != null;
     }
 
+    /*
+     * This method should be called for frames of all environments on the search path.
+     */
+    public static void handleAllMultiSlots(Frame frame, boolean replicate) {
+        // make a copy avoid potential updates to the array iterated over
+        FrameSlot[] slots = new FrameSlot[frame.getFrameDescriptor().getSlots().size()];
+        slots = frame.getFrameDescriptor().getSlots().toArray(slots);
+        for (int i = 0; i < slots.length; i++) {
+            if (!(slots[i].getIdentifier() instanceof RFrameSlot)) {
+                FrameSlotInfoImpl.handleSearchPathMultiSlot(frame, slots[i], replicate);
+            }
+        }
+    }
+
     public static Object getObject(FrameSlot slot, Frame frame) throws FrameSlotTypeException {
-        return frame.getObject(slot);
+        if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
+            FrameSlotInfoImpl info = getFrameSlotInfo(slot);
+            if (info.noMultiSlot.isValid()) {
+                return frame.getObject(slot);
+            }
+            Object o;
+            try {
+                o = frame.getObject(slot);
+            } catch (FrameSlotTypeException e) {
+                CompilerDirectives.transferToInterpreter();
+                o = null;
+            }
+            if (!(o instanceof MultiSlotData)) {
+                CompilerDirectives.transferToInterpreter();
+                synchronized (info) {
+                    o = frame.getObject(slot);
+                }
+            }
+            return ((MultiSlotData) o).get(RContext.getInstance().getMultiSlotInd());
+        } else {
+            return frame.getObject(slot);
+        }
     }
 
     public static Object getValue(FrameSlot slot, Frame frame) {
-        return frame.getValue(slot);
+        if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
+            FrameSlotInfoImpl info = getFrameSlotInfo(slot);
+            if (info.noMultiSlot.isValid()) {
+                return frame.getValue(slot);
+            }
+            Object o = frame.getValue(slot);
+            if (!(o instanceof MultiSlotData)) {
+                CompilerDirectives.transferToInterpreter();
+                synchronized (info) {
+                    o = frame.getValue(slot);
+                }
+            }
+            return ((MultiSlotData) o).get(RContext.getInstance().getMultiSlotInd());
+        } else {
+            return frame.getValue(slot);
+        }
     }
 }

@@ -60,7 +60,7 @@ public final class NSBaseMaterializedFrame implements MaterializedFrame {
     }
 
     public void updateGlobalFrame(MaterializedFrame globalFrame) {
-        RArguments.setEnclosingFrame(this, globalFrame);
+        RArguments.setEnclosingFrame(this, globalFrame, true);
     }
 
     public FrameDescriptor getMarkerFrameDescriptor() {

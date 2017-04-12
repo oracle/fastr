@@ -597,7 +597,10 @@ public class RErrorHandling {
          */
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         RFunction f = errorHandlingState.getDotSignalSimpleWarning();
-        RContext.getRRuntimeASTAccess().callback(f, new Object[]{warningMessage, call});
+        if (f != null) {
+            RContext.getRRuntimeASTAccess().callback(f, new Object[]{warningMessage, call});
+        }
+        // otherwise the subsystem is not initialized yet - no warning
     }
 
     private static void warningcallDfltWithCall(Object call, Message msg, Object... args) {
