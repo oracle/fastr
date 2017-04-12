@@ -363,6 +363,7 @@ public final class Utils {
      */
     @TruffleBoundary
     public static Frame getStackFrame(FrameAccess fa, RCaller target) {
+        RError.performanceWarning("slow frame access - getStackFrame1");
         assert target != null;
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             boolean first = true;
@@ -389,6 +390,7 @@ public final class Utils {
      */
     @TruffleBoundary
     public static Frame getStackFrame(FrameAccess fa, int depth) {
+        RError.performanceWarning("slow frame access - getStackFrame2");
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             boolean first = true;
 
@@ -419,6 +421,7 @@ public final class Utils {
      */
     @TruffleBoundary
     public static <T> T iterateRFrames(FrameAccess fa, Function<Frame, T> func) {
+        RError.performanceWarning("slow frame access - iterateRFrames");
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<T>() {
             boolean first = true;
 
@@ -464,6 +467,7 @@ public final class Utils {
      */
     @TruffleBoundary
     public static Frame getActualCurrentFrame() {
+        RError.performanceWarning("slow frame access - getActualCurrentFrame");
         FrameInstance frameInstance = Truffle.getRuntime().getCurrentFrame();
         if (frameInstance == null) {
             // Might be the case during initialization, when envs are prepared before the actual
@@ -529,6 +533,7 @@ public final class Utils {
      */
     @TruffleBoundary
     public static Object createTraceback(int skip) {
+        RError.performanceWarning("slow frame access - createTraceback");
         FrameInstance current = Truffle.getRuntime().getCurrentFrame();
         if (current != null) {
             TracebackVisitor fiv = new TracebackVisitor(skip);
@@ -544,6 +549,7 @@ public final class Utils {
      */
     @TruffleBoundary
     public static String createStackTrace(boolean printFrameSlots) {
+        RError.performanceWarning("slow frame access - createStackTrace");
         FrameInstance current = Truffle.getRuntime().getCurrentFrame();
         if (current == null) {
             return "no R stack trace available\n";

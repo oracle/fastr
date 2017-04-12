@@ -264,7 +264,13 @@ public final class RError extends RuntimeException {
     @TruffleBoundary
     public static void performanceWarning(String string) {
         if (FastROptions.PerformanceWarnings.getBooleanValue()) {
-            warning(RError.SHOW_CALLER2, Message.PERFORMANCE, string);
+            System.out.println("Performance warning: " + string);
+            StackTraceElement[] trace = new RuntimeException().getStackTrace();
+            for (int i = 1; i < trace.length && i < 8; i++) {
+                StackTraceElement element = trace[i];
+                System.out.println("  at " + element.getClassName() + "." + element.getMethodName() + "(" + element.getFileName() + ":" + element.getLineNumber() + ")");
+            }
+            // warning(RError.SHOW_CALLER2, Message.PERFORMANCE, string);
         }
     }
 
