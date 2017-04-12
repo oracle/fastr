@@ -54,7 +54,7 @@ public enum FastROptions {
     UseInternalGridGraphics("Whether the internal (Java) grid graphics implementation should be used", true),
     UseSpecials("Whether the fast-path special call nodes should be created for simple enough arguments.", true),
     ForceSources("Generate source sections for unserialized code", false),
-    SharedContexts("Whether all child contexts are to be shared contexts", false),
+    SharedContexts("Whether all child contexts are to be shared contexts", true),
     SearchPathForcePromises("Whether all promises for frames on shared path are forced in presence of shared contexts", false),
 
     // Promises optimizations

@@ -318,7 +318,6 @@ public class RPromise implements RTypedValue {
         public void materialize() {
             if (execFrame == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-// System.out.println("EagerPromiseBase.materialize()");
                 this.execFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, targetFrame).materialize();
             }
         }
