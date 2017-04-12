@@ -681,7 +681,7 @@ public final class FrameSlotChangeMonitor {
         Object info = slot.getInfo();
         if (!(info instanceof FrameSlotInfoImpl)) {
             CompilerDirectives.transferToInterpreter();
-            throw RInternalError.shouldNotReachHere("Each FrameSlot should hold a FrameSlotInfo in its info field!");
+            throw RInternalError.shouldNotReachHere("Each FrameSlot should hold a FrameSlotInfo in its info field! " + slot.getIdentifier().getClass() + " " + slot.getIdentifier());
         }
         return (FrameSlotInfoImpl) info;
     }
@@ -703,14 +703,10 @@ public final class FrameSlotChangeMonitor {
         if (frameSlot != null) {
             return frameSlot;
         } else {
-            if (identifier instanceof String || ((RFrameSlot) identifier).isMultiSlot()) {
-                FrameDescriptorMetaData metaData = getMetaData(fd);
-                invalidateNames(metaData, Arrays.asList(identifier));
-                return fd.addFrameSlot(identifier, new FrameSlotInfoImpl(metaData.singletonFrame != null, "global".equals(metaData.name), identifier, metaData.name.startsWith("<new-env-")),
-                                initialKind);
-            } else {
-                return fd.addFrameSlot(identifier, initialKind);
-            }
+            FrameDescriptorMetaData metaData = getMetaData(fd);
+            invalidateNames(metaData, Arrays.asList(identifier));
+            return fd.addFrameSlot(identifier, new FrameSlotInfoImpl(metaData.singletonFrame != null, "global".equals(metaData.name), identifier, metaData.name.startsWith("<new-env-")),
+                            initialKind);
         }
     }
 

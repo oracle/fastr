@@ -96,7 +96,7 @@ public class PromiseHelperNode extends RBaseNode {
             boolean deoptOne = false;
             for (FrameSlot slot : frame.getFrameDescriptor().getSlots().toArray(new FrameSlot[0])) {
                 // We're only interested in RPromises
-                if (slot.getKind() != FrameSlotKind.Object) {
+                if (slot.getKind() != FrameSlotKind.Object || !(slot.getIdentifier() instanceof String)) {
                     continue;
                 }
 
