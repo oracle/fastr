@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 /**
  * A {@link ArgumentStatePush} is used to bump up state transition for function arguments.
@@ -98,7 +99,9 @@ public abstract class ArgumentStatePush extends Node {
             if (writeArgMask != -1 && !FastROptions.RefCountIncrementOnly.getBooleanValue()) {
                 if (frameSlot == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(writeArgMask, FrameSlotKind.Object);
+                    synchronized (FrameSlotChangeMonitor.class) {
+                        frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(writeArgMask, FrameSlotKind.Object);
+                    }
                 }
                 frame.setObject(frameSlot, shareable);
             }
