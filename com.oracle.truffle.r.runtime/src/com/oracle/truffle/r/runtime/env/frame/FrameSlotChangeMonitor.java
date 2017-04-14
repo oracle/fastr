@@ -517,38 +517,43 @@ public final class FrameSlotChangeMonitor {
          */
 
         private void setValue(boolean value, FrameSlot slot) {
-            if (stableValue != null && (!(stableValue.getValue() instanceof Boolean) || ((boolean) stableValue.getValue()) != value)) {
-                invalidateStableValue(value, slot);
+            StableValue<Object> sv = stableValue;
+            if (sv != null && (!(sv.getValue() instanceof Boolean) || ((boolean) sv.getValue()) != value)) {
+                invalidateStableValue(sv, value, slot);
             }
         }
 
         private void setValue(byte value, FrameSlot slot) {
-            if (stableValue != null && (!(stableValue.getValue() instanceof Byte) || ((byte) stableValue.getValue()) != value)) {
-                invalidateStableValue(value, slot);
+            StableValue<Object> sv = stableValue;
+            if (sv != null && (!(sv.getValue() instanceof Byte) || ((byte) sv.getValue()) != value)) {
+                invalidateStableValue(sv, value, slot);
             }
         }
 
         private void setValue(int value, FrameSlot slot) {
-            if (stableValue != null && (!(stableValue.getValue() instanceof Integer) || ((int) stableValue.getValue()) != value)) {
-                invalidateStableValue(value, slot);
+            StableValue<Object> sv = stableValue;
+            if (sv != null && (!(sv.getValue() instanceof Integer) || ((int) sv.getValue()) != value)) {
+                invalidateStableValue(sv, value, slot);
             }
         }
 
         private void setValue(double value, FrameSlot slot) {
-            if (stableValue != null && (!(stableValue.getValue() instanceof Double) || ((double) stableValue.getValue()) != value)) {
-                invalidateStableValue(value, slot);
+            StableValue<Object> sv = stableValue;
+            if (sv != null && (!(sv.getValue() instanceof Double) || ((double) sv.getValue()) != value)) {
+                invalidateStableValue(sv, value, slot);
             }
         }
 
         private void setValue(Object value, FrameSlot slot) {
-            if (stableValue != null && stableValue.getValue() != value) {
-                invalidateStableValue(value, slot);
+            StableValue<Object> sv = stableValue;
+            if (sv != null && sv.getValue() != value) {
+                invalidateStableValue(sv, value, slot);
             }
         }
 
-        private void invalidateStableValue(Object value, FrameSlot slot) {
+        private void invalidateStableValue(StableValue<Object> sv, Object value, FrameSlot slot) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            stableValue.getAssumption().invalidate();
+            sv.getAssumption().invalidate();
             if (invalidationCount > 0) {
                 invalidationCount--;
                 out("setting singleton value %s = %s", slot.getIdentifier(), value == null ? "null" : value.getClass());
