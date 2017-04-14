@@ -34,6 +34,7 @@ import com.oracle.truffle.api.utilities.AssumedValue;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
@@ -73,7 +74,9 @@ public final class PostProcessArgumentsNode extends RNode {
                 if ((bits & mask) != 0) {
                     if (frameSlots[i] == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        frameSlots[i] = frame.getFrameDescriptor().findOrAddFrameSlot(mask, FrameSlotKind.Object);
+                        synchronized (FrameSlotChangeMonitor.class) {
+                            frameSlots[i] = frame.getFrameDescriptor().findOrAddFrameSlot(mask, FrameSlotKind.Object);
+                        }
                     }
                     RShareable s;
                     try {
