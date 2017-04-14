@@ -136,13 +136,14 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public int op(int left, int right) {
-            try {
-                return ExactMath.addExact(left, right);
-            } catch (ArithmeticException e) {
+            int r = left + right;
+            // TODO: not using ExactMath because of perf problems
+            if (((left ^ r) & (right ^ r)) < 0) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace(new AddOverflow());
                 return INT_NA;
             }
+            return r;
         }
 
         @Override
@@ -193,13 +194,14 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public int op(int left, int right) {
-            try {
-                return ExactMath.subtractExact(left, right);
-            } catch (ArithmeticException e) {
+            int r = left - right;
+            // TODO: not using ExactMath because of perf problems
+            if (((left ^ right) & (left ^ r)) < 0) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace(new SubtractOverflow());
                 return INT_NA;
             }
+            return r;
         }
 
         @Override
@@ -249,13 +251,14 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public int op(int left, int right) {
-            try {
-                return ExactMath.multiplyExact(left, right);
-            } catch (ArithmeticException e) {
+            long r = (long) left * (long) right;
+            // TODO: not using ExactMath because of perf problems
+            if ((int) r != r) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace(new MultiplyOverflow());
                 return INT_NA;
             }
+            return (int) r;
         }
 
         @Override
