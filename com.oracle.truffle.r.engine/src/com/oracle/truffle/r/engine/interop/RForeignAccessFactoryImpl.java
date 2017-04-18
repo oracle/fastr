@@ -28,6 +28,7 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RForeignAccessFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
@@ -92,6 +93,8 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return RDoubleMRForeign.ACCESS;
         } else if (obj instanceof CharSXPWrapper) {
             return CharSXPWrapperMRForeign.ACCESS;
+        } else if (obj instanceof RConnection) {
+            return RConnectionMRForeign.ACCESS;
         } else {
             if (obj instanceof RAbstractVector) {
                 return ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
