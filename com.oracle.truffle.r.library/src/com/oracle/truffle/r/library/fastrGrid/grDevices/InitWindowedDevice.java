@@ -28,12 +28,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
+import com.oracle.truffle.r.library.fastrGrid.WindowDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice.NotSupportedImageFormatException;
-import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedJFrameDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.Graphics2DDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -84,7 +83,7 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
         }
 
         // otherwise create the window ourselves
-        BufferedJFrameDevice device = new BufferedJFrameDevice(JFrameDevice.create(width, height));
+        GridDevice device = WindowDevice.createWindowDevice(width, height);
         String name = isFastRDevice ? "awt" : "X11cairo";
         GridContext.getContext().setCurrentDevice(name, device);
         return RNull.instance;
