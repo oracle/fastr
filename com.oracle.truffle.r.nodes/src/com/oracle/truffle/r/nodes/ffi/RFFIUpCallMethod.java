@@ -172,6 +172,7 @@ public enum RFFIUpCallMethod {
         for (RFFIUpCallMethod f : RFFIUpCallMethod.values()) {
             System.out.printf("#define %s_x %d\n", f.name(), f.ordinal());
         }
+        System.out.printf("\n#define CALLBACK_TABLE_SIZE %d\n", RFFIUpCallMethod.values().length);
     }
 
 }
