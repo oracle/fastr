@@ -821,6 +821,17 @@ public final class RContext extends com.oracle.truffle.api.ExecutionContext {
         return info.getEnv();
     }
 
+    /**
+     * Allows another thread to schedule some code to be run in this context's thread. The action is
+     * ignored if the current context does not support such scheduling, i.e. the polyglot engine was
+     * not created with an executor.
+     */
+    public void schedule(Runnable action) {
+        if (info.executor != null) {
+            info.executor.execute(action);
+        }
+    }
+
     @Override
     public String toString() {
         return "context: " + info.getId();

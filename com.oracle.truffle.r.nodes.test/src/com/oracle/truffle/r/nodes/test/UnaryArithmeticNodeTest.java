@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
+import static com.oracle.truffle.r.nodes.test.TestUtilities.copy;
 import static com.oracle.truffle.r.nodes.test.TestUtilities.createHandle;
+import static com.oracle.truffle.r.nodes.test.TestUtilities.withinTestContext;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createDoubleSequence;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createIntSequence;
 import static com.oracle.truffle.r.runtime.ops.UnaryArithmetic.NEGATE;
@@ -81,7 +83,7 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testVectorResult(UnaryArithmeticFactory factory, RAbstractVector originalOperand) {
-        RAbstractVector operand = originalOperand.copy();
+        RAbstractVector operand = copy(originalOperand);
         assumeThat(operand, is(not(instanceOf(RScalarVector.class))));
 
         Object result = executeArithmetic(factory, operand);
@@ -94,7 +96,7 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testSharing(UnaryArithmeticFactory factory, RAbstractVector originalOperand) {
-        RAbstractVector operand = originalOperand.copy();
+        RAbstractVector operand = copy(originalOperand);
         // sharing does not work if a is a scalar vector
         assumeThat(true, is(isShareable(operand, operand.getRType())));
 
@@ -128,7 +130,7 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testCompleteness(UnaryArithmeticFactory factory, RAbstractVector originalOperand) {
-        RAbstractVector operand = originalOperand.copy();
+        RAbstractVector operand = copy(originalOperand);
         Object result = executeArithmetic(factory, operand);
 
         boolean resultComplete = isPrimitive(result) ? true : ((RAbstractVector) result).isComplete();
@@ -143,21 +145,21 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testCopyAttributes(UnaryArithmeticFactory factory, RAbstractVector originalOperand) {
-        RAbstractVector operand = originalOperand.copy();
+        RAbstractVector operand = copy(originalOperand);
         // we have to e careful not to change mutable vectors
-        RAbstractVector a = operand.copy();
+        RAbstractVector a = copy(operand);
         if (a instanceof RShareable) {
             ((RShareable) a).incRefCount();
         }
 
-        RVector<?> aMaterialized = a.copy().materialize();
+        RVector<?> aMaterialized = withinTestContext(() -> a.copy().materialize());
         aMaterialized.setAttr("a", "a");
-        assertAttributes(executeArithmetic(factory, aMaterialized.copy()), "a");
+        assertAttributes(executeArithmetic(factory, copy(aMaterialized)), "a");
     }
 
     @Theory
     public void testPlusFolding(RAbstractVector originalOperand) {
-        RAbstractVector operand = originalOperand.copy();
+        RAbstractVector operand = copy(originalOperand);
         assumeThat(operand, is(not(instanceOf(RScalarVector.class))));
         if (operand.getRType() == getArgumentType(operand)) {
             assertFold(true, operand, PLUS);
@@ -178,7 +180,7 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
     public void testGeneric(UnaryArithmeticFactory factory) {
         // this should trigger the generic case
         for (RAbstractVector vector : ALL_VECTORS) {
-            executeArithmetic(factory, vector.copy());
+            executeArithmetic(factory, copy(vector));
         }
     }
 
