@@ -1,6 +1,5 @@
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/graphics/RGraphics.java,gnu_r_graphics.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/graphics/RGridGraphicsAdapter.java,gnu_r_graphics.copyright
-com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/grid/GridFunctions.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/methods/MethodsListDispatch.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/methods/Slot.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/Arithmetic.java,gnu_r_gentleman_ihaka.copyright
