@@ -27,8 +27,12 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.HeadlessException;
 import java.awt.Toolkit;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -37,6 +41,7 @@ public final class JFrameDevice extends Graphics2DDevice {
 
     private final JFrame currentFrame;
     private final boolean disposeResources;
+    private Runnable onResize;
 
     /**
      * @param frame The frame that should be used for drawing.
@@ -49,6 +54,9 @@ public final class JFrameDevice extends Graphics2DDevice {
         super(graphics, frame.getContentPane().getWidth(), frame.getContentPane().getHeight(), true);
         currentFrame = frame;
         this.disposeResources = disposeResources;
+        if (currentFrame instanceof FastRFrame) {
+            ((FastRFrame) currentFrame).device = this;
+        }
     }
 
     /**
@@ -72,6 +80,20 @@ public final class JFrameDevice extends Graphics2DDevice {
         }
     }
 
+    @Override
+    int getWidthAwt() {
+        return currentFrame.getContentPane().getWidth();
+    }
+
+    @Override
+    int getHeightAwt() {
+        return currentFrame.getContentPane().getHeight();
+    }
+
+    public void setResizeListener(Runnable onResize) {
+        this.onResize = onResize;
+    }
+
     JFrame getCurrentFrame() {
         return currentFrame;
     }
@@ -79,12 +101,20 @@ public final class JFrameDevice extends Graphics2DDevice {
     static class FastRFrame extends JFrame {
         private static final long serialVersionUID = 1L;
         private final JPanel fastRComponent = new JPanel();
+        private JFrameDevice device;
+
+        volatile boolean resizeScheduled = false;
+        private int oldWidth;
+        private int oldHeight;
+        private final Timer timer = new Timer();
 
         FastRFrame(int width, int height) throws HeadlessException {
             super("FastR");
-            addCloseListener();
+            addListeners();
             createUI(width, height);
             center();
+            oldWidth = width;
+            oldHeight = height;
         }
 
         private void createUI(int width, int height) {
@@ -94,11 +124,33 @@ public final class JFrameDevice extends Graphics2DDevice {
             fastRComponent.setPreferredSize(getSize());
         }
 
-        private void addCloseListener() {
+        private void addListeners() {
             addWindowFocusListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
                     dispose();
+                }
+            });
+            addComponentListener(new ComponentAdapter() {
+                @Override
+                public void componentResized(ComponentEvent e) {
+                    if (oldHeight == getHeight() && oldWidth == getWidth()) {
+                        return;
+                    }
+                    if (!resizeScheduled) {
+                        resizeScheduled = true;
+                        timer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                oldWidth = getWidth();
+                                oldHeight = getHeight();
+                                resizeScheduled = false;
+                                if (device.onResize != null) {
+                                    device.onResize.run();
+                                }
+                            }
+                        }, 1000);
+                    }
                 }
             });
         }

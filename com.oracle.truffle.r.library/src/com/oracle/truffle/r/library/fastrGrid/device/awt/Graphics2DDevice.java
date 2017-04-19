@@ -91,7 +91,7 @@ public class Graphics2DDevice implements GridDevice {
 
     @Override
     public void openNewPage() {
-        graphics.clearRect(0, 0, width, height);
+        graphics.clearRect(0, 0, getWidthAwt(), getHeightAwt());
     }
 
     @Override
@@ -142,12 +142,12 @@ public class Graphics2DDevice implements GridDevice {
 
     @Override
     public double getWidth() {
-        return width / AWT_POINTS_IN_INCH;
+        return getWidthAwt() / AWT_POINTS_IN_INCH;
     }
 
     @Override
     public double getHeight() {
-        return height / AWT_POINTS_IN_INCH;
+        return getHeightAwt() / AWT_POINTS_IN_INCH;
     }
 
     @Override
@@ -165,6 +165,20 @@ public class Graphics2DDevice implements GridDevice {
         return swingUnits / AWT_POINTS_IN_INCH;
     }
 
+    /**
+     * Allows to override the default fixed width behavior with dynamically computed width.
+     */
+    int getWidthAwt() {
+        return width;
+    }
+
+    /**
+     * Allows to override the default fixed height behavior with dynamically computed height.
+     */
+    int getHeightAwt() {
+        return height;
+    }
+
     void setGraphics2D(Graphics2D newGraphics) {
         assert newGraphics != null;
         graphics = newGraphics;
@@ -175,7 +189,7 @@ public class Graphics2DDevice implements GridDevice {
     }
 
     private int transY(double y) {
-        return height - (int) (y * AWT_POINTS_IN_INCH);
+        return getHeightAwt() - (int) (y * AWT_POINTS_IN_INCH);
     }
 
     private static int transX(double x) {

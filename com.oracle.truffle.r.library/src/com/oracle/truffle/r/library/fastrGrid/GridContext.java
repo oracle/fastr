@@ -27,8 +27,6 @@ import java.util.ArrayList;
 import com.oracle.truffle.r.library.fastrGrid.GridState.GridDeviceState;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice.DeviceCloseException;
-import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedJFrameDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
 import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -89,8 +87,7 @@ public final class GridContext {
     public void openDefaultDevice() {
         String defaultDev = RGridGraphicsAdapter.getDefaultDevice();
         if (defaultDev.equals("awt") || defaultDev.startsWith("X11")) {
-            BufferedJFrameDevice result = new BufferedJFrameDevice(JFrameDevice.create(GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT));
-            setCurrentDevice(defaultDev, result);
+            setCurrentDevice(defaultDev, WindowDevice.createWindowDevice());
         } else {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "FastR does not support device '" + defaultDev + "'.");
         }

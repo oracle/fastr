@@ -15,6 +15,11 @@
 # logic to R. Some functions implement whole externals, like L_downvppath, some implement coherent
 # parts of the logic and the rest is in Java.
 
+# Used by the interactive device to redraw the whole scene if the window gets resized.
+redrawAll <- function() {
+    popViewport(0, recording = FALSE)
+    grid:::draw.all()
+}
 
 # chull from grDevices package is used in EdgeDetection.java
 # Note: chull calls to native function, which we may consider
