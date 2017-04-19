@@ -906,7 +906,7 @@ SEXP *VECTOR_PTR(SEXP x){
 }
 
 SEXP Rf_asChar(SEXP x){
-	return unimplemented("Rf_asChar");
+	return ((call_Rf_asChar) callbacks[Rf_asChar_x])(x);
 }
 
 SEXP Rf_PairToVectorList(SEXP x){
@@ -931,8 +931,7 @@ int Rf_asInteger(SEXP x) {
 }
 
 double Rf_asReal(SEXP x) {
-	unimplemented("Rf_asReal");
-	return 0.0;
+	return ((call_Rf_asReal) callbacks[Rf_asReal_x])(x);
 }
 
 Rcomplex Rf_asComplex(SEXP x){
