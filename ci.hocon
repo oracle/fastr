@@ -153,7 +153,7 @@ internalPkgtest: ${common} {
 
 builds = [
   ${gateTestLinux}            {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64"}
-#  ${gateTestLinuxNFI}         {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-nfi-amd64"}
+  ${gateTestLinuxNFI}         {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-nfi-amd64"}
   ${gateTestNoSpecialsLinux}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64-nospecials"}
   ${gateTestDarwin}           {capabilities : [darwin, amd64], targets : [gate], name: "gate-test-darwin-amd64"}
   ${gateStyle}                {capabilities : [linux, amd64],  targets : [gate], name: "gate-style-linux-amd64"}
