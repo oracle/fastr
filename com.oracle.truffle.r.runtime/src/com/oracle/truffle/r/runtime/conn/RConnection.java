@@ -31,12 +31,13 @@ import java.nio.channels.ByteChannel;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 /**
  * Denotes an R {@code connection} instance used in the {@code base} I/O library.
  */
-public interface RConnection extends AutoCloseable {
+public interface RConnection extends AutoCloseable, RTruffleObject {
 
     static BaseRConnection fromIndex(int con) {
         return RContext.getInstance().stateRConnection.getConnection(con, true);

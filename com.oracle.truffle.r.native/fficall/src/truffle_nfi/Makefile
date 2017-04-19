@@ -52,7 +52,7 @@ $(C_OBJECTS): | $(OBJ)
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(OBJ)/%.o: %.c $(TOPDIR)/include/Rinternals.h $(C_HDRS)
+$(OBJ)/%.o: %.c $(TOPDIR)/include/Rinternals.h rffi_callbacksindex.h $(C_HDRS)
 	$(CC) $(CFLAGS) $(INCLUDES) -I../variable_defs -c $< -o $@
 
 # for debugging, to see what's really being compiled
