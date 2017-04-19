@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -13,6 +13,8 @@ package com.oracle.truffle.r.test.builtins;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
+import java.util.HashMap;
+import java.util.Map;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_names extends TestBase {
@@ -209,5 +211,45 @@ public class TestBuiltin_names extends TestBase {
     @Test
     public void testLNames() {
         assertEval("{ x <- quote(plot(x = age, y = weight)); names(x) }");
+    }
+
+    public static class TestClass {
+        public Object field;
+        public static Object staticField;
+
+        public void method() {
+        }
+
+        public static void staticMethod() {
+        }
+    }
+
+    public static class TestClassNoMembers {
+
+    }
+
+    public static class TestClassNoPublicMembers {
+        int i;
+    }
+
+    public static class TestClassMap {
+        public static Map<String, String> m() {
+            HashMap<String, String> m = new HashMap<>();
+            m.put("one", "1");
+            m.put("two", "2");
+            return m;
+        }
+    }
+
+    @Test
+    public void testJavaObject() {
+        assertEvalFastR("tc <- .fastr.java.class('" + TestClassNoMembers.class.getName() + "'); t <- .fastr.interop.new(tc); names(t)", "NULL");
+        assertEvalFastR("tc <- .fastr.java.class('" + TestClassNoPublicMembers.class.getName() + "'); t <- .fastr.interop.new(tc); names(t)", "NULL");
+        assertEvalFastR("tc <- .fastr.java.class('" + TestClass.class.getName() + "'); sort(names(tc))", "c('staticField', 'staticMethod')");
+        assertEvalFastR("tc <- .fastr.java.class('" + TestClass.class.getName() + "'); names(tc$staticField)", "NULL");
+        assertEvalFastR("tc <- .fastr.java.class('" + TestClass.class.getName() + "'); names(tc$staticMethod)", "NULL");
+        assertEvalFastR("tc <- .fastr.java.class('" + TestClass.class.getName() + "'); t <- .fastr.interop.new(tc); sort(names(t))", "c('field', 'method', 'staticField', 'staticMethod')");
+        assertEvalFastR("cl <- .fastr.java.class('java.util.Collections'); em<-cl$EMPTY_MAP; names(em)", "NULL");
+        assertEvalFastR("tc <- .fastr.java.class('" + TestClassMap.class.getName() + "'); t <- .fastr.interop.new(tc); sort(names(t$m()))", "c('one', 'two')");
     }
 }
