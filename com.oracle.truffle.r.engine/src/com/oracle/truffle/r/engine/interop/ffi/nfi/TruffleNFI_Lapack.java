@@ -39,7 +39,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         dgeqp3("(sint32, sint32, [double], sint32, [sint32], [double], [double], sint32) : sint32"),
         dormq("(uint8, uint8, sint32, sint32, sint32, [double], sint32, [double], [double], sint32, [double], sint32) : sint32"),
         dtrtrs("(uint8, uint8, uint8, sint32, sint32, [double], sint32, [double], sint32) : sint32"),
-        dgetr("(sint32, sint32, [double], sint32, [sint32]) : sint32"),
+        dgetrf("(sint32, sint32, [double], sint32, [sint32]) : sint32"),
         dpotrf("(uint8, sint32, [double], sint32) : sint32"),
         dpotri("(uint8, sint32, [double], sint32) : sint32"),
         dpstrf("uint8, sint32, [double], sint32, [sint32], [sint32], double, [double]) : sint32"),
@@ -143,9 +143,9 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
         @Override
         public int execute(int m, int n, double[] a, int lda, int[] ipiv) {
-            Function.dgetr.initialize();
+            Function.dgetrf.initialize();
             try {
-                return (int) ForeignAccess.sendExecute(Function.dgetr.executeNode, Function.dgetr.function, m, n, JavaInterop.asTruffleObject(a), lda, JavaInterop.asTruffleObject(ipiv));
+                return (int) ForeignAccess.sendExecute(Function.dgetrf.executeNode, Function.dgetrf.function, m, n, JavaInterop.asTruffleObject(a), lda, JavaInterop.asTruffleObject(ipiv));
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
@@ -171,7 +171,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         public int execute(char uplo, int n, double[] a, int lda) {
             Function.dpotri.initialize();
             try {
-                return (int) ForeignAccess.sendExecute(Function.dpotri.executeNode, Function.dpotrf.function, uplo, n, JavaInterop.asTruffleObject(a), lda);
+                return (int) ForeignAccess.sendExecute(Function.dpotri.executeNode, Function.dpotri.function, uplo, n, JavaInterop.asTruffleObject(a), lda);
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }

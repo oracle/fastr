@@ -40,7 +40,7 @@ public class TruffleNFI_PCRE implements PCRERFFI {
         maketables("(): sint64", true),
         compile("((uint64, string, sint32): void, string, sint32, uint64): void", false),
         getcapturecount("(uint64, uint64): sint32", false),
-        getcapturenames("((sint32, string): void, uint64, uint64)", false),
+        getcapturenames("((sint32, string): void, uint64, uint64): sint32", false),
         study("(uint64, sint32): void", false),
         exec("(uint64, uint64, [uint8], sint32, sint32, sint32, [sint32], sint32): sint32", true);
 
