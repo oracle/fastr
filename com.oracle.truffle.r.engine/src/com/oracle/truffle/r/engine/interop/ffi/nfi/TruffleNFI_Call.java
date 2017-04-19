@@ -230,7 +230,7 @@ public class TruffleNFI_Call implements CallRFFI {
         @Child Node bindNode = Message.createInvoke(1).createNode();
 
         @Specialization(guards = "args.length == 0")
-        protected Object invokeCall0(NativeCallInfo nativeCallInfo, @SuppressWarnings("unused") Object[] args,
+        protected Object invokeCall0(NativeCallInfo nativeCallInfo, Object[] args,
                         @Cached("createExecute(args.length)") Node executeNode) {
             synchronized (TruffleNFI_Call.class) {
                 Object result = null;
