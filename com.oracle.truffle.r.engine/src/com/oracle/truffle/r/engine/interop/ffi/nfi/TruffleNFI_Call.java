@@ -238,7 +238,8 @@ public class TruffleNFI_Call implements CallRFFI {
                 try {
                     TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
                                     nativeCallInfo.address.asTruffleObject(), "bind", "(): object");
-                    return ForeignAccess.sendExecute(executeNode, callFunction);
+                    result = ForeignAccess.sendExecute(executeNode, callFunction);
+                    return result;
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
                 } finally {
@@ -256,7 +257,8 @@ public class TruffleNFI_Call implements CallRFFI {
                 try {
                     TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
                                     nativeCallInfo.address.asTruffleObject(), "bind", "(object): object");
-                    return ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]));
+                    result = ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]));
+                    return result;
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
                 } finally {
@@ -274,7 +276,8 @@ public class TruffleNFI_Call implements CallRFFI {
                 try {
                     TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
                                     nativeCallInfo.address.asTruffleObject(), "bind", "(object, object): object");
-                    return ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]), JavaInterop.asTruffleObject(args[1]));
+                    result = ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]), JavaInterop.asTruffleObject(args[1]));
+                    return result;
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
                 } finally {
@@ -292,7 +295,8 @@ public class TruffleNFI_Call implements CallRFFI {
                 try {
                     TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
                                     nativeCallInfo.address.asTruffleObject(), "bind", "(object, object, object): object");
-                    return ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]), JavaInterop.asTruffleObject(args[1]), JavaInterop.asTruffleObject(args[2]));
+                    result = ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]), JavaInterop.asTruffleObject(args[1]), JavaInterop.asTruffleObject(args[2]));
+                    return result;
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
                 } finally {
@@ -310,8 +314,9 @@ public class TruffleNFI_Call implements CallRFFI {
                 try {
                     TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
                                     nativeCallInfo.address.asTruffleObject(), "bind", "(object, object, object, object): object");
-                    return ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]), JavaInterop.asTruffleObject(args[1]), JavaInterop.asTruffleObject(args[2]),
+                    result = ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]), JavaInterop.asTruffleObject(args[1]), JavaInterop.asTruffleObject(args[2]),
                                     JavaInterop.asTruffleObject(args[3]));
+                    return result;
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
                 } finally {
@@ -329,8 +334,9 @@ public class TruffleNFI_Call implements CallRFFI {
                 try {
                     TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
                                     nativeCallInfo.address.asTruffleObject(), "bind", "(object, object, object, object, object): object");
-                    return ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]), JavaInterop.asTruffleObject(args[1]),
+                    result = ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]), JavaInterop.asTruffleObject(args[1]),
                                     JavaInterop.asTruffleObject(args[2]), JavaInterop.asTruffleObject(args[3]), JavaInterop.asTruffleObject(args[4]));
+                    return result;
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
                 } finally {
@@ -348,8 +354,9 @@ public class TruffleNFI_Call implements CallRFFI {
                 try {
                     TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
                                     nativeCallInfo.address.asTruffleObject(), "bind", "(object, object, object, object, object, object): object");
-                    return ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]), JavaInterop.asTruffleObject(args[1]),
+                    result = ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]), JavaInterop.asTruffleObject(args[1]),
                                     JavaInterop.asTruffleObject(args[2]), JavaInterop.asTruffleObject(args[3]), JavaInterop.asTruffleObject(args[4]), JavaInterop.asTruffleObject(args[5]));
+                    return result;
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
                 } finally {
@@ -367,9 +374,10 @@ public class TruffleNFI_Call implements CallRFFI {
                 try {
                     TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
                                     nativeCallInfo.address.asTruffleObject(), "bind", "(object, object, object, object, object, object, object): object");
-                    return ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]), JavaInterop.asTruffleObject(args[1]),
+                    result = ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]), JavaInterop.asTruffleObject(args[1]),
                                     JavaInterop.asTruffleObject(args[2]), JavaInterop.asTruffleObject(args[3]), JavaInterop.asTruffleObject(args[4]), JavaInterop.asTruffleObject(args[5]),
                                     JavaInterop.asTruffleObject(args[6]));
+                    return result;
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
                 } finally {
@@ -387,9 +395,10 @@ public class TruffleNFI_Call implements CallRFFI {
                 try {
                     TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
                                     nativeCallInfo.address.asTruffleObject(), "bind", "(object, object, object, object, object, object, object, object): object");
-                    return ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]), JavaInterop.asTruffleObject(args[1]),
+                    result = ForeignAccess.sendExecute(executeNode, callFunction, JavaInterop.asTruffleObject(args[0]), JavaInterop.asTruffleObject(args[1]),
                                     JavaInterop.asTruffleObject(args[2]), JavaInterop.asTruffleObject(args[3]), JavaInterop.asTruffleObject(args[4]), JavaInterop.asTruffleObject(args[5]),
                                     JavaInterop.asTruffleObject(args[6]), JavaInterop.asTruffleObject(args[7]));
+                    return result;
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
                 } finally {
