@@ -30,6 +30,7 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.nodes.ffi.RFFIUtils;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -52,10 +53,13 @@ public class TruffleNFI_Tools implements ToolsRFFI {
         private static class RConnGetCImpl implements RConnGetC {
             @Override
             public int getc(RConnection conn) {
+                RFFIUtils.traceUpCall("getc");
                 try {
-                    return conn.getc();
+                    int r = conn.getc();
+                    RFFIUtils.traceUpCallReturn("getc", r);
+                    return r;
                 } catch (IOException ex) {
-                    throw RInternalError.shouldNotReachHere(ex);
+                    return -1;
                 }
             }
         }

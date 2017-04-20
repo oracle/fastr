@@ -85,6 +85,14 @@ int call_dpotrf(char uplo, int n, double *a, int lda) {
     return info;
 }
 
+extern int dpotri_(char *uplo, int *n, double *a, int *lda, int *info);
+
+int call_dpotri(char uplo, int n, double *a, int lda) {
+    int info;
+    dpotri_(&uplo, &n, a, &lda, &info);
+    return info;
+}
+
 extern int dpstrf_(char *uplo, int *n, double *a, int *lda, int *piv, int *rank, double *tol, double *work, int *info);
 
 int call_dpstrf(char uplo, int n, double *a, int lda, int *piv, int *rank, double tol, double *work) {
