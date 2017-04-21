@@ -71,7 +71,6 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
      */
     private static void initialize() {
         try {
-            RFFIFactory.initialize();
             Locale.setDefault(Locale.ROOT);
             RAccuracyInfo.initialize();
         } catch (Throwable t) {
