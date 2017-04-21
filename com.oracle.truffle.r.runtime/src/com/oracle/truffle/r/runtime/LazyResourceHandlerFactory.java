@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.ResourceHandlerFactory.Handler;
 /**
  * Default implementation uses the default mechanism in {@code java.lang.Class}.
  */
-class DefaultResourceHandlerFactory extends ResourceHandlerFactory implements Handler {
+class LazyResourceHandlerFactory extends ResourceHandlerFactory implements Handler {
 
     @Override
     public URL getResource(Class<?> accessor, String name) {

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 
@@ -40,6 +41,7 @@ public abstract class RFFIFactory {
     private enum Factory {
         JNI("com.oracle.truffle.r.runtime.ffi.jni.JNI_RFFIFactory"),
         LLVM("com.oracle.truffle.r.engine.interop.ffi.llvm.TruffleLLVM_RFFIFactory"),
+        MANAGED("com.oracle.truffle.r.runtime.ffi.managed.Managed_RFFIFactory"),
         NFI("com.oracle.truffle.r.engine.interop.ffi.nfi.TruffleNFI_RFFIFactory");
 
         private final String klassName;
@@ -85,6 +87,9 @@ public abstract class RFFIFactory {
         prop = System.getenv(FACTORY_CLASS_ENV);
         if (prop != null) {
             return checkFactoryName(prop);
+        }
+        if (FastRConfig.ManagedMode) {
+            return Factory.MANAGED.klassName;
         }
         return DEFAULT_FACTORY.klassName;
     }

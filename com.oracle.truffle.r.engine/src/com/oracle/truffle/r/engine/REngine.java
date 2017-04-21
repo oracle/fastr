@@ -162,7 +162,7 @@ final class REngine implements Engine, Engine.Timings {
         REnvironment.baseInitialize(baseFrame, globalFrame);
         RBuiltinPackages.loadBase(baseFrame);
         RGraphics.initialize();
-        if (FastROptions.LoadBase.getBooleanValue()) {
+        if (FastROptions.LoadProfiles.getBooleanValue()) {
             /*
              * eval the system/site/user profiles. Experimentally GnuR does not report warnings
              * during system profile evaluation, but does for the site/user profiles.

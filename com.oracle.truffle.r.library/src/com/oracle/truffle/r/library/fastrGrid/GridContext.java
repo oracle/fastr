@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import static com.oracle.truffle.r.library.fastrGrid.WindowDevice.awtNotSupported;
+
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -29,6 +31,7 @@ import com.oracle.truffle.r.library.fastrGrid.GridState.GridDeviceState;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice.DeviceCloseException;
 import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
+import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -89,7 +92,11 @@ public final class GridContext {
     public void openDefaultDevice() {
         String defaultDev = RGridGraphicsAdapter.getDefaultDevice();
         if (defaultDev.equals("awt") || defaultDev.startsWith("X11")) {
-            setCurrentDevice(defaultDev, WindowDevice.createWindowDevice());
+            if (!FastRConfig.InternalGridAwtSupport) {
+                throw awtNotSupported();
+            } else {
+                setCurrentDevice(defaultDev, WindowDevice.createWindowDevice());
+            }
         } else {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "FastR does not support device '" + defaultDev + "'.");
         }

@@ -65,6 +65,7 @@ public abstract class CountFields extends RExternalBuiltinNode.Arg6 {
     }
 
     @Specialization
+    @TruffleBoundary
     protected Object count(int conn, Object sep, Object quote, int nskipArg, boolean blskip, String commentCharArg) {
         char comChar;
         if (!(commentCharArg != null && commentCharArg.length() == 1)) {
@@ -104,7 +105,6 @@ public abstract class CountFields extends RExternalBuiltinNode.Arg6 {
         }
     }
 
-    @TruffleBoundary
     private static Object countFields(RConnection file, char sepChar, String quoteSet, @SuppressWarnings("unused") int nskip, boolean blskip, char comChar) throws IOException {
         LocalData data = new LocalData();
         data.sepchar = sepChar;

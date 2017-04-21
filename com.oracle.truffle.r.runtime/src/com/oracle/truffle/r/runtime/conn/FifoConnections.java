@@ -35,6 +35,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
@@ -54,6 +55,7 @@ public class FifoConnections {
         }
 
         @Override
+        @TruffleBoundary
         protected void createDelegateConnection() throws IOException {
             final DelegateRConnection delegate;
             if (isBlocking()) {
@@ -267,6 +269,7 @@ public class FifoConnections {
      * @param path The path to the named pipe.
      * @throws IOException
      */
+    @TruffleBoundary
     private static void createNamedPipe(String path) throws IOException {
 
         String[] command = new String[]{"mkfifo", path};

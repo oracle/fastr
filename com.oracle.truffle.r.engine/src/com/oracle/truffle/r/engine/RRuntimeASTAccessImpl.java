@@ -561,16 +561,19 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
+    @TruffleBoundary
     public boolean enableDebug(RFunction func, boolean once) {
         return DebugHandling.enableDebug(func, "", RNull.instance, once, false);
     }
 
     @Override
+    @TruffleBoundary
     public boolean isDebugged(RFunction func) {
         return DebugHandling.isDebugged(func);
     }
 
     @Override
+    @TruffleBoundary
     public boolean disableDebug(RFunction func) {
         return DebugHandling.undebug(func);
     }

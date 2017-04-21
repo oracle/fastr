@@ -31,7 +31,11 @@ export R_VERSION = $(subst R-,,$(notdir $(basename $(basename $(wildcard $(FASTR
 export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
 
 ifndef FASTR_RFFI
+ifeq ($(FASTR_MANAGED),true)
+export FASTR_RFFI = managed
+else
 export FASTR_RFFI = jni
+endif
 endif
 
 # Completely accurate dependency analysis is very difficult for this project, so use a version number

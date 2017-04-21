@@ -1,9 +1,12 @@
 # The R FFI Implementation
 
 # Introduction
-FastR interfaces to native C and Fortran code in a number of ways, for example, access to C library APIs not supported by the Java JDK, access to LaPack functions, and the `.Call`, `.Fortran`, `.C` builtins. Each of these are defined by a Java interface,e.g. `CallRFFI` for the `.Call` builtin. To facilitate experimentation and different implementations, the implementation of these interfaces is defined by a factory class, `RFFIFactory`, that is chosen at run time via the `fastr.ffi.factory.class` system property, or the `FASTR_RFFI` environment variable.
+FastR can interface to native C and Fortran code in a number of ways, for example, access to C library APIs not supported by the Java JDK, access to LaPack functions, and the `.Call`, `.Fortran`, `.C` builtins. Each of these are defined by a Java interface,e.g. `CallRFFI` for the `.Call` builtin. To facilitate experimentation and different implementations, the implementation of these interfaces is defined by a factory class, `RFFIFactory`, that is chosen at run time via the `fastr.ffi.factory.class` system property, or the `FASTR_RFFI` environment variable.
 The factory is responsible for creating an instance of the `RFFI` interface that in turn provides access to implementations of the underlying interfaces such as `CallRFFI`. This structure allows
 for each of the individual interfaces to be implemented by a different mechanism. Currently the default factory class is `JNI_RFFIFactory` which uses the Java JNI system to implement the transition to native code.
+
+# No native code mode
+FastR can be configured to avoid running any unmanaged code coming from GNU R or packages. It is described in more detail [here](managed_ffi.md).
 
 # Native Implementation
 The native implementation of the [R FFI](https://cran.r-project.org/doc/manuals/r-release/R-exts.html) is contained in the `fficall` directory of
@@ -58,7 +61,7 @@ The implementation is currently incomplete.
 
 # RFFI Initialization
 Not all of the individual interfaces need to be instantiated on startup. The `getXXXRFFI()` method of `RFFI` is responsible for instantiating the `XXX` interface (e.e.g `Call`).
-However, the factory can choose to instantiate the interfqces eagerly if desired. The choice of factory class is made by `RFFIFactory.initialize()` which is called when the
+However, the factory can choose to instantiate the interfaces eagerly if desired. The choice of factory class is made by `RFFIFactory.initialize()` which is called when the
 initial `RContext` is being created by `PolyglotEngine`. Note that at this stage, very little code can be executed as the initial context has not yet been fully created and registered with `PolyglotEngine`.
 
 In general, state maintained by the `RFFI` implementation classes is `RContext` specific and to facilitate this `RFFIFactory` defines a `newContextState` method that is called by `RContext`. Again, at the point this is called the context is not active and so any execution that requires an active context must be delayed until the `initialize` method is called on the `ContextState` instance. Typically special initialization may be required on the initialization of the initial context, such as loading native libraries, and also on the initialization of a `SHARED_PARENT_RW` context kind.

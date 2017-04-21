@@ -20,32 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastrGrid;
+package com.oracle.truffle.r.runtime.ffi.managed;
 
-import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedJFrameDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
+import static com.oracle.truffle.r.runtime.ffi.managed.Managed_RFFIFactory.unsupported;
 
-/**
- * Contains code specific to FastR device that shows the graphical output interactively in a window.
- */
-public final class WindowDevice {
-    private WindowDevice() {
-        // only static members
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
+
+public class Managed_REmbedRFFI implements REmbedRFFI {
+    @Override
+    public void suicide(String x) {
+        throw unsupported("REmbed");
     }
 
-    public static GridDevice createWindowDevice() {
-        return createWindowDevice(GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT);
+    @Override
+    public void cleanUp(int type, int x, int y) {
+        throw unsupported("REmbed");
     }
 
-    public static GridDevice createWindowDevice(int width, int height) {
-        JFrameDevice frameDevice = JFrameDevice.create(width, height);
-        return new BufferedJFrameDevice(frameDevice);
+    @Override
+    public String readConsole(String prompt) {
+        throw unsupported("REmbed");
     }
 
-    public static RError awtNotSupported() {
-        throw RError.error(RError.NO_CALLER, Message.GENERIC, "AWT based grid devices are not supported.");
+    @Override
+    public void writeConsole(String x) {
+        throw unsupported("REmbed");
+    }
+
+    @Override
+    public void writeErrConsole(String x) {
+        throw unsupported("REmbed");
     }
 }

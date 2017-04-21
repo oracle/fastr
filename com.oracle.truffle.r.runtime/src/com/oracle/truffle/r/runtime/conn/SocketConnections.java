@@ -29,6 +29,7 @@ import java.nio.channels.ByteChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
@@ -56,6 +57,7 @@ public class SocketConnections {
         }
 
         @Override
+        @TruffleBoundary
         protected void createDelegateConnection() throws IOException {
             DelegateRConnection delegate;
             if (server) {
