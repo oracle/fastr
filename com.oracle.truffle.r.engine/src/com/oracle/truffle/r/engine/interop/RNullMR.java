@@ -32,6 +32,11 @@ import com.oracle.truffle.r.runtime.data.RNull;
 
 @MessageResolution(receiverType = RNull.class, language = TruffleRLanguage.class)
 public class RNullMR {
+    /**
+     * Workaround to avoid NFI converting {@link RNull} to {@code null}.
+     */
+    private static boolean isNull = true;
+
     @Resolve(message = "IS_BOXED")
     public abstract static class RNullIsBoxedNode extends Node {
         protected Object access(@SuppressWarnings("unused") RNull receiver) {
@@ -49,7 +54,7 @@ public class RNullMR {
     @Resolve(message = "IS_NULL")
     public abstract static class RNullIsNullNode extends Node {
         protected Object access(@SuppressWarnings("unused") RNull receiver) {
-            return true;
+            return isNull;
         }
     }
 
@@ -59,5 +64,11 @@ public class RNullMR {
         protected static boolean test(TruffleObject receiver) {
             return receiver instanceof RNull;
         }
+    }
+
+    public static boolean setIsNull(boolean value) {
+        boolean prev = isNull;
+        isNull = value;
+        return prev;
     }
 }
