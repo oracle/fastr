@@ -30,6 +30,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -54,6 +55,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
@@ -208,13 +210,13 @@ public class LogFunctions {
                 Arrays.fill(resultVector, 0, resultVector.length, Double.NaN);
             } else {
                 xNACheck.enable(vector);
-                Runnable[] warningResult = new Runnable[1];
+                RBaseNode[] warningCtx = new RBaseNode[1];
                 for (int i = 0; i < vector.getLength(); i++) {
                     double value = vector.getDataAt(i);
-                    resultVector[i] = xNACheck.check(value) ? RRuntime.DOUBLE_NA : logb(value, base, warningResult);
+                    resultVector[i] = xNACheck.check(value) ? RRuntime.DOUBLE_NA : logb(value, base, warningCtx);
                 }
-                if (warningResult[0] != null) {
-                    warningResult[0].run();
+                if (warningCtx[0] != null) {
+                    RError.warning(warningCtx[0], RError.Message.NAN_PRODUCED);
                 }
             }
             boolean complete = xNACheck.neverSeenNA() && baseNACheck.neverSeenNA();
@@ -230,26 +232,27 @@ public class LogFunctions {
                 nanProfile.enter();
                 return base;
             }
-            Runnable[] warningResult = new Runnable[1];
-            double ret = logb(x, base, warningResult);
-            if (warningResult[0] != null) {
-                warningResult[0].run();
+            RBaseNode[] warningCtx = new RBaseNode[1];
+            double ret = logb(x, base, warningCtx);
+            if (warningCtx[0] != null) {
+                RError.warning(warningCtx[0], RError.Message.NAN_PRODUCED);
             }
             return ret;
         }
 
-        private double logb(double x, double base, Runnable[] warningResult) {
+        @TruffleBoundary
+        private double logb(double x, double base, RBaseNode[] warningCtx) {
             double logx = Math.log(x);
             if (Double.isNaN(logx)) {
-                warningResult[0] = () -> RError.warning(this, RError.Message.NAN_PRODUCED);
+                warningCtx[0] = this;
             }
             if (base == Math.E) {
                 return logx;
             }
 
             double result = logx / Math.log(base);
-            if (warningResult[0] == null && Double.isNaN(result)) {
-                warningResult[0] = () -> RError.warning(RError.SHOW_CALLER, RError.Message.NAN_PRODUCED);
+            if (warningCtx[0] == null && Double.isNaN(result)) {
+                warningCtx[0] = RError.SHOW_CALLER;
             }
 
             return result;
