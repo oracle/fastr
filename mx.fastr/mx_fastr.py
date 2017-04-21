@@ -39,7 +39,7 @@ import os
 '''
 This is the launchpad for all the functions available for building/running/testing/analyzing
 FastR. FastR can run with or without the Graal compiler enabled. As a convenience if the
-graal-core suite is detected then the use of the Graal compiler is enabled without any
+compiler suite is detected then the use of the Graal compiler is enabled without any
 additional command line options being required to the mx command, i.e. it is as if --jdk jvmci
 was passed as an mx global option.
 '''
@@ -48,7 +48,7 @@ _fastr_suite = mx.suite('fastr')
 '''
 If this is None, then we run under the standard VM in interpreted mode only.
 '''
-_mx_graal = mx.suite("graal-core", fatalIfMissing=False)
+_mx_graal = mx.suite("compiler", fatalIfMissing=False)
 _mx_sulong = mx.suite("sulong", fatalIfMissing=False)
 
 _r_command_package = 'com.oracle.truffle.r.engine'

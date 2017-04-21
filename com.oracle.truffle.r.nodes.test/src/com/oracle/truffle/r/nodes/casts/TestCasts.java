@@ -69,7 +69,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * mx --J @'-Dgraal.Dump=HighTier:1 -Dgraal.MethodFilter=*TestCasts* -Dgraal.TraceTruffleCompilation=true -Dgraal.PrintBackendCFG=false'  junits --tests TestCasts
  *
  * of course, Graal needs to be imported for this to work:
- * DEFAULT_DYNAMIC_IMPORTS=graal-core (or graal-enterprise)
+ * DEFAULT_DYNAMIC_IMPORTS=compiler (or graal-enterprise)
  */
 public class TestCasts extends TestBase {
 

@@ -15,7 +15,7 @@ The `sulong` repository must be cloned to a sibling directory of `fastr` and bui
     mx build
     mx su-pulldragonegg
 
-The `mx build` step will clone the `graal-core` repository, if necessary, and build that also. The `mx su-pulldragonegg` step is required to be able to compile Fortran code to LLVM, which is required by FastR.
+The `mx build` step will clone the `compiler` repository, if necessary, and build that also. The `mx su-pulldragonegg` step is required to be able to compile Fortran code to LLVM, which is required by FastR.
 
 ## Additional Pre-Requisites
 
