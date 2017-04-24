@@ -24,6 +24,7 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import java.util.ArrayList;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridState.GridDeviceState;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice.DeviceCloseException;
@@ -58,6 +59,7 @@ public final class GridContext {
         return INSTANCE;
     }
 
+    @TruffleBoundary
     public GridState getGridState() {
         gridState.setDeviceState(devices.get(currentDeviceIdx).state);
         return gridState;

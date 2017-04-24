@@ -24,6 +24,7 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import java.util.function.Function;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 
 /**
@@ -41,6 +42,7 @@ final class GridStateGetNode extends RExternalBuiltinNode.Arg0 {
     }
 
     @Override
+    @TruffleBoundary
     public Object execute() {
         Object result = getter.apply(GridContext.getContext().getGridState());
         assert result != null;

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import java.util.function.BiConsumer;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -46,6 +47,7 @@ public final class GridStateSetNode extends RExternalBuiltinNode.Arg1 {
     }
 
     @Override
+    @TruffleBoundary
     public Object execute(Object arg) {
         setter.accept(GridContext.getContext().getGridState(), arg);
         return RNull.instance;
