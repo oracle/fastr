@@ -47,6 +47,7 @@ public final class FFIUpCallRootNode extends RootNode {
     @Child private FFIUpCallNode theFFIUpCallNode;
     private final int numArgs;
 
+    @SuppressWarnings("deprecation")
     private FFIUpCallRootNode(FFIUpCallNode child) {
         super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
         theFFIUpCallNode = child;

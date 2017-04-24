@@ -82,6 +82,7 @@ public class TestCasts extends TestBase {
         private boolean isCompiled = false;
         @Child protected T node;
 
+        @SuppressWarnings("deprecation")
         protected TestRootNode(String name, T node) {
             super(RContext.getRForeignAccessFactory().getTruffleLanguage(), RSyntaxNode.INTERNAL, descriptor);
             this.name = name;

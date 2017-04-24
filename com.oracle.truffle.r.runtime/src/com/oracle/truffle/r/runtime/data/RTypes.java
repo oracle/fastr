@@ -26,8 +26,6 @@ import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.TypeCast;
 import com.oracle.truffle.api.dsl.TypeCheck;
 import com.oracle.truffle.api.dsl.TypeSystem;
-import com.oracle.truffle.api.dsl.internal.DSLOptions;
-import com.oracle.truffle.api.dsl.internal.DSLOptions.DSLGenerator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -68,7 +66,6 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
                 RAbstractContainer.class,
                 RArgsValuesAndNames.class
 })
-@DSLOptions(defaultGenerator = DSLGenerator.FLAT)
 public class RTypes {
 
     @TypeCheck(RNull.class)

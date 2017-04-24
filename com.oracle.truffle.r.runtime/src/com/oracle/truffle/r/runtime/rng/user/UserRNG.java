@@ -78,6 +78,7 @@ public final class UserRNG implements RandomNumberGenerator {
     private abstract static class UserRNGRootNodeAdapter extends RootNode {
         @Child protected UserRngRFFI.UserRngRFFINode userRngRFFINode = RFFIFactory.getRFFI().getUserRngRFFI().createUserRngRFFINode();
 
+        @SuppressWarnings("deprecation")
         protected UserRNGRootNodeAdapter() {
             super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
         }

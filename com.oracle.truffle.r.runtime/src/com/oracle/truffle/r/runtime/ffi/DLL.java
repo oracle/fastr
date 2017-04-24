@@ -581,6 +581,7 @@ public class DLL {
 
         @Child RFindSymbolNode findSymbolNode = RFindSymbolNode.create();
 
+        @SuppressWarnings("deprecation")
         private RFindSymbolRootNode() {
             super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
         }

@@ -90,11 +90,12 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     private static boolean systemInitialized;
 
-    public static final TruffleRLanguage INSTANCE = new TruffleRLanguage();
+    public static TruffleRLanguage INSTANCE;
 
     public static final String MIME = RRuntime.R_APP_MIME;
 
-    private TruffleRLanguage() {
+    public TruffleRLanguage() {
+        INSTANCE = this;
     }
 
     @Override
@@ -185,8 +186,8 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         return null;
     }
 
-    @SuppressWarnings("try")
     @Override
+    @SuppressWarnings({"try", "deprecation"})
     protected CallTarget parse(ParsingRequest request) throws Exception {
         CompilerAsserts.neverPartOfCompilation();
         try (RCloseable c = RContext.withinContext(findContext(createFindContextNode()))) {
@@ -228,10 +229,12 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     // TODO: why isn't the original method public?
+    @SuppressWarnings("deprecation")
     public Node actuallyCreateFindContextNode() {
         return createFindContextNode();
     }
 
+    @SuppressWarnings("deprecation")
     public RContext actuallyFindContext0(Node contextNode) {
         return findContext(contextNode);
     }

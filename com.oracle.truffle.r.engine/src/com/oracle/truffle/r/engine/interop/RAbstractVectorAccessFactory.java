@@ -48,6 +48,7 @@ public final class RAbstractVectorAccessFactory implements Factory18 {
 
         @Child private RLengthNode lengthNode = RLengthNode.create();
 
+        @SuppressWarnings("deprecation")
         VectorSizeNode() {
             super(TruffleRLanguage.class, null, null);
         }
@@ -65,6 +66,7 @@ public final class RAbstractVectorAccessFactory implements Factory18 {
         @Child private RLengthNode lengthNode = RLengthNode.create();
         @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
+        @SuppressWarnings("deprecation")
         VectorReadNode() {
             super(TruffleRLanguage.class, null, null);
             this.lengthAccess = false;
@@ -94,6 +96,7 @@ public final class RAbstractVectorAccessFactory implements Factory18 {
     }
 
     private abstract class InteropRootNode extends RootNode {
+        @SuppressWarnings("deprecation")
         InteropRootNode() {
             super(TruffleRLanguage.class, null, null);
         }

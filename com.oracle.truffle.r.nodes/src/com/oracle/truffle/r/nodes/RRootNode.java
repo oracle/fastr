@@ -47,6 +47,7 @@ public abstract class RRootNode extends RootNode implements HasSignature {
 
     private FastPathFactory fastPath;
 
+    @SuppressWarnings("deprecation")
     protected RRootNode(FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
         super(RContext.getRForeignAccessFactory().getTruffleLanguage(), RSyntaxNode.SOURCE_UNAVAILABLE, frameDescriptor);
         this.fastPath = fastPath;
