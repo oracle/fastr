@@ -30,7 +30,11 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
  * Factory class for the different possible implementations of the {@link RFFI} interface.
  *
  * The RFFI may need to do special things in the case of multiple contexts, hence any given factory
- * must support the {@link #newContextState()} method.
+ * must support the {@link #newContextState()} method. Initialization of factory state that is
+ * dependent on the system being properly initialized <b>must</b> be done in the
+ * {@link ContextState#initialize} method and not in the constructor or {@link #createRFFI} method
+ * as they are invoked in the static block and the system is not typically initialized at that
+ * point.
  */
 public abstract class RFFIFactory {
     private enum Factory {
@@ -57,7 +61,7 @@ public abstract class RFFIFactory {
 
     @CompilationFinal protected static RFFI theRFFI;
 
-    public static RFFIFactory initialize() {
+    static {
         if (instance == null) {
             String klassName = getFactoryClassName();
             try {
@@ -67,7 +71,6 @@ public abstract class RFFIFactory {
                 throw Utils.rSuicide("Failed to instantiate class: " + klassName + ": " + ex);
             }
         }
-        return instance;
     }
 
     private static String getFactoryClassName() {
