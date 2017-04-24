@@ -27,6 +27,8 @@ import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.engine.interop.ffi.nfi.TruffleNFI_Base;
+import com.oracle.truffle.r.engine.interop.ffi.nfi.TruffleNFI_PCRE;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -95,6 +97,16 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return CharSXPWrapperMRForeign.ACCESS;
         } else if (obj instanceof RConnection) {
             return RConnectionMRForeign.ACCESS;
+        } else if (obj instanceof TruffleNFI_Base.TruffleNFI_UnameNode.UnameUpCallImpl) {
+            return UnameUpCallImplMRForeign.ACCESS;
+        } else if (obj instanceof TruffleNFI_Base.TruffleNFI_ReadlinkNode.SetResultImpl) {
+            return SetResultImplMRForeign.ACCESS;
+        } else if (obj instanceof TruffleNFI_Base.TruffleNFI_GlobNode.GlobUpCallImpl) {
+            return GlobUpCallImplMRForeign.ACCESS;
+        } else if (obj instanceof TruffleNFI_PCRE.TruffleNFI_CompileNode.MakeResultImpl) {
+            return MakeResultImplMRForeign.ACCESS;
+        } else if (obj instanceof TruffleNFI_PCRE.TruffleNFI_GetCaptureNamesNode.CaptureNamesImpl) {
+            return CaptureNamesImplMRForeign.ACCESS;
         } else {
             if (obj instanceof RAbstractVector) {
                 return ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
@@ -102,6 +114,7 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
                 throw RInternalError.unimplemented("missing foreign access factory for " + obj.getClass().getSimpleName());
             }
         }
+
     }
 
     @Override

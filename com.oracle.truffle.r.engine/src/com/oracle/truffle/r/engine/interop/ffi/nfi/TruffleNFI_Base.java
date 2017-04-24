@@ -32,6 +32,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 public class TruffleNFI_Base implements BaseRFFI {
@@ -145,7 +146,7 @@ public class TruffleNFI_Base implements BaseRFFI {
             void setResult(String link, int errno);
         }
 
-        private static class SetResultImpl implements SetResult {
+        public static class SetResultImpl implements SetResult, RTruffleObject {
             private String link;
             private int errno;
 
@@ -162,7 +163,7 @@ public class TruffleNFI_Base implements BaseRFFI {
             Function.call_readlink.initialize();
             try {
                 SetResultImpl setResultImpl = new SetResultImpl();
-                ForeignAccess.sendExecute(Function.call_readlink.message, Function.call_readlink.function, JavaInterop.asTruffleFunction(SetResult.class, setResultImpl), path);
+                ForeignAccess.sendExecute(Function.call_readlink.message, Function.call_readlink.function, setResultImpl, path);
                 if (setResultImpl.link == null) {
                     if (setResultImpl.errno == EINVAL) {
                         return path;
@@ -256,7 +257,7 @@ public class TruffleNFI_Base implements BaseRFFI {
             void unameUpCall(String sysname, String release, String version, String machine, String nodename);
         }
 
-        private class UnameUpCallImpl implements UnameUpCall, UtsName {
+        public static class UnameUpCallImpl implements UnameUpCall, UtsName, RTruffleObject {
             private String sysname;
             private String release;
             private String version;
@@ -305,7 +306,7 @@ public class TruffleNFI_Base implements BaseRFFI {
             if (unameUpCallImpl == null) {
                 unameUpCallImpl = new UnameUpCallImpl();
                 try {
-                    ForeignAccess.sendExecute(Function.call_uname.message, Function.call_uname.function, JavaInterop.asTruffleFunction(UnameUpCall.class, unameUpCallImpl));
+                    ForeignAccess.sendExecute(Function.call_uname.message, Function.call_uname.function, unameUpCallImpl);
                 } catch (InteropException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
@@ -319,7 +320,7 @@ public class TruffleNFI_Base implements BaseRFFI {
             void addPath(String path);
         }
 
-        private static class GlobUpCallImpl implements GlobUpCall {
+        public static class GlobUpCallImpl implements GlobUpCall, RTruffleObject {
             private ArrayList<String> paths = new ArrayList<>();
 
             @Override
@@ -333,7 +334,7 @@ public class TruffleNFI_Base implements BaseRFFI {
             Function.call_glob.initialize();
             GlobUpCallImpl globUpCallImpl = new GlobUpCallImpl();
             try {
-                ForeignAccess.sendExecute(Function.call_glob.message, Function.call_glob.function, pattern, JavaInterop.asTruffleFunction(GlobUpCall.class, globUpCallImpl));
+                ForeignAccess.sendExecute(Function.call_glob.message, Function.call_glob.function, pattern, globUpCallImpl);
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }

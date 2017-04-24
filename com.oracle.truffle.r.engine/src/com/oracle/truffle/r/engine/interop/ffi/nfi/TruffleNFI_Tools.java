@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
@@ -50,7 +51,7 @@ public class TruffleNFI_Tools implements ToolsRFFI {
             int getc(RConnection conn);
         }
 
-        private static class RConnGetCImpl implements RConnGetC {
+        private static class RConnGetCImpl implements RConnGetC, RTruffleObject {
             @Override
             public int getc(RConnection conn) {
                 RFFIUtils.traceUpCall("getc");
@@ -87,7 +88,7 @@ public class TruffleNFI_Tools implements ToolsRFFI {
             Node executeNode = Message.createExecute(1).createNode();
             try {
                 TruffleObject function = (TruffleObject) ForeignAccess.sendInvoke(bind, symbolHandle.asTruffleObject(), "bind", "((object): sint32): void");
-                ForeignAccess.sendExecute(executeNode, function, JavaInterop.asTruffleFunction(RConnGetC.class, new RConnGetCImpl()));
+                ForeignAccess.sendExecute(executeNode, function, new RConnGetCImpl());
             } catch (InteropException t) {
                 throw RInternalError.shouldNotReachHere(t);
             }

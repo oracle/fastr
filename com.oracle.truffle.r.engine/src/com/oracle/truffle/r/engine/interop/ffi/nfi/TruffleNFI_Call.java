@@ -39,7 +39,6 @@ import com.oracle.truffle.r.engine.interop.ffi.nfi.TruffleNFI_CallFactory.Truffl
 import com.oracle.truffle.r.nodes.ffi.RFFIUpCallMethod;
 import com.oracle.truffle.r.nodes.ffi.RFFIUtils;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
