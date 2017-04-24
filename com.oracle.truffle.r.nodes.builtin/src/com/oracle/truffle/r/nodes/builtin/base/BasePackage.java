@@ -440,7 +440,8 @@ public class BasePackage extends RBuiltinPackage {
         add(GrepFunctions.Gregexpr.class, GrepFunctionsFactory.GregexprNodeGen::create);
         add(GrepFunctions.Grep.class, GrepFunctionsFactory.GrepNodeGen::create);
         add(GrepFunctions.GrepL.class, GrepFunctionsFactory.GrepLNodeGen::create);
-        add(GrepFunctions.Regexp.class, GrepFunctionsFactory.RegexpNodeGen::create);
+        add(GrepFunctions.Regexpr.class, GrepFunctionsFactory.RegexprNodeGen::create);
+        add(GrepFunctions.Regexec.class, GrepFunctionsFactory.RegexecNodeGen::create);
         add(GrepFunctions.Strsplit.class, GrepFunctionsFactory.StrsplitNodeGen::create);
         add(GrepFunctions.Sub.class, GrepFunctionsFactory.SubNodeGen::create);
         add(HiddenInternalFunctions.GetRegisteredRoutines.class, HiddenInternalFunctionsFactory.GetRegisteredRoutinesNodeGen::create);

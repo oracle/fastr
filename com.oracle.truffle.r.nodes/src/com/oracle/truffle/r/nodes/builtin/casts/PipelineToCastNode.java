@@ -495,8 +495,8 @@ public final class PipelineToCastNode {
                         default:
                             throw RInternalError.unimplemented("TODO: more types here");
                     }
-                case CompareFilter.SAME:
-                    return arg -> arg == scalarValue.value;
+                case CompareFilter.STRING_EQ:
+                    return arg -> ((String) scalarValue.value).equals(arg);
 
                 default:
                     throw RInternalError.unimplemented("TODO: more operations here");

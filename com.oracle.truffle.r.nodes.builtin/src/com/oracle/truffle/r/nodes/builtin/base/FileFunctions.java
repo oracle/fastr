@@ -580,7 +580,7 @@ public class FileFunctions {
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
-                if (RRuntime.isNA(path)) {
+                if (RRuntime.isNA(path) || path.isEmpty()) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
                     File f = new File(Utils.tildeExpand(path));

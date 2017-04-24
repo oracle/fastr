@@ -313,7 +313,7 @@ public class GrepFunctions {
         }
 
         protected static boolean findMatch(String pattern, String text, boolean ignoreCase) {
-            Matcher m = Regexp.getPatternMatcher(pattern, text, ignoreCase);
+            Matcher m = Regexpr.getPatternMatcher(pattern, text, ignoreCase);
             return m.find();
         }
     }
@@ -733,7 +733,7 @@ public class GrepFunctions {
 
     @ImportStatic(GrepFunctions.class)
     @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
-    public abstract static class Regexp extends RBuiltinNode.Arg6 {
+    public abstract static class Regexpr extends RBuiltinNode.Arg6 {
 
         @Child SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
         @Child SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
@@ -746,7 +746,7 @@ public class GrepFunctions {
         @Child PCRERFFI.GetCaptureCountNode getCaptureCountNode = RFFIFactory.getRFFI().getPCRERFFI().createGetCaptureCountNode();
 
         static {
-            Casts casts = new Casts(Regexp.class);
+            Casts casts = new Casts(Regexpr.class);
             castPattern(casts);
             castText(casts, "text");
             castIgnoreCase(casts);
@@ -782,12 +782,9 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, boolean ignoreCaseL, boolean perlL, boolean fixedL, boolean useBytesL,
+        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, boolean ignoreCase, boolean perl, boolean fixed, boolean useBytesL,
                         @Cached("createCommon()") CommonCodeNode common) {
             common.checkExtraArgs(false, false, false, useBytesL, false);
-            boolean ignoreCase = ignoreCaseL;
-            boolean fixed = fixedL;
-            boolean perl = perlL;
             if (patternArg.getLength() > 1) {
                 throw RInternalError.unimplemented("multi-element patterns in regexpr not implemented yet");
             }
@@ -925,8 +922,115 @@ public class GrepFunctions {
     }
 
     @ImportStatic(GrepFunctions.class)
+    @RBuiltin(name = "regexec", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "fixed", "useBytes"}, behavior = PURE)
+    public abstract static class Regexec extends RBuiltinNode.Arg5 {
+
+        @Child SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
+        @Child SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
+        @Child SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
+
+        static {
+            Casts casts = new Casts(Regexec.class);
+            castPattern(casts);
+            castText(casts, "text");
+            castIgnoreCase(casts);
+            castFixed(casts, RRuntime.LOGICAL_FALSE);
+            castUseBytes(casts);
+        }
+
+        protected static final class Info {
+            protected final int index;
+            protected final int size;
+            protected final int[] captureStart;
+            protected final int[] captureLength;
+            protected final String[] captureNames;
+            protected final boolean hasCapture;
+
+            public Info(int index, int size, int[] captureStart, int[] captureLength, String[] captureNames) {
+                this.index = index;
+                this.size = size;
+                this.captureStart = captureStart;
+                this.captureLength = captureLength;
+                this.captureNames = captureNames;
+                this.hasCapture = captureStart != null && captureLength != null;
+            }
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, boolean ignoreCase, boolean fixed, boolean useBytes,
+                        @Cached("createCommon()") CommonCodeNode common) {
+            common.checkExtraArgs(false, false, false, useBytes, false);
+            if (patternArg.getLength() > 1) {
+                throw RInternalError.unimplemented("multi-element patterns in regexpr not implemented yet");
+            }
+            RList ret = RDataFactory.createList(vector.getLength());
+            String pattern = patternArg.getDataAt(0);
+            pattern = RegExp.checkPreDefinedClasses(pattern);
+            // TODO: useBytes normally depends on the value of the parameter and (if false) on
+            // whether the string is ASCII
+            for (int i = 0; i < vector.getLength(); i++) {
+                int[] matchPos;
+                int[] matchLength;
+                if (pattern.length() == 0) {
+                    // emtpy pattern
+                    matchPos = new int[]{1};
+                    matchLength = new int[]{0};
+                } else {
+                    List<Info> res = getInfo(pattern, vector.getDataAt(i), ignoreCase, fixed);
+                    matchPos = new int[res.size()];
+                    matchLength = new int[res.size()];
+                    for (int j = 0; j < res.size(); j++) {
+                        matchPos[j] = res.get(j).index;
+                        matchLength[j] = res.get(j).size;
+                    }
+                }
+                RIntVector matches = RDataFactory.createIntVector(matchPos, RDataFactory.COMPLETE_VECTOR);
+                setMatchLengthAttrNode.execute(matches, RDataFactory.createIntVector(matchLength, RDataFactory.COMPLETE_VECTOR));
+                ret.setElement(i, matches);
+            }
+            if (useBytes) {
+                setUseBytesAttrNode.execute(ret, RRuntime.LOGICAL_TRUE);
+            }
+            return ret;
+        }
+
+        protected List<Info> getInfo(String pattern, String text, boolean ignoreCase, boolean fixed) {
+            List<Info> list = new ArrayList<>();
+            if (fixed) {
+                int index;
+                if (ignoreCase) {
+                    index = text.toLowerCase().indexOf(pattern.toLowerCase());
+                } else {
+                    index = text.indexOf(pattern);
+                }
+                if (index != -1) {
+                    list.add(new Info(index + 1, pattern.length(), null, null, null));
+                }
+            } else {
+                Matcher m = getPatternMatcher(pattern, text, ignoreCase);
+                if (m.find()) {
+                    for (int i = 0; i <= m.groupCount(); i++) {
+                        list.add(new Info(m.start(i) + 1, m.end(i) - m.start(i), null, null, null));
+                    }
+                }
+            }
+            if (list.size() > 0) {
+                return list;
+            }
+            list.add(new Info(-1, -1, null, null, null));
+            return list;
+        }
+
+        @TruffleBoundary
+        private static Matcher getPatternMatcher(String pattern, String text, boolean ignoreCase) {
+            return Pattern.compile(pattern, ignoreCase ? Pattern.CASE_INSENSITIVE : 0).matcher(text);
+        }
+    }
+
+    @ImportStatic(GrepFunctions.class)
     @RBuiltin(name = "gregexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
-    public abstract static class Gregexpr extends Regexp {
+    public abstract static class Gregexpr extends Regexpr {
 
         @Child SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
         @Child SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
