@@ -37,12 +37,9 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAt
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertIndexNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertValueNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ProfiledSubscriptSpecial2NodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ProfiledSubscriptSpecialNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ProfiledSubsetSpecial2NodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ProfiledSubsetSpecialNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -83,7 +80,7 @@ class SpecialsUtils {
         }
 
         protected SubscriptSpecialBase createAccessNode() {
-            return null;
+            throw RInternalError.shouldNotReachHere();
         }
 
         @Specialization(limit = "CACHE_LIMIT", guards = "vector.getClass() == clazz")
@@ -111,11 +108,6 @@ class SpecialsUtils {
         protected SubscriptSpecialBase createAccessNode() {
             return SubscriptSpecialNodeGen.create(inReplacement);
         }
-
-        public static ProfiledSubscriptSpecial create(boolean inReplacement, SubscriptSpecial accessNode, RNode vectorNode, ConvertIndex indexNode) {
-            return ProfiledSubscriptSpecialNodeGen.create(inReplacement, accessNode, vectorNode, indexNode);
-        }
-
     }
 
     public abstract static class ProfiledSubsetSpecial extends ProfiledSubscriptSpecialBase {
@@ -130,11 +122,6 @@ class SpecialsUtils {
         protected SubscriptSpecialBase createAccessNode() {
             return SubsetSpecialNodeGen.create(inReplacement);
         }
-
-        public static ProfiledSubsetSpecial create(boolean inReplacement, SubsetSpecial accessNode, RNode vectorNode, ConvertIndex indexNode) {
-            return ProfiledSubsetSpecialNodeGen.create(inReplacement, accessNode, vectorNode, indexNode);
-        }
-
     }
 
     @NodeChild(value = "vector", type = RNode.class)
@@ -151,7 +138,7 @@ class SpecialsUtils {
         }
 
         protected SubscriptSpecial2Base createAccessNode() {
-            return null;
+            throw RInternalError.shouldNotReachHere();
         }
 
         @Specialization(limit = "CACHE_LIMIT", guards = "vector.getClass() == clazz")
@@ -181,10 +168,6 @@ class SpecialsUtils {
         protected SubscriptSpecial2Base createAccessNode() {
             return SubscriptSpecial2NodeGen.create(inReplacement);
         }
-
-        public static ProfiledSubscriptSpecial2 create(boolean inReplacement, SubscriptSpecial2 accessNode, RNode vectorNode, ConvertIndex indexNode1, ConvertIndex indexNode2) {
-            return ProfiledSubscriptSpecial2NodeGen.create(inReplacement, accessNode, vectorNode, indexNode1, indexNode2);
-        }
     }
 
     public abstract static class ProfiledSubsetSpecial2 extends ProfiledSubscriptSpecial2Base {
@@ -198,10 +181,6 @@ class SpecialsUtils {
         @Override
         protected SubscriptSpecial2Base createAccessNode() {
             return SubsetSpecial2NodeGen.create(inReplacement);
-        }
-
-        public static ProfiledSubsetSpecial2 create(boolean inReplacement, SubsetSpecial2 accessNode, RNode vectorNode, ConvertIndex indexNode1, ConvertIndex indexNode2) {
-            return ProfiledSubsetSpecial2NodeGen.create(inReplacement, accessNode, vectorNode, indexNode1, indexNode2);
         }
     }
 

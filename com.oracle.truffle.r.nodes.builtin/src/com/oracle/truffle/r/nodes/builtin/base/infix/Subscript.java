@@ -37,10 +37,10 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertIndex;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ProfiledSubscriptSpecial;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ProfiledSubscriptSpecial2;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecial2Common1;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecialCommon1;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ProfiledSubscriptSpecial2NodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ProfiledSubscriptSpecialNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -162,7 +162,7 @@ abstract class SubscriptSpecial extends SubscriptSpecialBase {
     }
 
     public static RNode create(boolean inReplacement, RNode profiledVector, ConvertIndex index) {
-        return ProfiledSubscriptSpecial.create(inReplacement, SubscriptSpecialNodeGen.create(inReplacement), profiledVector, index);
+        return ProfiledSubscriptSpecialNodeGen.create(inReplacement, profiledVector, index);
     }
 }
 
@@ -179,7 +179,7 @@ abstract class SubscriptSpecial2 extends SubscriptSpecial2Base {
     }
 
     public static RNode create(boolean inReplacement, RNode vectorNode, ConvertIndex index1, ConvertIndex index2) {
-        return ProfiledSubscriptSpecial2.create(inReplacement, SubscriptSpecial2NodeGen.create(inReplacement), vectorNode, index1, index2);
+        return ProfiledSubscriptSpecial2NodeGen.create(inReplacement, vectorNode, index1, index2);
     }
 }
 

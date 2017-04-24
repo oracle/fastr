@@ -36,8 +36,8 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertIndex;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ProfiledSubsetSpecial;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ProfiledSubsetSpecial2;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ProfiledSubsetSpecial2NodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ProfiledSubsetSpecialNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -84,7 +84,7 @@ abstract class SubsetSpecial extends SubscriptSpecialBase {
     }
 
     public static RNode create(boolean inReplacement, RNode vectorNode, ConvertIndex index) {
-        return ProfiledSubsetSpecial.create(inReplacement, null, vectorNode, index);
+        return ProfiledSubsetSpecialNodeGen.create(inReplacement, vectorNode, index);
     }
 }
 
@@ -112,7 +112,7 @@ abstract class SubsetSpecial2 extends SubscriptSpecial2Base {
     }
 
     public static RNode create(boolean inReplacement, RNode vectorNode, ConvertIndex index1, ConvertIndex index2) {
-        return ProfiledSubsetSpecial2.create(inReplacement, null, vectorNode, index1, index2);
+        return ProfiledSubsetSpecial2NodeGen.create(inReplacement, vectorNode, index1, index2);
     }
 }
 
