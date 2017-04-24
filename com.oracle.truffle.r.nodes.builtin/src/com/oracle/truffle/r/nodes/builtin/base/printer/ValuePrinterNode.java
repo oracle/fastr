@@ -562,6 +562,7 @@ public final class ValuePrinterNode extends RBaseNode {
         ValuePrinters.printNewLine(printCtx);
     }
 
+    @SuppressWarnings("deprecation")
     public static String prettyPrint(final Object value) {
         return (String) Truffle.getRuntime().createCallTarget(new RootNode(TruffleLanguage.class, null, null) {
 

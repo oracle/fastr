@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -293,6 +293,7 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public CallTarget parseToCallTarget(Source source, MaterializedFrame executionFrame) throws ParseException {
         if (source == Engine.GET_CONTEXT) {
             /*
@@ -332,6 +333,7 @@ final class REngine implements Engine, Engine.Timings {
 
         @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
+        @SuppressWarnings("deprecation")
         PolyglotEngineRootNode(List<RSyntaxNode> statements, SourceSection sourceSection, MaterializedFrame executionFrame) {
             super(TruffleRLanguage.class, sourceSection, new FrameDescriptor());
             // can't print if initializing the system in embedded mode (no builtins yet)
@@ -519,6 +521,7 @@ final class REngine implements Engine, Engine.Timings {
         @Child private GetVisibilityNode visibility = GetVisibilityNode.create();
         @Child private SetVisibilityNode setVisibility = SetVisibilityNode.create();
 
+        @SuppressWarnings("deprecation")
         protected AnonymousRootNode(RNode body, String description, boolean printResult, boolean topLevel) {
             super(TruffleRLanguage.class, null, new FrameDescriptor());
             this.body = body;

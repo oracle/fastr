@@ -56,7 +56,7 @@ FastR is primarily aimed at long-running applications. The runtime performance b
 
 Building FastR from source is supported on Mac OS X (El Capitan onwards), and various flavors of Linux.
 FastR uses a build tool called `mx` (cf `maven`) which can be downloaded from [here](http://github.com/graalvm/mx).
-`mx` manages software in _suites_, which are normally one-to-one with a `git` repository. FastR depends fundamentally on the [truffle](http://github.com/graalvm/truffle) suite. However, performance also depends on the [Graal compiler](http://github.com/graalvm/graal-core) as without it, FastR operates in interpreted mode only. The conventional way to arrange the Git repos (suites) is as siblings in a parent directory, which we will call `FASTR_HOME`.
+`mx` manages software in _suites_, which are normally one-to-one with a `git` repository. FastR depends fundamentally on the [truffle](http://github.com/graalvm/truffle) suite. However, performance also depends on the [Graal compiler](http://github.com/graalvm/graal) as without it, FastR operates in interpreted mode only. The conventional way to arrange the Git repos (suites) is as siblings in a parent directory, which we will call `FASTR_HOME`.
 
 ## Pre-Requisites
 FastR shares some code with GnuR, for example, the default packages and the Blas library. Therefore, a version of GnuR (currently

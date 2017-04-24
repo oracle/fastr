@@ -35,7 +35,6 @@ import java.util.concurrent.Semaphore;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.ExecutionContext;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
@@ -97,7 +96,8 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  *
  * Contexts can be destroyed
  */
-public final class RContext extends ExecutionContext {
+@SuppressWarnings("deprecation")
+public final class RContext extends com.oracle.truffle.api.ExecutionContext {
 
     public static final int CONSOLE_WIDTH = 80;
 

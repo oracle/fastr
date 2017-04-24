@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 public abstract class RFFIRootNode<T extends Node> extends RootNode {
     @Child T rffiNode;
 
+    @SuppressWarnings("deprecation")
     protected RFFIRootNode(T baseRFFINode) {
         super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
         this.rffiNode = baseRFFINode;
