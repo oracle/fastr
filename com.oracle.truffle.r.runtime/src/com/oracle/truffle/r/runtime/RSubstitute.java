@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,8 +87,10 @@ public class RSubstitute {
      * <li>..., replace by contents of ... (if bound)</li>
      * </ul>
      */
-    private static <T> T substitute(RCodeBuilder<T> builder, RSyntaxElement original, REnvironment env) {
+    private static <T> T substitute(RCodeBuilder<T> builder, RSyntaxElement original, REnvironment callEnv) {
         return new RSyntaxVisitor<T>() {
+
+            REnvironment env = callEnv;
 
             @Override
             protected T visit(RSyntaxCall element) {
@@ -134,8 +136,19 @@ public class RSubstitute {
                                 }
                                 RArgsValuesAndNames dots = (RArgsValuesAndNames) substitute;
                                 for (int j = 0; j < dots.getLength(); j++) {
-                                    RSyntaxElement contents = substituteElement(dots.getArgument(j));
-                                    args.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, dots.getSignature().getName(j), accept(contents)));
+                                    Object dotArg = dots.getArgument(j);
+                                    RSyntaxElement contents = substituteElement(dotArg);
+                                    if (dotArg instanceof RPromise) {
+                                        // Replace the environment used to substitute symbols in a
+                                        // promise by the empty one to prevent an infinite recursion
+                                        // if the promise contains a vararg
+                                        REnvironment origEnv = env;
+                                        env = REnvironment.emptyEnv();
+                                        args.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, dots.getSignature().getName(j), accept(contents)));
+                                        env = origEnv;
+                                    } else {
+                                        args.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, dots.getSignature().getName(j), accept(contents)));
+                                    }
                                 }
                                 continue;
                             }

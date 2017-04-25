@@ -341,6 +341,8 @@ public class TestFunctions extends TestBase {
         assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...,,,) } ; g(1) }");
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(...) { ..2 + ..2 } ; f(1,,2) }");
         assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(...) { ..1 + ..2 } ; f(1,,3) }");
+
+        assertEval("{ f1 <- function(...) { subst <- substitute(list(...))[-1L]; eval(subst[[1]]) }; f2 <- function(a, ...) TRUE; f3 <- function(a, ...) { cat(\"Here:\"); f1(f2(a, ...)) }; f1(f3(\"aaa\")) }");
     }
 
     @Test

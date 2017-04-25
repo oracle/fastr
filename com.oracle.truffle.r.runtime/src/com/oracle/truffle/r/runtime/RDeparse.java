@@ -893,7 +893,7 @@ public class RDeparse {
                 }
                 lbreak = linebreak(lbreak);
                 if (snames != null) {
-                    append(snames.getDataAt(i));
+                    append(quotify(snames.getDataAt(i), '\"'));
                     append(" = ");
                 }
                 appendValue(v.getDataAtAsObject(i));
