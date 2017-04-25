@@ -36,13 +36,11 @@ import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.infix.ProfiledSpecialsUtilsFactory.ProfiledSubscriptSpecial2NodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.infix.ProfiledSpecialsUtilsFactory.ProfiledSubscriptSpecialNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertIndex;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecial2Common1;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecialCommon1;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ProfiledSubscriptSpecial2NodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ProfiledSubscriptSpecialNodeGen;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecial2Common;
+import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecialCommon;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -64,19 +62,13 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 /**
  * Subscript code for vectors minus list is the same as subset code, this class allows sharing it.
  */
-abstract class SubscriptSpecialBase extends SubscriptSpecialCommon1 {
+abstract class SubscriptSpecialBase extends SubscriptSpecialCommon {
 
     protected SubscriptSpecialBase(boolean inReplacement) {
         super(inReplacement);
     }
 
-    @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
-
     protected abstract Object execute(VirtualFrame frame, Object vec, Object index);
-
-    protected boolean simpleVector(RAbstractVector vector) {
-        return classHierarchy.execute(vector) == null;
-    }
 
     @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
     protected int access(RAbstractIntVector vector, int index) {
@@ -103,19 +95,13 @@ abstract class SubscriptSpecialBase extends SubscriptSpecialCommon1 {
 /**
  * Subscript code for matrices minus list is the same as subset code, this class allows sharing it.
  */
-abstract class SubscriptSpecial2Base extends SubscriptSpecial2Common1 {
+abstract class SubscriptSpecial2Base extends SubscriptSpecial2Common {
 
     protected SubscriptSpecial2Base(boolean inReplacement) {
         super(inReplacement);
     }
 
-    @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
-
     public abstract Object execute(VirtualFrame frame, Object vector, Object index1, Object index2);
-
-    protected boolean simpleVector(RAbstractVector vector) {
-        return classHierarchy.execute(vector) == null;
-    }
 
     @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
     protected int access(RAbstractIntVector vector, int index1, int index2) {
