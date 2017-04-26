@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
@@ -37,6 +38,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -145,6 +147,16 @@ public abstract class CastListNode extends CastBaseNode {
     @Specialization
     protected RList doRSymbol(RSymbol s) {
         return RDataFactory.createList(new Object[]{s});
+    }
+
+    @Specialization
+    protected RList doRInterop(RInteropScalar ri) {
+        return RDataFactory.createList(new Object[]{ri});
+    }
+
+    @Specialization(guards = {"isForeignObject(to)"})
+    protected RList doForeignObject(TruffleObject to) {
+        return RDataFactory.createList(new Object[]{to});
     }
 
     public static CastListNode create() {

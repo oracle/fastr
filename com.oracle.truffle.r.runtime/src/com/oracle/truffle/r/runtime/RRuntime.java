@@ -21,22 +21,31 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropByte;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropChar;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropFloat;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropLong;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropShort;
 import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -312,7 +321,7 @@ public class RRuntime {
     }
 
     public static String logicalToStringNoCheck(byte operand) {
-        assert operand == LOGICAL_TRUE || operand == LOGICAL_FALSE;
+        assert operand == LOGICAL_TRUE || operand == LOGICAL_FALSE : "operand: " + operand;
         return operand == LOGICAL_TRUE ? STRING_TRUE : STRING_FALSE;
     }
 
@@ -918,4 +927,66 @@ public class RRuntime {
         return xa.hasDimensions();
     }
 
+    public static Object java2R(Object obj) {
+        if (obj == null) {
+            obj = RNull.instance;
+        } else if (obj instanceof Boolean) {
+            obj = RRuntime.asLogical((boolean) obj);
+        } else if (obj instanceof Byte) {
+            obj = ((Byte) obj).intValue();
+        } else if (obj instanceof Short) {
+            obj = ((Short) obj).intValue();
+        } else if (obj instanceof Long) {
+            obj = (((Long) obj).doubleValue());
+        } else if (obj instanceof Float) {
+            obj = (((Float) obj).doubleValue());
+        } else if (obj instanceof Character) {
+            obj = ((Character) obj).toString();
+        }
+        return obj;
+    }
+
+    public static Object[] r2Java(Object[] objects) {
+        Object[] ret = new Object[objects.length];
+        for (int i = 0; i < objects.length; i++) {
+            ret[i] = RRuntime.r2Java(objects[i]);
+        }
+        return ret;
+    }
+
+    public static Object r2Java(Object obj) {
+        if (obj == RNull.instance) {
+            return JavaInterop.asTruffleObject(null);
+        } else if (obj instanceof Byte) {
+            return RRuntime.fromLogical((byte) obj);
+        } else if (obj instanceof RInteropByte) {
+            return ((RInteropByte) obj).getValue();
+        } else if (obj instanceof RInteropChar) {
+            return ((RInteropChar) obj).getValue();
+        } else if (obj instanceof RInteropFloat) {
+            return ((RInteropFloat) obj).getValue();
+        } else if (obj instanceof RInteropLong) {
+            return ((RInteropLong) obj).getValue();
+        } else if (obj instanceof RInteropShort) {
+            return ((RInteropShort) obj).getValue();
+        } else if (obj instanceof RAbstractAtomicVector && ((RAbstractAtomicVector) obj).getLength() == 1) {
+            if (obj instanceof RAbstractDoubleVector) {
+                RAbstractDoubleVector v = (RAbstractDoubleVector) obj;
+                return v.getDataAt(0);
+            } else if (obj instanceof RAbstractIntVector) {
+                RAbstractIntVector v = (RAbstractIntVector) obj;
+                return v.getDataAt(0);
+            } else if (obj instanceof RAbstractLogicalVector) {
+                RAbstractLogicalVector v = (RAbstractLogicalVector) obj;
+                return v.getDataAt(0) == RRuntime.LOGICAL_TRUE;
+            } else if (obj instanceof RAbstractRawVector) {
+                RAbstractRawVector v = (RAbstractRawVector) obj;
+                return v.getDataAt(0).getValue();
+            } else if (obj instanceof RAbstractStringVector) {
+                RAbstractStringVector v = (RAbstractStringVector) obj;
+                return v.getDataAt(0);
+            }
+        }
+        return obj;
+    }
 }

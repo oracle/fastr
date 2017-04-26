@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -35,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -151,6 +153,11 @@ public abstract class PrecedenceNode extends RBaseNode {
         return LIST_PRECEDENCE;
     }
 
+    @Specialization
+    protected int doRInteroptFloat(RInterop b, boolean recursive) {
+        return NO_PRECEDENCE;
+    }
+
     @Specialization(guards = "recursive")
     protected int doListRecursive(RList val, boolean recursive,
                     @Cached("createRecursive()") PrecedenceNode precedenceNode) {
@@ -202,6 +209,16 @@ public abstract class PrecedenceNode extends RBaseNode {
 
     @Specialization
     protected int doS4Object(RSymbol o, boolean recursive) {
+        return LIST_PRECEDENCE;
+    }
+
+    @Specialization
+    protected int doRInterop(RInteropScalar ri, boolean recursive) {
+        return LIST_PRECEDENCE;
+    }
+
+    @Specialization(guards = {"isForeignObject(to)"})
+    protected int doForeignObject(TruffleObject to, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 
