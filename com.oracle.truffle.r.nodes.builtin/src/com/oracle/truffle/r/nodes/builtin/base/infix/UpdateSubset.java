@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base.infix;
 
 import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertIndex;
 import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertValue;
-import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.profile;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -38,7 +37,6 @@ import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertIndex;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ProfiledValue;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -58,12 +56,11 @@ public abstract class UpdateSubset extends RBuiltinNode.Arg1 {
 
     public static RNode special(ArgumentsSignature signature, RNode[] args, boolean inReplacement) {
         if (SpecialsUtils.isCorrectUpdateSignature(signature) && (args.length == 3 || args.length == 4)) {
-            ProfiledValue vector = profile(args[0]);
             ConvertIndex index = convertIndex(args[1]);
             if (args.length == 3) {
-                return UpdateSubscriptSpecialNodeGen.create(inReplacement, vector, index, convertValue(args[2]));
+                return UpdateSubscriptSpecial.create(inReplacement, args[0], index, convertValue(args[2]));
             } else {
-                return UpdateSubscriptSpecial2NodeGen.create(inReplacement, vector, index, convertIndex(args[2]), convertValue(args[3]));
+                return UpdateSubscriptSpecial2.create(inReplacement, args[0], index, convertIndex(args[2]), convertValue(args[3]));
             }
         }
         return null;

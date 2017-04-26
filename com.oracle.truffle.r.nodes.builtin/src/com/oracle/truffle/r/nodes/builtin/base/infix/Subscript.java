@@ -23,14 +23,12 @@
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
 import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertIndex;
-import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.profile;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -38,12 +36,11 @@ import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.infix.ProfiledSpecialsUtilsFactory.ProfiledSubscriptSpecial2NodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.infix.ProfiledSpecialsUtilsFactory.ProfiledSubscriptSpecialNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertIndex;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ProfiledValue;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecial2Common;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecialCommon;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -65,19 +62,13 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 /**
  * Subscript code for vectors minus list is the same as subset code, this class allows sharing it.
  */
-@NodeChild(value = "vector", type = ProfiledValue.class)
-@NodeChild(value = "index", type = ConvertIndex.class)
 abstract class SubscriptSpecialBase extends SubscriptSpecialCommon {
 
     protected SubscriptSpecialBase(boolean inReplacement) {
         super(inReplacement);
     }
 
-    @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
-
-    protected boolean simpleVector(RAbstractVector vector) {
-        return classHierarchy.execute(vector) == null;
-    }
+    protected abstract Object execute(VirtualFrame frame, Object vec, Object index);
 
     @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
     protected int access(RAbstractIntVector vector, int index) {
@@ -104,26 +95,13 @@ abstract class SubscriptSpecialBase extends SubscriptSpecialCommon {
 /**
  * Subscript code for matrices minus list is the same as subset code, this class allows sharing it.
  */
-@NodeChild(value = "vector", type = ProfiledValue.class)
-@NodeChild(value = "index1", type = ConvertIndex.class)
-@NodeChild(value = "index2", type = ConvertIndex.class)
 abstract class SubscriptSpecial2Base extends SubscriptSpecial2Common {
 
     protected SubscriptSpecial2Base(boolean inReplacement) {
         super(inReplacement);
     }
 
-    @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
-
-    protected abstract ProfiledValue getVector();
-
-    protected abstract ConvertIndex getIndex1();
-
-    protected abstract ConvertIndex getIndex2();
-
-    protected boolean simpleVector(RAbstractVector vector) {
-        return classHierarchy.execute(vector) == null;
-    }
+    public abstract Object execute(VirtualFrame frame, Object vector, Object index1, Object index2);
 
     @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
     protected int access(RAbstractIntVector vector, int index1, int index2) {
@@ -168,6 +146,10 @@ abstract class SubscriptSpecial extends SubscriptSpecialBase {
                     @Cached("createAccess()") ExtractVectorNode extract) {
         return extract.apply(frame, vector, new Object[]{index}, RRuntime.LOGICAL_TRUE, RLogical.TRUE);
     }
+
+    public static RNode create(boolean inReplacement, RNode profiledVector, ConvertIndex index) {
+        return ProfiledSubscriptSpecialNodeGen.create(inReplacement, profiledVector, index);
+    }
 }
 
 abstract class SubscriptSpecial2 extends SubscriptSpecial2Base {
@@ -180,6 +162,10 @@ abstract class SubscriptSpecial2 extends SubscriptSpecial2Base {
     protected Object access(RList vector, int index1, int index2,
                     @Cached("create()") ExtractListElement extract) {
         return extract.execute(vector, matrixIndex(vector, index1, index2));
+    }
+
+    public static RNode create(boolean inReplacement, RNode vectorNode, ConvertIndex index1, ConvertIndex index2) {
+        return ProfiledSubscriptSpecial2NodeGen.create(inReplacement, vectorNode, index1, index2);
     }
 }
 
@@ -199,9 +185,9 @@ public abstract class Subscript extends RBuiltinNode.Arg4 {
     public static RNode special(ArgumentsSignature signature, RNode[] arguments, boolean inReplacement) {
         if (signature.getNonNullCount() == 0) {
             if (arguments.length == 2) {
-                return SubscriptSpecialNodeGen.create(inReplacement, profile(arguments[0]), convertIndex(arguments[1]));
+                return SubscriptSpecial.create(inReplacement, arguments[0], convertIndex(arguments[1]));
             } else if (arguments.length == 3) {
-                return SubscriptSpecial2NodeGen.create(inReplacement, profile(arguments[0]), convertIndex(arguments[1]), convertIndex(arguments[2]));
+                return SubscriptSpecial2.create(inReplacement, arguments[0], convertIndex(arguments[1]), convertIndex(arguments[2]));
             }
         }
         return null;

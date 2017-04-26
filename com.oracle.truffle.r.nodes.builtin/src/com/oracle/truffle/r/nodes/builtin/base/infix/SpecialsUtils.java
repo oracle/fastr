@@ -27,22 +27,21 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertIndexNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertValueNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -52,6 +51,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * @see com.oracle.truffle.r.runtime.builtins.RSpecialFactory
  */
 class SpecialsUtils {
+
     private static final String valueArgName = "value".intern();
 
     public static boolean isCorrectUpdateSignature(ArgumentsSignature signature) {
@@ -66,12 +66,18 @@ class SpecialsUtils {
     /**
      * Common code shared between specials doing subset/subscript related operation.
      */
-    abstract static class SubscriptSpecialCommon extends RNode {
+    abstract static class SubscriptSpecialCommon extends Node {
+
+        @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
 
         protected final boolean inReplacement;
 
         protected SubscriptSpecialCommon(boolean inReplacement) {
             this.inReplacement = inReplacement;
+        }
+
+        protected boolean simpleVector(RAbstractVector vector) {
+            return classHierarchy.execute(vector) == null;
         }
 
         /**
@@ -145,27 +151,6 @@ class SpecialsUtils {
         @TruffleBoundary
         private static boolean hashCodeEquals(String current, int fieldHash) {
             return current.hashCode() == fieldHash;
-        }
-    }
-
-    @NodeInfo(cost = NodeCost.NONE)
-    public static final class ProfiledValue extends RBaseNode {
-
-        private final ValueProfile profile = ValueProfile.createClassProfile();
-
-        @Child private RNode delegate;
-
-        protected ProfiledValue(RNode delegate) {
-            this.delegate = delegate;
-        }
-
-        public Object execute(VirtualFrame frame) {
-            return profile.profile(delegate.execute(frame));
-        }
-
-        @Override
-        protected RSyntaxNode getRSyntaxNode() {
-            return delegate.asRSyntaxNode();
         }
     }
 
@@ -245,10 +230,6 @@ class SpecialsUtils {
         protected RSyntaxNode getRSyntaxNode() {
             return getDelegate().asRSyntaxNode();
         }
-    }
-
-    public static ProfiledValue profile(RNode value) {
-        return new ProfiledValue(value);
     }
 
     public static ConvertIndex convertIndex(RNode value) {

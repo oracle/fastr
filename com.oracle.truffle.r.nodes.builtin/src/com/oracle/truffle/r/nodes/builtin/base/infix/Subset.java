@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
 import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertIndex;
-import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.profile;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -36,8 +35,9 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.infix.ProfiledSpecialsUtilsFactory.ProfiledSubsetSpecial2NodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.infix.ProfiledSpecialsUtilsFactory.ProfiledSubsetSpecialNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertIndex;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ProfiledValue;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -82,6 +82,10 @@ abstract class SubsetSpecial extends SubscriptSpecialBase {
                     @Cached("createAccess()") ExtractVectorNode extract) {
         return extract.apply(frame, vector, new Object[]{index}, RRuntime.LOGICAL_TRUE, RLogical.TRUE);
     }
+
+    public static RNode create(boolean inReplacement, RNode vectorNode, ConvertIndex index) {
+        return ProfiledSubsetSpecialNodeGen.create(inReplacement, vectorNode, index);
+    }
 }
 
 /**
@@ -106,6 +110,10 @@ abstract class SubsetSpecial2 extends SubscriptSpecial2Base {
                     @Cached("create()") ExtractListElement extract) {
         return RDataFactory.createList(new Object[]{extract.execute(vector, matrixIndex(vector, index1, index2))});
     }
+
+    public static RNode create(boolean inReplacement, RNode vectorNode, ConvertIndex index1, ConvertIndex index2) {
+        return ProfiledSubsetSpecial2NodeGen.create(inReplacement, vectorNode, index1, index2);
+    }
 }
 
 @RBuiltin(name = "[", kind = PRIMITIVE, parameterNames = {"x", "...", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
@@ -118,12 +126,11 @@ public abstract class Subset extends RBuiltinNode.Arg3 {
 
     public static RNode special(ArgumentsSignature signature, RNode[] args, boolean inReplacement) {
         if (signature.getNonNullCount() == 0 && (args.length == 2 || args.length == 3)) {
-            ProfiledValue profiledVector = profile(args[0]);
             ConvertIndex index = convertIndex(args[1]);
             if (args.length == 2) {
-                return SubsetSpecialNodeGen.create(inReplacement, profiledVector, index);
+                return SubsetSpecial.create(inReplacement, args[0], index);
             } else {
-                return SubsetSpecial2NodeGen.create(inReplacement, profiledVector, index, convertIndex(args[2]));
+                return SubsetSpecial2.create(inReplacement, args[0], index, convertIndex(args[2]));
             }
         }
         return null;
