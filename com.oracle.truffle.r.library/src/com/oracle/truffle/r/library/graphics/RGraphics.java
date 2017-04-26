@@ -34,7 +34,7 @@ public class RGraphics {
         if (initialized.compareAndSet(false, true)) {
             if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
                 RGridGraphicsAdapter.initialize();
-            } else {
+            } else if (FastROptions.LoadPackagesNativeCode.getBooleanValue()) {
                 DLL.DLLInfo dllInfo = DLL.findLibraryContainingSymbol("InitGraphics");
                 DLL.SymbolHandle symbolHandle = DLL.findSymbol("InitGraphics", dllInfo);
                 assert symbolHandle != DLL.SYMBOL_NOT_FOUND;

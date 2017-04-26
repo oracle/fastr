@@ -46,7 +46,7 @@ public enum FastROptions {
     TraceNativeCalls("Trace all native function calls (performed via .Call, .External, etc.)", false),
     Rdebug("Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)", null, true),
     PerformanceWarnings("Print FastR performance warning", false),
-    LoadBase("Load base package", true),
+    LoadProfiles("Load the system, site and user profile scripts.", !FastRConfig.ManagedMode),
     PrintComplexLookups("Print a message for each non-trivial variable lookup", false),
     FullPrecisionSum("Use 128 bit arithmetic in sum builtin", false),
     InvisibleArgs("Argument writes do not trigger state transitions", true),
@@ -56,6 +56,7 @@ public enum FastROptions {
     ForceSources("Generate source sections for unserialized code", false),
     SharedContexts("Whether all child contexts are to be shared contexts", true),
     SearchPathForcePromises("Whether all promises for frames on shared path are forced in presence of shared contexts", false),
+    LoadPackagesNativeCode("Load native code of packages, including builtin packages.", !FastRConfig.ManagedMode),
 
     // Promises optimizations
     EagerEval("If enabled, overrides all other EagerEval switches (see EagerEvalHelper)", false),

@@ -33,6 +33,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.CodeSource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -190,6 +191,8 @@ public final class REnvVars implements RContext.ContextState {
         return rHome;
     }
 
+    private static CodeSource codeSource = REnvVars.class.getProtectionDomain().getCodeSource();
+
     /**
      * In the case where {@code R_HOME} is not set, which should only occur when FastR is invoked
      * from a {@link PolyglotEngine} created by another language, we try to locate the
@@ -200,7 +203,7 @@ public final class REnvVars implements RContext.ContextState {
      * @return either a valid {@code R_HOME} or {@code null}
      */
     private static Path getRHomePath() {
-        Path path = Paths.get(REnvVars.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
+        Path path = Paths.get(codeSource.getLocation().getPath()).getParent();
         String markerFile = markerFile();
         while (path != null) {
             if (validateRHome(path, markerFile)) {

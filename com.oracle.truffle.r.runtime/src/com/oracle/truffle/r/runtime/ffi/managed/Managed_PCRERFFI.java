@@ -20,32 +20,40 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.fastrGrid;
+package com.oracle.truffle.r.runtime.ffi.managed;
 
-import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedJFrameDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
+import static com.oracle.truffle.r.runtime.ffi.managed.Managed_RFFIFactory.unsupported;
 
-/**
- * Contains code specific to FastR device that shows the graphical output interactively in a window.
- */
-public final class WindowDevice {
-    private WindowDevice() {
-        // only static members
+import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
+
+public class Managed_PCRERFFI implements PCRERFFI {
+    @Override
+    public MaketablesNode createMaketablesNode() {
+        throw unsupported("PCRER");
     }
 
-    public static GridDevice createWindowDevice() {
-        return createWindowDevice(GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT);
+    @Override
+    public CompileNode createCompileNode() {
+        throw unsupported("PCRER");
     }
 
-    public static GridDevice createWindowDevice(int width, int height) {
-        JFrameDevice frameDevice = JFrameDevice.create(width, height);
-        return new BufferedJFrameDevice(frameDevice);
+    @Override
+    public GetCaptureCountNode createGetCaptureCountNode() {
+        throw unsupported("PCRER");
     }
 
-    public static RError awtNotSupported() {
-        throw RError.error(RError.NO_CALLER, Message.GENERIC, "AWT based grid devices are not supported.");
+    @Override
+    public GetCaptureNamesNode createGetCaptureNamesNode() {
+        throw unsupported("PCRER");
+    }
+
+    @Override
+    public StudyNode createStudyNode() {
+        throw unsupported("PCRER");
+    }
+
+    @Override
+    public ExecNode createExecNode() {
+        throw unsupported("PCRER");
     }
 }

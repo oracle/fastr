@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
+import static com.oracle.truffle.r.library.fastrGrid.WindowDevice.awtNotSupported;
+
 import java.awt.Graphics2D;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -34,6 +36,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice.NotSupportedImageFormatException;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.Graphics2DDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -54,6 +57,10 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
     @Override
     @TruffleBoundary
     protected Object call(RArgsValuesAndNames args) {
+        if (!FastRConfig.InternalGridAwtSupport) {
+            throw awtNotSupported();
+        }
+
         int width = getIntOrDefault(args, 1, GridDevice.DEFAULT_WIDTH);
         int height = getIntOrDefault(args, 2, GridDevice.DEFAULT_HEIGHT);
 

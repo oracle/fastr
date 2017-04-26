@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,14 @@ public abstract class ResourceHandlerFactory {
     }
 
     static {
-        final String prop = System.getProperty("fastr.resource.factory.class", "com.oracle.truffle.r.runtime.DefaultResourceHandlerFactory");
+        String prop = System.getProperty("fastr.resource.factory.class");
+        if (prop == null) {
+            if (FastRConfig.ManagedMode) {
+                prop = "com.oracle.truffle.r.nodes.builtin.EagerResourceHandlerFactory";
+            } else {
+                prop = LazyResourceHandlerFactory.class.getName();
+            }
+        }
         try {
             theInstance = (ResourceHandlerFactory) Class.forName(prop).newInstance();
         } catch (Exception ex) {

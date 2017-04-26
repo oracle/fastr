@@ -37,6 +37,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
 import com.oracle.truffle.r.nodes.builtin.base.BaseVariables;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -97,12 +98,14 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         try {
             baseSource = RSource.fromFileName(basePathbase.toString(), true);
         } catch (IOException ex) {
-            Utils.rSuicide(String.format("unable to open the base package %s", basePathbase));
+            throw Utils.rSuicide(String.format("unable to open the base package %s", basePathbase));
         }
         // Load the (stub) DLL for base
-        String path = baseDirPath.resolve("libs").resolve("base.so").toString();
-        Source loadSource = RSource.fromTextInternal(".Internal(dyn.load(" + RRuntime.escapeString(path, false, true) + ", TRUE, TRUE, \"\"))", RSource.Internal.R_IMPL);
-        RContext.getEngine().parseAndEval(loadSource, baseFrame, false);
+        if (FastROptions.LoadPackagesNativeCode.getBooleanValue()) {
+            String path = baseDirPath.resolve("libs").resolve("base.so").toString();
+            Source loadSource = RSource.fromTextInternal(".Internal(dyn.load(" + RRuntime.escapeString(path, false, true) + ", TRUE, TRUE, \"\"))", RSource.Internal.R_IMPL);
+            RContext.getEngine().parseAndEval(loadSource, baseFrame, false);
+        }
 
         // Any RBuiltinKind.SUBSTITUTE functions installed above should not be overridden
         try {

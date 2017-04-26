@@ -46,6 +46,7 @@ import org.tukaani.xz.XZ;
 import org.tukaani.xz.XZInputStream;
 import org.tukaani.xz.XZOutputStream;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RCompression.Type;
 import com.oracle.truffle.r.runtime.RError;
@@ -87,6 +88,7 @@ public class FileConnections {
         }
 
         @Override
+        @TruffleBoundary
         protected void createDelegateConnection() throws IOException {
 
             DelegateRConnection delegate = FileConnections.createDelegateConnection(this, RCompression.Type.NONE, raw);
@@ -111,6 +113,7 @@ public class FileConnections {
         }
 
         @Override
+        @TruffleBoundary
         protected void createDelegateConnection() throws IOException {
             setDelegate(FileConnections.createDelegateConnection(this, cType, false));
 
@@ -215,6 +218,7 @@ public class FileConnections {
         }
     }
 
+    @TruffleBoundary
     private static DelegateRConnection createDelegateConnection(BasePathRConnection base, RCompression.Type cType, boolean raw) throws IOException {
         AbstractOpenMode openMode = base.getOpenMode().abstractOpenMode;
 

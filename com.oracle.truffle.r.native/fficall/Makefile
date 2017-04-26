@@ -56,6 +56,9 @@ all: $(R_LIB)
 # to remove the sentinels
 
 $(R_LIB): fficall.done 
+ifeq ($(FASTR_RFFI),managed)
+	# nop
+else
 ifeq ($(OS_NAME),Darwin)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
 	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
@@ -66,7 +69,12 @@ ifeq ($(OS_NAME),Darwin)
 else
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz
 endif
+endif # managed
 
+ifeq ($(FASTR_RFFI),managed)
+fficall.done: common.done
+	touch fficall.done
+else
 ifeq ($(FASTR_RFFI),nfi)
 fficall.done: common.done
 	$(MAKE) -C src/truffle_nfi all
@@ -94,6 +102,7 @@ else
 	$(error unknown value for FASTR_RFFI)
 endif
 	touch fficall.done
+endif
 endif
 endif
 

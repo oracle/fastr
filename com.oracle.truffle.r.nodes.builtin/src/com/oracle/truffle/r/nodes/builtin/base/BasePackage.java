@@ -724,6 +724,10 @@ public class BasePackage extends RBuiltinPackage {
         add(WhileBuiltin.class, WhileBuiltinNodeGen::create);
 
         // grid intrinsics
+        addGridIntrinsics();
+    }
+
+    private void addGridIntrinsics() {
         add(DoSetViewPortBuiltin.class, DoSetViewPortBuiltin::create);
     }
 
