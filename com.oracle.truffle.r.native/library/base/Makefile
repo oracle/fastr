@@ -32,14 +32,16 @@ include ../lib.mk
 ifeq ($(FASTR_RFFI),managed)
 # original base assumes that "base" DLL is loaded, we change it to check for that first
 $(BASE_SCRIPT): $(GNUR_HOME)/library/base/R/base
-	sed -i '/## populate C\/Fortran symbols/a if (length(getLoadedDLLs()) > 0)' $(FASTR_LIBRARY_DIR)/base/R/base
+	sed 's|## populate C\/Fortran symbols|if (length(getLoadedDLLs()) > 0)|g' $(FASTR_LIBRARY_DIR)/base/R/base > $(FASTR_LIBRARY_DIR)/base/R/base.tmp
+	mv $(FASTR_LIBRARY_DIR)/base/R/base.tmp $(FASTR_LIBRARY_DIR)/base/R/base
 # The following changes GnuR's build script makebasedb.R so that it does not
 # compress the lazy load database, then it builds GnuR and copies the
 # uncompressed base package database to FastR library location
 $(BASE_UNCOMPRESSED): $(GNUR_HOME)/src/library/base/all.R
-	sed -i 's|compress = TRUE|compress = FALSE|g' $(GNUR_HOME)/src/library/base/makebasedb.R
+	cp $(GNUR_HOME)/src/library/base/makebasedb.R $(GNUR_HOME)/src/library/base/makebasedb.R.tmp
+	sed 's|compress = TRUE|compress = FALSE|g' $(GNUR_HOME)/src/library/base/makebasedb.R.tmp > $(GNUR_HOME)/src/library/base/makebasedb.R
 	(cd $(GNUR_HOME); $(MAKE))
 	cp $(GNUR_HOME)/library/$(PKG)/R/base.rd* $(FASTR_LIBRARY_DIR)/base/R/
-	sed -i 's|compress = FALSE|compress = TRUE|g' $(GNUR_HOME)/src/library/base/makebasedb.R
+	mv $(GNUR_HOME)/src/library/base/makebasedb.R.tmp $(GNUR_HOME)/src/library/base/makebasedb.R
 	(cd $(GNUR_HOME); $(MAKE))
 endif
