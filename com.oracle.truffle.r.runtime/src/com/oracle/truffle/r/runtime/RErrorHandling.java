@@ -388,7 +388,7 @@ public class RErrorHandling {
                     } else {
                         RFunction handler = (RFunction) entry.getDataAt(2);
                         RStringVector errorMsgVec = RDataFactory.createStringVectorFromScalar(fMsg);
-                        RContext.getRRuntimeASTAccess().callback(handler, new Object[]{errorMsgVec, call});
+                        RContext.getRRuntimeASTAccess().callback(handler, new Object[]{errorMsgVec});
                     }
                 } else {
                     throw gotoExitingHandler(RNull.instance, call, entry);
