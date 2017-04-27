@@ -63,5 +63,7 @@ public class TestConditionHandling extends TestRBase {
         assertEval("withCallingHandlers({message(\"foo\");123L},\n message=function(e) {cat(\"<msg>\")})");
         assertEval("withCallingHandlers({message(\"foo\");123L},\n message=function(e) {\n cat(\"<msg>\")\n invokeRestart(\"muffleMessage\")\n })");
         assertEval("withCallingHandlers({message(\"foo\");packageStartupMessage(\"bar\");123L},\n packageStartupMessage=function(e) {\n cat(\"<msg>\")\n invokeRestart(\"muffleMessage\")\n })");
+        assertEval(Output.IgnoreErrorContext, "withCallingHandlers(stop('error message'), error=function(e) {})");
+        assertEval(Output.IgnoreErrorMessage, "withCallingHandlers(unknownSymbol(), condition = function(e) {})");
     }
 }
