@@ -153,11 +153,6 @@ public abstract class PrecedenceNode extends RBaseNode {
         return LIST_PRECEDENCE;
     }
 
-    @Specialization
-    protected int doRInteroptFloat(RInterop b, boolean recursive) {
-        return NO_PRECEDENCE;
-    }
-
     @Specialization(guards = "recursive")
     protected int doListRecursive(RList val, boolean recursive,
                     @Cached("createRecursive()") PrecedenceNode precedenceNode) {
@@ -226,5 +221,9 @@ public abstract class PrecedenceNode extends RBaseNode {
     protected int doArgsValuesAndNames(RArgsValuesAndNames args, boolean recursive,
                     @Cached("createRecursive()") PrecedenceNode precedenceNode) {
         return precedenceNode.executeInteger(args.getArgument(0), recursive);
+    }
+
+    protected boolean isForeignObject(TruffleObject to) {
+        return RRuntime.isForeignObject(to);
     }
 }

@@ -166,4 +166,8 @@ public abstract class CastListNode extends CastBaseNode {
     public static CastListNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         return CastListNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true);
     }
+
+    protected boolean isForeignObject(TruffleObject to) {
+        return RRuntime.isForeignObject(to);
+    }
 }

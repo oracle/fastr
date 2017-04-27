@@ -127,6 +127,19 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
+    public void testCombine() {
+        assertEvalFastR("class(c(.fastr.interop.toByte(123)))", "'interopt.byte'");
+        assertEvalFastR("class(c(.fastr.interop.toByte(123), .fastr.interop.toByte(234)))", "'list'");
+        assertEvalFastR("class(c(.fastr.interop.toByte(123), 1))", "'list'");
+        assertEvalFastR("class(c(1, .fastr.interop.toByte(123)))", "'list'");
+
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); class(c(t))", "'truffle.object'");
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t1 <- .fastr.interop.new(tc); class(c(t, t1))", "'list'");
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); class(c(1, t))", "'list'");
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); class(c(t, 1))", "'list'");
+    }
+
+    @Test
     public void testFields() throws IllegalArgumentException, IllegalAccessException {
         TestClass t = new TestClass();
         Field[] fields = t.getClass().getDeclaredFields();
