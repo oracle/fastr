@@ -33,6 +33,7 @@ import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 
 public class TruffleNFI_PCRE implements PCRERFFI {
@@ -95,12 +96,12 @@ public class TruffleNFI_PCRE implements PCRERFFI {
         }
     }
 
-    private static class TruffleNFI_GetCaptureNamesNode extends GetCaptureNamesNode {
+    public static class TruffleNFI_GetCaptureNamesNode extends GetCaptureNamesNode {
         interface CaptureNames {
             void addName(int i, String name);
         }
 
-        final class CaptureNamesImpl implements CaptureNames {
+        public static final class CaptureNamesImpl implements CaptureNames, RTruffleObject {
             private final String[] captureNames;
 
             private CaptureNamesImpl(int captureCount) {
@@ -120,7 +121,7 @@ public class TruffleNFI_PCRE implements PCRERFFI {
             try {
                 CaptureNamesImpl captureNamesImpl = new CaptureNamesImpl(captureCount);
                 int result = (int) ForeignAccess.sendExecute(Function.getcapturenames.executeNode, Function.getcapturenames.function,
-                                JavaInterop.asTruffleFunction(CaptureNames.class, captureNamesImpl), code, extra);
+                                captureNamesImpl, code, extra);
                 if (result < 0) {
                     CompilerDirectives.transferToInterpreter();
                     throw RError.error(RError.NO_CALLER, RError.Message.WRONG_PCRE_INFO, result);
@@ -134,12 +135,12 @@ public class TruffleNFI_PCRE implements PCRERFFI {
 
     }
 
-    private static class TruffleNFI_CompileNode extends CompileNode {
+    public static class TruffleNFI_CompileNode extends CompileNode {
         interface MakeResult {
             void makeresult(long pcreResult, String errorMessage, int errOffset);
         }
 
-        private static class MakeResultImpl implements MakeResult {
+        public static class MakeResultImpl implements MakeResult, RTruffleObject {
             private PCRERFFI.Result result;
 
             @Override
@@ -153,7 +154,7 @@ public class TruffleNFI_PCRE implements PCRERFFI {
             Function.compile.initialize();
             try {
                 MakeResultImpl makeResultImpl = new MakeResultImpl();
-                ForeignAccess.sendExecute(Function.compile.executeNode, Function.compile.function, JavaInterop.asTruffleFunction(MakeResult.class, makeResultImpl),
+                ForeignAccess.sendExecute(Function.compile.executeNode, Function.compile.function, makeResultImpl,
                                 pattern, options, tables);
                 return makeResultImpl.result;
             } catch (InteropException e) {
