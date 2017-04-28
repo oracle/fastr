@@ -38,7 +38,12 @@ public final class FastRConfig {
     static {
         String managedModeVal = System.getenv("FASTR_MANAGED");
         ManagedMode = managedModeVal != null && managedModeVal.equals("true");
-        InternalGridAwtSupport = !ManagedMode;
+        if (ManagedMode) {
+            InternalGridAwtSupport = false;
+        } else {
+            String val = System.getProperty("fastr.internal.grid.awt.support");
+            InternalGridAwtSupport = val == null || val.equals("true");
+        }
     }
 
     private FastRConfig() {
