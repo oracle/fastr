@@ -31,7 +31,6 @@ import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
-import com.oracle.truffle.r.runtime.ffi.GridRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
@@ -44,7 +43,6 @@ import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
-import com.oracle.truffle.r.runtime.ffi.generic.Generic_Grid;
 
 public class TruffleNFI_RFFIFactory extends RFFIFactory implements RFFI {
     private static class ContextStateImpl implements RContext.ContextState {
@@ -194,17 +192,6 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory implements RFFI {
             rEmbedRFFI = new TruffleNFI_REmbed();
         }
         return rEmbedRFFI;
-    }
-
-    @CompilationFinal private GridRFFI gridRFFI;
-
-    @Override
-    public GridRFFI getGridRFFI() {
-        if (gridRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            gridRFFI = new Generic_Grid();
-        }
-        return gridRFFI;
     }
 
     private MiscRFFI miscRFFI;

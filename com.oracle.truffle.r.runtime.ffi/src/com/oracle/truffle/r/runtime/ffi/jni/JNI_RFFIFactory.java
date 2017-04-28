@@ -31,7 +31,6 @@ import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
-import com.oracle.truffle.r.runtime.ffi.GridRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
@@ -44,7 +43,6 @@ import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
-import com.oracle.truffle.r.runtime.ffi.generic.Generic_Grid;
 import com.oracle.truffle.r.runtime.ffi.generic.Generic_Tools;
 
 /**
@@ -144,17 +142,6 @@ public class JNI_RFFIFactory extends RFFIFactory implements RFFI {
             toolsRFFI = new Generic_Tools();
         }
         return toolsRFFI;
-    }
-
-    @CompilationFinal private GridRFFI gridRFFI;
-
-    @Override
-    public GridRFFI getGridRFFI() {
-        if (gridRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            gridRFFI = new Generic_Grid();
-        }
-        return gridRFFI;
     }
 
     @CompilationFinal private UserRngRFFI userRngRFFI;

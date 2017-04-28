@@ -31,7 +31,6 @@ import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
-import com.oracle.truffle.r.runtime.ffi.GridRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
@@ -105,22 +104,6 @@ public class Managed_RFFIFactory extends RFFIFactory implements RFFI {
             @Override
             public ParseRdNode createParseRdNode() {
                 throw unsupported("parseRD");
-            }
-        };
-    }
-
-    // TODO: will be removed anyway
-    @Override
-    public GridRFFI getGridRFFI() {
-        return new GridRFFI() {
-            @Override
-            public InitGridNode createInitGridNode() {
-                return null;
-            }
-
-            @Override
-            public KillGridNode createKillGridNode() {
-                return null;
             }
         };
     }
