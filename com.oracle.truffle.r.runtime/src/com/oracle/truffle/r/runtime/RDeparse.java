@@ -871,7 +871,7 @@ public class RDeparse {
                     break;
                 case RAWSXP:
                     RRaw r = (RRaw) element;
-                    append(String.format("0x%02x", r.getValue()));
+                    append(Utils.stringFormat("0x%02x", r.getValue()));
                     break;
                 default:
                     throw RInternalError.shouldNotReachHere("unexpected SEXPTYPE: " + type);
@@ -987,6 +987,7 @@ public class RDeparse {
     /**
      * Ensure that {@code node} has a {@link SourceSection} by deparsing if necessary.
      */
+    @TruffleBoundary
     public static void ensureSourceSection(RSyntaxNode node) {
         SourceSection ss = node.getLazySourceSection();
         if (ss == RSyntaxNode.LAZY_DEPARSE) {

@@ -230,6 +230,7 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
      * @return {@code true} if an incomplete line was written; {@code false} otherwise
      * @throws IOException
      */
+    @TruffleBoundary
     public static boolean writeStringHelper(WritableByteChannel out, String s, boolean nl, Charset encoding) throws IOException {
         boolean incomplete;
         final byte[] bytes = s.getBytes(encoding);
@@ -258,6 +259,7 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
      * @param eos The end-of-string terminator (may be {@code null}).
      * @throws IOException
      */
+    @TruffleBoundary
     public static void writeCharHelper(@NotNull WritableByteChannel channel, @NotNull String s, int pad, String eos) throws IOException {
 
         final byte[] bytes = s.getBytes();
@@ -394,6 +396,7 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
         }
     }
 
+    @TruffleBoundary
     public static boolean writeLinesHelper(WritableByteChannel out, RAbstractStringVector lines, String sep, Charset encoding) throws IOException {
         if (sep != null && sep.contains("\n")) {
             // fast path: we know that the line is complete
@@ -461,6 +464,7 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
     }
 
     @Override
+    @TruffleBoundary
     public int read(ByteBuffer dst) throws IOException {
         if (cache != null) {
             final int bytesRequested = dst.remaining();
@@ -481,6 +485,7 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
     }
 
     @Override
+    @TruffleBoundary
     public int write(ByteBuffer src) throws IOException {
         return getChannel().write(src);
     }

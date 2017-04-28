@@ -188,7 +188,7 @@ public final class RError extends RuntimeException {
             }
             current = current.getParent();
         }
-        throw new AssertionError("Could not find RBaseNode for given Node. Is it not adopted in the AST?");
+        throw RInternalError.shouldNotReachHere("Could not find RBaseNode for given Node. Is it not adopted in the AST?");
     }
 
     /**

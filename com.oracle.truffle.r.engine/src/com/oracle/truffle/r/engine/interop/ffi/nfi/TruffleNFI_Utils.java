@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.engine.interop.ffi.nfi;
 
 import java.nio.charset.StandardCharsets;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
@@ -57,6 +58,7 @@ public class TruffleNFI_Utils {
 
     private static TruffleObject defaultLibrary;
 
+    @TruffleBoundary
     private static void initDefaultLibrary() {
         if (defaultLibrary == null) {
             Env env = RContext.getInstance().getEnv();

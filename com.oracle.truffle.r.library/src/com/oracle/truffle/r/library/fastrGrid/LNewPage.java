@@ -12,6 +12,7 @@
 package com.oracle.truffle.r.library.fastrGrid;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -29,13 +30,18 @@ final class LNewPage extends RExternalBuiltinNode {
     public Object call(VirtualFrame frame, RArgsValuesAndNames args) {
         GridDevice device = GridContext.getContext().getCurrentDevice();
         if (GridContext.getContext().getGridState().isDeviceInitialized()) {
-            device.openNewPage();
+            openNewPage(device);
             return RNull.instance;
         }
         // There are some exceptions to the rule that any external call from grid R code is
         // preceded by L_gridDirty call, L_newpage is one of them.
         CompilerDirectives.transferToInterpreter();
         return gridDirty.call(frame, RArgsValuesAndNames.EMPTY);
+    }
+
+    @TruffleBoundary
+    private static void openNewPage(GridDevice device) {
+        device.openNewPage();
     }
 
     @Override

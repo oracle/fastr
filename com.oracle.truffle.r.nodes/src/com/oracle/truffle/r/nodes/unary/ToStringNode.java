@@ -31,6 +31,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -148,7 +149,7 @@ public abstract class ToStringNode extends RBaseNode {
         } else {
             throw RInternalError.shouldNotReachHere("S4 object has no class");
         }
-        return String.format("<S4 object of class %s>", clazz);
+        return Utils.stringFormat("<S4 object of class %s>", clazz);
     }
 
     @FunctionalInterface

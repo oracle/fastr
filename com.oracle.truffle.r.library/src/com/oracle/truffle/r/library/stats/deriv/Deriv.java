@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -149,6 +149,43 @@ public abstract class Deriv extends RExternalBuiltinNode {
     }
 
     private Object derive(VirtualFrame frame, RBaseNode elem, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
+        return findDerive(elem, names, functionArg, tag, hessian).getResult(frame);
+    }
+
+    private static final class DerivResult {
+        private final RExpression result;
+        private final RSyntaxNode blockCall;
+        private final List<Argument<RSyntaxNode>> targetArgs;
+
+        private DerivResult(RExpression result) {
+            this.result = result;
+            blockCall = null;
+            targetArgs = null;
+        }
+
+        private DerivResult(RSyntaxNode blockCall, List<Argument<RSyntaxNode>> targetArgs) {
+            this.blockCall = blockCall;
+            this.targetArgs = targetArgs;
+            result = null;
+        }
+
+        private Object getResult(VirtualFrame frame) {
+            if (result != null) {
+                return result;
+            }
+            RootCallTarget callTarget = getRootCallTarget();
+            FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), frame);
+            return RDataFactory.createFunction(RFunction.NO_NAME, RFunction.NO_NAME, callTarget, null, frame.materialize());
+        }
+
+        @TruffleBoundary
+        private RootCallTarget getRootCallTarget() {
+            return RContext.getASTBuilder().rootFunction(RSyntaxNode.LAZY_DEPARSE, targetArgs, blockCall, null);
+        }
+    }
+
+    @TruffleBoundary
+    private DerivResult findDerive(RBaseNode elem, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
         LinkedList<RSyntaxNode> exprlist = new LinkedList<>();
         int fIndex = findSubexpression(elem, exprlist, tag);
 
@@ -275,7 +312,10 @@ public abstract class Deriv extends RExternalBuiltinNode {
         // prune exprlist
         exprlist.removeAll(Collections.singleton(null));
 
-        List<Argument<RSyntaxNode>> blockStatements = exprlist.stream().map(e -> RCodeBuilder.argument(e)).collect(Collectors.toList());
+        List<Argument<RSyntaxNode>> blockStatements = new ArrayList<>(exprlist.size());
+        for (RSyntaxNode e : exprlist) {
+            blockStatements.add(RCodeBuilder.argument(e));
+        }
         RSyntaxNode blockCall = RContext.getASTBuilder().call(RSyntaxNode.LAZY_DEPARSE, ReadVariableNode.create("{"), blockStatements);
 
         if (functionArg instanceof RAbstractStringVector) {
@@ -285,14 +325,14 @@ public abstract class Deriv extends RExternalBuiltinNode {
                 targetArgs.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, funArgNames.getDataAt(i), ConstantNode.create(RMissing.instance)));
             }
 
-            return createFunction(frame, blockCall, targetArgs);
+            return new DerivResult(blockCall, targetArgs);
         } else if (functionArg == Boolean.TRUE) {
             List<Argument<RSyntaxNode>> targetArgs = new ArrayList<>();
             for (int i = 0; i < names.getLength(); i++) {
                 targetArgs.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, names.getDataAt(i), ConstantNode.create(RMissing.instance)));
             }
 
-            return createFunction(frame, blockCall, targetArgs);
+            return new DerivResult(blockCall, targetArgs);
         } else if (functionArg instanceof RFunction) {
             RFunction funTemplate = (RFunction) functionArg;
             FormalArguments formals = ((RRootNode) funTemplate.getRootNode()).getFormalArguments();
@@ -302,19 +342,13 @@ public abstract class Deriv extends RExternalBuiltinNode {
                 targetArgs.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, formals.getSignature().getName(i), cloneElement((RSyntaxNode) defArgs[i])));
             }
 
-            return createFunction(frame, blockCall, targetArgs);
+            return new DerivResult(blockCall, targetArgs);
         } else {
             RLanguage lan = RDataFactory.createLanguage(blockCall.asRNode());
             RExpression res = RDataFactory.createExpression(new Object[]{lan});
-            return res;
+            return new DerivResult(res);
         }
 
-    }
-
-    private static RFunction createFunction(VirtualFrame frame, RSyntaxNode blockCall, List<Argument<RSyntaxNode>> targetArgs) {
-        RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(RSyntaxNode.LAZY_DEPARSE, targetArgs, blockCall, null);
-        FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), frame);
-        return RDataFactory.createFunction(RFunction.NO_NAME, RFunction.NO_NAME, callTarget, null, frame.materialize());
     }
 
     private int findSubexpression(RBaseNode expr, List<RSyntaxNode> exprlist, String tag) {

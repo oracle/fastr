@@ -25,6 +25,7 @@ package com.oracle.truffle.r.engine.interop.ffi.nfi;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
@@ -90,6 +91,7 @@ public class TruffleNFI_Base implements BaseRFFI {
     }
 
     public static class TruffleNFI_GetwdNode extends GetwdNode {
+        @TruffleBoundary
         @Override
         public String execute() {
             byte[] buf = new byte[4096];
@@ -180,6 +182,7 @@ public class TruffleNFI_Base implements BaseRFFI {
     }
 
     public static class TruffleNFI_MkdtempNode extends MkdtempNode {
+        @TruffleBoundary
         @Override
         public String execute(String template) {
             /*

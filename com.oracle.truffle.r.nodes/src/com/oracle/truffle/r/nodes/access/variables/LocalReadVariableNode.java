@@ -101,6 +101,7 @@ public final class LocalReadVariableNode extends Node {
         }
         Object result = null;
         if (isMissingProfile == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             seenValueKinds = new boolean[FrameSlotKind.values().length];
             valueProfile = ValueProfile.createClassProfile();
             isNullProfile = ConditionProfile.createBinaryProfile();

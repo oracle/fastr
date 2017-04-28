@@ -624,6 +624,7 @@ public class FileConnections {
             return super.readBinChars();
         }
 
+        @TruffleBoundary
         private void setReadPosition() throws IOException {
             if (lastMode != SeekRWMode.READ) {
                 raf.seek(readOffset);
@@ -631,6 +632,7 @@ public class FileConnections {
             }
         }
 
+        @TruffleBoundary
         private void setWritePosition() throws IOException {
             if (lastMode != SeekRWMode.WRITE) {
                 raf.seek(writeOffset);
