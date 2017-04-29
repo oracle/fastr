@@ -149,7 +149,8 @@ char *FASTR_R_TempDir() {
 
 Rboolean FASTR_R_Interactive() {
 	JNIEnv *env = getEnv();
-	CTXT res = (*env)->CallObjectMethod(env, UpCallsRFFIObject, R_InteractiveMethodID);
+	int res = (int) (*env)->CallObjectMethod(env, UpCallsRFFIObject, R_InteractiveMethodID);
+	return (Rboolean) res;
 }
 
 SEXP FASTR_R_EmptyEnv() {

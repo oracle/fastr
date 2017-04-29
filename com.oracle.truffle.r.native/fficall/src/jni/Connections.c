@@ -46,14 +46,14 @@ static jbyteArray wrap(JNIEnv *thisenv, void* buf, size_t n) {
  * Otherwise an error is issued.
  */
 static int getFd(Rconnection con) {
-	return con->id;
+	return (int) con->id;
 }
 
 /*
  * Sets the file descriptor for the connection.
  */
 static void setFd(Rconnection con, jint fd) {
-	con->id = fd;
+	con->id = (void *) (jlong) fd;
 }
 
 
@@ -134,6 +134,7 @@ static void NORET null_truncate(Rconnection con)
 
 static int null_fflush(Rconnection con)
 {
+	return 0;
 }
 
 static size_t NORET null_read(void *ptr, size_t size, size_t nitems,
@@ -206,7 +207,7 @@ SEXP R_new_custom_connection(const char *description, const char *mode, const ch
 			free(new);
 			error(_("allocation of %s connection failed"), class_name);
 		}
-		init_con(new, description, CE_NATIVE, mode);
+		init_con(new, (char *) description, CE_NATIVE, mode);
 		/* all ptrs are init'ed to null_* so no need to repeat that,
 		 but the following two are useful tools which could not be accessed otherwise */
 		// TODO dummy_vfprintf and dummy_fgetc not implemented yet
@@ -271,7 +272,7 @@ SEXP __GetFlagNativeConnection(SEXP rConnAddrObj, jstring jname) {
 	}else if(strcmp(name, "blocking") == 0) {
 		result = con->blocking;
 	}
-	free(name);
+	free((char *)name);
 
 	return ScalarLogical(result);
 }
@@ -406,7 +407,7 @@ Rconnection R_GetConnection(SEXP sConn) {
 
 	init_con(new, sSummaryDesc, 0, sOpenMode);
 	free(sOpenMode);
-	new->class = sConnClass;
+	new->class = (char *) sConnClass;
 	new->canseek = seekable;
 
 	setFd(new, fd);

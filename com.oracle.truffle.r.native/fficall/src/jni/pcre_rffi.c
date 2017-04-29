@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2015,  The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -41,7 +41,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeCompile(JNIEnv *env, j
 	const char *patternChars = (*env)->GetStringUTFChars(env, pattern, NULL);
 	char *errorMessage;
 	int errOffset;
-	void *pcre_result = pcre_compile(patternChars, options, &errorMessage, &errOffset, (char*) tables);
+	void *pcre_result = pcre_compile((char *) patternChars, options, &errorMessage, &errOffset, (char*) tables);
 	jstring stringErrorMessage = NULL;
 	if (pcre_result == NULL) {
 	    stringErrorMessage = (*env)->NewStringUTF(env, errorMessage);
@@ -53,7 +53,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeCompile(JNIEnv *env, j
 JNIEXPORT jint JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeGetCaptureCount(JNIEnv *env, jclass c, jlong code, jlong extra) {
     int captureCount;
-	int rc = pcre_fullinfo(code, extra, PCRE_INFO_CAPTURECOUNT, &captureCount);
+	int rc = pcre_fullinfo((void *)code, (void *)extra, PCRE_INFO_CAPTURECOUNT, &captureCount);
     return rc < 0 ? rc : captureCount;
 }
 
@@ -63,15 +63,15 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeGetCaptureNames(JNIEnv
     int nameEntrySize;
     char* nameTable;
     int res;
-	res = pcre_fullinfo(code, extra, PCRE_INFO_NAMECOUNT, &nameCount);
+	res = pcre_fullinfo((void *) code, (void *) extra, PCRE_INFO_NAMECOUNT, &nameCount);
     if (res < 0) {
         return res;
     }
-    res = pcre_fullinfo(code, extra, PCRE_INFO_NAMEENTRYSIZE, &nameEntrySize);
+    res = pcre_fullinfo((void *) code, (void *) extra, PCRE_INFO_NAMEENTRYSIZE, &nameEntrySize);
     if (res < 0) {
         return res;
     }
-	res = pcre_fullinfo(code, extra, PCRE_INFO_NAMETABLE, &nameTable);
+	res = pcre_fullinfo((void *) code,(void *) extra, PCRE_INFO_NAMETABLE, &nameTable);
     if (res < 0) {
         return res;
     }
@@ -91,7 +91,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1PCRE_nativeExec(JNIEnv *env, jcla
 	int subjectLength = (*env)->GetStringUTFLength(env, subject);
 	int* ovectorElems = (*env)->GetIntArrayElements(env, ovector, NULL);
 
-	int rc = pcre_exec(code, extra, subjectChars, subjectLength, startOffset, options,
+	int rc = pcre_exec((void *) code,(void *) extra, (char *) subjectChars, subjectLength, startOffset, options,
 			ovectorElems, ovectorLen);
 	(*env)->ReleaseIntArrayElements(env, ovector, ovectorElems, 0);
 	(*env)->ReleaseStringUTFChars(env, subject, subjectChars);

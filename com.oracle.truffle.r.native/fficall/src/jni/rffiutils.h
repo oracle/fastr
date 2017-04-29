@@ -41,9 +41,9 @@ jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const ch
 jfieldID checkGetFieldID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic);
 
 // use for an unimplemented API function
-void *unimplemented(char *msg);
+void *unimplemented(char *msg) __attribute__((noreturn));
 // use for any fatal error
-void fatalError(char *msg);
+void fatalError(char *msg) __attribute__((noreturn));
 // makes a call to the VM with x as an argument (for debugger validation)
 void validate(SEXP x);
 // checks x against the list of global JNI refs, returning the global version if x matches (IsSameObject)

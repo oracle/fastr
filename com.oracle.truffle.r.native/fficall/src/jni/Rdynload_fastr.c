@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -151,5 +151,5 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg,
 
 DllInfo *R_getEmbeddingDllInfo(void) {
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticObjectMethod(thisenv, JNI_PkgInitClass, getEmbeddingDllInfoID);
+	return (DllInfo*) (*thisenv)->CallStaticObjectMethod(thisenv, JNI_PkgInitClass, getEmbeddingDllInfoID);
 }
