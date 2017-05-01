@@ -351,7 +351,8 @@ public final class SNorm {
                 return 0d; // can NEVER reach here (infinite loop ahead)
 
             default:
-                throw new AssertionError();
+                assert false;
+                return 0d;
         }
     }
 }

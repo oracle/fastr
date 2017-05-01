@@ -36,6 +36,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridFontStyl
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineEnd;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineJoin;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
 
 public class SVGDevice implements GridDevice {
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.000");
@@ -250,11 +251,11 @@ public class SVGDevice implements GridDevice {
     }
 
     private static String getStyleColor(String prefix, GridColor color) {
-        return String.format("%s:rgb(%d,%d,%d);%s-opacity:%.3f", prefix, color.getRed(), color.getGreen(), color.getBlue(), prefix, (double) color.getAlpha() / 255d);
+        return Utils.stringFormat("%s:rgb(%d,%d,%d);%s-opacity:%.3f", prefix, color.getRed(), color.getGreen(), color.getBlue(), prefix, color.getAlpha() / 255d);
     }
 
     private void append(String fmt, Object... args) {
-        data.append(String.format(fmt + "\n", args));
+        data.append(Utils.stringFormat(fmt + "\n", args));
     }
 
     private double transY(double y) {

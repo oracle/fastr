@@ -217,6 +217,7 @@ public final class REnvVars implements RContext.ContextState {
     /**
      * Sanity check on the expected structure of an {@code R_HOME}.
      */
+    @TruffleBoundary
     private static boolean validateRHome(Path path, String markerFile) {
         if (path == null) {
             return false;

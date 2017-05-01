@@ -62,6 +62,7 @@ public class ProfiledSpecialsUtils {
         @Specialization(replaces = "access")
         public Object accessGeneric(VirtualFrame frame, Object vector, Object index) {
             if (defaultAccessNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 defaultAccessNode = insert(createAccessNode());
             }
             return defaultAccessNode.execute(frame, vector, index);
@@ -120,6 +121,7 @@ public class ProfiledSpecialsUtils {
         @Specialization(replaces = "access")
         public Object accessGeneric(VirtualFrame frame, Object vector, Object index1, Object index2) {
             if (defaultAccessNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 defaultAccessNode = insert(createAccessNode());
             }
             return defaultAccessNode.execute(frame, vector, index1, index2);
@@ -220,6 +222,7 @@ public class ProfiledSpecialsUtils {
         @Specialization(replaces = "access")
         public Object accessGeneric(VirtualFrame frame, Object vector, Object index1, Object index2, Object value) {
             if (defaultAccessNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 defaultAccessNode = insert(createAccessNode());
             }
             return defaultAccessNode.execute(frame, vector, index1, index2, value);

@@ -22,7 +22,22 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
 
 public final class Pnorm implements Function3_2 {
 
-    private final BranchProfile nanProfile = BranchProfile.create();
+    private final BranchProfile nanProfile;
+
+    public Pnorm() {
+        this(BranchProfile.create());
+    }
+
+    private Pnorm(BranchProfile nanProfile) {
+        this.nanProfile = nanProfile;
+    }
+
+    /**
+     * For use in a temporary (non-Truffle Node) context.
+     */
+    public static Pnorm createTemp() {
+        return new Pnorm(null);
+    }
 
     @Override
     public double evaluate(double x, double mu, double sigma, boolean lowerTail, boolean logP) {
@@ -31,7 +46,9 @@ public final class Pnorm implements Function3_2 {
          * == mu and sigma == 0, we get the correct answer 1.
          */
         if (Double.isNaN(x) || Double.isNaN(mu) || Double.isNaN(sigma)) {
-            nanProfile.enter();
+            if (nanProfile != null) {
+                nanProfile.enter();
+            }
             return x + mu + sigma;
         }
         if (!Double.isFinite(x) && mu == x) {
@@ -40,7 +57,9 @@ public final class Pnorm implements Function3_2 {
         }
         if (sigma <= 0) {
             if (sigma < 0) {
-                nanProfile.enter();
+                if (nanProfile != null) {
+                    nanProfile.enter();
+                }
                 return Double.NaN;
             }
             /* sigma = 0 : */
@@ -170,24 +189,24 @@ public final class Pnorm implements Function3_2 {
                 /*
                  * else |x| > sqrt(32) = 5.657 : the next two case differentiations were really for
                  * lower=T, log=F Particularly *not* for log_p !
-                 * 
+                 *
                  * Cody had (-37.5193 < x && x < 8.2924) ; R originally had y < 50
-                 * 
+                 *
                  * Note that we do want symmetry(0), lower/upper -> hence use y
                  */
             } else if ((logP && y < 1e170) /* avoid underflow below */
             /*
              * ^^^^^ MM FIXME: can speedup for log_p and much larger |x| ! Then, make use of
              * Abramowitz & Stegun, 26.2.13, something like
-             * 
+             *
              * xsq = x*x;
-             * 
+             *
              * if(xsq * DBL_EPSILON < 1.) del = (1. - (1. - 5./(xsq+6.)) / (xsq+4.)) / (xsq+2.);
              * else del = 0.;cum = -.5*xsq - M_LN_SQRT_2PI - log(x) + log1p(-del);ccum =
              * log1p(-exp(*cum)); /.* ~ log(1) = 0 *./
-             * 
+             *
              * swap_tail;
-             * 
+             *
              * [Yes, but xsq might be infinite.]
              */
                             || (lower && -37.5193 < x && x < 8.2924) || (upper && -8.2924 < x && x < 37.5193)) {

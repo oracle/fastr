@@ -14,6 +14,7 @@ package com.oracle.truffle.r.library.fastrGrid;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.runtime.nmath.TOMS708.fabs;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.PrettyIntevals;
@@ -42,6 +43,7 @@ public abstract class LPretty extends RExternalBuiltinNode.Arg1 {
         }
 
         if (Double.isInfinite(min) || Double.isInfinite(max)) {
+            CompilerDirectives.transferToInterpreter();
             throw error(Message.GENERIC, String.format("infinite axis extents [GEPretty(%g,%g,5)]", min, max));
         }
 

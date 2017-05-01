@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.ffi;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RPlatform;
 import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
@@ -34,6 +35,7 @@ public class LibPaths {
     /**
      * Returns the absolute path to the directory containing the builtin libraries.
      */
+    @TruffleBoundary
     public static String getBuiltinLibPath() {
         return FileSystems.getDefault().getPath(REnvVars.rHome(), "lib").toString();
     }
@@ -42,6 +44,7 @@ public class LibPaths {
      * Returns the absolute path to the builtin library {@code libName} for use with
      * {@link System#load}.
      */
+    @TruffleBoundary
     public static String getBuiltinLibPath(String libName) {
         String rHome = REnvVars.rHome();
         OSInfo osInfo = RPlatform.getOSInfo();
@@ -53,6 +56,7 @@ public class LibPaths {
      * Returns the absolute path to the shared library associated with package {@code name}. (Does
      * not check for existence).
      */
+    @TruffleBoundary
     public static String getPackageLibPath(String name) {
         String rHome = REnvVars.rHome();
         String packageDir = "library";

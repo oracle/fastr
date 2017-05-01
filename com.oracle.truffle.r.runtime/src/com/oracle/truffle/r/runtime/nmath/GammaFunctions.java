@@ -1052,7 +1052,7 @@ public abstract class GammaFunctions {
         }
         f = res12 / elfb;
 
-        np = new Pnorm().evaluate(s2pt, 0.0, 1.0, !lowerTail, logp);
+        np = Pnorm.createTemp().evaluate(s2pt, 0.0, 1.0, !lowerTail, logp);
 
         if (logp) {
             double ndOverP = dpnorm(s2pt, !lowerTail, np);

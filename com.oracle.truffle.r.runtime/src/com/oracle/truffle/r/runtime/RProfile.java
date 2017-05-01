@@ -28,6 +28,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
@@ -45,6 +46,7 @@ public final class RProfile implements RContext.ContextState {
     }
 
     @Override
+    @TruffleBoundary
     public RContext.ContextState initialize(RContext context) {
         String rHome = REnvVars.rHome();
         FileSystem fileSystem = FileSystems.getDefault();
