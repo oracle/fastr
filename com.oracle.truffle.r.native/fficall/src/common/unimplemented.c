@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -142,6 +142,7 @@ void* PRIMFUN(SEXP x) {
 
 SEXP coerceToSymbol(SEXP v) {
 	unimplemented("coerceToSymbol");
+	return NULL;
 }
 
 int IntegerFromString(SEXP a, int* b) {

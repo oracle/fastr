@@ -28,7 +28,7 @@
 /com.oracle.truffle.r.native/include/*.h
 /com.oracle.truffle.r.native/include/R_ext/*.h
 /com.oracle.truffle.r.native/include/linked
-/com.oracle.truffle.r.native/fficall/jni.done
+/com.oracle.truffle.r.native/fficall/fficall.done
 /com.oracle.truffle.r.native/fficall/jniboot.done
 /com.oracle.truffle.r.native.recommended/install.recommended
 /com.oracle.truffle.r.test.native/packages/copy_recommended
@@ -89,6 +89,7 @@ output.txt
 output.cfg
 .cfg
 **/nbproject/**
+
 **/build.xml
 /scratch/
 /test.fastr/
@@ -138,3 +139,4 @@ bench-results.json
 com.oracle.truffle.r.test.native/packages/testrffi/testrffi/tests/asTests.R
 com.oracle.truffle.r.test.native/packages/testrffi/testrffi/tests/coerceTests.R
 com.oracle.truffle.r.native/version.built
+documentation/.pydevproject

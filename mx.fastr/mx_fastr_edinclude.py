@@ -47,6 +47,7 @@ def edinclude(args):
     ed_r_internals(args[0])
     ed_r_interface(args[0])
     ed_graphicsengine(args[0])
+    ed_rconfig(args[0])
 
 use_internals_section = '''#ifdef FASTR
 // packages defining USE_INTERNALS expect certain defs (e.g. isNull) to be there
@@ -217,5 +218,21 @@ def ed_graphicsengine(gnu_dir):
         for line in lines:
             if 'MAX_GRAPHICS_SYSTEMS' in line:
                 f.write(line.replace('24', '256'))
+            else:
+                f.write(line)
+
+def ed_rconfig(gnu_dir):
+    '''
+    GNU R is built with ENABLE_NLS (internationalized strings) but FastR
+    does not do that in native code, so we disable it.
+    '''
+    rconfig_h = join(gnu_dir, 'Rconfig.h')
+    with open(rconfig_h) as f:
+        lines = f.readlines()
+
+    with open(join('Rconfig.h'), 'w') as f:
+        for line in lines:
+            if 'ENABLE_NLS' in line:
+                continue
             else:
                 f.write(line)

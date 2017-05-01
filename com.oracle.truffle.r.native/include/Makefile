@@ -37,7 +37,7 @@ R_EXT_HEADERS_TO_LINK := $(filter-out $(notdir $(R_EXT_HEADERS_LOCAL)),$(R_EXT_H
 R_HEADERS := $(wildcard $(GNUR_HOME)/include/*.h)
 R_HEADERS_FILENAMES := $(notdir $(R_HEADERS))
 #$(info R_HEADERS_FILENAMES=$(R_HEADERS_FILENAMES))
-R_HEADERS_LOCAL := src/libintl.h src/Rinternals.h src/Rinterface.h
+R_HEADERS_LOCAL := src/Rinternals.h src/Rinterface.h
 #$(info R_HEADERS_LOCAL=$(R_HEADERS_LOCAL))>
 R_HEADERS_TO_LINK := $(filter-out $(notdir $(R_HEADERS_LOCAL)),$(R_HEADERS_FILENAMES))
 #$(info R_HEADERS_TO_LINK=$(R_HEADERS_TO_LINK))
@@ -47,7 +47,6 @@ all: linked
 linked:
 	mkdir -p R_ext
 	$(foreach file,$(R_HEADERS_TO_LINK),ln -sf $(GNUR_HOME)/include/$(file) $(file);)
-	ln -sf src/libintl.h
 	mx edinclude $(GNUR_HOME)/include
 	$(foreach file,$(R_EXT_HEADERS_TO_LINK),ln -sf $(GNUR_HOME)/include/R_ext/$(file) R_ext/$(file);)
 #	cp $(R_EXT_HEADERS_LOCAL) R_ext

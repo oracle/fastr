@@ -616,7 +616,6 @@ void Rf_error(const char *format, ...) {
 	(*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_errorMethodID, string);
 	// just transfer back which will cleanup and exit the entire JNI call
 	longjmp(*getErrorJmpBuf(), 1);
-
 }
 
 void Rf_errorcall(SEXP x, const char *format, ...) {
@@ -1077,7 +1076,7 @@ SEXP PRVALUE(SEXP x) {
 
 int PRSEEN(SEXP x) {
     JNIEnv *thisenv = getEnv();
-    return (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, PRSEENMethodID, x);
+    return (int) (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, PRSEENMethodID, x);
 }
 
 void SET_PRSEEN(SEXP x, int v) {
@@ -1099,7 +1098,7 @@ void SET_PRCODE(SEXP x, SEXP v) {
 int LENGTH(SEXP x) {
     TRACE(TARGp, x);
     JNIEnv *thisenv = getEnv();
-    return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, LENGTH_MethodID, x);
+    return (int) (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, LENGTH_MethodID, x);
 }
 
 int TRUELENGTH(SEXP x){
@@ -1218,9 +1217,8 @@ SEXP *STRING_PTR(SEXP x){
 }
 
 
-SEXP *VECTOR_PTR(SEXP x){
+SEXP * NORET VECTOR_PTR(SEXP x){
 	unimplemented("VECTOR_PTR");
-	return NULL;
 }
 
 SEXP Rf_asChar(SEXP x){
@@ -1333,20 +1331,6 @@ void SET_ATTRIB(SEXP x, SEXP v){
 void DUPLICATE_ATTRIB(SEXP to, SEXP from){
     JNIEnv *thisenv = getEnv();
     (*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, DUPLICATE_ATTRIB_MethodID, to, from);
-}
-
-char *dgettext(const char *domainname, const char *msgid) {
-	printf("dgettext: '%s'\n", msgid);
-	return (char*) msgid;
-}
-
-char *libintl_dgettext(const char *domainname, const char *msgid) {
-	return dgettext(domainname, msgid);
-}
-
-char *dngettext(const char *domainname, const char *msgid, const char * msgid_plural, unsigned long int n) {
-    printf("dngettext: singular - '%s' ; plural - '%s'\n", msgid, msgid_plural);
-    return (char*) (n == 1 ? msgid : msgid_plural);
 }
 
 const char *R_CHAR(SEXP charsxp) {
@@ -1637,7 +1621,7 @@ SEXP R_do_MAKE_CLASS(const char *what) {
 SEXP R_getClassDef (const char *what) {
 	return unimplemented("R_getClassDef");
 }
-    
+
 SEXP R_do_new_object(SEXP class_def) {
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_do_new_object_MethodID, class_def);

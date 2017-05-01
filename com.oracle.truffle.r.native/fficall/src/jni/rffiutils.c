@@ -524,8 +524,6 @@ void *unimplemented(char *msg) {
     strcpy(buf, "unimplemented ");
     strcat(buf, msg);
     (*thisenv)->FatalError(thisenv, buf);
-    // to keep compiler happy
-    return NULL;
 }
 
 void fatalError(char *msg) {
