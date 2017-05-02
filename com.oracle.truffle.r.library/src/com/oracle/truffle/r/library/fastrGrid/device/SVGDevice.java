@@ -53,7 +53,8 @@ public class SVGDevice implements GridDevice {
         this.height = height;
     }
 
-    public String getContents() {
+    public String closeAndGetContents() {
+        closeSVGDocument();
         return data.toString();
     }
 
@@ -73,11 +74,7 @@ public class SVGDevice implements GridDevice {
 
     @Override
     public void close() throws DeviceCloseException {
-        if (cachedCtx != null) {
-            // see #appendStyle
-            append("</g>");
-        }
-        append("</svg>");
+        closeSVGDocument();
         try {
             Files.write(Paths.get(filename), Collections.singleton(data.toString()), StandardCharsets.UTF_8);
         } catch (IOException e) {
@@ -174,6 +171,14 @@ public class SVGDevice implements GridDevice {
             data.append(' ');
         }
         data.append("' ").append(attributes).append(" />");
+    }
+
+    private void closeSVGDocument() {
+        if (cachedCtx != null) {
+            // see #appendStyle
+            append("</g>");
+        }
+        append("</svg>");
     }
 
     private void appendStyle(DrawingContext ctx) {
