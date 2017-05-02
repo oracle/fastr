@@ -295,10 +295,6 @@ def rgate(args):
     '''
     mx_gate.gate(args)
 
-def gate(args):
-    '''Run 'mx.gate' with some standard tasks excluded as they currently fail'''
-    mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj'])
-
 def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
     return join(mx.project(tp).dir, 'src', tp.replace('.', sep))
@@ -579,7 +575,6 @@ _commands = {
     'Rscript' : [rscript, '[options]'],
     'rtestgen' : [testgen, ''],
     'rgate' : [rgate, ''],
-    'gate' : [gate, ''],
     'junit' : [junit, ['options']],
     'junitsimple' : [junit_simple, ['options']],
     'junitdefault' : [junit_default, ['options']],
