@@ -70,7 +70,7 @@ public abstract class DevOff extends RExternalBuiltinNode.Arg1 {
         GridDevice dev = ctx.getDevice(which);
         ctx.removeDevice(which);
         if ((dev instanceof SVGDevice)) {
-            return ((SVGDevice) dev).getContents();
+            return ((SVGDevice) dev).closeAndGetContents();
         } else {
             warning(Message.GENERIC, "The device was not SVG device.");
             return "";
