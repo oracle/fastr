@@ -23,18 +23,13 @@
 #include <Rinterface.h>
 #include <rffiutils.h>
 #include <rffi_callbacks.h>
+#include <Rinternals_common.h>
 
 void *callbacks[CALLBACK_TABLE_SIZE];
 
 void Rinternals_addCallback(int index, void *closure) {
 	newClosureRef(closure);
 	callbacks[index] = closure;
-}
-
-static SEXP unimplemented(char *f) {
-	printf("unimplemented %s\n", f);
-	exit(1);
-	return NULL;
 }
 
 static int* return_int;
@@ -86,7 +81,7 @@ void return_FREE(void *address) {
 
 // R_GlobalEnv et al are not a variables in FASTR as they are RContext specific
 SEXP FASTR_R_GlobalEnv() {
-	return unimplemented("FASTR_R_GlobalEnv");
+	return ((call_R_GlobalEnv) callbacks[R_GlobalEnv_x])();
 }
 
 SEXP FASTR_R_BaseEnv() {
@@ -94,19 +89,19 @@ SEXP FASTR_R_BaseEnv() {
 }
 
 SEXP FASTR_R_BaseNamespace() {
-	return unimplemented("FASTR_R_BaseNamespace");
+	return ((call_R_BaseNamespace) callbacks[R_BaseNamespace_x])();
 }
 
 SEXP FASTR_R_NamespaceRegistry() {
-	return unimplemented("FASTR_R_NamespaceRegistry");
+	return ((call_R_NamespaceRegistry) callbacks[R_NamespaceRegistry_x])();
 }
 
 CTXT FASTR_GlobalContext() {
-	return unimplemented("FASTR_GlobalContext");
+	return ((call_R_GlobalContext) callbacks[R_GlobalContext_x])();
 }
 
 Rboolean FASTR_R_Interactive() {
-	return (int) unimplemented("FASTR_R_Interactive");
+	return (int) ((call_R_Interactive) callbacks[R_Interactive_x])();
 }
 
 SEXP CAR(SEXP e) {
@@ -134,7 +129,7 @@ double *REAL(SEXP x){
 
 Rbyte *RAW(SEXP x) {
 	((call_RAW) callbacks[RAW_x])(x);
-		return return_byte;
+		return (Rbyte *) return_byte;
 }
 
 int LENGTH(SEXP x) {
@@ -178,20 +173,8 @@ SEXP Rf_coerceVector(SEXP x, SEXPTYPE mode) {
 	return ((call_Rf_coerceVector) callbacks[Rf_coerceVector_x])(x, mode);
 }
 
-SEXP Rf_protect(SEXP x) {
-	return x;
-}
-
-void Rf_unprotect(int x) {
-	// nothing to do
-}
-
 SEXP Rf_cons(SEXP car, SEXP cdr) {
 	return ((call_Rf_cons) callbacks[Rf_cons_x])(car, cdr);
-}
-
-SEXP R_FindNamespace(SEXP info) {
-	return ((call_R_FindNamespace) callbacks[R_FindNamespace_x])(info);
 }
 
 SEXP Rf_GetOption1(SEXP tag) {
@@ -227,7 +210,8 @@ void Rf_error(const char *format, ...) {
 	((call_Rf_error) callbacks[Rf_error_x])(buf);
 	// just transfer back which will cleanup and exit the entire JNI call
 //	longjmp(*getErrorJmpBuf(), 1);
-
+	// Should not reach here
+	unimplemented("Rf_error");
 }
 
 void Rf_errorcall(SEXP x, const char *format, ...) {
@@ -246,7 +230,7 @@ void Rf_warningcall(SEXP x, const char *format, ...) {
 void Rf_warning(const char *format, ...) {
 	char buf[8192];
 	va_list(ap);
-	va_start(ap,format);
+	va_start(ap, format);
 	Rvsnprintf(buf, BUFSIZE - 1, format, ap);
 	va_end(ap);
 	((call_Rf_warning) callbacks[Rf_warning_x])(buf);
@@ -302,11 +286,11 @@ SEXP Rf_allocVector3(SEXPTYPE t, R_xlen_t len, R_allocator_t* allocator) {
   	    unimplemented("RF_allocVector with custom allocator");
 	    return NULL;
     }
-    return ((call_Rf_allocateVector) callbacks[Rf_allocateVector_x])(t, len);
+    return ((call_Rf_allocVector) callbacks[Rf_allocVector_x])(t, len);
 }
 
 SEXP Rf_allocArray(SEXPTYPE t, SEXP dims) {
-	unimplemented("Rf_allocArray");
+	return ((call_Rf_allocArray) callbacks[Rf_allocArray_x])(t, dims);
 }
 
 SEXP Rf_alloc3DArray(SEXPTYPE t, int x, int y, int z) {
@@ -314,7 +298,7 @@ SEXP Rf_alloc3DArray(SEXPTYPE t, int x, int y, int z) {
 }
 
 SEXP Rf_allocMatrix(SEXPTYPE mode, int nrow, int ncol) {
-	unimplemented("Rf_allocMatrix");
+	return ((call_Rf_allocMatrix) callbacks[Rf_allocMatrix_x])(mode, nrow, ncol);
 }
 
 SEXP Rf_allocList(int x) {
@@ -343,11 +327,11 @@ SEXP Rf_dimnamesgets(SEXP x, SEXP y) {
 }
 
 SEXP Rf_eval(SEXP expr, SEXP env) {
-	return unimplemented("Rf_eval");
+	return ((call_Rf_eval) callbacks[Rf_eval_x])(expr, env);
 }
 
 SEXP Rf_findFun(SEXP symbol, SEXP rho) {
-	return unimplemented("Rf_findFun");
+	return ((call_Rf_findFun) callbacks[Rf_findFun_x])(symbol, rho);
 }
 
 SEXP Rf_findVar(SEXP sym, SEXP rho) {
@@ -355,11 +339,11 @@ SEXP Rf_findVar(SEXP sym, SEXP rho) {
 }
 
 SEXP Rf_findVarInFrame(SEXP rho, SEXP sym) {
-	return unimplemented("Rf_findVarInFrame");
+	return ((call_Rf_findVarInFrame) callbacks[Rf_findVarInFrame_x])(rho, sym);
 }
 
 SEXP Rf_findVarInFrame3(SEXP rho, SEXP sym, Rboolean b) {
-	return unimplemented("Rf_findVarInFrame");
+	return ((call_Rf_findVarInFrame3) callbacks[Rf_findVarInFrame3_x])(rho, sym, b);
 }
 
 SEXP Rf_getAttrib(SEXP vec, SEXP name) {
@@ -373,15 +357,15 @@ SEXP Rf_setAttrib(SEXP vec, SEXP name, SEXP val) {
 }
 
 SEXP Rf_duplicate(SEXP x) {
-	return unimplemented("Rf_duplicate");
+	return ((call_Rf_duplicate) callbacks[Rf_duplicate_x])(x, 1);
 }
 
 SEXP Rf_shallow_duplicate(SEXP x) {
-	return unimplemented("Rf_shallow_duplicate");
+	return ((call_Rf_duplicate) callbacks[Rf_duplicate_x])(x, 0);
 }
 
 R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
-	return (R_xlen_t) unimplemented("Rf_any_duplicated");
+	return (R_xlen_t) ((call_Rf_any_duplicated) callbacks[Rf_any_duplicated_x])(x, from_last);
 }
 
 SEXP Rf_duplicated(SEXP x, Rboolean y) {
@@ -406,31 +390,7 @@ int Rf_countContexts(int x, int y) {
 }
 
 Rboolean Rf_inherits(SEXP x, const char * klass) {
-	return (Rboolean) unimplemented("Rf_inherits");
-}
-
-Rboolean Rf_isReal(SEXP x) {
-    return TYPEOF(x) == REALSXP;
-}
-
-Rboolean Rf_isSymbol(SEXP x) {
-    return TYPEOF(x) == SYMSXP;
-}
-
-Rboolean Rf_isComplex(SEXP x) {
-    return TYPEOF(x) == CPLXSXP;
-}
-
-Rboolean Rf_isEnvironment(SEXP x) {
-    return TYPEOF(x) == ENVSXP;
-}
-
-Rboolean Rf_isExpression(SEXP x) {
-    return TYPEOF(x) == EXPRSXP;
-}
-
-Rboolean Rf_isLogical(SEXP x) {
-    return TYPEOF(x) == LGLSXP;
+	return (Rboolean) ((call_Rf_inherits) callbacks[Rf_inherits_x])(x, klass);
 }
 
 Rboolean Rf_isObject(SEXP s) {
@@ -443,7 +403,7 @@ void Rf_PrintValue(SEXP x) {
 }
 
 SEXP Rf_install(const char *name) {
-	((call_Rf_install) callbacks[Rf_install_x])(name);
+	return ((call_Rf_install) callbacks[Rf_install_x])(name);
 }
 
 SEXP Rf_installChar(SEXP charsxp) {
@@ -475,13 +435,20 @@ const char *Rf_reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst) 
 }
 
 int Rf_ncols(SEXP x) {
-	return (int) unimplemented("Rf_ncols");
+	return (int) ((call_Rf_ncols) callbacks[Rf_ncols_x])(x);
 }
 
 int Rf_nrows(SEXP x) {
-	return (int) unimplemented("Rf_nrows");
+	return (int) ((call_Rf_nrows) callbacks[Rf_nrows_x])(x);
 }
 
+
+SEXP Rf_protect(SEXP x) {
+	return x;
+}
+
+void Rf_unprotect(int x) {
+}
 
 void R_ProtectWithIndex(SEXP x, PROTECT_INDEX *y) {
 	//
@@ -511,7 +478,7 @@ SEXP R_NewHashedEnv(SEXP parent, SEXP size) {
 }
 
 SEXP Rf_classgets(SEXP vec, SEXP klass) {
-	return unimplemented("Rf_classgets");
+	return ((call_Rf_classgets) callbacks[Rf_classgets_x])(vec, klass);
 }
 
 const char *Rf_translateChar(SEXP x) {
@@ -533,7 +500,7 @@ const char *Rf_translateCharUTF8(SEXP x) {
 }
 
 SEXP Rf_lengthgets(SEXP x, R_len_t y) {
-	return unimplemented("Rf_lengthgets");
+	return ((call_Rf_lengthgets) callbacks[Rf_lengthgets_x])(x, y);
 }
 
 SEXP Rf_xlengthgets(SEXP x, R_xlen_t y) {
@@ -545,60 +512,11 @@ SEXP R_lsInternal(SEXP env, Rboolean all) {
 }
 
 SEXP R_lsInternal3(SEXP env, Rboolean all, Rboolean sorted) {
-	return unimplemented("R_lsInternal3");
+	return ((call_R_lsInternal3) callbacks[R_lsInternal3_x])(env, all, sorted);
 }
 
 SEXP Rf_namesgets(SEXP x, SEXP y) {
 	return unimplemented("Rf_namesgets");
-}
-
-SEXP GetOption(SEXP tag, SEXP rho) {
-    return GetOption1(tag);
-}
-
-int GetOptionCutoff(void) {
-    int w;
-    w = asInteger(GetOption1(install("deparse.cutoff")));
-    if (w == NA_INTEGER || w <= 0) {
-	warning(_("invalid 'deparse.cutoff', used 60"));
-	w = 60;
-    }
-    return w;
-}
-
-#define R_MIN_WIDTH_OPT		10
-#define R_MAX_WIDTH_OPT		10000
-#define R_MIN_DIGITS_OPT	0
-#define R_MAX_DIGITS_OPT	22
-
-int GetOptionWidth(void) {
-    int w;
-    w = asInteger(GetOption1(install("width")));
-    if (w < R_MIN_WIDTH_OPT || w > R_MAX_WIDTH_OPT) {
-	warning(_("invalid printing width, used 80"));
-	return 80;
-    }
-    return w;
-}
-
-int GetOptionDigits(void) {
-    int d;
-    d = asInteger(GetOption1(install("digits")));
-    if (d < R_MIN_DIGITS_OPT || d > R_MAX_DIGITS_OPT) {
-	warning(_("invalid printing digits, used 7"));
-	return 7;
-    }
-    return d;
-}
-
-Rboolean Rf_GetOptionDeviceAsk(void) {
-    int ask;
-    ask = asLogical(GetOption1(install("device.ask.default")));
-    if(ask == NA_LOGICAL) {
-	warning(_("invalid value for \"device.ask.default\", using FALSE"));
-	return FALSE;
-    }
-    return ask != 0;
 }
 
 SEXP TAG(SEXP e) {
@@ -606,7 +524,7 @@ SEXP TAG(SEXP e) {
 }
 
 SEXP PRINTNAME(SEXP e) {
-	return unimplemented("PRINTNAME");
+	return ((call_PRINTNAME) callbacks[PRINTNAME_x])(e);
 }
 
 
@@ -634,7 +552,7 @@ SEXP CDDDR(SEXP e) {
 }
 
 SEXP CADDR(SEXP e) {
-	return unimplemented("CADDR");
+	return ((call_CADDR) callbacks[CADDR_x])(e);
 }
 
 SEXP CADDDR(SEXP e) {
@@ -669,7 +587,7 @@ SEXP SETCDR(SEXP x, SEXP y) {
 }
 
 SEXP SETCADR(SEXP x, SEXP y) {
-	return unimplemented("SETCADR");
+	return ((call_SETCADR) callbacks[SETCADR_x])(x, y);
 }
 
 SEXP SETCADDR(SEXP x, SEXP y) {
@@ -700,11 +618,11 @@ SEXP CLOENV(SEXP x) {
 }
 
 int RDEBUG(SEXP x) {
-    unimplemented("RDEBUG");
+	return ((call_RDEBUG) callbacks[RDEBUG_x])(x);
 }
 
 int RSTEP(SEXP x) {
-	unimplemented("RSTEP");
+	return ((call_RSTEP) callbacks[RSTEP_x])(x);
 }
 
 int RTRACE(SEXP x) {
@@ -713,11 +631,11 @@ int RTRACE(SEXP x) {
 }
 
 void SET_RDEBUG(SEXP x, int v) {
-	unimplemented("SET_RDEBUG");
+	((call_SET_RDEBUG) callbacks[SET_RDEBUG_x])(x, v);
 }
 
 void SET_RSTEP(SEXP x, int v) {
-	unimplemented("SET_RSTEP");
+	((call_SET_RSTEP) callbacks[SET_RSTEP_x])(x, v);
 }
 
 void SET_RTRACE(SEXP x, int v) {
@@ -737,7 +655,7 @@ void SET_CLOENV(SEXP x, SEXP v) {
 }
 
 SEXP SYMVALUE(SEXP x) {
-	return unimplemented("SYMVALUE");
+	return ((call_SYMVALUE) callbacks[SYMVALUE_x])(x);
 }
 
 SEXP INTERNAL(SEXP x) {
@@ -754,7 +672,7 @@ void SET_DDVAL(SEXP x, int v) {
 }
 
 void SET_SYMVALUE(SEXP x, SEXP v) {
-	unimplemented("SET_SYMVALUE");
+	((call_SET_SYMVALUE) callbacks[SET_SYMVALUE_x])(x, v);
 }
 
 void SET_INTERNAL(SEXP x, SEXP v) {
@@ -766,7 +684,7 @@ SEXP FRAME(SEXP x) {
 }
 
 SEXP ENCLOS(SEXP x) {
-	return unimplemented("ENCLOS");
+	return ((call_ENCLOS) callbacks[ENCLOS_x])(x);
 }
 
 SEXP HASHTAB(SEXP x) {
@@ -795,19 +713,19 @@ void SET_HASHTAB(SEXP x, SEXP v) {
 }
 
 SEXP PRCODE(SEXP x) {
-	return unimplemented("PRCODE");
+	return ((call_PRCODE) callbacks[PRCODE_x])(x);
 }
 
 SEXP PRENV(SEXP x) {
-	return unimplemented("PRENV");
+	return ((call_PRENV) callbacks[PRENV_x])(x);
 }
 
 SEXP PRVALUE(SEXP x) {
-	return unimplemented("PRVALUE");
+	return ((call_PRVALUE) callbacks[PRVALUE_x])(x);
 }
 
 int PRSEEN(SEXP x) {
-	return (int) unimplemented("PRSEEN");
+	return ((call_PRSEEN) callbacks[PRSEEN_x])(x);
 }
 
 void SET_PRSEEN(SEXP x, int v) {
@@ -900,9 +818,8 @@ SEXP *STRING_PTR(SEXP x){
 }
 
 
-SEXP *VECTOR_PTR(SEXP x){
+SEXP * NORET VECTOR_PTR(SEXP x){
 	unimplemented("VECTOR_PTR");
-	return NULL;
 }
 
 SEXP Rf_asChar(SEXP x){
@@ -949,7 +866,7 @@ SEXP ATTRIB(SEXP x){
 }
 
 int OBJECT(SEXP x){
-	return (int) unimplemented("OBJECT");
+	return (int) ((call_OBJECT) callbacks[OBJECT_x])(x);
 }
 
 int MARK(SEXP x){
@@ -958,7 +875,7 @@ int MARK(SEXP x){
 }
 
 int NAMED(SEXP x){
-	return (int) unimplemented("NAMED");
+	return (int) ((call_NAMED) callbacks[NAMED_x])(x);
 }
 
 int REFCNT(SEXP x){
@@ -975,6 +892,7 @@ void SET_TYPEOF(SEXP x, int v){
 }
 
 SEXP SET_TYPEOF_FASTR(SEXP x, int v){
+	return ((call_SET_TYPEOF_FASTR) callbacks[SET_TYPEOF_FASTR_x])(x, v);
 }
 
 void SET_NAMED(SEXP x, int v){
@@ -986,36 +904,7 @@ void SET_ATTRIB(SEXP x, SEXP v){
 }
 
 void DUPLICATE_ATTRIB(SEXP to, SEXP from){
-	unimplemented("DUPLICATE_ATTRIB");
-}
-
-char *dgettext(const char *domainname, const char *msgid) {
-	printf("dgettext: '%s'\n", msgid);
-	return (char*) msgid;
-}
-
-char *libintl_dgettext(const char *domainname, const char *msgid) {
-	return dgettext(domainname, msgid);
-}
-
-char *dngettext(const char *domainname, const char *msgid, const char * msgid_plural, unsigned long int n) {
-    printf("dngettext: singular - '%s' ; plural - '%s'\n", msgid, msgid_plural);
-    return (char*) (n == 1 ? msgid : msgid_plural);
-}
-
-void *DATAPTR(SEXP x) {
-	int type = TYPEOF(x);
-	if (type == INTSXP) {
-		return INTEGER(x);
-	} else if (type == REALSXP) {
-		return REAL(x);
-	} else if (type == LGLSXP) {
-		return LOGICAL(x);
-	} else {
-		printf("DATAPTR %d\n", type);
-		unimplemented("R_DATAPTR");
-		return NULL;
-	}
+	((call_DUPLICATE_ATTRIB) callbacks[DUPLICATE_ATTRIB_x])(to, from);
 }
 
 void R_qsort_I  (double *v, int *II, int i, int j) {
@@ -1031,14 +920,15 @@ R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
 }
 
 int IS_S4_OBJECT(SEXP x) {
-	return (int) unimplemented("IS_S4_OBJECT");
+	return (int) ((call_IS_S4_OBJECT) callbacks[IS_S4_OBJECT_x])(x);
 }
 
 void SET_S4_OBJECT(SEXP x) {
-	unimplemented("SET_S4_OBJECT");
+	((call_SET_S4_OBJECT) callbacks[SET_S4_OBJECT_x])(x);
 }
+
 void UNSET_S4_OBJECT(SEXP x) {
-	unimplemented("UNSET_S4_OBJECT");
+	((call_UNSET_S4_OBJECT) callbacks[UNSET_S4_OBJECT_x])(x);
 }
 
 Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
@@ -1071,6 +961,10 @@ Rboolean R_IsNamespaceEnv(SEXP rho) {
 	return (Rboolean) unimplemented("R_IsNamespaceEnv");
 }
 
+SEXP R_FindNamespace(SEXP info) {
+	return ((call_R_FindNamespace) callbacks[R_FindNamespace_x])(info);
+}
+
 SEXP R_NamespaceEnvSpec(SEXP rho) {
 	return unimplemented("R_NamespaceEnvSpec");
 }
@@ -1096,11 +990,11 @@ void R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env) {
 }
 
 Rboolean R_BindingIsLocked(SEXP sym, SEXP env) {
-	return (Rboolean) unimplemented("R_BindingIsLocked");
+	return (Rboolean) ((call_R_BindingIsLocked) callbacks[R_BindingIsLocked_x])(sym, env);
 }
 
 Rboolean R_BindingIsActive(SEXP sym, SEXP env) {
-    // TODO: for now, I belive all bindings are false
+    // TODO: for now, I believe all bindings are false
     return (Rboolean)0;
 }
 
@@ -1117,6 +1011,7 @@ SEXP Rf_asS4(SEXP x, Rboolean b, int i) {
 }
 
 static SEXP R_tryEvalInternal(SEXP x, SEXP y, int *ErrorOccurred, int silent) {
+	unimplemented("R_tryEvalInternal");
 }
 
 SEXP R_tryEval(SEXP x, SEXP y, int *ErrorOccurred) {
@@ -1138,7 +1033,7 @@ double R_strtod(const char *c, char **end) {
 }
 
 SEXP R_PromiseExpr(SEXP x) {
-	return unimplemented("R_PromiseExpr");
+	return ((call_R_PromiseExpr) callbacks[R_PromiseExpr_x])(x);
 }
 
 SEXP R_ClosureExpr(SEXP x) {
@@ -1150,31 +1045,31 @@ SEXP R_forceAndCall(SEXP e, int n, SEXP rho) {
 }
 
 SEXP R_MakeExternalPtr(void *p, SEXP tag, SEXP prot) {
-	return unimplemented("R_MakeExternalPtr");
+	return ((call_R_MakeExternalPtr) callbacks[R_MakeExternalPtr_x])(p, tag, prot);
 }
 
 void *R_ExternalPtrAddr(SEXP s) {
-	return unimplemented("R_ExternalPtrAddr");
+	return ((call_R_ExternalPtrAddr) callbacks[R_ExternalPtrAddr_x])(s);
 }
 
 SEXP R_ExternalPtrTag(SEXP s) {
-	return unimplemented("R_ExternalPtrTag");
+	return ((call_R_ExternalPtrTag) callbacks[R_ExternalPtrTag_x])(s);
 }
 
-SEXP R_ExternalPtrProt(SEXP s) {
-	return unimplemented("R_ExternalPtrProt");
+SEXP R_ExternalPtrProtected(SEXP s) {
+	return ((call_R_ExternalPtrProtected) callbacks[R_ExternalPtrProtected_x])(s);
 }
 
 void R_SetExternalPtrAddr(SEXP s, void *p) {
-	unimplemented("R_SetExternalPtrAddr");
+	((call_R_SetExternalPtrProtected) callbacks[R_SetExternalPtrProtected_x])(s, p);
 }
 
 void R_SetExternalPtrTag(SEXP s, SEXP tag) {
-	unimplemented("R_SetExternalPtrTag");
+	((call_R_SetExternalPtrProtected) callbacks[R_SetExternalPtrProtected_x])(s, tag);
 }
 
 void R_SetExternalPtrProtected(SEXP s, SEXP p) {
-	unimplemented("R_SetExternalPtrProtected");
+	((call_R_SetExternalPtrProtected) callbacks[R_SetExternalPtrProtected_x])(s, p);
 }
 
 void R_ClearExternalPtr(SEXP s) {
@@ -1222,11 +1117,11 @@ void R_RunWeakRefFinalizer(SEXP w) {
 }
 
 SEXP R_do_slot(SEXP obj, SEXP name) {
-	return unimplemented("R_do_slot");
+	return ((call_R_do_slot) callbacks[R_do_slot_x])(obj, name);
 }
 
 SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
-	return unimplemented("R_do_slot_assign");
+	return ((call_R_do_slot_assign) callbacks[R_do_slot_assign_x])(obj, name, value);
 }
 
 int R_has_slot(SEXP obj, SEXP name) {
@@ -1234,7 +1129,7 @@ int R_has_slot(SEXP obj, SEXP name) {
 }
 
 SEXP R_do_MAKE_CLASS(const char *what) {
-	return unimplemented("R_do_MAKE_CLASS");
+	return ((call_R_do_MAKE_CLASS) callbacks[R_do_MAKE_CLASS_x])(what);
 }
 
 SEXP R_getClassDef (const char *what) {
@@ -1242,15 +1137,15 @@ SEXP R_getClassDef (const char *what) {
 }
 
 SEXP R_do_new_object(SEXP class_def) {
-	return unimplemented("R_do_new_object");
+	return ((call_R_do_new_object) callbacks[R_do_new_object_x])(class_def);
 }
 
-int R_check_class_and_super(SEXP x, const char **valid, SEXP rho) {
-	return (int) unimplemented("R_check_class_and_super");
+static SEXP nfiGetMethodsNamespace() {
+    return ((call_R_MethodsNamespace) callbacks[R_MethodsNamespace_x])();
 }
 
 int R_check_class_etc (SEXP x, const char **valid) {
-	return (int) unimplemented("R_check_class_etc");
+	return R_check_class_etc_helper(x, valid, nfiGetMethodsNamespace);
 }
 
 SEXP R_PreserveObject(SEXP x) {
@@ -1267,14 +1162,14 @@ void R_dot_Last(void) {
 
 
 Rboolean R_compute_identical(SEXP x, SEXP y, int flags) {
-	return (Rboolean) unimplemented("R_compute_identical");
+	return (Rboolean) ((call_R_compute_identical) callbacks[R_compute_identical_x])(x, y, flags);
 }
 
 void Rf_copyListMatrix(SEXP s, SEXP t, Rboolean byrow) {
-	unimplemented("Rf_copyListMatrix");
+	((call_Rf_copyListMatrix) callbacks[Rf_copyListMatrix_x])(s, t, byrow);
 }
 
 void Rf_copyMatrix(SEXP s, SEXP t, Rboolean byrow) {
-	unimplemented("Rf_copyMatrix");
+	((call_Rf_copyMatrix) callbacks[Rf_copyMatrix_x])(s, t, byrow);
 }
 

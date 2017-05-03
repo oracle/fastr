@@ -44,7 +44,7 @@ extern SEXP FASTR_R_EmptyEnv();
 extern SEXP R_NewHashedEnv(SEXP a, SEXP b);
 
 char *dgettext(const char *p, const char *msgid) {
-return msgid;
+return (char *)msgid;
 }
 
 int imax2(int x, int y)

@@ -51,7 +51,7 @@ void call_glob(char *pattern, void *closure) {
 	}
 }
 
-void call_readlink(void (*call_setresult)(char *link, int errno), char *path) {
+void call_readlink(void (*call_setresult)(char *link, int cerrno), char *path) {
 	char *link = NULL;
 	int cerrno = 0;
     char buf[4096];
@@ -65,7 +65,7 @@ void call_readlink(void (*call_setresult)(char *link, int errno), char *path) {
 	call_setresult(link, cerrno);
 }
 
-void call_strtol(void (*call_setresult)(long result, int errno), char *s, int base) {
+void call_strtol(void (*call_setresult)(long result, int cerrno), char *s, int base) {
     long rc = strtol(s, NULL, base);
 	call_setresult(rc, errno);
 }

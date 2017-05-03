@@ -108,11 +108,11 @@ public interface StdUpCallsRFFI {
 
     void Rf_warningcall(Object call, @RFFICstring Object msg);
 
-    Object Rf_allocateVector(int mode, int n);
+    Object Rf_allocVector(int mode, int n);
 
-    Object Rf_allocateArray(int mode, Object dimsObj);
+    Object Rf_allocArray(int mode, Object dimsObj);
 
-    Object Rf_allocateMatrix(int mode, int nrow, int ncol);
+    Object Rf_allocMatrix(int mode, int nrow, int ncol);
 
     int Rf_nrows(Object x);
 
@@ -146,7 +146,7 @@ public interface StdUpCallsRFFI {
 
     Object Rf_duplicate(Object x, int deep);
 
-    int Rf_anyDuplicated(Object x, int fromLast);
+    int Rf_any_duplicated(Object x, int fromLast);
 
     Object PRINTNAME(Object x);
 
@@ -180,7 +180,7 @@ public interface StdUpCallsRFFI {
 
     Object Rf_eval(Object expr, Object env);
 
-    Object Rf_findfun(Object symbolObj, Object envObj);
+    Object Rf_findFun(Object symbolObj, Object envObj);
 
     Object Rf_GetOption1(Object tag);
 
@@ -188,7 +188,7 @@ public interface StdUpCallsRFFI {
 
     void DUPLICATE_ATTRIB(Object to, Object from);
 
-    int R_computeIdentical(Object x, Object y, int flags);
+    int R_compute_identical(Object x, Object y, int flags);
 
     void Rf_copyListMatrix(Object s, Object t, int byrow);
 
@@ -238,13 +238,13 @@ public interface StdUpCallsRFFI {
 
     Object R_ExternalPtrTag(Object x);
 
-    Object R_ExternalPtrProt(Object x);
+    Object R_ExternalPtrProtected(Object x);
 
     void R_SetExternalPtrAddr(Object x, long addr);
 
     void R_SetExternalPtrTag(Object x, Object tag);
 
-    void R_SetExternalPtrProt(Object x, Object prot);
+    void R_SetExternalPtrProtected(Object x, Object prot);
 
     void R_CleanUp(int sa, int status, int runlast);
 

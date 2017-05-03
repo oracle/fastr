@@ -371,7 +371,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_allocateVector(int mode, int n) {
+    public Object Rf_allocVector(int mode, int n) {
         SEXPTYPE type = SEXPTYPE.mapInt(mode);
         if (n < 0) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
@@ -403,7 +403,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_allocateArray(int mode, Object dimsObj) {
+    public Object Rf_allocArray(int mode, Object dimsObj) {
         RIntVector dims = (RIntVector) dimsObj;
         int n = 1;
         int[] newDims = new int[dims.getLength()];
@@ -412,7 +412,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             newDims[i] = dims.getDataAt(i);
             n *= newDims[i];
         }
-        RAbstractVector result = (RAbstractVector) Rf_allocateVector(mode, n);
+        RAbstractVector result = (RAbstractVector) Rf_allocVector(mode, n);
         setDims(newDims, result);
         return result;
 
@@ -424,7 +424,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_allocateMatrix(int mode, int nrow, int ncol) {
+    public Object Rf_allocMatrix(int mode, int nrow, int ncol) {
         SEXPTYPE type = SEXPTYPE.mapInt(mode);
         if (nrow < 0 || ncol < 0) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.NEGATIVE_EXTENTS_TO_MATRIX);
@@ -601,7 +601,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int Rf_anyDuplicated(Object x, int fromLast) {
+    public int Rf_any_duplicated(Object x, int fromLast) {
         RAbstractVector vec = (RAbstractVector) x;
         if (vec.getLength() == 0) {
             return 0;
@@ -747,7 +747,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_findfun(Object symbolObj, Object envObj) {
+    public Object Rf_findFun(Object symbolObj, Object envObj) {
         guarantee(envObj instanceof REnvironment);
         REnvironment env = (REnvironment) envObj;
         guarantee(symbolObj instanceof RSymbol);
@@ -792,7 +792,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int R_computeIdentical(Object x, Object y, int flags) {
+    public int R_compute_identical(Object x, Object y, int flags) {
         RFunction indenticalBuiltin = RContext.lookupBuiltin("identical");
         Object res = RContext.getEngine().evalFunction(indenticalBuiltin, null, null, null, x, y, RRuntime.asLogical((!((flags & 1) == 0))),
                         RRuntime.asLogical((!((flags & 2) == 0))), RRuntime.asLogical((!((flags & 4) == 0))), RRuntime.asLogical((!((flags & 8) == 0))), RRuntime.asLogical((!((flags & 16) == 0))));
@@ -1279,7 +1279,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object R_ExternalPtrProt(Object x) {
+    public Object R_ExternalPtrProtected(Object x) {
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         return p.getProt();
     }
@@ -1297,7 +1297,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public void R_SetExternalPtrProt(Object x, Object prot) {
+    public void R_SetExternalPtrProtected(Object x, Object prot) {
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         p.setProt(prot);
     }

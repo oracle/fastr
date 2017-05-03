@@ -20,19 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include <Rinternals.h>
+#include <string.h>
+#include <Rinterface.h>
 #include <trufflenfi.h>
+#include <rffiutils.h>
 
+// Indices into RFFIVariables enum
+// The commented out entries are not used as they are remapped
+// as functions and the name clashes with the callback index for that
 #define R_Home_x 0
 #define R_TempDir_x 1
 #define R_NilValue_x 2
 #define R_UnboundValue_x 3
 #define R_MissingArg_x 4
-#define R_GlobalEnv_x 5
+//#define R_GlobalEnv_x 5
 #define R_EmptyEnv_x 6
-#define R_BaseEnv_x 7
-#define R_BaseNamespace_x 8
-#define R_NamespaceRegistry_x 9
+//#define R_BaseEnv_x 7
+//#define R_BaseNamespace_x 8
+//#define R_NamespaceRegistry_x 9
 #define R_Srcref_x 10
 #define R_Bracket2Symbol_x 11
 #define R_BracketSymbol_x 12

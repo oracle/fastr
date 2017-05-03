@@ -38,7 +38,7 @@ C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_SOURCES))
 
 FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
 #NFI_INCLUDES is set in environment (by mx)
-LOCAL_INCLUDES = -I . -I $(abspath ../include)
+LOCAL_INCLUDES = -I . -I $(abspath ../include) -I $(abspath ../common)
 
 INCLUDES := $(LOCAL_INCLUDES) $(FFI_INCLUDES) $(NFI_INCLUDES)
 

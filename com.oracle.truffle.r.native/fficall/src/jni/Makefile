@@ -38,7 +38,7 @@ C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_SOURCES))
 
 JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(JDK_OS_DIR)
 FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
-LOCAL_INCLUDES = -I . -I $(abspath ../include)
+LOCAL_INCLUDES = -I . -I $(abspath ../include) -I $(abspath ../common)
 
 INCLUDES := $(LOCAL_INCLUDES) $(JNI_INCLUDES) $(FFI_INCLUDES)
 
