@@ -11,6 +11,12 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -317,9 +323,26 @@ public class RDeparse {
         }
 
         public void fixupSources() {
-            Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.DEPARSE);
-            for (SourceSectionElement s : sources) {
-                s.element.setSourceSection(source.createSection(s.start, s.length));
+            if (FastROptions.EmitTmpSource.getBooleanValue()) {
+                String tmpDirStr = FastROptions.EmitTmpDir.getStringValue();
+                Path tmpDir = tmpDirStr != null ? Paths.get(tmpDirStr) : null;
+                for (SourceSectionElement s : sources) {
+                    try {
+                        Path path = Files.createTempFile(tmpDir, "deparse-", ".r");
+                        try (BufferedWriter bw = Files.newBufferedWriter(path, StandardOpenOption.WRITE)) {
+                            bw.write(sb.toString());
+                        }
+                        Source source = RSource.fromFile(path.toFile());
+                        s.element.setSourceSection(source.createSection(s.start, s.length));
+                    } catch (IOException e) {
+                        RInternalError.reportError(e);
+                    }
+                }
+            } else {
+                Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.DEPARSE);
+                for (SourceSectionElement s : sources) {
+                    s.element.setSourceSection(source.createSection(s.start, s.length));
+                }
             }
         }
 
