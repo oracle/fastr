@@ -79,7 +79,7 @@ Rboolean R_forceSymbols(DllInfo *dllInfo, Rboolean value) {
 
 
 TruffleObject Rdynload_setSymbol(DllInfo *info, int nstOrd, long routinesAddr, int index) {
-	char *name;
+	const char *name;
 	long fun;
 	int numArgs;
 	switch (nstOrd) {
@@ -113,7 +113,7 @@ TruffleObject Rdynload_setSymbol(DllInfo *info, int nstOrd, long routinesAddr, i
 	}
 	}
 	//printf("call_setDotSymbolValues %p, %s, %p, %d\n", info, name, fun, numArgs);
-	TruffleObject result = call_setDotSymbolValues(info, name, fun, numArgs);
+	TruffleObject result = call_setDotSymbolValues(info, (char *)name, fun, numArgs);
 
 	return result;
 }

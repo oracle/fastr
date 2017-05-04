@@ -20,21 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#ifndef RFFIUTILS_H
-#define RFFIUTILS_H
-
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
 #include <Rinternals.h>
-#include <rffi_callbacks.h>
-#include <trufflenfi.h>
 
-extern void init_memory();
-
-// use for an unimplemented API function
-void *unimplemented(char *msg) __attribute__((noreturn));
-// use for any fatal error
-void fatalError(char *msg) __attribute__((noreturn));
-
-#endif
+// Factors out the RFFI mechanism for getting the methods namespace.
+int R_check_class_etc_helper (SEXP x, const char **valid, SEXP (*getMethodsNamespace)());

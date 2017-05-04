@@ -214,21 +214,21 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_allocateVector(int mode, int n) {
+    public Object Rf_allocVector(int mode, int n) {
         RFFIUtils.traceUpCall("Rf_allocateVector", mode, n);
-        return delegate.Rf_allocateVector(mode, n);
+        return delegate.Rf_allocVector(mode, n);
     }
 
     @Override
-    public Object Rf_allocateArray(int mode, Object dimsObj) {
+    public Object Rf_allocArray(int mode, Object dimsObj) {
         RFFIUtils.traceUpCall("Rf_allocateArray", mode, dimsObj);
         return null;
     }
 
     @Override
-    public Object Rf_allocateMatrix(int mode, int nrow, int ncol) {
+    public Object Rf_allocMatrix(int mode, int nrow, int ncol) {
         RFFIUtils.traceUpCall("Rf_allocateMatrix", mode, ncol, nrow);
-        return delegate.Rf_allocateMatrix(mode, nrow, ncol);
+        return delegate.Rf_allocMatrix(mode, nrow, ncol);
     }
 
     @Override
@@ -328,9 +328,9 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int Rf_anyDuplicated(Object x, int fromLast) {
+    public int Rf_any_duplicated(Object x, int fromLast) {
         RFFIUtils.traceUpCall("Rf_anyDuplicated", x, fromLast);
-        return delegate.Rf_anyDuplicated(x, fromLast);
+        return delegate.Rf_any_duplicated(x, fromLast);
     }
 
     @Override
@@ -430,9 +430,9 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_findfun(Object symbolObj, Object envObj) {
+    public Object Rf_findFun(Object symbolObj, Object envObj) {
         RFFIUtils.traceUpCall("Rf_findfun", symbolObj, envObj);
-        return delegate.Rf_findfun(symbolObj, envObj);
+        return delegate.Rf_findFun(symbolObj, envObj);
     }
 
     @Override
@@ -454,9 +454,9 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int R_computeIdentical(Object x, Object y, int flags) {
+    public int R_compute_identical(Object x, Object y, int flags) {
         RFFIUtils.traceUpCall("R_computeIdentical", x, y, flags);
-        return delegate.R_computeIdentical(x, y, flags);
+        return delegate.R_compute_identical(x, y, flags);
     }
 
     @Override
@@ -700,9 +700,9 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object R_ExternalPtrProt(Object x) {
+    public Object R_ExternalPtrProtected(Object x) {
         RFFIUtils.traceUpCall("R_ExternalPtrProt", x);
-        return delegate.R_ExternalPtrProt(x);
+        return delegate.R_ExternalPtrProtected(x);
     }
 
     @Override
@@ -718,9 +718,9 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public void R_SetExternalPtrProt(Object x, Object prot) {
+    public void R_SetExternalPtrProtected(Object x, Object prot) {
         RFFIUtils.traceUpCall("R_ExternalPtrProt", x);
-        delegate.R_SetExternalPtrProt(x, prot);
+        delegate.R_SetExternalPtrProtected(x, prot);
     }
 
     @Override
