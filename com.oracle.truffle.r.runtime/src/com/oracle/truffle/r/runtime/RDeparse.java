@@ -11,15 +11,21 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import static java.nio.file.StandardOpenOption.WRITE;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+
+import javax.xml.bind.DatatypeConverter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -321,19 +327,43 @@ public class RDeparse {
             }
         }
 
+        private static Path tmpDir = null;
+        private static MessageDigest digest = null;
+
+        private Path emitToFile() throws IOException, NoSuchAlgorithmException {
+            Path path;
+            if (FastROptions.EmitTmpHashed.getBooleanValue()) {
+                if (tmpDir == null) {
+                    tmpDir = Files.createTempDirectory("deparse");
+                }
+                if (digest == null) {
+                    digest = MessageDigest.getInstance("SHA-256");
+                }
+                String printHexBinary = DatatypeConverter.printHexBinary(digest.digest(sb.toString().getBytes()));
+                path = tmpDir.resolve(printHexBinary + ".r");
+            } else {
+                path = Files.createTempFile("deparse-", ".r");
+            }
+            if (!Files.exists(path)) {
+                try (BufferedWriter bw = Files.newBufferedWriter(path, CREATE_NEW, WRITE)) {
+                    bw.write(sb.toString());
+                }
+            }
+            return path;
+        }
+
         public void fixupSources() {
             if (FastROptions.EmitTmpSource.getBooleanValue()) {
                 try {
-                    Path path = Files.createTempFile("deparse-", ".r");
-                    try (BufferedWriter bw = Files.newBufferedWriter(path, StandardOpenOption.WRITE)) {
-                        bw.write(sb.toString());
-                    }
+                    Path path = emitToFile();
                     Source source = RSource.fromFile(path.toFile());
                     for (SourceSectionElement s : sources) {
                         s.element.setSourceSection(source.createSection(s.start, s.length));
                     }
                 } catch (IOException e) {
                     RInternalError.reportError(e);
+                } catch (NoSuchAlgorithmException e) {
+                    throw RInternalError.shouldNotReachHere("SHA-256 is an unknown algorithm");
                 }
             } else {
                 Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.DEPARSE);

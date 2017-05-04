@@ -59,6 +59,7 @@ public enum FastROptions {
     LoadPackagesNativeCode("Load native code of packages, including builtin packages.", !FastRConfig.ManagedMode),
     EmitTmpSource("Write deparsed source code to temporary files for better debugging.", true),
     EmitTmpDir("The directory where to allocate temporary files with deparsed source code.", null, true),
+    EmitTmpHashed("Use an SHA-256 hash as file name to reduce temporary file creation.", true),
 
     // Promises optimizations
     EagerEval("If enabled, overrides all other EagerEval switches (see EagerEvalHelper)", false),
