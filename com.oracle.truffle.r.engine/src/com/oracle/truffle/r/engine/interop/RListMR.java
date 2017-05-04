@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @MessageResolution(receiverType = RList.class, language = TruffleRLanguage.class)
@@ -75,7 +76,8 @@ public class RListMR {
         @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, RList receiver, String field) {
             try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
-                return extract.applyAccessField(frame, receiver, field);
+                Object applyAccessField = extract.applyAccessField(frame, receiver, field);
+                return applyAccessField;
             }
         }
     }
@@ -103,7 +105,8 @@ public class RListMR {
         @SuppressWarnings("try")
         protected Object access(RList receiver) {
             try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
-                return getNamesNode.getNames(receiver);
+                RStringVector names = getNamesNode.getNames(receiver);
+                return names != null ? names : RNull.instance;
             }
         }
     }
