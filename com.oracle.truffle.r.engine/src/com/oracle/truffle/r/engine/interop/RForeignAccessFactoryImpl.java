@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RForeignAccessFactory;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -41,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
@@ -110,6 +112,10 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return CaptureNamesImplMRForeign.ACCESS;
         } else if (obj instanceof RS4Object) {
             return RS4ObjectMRForeign.ACCESS;
+        } else if (obj instanceof RPromise) {
+            return RPromiseMRForeign.ACCESS;
+        } else if (obj instanceof RArgsValuesAndNames) {
+            return RArgsValuesAndNamesMRForeign.ACCESS;
         } else {
             if (obj instanceof RAbstractVector) {
                 return ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
