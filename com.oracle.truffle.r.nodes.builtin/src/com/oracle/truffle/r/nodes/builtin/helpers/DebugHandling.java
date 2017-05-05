@@ -186,6 +186,7 @@ public class DebugHandling {
 
             @Override
             protected Void visit(RSyntaxFunction element) {
+                accept(element.getSyntaxBody());
                 return null;
             }
         }.accept(fdn);
@@ -511,6 +512,9 @@ public class DebugHandling {
         }
     }
 
+    /**
+     * Handles the loop header and there is one instance registered for each loop.
+     */
     private static class LoopStatementEventListener extends StatementEventListener {
 
         private boolean finishing;
@@ -529,7 +533,7 @@ public class DebugHandling {
 
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
-            if (!disabled()) {
+            if (!disabled() && context.getInstrumentedNode() == loopNode) {
                 super.onEnter(context, frame);
             }
         }
@@ -544,7 +548,7 @@ public class DebugHandling {
 
         @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
-            if (!disabled()) {
+            if (!disabled() && context.getInstrumentedNode() == loopNode) {
                 CompilerDirectives.transferToInterpreter();
                 returnCleanup();
             }
@@ -552,7 +556,7 @@ public class DebugHandling {
 
         @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
-            if (!disabled()) {
+            if (!disabled() && context.getInstrumentedNode() == loopNode) {
                 CompilerDirectives.transferToInterpreter();
                 returnCleanup();
             }
