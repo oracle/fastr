@@ -22,26 +22,37 @@
 #
 
 ifeq ($(FASTR_RFFI),managed)
-BASE_UNCOMPRESSED = $(addprefix $(FASTR_LIBRARY_DIR)/base/R/, base.rdb)
-BASE_SCRIPT = $(addprefix $(FASTR_LIBRARY_DIR)/base/R/, base)
-LIB_PKG_POST = $(BASE_UNCOMPRESSED) $(BASE_SCRIPT)
+# lib.mk copies the GNU R library/base dir to the FastR library dir
+# so we have to build the "uncompressed" variant of GNU R in the PRE phase.
+LIB_PKG_PRE = pre.done 
+LIB_PKG_POST = post.done
+CLEAN_PKG = clean.done
 endif
 
 include ../lib.mk
 
 ifeq ($(FASTR_RFFI),managed)
-# original base assumes that "base" DLL is loaded, we change it to check for that first
-$(BASE_SCRIPT): $(GNUR_HOME)/library/base/R/base
-	sed 's|## populate C\/Fortran symbols|if (length(getLoadedDLLs()) > 0)|g' $(FASTR_LIBRARY_DIR)/base/R/base > $(FASTR_LIBRARY_DIR)/base/R/base.tmp
-	mv $(FASTR_LIBRARY_DIR)/base/R/base.tmp $(FASTR_LIBRARY_DIR)/base/R/base
 # The following changes GnuR's build script makebasedb.R so that it does not
-# compress the lazy load database, then it builds GnuR and copies the
-# uncompressed base package database to FastR library location
-$(BASE_UNCOMPRESSED): $(GNUR_HOME)/src/library/base/all.R
+# compress the lazy load database, then it (re)builds GnuR 
+pre.done:
 	cp $(GNUR_HOME)/src/library/base/makebasedb.R $(GNUR_HOME)/src/library/base/makebasedb.R.tmp
 	sed 's|compress = TRUE|compress = FALSE|g' $(GNUR_HOME)/src/library/base/makebasedb.R.tmp > $(GNUR_HOME)/src/library/base/makebasedb.R
+# force a base rebuild
+	rm $(GNUR_HOME)/src/library/base/all.R
 	(cd $(GNUR_HOME); $(MAKE))
-	cp $(GNUR_HOME)/library/$(PKG)/R/base.rd* $(FASTR_LIBRARY_DIR)/base/R/
+	touch pre.done
+
+# original base assumes that "base" DLL is loaded, we change it to check for that first
+post.done:
+	sed 's|## populate C\/Fortran symbols|if (length(getLoadedDLLs()) > 0)|g' $(FASTR_LIBRARY_DIR)/base/R/base > $(FASTR_LIBRARY_DIR)/base/R/base.tmp
+	mv $(FASTR_LIBRARY_DIR)/base/R/base.tmp $(FASTR_LIBRARY_DIR)/base/R/base
 	mv $(GNUR_HOME)/src/library/base/makebasedb.R.tmp $(GNUR_HOME)/src/library/base/makebasedb.R
+# force a base rebuild
+	rm $(GNUR_HOME)/src/library/base/all.R
+# rebuild GNU R in compressed mode
 	(cd $(GNUR_HOME); $(MAKE))
+	touch post.done
+
+clean.done:
+	rm -f post.done pre.done
 endif
