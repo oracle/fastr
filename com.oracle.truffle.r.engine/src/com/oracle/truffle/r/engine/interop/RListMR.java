@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
@@ -36,7 +38,9 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNames
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @MessageResolution(receiverType = RList.class, language = TruffleRLanguage.class)
 public class RListMR {
@@ -77,7 +81,7 @@ public class RListMR {
 
     @Resolve(message = "WRITE")
     public abstract static class RListWriteNode extends Node {
-        @Child private ReplaceVectorNode extract = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        @Child private ReplaceVectorNode replace = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
         @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         @SuppressWarnings("try")
@@ -97,7 +101,7 @@ public class RListMR {
                 } else if (value instanceof Byte) {
                     value = (int) ((Byte) value).byteValue();
                 }
-                Object x = extract.apply(frame, receiver, new Object[]{field}, value);
+                Object x = replace.apply(frame, receiver, new Object[]{field}, value);
                 return x;
             }
         }
@@ -112,6 +116,48 @@ public class RListMR {
         protected Object access(RList receiver) {
             try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
                 return getNamesNode.getNames(receiver);
+            }
+        }
+    }
+
+    @Resolve(message = "KEY_INFO")
+    public abstract static class RListKeyInfoNode extends Node {
+        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
+        @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
+        @Child private ExtractVectorNode extractNode;
+
+        private final ConditionProfile unknownIdentifier = ConditionProfile.createBinaryProfile();
+
+        private static final int READABLE = 1 << 1;
+        private static final int WRITABLE = 1 << 2;
+        private static final int INVOCABLE = 1 << 3;
+        private static final int INTERNAL = 1 << 4;
+
+        @SuppressWarnings("try")
+        protected Object access(VirtualFrame frame, RList receiver, String identifier) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+                int info = 0;
+                RStringVector names = getNamesNode.getNames(receiver);
+                for (int i = 0; i < names.getLength(); i++) {
+                    if (identifier.equals(names.getDataAt(i))) {
+                        info = 1;
+                        break;
+                    }
+                }
+                if (unknownIdentifier.profile(info == 0)) {
+                    return info;
+                }
+
+                info = info + READABLE + WRITABLE;
+                if (extractNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    extractNode = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
+                }
+                Object value = extractNode.applyAccessField(frame, receiver, identifier);
+                if (value instanceof RFunction) {
+                    info = info + INVOCABLE;
+                }
+                return info;
             }
         }
     }

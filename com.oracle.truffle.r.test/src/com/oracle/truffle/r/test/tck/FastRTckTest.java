@@ -152,6 +152,7 @@ public class FastRTckTest extends TruffleTCK {
         "builtinFunctionValue <- function() `+`\n" +
         "builtinFunctionType <- function() 'builtin'\n" +
         "valueWithSource <- function() intValue\n" +
+        "objectWithKeyInfoAttributes <- function() { list(rw=1, invocable=function(){ 'invoked' }) }\n" +
         "for (name in ls()) .fastr.interop.export(name, get(name))\n",
         RSource.Internal.TCK_INIT
     );
@@ -283,12 +284,6 @@ public class FastRTckTest extends TruffleTCK {
     @Override
     protected String objectWithValueAndAddProperty() {
         return "objectWithValueAndAddProperty";
-    }
-
-    @Override
-    protected String objectWithKeyInfoAttributes() {
-        // TODO
-        return null;
     }
 
     @Override
@@ -509,6 +504,10 @@ public class FastRTckTest extends TruffleTCK {
     @Override
     protected String valueWithSource() {
         return "valueWithSource";
+    }
+
+    protected String objectWithKeyInfoAttributes() {
+        return "objectWithKeyInfoAttributes";
     }
 
 }
