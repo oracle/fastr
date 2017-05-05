@@ -286,6 +286,12 @@ public class FastRTckTest extends TruffleTCK {
     }
 
     @Override
+    protected String objectWithKeyInfoAttributes() {
+        // TODO
+        return null;
+    }
+
+    @Override
     protected String callMethod() {
         return "callMethod";
     }
