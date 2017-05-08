@@ -45,6 +45,7 @@ import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
+import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
@@ -428,7 +429,7 @@ public class DebugHandling {
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
             if (!disabled()) {
                 CompilerDirectives.transferToInterpreter();
-                returnCleanup(frame);
+                returnCleanup(frame, false);
             }
         }
 
@@ -436,12 +437,12 @@ public class DebugHandling {
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
             if (!disabled()) {
                 CompilerDirectives.transferToInterpreter();
-                returnCleanup(frame);
+                returnCleanup(frame, exception instanceof JumpToTopLevelException);
             }
         }
 
-        private void returnCleanup(VirtualFrame frame) {
-            if (!implicit) {
+        private void returnCleanup(VirtualFrame frame, boolean jumpToTopLevel) {
+            if (!implicit && !jumpToTopLevel) {
                 print("exiting from: ", false);
                 printCall(frame);
             }
