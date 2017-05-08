@@ -197,7 +197,7 @@ public class DebugHandling {
         FunctionStatementsEventListener fser = getFunctionStatementsEventListener(fdn);
         if (fser == null) {
             // attach a "once" listener
-            fser = attachDebugHandler(fdn, null, null, true, false);
+            fser = attachDebugHandler(fdn, null, null, true, true);
         } else {
             if (fser.disabled()) {
                 fser.enable();
@@ -294,8 +294,9 @@ public class DebugHandling {
 
         @TruffleBoundary
         private void attachStepInto() {
-            stepIntoInstrument = RInstrumentation.getInstrumenter().attachListener(SourceSectionFilter.newBuilder().tagIs(StandardTags.RootTag.class).build(),
-                            new StepIntoInstrumentListener(getFunctionStatementsEventListener(functionDefinitionNode)));
+            FunctionStatementsEventListener parentListener = getFunctionStatementsEventListener(functionDefinitionNode);
+            parentListener.stepIntoInstrument = RInstrumentation.getInstrumenter().attachListener(SourceSectionFilter.newBuilder().tagIs(StandardTags.RootTag.class).build(),
+                            new StepIntoInstrumentListener(parentListener));
 
         }
 
@@ -503,7 +504,7 @@ public class DebugHandling {
                     return;
                 }
                 printNode(node, false);
-                browserInteract(context.getInstrumentedNode(), frame);
+                browserInteract(node, frame);
             }
         }
 

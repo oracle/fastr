@@ -173,6 +173,13 @@ public class RSource {
     }
 
     /**
+     * Create a source from the file system path denoted by {@code file}.
+     */
+    public static Source fromTempFile(File file) throws IOException {
+        return Source.newBuilder(file).name(file.getName()).mimeType(RRuntime.R_APP_MIME).internal().build();
+    }
+
+    /**
      * Create an (external) source from {@code url}.
      */
     public static Source fromURL(URL url, String name) throws IOException {
