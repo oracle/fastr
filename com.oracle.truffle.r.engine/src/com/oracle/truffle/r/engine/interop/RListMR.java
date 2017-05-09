@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
+import static com.oracle.truffle.r.engine.interop.Utils.javaToRPrimitive;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
@@ -35,7 +37,6 @@ import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -87,20 +88,7 @@ public class RListMR {
         @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, RList receiver, String field, Object valueObj) {
             try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
-                Object value = valueObj;
-                if (value instanceof Short) {
-                    value = (int) ((Short) value).shortValue();
-                } else if (value instanceof Float) {
-                    float floatValue = ((Float) value).floatValue();
-                    value = new Double(floatValue);
-                } else if (value instanceof Boolean) {
-                    boolean booleanValue = ((Boolean) value).booleanValue();
-                    value = booleanValue ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
-                } else if (value instanceof Character) {
-                    value = (int) ((Character) value).charValue();
-                } else if (value instanceof Byte) {
-                    value = (int) ((Byte) value).byteValue();
-                }
+                Object value = javaToRPrimitive(valueObj);
                 Object x = replace.apply(frame, receiver, new Object[]{field}, value);
                 return x;
             }

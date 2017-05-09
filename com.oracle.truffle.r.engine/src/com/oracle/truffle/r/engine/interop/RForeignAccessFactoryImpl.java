@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
@@ -107,6 +108,8 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return MakeResultImplMRForeign.ACCESS;
         } else if (obj instanceof TruffleNFI_PCRE.TruffleNFI_GetCaptureNamesNode.CaptureNamesImpl) {
             return CaptureNamesImplMRForeign.ACCESS;
+        } else if (obj instanceof RS4Object) {
+            return RS4ObjectMRForeign.ACCESS;
         } else {
             if (obj instanceof RAbstractVector) {
                 return ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
