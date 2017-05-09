@@ -319,7 +319,10 @@ suite = {
 
     "FASTR_UNIT_TESTS" : {
       "description" : "unit tests",
-      "dependencies" : ["com.oracle.truffle.r.test"],
+      "dependencies" : [
+        "com.oracle.truffle.r.test",
+        "com.oracle.truffle.r.nodes.test"
+       ],
       "exclude": ["mx:HAMCREST", "mx:JUNIT", "mx:JMH"],
       "distDependencies" : [
         "FASTR",

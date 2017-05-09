@@ -29,6 +29,7 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.engine.interop.ffi.nfi.TruffleNFI_Base;
 import com.oracle.truffle.r.engine.interop.ffi.nfi.TruffleNFI_PCRE;
+import com.oracle.truffle.r.engine.interop.ffi.nfi.TruffleNFI_UpCallsRFFIImpl;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -102,6 +103,8 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return CharSXPWrapperMRForeign.ACCESS;
         } else if (obj instanceof RConnection) {
             return RConnectionMRForeign.ACCESS;
+        } else if (obj instanceof RContext) {
+            return RContextMRForeign.ACCESS;
         } else if (obj instanceof TruffleNFI_Base.TruffleNFI_UnameNode.UnameUpCallImpl) {
             return UnameUpCallImplMRForeign.ACCESS;
         } else if (obj instanceof TruffleNFI_Base.TruffleNFI_ReadlinkNode.SetResultImpl) {

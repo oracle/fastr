@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,40 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi.managed;
+package com.oracle.truffle.r.engine.interop;
 
-import static com.oracle.truffle.r.runtime.ffi.managed.Managed_RFFIFactory.unsupported;
+import com.oracle.truffle.api.interop.CanResolve;
+import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.context.RContext;
 
-import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
+@MessageResolution(receiverType = RContext.class, language = TruffleRLanguage.class)
+public class RContextMR {
+    @CanResolve
+    public abstract static class RContext extends Node {
 
-public class Managed_PCRERFFI implements PCRERFFI {
-    @Override
-    public MaketablesNode createMaketablesNode() {
-        throw unsupported("PCRE");
+        protected static boolean test(TruffleObject receiver) {
+            return receiver instanceof RContext;
+        }
     }
 
-    @Override
-    public CompileNode createCompileNode() {
-        throw unsupported("PCRE");
-    }
-
-    @Override
-    public GetCaptureCountNode createGetCaptureCountNode() {
-        throw unsupported("PCRE");
-    }
-
-    @Override
-    public GetCaptureNamesNode createGetCaptureNamesNode() {
-        throw unsupported("PCRE");
-    }
-
-    @Override
-    public StudyNode createStudyNode() {
-        throw unsupported("PCRE");
-    }
-
-    @Override
-    public ExecNode createExecNode() {
-        throw unsupported("PCRE");
-    }
 }

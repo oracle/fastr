@@ -71,6 +71,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -97,7 +98,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  * Contexts can be destroyed
  */
 @SuppressWarnings("deprecation")
-public final class RContext extends com.oracle.truffle.api.ExecutionContext {
+public final class RContext extends com.oracle.truffle.api.ExecutionContext implements RTruffleObject {
 
     public static final int CONSOLE_WIDTH = 80;
 
