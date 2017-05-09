@@ -23,9 +23,12 @@
 package com.oracle.truffle.r.runtime.context;
 
 import java.util.TimeZone;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -58,6 +61,7 @@ public final class ContextInfo {
     private final int id;
     private final int multiSlotInd;
     private PolyglotEngine vm;
+    public Executor executor;
 
     private ContextInfo(RStartParams startParams, String[] env, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone, int id, int multiSlotInd) {
         this.startParams = startParams;
@@ -83,7 +87,12 @@ public final class ContextInfo {
     }
 
     public PolyglotEngine createVM() {
-        PolyglotEngine newVM = PolyglotEngine.newBuilder().config("application/x-r", CONFIG_KEY, this).build();
+        Builder builder = PolyglotEngine.newBuilder();
+        if (startParams.getInteractive()) {
+            this.executor = Executors.newSingleThreadExecutor();
+            builder = builder.executor(executor);
+        }
+        PolyglotEngine newVM = builder.config("application/x-r", CONFIG_KEY, this).build();
         this.vm = newVM;
         return newVM;
     }

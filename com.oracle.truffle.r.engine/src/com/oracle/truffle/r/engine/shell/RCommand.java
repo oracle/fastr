@@ -227,7 +227,7 @@ public class RCommand {
                         lastStatus = 0;
                         try {
                             try {
-                                vm.eval(source);
+                                vm.eval(source).get();
                                 // checked exceptions are wrapped in RuntimeExceptions
                             } catch (RuntimeException e) {
                                 if (e.getCause() instanceof com.oracle.truffle.api.vm.IncompleteSourceException) {
@@ -281,7 +281,7 @@ public class RCommand {
             // JumpToTopLevelException can happen if user profile invokes browser (unlikely but
             // possible)
             try {
-                vm.eval(QUIT_EOF);
+                vm.eval(QUIT_EOF).get();
             } catch (JumpToTopLevelException e) {
                 Utils.systemExit(0);
             } catch (ExitException e) {

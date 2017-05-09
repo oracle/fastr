@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
+import static com.oracle.truffle.r.nodes.test.TestUtilities.copy;
 import static com.oracle.truffle.r.nodes.test.TestUtilities.createHandle;
+import static com.oracle.truffle.r.nodes.test.TestUtilities.withinTestContext;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createDoubleSequence;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createDoubleVectorFromScalar;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyComplexVector;
@@ -92,8 +94,8 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testScalarUnboxing(BinaryArithmeticFactory factory, RScalarVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = aOrig.copy();
-        RAbstractVector b = bOrig.copy();
+        RAbstractVector a = withinTestContext(() -> aOrig.copy());
+        RAbstractVector b = copy(bOrig);
         // unboxing cannot work if length is 1
         assumeThat(b.getLength(), is(1));
 
@@ -107,8 +109,8 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testVectorResult(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = aOrig.copy();
-        RAbstractVector b = bOrig.copy();
+        RAbstractVector a = copy(aOrig);
+        RAbstractVector b = copy(bOrig);
         assumeThat(a, is(not(instanceOf(RScalarVector.class))));
         assumeThat(b, is(not(instanceOf(RScalarVector.class))));
         assumeArithmeticCompatible(factory, a, b);
@@ -124,8 +126,8 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testSharing(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = aOrig.copy();
-        RAbstractVector b = bOrig.copy();
+        RAbstractVector a = copy(aOrig);
+        RAbstractVector b = copy(bOrig);
         assumeArithmeticCompatible(factory, a, b);
 
         // not part of this test, see #testEmptyArrays
@@ -189,7 +191,7 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testEmptyArrays(BinaryArithmeticFactory factory, RAbstractVector originalVector) {
-        RAbstractVector vector = originalVector.copy();
+        RAbstractVector vector = withinTestContext(() -> originalVector.copy());
         testEmptyArray(factory, vector, createEmptyLogicalVector());
         testEmptyArray(factory, vector, createEmptyIntVector());
         testEmptyArray(factory, vector, createEmptyDoubleVector());
@@ -199,7 +201,7 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testRNullConstantResult(BinaryArithmeticFactory factory, RAbstractVector originalVector) {
-        RAbstractVector vector = originalVector.copy();
+        RAbstractVector vector = withinTestContext(() -> originalVector.copy());
 
         RType type = vector.getRType() == RType.Complex ? RType.Complex : RType.Double;
         assertThat(executeArithmetic(factory, vector, RNull.instance), isEmptyVectorOf(type));
@@ -213,8 +215,8 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testCompleteness(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = aOrig.copy();
-        RAbstractVector b = bOrig.copy();
+        RAbstractVector a = copy(aOrig);
+        RAbstractVector b = copy(bOrig);
         assumeArithmeticCompatible(factory, a, b);
 
         // disable division they might produce NA values by division with 0
@@ -239,8 +241,8 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         assumeArithmeticCompatible(factory, aOrig, bOrig);
 
         // we have to e careful not to change mutable vectors
-        RAbstractVector a = aOrig.copy();
-        RAbstractVector b = bOrig.copy();
+        RAbstractVector a = copy(aOrig);
+        RAbstractVector b = copy(bOrig);
         if (a instanceof RShareable) {
             assert ((RShareable) a).isTemporary();
             ((RShareable) a).incRefCount();
@@ -250,29 +252,29 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
             ((RShareable) b).incRefCount();
         }
 
-        RVector<?> aMaterialized = a.copy().materialize();
-        RVector<?> bMaterialized = b.copy().materialize();
+        RVector<?> aMaterialized = withinTestContext(() -> a.copy().materialize());
+        RVector<?> bMaterialized = withinTestContext(() -> b.copy().materialize());
 
         aMaterialized.setAttr("a", "a");
         bMaterialized.setAttr("b", "b");
 
         if (a.getLength() == 0 || b.getLength() == 0) {
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), bMaterialized.copy()));
-            assertAttributes(executeArithmetic(factory, a, bMaterialized.copy()));
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), b));
+            assertAttributes(executeArithmetic(factory, copy(aMaterialized), copy(bMaterialized)));
+            assertAttributes(executeArithmetic(factory, a, copy(bMaterialized)));
+            assertAttributes(executeArithmetic(factory, copy(aMaterialized), b));
         } else if (a.getLength() == b.getLength()) {
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), bMaterialized.copy()), "a", "b");
-            assertAttributes(executeArithmetic(factory, a, bMaterialized.copy()), "b");
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), b), "a");
+            assertAttributes(executeArithmetic(factory, copy(aMaterialized), copy(bMaterialized)), "a", "b");
+            assertAttributes(executeArithmetic(factory, a, copy(bMaterialized)), "b");
+            assertAttributes(executeArithmetic(factory, copy(aMaterialized), b), "a");
         } else if (a.getLength() > b.getLength()) {
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), bMaterialized.copy()), "a");
-            assertAttributes(executeArithmetic(factory, a, bMaterialized.copy()));
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), b), "a");
+            assertAttributes(executeArithmetic(factory, copy(aMaterialized), copy(bMaterialized)), "a");
+            assertAttributes(executeArithmetic(factory, a, copy(bMaterialized)));
+            assertAttributes(executeArithmetic(factory, copy(aMaterialized), b), "a");
         } else {
             assert a.getLength() < b.getLength();
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), bMaterialized.copy()), "b");
-            assertAttributes(executeArithmetic(factory, a, bMaterialized.copy()), "b");
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), b));
+            assertAttributes(executeArithmetic(factory, copy(aMaterialized), copy(bMaterialized)), "b");
+            assertAttributes(executeArithmetic(factory, a, copy(bMaterialized)), "b");
+            assertAttributes(executeArithmetic(factory, copy(aMaterialized), b));
         }
     }
 
@@ -300,7 +302,7 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
             } catch (AssumptionViolatedException e) {
                 continue;
             }
-            executeArithmetic(factory, vector.copy(), vector.copy());
+            executeArithmetic(factory, copy(vector), copy(vector));
         }
     }
 

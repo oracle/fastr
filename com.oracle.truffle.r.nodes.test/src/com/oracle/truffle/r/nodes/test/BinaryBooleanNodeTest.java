@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
+import static com.oracle.truffle.r.nodes.test.TestUtilities.copy;
 import static com.oracle.truffle.r.nodes.test.TestUtilities.createHandle;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyComplexVector;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyDoubleVector;
@@ -91,8 +92,8 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testScalarUnboxing(BooleanOperationFactory factory, RScalarVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = aOrig.copy();
-        RAbstractVector b = bOrig.copy();
+        RAbstractVector a = copy(aOrig);
+        RAbstractVector b = copy(bOrig);
         // unboxing cannot work if length is 1
         assumeThat(b.getLength(), is(1));
 
@@ -106,8 +107,8 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testVectorResult(BooleanOperationFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = aOrig.copy();
-        RAbstractVector b = bOrig.copy();
+        RAbstractVector a = copy(aOrig);
+        RAbstractVector b = copy(bOrig);
         assumeThat(a, is(not(instanceOf(RScalarVector.class))));
         assumeThat(b, is(not(instanceOf(RScalarVector.class))));
         assumeArithmeticCompatible(factory, a, b);
@@ -123,8 +124,8 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testSharing(BooleanOperationFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = aOrig.copy();
-        RAbstractVector b = bOrig.copy();
+        RAbstractVector a = copy(aOrig);
+        RAbstractVector b = copy(bOrig);
         assumeArithmeticCompatible(factory, aOrig, bOrig);
 
         // not part of this test, see #testEmptyArrays
@@ -194,7 +195,7 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testEmptyArrays(BooleanOperationFactory factory, RAbstractVector originalVector) {
-        RAbstractVector vector = originalVector.copy();
+        RAbstractVector vector = copy(originalVector);
         assumeArithmeticCompatible(factory, vector, createEmptyLogicalVector());
         assumeArithmeticCompatible(factory, vector, createEmptyIntVector());
         assumeArithmeticCompatible(factory, vector, createEmptyDoubleVector());
@@ -209,7 +210,7 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testRNullConstantResult(BooleanOperationFactory factory, RAbstractVector originalVector) {
-        RAbstractVector vector = originalVector.copy();
+        RAbstractVector vector = copy(originalVector);
         assumeFalse(isLogicOp(factory));
         assumeFalse(vector.getRType() == RType.Raw);
         assertThat(executeArithmetic(factory, vector, RNull.instance), isEmptyVectorOf(RType.Logical));
@@ -224,8 +225,8 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testCompleteness(BooleanOperationFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = aOrig.copy();
-        RAbstractVector b = bOrig.copy();
+        RAbstractVector a = copy(aOrig);
+        RAbstractVector b = copy(bOrig);
         assumeArithmeticCompatible(factory, a, b);
 
         Object result = executeArithmetic(factory, a, b);
@@ -249,7 +250,7 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
             } catch (AssumptionViolatedException e) {
                 continue;
             }
-            executeArithmetic(factory, vector.copy(), vector.copy());
+            executeArithmetic(factory, copy(vector), copy(vector));
         }
     }
 

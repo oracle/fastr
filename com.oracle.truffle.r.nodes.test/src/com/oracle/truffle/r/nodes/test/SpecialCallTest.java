@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,8 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RootWithBody;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -259,6 +261,7 @@ public class SpecialCallTest extends TestBase {
         assertCallCounts("{}", test, initialSpecialCount, initialNormalCount, finalSpecialCount, finalNormalCount);
     }
 
+    @SuppressWarnings("try")
     private static void assertCallCounts(String setup, String test, int initialSpecialCount, int initialNormalCount, int finalSpecialCount, int finalNormalCount) {
         if (!FastROptions.UseSpecials.getBooleanValue()) {
             return;
@@ -273,7 +276,7 @@ public class SpecialCallTest extends TestBase {
         RootCallTarget setupCallTarget = testVMContext.getThisEngine().makePromiseCallTarget(((RLanguage) setupExpression.getDataAt(0)).getRep().asRSyntaxNode().asRNode(), "test");
         RootCallTarget testCallTarget = testVMContext.getThisEngine().makePromiseCallTarget(((RLanguage) testExpression.getDataAt(0)).getRep().asRSyntaxNode().asRNode(), "test");
 
-        try {
+        try (RCloseable c = RContext.withinContext(TestBase.testVMContext)) {
             CountCallsVisitor count1 = new CountCallsVisitor(testCallTarget);
             Assert.assertEquals("initial special call count '" + setup + "; " + test + "': ", initialSpecialCount, count1.special);
             Assert.assertEquals("initial normal call count '" + setup + "; " + test + "': ", initialNormalCount, count1.normal);

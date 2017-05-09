@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
+import java.util.function.Supplier;
+
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
@@ -146,6 +148,21 @@ public class TestUtilities {
         RAbstractVector list = RDataFactory.createList(array);
         list.setComplete(complete || !complete && size < 3);
         return list;
+    }
+
+    public static RAbstractVector copy(RAbstractVector orig) {
+        return withinTestContext(() -> orig.copy());
+    }
+
+    /**
+     * Certain code needs to be run within valid RContext, e.g. copying, which tries to report to
+     * memory tracer taken from RContext.
+     */
+    @SuppressWarnings("try")
+    public static <T> T withinTestContext(Supplier<T> action) {
+        try (RCloseable c = RContext.withinContext(TestBase.testVMContext)) {
+            return action.get();
+        }
     }
 
     /**

@@ -27,6 +27,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedJFrameDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * Contains code specific to FastR device that shows the graphical output interactively in a window.
@@ -42,6 +43,11 @@ public final class WindowDevice {
 
     public static GridDevice createWindowDevice(int width, int height) {
         JFrameDevice frameDevice = JFrameDevice.create(width, height);
+        frameDevice.setResizeListener(() -> {
+            RContext.getInstance().schedule(() -> {
+                GridContext.getContext().evalInternalRFunction("redrawAll");
+            });
+        });
         return new BufferedJFrameDevice(frameDevice);
     }
 
