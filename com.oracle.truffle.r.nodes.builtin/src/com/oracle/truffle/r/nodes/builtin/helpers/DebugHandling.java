@@ -198,7 +198,7 @@ public class DebugHandling {
         FunctionStatementsEventListener fser = getFunctionStatementsEventListener(fdn);
         if (fser == null) {
             // attach a "once" listener
-            fser = attachDebugHandler(fdn, null, null, true, true);
+            fser = attachDebugHandler(fdn, null, null, true, false);
         } else {
             if (fser.disabled()) {
                 fser.enable();
