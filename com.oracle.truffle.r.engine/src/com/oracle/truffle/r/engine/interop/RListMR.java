@@ -76,8 +76,7 @@ public class RListMR {
         @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, RList receiver, String field) {
             try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
-                Object applyAccessField = extract.applyAccessField(frame, receiver, field);
-                return applyAccessField;
+                return extract.applyAccessField(frame, receiver, field);
             }
         }
     }
@@ -91,8 +90,7 @@ public class RListMR {
         protected Object access(VirtualFrame frame, RList receiver, String field, Object valueObj) {
             try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
                 Object value = javaToRPrimitive(valueObj);
-                Object x = replace.apply(frame, receiver, new Object[]{field}, value);
-                return x;
+                return replace.apply(frame, receiver, new Object[]{field}, value);
             }
         }
     }

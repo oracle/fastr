@@ -18,6 +18,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -332,10 +333,13 @@ public class RDeparse {
 
         private Path emitToFile() throws IOException, NoSuchAlgorithmException {
             Path path;
-            if (FastROptions.EmitTmpHashed.getBooleanValue()) {
-                if (tmpDir == null) {
-                    tmpDir = Files.createTempDirectory("deparse");
+            if (tmpDir == null) {
+                tmpDir = Paths.get(TempPathName.tempDirPath()).resolve("deparse");
+                if (!Files.exists(tmpDir)) {
+                    Files.createDirectory(tmpDir);
                 }
+            }
+            if (FastROptions.EmitTmpHashed.getBooleanValue()) {
                 if (digest == null) {
                     digest = MessageDigest.getInstance("SHA-256");
                 }
