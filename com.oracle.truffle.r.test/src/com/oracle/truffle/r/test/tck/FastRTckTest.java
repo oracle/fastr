@@ -506,6 +506,7 @@ public class FastRTckTest extends TruffleTCK {
         return "valueWithSource";
     }
 
+    @Override
     protected String objectWithKeyInfoAttributes() {
         return "objectWithKeyInfoAttributes";
     }
