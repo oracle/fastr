@@ -198,7 +198,7 @@ public class DebugHandling {
         FunctionStatementsEventListener fser = getFunctionStatementsEventListener(fdn);
         if (fser == null) {
             // attach a "once" listener
-            fser = attachDebugHandler(fdn, null, null, true, false);
+            fser = attachDebugHandler(fdn, null, null, true, true);
         } else {
             if (fser.disabled()) {
                 fser.enable();
@@ -443,7 +443,7 @@ public class DebugHandling {
         }
 
         private void returnCleanup(VirtualFrame frame, boolean jumpToTopLevel) {
-            if (!implicit && !jumpToTopLevel) {
+            if (!implicit && !once && !jumpToTopLevel) {
                 print("exiting from: ", false);
                 printCall(frame);
             }
