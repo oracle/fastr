@@ -73,4 +73,10 @@ public class TestInteractiveDebug extends TestBase {
     public void testConditionalBreakpoint() {
         assertEval("fun <- function(x) { cat('x='); cat(x); cat('\\n') }; trace(fun, quote(if (x > 10) browser())); fun(10)\n; fun(11)\n\n\n\n\n\n");
     }
+
+    @Test
+    public void testContinue() {
+        assertEval(Output.IgnoreDebugExitFrom,
+                        "fun0 <- function() { print('fun0') }; fun1 <- function() { print('enter fun1'); fun0(); print('exit fun1') }; fun2 <- function() { print('enter fun2'); fun1(); print('exit fun2') }; debug(fun2); fun2()\n\n\ns\nn\n\ns\nc\nc\nc\n");
+    }
 }

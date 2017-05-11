@@ -194,7 +194,7 @@ public class DebugHandling {
         return fser;
     }
 
-    private static void ensureSingleStep(FunctionDefinitionNode fdn) {
+    private static FunctionStatementsEventListener ensureSingleStep(FunctionDefinitionNode fdn) {
         FunctionStatementsEventListener fser = getFunctionStatementsEventListener(fdn);
         if (fser == null) {
             // attach a "once" listener
@@ -206,6 +206,7 @@ public class DebugHandling {
                 fser.enabledForStepInto = true;
             }
         }
+        return fser;
     }
 
     private abstract static class DebugEventListener implements ExecutionEventListener {
@@ -598,9 +599,10 @@ public class DebugHandling {
             if (!RContext.getInstance().stateInstrumentation.debugGloballyDisabled()) {
                 CompilerDirectives.transferToInterpreter();
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) context.getInstrumentedNode().getRootNode();
-                ensureSingleStep(fdn);
+                FunctionStatementsEventListener ensureSingleStep = ensureSingleStep(fdn);
+
                 functionStatementsEventListener.clearStepInstrument();
-                functionStatementsEventListener.onEnter(context, frame);
+                ensureSingleStep.onEnter(context, frame);
             }
         }
 
