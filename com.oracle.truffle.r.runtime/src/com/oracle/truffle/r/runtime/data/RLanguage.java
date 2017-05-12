@@ -272,6 +272,6 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
 
     @Override
     public AbstractScope findScope(RContext langContext, Node node, Frame frame) {
-        return RScope.createScope(node);
+        return RScope.createScope(node, frame);
     }
 }
