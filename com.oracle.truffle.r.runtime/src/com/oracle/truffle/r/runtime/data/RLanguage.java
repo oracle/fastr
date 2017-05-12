@@ -24,12 +24,16 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.metadata.ScopeProvider;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.RScope;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -47,7 +51,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  *
  */
 @ValueType
-public class RLanguage extends RSharingAttributeStorage implements RAbstractContainer {
+public class RLanguage extends RSharingAttributeStorage implements RAbstractContainer, ScopeProvider<RContext> {
 
     /*
      * Used for RLanguage construction from separate AST components.
@@ -264,5 +268,10 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     @TruffleBoundary
     private void setNamesOnPairList(RStringVector names) {
         list.setNames(names);
+    }
+
+    @Override
+    public AbstractScope findScope(RContext langContext, Node node, Frame frame) {
+        return RScope.createScope(node);
     }
 }
