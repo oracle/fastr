@@ -79,8 +79,7 @@ public class TestBase {
         IgnoreWhitespace, // removes all whitespace from the whole output
         IgnoreCase, // ignores upper/lower case differences
         IgnoreDebugPath, // ignores <path> in debug output like "debug at <path> #..."
-        IgnoreDebugDepth, // ignores call depth printed by the debugger ("Browse[<call depth>]")
-        IgnoreDebugExitFrom; // ignores the debugger's "exiting from ..."
+        IgnoreDebugDepth; // ignores call depth printed by the debugger ("Browse[<call depth>]")
 
         @Override
         public String getName() {
@@ -614,9 +613,6 @@ public class TestBase {
             if (output.contains(Output.IgnoreDebugPath)) {
                 return convertDebugOutput(out);
             }
-            if (output.contains(Output.IgnoreDebugExitFrom)) {
-                return removeExitingFrom(out);
-            }
             if (output.contains(Output.IgnoreDebugDepth)) {
                 return removeDebugCallDepth(out);
             }
@@ -746,10 +742,6 @@ public class TestBase {
     private static String convertDebugOutput(String out) {
         String prefix = "debug at ";
         return removeAllOccurrencesBetween(out, prefix, prefix.length(), "#", 0);
-    }
-
-    private static String removeExitingFrom(String out) {
-        return removeAllOccurrencesBetween(out, "exiting from:", 0, "\n", 1);
     }
 
     private static String removeDebugCallDepth(String out) {
