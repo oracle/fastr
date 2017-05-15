@@ -30,6 +30,8 @@ import javax.xml.bind.DatatypeConverter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -331,7 +333,7 @@ public class RDeparse {
         private static Path tmpDir = null;
         private static MessageDigest digest = null;
 
-        private Path emitToFile() throws IOException, NoSuchAlgorithmException {
+        private Path emitToFile(String qualifiedFunctionName) throws IOException, NoSuchAlgorithmException {
             Path path;
             if (tmpDir == null) {
                 tmpDir = Paths.get(TempPathName.tempDirPath()).resolve("deparse");
@@ -344,7 +346,14 @@ public class RDeparse {
                     digest = MessageDigest.getInstance("SHA-256");
                 }
                 String printHexBinary = DatatypeConverter.printHexBinary(digest.digest(sb.toString().getBytes()));
-                path = tmpDir.resolve(printHexBinary + ".r");
+                assert printHexBinary.length() > 10;
+
+                // just use the first 10 hex digits to have a nicer file name
+                if (qualifiedFunctionName != null) {
+                    path = tmpDir.resolve(qualifiedFunctionName + "-" + printHexBinary.substring(0, 10) + ".r");
+                } else {
+                    path = tmpDir.resolve(printHexBinary.substring(0, 10) + ".r");
+                }
             } else {
                 path = Files.createTempFile("deparse-", ".r");
             }
@@ -359,7 +368,10 @@ public class RDeparse {
         public void fixupSources() {
             if (FastROptions.EmitTmpSource.getBooleanValue()) {
                 try {
-                    Path path = emitToFile();
+                    RootNode rn = getRootNode();
+                    String qualifiedFunctionName = RContext.getRRuntimeASTAccess().getQualifiedFunctionName(rn);
+
+                    Path path = emitToFile(qualifiedFunctionName);
                     Source source = RSource.fromFile(path.toFile());
                     for (SourceSectionElement s : sources) {
                         s.element.setSourceSection(source.createSection(s.start, s.length));
@@ -375,6 +387,21 @@ public class RDeparse {
                     s.element.setSourceSection(source.createSection(s.start, s.length));
                 }
             }
+        }
+
+        private RootNode getRootNode() {
+            RootNode rn = null;
+            for (SourceSectionElement s : sources) {
+                if (s.element instanceof Node) {
+                    Node n = (Node) s.element;
+                    if (rn == null) {
+                        rn = n.getRootNode();
+                    } else {
+                        assert rn == n.getRootNode();
+                    }
+                }
+            }
+            return rn;
         }
 
         @SuppressWarnings("try")

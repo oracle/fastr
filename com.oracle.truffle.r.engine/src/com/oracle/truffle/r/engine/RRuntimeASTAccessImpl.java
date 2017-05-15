@@ -36,6 +36,7 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -89,6 +90,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -730,5 +732,26 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public RAbstractStringVector getClassHierarchy(RAttributable value) {
         return ClassHierarchyNode.getClassHierarchy(value);
+    }
+
+    @Override
+    public String getQualifiedFunctionName(RootNode n) {
+
+        if (n instanceof FunctionDefinitionNode && n.getName() != null) {
+            FunctionDefinitionNode fdn = (FunctionDefinitionNode) n;
+            StringBuilder qname = new StringBuilder(n.getName());
+            MaterializedFrame frame = (MaterializedFrame) Utils.getCallerFrame(Utils.getActualCurrentFrame(), FrameAccess.MATERIALIZE);
+            REnvironment env = REnvironment.frameToEnvironment(frame);
+
+            while (env != null && env.getPrintName() != null) {
+                qname.insert(0, '.');
+                qname.insert(0, env.getPrintName());
+                env = env.getParent();
+            }
+            return qname.toString();
+
+        }
+        return null;
+
     }
 }
