@@ -54,6 +54,7 @@ import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.control.BlockNode;
+import com.oracle.truffle.r.nodes.control.ForNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
@@ -532,7 +533,9 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     return true;
                 } else {
                     // single statement block, variable parent
-                    return parent instanceof FunctionDefinitionNode || parent instanceof IfNode || parent instanceof AbstractLoopNode;
+                    // note: RepeatingNode is not a RSyntaxElement but the body of a loop is
+                    // under the repeating node !
+                    return parent instanceof FunctionDefinitionNode || parent instanceof IfNode || parent instanceof AbstractLoopNode || ForNode.isLoopBody(node);
                 }
             }
 

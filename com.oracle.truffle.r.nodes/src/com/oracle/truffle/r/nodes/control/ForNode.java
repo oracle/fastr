@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RepeatingNode;
@@ -158,5 +159,17 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
     @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ArgumentsSignature.empty(3);
+    }
+
+    /**
+     * Tests if the provided node is a loop-body node (also considering wrappers).
+     */
+    public static boolean isLoopBody(Node n) {
+        Node parent = n.getParent();
+        if (parent instanceof WrapperNode) {
+            Node grandparent = parent.getParent();
+            return grandparent instanceof ForRepeatingNode && ((ForRepeatingNode) grandparent).body == parent;
+        }
+        return parent instanceof ForRepeatingNode && ((ForRepeatingNode) parent).body == n;
     }
 }

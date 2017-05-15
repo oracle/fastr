@@ -36,6 +36,7 @@ import com.oracle.truffle.api.debug.SuspendedEvent;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.ExitException;
+import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
@@ -224,8 +225,9 @@ public final class FastRSession implements RSession {
             }
         } catch (ParseException e) {
             e.report(consoleHandler);
-        } catch (ExitException e) {
-            // exit exceptions are legitimate if a test case calls "q()"
+        } catch (ExitException | JumpToTopLevelException e) {
+            // exit and jumpToTopLevel exceptions are legitimate if a test case calls "q()" or "Q"
+            // during debugging
         } catch (RError e) {
             // nothing to do
         } catch (Throwable t) {

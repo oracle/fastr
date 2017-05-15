@@ -77,7 +77,9 @@ public class TestBase {
         MayIgnoreWarningContext,
         ContainsReferences, // replaces references in form of 0xbcdef1 for numbers
         IgnoreWhitespace, // removes all whitespace from the whole output
-        IgnoreCase; // ignores upper/lower case differences
+        IgnoreCase, // ignores upper/lower case differences
+        IgnoreDebugPath, // ignores <path> in debug output like "debug at <path> #..."
+        IgnoreDebugDepth; // ignores call depth printed by the debugger ("Browse[<call depth>]")
 
         @Override
         public String getName() {
@@ -608,6 +610,12 @@ public class TestBase {
             if (output.contains(Output.ContainsReferences)) {
                 return convertReferencesInOutput(out);
             }
+            if (output.contains(Output.IgnoreDebugPath)) {
+                return convertDebugOutput(out);
+            }
+            if (output.contains(Output.IgnoreDebugDepth)) {
+                return removeDebugCallDepth(out);
+            }
             return out;
         }
     }
@@ -729,6 +737,29 @@ public class TestBase {
             result = result.replace(item.getKey(), item.getValue().toString());
         }
         return result;
+    }
+
+    private static String convertDebugOutput(String out) {
+        String prefix = "debug at ";
+        return removeAllOccurrencesBetween(out, prefix, prefix.length(), "#", 0);
+    }
+
+    private static String removeDebugCallDepth(String out) {
+        String prefix = "Browse[";
+        return removeAllOccurrencesBetween(out, prefix, prefix.length(), "]", 0);
+    }
+
+    private static String removeAllOccurrencesBetween(String out, String prefix, int prefixOffset, String suffix, int suffixOffset) {
+        StringBuilder sb = new StringBuilder(out);
+
+        int idxPrefix = -1;
+        int idxSuffix = -1;
+
+        while ((idxPrefix = sb.indexOf(prefix, idxPrefix + 1)) > 0 && (idxSuffix = sb.indexOf(suffix, idxPrefix)) > idxPrefix) {
+            sb.replace(idxPrefix + prefixOffset, idxSuffix + suffixOffset, "");
+        }
+
+        return sb.toString();
     }
 
     private boolean searchWhiteLists(WhiteList[] whiteLists, String input, String expected, String result, TestTraitsSet testTraits) {

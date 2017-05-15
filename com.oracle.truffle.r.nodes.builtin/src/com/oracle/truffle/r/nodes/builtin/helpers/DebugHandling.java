@@ -45,6 +45,7 @@ import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
+import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
@@ -186,17 +187,18 @@ public class DebugHandling {
 
             @Override
             protected Void visit(RSyntaxFunction element) {
+                accept(element.getSyntaxBody());
                 return null;
             }
         }.accept(fdn);
         return fser;
     }
 
-    private static void ensureSingleStep(FunctionDefinitionNode fdn) {
+    private static FunctionStatementsEventListener ensureSingleStep(FunctionDefinitionNode fdn) {
         FunctionStatementsEventListener fser = getFunctionStatementsEventListener(fdn);
         if (fser == null) {
             // attach a "once" listener
-            fser = attachDebugHandler(fdn, null, null, true, false);
+            fser = attachDebugHandler(fdn, null, null, true, true);
         } else {
             if (fser.disabled()) {
                 fser.enable();
@@ -204,6 +206,7 @@ public class DebugHandling {
                 fser.enabledForStepInto = true;
             }
         }
+        return fser;
     }
 
     private abstract static class DebugEventListener implements ExecutionEventListener {
@@ -293,8 +296,9 @@ public class DebugHandling {
 
         @TruffleBoundary
         private void attachStepInto() {
-            stepIntoInstrument = RInstrumentation.getInstrumenter().attachListener(SourceSectionFilter.newBuilder().tagIs(StandardTags.RootTag.class).build(),
-                            new StepIntoInstrumentListener(getFunctionStatementsEventListener(functionDefinitionNode)));
+            FunctionStatementsEventListener parentListener = getFunctionStatementsEventListener(functionDefinitionNode);
+            parentListener.stepIntoInstrument = RInstrumentation.getInstrumenter().attachListener(SourceSectionFilter.newBuilder().tagIs(StandardTags.RootTag.class).build(),
+                            new StepIntoInstrumentListener(parentListener));
 
         }
 
@@ -426,7 +430,7 @@ public class DebugHandling {
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
             if (!disabled()) {
                 CompilerDirectives.transferToInterpreter();
-                returnCleanup(frame);
+                returnCleanup(frame, false);
             }
         }
 
@@ -434,12 +438,12 @@ public class DebugHandling {
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
             if (!disabled()) {
                 CompilerDirectives.transferToInterpreter();
-                returnCleanup(frame);
+                returnCleanup(frame, exception instanceof JumpToTopLevelException);
             }
         }
 
-        private void returnCleanup(VirtualFrame frame) {
-            if (!implicit) {
+        private void returnCleanup(VirtualFrame frame, boolean jumpToTopLevel) {
+            if (!implicit && !once && !jumpToTopLevel) {
                 print("exiting from: ", false);
                 printCall(frame);
             }
@@ -502,7 +506,7 @@ public class DebugHandling {
                     return;
                 }
                 printNode(node, false);
-                browserInteract(context.getInstrumentedNode(), frame);
+                browserInteract(node, frame);
             }
         }
 
@@ -511,6 +515,9 @@ public class DebugHandling {
         }
     }
 
+    /**
+     * Handles the loop header and there is one instance registered for each loop.
+     */
     private static class LoopStatementEventListener extends StatementEventListener {
 
         private boolean finishing;
@@ -529,7 +536,7 @@ public class DebugHandling {
 
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
-            if (!disabled()) {
+            if (!disabled() && context.getInstrumentedNode() == loopNode) {
                 super.onEnter(context, frame);
             }
         }
@@ -544,7 +551,7 @@ public class DebugHandling {
 
         @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
-            if (!disabled()) {
+            if (!disabled() && context.getInstrumentedNode() == loopNode) {
                 CompilerDirectives.transferToInterpreter();
                 returnCleanup();
             }
@@ -552,7 +559,7 @@ public class DebugHandling {
 
         @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
-            if (!disabled()) {
+            if (!disabled() && context.getInstrumentedNode() == loopNode) {
                 CompilerDirectives.transferToInterpreter();
                 returnCleanup();
             }
@@ -592,9 +599,10 @@ public class DebugHandling {
             if (!RContext.getInstance().stateInstrumentation.debugGloballyDisabled()) {
                 CompilerDirectives.transferToInterpreter();
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) context.getInstrumentedNode().getRootNode();
-                ensureSingleStep(fdn);
+                FunctionStatementsEventListener ensureSingleStep = ensureSingleStep(fdn);
+
                 functionStatementsEventListener.clearStepInstrument();
-                functionStatementsEventListener.onEnter(context, frame);
+                ensureSingleStep.onEnter(context, frame);
             }
         }
 
