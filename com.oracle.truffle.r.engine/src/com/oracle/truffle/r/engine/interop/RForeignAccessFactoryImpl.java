@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -116,6 +117,9 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return RPromiseMRForeign.ACCESS;
         } else if (obj instanceof RArgsValuesAndNames) {
             return RArgsValuesAndNamesMRForeign.ACCESS;
+        } else if (obj instanceof RLanguage) {
+            return RLanguageMRForeign.ACCESS;
+
         } else {
             if (obj instanceof RAbstractVector) {
                 return ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
