@@ -72,6 +72,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.ReturnException;
+import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -520,7 +521,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         String className = tag.getSimpleName();
         switch (className) {
             case "CallTag":
-                return node instanceof RCallNode;
+                // TODO: should just mark calls to other languages
+                return false;
 
             case "StatementTag": {
                 Node parent = ((RInstrumentableNode) node).unwrapParent();
@@ -541,7 +543,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
             case "RootTag": {
                 Node parent = ((RInstrumentableNode) node).unwrapParent();
-                return parent instanceof FunctionDefinitionNode;
+                return parent instanceof FunctionDefinitionNode || parent instanceof RootWithBody;
             }
 
             case "LoopTag":
