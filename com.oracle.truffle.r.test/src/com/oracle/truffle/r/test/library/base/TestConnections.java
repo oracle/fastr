@@ -185,6 +185,7 @@ public class TestConnections extends TestRBase {
     public void testFileOpenRaw() {
         Assert.assertTrue("Could not create required temp file for test.", Files.exists(tempFileGzip));
         assertEval("{ zz <- file(\"" + tempFileGzip + "\", \"r\", raw=T); res <- readBin(zz, raw(), 4); close(zz); res }");
+        assertEval("{ zz <- rawConnection(as.raw(c(65, 66, 67, 0, 97, 98, 99))); readChar(zz, 6) }");
     }
 
     @Test
