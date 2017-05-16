@@ -49,6 +49,7 @@ import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 
@@ -119,6 +120,8 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return RArgsValuesAndNamesMRForeign.ACCESS;
         } else if (obj instanceof RLanguage) {
             return RLanguageMRForeign.ACCESS;
+        } else if (obj instanceof ActiveBinding) {
+            return ActiveBindingMRForeign.ACCESS;
 
         } else {
             if (obj instanceof RAbstractVector) {
