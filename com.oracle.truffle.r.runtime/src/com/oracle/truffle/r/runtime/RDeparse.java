@@ -18,7 +18,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -332,7 +331,7 @@ public class RDeparse {
         private static MessageDigest digest = null;
 
         private Path emitToFile(String qualifiedFunctionName) throws IOException, NoSuchAlgorithmException {
-            Path tmpDir = Paths.get(TempPathName.tempDirPath()).resolve("deparse");
+            Path tmpDir = Files.createTempDirectory("deparse-");
             if (!Files.exists(tmpDir)) {
                 Files.createDirectory(tmpDir);
             }
@@ -1073,9 +1072,6 @@ public class RDeparse {
             new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(nodeToFixup).fixupSources();
 
             // if not, we have to deparse the node in isolation
-            if (node.getLazySourceSection() == RSyntaxNode.LAZY_DEPARSE) {
-                new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(node).fixupSources();
-            }
             if (node.getLazySourceSection() == RSyntaxNode.LAZY_DEPARSE) {
                 new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(node).fixupSources();
             }

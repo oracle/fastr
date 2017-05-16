@@ -536,7 +536,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     // single statement block, variable parent
                     // note: RepeatingNode is not a RSyntaxElement but the body of a loop is
                     // under the repeating node !
-                    return parent instanceof FunctionDefinitionNode || parent instanceof IfNode || parent instanceof AbstractLoopNode || ForNode.isLoopBody(node);
+                    return parent instanceof FunctionDefinitionNode || parent instanceof RootWithBody || parent instanceof IfNode || parent instanceof AbstractLoopNode || ForNode.isLoopBody(node);
                 }
             }
 
