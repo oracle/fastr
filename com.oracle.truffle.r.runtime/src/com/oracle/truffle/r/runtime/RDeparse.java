@@ -30,7 +30,6 @@ import javax.xml.bind.DatatypeConverter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
@@ -349,7 +348,7 @@ public class RDeparse {
                 assert printHexBinary.length() > 10;
 
                 // just use the first 10 hex digits to have a nicer file name
-                if (qualifiedFunctionName != null) {
+                if (qualifiedFunctionName != null && !qualifiedFunctionName.isEmpty() && !qualifiedFunctionName.equals("<no source>")) {
                     path = tmpDir.resolve(qualifiedFunctionName + "-" + printHexBinary.substring(0, 10) + ".r");
                 } else {
                     path = tmpDir.resolve(printHexBinary.substring(0, 10) + ".r");
@@ -368,10 +367,9 @@ public class RDeparse {
         public void fixupSources() {
             if (FastROptions.EmitTmpSource.getBooleanValue()) {
                 try {
-                    RootNode rn = getRootNode();
-                    String qualifiedFunctionName = RContext.getRRuntimeASTAccess().getQualifiedFunctionName(rn);
-
-                    Path path = emitToFile(qualifiedFunctionName);
+                    RootNode rootNode = getRootNode();
+                    String name = rootNode != null ? rootNode.getName() : null;
+                    Path path = emitToFile(name);
                     Source source = RSource.fromFile(path.toFile());
                     for (SourceSectionElement s : sources) {
                         s.element.setSourceSection(source.createSection(s.start, s.length));
@@ -390,18 +388,12 @@ public class RDeparse {
         }
 
         private RootNode getRootNode() {
-            RootNode rn = null;
-            for (SourceSectionElement s : sources) {
-                if (s.element instanceof Node) {
-                    Node n = (Node) s.element;
-                    if (rn == null) {
-                        rn = n.getRootNode();
-                    } else {
-                        assert rn == n.getRootNode();
-                    }
-                }
+            // the last element in the list is the top-most one
+            RSyntaxElement n = sources.get(sources.size() - 1).element;
+            if (n instanceof RootNode) {
+                return (RootNode) n;
             }
-            return rn;
+            return null;
         }
 
         @SuppressWarnings("try")
@@ -1072,7 +1064,20 @@ public class RDeparse {
     public static void ensureSourceSection(RSyntaxNode node) {
         SourceSection ss = node.getLazySourceSection();
         if (ss == RSyntaxNode.LAZY_DEPARSE) {
-            new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(node).fixupSources();
+            RSyntaxElement nodeToFixup = node;
+            if (FastROptions.EmitTmpSource.getBooleanValue()) {
+                RootNode rootNode = node.asNode().getRootNode();
+                if (RContext.getRRuntimeASTAccess().isFunctionDefinitionNode(rootNode)) {
+                    nodeToFixup = (RSyntaxElement) rootNode;
+                }
+            }
+            // try to generate the source from the root node and hopefully it includes this node
+            new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(nodeToFixup).fixupSources();
+
+            // if not, we have to deparse the node in isolation
+            if (node.getLazySourceSection() == RSyntaxNode.LAZY_DEPARSE) {
+                new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(node).fixupSources();
+            }
             assert node.getLazySourceSection() != RSyntaxNode.LAZY_DEPARSE;
         }
     }

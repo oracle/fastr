@@ -204,11 +204,4 @@ public interface RRuntimeASTAccess {
     void checkDebugRequest(RFunction func);
 
     RAbstractStringVector getClassHierarchy(RAttributable value);
-
-    /**
-     * Creates a qualified name of an R function.
-     *
-     * @param n The root node of the function (i.e. the function definition node).
-     */
-    String getQualifiedFunctionName(RootNode n);
 }
