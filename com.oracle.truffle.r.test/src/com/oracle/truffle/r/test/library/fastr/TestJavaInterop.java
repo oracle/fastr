@@ -113,6 +113,81 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
+    public void testToArray() {
+        assertEvalFastR("a <- .fastr.java.toArray(1L); a;", getRValue(new int[]{1}));
+        assertEvalFastR("a <- .fastr.java.toArray(c(1L, 2L)); a;", getRValue(new int[]{1, 2}));
+        assertEvalFastR("a <- .fastr.java.toArray(1L,,T); a;", getRValue(new int[]{1}));
+        assertEvalFastR("a <- .fastr.java.toArray(c(1L, 2L),,T); a;", getRValue(new int[]{1, 2}));
+
+        assertEvalFastR("a <- .fastr.java.toArray(1.1); a;", getRValue(new double[]{1.1}));
+        assertEvalFastR("a <- .fastr.java.toArray(c(1.1, 1.2)); a;", getRValue(new double[]{1.1, 1.2}));
+        assertEvalFastR("a <- .fastr.java.toArray(1.1,,T); a;", getRValue(new double[]{1.1}));
+        assertEvalFastR("a <- .fastr.java.toArray(c(1.1, 1.2),,T); a;", getRValue(new double[]{1.1, 1.2}));
+
+        assertEvalFastR("a <- .fastr.java.toArray(T); a;", getRValue(new boolean[]{true}));
+        assertEvalFastR("a <- .fastr.java.toArray(c(T, F)); a;", getRValue(new boolean[]{true, false}));
+        assertEvalFastR("a <- .fastr.java.toArray(T,,T); a;", getRValue(new boolean[]{true}));
+        assertEvalFastR("a <- .fastr.java.toArray(c(T, F),,T); a;", getRValue(new boolean[]{true, false}));
+
+        assertEvalFastR("a <- .fastr.java.toArray('a'); a;", getRValue(new String[]{"a"}));
+        assertEvalFastR("a <- .fastr.java.toArray(c('a', 'b')); a;", getRValue(new String[]{"a", "b"}));
+        assertEvalFastR("a <- .fastr.java.toArray('a',,T); a;", getRValue(new String[]{"a"}));
+        assertEvalFastR("a <- .fastr.java.toArray(c('a', 'b'),,T); a;", getRValue(new String[]{"a", "b"}));
+
+        assertEvalFastR("a <- .fastr.java.toArray(.fastr.interop.toShort(1)); a;", getRValue(new short[]{1}));
+        assertEvalFastR("a <- .fastr.java.toArray(c(.fastr.interop.toShort(1), .fastr.interop.toShort(2))); a;", getRValue(new short[]{1, 2}));
+        assertEvalFastR("a <- .fastr.java.toArray(.fastr.interop.toShort(1),,T); a;", getRValue(new short[]{1}));
+        assertEvalFastR("a <- .fastr.java.toArray(c(.fastr.interop.toShort(1), .fastr.interop.toShort(2)),,T); a;", getRValue(new short[]{1, 2}));
+
+        assertEvalFastR("a <- .fastr.java.toArray(.fastr.interop.toShort(1), 'java.lang.Short'); a;", getRValue(new short[]{1}));
+        assertEvalFastR("a <- .fastr.java.toArray(c(.fastr.interop.toShort(1), .fastr.interop.toShort(2)), 'java.lang.Short'); a;", getRValue(new short[]{1, 2}));
+        assertEvalFastR("a <- .fastr.java.toArray(.fastr.interop.toShort(1), 'java.lang.Short', T); a;", getRValue(new short[]{1}));
+        assertEvalFastR("a <- .fastr.java.toArray(c(.fastr.interop.toShort(1), .fastr.interop.toShort(2)), 'java.lang.Short', T); a;", getRValue(new short[]{1, 2}));
+
+        assertEvalFastR("a <- .fastr.java.toArray(c(.fastr.interop.toShort(1), .fastr.interop.toShort(2)), 'int'); a;", getRValue(new int[]{1, 2}));
+        assertEvalFastR("a <- .fastr.java.toArray(c(1.123, 2.123), 'double'); a;", getRValue(new double[]{1.123, 2.123}));
+        assertEvalFastR("a <- .fastr.java.toArray(.fastr.interop.toShort(1), 'double'); a;", getRValue(new double[]{1}));
+
+        assertEvalFastR("a <- .fastr.java.toArray(1L); .fastr.java.toArray(a);", getRValue(new int[]{1}));
+        assertEvalFastR("a <- .fastr.java.toArray(1L); .fastr.java.toArray(a,,T);", getRValue(new int[]{1}));
+
+        assertEvalFastR("a <- .fastr.java.toArray(.fastr.interop.toShort(1)); .fastr.java.toArray(a);", getRValue(new short[]{1}));
+
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); to <- .fastr.interop.new(tc); a <- .fastr.java.toArray(to); .fastr.java.isArray(a)", "TRUE");
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); to <- .fastr.interop.new(tc); a <- .fastr.java.toArray(c(to, to)); .fastr.java.isArray(a)", "TRUE");
+        
+        assertEvalFastR(Ignored.Unimplemented, "a <- .fastr.java.toArray(1L,,F); a;", getRValue(new int[]{1}));
+    }
+
+    @Test
+    public void testFromArray() {
+        testFromArray("fieldStaticBooleanArray", "logical");
+        testFromArray("fieldStaticByteArray", "integer");
+        testFromArray("fieldStaticCharArray", "character");
+        testFromArray("fieldStaticDoubleArray", "double");
+        testFromArray("fieldStaticFloatArray", "double");
+        testFromArray("fieldStaticIntArray", "integer");
+        testFromArray("fieldStaticLongArray", "double");
+        testFromArray("fieldStaticShortArray", "integer");
+        testFromArray("fieldStaticStringArray", "character");
+
+        assertEvalFastR("t <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); v <- .fastr.java.fromArray(t$objectArray); is.list(v)", "TRUE");
+        testFromArray("objectIntArray", "integer");
+        testFromArray("objectDoubleArray", "double");
+        assertEvalFastR("t <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); v <- .fastr.java.fromArray(t$mixedTypesArray); is.list(v)", "TRUE");
+
+        assertEvalFastR("t <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); v <- .fastr.java.fromArray(t$hasNullIntArray); is.list(v)", "TRUE");
+        assertEvalFastR("t <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); v <- .fastr.java.fromArray(t$hasNullIntArray); v[1]", "list(1)");
+        assertEvalFastR("t <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); v <- .fastr.java.fromArray(t$hasNullIntArray); v[2]", "list(NULL)");
+        assertEvalFastR("t <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); v <- .fastr.java.fromArray(t$hasNullIntArray); v[3]", "list(3)");
+    }
+
+    public void testFromArray(String field, String type) {
+        assertEvalFastR("t <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); v <- .fastr.java.fromArray(t$" + field + "); is.vector(v)", "TRUE");
+        assertEvalFastR("t <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); v <- .fastr.java.fromArray(t$" + field + "); typeof(v)", getRValue(type));
+    }
+
+    @Test
     public void testNew() {
         assertEvalFastR("tc <- .fastr.java.class('" + Boolean.class.getName() + "'); t <- .fastr.interop.new(tc, TRUE); t", "TRUE");
         assertEvalFastR("tc <- .fastr.java.class('" + Byte.class.getName() + "'); t <- .fastr.interop.new(tc, .fastr.interop.toByte(1)); t", "1");
@@ -127,7 +202,7 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    public void testCombine() {
+    public void testCombineInteropTypes() {
         assertEvalFastR("class(c(.fastr.interop.toByte(123)))", "'interopt.byte'");
         assertEvalFastR("class(c(.fastr.interop.toByte(123), .fastr.interop.toByte(234)))", "'list'");
         assertEvalFastR("class(c(.fastr.interop.toByte(123), 1))", "'list'");
@@ -177,7 +252,13 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testNonPrimitiveParameter() {
-        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$equals(t)", getRValue(true));
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$equals(t)", "TRUE");
+    }
+    
+    @Test
+    public void testClassAsParameter() {
+        // needs to be implemented in truffle
+        assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$classAsArg(tc)", getRValue(TEST_CLASS));
     }
 
     private void getValueForAllTypesMethod(String method) {
@@ -190,7 +271,7 @@ public class TestJavaInterop extends TestBase {
         double d = Double.MAX_VALUE;
         float f = Float.MAX_VALUE;
         String s = "testString";
-        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$" + method + "(" + getRValue(bo, bt, c, sh, i, l, d, f, s) + ")",
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$" + method + "(" + getRValuesAsString(bo, bt, c, sh, i, l, d, f, s) + ")",
                         getRValue("" + bo + bt + c + sh + i + l + d + f + s));
     }
 
@@ -207,12 +288,35 @@ public class TestJavaInterop extends TestBase {
         // TODO add remaining isOverloaded(...) calls once this is fixed
     }
 
+    @Test
+    public void testArrayAccess() {
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[1]", "1");
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[[1]]", "1");
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$int2DimArray; a[1]", getRValue(new int[]{1, 2, 3}));
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$int2DimArray; a[[1]]", getRValue(new int[]{1, 2, 3}));
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$int2DimArray; a[1,2]", "2");
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$int2DimArray; a[[1,2]]", "2");
+
+        assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[1]<-123; a[1]", "123");
+        assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[[1]]<-123; a[[1]]", "123");
+        assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[1,2]<-1234; a[1,2]", "1234");
+        assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[[1,2]]<-1234; a[[1,2]]", "1234");
+    }
+
     private String getRValue(Object value) {
         if (value == null) {
             return "NULL";
         }
         if (value instanceof Boolean) {
             return value.toString().toUpperCase();
+        }
+        if (value instanceof Double) {
+            if (((Double) value) == (((Double) value).intValue())) {
+                return Integer.toString(((Double) value).intValue());
+            }
+        }
+        if (value instanceof String) {
+            return "\"" + value.toString() + "\"";
         }
         if (value instanceof String) {
             return "\"" + value.toString() + "\"";
@@ -222,22 +326,25 @@ public class TestJavaInterop extends TestBase {
         }
         if (value.getClass().isArray()) {
             StringBuilder sb = new StringBuilder();
-            int l = Array.getLength(value);
             sb.append("cat('[1] ");
-            for (int i = 0; i < l; i++) {
+            int lenght = Array.getLength(value);
+            for (int i = 0; i < lenght; i++) {
+                if (lenght > 1 && value.getClass().getComponentType() == Boolean.TYPE && (boolean) Array.get(value, i)) {
+                    // what the heck?
+                    sb.append(" ");
+                }
                 sb.append(getRValue(Array.get(value, i)));
-                if (i < l - 1) {
+                if (i < lenght - 1) {
                     sb.append(" ");
                 }
             }
             sb.append("\\nattr(,\"is.truffle.object\")\\n[1] TRUE\\n')");
             return sb.toString();
         }
-
         return value.toString();
     }
 
-    private String getRValue(Object... values) {
+    private String getRValuesAsString(Object... values) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < values.length; i++) {
             Object v = values[i];
@@ -298,11 +405,32 @@ public class TestJavaInterop extends TestBase {
         public static Double fieldStaticNaNObject = Double.NaN;
         public static double fieldStaticNaN = Double.NaN;
 
+        public static boolean[] fieldStaticBooleanArray = new boolean[]{true, false, true};
+        public static byte[] fieldStaticByteArray = new byte[]{1, 2, 3};
+        public static char[] fieldStaticCharArray = new char[]{'a', 'b', 'c'};
+        public static double[] fieldStaticDoubleArray = new double[]{1.1, 2.1, 3.1};
+        public static float[] fieldStaticFloatArray = new float[]{1.1f, 2.1f, 3.1f};
         public static int[] fieldStaticIntArray = new int[]{1, 2, 3};
+        public static long[] fieldStaticLongArray = new long[]{1, 2, 3};
+        public static short[] fieldStaticShortArray = new short[]{1, 2, 3};
         public static String[] fieldStaticStringArray = new String[]{"a", "b", "c"};
 
+        public boolean[] fieldBooleanArray = fieldStaticBooleanArray;
+        public byte[] fieldByteArray = fieldStaticByteArray;
+        public char[] fieldCharArray = fieldStaticCharArray;
+        public double[] fieldDoubleArray = fieldStaticDoubleArray;
+        public float[] fieldFloatArray = fieldStaticFloatArray;
         public int[] fieldIntArray = fieldStaticIntArray;
+        public long[] fieldLongArray = fieldStaticLongArray;
+        public short[] fieldShortArray = fieldStaticShortArray;
         public String[] fieldStringArray = fieldStaticStringArray;
+
+        public int[][] int2DimArray = new int[][]{new int[]{1, 2, 3}, new int[]{4, 5, 5}};
+        public Object[] objectArray = new Object[]{new Object(), new Object(), new Object()};
+        public Object[] objectIntArray = new Object[]{1, 2, 3};
+        public Object[] objectDoubleArray = new Object[]{1.1, 2.1, 3.1};
+        public Object[] mixedTypesArray = new Object[]{1, 2.1, 'a'};
+        public Integer[] hasNullIntArray = new Integer[]{1, null, 3};
 
         public static Object fieldStaticNullObject = null;
         public Object fieldNullObject = null;
@@ -321,9 +449,6 @@ public class TestJavaInterop extends TestBase {
             fieldStaticLong = l;
             fieldStaticShort = sh;
             fieldStaticStringObject = st;
-
-            // fieldStaticIntArray = ia;
-            // fieldStaticStringArray = sta;
 
             fieldStaticBooleanObject = fieldStaticBoolean;
             fieldStaticByteObject = fieldStaticByte;
@@ -352,9 +477,6 @@ public class TestJavaInterop extends TestBase {
             this.fieldDoubleObject = fieldDouble;
             this.fieldFloatObject = fieldFloat;
             this.fieldStringObject = fieldStaticStringObject;
-
-            this.fieldIntArray = fieldStaticIntArray;
-            this.fieldStringArray = fieldStaticStringArray;
         }
 
         public static boolean methodStaticBoolean() {
@@ -517,6 +639,10 @@ public class TestJavaInterop extends TestBase {
             return null;
         }
 
+        public String classAsArg(Class<?> c) {
+            return c.getName();
+        }
+
         public String allTypesMethod(boolean bo, byte bt, char ch, short sh, int in, long lo, double db, float fl, String st) {
             return "" + bo + bt + ch + sh + in + lo + db + fl + st;
         }
@@ -605,4 +731,10 @@ public class TestJavaInterop extends TestBase {
             return String.class.getName();
         }
     }
+
+    public static class TestArrayClass {
+        public static TestArrayClass[] testArray = new TestArrayClass[]{new TestArrayClass(), new TestArrayClass(), new TestArrayClass()};
+
+    }
+
 }

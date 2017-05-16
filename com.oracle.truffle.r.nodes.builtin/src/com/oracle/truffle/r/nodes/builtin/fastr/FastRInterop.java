@@ -44,6 +44,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -63,10 +64,8 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
-import static com.oracle.truffle.r.runtime.RType.Array;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -87,6 +86,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import java.lang.reflect.Array;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -108,7 +108,7 @@ public class FastRInterop {
             try {
                 return RContext.getInstance().getEnv().parse(sourceObject);
             } catch (Throwable t) {
-                throw error(Message.GENERIC, "Error while parsing: " + t.getMessage());
+                throw error(RError.Message.GENERIC, "Error while parsing: " + t.getMessage());
             }
         }
 
@@ -153,9 +153,9 @@ public class FastRInterop {
                 Source sourceObject = sourceBuilder.build();
                 return RContext.getInstance().getEnv().parse(sourceObject);
             } catch (IOException e) {
-                throw error(Message.GENERIC, "Error reading file: " + e.getMessage());
+                throw error(RError.Message.GENERIC, "Error reading file: " + e.getMessage());
             } catch (Throwable t) {
-                throw error(Message.GENERIC, "Error while parsing: " + t.getMessage());
+                throw error(RError.Message.GENERIC, "Error while parsing: " + t.getMessage());
             }
         }
 
@@ -194,13 +194,13 @@ public class FastRInterop {
         @Specialization
         @TruffleBoundary
         protected Object exportSymbol(@SuppressWarnings("unused") String name, @SuppressWarnings("unused") RMissing value) {
-            throw error(Message.ARGUMENT_MISSING, "value");
+            throw error(RError.Message.ARGUMENT_MISSING, "value");
         }
 
         @Fallback
         @TruffleBoundary
         protected Object exportSymbol(@SuppressWarnings("unused") Object name, @SuppressWarnings("unused") Object value) {
-            throw error(Message.GENERIC, "only R language objects can be exported");
+            throw error(RError.Message.GENERIC, "only R language objects can be exported");
         }
     }
 
@@ -226,7 +226,7 @@ public class FastRInterop {
     @RBuiltin(name = ".fastr.interop.hasSize", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
     public abstract static class HasSize extends RBuiltinNode.Arg1 {
 
-        @Child private Node node = com.oracle.truffle.api.interop.Message.HAS_SIZE.createNode();
+        @Child private Node node = Message.HAS_SIZE.createNode();
 
         static {
             Casts.noCasts(HasSize.class);
@@ -241,7 +241,7 @@ public class FastRInterop {
     @RBuiltin(name = ".fastr.interop.isNull", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
     public abstract static class IsNull extends RBuiltinNode.Arg1 {
 
-        @Child private Node node = com.oracle.truffle.api.interop.Message.IS_NULL.createNode();
+        @Child private Node node = Message.IS_NULL.createNode();
 
         static {
             Casts.noCasts(IsNull.class);
@@ -256,7 +256,7 @@ public class FastRInterop {
     @RBuiltin(name = ".fastr.interop.isExecutable", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
     public abstract static class IsExecutable extends RBuiltinNode.Arg1 {
 
-        @Child private Node node = com.oracle.truffle.api.interop.Message.IS_EXECUTABLE.createNode();
+        @Child private Node node = Message.IS_EXECUTABLE.createNode();
 
         static {
             Casts.noCasts(IsExecutable.class);
@@ -434,7 +434,7 @@ public class FastRInterop {
             try {
                 return JavaInterop.asTruffleObject(Class.forName(clazz));
             } catch (ClassNotFoundException | SecurityException | IllegalArgumentException e) {
-                throw error(Message.GENERIC, "error while accessing Java class: " + e.getMessage());
+                throw error(RError.Message.GENERIC, "error while accessing Java class: " + e.getMessage());
             }
         }
     }
@@ -797,13 +797,13 @@ public class FastRInterop {
                 Object result = ForeignAccess.sendNew(sendNew, clazz, argValues);
                 return RRuntime.java2R(result);
             } catch (SecurityException | IllegalArgumentException | UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
-                throw error(Message.GENERIC, "error during Java object instantiation: " + e.getMessage());
+                throw error(RError.Message.GENERIC, "error during Java object instantiation: " + e.getMessage());
             }
         }
 
         @Fallback
         public Object interopNew(@SuppressWarnings("unused") Object clazz, @SuppressWarnings("unused") Object args) {
-            throw error(Message.GENERIC, "interop object needed as receiver of NEW message");
+            throw error(RError.Message.GENERIC, "interop object needed as receiver of NEW message");
         }
     }
 }

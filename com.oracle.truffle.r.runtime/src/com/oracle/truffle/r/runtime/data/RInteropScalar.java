@@ -31,6 +31,8 @@ public abstract class RInteropScalar extends RScalar {
 
     public abstract Object getRValue();
 
+    public abstract Class<?> getJavaType();
+
     @ValueType
     public static final class RInteropByte extends RInteropScalar {
 
@@ -62,6 +64,11 @@ public abstract class RInteropScalar extends RScalar {
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return Byte.toString(value);
+        }
+
+        @Override
+        public Class<?> getJavaType() {
+            return Byte.TYPE;
         }
     }
 
@@ -97,6 +104,11 @@ public abstract class RInteropScalar extends RScalar {
             CompilerAsserts.neverPartOfCompilation();
             return Character.toString(value);
         }
+
+        @Override
+        public Class<?> getJavaType() {
+            return Character.TYPE;
+        }
     }
 
     @ValueType
@@ -131,6 +143,11 @@ public abstract class RInteropScalar extends RScalar {
             CompilerAsserts.neverPartOfCompilation();
             return Float.toString(value);
         }
+
+        @Override
+        public Class<?> getJavaType() {
+            return Float.TYPE;
+        }
     }
 
     @ValueType
@@ -164,6 +181,11 @@ public abstract class RInteropScalar extends RScalar {
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
             return Long.toString(value);
+        }
+
+        @Override
+        public Class<?> getJavaType() {
+            return Long.TYPE;
         }
     }
 
@@ -200,5 +222,9 @@ public abstract class RInteropScalar extends RScalar {
             return Short.toString(value);
         }
 
+        @Override
+        public Class<?> getJavaType() {
+            return Short.TYPE;
+        }
     }
 }
