@@ -7,6 +7,7 @@
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 # java 8 must be a jvmci enabled variant
 java8 : {name : labsjdk, version : "8-jvmci-latest", platformspecific: true}
+java9 : {name : labsjdk, version : "9-ea+168", platformspecific: true}
 
 java8Downloads : {
   downloads : {
@@ -14,6 +15,16 @@ java8Downloads : {
       ${java7}
     ]}
     JAVA_HOME : ${java8}
+  }
+}
+
+java9Downloads : {
+  downloads : {
+    EXTRA_JAVA_HOMES : { pathlist :[
+      ${java7}
+      ${java8}
+    ]}
+    JAVA_HOME : ${java9}
   }
 }
 
@@ -123,6 +134,12 @@ gateTestManagedLinux: ${common} {
   ]
 }
 
+gateTestJava9Linux : ${java9Downloads} ${gateTestCommon} {
+  downloads : {
+    JAVA_HOME : ${java9Downloads.downloads.JAVA_HOME}
+    EXTRA_JAVA_HOMES : ${java9Downloads.downloads.EXTRA_JAVA_HOMES}
+  }
+}
 
 # This performs a number of "style" checks on the code to ensure it confirms to the project standards.
 
@@ -171,4 +188,5 @@ builds = [
   ${rbcheck}                  {capabilities : [linux, amd64],  targets : [gate], name: "gate-rbcheck-linux-amd64"}
   ${internalPkgtest}          {capabilities : [linux, amd64],  targets : [gate], name: "gate-internal-pkgtest-linux-amd64"}
   ${gateTestManagedLinux}     {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-managed-linux-amd64"}
+  ${gateTestJava9Linux}       {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-java9-linux-amd64"}
 ]
