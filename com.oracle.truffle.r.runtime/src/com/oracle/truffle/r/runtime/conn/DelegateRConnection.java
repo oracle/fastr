@@ -45,9 +45,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.sun.istack.internal.NotNull;
-
-import sun.nio.cs.StreamDecoder;
 
 /**
  * Actually performs the I/O operations for a connections.<br>
@@ -260,7 +257,7 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
      * @throws IOException
      */
     @TruffleBoundary
-    public static void writeCharHelper(@NotNull WritableByteChannel channel, @NotNull String s, int pad, String eos) throws IOException {
+    public static void writeCharHelper(WritableByteChannel channel, String s, int pad, String eos) throws IOException {
 
         final byte[] bytes = s.getBytes();
         final byte[] eosBytes = eos != null ? eos.getBytes() : null;
@@ -330,31 +327,6 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
         }
 
         return new String(buf.array(), 0, j);
-    }
-
-    /**
-     * Reads a specified number of characters (not bytes).<br>
-     * <p>
-     * This method is meant to be used if R's function {@code readChar} is called with parameter
-     * {@code useBytes=FALSE}.
-     * </p>
-     *
-     * @param nchars The number of characters to read.
-     * @param decoder The stream decoder to use (must not be {@code null}).
-     * @throws IOException
-     */
-    public static String readCharHelper(int nchars, StreamDecoder decoder) throws IOException {
-        // we need a decoder
-        char[] chars = new char[nchars];
-        decoder.read(chars);
-        int j = 0;
-        for (; j < chars.length; j++) {
-            // strings end at 0
-            if (chars[j] == 0) {
-                break;
-            }
-        }
-        return new String(chars, 0, j);
     }
 
     /**
@@ -429,9 +401,9 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
     /**
      * Creates the stream decoder on demand and returns it.
      */
-    protected StreamDecoder getDecoder(int bufSize) {
+    protected Reader getDecoder(int bufSize) {
         CharsetDecoder charsetEncoder = base.getEncoding().newDecoder().onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE);
-        return StreamDecoder.forDecoder(this, charsetEncoder, bufSize);
+        return Channels.newReader(this, charsetEncoder, bufSize);
     }
 
     @Override

@@ -80,11 +80,6 @@ suite = {
       "sha1" : "0baa82bff19059401e90e1b90020beb9c96305d7",
     },
 
-    "JDK_TOOLS" : {
-      "path" : "${JAVA_HOME}/lib/tools.jar",
-      "sha1" : "NOCHECK",
-    },
-
     "ANTLR-C-3.5" : {
       "path" : "libdownloads/antlr-complete-3.5.1.jar",
       "urls" : ["http://central.maven.org/maven2/org/antlr/antlr-complete/3.5.1/antlr-complete-3.5.1.jar"],
@@ -103,7 +98,6 @@ suite = {
     "com.oracle.truffle.r.parser.processor" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "JDK_TOOLS",
         "ANTLR-3.5",
         "ANTLR-C-3.5",
       ],
@@ -295,7 +289,6 @@ suite = {
       "subDir" : "truffle",
       "dependencies" : ["com.oracle.truffle.r.parser.processor"],
       "exclude" : [
-        "JDK_TOOLS",
         "ANTLR-3.5",
         "ANTLR-C-3.5",
        ],
@@ -308,7 +301,6 @@ suite = {
       "dependencies" : ["com.oracle.truffle.r.engine", "com.oracle.truffle.r.runtime.ffi"],
       "mainClass" : "com.oracle.truffle.r.engine.shell.RCommand",
       "exclude" : [
-        "JDK_TOOLS",
         "truffle:JLINE",
         "ANTLR-C-3.5",
         "ANTLR-3.5",
