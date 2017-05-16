@@ -21,16 +21,13 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteger;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -657,12 +654,7 @@ public class RRuntime {
             return Double.toString((double) object);
         } else if (object instanceof Byte) {
             return logicalToString((byte) object);
-        } else if (object instanceof RS4Object) {
-            return String.format("<RS4Object of class %s>", RContext.getRRuntimeASTAccess().getClassHierarchy((RS4Object) object));
-        } else if (object instanceof RLanguage) {
-            return RDeparse.deparse(object);
         }
-
         return String.valueOf(object);
     }
 
