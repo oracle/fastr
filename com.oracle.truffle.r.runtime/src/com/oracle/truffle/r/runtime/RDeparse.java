@@ -329,17 +329,15 @@ public class RDeparse {
             }
         }
 
-        private static Path tmpDir = null;
         private static MessageDigest digest = null;
 
         private Path emitToFile(String qualifiedFunctionName) throws IOException, NoSuchAlgorithmException {
-            Path path;
-            if (tmpDir == null) {
-                tmpDir = Paths.get(TempPathName.tempDirPath()).resolve("deparse");
-                if (!Files.exists(tmpDir)) {
-                    Files.createDirectory(tmpDir);
-                }
+            Path tmpDir = Paths.get(TempPathName.tempDirPath()).resolve("deparse");
+            if (!Files.exists(tmpDir)) {
+                Files.createDirectory(tmpDir);
             }
+
+            Path path;
             if (FastROptions.EmitTmpHashed.getBooleanValue()) {
                 if (digest == null) {
                     digest = MessageDigest.getInstance("SHA-256");
@@ -1075,6 +1073,9 @@ public class RDeparse {
             new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(nodeToFixup).fixupSources();
 
             // if not, we have to deparse the node in isolation
+            if (node.getLazySourceSection() == RSyntaxNode.LAZY_DEPARSE) {
+                new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(node).fixupSources();
+            }
             if (node.getLazySourceSection() == RSyntaxNode.LAZY_DEPARSE) {
                 new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(node).fixupSources();
             }

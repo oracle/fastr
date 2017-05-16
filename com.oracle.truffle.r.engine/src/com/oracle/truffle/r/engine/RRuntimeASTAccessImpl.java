@@ -521,8 +521,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         String className = tag.getSimpleName();
         switch (className) {
             case "CallTag":
-                // TODO: should just mark calls to other languages
-                return false;
+                return node instanceof RCallNode;
 
             case "StatementTag": {
                 Node parent = ((RInstrumentableNode) node).unwrapParent();
