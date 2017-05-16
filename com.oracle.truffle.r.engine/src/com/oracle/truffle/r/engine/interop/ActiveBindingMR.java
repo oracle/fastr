@@ -59,6 +59,7 @@ public class ActiveBindingMR {
     public abstract static class ActiveBindingUnboxNode extends Node {
         @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
+        @SuppressWarnings("try")
         protected Object access(ActiveBinding receiver) {
             try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
                 return receiver.readValue();
