@@ -28,11 +28,13 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.metadata.ScopeProvider;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
@@ -54,6 +56,7 @@ import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.env.RScope;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -63,7 +66,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  */
 @TruffleLanguage.Registration(name = "R", version = "0.1", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class})
-public final class TruffleRLanguage extends TruffleLanguage<RContext> {
+public final class TruffleRLanguage extends TruffleLanguage<RContext> implements ScopeProvider<RContext> {
 
     /**
      * The choice of {@link RFFIFactory} is made statically so that it is bound into an AOT-compiled
@@ -241,5 +244,10 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     @SuppressWarnings("deprecation")
     public RContext actuallyFindContext0(Node contextNode) {
         return findContext(contextNode);
+    }
+
+    @Override
+    public AbstractScope findScope(RContext langContext, Node node, Frame frame) {
+        return RScope.createScope(node, frame);
     }
 }

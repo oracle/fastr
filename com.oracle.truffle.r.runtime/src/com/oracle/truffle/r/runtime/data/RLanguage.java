@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  *
  */
 @ValueType
-public class RLanguage extends RSharingAttributeStorage implements RAbstractContainer, ScopeProvider<RContext> {
+public class RLanguage extends RSharingAttributeStorage implements RAbstractContainer {
 
     /*
      * Used for RLanguage construction from separate AST components.
@@ -268,10 +268,5 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     @TruffleBoundary
     private void setNamesOnPairList(RStringVector names) {
         list.setNames(names);
-    }
-
-    @Override
-    public AbstractScope findScope(RContext langContext, Node node, Frame frame) {
-        return RScope.createScope(node, frame);
     }
 }
