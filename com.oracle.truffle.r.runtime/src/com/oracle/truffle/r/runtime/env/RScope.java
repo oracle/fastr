@@ -132,7 +132,7 @@ public final class RScope extends AbstractScope {
     }
 
     public static RScope createScope(Node node, Frame frame) {
-        return new RScope(node, getEnv(frame));
+        return new RScope(node.getRootNode(), getEnv(frame));
     }
 
     private static Object getInteropValue(Object value) {
