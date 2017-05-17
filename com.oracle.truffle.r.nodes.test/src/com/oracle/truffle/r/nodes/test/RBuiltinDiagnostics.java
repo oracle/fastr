@@ -145,12 +145,13 @@ public class RBuiltinDiagnostics {
 
         boolean ok = true;
         try {
-            diag.init().diagnoseBuiltin();
+            ok = diag.init().diagnoseBuiltin();
 
             print(1, "Finished");
             print(1, "--------");
         } catch (WarningException e) {
             diag.print(0, "Warning: " + e.getMessage());
+            ok = false;
         } catch (InfoException e) {
             print(0, e.getMessage());
         } catch (Throwable e) {
@@ -178,6 +179,7 @@ public class RBuiltinDiagnostics {
                 diag = createBuiltinDiagnostics(new RIntBuiltinDiagFactory((bf)));
             } catch (WarningException e) {
                 print(0, "Warning: " + e.getMessage());
+                ok = false;
                 continue;
             } catch (InfoException e) {
                 print(1, e.getMessage());
@@ -186,12 +188,14 @@ public class RBuiltinDiagnostics {
                 errCounter++;
                 print(0, "Error in initialization of builtin " + bf.getName());
                 t.printStackTrace();
+                ok = false;
                 continue;
             }
             try {
-                diag.init().diagnoseBuiltin();
+                ok &= diag.init().diagnoseBuiltin();
             } catch (WarningException e) {
                 diag.print(0, "Warning: " + e.getMessage());
+                ok = false;
             } catch (InfoException e) {
                 diag.print(1, e.getMessage());
             } catch (Throwable t) {
@@ -209,6 +213,7 @@ public class RBuiltinDiagnostics {
                 diag = createBuiltinDiagnostics(RExtBuiltinDiagFactory.create(extBltCls));
             } catch (WarningException e) {
                 print(0, "Warning: " + e.getMessage());
+                ok = false;
                 continue;
             } catch (InfoException e) {
                 print(1, e.getMessage());
@@ -217,12 +222,14 @@ public class RBuiltinDiagnostics {
                 errCounter++;
                 print(0, "Error in initialization of " + extBltCls.getName() + " builtin");
                 t.printStackTrace();
+                ok = false;
                 continue;
             }
             try {
-                diag.init().diagnoseBuiltin();
+                ok &= diag.init().diagnoseBuiltin();
             } catch (WarningException e) {
                 diag.print(0, "Warning: " + e.getMessage());
+                ok = false;
             } catch (InfoException e) {
                 diag.print(1, e.getMessage());
             } catch (Throwable t) {
@@ -230,6 +237,7 @@ public class RBuiltinDiagnostics {
                 ok = false;
                 diag.print(0, "");
                 t.printStackTrace();
+                ok = false;
             }
         }
 
@@ -422,14 +430,18 @@ public class RBuiltinDiagnostics {
             return nonCovered;
         }
 
-        public void diagnoseBuiltin() throws Exception {
+        public boolean diagnoseBuiltin() throws Exception {
+            boolean ok = true;
+
             print(1, "Argument cast pipelines binding:");
             for (int i = 0; i < argLength; i++) {
-                diagnosePipeline(i);
+                ok &= diagnosePipeline(i);
             }
 
             print(1, "\nUnhandled argument combinations: " + nonCoveredArgsSet.size());
             print(1, "");
+
+            nonCoveredArgsSet.isEmpty();
 
             if (diagSuite.diagConfig.verbose) {
                 for (List<Type> uncoveredArgs : nonCoveredArgsSet) {
@@ -438,7 +450,9 @@ public class RBuiltinDiagnostics {
             }
             print(1, "");
 
-            printDeadSpecs();
+            ok &= printDeadSpecs();
+
+            return ok;
         }
 
         private void printBuiltinHeader(int level) {
@@ -452,7 +466,8 @@ public class RBuiltinDiagnostics {
             }
         }
 
-        private void printDeadSpecs() {
+        private boolean printDeadSpecs() {
+            boolean ok = true;
             StringBuilder sb = new StringBuilder();
             int deadSpecCnt = 0;
             for (Map.Entry<Method, List<Set<Cast>>> resTpPerSpec : convResultTypePerSpec.entrySet()) {
@@ -471,13 +486,19 @@ public class RBuiltinDiagnostics {
                 }
             }
 
+            ok = deadSpecCnt == 0;
+
             int logLev = deadSpecCnt == 0 ? 1 : 0;
             String msg = deadSpecCnt == 0 ? "Dead specializations: " + deadSpecCnt : "Warning: Dead specializations: " + deadSpecCnt;
             print(logLev, msg);
             print(logLev, sb.toString());
+
+            return ok;
         }
 
-        protected void diagnosePipeline(int i) {
+        protected boolean diagnosePipeline(int i) {
+            boolean ok = true;
+
             TypeExpr argResultSet = argResultSets.get(i);
 
             String pipelineHeader = "Pipeline for '" + parameterNames[i] + "' (arg[" + i + "])";
@@ -501,11 +522,13 @@ public class RBuiltinDiagnostics {
             if (unboundArgTypes.isEmpty()) {
                 print(1, pipelineHeader);
             } else {
+                ok = false;
                 print(0, "Warning: " + pipelineHeader);
                 print(0, "   Unbound types: " + unboundArgTypes.stream().map(argType -> typeName(argType)).collect(Collectors.toSet()));
             }
             print(1, sb.toString());
 
+            return ok;
         }
 
         private List<TypeExpr> createArgResultSets() {

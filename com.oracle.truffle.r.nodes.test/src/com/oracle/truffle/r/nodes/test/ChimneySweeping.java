@@ -236,7 +236,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     }
 
     @Override
-    public void diagnoseBuiltin() throws Exception {
+    public boolean diagnoseBuiltin() throws Exception {
         // super.diagnoseBuiltin();
 
         if (blacklistedBuiltins.contains(builtinName)) {
@@ -244,10 +244,12 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         } else {
             sweepChimney();
         }
+
+        return true;
     }
 
     @Override
-    protected void diagnosePipeline(int i) {
+    protected boolean diagnosePipeline(int i) {
         super.diagnosePipeline(i);
 
         print(1, " Samples:");
@@ -256,6 +258,8 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         if (diagSuite.diagConfig.performPipelineSelfTest) {
             checkPipelines(i);
         }
+
+        return true;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
