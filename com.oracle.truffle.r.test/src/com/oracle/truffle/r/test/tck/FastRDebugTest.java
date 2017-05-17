@@ -38,6 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.oracle.truffle.api.debug.Breakpoint;
+import com.oracle.truffle.api.debug.DebugScope;
 import com.oracle.truffle.api.debug.DebugStackFrame;
 import com.oracle.truffle.api.debug.DebugValue;
 import com.oracle.truffle.api.debug.Debugger;
@@ -230,6 +231,42 @@ public class FastRDebugTest {
         assertExecutedOK();
     }
 
+    @Test
+    public void testScope() throws Throwable {
+        final Source srcFunMain = RSource.fromTextInternal("function () {\n" +
+                        "    i = 3L\n" +
+                        "    n = 15\n" +
+                        "    str = \"hello\"\n" +
+                        "    i <- i + 1L\n" +
+                        "    ab <<- i\n" +
+                        "    i\n" +
+                        "}", RSource.Internal.DEBUGTEST_DEBUG);
+        final Source source = RSource.fromTextInternal("x <- 10L\n" +
+                        "makeActiveBinding('ab', function(v) { if(missing(v)) x else x <<- v }, .GlobalEnv)\n" +
+                        "main <- " + srcFunMain.getCode() + "\n",
+                        RSource.Internal.DEBUGTEST_DEBUG);
+        engine.eval(source);
+
+        // @formatter:on
+        run.addLast(() -> {
+            assertNull(suspendedEvent);
+            assertNotNull(debuggerSession);
+            debuggerSession.suspendNextExecution();
+        });
+
+        assertLocation(1, "main()", "x", 10, "ab", 10, "main", srcFunMain.getCode());
+        stepInto(1);
+        assertLocation(4, "i = 3L");
+        stepOut();
+        assertLocation(1, "main()", "x", 4, "ab", 4, "main", srcFunMain.getCode());
+        performWork();
+
+        final Source evalSource = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_EVAL);
+        engine.eval(evalSource);
+
+        assertExecutedOK();
+    }
+
     private void performWork() {
         try {
             if (ex == null && !run.isEmpty()) {
@@ -279,17 +316,20 @@ public class FastRDebugTest {
                 });
                 assertEquals(line + ": " + code, expectedFrame.length / 2, numFrameVars.get());
 
+                DebugScope scope = frame.getScope();
                 for (int i = 0; i < expectedFrame.length; i = i + 2) {
                     String expectedIdentifier = (String) expectedFrame[i];
                     Object expectedValue = expectedFrame[i + 1];
                     String expectedValueStr = (expectedValue != null) ? expectedValue.toString() : null;
-                    DebugValue value = frame.getValue(expectedIdentifier);
+                    DebugValue value = scope.getDeclaredValue(expectedIdentifier);
                     assertNotNull(value);
                     String valueStr = value.as(String.class);
                     assertEquals(expectedValueStr, valueStr);
                 }
 
-                run.removeFirst().run();
+                if (!run.isEmpty()) {
+                    run.removeFirst().run();
+                }
             } catch (RuntimeException | Error e) {
 
                 final DebugStackFrame frame = suspendedEvent.getTopStackFrame();

@@ -24,8 +24,6 @@ package com.oracle.truffle.r.runtime.env;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.MessageResolution;
@@ -38,8 +36,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -68,7 +64,7 @@ public final class RScope extends AbstractScope {
 
     @Override
     protected String getName() {
-        // TODO
+        // TODO promises (= closure)
         return "function";
     }
 
@@ -82,29 +78,9 @@ public final class RScope extends AbstractScope {
         return new VariablesMapObject(env, false);
     }
 
-    private static MaterializedFrame getCallerFrame(Frame frame) {
-
-        MaterializedFrame funFrame = RArguments.getCallerFrame(frame);
-        if (funFrame == null) {
-            Frame callerFrame = Utils.getCallerFrame(frame, FrameInstance.FrameAccess.MATERIALIZE);
-            if (callerFrame != null) {
-                return callerFrame.materialize();
-            } else {
-                // S3 method can be dispatched from top-level where there is no caller frame
-                return frame.materialize();
-            }
-        }
-        return funFrame;
-    }
-
     private static REnvironment getEnv(Frame frame) {
-        // TODO deopt frame
-// PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
-
-        MaterializedFrame matFrame = getCallerFrame(frame);
-        matFrame = matFrame instanceof VirtualEvalFrame ? ((VirtualEvalFrame) matFrame).getOriginalFrame() : matFrame;
-// deoptFrameNode.deoptimizeFrame(matFrame);
-        return REnvironment.frameToEnvironment(matFrame);
+        assert RArguments.isRFrame(frame);
+        return REnvironment.frameToEnvironment(frame.materialize());
     }
 
     @Override
