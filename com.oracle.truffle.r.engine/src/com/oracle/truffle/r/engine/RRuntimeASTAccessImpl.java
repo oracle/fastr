@@ -72,6 +72,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.ReturnException;
+import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -535,13 +536,13 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     // single statement block, variable parent
                     // note: RepeatingNode is not a RSyntaxElement but the body of a loop is
                     // under the repeating node !
-                    return parent instanceof FunctionDefinitionNode || parent instanceof IfNode || parent instanceof AbstractLoopNode || ForNode.isLoopBody(node);
+                    return parent instanceof FunctionDefinitionNode || parent instanceof RootWithBody || parent instanceof IfNode || parent instanceof AbstractLoopNode || ForNode.isLoopBody(node);
                 }
             }
 
             case "RootTag": {
                 Node parent = ((RInstrumentableNode) node).unwrapParent();
-                return parent instanceof FunctionDefinitionNode;
+                return parent instanceof FunctionDefinitionNode || parent instanceof RootWithBody;
             }
 
             case "LoopTag":

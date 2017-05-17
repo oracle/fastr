@@ -655,7 +655,6 @@ public class RRuntime {
         } else if (object instanceof Byte) {
             return logicalToString((byte) object);
         }
-
         return String.valueOf(object);
     }
 
@@ -918,4 +917,5 @@ public class RRuntime {
     private static boolean hasDims(RAbstractContainer xa) {
         return xa.hasDimensions();
     }
+
 }

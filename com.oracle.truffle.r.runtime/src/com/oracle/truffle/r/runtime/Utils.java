@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -696,5 +697,25 @@ public final class Utils {
     @TruffleBoundary
     public static String stringFormat(String format, Object... objects) {
         return String.format(format, objects);
+    }
+
+    private static boolean isWriteableDirectory(String path) {
+        File f = new File(path);
+        return f.exists() && f.isDirectory() && f.canWrite();
+    }
+
+    public static String getUserTempDir() {
+        final String[] envVars = new String[]{"TMPDIR", "TMP", "TEMP"};
+        String startingTempDir = null;
+        for (String envVar : envVars) {
+            String value = System.getenv(envVar);
+            if (value != null && isWriteableDirectory(value)) {
+                startingTempDir = value;
+            }
+        }
+        if (startingTempDir == null) {
+            startingTempDir = "/tmp";
+        }
+        return startingTempDir;
     }
 }

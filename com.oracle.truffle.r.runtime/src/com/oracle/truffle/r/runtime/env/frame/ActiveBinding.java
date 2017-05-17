@@ -29,13 +29,14 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Represent an active binding of a function. This requires special treatment when reading and
  * writing variables.
  */
-public class ActiveBinding {
+public class ActiveBinding implements RTruffleObject {
 
     private final RType expectedType;
     private final RFunction function;

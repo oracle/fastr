@@ -27,8 +27,6 @@ import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import java.util.ArrayList;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -42,7 +40,9 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
@@ -66,7 +66,6 @@ public abstract class OnExit extends RBuiltinNode.Arg2 {
         return new Object[]{RNull.instance, RRuntime.LOGICAL_FALSE};
     }
 
-    @SuppressWarnings("unchecked")
     @Specialization
     protected Object onExit(VirtualFrame frame, RPromise expr, boolean add) {
 
@@ -78,7 +77,7 @@ public abstract class OnExit extends RBuiltinNode.Arg2 {
         // the empty (RNull.instance) expression is used to clear on.exit
         if (emptyPromiseProfile.profile(expr.isDefaultArgument())) {
             assert expr.getRep() instanceof ConstantNode : "only ConstantNode expected for defaulted promise";
-            frame.setObject(onExitSlot, new ArrayList<>());
+            frame.setObject(onExitSlot, RDataFactory.createPairList());
         } else {
             assert !expr.isEvaluated() : "promise cannot already be evaluated";
             Object value;
@@ -87,18 +86,20 @@ public abstract class OnExit extends RBuiltinNode.Arg2 {
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
-            ArrayList<Object> list;
+            RPairList list;
             if (newProfile.profile(value == null)) {
                 // initialize the list of exit handlers
-                frame.setObject(onExitSlot, list = new ArrayList<>());
+                frame.setObject(onExitSlot, list = RDataFactory.createPairList());
             } else {
-                list = (ArrayList<Object>) value;
+                list = (RPairList) value;
                 if (addProfile.profile(!add)) {
                     // add is false, so clear the existing list
-                    list.clear();
+                    assert !list.isShared();
+                    list.setCdr(RNull.instance);
+                    list.setCar(RNull.instance);
                 }
             }
-            list.add(expr.getRep());
+            list.appendToEnd(RDataFactory.createPairList(expr.getRep()));
         }
         return RNull.instance;
     }

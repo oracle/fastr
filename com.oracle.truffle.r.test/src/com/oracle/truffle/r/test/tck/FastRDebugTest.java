@@ -161,6 +161,7 @@ public class FastRDebugTest {
             debuggerSession.suspendNextExecution();
         });
 
+        stepInto(1);
         assertLocation(2, "res = fac(2)");
         stepInto(2);
         assertLocation(9, "nMinusOne = n - 1",
@@ -218,7 +219,7 @@ public class FastRDebugTest {
 
         stepInto(1);
         stepOver(3);
-        assertLocation(6, "i", "i", 4, "n", 15.0, "str", "hello");
+        assertLocation(5, "i <- i + 1L", "i", 3, "n", 15.0, "str", "hello");
         assertMetaObjects(source, "i", "integer", "n", "double", "str", "character");
         stepOut();
         performWork();

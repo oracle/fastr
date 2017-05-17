@@ -68,6 +68,8 @@ import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -339,17 +341,19 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         onExitExpressionCache = insert(InlineCacheNode.createExpression(3));
                     }
-                    ArrayList<Object> current = getCurrentOnExitList(frame, onExitSlot.executeFrameSlot(frame));
+                    RPairList current = getCurrentOnExitList(frame, onExitSlot.executeFrameSlot(frame));
                     /*
                      * We do not need to preserve visibility, since visibility.executeEndOfFunction
                      * was already called.
                      */
                     try {
-                        for (Object expr : current) {
-                            if (!(expr instanceof RNode)) {
-                                RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
+                        for (RPairList expr : current) {
+                            if (expr.car() != RNull.instance) {
+                                if (!(expr.car() instanceof RNode)) {
+                                    RInternalError.shouldNotReachHere("unexpected type for on.exit entry: " + expr.car());
+                                }
+                                onExitExpressionCache.execute(frame, expr.car());
                             }
-                            onExitExpressionCache.execute(frame, expr);
                         }
                     } catch (ReturnException ex) {
                         if (returnTopLevelProfile.profile(ex.getTarget() == RArguments.getCall(frame))) {
@@ -448,10 +452,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static ArrayList<Object> getCurrentOnExitList(VirtualFrame frame, FrameSlot slot) {
+    private static RPairList getCurrentOnExitList(VirtualFrame frame, FrameSlot slot) {
         try {
-            return (ArrayList<Object>) FrameSlotChangeMonitor.getObject(slot, frame);
+            return (RPairList) FrameSlotChangeMonitor.getObject(slot, frame);
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere();
         }

@@ -11,13 +11,26 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import static java.nio.file.StandardOpenOption.WRITE;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import javax.xml.bind.DatatypeConverter;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -316,11 +329,69 @@ public class RDeparse {
             }
         }
 
-        public void fixupSources() {
-            Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.DEPARSE);
-            for (SourceSectionElement s : sources) {
-                s.element.setSourceSection(source.createSection(s.start, s.length));
+        private static MessageDigest digest = null;
+
+        private Path emitToFile(String qualifiedFunctionName) throws IOException, NoSuchAlgorithmException {
+            Path tmpDir = Paths.get(Utils.getUserTempDir()).resolve("deparse");
+            if (!Files.exists(tmpDir)) {
+                Files.createDirectory(tmpDir);
             }
+
+            Path path;
+            if (FastROptions.EmitTmpHashed.getBooleanValue()) {
+                if (digest == null) {
+                    digest = MessageDigest.getInstance("SHA-256");
+                }
+                String printHexBinary = DatatypeConverter.printHexBinary(digest.digest(sb.toString().getBytes()));
+                assert printHexBinary.length() > 10;
+
+                // just use the first 10 hex digits to have a nicer file name
+                if (qualifiedFunctionName != null && !qualifiedFunctionName.isEmpty() && !qualifiedFunctionName.equals("<no source>")) {
+                    path = tmpDir.resolve(qualifiedFunctionName + "-" + printHexBinary.substring(0, 10) + ".r");
+                } else {
+                    path = tmpDir.resolve(printHexBinary.substring(0, 10) + ".r");
+                }
+            } else {
+                path = Files.createTempFile("deparse-", ".r");
+            }
+            if (!Files.exists(path)) {
+                try (BufferedWriter bw = Files.newBufferedWriter(path, CREATE_NEW, WRITE)) {
+                    bw.write(sb.toString());
+                }
+            }
+            return path;
+        }
+
+        public void fixupSources() {
+            if (FastROptions.EmitTmpSource.getBooleanValue()) {
+                try {
+                    RootNode rootNode = getRootNode();
+                    String name = rootNode != null ? rootNode.getName() : null;
+                    Path path = emitToFile(name);
+                    Source source = RSource.fromFile(path.toFile());
+                    for (SourceSectionElement s : sources) {
+                        s.element.setSourceSection(source.createSection(s.start, s.length));
+                    }
+                } catch (IOException e) {
+                    RInternalError.reportError(e);
+                } catch (NoSuchAlgorithmException e) {
+                    throw RInternalError.shouldNotReachHere("SHA-256 is an unknown algorithm");
+                }
+            } else {
+                Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.DEPARSE);
+                for (SourceSectionElement s : sources) {
+                    s.element.setSourceSection(source.createSection(s.start, s.length));
+                }
+            }
+        }
+
+        private RootNode getRootNode() {
+            // the last element in the list is the top-most one
+            RSyntaxElement n = sources.get(sources.size() - 1).element;
+            if (n instanceof RootNode) {
+                return (RootNode) n;
+            }
+            return null;
         }
 
         @SuppressWarnings("try")
@@ -991,7 +1062,20 @@ public class RDeparse {
     public static void ensureSourceSection(RSyntaxNode node) {
         SourceSection ss = node.getLazySourceSection();
         if (ss == RSyntaxNode.LAZY_DEPARSE) {
-            new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(node).fixupSources();
+            RSyntaxElement nodeToFixup = node;
+            if (FastROptions.EmitTmpSource.getBooleanValue()) {
+                RootNode rootNode = node.asNode().getRootNode();
+                if (RContext.getRRuntimeASTAccess().isFunctionDefinitionNode(rootNode)) {
+                    nodeToFixup = (RSyntaxElement) rootNode;
+                }
+            }
+            // try to generate the source from the root node and hopefully it includes this node
+            new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(nodeToFixup).fixupSources();
+
+            // if not, we have to deparse the node in isolation
+            if (node.getLazySourceSection() == RSyntaxNode.LAZY_DEPARSE) {
+                new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(node).fixupSources();
+            }
             assert node.getLazySourceSection() != RSyntaxNode.LAZY_DEPARSE;
         }
     }

@@ -43,6 +43,7 @@ import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
@@ -140,6 +141,9 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         }
         if (unwrapped instanceof String) {
             return (String) unwrapped;
+        }
+        if (unwrapped instanceof RTypedValue) {
+            return RDeparse.deparse(unwrapped);
         }
         return RRuntime.toString(unwrapped);
     }
