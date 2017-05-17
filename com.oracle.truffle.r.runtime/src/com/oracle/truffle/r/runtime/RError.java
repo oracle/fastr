@@ -320,7 +320,7 @@ public final class RError extends RuntimeException {
         MUST_BE_POSITIVE_INT("'%s' must be a positive integer"),
         MUST_BE_POSITIVE_SD("%s must be non-negative number"),
         MUST_BE_SQUARE("'%s' (%d x %d) must be square"),
-        MUST_BE_SQUARE_COMPATIBLE("'%s' (%d x %d) must be compatible with '%' (%d x %d)"),
+        MUST_BE_SQUARE_COMPATIBLE("'%s' (%d x %d) must be compatible with '%s' (%d x %d)"),
         INVALID_TFB_SD("invalid (to - from)/by in seq(.)"),
         INVALID_TFB("invalid '(to - from)/by' in 'seq'"),
         WRONG_SIGN_IN_BY("wrong sign in 'by' argument"),

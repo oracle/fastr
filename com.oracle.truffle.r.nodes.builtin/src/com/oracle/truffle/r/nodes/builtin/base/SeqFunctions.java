@@ -197,9 +197,9 @@ public final class SeqFunctions {
                         @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode fromCheck) {
             if (isNumericProfile.profile(fromCheck.execute(args.getArgument(0)))) {
                 if (args.getLength() == 1) {
-                    return seqInt.execute(frame, RMissing.instance, RMissing.instance, RMissing.instance, args.getArgument(0), RMissing.instance);
+                    return seqInt.execute(frame, RMissing.instance, RMissing.instance, RMissing.instance, args.getArgument(0), RMissing.instance, RMissing.instance);
                 } else {
-                    return seqInt.execute(frame, args.getArgument(0), RMissing.instance, RMissing.instance, args.getArgument(1), RMissing.instance);
+                    return seqInt.execute(frame, args.getArgument(0), RMissing.instance, RMissing.instance, args.getArgument(1), RMissing.instance, RMissing.instance);
                 }
             } else {
                 return null;
@@ -217,7 +217,7 @@ public final class SeqFunctions {
                         @Cached("createIsMissingOrNumericNode()") @SuppressWarnings("unused") IsMissingOrNumericNode byCheck) {
             Object[] rargs = reorderedArguments(args, seqIntFunction);
             if (isNumericProfile.profile(fromCheck.execute(rargs[0]) && toCheck.execute(rargs[1]) && toCheck.execute(rargs[2]))) {
-                return seqInt.execute(frame, rargs[0], rargs[1], rargs[2], rargs[3], rargs[4]);
+                return seqInt.execute(frame, rargs[0], rargs[1], rargs[2], rargs[3], rargs[4], RMissing.instance);
             } else {
                 return null;
             }
@@ -309,7 +309,7 @@ public final class SeqFunctions {
                         @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode fromCheck,
                         @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode toCheck,
                         @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode byCheck) {
-            return seqInt.execute(frame, fromObj, toObj, byObj, lengthOut, alongWith);
+            return seqInt.execute(frame, fromObj, toObj, byObj, lengthOut, alongWith, RMissing.instance);
         }
 
         /**
@@ -407,7 +407,7 @@ public final class SeqFunctions {
     @ImportStatic({AsRealNodeGen.class, SeqFunctions.class})
     @com.oracle.truffle.r.runtime.builtins.RBuiltin(name = "seq.int", kind = PRIMITIVE, parameterNames = {"from", "to", "by", "length.out", "along.with",
                     "..."}, dispatch = INTERNAL_GENERIC, genericName = "seq", behavior = PURE)
-    public abstract static class SeqInt extends RBuiltinNode.Arg5 {
+    public abstract static class SeqInt extends RBuiltinNode.Arg6 {
         private final BranchProfile error = BranchProfile.create();
         private final boolean seqFastPath;
 
@@ -426,7 +426,7 @@ public final class SeqFunctions {
         }
 
         @Override
-        public abstract Object execute(VirtualFrame frame, Object start, Object to, Object by, Object lengthOut, Object alongWith);
+        public abstract Object execute(VirtualFrame frame, Object start, Object to, Object by, Object lengthOut, Object alongWith, Object dotdotdot);
 
         protected SeqInt(boolean seqFastPath) {
             this.seqFastPath = seqFastPath;
@@ -447,7 +447,7 @@ public final class SeqFunctions {
         // No matching args (special case)
 
         @Specialization
-        protected RIntSequence allMissing(RMissing from, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith) {
+        protected RIntSequence allMissing(RMissing from, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
             // GNU R allows this and returns 1
             return RDataFactory.createIntSequence(1, 1, 1);
         }
@@ -462,7 +462,7 @@ public final class SeqFunctions {
          * Irrespective of the R type, if the length is zero the result is an empty sequence.
          */
         @Specialization(guards = {"!isMissing(from)", "getLength(frame, from) == 0"})
-        protected RIntVector emptySeqFromOneArg(VirtualFrame frame, Object from, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith) {
+        protected RIntVector emptySeqFromOneArg(VirtualFrame frame, Object from, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
             return RDataFactory.createEmptyIntVector();
         }
 
@@ -473,7 +473,7 @@ public final class SeqFunctions {
          * but the value likely could not be coerced.
          */
         @Specialization(guards = {"!isMissing(from)", "getLength(frame, from) > 1"})
-        protected RIntSequence lenSeqFromOneArg(VirtualFrame frame, Object from, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith) {
+        protected RIntSequence lenSeqFromOneArg(VirtualFrame frame, Object from, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
             return RDataFactory.createIntSequence(1, 1, getLength(frame, from));
         }
 
@@ -481,7 +481,7 @@ public final class SeqFunctions {
          * A length-1 REAL. Return "1:(int) from" where from is positive integral
          */
         @Specialization(guards = {"fromVec.getLength() == 1", "isPositiveIntegralDouble(fromVec.getDataAt(0))"})
-        protected RAbstractVector seqFromOneArgIntDouble(RAbstractDoubleVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith) {
+        protected RAbstractVector seqFromOneArgIntDouble(RAbstractDoubleVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
             int len = (int) fromVec.getDataAt(0);
             return RDataFactory.createIntSequence(1, 1, len);
         }
@@ -491,7 +491,7 @@ public final class SeqFunctions {
          * {@code seq(0.2)} is NOT the same as {@code seq(0.0)} (according to GNU R)
          */
         @Specialization(guards = "fromVec.getLength() == 1")
-        protected RAbstractVector seqFromOneArgDouble(RAbstractDoubleVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith) {
+        protected RAbstractVector seqFromOneArgDouble(RAbstractDoubleVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
             double from = validateDoubleParam(fromVec.getDataAt(0), fromVec, "from");
             int len = effectiveLength(1, from);
             return RDataFactory.createIntSequence(1, from > 0 ? 1 : -1, len);
@@ -501,7 +501,7 @@ public final class SeqFunctions {
          * A length-1 INT. Return "1:from" (N.B. from may be negative)
          */
         @Specialization(guards = "fromVec.getLength() == 1")
-        protected RIntSequence seqFromOneArgInt(RAbstractIntVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith) {
+        protected RIntSequence seqFromOneArgInt(RAbstractIntVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
             int from = validateIntParam(fromVec.getDataAt(0), "from");
             int len = from > 0 ? from : 2 - from;
             return RDataFactory.createIntSequence(1, from > 0 ? 1 : -1, len);
@@ -514,17 +514,8 @@ public final class SeqFunctions {
          * which would be incorrect as the result is different.
          */
         @Specialization(guards = {"!isMissing(from)", "getLength(frame, from) == 1", "!isNumeric(from)"})
-        protected RIntSequence seqFromOneArgObj(VirtualFrame frame, Object from, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith) {
+        protected RIntSequence seqFromOneArgObj(VirtualFrame frame, Object from, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
             return RDataFactory.createIntSequence(1, 1, 1);
-        }
-
-        /**
-         * Treat {@code lengthOut==NULL} as {@link RMissing}.
-         */
-        @Specialization
-        protected RAbstractVector seqLengthByMissing(VirtualFrame frame, Object from, Object to, Object by, RNull lengthOut, RMissing alongWith,
-                        @Cached("createSeqInt()") SeqInt seqIntNodeRecursive) {
-            return (RAbstractVector) seqIntNodeRecursive.execute(frame, from, to, by, RMissing.instance, alongWith);
         }
 
         /*
@@ -539,6 +530,7 @@ public final class SeqFunctions {
 
         @Specialization(guards = "validDoubleParams(fromVec, toVec)")
         protected RAbstractVector seqLengthByMissingDouble(VirtualFrame frame, RAbstractDoubleVector fromVec, RAbstractDoubleVector toVec, RMissing by, RMissing lengthOut, RMissing alongWith,
+                        Object dotdotdot,
                         @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
             double from = fromVec.getDataAt(0);
             double to = toVec.getDataAt(0);
@@ -547,7 +539,7 @@ public final class SeqFunctions {
         }
 
         @Specialization(guards = "validIntParams(fromVec, toVec)")
-        protected RAbstractVector seqLengthByMissingInt(VirtualFrame frame, RAbstractIntVector fromVec, RAbstractIntVector toVec, RMissing by, RMissing lengthOut, RMissing alongWith,
+        protected RAbstractVector seqLengthByMissingInt(VirtualFrame frame, RAbstractIntVector fromVec, RAbstractIntVector toVec, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
                         @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
             int from = fromVec.getDataAt(0);
             int to = toVec.getDataAt(0);
@@ -563,7 +555,7 @@ public final class SeqFunctions {
          * previous specializations.
          */
         @Specialization(guards = {"!isMissing(toObj)"})
-        protected RAbstractVector seqLengthByMissing(VirtualFrame frame, Object fromObj, Object toObj, RMissing by, RMissing lengthOut, RMissing alongWith,
+        protected RAbstractVector seqLengthByMissing(VirtualFrame frame, Object fromObj, Object toObj, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
                         @Cached("create()") AsRealNode asRealFrom,
                         @Cached("create()") AsRealNode asRealTo,
                         @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
@@ -589,7 +581,7 @@ public final class SeqFunctions {
          */
 
         @Specialization(guards = {"validDoubleParams(fromVec, toVec)", "!isMissing(byObj)"})
-        protected Object seqLengthMissing(VirtualFrame frame, RAbstractDoubleVector fromVec, RAbstractDoubleVector toVec, Object byObj, RMissing lengthOut, RMissing alongWith,
+        protected Object seqLengthMissing(VirtualFrame frame, RAbstractDoubleVector fromVec, RAbstractDoubleVector toVec, Object byObj, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
                         @Cached("create()") AsRealNode asRealby) {
             validateLength(frame, byObj, "by");
             double by = asRealby.execute(byObj);
@@ -598,6 +590,7 @@ public final class SeqFunctions {
 
         @Specialization(guards = {"validIntParams(fromVec, toVec)", "validIntParam(byVec)", "byVec.getDataAt(0) != 0"})
         protected RAbstractVector seqLengthMissing(VirtualFrame frame, RAbstractIntVector fromVec, RAbstractIntVector toVec, RAbstractIntVector byVec, RMissing lengthOut, RMissing alongWith,
+                        Object dotdotdot,
                         @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
             int by = byVec.getDataAt(0);
             int from = fromVec.getDataAt(0);
@@ -626,7 +619,7 @@ public final class SeqFunctions {
          * See comment in {@link #seqLengthByMissing}.
          */
         @Specialization(guards = {"!isMissing(byObj)"})
-        protected Object seqLengthMissing(VirtualFrame frame, Object fromObj, Object toObj, Object byObj, RMissing lengthOut, RMissing alongWith,
+        protected Object seqLengthMissing(VirtualFrame frame, Object fromObj, Object toObj, Object byObj, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
                         @Cached("create()") AsRealNode asRealFrom,
                         @Cached("create()") AsRealNode asRealTo,
                         @Cached("create()") AsRealNode asRealby) {
@@ -722,7 +715,7 @@ public final class SeqFunctions {
          */
 
         @Specialization(guards = "!isMissing(lengthOut)")
-        protected RAbstractVector seqJustLength(VirtualFrame frame, RMissing from, RMissing to, RMissing by, Object lengthOut, RMissing alongWith,
+        protected RAbstractVector seqJustLength(VirtualFrame frame, RMissing from, RMissing to, RMissing by, Object lengthOut, RMissing alongWith, Object dotdotdot,
                         @Cached("create()") AsRealNode asRealLen) {
             int n = checkLength(frame, lengthOut, asRealLen);
             return n == 0 ? RDataFactory.createEmptyIntVector() : RDataFactory.createIntSequence(1, 1, n);
@@ -731,7 +724,7 @@ public final class SeqFunctions {
         // seq(along,with=)
 
         @Specialization(guards = "!isMissing(alongWith)")
-        protected RAbstractVector seqFromJustAlong(VirtualFrame frame, RMissing from, RMissing to, RMissing by, RMissing lengthOut, Object alongWith) {
+        protected RAbstractVector seqFromJustAlong(VirtualFrame frame, RMissing from, RMissing to, RMissing by, RMissing lengthOut, Object alongWith, Object dotdotdot) {
             int len = getLength(frame, alongWith);
             return len == 0 ? RDataFactory.createEmptyIntVector() : RDataFactory.createIntSequence(1, 1, len);
         }
@@ -805,7 +798,7 @@ public final class SeqFunctions {
 
         // common idiom
         @Specialization(guards = {"fromCheck.execute(fromObj)", "lengthCheck.execute(lengthOut)"})
-        protected RAbstractVector seqWithFromLengthIntegralNumeric(VirtualFrame frame, Object fromObj, RMissing toObj, RMissing byObj, Object lengthOut, RMissing alongWith,
+        protected RAbstractVector seqWithFromLengthIntegralNumeric(VirtualFrame frame, Object fromObj, RMissing toObj, RMissing byObj, Object lengthOut, RMissing alongWith, Object dotdotdot,
                         @Cached("createGetIntegralNumericNode()") GetIntegralNumericNode getIntegralNumericNode,
                         @Cached("createIsIntegralNumericNodeNoLengthCheck()") IsIntegralNumericNode fromCheck,
                         @Cached("createIsIntegralNumericNodeLengthCheck()") IsIntegralNumericNode lengthCheck) {
@@ -820,7 +813,7 @@ public final class SeqFunctions {
 
         // "by" missing
         @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(fromObj, toObj)"})
-        protected RAbstractVector seqWithLength(VirtualFrame frame, Object fromObj, Object toObj, RMissing byObj, Object lengthOut, Object alongWith,
+        protected RAbstractVector seqWithLength(VirtualFrame frame, Object fromObj, Object toObj, RMissing byObj, Object lengthOut, Object alongWith, Object dotdotdot,
                         @Cached("create()") AsRealNode asRealFrom,
                         @Cached("create()") AsRealNode asRealTo,
                         @Cached("create()") AsRealNode asRealLen) {
@@ -874,7 +867,7 @@ public final class SeqFunctions {
 
         // "to" missing
         @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(fromObj, byObj)"})
-        protected RAbstractVector seqWithLength(VirtualFrame frame, Object fromObj, RMissing toObj, Object byObj, Object lengthOut, Object alongWith,
+        protected RAbstractVector seqWithLength(VirtualFrame frame, Object fromObj, RMissing toObj, Object byObj, Object lengthOut, Object alongWith, Object dotdotdot,
                         @Cached("create()") AsRealNode asRealFrom,
                         @Cached("create()") AsRealNode asRealby,
                         @Cached("create()") AsRealNode asRealLen) {
@@ -901,7 +894,7 @@ public final class SeqFunctions {
 
         // "from" missing
         @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(toObj, byObj)"})
-        protected RAbstractVector seqWithLength(VirtualFrame frame, RMissing fromObj, Object toObj, Object byObj, Object lengthOut, Object alongWith,
+        protected RAbstractVector seqWithLength(VirtualFrame frame, RMissing fromObj, Object toObj, Object byObj, Object lengthOut, Object alongWith, Object dotdotdot,
                         @Cached("create()") AsRealNode asRealTo,
                         @Cached("create()") AsRealNode asRealby,
                         @Cached("create()") AsRealNode asRealLen) {
@@ -922,7 +915,7 @@ public final class SeqFunctions {
         }
 
         @Fallback
-        protected RAbstractVector seqFallback(VirtualFrame frame, Object fromObj, Object toObj, Object byObj, Object lengthOut, Object alongWith) {
+        protected RAbstractVector seqFallback(VirtualFrame frame, Object fromObj, Object toObj, Object byObj, Object lengthOut, Object alongWith, Object dotdotdot) {
             error.enter();
             throw error(RError.Message.TOO_MANY_ARGS);
         }

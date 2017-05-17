@@ -21,7 +21,6 @@ import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -39,7 +38,6 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 
@@ -70,6 +68,7 @@ public abstract class Switch extends RBuiltinNode.Arg2 {
         Casts casts = new Casts(Switch.class);
         // first argument must be list or expression or vector of size 1, if it is not String, cast it to integer
         casts.arg("EXPR").defaultError(RError.Message.EXPR_NOT_LENGTH_ONE).
+                mustNotBeMissing(RError.Message.EXPR_MISSING).
                 returnIf(atomicIntegerValue().or(instanceOf(String.class)).or(instanceOf(RExpression.class))).
                 mustBe(abstractVectorValue()).boxPrimitive().mustBe(size(1)).
                 returnIf(stringValue(), findFirst().stringElement()).
@@ -174,13 +173,6 @@ public abstract class Switch extends RBuiltinNode.Arg2 {
             return prepareResult(frame, null);
         }
         return prepareResult(frame, doSwitchInt(frame, x, optionalArgs));
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected Object doSwitch(RMissing x, RMissing optionalArgs) {
-        CompilerDirectives.transferToInterpreter();
-        throw error(RError.Message.EXPR_MISSING);
     }
 
     private Object doSwitchInt(VirtualFrame frame, int index, RArgsValuesAndNames optionalArgs) {

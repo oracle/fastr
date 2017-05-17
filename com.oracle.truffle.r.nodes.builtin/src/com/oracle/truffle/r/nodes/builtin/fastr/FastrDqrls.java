@@ -11,6 +11,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -44,13 +46,13 @@ public abstract class FastrDqrls extends RBuiltinNode.Arg7 {
 
     static {
         Casts casts = new Casts(FastrDqrls.class);
-        casts.arg("x").asDoubleVector(true, true, true);
+        casts.arg("x").mustNotBeMissing().mustNotBeNull().asDoubleVector(true, true, true);
         casts.arg("n").asIntegerVector().findFirst();
         casts.arg("p").asIntegerVector().findFirst();
-        casts.arg("y").asDoubleVector(true, true, true);
+        casts.arg("y").mustNotBeMissing().mustNotBeNull().asDoubleVector(true, true, true);
         casts.arg("ny").asIntegerVector().findFirst();
         casts.arg("tol").asDoubleVector().findFirst();
-        casts.arg("coeff").asDoubleVector(true, true, true);
+        casts.arg("coeff").mustNotBeMissing().mustNotBeNull().asDoubleVector(true, true, true);
 
     }
 

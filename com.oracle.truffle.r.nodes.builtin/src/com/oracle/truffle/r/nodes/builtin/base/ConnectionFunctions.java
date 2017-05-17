@@ -70,7 +70,6 @@ import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.WriteDataNodeGen;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.HeadPhaseBuilder;
-import com.oracle.truffle.r.nodes.builtin.casts.fluent.InitialPhaseBuilder;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -153,15 +152,7 @@ public abstract class ConnectionFunctions {
 
     public static final class CastsHelper {
         private static HeadPhaseBuilder<String> description(Casts casts) {
-            return descriptionInternal(casts.arg("description"));
-        }
-
-        private static HeadPhaseBuilder<String> descriptionNull(Casts casts) {
-            return descriptionInternal(casts.arg("description").allowNull());
-        }
-
-        private static HeadPhaseBuilder<String> descriptionInternal(InitialPhaseBuilder<Object> casts) {
-            return casts.mustBe(stringValue()).asStringVector().shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").findFirst().mustNotBeNA();
+            return casts.arg("description").mustBe(stringValue()).asStringVector().shouldBe(singleElement(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description").findFirst().mustNotBeNA();
         }
 
         private static HeadPhaseBuilder<String> open(Casts casts) {
@@ -351,7 +342,7 @@ public abstract class ConnectionFunctions {
 
         static {
             Casts casts = new Casts(TextConnection.class);
-            CastsHelper.descriptionNull(casts);
+            CastsHelper.description(casts);
             casts.arg("text").allowNull().mustBe(stringValue());
             CastsHelper.open(casts).mustBe(equalTo("").or(equalTo("r").or(equalTo("w").or(equalTo("a")))), RError.Message.UNSUPPORTED_MODE);
             casts.arg("env").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
