@@ -183,11 +183,6 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     }
 
     @Specialization
-    protected RArgsValuesAndNames doArgsValueAndNames(RArgsValuesAndNames values) {
-        return values;
-    }
-
-    @Specialization
     protected RMissing doMissing(RMissing missing) {
         return missing;
     }

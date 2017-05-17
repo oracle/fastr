@@ -13,11 +13,14 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.dimEq;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.dimGt;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyDoubleVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.matrix;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.not;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.or;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.squareMatrix;
@@ -571,7 +574,8 @@ public class LaFunctions {
             casts.arg("a").mustBe(numericValue()).asVector().mustBe(matrix(), Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(not(dimEq(0, 0)),
                             Message.GENERIC, "'a' is 0-diml").mustBe(squareMatrix(), Message.MUST_BE_SQUARE_MATRIX_SPEC, "a", getDimVal(0), getDimVal(1));
 
-            casts.arg("bin").asDoubleVector(false, true, false).mustBe(or(not(matrix()), not(dimEq(1, 0))), Message.GENERIC, "no right-hand side in 'b'");
+            casts.arg("bin").returnIf(missingValue().or(nullValue()), emptyDoubleVector()).asDoubleVector(false, true, false).mustBe(or(not(matrix()), not(dimEq(1, 0))), Message.GENERIC,
+                            "no right-hand side in 'b'");
 
             casts.arg("tolin").asDoubleVector().findFirst(RRuntime.DOUBLE_NA);
         }

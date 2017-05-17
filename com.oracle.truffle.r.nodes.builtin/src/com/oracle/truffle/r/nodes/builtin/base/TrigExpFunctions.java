@@ -565,13 +565,17 @@ public class TrigExpFunctions {
                             profile);
         }
 
-        @Fallback
+        @Specialization(guards = {"!isDouble(x) || !isDouble(y)"})
         @TruffleBoundary
         protected Object atan2(Object x, Object y) {
             if (x instanceof RAbstractComplexVector || y instanceof RAbstractComplexVector) {
                 throw RInternalError.unimplemented("atan2 for complex values");
             }
             throw error(RError.Message.NON_NUMERIC_MATH);
+        }
+
+        protected static boolean isDouble(Object x) {
+            return x instanceof Double || x instanceof RAbstractDoubleVector;
         }
     }
 }
