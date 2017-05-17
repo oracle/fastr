@@ -148,7 +148,7 @@ rbcheck : ${common} {
   run : [
     ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac"]
     ["mx", "rbcheck"]
-    ["mx", "rbdiag", "-n", "-m"]
+    ["mx", "rbdiag"]
   ]
 }
 
