@@ -18,6 +18,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -331,7 +332,7 @@ public class RDeparse {
         private static MessageDigest digest = null;
 
         private Path emitToFile(String qualifiedFunctionName) throws IOException, NoSuchAlgorithmException {
-            Path tmpDir = Files.createTempDirectory("deparse-");
+            Path tmpDir = Paths.get(Utils.getUserTempDir()).resolve("deparse");
             if (!Files.exists(tmpDir)) {
                 Files.createDirectory(tmpDir);
             }

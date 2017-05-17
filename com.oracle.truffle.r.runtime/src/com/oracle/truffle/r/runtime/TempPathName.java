@@ -58,17 +58,7 @@ public class TempPathName implements RContext.ContextState {
             tempDirPath = context.getParent().stateTempPath.tempDirPath;
             return this;
         }
-        final String[] envVars = new String[]{"TMPDIR", "TMP", "TEMP"};
-        String startingTempDir = null;
-        for (String envVar : envVars) {
-            String value = System.getenv(envVar);
-            if (value != null && isWriteableDirectory(value)) {
-                startingTempDir = value;
-            }
-        }
-        if (startingTempDir == null) {
-            startingTempDir = "/tmp";
-        }
+        String startingTempDir = Utils.getUserTempDir();
         Path startingTempDirPath = FileSystems.getDefault().getPath(startingTempDir, "Rtmp");
         // ensure absolute, to avoid problems with R code does a setwd
         if (!startingTempDirPath.isAbsolute()) {
@@ -94,11 +84,6 @@ public class TempPathName implements RContext.ContextState {
         } catch (Throwable e) {
             // unexpected and we are exiting anyway
         }
-    }
-
-    private static boolean isWriteableDirectory(String path) {
-        File f = new File(path);
-        return f.exists() && f.isDirectory() && f.canWrite();
     }
 
     public static String tempDirPath() {
