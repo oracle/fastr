@@ -30,6 +30,8 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TestJavaInterop extends TestBase {
 
@@ -155,7 +157,7 @@ public class TestJavaInterop extends TestBase {
 
         assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); to <- .fastr.interop.new(tc); a <- .fastr.java.toArray(to); .fastr.java.isArray(a)", "TRUE");
         assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); to <- .fastr.interop.new(tc); a <- .fastr.java.toArray(c(to, to)); .fastr.java.isArray(a)", "TRUE");
-        
+
         assertEvalFastR(Ignored.Unimplemented, "a <- .fastr.java.toArray(1L,,F); a;", getRValue(new int[]{1}));
     }
 
@@ -254,7 +256,7 @@ public class TestJavaInterop extends TestBase {
     public void testNonPrimitiveParameter() {
         assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$equals(t)", "TRUE");
     }
-    
+
     @Test
     public void testClassAsParameter() {
         // needs to be implemented in truffle
@@ -301,6 +303,18 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[[1]]<-123; a[[1]]", "123");
         assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[1,2]<-1234; a[1,2]", "1234");
         assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[[1,2]]<-1234; a[[1,2]]", "1234");
+    }
+
+    @Test
+    public void testNamesForJavaObject() {
+        assertEvalFastR("tc <- .fastr.java.class('" + TestNamesClassNoMembers.class.getName() + "'); t <- .fastr.interop.new(tc); names(t)", "NULL");
+        assertEvalFastR("tc <- .fastr.java.class('" + TestNamesClassNoPublicMembers.class.getName() + "'); t <- .fastr.interop.new(tc); names(t)", "NULL");
+        assertEvalFastR("tc <- .fastr.java.class('" + TestNamesClass.class.getName() + "'); sort(names(tc))", "c('staticField', 'staticMethod')");
+        assertEvalFastR("tc <- .fastr.java.class('" + TestNamesClass.class.getName() + "'); names(tc$staticField)", "NULL");
+        assertEvalFastR("tc <- .fastr.java.class('" + TestNamesClass.class.getName() + "'); names(tc$staticMethod)", "NULL");
+        assertEvalFastR("tc <- .fastr.java.class('" + TestNamesClass.class.getName() + "'); t <- .fastr.interop.new(tc); sort(names(t))", "c('field', 'method', 'staticField', 'staticMethod')");
+        assertEvalFastR("cl <- .fastr.java.class('java.util.Collections'); em<-cl$EMPTY_MAP; names(em)", "NULL");
+        assertEvalFastR("tc <- .fastr.java.class('" + TestNamesClassMap.class.getName() + "'); t <- .fastr.interop.new(tc); sort(names(t$m()))", "c('one', 'two')");
     }
 
     private String getRValue(Object value) {
@@ -354,6 +368,34 @@ public class TestJavaInterop extends TestBase {
             }
         }
         return sb.toString();
+    }
+
+    public static class TestNamesClass {
+        public Object field;
+        public static Object staticField;
+
+        public void method() {
+        }
+
+        public static void staticMethod() {
+        }
+    }
+
+    public static class TestNamesClassNoMembers {
+
+    }
+
+    public static class TestNamesClassNoPublicMembers {
+        int i;
+    }
+
+    public static class TestNamesClassMap {
+        public static Map<String, String> m() {
+            HashMap<String, String> m = new HashMap<>();
+            m.put("one", "1");
+            m.put("two", "2");
+            return m;
+        }
     }
 
     public static class TestNullClass {
