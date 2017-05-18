@@ -1,0 +1,11 @@
+Package: rJava
+Type: Package
+Title: FastR rJava compatibility layer
+Version: 1.0
+Date: 2017-05-18
+Author: Tomas Stupka
+Maintainer: Tomas Stupka <tomas.stupka@oracle.com>
+Description: Provides rJava R interface backed by FastR interoperability builtins.
+License: GPL-2
+Suggests: testthat
+RoxygenNote: 6.0.1
