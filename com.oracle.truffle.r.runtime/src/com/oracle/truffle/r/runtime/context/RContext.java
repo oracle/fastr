@@ -822,15 +822,17 @@ public final class RContext extends com.oracle.truffle.api.ExecutionContext impl
         return info.getEnv();
     }
 
+    public boolean hasExecutor() {
+        return info.executor != null;
+    }
+
     /**
-     * Allows another thread to schedule some code to be run in this context's thread. The action is
-     * ignored if the current context does not support such scheduling, i.e. the polyglot engine was
-     * not created with an executor.
+     * Allows another thread to schedule some code to be run in this context's thread. The action
+     * can be scheduled only if PolyglotEngine was created with an Executor.
      */
     public void schedule(Runnable action) {
-        if (info.executor != null) {
-            info.executor.execute(action);
-        }
+        assert hasExecutor() : "Cannot run RContext#schedule() when there is no executor.";
+        info.executor.execute(action);
     }
 
     @Override

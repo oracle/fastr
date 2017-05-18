@@ -38,6 +38,7 @@ import java.util.List;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.api.vm.PolyglotEngine.Value;
 import com.oracle.truffle.r.nodes.builtin.base.Quit;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
@@ -223,11 +224,15 @@ public class RCommand {
                     String continuePrompt = getContinuePrompt();
                     StringBuffer sb = new StringBuffer(input);
                     Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.SHELL_INPUT);
+                    boolean hasExecutor = RContext.getInstance().hasExecutor();
                     while (true) {
                         lastStatus = 0;
                         try {
                             try {
-                                vm.eval(source).get();
+                                Value val = vm.eval(source);
+                                if (hasExecutor) {
+                                    val.get();
+                                }
                                 // checked exceptions are wrapped in RuntimeExceptions
                             } catch (RuntimeException e) {
                                 if (e.getCause() instanceof com.oracle.truffle.api.vm.IncompleteSourceException) {
