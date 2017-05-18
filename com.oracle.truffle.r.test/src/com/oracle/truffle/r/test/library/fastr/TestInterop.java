@@ -32,11 +32,21 @@ import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.conn.SeekableMemoryByteChannel;
 import com.oracle.truffle.r.test.TestBase;
+import java.io.File;
+import org.junit.After;
 
 public class TestInterop extends TestBase {
 
     private static final SeekableMemoryByteChannel CHANNEL = new SeekableMemoryByteChannel();
     private static final String CHANNEL_NAME = "_fastr_channel0";
+
+    @After
+    public void cleanup() {
+        File f = new File("testScript.R");
+        if (f.exists()) {
+            f.delete();
+        }
+    }
 
     @Test
     public void testInteropEval() {
