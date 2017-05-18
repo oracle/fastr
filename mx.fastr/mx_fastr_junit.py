@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -76,7 +76,10 @@ def junit(args, harness, parser=None, jdk_default=None):
             if not found:
                 mx.warn('no tests matched by substring "' + t + '"')
 
-    vmArgs += mx.get_runtime_jvm_args([pcp.name for pcp in mx.projects(opt_limit_to_suite=True) if pcp.isJavaProject() and pcp.javaCompliance <= jdk.javaCompliance], jdk=jdk)
+    dists = ['FASTR', 'FASTR_UNIT_TESTS']
+    if mx.suite('r-apptests', fatalIfMissing=False):
+        dists.append('com.oracle.truffle.r.test.apps')
+    vmArgs += mx.get_runtime_jvm_args(dists, jdk=jdk)
 
     if len(classes) != 0:
         if len(classes) == 1:

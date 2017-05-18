@@ -106,9 +106,8 @@ public class FastRJUnitWrapper {
 
                 ArrayList<Class<?>> tests = new ArrayList<>(1000);
                 try (BufferedReader br = new BufferedReader(new FileReader(testsFile))) {
-                    String className;
-                    while ((className = br.readLine()) != null) {
-                        tests.add(Class.forName(className));
+                    while ((testClassName = br.readLine()) != null) {
+                        tests.add(Class.forName(testClassName));
                     }
                 } catch (IOException ioe) {
                     ioe.printStackTrace();
