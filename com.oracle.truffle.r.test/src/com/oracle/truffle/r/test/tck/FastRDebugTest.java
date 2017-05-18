@@ -29,7 +29,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
@@ -38,6 +40,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.oracle.truffle.api.debug.Breakpoint;
+import com.oracle.truffle.api.debug.DebugScope;
 import com.oracle.truffle.api.debug.DebugStackFrame;
 import com.oracle.truffle.api.debug.DebugValue;
 import com.oracle.truffle.api.debug.Debugger;
@@ -54,6 +57,7 @@ import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.DefaultConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 public class FastRDebugTest {
@@ -230,6 +234,136 @@ public class FastRDebugTest {
         assertExecutedOK();
     }
 
+    @Test
+    public void testScopeFunction() throws Throwable {
+        final Source srcFunMain = RSource.fromTextInternal("function () {\n" +
+                        "    i = 3L\n" +
+                        "    n = 15L\n" +
+                        "    str = \"hello\"\n" +
+                        "    i <- i + 1L\n" +
+                        "    ab <<- i\n" +
+                        "    i\n" +
+                        "}", RSource.Internal.DEBUGTEST_DEBUG);
+        final Source source = RSource.fromTextInternal("x <- 10L\n" +
+                        "makeActiveBinding('ab', function(v) { if(missing(v)) x else x <<- v }, .GlobalEnv)\n" +
+                        "main <- " + srcFunMain.getCode() + "\n",
+                        RSource.Internal.DEBUGTEST_DEBUG);
+        engine.eval(source);
+
+        // @formatter:on
+        run.addLast(() -> {
+            assertNull(suspendedEvent);
+            assertNotNull(debuggerSession);
+            debuggerSession.suspendNextExecution();
+        });
+
+        assertLocation(1, "main()", "x", 10, "ab", 10, "main", srcFunMain.getCode());
+        stepInto(1);
+        assertLocation(4, "i = 3L");
+        stepOver(1);
+        assertLocation(5, "n = 15L", "i", 3);
+        stepOver(1);
+        assertLocation(6, "str = \"hello\"", "i", 3, "n", 15);
+        stepOver(1);
+        assertLocation(7, "i <- i + 1L", "i", 3, "n", 15, "str", "hello");
+        stepOver(1);
+        assertLocation(8, "ab <<- i", "i", 4, "n", 15, "str", "hello");
+        stepOver(1);
+        assertScope(9, "i", true, false, "ab", 4, "x", 4);
+        stepOut();
+        assertLocation(1, "main()", "x", 4, "ab", 4, "main", srcFunMain.getCode());
+        performWork();
+
+        final Source evalSource = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_EVAL);
+        engine.eval(evalSource);
+
+        assertExecutedOK();
+    }
+
+    @Test
+    public void testScopePromise() throws Throwable {
+        final Source source = RSource.fromTextInternal("main <- function(e) {\n" +
+                        "   x <- 10L\n" +
+                        "   e()\n" +
+                        "   x\n" +
+                        "}\n" +
+                        "closure <- function() {\n" +
+                        "   x <<- 123L\n" +
+                        "   x\n" +
+                        "}\n",
+
+                        RSource.Internal.DEBUGTEST_DEBUG);
+        engine.eval(source);
+
+        // @formatter:on
+        run.addLast(() -> {
+            assertNull(suspendedEvent);
+            assertNotNull(debuggerSession);
+            debuggerSession.suspendNextExecution();
+        });
+
+        stepOver(1);
+        stepInto(1);
+        stepOver(1);
+        assertScope(3, "e()", false, false, "x", 10);
+        stepInto(1);
+        assertLocation(7, "x <<- 123L");
+        assertScope(7, "x <<- 123L", true, false, "x", 0);
+        stepOver(1);
+        assertScope(8, "x", true, false, "x", 123);
+        continueExecution();
+        performWork();
+
+        final Source evalSource = RSource.fromTextInternal("x <- 0L\nmain(closure)\n", RSource.Internal.DEBUGTEST_EVAL);
+        engine.eval(evalSource);
+
+        assertExecutedOK();
+    }
+
+    @Test
+    public void testChangedScopeChain() throws Throwable {
+        final Source source = RSource.fromTextInternal("main <- function(e) {\n" +
+                        "   x <- 10L\n" +
+                        "   environment(e) <- environment()\n" +
+                        "   e()\n" +
+                        "   x\n" +
+                        "}\n" +
+                        "closure <- function() {\n" +
+                        "   x <<- 123L\n" +
+                        "   x\n" +
+                        "}\n",
+                        RSource.Internal.DEBUGTEST_DEBUG);
+        engine.eval(source);
+
+        // @formatter:on
+        run.addLast(() -> {
+            assertNull(suspendedEvent);
+            assertNotNull(debuggerSession);
+            debuggerSession.suspendNextExecution();
+        });
+
+        stepOver(1);
+        stepInto(1);
+        stepOver(2);
+        assertScope(4, "e()", false, false, "x", 10);
+        stepInto(1);
+        assertLocation(8, "x <<- 123L");
+        assertScope(8, "x <<- 123L", true, false, "x", 10);
+        stepOver(1);
+        stepOut();
+        assertScope(9, "x", false, false, "x", 123);
+        assertIdentifiers(false, "x", "e");
+        stepOut();
+        assertScope(9, "x", false, false, "x", 0);
+        continueExecution();
+        performWork();
+
+        final Source evalSource = RSource.fromTextInternal("x <- 0L\nmain(closure)\n", RSource.Internal.DEBUGTEST_EVAL);
+        engine.eval(evalSource);
+
+        assertExecutedOK();
+    }
+
     private void performWork() {
         try {
             if (ex == null && !run.isEmpty()) {
@@ -246,7 +380,7 @@ public class FastRDebugTest {
     }
 
     private void stepOut() {
-        run.addLast(() -> suspendedEvent.prepareStepOut());
+        run.addLast(() -> suspendedEvent.prepareStepOut(1));
     }
 
     private void continueExecution() {
@@ -257,6 +391,30 @@ public class FastRDebugTest {
         run.addLast(() -> suspendedEvent.prepareStepInto(size));
     }
 
+    private void assertIdentifiers(boolean includeAncestors, String... identifiers) {
+        run.addLast(() -> {
+
+            final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
+            DebugScope scope = frame.getScope();
+
+            Set<String> actualIdentifiers = new HashSet<>();
+            do {
+                scope.getDeclaredValues().forEach((x) -> actualIdentifiers.add(x.getName()));
+            } while (includeAncestors && scope != null && !REnvironment.baseEnv().getName().equals(scope.getName()));
+
+            Set<String> expected = new HashSet<>();
+            for (String s : identifiers) {
+                expected.add(s);
+            }
+
+            assertEquals(expected, actualIdentifiers);
+
+            if (!run.isEmpty()) {
+                run.removeFirst().run();
+            }
+        });
+    }
+
     private void assertLocation(final int line, final String code, final Object... expectedFrame) {
         run.addLast(() -> {
             try {
@@ -265,31 +423,7 @@ public class FastRDebugTest {
                 assertEquals(line, currentLine);
                 final String currentCode = suspendedEvent.getSourceSection().getCode().trim();
                 assertEquals(code, currentCode);
-                final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
-
-                final AtomicInteger numFrameVars = new AtomicInteger(0);
-                frame.forEach(var -> {
-                    // skip synthetic slots
-                    for (RFrameSlot slot : RFrameSlot.values()) {
-                        if (slot.toString().equals(var.getName())) {
-                            return;
-                        }
-                    }
-                    numFrameVars.incrementAndGet();
-                });
-                assertEquals(line + ": " + code, expectedFrame.length / 2, numFrameVars.get());
-
-                for (int i = 0; i < expectedFrame.length; i = i + 2) {
-                    String expectedIdentifier = (String) expectedFrame[i];
-                    Object expectedValue = expectedFrame[i + 1];
-                    String expectedValueStr = (expectedValue != null) ? expectedValue.toString() : null;
-                    DebugValue value = frame.getValue(expectedIdentifier);
-                    assertNotNull(value);
-                    String valueStr = value.as(String.class);
-                    assertEquals(expectedValueStr, valueStr);
-                }
-
-                run.removeFirst().run();
+                compareScope(line, code, false, true, expectedFrame);
             } catch (RuntimeException | Error e) {
 
                 final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
@@ -299,6 +433,69 @@ public class FastRDebugTest {
                 throw e;
             }
         });
+    }
+
+    /**
+     * Ensure that the scope at a certain program position contains an expected set of key-value
+     * pairs.
+     *
+     * @param line line number
+     * @param code the code snippet of the program location
+     * @param includeAncestors Include current scope's ancestors for the identifier lookup.
+     * @param completeMatch {@code true} if the defined key-value pairs should be the only pairs in
+     *            the scope.
+     * @param expectedFrame the key-value pairs (e.g. {@code "id0", 1, "id1", "strValue"})
+     */
+    private void assertScope(final int line, final String code, boolean includeAncestors, boolean completeMatch, final Object... expectedFrame) {
+        run.addLast(() -> {
+            try {
+                compareScope(line, code, includeAncestors, completeMatch, expectedFrame);
+            } catch (RuntimeException | Error e) {
+
+                final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
+                frame.forEach(var -> {
+                    System.out.println(var);
+                });
+                throw e;
+            }
+        });
+    }
+
+    private void compareScope(final int line, final String code, boolean includeAncestors, boolean completeMatch, final Object[] expectedFrame) {
+        final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
+
+        final AtomicInteger numFrameVars = new AtomicInteger(0);
+        frame.forEach(var -> {
+            // skip synthetic slots
+            for (RFrameSlot slot : RFrameSlot.values()) {
+                if (slot.toString().equals(var.getName())) {
+                    return;
+                }
+            }
+            numFrameVars.incrementAndGet();
+        });
+        if (completeMatch) {
+            assertEquals(line + ": " + code, expectedFrame.length / 2, numFrameVars.get());
+        }
+
+        for (int i = 0; i < expectedFrame.length; i = i + 2) {
+            String expectedIdentifier = (String) expectedFrame[i];
+            Object expectedValue = expectedFrame[i + 1];
+            String expectedValueStr = (expectedValue != null) ? expectedValue.toString() : null;
+            DebugScope scope = frame.getScope();
+            DebugValue value;
+            do {
+                value = scope.getDeclaredValue(expectedIdentifier);
+                scope = scope.getParent();
+            } while (includeAncestors && value == null && scope != null && !REnvironment.baseEnv().getName().equals(scope.getName()));
+            assertNotNull("identifier \"" + expectedIdentifier + "\" not found", value);
+            String valueStr = value.as(String.class);
+            assertEquals(expectedValueStr, valueStr);
+        }
+
+        if (!run.isEmpty()) {
+            run.removeFirst().run();
+        }
     }
 
     Object getRValue(Object value) {
