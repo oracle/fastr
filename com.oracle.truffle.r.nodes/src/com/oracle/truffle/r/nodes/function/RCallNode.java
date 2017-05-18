@@ -40,9 +40,12 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -90,6 +93,7 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -526,6 +530,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         @Child private CallArgumentsNode arguments;
         @Child private Node foreignCall;
+        @Child private Node isNullCall;
         @CompilationFinal private int foreignCallArgCount;
 
         public ForeignCall(CallArgumentsNode arguments) {
@@ -540,15 +545,20 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 foreignCallArgCount = argumentsArray.length;
             }
             try {
-                Object result = ForeignAccess.sendExecute(foreignCall, function, argumentsArray);
-                if (result instanceof Boolean) {
-                    // convert to R logical
-                    // TODO byte/short convert to int?
-                    result = RRuntime.asLogical((boolean) result);
+                Object result = ForeignAccess.sendExecute(foreignCall, function, RRuntime.r2Java(argumentsArray));
+                if (RRuntime.isForeignObject(result)) {
+                    if (isNullCall == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        isNullCall = insert(Message.IS_NULL.createNode());
+                    }
+                    if (ForeignAccess.sendIsNull(isNullCall, (TruffleObject) result)) {
+                        return RNull.instance;
+                    }
                 }
-                return result;
-            } catch (Throwable e) {
+                return RRuntime.java2R(result);
+            } catch (ArityException | UnsupportedMessageException | UnsupportedTypeException e) {
                 CompilerDirectives.transferToInterpreter();
+                RInternalError.reportError(e);
                 throw RError.interopError(RError.findParentRBase(this), e, function);
             }
         }

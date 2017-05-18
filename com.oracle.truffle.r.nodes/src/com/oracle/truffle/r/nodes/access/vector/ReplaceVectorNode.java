@@ -25,12 +25,15 @@ package com.oracle.truffle.r.nodes.access.vector;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
+import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
@@ -38,8 +41,6 @@ import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.FirstStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -49,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 /**
  * Syntax node for element writes.
  */
+@ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
 public abstract class ReplaceVectorNode extends Node {
 
     protected static final int CACHE_LIMIT = 5;
@@ -97,38 +99,48 @@ public abstract class ReplaceVectorNode extends Node {
 
     @Specialization(guards = {"isForeignObject(object)", "positions.length == cachedLength"})
     protected Object accessField(TruffleObject object, Object[] positions, Object value,
-                    @Cached("createForeignWrite(positions)") Node foreignRead,
+                    @Cached("WRITE.createNode()") Node foreignWrite,
+                    @Cached("KEY_INFO.createNode()") Node keyInfo,
                     @SuppressWarnings("unused") @Cached("positions.length") int cachedLength,
                     @Cached("create()") CastStringNode castNode,
                     @Cached("createFirstString()") FirstStringNode firstString) {
-
-        Object writtenValue = value;
-        if (writtenValue instanceof RInteger) {
-            writtenValue = ((RInteger) writtenValue).getValue();
-        } else if (writtenValue instanceof RDouble) {
-            writtenValue = ((RDouble) writtenValue).getValue();
-        }
+        Object writtenValue = RRuntime.r2Java(value);
         Object position = positions[0];
         try {
-            if (position instanceof Integer) {
-                return ForeignAccess.send(foreignRead, object, new Object[]{((Integer) position) - 1, writtenValue});
-            } else if (position instanceof Double) {
-                return ForeignAccess.send(foreignRead, object, new Object[]{((Double) position) - 1, writtenValue});
-            } else if (position instanceof String) {
-                return ForeignAccess.send(foreignRead, object, new Object[]{position, writtenValue});
-            } else if (position instanceof RAbstractStringVector) {
-                String string = firstString.executeString(castNode.doCast(position));
-                return ForeignAccess.send(foreignRead, object, new Object[]{string, writtenValue});
-            } else if (position instanceof RAbstractDoubleVector) {
-                return ForeignAccess.send(foreignRead, object, new Object[]{((RAbstractDoubleVector) position).getDataAt(0) - 1, writtenValue});
-            } else if (position instanceof RAbstractIntVector) {
-                return ForeignAccess.send(foreignRead, object, new Object[]{((RAbstractIntVector) position).getDataAt(0) - 1, writtenValue});
-            } else {
-                throw RError.error(this, RError.Message.GENERIC, "invalid index during foreign access");
-            }
+            return write(position, foreignWrite, keyInfo, object, writtenValue, firstString, castNode);
         } catch (InteropException e) {
             throw RError.interopError(RError.findParentRBase(this), e, object);
         }
+    }
+
+    private Object write(Object position, Node foreignWrite, Node keyInfoNode, TruffleObject object, Object writtenValue, FirstStringNode firstString, CastStringNode castNode)
+                    throws InteropException, RError {
+        if (position instanceof Integer) {
+            position = ((Integer) position) - 1;
+        } else if (position instanceof Double) {
+            position = ((Double) position) - 1;
+        } else if (position instanceof RAbstractDoubleVector) {
+            position = ((RAbstractDoubleVector) position).getDataAt(0) - 1;
+        } else if (position instanceof RAbstractIntVector) {
+            position = ((RAbstractIntVector) position).getDataAt(0) - 1;
+        } else if (position instanceof RAbstractStringVector) {
+            String string = firstString.executeString(castNode.doCast(position));
+            position = string;
+        } else if (!(position instanceof String)) {
+            throw RError.error(this, RError.Message.GENERIC, "invalid index during foreign access");
+        }
+
+        int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, position);
+        if (KeyInfo.isWritable(info)) {
+            return ForeignAccess.sendWrite(foreignWrite, object, position, writtenValue);
+        } else if (position instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
+            TruffleObject clazz = JavaInterop.toJavaClass(object);
+            info = ForeignAccess.sendKeyInfo(keyInfoNode, clazz, position);
+            if (KeyInfo.isWritable(info)) {
+                return ForeignAccess.sendWrite(foreignWrite, clazz, position, writtenValue);
+            }
+        }
+        throw RError.error(this, RError.Message.GENERIC, "invalid index/identifier during foreign access: " + position);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(vector, positions)"})

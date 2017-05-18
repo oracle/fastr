@@ -34,6 +34,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
@@ -80,27 +83,55 @@ public abstract class Names extends RBuiltinNode.Arg1 {
                     @Cached("KEYS.createNode()") Node keysNode,
                     @Cached("READ.createNode()") Node readNode,
                     @Cached("IS_BOXED.createNode()") Node isBoxedNode,
-                    @Cached("UNBOX.createNode()") Node unboxNode) {
+                    @Cached("UNBOX.createNode()") Node unboxNode,
+                    @Cached("createExecute(0).createNode()") Node callNode) {
 
         try {
-            TruffleObject keys = (TruffleObject) ForeignAccess.send(keysNode, obj);
-            if (keys != null) {
-                int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, keys);
-                String[] names = new String[size];
-                for (int i = 0; i < size; i++) {
-                    Object value;
-                    value = ForeignAccess.sendRead(readNode, keys, i);
-                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
-                        value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
-                    }
-                    names[i] = (String) value;
-                }
-                return RDataFactory.createStringVector(names, true);
+            String[] names;
+            try {
+                names = readKeys(keysNode, obj, getSizeNode, readNode, isBoxedNode, unboxNode);
+            } catch (UnsupportedMessageException e) {
+                // because it is a java function, java.util.Map (has special handling too) ... ?
+                return RNull.instance;
             }
-            return RNull.instance;
+            String[] staticNames = new String[0];
+            try {
+                if (JavaInterop.isJavaObject(Object.class, obj)) {
+                    TruffleObject clazz = JavaInterop.toJavaClass(obj);
+                    staticNames = readKeys(keysNode, clazz, getSizeNode, readNode, isBoxedNode, unboxNode);
+                }
+            } catch (UnknownIdentifierException | NoSuchFieldError | UnsupportedMessageException e) {
+                // because it is a class ... ?
+            }
+            if (names.length == 0 && staticNames.length == 0) {
+                return RNull.instance;
+            }
+            String[] result = new String[names.length + staticNames.length];
+            System.arraycopy(names, 0, result, 0, names.length);
+            System.arraycopy(staticNames, 0, result, names.length, staticNames.length);
+            return RDataFactory.createStringVector(result, true);
         } catch (InteropException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
+    }
+
+    private String[] readKeys(Node keysNode, TruffleObject obj, Node getSizeNode, Node readNode, Node isBoxedNode, Node unboxNode)
+                    throws UnknownIdentifierException, InteropException, UnsupportedMessageException {
+        TruffleObject keys = (TruffleObject) ForeignAccess.send(keysNode, obj);
+        if (keys != null) {
+            int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, keys);
+            String[] names = new String[size];
+            for (int i = 0; i < size; i++) {
+                Object value;
+                value = ForeignAccess.sendRead(readNode, keys, i);
+                if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
+                    value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
+                }
+                names[i] = (String) value;
+            }
+            return names;
+        }
+        return new String[0];
     }
 
     @Fallback

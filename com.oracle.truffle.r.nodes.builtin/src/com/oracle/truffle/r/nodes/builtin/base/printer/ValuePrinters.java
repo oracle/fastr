@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -75,7 +76,7 @@ final class ValuePrinters implements ValuePrinter<Object> {
         if (v == RNull.instance) {
             NullPrinter.INSTANCE.print(null, printCtx);
         } else {
-            // handle types that can appear via Truffle interop
+            // handle types that are meant for or can appear via Truffle interop
             Object x = v;
             if (x instanceof Boolean) {
                 x = RRuntime.asLogical((Boolean) x);
@@ -83,6 +84,8 @@ final class ValuePrinters implements ValuePrinter<Object> {
                 x = ((Number) x).doubleValue();
             } else if (x instanceof Character) {
                 x = ((Character) x).toString();
+            } else if (x instanceof RInteropScalar) {
+                x = ((RInteropScalar) x).getRValue();
             }
             // try to box a scalar primitive value to the respective vector
             x = printCtx.printerNode().boxPrimitive(x);

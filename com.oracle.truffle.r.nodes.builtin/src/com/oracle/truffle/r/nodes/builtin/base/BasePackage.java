@@ -375,7 +375,16 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRInterop.IsNull.class, FastRInteropFactory.IsNullNodeGen::create);
         add(FastRInterop.IsExecutable.class, FastRInteropFactory.IsExecutableNodeGen::create);
         add(FastRInterop.JavaClass.class, FastRInteropFactory.JavaClassNodeGen::create);
+        add(FastRInterop.IsJavaArray.class, FastRInteropFactory.IsJavaArrayNodeGen::create);
+        add(FastRInterop.NewJavaArray.class, FastRInteropFactory.NewJavaArrayNodeGen::create);
+        add(FastRInterop.ToJavaArray.class, FastRInteropFactory.ToJavaArrayNodeGen::create);
+        add(FastRInterop.FromJavaArray.class, FastRInteropFactory.FromJavaArrayNodeGen::create);
         add(FastRInterop.ToBoolean.class, FastRInteropFactory.ToBooleanNodeGen::create);
+        add(FastRInterop.ToByte.class, FastRInteropFactory.ToByteNodeGen::create);
+        add(FastRInterop.ToChar.class, FastRInteropFactory.ToCharNodeGen::create);
+        add(FastRInterop.ToFloat.class, FastRInteropFactory.ToFloatNodeGen::create);
+        add(FastRInterop.ToLong.class, FastRInteropFactory.ToLongNodeGen::create);
+        add(FastRInterop.ToShort.class, FastRInteropFactory.ToShortNodeGen::create);
         add(FastRRefCountInfo.class, FastRRefCountInfoNodeGen::create);
         add(FastRPkgSource.class, FastRPkgSourceNodeGen::create);
         add(FastRStackTrace.class, FastRStackTraceNodeGen::create);

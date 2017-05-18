@@ -46,7 +46,13 @@ public enum RType {
     ExternalPtr("externalptr", -1),
     S4Object("S4", -1),
     Connection("connection", -1),
-    Dots("...", -1);
+    Dots("...", -1),
+    TruffleObject("truffle.object", -1),
+    RInteropByte("interopt.byte", -1),
+    RInteropChar("interopt.char", -1),
+    RInteropFloat("interopt.float", -1),
+    RInteropLong("interopt.long", -1),
+    RInteropShort("interopt.short", -1);
 
     public static final int NO_PRECEDENCE = -1;
     public static final int NUMBER_OF_PRECEDENCES = 9;

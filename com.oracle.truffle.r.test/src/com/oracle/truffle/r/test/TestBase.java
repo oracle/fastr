@@ -49,6 +49,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
 import com.oracle.truffle.r.test.generate.TestOutputManager;
+import java.io.OutputStream;
 
 /**
  * Base class for all unit tests. The unit tests are actually arranged as a collection of
@@ -469,8 +470,16 @@ public class TestBase {
     }
 
     // support testing of FastR-only functionality (equivalent GNU R output provided separately)
+    protected void assertEvalFastR(TestTrait trait1, String input, String gnuROutput) {
+        evalAndCompare(getAssertEvalFastR(gnuROutput, input), trait1);
+    }
+
     protected void assertEvalFastR(String input, String gnuROutput) {
-        evalAndCompare(new String[]{"if (length(grep(\"FastR\", R.Version()$version.string)) != 1) { " + gnuROutput + " } else { " + input + " }"});
+        evalAndCompare(getAssertEvalFastR(gnuROutput, input));
+    }
+
+    private static String[] getAssertEvalFastR(String gnuROutput, String input) {
+        return new String[]{"if (length(grep(\"FastR\", R.Version()$version.string)) != 1) { " + gnuROutput + " } else { " + input + " }"};
     }
 
     /*

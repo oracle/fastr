@@ -129,7 +129,7 @@ public final class ValuePrinterNode extends RBaseNode {
                     } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                         throw RInternalError.shouldNotReachHere(e);
                     }
-                    return (String) value;
+                    return String.valueOf(value);
                 }
 
                 @Override
@@ -143,6 +143,7 @@ public final class ValuePrinterNode extends RBaseNode {
                     boolean allBoolean = true;
                     boolean allInteger = true;
                     boolean allNumber = true;
+                    boolean allCharacter = true;
                     boolean allString = true;
                     for (int i = 0; i < size; i++) {
                         Object value = ForeignAccess.sendRead(readNode, obj, i);
@@ -152,6 +153,7 @@ public final class ValuePrinterNode extends RBaseNode {
                         allBoolean &= value instanceof Boolean;
                         allInteger &= value instanceof Integer;
                         allNumber &= value instanceof Number;
+                        allCharacter &= value instanceof Character;
                         allString &= value instanceof String;
                     }
                     if (allBoolean) {
@@ -250,7 +252,7 @@ public final class ValuePrinterNode extends RBaseNode {
                             }
                         }
                         return new RDoubleWrapper(size);
-                    } else if (allString) {
+                    } else if (allString || allCharacter) {
                         return new RStringWrapper(size, obj);
                     } else {
                         class RListWrapper extends TruffleObjectWrapper implements RAbstractListVector {

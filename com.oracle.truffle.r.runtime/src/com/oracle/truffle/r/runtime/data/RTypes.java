@@ -26,6 +26,11 @@ import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.TypeCast;
 import com.oracle.truffle.api.dsl.TypeCheck;
 import com.oracle.truffle.api.dsl.TypeSystem;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropByte;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropChar;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropFloat;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropLong;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropShort;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -47,7 +52,11 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * @see RNode
  */
 @TypeSystem({
-                byte.class, RAbstractLogicalVector.class,
+                byte.class, RAbstractLogicalVector.class, RInteropByte.class,
+                RInteropChar.class,
+                RInteropFloat.class,
+                RInteropLong.class,
+                RInteropShort.class,
                 int.class, RAbstractIntVector.class,
                 double.class, RAbstractDoubleVector.class,
                 String.class, RAbstractStringVector.class,
