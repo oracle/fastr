@@ -36,6 +36,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -64,8 +65,7 @@ public final class RScope extends AbstractScope {
 
     @Override
     protected String getName() {
-        // TODO promises (= closure)
-        return "function";
+        return isPromiseScope() ? "promise" : "function";
     }
 
     @Override
@@ -103,8 +103,22 @@ public final class RScope extends AbstractScope {
     }
 
     private static String[] collectArgs(REnvironment env) {
-        ArgumentsSignature signature = RArguments.getSignature(env.getFrame());
-        return signature.getNames();
+        assert RArguments.isRFrame(env.getFrame());
+        RFunction f = RArguments.getFunction(env.getFrame());
+        if (f != null) {
+            return RContext.getRRuntimeASTAccess().getArgumentsSignature(f).getNames();
+        } else {
+            ArgumentsSignature suppliedSignature = RArguments.getSuppliedSignature(env.getFrame());
+            if (suppliedSignature != null) {
+                return suppliedSignature.getNames();
+            }
+        }
+        return new String[0];
+    }
+
+    private boolean isPromiseScope() {
+        Frame frame = env.getFrame();
+        return RArguments.getFunction(frame) == null && RArguments.getSuppliedSignature(frame) != null;
     }
 
     public static RScope createScope(Node node, Frame frame) {

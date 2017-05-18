@@ -29,6 +29,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
@@ -321,6 +322,36 @@ public class FastRDebugTest {
     }
 
     @Test
+    public void testScopeArguments() throws Throwable {
+        final Source source = RSource.fromTextInternal("main <- function(a, b, c, d) {\n" +
+                        "   x <- 10L\n" +
+                        "}\n" +
+                        "closure <- function() {\n" +
+                        "   x <<- 123L\n" +
+                        "   x\n" +
+                        "}\n",
+
+                        RSource.Internal.DEBUGTEST_DEBUG);
+        engine.eval(source);
+
+        // @formatter:on
+        run.addLast(() -> {
+            assertNull(suspendedEvent);
+            assertNotNull(debuggerSession);
+            debuggerSession.suspendNextExecution();
+        });
+
+        assertArguments(2, "x <- 10L", "a", "b", "c", "d");
+        continueExecution();
+        performWork();
+
+        final Source evalSource = RSource.fromTextInternal("main(1, 2, 3, 4)\n", RSource.Internal.DEBUGTEST_EVAL);
+        engine.eval(evalSource);
+
+        assertExecutedOK();
+    }
+
+    @Test
     public void testChangedScopeChain() throws Throwable {
         final Source source = RSource.fromTextInternal("main <- function(e) {\n" +
                         "   x <- 10L\n" +
@@ -450,6 +481,35 @@ public class FastRDebugTest {
         run.addLast(() -> {
             try {
                 compareScope(line, code, includeAncestors, completeMatch, expectedFrame);
+            } catch (RuntimeException | Error e) {
+
+                final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
+                frame.forEach(var -> {
+                    System.out.println(var);
+                });
+                throw e;
+            }
+        });
+    }
+
+    private void assertArguments(final int line, final String code, final String... expectedArgs) {
+        run.addLast(() -> {
+            try {
+                final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
+
+                DebugScope scope = frame.getScope();
+
+                Set<String> actualIdentifiers = new HashSet<>();
+                scope.getArguments().forEach((x) -> actualIdentifiers.add(x.getName()));
+
+                assertEquals(line + ": " + code, expectedArgs.length, actualIdentifiers.size());
+
+                Set<String> expectedIds = new HashSet<>(Arrays.asList(expectedArgs));
+                Assert.assertEquals(expectedIds, actualIdentifiers);
+
+                if (!run.isEmpty()) {
+                    run.removeFirst().run();
+                }
             } catch (RuntimeException | Error e) {
 
                 final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
