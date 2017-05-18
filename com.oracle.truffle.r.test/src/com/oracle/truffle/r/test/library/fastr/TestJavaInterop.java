@@ -32,6 +32,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Assert;
 
 public class TestJavaInterop extends TestBase {
 
@@ -259,8 +260,7 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testClassAsParameter() {
-        // needs to be implemented in truffle
-        assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$classAsArg(tc)", getRValue(TEST_CLASS));
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$classAsArg(tc)", getRValue(TEST_CLASS));
     }
 
     private void getValueForAllTypesMethod(String method) {
@@ -278,7 +278,9 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    public void testNullParameter() {
+    public void testNullParameters() {
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$methodAcceptsOnlyNull(NULL)", "");
+
         assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$isNull('string')", "java.lang.String");
         assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$isNull(1)", "java.lang.Long");
     }
@@ -291,18 +293,38 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    public void testArrayAccess() {
-        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[1]", "1");
-        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[[1]]", "1");
-        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$int2DimArray; a[1]", getRValue(new int[]{1, 2, 3}));
-        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$int2DimArray; a[[1]]", getRValue(new int[]{1, 2, 3}));
-        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$int2DimArray; a[1,2]", "2");
-        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$int2DimArray; a[[1,2]]", "2");
+    public void testArrayReadWrite() {
+        assertEvalFastR("a <- .fastr.java.toArray(c(1,2,3)); a[1]", "1");
+        assertEvalFastR("a <- .fastr.java.toArray(c(1,2,3)); a[[1]]", "1");
 
-        assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[1]<-123; a[1]", "123");
-        assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[[1]]<-123; a[[1]]", "123");
-        assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[1,2]<-1234; a[1,2]", "1234");
-        assertEvalFastR(Ignored.Unimplemented, "tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); a <- t$fieldIntArray; a[[1,2]]<-1234; a[[1,2]]", "1234");
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$fieldIntArray[1];", "1");
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$fieldIntArray[[1]];", "1");
+
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$int2DimArray[1]", getRValue(new int[]{1, 2, 3}));
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$int2DimArray[[1]]", getRValue(new int[]{1, 2, 3}));
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$int2DimArray[1,2]", "2");
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$int2DimArray[[1,2]]", "2");
+
+        assertEvalFastR("a <- .fastr.java.toArray(c(1,2,3)); a[1] <- 123; a[1]", "123");
+        assertEvalFastR("a <- .fastr.java.toArray(c(1,2,3)); a[[1]] <- 123; a[[1]]", "123");
+
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$fieldIntArray[1] <- 123L; t$fieldIntArray[1]", "123");
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$fieldIntArray[[1]] <- 1234L; t$fieldIntArray[[1]]", "1234");
+
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$fieldStringArray[1] <- NULL; t$fieldStringArray[1]", "NULL");
+
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$int2DimArray[1,2] <- 1234L; t$int2DimArray[1,2]", "1234");
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t$int2DimArray[[1,2]] <- 12345L; t$int2DimArray[[1,2]]", "12345");
+    }
+
+    public void testMap() {
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); m <- t$map; m['one']", "'1'");
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); m <- t$map; m['two']", "'2'");
+
+        assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); m <- t$map; m['one']<-'11'; m['one']", "'11'");
+
+        // truffle
+        assertEvalFastR(Ignored.Unimplemented, "how to put into map?", "'11'");
     }
 
     @Test
@@ -406,56 +428,53 @@ public class TestJavaInterop extends TestBase {
 
     public static class TestClass {
 
-        public static boolean fieldStaticBoolean = true;
-        public static byte fieldStaticByte = Byte.MAX_VALUE;
-        public static char fieldStaticChar = 'a';
-        public static short fieldStaticShort = Short.MAX_VALUE;
-        public static int fieldStaticInteger = Integer.MAX_VALUE;
-        public static long fieldStaticLong = Long.MAX_VALUE;
-        public static double fieldStaticDouble = Double.MAX_VALUE;
-        public static float fieldStaticFloat = Float.MAX_VALUE;
+        public static boolean fieldStaticBoolean;
+        public static byte fieldStaticByte;
+        public static char fieldStaticChar;
+        public static short fieldStaticShort;
+        public static int fieldStaticInteger;
+        public static long fieldStaticLong;
+        public static double fieldStaticDouble;
+        public static float fieldStaticFloat;
 
-        public static Boolean fieldStaticBooleanObject = fieldStaticBoolean;
-        public static Byte fieldStaticByteObject = fieldStaticByte;
-        public static Character fieldStaticCharObject = fieldStaticChar;
-        public static Short fieldStaticShortObject = fieldStaticShort;
-        public static Integer fieldStaticIntegerObject = fieldStaticInteger;
-        public static Long fieldStaticLongObject = fieldStaticLong;
-        public static Double fieldStaticDoubleObject = fieldStaticDouble;
-        public static Float fieldStaticFloatObject = fieldStaticFloat;
-        public static String fieldStaticStringObject = "a string";
+        public static Boolean fieldStaticBooleanObject;
+        public static Byte fieldStaticByteObject;
+        public static Character fieldStaticCharObject;
+        public static Short fieldStaticShortObject;
+        public static Integer fieldStaticIntegerObject;
+        public static Long fieldStaticLongObject;
+        public static Double fieldStaticDoubleObject;
+        public static Float fieldStaticFloatObject;
+        public static String fieldStaticStringObject;
 
-        public boolean fieldBoolean = fieldStaticBoolean;
-        public byte fieldByte = fieldStaticByte;
-        public char fieldChar = fieldStaticChar;
-        public short fieldShort = fieldStaticShort;
-        public int fieldInteger = fieldStaticInteger;
-        public long fieldLong = fieldStaticLong;
-        public double fieldDouble = fieldStaticDouble;
-        public float fieldFloat = fieldStaticFloat;
+        public boolean fieldBoolean;
+        public byte fieldByte;
+        public char fieldChar;
+        public short fieldShort;
+        public int fieldInteger;
+        public long fieldLong;
+        public double fieldDouble;
+        public float fieldFloat;
 
-        public Boolean fieldBooleanObject = fieldBoolean;
-        public Byte fieldByteObject = fieldByte;
-        public Character fieldCharObject = fieldChar;
-        public Short fieldShortObject = fieldShort;
-        public Integer fieldIntegerObject = fieldInteger;
-        public Long fieldLongObject = fieldLong;
-        public Double fieldDoubleObject = fieldDouble;
-        public Float fieldFloatObject = fieldFloat;
-        public String fieldStringObject = fieldStaticStringObject;
+        public Boolean fieldBooleanObject;
+        public Byte fieldByteObject;
+        public Character fieldCharObject;
+        public Short fieldShortObject;
+        public Integer fieldIntegerObject;
+        public Long fieldLongObject;
+        public Double fieldDoubleObject;
+        public Float fieldFloatObject;
+        public String fieldStringObject;
 
-        public static Double fieldStaticNaNObject = Double.NaN;
-        public static double fieldStaticNaN = Double.NaN;
-
-        public static boolean[] fieldStaticBooleanArray = new boolean[]{true, false, true};
-        public static byte[] fieldStaticByteArray = new byte[]{1, 2, 3};
-        public static char[] fieldStaticCharArray = new char[]{'a', 'b', 'c'};
-        public static double[] fieldStaticDoubleArray = new double[]{1.1, 2.1, 3.1};
-        public static float[] fieldStaticFloatArray = new float[]{1.1f, 2.1f, 3.1f};
-        public static int[] fieldStaticIntArray = new int[]{1, 2, 3};
-        public static long[] fieldStaticLongArray = new long[]{1, 2, 3};
-        public static short[] fieldStaticShortArray = new short[]{1, 2, 3};
-        public static String[] fieldStaticStringArray = new String[]{"a", "b", "c"};
+        public static boolean[] fieldStaticBooleanArray;
+        public static byte[] fieldStaticByteArray;
+        public static char[] fieldStaticCharArray;
+        public static double[] fieldStaticDoubleArray;
+        public static float[] fieldStaticFloatArray;
+        public static int[] fieldStaticIntArray;
+        public static long[] fieldStaticLongArray;
+        public static short[] fieldStaticShortArray;
+        public static String[] fieldStaticStringArray;
 
         public boolean[] fieldBooleanArray = fieldStaticBooleanArray;
         public byte[] fieldByteArray = fieldStaticByteArray;
@@ -467,15 +486,20 @@ public class TestJavaInterop extends TestBase {
         public short[] fieldShortArray = fieldStaticShortArray;
         public String[] fieldStringArray = fieldStaticStringArray;
 
-        public int[][] int2DimArray = new int[][]{new int[]{1, 2, 3}, new int[]{4, 5, 5}};
-        public Object[] objectArray = new Object[]{new Object(), new Object(), new Object()};
-        public Object[] objectIntArray = new Object[]{1, 2, 3};
-        public Object[] objectDoubleArray = new Object[]{1.1, 2.1, 3.1};
-        public Object[] mixedTypesArray = new Object[]{1, 2.1, 'a'};
-        public Integer[] hasNullIntArray = new Integer[]{1, null, 3};
+        public int[][] int2DimArray;
+        public Object[] objectArray;
+        public Object[] objectIntArray;
+        public Object[] objectDoubleArray;
+        public Object[] mixedTypesArray;
+        public Integer[] hasNullIntArray;
+
+        public static Double fieldStaticNaNObject = Double.NaN;
+        public static double fieldStaticNaN = Double.NaN;
 
         public static Object fieldStaticNullObject = null;
         public Object fieldNullObject = null;
+
+        public Map<String, String> map;
 
         public TestClass() {
             this(true, Byte.MAX_VALUE, 'a', Double.MAX_VALUE, Float.MAX_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE, Short.MAX_VALUE, "a string");
@@ -519,6 +543,37 @@ public class TestJavaInterop extends TestBase {
             this.fieldDoubleObject = fieldDouble;
             this.fieldFloatObject = fieldFloat;
             this.fieldStringObject = fieldStaticStringObject;
+
+            fieldStaticBooleanArray = new boolean[]{true, false, true};
+            fieldStaticByteArray = new byte[]{1, 2, 3};
+            fieldStaticCharArray = new char[]{'a', 'b', 'c'};
+            fieldStaticDoubleArray = new double[]{1.1, 2.1, 3.1};
+            fieldStaticFloatArray = new float[]{1.1f, 2.1f, 3.1f};
+            fieldStaticIntArray = new int[]{1, 2, 3};
+            fieldStaticLongArray = new long[]{1, 2, 3};
+            fieldStaticShortArray = new short[]{1, 2, 3};
+            fieldStaticStringArray = new String[]{"a", "b", "c"};
+
+            fieldBooleanArray = fieldStaticBooleanArray;
+            fieldByteArray = fieldStaticByteArray;
+            fieldCharArray = fieldStaticCharArray;
+            fieldDoubleArray = fieldStaticDoubleArray;
+            fieldFloatArray = fieldStaticFloatArray;
+            fieldIntArray = fieldStaticIntArray;
+            fieldLongArray = fieldStaticLongArray;
+            fieldShortArray = fieldStaticShortArray;
+            fieldStringArray = fieldStaticStringArray;
+
+            int2DimArray = new int[][]{new int[]{1, 2, 3}, new int[]{4, 5, 5}};
+            objectArray = new Object[]{new Object(), new Object(), new Object()};
+            objectIntArray = new Object[]{1, 2, 3};
+            objectDoubleArray = new Object[]{1.1, 2.1, 3.1};
+            mixedTypesArray = new Object[]{1, 2.1, 'a'};
+            hasNullIntArray = new Integer[]{1, null, 3};
+
+            map = new HashMap<>();
+            map.put("one", "1");
+            map.put("two", "2");
         }
 
         public static boolean methodStaticBoolean() {
@@ -679,6 +734,10 @@ public class TestJavaInterop extends TestBase {
 
         public Object methodReturnsNull() {
             return null;
+        }
+
+        public void methodAcceptsOnlyNull(Object o) {
+            Assert.assertNull(o);
         }
 
         public String classAsArg(Class<?> c) {
