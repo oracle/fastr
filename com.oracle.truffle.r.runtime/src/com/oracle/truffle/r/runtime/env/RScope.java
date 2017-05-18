@@ -36,6 +36,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -64,8 +65,20 @@ public final class RScope extends AbstractScope {
 
     @Override
     protected String getName() {
-        // TODO promises (= closure)
-        return "function";
+        // just to be sure
+        if (env == REnvironment.emptyEnv()) {
+            return "empty environment";
+        }
+
+        assert env.getFrame() != null;
+        RFunction function = RArguments.getFunction(env.getFrame());
+        if (function != null) {
+            String name = function.getName();
+            return "function environment" + (name != null ? " for function " + name : "");
+        } else {
+            String name = env.getName();
+            return "explicit environment" + (name != null ? ": " + name : "");
+        }
     }
 
     @Override
@@ -103,8 +116,20 @@ public final class RScope extends AbstractScope {
     }
 
     private static String[] collectArgs(REnvironment env) {
-        ArgumentsSignature signature = RArguments.getSignature(env.getFrame());
-        return signature.getNames();
+
+        if (env != REnvironment.emptyEnv()) {
+            assert RArguments.isRFrame(env.getFrame());
+            RFunction f = RArguments.getFunction(env.getFrame());
+            if (f != null) {
+                return RContext.getRRuntimeASTAccess().getArgumentsSignature(f).getNames();
+            } else {
+                ArgumentsSignature suppliedSignature = RArguments.getSuppliedSignature(env.getFrame());
+                if (suppliedSignature != null) {
+                    return suppliedSignature.getNames();
+                }
+            }
+        }
+        return new String[0];
     }
 
     public static RScope createScope(Node node, Frame frame) {
@@ -274,7 +299,7 @@ public final class RScope extends AbstractScope {
 
         @Override
         public ForeignAccess getForeignAccess() {
-            return VariableNamesMessageResolutionForeign.ACCESS;
+            return ArgumentNamesMessageResolutionForeign.ACCESS;
         }
 
         public static boolean isInstance(TruffleObject obj) {
