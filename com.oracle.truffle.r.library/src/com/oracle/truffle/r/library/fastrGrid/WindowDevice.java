@@ -43,15 +43,30 @@ public final class WindowDevice {
 
     public static GridDevice createWindowDevice(int width, int height) {
         JFrameDevice frameDevice = JFrameDevice.create(width, height);
-        frameDevice.setResizeListener(() -> {
-            RContext.getInstance().schedule(() -> {
-                GridContext.getContext().evalInternalRFunction("redrawAll");
-            });
-        });
+        if (RContext.getInstance().hasExecutor()) {
+            frameDevice.setResizeListener(WindowDevice::redrawAll);
+        } else {
+            noSchedulingSupportWarning();
+        }
         return new BufferedJFrameDevice(frameDevice);
     }
 
     public static RError awtNotSupported() {
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "AWT based grid devices are not supported.");
+    }
+
+    private static void redrawAll() {
+        RContext ctx = RContext.getInstance();
+        if (ctx.hasExecutor()) {
+            // to be robust we re-check the executor availability
+            ctx.schedule(() -> {
+                GridContext.getContext().evalInternalRFunction("redrawAll");
+            });
+        }
+    }
+
+    private static void noSchedulingSupportWarning() {
+        // Note: the PolyglotEngine was not built with an Executor
+        RError.warning(RError.NO_CALLER, Message.GENERIC, "Grid cannot resize the drawings. If you resize the window, the content will be lost.");
     }
 }
