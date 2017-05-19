@@ -228,8 +228,7 @@ public class BitwiseFunctions {
             Casts casts = new Casts(BitwiseShiftL.class);
             casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.SHIFTL.name).mustBe(
                             doubleValue().or(integerValue())).asIntegerVector();
-            casts.arg("n").allowNull().mustBe(missingValue().not()).mapIf(stringValue(), chain(asStringVector()).with(shouldBe(anyValue().not(), RError.Message.NA_INTRODUCED_COERCION)).end(),
-                            asIntegerVector());
+            casts.arg("n").allowNull().mustNotBeMissing().asIntegerVector();
         }
 
         @Specialization
@@ -241,12 +240,6 @@ public class BitwiseFunctions {
         @SuppressWarnings("unused")
         protected Object bitwShiftL(RAbstractIntVector a, RNull n) {
             return RDataFactory.createEmptyIntVector();
-        }
-
-        @Specialization
-        @SuppressWarnings("unused")
-        protected Object bitwShiftLChar(RAbstractVector a, RAbstractStringVector n) {
-            return makeNA(a.getLength());
         }
     }
 
