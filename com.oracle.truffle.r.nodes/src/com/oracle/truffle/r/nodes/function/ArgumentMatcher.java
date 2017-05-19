@@ -672,7 +672,7 @@ public class ArgumentMatcher {
         assert suppliedName != null && !suppliedName.isEmpty();
         for (int i = 0; i < formalsSignature.getLength(); i++) {
             String formalName = formalsSignature.getName(i);
-            if (formalName != null) {
+            if (!formalsSignature.isVarArg(i) && formalName != null) {
                 if (formalName.equals(suppliedName)) {
                     if (resultPermutation[i] != MatchPermutation.UNMATCHED) {
                         if (builtin != null && builtin.getKind() == RBuiltinKind.PRIMITIVE && hasVarArgs) {

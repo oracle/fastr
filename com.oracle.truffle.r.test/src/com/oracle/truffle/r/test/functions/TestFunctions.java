@@ -240,6 +240,7 @@ public class TestFunctions extends TestBase {
         assertEval("{ foo <- function(xa, ...) list(xa=xa, ...); foo(x=4,xa=5); }");
         // however, two partial matches produce error, even if one is "longer"
         assertEval("{ foo <- function(xaaa, ...) list(xaa=xaaa, ...); foo(xa=4,xaa=5); }");
+        assertEval("list(`...`=NULL);");
     }
 
     @Test
