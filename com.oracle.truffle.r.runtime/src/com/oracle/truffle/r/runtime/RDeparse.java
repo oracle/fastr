@@ -370,7 +370,9 @@ public class RDeparse {
                     Path path = emitToFile(name);
                     Source source = RSource.fromFile(path.toFile());
                     for (SourceSectionElement s : sources) {
-                        s.element.setSourceSection(source.createSection(s.start, s.length));
+                        if (s.element.getLazySourceSection() == null || s.element.getLazySourceSection() == RSyntaxNode.LAZY_DEPARSE) {
+                            s.element.setSourceSection(source.createSection(s.start, s.length));
+                        }
                     }
                 } catch (IOException e) {
                     RInternalError.reportError(e);

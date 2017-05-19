@@ -49,7 +49,6 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
 import com.oracle.truffle.r.test.generate.TestOutputManager;
-import java.io.OutputStream;
 
 /**
  * Base class for all unit tests. The unit tests are actually arranged as a collection of
