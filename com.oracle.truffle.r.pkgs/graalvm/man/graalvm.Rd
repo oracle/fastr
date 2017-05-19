@@ -37,7 +37,7 @@ g.r("a1")
 g.js("a2")
 g.rb("$a3")
 
-g(a1 = FALSE)
+g(a1 <- FALSE)
 gget(a1)
 a1
 
