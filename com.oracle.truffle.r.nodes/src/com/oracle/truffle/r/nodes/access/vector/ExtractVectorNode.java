@@ -124,7 +124,7 @@ public abstract class ExtractVectorNode extends Node {
                 // TODO implicite unboxing ok? method calls seem to behave this way
                 Object result = object;
                 for (int i = 0; i < positions.length; i++) {
-                    result = send(positions[i], foreignRead, keyInfoNode, (TruffleObject) result, firstString, castNode);
+                    result = read(this, positions[i], foreignRead, keyInfoNode, (TruffleObject) result, firstString, castNode);
                     if (positions.length > 1 && i < positions.length - 1) {
                         assert result instanceof TruffleObject;
                     }
@@ -151,7 +151,8 @@ public abstract class ExtractVectorNode extends Node {
         return RRuntime.java2R(obj);
     }
 
-    private Object send(Object position, Node foreignRead, Node keyInfoNode, TruffleObject object, FirstStringNode firstString, CastStringNode castNode) throws RError, InteropException {
+    public static Object read(Node caller, Object position, Node foreignRead, Node keyInfoNode, TruffleObject object, FirstStringNode firstString, CastStringNode castNode)
+                    throws RError, InteropException {
         if (position instanceof Integer) {
             position = ((int) position) - 1;
         } else if (position instanceof Double) {
@@ -163,7 +164,7 @@ public abstract class ExtractVectorNode extends Node {
         } else if (position instanceof RAbstractStringVector) {
             position = firstString.executeString(castNode.doCast(position));
         } else if (!(position instanceof String)) {
-            throw RError.error(this, RError.Message.GENERIC, "invalid index during foreign access");
+            throw RError.error(caller, RError.Message.GENERIC, "invalid index during foreign access");
         }
 
         int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, position);
@@ -176,7 +177,7 @@ public abstract class ExtractVectorNode extends Node {
                 return ForeignAccess.sendRead(foreignRead, clazz, position);
             }
         }
-        throw RError.error(this, RError.Message.GENERIC, "invalid index/identifier during foreign access: " + position);
+        throw RError.error(caller, RError.Message.GENERIC, "invalid index/identifier during foreign access: " + position);
     }
 
     @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})

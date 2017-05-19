@@ -100,20 +100,25 @@ public abstract class ReplaceVectorNode extends Node {
     @Specialization(guards = {"isForeignObject(object)", "positions.length == cachedLength"})
     protected Object accessField(TruffleObject object, Object[] positions, Object value,
                     @Cached("WRITE.createNode()") Node foreignWrite,
+                    @Cached("READ.createNode()") Node foreignRead,
                     @Cached("KEY_INFO.createNode()") Node keyInfo,
                     @SuppressWarnings("unused") @Cached("positions.length") int cachedLength,
                     @Cached("create()") CastStringNode castNode,
                     @Cached("createFirstString()") FirstStringNode firstString) {
         Object writtenValue = RRuntime.r2Java(value);
-        Object position = positions[0];
         try {
-            return write(position, foreignWrite, keyInfo, object, writtenValue, firstString, castNode);
+            TruffleObject result = object;
+            for (int i = 0; i < positions.length - 1; i++) {
+                result = (TruffleObject) ExtractVectorNode.read(this, positions[i], foreignRead, keyInfo, result, firstString, castNode);
+            }
+            write(positions[positions.length - 1], foreignWrite, keyInfo, result, writtenValue, firstString, castNode);
+            return object;
         } catch (InteropException e) {
             throw RError.interopError(RError.findParentRBase(this), e, object);
         }
     }
 
-    private Object write(Object position, Node foreignWrite, Node keyInfoNode, TruffleObject object, Object writtenValue, FirstStringNode firstString, CastStringNode castNode)
+    private void write(Object position, Node foreignWrite, Node keyInfoNode, TruffleObject object, Object writtenValue, FirstStringNode firstString, CastStringNode castNode)
                     throws InteropException, RError {
         if (position instanceof Integer) {
             position = ((Integer) position) - 1;
@@ -132,12 +137,14 @@ public abstract class ReplaceVectorNode extends Node {
 
         int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, position);
         if (KeyInfo.isWritable(info)) {
-            return ForeignAccess.sendWrite(foreignWrite, object, position, writtenValue);
+            ForeignAccess.sendWrite(foreignWrite, object, position, RRuntime.r2Java(writtenValue));
+            return;
         } else if (position instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
             TruffleObject clazz = JavaInterop.toJavaClass(object);
             info = ForeignAccess.sendKeyInfo(keyInfoNode, clazz, position);
             if (KeyInfo.isWritable(info)) {
-                return ForeignAccess.sendWrite(foreignWrite, clazz, position, writtenValue);
+                ForeignAccess.sendWrite(foreignWrite, clazz, position, RRuntime.r2Java(writtenValue));
+                return;
             }
         }
         throw RError.error(this, RError.Message.GENERIC, "invalid index/identifier during foreign access: " + position);
