@@ -60,6 +60,12 @@ public class TestInteractiveDebug extends TestBase {
     }
 
     @Test
+    public void testPromise() {
+        // TODO enable test as soon as Truffle support is available
+        assertEval(Ignored.ImplementationError, "fun <- function(x) { cat({ cat(x); cat('\n') }) }; debug(fun); fun(3)\n\n\n\n\n");
+    }
+
+    @Test
     public void testNestedDebugging() {
         assertEval(Output.IgnoreDebugPath,
                         "foo <- function(rCode) { eval(parse(text=rCode)); print('foo done') }; debug(foo); foo(\"bar <- function() { print('bar') }; debug(bar); bar()\")\n\n\n\n\n\n");
