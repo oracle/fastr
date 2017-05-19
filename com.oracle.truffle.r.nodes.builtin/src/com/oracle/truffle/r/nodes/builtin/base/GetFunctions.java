@@ -66,9 +66,11 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -316,6 +318,8 @@ public class GetFunctions {
 
         @Specialization
         protected RList mget(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, RAbstractStringVector mode, RList ifNotFound, boolean inherits,
+                        @Cached("createBinaryProfile()") ConditionProfile argsAndValuesProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile missingProfile,
                         @Cached("createBinaryProfile()") ConditionProfile inheritsProfile) {
             State state = checkArgs(xv, mode, ifNotFound);
             for (int i = 0; i < state.svLength; i++) {
@@ -330,7 +334,7 @@ public class GetFunctions {
                         while (env != REnvironment.emptyEnv()) {
                             env = env.getParent();
                             if (env != REnvironment.emptyEnv()) {
-                                r = helper.checkPromise(frame, env.get(x), x);
+                                r = handleMissingAndVarargs(helper.checkPromise(frame, env.get(x), x), argsAndValuesProfile, missingProfile);
                                 if (r != null && RRuntime.checkType(r, modeType)) {
                                     break;
                                 }
@@ -343,7 +347,7 @@ public class GetFunctions {
                         state.data[i] = r;
                     }
                 } else {
-                    Object r = helper.checkPromise(frame, envir.get(x), x);
+                    Object r = handleMissingAndVarargs(helper.checkPromise(frame, envir.get(x), x), argsAndValuesProfile, missingProfile);
                     if (r != null && RRuntime.checkType(r, modeType)) {
                         state.data[i] = r;
                     } else {
@@ -356,9 +360,11 @@ public class GetFunctions {
 
         @Specialization
         protected RList mget(VirtualFrame frame, RAbstractStringVector xv, RS4Object s4Envir, RAbstractStringVector mode, RList ifNotFound, boolean inherits,
+                        @Cached("createBinaryProfile()") ConditionProfile argsAndValuesProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile missingProfile,
                         @Cached("createBinaryProfile()") ConditionProfile inheritsProfile,
                         @Cached("new()") S4ToEnvNode s4ToEnv) {
-            return mget(frame, xv, (REnvironment) s4ToEnv.execute(s4Envir), mode, ifNotFound, inherits, inheritsProfile);
+            return mget(frame, xv, (REnvironment) s4ToEnv.execute(s4Envir), mode, ifNotFound, inherits, argsAndValuesProfile, missingProfile, inheritsProfile);
         }
 
         private void doIfNotFound(VirtualFrame frame, State state, int i, String x, RList ifNotFound) {
@@ -379,6 +385,21 @@ public class GetFunctions {
             RArgsValuesAndNames args = new RArgsValuesAndNames(new Object[]{x}, ArgumentsSignature.empty(1));
             return callCache.execute(frame, ifnFunc, RCaller.create(frame, RCallerHelper.createFromArguments(ifnFunc, args)), callerFrame, new Object[]{x}, formals.getSignature(),
                             ifnFunc.getEnclosingFrame(), null);
+        }
+
+        private static Object handleMissingAndVarargs(Object value, ConditionProfile argsAndValuesProfile, ConditionProfile missingProfile) {
+            if (argsAndValuesProfile.profile(value instanceof RArgsValuesAndNames)) {
+                if (((RArgsValuesAndNames) value).getLength() == 0) {
+                    return RSymbol.MISSING;
+                } else {
+                    // GNUR also puts raw promises in the list
+                    return RDataFactory.createList(((RArgsValuesAndNames) value).getArguments());
+                }
+            }
+            if (missingProfile.profile(value == RMissing.instance)) {
+                return RSymbol.MISSING;
+            }
+            return value;
         }
     }
 }
