@@ -111,4 +111,9 @@ public class TestBuiltin_serialize extends TestBase {
 
         assertEval("{ options(keep.source=FALSE); f <- function() NULL; attributes(f) <- list(skeleton=quote(`<undef>`())); data <- serialize(f, conn=NULL); unserialize(conn=data) }");
     }
+
+    @Test
+    public void testSerializeWithPromises() {
+        assertEval("{ f <- function(...) serialize(mget('...'),NULL); length(unserialize(f(a=3,b=2,c=1))[[1]]); }");
+    }
 }

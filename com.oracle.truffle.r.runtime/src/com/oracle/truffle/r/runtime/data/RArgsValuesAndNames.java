@@ -51,7 +51,9 @@ public final class RArgsValuesAndNames extends Arguments<Object> implements RTyp
 
     @Override
     public int getTypedValueInfo() {
-        throw RInternalError.shouldNotReachHere();
+        // RArgsValuesAndNames can get serialized under specific circumstances (ggplot2 does that)
+        // and getTypedValueInfo() must be defined for this to work.
+        return 0;
     }
 
     @Override

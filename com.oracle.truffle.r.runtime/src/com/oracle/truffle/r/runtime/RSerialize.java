@@ -1474,7 +1474,8 @@ public class RSerialize {
                             attributes = null;
                         }
                     }
-                    boolean hasTag = gnuRType == SEXPTYPE.CLOSXP || (gnuRType == SEXPTYPE.PROMSXP && !((RPromise) obj).isEvaluated()) || (type == SEXPTYPE.LISTSXP && !((RPairList) obj).isNullTag());
+                    boolean hasTag = gnuRType == SEXPTYPE.CLOSXP || gnuRType == SEXPTYPE.DOTSXP || (gnuRType == SEXPTYPE.PROMSXP && !((RPromise) obj).isEvaluated()) ||
+                                    (type == SEXPTYPE.LISTSXP && !((RPairList) obj).isNullTag());
                     int gpbits = getGPBits(obj);
                     int flags = Flags.packFlags(gnuRType, gpbits, isObject(obj), attributes != null, hasTag);
                     stream.writeInt(flags);
