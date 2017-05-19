@@ -103,10 +103,9 @@ public final class RScope extends AbstractScope {
 
     @Override
     protected AbstractScope findParent() {
-        if (this.env == REnvironment.emptyEnv()) {
+        if (env == REnvironment.emptyEnv() || env.getParent() == REnvironment.emptyEnv()) {
             return null;
         }
-
         return new RScope(env.getParent());
     }
 
@@ -167,11 +166,13 @@ public final class RScope extends AbstractScope {
 
                 @TruffleBoundary
                 public Object access(VariablesMapObject varMap) {
+                    String[] names;
                     if (varMap.argumentsOnly) {
-                        return new ArgumentNamesObject(collectArgs(varMap.env));
+                        names = collectArgs(varMap.env);
                     } else {
-                        return new VariableNamesObject(varMap.env);
+                        names = ls(varMap.env);
                     }
+                    return new ArgumentNamesObject(names);
                 }
             }
 
@@ -235,60 +236,6 @@ public final class RScope extends AbstractScope {
         }
     }
 
-    static final class VariableNamesObject implements TruffleObject {
-
-        private final REnvironment env;
-
-        private VariableNamesObject(REnvironment env) {
-            this.env = env;
-        }
-
-        @Override
-        public ForeignAccess getForeignAccess() {
-            return VariableNamesMessageResolutionForeign.ACCESS;
-        }
-
-        public static boolean isInstance(TruffleObject obj) {
-            return obj instanceof VariableNamesObject;
-        }
-
-        @MessageResolution(receiverType = VariableNamesObject.class)
-        static final class VariableNamesMessageResolution {
-
-            @Resolve(message = "HAS_SIZE")
-            abstract static class VarNamesHasSizeNode extends Node {
-
-                @SuppressWarnings("unused")
-                public Object access(VariableNamesObject varNames) {
-                    return true;
-                }
-            }
-
-            @Resolve(message = "GET_SIZE")
-            abstract static class VarNamesGetSizeNode extends Node {
-
-                public Object access(VariableNamesObject varNames) {
-                    return ls(varNames.env).length;
-                }
-            }
-
-            @Resolve(message = "READ")
-            abstract static class VarNamesReadNode extends Node {
-
-                @TruffleBoundary
-                public Object access(VariableNamesObject varNames, int index) {
-                    String[] names = ls(varNames.env);
-                    if (index >= 0 && index < names.length) {
-                        return names[index];
-                    } else {
-                        throw UnknownIdentifierException.raise(Integer.toString(index));
-                    }
-                }
-            }
-
-        }
-    }
-
     static final class ArgumentNamesObject implements TruffleObject {
 
         private final String[] names;
@@ -331,8 +278,9 @@ public final class RScope extends AbstractScope {
 
                 @TruffleBoundary
                 public Object access(ArgumentNamesObject varNames, int index) {
-                    if (index >= 0 && index < varNames.names.length) {
-                        return varNames.names[index];
+                    String[] names = varNames.names;
+                    if (index >= 0 && index < names.length) {
+                        return names[index];
                     } else {
                         throw UnknownIdentifierException.raise(Integer.toString(index));
                     }
