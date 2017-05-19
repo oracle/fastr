@@ -33,6 +33,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.IterableAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -44,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -333,11 +335,25 @@ public abstract class Identical extends RBuiltinNode.Arg7 {
         return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
+    @Specialization
+    protected byte doInternalIdenticalForeignObject(RInteropScalar x, RInteropScalar y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
+        return RRuntime.asLogical(x == y);
+    }
+
+    @Specialization(guards = "areForeignObjects(x, y)")
+    protected byte doInternalIdenticalForeignObject(TruffleObject x, TruffleObject y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
+        return RRuntime.asLogical(x == y);
+    }
+
     @SuppressWarnings("unused")
     @Fallback
     protected byte doInternalIdenticalWrongTypes(Object x, Object y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
         assert x.getClass() != y.getClass();
         return RRuntime.LOGICAL_FALSE;
+    }
+
+    protected boolean areForeignObjects(TruffleObject x, TruffleObject y) {
+        return RRuntime.isForeignObject(x) && RRuntime.isForeignObject(x);
     }
 
     protected boolean vectorsLists(RAbstractVector x, RAbstractVector y) {

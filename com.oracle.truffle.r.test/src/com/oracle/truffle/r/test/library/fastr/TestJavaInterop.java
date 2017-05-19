@@ -347,6 +347,15 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("to <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); attr(to, which = 'a')", "cat('Error in attr(to, which = \"a\") : external object cannot be attributed\n')");
     }
 
+    public void testIdentical() {
+        assertEvalFastR("b1 <- .fastr.interop.toByte(1); identical(b1, b1)", "TRUE");
+        assertEvalFastR("b1 <- .fastr.interop.toByte(1); b2 <- .fastr.interop.toByte(1); identical(b1, b2)", "FALSE");
+        assertEvalFastR("b1 <- .fastr.interop.toByte(1); s1 <- .fastr.interop.toShort(1); identical(b1, s1)", "FALSE");
+
+        assertEvalFastR("al <- .fastr.interop.new(.fastr.java.class('java.util.ArrayList')); identical(t, t)", "TRUE");
+        assertEvalFastR("ll <- .fastr.interop.new(.fastr.java.class('java.util.LinkedList')); al <- .fastr.interop.new(.fastr.java.class('java.util.ArrayList')); identical(al, ll)", "FALSE");
+    }
+
     private String getRValue(Object value) {
         if (value == null) {
             return "NULL";
