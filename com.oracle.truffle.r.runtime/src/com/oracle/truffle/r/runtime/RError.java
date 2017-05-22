@@ -590,7 +590,6 @@ public final class RError extends RuntimeException {
         NROW_ZERO("nr(0 for non-null data"),
         CANNOT_EXCEED_X("'%s' cannot exceed %s(x) = %d"),
         SAMPLE_LARGER_THAN_POPULATION("cannot take a sample larger than the population when 'replace(FALSE'\n"),
-        SAMPLE_OBJECT_NOT_FOUND("object '%s' not found"),
         ERROR_IN_SAMPLE("Error in sample.int(x, size, replace, prob) :  "),
         INCORRECT_NUM_PROB("incorrect number of probabilities"),
         NA_IN_PROB_VECTOR("NA in probability vector"),

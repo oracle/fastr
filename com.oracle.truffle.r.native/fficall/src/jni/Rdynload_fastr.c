@@ -22,6 +22,7 @@ static jclass RegisteredNativeSymbolClass;
 
 static jmethodID registerRoutinesID;
 static jmethodID registerCCallableID;
+static jmethodID getCCallableID;
 static jmethodID useDynamicSymbolsID;
 static jmethodID forceSymbolsID;
 static jmethodID setDotSymbolValuesID;
@@ -36,6 +37,7 @@ void init_dynload(JNIEnv *env) {
 
     registerRoutinesID = checkGetMethodID(env, JNI_PkgInitClass, "registerRoutines", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;IIJ)V", 1);
     registerCCallableID = checkGetMethodID(env, JNI_PkgInitClass, "registerCCallable", "(Ljava/lang/String;Ljava/lang/String;J)V", 1);
+    getCCallableID = checkGetMethodID(env, JNI_PkgInitClass, "getCCallable", "(Ljava/lang/String;Ljava/lang/String;)J", 1);
     useDynamicSymbolsID = checkGetMethodID(env, JNI_PkgInitClass, "useDynamicSymbols", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;I)I", 1);
     forceSymbolsID = checkGetMethodID(env, JNI_PkgInitClass, "forceSymbols", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;I)I", 1);
     setDotSymbolValuesID = checkGetMethodID(env, JNI_PkgInitClass, "setDotSymbolValues", "(Ljava/lang/String;JI)Lcom/oracle/truffle/r/runtime/ffi/DLL$DotSymbol;", 1);
@@ -139,8 +141,10 @@ Rboolean R_forceSymbols(DllInfo *dllInfo, Rboolean value) {
 }
 
 DL_FUNC R_GetCCallable(const char *package, const char *name) {
-	unimplemented("R_GetCCallable");
-	return NULL;
+    JNIEnv *thisenv = getEnv();
+    jstring packageString = (*thisenv)->NewStringUTF(thisenv, package);
+    jstring nameString = (*thisenv)->NewStringUTF(thisenv, name);
+    return (DL_FUNC) (*thisenv)->CallStaticObjectMethod(thisenv, JNI_PkgInitClass, getCCallableID, packageString, nameString);
 }
 
 DL_FUNC R_FindSymbol(char const *name, char const *pkg,

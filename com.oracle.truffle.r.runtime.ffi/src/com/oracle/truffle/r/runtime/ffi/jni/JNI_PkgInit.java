@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jni;
 
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
@@ -43,13 +46,18 @@ final class JNI_PkgInit {
 
     @SuppressWarnings("unused")
     private static void registerCCallable(String pkgName, String functionName, long address) {
-        // TBD
+        DLLInfo lib = safeFindLibrary(pkgName);
+        lib.registerCEntry(new CEntry(functionName, new SymbolHandle(address)));
     }
 
     @SuppressWarnings("unused")
-    private static long getCCallable(String pkgName, String functionName) {
-        // TBD
-        throw RInternalError.unimplemented();
+    public static long getCCallable(String pkgName, String functionName) {
+        DLLInfo lib = safeFindLibrary(pkgName);
+        CEntry result = lib.lookupCEntry(functionName);
+        if (result == null) {
+            throw RError.error(RError.NO_CALLER, Message.UNKNOWN_OBJECT, functionName);
+        }
+        return result.address.asAddress();
     }
 
     /**
@@ -76,5 +84,15 @@ final class JNI_PkgInit {
     @SuppressWarnings("unused")
     public static int findSymbol(String name, String pkg, DLL.RegisteredNativeSymbol rns) {
         throw RInternalError.unimplemented();
+    }
+
+    private static DLLInfo safeFindLibrary(String pkgName) {
+        DLLInfo lib = DLL.findLibrary(pkgName);
+        if (lib == null) {
+            // It seems GNU R would create an C entry even for non-existing package, we are more
+            // defensive
+            throw RError.error(RError.NO_CALLER, Message.DLL_NOT_LOADED, pkgName);
+        }
+        return lib;
     }
 }

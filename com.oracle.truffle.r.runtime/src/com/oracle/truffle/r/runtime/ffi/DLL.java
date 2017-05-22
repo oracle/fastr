@@ -17,8 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -180,6 +180,7 @@ public class DLL {
         private boolean dynamicLookup;
         private boolean forceSymbols;
         private final DotSymbol[][] nativeSymbols = new DotSymbol[NativeSymbolType.values().length][];
+        private ArrayList<CEntry> cEntryTable = null;
 
         private DLLInfo(String name, String path, boolean dynamicLookup, Object handle) {
             this.id = ID.getAndIncrement();
@@ -229,6 +230,24 @@ public class DLL {
             }
         }
 
+        public void registerCEntry(CEntry entry) {
+            if (cEntryTable == null) {
+                cEntryTable = new ArrayList<>();
+            }
+            cEntryTable.add(entry);
+        }
+
+        public CEntry lookupCEntry(String symbol) {
+            if (cEntryTable != null) {
+                for (CEntry entry : cEntryTable) {
+                    if (entry.symbol.equals(symbol)) {
+                        return entry;
+                    }
+                }
+            }
+            return null;
+        }
+
         /**
          * Return array of values that can be plugged directly into an {@code RList}.
          */
@@ -256,7 +275,7 @@ public class DLL {
         }
     }
 
-    public static class SymbolInfo {
+    public static final class SymbolInfo {
         public final DLLInfo libInfo;
         public final String symbol;
         public final SymbolHandle address;
@@ -302,6 +321,21 @@ public class DLL {
                 klass[0] = rnt.nst.name() + "Routine";
             }
             return RDataFactory.createList(data, n > 3 ? NAMES_4_VEC : NAMES_3_VEC);
+        }
+    }
+
+    /**
+     * R has an interface for exporting and importing functions between packages' native code. The
+     * functions have to be exported, i.e. registered in a directory, called CEntry table in GNU R.
+     * Another package can they as the directory for address or a function with specified name.
+     */
+    public static final class CEntry {
+        public final String symbol;
+        public final SymbolHandle address;
+
+        public CEntry(String symbol, SymbolHandle address) {
+            this.symbol = symbol;
+            this.address = address;
         }
     }
 
