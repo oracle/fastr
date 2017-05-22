@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.HashMap;
-
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RObjectSize.IgnoreObjectHandler;
@@ -40,16 +38,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  * Very simple object size calculation that does not need an instrumentation agent.
  */
 public class SimpleObjectSizeFactory extends ObjectSizeFactory {
-    private HashMap<Class<?>, TypeCustomizer> typeCustomizers;
-
     @Override
     public long getObjectSize(Object obj, IgnoreObjectHandler ignoreObjectHandler) {
         RError.warning(RError.NO_CALLER, Message.OBJECT_SIZE_ESTIMATE);
         // Customizers
-        for (Class<?> klass : typeCustomizers.keySet()) {
-            if (obj.getClass().equals(klass)) {
-                return typeCustomizers.get(klass).getObjectSize(obj);
-            }
+        TypeCustomizer customizer = getCustomizer(obj.getClass());
+        if (customizer != null) {
+            return customizer.getObjectSize(obj);
         }
         // Well known vector types
         if (obj instanceof RAbstractDoubleVector) {
@@ -75,13 +70,5 @@ public class SimpleObjectSizeFactory extends ObjectSizeFactory {
             return total;
         }
         return 4;
-    }
-
-    @Override
-    public void registerTypeCustomizer(Class<?> klass, TypeCustomizer typeCustomizer) {
-        if (typeCustomizers == null) {
-            typeCustomizers = new HashMap<>();
-        }
-        typeCustomizers.put(klass, typeCustomizer);
     }
 }
