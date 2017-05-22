@@ -213,11 +213,7 @@ public final class Unit {
             case STRINGWIDTH:
             case MYSTRINGWIDTH:
                 str = RRuntime.asString(data.getDataAt(0));
-                lines = str.split("\n");
-                for (String line1 : lines) {
-                    result = Math.max(result, ctx.device.getStringWidth(ctx.gpar.getDrawingContext(index), line1));
-                }
-                return value * result;
+                return value * GridUtils.getStringWidth(ctx.gpar.getDrawingContext(index), ctx.device, str);
             case STRINGHEIGHT:
             case MYSTRINGHEIGHT:
                 str = RRuntime.asString(data.getDataAt(0));
