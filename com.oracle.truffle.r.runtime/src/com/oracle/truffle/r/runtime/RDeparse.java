@@ -373,6 +373,7 @@ public class RDeparse {
             if (!Files.exists(path)) {
                 try (BufferedWriter bw = Files.newBufferedWriter(path, CREATE_NEW, WRITE)) {
                     bw.write(sb.toString());
+                    bw.newLine();
                 }
             }
             return path;
