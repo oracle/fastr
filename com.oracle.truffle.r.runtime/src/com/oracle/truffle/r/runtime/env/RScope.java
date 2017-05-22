@@ -31,6 +31,7 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.metadata.ScopeProvider.AbstractScope;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -39,6 +40,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
@@ -223,6 +225,9 @@ public final class RScope extends AbstractScope {
                 public Object access(VariablesMapObject varMap, String name, Object value) {
                     if (varMap.env == null) {
                         throw UnsupportedMessageException.raise(Message.WRITE);
+                    }
+                    if (!(value instanceof RTypedValue)) {
+                        throw UnsupportedTypeException.raise(new Object[]{value});
                     }
                     try {
                         varMap.env.put(name, value);
