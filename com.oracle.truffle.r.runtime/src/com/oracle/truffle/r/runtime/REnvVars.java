@@ -291,7 +291,7 @@ public final class REnvVars implements RContext.ContextState {
     }
 
     private String expandParameters(String value) {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         int x = 0;
         int paramStart = value.indexOf("${", x);
         while (paramStart >= 0) {

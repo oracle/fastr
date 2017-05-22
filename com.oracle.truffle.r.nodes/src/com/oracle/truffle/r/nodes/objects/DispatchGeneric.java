@@ -42,7 +42,7 @@ public abstract class DispatchGeneric extends RBaseNode {
 
     @TruffleBoundary
     private static String createMultiDispatchString(RStringVector classes) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < classes.getLength(); i++) {
             if (i > 0) {
                 sb.append('#');

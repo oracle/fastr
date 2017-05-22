@@ -147,7 +147,7 @@ public abstract class BrowserInteractNode extends RNode {
                     }
 
                     default:
-                        StringBuffer sb = new StringBuffer(input);
+                        StringBuilder sb = new StringBuilder(input);
                         while (true) {
                             try {
                                 RContext.getEngine().parseAndEval(RSource.fromTextInternal(sb.toString(), RSource.Internal.BROWSER_INPUT), mFrame, true);

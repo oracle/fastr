@@ -225,7 +225,7 @@ public class RCommand {
                     }
 
                     String continuePrompt = getContinuePrompt(vm);
-                    StringBuffer sb = new StringBuffer(input);
+                    StringBuilder sb = new StringBuilder(input);
                     Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.SHELL_INPUT);
                     boolean hasExecutor = hasExectuor(vm);
                     while (true) {

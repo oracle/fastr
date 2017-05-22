@@ -94,7 +94,7 @@ public class TextConnections {
         TextReadRConnection(TextRConnection base, RAbstractStringVector object) {
             super(base, 0);
             assert object != null;
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             for (int i = 0; i < object.getLength(); i++) {
                 sb.append(object.getDataAt(i));
                 // vector elements are implicitly terminated with a newline
@@ -219,7 +219,7 @@ public class TextConnections {
             }
             if (incompleteLine != null && !endOfLine) {
                 // end of line not found - accumulate incomplete line
-                incompleteLine = new StringBuffer(incompleteLine).append(result).toString();
+                incompleteLine = new StringBuilder(incompleteLine).append(result).toString();
                 base.setIncomplete(true);
             } else if (px < result.length()) {
                 // only reset incompleteLine if
@@ -250,7 +250,7 @@ public class TextConnections {
 
         @Override
         public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             if (incompleteLine != null) {
                 sb.append(incompleteLine);
                 incompleteLine = null;
@@ -269,7 +269,7 @@ public class TextConnections {
 
         @Override
         public void writeString(String s, boolean nl) throws IOException {
-            writeStringInternal(nl ? new StringBuffer(s).append('\n').toString() : s);
+            writeStringInternal(nl ? new StringBuilder(s).append('\n').toString() : s);
         }
 
         @Override
@@ -328,7 +328,7 @@ public class TextConnections {
      * Strictly implementation-internal connection that is used to support the external debugger.
      */
     public static class InternalStringWriteConnection extends BaseRConnection {
-        private StringBuffer sb = new StringBuffer();
+        private StringBuilder sb = new StringBuilder();
 
         public InternalStringWriteConnection() throws IOException {
             super(ConnectionClass.Terminal, "w", AbstractOpenMode.Write);
@@ -363,7 +363,7 @@ public class TextConnections {
 
         public String getString() {
             String result = sb.toString();
-            sb = new StringBuffer();
+            sb = new StringBuilder();
             return result;
         }
     }

@@ -1118,7 +1118,7 @@ public class RDeparse {
         if (isValidName(name) || name.length() == 0) {
             return name;
         } else {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append(qc);
             for (int i = 0; i < name.length(); i++) {
                 char ch = name.charAt(i);

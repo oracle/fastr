@@ -73,7 +73,7 @@ public abstract class Strrep extends RBuiltinNode.Arg2 {
                 if (times == 1) {
                     data[i] = x;
                 } else {
-                    StringBuffer sb = new StringBuffer();
+                    StringBuilder sb = new StringBuilder();
                     for (int t = 0; t < times; t++) {
                         sb.append(x);
                     }

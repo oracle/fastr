@@ -130,7 +130,7 @@ public abstract class SystemFunctionFactory {
                         newArgsList.add("-e");
                         newArgsList.add("tools:::.install_packages()");
                         newArgsList.add("--args");
-                        StringBuffer sb = new StringBuffer();
+                        StringBuilder sb = new StringBuilder();
                         i = 2;
                         while (i < commandInfo.args.length) {
                             String arg = commandInfo.args[i];

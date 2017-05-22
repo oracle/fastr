@@ -159,7 +159,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
     }
 
     private static String coalesce(String[] lines) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (String line : lines) {
             sb.append(line);
             sb.append('\n');

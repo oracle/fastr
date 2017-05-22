@@ -150,7 +150,7 @@ public class RFFIUtils {
 
     private static void traceCall(CallMode mode, String name, int depthValue, Object... args) {
         if (traceEnabled) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append("CallRFFI[");
             sb.append(mode.printName);
             sb.append(':');
@@ -170,7 +170,7 @@ public class RFFIUtils {
         }
     }
 
-    private static void printArgs(StringBuffer sb, Object[] args) {
+    private static void printArgs(StringBuilder sb, Object[] args) {
         boolean first = true;
         for (Object arg : args) {
             if (first) {

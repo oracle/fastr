@@ -49,7 +49,7 @@ public class ToolsText {
             for (int i = 0; i < data.length; i++) {
                 String input = strings.getDataAt(i);
                 if (input.indexOf('\t') >= 0) {
-                    StringBuffer sb = new StringBuffer();
+                    StringBuilder sb = new StringBuilder();
                     int b = 0;
                     int start = starts.getDataAt(i % starts.getLength());
                     for (int sx = 0; sx < input.length(); sx++) {
