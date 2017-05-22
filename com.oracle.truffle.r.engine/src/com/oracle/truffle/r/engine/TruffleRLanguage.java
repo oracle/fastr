@@ -146,7 +146,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> implements
             return (String) unwrapped;
         }
         if (unwrapped instanceof RTypedValue) {
-            return RDeparse.deparse(unwrapped);
+            return RDeparse.deparse(unwrapped, RDeparse.MAX_CUTOFF, true, RDeparse.KEEPINTEGER, -1, 1024 * 1024);
         }
         return RRuntime.toString(unwrapped);
     }

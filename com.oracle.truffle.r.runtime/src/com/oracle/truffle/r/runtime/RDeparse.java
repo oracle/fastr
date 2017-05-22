@@ -86,9 +86,9 @@ public class RDeparse {
     public static final int SIMPLEDEPARSE = 0;
     public static final int DEFAULTDEPARSE = 65; /* KEEPINTEGER | KEEPNA, used for calls */
 
-    public static final int MIN_Cutoff = 20;
-    public static final int MAX_Cutoff = 500;
-    public static final int DEFAULT_Cutoff = 60;
+    public static final int MIN_CUTOFF = 20;
+    public static final int MAX_CUTOFF = 500;
+    public static final int DEFAULT_CUTOFF = 60;
     public static final char BACKTICK = '`';
     public static final char DQUOTE = '"';
 
@@ -264,22 +264,29 @@ public class RDeparse {
 
         private final ArrayList<SourceSectionElement> sources;
 
-        private final int cutoff;
+        private final int listCutoff;
+        private final int debugCutoff;
         private final boolean backtick;
         private int opts;
-        @SuppressWarnings("unused") private final int nlines;
+        private final int nlines;
 
         private int inCurly = 0;
         private int inList = 0;
         private int indent = 0;
         private int lastLineStart = 0;
+        private int curLine = 1;
 
         DeparseVisitor(boolean storeSource, int cutoff, boolean backtick, int opts, int nlines) {
-            this.cutoff = cutoff;
+            this(storeSource, cutoff, backtick, opts, nlines, -1);
+        }
+
+        DeparseVisitor(boolean storeSource, int cutoff, boolean backtick, int opts, int nlines, int debugCutoff) {
+            this.listCutoff = cutoff;
             this.backtick = backtick;
             this.opts = opts;
             this.nlines = nlines;
             this.sources = storeSource ? new ArrayList<>() : null;
+            this.debugCutoff = debugCutoff;
         }
 
         public String getContents() {
@@ -304,13 +311,22 @@ public class RDeparse {
             return (opts & QUOTEEXPRESSIONS) != 0;
         }
 
+        private void checkLength(int nchar) {
+            if (debugCutoff >= 0 && sb.length() + nchar > debugCutoff) {
+                throw new MaxLengthReachedException();
+            }
+        }
+
         private DeparseVisitor append(char ch) {
             assert ch != '\n';
+            checkLength(1);
             sb.append(ch);
             return this;
         }
 
         private DeparseVisitor append(String str) {
+            assert !str.contains("\n");
+            checkLength(str.length());
             sb.append(str);
             return this;
         }
@@ -408,13 +424,20 @@ public class RDeparse {
         public DeparseVisitor append(RSyntaxElement element) {
             try (C c = withContext(element)) {
                 visitor.accept(element);
+            } catch (AbortDeparsingException e) {
+                // stop deparsing; indicate that there is something missing
+                sb.append("...");
             }
             return this;
         }
 
         private void printline() {
             sb.append("\n");
+            curLine++;
             lastLineStart = sb.length();
+            if (nlines > 0 && curLine >= nlines) {
+                throw new MaxLinesReachedException();
+            }
             for (int i = 0; i < indent; i++) {
                 sb.append(i < 4 ? "    " : "  ");
             }
@@ -438,9 +461,9 @@ public class RDeparse {
             return null;
         }
 
-        private boolean linebreak(boolean lbreak) {
+        private boolean listLinebreak(boolean lbreak) {
             boolean result = lbreak;
-            if ((sb.length() - lastLineStart) > cutoff) {
+            if ((sb.length() - lastLineStart) > listCutoff) {
                 if (!lbreak) {
                     result = true;
                     indent++;
@@ -721,7 +744,7 @@ public class RDeparse {
                     if (i++ > 0) {
                         append(", ");
                     }
-                    lbreak = linebreak(lbreak);
+                    lbreak = listLinebreak(lbreak);
                     if (arglist.getTag() != RNull.instance) {
                         String argName = ((RSymbol) arglist.getTag()).getName();
                         if (!argName.isEmpty()) {
@@ -786,7 +809,7 @@ public class RDeparse {
                 if (i > start) {
                     append(", ");
                 }
-                lbreak = linebreak(lbreak);
+                lbreak = listLinebreak(lbreak);
                 RSyntaxElement argument = args[i];
                 String name = signature.getName(i);
 
@@ -823,22 +846,27 @@ public class RDeparse {
             Object value = RRuntime.asAbstractVector(v);
             assert value instanceof RTypedValue : v.getClass();
 
-            RSyntaxElement element;
-            if (value instanceof RSymbol) {
-                element = RSyntaxLookup.createDummyLookup(RSyntaxNode.INTERNAL, ((RSymbol) value).getName(), false);
-            } else if (value instanceof RLanguage) {
-                element = ((RLanguage) value).getRep().asRSyntaxNode();
-            } else if (value instanceof RMissing) {
-                element = RSyntaxLookup.createDummyLookup(null, "", false);
-            } else {
-                return appendConstant(value);
-            }
-            if (!quoteExpressions() || element instanceof RSyntaxConstant) {
-                append(element);
-            } else {
-                append("quote(");
-                append(element);
-                append(')');
+            try {
+                RSyntaxElement element;
+                if (value instanceof RSymbol) {
+                    element = RSyntaxLookup.createDummyLookup(RSyntaxNode.INTERNAL, ((RSymbol) value).getName(), false);
+                } else if (value instanceof RLanguage) {
+                    element = ((RLanguage) value).getRep().asRSyntaxNode();
+                } else if (value instanceof RMissing) {
+                    element = RSyntaxLookup.createDummyLookup(null, "", false);
+                } else {
+                    return appendConstant(value);
+                }
+                if (!quoteExpressions() || element instanceof RSyntaxConstant) {
+                    append(element);
+                } else {
+                    append("quote(");
+                    append(element);
+                    append(')');
+                }
+            } catch (AbortDeparsingException e) {
+                // stop deparsing; indicate that there is something missing
+                sb.append("...");
             }
             return this;
         }
@@ -964,7 +992,7 @@ public class RDeparse {
                 if (i > 0) {
                     append(", ");
                 }
-                lbreak = linebreak(lbreak);
+                lbreak = listLinebreak(lbreak);
                 if (snames != null) {
                     append(quotify(snames.getDataAt(i), '\"'));
                     append(" = ");
@@ -1044,17 +1072,22 @@ public class RDeparse {
 
     @TruffleBoundary
     public static String deparseSyntaxElement(RSyntaxElement element) {
-        return new DeparseVisitor(false, RDeparse.MAX_Cutoff, true, KEEPINTEGER, -1).append(element).getContents();
+        return new DeparseVisitor(false, RDeparse.MAX_CUTOFF, true, KEEPINTEGER, -1).append(element).getContents();
     }
 
     @TruffleBoundary
     public static String deparse(Object value) {
-        return new DeparseVisitor(false, RDeparse.MAX_Cutoff, true, KEEPINTEGER, -1).appendValue(value).getContents();
+        return new DeparseVisitor(false, RDeparse.MAX_CUTOFF, true, KEEPINTEGER, -1).appendValue(value).getContents();
     }
 
     @TruffleBoundary
     public static String deparse(Object expr, int cutoff, boolean backtick, int opts, int nlines) {
         return new DeparseVisitor(false, cutoff, backtick, opts, nlines).appendValue(expr).getContents();
+    }
+
+    @TruffleBoundary
+    public static String deparse(Object expr, int cutoff, boolean backtick, int opts, int nlines, int debugCutoff) {
+        return new DeparseVisitor(false, cutoff, backtick, opts, nlines, debugCutoff).appendValue(expr).getContents();
     }
 
     /**
@@ -1072,11 +1105,11 @@ public class RDeparse {
                 }
             }
             // try to generate the source from the root node and hopefully it includes this node
-            new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(nodeToFixup).fixupSources();
+            new DeparseVisitor(true, RDeparse.MAX_CUTOFF, false, -1, 0).append(nodeToFixup).fixupSources();
 
             // if not, we have to deparse the node in isolation
             if (node.getLazySourceSection() == RSyntaxNode.LAZY_DEPARSE) {
-                new DeparseVisitor(true, RDeparse.MAX_Cutoff, false, -1, 0).append(node).fixupSources();
+                new DeparseVisitor(true, RDeparse.MAX_CUTOFF, false, -1, 0).append(node).fixupSources();
             }
             assert node.getLazySourceSection() != RSyntaxNode.LAZY_DEPARSE;
         }
@@ -1135,5 +1168,17 @@ public class RDeparse {
         } else {
             return 0;
         }
+    }
+
+    @SuppressWarnings("serial")
+    private static class AbortDeparsingException extends RuntimeException {
+    }
+
+    @SuppressWarnings("serial")
+    private static final class MaxLinesReachedException extends AbortDeparsingException {
+    }
+
+    @SuppressWarnings("serial")
+    private static final class MaxLengthReachedException extends AbortDeparsingException {
     }
 }

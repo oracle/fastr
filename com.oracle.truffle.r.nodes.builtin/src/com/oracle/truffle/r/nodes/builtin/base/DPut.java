@@ -52,7 +52,7 @@ public abstract class DPut extends RBuiltinNode.Arg3 {
     @Specialization
     @TruffleBoundary
     protected Object dput(Object x, int file, int opts) {
-        String string = RDeparse.deparse(x, RDeparse.DEFAULT_Cutoff, true, opts, -1);
+        String string = RDeparse.deparse(x, RDeparse.DEFAULT_CUTOFF, true, opts, -1);
         try (RConnection openConn = RConnection.fromIndex(file).forceOpen("wt")) {
             openConn.writeString(string, true);
         } catch (IOException ex) {
