@@ -34,4 +34,11 @@ public class TestBuiltin_mget extends TestBase {
         assertEval("{ x<-mget(\"_foo_\", ifnotfound=list(function(x) sys.call(0))); print(x[[1]][[1]]); print(x[[1]][[2]]) }");
         assertEval("{ x<-mget(\"_foo_\", ifnotfound=list(function(x) sys.call(1))); list(x[[1]][[1]], x[[1]][[2]], x[[1]][[3]][[1]], x[[1]][[3]][[2]][[1]], x[[1]][[3]][[2]][[2]], x[[1]][[3]][[2]][[3]]) }");
     }
+
+    @Test
+    public void testMGetWithVarArgs() {
+        assertEval(template("{ find_args <- function(...) !vapply(mget('...', envir = parent.frame()), function(x) identical(x, quote(expr = )), logical(1));" +
+                        "func <- function(...) find_args(...);" +
+                        "%0; }", new String[]{"func()", "func(a=3)"}));
+    }
 }
