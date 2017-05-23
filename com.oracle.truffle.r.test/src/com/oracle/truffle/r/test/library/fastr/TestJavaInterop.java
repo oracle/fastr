@@ -369,7 +369,7 @@ public class TestJavaInterop extends TestBase {
         }
         if (value.getClass().isArray()) {
             StringBuilder sb = new StringBuilder();
-            sb.append("cat('[1] ");
+            sb.append("cat('[external object]\\n[1] ");
             int lenght = Array.getLength(value);
             for (int i = 0; i < lenght; i++) {
                 if (lenght > 1 && value.getClass().getComponentType() == Boolean.TYPE && (boolean) Array.get(value, i)) {
@@ -381,7 +381,7 @@ public class TestJavaInterop extends TestBase {
                     sb.append(" ");
                 }
             }
-            sb.append("\\nattr(,\"is.truffle.object\")\\n[1] TRUE\\n')");
+            sb.append("\\n')");
             return sb.toString();
         }
         return value.toString();

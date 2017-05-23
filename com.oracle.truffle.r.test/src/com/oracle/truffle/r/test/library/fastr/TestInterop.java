@@ -108,7 +108,8 @@ public class TestInterop extends TestBase {
 
     @Test
     public void testPrinting() {
-        assertEvalFastR("v <- .fastr.interop.import('testPOJO'); print(v)", "cat('$intValue\\n" +
+        assertEvalFastR("v <- .fastr.interop.import('testPOJO'); print(v)", "cat('[external object]\\n" +
+                        "$intValue\\n" +
                         "[1] 1\\n" +
                         "\\n" +
                         "$longValue\\n" +
@@ -124,19 +125,10 @@ public class TestInterop extends TestBase {
                         "[1] TRUE\\n" +
                         "\\n" +
                         "$stringValue\\n" +
-                        "[1] \"foo\"\\n" +
-                        "\\n" +
-                        "attr(,\"is.truffle.object\")\\n" +
-                        "[1] TRUE\\n')");
-        assertEvalFastR("v <- .fastr.interop.import('testStringArray'); print(v)", "cat('[1] \"a\"   \"\"    \"foo\"\\n" +
-                        "attr(,\"is.truffle.object\")\\n" +
-                        "[1] TRUE\\n')");
-        assertEvalFastR("v <- .fastr.interop.import('testIntArray'); print(v)", "cat('[1]   1  -5 199\\n" +
-                        "attr(,\"is.truffle.object\")\\n" +
-                        "[1] TRUE\\n')");
-        assertEvalFastR("v <- .fastr.interop.import('testIntArray'); v", "cat('[1]   1  -5 199\\n" +
-                        "attr(,\"is.truffle.object\")\\n" +
-                        "[1] TRUE\\n')");
+                        "[1] \"foo\"\\n\\n')");
+        assertEvalFastR("v <- .fastr.interop.import('testStringArray'); print(v)", "cat('[external object]\\n[1] \"a\"   \"\"    \"foo\"\\n')");
+        assertEvalFastR("v <- .fastr.interop.import('testIntArray'); print(v)", "cat('[external object]\\n[1]   1  -5 199\\n')");
+        assertEvalFastR("v <- .fastr.interop.import('testIntArray'); v", "cat('[external object]\\n[1]   1  -5 199\\n')");
         assertEvalFastR("v <- .fastr.interop.import('testPOJO'); names(v)", "c('intValue', 'longValue', 'charValue', 'shortValue', 'booleanValue', 'stringValue')");
     }
 
