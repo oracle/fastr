@@ -364,7 +364,7 @@ final class REngine implements Engine, Engine.Timings {
                     }
                     lastValue = calls[i].call(new Object[]{executionFrame != null ? executionFrame : newContext.stateREnvironment.getGlobalFrame()});
                 }
-                return lastValue;
+                return RRuntime.r2Java(lastValue);
             } catch (ReturnException ex) {
                 return ex.getResult();
             } catch (DebugExitException | JumpToTopLevelException | ExitException | ThreadDeath e) {
