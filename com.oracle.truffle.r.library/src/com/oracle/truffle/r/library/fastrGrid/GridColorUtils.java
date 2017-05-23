@@ -34,6 +34,11 @@ public final class GridColorUtils {
             return parseHex(value);
         }
 
+        if (value.equals("NA")) {
+            // special case value, we want to check only for "NA", not "na".
+            return GridColor.TRANSPARENT;
+        }
+
         Object result = findByName(value);
         if (result == null) {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "Invalid color '" + value + "'.");
@@ -84,7 +89,6 @@ public final class GridColorUtils {
 
         static {
             NAMES.put("transparent", GridColor.TRANSPARENT);
-            NAMES.put("NA", GridColor.TRANSPARENT);
             NAMES.put("white", "#FFFFFF");
             NAMES.put("aliceblue", "#F0F8FF");
             NAMES.put("antiquewhite", "#FAEBD7");
