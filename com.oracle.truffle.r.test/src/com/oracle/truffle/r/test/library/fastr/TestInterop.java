@@ -39,10 +39,11 @@ public class TestInterop extends TestBase {
 
     private static final SeekableMemoryByteChannel CHANNEL = new SeekableMemoryByteChannel();
     private static final String CHANNEL_NAME = "_fastr_channel0";
+    private static final String TEST_EVAL_FILE = "_testInteropEvalFile_testScript_.R";
 
     @After
     public void cleanup() {
-        File f = new File("testScript.R");
+        File f = new File(TEST_EVAL_FILE);
         if (f.exists()) {
             f.delete();
         }
@@ -67,9 +68,11 @@ public class TestInterop extends TestBase {
 
     @Test
     public void testInteropEvalFile() {
-        assertEvalFastR("fileConn<-file(\"testScript.R\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);.fastr.interop.evalFile(\"testScript.R\",\"application/x-r\")",
+        assertEvalFastR("fileConn<-file(\"" + TEST_EVAL_FILE + "\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);.fastr.interop.evalFile(\"" + TEST_EVAL_FILE +
+                        "\",\"application/x-r\")",
                         "x<-c(1);cat(x)");
-        assertEvalFastR("fileConn<-file(\"testScript.R\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);.fastr.interop.evalFile(\"testScript.R\")", "x<-c(1);cat(x)");
+        assertEvalFastR("fileConn<-file(\"" + TEST_EVAL_FILE + "\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);.fastr.interop.evalFile(\"" + TEST_EVAL_FILE + "\")",
+                        "x<-c(1);cat(x)");
         assertEvalFastR("tryCatch(.fastr.interop.evalFile(\"/a/b.R\"),  error = function(e) e$message)", "cat('[1] \"Error reading file: /a/b.R\"\\n')");
     }
 

@@ -29,7 +29,6 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.engine.interop.ffi.nfi.TruffleNFI_Base;
 import com.oracle.truffle.r.engine.interop.ffi.nfi.TruffleNFI_PCRE;
-import com.oracle.truffle.r.engine.interop.ffi.nfi.TruffleNFI_UpCallsRFFIImpl;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -39,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -125,6 +125,8 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return RLanguageMRForeign.ACCESS;
         } else if (obj instanceof ActiveBinding) {
             return ActiveBindingMRForeign.ACCESS;
+        } else if (obj instanceof RInteropScalar) {
+            return RInteropScalarMRForeign.ACCESS;
 
         } else {
             if (obj instanceof RAbstractVector) {
