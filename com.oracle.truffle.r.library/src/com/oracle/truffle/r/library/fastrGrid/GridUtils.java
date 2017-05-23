@@ -15,6 +15,8 @@ import static com.oracle.truffle.r.runtime.nmath.RMath.fmax2;
 import static com.oracle.truffle.r.runtime.nmath.RMath.fmin2;
 
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
+import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -38,6 +40,16 @@ final class GridUtils {
     static double justify(double coord, double size, double justification) {
         // justification is supposed to be either between 0 and 1
         return coord - size * justification;
+    }
+
+    static double getStringWidth(DrawingContext drawingContext, GridDevice dev, String str) {
+        String[] lines;
+        double result = 0;
+        lines = str.split("\n");
+        for (String line : lines) {
+            result = Math.max(result, dev.getStringWidth(drawingContext, line));
+        }
+        return result;
     }
 
     /**

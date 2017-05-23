@@ -264,7 +264,16 @@ public final class GPar {
         }
 
         private GridColor getGridColor(int listIndex) {
-            GridColor color = GridColorUtils.gridColorFromString(GridUtils.asString(data[listIndex], index));
+            Object value = data[listIndex];
+            String strValue = null;
+            if (value instanceof String) {
+                strValue = (String) value;
+            } else if (value instanceof RAbstractStringVector && ((RAbstractStringVector) value).getLength() > 0) {
+                strValue = ((RAbstractStringVector) value).getDataAt(listIndex % ((RAbstractStringVector) value).getLength());
+            } else {
+                return GridColor.TRANSPARENT;
+            }
+            GridColor color = GridColorUtils.gridColorFromString(strValue);
             double alpha = asDouble(data[GP_ALPHA], index);
             if (alpha != 1.) {
                 int newAlpha = Math.min(255, (int) (alpha * ((color.getAlpha() / 255.0) * 255)));
