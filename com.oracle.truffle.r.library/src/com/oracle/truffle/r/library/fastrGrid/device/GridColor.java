@@ -33,11 +33,19 @@ public final class GridColor {
 
     private final int value;
 
+    private GridColor(int value) {
+        this.value = value;
+    }
+
     public GridColor(int red, int green, int blue, int alpha) {
         value = ((alpha & 0xFF) << 24) |
                         ((red & 0xFF) << 16) |
                         ((green & 0xFF) << 8) |
                         (blue & 0xFF);
+    }
+
+    public static GridColor fromRawValue(int value) {
+        return new GridColor(value);
     }
 
     public int getRed() {
@@ -54,6 +62,10 @@ public final class GridColor {
 
     public int getAlpha() {
         return (value >> 24) & 0xff;
+    }
+
+    public int getRawValue() {
+        return value;
     }
 
     @Override

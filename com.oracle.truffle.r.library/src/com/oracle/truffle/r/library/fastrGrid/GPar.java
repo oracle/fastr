@@ -18,6 +18,7 @@ import static com.oracle.truffle.r.library.fastrGrid.GridUtils.getDataAtMod;
 import java.util.Arrays;
 import java.util.function.Function;
 
+import com.oracle.truffle.r.library.fastrGrid.GridState.GridPalette;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContextDefaults;
 import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
@@ -25,6 +26,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -265,21 +267,65 @@ public final class GPar {
 
         private GridColor getGridColor(int listIndex) {
             Object value = data[listIndex];
+            GridColor color = getPaletteColor(value);
+            if (color != null) {
+                return color;
+            }
+
             String strValue = null;
             if (value instanceof String) {
                 strValue = (String) value;
             } else if (value instanceof RAbstractStringVector && ((RAbstractStringVector) value).getLength() > 0) {
-                strValue = ((RAbstractStringVector) value).getDataAt(listIndex % ((RAbstractStringVector) value).getLength());
+                strValue = ((RAbstractStringVector) value).getDataAt(index % ((RAbstractStringVector) value).getLength());
             } else {
                 return GridColor.TRANSPARENT;
             }
-            GridColor color = GridColorUtils.gridColorFromString(strValue);
+
+            color = GridColorUtils.gridColorFromString(strValue);
             double alpha = asDouble(data[GP_ALPHA], index);
             if (alpha != 1.) {
                 int newAlpha = Math.min(255, (int) (alpha * ((color.getAlpha() / 255.0) * 255)));
                 return new GridColor(color.getRed(), color.getGreen(), color.getBlue(), newAlpha);
             } else {
                 return color;
+            }
+        }
+
+        private GridColor getPaletteColor(Object colorIdIn) {
+            Object colorId = colorIdIn;
+            if (colorId instanceof RAbstractVector) {
+                RAbstractVector vec = (RAbstractVector) colorId;
+                colorId = vec.getDataAtAsObject(index % vec.getLength());
+            }
+            int paletteIdx = RRuntime.INT_NA;
+            if (colorId instanceof Integer) {
+                paletteIdx = (int) colorId;
+            } else if (colorId instanceof Double && !RRuntime.isNA((Double) colorId)) {
+                paletteIdx = (int) (double) colorId;
+            } else if (colorId instanceof String && !RRuntime.isNA((String) colorId)) {
+                paletteIdx = paletteIdxFromString((String) colorId);
+            } else if (colorId instanceof Byte && !RRuntime.isNA((byte) colorId)) {
+                paletteIdx = (int) (byte) colorId;
+            }
+            if (RRuntime.isNA(paletteIdx)) {
+                return null;
+            }
+            if (paletteIdx < 0) {
+                throw RError.error(RError.NO_CALLER, Message.GENERIC, Utils.stringFormat("numerical color values must be >= 0, found %d", paletteIdx));
+            }
+            if (paletteIdx == 0) {
+                return GridColor.TRANSPARENT;
+            }
+            GridPalette palette = GridContext.getContext().getGridState().getPalette();
+            GridColor result = palette.colors[(paletteIdx - 1) % palette.colors.length];
+            return result; // one based index
+        }
+
+        private int paletteIdxFromString(String colorId) {
+            try {
+                return Integer.parseInt(colorId, 10);
+            } catch (NumberFormatException ex) {
+                return RRuntime.INT_NA;
             }
         }
 
