@@ -25,6 +25,8 @@ package com.oracle.truffle.r.library.fastrGrid;
 import com.oracle.truffle.r.library.fastrGrid.DisplayList.LGetDisplayListElement;
 import com.oracle.truffle.r.library.fastrGrid.DisplayList.LInitDisplayList;
 import com.oracle.truffle.r.library.fastrGrid.DisplayList.LSetDisplayListOn;
+import com.oracle.truffle.r.library.fastrGrid.PaletteExternals.CPalette;
+import com.oracle.truffle.r.library.fastrGrid.PaletteExternals.CPalette2;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevCairo;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevCurr;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevHoldFlush;
@@ -75,6 +77,10 @@ public final class FastRGridExternalLookup {
                 return SavePlot.create();
             case "X11":
                 return new InitWindowedDevice();
+            case "palette":
+                return CPalette.create();
+            case "palette2":
+                return CPalette2.create();
             default:
                 return null;
         }

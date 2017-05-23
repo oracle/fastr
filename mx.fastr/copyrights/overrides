@@ -770,6 +770,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/GridLine
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/ViewPortTransform.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LGridDirty.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/GridColorUtils.java,gnu_r.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/PaletteExternals.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/LCircle.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/EdgeDetection.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/GridTextNode.java,gnu_r_murrel_core.copyright

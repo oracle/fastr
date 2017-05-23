@@ -14,13 +14,34 @@ package com.oracle.truffle.r.library.fastrGrid;
 import java.util.HashMap;
 import java.util.Locale;
 
+import com.oracle.truffle.r.library.fastrGrid.GridState.GridPalette;
 import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 
 public final class GridColorUtils {
+
+    private static GridPalette defaultPalette;
+
     private GridColorUtils() {
         // only static members
+    }
+
+    public static GridPalette getDefaultPalette() {
+        if (defaultPalette == null) {
+            // Note: default palette copied from GNU R
+            defaultPalette = new GridPalette(new String[]{
+                            "black",
+                            "red",
+                            "green3",
+                            "blue",
+                            "cyan",
+                            "magenta",
+                            "yellow",
+                            "grey"
+            });
+        }
+        return defaultPalette;
     }
 
     /**

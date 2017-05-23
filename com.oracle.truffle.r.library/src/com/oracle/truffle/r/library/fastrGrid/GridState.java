@@ -13,6 +13,7 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import java.util.function.Supplier;
 
+import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -21,6 +22,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public final class GridState {
     private REnvironment gridEnv;
     private GridDeviceState devState;
+    private GridPalette palette;
 
     /**
      * Current grob being drawn (for determining the list of grobs to search when evaluating a
@@ -87,6 +89,14 @@ public final class GridState {
         devState.displayListIndex = newValue;
     }
 
+    public GridPalette getPalette() {
+        return palette == null ? GridColorUtils.getDefaultPalette() : palette;
+    }
+
+    public void setPalette(GridPalette palette) {
+        this.palette = palette;
+    }
+
     public void init(REnvironment gridEnv) {
         this.gridEnv = gridEnv;
         this.currentGrob = RNull.instance;
@@ -151,6 +161,28 @@ public final class GridState {
 
     public double getScale() {
         return devState.scale;
+    }
+
+    public static final class GridPalette {
+        public final GridColor[] colors;
+        public final String[] colorNames;
+
+        public GridPalette(String[] colorNames) {
+            this.colorNames = colorNames;
+            colors = new GridColor[colorNames.length];
+            for (int i = 0; i < colorNames.length; i++) {
+                colors[i] = GridColorUtils.gridColorFromString(colorNames[i]);
+            }
+        }
+
+        public GridPalette(int[] colors) {
+            this.colors = new GridColor[colors.length];
+            colorNames = new String[colors.length];
+            for (int i = 0; i < colors.length; i++) {
+                this.colors[i] = GridColor.fromRawValue(colors[i]);
+                colorNames[i] = GridColorUtils.gridColorToRString(this.colors[i]);
+            }
+        }
     }
 
     static final class GridDeviceState {
