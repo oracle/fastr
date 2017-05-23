@@ -98,7 +98,7 @@ public class FastRContext {
     private static void handleSharedContexts(ContextKind contextKind) {
         if (contextKind == ContextKind.SHARE_ALL) {
             RContext current = RContext.getInstance();
-            if (EvalThread.threads.size() == 0 && (current.isInitial() || current.getKind() == ContextKind.SHARE_PARENT_RW)) {
+            if (EvalThread.threadCnt.get() == 0 && (current.isInitial() || current.getKind() == ContextKind.SHARE_PARENT_RW)) {
                 ContextInfo.resetMultiSlotIndexGenerator();
             } else {
                 throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Shared contexts can be created only if no other child contexts exist");
