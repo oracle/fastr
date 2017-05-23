@@ -31,6 +31,7 @@ import java.util.TimeZone;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -228,10 +229,14 @@ public final class RContext extends com.oracle.truffle.api.ExecutionContext impl
 
         public static final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
 
+        /** We use a separate counter for threads since ConcurrentHashMap.size() is not reliable. */
+        public static final AtomicInteger threadCnt = new AtomicInteger(0);
+
         public EvalThread(ContextInfo info, Source source) {
             super(null);
             this.info = info;
             this.source = source;
+            threadCnt.incrementAndGet();
             threads.put(info.getId(), this);
         }
 
@@ -249,6 +254,7 @@ public final class RContext extends com.oracle.truffle.api.ExecutionContext impl
             } finally {
                 vm.dispose();
                 threads.remove(info.getId());
+                threadCnt.decrementAndGet();
             }
         }
 
