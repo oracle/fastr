@@ -111,4 +111,10 @@ stopCluster.SHAREDcluster <- function(cl) {
     }
 }
 
+## manually register S3 generic methods
+registerS3method("closeNode", "SHAREDnode", closeNode.SHAREDnode) 
+registerS3method("sendData", "SHAREDnode", sendData.SHAREDnode) 
+registerS3method("recvData", "SHAREDnode", recvData.SHAREDnode) 
+registerS3method("recvOneData", "SHAREDcluster", recvOneData.SHAREDcluster) 
+registerS3method("stopCluster", "SHAREDcluster", stopCluster.SHAREDcluster) 
 }), asNamespace("parallel"))
