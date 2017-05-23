@@ -42,9 +42,9 @@ public abstract class Deparse extends RBuiltinNode.Arg5 {
     @TruffleBoundary
     protected RStringVector deparse(Object expr, int widthCutoffArg, boolean backtick, int control, int nlines) {
         int widthCutoff = widthCutoffArg;
-        if (widthCutoff == RRuntime.INT_NA || widthCutoff < RDeparse.MIN_Cutoff || widthCutoff > RDeparse.MAX_Cutoff) {
+        if (widthCutoff == RRuntime.INT_NA || widthCutoff < RDeparse.MIN_CUTOFF || widthCutoff > RDeparse.MAX_CUTOFF) {
             warning(RError.Message.DEPARSE_INVALID_CUTOFF);
-            widthCutoff = RDeparse.DEFAULT_Cutoff;
+            widthCutoff = RDeparse.DEFAULT_CUTOFF;
         }
 
         String[] data = RDeparse.deparse(expr, widthCutoff, backtick, control, nlines).split("\n");

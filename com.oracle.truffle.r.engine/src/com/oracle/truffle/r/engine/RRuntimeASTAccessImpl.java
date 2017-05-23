@@ -438,7 +438,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         // This checks for the specific structure of replacements
         RLanguage replacement = ReplacementDispatchNode.getRLanguage(rl);
         RLanguage elem = replacement == null ? rl : replacement;
-        String string = RDeparse.deparse(elem, RDeparse.DEFAULT_Cutoff, true, RDeparse.KEEPINTEGER, -1);
+        String string = RDeparse.deparse(elem, RDeparse.DEFAULT_CUTOFF, true, RDeparse.KEEPINTEGER, -1);
         return string.split("\n")[0];
     }
 

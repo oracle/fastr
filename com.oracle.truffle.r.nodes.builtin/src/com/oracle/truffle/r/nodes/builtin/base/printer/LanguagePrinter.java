@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,6 @@ final class LanguagePrinter extends AbstractValuePrinter<RLanguage> {
     @Override
     @TruffleBoundary
     protected void printValue(RLanguage language, PrintContext printCtx) throws IOException {
-        printCtx.output().print(RDeparse.deparse(language, RDeparse.DEFAULT_Cutoff, true, RDeparse.KEEPINTEGER, -1));
+        printCtx.output().print(RDeparse.deparse(language, RDeparse.DEFAULT_CUTOFF, true, RDeparse.KEEPINTEGER, -1));
     }
 }

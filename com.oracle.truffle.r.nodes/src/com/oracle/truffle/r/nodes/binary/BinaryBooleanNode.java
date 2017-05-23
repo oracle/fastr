@@ -150,7 +150,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
     }
 
     private static RString deparseSymbolOrLang(Object val) {
-        return RString.valueOf(RDeparse.deparse(val, RDeparse.MAX_Cutoff, false, RDeparse.KEEPINTEGER, -1));
+        return RString.valueOf(RDeparse.deparse(val, RDeparse.MAX_CUTOFF, false, RDeparse.KEEPINTEGER, -1));
     }
 
     protected BinaryBooleanNode createRecursive() {

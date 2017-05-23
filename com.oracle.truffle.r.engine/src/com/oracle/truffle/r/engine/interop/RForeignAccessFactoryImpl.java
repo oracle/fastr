@@ -35,16 +35,18 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RForeignAccessFactory;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
@@ -127,6 +129,10 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return ActiveBindingMRForeign.ACCESS;
         } else if (obj instanceof RInteropScalar) {
             return RInteropScalarMRForeign.ACCESS;
+        } else if (obj instanceof RMissing) {
+            return RMissingMRForeign.ACCESS;
+        } else if (obj instanceof REmpty) {
+            return REmptyMRForeign.ACCESS;
 
         } else {
             if (obj instanceof RAbstractVector) {
