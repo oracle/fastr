@@ -84,7 +84,7 @@ public abstract class Attributes extends RBuiltinNode.Arg1 {
             } else {
                 return createResult((RAttributable) object, false);
             }
-        } else if (object == RNull.instance) {
+        } else if (object == RNull.instance || RRuntime.isForeignObject(object)) {
             return RNull.instance;
         } else {
             throw RError.nyi(this, "object cannot be attributed");

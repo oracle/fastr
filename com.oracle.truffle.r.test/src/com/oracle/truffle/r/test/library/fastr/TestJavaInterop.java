@@ -339,6 +339,13 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("tc <- .fastr.java.class('" + TestNamesClassMap.class.getName() + "'); t <- .fastr.interop.new(tc); sort(names(t$m()))", "c('one', 'two')");
     }
 
+    @Test
+    public void testAttributes() {
+        assertEvalFastR("to <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); attributes(to)", "NULL");
+        assertEvalFastR("to <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); attr(to, 'a')<-'a'", "cat('Error in attr(to, \"a\") <- \"a\" : external object cannot be attributed\n')");
+        assertEvalFastR("to <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); attr(to, which = 'a')", "cat('Error in attr(to, which = \"a\") : external object cannot be attributed\n')");
+    }
+
     private String getRValue(Object value) {
         if (value == null) {
             return "NULL";
