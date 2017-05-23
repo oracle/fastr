@@ -35,9 +35,11 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -47,6 +49,9 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  *
  * TODO Can we find a way to efficiently write the specializations as generics? The code is
  * identical except for the argument type.
+ *
+ * TODO: GNU R preserves the corresponding values of names attribute. There are (ignored) tests for
+ * this in TestBuiltin_split.
  */
 @RBuiltin(name = "split", kind = INTERNAL, parameterNames = {"x", "f"}, behavior = PURE)
 public abstract class Split extends RBuiltinNode.Arg2 {
@@ -62,9 +67,37 @@ public abstract class Split extends RBuiltinNode.Arg2 {
         Casts.noCasts(Split.class);
     }
 
-    public static class SplitTemplate {
-        @SuppressWarnings("unused") private int[] collectResultsSize;
-        @SuppressWarnings("unused") private int nLevels;
+    @Specialization
+    protected RList split(RAbstractListVector x, RAbstractIntVector f) {
+        int[] factor = f.materialize().getDataWithoutCopying();
+        RStringVector names = getLevelNode.execute(f);
+        final int nLevels = getNLevels(names);
+
+        // initialise result arrays
+        Object[][] collectResults = new Object[nLevels][];
+        int[] collectResultSize = new int[nLevels];
+        for (int i = 0; i < collectResults.length; i++) {
+            collectResults[i] = new Object[INITIAL_SIZE];
+        }
+
+        // perform split
+        for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factor.length)) {
+            int resultIndex = factor[fi] - 1; // a factor is a 1-based int vector
+            Object[] collect = collectResults[resultIndex];
+            if (collect.length == collectResultSize[resultIndex]) {
+                collectResults[resultIndex] = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                collect = collectResults[resultIndex];
+            }
+            collect[collectResultSize[resultIndex]++] = x.getDataAt(i);
+        }
+
+        // assemble result vectors and level names
+        Object[] results = new Object[nLevels];
+        for (int i = 0; i < nLevels; i++) {
+            results[i] = RDataFactory.createList(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]));
+        }
+
+        return RDataFactory.createList(results, names);
     }
 
     @Specialization
@@ -194,6 +227,39 @@ public abstract class Split extends RBuiltinNode.Arg2 {
         Object[] results = new Object[nLevels];
         for (int i = 0; i < nLevels; i++) {
             results[i] = RDataFactory.createLogicalVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete());
+        }
+
+        return RDataFactory.createList(results, names);
+    }
+
+    @Specialization
+    protected RList split(RRawVector x, RAbstractIntVector f) {
+        int[] factor = f.materialize().getDataWithoutCopying();
+        RStringVector names = getLevelNode.execute(f);
+        final int nLevels = getNLevels(names);
+
+        // initialise result arrays
+        byte[][] collectResults = new byte[nLevels][];
+        int[] collectResultSize = new int[nLevels];
+        for (int i = 0; i < collectResults.length; i++) {
+            collectResults[i] = new byte[INITIAL_SIZE];
+        }
+
+        // perform split
+        for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factor.length)) {
+            int resultIndex = factor[fi] - 1; // a factor is a 1-based int vector
+            byte[] collect = collectResults[resultIndex];
+            if (collect.length == collectResultSize[resultIndex]) {
+                collectResults[resultIndex] = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                collect = collectResults[resultIndex];
+            }
+            collect[collectResultSize[resultIndex]++] = x.getDataAt(i).getValue();
+        }
+
+        // assemble result vectors and level names
+        Object[] results = new Object[nLevels];
+        for (int i = 0; i < nLevels; i++) {
+            results[i] = RDataFactory.createRawVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]));
         }
 
         return RDataFactory.createList(results, names);
