@@ -598,11 +598,14 @@ public class DebugHandling {
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!RContext.getInstance().stateInstrumentation.debugGloballyDisabled()) {
                 CompilerDirectives.transferToInterpreter();
-                FunctionDefinitionNode fdn = (FunctionDefinitionNode) context.getInstrumentedNode().getRootNode();
-                FunctionStatementsEventListener ensureSingleStep = ensureSingleStep(fdn);
+                RootNode rootNode = context.getInstrumentedNode().getRootNode();
+                if (rootNode instanceof FunctionDefinitionNode) {
+                    FunctionDefinitionNode fdn = (FunctionDefinitionNode) rootNode;
+                    FunctionStatementsEventListener ensureSingleStep = ensureSingleStep(fdn);
 
-                functionStatementsEventListener.clearStepInstrument();
-                ensureSingleStep.onEnter(context, frame);
+                    functionStatementsEventListener.clearStepInstrument();
+                    ensureSingleStep.onEnter(context, frame);
+                }
             }
         }
 
