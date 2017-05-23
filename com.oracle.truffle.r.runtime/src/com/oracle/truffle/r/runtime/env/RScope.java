@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.env;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.MessageResolution;
@@ -137,8 +138,16 @@ public final class RScope extends AbstractScope {
         return new RScope(node.getRootNode(), getEnv(frame));
     }
 
-    private static Object getInteropValue(Object value) {
-        return value;
+    /**
+     * Explicitly convert some known types to interop types.
+     */
+    private static Object getInteropValue(Object obj) {
+        if (obj instanceof Frame) {
+            MaterializedFrame materialized = ((Frame) obj).materialize();
+            assert RArguments.isRFrame(materialized);
+            return REnvironment.frameToEnvironment(materialized);
+        }
+        return obj;
     }
 
     static final class VariablesMapObject implements TruffleObject {
