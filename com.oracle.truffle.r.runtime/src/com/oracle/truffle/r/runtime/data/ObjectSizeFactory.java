@@ -22,11 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.ArrayList;
+
 import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.data.RObjectSize.IgnoreObjectHandler;
 import com.oracle.truffle.r.runtime.data.RObjectSize.TypeCustomizer;
 
 public abstract class ObjectSizeFactory {
+
+    private static ArrayList<TypeCustomizerData> typeCustomizers = new ArrayList<>(); // system wide
 
     static {
         String prop = System.getProperty("fastr.objectsize.factory.class");
@@ -56,6 +60,26 @@ public abstract class ObjectSizeFactory {
      */
     public abstract long getObjectSize(Object obj, IgnoreObjectHandler ignoreObjectHandler);
 
-    public abstract void registerTypeCustomizer(Class<?> klass, TypeCustomizer typeCustomizer);
+    public void registerTypeCustomizer(Class<?> klass, TypeCustomizer typeCustomizer) {
+        typeCustomizers.add(new TypeCustomizerData(klass, typeCustomizer));
+    }
 
+    protected static TypeCustomizer getCustomizer(Class<?> objClass) {
+        for (TypeCustomizerData customizer : typeCustomizers) {
+            if (customizer.type.isAssignableFrom(objClass)) {
+                return customizer.customizer;
+            }
+        }
+        return null;
+    }
+
+    private static final class TypeCustomizerData {
+        private final TypeCustomizer customizer;
+        private final Class<?> type;
+
+        private TypeCustomizerData(Class<?> type, TypeCustomizer customizer) {
+            this.customizer = customizer;
+            this.type = type;
+        }
+    }
 }

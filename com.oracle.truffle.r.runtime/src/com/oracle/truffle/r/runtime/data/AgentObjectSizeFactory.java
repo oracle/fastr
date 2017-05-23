@@ -59,7 +59,6 @@ import com.oracle.truffle.r.runtime.data.RObjectSize.TypeCustomizer;
 public class AgentObjectSizeFactory extends ObjectSizeFactory {
 
     private final Map<Class<?>, ArrayList<Field>> objectFieldsMap = new HashMap<>();
-    private static Map<Class<?>, TypeCustomizer> customizerMap = new HashMap<>(); // system wide
 
     public AgentObjectSizeFactory() {
         if (!ObjSizeAgent.isInitialized()) {
@@ -207,20 +206,5 @@ public class AgentObjectSizeFactory extends ObjectSizeFactory {
                 objectFields.add(field);
             }
         }
-    }
-
-    private static TypeCustomizer getCustomizer(Class<?> objClass) {
-        for (Map.Entry<Class<?>, TypeCustomizer> entry : customizerMap.entrySet()) {
-            if (entry.getKey().isAssignableFrom(objClass)) {
-                return entry.getValue();
-            }
-        }
-        return null;
-
-    }
-
-    @Override
-    public void registerTypeCustomizer(Class<?> klass, TypeCustomizer typeCustomizer) {
-        customizerMap.put(klass, typeCustomizer);
     }
 }
