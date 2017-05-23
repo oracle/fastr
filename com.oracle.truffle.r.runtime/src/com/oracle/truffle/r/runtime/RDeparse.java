@@ -26,8 +26,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 
-import javax.xml.bind.DatatypeConverter;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -342,7 +340,7 @@ public class RDeparse {
                 if (digest == null) {
                     digest = MessageDigest.getInstance("SHA-256");
                 }
-                String printHexBinary = DatatypeConverter.printHexBinary(digest.digest(sb.toString().getBytes()));
+                String printHexBinary = Utils.toHexString(digest.digest(sb.toString().getBytes()));
                 assert printHexBinary.length() > 10;
 
                 // just use the first 10 hex digits to have a nicer file name
