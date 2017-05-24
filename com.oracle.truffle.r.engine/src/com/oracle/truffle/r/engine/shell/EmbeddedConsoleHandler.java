@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  * have be lazy about that.
  *
  */
-public class EmbeddedConsoleHandler implements ConsoleHandler {
+public class EmbeddedConsoleHandler extends ConsoleHandler {
 
     private final RStartParams startParams;
     /**

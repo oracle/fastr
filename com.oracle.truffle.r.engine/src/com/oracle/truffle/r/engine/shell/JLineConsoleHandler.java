@@ -39,7 +39,7 @@ import jline.console.UserInterruptException;
 import jline.console.history.FileHistory;
 import jline.console.history.History;
 
-class JLineConsoleHandler implements ConsoleHandler {
+class JLineConsoleHandler extends ConsoleHandler {
     private final ConsoleReader console;
     private final boolean isInteractive;
     private final PrintWriter printWriter;

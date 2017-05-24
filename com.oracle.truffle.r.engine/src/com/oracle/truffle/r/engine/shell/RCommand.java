@@ -54,11 +54,13 @@ import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.DefaultConsoleHandler;
+import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 import jline.console.UserInterruptException;
 
@@ -190,6 +192,7 @@ public class RCommand {
 
     private static final Source GET_ECHO = RSource.fromTextInternal("invisible(getOption('echo'))", RSource.Internal.GET_ECHO);
     private static final Source QUIT_EOF = RSource.fromTextInternal("quit(\"default\", 0L, TRUE)", RSource.Internal.QUIT_EOF);
+    private static final Source GET_CONTINUE_PROMPT = RSource.fromTextInternal("invisible(getOption('continue'))", RSource.Internal.GET_CONTINUE_PROMPT);
 
     /**
      * The read-eval-print loop, which can take input from a console, command line expression or a
@@ -221,10 +224,10 @@ public class RCommand {
                         continue;
                     }
 
-                    String continuePrompt = getContinuePrompt();
+                    String continuePrompt = getContinuePrompt(vm);
                     StringBuffer sb = new StringBuffer(input);
                     Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.SHELL_INPUT);
-                    boolean hasExecutor = RContext.getInstance().hasExecutor();
+                    boolean hasExecutor = hasExectuor(vm);
                     while (true) {
                         lastStatus = 0;
                         try {
@@ -320,7 +323,21 @@ public class RCommand {
         }
     }
 
-    private static String getContinuePrompt() {
-        return RRuntime.asString(RRuntime.asAbstractVector(RContext.getInstance().stateROptions.getValue("continue")));
+    private static String getContinuePrompt(PolyglotEngine vm) {
+        PolyglotEngine.Value echoValue = vm.eval(GET_CONTINUE_PROMPT);
+        Object echo = echoValue.get();
+        if (echo instanceof String) {
+            return (String) echo;
+        } else if (echo instanceof TruffleObject) {
+            RStringVector promptVec = echoValue.as(RStringVector.class);
+            return promptVec.getDataAt(0);
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
+
+    private static boolean hasExectuor(PolyglotEngine vm) {
+        return vm.eval(Engine.GET_CONTEXT).as(RContext.class).hasExecutor();
+    }
+
 }

@@ -31,24 +31,27 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
  * implementations for different contexts. Since I/O is involved, all methods are tagged with
  * {@link TruffleBoundary} as a hint that so should the associated implementation methods.
  */
-public interface ConsoleHandler {
+public abstract class ConsoleHandler {
+
+    private RContext ctx;
+
     /**
      * Normal output with a new line.
      */
     @TruffleBoundary
-    void println(String s);
+    public abstract void println(String s);
 
     /**
      * Normal output without a newline.
      */
     @TruffleBoundary
-    void print(String s);
+    public abstract void print(String s);
 
     /**
      * Formatted output.
      */
     @TruffleBoundary
-    default void printf(String format, Object... args) {
+    public void printf(String format, Object... args) {
         print(String.format(format, args));
     }
 
@@ -58,20 +61,20 @@ public interface ConsoleHandler {
      * @param s
      */
     @TruffleBoundary
-    void printErrorln(String s);
+    public abstract void printErrorln(String s);
 
     /**
      * Error output without a newline.
      */
     @TruffleBoundary
-    void printError(String s);
+    public abstract void printError(String s);
 
     /**
      * Read a line of input, newline is <b>NOT</b> included in result. Returns null if
      * {@link #isInteractive() == false}. TODO worry about "\r\n"?
      */
     @TruffleBoundary
-    String readLine();
+    public abstract String readLine();
 
     /**
      * Denote whether the FastR instance is running in 'interactive' mode. This can be set in a
@@ -79,27 +82,35 @@ public interface ConsoleHandler {
      * final once set.
      */
     @TruffleBoundary
-    boolean isInteractive();
+    public abstract boolean isInteractive();
 
     /**
      * Get the current prompt.
      */
     @TruffleBoundary
-    String getPrompt();
+    public abstract String getPrompt();
 
     /**
      * Set the R prompt.
      */
     @TruffleBoundary
-    void setPrompt(String prompt);
+    public abstract void setPrompt(String prompt);
 
-    String getInputDescription();
+    public abstract String getInputDescription();
 
-    default void setHistoryFrom(@SuppressWarnings("unused") File file) {
+    public void setContext(RContext ctx) {
+        this.ctx = ctx;
+    }
+
+    public RContext getContext() {
+        return ctx;
+    }
+
+    public void setHistoryFrom(@SuppressWarnings("unused") File file) {
         // by default, do nothing
     }
 
-    default void flushHistory() {
+    public void flushHistory() {
         // by default, do nothing
     }
 }

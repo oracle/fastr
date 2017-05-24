@@ -94,6 +94,13 @@ public final class ContextInfo {
         }
         PolyglotEngine newVM = builder.config("application/x-r", CONFIG_KEY, this).build();
         this.vm = newVM;
+
+        // retrieve context and set for console handler
+        if (consoleHandler != null) {
+            RContext ctx = newVM.eval(Engine.GET_CONTEXT).as(RContext.class);
+            consoleHandler.setContext(ctx);
+        }
+
         return newVM;
     }
 

@@ -118,7 +118,8 @@ public class TestJLineConsoleCompleter {
         }
     }
 
-    private class DummyConsoleHandler implements ConsoleHandler {
+    private class DummyConsoleHandler extends ConsoleHandler {
+
         @Override
         public void println(String s) {
         }
