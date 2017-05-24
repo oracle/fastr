@@ -118,8 +118,7 @@ public class TestJLineConsoleCompleter {
         }
     }
 
-    private class DummyConsoleHandler implements ConsoleHandler {
-        private RContext ctx;
+    private class DummyConsoleHandler extends ConsoleHandler {
 
         @Override
         public void println(String s) {
@@ -159,16 +158,6 @@ public class TestJLineConsoleCompleter {
         @Override
         public String getInputDescription() {
             return "";
-        }
-
-        @Override
-        public void setContext(RContext ctx) {
-            this.ctx = ctx;
-        }
-
-        @Override
-        public RContext getContext() {
-            return ctx;
         }
     }
 }

@@ -30,7 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
 
-class StringConsoleHandler implements ConsoleHandler {
+class StringConsoleHandler extends ConsoleHandler {
     private final PrintStream output;
     private final List<String> lines;
     private final String inputDescription;

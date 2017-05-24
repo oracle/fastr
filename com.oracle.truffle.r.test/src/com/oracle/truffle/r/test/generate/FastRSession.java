@@ -66,10 +66,9 @@ public final class FastRSession implements RSession {
      * A (virtual) console handler that collects the output in a {@link StringBuilder} for
      * comparison. It does not separate error output as the test analysis doesn't need it.
      */
-    public static class TestConsoleHandler implements ConsoleHandler {
+    public static class TestConsoleHandler extends ConsoleHandler {
         private final StringBuilder buffer = new StringBuilder();
         private final Deque<String> input = new ArrayDeque<>();
-        private RContext ctx;
 
         public void setInput(String[] lines) {
             input.clear();
@@ -129,16 +128,6 @@ public final class FastRSession implements RSession {
         @Override
         public String getInputDescription() {
             return "<test input>";
-        }
-
-        @Override
-        public void setContext(RContext ctx) {
-            this.ctx = ctx;
-        }
-
-        @Override
-        public RContext getContext() {
-            return ctx;
         }
     }
 

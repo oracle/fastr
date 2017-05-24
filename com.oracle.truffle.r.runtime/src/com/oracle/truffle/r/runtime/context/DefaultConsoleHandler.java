@@ -29,12 +29,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
-public class DefaultConsoleHandler implements ConsoleHandler {
+public class DefaultConsoleHandler extends ConsoleHandler {
 
     private final BufferedReader in;
     private final PrintStream out;
     private String prompt;
-    private RContext ctx;
 
     public DefaultConsoleHandler(InputStream in, OutputStream out) {
         this.in = new BufferedReader(new InputStreamReader(in));
@@ -91,15 +90,5 @@ public class DefaultConsoleHandler implements ConsoleHandler {
     @Override
     public String getInputDescription() {
         return "<PolyglotEngine env input>";
-    }
-
-    @Override
-    public void setContext(RContext ctx) {
-        this.ctx = ctx;
-    }
-
-    @Override
-    public RContext getContext() {
-        return ctx;
     }
 }

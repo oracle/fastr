@@ -33,18 +33,16 @@ import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
-import com.oracle.truffle.r.runtime.context.RContext;
 
 import jline.console.ConsoleReader;
 import jline.console.UserInterruptException;
 import jline.console.history.FileHistory;
 import jline.console.history.History;
 
-class JLineConsoleHandler implements ConsoleHandler {
+class JLineConsoleHandler extends ConsoleHandler {
     private final ConsoleReader console;
     private final boolean isInteractive;
     private final PrintWriter printWriter;
-    private RContext ctx;
 
     JLineConsoleHandler(RStartParams startParams, InputStream inStream, OutputStream outStream) {
         try {
@@ -141,15 +139,5 @@ class JLineConsoleHandler implements ConsoleHandler {
                 // silent - no history appended
             }
         }
-    }
-
-    @Override
-    public void setContext(RContext ctx) {
-        this.ctx = ctx;
-    }
-
-    @Override
-    public RContext getContext() {
-        return ctx;
     }
 }

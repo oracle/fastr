@@ -67,6 +67,7 @@ public class JLineConsoleCompleter implements Completer {
         return cursor;
     }
 
+    @SuppressWarnings("try")
     private int completeImpl(String buffer, int cursor, List<CharSequence> candidates) {
         if (buffer.isEmpty()) {
             return cursor;
