@@ -43,9 +43,24 @@ public abstract class ImplicitClassHierarchyNode extends UnaryNode {
 
     private static final RStringVector implicitArrayClass = ShareObjectNode.sharePermanent(RDataFactory.createStringVector("array"));
     private static final RStringVector implicitMatrixClass = ShareObjectNode.sharePermanent(RDataFactory.createStringVector("matrix"));
+    private static final RStringVector dispatchDoubleImplicitClass = ShareObjectNode.sharePermanent(RDataFactory.createStringVector(new String[]{"double", "numeric"}, RDataFactory.COMPLETE_VECTOR));
+    private static final RStringVector dispatchIntegerImplicitClass = ShareObjectNode.sharePermanent(RDataFactory.createStringVector(new String[]{"integer", "numeric"}, RDataFactory.COMPLETE_VECTOR));
     @CompilationFinal(dimensions = 1) private static final RStringVector[] implicitClasses = new RStringVector[RType.values().length];
 
-    public static RStringVector getImplicitClass(RType type) {
+    private final boolean forDispatch;
+
+    protected ImplicitClassHierarchyNode(boolean forDispatch) {
+        this.forDispatch = forDispatch;
+    }
+
+    public static RStringVector getImplicitClass(RType type, boolean forDispatch) {
+        if (forDispatch) {
+            if (type == RType.Double) {
+                return dispatchDoubleImplicitClass;
+            } else if (type == RType.Integer) {
+                return dispatchIntegerImplicitClass;
+            }
+        }
         RStringVector result = implicitClasses[type.ordinal()];
         if (result == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -57,27 +72,27 @@ public abstract class ImplicitClassHierarchyNode extends UnaryNode {
     public abstract RStringVector execute(Object arg);
 
     @Specialization
-    protected static RStringVector get(@SuppressWarnings("unused") int value) {
-        return getImplicitClass(RType.Integer);
+    protected RStringVector get(@SuppressWarnings("unused") int value) {
+        return getImplicitClass(RType.Integer, forDispatch);
     }
 
     @Specialization
-    protected static RStringVector get(@SuppressWarnings("unused") double value) {
-        return getImplicitClass(RType.Double);
+    protected RStringVector get(@SuppressWarnings("unused") double value) {
+        return getImplicitClass(RType.Double, forDispatch);
     }
 
     @Specialization
-    protected static RStringVector get(@SuppressWarnings("unused") String value) {
-        return getImplicitClass(RType.Character);
+    protected RStringVector get(@SuppressWarnings("unused") String value) {
+        return getImplicitClass(RType.Character, forDispatch);
     }
 
     @Specialization
-    protected static RStringVector get(@SuppressWarnings("unused") byte value) {
-        return getImplicitClass(RType.Logical);
+    protected RStringVector get(@SuppressWarnings("unused") byte value) {
+        return getImplicitClass(RType.Logical, forDispatch);
     }
 
     @Specialization(limit = "5", guards = "value.getClass() == valueClass")
-    protected static RStringVector getCachedClass(RTypedValue value,
+    protected RStringVector getCachedClass(RTypedValue value,
                     @Cached("value.getClass()") Class<? extends RTypedValue> valueClass,
                     @Cached("createBinaryProfile()") ConditionProfile isArray,
                     @Cached("createBinaryProfile()") ConditionProfile isMatrix,
@@ -86,7 +101,7 @@ public abstract class ImplicitClassHierarchyNode extends UnaryNode {
     }
 
     @Specialization(replaces = "getCachedClass", limit = "5", guards = "value.getRType() == type")
-    protected static RStringVector getCachedType(RTypedValue value,
+    protected RStringVector getCachedType(RTypedValue value,
                     @Cached("value.getRType()") RType type,
                     @Cached("createBinaryProfile()") ConditionProfile isArray,
                     @Cached("createBinaryProfile()") ConditionProfile isMatrix,
@@ -97,28 +112,28 @@ public abstract class ImplicitClassHierarchyNode extends UnaryNode {
         } else if (isArray.profile(GetDimAttributeNode.isArray(dimensions))) {
             return implicitArrayClass;
         } else {
-            return getImplicitClass(type);
+            return getImplicitClass(type, forDispatch);
         }
     }
 
     @Specialization(replaces = {"getCachedClass", "getCachedType"})
-    protected static RStringVector get(RTypedValue value,
+    protected RStringVector get(RTypedValue value,
                     @Cached("createBinaryProfile()") ConditionProfile isArray,
                     @Cached("createBinaryProfile()") ConditionProfile isMatrix,
                     @Cached("create()") GetDimAttributeNode getDim) {
         return getCachedType(value, value.getRType(), isArray, isMatrix, getDim);
     }
 
-    public static RStringVector getImplicitClass(Object value) {
+    public static RStringVector getImplicitClass(Object value, boolean forDispatch) {
         CompilerAsserts.neverPartOfCompilation();
         if (value instanceof Integer) {
-            return getImplicitClass(RType.Integer);
+            return getImplicitClass(RType.Integer, forDispatch);
         } else if (value instanceof Double) {
-            return getImplicitClass(RType.Double);
+            return getImplicitClass(RType.Double, forDispatch);
         } else if (value instanceof String) {
-            return getImplicitClass(RType.Character);
+            return getImplicitClass(RType.Character, forDispatch);
         } else if (value instanceof Byte) {
-            return getImplicitClass(RType.Logical);
+            return getImplicitClass(RType.Logical, forDispatch);
         } else if (value instanceof RAttributable) {
             RAttributable attributable = (RAttributable) value;
             RIntVector dim = (RIntVector) attributable.getAttr(RRuntime.DIM_ATTR_KEY);
@@ -131,6 +146,6 @@ public abstract class ImplicitClassHierarchyNode extends UnaryNode {
                 }
             }
         }
-        return getImplicitClass(((RTypedValue) value).getRType());
+        return getImplicitClass(((RTypedValue) value).getRType(), forDispatch);
     }
 }

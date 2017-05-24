@@ -27,7 +27,6 @@ import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
@@ -96,7 +95,7 @@ public abstract class S3DispatchFunctions {
          * ignored and a warning is generated.
          */
 
-        @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(true, true);
+        @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNode.createForDispatch(true);
         @Child private PromiseCheckHelperNode promiseCheckHelper;
         @Child private Helper helper = new Helper(false);
 
@@ -294,7 +293,7 @@ public abstract class S3DispatchFunctions {
             }
             if (hierarchy == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                hierarchy = insert(ClassHierarchyNode.createWithImplicit());
+                hierarchy = insert(ClassHierarchyNode.createForDispatch(false));
             }
             return hierarchy.execute(arg);
         }
