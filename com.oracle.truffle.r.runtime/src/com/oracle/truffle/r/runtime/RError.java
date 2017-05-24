@@ -613,6 +613,7 @@ public final class RError extends RuntimeException {
         INVALID_FORMAT_LOGICAL("invalid format '%s'; use format %%d or %%i for logical objects"),
         INVALID_FORMAT_INTEGER("invalid format '%s'; use format %%d, %%i, %%o, %%x or %%X for integer objects"),
         POS_NOT_ALLOWED_WITH_NUMERIC("pos argument not allowed with a numeric value"),
+        OBJ_CANNOT_BE_ATTRIBUTED("external object cannot be attributed"),
         // the following list is incomplete (but like GNU-R)
         INVALID_FORMAT_DOUBLE("invalid format '%s'; use format %%f, %%e, %%g or %%a for numeric objects"),
         INVALID_LOGICAL("'%s' must be TRUE or FALSE"),

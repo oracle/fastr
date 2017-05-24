@@ -339,6 +339,13 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("tc <- .fastr.java.class('" + TestNamesClassMap.class.getName() + "'); t <- .fastr.interop.new(tc); sort(names(t$m()))", "c('one', 'two')");
     }
 
+    @Test
+    public void testAttributes() {
+        assertEvalFastR("to <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); attributes(to)", "NULL");
+        assertEvalFastR("to <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); attr(to, 'a')<-'a'", "cat('Error in attr(to, \"a\") <- \"a\" : external object cannot be attributed\n')");
+        assertEvalFastR("to <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); attr(to, which = 'a')", "cat('Error in attr(to, which = \"a\") : external object cannot be attributed\n')");
+    }
+
     private String getRValue(Object value) {
         if (value == null) {
             return "NULL";
@@ -362,7 +369,7 @@ public class TestJavaInterop extends TestBase {
         }
         if (value.getClass().isArray()) {
             StringBuilder sb = new StringBuilder();
-            sb.append("cat('[1] ");
+            sb.append("cat('[external object]\\n[1] ");
             int lenght = Array.getLength(value);
             for (int i = 0; i < lenght; i++) {
                 if (lenght > 1 && value.getClass().getComponentType() == Boolean.TYPE && (boolean) Array.get(value, i)) {
@@ -374,7 +381,7 @@ public class TestJavaInterop extends TestBase {
                     sb.append(" ");
                 }
             }
-            sb.append("\\nattr(,\"is.truffle.object\")\\n[1] TRUE\\n')");
+            sb.append("\\n')");
             return sb.toString();
         }
         return value.toString();

@@ -101,7 +101,6 @@ public final class ValuePrinterNode extends RBaseNode {
         @Child private Node unboxNode = com.oracle.truffle.api.interop.Message.UNBOX.createNode();
         @Child private Node keysNode = com.oracle.truffle.api.interop.Message.KEYS.createNode();
         @Child private SetFixedAttributeNode namesAttrSetter = SetFixedAttributeNode.createNames();
-        @Child private SetFixedAttributeNode isTruffleObjAttrSetter = SetFixedAttributeNode.create("is.truffle.object");
 
         @TruffleBoundary
         public Object convert(TruffleObject obj) {
@@ -303,7 +302,6 @@ public final class ValuePrinterNode extends RBaseNode {
                             super(length);
                             DynamicObject attrs = RAttributesLayout.createNames(names);
                             initAttributes(attrs);
-                            isTruffleObjAttrSetter.execute(attrs, RRuntime.LOGICAL_TRUE);
                         }
 
                         @Override
@@ -377,23 +375,40 @@ public final class ValuePrinterNode extends RBaseNode {
     }
 
     private Object convertTruffleObject(Object o) {
-        if (o instanceof TruffleObject && !(o instanceof RTypedValue)) {
+        if (RRuntime.isForeignObject(o)) {
             if (convertTruffleObject == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 convertTruffleObject = insert(new ConvertTruffleObjectNode());
             }
             return convertTruffleObject.convert((TruffleObject) o);
         }
-        return o;
+        return null;
     }
 
     public String execute(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
         try {
-            prettyPrint(convertTruffleObject(o), new PrintParameters(digits, quote, naPrint, printGap, right, max, useSource, noOpt), RWriter::new);
+            PrintParameters printParams = new PrintParameters(digits, quote, naPrint, printGap, right, max, useSource, noOpt);
+
+            PrintContext printCtx = PrintContext.enter(this, printParams, RWriter::new);
+            try {
+                prettyPrint(o, printCtx);
+                Object foreignObjectWrapper = convertTruffleObject(o);
+                if (foreignObjectWrapper != null) {
+                    prettyPrint(foreignObjectWrapper, printCtx);
+                }
+            } finally {
+                PrintContext.leave();
+            }
             return null;
         } catch (IOException ex) {
             throw RError.ioError(this, ex);
         }
+    }
+
+    @TruffleBoundary
+    private static void prettyPrint(Object o, PrintContext printCtx) throws IOException {
+        ValuePrinters.INSTANCE.print(o, printCtx);
+        ValuePrinters.printNewLine(printCtx);
     }
 
     private abstract static class TruffleObjectWrapper extends RAttributeStorage implements RAbstractVector {
@@ -401,8 +416,6 @@ public final class ValuePrinterNode extends RBaseNode {
         private final int length;
 
         TruffleObjectWrapper(int length) {
-            initAttributes().define("is.truffle.object", RRuntime.LOGICAL_TRUE);
-
             this.length = length;
         }
 
@@ -546,22 +559,6 @@ public final class ValuePrinterNode extends RBaseNode {
         } finally {
             PrintContext.leave();
         }
-    }
-
-    private String prettyPrint(Object o, PrintParameters printParams, WriterFactory wf) throws IOException {
-        PrintContext printCtx = PrintContext.enter(this, printParams, wf);
-        try {
-            prettyPrint(o, printCtx);
-            return null;
-        } finally {
-            PrintContext.leave();
-        }
-    }
-
-    @TruffleBoundary
-    private static void prettyPrint(Object o, PrintContext printCtx) throws IOException {
-        ValuePrinters.INSTANCE.print(o, printCtx);
-        ValuePrinters.printNewLine(printCtx);
     }
 
     @SuppressWarnings("deprecation")
