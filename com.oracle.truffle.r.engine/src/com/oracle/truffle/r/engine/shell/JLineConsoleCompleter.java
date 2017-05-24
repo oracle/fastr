@@ -22,20 +22,23 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+
 import jline.console.completer.Completer;
 
 public class JLineConsoleCompleter implements Completer {
@@ -64,50 +67,53 @@ public class JLineConsoleCompleter implements Completer {
         return cursor;
     }
 
-    private static int completeImpl(String buffer, int cursor, List<CharSequence> candidates) {
+    private int completeImpl(String buffer, int cursor, List<CharSequence> candidates) {
         if (buffer.isEmpty()) {
             return cursor;
         }
 
-        REnvironment utils = REnvironment.getRegisteredNamespace("utils");
-        Object o = utils.get(".completeToken");
-        if (o instanceof RPromise) {
-            o = PromiseHelperNode.evaluateSlowPath(null, (RPromise) o);
-        }
-        RFunction completeToken;
-        if (o instanceof RFunction) {
-            completeToken = (RFunction) o;
-        } else {
-            return cursor;
-        }
+        try (RCloseable c = RContext.withinContext(console.getContext())) {
 
-        o = utils.get(".CompletionEnv");
-        if (!(o instanceof RPromise)) {
-            return cursor;
-        }
-        REnvironment env = (REnvironment) PromiseHelperNode.evaluateSlowPath(null, (RPromise) o);
-        int start = getStart(buffer, env, cursor);
-        env.safePut("start", start);
-        env.safePut("end", cursor);
-        env.safePut("linebuffer", buffer);
-        env.safePut("token", buffer.substring(start, cursor));
+            REnvironment utils = REnvironment.getRegisteredNamespace("utils");
+            Object o = utils.get(".completeToken");
+            if (o instanceof RPromise) {
+                o = PromiseHelperNode.evaluateSlowPath(null, (RPromise) o);
+            }
+            RFunction completeToken;
+            if (o instanceof RFunction) {
+                completeToken = (RFunction) o;
+            } else {
+                return cursor;
+            }
 
-        MaterializedFrame callingFrame = REnvironment.globalEnv().getFrame();
-        RContext.getEngine().evalFunction(completeToken, callingFrame, RCaller.createInvalid(callingFrame), null, new Object[]{});
+            o = utils.get(".CompletionEnv");
+            if (!(o instanceof RPromise)) {
+                return cursor;
+            }
+            REnvironment env = (REnvironment) PromiseHelperNode.evaluateSlowPath(null, (RPromise) o);
+            int start = getStart(buffer, env, cursor);
+            env.safePut("start", start);
+            env.safePut("end", cursor);
+            env.safePut("linebuffer", buffer);
+            env.safePut("token", buffer.substring(start, cursor));
 
-        o = env.get("comps");
-        if (!(o instanceof RAbstractStringVector)) {
-            return cursor;
-        }
+            MaterializedFrame callingFrame = REnvironment.globalEnv().getFrame();
+            RContext.getEngine().evalFunction(completeToken, callingFrame, RCaller.createInvalid(callingFrame), null, new Object[]{});
 
-        RAbstractStringVector comps = (RAbstractStringVector) o;
-        List<String> ret = new ArrayList<>(comps.getLength());
-        for (int i = 0; i < comps.getLength(); i++) {
-            ret.add(comps.getDataAt(i));
+            o = env.get("comps");
+            if (!(o instanceof RAbstractStringVector)) {
+                return cursor;
+            }
+
+            RAbstractStringVector comps = (RAbstractStringVector) o;
+            List<String> ret = new ArrayList<>(comps.getLength());
+            for (int i = 0; i < comps.getLength(); i++) {
+                ret.add(comps.getDataAt(i));
+            }
+            Collections.sort(ret, String.CASE_INSENSITIVE_ORDER);
+            candidates.addAll(ret);
+            return start;
         }
-        Collections.sort(ret, String.CASE_INSENSITIVE_ORDER);
-        candidates.addAll(ret);
-        return start;
     }
 
     private static int getStart(String buffer, REnvironment env, int cursor) {

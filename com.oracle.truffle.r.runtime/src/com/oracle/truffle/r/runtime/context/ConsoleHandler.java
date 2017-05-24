@@ -95,6 +95,10 @@ public interface ConsoleHandler {
 
     String getInputDescription();
 
+    void setContext(RContext ctx);
+
+    RContext getContext();
+
     default void setHistoryFrom(@SuppressWarnings("unused") File file) {
         // by default, do nothing
     }

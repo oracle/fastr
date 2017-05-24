@@ -27,6 +27,7 @@ import com.oracle.truffle.r.runtime.RInterfaceCallbacks;
 import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.DefaultConsoleHandler;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
@@ -47,6 +48,7 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
     private ConsoleHandler delegate;
     private REmbedRFFI rEmbedRFFI;
     private String prompt;
+    private RContext ctx;
 
     EmbeddedConsoleHandler(RStartParams startParams) {
         this.startParams = startParams;
@@ -146,5 +148,15 @@ public class EmbeddedConsoleHandler implements ConsoleHandler {
     @Override
     public String getInputDescription() {
         return "<embedded input>";
+    }
+
+    @Override
+    public void setContext(RContext ctx) {
+        this.ctx = ctx;
+    }
+
+    @Override
+    public RContext getContext() {
+        return ctx;
     }
 }

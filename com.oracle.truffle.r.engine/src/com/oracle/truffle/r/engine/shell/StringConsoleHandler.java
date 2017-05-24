@@ -28,6 +28,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 class StringConsoleHandler implements ConsoleHandler {
     private final PrintStream output;
@@ -35,6 +36,7 @@ class StringConsoleHandler implements ConsoleHandler {
     private final String inputDescription;
     private String prompt;
     private int currentLine;
+    private RContext ctx;
 
     StringConsoleHandler(List<String> lines, OutputStream output, String inputDescription) {
         this.lines = lines;
@@ -102,5 +104,15 @@ class StringConsoleHandler implements ConsoleHandler {
     @Override
     public String getInputDescription() {
         return inputDescription;
+    }
+
+    @Override
+    public void setContext(RContext ctx) {
+        this.ctx = ctx;
+    }
+
+    @Override
+    public RContext getContext() {
+        return ctx;
     }
 }

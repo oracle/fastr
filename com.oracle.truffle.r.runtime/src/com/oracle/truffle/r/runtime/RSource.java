@@ -56,6 +56,7 @@ public class RSource {
         SHELL_INPUT("<shell_input>"),
         EXPRESSION_INPUT("<expression_input>"),
         GET_ECHO("<get_echo>"),
+        GET_CONTINUE_PROMPT("<get_continue_prompt>"),
         QUIT_EOF("<<quit_eof>>"),
         STARTUP_SHUTDOWN("<startup/shutdown>"),
         REPL_WRAPPER("<repl wrapper>"),
