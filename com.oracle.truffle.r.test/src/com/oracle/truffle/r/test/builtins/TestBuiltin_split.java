@@ -116,5 +116,13 @@ public class TestBuiltin_split extends TestBase {
         assertEval("{ fu <- c(\"a\",\"b\") ; split(1:8,fu) }");
         assertEval("{ g <- factor(round(c(0.4,1.3,0.6,1.8,2.5,4.1,2.2,1.0))) ; x <- c(0.1,3.2,1,0.6,1.9,3.3,1.6,1.7) + sqrt(as.numeric(g)) ; xg <- split(x, g) ; xg }");
         assertEval("{ x <- factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(7L, 42L) ; split(1:3, x) }");
+        assertEval("{ split(list(1, 2L, 'x', T), as.factor(c('a', 'b', 'a')); }");
+        assertEval("{ split(as.raw(1:10), as.factor(c('a', 'b', 'a')); }");
+    }
+
+    @Test
+    public void testSplitWithNames() {
+        assertEval(Ignored.Unimplemented, "{ split(list(q=1, w=2L, e='x', r=T), as.factor(c('a', 'b', 'a')); }");
+        assertEval(Ignored.Unimplemented, "{ tmp <- c(1,2,3); names(tmp) <- c('x','y','z'); split(tmp, as.factor(c('a','b'))); }");
     }
 }
