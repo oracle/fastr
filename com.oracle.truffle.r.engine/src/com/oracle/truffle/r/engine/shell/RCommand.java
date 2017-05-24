@@ -308,7 +308,9 @@ public class RCommand {
     private static boolean doEcho(PolyglotEngine vm) {
         PolyglotEngine.Value echoValue = vm.eval(GET_ECHO);
         Object echo = echoValue.get();
-        if (echo instanceof TruffleObject) {
+        if (echo instanceof Boolean) {
+            return (boolean) echo;
+        } else if (echo instanceof TruffleObject) {
             RLogicalVector echoVec = echoValue.as(RLogicalVector.class);
             return RRuntime.fromLogical(echoVec.getDataAt(0));
         } else if (echo instanceof Byte) {
