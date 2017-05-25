@@ -202,10 +202,10 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
         }
     }
 
-    private static int getFirstQuoteInd(String str, char sepChar) {
-        int quoteInd = str.indexOf(sepChar);
+    private static int getFirstQuoteInd(String str, char quotechar, Character sepChar) {
+        int quoteInd = str.indexOf(quotechar);
         if (quoteInd >= 0) {
-            if (quoteInd == 0 || str.charAt(quoteInd - 1) == ' ' || str.charAt(quoteInd - 1) == '\t') {
+            if (quoteInd == 0 || (str.charAt(quoteInd - 1) == ' ' || str.charAt(quoteInd - 1) == '\t') || sepChar != null && str.charAt(quoteInd - 1) == sepChar) {
                 // it's a quote character if it starts the string or is preceded by a blank space
                 return quoteInd;
             }
@@ -236,10 +236,11 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
                 sepInd = str.indexOf(data.sepchar.charAt(0));
             }
 
-            int quoteInd = getFirstQuoteInd(str, data.quoteset.charAt(0));
+            Character sepChar = data.sepchar != null ? data.sepchar.charAt(0) : null;
+            int quoteInd = getFirstQuoteInd(str, data.quoteset.charAt(0), sepChar);
             char quoteChar = data.quoteset.charAt(0);
             for (int i = 1; i < data.quoteset.length(); i++) {
-                int ind = getFirstQuoteInd(str, data.quoteset.charAt(i));
+                int ind = getFirstQuoteInd(str, data.quoteset.charAt(i), sepChar);
                 if (ind >= 0 && (quoteInd == -1 || (quoteInd >= 0 && ind < quoteInd))) {
                     // update quoteInd if either the new index is smaller or the previous one (for
                     // another separator) was not found
