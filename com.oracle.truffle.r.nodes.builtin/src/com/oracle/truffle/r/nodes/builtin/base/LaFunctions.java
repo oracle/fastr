@@ -258,7 +258,7 @@ public class LaFunctions {
     @RBuiltin(name = "La_qr", kind = INTERNAL, parameterNames = {"in"}, behavior = PURE)
     public abstract static class Qr extends RBuiltinNode.Arg1 {
 
-        @CompilationFinal private static final String[] NAMES = new String[]{"qr", "rank", "qraux", "pivot"};
+        @CompilationFinal(dimensions = 1) private static final String[] NAMES = new String[]{"qr", "rank", "qraux", "pivot"};
 
         static {
             Casts casts = new Casts(Qr.class);

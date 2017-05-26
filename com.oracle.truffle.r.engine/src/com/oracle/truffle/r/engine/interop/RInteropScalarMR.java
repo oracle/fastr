@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;

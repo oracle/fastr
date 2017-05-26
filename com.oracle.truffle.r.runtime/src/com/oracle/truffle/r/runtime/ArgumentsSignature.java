@@ -46,7 +46,7 @@ public final class ArgumentsSignature implements Iterable<String> {
     public static final String VARARG_NAME = "...";
     public static final int NO_VARARG = -1;
 
-    @CompilationFinal private static final ArgumentsSignature[] EMPTY_SIGNATURES = new ArgumentsSignature[32];
+    @CompilationFinal(dimensions = 1) private static final ArgumentsSignature[] EMPTY_SIGNATURES = new ArgumentsSignature[32];
     public static final ArgumentsSignature INVALID_SIGNATURE = new ArgumentsSignature(new String[]{"<<invalid>>"});
 
     static {
@@ -73,9 +73,9 @@ public final class ArgumentsSignature implements Iterable<String> {
         return get(new String[length]);
     }
 
-    @CompilationFinal private final String[] names;
-    @CompilationFinal private final int[] varArgIndexes;
-    @CompilationFinal private final boolean[] isVarArg;
+    @CompilationFinal(dimensions = 1) private final String[] names;
+    @CompilationFinal(dimensions = 1) private final int[] varArgIndexes;
+    @CompilationFinal(dimensions = 1) private final boolean[] isVarArg;
     private final int varArgIndex;
     private final int nonNullCount;
 

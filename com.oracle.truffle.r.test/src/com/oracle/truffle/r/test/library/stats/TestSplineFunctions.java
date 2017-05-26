@@ -51,10 +51,10 @@ public class TestSplineFunctions extends TestBase {
         assertEval(".Call(stats:::C_SplineCoef, c(), c(1:5), c(1:5))");
         assertEval(".Call(stats:::C_SplineCoef, list(), c(1:5), c(1:5))");
         assertEval(".Call(stats:::C_SplineCoef, c(list()), c(1:5), c(1:5))");
-        assertEval(Ignored.WrongCaller, ".Call(stats:::C_SplineCoef, 'abc', c(1:5), c(1:5))");
+        assertEval(".Call(stats:::C_SplineCoef, 'abc', c(1:5), c(1:5))");
         assertEval(".Call(stats:::C_SplineCoef, c(1), c(1:5), c(1:5))");
         assertEval(".Call(stats:::C_SplineCoef, c(1, 2, 3), c(1), c(1))");
-        assertEval(Ignored.WrongCaller, ".Call(stats:::C_SplineCoef, c('a'), c(1), c(1))");
+        assertEval(".Call(stats:::C_SplineCoef, c('a'), c(1), c(1))");
         assertEval(Ignored.WrongCaller, ".Call(stats:::C_SplineCoef, list(1), c(1), c(1))");
         assertEval(Ignored.WrongCaller, ".Call(stats:::C_SplineCoef, environment(), c(1:5), c(1:5))");
         assertEval(Ignored.WrongCaller, ".Call(stats:::C_SplineCoef, function() {}, c(1:5), c(1:5))");

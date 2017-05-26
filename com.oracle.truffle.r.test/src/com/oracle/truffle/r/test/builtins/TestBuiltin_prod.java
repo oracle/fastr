@@ -64,7 +64,7 @@ public class TestBuiltin_prod extends TestBase {
 
     @Test
     public void testprod10() {
-        assertEval(Ignored.Unknown, "prod( );");
+        assertEval("prod( );");
     }
 
     @Test

@@ -166,7 +166,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     }
 
     @Specialization
-    protected RStringVector getClassHr(@SuppressWarnings("unused") RInteropScalar arg) {
+    protected RStringVector getClassHr(RInteropScalar arg) {
         return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(arg.getRType(), forDispatch) : null;
     }
 
