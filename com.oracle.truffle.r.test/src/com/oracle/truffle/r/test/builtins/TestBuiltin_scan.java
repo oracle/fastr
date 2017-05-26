@@ -13,10 +13,22 @@ package com.oracle.truffle.r.test.builtins;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
+import java.io.File;
+import org.junit.After;
 
 // Checkstyle: stop line length check
 
 public class TestBuiltin_scan extends TestBase {
+
+    private static final String TEST_CVS_FILE = "__TestBuiltin_scan_testReadCsvTestFile.cvs";
+
+    @After
+    public void cleanup() {
+        File f = new File(TEST_CVS_FILE);
+        if (f.exists()) {
+            f.delete();
+        }
+    }
 
     @Test
     public void testScan() {
@@ -45,12 +57,22 @@ public class TestBuiltin_scan extends TestBase {
         assertEval("{ con<-textConnection(c(\"foo faz\", \"bar \\\"baz\\\"\")); scan(con, what=list(\"\", \"\")) }");
         assertEval("{ con<-textConnection(c(\"foo, faz\", \"bar, baz\")); scan(con, what=list(\"\", \"\"), sep=\",\") }");
 
+        assertEval("con<-textConnection(c(\"foo,\\\"bar,bar\\\"\")); scan(con, what=list(\"\"), sep=',')");
+        assertEval("con<-textConnection(c(\"foo,'bar,bar'\")); scan(con, what=list(\"\"), sep=',')");
+
         assertEval("{ con<-textConnection(c(\"bar'foo'\")); scan(con, what=list(\"\")) }");
         assertEval("{ con<-textConnection(c(\"'foo'\")); scan(con, what=list(\"\")) }");
         assertEval("{ con<-textConnection(c(\"bar 'foo'\")); scan(con, what=list(\"\")) }");
 
         // sep should not be treated as a regex:
         assertEval("con <- textConnection(\"A|B|C\\n1|2|3\\n4|5|6\"); read.csv(con, sep=\"|\")");
+
+    }
+
+    @Test
+    public void testReadCsv() {
+        String testData = "n1,n2\nv1,\"v5, v5\"\n";
+        assertEval("fileConn<-file('" + TEST_CVS_FILE + "'); writeLines(c('" + testData + "'), fileConn); m <- read.csv('" + TEST_CVS_FILE + "'); m");
     }
 
     @Test
