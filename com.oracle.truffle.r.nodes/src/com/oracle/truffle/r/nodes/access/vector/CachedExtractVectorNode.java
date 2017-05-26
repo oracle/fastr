@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNa
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -49,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -86,6 +88,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     @Child private ExtractDimNamesNode extractDimNames;
 
     private final ConditionProfile resultHasDimensions = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile promiseInEnvironment = ConditionProfile.createBinaryProfile();
 
     /**
      * Profile if any metadata was applied at any point in time. This is useful extract primitive
@@ -254,6 +257,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         String positionString = tryCastSingleString(positionsCheckNode, positions);
         if (positionString != null) {
             Object obj = env.get(positionString);
+            if (promiseInEnvironment.profile(obj instanceof RPromise)) {
+                obj = PromiseHelperNode.evaluateSlowPath(null, (RPromise) obj);
+            }
             return obj == null ? RNull.instance : obj;
         }
         throw error(RError.Message.WRONG_ARGS_SUBSET_ENV);

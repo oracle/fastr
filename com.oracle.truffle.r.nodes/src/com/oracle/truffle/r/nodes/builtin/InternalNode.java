@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -245,6 +246,7 @@ public abstract class InternalNode extends OperatorNode {
             Object[] args = new Object[arguments.length];
             for (int i = 0; i < args.length; i++) {
                 args[i] = arguments[i].execute(frame);
+                assert !(args[i] instanceof RPromise);
             }
             return args;
         }
@@ -273,6 +275,7 @@ public abstract class InternalNode extends OperatorNode {
                     value = forcePromises(frame, (RArgsValuesAndNames) value);
                 }
                 args[i] = value;
+                assert !(args[i] instanceof RPromise);
             }
             return args;
         }
@@ -281,6 +284,7 @@ public abstract class InternalNode extends OperatorNode {
             Object[] array = new Object[varArgs.getLength()];
             for (int i = 0; i < array.length; i++) {
                 array[i] = promiseHelper.checkEvaluate(frame, varArgs.getArgument(i));
+                assert !(array[i] instanceof RPromise);
             }
             return new RArgsValuesAndNames(array, varArgs.getSignature());
         }
@@ -303,10 +307,12 @@ public abstract class InternalNode extends OperatorNode {
 
             for (int i = 0; i < args.length - 1; i++) {
                 args[i] = arguments[i].execute(frame);
+                assert !(args[i] instanceof RPromise);
             }
             Object[] varArgs = new Object[arguments.length - (factory.getSignature().getLength() - 1)];
             for (int i = 0; i < varArgs.length; i++) {
                 varArgs[i] = arguments[args.length - 1 + i].execute(frame);
+                assert !(varArgs[i] instanceof RPromise);
             }
             args[args.length - 1] = new RArgsValuesAndNames(varArgs, ArgumentsSignature.empty(varArgs.length));
             return args;
