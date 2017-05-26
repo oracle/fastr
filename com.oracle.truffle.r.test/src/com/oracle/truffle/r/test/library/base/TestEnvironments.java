@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -284,5 +284,13 @@ public class TestEnvironments extends TestBase {
         assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); r <- x; detach(2); r }");
         assertEval("{ e <- new.env(); assign(\"x\", 1, e); attach(e, 2); x; detach(2); x }");
         assertEval("{ detach(\"missing\"); x }");
+    }
+
+    @Test
+    public void testFrameToEnv() {
+        // Note: islistfactor is internal and should fail if it gets promise directly
+        assertEval("{ makefun <- function(f) function(a) f(a); .Internal(islistfactor(environment(makefun(function(b) 2*b))$f, F)); }");
+        // Turning frame into an environment should not evaluate all the promises:
+        assertEval("{ makefun <- function(f,s) function(a) f(a); s <- function() cat('side effect'); .Internal(islistfactor(environment(makefun(function(b) 2*b, s()))$f, F)); }");
     }
 }

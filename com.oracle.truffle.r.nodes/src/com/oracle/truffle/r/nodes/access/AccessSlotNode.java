@@ -136,7 +136,7 @@ public abstract class AccessSlotNode extends RBaseNode {
                     @Cached("create()") GetClassAttributeNode getClassNode) {
         RStringVector classAttr = getClassNode.getClassAttr(object);
         if (classAttr == null) {
-            RStringVector implicitClassVec = ImplicitClassHierarchyNode.getImplicitClass(object);
+            RStringVector implicitClassVec = ImplicitClassHierarchyNode.getImplicitClass(object, false);
             assert implicitClassVec.getLength() > 0;
             throw RError.error(this, RError.Message.SLOT_BASIC_CLASS, name, implicitClassVec.getDataAt(0));
         } else {

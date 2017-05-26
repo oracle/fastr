@@ -67,7 +67,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
         RStringVector result = null;
         if (value instanceof RAttributable) {
             Object v = ((RAttributable) value).getAttr(RRuntime.CLASS_ATTR_KEY);
-            result = v instanceof RStringVector ? (RStringVector) v : ImplicitClassHierarchyNode.getImplicitClass(value);
+            result = v instanceof RStringVector ? (RStringVector) v : ImplicitClassHierarchyNode.getImplicitClass(value, false);
         }
 
         return result != null ? result : RDataFactory.createEmptyStringVector();
@@ -95,13 +95,20 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     private final boolean withImplicitTypes;
     private final boolean withS4;
+    private final boolean forDispatch;
     private final ConditionProfile noAttributesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile nullAttributeProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isS4Profile = ConditionProfile.createBinaryProfile();
 
-    protected ClassHierarchyNode(boolean withImplicitTypes, boolean withS4) {
+    protected ClassHierarchyNode(boolean withImplicitTypes, boolean withS4, boolean forDispatch) {
+        assert !forDispatch || withImplicitTypes : "forDispatch requires withImplicitTypes";
         this.withImplicitTypes = withImplicitTypes;
         this.withS4 = withS4;
+        this.forDispatch = forDispatch;
+    }
+
+    protected ClassHierarchyNode(boolean withImplicitTypes, boolean withS4) {
+        this(withImplicitTypes, withS4, false);
     }
 
     public static ClassHierarchyNode create() {
@@ -112,51 +119,60 @@ public abstract class ClassHierarchyNode extends UnaryNode {
         return ClassHierarchyNodeGen.create(true, false);
     }
 
+    /*
+     * Creates node that return result, which is meant to be used for S3 dispatch, in such case the
+     * "numeric" class will be preceeded by "integer" or "double" classes. This seems to be not used
+     * anywhere else than for the dispatch.
+     */
+    public static ClassHierarchyNode createForDispatch(boolean withS4) {
+        return ClassHierarchyNodeGen.create(true, withS4, true);
+    }
+
     public abstract RStringVector execute(Object arg);
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") byte arg) {
-        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Logical) : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Logical, forDispatch) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") String arg) {
-        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Character) : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Character, forDispatch) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") int arg) {
-        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Integer) : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Integer, forDispatch) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") double arg) {
-        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Double) : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Double, forDispatch) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RComplex arg) {
-        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Complex) : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Complex, forDispatch) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RRaw arg) {
-        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Raw) : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Raw, forDispatch) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RNull arg) {
-        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Null) : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Null, forDispatch) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RInteropScalar arg) {
-        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(arg.getRType()) : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(arg.getRType(), forDispatch) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") REmpty arg) {
-        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Null) : null;
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Null, forDispatch) : null;
     }
 
     @Specialization
@@ -194,7 +210,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
         if (withImplicitTypes) {
             if (implicit == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                implicit = insert(ImplicitClassHierarchyNodeGen.create());
+                implicit = insert(ImplicitClassHierarchyNodeGen.create(forDispatch));
             }
             return implicit.execute(arg);
         } else {
