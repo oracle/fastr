@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -40,7 +41,8 @@ import com.oracle.truffle.r.runtime.data.RNull;
 public abstract class FastRSourceInfo extends RBuiltinNode.Arg1 {
 
     static {
-        Casts.noCasts(FastRSourceInfo.class);
+        Casts casts = new Casts(FastRSourceInfo.class);
+        casts.arg("fun").defaultError(RError.Message.GENERIC, "Only functions are allowed.").mustBe(RFunction.class);
     }
 
     @Specialization
@@ -55,6 +57,8 @@ public abstract class FastRSourceInfo extends RBuiltinNode.Arg1 {
             String path = ss.getSource().getPath();
             if (path != null) {
                 return path + "#" + ss.getStartLine();
+            } else if (ss.getSource().getURI() != null) {
+                return ss.getSource().getURI() + "#" + ss.getStartLine();
             } else {
                 return ss.getSource().getName();
             }
