@@ -85,7 +85,7 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
 
     @TruffleBoundary
     private static String concat(Object... args) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (Object arg : args) {
             sb.append(arg);
         }
@@ -229,7 +229,7 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
 
     @TruffleBoundary
     private static String addPaddingIgnoreNA(final String el, final int leftPadding, final int rightPadding, final String quoteEl) {
-        final StringBuffer sb = new StringBuffer();
+        final StringBuilder sb = new StringBuilder();
         for (int j = 0; j < leftPadding; j++) {
             sb.append(" ");
         }
@@ -244,7 +244,7 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
 
     @TruffleBoundary
     private String addPadding(final String el, final int leftPadding, final int rightPadding, final String quoteEl) {
-        final StringBuffer sb = new StringBuffer();
+        final StringBuilder sb = new StringBuilder();
         for (int j = 0; j < leftPadding; j++) {
             sb.append(" ");
         }

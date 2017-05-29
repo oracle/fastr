@@ -188,9 +188,9 @@ public class TestOutputManager {
     }
 
     private static class SaveBufferedReader extends BufferedReader {
-        StringBuffer save;
+        StringBuilder save;
 
-        SaveBufferedReader(Reader in, StringBuffer save) {
+        SaveBufferedReader(Reader in, StringBuilder save) {
             super(in);
             this.save = save;
         }
@@ -217,7 +217,7 @@ public class TestOutputManager {
         if (!outputFile.exists()) {
             return null;
         }
-        StringBuffer content = new StringBuffer();
+        StringBuilder content = new StringBuilder();
         try (SaveBufferedReader in = new SaveBufferedReader(new FileReader(outputFile), content)) {
             // line format for element name: ##elementName
             // line format for input lines: #input

@@ -479,7 +479,7 @@ public class GrepFunctions {
                         int[] fromByteMapping = getFromByteMapping(input); // non-null if it's
                                                                            // necessary
 
-                        StringBuffer sb = new StringBuffer();
+                        StringBuilder sb = new StringBuilder();
                         while (execNode.execute(pcre.result, 0, input, lastEndOffset, eflag, ovector) >= 0) {
                             nmatch++;
 
@@ -623,7 +623,7 @@ public class GrepFunctions {
             return nonEmpty;
         }
 
-        private static void pcreStringAdj(StringBuffer sb, String input, String repl, int[] ovector, int[] fromByteMapping) {
+        private static void pcreStringAdj(StringBuilder sb, String input, String repl, int[] ovector, int[] fromByteMapping) {
             boolean upper = false;
             boolean lower = false;
             int px = 0;

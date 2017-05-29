@@ -203,7 +203,7 @@ public class TraceFunctions {
 
     @TruffleBoundary
     protected static String getStackTrace() {
-        final StringBuffer result = new StringBuffer();
+        final StringBuilder result = new StringBuilder();
         Truffle.getRuntime().iterateFrames(frame -> {
             Frame unwrapped = RArguments.unwrap(frame.getFrame(FrameAccess.READ_ONLY));
             if (RArguments.isRFrame(unwrapped)) {

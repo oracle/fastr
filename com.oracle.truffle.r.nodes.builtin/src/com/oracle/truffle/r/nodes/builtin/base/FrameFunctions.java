@@ -265,7 +265,7 @@ public class FrameFunctions {
              * starting point
              */
             RCallNode callNode = (RCallNode) RASTUtils.unwrap(call.getRep());
-            CallArgumentsNode callArgs = callNode.createArguments(null, false, false);
+            CallArgumentsNode callArgs = callNode.createArguments(null, false, true);
             ArgumentsSignature inputVarArgSignature = callArgs.containsVarArgsSymbol() ? CallArgumentsNode.getVarargsAndNames(cframe).getSignature() : null;
             RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), callArgs, inputVarArgSignature, null, null, true).getArguments();
             ArgumentsSignature sig = ((HasSignature) definition.getRootNode()).getSignature();

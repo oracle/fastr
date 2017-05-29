@@ -378,8 +378,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return call.execute(frame, resultFunction, argAndNames, s3Args, null);
     }
 
-    protected CallArgumentsNode createArguments() {
-        return signature == null ? null : createArguments(null, false, false);
+    protected CallArgumentsNode createGenericDispatchArguments() {
+        return signature == null ? null : createArguments(null, false, true);
     }
 
     protected boolean isGroupGenericDispatch(RFunction function) {
@@ -399,7 +399,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     @Specialization(guards = "isGroupGenericDispatch(function)")
     public Object callGroupGeneric(VirtualFrame frame, RFunction function,
-                    @Cached("createArguments()") CallArgumentsNode callArguments,
+                    @Cached("createGenericDispatchArguments()") CallArgumentsNode callArguments,
                     @Cached("create()") ClassHierarchyNode classHierarchyNodeX,
                     @Cached("createWithException()") S3FunctionLookupNode dispatchLookupX,
                     @Cached("create()") ClassHierarchyNode classHierarchyNodeY,

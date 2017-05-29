@@ -52,7 +52,7 @@ public class DCF {
     public static DCF read(String[] lines, Set<String> keepWhiteSet) {
         DCF result = new DCF();
         String fieldName = null;
-        StringBuffer fieldContent = new StringBuffer();
+        StringBuilder fieldContent = new StringBuilder();
         Fields fields = new Fields();
         for (String line : lines) {
             if (line == null) {
@@ -67,7 +67,7 @@ public class DCF {
                 // should start a field, finish off any current one
                 if (fieldName != null) {
                     fields.add(fieldName, fieldContent.toString());
-                    fieldContent = new StringBuffer();
+                    fieldContent = new StringBuilder();
                 }
                 if (endOfParagraph(line)) {
                     fieldName = null;

@@ -2038,7 +2038,7 @@ public class RSerialize {
             // IDE debugging
             Iterator<RPairList> iter = active.iterator();
             if (iter.hasNext()) {
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 while (iter.hasNext()) {
                     RPairList pl = iter.next();
                     sb.append('[');
