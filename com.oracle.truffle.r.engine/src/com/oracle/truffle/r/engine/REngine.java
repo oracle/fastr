@@ -120,7 +120,7 @@ final class REngine implements Engine, Engine.Timings {
     /**
      * The accumulated time spent by child processes on behalf of this engine.
      */
-    @CompilationFinal private long[] childTimes;
+    private long[] childTimes;
     /**
      * The {@link RContext} that this engine is associated with (1-1).
      */

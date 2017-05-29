@@ -11,14 +11,11 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.anyValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.shouldBe;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -38,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class BitwiseFunctions {

@@ -44,13 +44,11 @@ final class JNI_PkgInit {
         dllInfo.setNativeSymbols(nstOrd, array);
     }
 
-    @SuppressWarnings("unused")
     private static void registerCCallable(String pkgName, String functionName, long address) {
         DLLInfo lib = safeFindLibrary(pkgName);
         lib.registerCEntry(new CEntry(functionName, new SymbolHandle(address)));
     }
 
-    @SuppressWarnings("unused")
     public static long getCCallable(String pkgName, String functionName) {
         DLLInfo lib = safeFindLibrary(pkgName);
         CEntry result = lib.lookupCEntry(functionName);

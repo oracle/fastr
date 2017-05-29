@@ -49,7 +49,7 @@ public abstract class RBuiltinDescriptor {
     private final RSpecialFactory specialCall;
 
     private final int primitiveMethodIndex;
-    @CompilationFinal private final boolean[] evaluatesArgument;
+    @CompilationFinal(dimensions = 1) private final boolean[] evaluatesArgument;
 
     public RBuiltinDescriptor(String name, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller,
                     boolean alwaysSplit, RDispatch dispatch, String genericName, RBehavior behavior, RSpecialFactory specialCall) {

@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -32,7 +31,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.KeyInfo;
-import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -143,8 +141,7 @@ public abstract class ExtractVectorNode extends Node {
             if (ForeignAccess.sendIsNull(isNullNode, (TruffleObject) obj)) {
                 return RNull.instance;
             }
-            Boolean isBoxed = (Boolean) ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) obj);
-            if (isBoxed) {
+            if (ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) obj)) {
                 return RRuntime.java2R(ForeignAccess.sendUnbox(unboxNode, (TruffleObject) obj));
             }
         }

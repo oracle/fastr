@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ public class Arguments<T> {
     /**
      * Array of arguments; semantics have to be specified by child classes.
      */
-    @CompilationFinal private final T[] values;
+    @CompilationFinal(dimensions = 1) private final T[] values;
 
     /**
      * Array of arguments; semantics have to be specified by child classes.

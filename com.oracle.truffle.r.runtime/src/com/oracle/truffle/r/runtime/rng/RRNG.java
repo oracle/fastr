@@ -60,7 +60,7 @@ public class RRNG {
         KNUTH_TAOCP2(),
         LECUYER_CMRG();
 
-        @CompilationFinal static final Kind[] VALUES = values();
+        @CompilationFinal(dimensions = 1) static final Kind[] VALUES = values();
 
         private final Supplier<RandomNumberGenerator> createFunction;
 
@@ -92,8 +92,7 @@ public class RRNG {
         INVERSION,
         KINDERMAN_RAMAGE;
 
-        @CompilationFinal static final NormKind[] VALUES = values();
-
+        @CompilationFinal(dimensions = 1) static final NormKind[] VALUES = values();
     }
 
     public static final int NO_KIND_CHANGE = -2; // internal value

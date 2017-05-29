@@ -81,8 +81,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  */
 public abstract class RBaseNode extends Node {
 
-    @CompilationFinal public static final RNode[] EMTPY_RNODE_ARRAY = new RNode[0];
-    @CompilationFinal protected static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+    @CompilationFinal(dimensions = 1) public static final RNode[] EMTPY_RNODE_ARRAY = new RNode[0];
+    @CompilationFinal(dimensions = 1) protected static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
     /**
      * Since {@link RSyntaxNode}s are sometimes used (for convenience) in non-syntax contexts, this

@@ -60,7 +60,7 @@ public final class RError extends RuntimeException {
         private static final long serialVersionUID = 1L;
 
         private final RError.Message msg;
-        @CompilationFinal private final Object[] args;
+        @CompilationFinal(dimensions = 1) private final Object[] args;
 
         @TruffleBoundary
         protected RErrorException(RError.Message msg, Object[] args) {

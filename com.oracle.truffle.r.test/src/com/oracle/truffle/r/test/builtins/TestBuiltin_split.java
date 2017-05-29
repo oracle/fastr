@@ -122,7 +122,7 @@ public class TestBuiltin_split extends TestBase {
 
     @Test
     public void testSplitWithNames() {
-        assertEval(Ignored.Unimplemented, "{ split(list(q=1, w=2L, e='x', r=T), as.factor(c('a', 'b', 'a')); }");
+        assertEval("{ split(list(q=1, w=2L, e='x', r=T), as.factor(c('a', 'b', 'a')); }");
         assertEval(Ignored.Unimplemented, "{ tmp <- c(1,2,3); names(tmp) <- c('x','y','z'); split(tmp, as.factor(c('a','b'))); }");
     }
 }
