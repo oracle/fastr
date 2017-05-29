@@ -188,7 +188,7 @@ public final class RandFunctionsNodes {
                 double bValue = b.getDataAt(i % bLength);
                 double cValue = c.getDataAt(i % cLength);
                 double value = function.execute(aValue, bValue, cValue, randProvider);
-                if (Double.isNaN(value) || value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+                if (Double.isNaN(value) || value <= Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
                     nodeData.nan.enter();
                     nans = true;
                     result[i] = RRuntime.INT_NA;
