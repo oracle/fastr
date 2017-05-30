@@ -1434,269 +1434,272 @@ public class RSerialize {
                     outRefIndex(refIndex);
                 } else if (type == SEXPTYPE.SYMSXP) {
                     writeSymbol((RSymbol) obj);
-                } else if (type == SEXPTYPE.ENVSXP) {
-                    REnvironment env = (REnvironment) obj;
-                    addReadRef(obj);
-                    String name = null;
-                    if ((name = env.isPackageEnv()) != null) {
-                        RError.warning(RError.SHOW_CALLER2, RError.Message.PACKAGE_AVAILABLE, name);
-                        stream.writeInt(SEXPTYPE.PACKAGESXP.code);
-                        stream.writeString(name);
-                    } else if (env.isNamespaceEnv()) {
-                        stream.writeInt(SEXPTYPE.NAMESPACESXP.code);
-                        RStringVector nameSpaceEnvSpec = env.getNamespaceSpec();
-                        outStringVec(nameSpaceEnvSpec, false);
-                    } else {
-                        stream.writeInt(SEXPTYPE.ENVSXP.code);
-                        stream.writeInt(env.isLocked() ? 1 : 0);
-                        writeItem(env.getParent());
-                        /*
-                         * TODO To be truly compatible with GnuR we should remember whether an
-                         * environment was created with new.env(hash=T) and output it in that form
-                         * with the associated size. For internal FastR use it does not matter, so
-                         * we use the "frame" form, which is a pairlist. tag is binding name, car is
-                         * binding value
-                         */
-                        String[] bindings = env.ls(true, null, false).getDataWithoutCopying();
-                        for (String binding : bindings) {
-                            Object value = getValueIgnoreActiveBinding(env.getFrame(), binding);
-                            writePairListEntry(binding, value);
-                        }
-                        terminatePairList();
-                        writeItem(RNull.instance); // hashtab
-                        DynamicObject attributes = env.getAttributes();
-                        writeAttributes(attributes, getSourceSection(obj));
-                        if (attributes == null) {
-                            writeItem(RNull.instance);
-                        }
-                    }
                 } else {
-                    // flags
-                    DynamicObject attributes = null;
-                    SourceSection ss = getSourceSection(obj);
-                    if (obj instanceof RAttributable) {
-                        RAttributable rattr = (RAttributable) obj;
-                        attributes = rattr.getAttributes();
-                        if (attributes != null && attributes.isEmpty()) {
-                            attributes = null;
-                        }
-                    }
-                    boolean hasTag = gnuRType == SEXPTYPE.CLOSXP || gnuRType == SEXPTYPE.DOTSXP || (gnuRType == SEXPTYPE.PROMSXP && !((RPromise) obj).isEvaluated()) ||
-                                    (type == SEXPTYPE.LISTSXP && !((RPairList) obj).isNullTag());
-                    int gpbits = getGPBits(obj);
-                    int flags = Flags.packFlags(gnuRType, gpbits, isObject(obj), attributes != null, hasTag);
-                    stream.writeInt(flags);
-                    switch (type) {
-                        case STRSXP: {
-                            if (obj instanceof String) {
-                                // length 1 vector
-                                stream.writeInt(1);
-                                writeCHARSXP((String) obj);
-                            } else {
-                                outStringVec((RAbstractStringVector) obj, true);
+                    SourceSection sourceSection = getSourceSection(obj);
+                    if (type == SEXPTYPE.ENVSXP) {
+                        REnvironment env = (REnvironment) obj;
+                        addReadRef(obj);
+                        String name = null;
+                        if ((name = env.isPackageEnv()) != null) {
+                            RError.warning(RError.SHOW_CALLER2, RError.Message.PACKAGE_AVAILABLE, name);
+                            stream.writeInt(SEXPTYPE.PACKAGESXP.code);
+                            stream.writeString(name);
+                        } else if (env.isNamespaceEnv()) {
+                            stream.writeInt(SEXPTYPE.NAMESPACESXP.code);
+                            RStringVector nameSpaceEnvSpec = env.getNamespaceSpec();
+                            outStringVec(nameSpaceEnvSpec, false);
+                        } else {
+                            stream.writeInt(SEXPTYPE.ENVSXP.code);
+                            stream.writeInt(env.isLocked() ? 1 : 0);
+                            writeItem(env.getParent());
+                            /*
+                             * TODO To be truly compatible with GnuR we should remember whether an
+                             * environment was created with new.env(hash=T) and output it in that
+                             * form with the associated size. For internal FastR use it does not
+                             * matter, so we use the "frame" form, which is a pairlist. tag is
+                             * binding name, car is binding value
+                             */
+                            String[] bindings = env.ls(true, null, false).getDataWithoutCopying();
+                            for (String binding : bindings) {
+                                Object value = getValueIgnoreActiveBinding(env.getFrame(), binding);
+                                writePairListEntry(binding, value);
                             }
-                            break;
-                        }
-
-                        case INTSXP: {
-                            if (obj instanceof Integer) {
-                                stream.writeInt(1);
-                                stream.writeInt((int) obj);
-                            } else {
-                                RAbstractIntVector vec = (RAbstractIntVector) obj;
-                                stream.writeInt(vec.getLength());
-                                for (int i = 0; i < vec.getLength(); i++) {
-                                    stream.writeInt(vec.getDataAt(i));
-                                }
+                            terminatePairList();
+                            writeItem(RNull.instance); // hashtab
+                            DynamicObject attributes = env.getAttributes();
+                            writeAttributes(attributes, sourceSection);
+                            if (attributes == null && sourceSection == null) {
+                                writeItem(RNull.instance);
                             }
-                            break;
                         }
-
-                        case REALSXP: {
-                            if (obj instanceof Double) {
-                                stream.writeInt(1);
-                                stream.writeDouble((double) obj);
-                            } else {
-                                RAbstractDoubleVector vec = (RAbstractDoubleVector) obj;
-                                stream.writeInt(vec.getLength());
-                                for (int i = 0; i < vec.getLength(); i++) {
-                                    stream.writeDouble(vec.getDataAt(i));
-                                }
-                            }
-                            break;
-                        }
-
-                        case LGLSXP: {
-                            // Output as ints
-                            if (obj instanceof Byte) {
-                                stream.writeInt(1);
-                                stream.writeInt(RRuntime.logical2int((byte) obj));
-                            } else {
-                                RAbstractLogicalVector vec = (RAbstractLogicalVector) obj;
-                                stream.writeInt(vec.getLength());
-                                for (int i = 0; i < vec.getLength(); i++) {
-                                    stream.writeInt(RRuntime.logical2int(vec.getDataAt(i)));
-                                }
-                            }
-                            break;
-                        }
-
-                        case CPLXSXP: {
-                            RAbstractComplexVector vec = (RAbstractComplexVector) obj;
-                            stream.writeInt(vec.getLength());
-                            for (int i = 0; i < vec.getLength(); i++) {
-                                RComplex val = vec.getDataAt(i);
-                                if (RRuntime.isNA(val)) {
-                                    stream.writeDouble(RRuntime.DOUBLE_NA);
-                                    stream.writeDouble(RRuntime.DOUBLE_NA);
-                                } else {
-                                    stream.writeDouble(val.getRealPart());
-                                    stream.writeDouble(val.getImaginaryPart());
-                                }
-                            }
-                            break;
-                        }
-
-                        case EXPRSXP:
-                        case VECSXP: {
-                            RAbstractVector list;
-                            if (type == SEXPTYPE.EXPRSXP) {
-                                list = (RExpression) obj;
-                            } else {
-                                list = (RList) obj;
-                            }
-                            stream.writeInt(list.getLength());
-                            for (int i = 0; i < list.getLength(); i++) {
-                                Object listObj = list.getDataAtAsObject(i);
-                                writeItem(listObj);
-                            }
-                            break;
-                        }
-
-                        case RAWSXP: {
-                            RRawVector raw = (RRawVector) obj;
-                            byte[] data = raw.getDataWithoutCopying();
-                            stream.writeInt(data.length);
-                            stream.writeRaw(data);
-                            break;
-                        }
-
-                        case EXTPTRSXP: {
-                            addReadRef(obj);
-                            RExternalPtr xptr = (RExternalPtr) obj;
-                            writeItem(xptr.getProt());
-                            writeItem(xptr.getTag());
-                            break;
-                        }
-
-                        case S4SXP: {
-                            break;
-                        }
-
-                        /*
-                         * The objects that GnuR represents as a pairlist. To avoid stack overflow,
-                         * these utilize manual tail recursion on the cdr of the
-                         * pairlist.closePairList
-                         */
-
-                        case FUNSXP:
-                        case PROMSXP:
-                        case LANGSXP:
-                        case LISTSXP:
-                        case DOTSXP: {
-                            if (type == SEXPTYPE.FUNSXP && gnuRType == SEXPTYPE.BUILTINSXP) {
-                                // special case
-                                RFunction fun = (RFunction) obj;
-                                String name = fun.getRBuiltin().getName();
-                                stream.writeString(name);
-                                break;
-                            }
-                            if (type == SEXPTYPE.FUNSXP) {
-                                RFunction fun = (RFunction) obj;
-                                RSyntaxFunction body = (RSyntaxFunction) fun.getRootNode();
-                                ss = body.getLazySourceSection();
-                            }
-                            tailCall = true;
-
-                            // attributes written first to avoid recursion on cdr
-                            writeAttributes(attributes, ss);
-                            if (attributes != null) {
+                    } else {
+                        // flags
+                        DynamicObject attributes = null;
+                        SourceSection ss = sourceSection;
+                        if (obj instanceof RAttributable) {
+                            RAttributable rattr = (RAttributable) obj;
+                            attributes = rattr.getAttributes();
+                            if (attributes != null && attributes.isEmpty()) {
                                 attributes = null;
                             }
-                            if (ss != null) {
-                                ss = null;
+                        }
+                        boolean hasTag = gnuRType == SEXPTYPE.CLOSXP || gnuRType == SEXPTYPE.DOTSXP || (gnuRType == SEXPTYPE.PROMSXP && !((RPromise) obj).isEvaluated()) ||
+                                        (type == SEXPTYPE.LISTSXP && !((RPairList) obj).isNullTag());
+                        int gpbits = getGPBits(obj);
+                        int flags = Flags.packFlags(gnuRType, gpbits, isObject(obj), attributes != null, hasTag);
+                        stream.writeInt(flags);
+                        switch (type) {
+                            case STRSXP: {
+                                if (obj instanceof String) {
+                                    // length 1 vector
+                                    stream.writeInt(1);
+                                    writeCHARSXP((String) obj);
+                                } else {
+                                    outStringVec((RAbstractStringVector) obj, true);
+                                }
+                                break;
                             }
 
-                            switch (type) {
-                                case FUNSXP: {
+                            case INTSXP: {
+                                if (obj instanceof Integer) {
+                                    stream.writeInt(1);
+                                    stream.writeInt((int) obj);
+                                } else {
+                                    RAbstractIntVector vec = (RAbstractIntVector) obj;
+                                    stream.writeInt(vec.getLength());
+                                    for (int i = 0; i < vec.getLength(); i++) {
+                                        stream.writeInt(vec.getDataAt(i));
+                                    }
+                                }
+                                break;
+                            }
+
+                            case REALSXP: {
+                                if (obj instanceof Double) {
+                                    stream.writeInt(1);
+                                    stream.writeDouble((double) obj);
+                                } else {
+                                    RAbstractDoubleVector vec = (RAbstractDoubleVector) obj;
+                                    stream.writeInt(vec.getLength());
+                                    for (int i = 0; i < vec.getLength(); i++) {
+                                        stream.writeDouble(vec.getDataAt(i));
+                                    }
+                                }
+                                break;
+                            }
+
+                            case LGLSXP: {
+                                // Output as ints
+                                if (obj instanceof Byte) {
+                                    stream.writeInt(1);
+                                    stream.writeInt(RRuntime.logical2int((byte) obj));
+                                } else {
+                                    RAbstractLogicalVector vec = (RAbstractLogicalVector) obj;
+                                    stream.writeInt(vec.getLength());
+                                    for (int i = 0; i < vec.getLength(); i++) {
+                                        stream.writeInt(RRuntime.logical2int(vec.getDataAt(i)));
+                                    }
+                                }
+                                break;
+                            }
+
+                            case CPLXSXP: {
+                                RAbstractComplexVector vec = (RAbstractComplexVector) obj;
+                                stream.writeInt(vec.getLength());
+                                for (int i = 0; i < vec.getLength(); i++) {
+                                    RComplex val = vec.getDataAt(i);
+                                    if (RRuntime.isNA(val)) {
+                                        stream.writeDouble(RRuntime.DOUBLE_NA);
+                                        stream.writeDouble(RRuntime.DOUBLE_NA);
+                                    } else {
+                                        stream.writeDouble(val.getRealPart());
+                                        stream.writeDouble(val.getImaginaryPart());
+                                    }
+                                }
+                                break;
+                            }
+
+                            case EXPRSXP:
+                            case VECSXP: {
+                                RAbstractVector list;
+                                if (type == SEXPTYPE.EXPRSXP) {
+                                    list = (RExpression) obj;
+                                } else {
+                                    list = (RList) obj;
+                                }
+                                stream.writeInt(list.getLength());
+                                for (int i = 0; i < list.getLength(); i++) {
+                                    Object listObj = list.getDataAtAsObject(i);
+                                    writeItem(listObj);
+                                }
+                                break;
+                            }
+
+                            case RAWSXP: {
+                                RRawVector raw = (RRawVector) obj;
+                                byte[] data = raw.getDataWithoutCopying();
+                                stream.writeInt(data.length);
+                                stream.writeRaw(data);
+                                break;
+                            }
+
+                            case EXTPTRSXP: {
+                                addReadRef(obj);
+                                RExternalPtr xptr = (RExternalPtr) obj;
+                                writeItem(xptr.getProt());
+                                writeItem(xptr.getTag());
+                                break;
+                            }
+
+                            case S4SXP: {
+                                break;
+                            }
+
+                            /*
+                             * The objects that GnuR represents as a pairlist. To avoid stack
+                             * overflow, these utilize manual tail recursion on the cdr of the
+                             * pairlist.closePairList
+                             */
+
+                            case FUNSXP:
+                            case PROMSXP:
+                            case LANGSXP:
+                            case LISTSXP:
+                            case DOTSXP: {
+                                if (type == SEXPTYPE.FUNSXP && gnuRType == SEXPTYPE.BUILTINSXP) {
+                                    // special case
                                     RFunction fun = (RFunction) obj;
-                                    RPairList pl = (RPairList) serializeLanguageObject(state, fun);
-                                    assert pl != null;
-                                    state.convertUnboundValues(pl);
-                                    if (FastROptions.debugMatches("printWclosure")) {
-                                        Debug.printClosure(pl);
-                                    }
-                                    writeItem(pl.getTag());
-                                    writeItem(pl.car());
-                                    obj = pl.cdr();
+                                    String name = fun.getRBuiltin().getName();
+                                    stream.writeString(name);
                                     break;
                                 }
+                                if (type == SEXPTYPE.FUNSXP) {
+                                    RFunction fun = (RFunction) obj;
+                                    RSyntaxFunction body = (RSyntaxFunction) fun.getRootNode();
+                                    ss = body.getLazySourceSection();
+                                }
+                                tailCall = true;
 
-                                case PROMSXP: {
-                                    RPairList pl = (RPairList) serializeLanguageObject(state, obj);
-                                    assert pl != null;
-                                    state.convertUnboundValues(pl);
-                                    if (pl.getTag() != RNull.instance) {
+                                // attributes written first to avoid recursion on cdr
+                                writeAttributes(attributes, ss);
+                                if (attributes != null) {
+                                    attributes = null;
+                                }
+                                if (ss != null) {
+                                    ss = null;
+                                }
+
+                                switch (type) {
+                                    case FUNSXP: {
+                                        RFunction fun = (RFunction) obj;
+                                        RPairList pl = (RPairList) serializeLanguageObject(state, fun);
+                                        assert pl != null;
+                                        state.convertUnboundValues(pl);
+                                        if (FastROptions.debugMatches("printWclosure")) {
+                                            Debug.printClosure(pl);
+                                        }
                                         writeItem(pl.getTag());
+                                        writeItem(pl.car());
+                                        obj = pl.cdr();
+                                        break;
                                     }
-                                    writeItem(pl.car());
-                                    obj = pl.cdr();
-                                    break;
-                                }
 
-                                case LISTSXP: {
-                                    RPairList pl = (RPairList) obj;
-                                    if (!pl.isNullTag()) {
-                                        writeItem(pl.getTag());
+                                    case PROMSXP: {
+                                        RPairList pl = (RPairList) serializeLanguageObject(state, obj);
+                                        assert pl != null;
+                                        state.convertUnboundValues(pl);
+                                        if (pl.getTag() != RNull.instance) {
+                                            writeItem(pl.getTag());
+                                        }
+                                        writeItem(pl.car());
+                                        obj = pl.cdr();
+                                        break;
                                     }
-                                    writeItem(pl.car());
-                                    obj = pl.cdr();
-                                    break;
-                                }
 
-                                case LANGSXP: {
-                                    RPairList pl = (RPairList) serializeLanguageObject(state, obj);
-                                    state.convertUnboundValues(pl);
-                                    writeItem(pl.car());
-                                    obj = pl.cdr();
-                                    break;
-                                }
+                                    case LISTSXP: {
+                                        RPairList pl = (RPairList) obj;
+                                        if (!pl.isNullTag()) {
+                                            writeItem(pl.getTag());
+                                        }
+                                        writeItem(pl.car());
+                                        obj = pl.cdr();
+                                        break;
+                                    }
 
-                                case DOTSXP: {
-                                    // This in GnuR is a pairlist
-                                    RArgsValuesAndNames rvn = (RArgsValuesAndNames) obj;
-                                    Object list = RNull.instance;
-                                    for (int i = rvn.getLength() - 1; i >= 0; i--) {
-                                        String name = rvn.getSignature().getName(i);
-                                        list = RDataFactory.createPairList(rvn.getArgument(i), list, name == null ? RNull.instance : RDataFactory.createSymbolInterned(name));
+                                    case LANGSXP: {
+                                        RPairList pl = (RPairList) serializeLanguageObject(state, obj);
+                                        state.convertUnboundValues(pl);
+                                        writeItem(pl.car());
+                                        obj = pl.cdr();
+                                        break;
                                     }
-                                    RPairList pl = (RPairList) list;
-                                    if (!pl.isNullTag()) {
-                                        writeItem(pl.getTag());
+
+                                    case DOTSXP: {
+                                        // This in GnuR is a pairlist
+                                        RArgsValuesAndNames rvn = (RArgsValuesAndNames) obj;
+                                        Object list = RNull.instance;
+                                        for (int i = rvn.getLength() - 1; i >= 0; i--) {
+                                            String name = rvn.getSignature().getName(i);
+                                            list = RDataFactory.createPairList(rvn.getArgument(i), list, name == null ? RNull.instance : RDataFactory.createSymbolInterned(name));
+                                        }
+                                        RPairList pl = (RPairList) list;
+                                        if (!pl.isNullTag()) {
+                                            writeItem(pl.getTag());
+                                        }
+                                        writeItem(pl.car());
+                                        obj = pl.cdr();
+                                        break;
                                     }
-                                    writeItem(pl.car());
-                                    obj = pl.cdr();
-                                    break;
                                 }
+                                break;
                             }
-                            break;
+
+                            default:
+                                throw RInternalError.unimplemented(type.name());
                         }
 
-                        default:
-                            throw RInternalError.unimplemented(type.name());
+                        writeAttributes(attributes, ss);
                     }
-
-                    writeAttributes(attributes, ss);
                 }
             } while (tailCall);
         }
@@ -1778,6 +1781,13 @@ public class RSerialize {
         }
 
         private void writeAttributes(DynamicObject attributes, SourceSection ss) throws IOException {
+            if (ss != null && ss != RSyntaxNode.LAZY_DEPARSE) {
+                String path = ss.getSource().getURI().getPath();
+                REnvironment createSrcfile = RSrcref.createSrcfile(path);
+                Object createLloc = RSrcref.createLloc(ss);
+                writePairListEntry(RRuntime.R_SRCREF, createLloc);
+                writePairListEntry(RRuntime.R_SRCFILE, createSrcfile);
+            }
             if (attributes != null) {
                 // have to convert to GnuR pairlist
                 Iterator<RAttributesLayout.RAttribute> iter = RAttributesLayout.asIterable(attributes).iterator();
@@ -1789,14 +1799,7 @@ public class RSerialize {
                     writePairListEntry(attr.getName(), attr.getValue());
                 }
             }
-            if (ss != null && ss != RSyntaxNode.LAZY_DEPARSE) {
-                String path = ss.getSource().getURI().getPath();
-                REnvironment createSrcfile = RSrcref.createSrcfile(path);
-                RIntVector createLloc = RSrcref.createLloc(ss, createSrcfile);
-                writePairListEntry(RRuntime.R_SRCREF, createLloc);
-                writePairListEntry(RRuntime.R_SRCFILE, createSrcfile);
-            }
-            if (attributes != null || ss != null) {
+            if (attributes != null || ss != null && ss != RSyntaxNode.LAZY_DEPARSE) {
                 terminatePairList();
             }
         }
@@ -2415,6 +2418,21 @@ public class RSerialize {
         return state.closePairList();
     }
 
+    private static Object extractFromList(Object tag, SEXPTYPE expectedType) {
+        SEXPTYPE type = SEXPTYPE.typeForClass(tag.getClass());
+        if (type == expectedType) {
+            return tag;
+        } else if (type == SEXPTYPE.LISTSXP) {
+            for (RPairList item : (RPairList) tag) {
+                Object data = item.car();
+                if (SEXPTYPE.typeForClass(data.getClass()) == expectedType) {
+                    return data;
+                }
+            }
+        }
+        return null;
+    }
+
     /**
      * A collection of static functions that will transform a pairlist into an AST using the
      * {@link RCodeBuilder}.
@@ -2422,9 +2440,10 @@ public class RSerialize {
     private static final class PairlistDeserializer {
 
         public static RFunction processFunction(Object car, Object cdr, Object tag, String functionName, String packageName) {
-            // car == arguments, cdr == body, tag == environment
+            // car == arguments, cdr == body, tag == PairList(attributes, environment)
 
             REnvironment environment = (REnvironment) tag;
+
             MaterializedFrame enclosingFrame = environment.getFrame();
             RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(RSyntaxNode.LAZY_DEPARSE, processArguments(car), processBody(cdr), functionName);
 
