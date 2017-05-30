@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -23,7 +23,9 @@ public class TestBuiltin_oldClassassign extends TestBase {
 
     @Test
     public void testoldClassassign2() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL, NULL);`oldClass<-`(argv[[1]],argv[[2]]);");
+        // FIXME UnsupportedSpecializationException: Unexpected values provided for oldClass<-: [],
+        // []
+        assertEval(Ignored.ImplementationError, "argv <- list(NULL, NULL);`oldClass<-`(argv[[1]],argv[[2]]);");
     }
 
     @Test

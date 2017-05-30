@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -49,7 +49,9 @@ public class TestBuiltin_sin extends TestBase {
 
     @Test
     public void testsin7() {
-        assertEval(Ignored.Unknown, "argv <- list(Inf);sin(argv[[1]]);");
+        // FIXME Warning message:
+        // In sin(argv[[1]]) : NaNs produced
+        assertEval(Output.MissingWarning, "argv <- list(Inf);sin(argv[[1]]);");
     }
 
     @Test

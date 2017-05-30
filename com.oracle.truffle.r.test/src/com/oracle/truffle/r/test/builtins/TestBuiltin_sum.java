@@ -94,7 +94,8 @@ public class TestBuiltin_sum extends TestBase {
 
     @Test
     public void testsum16() {
-        assertEval(Ignored.Unknown, "argv <- list(1073741824L, 1073741824L);sum(argv[[1]],argv[[2]]);");
+        // FIXME Case difference GnuR: "Integer overflow" vs "integer overflow" in FastR
+        assertEval(Output.IgnoreCase, "argv <- list(1073741824L, 1073741824L);sum(argv[[1]],argv[[2]]);");
     }
 
     @Test

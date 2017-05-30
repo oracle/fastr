@@ -39,7 +39,15 @@ public class TestBuiltin_options extends TestBase {
 
     @Test
     public void testoptions5() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL); .Internal(options(argv[[1]]))");
+        // FIXME RInternalError: should not reach here
+        assertEval(Ignored.Unimplemented, "options(list(NULL));");
+        assertEval("options(NA);");
+        // IMHO ReferenceError since NULL makes little sense as parameter value
+        // here just like NA which outputs 'invalid argument' both in GnuR and FastR.
+        // Expected output:
+        // FastR output: Error in options(NULL) : invalid argument
+        assertEval(Ignored.ReferenceError, "options(NULL);");
+        assertEval(Ignored.ReferenceError, "argv <- list(NULL); .Internal(options(argv[[1]]))");
     }
 
     @Test

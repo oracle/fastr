@@ -19,24 +19,28 @@ public class TestBuiltin_formatC extends TestBase {
 
     @Test
     public void testformatC1() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR: the third arg "1" is output into 6 characters instead of 10
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(c(3.14159265358979, 3.1415926535898, 1), 'double', 10, 4L, 'g', '', c(12L, 12L, 12L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
     public void testformatC2() {
-        assertEval(Ignored.Unknown, "argv <- list(1, 'double', 8, 5, 'g', '-', 13); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        // FIXME FastR: "1" is output like "1.0000" IMHO mode='g' should output just "1"
+        assertEval(Ignored.ImplementationError, "argv <- list(1, 'double', 8, 5, 'g', '-', 13); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
     public void testformatC3() {
-        assertEval(Ignored.Unknown,
+        // FIXME Similar problem to testformatC1
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(c(1.5, 13.3414265412268, 1e-15, 8, 1, 500, 28), .Dim = c(7L, 1L), .Dimnames = list(c('m.ship.expon.', 'objective', 'tolerance', 'iterations', 'converged', 'maxit', 'n'), ' ')), 'double', 8L, 7L, 'g', '', c(15L, 15L, 15L, 15L, 15L, 15L, 15L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
     public void testformatC4() {
-        assertEval(Ignored.Unknown,
+        // FIXME Similar problem to testformatC2
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(c(1000, 1e+07, 1), 'double', 5, 4L, 'g', '', c(12L, 12L, 12L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
@@ -62,7 +66,8 @@ public class TestBuiltin_formatC extends TestBase {
 
     @Test
     public void testformatC9() {
-        assertEval(Ignored.Unknown,
+        // FIXME java.util.FormatFlagsConversionMismatchException: Conversion = g, Flags = #
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(c(0.0599, 0.00599, 0.000599, 5.99e-05, 5.99e-06, 5.99e-07), 'double', 3, -2, 'fg', '#', c(10, 11, 12, 13, 14, 15)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
@@ -88,7 +93,8 @@ public class TestBuiltin_formatC extends TestBase {
 
     @Test
     public void testformatC14() {
-        assertEval(Ignored.Unknown,
+        // GnuR does not round up xyz.5 to xyz+1 although it does e.g. xyz.75 to xyz+1
+        assertEval(Ignored.ReferenceError,
                         "argv <- list(structure(c(1962.25, 1962.5, 1962.75, 1963, 1963.25, 1963.5, 1963.75, 1964, 1964.25, 1964.5, 1964.75, 1965, 1965.25, 1965.5, 1965.75, 1966, 1966.25, 1966.5, 1966.75, 1967, 1967.25, 1967.5, 1967.75, 1968, 1968.25, 1968.5, 1968.75, 1969, 1969.25, 1969.5, 1969.75, 1970, 1970.25, 1970.5, 1970.75, 1971, 1971.25, 1971.5, 1971.75), .Tsp = c(1962.25, 1971.75, 4), class = 'ts'), 'double', 1, 4L, 'g', '', c(12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 }

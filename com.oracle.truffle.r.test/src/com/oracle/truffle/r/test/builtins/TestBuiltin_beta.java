@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -19,21 +19,25 @@ public class TestBuiltin_beta extends TestBase {
 
     @Test
     public void testbeta1() {
-        assertEval(Ignored.Unknown, "argv <- list(FALSE, FALSE); .Internal(beta(argv[[1]], argv[[2]]))");
+        // FIXME RInternalError: not implemented: .Internal beta
+        assertEval(Ignored.Unimplemented, "argv <- list(FALSE, FALSE); .Internal(beta(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testbeta2() {
-        assertEval(Ignored.Unknown, "argv <- list(logical(0), logical(0)); .Internal(beta(argv[[1]], argv[[2]]))");
+        // FIXME RInternalError: not implemented: .Internal beta
+        assertEval(Ignored.Unimplemented, "argv <- list(logical(0), logical(0)); .Internal(beta(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testbeta4() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(a = 0.01, b = 171), .Names = c('a', 'b'));do.call('beta', argv)");
+        // FIXME RInternalError: not implemented: .Internal beta
+        assertEval(Ignored.Unimplemented, "argv <- structure(list(a = 0.01, b = 171), .Names = c('a', 'b'));do.call('beta', argv)");
     }
 
     @Test
     public void testbeta5() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(a = 1e-200, b = 1e-200), .Names = c('a',     'b'));do.call('beta', argv)");
+        // FIXME RInternalError: not implemented: .Internal beta
+        assertEval(Ignored.Unimplemented, "argv <- structure(list(a = 1e-200, b = 1e-200), .Names = c('a',     'b'));do.call('beta', argv)");
     }
 }

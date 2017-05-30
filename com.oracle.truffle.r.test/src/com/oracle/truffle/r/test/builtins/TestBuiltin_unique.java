@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -24,8 +24,8 @@ public class TestBuiltin_unique extends TestBase {
 
     @Test
     public void testunique2() {
-        // FIXME NA's are being considered duplicates
-        assertEval(Ignored.Unknown, "argv <- list(c('a', 'b', 'c', 'c', 'b', 'a', 'NA', 'd', 'd', NA), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        // FIXME FastR wrongly considers 'NA' and NA equal
+        assertEval(Ignored.ImplementationError, "argv <- list(c('a', 'b', 'c', 'c', 'b', 'a', 'NA', 'd', 'd', NA), FALSE, FALSE, NA); .Internal(unique(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
@@ -188,7 +188,9 @@ public class TestBuiltin_unique extends TestBase {
 
         assertEval("{ x<-quote(f(7, 42)); unique(x) }");
         assertEval("{ x<-function() 42; unique(x) }");
-        assertEval(Ignored.Unknown, "{ unique(c(1,2,1), incomparables=function() 42) }");
+        // FastR msg "invalid 'incomparables' argument"
+        // seems a bit better than GnuR's "cannot coerce type 'closure' to vector of type 'double'"
+        assertEval(Ignored.ReferenceError, "{ unique(c(1,2,1), incomparables=function() 42) }");
 
     }
 }

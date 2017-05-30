@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -20,6 +20,6 @@ public class TestBuiltin_dir extends TestBase {
 
     @Test
     public void testdir1() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(path = '.', pattern = 'myTst_.*tar\\.gz$'),     .Names = c('path', 'pattern'));do.call('dir', argv)");
+        assertEval(Ignored.Unknown, "argv <- structure(list(path = '.', pattern = 'myTst_.*tar[.]gz$'),     .Names = c('path', 'pattern'));do.call('dir', argv)");
     }
 }

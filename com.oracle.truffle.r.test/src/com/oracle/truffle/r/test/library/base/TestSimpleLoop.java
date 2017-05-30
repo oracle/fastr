@@ -61,9 +61,12 @@ public class TestSimpleLoop extends TestBase {
 
     @Test
     public void testLoopsErrorsIgnore() {
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ l <- quote(for(i in s) { x <- i }) ; s <- 1:3 ; eval(l) ; s <- function(){} ; eval(l) ; x }");
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ l <- function(s) { for(i in s) { x <- i } ; x } ; l(1:3) ; s <- function(){} ; l(s) ; x }");
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ l <- quote({ for(i in s) { x <- i } ; x }) ; f <- function(s) { eval(l) } ; f(1:3) ; s <- function(){} ; f(s) ; x }");
+        // FIXME: A strange-looking error: "Error in
+        // `*anonymous-FOR_RANGE-2119`[[`*anonymous-FOR_INDEX-2118`]] :
+        // object of type 'closure' is not subsettable"
+        assertEval(Output.IgnoreErrorMessage, "{ l <- quote(for(i in s) { x <- i }) ; s <- 1:3 ; eval(l) ; s <- function(){} ; eval(l) ; x }");
+        assertEval(Output.IgnoreErrorMessage, "{ l <- function(s) { for(i in s) { x <- i } ; x } ; l(1:3) ; s <- function(){} ; l(s) ; x }");
+        assertEval(Output.IgnoreErrorMessage, "{ l <- quote({ for(i in s) { x <- i } ; x }) ; f <- function(s) { eval(l) } ; f(1:3) ; s <- function(){} ; f(s) ; x }");
     }
 
     @Test

@@ -19,7 +19,9 @@ public class TestBuiltin_La extends TestBase {
 
     @Test
     public void testLa1() {
-        assertEval(Ignored.Unknown,
+        // FIXME numerical results are almost all different
+        // and FastR output misses "(Intercept) Rail2 Rail3 ..." heading
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0), .Dim = c(18L, 7L), .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18'), c('(Intercept)', 'Rail2', 'Rail5', 'Rail1', 'Rail6', 'Rail3', 'Rail4')))); .Internal(La_qr(argv[[1]]))");
     }
 
@@ -40,7 +42,8 @@ public class TestBuiltin_La extends TestBase {
 
     @Test
     public void testLa4() {
-        assertEval(Ignored.Unknown,
+        // FIXME RInternalError: not implemented: .Internal La_svd
+        assertEval(Ignored.Unimplemented,
                         "argv <- list('S', structure(c(1, 0, 0, 0, 0, 1.4142135623731, 0, 0, 0, 0, 1.73205080756888, 0, 0, 0, 0, 2), .Dim = c(4L, 4L), Dimnames = list(character(0), character(0))), c(2, 1.73205080756888, 1.4142135623731, 1), structure(c(0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0), .Dim = c(4L, 4L)), structure(c(0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0), .Dim = c(4L, 4L))); .Internal(La_svd(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
@@ -51,18 +54,21 @@ public class TestBuiltin_La extends TestBase {
 
     @Test
     public void testLa6() {
-        assertEval(Ignored.Unknown,
+        // FIXME RInternalError: not implemented: .Internal La_svd
+        assertEval(Ignored.Unimplemented,
                         "argv <- list('S', structure(c(FALSE, TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = c(5L, 5L)), c(3.37916576339493, 1.53572230863579, 1.41421356237309, 0.472012430194285, 3.04287016253022e-18), structure(c(-0.38209344041777, -0.441911867608196, -0.441911867608196, -0.563415484445979, -0.38209344041777, -0.594200765232569, 0.307687929858406, 0.307687929858405, 0.32327569786942, -0.594200765232566, 0.499999999999999, -0.5, 0.500000000000001, 7.42461647718073e-16, -0.500000000000001, 0.0304967766615352, 0.45830343560406, 0.458303435604061, -0.760299819185526, 0.0304967766615352, -0.5, -0.5, 0.5, -1.11022302462516e-16, 0.5), .Dim = c(5L, 5L)), structure(c(-0.41058086214689, 0.0239384830763564, -0.707106781186547, -0.575195883735897, 0, -0.428282990831553, 0.611211774620929, 9.15933995315754e-16, 0.331150287627506, 0.577350269189626, -0.41058086214689, 0.0239384830763538, 0.707106781186548, -0.575195883735897, 5.55111512312578e-17, -0.226146609649533, -0.773838814336698, -1.55431223447522e-15, 0.129220226886747, 0.577350269189625, -0.654429600481086, -0.162627039715767, -5.27355936696949e-16, 0.460370514514253, -0.577350269189626), .Dim = c(5L, 5L))); .Internal(La_svd(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
     public void testLa7() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(1, 1, 3, 3), .Dim = c(2L, 2L)), 'O'); .Internal(La_dgecon(argv[[1]], argv[[2]]))");
+        // FIXME RInternalError: not implemented: .Internal La_dgecon
+        assertEval(Ignored.Unimplemented, "argv <- list(structure(c(1, 1, 3, 3), .Dim = c(2L, 2L)), 'O'); .Internal(La_dgecon(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testLa8() {
-        assertEval(Ignored.Unknown,
+        // FIXME RInternalError: not implemented: .Internal La_svd
+        assertEval(Ignored.Unimplemented,
                         "argv <- list('N', structure(c(-4, 0, 0, 0, 0, 0, 0, -406.725, 41.7955066364795, 0, 0, 0, 0, 0, -1550.79375, 381.717151319926, 49.8228991342168, 0, 0, 0, 0, -1277.325, 224.617432123818, -31.1858918860748, -282.060212912726, 0, 0, 0, -1042.675, 125.261805546114, -29.9849484767744, 164.425554254677, -170.353263600129, 0, 0, -469.696, 26.3795103523805, 4.19691803785862, -3.18974110831568, 0.0462484557378925, 1.46320172717486, 0, -7818, 18.2758880432689, 1.77525956575195, -1.45298766739792, -0.449176219307484, -0.281900648530911, -0.669305080560524), .Dim = c(7L, 7L), .Dimnames = list(c('1947', '1948', '1949', '1950', '1951', '1952', '1953'), c('(Intercept)', 'GNP.deflator', 'GNP', 'Unemployed', 'Armed.Forces', 'Population', 'Year'))), c(8164.12940108939, 457.24498274114, 324.584423503013, 134.312174464868, 4.95553195929945, 1.41954832076337, 0.000342370904183799), structure(0, .Dim = c(1L, 1L)), structure(0, .Dim = c(1L, 1L))); .Internal(La_svd(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 

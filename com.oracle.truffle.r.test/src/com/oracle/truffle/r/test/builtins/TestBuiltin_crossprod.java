@@ -24,7 +24,9 @@ public class TestBuiltin_crossprod extends TestBase {
 
     @Test
     public void testcrossprod2() {
-        assertEval(Ignored.Unknown, "argv <- list(numeric(0), numeric(0)); .Internal(crossprod(argv[[1]], argv[[2]]))");
+        // FIXME NullPointerException at
+        // com.oracle.truffle.r.nodes.builtin.base.MatMult.left0Dim(MatMult.java:119)
+        assertEval(Ignored.ImplementationError, "argv <- list(numeric(0), numeric(0)); .Internal(crossprod(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -54,7 +56,8 @@ public class TestBuiltin_crossprod extends TestBase {
 
     @Test
     public void testcrossprod8() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR ignores .Dimnames (docs say to keep them)
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(c(-0.0972759604917099, -0.0972759604917099, -0.197781705719934, -0.197781705719934, -0.258476920906799, -0.258476920906799, -0.31681058743414, -0.31681058743414, -0.36711291168933, -0.36711291168933, -0.386611727075222, -0.386611727075222, -0.339690730499459, -0.33969073049946, -0.392353467475584, -0.392353467475584, -0.277328754578855, -0.277328754578855, -0.062581948827679, -0.062581948827679, 0.204605005658209, 0.204605005658209, 0.32860008733551, 0.32860008733551, 0.504748197638673, 0.504748197638673, 0.0398546163039329, 0.039854616303933, -0.269613788250837, -0.269613788250837, -0.312096598983548, -0.312096598983548, 0.0190548270250438, 0.0190548270250438, 0.270521530002251, 0.270521530002251), .Dim = c(12L, 3L)), structure(c(-2.82631170793264, -2.82631170793264, -3.89457420977924, -3.89457420977924, -3.62818861156626, -3.62818861156626, -2.72530862462141, -2.72530862462141, -1.437640468988, -1.437640468988, -0.811701520293695, -0.811701520293695, 14291.543903102, 14291.543903102, 13346.8386233407, 13346.8386233407, 8863.44390274002, 8863.44390274002, 4080.15117667984, 4080.15117667984, 979.818149952962, 979.818149952962, 296.593928028368, 296.593928028368), .Dim = c(12L, 2L), .Dimnames = list(NULL, c('Vm', 'K')))); .Internal(crossprod(argv[[1]], argv[[2]]))");
     }
 
@@ -68,7 +71,8 @@ public class TestBuiltin_crossprod extends TestBase {
         assertEval("{ crossprod(c(1,NA,2), matrix(1:6, ncol=2)) }");
         assertEval("{ x <- matrix(c(NaN,2,3,4,5,NA), nrow=3); crossprod(x) }");
 
-        assertEval(Ignored.Unknown, "{ x <- matrix(c(NaN,2+3i,3,4+1i,5,NA), nrow=3); crossprod(x) }");
+        // FIXME Number at [2][2] position of resulting matrix differs
+        assertEval(Ignored.ImplementationError, "{ x <- matrix(c(NaN,2+3i,3,4+1i,5,NA), nrow=3); crossprod(x) }");
 
         assertEval(Output.ImprovedErrorContext, "{ crossprod('asdf', matrix(1:6, ncol=2)) }");
     }

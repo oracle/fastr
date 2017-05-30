@@ -86,7 +86,11 @@ public class TestBuiltin_c extends TestBase {
 
     @Test
     public void testc14() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR does not honor setting options(digits=ndecimaldigits)
+        // First test is a simplified problem on which the second test would fail too (besides that
+        // it should work fine)
+        assertEval(Ignored.OutputFormatting, "options(digits=4);c(0.12345678912345,0.123)");
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(`Grand mean` = structure(103.87323943662, class = 'mtable'), structure(list(N = structure(c(78.7365206866197, 98.5088731171753, 113.842206450509, 123.008873117175), .Dim = 4L, .Dimnames = structure(list(N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = 'N'), class = 'mtable'), `V:N` = structure(c(79.5323303457107, 86.1989970123773, 69.7732394366197, 98.0323303457106, 108.032330345711, 89.1989970123773, 114.198997012377, 116.698997012377, 110.365663679044, 124.365663679044, 126.365663679044, 118.032330345711), .Dim = 3:4, .Dimnames = structure(list(V = c('Golden.rain', 'Marvellous', 'Victory'), N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = c('V', 'N')), class = 'mtable')), .Names = c('N', 'V:N')));c(argv[[1]],argv[[2]]);");
     }
 
@@ -302,7 +306,9 @@ public class TestBuiltin_c extends TestBase {
 
     @Test
     public void testc57() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR produces slightly different output for class = 'bibentry' than GnuR
+        // It should be decided which output is the best
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(list(structure(list(title = 'boot: Bootstrap R (S-PLUS) Functions', author = structure(list(structure(list(given = 'Angelo', family = 'Canty', role = 'aut', email = NULL, comment = 'S original'), .Names = c('given', 'family', 'role', 'email', 'comment')), structure(list(given = c('Brian', 'D.'), family = 'Ripley', role = c('aut', 'trl', 'cre'), email = 'ripley@stats.ox.ac.uk', comment = 'R port, author of parallel support'), .Names = c('given', 'family', 'role', 'email', 'comment'))), class = 'person'),     year = '2012', note = 'R package version 1.3-4', url = 'http://CRAN.R-project.org/package=boot'), .Names = c('title', 'author', 'year', 'note', 'url'), bibtype = 'Manual', key = 'boot-package')), class = 'bibentry'), structure(list(structure(list(title = 'Bootstrap Methods and Their Applications', author = structure(list(structure(list(given = c('Anthony', 'C.'), family = 'Davison', role = 'aut', email = NULL, comment = NULL), .Names = c('given', 'family', 'role', 'email', 'comment')), structure(list(    given = c('David', 'V.'), family = 'Hinkley', role = 'aut', email = NULL, comment = NULL), .Names = c('given', 'family', 'role', 'email', 'comment'))), class = 'person'), year = '1997', publisher = 'Cambridge University Press', address = 'Cambridge', isbn = '0-521-57391-2', url = 'http://statwww.epfl.ch/davison/BMA/'), .Names = c('title', 'author', 'year', 'publisher', 'address', 'isbn', 'url'), bibtype = 'Book', key = 'boot-book')), class = 'bibentry'));c(argv[[1]],argv[[2]]);");
     }
 
@@ -323,7 +329,11 @@ public class TestBuiltin_c extends TestBase {
 
     @Test
     public void testc61() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(`ANY#ANY` = .Primitive('==')), .Names = 'ANY#ANY'), list());c(argv[[1]],argv[[2]]);");
+        // FIXME: FastR does not name the args for primitives so the following gives
+        // "function(null,null)" and "function(null)" while GnuR gives
+        // "function (e1, e2)" and "function (x)"
+        assertEval(Ignored.OutputFormatting, ".Primitive('==');.Primitive('!');");
+        assertEval(Ignored.OutputFormatting, "argv <- list(structure(list(`ANY#ANY` = .Primitive('==')), .Names = 'ANY#ANY'), list());c(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -388,7 +398,10 @@ public class TestBuiltin_c extends TestBase {
 
     @Test
     public void testc74() {
-        assertEval(Ignored.Unknown,
+        // FIXME the contained "formatNum = function (x, ...) format(x, ..."
+        // is output without newline before 'format' in FastR
+        // and with newline before 'format' in GnuR
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(list(object = c('time', 'status')), .Names = 'object'), structure(list(max.level = NA, vec.len = 4, digits.d = 3, nchar.max = 128, give.attr = TRUE, give.head = TRUE, width = 80L, envir = NULL, strict.width = 'no', formatNum = function (x, ...) format(x, trim = TRUE, drop0trailing = TRUE, ...), list.len = 99), .Names = c('max.level', 'vec.len', 'digits.d', 'nchar.max', 'give.attr', 'give.head', 'width', 'envir', 'strict.width', 'formatNum', 'list.len')), structure(list(give.length = TRUE, nest.lev = 2, indent.str = '  .. ..'), .Names = c('give.length', 'nest.lev', 'indent.str')));c(argv[[1]],argv[[2]],argv[[3]]);");
     }
 

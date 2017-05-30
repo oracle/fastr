@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -79,7 +79,16 @@ public class TestBuiltin_matrix extends TestBase {
 
     @Test
     public void testmatrix13() {
-        assertEval(Ignored.Unknown, "argv <- list(c(0, 0, 0, 0), 4L, 0L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("matrix(1:4, 2, 1)");
+        // Missing warning in FastR; GnuR ouptputs:
+        // Warning message:
+        // In matrix(1:4, 4, 0) : data length exceeds size of matrix
+        // IMHO more a ReferenceError since e.g. "matrix(1:4, 2, 1)" gives no warning about extra
+        // two elements
+        // but for 0 columns the warning is given by GnuR
+        assertEval(Output.MissingWarning, "matrix(1:4, 4, 0)");
+        assertEval(Output.MissingWarning,
+                        "argv <- list(c(0, 0, 0, 0), 4L, 0L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -194,13 +203,15 @@ public class TestBuiltin_matrix extends TestBase {
 
     @Test
     public void testmatrix36() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(0, 0, 0, 0, 0, 0, 4.94065645841247e-324, 0, 0, 0, 0, 0), structure(12L, .Names = '1'), 1L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(c(0, 0, 0, 0, 0, 0, 4.94065645841247e-324, 0, 0, 0, 0, 0), structure(12L, .Names = '1'), 1L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
     public void testmatrix37() {
-        assertEval(Ignored.Unknown, "argv <- list(1:7, 3, 4, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        // FIXME Missing warning in FastR:
+        // Warning message:
+        // data length [7] is not a sub-multiple or multiple of the number of rows [3]
+        assertEval(Output.MissingWarning, "argv <- list(1:7, 3, 4, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -210,7 +221,9 @@ public class TestBuiltin_matrix extends TestBase {
 
     @Test
     public void testmatrix39() {
-        assertEval(Ignored.Unknown,
+        // Warning message:
+        // data length [44] is not a sub-multiple or multiple of the number of columns [5]
+        assertEval(Output.MissingWarning,
                         "argv <- list(c(-1, 4, 4, 9, 5, 1, 4, 8, 8, 2, 6, 0, 2, 3, 8, 8, 4, 4, 2, 3, 4, 0, -1, 7, 2, 4, 2, 3, 5, 6, 6, 5, 4, 3, 7, -1, 3, 1, -1, 2, 32, 1, 4, 4), 2L, 5L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 

@@ -34,13 +34,19 @@ public class TestBuiltin_qsort extends TestBase {
 
     @Test
     public void testqsort4() {
-        assertEval(Ignored.Unknown,
+        // FastR returns double vector ordered according to the second "decreasing" argument.
+        // GnuR returns "list" with sorted double vector in "x" and element indices in "ix"
+        // GnuR ignores second argument "decreasing" and it always sorts in ascending order.
+        assertEval(Ignored.ReferenceError,
                         "argv <- list(c(1.64819754690779, 0.502718643389684, 0.845467412356198, 0.467247395729231, -0.402055063696625, 0.923526703253396, -0.0080556407117813, 1.03378423761425, -0.799126981726699, 1.00423302095334, -0.311973356192691, -0.88614958536232, -1.9222548962705, 1.61970074406333, 0.519269904664384, -0.055849931834021, 0.696417610118512), TRUE); .Internal(qsort(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testqsort5() {
-        assertEval(Ignored.Unknown, "argv <- list(c(1L, 7L, 11L, 12L, 13L, 19L, 25L, 3L, 8L), TRUE); .Internal(qsort(argv[[1]], argv[[2]]))");
+        // FastR returns double vector ordered according to the second "decreasing" argument.
+        // GnuR returns "list" with sorted double vector in "x" and element indices in "ix"
+        // GnuR ignores second argument "decreasing" and it always sorts in ascending order.
+        assertEval(Ignored.ReferenceError, "argv <- list(c(1L, 7L, 11L, 12L, 13L, 19L, 25L, 3L, 8L), TRUE); .Internal(qsort(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -75,7 +81,10 @@ public class TestBuiltin_qsort extends TestBase {
 
     @Test
     public void testqsort12() {
-        assertEval(Ignored.Unknown, "argv <- list(FALSE, FALSE); .Internal(qsort(argv[[1]], argv[[2]]))");
+        // FIXME:
+        // FastR refuses to sort logical vector with "Error: argument is not a numeric vector"
+        // GnuR outputs "[1] FALSE"
+        assertEval(Ignored.ReferenceError, "argv <- list(FALSE, FALSE); .Internal(qsort(argv[[1]], argv[[2]]))");
     }
 
     @Test

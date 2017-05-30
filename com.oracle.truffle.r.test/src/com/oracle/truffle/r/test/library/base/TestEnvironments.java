@@ -267,7 +267,8 @@ public class TestEnvironments extends TestBase {
 
     @Test
     public void testEnvironmentAssignLocked() {
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ x <- 1; lockBinding(\"x\", globalenv()); x <- 1 }");
+        // FIXME: No error when writing to locked variable
+        assertEval(Ignored.Unimplemented, Output.IgnoreErrorContext, "{ x <- 1; lockBinding(\"x\", globalenv()); x <- 1 }");
     }
 
     @Test

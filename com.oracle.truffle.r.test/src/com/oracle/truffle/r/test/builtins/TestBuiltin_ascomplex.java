@@ -29,7 +29,8 @@ public class TestBuiltin_ascomplex extends TestBase {
 
     @Test
     public void testascomplex3() {
-        assertEval(Ignored.Unknown, "argv <- list(' ');as.complex(argv[[1]]);");
+        // FastR: extra warning: NAs introduced by coercion
+        assertEval(Output.IgnoreWarningMessage, "argv <- list(' ');as.complex(argv[[1]]);");
     }
 
     @Test
@@ -93,8 +94,9 @@ public class TestBuiltin_ascomplex extends TestBase {
 
         assertEval("{ as.complex(\"1e10+5i\") }");
         assertEval("{ as.complex(\"-.1e10+5i\") }");
-        assertEval(Ignored.Unknown, "{ as.complex(\"1e-2+3i\") }");
-        assertEval(Ignored.Unknown, "{ as.complex(\"+.1e+2-3i\") }");
+        // FIXME FastR unable to properly interpret x+yi (reports NA and warning instead)
+        assertEval(Ignored.ImplementationError, "{ as.complex(\"1e-2+3i\") }");
+        assertEval(Ignored.ImplementationError, "{ as.complex(\"+.1e+2-3i\") }");
 
         assertEval("{ as.complex(list(42)) }");
         assertEval(Output.IgnoreErrorContext, "{ as.complex(list(NULL)) }");
