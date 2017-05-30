@@ -36,5 +36,6 @@ public class TestExternal_rbinom extends TestBase {
         assertEval("set.seed(42); rbinom(10, 2:10, c(0.1, 0.5, 0.9))");
         assertEval("set.seed(42); rbinom(1:10, 2:10, c(0.1, 0.5, 0.9))");
         assertEval("set.seed(42); rbinom(c(1,2), 11:12, c(0.1, 0.5, 0.9))");
+        assertEval("set.seed(42); rbinom(1, 2, 3)");
     }
 }
