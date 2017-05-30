@@ -22,16 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.runtime.RVisibility.ON;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
@@ -42,17 +47,22 @@ public abstract class FastRSourceInfo extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(FastRSourceInfo.class);
-        casts.arg("fun").defaultError(RError.Message.GENERIC, "Only functions are allowed.").mustBe(RFunction.class);
+        casts.arg("fun").defaultError(RError.Message.GENERIC, "Only functions are allowed.").mustBe(instanceOf(RFunction.class).or(instanceOf(RLanguage.class)));
     }
 
     @Specialization
-    public Object srcInfo(@SuppressWarnings("unused") RNull fun) {
-        return RNull.instance;
+    public Object srcInfo(VirtualFrame frame, RFunction fun) {
+        return execute(frame, fun.getRootNode());
     }
 
     @Specialization
-    public Object srcInfo(RFunction fun) {
-        SourceSection ss = fun.getRootNode().getSourceSection();
+    public Object srcInfo(VirtualFrame frame, RLanguage fun) {
+        return execute(frame, fun.getRep());
+    }
+
+    @Specialization
+    protected Object srcInfo(Node fun) {
+        SourceSection ss = fun.getSourceSection();
         if (ss != null) {
             String path = ss.getSource().getPath();
             if (path != null) {
@@ -63,6 +73,11 @@ public abstract class FastRSourceInfo extends RBuiltinNode.Arg1 {
                 return ss.getSource().getName();
             }
         }
+        return RNull.instance;
+    }
+
+    @Fallback
+    public Object srcInfo(@SuppressWarnings("unused") Object o) {
         return RNull.instance;
     }
 }
