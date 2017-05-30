@@ -30,6 +30,8 @@ import java.net.URL;
 
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RSrcref.SrcrefFields;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * A facade for the creation of Truffle {@link Source} objects, which is complicated in R due the
@@ -185,6 +187,14 @@ public class RSource {
      */
     public static Source fromURL(URL url, String name) throws IOException {
         return Source.newBuilder(url).name(name).mimeType(RRuntime.R_APP_MIME).build();
+    }
+
+    /**
+     * Create an (external) source from an R srcfile ({@link RSrcref#createSrcfile(String)}).
+     */
+    public static Source fromFile(REnvironment env) throws IOException {
+        String path = (String) RRuntime.r2Java(env.get(SrcrefFields.filename.name()));
+        return fromFileName(path, false);
     }
 
     /**

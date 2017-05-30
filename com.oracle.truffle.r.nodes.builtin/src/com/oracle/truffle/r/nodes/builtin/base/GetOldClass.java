@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 @RBuiltin(name = "oldClass", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
@@ -54,6 +55,11 @@ public abstract class GetOldClass extends RBuiltinNode.Arg1 {
         } else {
             return RNull.instance;
         }
+    }
+
+    @Specialization
+    protected Object getOldClass(@SuppressWarnings("unused") RSymbol arg) {
+        return RNull.instance;
     }
 
     @Specialization
