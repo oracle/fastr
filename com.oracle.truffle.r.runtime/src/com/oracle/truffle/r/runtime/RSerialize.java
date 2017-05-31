@@ -53,7 +53,6 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -84,7 +83,6 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
-import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -1435,7 +1433,6 @@ public class RSerialize {
                 } else if (type == SEXPTYPE.SYMSXP) {
                     writeSymbol((RSymbol) obj);
                 } else {
-                    SourceSection sourceSection = getSourceSection(obj);
                     if (type == SEXPTYPE.ENVSXP) {
                         REnvironment env = (REnvironment) obj;
                         addReadRef(obj);
@@ -1466,27 +1463,20 @@ public class RSerialize {
                             }
                             terminatePairList();
                             writeItem(RNull.instance); // hashtab
-                            DynamicObject attributes = env.getAttributes();
-                            writeAttributes(attributes, sourceSection);
-                            if (attributes == null && sourceSection == null) {
+                            OutAttributes attributes = new OutAttributes(env, type);
+                            if (attributes.hasAttributes()) {
+                                writeAttributes(attributes);
+                            } else {
                                 writeItem(RNull.instance);
                             }
                         }
                     } else {
                         // flags
-                        DynamicObject attributes = null;
-                        SourceSection ss = sourceSection;
-                        if (obj instanceof RAttributable) {
-                            RAttributable rattr = (RAttributable) obj;
-                            attributes = rattr.getAttributes();
-                            if (attributes != null && attributes.isEmpty()) {
-                                attributes = null;
-                            }
-                        }
+                        OutAttributes attributes = new OutAttributes(obj, type);
                         boolean hasTag = gnuRType == SEXPTYPE.CLOSXP || gnuRType == SEXPTYPE.DOTSXP || (gnuRType == SEXPTYPE.PROMSXP && !((RPromise) obj).isEvaluated()) ||
                                         (type == SEXPTYPE.LISTSXP && !((RPairList) obj).isNullTag());
                         int gpbits = getGPBits(obj);
-                        int flags = Flags.packFlags(gnuRType, gpbits, isObject(obj), attributes != null, hasTag);
+                        int flags = Flags.packFlags(gnuRType, gpbits, isObject(obj), attributes.hasAttributes(), hasTag);
                         stream.writeInt(flags);
                         switch (type) {
                             case STRSXP: {
@@ -1613,20 +1603,12 @@ public class RSerialize {
                                     stream.writeString(name);
                                     break;
                                 }
-                                if (type == SEXPTYPE.FUNSXP) {
-                                    RFunction fun = (RFunction) obj;
-                                    RSyntaxFunction body = (RSyntaxFunction) fun.getRootNode();
-                                    ss = body.getLazySourceSection();
-                                }
                                 tailCall = true;
 
                                 // attributes written first to avoid recursion on cdr
-                                writeAttributes(attributes, ss);
+                                writeAttributes(attributes);
                                 if (attributes != null) {
                                     attributes = null;
-                                }
-                                if (ss != null) {
-                                    ss = null;
                                 }
 
                                 switch (type) {
@@ -1698,17 +1680,10 @@ public class RSerialize {
                                 throw RInternalError.unimplemented(type.name());
                         }
 
-                        writeAttributes(attributes, ss);
+                        writeAttributes(attributes);
                     }
                 }
             } while (tailCall);
-        }
-
-        private static SourceSection getSourceSection(Object obj) {
-            if (obj instanceof RSourceSectionNode) {
-                return ((RSourceSectionNode) obj).getLazySourceSection();
-            }
-            return null;
         }
 
         private static Object getValueIgnoreActiveBinding(Frame frame, String key) {
@@ -1780,27 +1755,31 @@ public class RSerialize {
             }
         }
 
-        private void writeAttributes(DynamicObject attributes, SourceSection ss) throws IOException {
-            if (ss != null && ss != RSyntaxNode.LAZY_DEPARSE) {
-                String path = ss.getSource().getURI().getPath();
-                REnvironment createSrcfile = RSrcref.createSrcfile(path);
-                Object createLloc = RSrcref.createLloc(ss);
-                writePairListEntry(RRuntime.R_SRCREF, createLloc);
-                writePairListEntry(RRuntime.R_SRCFILE, createSrcfile);
-            }
-            if (attributes != null) {
-                // have to convert to GnuR pairlist
-                Iterator<RAttributesLayout.RAttribute> iter = RAttributesLayout.asIterable(attributes).iterator();
-                while (iter.hasNext()) {
-                    RAttributesLayout.RAttribute attr = iter.next();
-                    // name is the tag of the virtual pairlist
-                    // value is the car
-                    // next is the cdr
-                    writePairListEntry(attr.getName(), attr.getValue());
+        private void writeAttributes(OutAttributes outAttrs) throws IOException {
+            if (outAttrs != null) {
+                SourceSection ss = outAttrs.getSourceReferenceAttributes();
+                if (ss != null) {
+                    String path = ss.getSource().getURI().getPath();
+                    REnvironment createSrcfile = RSrcref.createSrcfile(path);
+                    Object createLloc = RSrcref.createLloc(ss, createSrcfile);
+                    writePairListEntry(RRuntime.R_SRCREF, createLloc);
+                    writePairListEntry(RRuntime.R_SRCFILE, createSrcfile);
                 }
-            }
-            if (attributes != null || ss != null && ss != RSyntaxNode.LAZY_DEPARSE) {
-                terminatePairList();
+                DynamicObject attributes = outAttrs.getExplicitAttributes();
+                if (attributes != null) {
+                    // have to convert to GnuR pairlist
+                    Iterator<RAttributesLayout.RAttribute> iter = RAttributesLayout.asIterable(attributes).iterator();
+                    while (iter.hasNext()) {
+                        RAttributesLayout.RAttribute attr = iter.next();
+                        // name is the tag of the virtual pairlist
+                        // value is the car
+                        // next is the cdr
+                        writePairListEntry(attr.getName(), attr.getValue());
+                    }
+                }
+                if (outAttrs.hasAttributes()) {
+                    terminatePairList();
+                }
             }
         }
 
@@ -2106,6 +2085,52 @@ public class RSerialize {
                 assert !(obj instanceof RUnboundValue);
             }
         }
+    }
+
+    /**
+     * An abstraction of implicit and explicit attributes to serialize.
+     */
+    private static class OutAttributes {
+        private DynamicObject explicitAttributes;
+        private SourceSection ss;
+
+        OutAttributes(RAttributable obj, SEXPTYPE type) {
+
+            explicitAttributes = obj.getAttributes();
+            initSourceSection(obj, type);
+        }
+
+        OutAttributes(Object obj, SEXPTYPE type) {
+
+            if (obj instanceof RAttributable) {
+                explicitAttributes = ((RAttributable) obj).getAttributes();
+            }
+            initSourceSection(obj, type);
+        }
+
+        private void initSourceSection(Object obj, SEXPTYPE type) {
+            if (type == SEXPTYPE.FUNSXP) {
+                RFunction fun = (RFunction) obj;
+                RSyntaxFunction body = (RSyntaxFunction) fun.getRootNode();
+                SourceSection lazySourceSection = body.getLazySourceSection();
+                if (lazySourceSection != RSyntaxNode.LAZY_DEPARSE) {
+                    ss = lazySourceSection;
+                }
+            }
+        }
+
+        public boolean hasAttributes() {
+            return explicitAttributes != null && !explicitAttributes.isEmpty() || ss != null && ss != RSyntaxNode.LAZY_DEPARSE;
+        }
+
+        public DynamicObject getExplicitAttributes() {
+            return explicitAttributes;
+        }
+
+        public SourceSection getSourceReferenceAttributes() {
+            return ss;
+        }
+
     }
 
     /**
@@ -2418,21 +2443,6 @@ public class RSerialize {
         return state.closePairList();
     }
 
-    private static Object extractFromList(Object tag, SEXPTYPE expectedType) {
-        SEXPTYPE type = SEXPTYPE.typeForClass(tag.getClass());
-        if (type == expectedType) {
-            return tag;
-        } else if (type == SEXPTYPE.LISTSXP) {
-            for (RPairList item : (RPairList) tag) {
-                Object data = item.car();
-                if (SEXPTYPE.typeForClass(data.getClass()) == expectedType) {
-                    return data;
-                }
-            }
-        }
-        return null;
-    }
-
     /**
      * A collection of static functions that will transform a pairlist into an AST using the
      * {@link RCodeBuilder}.
@@ -2585,7 +2595,8 @@ public class RSerialize {
         } else {
             Object srcref = func.getAttr(RRuntime.R_SRCREF);
             if (srcref instanceof RAbstractIntVector) {
-                handleSrcrefAttr((RAbstractIntVector) srcref, null, elem);
+                SourceSection ss = RSrcref.createSourceSection((RAbstractIntVector) srcref, null);
+                elem.setSourceSection(ss);
             }
         }
     }
@@ -2597,12 +2608,13 @@ public class RSerialize {
     private static void handleSrcrefAttr(RAttributable func, RSyntaxCall elem) {
         Object srcref = func.getAttr(RRuntime.R_SRCREF);
         if (srcref instanceof RAbstractIntVector) {
-            handleSrcrefAttr((RAbstractIntVector) srcref, null, elem);
+            SourceSection ss = RSrcref.createSourceSection((RAbstractIntVector) srcref, null);
+            elem.setSourceSection(ss);
         } else if (srcref instanceof RList) {
             try {
                 Object srcfile = func.getAttr(RRuntime.R_SRCFILE);
                 assert srcfile instanceof REnvironment;
-                Source source = RSource.fromFile((REnvironment) srcfile);
+                Source source = RSource.fromSrcfile((REnvironment) srcfile);
 
                 RList l = (RList) srcref;
                 RSyntaxElement[] syntaxArguments = elem.getSyntaxArguments();
@@ -2611,10 +2623,11 @@ public class RSerialize {
                 for (int i = 0; i < l.getLength(); i++) {
                     Object dataAt = l.getDataAt(i);
                     assert dataAt instanceof RAbstractIntVector;
+                    SourceSection ss = RSrcref.createSourceSection((RAbstractIntVector) dataAt, source);
                     if (i == 0) {
-                        handleSrcrefAttr((RAbstractIntVector) dataAt, source, elem);
+                        elem.setSourceSection(ss);
                     } else {
-                        handleSrcrefAttr((RAbstractIntVector) dataAt, source, syntaxArguments[i - 1]);
+                        syntaxArguments[i - 1].setSourceSection(ss);
                     }
                 }
             } catch (NoSuchFileException e) {
@@ -2622,32 +2635,6 @@ public class RSerialize {
             } catch (IOException e) {
                 RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, "Cannot access source file: " + e.getMessage());
             }
-        }
-    }
-
-    private static void handleSrcrefAttr(RAbstractIntVector srcrefVec, Source sharedSource, RSyntaxElement elem) {
-
-        try {
-            Source source;
-            if (sharedSource != null) {
-                source = sharedSource;
-            } else {
-                Object srcfile = srcrefVec.getAttr(RRuntime.R_SRCFILE);
-                assert srcfile instanceof REnvironment;
-                source = RSource.fromFile((REnvironment) srcfile);
-            }
-            int startLine = srcrefVec.getDataAt(0);
-            int startColumn = srcrefVec.getDataAt(1);
-            int startIdx = source.getLineStartOffset(startLine) + startColumn;
-            int length = source.getLineStartOffset(srcrefVec.getDataAt(2)) + srcrefVec.getDataAt(3) - startIdx;
-            SourceSection createSection = source.createSection(startLine, startColumn, length);
-            elem.setSourceSection(createSection);
-        } catch (NoSuchFileException e) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, "Missing source file: " + e.getMessage());
-        } catch (IOException e) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, "Cannot access source file: " + e.getMessage());
-        } catch (IllegalArgumentException e) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, "Invalid source reference: " + e.getMessage());
         }
     }
 }
