@@ -1759,11 +1759,13 @@ public class RSerialize {
             if (outAttrs != null) {
                 SourceSection ss = outAttrs.getSourceReferenceAttributes();
                 if (ss != null) {
-                    String path = ss.getSource().getURI().getPath();
-                    REnvironment createSrcfile = RSrcref.createSrcfile(path);
-                    Object createLloc = RSrcref.createLloc(ss, createSrcfile);
-                    writePairListEntry(RRuntime.R_SRCREF, createLloc);
-                    writePairListEntry(RRuntime.R_SRCFILE, createSrcfile);
+                    String path = RSource.getPathInternal(ss.getSource());
+                    if (path != null) {
+                        REnvironment createSrcfile = RSrcref.createSrcfile(path);
+                        Object createLloc = RSrcref.createLloc(ss, createSrcfile);
+                        writePairListEntry(RRuntime.R_SRCREF, createLloc);
+                        writePairListEntry(RRuntime.R_SRCFILE, createSrcfile);
+                    }
                 }
                 DynamicObject attributes = outAttrs.getExplicitAttributes();
                 if (attributes != null) {
@@ -2094,13 +2096,7 @@ public class RSerialize {
         private DynamicObject explicitAttributes;
         private SourceSection ss;
 
-        OutAttributes(RAttributable obj, SEXPTYPE type) {
-
-            explicitAttributes = obj.getAttributes();
-            initSourceSection(obj, type);
-        }
-
-        OutAttributes(Object obj, SEXPTYPE type) {
+        private OutAttributes(Object obj, SEXPTYPE type) {
 
             if (obj instanceof RAttributable) {
                 explicitAttributes = ((RAttributable) obj).getAttributes();
@@ -2112,10 +2108,14 @@ public class RSerialize {
             if (type == SEXPTYPE.FUNSXP) {
                 RFunction fun = (RFunction) obj;
                 RSyntaxFunction body = (RSyntaxFunction) fun.getRootNode();
-                SourceSection lazySourceSection = body.getLazySourceSection();
-                if (lazySourceSection != RSyntaxNode.LAZY_DEPARSE) {
-                    ss = lazySourceSection;
-                }
+                setSourceSection(body);
+            }
+        }
+
+        private void setSourceSection(RSyntaxElement body) {
+            SourceSection lazySourceSection = body.getLazySourceSection();
+            if (lazySourceSection != RSyntaxNode.LAZY_DEPARSE) {
+                ss = lazySourceSection;
             }
         }
 
@@ -2315,7 +2315,6 @@ public class RSerialize {
 
         @Override
         protected Void visit(RSyntaxLookup element) {
-// setSrcrefs(element)
             state.setCarAsSymbol(element.getIdentifier());
             return null;
         }
@@ -2410,7 +2409,27 @@ public class RSerialize {
     private static void serializeFunctionDefinition(State state, RSyntaxFunction function) {
         SerializeVisitor visitor = new SerializeVisitor(state);
         state.setCar(visitor.visitFunctionFormals(function));
-        state.setCdr(visitor.visitFunctionBody(function));
+        Object visitFunctionBody = visitor.visitFunctionBody(function);
+
+        // convert and attach source section to srcref attribute
+        if (visitFunctionBody instanceof RAttributable) {
+
+            SourceSection lazySourceSection = function.getLazySourceSection();
+            if (lazySourceSection != null) {
+                String pathInternal = RSource.getPathInternal(lazySourceSection.getSource());
+                if (pathInternal != null) {
+                    RAttributable visitFunctionBody2 = (RAttributable) visitFunctionBody;
+                    RList createBlockSrcrefs = RSrcref.createBlockSrcrefs(function);
+                    if (createBlockSrcrefs != null) {
+                        visitFunctionBody2.setAttr(RRuntime.R_SRCREF, createBlockSrcrefs);
+                        visitFunctionBody2.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(lazySourceSection));
+                        visitFunctionBody2.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(pathInternal));
+                    }
+                }
+            }
+        }
+
+        state.setCdr(visitFunctionBody);
     }
 
     private static Object serializeLanguage(State state, RLanguage lang) {

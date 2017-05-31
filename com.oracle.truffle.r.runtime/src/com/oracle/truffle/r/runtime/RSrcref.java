@@ -18,6 +18,8 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFileAttributes;
+import java.util.LinkedList;
+import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.Source;
@@ -25,6 +27,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -32,7 +35,13 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 /**
  * Utilities for handling R srcref attributes, in particular conversion from {@link Source},
@@ -103,6 +112,88 @@ public class RSrcref {
         return createLloc(ss, createSrcfile(path));
     }
 
+    /**
+     * Creates a block source reference or {@code null} if the function's body is not a block
+     * statement.<br>
+     * Srcref for blocks are different in that it is an RList of srcref vectors whereas each element
+     * corresponds to one syntax call in the block (including the block itself). E.g.
+     * <p>
+     * <code> {<br/>
+     * print('Hello')<br/>
+     * print(x)<br/>
+     * }</code>
+     * </p>
+     * will result in [[1, 20, 4, 1, 20, 1, 1, 4], [2, 2, 2, 15, 2, 15, 2, 2], [3, 2, 3, 9, 2, 9, 3,
+     * 3]]
+     *
+     * @param function
+     */
+    @TruffleBoundary
+    public static RList createBlockSrcrefs(RSyntaxFunction function) {
+
+        List<Object> blockSrcrefs = new LinkedList<>();
+
+        RSyntaxVisitor<Void> v = new RSyntaxVisitor<Void>() {
+
+            private int depth = 0;
+
+            @Override
+            public Void visit(RSyntaxCall element) {
+
+                if (depth == 0 && !isBlockStatement(element)) {
+                    return null;
+                }
+
+                SourceSection lazySourceSection = element.getLazySourceSection();
+                if (lazySourceSection != null) {
+                    blockSrcrefs.add(createLloc(lazySourceSection));
+                }
+
+                if (depth == 0) {
+                    RSyntaxElement[] syntaxArguments = element.getSyntaxArguments();
+                    for (int i = 0; i < syntaxArguments.length; i++) {
+                        if (syntaxArguments[i] != null) {
+                            depth++;
+                            accept(syntaxArguments[i]);
+                            depth--;
+                        }
+                    }
+                }
+                return null;
+            }
+
+            private boolean isBlockStatement(RSyntaxCall element) {
+                RSyntaxElement lhs = element.getSyntaxLHS();
+                if (lhs instanceof RSyntaxLookup) {
+                    return "{".equals(((RSyntaxLookup) lhs).getIdentifier());
+                }
+                return false;
+            }
+
+            @Override
+            public Void visit(RSyntaxConstant element) {
+                return null;
+            }
+
+            @Override
+            public Void visit(RSyntaxLookup element) {
+                return null;
+            }
+
+            @Override
+            public Void visit(RSyntaxFunction element) {
+                accept(element.getSyntaxBody());
+                return null;
+            }
+        };
+        v.accept(function);
+
+        if (!blockSrcrefs.isEmpty()) {
+            return RDataFactory.createList(blockSrcrefs.toArray());
+        }
+        return null;
+    }
+
     @TruffleBoundary
     public static Object createLloc(SourceSection src) {
         if (src == null) {
@@ -117,7 +208,8 @@ public class RSrcref {
             env = RDataFactory.createNewEnv("src");
             env.setClassAttr(RDataFactory.createStringVector(new String[]{"srcfilecopy", RRuntime.R_SRCFILE}, true));
             try {
-                Path path = Paths.get(RSource.getPathInternal(source));
+                String pathStr = RSource.getPathInternal(source);
+                Path path = Paths.get(pathStr != null ? pathStr : "");
                 env.put(SrcrefFields.filename.name(), path.toString());
                 env.put(SrcrefFields.fixedNewlines.name(), RRuntime.LOGICAL_TRUE);
                 String[] lines = new String[source.getLineCount()];
