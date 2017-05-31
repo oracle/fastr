@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base.infix;
 
 import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertIndex;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUBSCRIPT;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
@@ -169,11 +169,11 @@ abstract class SubscriptSpecial2 extends SubscriptSpecial2Base {
     }
 }
 
-@RBuiltin(name = "[[", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
+@RBuiltin(name = "[[", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE_SUBSCRIPT)
 @TypeSystemReference(RTypes.class)
 public abstract class Subscript extends RBuiltinNode.Arg4 {
 
-    @RBuiltin(name = ".subset2", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, behavior = PURE)
+    @RBuiltin(name = ".subset2", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, behavior = PURE_SUBSCRIPT)
     public abstract class DefaultBuiltin {
         // same implementation as "[[", with different dispatch
     }

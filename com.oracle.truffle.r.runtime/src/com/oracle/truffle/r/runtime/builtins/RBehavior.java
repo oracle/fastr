@@ -33,7 +33,11 @@ public enum RBehavior {
      * This builtin always returns the same result or raises the same error if it is called with the
      * same arguments. It cannot depend on any external state, on the frame or on IO input.
      */
-    PURE,
+    PURE_ARITHMETIC(true), // the length of the result is the maximum of all inputs
+    PURE_SUMMARY(true), // the length of the result is exactly one
+    PURE_SUBSET(true), // the length of the result depends on the inputs
+    PURE_SUBSCRIPT(true), // the length of the result is exactly one
+    PURE(true), // unknown result length
     /**
      * This builtin performs IO operations.
      */
@@ -64,5 +68,19 @@ public enum RBehavior {
      * This builtin has arbitrary effects on the global state, on IO components, the frame, and the
      * AST itself. It also depends on the global state, IO and the frame.
      */
-    COMPLEX
+    COMPLEX;
+
+    private final boolean pure;
+
+    private RBehavior() {
+        this(false);
+    }
+
+    private RBehavior(boolean pure) {
+        this.pure = pure;
+    }
+
+    public boolean isPure() {
+        return pure;
+    }
 }

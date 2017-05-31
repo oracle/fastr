@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.runtime.ops;
 
 import static com.oracle.truffle.r.runtime.RDispatch.OPS_GROUP_GENERIC;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_ARITHMETIC;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.r.runtime.RError;
@@ -36,27 +36,27 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 public abstract class BinaryCompare extends BooleanOperation {
 
     /* Fake RBuiltins to unify the compare operations */
-    @RBuiltin(name = "==", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = "==", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class EqualBuiltin {
     }
 
-    @RBuiltin(name = "!=", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = "!=", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class NotEqualBuiltin {
     }
 
-    @RBuiltin(name = ">=", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = ">=", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class GreaterEqualBuiltin {
     }
 
-    @RBuiltin(name = ">", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = ">", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class GreaterBuiltin {
     }
 
-    @RBuiltin(name = "<=", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = "<=", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class LessEqualBuiltin {
     }
 
-    @RBuiltin(name = "<", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = "<", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class LessBuiltin {
     }
 
