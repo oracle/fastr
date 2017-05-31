@@ -445,24 +445,24 @@ public class TestJavaInterop extends TestBase {
 
     public static class TestClass {
 
-        public static boolean fieldStaticBoolean;
-        public static byte fieldStaticByte;
-        public static char fieldStaticChar;
-        public static short fieldStaticShort;
-        public static int fieldStaticInteger;
-        public static long fieldStaticLong;
-        public static double fieldStaticDouble;
-        public static float fieldStaticFloat;
+        public static boolean fieldStaticBoolean = true;
+        public static byte fieldStaticByte = Byte.MAX_VALUE;
+        public static char fieldStaticChar = 'a';
+        public static short fieldStaticShort = Short.MAX_VALUE;
+        public static int fieldStaticInteger = Integer.MAX_VALUE;
+        public static long fieldStaticLong = Long.MAX_VALUE;
+        public static double fieldStaticDouble = Double.MAX_VALUE;
+        public static float fieldStaticFloat = Float.MAX_VALUE;
 
-        public static Boolean fieldStaticBooleanObject;
-        public static Byte fieldStaticByteObject;
-        public static Character fieldStaticCharObject;
-        public static Short fieldStaticShortObject;
-        public static Integer fieldStaticIntegerObject;
-        public static Long fieldStaticLongObject;
-        public static Double fieldStaticDoubleObject;
-        public static Float fieldStaticFloatObject;
-        public static String fieldStaticStringObject;
+        public static Boolean fieldStaticBooleanObject = fieldStaticBoolean;
+        public static Byte fieldStaticByteObject = fieldStaticByte;
+        public static Character fieldStaticCharObject = fieldStaticChar;
+        public static Short fieldStaticShortObject = fieldStaticShort;
+        public static Integer fieldStaticIntegerObject = fieldStaticInteger;
+        public static Long fieldStaticLongObject = fieldStaticLong;
+        public static Double fieldStaticDoubleObject = fieldStaticDouble;
+        public static Float fieldStaticFloatObject = fieldStaticFloat;
+        public static String fieldStaticStringObject = "a string";
 
         public boolean fieldBoolean;
         public byte fieldByte;
