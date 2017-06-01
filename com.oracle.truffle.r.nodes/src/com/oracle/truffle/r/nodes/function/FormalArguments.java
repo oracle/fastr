@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,7 +61,7 @@ public final class FormalArguments extends Arguments<RNode> implements ClosureCa
      * builtins), {@link RMissing#instance} and {@link RArgsValuesAndNames#EMPTY} will be replaced
      * with the actual default values on the callee side.
      */
-    @CompilationFinal private final Object[] internalDefaultArguments;
+    @CompilationFinal(dimensions = 1) private final Object[] internalDefaultArguments;
 
     private FormalArguments(RNode[] defaultArguments, Object[] internalDefaultArguments, ArgumentsSignature signature) {
         super(defaultArguments, signature);

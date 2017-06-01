@@ -64,7 +64,7 @@ final class SearchFirstStringNode extends Node {
     private final boolean useNAForNotFound;
     private final boolean exactMatch;
 
-    @CompilationFinal private int[] cachedIndices;
+    @CompilationFinal(dimensions = 1) private int[] cachedIndices;
 
     private SearchFirstStringNode(boolean exactMatch, boolean useNAForNotFound) {
         this.exactMatch = exactMatch;

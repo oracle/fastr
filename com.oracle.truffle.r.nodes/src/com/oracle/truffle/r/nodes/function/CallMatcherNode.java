@@ -196,7 +196,7 @@ public abstract class CallMatcherNode extends RBaseNode {
          * {@link VarArgsHelper#flattenNames(ArgumentsSignature)} for the interpretation of the
          * values.
          */
-        @CompilationFinal private final long[] preparePermutation;
+        @CompilationFinal(dimensions = 1) private final long[] preparePermutation;
         private final MatchPermutation permutation;
         private final FormalArguments formals;
         @Child private RFastPathNode fastPath;

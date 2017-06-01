@@ -47,7 +47,7 @@ public final class LocalReadVariableNode extends Node {
     private final Object identifier;
     private final boolean forceResult;
 
-    @CompilationFinal private boolean[] seenValueKinds;
+    @CompilationFinal(dimensions = 1) private boolean[] seenValueKinds;
     @CompilationFinal private ValueProfile valueProfile;
     @CompilationFinal private ConditionProfile isNullProfile;
     @CompilationFinal private ConditionProfile isMissingProfile;

@@ -790,10 +790,10 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         // not using profiles to save overhead
-        @CompilationFinal private final boolean[] argEmptySeen;
-        @CompilationFinal private final boolean[] varArgSeen;
-        @CompilationFinal private final boolean[] nonWrapSeen;
-        @CompilationFinal private final boolean[] wrapSeen;
+        @CompilationFinal(dimensions = 1) private final boolean[] argEmptySeen;
+        @CompilationFinal(dimensions = 1) private final boolean[] varArgSeen;
+        @CompilationFinal(dimensions = 1) private final boolean[] nonWrapSeen;
+        @CompilationFinal(dimensions = 1) private final boolean[] wrapSeen;
 
         private final FormalArguments formals;
         private final RBuiltinDescriptor builtinDescriptor;

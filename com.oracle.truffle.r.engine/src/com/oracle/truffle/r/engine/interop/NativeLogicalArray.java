@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.RTruffleObject;
  * array in FastR is represented as {@code byte[]}.
  */
 public class NativeLogicalArray extends NativeNACheck implements RTruffleObject {
-    @CompilationFinal public final byte[] data;
+    @CompilationFinal(dimensions = 1) public final byte[] data;
 
     public NativeLogicalArray(Object obj, byte[] value) {
         super(obj);

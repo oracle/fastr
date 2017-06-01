@@ -73,7 +73,7 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
      * If a supplied argument is a {@link ReadVariableNode} whose name is "...", this field contains
      * the index of the name. Otherwise it is an empty list.
      */
-    @CompilationFinal private final int[] varArgsSymbolIndices;
+    @CompilationFinal(dimensions = 1) private final int[] varArgsSymbolIndices;
 
     private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 

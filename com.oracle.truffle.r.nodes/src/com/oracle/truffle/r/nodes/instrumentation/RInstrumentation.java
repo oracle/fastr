@@ -43,7 +43,7 @@ public class RInstrumentation {
      * The function names that were requested to be used in implicit {@code debug(f)} calls, when
      * those functions are defined. Global to all contexts.
      */
-    @CompilationFinal private static String[] debugFunctionNames;
+    @CompilationFinal(dimensions = 1) private static String[] debugFunctionNames;
 
     public static FunctionDefinitionNode getFunctionDefinitionNode(RFunction func) {
         assert !func.isBuiltin();
