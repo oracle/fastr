@@ -2114,13 +2114,13 @@ public class RSerialize {
 
         private void setSourceSection(RSyntaxElement body) {
             SourceSection lazySourceSection = body.getLazySourceSection();
-            if (lazySourceSection != RSyntaxNode.LAZY_DEPARSE) {
+            if (RSource.getPathInternal(lazySourceSection.getSource()) != null) {
                 ss = lazySourceSection;
             }
         }
 
         public boolean hasAttributes() {
-            return explicitAttributes != null && !explicitAttributes.isEmpty() || ss != null && ss != RSyntaxNode.LAZY_DEPARSE;
+            return explicitAttributes != null && !explicitAttributes.isEmpty() || ss != null;
         }
 
         public DynamicObject getExplicitAttributes() {
