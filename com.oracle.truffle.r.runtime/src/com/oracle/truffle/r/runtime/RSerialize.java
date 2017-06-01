@@ -1463,7 +1463,7 @@ public class RSerialize {
                             }
                             terminatePairList();
                             writeItem(RNull.instance); // hashtab
-                            OutAttributes attributes = new OutAttributes(env, type);
+                            OutAttributes attributes = new OutAttributes(env, type, gnuRType);
                             if (attributes.hasAttributes()) {
                                 writeAttributes(attributes);
                             } else {
@@ -1472,7 +1472,7 @@ public class RSerialize {
                         }
                     } else {
                         // flags
-                        OutAttributes attributes = new OutAttributes(obj, type);
+                        OutAttributes attributes = new OutAttributes(obj, type, gnuRType);
                         boolean hasTag = gnuRType == SEXPTYPE.CLOSXP || gnuRType == SEXPTYPE.DOTSXP || (gnuRType == SEXPTYPE.PROMSXP && !((RPromise) obj).isEvaluated()) ||
                                         (type == SEXPTYPE.LISTSXP && !((RPairList) obj).isNullTag());
                         int gpbits = getGPBits(obj);
@@ -2096,16 +2096,16 @@ public class RSerialize {
         private DynamicObject explicitAttributes;
         private SourceSection ss;
 
-        private OutAttributes(Object obj, SEXPTYPE type) {
+        private OutAttributes(Object obj, SEXPTYPE type, SEXPTYPE gnuRType) {
 
             if (obj instanceof RAttributable) {
                 explicitAttributes = ((RAttributable) obj).getAttributes();
             }
-            initSourceSection(obj, type);
+            initSourceSection(obj, type, gnuRType);
         }
 
-        private void initSourceSection(Object obj, SEXPTYPE type) {
-            if (type == SEXPTYPE.FUNSXP) {
+        private void initSourceSection(Object obj, SEXPTYPE type, SEXPTYPE gnuRType) {
+            if (type == SEXPTYPE.FUNSXP && gnuRType != SEXPTYPE.BUILTINSXP) {
                 RFunction fun = (RFunction) obj;
                 RSyntaxFunction body = (RSyntaxFunction) fun.getRootNode();
                 setSourceSection(body);
