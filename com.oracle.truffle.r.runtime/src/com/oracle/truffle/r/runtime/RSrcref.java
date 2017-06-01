@@ -92,15 +92,13 @@ public class RSrcref {
         return env;
     }
 
-    private static double getTimestamp(Path path) {
-        double mtime;
+    private static int getTimestamp(Path path) {
         try {
             PosixFileAttributes pfa = Files.readAttributes(path, PosixFileAttributes.class);
-            mtime = pfa.lastModifiedTime().toMillis();
+            return Utils.getTimeInSecs(pfa.lastModifiedTime());
         } catch (IOException ex) {
-            mtime = RRuntime.DOUBLE_NA;
+            return RRuntime.INT_NA;
         }
-        return mtime;
     }
 
     /**
