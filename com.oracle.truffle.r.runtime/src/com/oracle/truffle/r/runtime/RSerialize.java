@@ -2256,7 +2256,7 @@ public class RSerialize {
                     String name = ((RSyntaxLookup) lhs).getIdentifier();
                     infixFieldAccess = "$".equals(name) || "@".equals(name);
                 }
-                serializeArguments(arguments, element.getSyntaxSignature(), infixFieldAccess);
+                serializeArguments(element, arguments, element.getSyntaxSignature(), infixFieldAccess);
             }
             return null;
         }
@@ -2269,7 +2269,7 @@ public class RSerialize {
             return false;
         }
 
-        private void serializeArguments(RSyntaxElement[] arguments, ArgumentsSignature signature, boolean infixFieldAccess) {
+        private void serializeArguments(RSyntaxCall callElement, RSyntaxElement[] arguments, ArgumentsSignature signature, boolean infixFieldAccess) {
             state.openPairList(SEXPTYPE.LISTSXP);
             if (arguments.length == 0) {
                 state.setNull();
@@ -2300,7 +2300,9 @@ public class RSerialize {
                 }
                 state.linkPairList(arguments.length);
             }
-            state.setCdr(state.closePairList());
+            Object pl = state.closePairList();
+            attachSrcref(callElement, pl);
+            state.setCdr(pl);
         }
 
         @Override
@@ -2409,27 +2411,47 @@ public class RSerialize {
     private static void serializeFunctionDefinition(State state, RSyntaxFunction function) {
         SerializeVisitor visitor = new SerializeVisitor(state);
         state.setCar(visitor.visitFunctionFormals(function));
-        Object visitFunctionBody = visitor.visitFunctionBody(function);
+        Object body = visitor.visitFunctionBody(function);
 
         // convert and attach source section to srcref attribute
-        if (visitFunctionBody instanceof RAttributable) {
+        attachSrcref(function, body);
 
-            SourceSection lazySourceSection = function.getLazySourceSection();
-            if (lazySourceSection != null) {
-                String pathInternal = RSource.getPathInternal(lazySourceSection.getSource());
-                if (pathInternal != null) {
-                    RAttributable visitFunctionBody2 = (RAttributable) visitFunctionBody;
-                    RList createBlockSrcrefs = RSrcref.createBlockSrcrefs(function);
-                    if (createBlockSrcrefs != null) {
-                        visitFunctionBody2.setAttr(RRuntime.R_SRCREF, createBlockSrcrefs);
-                        visitFunctionBody2.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(lazySourceSection));
-                        visitFunctionBody2.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(pathInternal));
-                    }
+        state.setCdr(body);
+    }
+
+    /**
+     * Converts the source section from the syntax element to a srcref attribute and attaches it to
+     * the serialization object.
+     *
+     * @param syntaxElement The syntax element providing the source section.
+     * @param serObj The object to attribute (most likely a pair list).
+     */
+    private static void attachSrcref(RSyntaxElement syntaxElement, Object serObj) {
+        SourceSection ss = getFileSourceSection(syntaxElement);
+        if (ss != null) {
+            if (serObj instanceof RAttributable) {
+                String pathInternal = RSource.getPathInternal(ss.getSource());
+                RAttributable attributable = (RAttributable) serObj;
+                attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(pathInternal));
+                RList createBlockSrcrefs = RSrcref.createBlockSrcrefs(syntaxElement);
+                if (createBlockSrcrefs != null) {
+                    attributable.setAttr(RRuntime.R_SRCREF, createBlockSrcrefs);
+                    attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
+                } else {
+                    Object createLloc = RSrcref.createLloc(ss);
+                    attributable.setAttr(RRuntime.R_SRCREF, createLloc);
+                    attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
                 }
             }
         }
+    }
 
-        state.setCdr(visitFunctionBody);
+    private static SourceSection getFileSourceSection(RSyntaxElement syntaxElement) {
+        SourceSection ss = syntaxElement.getLazySourceSection();
+        if (ss != null && RSource.getPathInternal(ss.getSource()) != null) {
+            return ss;
+        }
+        return null;
     }
 
     private static Object serializeLanguage(State state, RLanguage lang) {
@@ -2543,7 +2565,11 @@ public class RSerialize {
                 RPairList function = (RPairList) cdr;
                 return processFunctionExpression(function.car(), function.cdr(), function.getTag());
             }
-            return RContext.getASTBuilder().call(RSyntaxNode.LAZY_DEPARSE, process(car, true), processArguments(cdr));
+            RSyntaxNode call = RContext.getASTBuilder().call(RSyntaxNode.LAZY_DEPARSE, process(car, true), processArguments(cdr));
+            if (cdr instanceof RAttributable) {
+                handleSrcrefAttr((RAttributable) cdr, call);
+            }
+            return call;
         }
 
         private static RSyntaxNode processFunctionExpression(Object car, Object cdr, @SuppressWarnings("unused") Object tag) {

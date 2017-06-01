@@ -129,64 +129,11 @@ public class RSrcref {
      * @param function
      */
     @TruffleBoundary
-    public static RList createBlockSrcrefs(RSyntaxFunction function) {
+    public static RList createBlockSrcrefs(RSyntaxElement function) {
 
-        List<Object> blockSrcrefs = new LinkedList<>();
-
-        RSyntaxVisitor<Void> v = new RSyntaxVisitor<Void>() {
-
-            private int depth = 0;
-
-            @Override
-            public Void visit(RSyntaxCall element) {
-
-                if (depth == 0 && !isBlockStatement(element)) {
-                    return null;
-                }
-
-                SourceSection lazySourceSection = element.getLazySourceSection();
-                if (lazySourceSection != null) {
-                    blockSrcrefs.add(createLloc(lazySourceSection));
-                }
-
-                if (depth == 0) {
-                    RSyntaxElement[] syntaxArguments = element.getSyntaxArguments();
-                    for (int i = 0; i < syntaxArguments.length; i++) {
-                        if (syntaxArguments[i] != null) {
-                            depth++;
-                            accept(syntaxArguments[i]);
-                            depth--;
-                        }
-                    }
-                }
-                return null;
-            }
-
-            private boolean isBlockStatement(RSyntaxCall element) {
-                RSyntaxElement lhs = element.getSyntaxLHS();
-                if (lhs instanceof RSyntaxLookup) {
-                    return "{".equals(((RSyntaxLookup) lhs).getIdentifier());
-                }
-                return false;
-            }
-
-            @Override
-            public Void visit(RSyntaxConstant element) {
-                return null;
-            }
-
-            @Override
-            public Void visit(RSyntaxLookup element) {
-                return null;
-            }
-
-            @Override
-            public Void visit(RSyntaxFunction element) {
-                accept(element.getSyntaxBody());
-                return null;
-            }
-        };
+        BlockSrcrefsVisitor v = new BlockSrcrefsVisitor();
         v.accept(function);
+        List<Object> blockSrcrefs = v.blockSrcrefs;
 
         if (!blockSrcrefs.isEmpty()) {
             return RDataFactory.createList(blockSrcrefs.toArray());
@@ -271,7 +218,7 @@ public class RSrcref {
             int startLine = srcrefVec.getDataAt(0);
             int startColumn = srcrefVec.getDataAt(1);
             int startIdx = getLineStartOffset(source, startLine) + startColumn;
-            int length = getLineStartOffset(source, srcrefVec.getDataAt(2)) + srcrefVec.getDataAt(3) - startIdx;
+            int length = getLineStartOffset(source, srcrefVec.getDataAt(2)) + srcrefVec.getDataAt(3) - startIdx + 1;
             return source.createSection(startLine, startColumn, length);
         } catch (NoSuchFileException e) {
             RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, "Missing source file: " + e.getMessage());
@@ -288,6 +235,66 @@ public class RSrcref {
             return source.getLineStartOffset(lineNum);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(String.format("line %d does not exist in source %s", lineNum, RSource.getPathInternal(source)), e);
+        }
+    }
+
+    private static final class BlockSrcrefsVisitor extends RSyntaxVisitor<Void> {
+        private List<Object> blockSrcrefs = new LinkedList<>();
+        private int depth = 0;
+
+        @Override
+        public Void visit(RSyntaxCall element) {
+
+            if (depth == 0 && !isBlockStatement(element)) {
+                return null;
+            }
+
+            addSrcref(blockSrcrefs, element);
+
+            if (depth == 0) {
+                RSyntaxElement[] syntaxArguments = element.getSyntaxArguments();
+                for (int i = 0; i < syntaxArguments.length; i++) {
+                    if (syntaxArguments[i] != null) {
+                        depth++;
+                        accept(syntaxArguments[i]);
+                        depth--;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private static void addSrcref(List<Object> blockSrcrefs, RSyntaxElement element) {
+            SourceSection lazySourceSection = element.getLazySourceSection();
+            if (lazySourceSection != null) {
+                blockSrcrefs.add(createLloc(lazySourceSection));
+            }
+        }
+
+        private static boolean isBlockStatement(RSyntaxCall element) {
+            RSyntaxElement lhs = element.getSyntaxLHS();
+            if (lhs instanceof RSyntaxLookup) {
+                return "{".equals(((RSyntaxLookup) lhs).getIdentifier());
+            }
+            return false;
+        }
+
+        @Override
+        public Void visit(RSyntaxConstant element) {
+            addSrcref(blockSrcrefs, element);
+            return null;
+        }
+
+        @Override
+        public Void visit(RSyntaxLookup element) {
+            addSrcref(blockSrcrefs, element);
+            return null;
+        }
+
+        @Override
+        public Void visit(RSyntaxFunction element) {
+            accept(element.getSyntaxBody());
+            return null;
         }
     }
 }
