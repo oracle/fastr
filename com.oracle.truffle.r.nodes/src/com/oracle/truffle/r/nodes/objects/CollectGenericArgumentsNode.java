@@ -120,7 +120,7 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
             } else {
                 Object value = FrameSlotChangeMonitor.getValue(slot, frame);
                 if (value instanceof RPromise) {
-                    value = PromiseHelperNode.evaluateSlowPath(null, (RPromise) value);
+                    value = PromiseHelperNode.evaluateSlowPath((RPromise) value);
                 }
                 result[i] = classHierarchyNodeSlowPath.executeString(value);
             }

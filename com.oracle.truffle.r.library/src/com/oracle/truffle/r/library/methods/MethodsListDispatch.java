@@ -423,7 +423,7 @@ public class MethodsListDispatch {
                 Object res = FrameSlotChangeMonitor.getValue(slot, currentFrame);
                 if (res != null) {
                     if (res instanceof RPromise) {
-                        res = PromiseHelperNode.evaluateSlowPath(null, (RPromise) res);
+                        res = PromiseHelperNode.evaluateSlowPath((RPromise) res);
                     }
                 }
                 return res;

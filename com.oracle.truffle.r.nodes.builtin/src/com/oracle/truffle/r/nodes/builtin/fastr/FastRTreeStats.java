@@ -73,7 +73,7 @@ public abstract class FastRTreeStats extends RBuiltinNode.Arg1 {
             String binding = bindings.getDataAt(i);
             Object value = env.get(binding);
             if (value instanceof RPromise) {
-                value = PromiseHelperNode.evaluateSlowPath(null, (RPromise) value);
+                value = PromiseHelperNode.evaluateSlowPath((RPromise) value);
 
             }
             if (value instanceof RFunction) {

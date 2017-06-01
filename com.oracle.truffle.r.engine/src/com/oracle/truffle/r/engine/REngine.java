@@ -454,7 +454,7 @@ final class REngine implements Engine, Engine.Timings {
             for (int i = 0; i < newArgs.length; i++) {
                 Object arg = newArgs[i];
                 if (arg instanceof RPromise) {
-                    newArgs[i] = PromiseHelperNode.evaluateSlowPath(null, (RPromise) arg);
+                    newArgs[i] = PromiseHelperNode.evaluateSlowPath((RPromise) arg);
                 }
             }
         }
@@ -681,6 +681,6 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     private static Object evaluatePromise(Object value) {
-        return value instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) value) : value;
+        return value instanceof RPromise ? PromiseHelperNode.evaluateSlowPath((RPromise) value) : value;
     }
 }
