@@ -28,6 +28,7 @@ package com.oracle.truffle.r.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.IOException;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -39,6 +40,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -60,7 +62,9 @@ import com.oracle.truffle.r.runtime.RError;
 
 @members {
     private Source source;
+    private Source initialSource;
     private RCodeBuilder<T> builder;
+    private int fileStartOffset = 0;
     
     /**
      * Always use this constructor to initialize the R specific fields.
@@ -69,6 +73,7 @@ import com.oracle.truffle.r.runtime.RError;
         super(new CommonTokenStream(new RLexer(new ANTLRStringStream(source.getCode()))));
         assert source != null && builder != null;
         this.source = source;
+        this.initialSource = source;
         this.builder = builder;
     }
     
@@ -101,8 +106,13 @@ import com.oracle.truffle.r.runtime.RError;
      */
     private SourceSection src(Token t) {
         CommonToken token = (CommonToken) t;
-        int startIndex = token.getStartIndex();
-        return source.createSection(startIndex, token.getStopIndex() - startIndex + 1);
+        try {
+        	return source.createSection(token.getStartIndex() - fileStartOffset, token.getStopIndex() - token.getStartIndex() + 1);
+        } catch(IllegalArgumentException e) {
+        	// fall back and use the initial source (the file being parsed) 
+        	resetSource();
+        	return source.createSection(token.getStartIndex(), token.getStopIndex() - token.getStartIndex() + 1);
+        }
     }
     
     /**
@@ -114,8 +124,43 @@ import com.oracle.truffle.r.runtime.RError;
         int startIndex = cstart.getStartIndex();
         int stopIndex = cstop.getStopIndex();
         int length = stopIndex - startIndex + (cstop.getType() == Token.EOF ? 0 : 1);
-        return source.createSection(startIndex, length);
+        try {
+        	return source.createSection(startIndex - fileStartOffset, length);
+        } catch(IllegalArgumentException e) {
+        	// fall back and use the initial source (the file being parsed) 
+        	resetSource();
+        	return source.createSection(startIndex, length);
+        }
     }
+    
+    /**
+     * Checks if the token is a comment token indicating that the following part of the source file was
+     * pasted from another file.
+     * The format of this file delimiter is '#line 1 "filename"'
+     */
+    private void checkFileDelim(CommonToken commentToken) {
+			String commentLine = commentToken.getText();
+	    	if(commentLine.startsWith("#line 1")) {
+	    		int q0 = commentLine.indexOf("\"");
+	    		int q1 = commentLine.indexOf("\"", q0+1);
+	    		if(q0 != -1 && q1 != -1) {
+	    			String path = commentLine.substring(q0+1, q1);
+	    			try {
+                        source = RSource.fromFileName(path, false);
+                        fileStartOffset = commentToken.getStopIndex() + 1;
+                    } catch (IOException e) {
+                    }
+	    		} else {
+	    			// fall back and use the initial source (the file being parsed)
+	    			resetSource();
+	    		}
+	    	}
+	    }
+	
+	private void resetSource() {
+		source = initialSource;
+		fileStartOffset = 0;
+	}
 
 	// without this override, the parser will not throw exceptions if it can recover    
     @Override
@@ -205,9 +250,12 @@ statement returns [T v]
     : e=expr_or_assign n_one { $v = $e.v; }
     ;
 
-n_ : (NEWLINE | COMMENT)*;
-n_one  : (NEWLINE | COMMENT)+ | EOF | SEMICOLON n_;
-n_multi  : (NEWLINE | COMMENT | SEMICOLON)+ | EOF;
+n_ : (NEWLINE | COMMENT { checkFileDelim((CommonToken)last()); } 
+     )*;
+n_one  : (NEWLINE | COMMENT { checkFileDelim((CommonToken)last()); }
+         )+ | EOF | SEMICOLON n_;
+n_multi  : (NEWLINE | COMMENT { checkFileDelim((CommonToken)last()); }
+            | SEMICOLON)+ | EOF;
 
 expr_wo_assign returns [T v]
     : w=while_expr                                      { $v = $w.v; }
