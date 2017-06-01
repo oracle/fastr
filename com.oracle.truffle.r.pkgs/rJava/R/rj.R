@@ -24,6 +24,7 @@
     simplify = FALSE, use.true.class = FALSE) 
 {
     if(is.character(obj)) {
+        obj <- gsub("/", ".", as.character(obj))
         co <- .fastr.java.class(obj)
         r <- co[method](...)
     } else {
@@ -91,6 +92,18 @@
     invisible(x)
 }
 
+#' @export
+J <- function (class, method, ...) 
+{    
+    class <- gsub("/", ".", as.character(class))
+    javaClass <- .fastr.java.class(class)
+    if (nargs() == 1L && missing(method)) {
+        javaClass
+    } else {
+        .jcall(javaClass, ,method, ...)
+    }    
+}
+
 #
 # noop stubs
 #
@@ -116,4 +129,32 @@
 .jnull <- function (class)
 {    
     # do nothing
+}
+
+#' @export
+.jpackage <- function (name, jars='*', morePaths='', nativeLibrary=FALSE, lib.loc=NULL)
+{    
+    javalibs <- system.file("java", package = name, lib.loc = lib.loc)
+    if(javalibs == "") {
+        javalibs = paste0("library/", name, "/java")
+    }
+    cat(paste0("********************************************************\n",
+               "*** WARNING!!!\n",
+               "*** .jpackage is not yet implemented.\n",
+               "*** Please ensure that all java libraries from:\n",
+               "*** ", javalibs, "\n",
+               "*** are on FastR classpath\n",
+               "********************************************************\n"))
+}
+
+#' @export
+.jaddClassPath <- function (path)
+{
+    cat(paste0("********************************************************\n",
+               "*** WARNING!!!\n",
+               "*** .jaddClasPath is not yet implemented.\n",
+               "*** Please ensure that \n",
+               "*** ", path, "\n",
+               "*** is on FastR classpath\n",
+               "********************************************************\n"))
 }
