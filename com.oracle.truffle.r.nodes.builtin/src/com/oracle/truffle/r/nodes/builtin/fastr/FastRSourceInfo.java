@@ -28,7 +28,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -51,17 +50,16 @@ public abstract class FastRSourceInfo extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    public Object srcInfo(VirtualFrame frame, RFunction fun) {
-        return execute(frame, fun.getRootNode());
+    public Object srcInfo(RFunction fun) {
+        return srcInfo(fun.getRootNode());
     }
 
     @Specialization
-    public Object srcInfo(VirtualFrame frame, RLanguage fun) {
-        return execute(frame, fun.getRep());
+    public Object srcInfo(RLanguage fun) {
+        return srcInfo(fun.getRep());
     }
 
-    @Specialization
-    protected Object srcInfo(Node fun) {
+    private Object srcInfo(Node fun) {
         SourceSection ss = fun.getSourceSection();
         if (ss != null) {
             String path = ss.getSource().getPath();
