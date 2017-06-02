@@ -53,6 +53,7 @@ import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.Source.Builder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
@@ -91,6 +92,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FastRInterop {
+
+    private static boolean isTesting = false;
+
+    public static void testingMode() {
+        isTesting = true;
+    }
 
     @RBuiltin(name = ".fastr.interop.eval", visibility = OFF, kind = PRIMITIVE, parameterNames = {"mimeType", "source"}, behavior = COMPLEX)
     public abstract static class Eval extends RBuiltinNode.Arg2 {
@@ -420,26 +427,31 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.java.class", visibility = ON, kind = PRIMITIVE, parameterNames = {"class"}, behavior = COMPLEX)
-    public abstract static class JavaClass extends RBuiltinNode.Arg1 {
+    @RBuiltin(name = ".fastr.java.class", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "silent"}, behavior = COMPLEX)
+    public abstract static class JavaClass extends RBuiltinNode.Arg2 {
 
         static {
             Casts casts = new Casts(JavaClass.class);
             casts.arg("class").mustBe(stringValue()).asStringVector().mustBe(Predef.singleElement()).findFirst();
+            casts.arg("silent").mapMissing(Predef.constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
+                            notLogicalNA()).map(Predef.toBoolean());
         }
 
         @Specialization
         @TruffleBoundary
-        public TruffleObject javaClass(String clazz) {
+        public TruffleObject javaClass(String clazz, boolean silent) {
             try {
-                return JavaInterop.asTruffleObject(Class.forName(clazz));
+                return JavaInterop.asTruffleObject(Class.forName(clazz.replaceAll("/", ".")));
             } catch (ClassNotFoundException | SecurityException | IllegalArgumentException e) {
+                if (silent) {
+                    return RNull.instance;
+                }
                 throw error(RError.Message.GENERIC, "error while accessing Java class: " + e.getMessage());
             }
         }
     }
 
-    @ImportStatic({Message.class, RRuntime.class})
+    @ImportStatic({RRuntime.class})
     @RBuiltin(name = ".fastr.java.isArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"obj"}, behavior = COMPLEX)
     public abstract static class IsJavaArray extends RBuiltinNode.Arg1 {
 
@@ -506,7 +518,7 @@ public class FastRInterop {
             Casts casts = new Casts(ToJavaArray.class);
             casts.arg("x").mustNotBeMissing();
             casts.arg("className").allowMissing().mustBe(stringValue()).asStringVector().mustBe(Predef.singleElement()).findFirst();
-            casts.arg("flat").mapMissing(Predef.constant(RRuntime.asLogical(true))).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
+            casts.arg("flat").mapMissing(Predef.constant(RRuntime.LOGICAL_TRUE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
                             notLogicalNA()).map(Predef.toBoolean());
         }
 
@@ -796,14 +808,34 @@ public class FastRInterop {
                 }
                 Object result = ForeignAccess.sendNew(sendNew, clazz, argValues);
                 return RRuntime.java2R(result);
-            } catch (SecurityException | IllegalArgumentException | UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
-                throw error(RError.Message.GENERIC, "error during Java object instantiation: " + e.getMessage());
+            } catch (IllegalStateException | SecurityException | IllegalArgumentException | UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
+                String msg = isTesting ? "error during Java object instantiation" : "error during Java object instantiation: " + e.getMessage();
+                throw error(RError.Message.GENERIC, msg);
             }
         }
 
         @Fallback
         public Object interopNew(@SuppressWarnings("unused") Object clazz, @SuppressWarnings("unused") Object args) {
             throw error(RError.Message.GENERIC, "interop object needed as receiver of NEW message");
+        }
+    }
+
+    @ImportStatic(RRuntime.class)
+    @RBuiltin(name = ".fastr.interop.isExternal", visibility = ON, kind = PRIMITIVE, parameterNames = {"obj"}, behavior = COMPLEX)
+    public abstract static class IsExternal extends RBuiltinNode.Arg1 {
+
+        static {
+            Casts.noCasts(IsExternal.class);
+        }
+
+        @Specialization(guards = {"isForeignObject(obj)"})
+        public byte isExternal(TruffleObject obj) {
+            return RRuntime.LOGICAL_TRUE;
+        }
+
+        @Fallback
+        public byte isExternal(Object obj) {
+            return RRuntime.LOGICAL_FALSE;
         }
     }
 }
