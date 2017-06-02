@@ -81,14 +81,18 @@ public class RSrcref {
     @TruffleBoundary
     private static REnvironment createSrcfile(Path path) {
         // A srcref is an environment
-        REnvironment env = RDataFactory.createNewEnv("");
-        env.safePut(SrcrefFields.Enc.name(), "unknown");
-        env.safePut(SrcrefFields.encoding.name(), "native.enc");
-        env.safePut(SrcrefFields.timestamp.name(), getTimestamp(path));
-        env.safePut(SrcrefFields.filename.name(), path.toString());
-        env.safePut(SrcrefFields.isFile.name(), RRuntime.LOGICAL_TRUE);
-        env.safePut(SrcrefFields.wd.name(), BaseRFFI.GetwdRootNode.create().getCallTarget().call());
-        env.setClassAttr(SRCFILE_ATTR);
+        REnvironment env = RContext.getInstance().srcfileEnvironments.get(path);
+        if (env == null) {
+            env = RDataFactory.createNewEnv("");
+            env.safePut(SrcrefFields.Enc.name(), "unknown");
+            env.safePut(SrcrefFields.encoding.name(), "native.enc");
+            env.safePut(SrcrefFields.timestamp.name(), getTimestamp(path));
+            env.safePut(SrcrefFields.filename.name(), path.toString());
+            env.safePut(SrcrefFields.isFile.name(), RRuntime.LOGICAL_TRUE);
+            env.safePut(SrcrefFields.wd.name(), BaseRFFI.GetwdRootNode.create().getCallTarget().call());
+            env.setClassAttr(SRCFILE_ATTR);
+            RContext.getInstance().srcfileEnvironments.put(path, env);
+        }
         return env;
     }
 

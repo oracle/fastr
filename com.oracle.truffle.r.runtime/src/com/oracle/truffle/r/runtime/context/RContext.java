@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.context;
 
 import java.io.Closeable;
 import java.lang.ref.WeakReference;
+import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -454,6 +455,7 @@ public final class RContext extends com.oracle.truffle.api.ExecutionContext impl
 
     public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
+    public final WeakHashMap<Path, REnvironment> srcfileEnvironments = new WeakHashMap<>();
 
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRProfile, stateTempPath, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI,
