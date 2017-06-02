@@ -134,7 +134,7 @@ function(dir, outDir)
             singleOutFile <- file.path(outCodeDir, basename(f))
             writeLines(tmp, file(singleOutFile))
 
-            writeLines(paste0("#line 1 \"", f, "\""), con)
+            writeLines(paste0("#line 1 \"", singleOutFile, "\""), con)
             writeLines(tmp, con)
         }
 	close(con); on.exit()
