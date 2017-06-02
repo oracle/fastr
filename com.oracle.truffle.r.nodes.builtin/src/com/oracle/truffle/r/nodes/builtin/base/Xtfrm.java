@@ -67,6 +67,6 @@ public abstract class Xtfrm extends RBuiltinNode.Arg1 {
             env = REnvironment.createEnclosingEnvironments(frame.materialize());
         }
         RFunction func = (RFunction) getNode.execute(frame, "xtfrm.default", env, RType.Function.getName(), true);
-        return RContext.getEngine().evalFunction(func, null, null, null, x);
+        return RContext.getEngine().evalFunction(func, null, null, true, null, x);
     }
 }

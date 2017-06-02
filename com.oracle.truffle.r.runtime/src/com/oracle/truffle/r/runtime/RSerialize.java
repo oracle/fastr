@@ -466,7 +466,7 @@ public class RSerialize {
                     // fast path through getRegisteredNamespace
                     Object namespace = REnvironment.getRegisteredNamespace(s.getDataAt(0));
                     if (namespace == null) {
-                        namespace = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), null, null, null, s, "");
+                        namespace = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), null, null, true, null, s, "");
                     }
                     return checkResult(addReadRef(namespace));
                 }

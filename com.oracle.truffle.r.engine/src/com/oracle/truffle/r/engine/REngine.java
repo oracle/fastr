@@ -97,7 +97,6 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -436,7 +435,7 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     @TruffleBoundary
-    public Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, RStringVector names, Object... args) {
+    public Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, boolean evalPromises, ArgumentsSignature names, Object... args) {
         assert frame == null || caller != null;
         MaterializedFrame actualFrame = frame;
         if (actualFrame == null) {
@@ -449,15 +448,17 @@ final class REngine implements Engine, Engine.Timings {
             }
         }
         RArgsValuesAndNames reorderedArgs = CallMatcherGenericNode.reorderArguments(args, func,
-                        names == null ? ArgumentsSignature.empty(args.length) : ArgumentsSignature.get(names.getDataWithoutCopying()), RError.NO_CALLER);
+                        names == null ? ArgumentsSignature.empty(args.length) : names, RError.NO_CALLER);
         Object[] newArgs = reorderedArgs.getArguments();
-        for (int i = 0; i < newArgs.length; i++) {
-            Object arg = newArgs[i];
-            if (arg instanceof RPromise) {
-                newArgs[i] = PromiseHelperNode.evaluateSlowPath(null, (RPromise) arg);
+        if (evalPromises) {
+            for (int i = 0; i < newArgs.length; i++) {
+                Object arg = newArgs[i];
+                if (arg instanceof RPromise) {
+                    newArgs[i] = PromiseHelperNode.evaluateSlowPath(null, (RPromise) arg);
+                }
             }
         }
-        return CallRFunctionNode.executeSlowpath(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, newArgs, null);
+        return CallRFunctionNode.executeSlowpath(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, newArgs, reorderedArgs.getSignature(), null);
     }
 
     private Object evalNode(RSyntaxElement exprRep, REnvironment envir, RCaller caller) {

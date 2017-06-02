@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public final class ArgumentsSignature implements Iterable<String> {
 
@@ -47,7 +48,7 @@ public final class ArgumentsSignature implements Iterable<String> {
     public static final int NO_VARARG = -1;
 
     @CompilationFinal(dimensions = 1) private static final ArgumentsSignature[] EMPTY_SIGNATURES = new ArgumentsSignature[32];
-    public static final ArgumentsSignature INVALID_SIGNATURE = new ArgumentsSignature(new String[]{"<<invalid>>"});
+    public static final ArgumentsSignature INVALID_SIGNATURE = new ArgumentsSignature(new String[]{"<<invalid>>"}, false);
 
     static {
         for (int i = 0; i < EMPTY_SIGNATURES.length; i++) {
@@ -55,12 +56,8 @@ public final class ArgumentsSignature implements Iterable<String> {
         }
     }
 
-    @TruffleBoundary
     public static ArgumentsSignature get(String... names) {
-        assert names != null;
-        ArgumentsSignature newSignature = new ArgumentsSignature(names);
-        ArgumentsSignature oldSignature = signatures.putIfAbsent(newSignature, newSignature);
-        return oldSignature != null ? oldSignature : newSignature;
+        return get(names, false);
     }
 
     public static ArgumentsSignature empty(int length) {
@@ -73,15 +70,41 @@ public final class ArgumentsSignature implements Iterable<String> {
         return get(new String[length]);
     }
 
+    /**
+     * Returns {@code null} if the the vector is {@code null}. Any empty string in the vector is
+     * converted to {@code null} value.
+     */
+    public static ArgumentsSignature fromNamesAttribute(RStringVector names) {
+        return names == null ? null : get(names.getDataWithoutCopying(), true);
+    }
+
+    @TruffleBoundary
+    private static ArgumentsSignature get(String[] names, boolean convertEmpty) {
+        assert names != null;
+        ArgumentsSignature newSignature = new ArgumentsSignature(names, convertEmpty);
+        ArgumentsSignature oldSignature = signatures.putIfAbsent(newSignature, newSignature);
+        return oldSignature != null ? oldSignature : newSignature;
+    }
+
     @CompilationFinal(dimensions = 1) private final String[] names;
     @CompilationFinal(dimensions = 1) private final int[] varArgIndexes;
     @CompilationFinal(dimensions = 1) private final boolean[] isVarArg;
     private final int varArgIndex;
     private final int nonNullCount;
 
-    private ArgumentsSignature(String[] names) {
-        this.names = Arrays.stream(names).map(s -> s == null || s == UNMATCHED ? s : s.intern()).toArray(String[]::new);
-        this.nonNullCount = (int) Arrays.stream(names).filter(s -> s != null).count();
+    private ArgumentsSignature(String[] names, boolean convertEmpty) {
+        this.names = new String[names.length];
+        int nonNullCount = 0;
+        for (int i = 0; i < names.length; i++) {
+            String s = names[i];
+            if (s == null || (s.isEmpty() && convertEmpty)) {
+                this.names[i] = null;
+                continue;
+            }
+            nonNullCount++;
+            this.names[i] = s == UNMATCHED ? s : s.intern();
+        }
+        this.nonNullCount = nonNullCount;
 
         int index = NO_VARARG;
         int count = 0;

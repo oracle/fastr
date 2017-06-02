@@ -97,7 +97,7 @@ public abstract class StandardGeneric extends RBuiltinNode.Arg2 {
             // and this slow path should not be executed again
             REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
             RFunction currentFunction = ReadVariableNode.lookupFunction(".getMethodsTable", methodsEnv.getFrame(), true, true);
-            mtable = (REnvironment) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, getOriginalCall()), null, def);
+            mtable = (REnvironment) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, getOriginalCall()), true, null, def);
         }
         RList sigArgs = (RList) readSigARgs.execute(null, fnFrame);
         int sigLength = (int) castIntScalar.doCast(readSigLength.execute(null, fnFrame));

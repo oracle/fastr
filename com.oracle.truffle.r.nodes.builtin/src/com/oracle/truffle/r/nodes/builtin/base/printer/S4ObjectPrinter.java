@@ -63,7 +63,7 @@ final class S4ObjectPrinter implements ValuePrinter<RS4Object> {
 
     static void printS4(PrintContext printCtx, Object o) {
         Frame frame = com.oracle.truffle.r.runtime.Utils.getActualCurrentFrame();
-        RContext.getEngine().evalFunction(createShowFunction(frame), null, null, null, o);
+        RContext.getEngine().evalFunction(createShowFunction(frame), null, null, true, null, o);
         // The show function prints an additional new line character. The following attribute
         // instructs the ValuePrinter.println method not to print the new line since it was
         // already printed.

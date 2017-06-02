@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,13 +28,13 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -171,8 +171,12 @@ public interface Engine {
      * namespace, but the current stack is not empty. So when {@code frame} is not {@code null} a
      * {@code caller} should be passed to maintain the call stack correctly. {@code names} string
      * vector describing (optional) argument names
+     * 
+     * @param names signature of the given parameters, may be {@code null} in which case the empty
+     *            signature of correct cardinality shall be used.
+     * @param evalPromises whether to evaluate promises in args array before calling the function.
      */
-    Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, RStringVector names, Object... args);
+    Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, boolean evalPromises, ArgumentsSignature names, Object... args);
 
     /**
      * Checks for the existence of (startup/shutdown) function {@code name} and, if present, invokes

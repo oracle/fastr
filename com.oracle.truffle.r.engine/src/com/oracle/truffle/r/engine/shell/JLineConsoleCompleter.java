@@ -99,7 +99,7 @@ public class JLineConsoleCompleter implements Completer {
             env.safePut("token", buffer.substring(start, cursor));
 
             MaterializedFrame callingFrame = REnvironment.globalEnv().getFrame();
-            RContext.getEngine().evalFunction(completeToken, callingFrame, RCaller.createInvalid(callingFrame), null, new Object[]{});
+            RContext.getEngine().evalFunction(completeToken, callingFrame, RCaller.createInvalid(callingFrame), true, null, new Object[]{});
 
             o = env.get("comps");
             if (!(o instanceof RAbstractStringVector)) {
