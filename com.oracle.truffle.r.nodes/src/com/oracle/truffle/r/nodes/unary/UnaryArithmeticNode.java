@@ -29,40 +29,24 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.primitive.UnaryMapNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
-import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
 public abstract class UnaryArithmeticNode extends UnaryNode {
 
     protected final UnaryArithmeticFactory unary;
-    private final Message error;
-    private final Object[] errorArgs;
-    protected final RType minPrecedence;
 
-    public UnaryArithmeticNode(UnaryArithmeticFactory factory, RType minPrecedence, Message error, Object... errorArgs) {
+    public UnaryArithmeticNode(UnaryArithmeticFactory factory) {
         this.unary = factory;
-        this.error = error;
-        this.errorArgs = errorArgs;
-        this.minPrecedence = minPrecedence;
-    }
-
-    public UnaryArithmeticNode(UnaryArithmeticFactory factory, Message error, RType minPrecedence) {
-        this.unary = factory;
-        this.error = error;
-        this.minPrecedence = minPrecedence;
-        this.errorArgs = null;
-    }
-
-    public UnaryArithmeticNode(UnaryArithmeticFactory factory, Message error) {
-        this(factory, error, RType.Integer);
     }
 
     public abstract Object execute(Object value);
@@ -75,17 +59,17 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     protected UnaryMapNode createCachedFast(Object operand) {
         if (isNumericVector(operand)) {
-            return createCached(unary.createOperation(), operand, minPrecedence);
+            return createCached(unary.createOperation(), operand);
         }
         return null;
     }
 
-    protected static UnaryMapNode createCached(UnaryArithmetic arithmetic, Object operand, RType minPrecedence) {
+    protected static UnaryMapNode createCached(UnaryArithmetic arithmetic, Object operand) {
         if (operand instanceof RAbstractVector) {
             RAbstractVector castOperand = (RAbstractVector) operand;
             RType operandType = castOperand.getRType();
             if (operandType.isNumeric()) {
-                RType type = RType.maxPrecedence(operandType, minPrecedence);
+                RType type = RType.maxPrecedence(operandType, arithmetic.getMinPrecedence());
                 RType resultType = arithmetic.calculateResultType(type);
                 return UnaryMapNode.create(new ScalarUnaryArithmeticNode(arithmetic), castOperand, type, resultType);
             }
@@ -101,24 +85,24 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     @TruffleBoundary
     protected Object doGeneric(Object operand,
                     @Cached("unary.createOperation()") UnaryArithmetic arithmetic,
-                    @Cached("new(createCached(arithmetic, operand, minPrecedence), minPrecedence)") GenericNumericVectorNode generic) {
+                    @Cached("new(createCached(arithmetic, operand))") GenericNumericVectorNode generic) {
         RAbstractVector operandVector = (RAbstractVector) operand;
         return generic.get(arithmetic, operandVector).apply(operandVector);
     }
 
+    @Override
+    public RBaseNode getErrorContext() {
+        return this;
+    }
+
     @Fallback
-    protected Object invalidArgType(@SuppressWarnings("unused") Object operand) {
+    protected Object invalidArgType(Object operand) {
         CompilerDirectives.transferToInterpreter();
-        if (errorArgs == null || errorArgs.length == 0) {
-            throw error(error);
-        } else if (errorArgs.length == 1) {
-            throw error(error, errorArgs[0]);
-        } else if (errorArgs.length == 2) {
-            throw error(error, errorArgs[0], errorArgs[1]);
-        } else if (errorArgs.length == 3) {
-            throw error(error, errorArgs[0], errorArgs[1], errorArgs[2]);
+        UnaryArithmetic op = unary.createOperation();
+        if (operand instanceof RMissing) {
+            throw error(RError.Message.ARGUMENTS_PASSED, 0, "'" + op.getClass().getSimpleName().toLowerCase() + "'", 1);
         } else {
-            throw RInternalError.shouldNotReachHere("too many error arguments in UnaryArithmeticNode");
+            throw error(op.getArgumentError());
         }
     }
 
@@ -126,17 +110,14 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
         @Child private UnaryMapNode cached;
 
-        private final RType minPrecedence;
-
-        public GenericNumericVectorNode(UnaryMapNode cachedOperation, RType minPrecedence) {
+        public GenericNumericVectorNode(UnaryMapNode cachedOperation) {
             this.cached = cachedOperation;
-            this.minPrecedence = minPrecedence;
         }
 
         public UnaryMapNode get(UnaryArithmetic arithmetic, RAbstractVector operand) {
             UnaryMapNode next = cached;
             if (!next.isSupported(operand)) {
-                next = cached.replace(createCached(arithmetic, operand, minPrecedence));
+                next = cached.replace(createCached(arithmetic, operand));
             }
             return next;
         }

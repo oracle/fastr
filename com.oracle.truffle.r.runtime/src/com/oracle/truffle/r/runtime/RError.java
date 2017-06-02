@@ -305,7 +305,7 @@ public final class RError extends RuntimeException {
         MORE_SUPPLIED_REPLACE("more elements supplied than there are to replace"),
         NA_SUBSCRIPTED("NAs are not allowed in subscripted assignments"),
         INVALID_ARG_TYPE("invalid argument type"),
-        INVALID_ARG_TYPE_UNARY("invalid argument to unary operator"),
+        INVALID_ARG_UNARY("invalid argument to unary operator"),
         VECTOR_SIZE_NEGATIVE("vector size cannot be negative"),
         VECTOR_SIZE_NA("vector size cannot be NA"),
         VECTOR_SIZE_NA_NAN("vector size cannot be NA/NaN"),

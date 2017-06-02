@@ -22,96 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
-import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
-public abstract class UnaryArithmeticBuiltinNode extends RBuiltinNode.Arg1 implements UnaryArithmeticFactory {
+public final class UnaryArithmeticBuiltinNode extends RBuiltinNode.Arg1 {
 
-    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+    {
+        Casts casts = new Casts(UnaryArithmeticBuiltinNode.class);
+        casts.arg(0).boxPrimitive();
+    }
+
     @Child private UnaryArithmeticNode unaryNode;
 
-    protected UnaryArithmeticBuiltinNode(RType minPrecedence, RError.Message error, Object[] errorArgs) {
-        unaryNode = UnaryArithmeticNodeGen.create(this, minPrecedence, error, errorArgs);
-    }
-
-    protected UnaryArithmeticBuiltinNode(RType minPrecedence) {
-        unaryNode = UnaryArithmeticNodeGen.create(this, minPrecedence, RError.Message.ARGUMENTS_PASSED, new Object[]{0, "'" + getRBuiltin().name() + "'", 1});
-    }
-
-    @Specialization
-    public Object calculateUnboxed(Object value) {
-        return unaryNode.execute(boxPrimitive.execute(value));
+    public UnaryArithmeticBuiltinNode(UnaryArithmeticFactory factory) {
+        unaryNode = UnaryArithmeticNodeGen.create(factory);
     }
 
     @Override
-    public UnaryArithmetic createOperation() {
-        return new UnaryArithmetic() {
-
-            @Override
-            public RType calculateResultType(RType argumentType) {
-                return UnaryArithmeticBuiltinNode.this.calculateResultType(argumentType);
-            }
-
-            @Override
-            public double opd(double re, double im) {
-                return UnaryArithmeticBuiltinNode.this.opd(re, im);
-            }
-
-            @Override
-            public int op(byte op) {
-                return UnaryArithmeticBuiltinNode.this.op(op);
-            }
-
-            @Override
-            public int op(int op) {
-                return UnaryArithmeticBuiltinNode.this.op(op);
-            }
-
-            @Override
-            public double op(double op) {
-                return UnaryArithmeticBuiltinNode.this.op(op);
-            }
-
-            @Override
-            public RComplex op(double re, double im) {
-                return UnaryArithmeticBuiltinNode.this.op(re, im);
-            }
-        };
-    }
-
-    protected RType calculateResultType(RType argumentType) {
-        return argumentType;
-    }
-
-    @SuppressWarnings("unused")
-    protected int op(byte op) {
-        throw new UnsupportedOperationException();
-    }
-
-    @SuppressWarnings("unused")
-    protected int op(int op) {
-        throw new UnsupportedOperationException();
-    }
-
-    @SuppressWarnings("unused")
-    protected double op(double op) {
-        throw new UnsupportedOperationException();
-    }
-
-    @SuppressWarnings("unused")
-    protected RComplex op(double re, double im) {
-        throw new UnsupportedOperationException();
-    }
-
-    @SuppressWarnings("unused")
-    protected double opd(double re, double im) {
-        throw new UnsupportedOperationException();
+    public Object execute(VirtualFrame frame, Object value) {
+        return unaryNode.execute(value);
     }
 }

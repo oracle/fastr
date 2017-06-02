@@ -42,7 +42,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNames
 import com.oracle.truffle.r.nodes.binary.BinaryMapArithmeticFunctionNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -57,6 +56,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
@@ -348,18 +348,9 @@ public class LogFunctions {
     }
 
     @RBuiltin(name = "log10", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-    public abstract static class Log10 extends UnaryArithmeticBuiltinNode {
-
-        public Log10() {
-            super(RType.Double, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, null);
-        }
+    public static final class Log10 extends UnaryArithmetic {
 
         private static final double LOG_10 = Math.log(10);
-
-        static {
-            Casts casts = new Casts(Log10.class);
-            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
-        }
 
         @Override
         public double op(double op) {
@@ -375,18 +366,9 @@ public class LogFunctions {
     }
 
     @RBuiltin(name = "log2", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-    public abstract static class Log2 extends UnaryArithmeticBuiltinNode {
-
-        public Log2() {
-            super(RType.Double, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, null);
-        }
+    public static final class Log2 extends UnaryArithmetic {
 
         private static final double LOG_2 = Math.log(2);
-
-        static {
-            Casts casts = new Casts(Log2.class);
-            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
-        }
 
         @Override
         public double op(double op) {
@@ -402,30 +384,11 @@ public class LogFunctions {
     }
 
     @RBuiltin(name = "log1p", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-    public abstract static class Log1p extends UnaryArithmeticBuiltinNode {
-
-        public Log1p() {
-            super(RType.Double, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, null);
-        }
-
-        static {
-            Casts casts = new Casts(Log1p.class);
-            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
-        }
-
-        @Override
-        public int op(byte op) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int op(int op) {
-            throw new UnsupportedOperationException();
-        }
+    public static final class Log1p extends UnaryArithmetic {
 
         @Override
         public double op(double op) {
-            return Math.log(1 + op);
+            return Math.log1p(op);
         }
 
         @Override

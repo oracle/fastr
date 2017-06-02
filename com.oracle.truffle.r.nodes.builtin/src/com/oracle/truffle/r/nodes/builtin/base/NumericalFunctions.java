@@ -22,58 +22,32 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.runtime.RDispatch.COMPLEX_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 
 public class NumericalFunctions {
 
-    /**
-     * This node is only a workaround that makes the annotation processor process the other inner
-     * node classes. These classes would be ignored otherwise, since they do not contain any
-     * specialization, which would trigger the code generation performed by the annotation
-     * processor.
-     */
-    public abstract static class DummyNode extends RBuiltinNode.Arg1 {
-
-        @Specialization
-        protected Object dummySpec(@SuppressWarnings("unused") Object value) {
-            return null;
-        }
-    }
-
     @RBuiltin(name = "abs", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-    public abstract static class Abs extends UnaryArithmeticBuiltinNode {
-
-        public Abs() {
-            super(RType.Integer, RError.Message.NON_NUMERIC_MATH, null);
-        }
-
-        static {
-            Casts casts = new Casts(Abs.class);
-            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(numericValue().or(complexValue()));
-        }
+    public static final class Abs extends UnaryArithmetic {
 
         @Override
         public RType calculateResultType(RType argumentType) {
-            switch (argumentType) {
-                case Complex:
-                    return RType.Double;
-                default:
-                    return super.calculateResultType(argumentType);
-            }
+            return argumentType == RType.Complex ? RType.Double : argumentType;
+        }
+
+        @Override
+        public RType getMinPrecedence() {
+            return RType.Integer;
         }
 
         @Override
@@ -98,25 +72,16 @@ public class NumericalFunctions {
     }
 
     @RBuiltin(name = "Re", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = COMPLEX_GROUP_GENERIC, behavior = PURE)
-    public abstract static class Re extends UnaryArithmeticBuiltinNode {
-
-        public Re() {
-            super(RType.Double, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, null);
-        }
-
-        static {
-            Casts casts = new Casts(Re.class);
-            casts.arg("z").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
-        }
+    public static final class Re extends UnaryArithmetic {
 
         @Override
         public RType calculateResultType(RType argumentType) {
-            switch (argumentType) {
-                case Complex:
-                    return RType.Double;
-                default:
-                    return super.calculateResultType(argumentType);
-            }
+            return argumentType == RType.Complex ? RType.Double : argumentType;
+        }
+
+        @Override
+        public Message getArgumentError() {
+            return RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION;
         }
 
         @Override
@@ -138,28 +103,20 @@ public class NumericalFunctions {
         public double opd(double re, double im) {
             return re;
         }
+
     }
 
     @RBuiltin(name = "Im", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = COMPLEX_GROUP_GENERIC, behavior = PURE)
-    public abstract static class Im extends UnaryArithmeticBuiltinNode {
-
-        public Im() {
-            super(RType.Double, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, null);
-        }
-
-        static {
-            Casts casts = new Casts(Im.class);
-            casts.arg("z").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
-        }
+    public static final class Im extends UnaryArithmetic {
 
         @Override
         public RType calculateResultType(RType argumentType) {
-            switch (argumentType) {
-                case Complex:
-                    return RType.Double;
-                default:
-                    return super.calculateResultType(argumentType);
-            }
+            return argumentType == RType.Complex ? RType.Double : argumentType;
+        }
+
+        @Override
+        public Message getArgumentError() {
+            return RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION;
         }
 
         @Override
@@ -184,15 +141,11 @@ public class NumericalFunctions {
     }
 
     @RBuiltin(name = "Conj", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = COMPLEX_GROUP_GENERIC, behavior = PURE)
-    public abstract static class Conj extends UnaryArithmeticBuiltinNode {
+    public static final class Conj extends UnaryArithmetic {
 
-        public Conj() {
-            super(RType.Double, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, null);
-        }
-
-        static {
-            Casts casts = new Casts(Conj.class);
-            casts.arg("z").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
+        @Override
+        public Message getArgumentError() {
+            return RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION;
         }
 
         @Override
@@ -217,25 +170,16 @@ public class NumericalFunctions {
     }
 
     @RBuiltin(name = "Mod", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = COMPLEX_GROUP_GENERIC, behavior = PURE)
-    public abstract static class Mod extends UnaryArithmeticBuiltinNode {
-
-        public Mod() {
-            super(RType.Double, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION, null);
-        }
-
-        static {
-            Casts casts = new Casts(Mod.class);
-            casts.arg("z").defaultError(RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION).mustBe(numericValue().or(complexValue()));
-        }
+    public static final class Mod extends UnaryArithmetic {
 
         @Override
         public RType calculateResultType(RType argumentType) {
-            switch (argumentType) {
-                case Complex:
-                    return RType.Double;
-                default:
-                    return super.calculateResultType(argumentType);
-            }
+            return argumentType == RType.Complex ? RType.Double : argumentType;
+        }
+
+        @Override
+        public Message getArgumentError() {
+            return RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION;
         }
 
         @Override
@@ -259,17 +203,41 @@ public class NumericalFunctions {
         }
     }
 
+    @RBuiltin(name = "Arg", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = COMPLEX_GROUP_GENERIC, behavior = PURE)
+    public static final class Arg extends UnaryArithmetic {
+
+        @Override
+        public RType calculateResultType(RType argumentType) {
+            return argumentType == RType.Complex ? RType.Double : argumentType;
+        }
+
+        @Override
+        public int op(byte op) {
+            return 0;
+        }
+
+        @Override
+        public int op(int op) {
+            return op;
+        }
+
+        @Override
+        public double op(double op) {
+            if (op >= 0) {
+                return 0;
+            } else {
+                return Math.PI;
+            }
+        }
+
+        @Override
+        public double opd(double re, double im) {
+            return Math.atan2(im, re);
+        }
+    }
+
     @RBuiltin(name = "sign", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-    public abstract static class Sign extends UnaryArithmeticBuiltinNode {
-
-        public Sign() {
-            super(RType.Double, RError.Message.NON_NUMERIC_MATH, null);
-        }
-
-        static {
-            Casts casts = new Casts(Sign.class);
-            casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue());
-        }
+    public static final class Sign extends UnaryArithmetic {
 
         @Override
         public int op(byte op) {
@@ -285,19 +253,15 @@ public class NumericalFunctions {
         public double op(double op) {
             return Math.signum(op);
         }
+
+        @Override
+        public RComplex op(double re, double im) {
+            throw error(Message.UNIMPLEMENTED_COMPLEX_FUN);
+        }
     }
 
     @RBuiltin(name = "sqrt", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
-    public abstract static class Sqrt extends UnaryArithmeticBuiltinNode {
-
-        public Sqrt() {
-            super(RType.Double, RError.Message.NON_NUMERIC_MATH, null);
-        }
-
-        static {
-            Casts casts = new Casts(Sqrt.class);
-            casts.arg("x").defaultError(RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue().or(complexValue()));
-        }
+    public static final class Sqrt extends UnaryArithmetic {
 
         @Override
         public int op(byte op) {

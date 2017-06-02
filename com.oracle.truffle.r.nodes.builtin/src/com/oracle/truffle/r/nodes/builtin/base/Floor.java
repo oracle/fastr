@@ -22,64 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_ARITHMETIC;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
 @RBuiltin(name = "floor", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-public abstract class Floor extends UnaryArithmeticBuiltinNode {
+public final class Floor extends UnaryArithmetic {
 
-    public static final UnaryArithmeticFactory FLOOR = FloorNodeGen.create();
-
-    public Floor() {
-        super(RType.Double, RError.Message.NON_NUMERIC_MATH, null);
-    }
-
-    static {
-        Casts casts = new Casts(Floor.class);
-        casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustNotBeNull().mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue()).asDoubleVector(true,
-                        true, true);
-    }
-
-    @Override
-    public int op(byte op) {
-        return op;
-    }
-
-    @Override
-    public int op(int op) {
-        return op;
-    }
+    public static final UnaryArithmeticFactory FLOOR = Floor::new;
 
     @Override
     public double op(double op) {
         return Math.floor(op);
-    }
-
-    @Override
-    protected double opd(double re, double im) {
-        return op(re);
-    }
-
-    @Override
-    public RComplex op(double re, double im) {
-        return RDataFactory.createComplex(op(re), op(im));
-    }
-
-    @Specialization
-    @Override
-    public Object calculateUnboxed(Object op) {
-        return super.calculateUnboxed(op);
     }
 }

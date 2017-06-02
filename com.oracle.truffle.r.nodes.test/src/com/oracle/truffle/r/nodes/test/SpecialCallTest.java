@@ -186,8 +186,8 @@ public class SpecialCallTest extends TestBase {
         assertCallCounts("a <- c(1,2,3,4)", "a[0]", 1, 0, 1, 0);
         assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[b]", 1, 0, 1, 0);
         assertCallCounts("a <- c(1,2,3,4)", "a[NA_integer_]", 1, 0, 1, 0);
+        assertCallCounts("a <- c(1,2,3,4)", "a[-1]", 2, 0, 2, 0);
 
-        assertCallCounts("a <- c(1,2,3,4)", "a[-1]", 0, 2, 0, 2); // "-1" is a unary expression
         assertCallCounts("a <- c(1,2,3,4)", "a[drop=T, 1]", 0, 1, 0, 1);
         assertCallCounts("a <- c(1,2,3,4)", "a[drop=F, 1]", 0, 1, 0, 1);
         assertCallCounts("a <- c(1,2,3,4)", "a[1, drop=F]", 0, 1, 0, 1);
@@ -223,7 +223,7 @@ public class SpecialCallTest extends TestBase {
         assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[b] <- 1", 1, 0, 1, 1);
         assertCallCounts("a <- c(1,2,3,4)", "a[NA_integer_] <- 1", 1, 0, 1, 1);
 
-        assertCallCounts("a <- c(1,2,3,4)", "a[-1] <- 1", 0, 2, 0, 3); // "-1" is a unary expression
+        assertCallCounts("a <- c(1,2,3,4)", "a[-1] <- 1", 2, 0, 2, 1);
         assertCallCounts("a <- c(1,2,3,4)", "a[drop=T, 1] <- 1", 0, 1, 0, 2);
         assertCallCounts("a <- c(1,2,3,4)", "a[drop=F, 1] <- 1", 0, 1, 0, 2);
         assertCallCounts("a <- c(1,2,3,4)", "a[1, drop=F] <- 1", 0, 1, 0, 2);
@@ -254,7 +254,7 @@ public class SpecialCallTest extends TestBase {
         assertCallCounts("a <- 1", "('asdf')", 1, 0, 1, 0);
         assertCallCounts("a <- 1; b <- 2", "(a + b)", 2, 0, 2, 0);
         assertCallCounts("a <- 1; b <- 2; c <- 3", "a + (b + c)", 3, 0, 3, 0);
-        assertCallCounts("a <- 1; b <- 2; c <- 1:5", "a + (b + c)", 3, 0, 0, 3);
+        assertCallCounts("a <- 1; b <- 2; c <- 1:5", "a + (b + c)", 3, 0, 3, 0);
     }
 
     private static void assertCallCounts(String test, int initialSpecialCount, int initialNormalCount, int finalSpecialCount, int finalNormalCount) {
