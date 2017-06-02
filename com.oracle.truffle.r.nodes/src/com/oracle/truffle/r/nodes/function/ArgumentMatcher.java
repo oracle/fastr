@@ -483,8 +483,8 @@ public class ArgumentMatcher {
         public static final int UNMATCHED = -1;
         public static final int VARARGS = -2;
 
-        @CompilationFinal private final int[] resultPermutation;
-        @CompilationFinal private final int[] varargsPermutation;
+        @CompilationFinal(dimensions = 1) private final int[] resultPermutation;
+        @CompilationFinal(dimensions = 1) private final int[] varargsPermutation;
         private final ArgumentsSignature varargsSignature;
 
         /**

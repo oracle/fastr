@@ -144,7 +144,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     private final ReadKind kind;
     private int invalidationCount;
 
-    @CompilationFinal private final boolean[] seenValueKinds = new boolean[FrameSlotKind.values().length];
+    @CompilationFinal(dimensions = 1) private final boolean[] seenValueKinds = new boolean[FrameSlotKind.values().length];
 
     private ReadVariableNode(SourceSection sourceSection, Object identifier, RType mode, ReadKind kind) {
         super(sourceSection);
@@ -422,7 +422,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     private static final class MultiAssumptionLevel extends FrameLevel {
 
         private final FrameLevel next;
-        @CompilationFinal private final Assumption[] assumptions;
+        @CompilationFinal(dimensions = 1) private final Assumption[] assumptions;
 
         private MultiAssumptionLevel(FrameLevel next, Assumption... assumptions) {
             this.next = next;

@@ -280,7 +280,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
 
         @Child private S3FunctionLookupNode next;
 
-        @CompilationFinal private final String[] cachedTypeContents;
+        @CompilationFinal(dimensions = 1) private final String[] cachedTypeContents;
         @Children private final ReadVariableNode[] unsuccessfulReadsCallerFrame;
         @Child private LocalReadVariableNode readS3MethodsTable;
         @Children private final LocalReadVariableNode[] unsuccessfulReadsTable;

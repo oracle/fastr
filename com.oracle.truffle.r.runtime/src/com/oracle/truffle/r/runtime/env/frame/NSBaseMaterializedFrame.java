@@ -42,7 +42,7 @@ public final class NSBaseMaterializedFrame implements MaterializedFrame {
     private static final ValueProfile frameProfile = ValueProfile.createClassProfile();
 
     private final MaterializedFrame packageBaseFrame;
-    @CompilationFinal private final Object[] arguments;
+    @CompilationFinal(dimensions = 1) private final Object[] arguments;
 
     // this frame descriptor is only used for lookups in FrameSlotChangeMonitor
     private final FrameDescriptor markerFrameDescriptor;

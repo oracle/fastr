@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  */
 public class BaseVariables {
     // @formatter:off
-    @CompilationFinal private static final String[] PLATFORM_NAMES = new String[] {
+    @CompilationFinal(dimensions = 1) private static final String[] PLATFORM_NAMES = new String[] {
         "OS.type", "file.sep", "dynlib.ext", "GUI", "endian", "pkgType", "path.sep", "r_arch"
     };
     // @formatter:on
@@ -42,7 +42,7 @@ public class BaseVariables {
     }
 
     // @formatter:off
-    @CompilationFinal private static final String[] MACHINE_NAMES = new String[] {
+    @CompilationFinal(dimensions = 1) private static final String[] MACHINE_NAMES = new String[] {
         "double.eps",            "double.neg.eps",        "double.xmin",
         "double.xmax",           "double.base",           "double.digits",
         "double.rounding",       "double.guard",          "double.ulp.digits",
