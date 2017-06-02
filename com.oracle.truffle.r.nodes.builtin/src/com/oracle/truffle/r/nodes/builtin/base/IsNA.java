@@ -29,7 +29,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
@@ -53,6 +55,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
+@ImportStatic(RRuntime.class)
 @RBuiltin(name = "is.na", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class IsNA extends RBuiltinNode.Arg1 {
 
@@ -193,6 +196,11 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
     protected RLogicalVector isNA(RNull value) {
         warning(RError.Message.IS_NA_TO_NON_VECTOR, value.getRType().getName());
         return RDataFactory.createEmptyLogicalVector();
+    }
+
+    @Specialization(guards = "isForeignObject(obj)")
+    protected byte isNA(@SuppressWarnings("unused") TruffleObject obj) {
+        return RRuntime.LOGICAL_FALSE;
     }
 
     // Note: all the primitive values have specialization, so we can only get RTypedValue in

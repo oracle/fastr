@@ -62,6 +62,11 @@ public abstract class TypeofNode extends UnaryNode {
         return RType.Missing;
     }
 
+    @Specialization(guards = "isForeignObject(object)")
+    protected RType doTruffleObject(@SuppressWarnings("unused") TruffleObject object) {
+        return RType.TruffleObject;
+    }
+
     @Specialization(guards = {"operand.getClass() == cachedClass"}, limit = "NUMBER_OF_CACHED_CLASSES")
     protected static RType doCachedTyped(Object operand,
                     @Cached("getTypedValueClass(operand)") Class<? extends RTypedValue> cachedClass) {
@@ -80,11 +85,6 @@ public abstract class TypeofNode extends UnaryNode {
     @Specialization(replaces = {"doCachedTyped"})
     protected static RType doGenericTyped(RTypedValue operand) {
         return operand.getRType();
-    }
-
-    @Specialization(guards = "isForeignObject(object)")
-    protected RType doTruffleObject(@SuppressWarnings("unused") TruffleObject object) {
-        return RType.TruffleObject;
     }
 
     protected static boolean isForeignObject(Object obj) {

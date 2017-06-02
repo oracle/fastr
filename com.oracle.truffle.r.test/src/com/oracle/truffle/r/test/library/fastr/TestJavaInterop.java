@@ -329,7 +329,7 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    public void testNamesForJavaObject() {
+    public void testNamesForForeignObject() {
         assertEvalFastR("tc <- .fastr.java.class('" + TestNamesClassNoMembers.class.getName() + "'); t <- .fastr.interop.new(tc); names(t)", "NULL");
         assertEvalFastR("tc <- .fastr.java.class('" + TestNamesClassNoPublicMembers.class.getName() + "'); t <- .fastr.interop.new(tc); names(t)", "NULL");
         assertEvalFastR("tc <- .fastr.java.class('" + TestNamesClass.class.getName() + "'); sort(names(tc))", "c('staticField', 'staticMethod')");
@@ -338,6 +338,63 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("tc <- .fastr.java.class('" + TestNamesClass.class.getName() + "'); t <- .fastr.interop.new(tc); sort(names(t))", "c('field', 'method', 'staticField', 'staticMethod')");
         assertEvalFastR("cl <- .fastr.java.class('java.util.Collections'); em<-cl$EMPTY_MAP; names(em)", "NULL");
         assertEvalFastR("tc <- .fastr.java.class('" + TestNamesClassMap.class.getName() + "'); t <- .fastr.interop.new(tc); sort(names(t$m()))", "c('one', 'two')");
+    }
+
+    @Test
+    public void testIsXXXForForeignObject() {
+        // missing: is.element, is.empty.model, is.leaf, is.loaded, is.na.data.frame,
+        // is.na.numeric_version, is.na.POSIXlt
+
+        assertPassingForeighObjectToFunction("is.array", "FALSE");
+        assertPassingForeighObjectToFunction("is.atomic", "FALSE");
+        assertPassingForeighObjectToFunction("is.call", "FALSE");
+        assertPassingForeighObjectToFunction("is.character", "FALSE");
+        assertPassingForeighObjectToFunction("is.complex", "FALSE");
+        assertPassingForeighObjectToFunction("is.data.frame", "FALSE");
+        assertPassingForeighObjectToFunction("is.double", "FALSE");
+        assertPassingForeighObjectToFunction("is.environment", "FALSE");
+        assertPassingForeighObjectToFunction("is.expression", "FALSE");
+        assertPassingForeighObjectToFunction("is.factor", "FALSE");
+        assertPassingForeighObjectToFunction("is.function", "FALSE");
+        assertPassingForeighObjectToFunction("is.integer", "FALSE");
+        assertPassingForeighObjectToFunction("is.language", "FALSE");
+        assertPassingForeighObjectToFunction("is.logical", "FALSE");
+        assertPassingForeighObjectToFunction("is.matrix", "FALSE");
+        assertPassingForeighObjectToFunction("is.mts", "FALSE");
+        assertPassingForeighObjectToFunction("is.na", "FALSE");
+        assertPassingForeighObjectToFunction("is.name", "FALSE");
+        assertPassingForeighObjectToFunction("is.null", "FALSE");
+        assertPassingForeighObjectToFunction("is.numeric", "FALSE");
+        assertPassingForeighObjectToFunction("is.numeric.Date", "FALSE");
+        assertPassingForeighObjectToFunction("is.numeric.difftime", "FALSE");
+        assertPassingForeighObjectToFunction("is.numeric.POSIXt", "FALSE");
+        assertPassingForeighObjectToFunction("is.numeric_version", "FALSE");
+        assertPassingForeighObjectToFunction("is.object", "FALSE");
+        assertPassingForeighObjectToFunction("is.ordered", "FALSE");
+        assertPassingForeighObjectToFunction("is.package_version", "FALSE");
+        assertPassingForeighObjectToFunction("is.pairlist", "FALSE");
+        assertPassingForeighObjectToFunction("is.primitive", "FALSE");
+        assertPassingForeighObjectToFunction("is.qr", "FALSE");
+        assertPassingForeighObjectToFunction("is.raster", "FALSE");
+        assertPassingForeighObjectToFunction("is.raw", "FALSE");
+        assertPassingForeighObjectToFunction("is.recursive", "FALSE");
+        assertPassingForeighObjectToFunction("is.relistable", "FALSE");
+        assertPassingForeighObjectToFunction("is.stepfun", "FALSE");
+        assertPassingForeighObjectToFunction("is.symbol", "FALSE");
+        assertPassingForeighObjectToFunction("is.table", "FALSE");
+        assertPassingForeighObjectToFunction("is.ts", "FALSE");
+        assertPassingForeighObjectToFunction("is.tskernel", "FALSE");
+        assertPassingForeighObjectToFunction("is.unsorted", "FALSE");
+        assertPassingForeighObjectToFunction("is.vector", "FALSE");
+
+        assertPassingForeighObjectToFunction("is.nan", "cat('Error in is.nan(to) : ', '\n', '  default method not implemented for type \\'external object\\'\n', sep='')");
+        assertPassingForeighObjectToFunction("is.finite", "cat('Error in is.finite(to) : ', '\n', '  default method not implemented for type \\'external object\\'\n', sep='')");
+        assertPassingForeighObjectToFunction("is.infinite", "cat('Error in is.infinite(to) : ', '\n', '  default method not implemented for type \\'external object\\'\n', sep='')");
+
+    }
+
+    private void assertPassingForeighObjectToFunction(String function, String expectedOutput) {
+        assertEvalFastR("to <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); " + function + "(to)", expectedOutput);
     }
 
     @Test
