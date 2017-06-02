@@ -39,6 +39,8 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -2301,7 +2303,9 @@ public class RSerialize {
                 state.linkPairList(arguments.length);
             }
             Object pl = state.closePairList();
-            attachSrcref(callElement, pl);
+            if (callElement instanceof Node && RContext.getRRuntimeASTAccess().isTaggedWith((Node) callElement, StandardTags.StatementTag.class)) {
+                attachSrcref(callElement, pl);
+            }
             state.setCdr(pl);
         }
 
@@ -2428,20 +2432,18 @@ public class RSerialize {
      */
     private static void attachSrcref(RSyntaxElement syntaxElement, Object serObj) {
         SourceSection ss = getFileSourceSection(syntaxElement);
-        if (ss != null) {
-            if (serObj instanceof RAttributable) {
-                String pathInternal = RSource.getPathInternal(ss.getSource());
-                RAttributable attributable = (RAttributable) serObj;
-                attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(pathInternal));
-                RList createBlockSrcrefs = RSrcref.createBlockSrcrefs(syntaxElement);
-                if (createBlockSrcrefs != null) {
-                    attributable.setAttr(RRuntime.R_SRCREF, createBlockSrcrefs);
-                    attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
-                } else {
-                    Object createLloc = RSrcref.createLloc(ss);
-                    attributable.setAttr(RRuntime.R_SRCREF, createLloc);
-                    attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
-                }
+        if (ss != null && serObj instanceof RAttributable) {
+            String pathInternal = RSource.getPathInternal(ss.getSource());
+            RAttributable attributable = (RAttributable) serObj;
+            attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(pathInternal));
+            RList createBlockSrcrefs = RSrcref.createBlockSrcrefs(syntaxElement);
+            if (createBlockSrcrefs != null) {
+                attributable.setAttr(RRuntime.R_SRCREF, createBlockSrcrefs);
+                attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
+            } else {
+                Object createLloc = RSrcref.createLloc(ss);
+                attributable.setAttr(RRuntime.R_SRCREF, createLloc);
+                attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
             }
         }
     }
