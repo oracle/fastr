@@ -91,6 +91,11 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
         }
 
         @Specialization
+        protected Object readIndexed(VirtualFrame frame, Object receiver, long label) {
+            return extract.apply(frame, receiver, new Object[]{label + 1}, RLogical.TRUE, RLogical.TRUE);
+        }
+
+        @Specialization
         protected Object readProperty(VirtualFrame frame, Object receiver, String label) {
             return extract.applyAccessField(frame, receiver, label);
         }
