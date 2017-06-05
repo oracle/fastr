@@ -103,25 +103,27 @@ final class TruffleLLVM_Call implements CallRFFI {
         Node executeNode = Message.createExecute(2).createNode();
         RFFIVariables[] variables = RFFIVariables.initialize();
         boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
-        for (int i = 0; i < variables.length; i++) {
-            RFFIVariables var = variables[i];
-            Object value = var.getValue();
-            if (value == null) {
-                continue;
-            }
-            try {
-                if (value instanceof Double) {
-                    ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.DOUBLE.symbolHandle.asTruffleObject(), i, value);
-                } else if (value instanceof Integer) {
-                    ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.INT.symbolHandle.asTruffleObject(), i, value);
-                } else if (value instanceof TruffleObject) {
-                    ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, value);
+        try {
+            for (int i = 0; i < variables.length; i++) {
+                RFFIVariables var = variables[i];
+                Object value = var.getValue();
+                if (value == null) {
+                    continue;
                 }
-            } catch (Throwable t) {
-                throw RInternalError.shouldNotReachHere(t);
-            } finally {
-                RContext.getRForeignAccessFactory().setIsNull(isNullSetting);
+                try {
+                    if (value instanceof Double) {
+                        ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.DOUBLE.symbolHandle.asTruffleObject(), i, value);
+                    } else if (value instanceof Integer) {
+                        ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.INT.symbolHandle.asTruffleObject(), i, value);
+                    } else if (value instanceof TruffleObject) {
+                        ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, value);
+                    }
+                } catch (Throwable t) {
+                    throw RInternalError.shouldNotReachHere(t);
+                }
             }
+        } finally {
+            RContext.getRForeignAccessFactory().setIsNull(isNullSetting);
         }
     }
 

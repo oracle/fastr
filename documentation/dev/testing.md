@@ -7,18 +7,30 @@ The unit testing works by executing the R test and the comparing the output with
 
 ## Unit Tests
 
-The unit tests reside mainly in the `com.oracle.truffle.r.test` project, with a smaller number in the and `com.oracle.truffle.r.nodes.test` project. To execute the unit tests use the `mx junit` command. The standard set of unit tests is available via the `mx junitdefault` command and the following additional variants are available:
+The unit tests reside mainly in the `com.oracle.truffle.r.test` project, with a smaller number in the `com.oracle.truffle.r.nodes.test` project. The execution of the tests uses the `unittest` command that is built into `mx` and
+used by all the Truffle languages. See `mx unittest --help` for a complete description of the options. Certain system properties are used to control the test environment, a;; of which begin with `fastr.test`.
 
-1. `mx junitsimple`: everything except the package tests and the `com.oracle.truffle.r.nodes.test`
-2. `mx junit --tests list`: `list` is a comma-separated list of test patterns, where a pattern is a package or class. For example to just run the "builtin" tests run `mx junit --tests com.oracle.truffle.r.test.builtins`.
+1. `fastr.test.trace.tests`: this causes the specific test method being executed to be output to the standard output. A sometimes useful debugging tool.
+2. `fastr.test.check.expected`: this can be used in combination with `fastr.test.generate` to checked whether `ExpectedTestOutput.test` is in sync with the current set of tests.
+3. `fastr.test.generate`: Used internally by `mx rtestgen`, see below.
+4. `fastr.test.generate.quiet`; Used internally by `mx rtestgen`, see below.
 
-As with most FastR `mx` commands, additional parameters can be passed to the underlying FastR process using the `--J` option. For example to debug a unit test under an IDE, it is important to disable the internal timeout mechanism that detects looping tests, vis:
+For convenience and backwards compatibility FastR provides some wrapper commands that invoke `unittest` with specific arguments.
+In particular the standard set of unit tests is available via the `mx junitgate` command and the following additional variants are available:
 
-    mx -d junit --tests sometestclass --J @-DDisableTestTimeout
+1. `mx rutsimple`: everything except the tests in `com.oracle.truffle.r.nodes.test`
+2. `mx rutgate`: all the tests that run in the gate
+
+
+For example to debug a unit test under an IDE, it is important to disable the internal timeout mechanism that detects looping tests, vis:
+
+    mx -d unittest -Dfastr.test.timeout sometestclass
+
+Note that no value for `fastr.test.timeout` is treated as in infinite timeout. Any other value is expected to be an integer value, interpreted as seconds.
 
 ### Regenerating ExpectedTestOutput.test
 
-After adding, removing or altering units tests (including the `TestTrait` argument), it is necessary to regenerate the GNU R output, vis:
+After adding, removing or altering units tests (including the `TestTrait` argument), it is necessary to regenerate the `ExpectedTestOutput.test` file, vis:
 
     mx rtestgen
 

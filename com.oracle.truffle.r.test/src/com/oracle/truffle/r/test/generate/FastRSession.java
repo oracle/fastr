@@ -53,8 +53,7 @@ import com.oracle.truffle.r.test.TestBase;
 
 public final class FastRSession implements RSession {
 
-    private static final String TEST_TIMEOUT_PROPERTY = "FastRTestTimeout";
-    private static final String DISABLE_TIMEOUT_PROPERTY = "DisableTestTimeout"; // legacy
+    private static final String TEST_TIMEOUT_PROPERTY = "fastr.test.timeout";
     private static int timeoutValue = 10000;
     /**
      * The long timeout is used for package installation and currently needs to be 5 mins for the
@@ -163,13 +162,16 @@ public final class FastRSession implements RSession {
     }
 
     private FastRSession() {
-        if (System.getProperty(DISABLE_TIMEOUT_PROPERTY) != null) {
-            timeoutValue = Integer.MAX_VALUE;
-            longTimeoutValue = Integer.MAX_VALUE;
-        } else if (System.getProperty(TEST_TIMEOUT_PROPERTY) != null) {
-            int timeoutGiven = Integer.parseInt(System.getProperty(TEST_TIMEOUT_PROPERTY));
-            timeoutValue = timeoutGiven * 1000;
-            // no need to scale longTimeoutValue
+        String timeOutProp = System.getProperty(TEST_TIMEOUT_PROPERTY);
+        if (timeOutProp != null) {
+            if (timeOutProp.length() == 0) {
+                timeoutValue = Integer.MAX_VALUE;
+                longTimeoutValue = Integer.MAX_VALUE;
+            } else {
+                int timeoutGiven = Integer.parseInt(timeOutProp);
+                timeoutValue = timeoutGiven * 1000;
+                // no need to scale longTimeoutValue
+            }
         }
         consoleHandler = new TestConsoleHandler();
         try {

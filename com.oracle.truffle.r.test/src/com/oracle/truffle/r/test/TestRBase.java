@@ -22,16 +22,16 @@
  */
 package com.oracle.truffle.r.test;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
+import java.util.Map.Entry;
 
-import org.junit.Assert;
 import org.junit.Test;
+
+import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 
 /**
  * Base class for all Java test suites (in the sense of JUnit Java files) that want to run R tests
@@ -60,54 +60,45 @@ public class TestRBase extends TestBase {
         if (testDirName == null) {
             return;
         }
-        Path testDirPath = TestBase.getProjectFile(Paths.get(testDirName, "R"));
-        if (!Files.exists(testDirPath) || !Files.isDirectory(testDirPath)) {
-            return;
-        }
-        File testDir = testDirPath.toFile();
-        File[] files = testDir.listFiles((dir, name) -> name.endsWith(".R"));
-        if (files == null) {
-            return;
-        }
-        for (int i = 0; i < files.length; i++) {
-            explicitTestContext = testDirName + "/R/" + files[i].getName();
-            try {
-                BufferedReader bf = new BufferedReader(new FileReader(files[i]));
-                TestTrait testTrait = null;
-                String l = bf.readLine();
-                if (l != null) {
-                    l = l.trim();
-                    if (l.startsWith("#")) {
-                        // check the first line for configuration options
-                        if (l.contains("IgnoreErrorContext")) {
-                            testTrait = Output.IgnoreErrorContext;
-                        } else if (l.contains("IgnoreWarningContext")) {
-                            testTrait = Output.IgnoreWarningContext;
-                        } else if (l.contains("Ignored")) {
-                            for (Ignored ignoredType : Ignored.values()) {
-                                if (l.contains("Ignored." + ignoredType.name())) {
-                                    testTrait = ignoredType;
-                                    break;
-                                }
-                            }
-                            if (testTrait == null) {
-                                testTrait = Ignored.Unknown; // Retain old way for compatibility
-                            }
+        Map<String, String> rFiles = ResourceHandlerFactory.getHandler().getRFiles(this.getClass(), testDirName);
+        for (Entry<String, String> entry : rFiles.entrySet()) {
+            String entryName = entry.getKey();
+            String entryValue = entry.getValue();
+            explicitTestContext = entryName;
+            String[] lines = entryValue.split("\n");
+            String l = lines[0].trim();
+            TestTrait testTrait = null;
+            if (l.startsWith("#")) {
+                // check the first line for configuration options
+                if (l.contains("IgnoreErrorContext")) {
+                    testTrait = Output.IgnoreErrorContext;
+                } else if (l.contains("IgnoreWarningContext")) {
+                    testTrait = Output.IgnoreWarningContext;
+                } else if (l.contains("Ignored")) {
+                    for (Ignored ignoredType : Ignored.values()) {
+                        if (l.contains("Ignored." + ignoredType.name())) {
+                            testTrait = ignoredType;
+                            break;
                         }
                     }
+                    if (testTrait == null) {
+                        testTrait = Ignored.Unknown; // Retain old way for compatibility
+                    }
                 }
-                bf.close();
-                String testFilePath = testDirPath.resolve(files[i].getName()).toString();
-                if (testTrait == null) {
-                    assertEval(TestBase.template("{ source(\"%0\") }", new String[]{testFilePath}));
-                } else {
-                    assertEval(testTrait, TestBase.template("{ source(\"%0\") }", new String[]{testFilePath}));
-                }
-            } catch (IOException x) {
-                Assert.fail("error reading: " + files[i].getPath() + ": " + x);
-            } finally {
-                explicitTestContext = null;
             }
+            try {
+                Path dir = TestBase.createTestDir(getTestDir());
+                Path p = dir.resolve(Paths.get(entryName).getFileName());
+                Files.write(p, entryValue.getBytes());
+                if (testTrait == null) {
+                    assertEval(TestBase.template("{ source(\"%0\") }", new String[]{p.toString()}));
+                } else {
+                    assertEval(testTrait, TestBase.template("{ source(\"%0\") }", new String[]{p.toString()}));
+                }
+            } catch (IOException ex) {
+                assert false;
+            }
+            explicitTestContext = null;
         }
     }
 }

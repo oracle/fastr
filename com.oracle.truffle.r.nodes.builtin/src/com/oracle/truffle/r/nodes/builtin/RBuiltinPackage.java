@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -101,7 +102,7 @@ public abstract class RBuiltinPackage {
         return name;
     }
 
-    private static final ConcurrentHashMap<String, String[]> rFilesCache = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Map<String, String>> rFilesCache = new ConcurrentHashMap<>();
 
     /**
      * Get a list of R override files for package {@code pkgName}, from the {@code pkgName/R}
@@ -109,12 +110,12 @@ public abstract class RBuiltinPackage {
      */
     public static ArrayList<Source> getRFiles(String pkgName) {
         ArrayList<Source> componentList = new ArrayList<>();
-        String[] rFileContents = rFilesCache.get(pkgName);
+        Map<String, String> rFileContents = rFilesCache.get(pkgName);
         if (rFileContents == null) {
             rFileContents = ResourceHandlerFactory.getHandler().getRFiles(RBuiltinPackage.class, pkgName);
             rFilesCache.put(pkgName, rFileContents);
         }
-        for (String rFileContent : rFileContents) {
+        for (String rFileContent : rFileContents.values()) {
             Source content = RSource.fromTextInternal(rFileContent, RSource.Internal.R_IMPL);
             componentList.add(content);
         }

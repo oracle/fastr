@@ -85,7 +85,7 @@ public class TruffleNFI_DLL implements DLLRFFI {
                 TruffleObject result = (TruffleObject) ForeignAccess.sendRead(lookupSymbol, nfiHandle.libHandle, symbol);
                 return new SymbolHandle(result);
             } catch (UnknownIdentifierException e) {
-                return null;
+                throw new UnsatisfiedLinkError();
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere();
             }

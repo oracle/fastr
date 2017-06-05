@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,8 @@
  */
 package com.oracle.truffle.r.test.rffi;
 
+import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import org.junit.Test;
 
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
@@ -32,13 +31,26 @@ import com.oracle.truffle.r.test.TestBase;
 
 /**
  * Test for a user-defined random number generator. Implicitly tests {@code dyn.load} as well as the
- * {@link UserRngRFFI} interface. We take care to use relative paths so the expected output file is
- * portable.
+ * {@link UserRngRFFI} interface. The actual library is stored in a tar file, the location of which
+ * we can get from the {@code fastr.test.native} system property.
  */
 public class TestUserRNG extends TestBase {
     @Test
     public void testUserRNG() {
-        Path libPath = TestBase.getNativeProjectFile(Paths.get("urand", "lib", "liburand.so"));
-        assertEval(TestBase.template("{ dyn.load(\"%0\"); RNGkind(\"user\"); print(RNGkind()); set.seed(4567); runif(10) }", new String[]{libPath.toString()}));
+        Path dir = createTestDir("userrng");
+        String tarFile = System.getProperty("fastr.test.native");
+        assert tarFile != null;
+        String[] tarC = new String[]{"tar", "xf", tarFile};
+        ProcessBuilder pb = new ProcessBuilder(tarC);
+        pb.directory(dir.toFile());
+        try {
+            Process p = pb.start();
+            int rc = p.waitFor();
+            assert rc == 0;
+            assertEval(TestBase.template("{ dyn.load(\"%0\"); RNGkind(\"user\"); print(RNGkind()); set.seed(4567); runif(10) }", new String[]{dir.toString() + "/liburand.so"}));
+        } catch (IOException ex) {
+            assert false;
+        } catch (InterruptedException ex) {
+        }
     }
 }

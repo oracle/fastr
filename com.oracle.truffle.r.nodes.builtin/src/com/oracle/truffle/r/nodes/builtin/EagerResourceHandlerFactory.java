@@ -140,16 +140,14 @@ public class EagerResourceHandlerFactory extends ResourceHandlerFactory implemen
     }
 
     @Override
-    public String[] getRFiles(Class<?> accessor, String pkgName) {
-        ArrayList<String> list = new ArrayList<>();
+    public Map<String, String> getRFiles(Class<?> accessor, String pkgName) {
+        Map<String, String> result = new HashMap<>();
         for (Map.Entry<String, FileInfo> entry : files.entrySet()) {
             if (entry.getValue().url.toString().contains(pkgName + "/R")) {
                 String content = new String(entry.getValue().data);
-                list.add(content);
+                result.put(entry.getValue().url.toString(), content);
             }
         }
-        String[] result = new String[list.size()];
-        list.toArray(result);
         return result;
     }
 

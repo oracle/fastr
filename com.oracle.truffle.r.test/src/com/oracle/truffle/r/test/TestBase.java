@@ -40,6 +40,7 @@ import org.junit.runner.Description;
 import org.junit.runner.Result;
 
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.Utils;
@@ -139,8 +140,7 @@ public class TestBase {
     }
 
     /**
-     * Instantiated by the mx {@code JUnit} wrapper. The arguments are passed in the constructor and
-     * must be a comma-separated list of strings, i.e.:
+     * Instantiated by the mx {@code JUnit} wrapper. The arguments are passed as system properties
      * <ul>
      * <li>{@code expected=dir}: path to dir containing expected output file to be
      * read/generated/updated</li>
@@ -158,70 +158,52 @@ public class TestBase {
 
         private static File diffsOutputFile;
 
-        private static final String GEN_EXPECTED = "gen-expected";
-        private static final String GEN_EXPECTED_QUIET = "gen-expected-quiet";
-        private static final String CHECK_EXPECTED = "check-expected";
-        private static final String EXPECTED = "expected=";
-        private static final String GEN_FASTR = "gen-fastr=";
-        private static final String GEN_DIFFS = "gen-diff=";
-        private static final String KEEP_TRAILING_WHITESPACE = "keep-trailing-whitespace";
-        private static final String TRACE_TESTS = "trace-tests";
-        private static final String TEST_METHODS = "test-methods=";
-        /**
-         * The dir where 'mx' puts the output from building this project.
-         */
-        private static final String TEST_PROJECT_OUTPUT_DIR = "test-project-output-dir=";
+        private static final String PROP_BASE = "fastr.test.";
 
-        private final String arg;
+        private enum Props {
+            GEN_EXPECTED("gen.expected"),
+            GEN_EXPECTED_QUIET("gen.expected.quiet"),
+            CHECK_EXPECTED("check.expected"),
+            TRACE_TESTS("trace.tests"),
+            KEEP_TRAILING_WHITESPACE("keep.trailing.whitespace");
 
-        /**
-         * Constructor with customization arguments.
-         */
-        public RunListener(String arg) {
-            this.arg = arg;
+            private final String propSuffix;
+
+            Props(String propSuffix) {
+                this.propSuffix = propSuffix;
+            }
+        }
+
+        private static String getProperty(String baseName) {
+            String propName = PROP_BASE + baseName;
+            String val = System.getProperty(propName);
+            return val;
+        }
+
+        public static boolean getBooleanProperty(String baseName) {
+            String val = getProperty(baseName);
+            return val != null && (val.length() == 0 || val.equals("true"));
         }
 
         @Override
         public void testRunStarted(Description description) {
             try {
-                File expectedOutputFile = null;
                 File fastROutputFile = null;
                 boolean checkExpected = false;
-                boolean genExpected = false;
-                boolean genExpectedQuiet = false;
-                if (arg != null) {
-                    String[] args = arg.split(",");
-                    for (String directive : args) {
-                        if (directive.startsWith(EXPECTED)) {
-                            expectedOutputFile = new File(new File(directive.replace(EXPECTED, "")), TestOutputManager.TEST_EXPECTED_OUTPUT_FILE);
-                        } else if (directive.startsWith(GEN_FASTR)) {
-                            fastROutputFile = new File(new File(directive.replace(GEN_FASTR, "")), TestOutputManager.TEST_FASTR_OUTPUT_FILE);
-                        } else if (directive.startsWith(GEN_DIFFS)) {
-                            diffsOutputFile = new File(new File(directive.replace(GEN_DIFFS, "")), TestOutputManager.TEST_DIFF_OUTPUT_FILE);
-                        } else if (directive.equals(GEN_EXPECTED)) {
-                            genExpected = true;
-                        } else if (directive.equals(GEN_EXPECTED_QUIET)) {
-                            genExpectedQuiet = true;
-                        } else if (directive.equals(CHECK_EXPECTED)) {
-                            checkExpected = true;
-                        } else if (directive.equals(KEEP_TRAILING_WHITESPACE)) {
-                            keepTrailingWhiteSpace = true;
-                        } else if (directive.equals(TRACE_TESTS)) {
-                            traceTests = true;
-                        } else if (directive.startsWith(TEST_PROJECT_OUTPUT_DIR)) {
-                            testProjectOutputDir = Paths.get(directive.replace(TEST_PROJECT_OUTPUT_DIR, ""));
-                        } else if (directive.equals(TEST_METHODS)) {
-                            testMethodsPattern = directive.replace(TEST_METHODS, "");
-                        } else {
-                            throw new RuntimeException("RunListener arg: " + arg + " invalid");
-                        }
-                    }
+                String genExpected = getProperty(Props.GEN_EXPECTED.propSuffix);
+                boolean genExpectedQuiet = getBooleanProperty(Props.GEN_EXPECTED_QUIET.propSuffix);
+                checkExpected = getBooleanProperty(Props.CHECK_EXPECTED.propSuffix);
+                if (genExpected != null) {
+                    File expectedOutputFile = new File(new File(genExpected), TestOutputManager.TEST_EXPECTED_OUTPUT_FILE);
+                    expectedOutputManager = new ExpectedTestOutputManager(expectedOutputFile, true, checkExpected, genExpectedQuiet);
+                } else {
+                    // read from jar
+                    URL expectedTestOutputURL = ResourceHandlerFactory.getHandler().getResource(TestBase.class, TestOutputManager.TEST_EXPECTED_OUTPUT_FILE);
+                    expectedOutputManager = new ExpectedTestOutputManager(expectedTestOutputURL, false, checkExpected, genExpectedQuiet);
+                    System.console();
                 }
-                if (genExpected) {
-                    System.setProperty("GenerateExpectedOutput", "true");
-                }
-                expectedOutputManager = new ExpectedTestOutputManager(expectedOutputFile, genExpected, checkExpected, genExpectedQuiet);
                 fastROutputManager = new FastRTestOutputManager(fastROutputFile);
+                traceTests = getBooleanProperty(Props.TRACE_TESTS.propSuffix);
                 addOutputHook();
             } catch (Throwable ex) {
                 throw new AssertionError("R initialization failure", ex);
@@ -231,6 +213,7 @@ public class TestBase {
         @Override
         public void testRunFinished(Result result) {
             try {
+                deleteDir(Paths.get(TEST_OUTPUT));
                 if (expectedOutputManager.generate) {
                     boolean updated = expectedOutputManager.writeTestOutputFile();
                     if (updated) {
@@ -343,7 +326,20 @@ public class TestBase {
             }
         }
 
-        void createRSession() {
+        protected ExpectedTestOutputManager(URL urlOutput, boolean generate, boolean checkOnly, boolean genExpectedQuiet) throws IOException {
+            super(urlOutput);
+            this.checkOnly = checkOnly;
+            this.generate = generate;
+            if (genExpectedQuiet) {
+                localDiagnosticHandler.setQuiet();
+            }
+            oldExpectedOutputFileContent = readTestOutputFile();
+            if (generate) {
+                createRSession();
+            }
+        }
+
+        private void createRSession() {
             if (!haveRSession) {
                 setRSession(new GnuROneShotRSession());
                 haveRSession = true;
@@ -361,6 +357,9 @@ public class TestBase {
         FastRTestOutputManager(File outputFile) {
             super(outputFile);
             setRSessionName("FastR");
+            // no point in printing errors to file when running tests (that contain errors on
+            // purpose)
+            FastROptions.setValue("PrintErrorStacktracesToFile", false);
             fastRSession = FastRSession.create();
         }
     }
@@ -428,8 +427,6 @@ public class TestBase {
      * Trace the test methods as they are executed (debugging).
      */
     private static boolean traceTests;
-
-    private static Path testProjectOutputDir;
 
     protected static final String ERROR = "Error";
     protected static final String WARNING = "Warning message";
@@ -517,11 +514,7 @@ public class TestBase {
         return cwd;
     }
 
-    public static void setTestProjectOutputDir(String path) {
-        testProjectOutputDir = Paths.get(path);
-    }
-
-    private static final String TEST_OUTPUT = "tmptest";
+    protected static final String TEST_OUTPUT = "tmptest";
 
     /**
      * Return a path that is relative to the 'cwd/testoutput' when running tests.
@@ -542,24 +535,6 @@ public class TestBase {
             }
         }
         return relativize(dir);
-    }
-
-    private static final String TEST_PROJECT = "com.oracle.truffle.r.test";
-    private static final String TEST_NATIVE_PROJECT = "com.oracle.truffle.r.test.native";
-
-    /**
-     * Returns a path to {@code baseName}, assumed to be nested in {@link #testProjectOutputDir}.
-     * The path is return relativized to the cwd.
-     */
-    public static Path getProjectFile(Path baseName) {
-        Path baseNamePath = Paths.get(TEST_PROJECT.replace('.', '/'), baseName.toString());
-        Path result = relativize(testProjectOutputDir.resolve(baseNamePath));
-        return result;
-    }
-
-    public static Path getNativeProjectFile(Path baseName) {
-        Path path = Paths.get(TEST_NATIVE_PROJECT, baseName.toString());
-        return path;
     }
 
     private static void microTestFailed() {

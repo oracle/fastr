@@ -144,6 +144,6 @@ public class TestS3Dispatch extends TestRBase {
 
     @Override
     public String getTestDir() {
-        return "functions/S3";
+        return "S3";
     }
 }

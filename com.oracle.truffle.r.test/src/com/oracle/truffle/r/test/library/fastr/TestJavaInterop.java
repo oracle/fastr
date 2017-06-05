@@ -252,7 +252,7 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    public void testMethods() throws IllegalAccessException, ClassNotFoundException, IllegalArgumentException, InvocationTargetException {
+    public void testMethods() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         TestClass t = new TestClass();
         Method[] methods = t.getClass().getDeclaredMethods();
         for (Method m : methods) {
@@ -426,6 +426,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("to <- .fastr.interop.new(.fastr.java.class('" + TEST_CLASS + "')); attr(to, which = 'a')", "cat('Error in attr(to, which = \"a\") : external object cannot be attributed\n')");
     }
 
+    @Test
     public void testIdentical() {
         assertEvalFastR("b1 <- .fastr.interop.toByte(1); identical(b1, b1)", "TRUE");
         assertEvalFastR("b1 <- .fastr.interop.toByte(1); b2 <- .fastr.interop.toByte(1); identical(b1, b2)", "FALSE");

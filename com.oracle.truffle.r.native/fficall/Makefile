@@ -76,12 +76,12 @@ fficall.done: common.done
 	touch fficall.done
 else
 ifeq ($(FASTR_RFFI),nfi)
-fficall.done: common.done
+fficall.done: common.done $(CACCESS_LIB)
 	$(MAKE) -C src/truffle_nfi all
 	touch fficall.done
 else
 ifeq ($(FASTR_RFFI),llvm)
-fficall.done: common.done 
+fficall.done: common.done $(CACCESS_LIB)
 	$(MAKE) -C src/truffle_llvm all
 	touch fficall.done
 else

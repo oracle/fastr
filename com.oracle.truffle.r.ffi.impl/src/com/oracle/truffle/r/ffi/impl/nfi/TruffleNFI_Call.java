@@ -87,26 +87,31 @@ public class TruffleNFI_Call implements CallRFFI {
             }
         }
         Node executeNode = Message.createExecute(2).createNode();
-        RFFIVariables[] variables = RFFIVariables.values();
-        for (int i = 0; i < variables.length; i++) {
-            RFFIVariables var = variables[i];
-            Object value = var.getValue();
-            if (value == null || var.alwaysUpCall) {
-                continue;
-            }
-            try {
-                if (value instanceof Double) {
-                    ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.DOUBLE.initFunction, i, value);
-                } else if (value instanceof Integer) {
-                    ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.INT.initFunction, i, value);
-                } else if (value instanceof String) {
-                    ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.STRING.initFunction, i, value);
-                } else {
-                    ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.OBJ.initFunction, i, value);
+        RFFIVariables[] variables = RFFIVariables.initialize();
+        boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
+        try {
+            for (int i = 0; i < variables.length; i++) {
+                RFFIVariables var = variables[i];
+                Object value = var.getValue();
+                if (value == null || var.alwaysUpCall) {
+                    continue;
                 }
-            } catch (Throwable t) {
-                throw RInternalError.shouldNotReachHere(t);
+                try {
+                    if (value instanceof Double) {
+                        ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.DOUBLE.initFunction, i, value);
+                    } else if (value instanceof Integer) {
+                        ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.INT.initFunction, i, value);
+                    } else if (value instanceof String) {
+                        ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.STRING.initFunction, i, value);
+                    } else {
+                        ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.OBJ.initFunction, i, value);
+                    }
+                } catch (Throwable t) {
+                    throw RInternalError.shouldNotReachHere(t);
+                }
             }
+        } finally {
+            RContext.getRForeignAccessFactory().setIsNull(isNullSetting);
         }
     }
 
