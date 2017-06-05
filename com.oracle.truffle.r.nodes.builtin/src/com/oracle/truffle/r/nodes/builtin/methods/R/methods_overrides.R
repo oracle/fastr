@@ -23,4 +23,20 @@ eval(expression({
 # this function is replaced with a primitive because it is expected to
 # modify its argument in-place, which can clash with argument refcount handling
 `slot<-` <- .fastr.methods.slotassign
+
+new <- function (Class, ...) {
+    if(is.character(Class)) {
+        javaClass <- .fastr.java.class(Class, silent=TRUE)
+        if(!is.null(javaClass)) {
+            Class <- javaClass
+        }
+    }
+    if(.fastr.interop.isExternal(Class)) {
+        .fastr.interop.new(Class, ...)
+    } else {
+        ClassDef <- getClass(Class, where = topenv(parent.frame()))
+        value <- .Call(C_new_object, ClassDef)
+        initialize(value, ...)
+    }
+}
 }), asNamespace("methods"))

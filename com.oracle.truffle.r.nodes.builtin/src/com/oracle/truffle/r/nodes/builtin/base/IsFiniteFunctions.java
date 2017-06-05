@@ -31,7 +31,9 @@ import java.util.function.IntPredicate;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -53,6 +55,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class IsFiniteFunctions {
 
+    @ImportStatic(RRuntime.class)
     public abstract static class Adapter extends RBuiltinNode.Arg1 {
 
         @Child private GetDimAttributeNode getDims = GetDimAttributeNode.create();
@@ -81,6 +84,12 @@ public class IsFiniteFunctions {
         @Specialization
         public RLogicalVector doRaw(RAbstractRawVector x) {
             return doFunConstant(x, RRuntime.LOGICAL_FALSE);
+        }
+
+        @Specialization(guards = "isForeignObject(obj)")
+        @TruffleBoundary
+        protected byte doIsForeign(@SuppressWarnings("unused") TruffleObject obj) {
+            throw error(RError.Message.DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE, "external object");
         }
 
         @Fallback

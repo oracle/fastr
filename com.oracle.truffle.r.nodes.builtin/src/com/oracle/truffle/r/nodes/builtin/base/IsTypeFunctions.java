@@ -31,7 +31,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
@@ -100,6 +102,7 @@ public class IsTypeFunctions {
         }
     }
 
+    @ImportStatic(RRuntime.class)
     @RBuiltin(name = "is.recursive", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsRecursive extends MissingAdapter {
 
@@ -124,6 +127,11 @@ public class IsTypeFunctions {
 
         protected boolean isListVector(RAbstractVector arg) {
             return arg instanceof RListBase;
+        }
+
+        @Specialization(guards = "isForeignObject(obj)")
+        protected byte isRecursive(@SuppressWarnings("unused") TruffleObject obj) {
+            return RRuntime.LOGICAL_FALSE;
         }
 
         @Fallback
