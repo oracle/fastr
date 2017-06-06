@@ -50,7 +50,7 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(UpdateNames.class);
-        casts.arg("x").mustNotBeNull(RError.Message.SET_ATTRIBUTES_ON_NULL, "NULL");
+        casts.arg("x").mustNotBeNull(RError.Message.SET_ATTRIBUTES_ON_NULL);
     }
 
     private Object castString(Object o) {

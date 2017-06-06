@@ -1,23 +1,23 @@
-# Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
-# This code is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License version 2 only, as
-# published by the Free Software Foundation.
+# This material is distributed under the GNU General Public License
+# Version 2. You may review the terms of this license at
+# http://www.gnu.org/licenses/gpl-2.0.html
 #
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-# version 2 for more details (a copy is included in the LICENSE file that
-# accompanied this code).
+# Copyright (c) 1995-2015, The R Core Team
+# Copyright (c) 2003, The R Foundation
+# Copyright (c) 2017, Oracle and/or its affiliates
 #
-# You should have received a copy of the GNU General Public License version
-# 2 along with this work; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+# All rights reserved.
 #
-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
-# or visit www.oracle.com if you need additional information or have any
-# questions.
+
+
+
+# The modified function ".install_package_code_files" copies the source 
+# file of the package to be installed into the installation directory 
+# (see comments starting with "FastR extension:").
+# The code is then parsed from these files such that the parsed
+# elements are associated with the source files in the installation 
+# directory.
 
 eval(expression({
 .install_package_code_files <-
