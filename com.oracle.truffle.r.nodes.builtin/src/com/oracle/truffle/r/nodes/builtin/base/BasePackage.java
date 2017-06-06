@@ -748,7 +748,8 @@ public class BasePackage extends RBuiltinPackage {
     }
 
     private void addBinaryArithmetic(Class<?> builtinClass, BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
-        add(builtinClass, () -> BinaryArithmeticNodeGen.create(binaryFactory, unaryFactory), BinaryArithmeticSpecial.createSpecialFactory(binaryFactory));
+        add(builtinClass, () -> BinaryArithmeticNodeGen.create(binaryFactory, unaryFactory), BinaryArithmeticSpecial.createSpecialFactory(binaryFactory, unaryFactory));
+    }
 
     private void addUnaryArithmetic(Class<?> builtinClass, UnaryArithmeticFactory unaryFactory) {
         add(builtinClass, () -> new UnaryArithmeticBuiltinNode(unaryFactory), UnaryArithmeticSpecial.createSpecialFactory(unaryFactory));

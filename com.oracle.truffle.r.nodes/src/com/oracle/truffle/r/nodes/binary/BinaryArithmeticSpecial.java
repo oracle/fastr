@@ -23,18 +23,19 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.CompilerDirectives;
-
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticSpecialNodeGen.IntegerBinaryArithmeticSpecialNodeGen;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticSpecialNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
 /**
  * Fast-path for scalar values: these cannot have any class attribute. Note: we intentionally use
@@ -47,37 +48,58 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
 public abstract class BinaryArithmeticSpecial extends RNode {
 
     private final boolean handleNA;
+    private final BinaryArithmeticFactory binaryFactory;
+    private final UnaryArithmeticFactory unaryFactory;
+
     @Child private BinaryArithmetic operation;
 
-    public BinaryArithmeticSpecial(BinaryArithmeticFactory opFactory) {
-        this.operation = opFactory.createOperation();
-        this.handleNA = !(opFactory == BinaryArithmetic.POW || opFactory == BinaryArithmetic.MOD);
+    public BinaryArithmeticSpecial(BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
+        this.binaryFactory = binaryFactory;
+        this.unaryFactory = unaryFactory;
+        this.operation = binaryFactory.createOperation();
+        this.handleNA = !(binaryFactory == BinaryArithmetic.POW || binaryFactory == BinaryArithmetic.MOD);
     }
 
-    public static RSpecialFactory createSpecialFactory(BinaryArithmeticFactory opFactory) {
-        boolean handleIntegers = !(opFactory == BinaryArithmetic.POW || opFactory == BinaryArithmetic.DIV);
-        if (handleIntegers) {
-            return (signature, arguments, inReplacement) -> signature.getNonNullCount() == 0 && arguments.length == 2
-                            ? IntegerBinaryArithmeticSpecialNodeGen.create(opFactory, arguments[0], arguments[1]) : null;
-        } else {
-            return (signature, arguments, inReplacement) -> signature.getNonNullCount() == 0 && arguments.length == 2
-                            ? BinaryArithmeticSpecialNodeGen.create(opFactory, arguments[0], arguments[1]) : null;
-        }
+    public static RSpecialFactory createSpecialFactory(BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
+        return (signature, arguments, inReplacement) -> {
+            if (signature.getNonNullCount() == 0) {
+                if (arguments.length == 2) {
+                    boolean handleIntegers = !(binaryFactory == BinaryArithmetic.POW || binaryFactory == BinaryArithmetic.DIV);
+                    if (handleIntegers) {
+                        return IntegerBinaryArithmeticSpecialNodeGen.create(binaryFactory, unaryFactory, arguments[0], arguments[1]);
+                    } else {
+                        return BinaryArithmeticSpecialNodeGen.create(binaryFactory, unaryFactory, arguments[0], arguments[1]);
+                    }
+                } else if (arguments.length == 1) {
+                    return UnaryArithmeticSpecialNodeGen.create(unaryFactory, arguments[0]);
+                }
+            }
+            return null;
+        };
     }
 
     @Specialization
-    protected double doDoubles(double left, double right) {
-        if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
+    protected double doDoubles(double left, double right,
+                    @Cached("createBinaryProfile()") ConditionProfile leftNanProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile rightNaProfile) {
+        if (leftNanProfile.profile(Double.isNaN(left))) {
             checkFullCallNeededOnNA();
-            return isNaN(left) ? Double.NaN : RRuntime.DOUBLE_NA;
+            return left;
+        } else if (rightNaProfile.profile(RRuntime.isNA(right))) {
+            checkFullCallNeededOnNA();
+            return RRuntime.DOUBLE_NA;
         }
         return getOperation().op(left, right);
     }
 
-    @Fallback
-    @SuppressWarnings("unused")
-    protected double doFallback(Object left, Object right) {
-        throw RSpecialFactory.throwFullCallNeeded();
+    protected BinaryArithmeticNode createFull() {
+        return BinaryArithmeticNodeGen.create(binaryFactory, unaryFactory);
+    }
+
+    @Specialization
+    protected Object doFallback(VirtualFrame frame, Object left, Object right,
+                    @Cached("createFull()") BinaryArithmeticNode binary) {
+        return binary.call(frame, left, right);
     }
 
     protected BinaryArithmetic getOperation() {
@@ -100,11 +122,11 @@ public abstract class BinaryArithmeticSpecial extends RNode {
      */
     abstract static class IntegerBinaryArithmeticSpecial extends BinaryArithmeticSpecial {
 
-        IntegerBinaryArithmeticSpecial(BinaryArithmeticFactory opFactory) {
-            super(opFactory);
+        IntegerBinaryArithmeticSpecial(BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
+            super(binaryFactory, unaryFactory);
         }
 
-        @Specialization
+        @Specialization(insertBefore = "doFallback")
         public int doIntegers(int left, int right,
                         @Cached("createBinaryProfile()") ConditionProfile naProfile) {
             if (naProfile.profile(RRuntime.isNA(left) || RRuntime.isNA(right))) {
@@ -114,7 +136,7 @@ public abstract class BinaryArithmeticSpecial extends RNode {
             return getOperation().op(left, right);
         }
 
-        @Specialization
+        @Specialization(insertBefore = "doFallback")
         public double doIntDouble(int left, double right,
                         @Cached("createBinaryProfile()") ConditionProfile naProfile) {
             if (naProfile.profile(RRuntime.isNA(left) || RRuntime.isNA(right))) {
@@ -124,12 +146,16 @@ public abstract class BinaryArithmeticSpecial extends RNode {
             return getOperation().op(left, right);
         }
 
-        @Specialization
+        @Specialization(insertBefore = "doFallback")
         public double doDoubleInt(double left, int right,
-                        @Cached("createBinaryProfile()") ConditionProfile naProfile) {
-            if (naProfile.profile(RRuntime.isNA(left) || RRuntime.isNA(right))) {
+                        @Cached("createBinaryProfile()") ConditionProfile leftNanProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile rightNaProfile) {
+            if (leftNanProfile.profile(Double.isNaN(left))) {
                 checkFullCallNeededOnNA();
-                return isNaN(left) ? Double.NaN : RRuntime.DOUBLE_NA;
+                return left;
+            } else if (rightNaProfile.profile(RRuntime.isNA(right))) {
+                checkFullCallNeededOnNA();
+                return RRuntime.DOUBLE_NA;
             }
             return getOperation().op(left, right);
         }
