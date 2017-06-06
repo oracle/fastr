@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
@@ -38,11 +39,13 @@ import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArgumentsFactory.PrepareArgumentsDefaultNodeGen;
 import com.oracle.truffle.r.nodes.function.call.PrepareArgumentsFactory.PrepareArgumentsExplicitNodeGen;
+import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -111,12 +114,48 @@ public abstract class PrepareArguments extends Node {
             return executeArgs(arguments.matchedArguments, arguments.matchedSuppliedSignature, frame);
         }
 
-        @Fallback
-        public RArgsValuesAndNames prepareGeneric(VirtualFrame frame, RArgsValuesAndNames varArgs, S3DefaultArguments s3DefaultArguments, @SuppressWarnings("unused") RCallNode call) {
-            CompilerDirectives.transferToInterpreter();
+        private static final class GenericCallEntry extends Node {
+            private final ArgumentsSignature cachedVarArgSignature;
+            private final S3DefaultArguments cachedS3DefaultArguments;
+
+            @Child private ArgumentsAndSignature arguments;
+
+            GenericCallEntry(ArgumentsSignature cachedVarArgSignature, S3DefaultArguments cachedS3DefaultArguments, ArgumentsAndSignature arguments) {
+                this.cachedVarArgSignature = cachedVarArgSignature;
+                this.cachedS3DefaultArguments = cachedS3DefaultArguments;
+                this.arguments = arguments;
+            }
+        }
+
+        /*
+         * Use a TruffleBoundaryNode to be able to switch child nodes without invalidating the whole
+         * method.
+         */
+        protected final class GenericCall extends TruffleBoundaryNode {
+
+            @Child private GenericCallEntry entry;
+
+            @TruffleBoundary
+            public RArgsValuesAndNames execute(MaterializedFrame materializedFrame, S3DefaultArguments s3DefaultArguments, ArgumentsSignature varArgSignature, RCallNode call) {
+                GenericCallEntry e = entry;
+                if (e == null || e.cachedVarArgSignature != varArgSignature || e.cachedS3DefaultArguments != s3DefaultArguments) {
+                    ArgumentsAndSignature arguments = createArguments(call, varArgSignature, s3DefaultArguments);
+                    entry = e = insert(new GenericCallEntry(varArgSignature, s3DefaultArguments, arguments));
+                }
+                VirtualFrame frame = SubstituteVirtualFrame.create(materializedFrame);
+                return executeArgs(e.arguments.matchedArguments, e.arguments.matchedSuppliedSignature, frame);
+            }
+        }
+
+        protected GenericCall createGenericCall() {
+            return new GenericCall();
+        }
+
+        @Specialization
+        public RArgsValuesAndNames prepareGeneric(VirtualFrame frame, RArgsValuesAndNames varArgs, S3DefaultArguments s3DefaultArguments, RCallNode call,
+                        @Cached("createGenericCall()") GenericCall generic) {
             ArgumentsSignature varArgSignature = varArgs == null ? null : varArgs.getSignature();
-            Arguments<RNode> matchedArgs = ArgumentMatcher.matchArguments(target, sourceArguments, varArgSignature, s3DefaultArguments, RError.ROOTNODE, true);
-            return executeArgs(matchedArgs.getArguments(), matchedArgs.getSignature(), frame);
+            return generic.execute(frame.materialize(), s3DefaultArguments, varArgSignature, call);
         }
     }
 
