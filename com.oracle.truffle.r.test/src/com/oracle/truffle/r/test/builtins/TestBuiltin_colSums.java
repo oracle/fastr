@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -49,7 +49,10 @@ public class TestBuiltin_colSums extends TestBase {
 
     @Test
     public void testcolSums7() {
-        assertEval(Ignored.Unknown,
+        // FIXME results slightly differ for low-exponent values - ImplementationError for now
+        // Expected output: [1] 0.000000e+00 0.000000e+00 1.013412e-12 6.002665e-11
+        // FastR output: [1] 0.000000e+00 0.000000e+00 1.818989e-12 5.820766e-11
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(c(-7.5, -6.5, -5.5, -4.5, -3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, -421.875, -274.625, -166.375, -91.125, -42.875, -15.625, -3.375, -0.125, 0.125, 3.375, 15.625, 42.875, 91.125, 166.375, 274.625, 421.875, -9187.5, -2866.5, -445.499999999999, -4.5, -283.5, -562.5, -541.5, -220.5, 220.5, 541.5, 562.5, 283.5, 4.49999999999999, 445.5, 2866.5, 9187.5, -139741.875, -4844.38499999995, -10122.255, -28872.045, -28539.315, -15800.625, -4325.535, -178.605, 178.605, 4325.535, 15800.625, 28539.315, 28872.045, 10122.255, 4844.38500000001, 139741.875), .Dim = c(16L, 4L)), 16, 4, FALSE); .Internal(colSums(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 

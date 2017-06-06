@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,12 +61,14 @@ public class TestBuiltin_tanpi extends TestBase {
 
     @Test
     public void testtan7() {
-        assertEval(Ignored.Unknown, "argv <- list(Inf);tanpi(argv[[1]]);");
+        // FIXME Missing warning about NaNs produced
+        assertEval(Output.IgnoreWarningMessage, "argv <- list(Inf);tanpi(argv[[1]]);");
     }
 
     @Test
     public void testTrigExp() {
-        assertEval(Ignored.Unknown, "{ tanpi(c(0,0.5,-0.5)) }");
+        // FIXME Missing warning about NaNs produced
+        assertEval(Output.IgnoreWarningMessage, "{ tanpi(c(0,0.5,-0.5)) }");
         assertEval("{ tanpi(1.2) }");
         assertEval("{ tannpi(c(0.3,0.6,0.9)) }");
         assertEval("{ tanpi() }");

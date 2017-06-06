@@ -214,11 +214,15 @@ public class TestBuiltin_max extends TestBase {
 
         assertEval("max(v<-42)");
 
-        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(integer(0)) }");
-        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(integer()) }");
+        // FIXME -2147483647 returned instead of -Inf
+        assertEval(Ignored.ImplementationError, "{ max(integer(0)) }");
+        // FIXME -2147483647 returned instead of -Inf
+        assertEval(Ignored.ImplementationError, "{ max(integer()) }");
         assertEval("{ max(as.double(NA), na.rm=TRUE) }");
-        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(as.integer(NA), na.rm=TRUE) }");
-        assertEval(Ignored.Unknown, Output.IgnoreWarningContext, "{ max(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+        // FIXME -2147483647 returned instead of -Inf
+        assertEval(Ignored.ImplementationError, "{ max(as.integer(NA), na.rm=TRUE) }");
+        // FIXME -2147483647 returned instead of -Inf
+        assertEval(Ignored.ImplementationError, "{ max(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
 
         assertEval("max(c(1,NA,2), na.rm=NA)");
     }

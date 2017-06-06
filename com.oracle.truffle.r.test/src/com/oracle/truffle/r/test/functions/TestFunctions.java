@@ -76,7 +76,9 @@ public class TestFunctions extends TestBase {
 
         assertEval("{ matrix(x=1) }");
         assertEval("{ set.seed(4357); round( rnorm(1,), digits = 5 ) }");
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ max(1,2,) }");
+        // FIXME UnsupportedSpecializationException: Unexpected values provided for
+        // PrecedenceNodeGen@7c078bf0: [empty, false], [REmpty,Boolean]
+        assertEval(Ignored.ImplementationError, "{ max(1,2,) }");
     }
 
     @Test
@@ -147,11 +149,16 @@ public class TestFunctions extends TestBase {
         assertEval("{ x<-function(){1} ; x(y=1) }");
         assertEval("{ f <- function(a,b,c,d) { a + b } ; f(1,x=1,2,3,4) }");
 
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ x<-function(y, b){1} ; x(y=1, 2, 3, z = 5) }");
+        // FIXME GnuR's error message more precise
+        // Expected output: Error in x(y = 1, 2, 3, z = 5) : unused arguments (3, z = 5)
+        // FastR output: Error in x(y = 1, 2, 3, z = 5) : unused argument (z = 5)
+        assertEval(Ignored.ImplementationError, "{ x<-function(y, b){1} ; x(y=1, 2, 3, z = 5) }");
         assertEval("{ x<-function(a){1} ; x(1,) }");
 
-        // note exactly GNU-R message
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(a,a) {1} }");
+        // FIXME error message missing
+        // Expected output: Error: repeated formal argument 'a' on line 1
+        // FastR output:
+        assertEval(Ignored.ImplementationError, Output.IgnoreErrorContext, "{ f <- function(a,a) {1} }");
     }
 
     @Test
@@ -335,13 +342,26 @@ public class TestFunctions extends TestBase {
         assertEval("{ `-.foo` <- function(...) 123; v <- 1; class(v) <- 'foo'; sapply(1,`-`,v); sapply(v,`-`,1); sapply(v,`-`,v) }");
 
         assertEval("{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
+        // Error messages differ
+        // Expected output: Error in get(as.character(FUN), mode = "function", envir = envir) :
+        // object 'dummy' of mode 'function' was not found
+        // FastR output: Error in match.fun(FUN) : could not find function "dummy"
+        assertEval(Output.IgnoreErrorMessage, "{ lapply(1:3, \"dummy\") }");
 
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ lapply(1:3, \"dummy\") }");
-
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2,z=3) } ; g(1) }");
+        // Error messages differ
+        // Expected output: Error in f(a = 1, ..., x = 2, z = 3) : unused arguments (x = 2, z = 3)
+        // FastR output: Error in f(a = 1, ..., x = 2, z = 3) : unused argument (x = 2)
+        assertEval(Output.IgnoreErrorMessage, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2,z=3) } ; g(1) }");
         assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...,,,) } ; g(1) }");
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(...) { ..2 + ..2 } ; f(1,,2) }");
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ f <- function(...) { ..1 + ..2 } ; f(1,,3) }");
+        // Error messages differ
+        // Expected output: Error in ..2 + ..2 : non-numeric argument to binary operator
+        // FastR output: Error in ..2 + ..2 : invalid argument to unary operator
+        assertEval(Output.IgnoreErrorMessage, "{ f <- function(...) { ..2 + ..2 } ; f(1,,2) }");
+        // FIXME GnuR's probably better approach since missing(..n) could be used
+        // for arg presence so using ImplementationError for now.
+        // Expected output: Error in ..1 + ..2 : non-numeric argument to binary operator
+        // FastR output: [1] 1
+        assertEval(Ignored.ImplementationError, "{ f <- function(...) { ..1 + ..2 } ; f(1,,3) }");
 
         assertEval("{ f1 <- function(...) { subst <- substitute(list(...))[-1L]; eval(subst[[1]]) }; f2 <- function(a, ...) TRUE; f3 <- function(a, ...) { cat(\"Here:\"); f1(f2(a, ...)) }; f1(f3(\"aaa\")) }");
     }

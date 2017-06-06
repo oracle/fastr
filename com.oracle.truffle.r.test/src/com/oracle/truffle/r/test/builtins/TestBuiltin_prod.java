@@ -39,7 +39,9 @@ public class TestBuiltin_prod extends TestBase {
 
     @Test
     public void testprod5() {
-        assertEval(Ignored.Unknown, "argv <- list(integer(0));prod(argv[[1]]);");
+        // FIXME ArrayIndexOutOfBoundsException: 0
+        // com.oracle.truffle.r.runtime.data.RIntVector.getDataAt(RIntVector.java:75)
+        assertEval(Ignored.ImplementationError, "argv <- list(integer(0));prod(argv[[1]]);");
     }
 
     @Test
@@ -59,7 +61,8 @@ public class TestBuiltin_prod extends TestBase {
 
     @Test
     public void testprod9() {
-        assertEval(Ignored.Unknown, "argv <- list(NA_integer_);prod(argv[[1]]);");
+        // FIXME -2147483648 returned instead of NA
+        assertEval(Ignored.ImplementationError, "argv <- list(NA_integer_);prod(argv[[1]]);");
     }
 
     @Test
@@ -69,7 +72,9 @@ public class TestBuiltin_prod extends TestBase {
 
     @Test
     public void testprod11() {
-        assertEval(Ignored.Unknown, "argv <- list(numeric(0));prod(argv[[1]]);");
+        // FIXME ArrayIndexOutOfBoundsException: 0
+        // com.oracle.truffle.r.runtime.data.RIntVector.getDataAt(RIntVector.java:75)
+        assertEval(Ignored.ImplementationError, "argv <- list(numeric(0));prod(argv[[1]]);");
     }
 
     @Test
@@ -100,8 +105,11 @@ public class TestBuiltin_prod extends TestBase {
 
     @Test
     public void testProdNa() {
-        assertEval(Ignored.Unknown, "{prod(c(2,4,NA))}");
-        assertEval(Ignored.Unknown, "{prod(c(2,4,3,NA),TRUE)}");
-        assertEval(Ignored.Unknown, "{prod(c(1,2,3,4,5,NA),FALSE)}");
+        // FIXME NaN returned instead of expected NA
+        assertEval(Ignored.ImplementationError, "{prod(c(2,4,NA))}");
+        // FIXME NaN returned instead of expected NA
+        assertEval(Ignored.ImplementationError, "{prod(c(2,4,3,NA),TRUE)}");
+        // FIXME NaN returned instead of expected NA
+        assertEval(Ignored.ImplementationError, "{prod(c(1,2,3,4,5,NA),FALSE)}");
     }
 }

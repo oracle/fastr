@@ -93,9 +93,11 @@ public class TestBuiltin_grep extends TestBase {
         assertEval("{ .Internal(grep(character(), \"7\", F, F, F, F, F, F)) }");
         assertEval("{ .Internal(grep(\"7\", 7, F, F, F, F, F, F)) }");
 
+        // FIXME btw docs do not mention \n handling
+        // ImplementationError for now but might be revised
         // Expected output: integer(0)
         // FastR output: [1] 1
-        assertEval(Ignored.Unknown, "{ grep('^ *$', ' \\n') }");
+        assertEval(Ignored.ImplementationError, "{ grep('^ *$', ' \\n') }");
     }
 
     @Test

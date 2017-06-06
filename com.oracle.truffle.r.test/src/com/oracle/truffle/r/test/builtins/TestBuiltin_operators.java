@@ -60,7 +60,13 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators9() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1:10, class = structure('NumericNotStructure', package = '.GlobalEnv')), 1);`+`(argv[[1]],argv[[2]]);");
+        // FIXME GnuR outputs extra 'attr(,"class")' for the following:
+        // [1] "NumericNotStructure"
+        // attr(,"class")attr(,"package")
+        // FastR outputs
+        // [1] "NumericNotStructure"
+        // attr(,"package")
+        assertEval(Ignored.OutputFormatting, "argv <- list(structure(1:10, class = structure('NumericNotStructure', package = '.GlobalEnv')), 1);`+`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -115,7 +121,10 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators20() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR outputs time as 24:05 instead of 00:05
+        // Expected: [77] "2001-03-03 00:05:25 GMT" "2001-01-28 19:10:56 GMT"
+        // FastR: [77] "2001-03-03 24:05:25 GMT" "2001-01-28 19:10:56 GMT"
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(978350400, class = c('POSIXct', 'POSIXt'), tzone = 'GMT'), c(1605796.39468342, 2250605.34500331, 3464617.14155227, 5492840.71388841, 1219772.31891453, 5433460.81468463, 5713396.02452517, 3996505.04896045, 3804881.73750043, 373683.36378783, 1245734.22899097, 1067815.23929536, 4155114.17658627, 2323059.28775668, 4656000.90815127, 3010085.0161314, 4340156.73798323, 5999048.06153476, 2298452.76521891, 4701988.69854212, 5653097.23772854, 1283037.96871752, 3941322.93728739, 759357.220374048, 1616150.60446411, 2335218.03170443, 80984.7349449992, 2312682.3643595, 5259890.2349174, 2058430.73196709, 2915620.53836882, 3626174.11217093, 2984937.82503158, 1126244.053334, 5003953.83093506, 4042886.83258742, 4803562.677674, 652843.049369752, 4377003.8016513, 2487387.75048405, 4965083.1868127, 3913420.05222291, 4735177.34632641, 3344763.6128068, 3203744.02103573, 4774026.48925781, 141107.11171478, 2886287.43334115, 4429033.49147737, 4189640.45360684, 2888643.47467571, 5208594.91588175, 2649611.30449176, 1480533.93148631, 427466.877132654, 601571.336723864, 1912811.28504127, 3136700.02379268, 4003806.70217425, 2460508.97211581, 5521073.589921, 1775713.19845319, 2776429.51241881, 2010322.98948616, 3936464.58484232, 1560485.48977822, 2894241.66157097, 4634646.93606645, 509525.338098407, 5293943.40406358, 2050713.12808245, 5076935.23793668, 2096741.74243212, 2018670.78146338, 2880972.33020514, 5396015.5351907, 5227525.11837333, 2358656.75892681, 4701235.58655381, 5809817.647174, 2628820.56391239, 4309288.77686709, 2419165.9430936, 1967729.81455922, 4578863.07127029, 1225882.75911659, 4300861.15349829, 735992.738373578, 1484714.53242749, 866704.886756837, 1449278.70250493, 356435.113750398, 3884559.38760191, 5299676.19835585, 4710875.96918643, 4822123.77896905, 2753499.89549071, 2480188.52821738, 4904143.22827756, 3658636.53959334));`+`(argv[[1]],argv[[2]]);");
     }
 
@@ -171,7 +180,13 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators31() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(FALSE, class = structure('foo', package = '.GlobalEnv')), NA);`+`(argv[[1]],argv[[2]]);");
+        // FIXME GnuR outputs extra 'attr(,"class")' for the following:
+        // [1] "foo"
+        // attr(,"class")attr(,"package")
+        // FastR outputs
+        // [1] "foo"
+        // attr(,"package")
+        assertEval(Ignored.OutputFormatting, "argv <- list(structure(FALSE, class = structure('foo', package = '.GlobalEnv')), NA);`+`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -212,7 +227,10 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators39() {
-        assertEval(Ignored.Unknown,
+        // FIXME number of digits in output:
+        // GnuR: 79.38889 98.88889 114.22222 123.38889
+        // FastR: 79.3889 98.8889 114.2222 123.3889
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(c(-24.5833333333333, -5.08333333333333, 10.25, 19.4166666666667), .Dim = 4L, .Dimnames = structure(list(N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = 'N'), strata = structure('Within', .Names = 'N'), class = 'mtable'), structure(103.972222222222, class = 'mtable'));`+`(argv[[1]],argv[[2]]);");
     }
 
@@ -379,7 +397,16 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators72() {
-        assertEval(Ignored.Unknown,
+        // FIXME
+        // Expected output: [1] 1:1 1:1 1:2 2:2 2:3 2:3
+        // Levels: 1:1 1:2 1:3 2:1 2:2 2:3
+        // FastR output: [1] 1
+        // Warning messages:
+        // 1: In argv[[1]]:argv[[2]] :
+        // numerical expression has 6 elements: only the first used
+        // 2: In argv[[1]]:argv[[2]] :
+        // numerical expression has 6 elements: only the first used
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(c(1L, 1L, 1L, 2L, 2L, 2L), .Label = c('1', '2'), class = 'factor'), structure(c(1L, 1L, 2L, 2L, 3L, 3L), .Label = c('1', '2', '3'), class = 'factor'));`:`(argv[[1]],argv[[2]]);");
     }
 
@@ -552,18 +579,21 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators107() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(0:100, .Tsp = c(1, 101, 1), class = 'ts'), 0);`<=`(argv[[1]],argv[[2]]);");
+        // FIXME FastR output ignores .Tsp attribute of structure()
+        assertEval(Ignored.OutputFormatting, "argv <- list(structure(0:100, .Tsp = c(1, 101, 1), class = 'ts'), 0);`<=`(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testoperators108() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR output ignores .Tsp attribute of structure()
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 360, 370, 380, 390, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500, 510, 520, 530, 540, 550, 560, 570, 580, 590, 600, 610, 620, 630, 640, 650, 660, 670, 680, 690, 700, 710, 720, 730, 740, 750, 760, 770, 780, 790, 800, 810, 820, 830, 840, 850, 860, 870, 880, 890, 900, 910, 920, 930, 940, 950, 960, 970, 980, 990, 1000, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96), .Dim = c(101L, 3L), .Dimnames = list(NULL, c('t1', '10 * t1', 't1 - 4')), .Tsp = c(1, 101, 1), class = c('mts', 'ts', 'matrix')), 0);`<=`(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testoperators109() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR output ignores .Tsp attribute of structure()
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(c(112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118, 115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140, 145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166, 171, 180, 193, 181, 183, 218, 230, 242, 209, 191, 172, 194, 196, 196, 236, 235, 229, 243, 264, 272, 237, 211, 180, 201, 204, 188, 235, 227, 234, 264, 302, 293, 259, 229, 203, 229, 242, 233, 267, 269, 270, 315, 364, 347, 312, 274, 237, 278, 284, 277, 317, 313, 318, 374, 413, 405, 355, 306, 271, 306, 315, 301, 356, 348, 355, 422, 465, 467, 404, 347, 305, 336, 340, 318, 362, 348, 363, 435, 491, 505, 404, 359, 310, 337, 360, 342, 406, 396, 420, 472, 548, 559, 463, 407, 362, 405, 417, 391, 419, 461, 472, 535, 622, 606, 508, 461, 390, 432, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 419.147602949539, 391.474665943444, 435.919286153217, 443.935203034261, 455.023399013445, 517.28707821144, 589.71337277669, 582.999919227301, 484.573388713116, 428.878182738437, 368.526582998452, 406.728709993152, 415.660571294428, 388.716535970235, 433.006017658935, 440.885684396326, 451.651900136866, 513.051252429496, 584.327164324967, 577.055407135124, 479.076505013118, 423.494870357491, 363.43932958967, 400.592058645117, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 484.030717075782, 462.954959541421, 526.353307750503, 546.165638262644, 569.502470928676, 657.838443307596, 761.241730163307, 763.280655335144, 642.989004951864, 576.423799567567, 501.429012064338, 559.981301364233, 591.700754553767, 565.210772316967, 642.377841008703, 666.682421047093, 695.547100430962, 804.065022775202, 931.340589597203, 934.837830059897, 788.422986194072, 707.666678543854, 616.37838266375, 689.250456425465), .Dim = c(168L, 3L), .Dimnames = list(NULL, c('structure(c(112, 118, 132, 129, 121, 135, 148, 148, 136, 119, ', 'structure(c(419.147602949539, 391.474665943444, 435.919286153217, ', 'structure(c(484.030717075782, 462.954959541421, 526.353307750503, ')), .Tsp = c(1949, 1962.91666666667, 12), class = c('mts', 'ts', 'matrix')), 0);`<=`(argv[[1]],argv[[2]]);");
     }
 
@@ -584,7 +614,8 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators113() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR output: Error in Ops.factor(c(2L, 2L, ...
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(c(2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L), .Label = c('fm2', 'original'), class = c('ordered', 'factor')), 'original');`!=`(argv[[1]],argv[[2]]);");
     }
 
@@ -620,7 +651,8 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators120() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR output ignores .Tsp attribute of structure()
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12), .Tsp = c(1959, 1997.91666666667, 12), class = 'ts'), 10L);`==`(argv[[1]],argv[[2]]);");
     }
 
@@ -669,7 +701,11 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators130() {
-        assertEval(Ignored.Unknown, "argv <- list(2, structure(list(2L), class = structure('L', package = '.GlobalEnv')));`==`(argv[[1]],argv[[2]]);");
+        // FIXME
+        // Expected output: [1] TRUE
+        // FastR output: Error in argv[[1]] == argv[[2]] :
+        // operations are possible only for numeric, logical or complex types
+        assertEval(Ignored.ImplementationError, "argv <- list(2, structure(list(2L), class = structure('L', package = '.GlobalEnv')));`==`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -704,7 +740,8 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators137() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(2, 1, 0, 1, 2), .Tsp = c(-1, 3, 1), class = 'ts'), 1e-05);`>`(argv[[1]],argv[[2]]);");
+        // FIXME FastR output ignores .Tsp attribute of structure()
+        assertEval(Ignored.OutputFormatting, "argv <- list(structure(c(2, 1, 0, 1, 2), .Tsp = c(-1, 3, 1), class = 'ts'), 1e-05);`>`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -729,7 +766,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators142() {
-        // GnuR outputs "TRUE" not "[1] TRUE"
+        // FIXME FastR output ignores .Tsp attribute of structure()
         assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(list(c(3L, 0L, 1L)), class = c('R_system_version', 'package_version', 'numeric_version')), structure('2.13.2', .Names = 'SweaveListingUtils'));`>`(argv[[1]],argv[[2]]);");
     }
@@ -756,7 +793,8 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators147() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(0, .Tsp = c(1, 1, 1), class = 'ts'), 1e-05);`>`(argv[[1]],argv[[2]]);");
+        // FIXME FastR output ignores .Tsp in structure()
+        assertEval(Ignored.OutputFormatting, "argv <- list(structure(0, .Tsp = c(1, 1, 1), class = 'ts'), 1e-05);`>`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -947,7 +985,9 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators185() {
-        assertEval(Ignored.Unknown,
+        // FIXME NullPointerException
+        // at com.oracle.truffle.r.nodes.builtin.base.MatMult.left0Dim(MatMult.java:118)
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(numeric(0), .Dim = c(10L, 0L), .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10'), NULL)), structure(numeric(0), .Names = character(0)));`%*%`(argv[[1]],argv[[2]]);");
     }
 
@@ -1208,7 +1248,8 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators240() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(numeric(0), .Dim = c(0L, 4L)), structure(numeric(0), .Dim = c(0L, 4L)));`-`(argv[[1]],argv[[2]]);");
+        // FIXME FastR output ignores .Dim attribute of structure()
+        assertEval(Ignored.OutputFormatting, "argv <- list(structure(numeric(0), .Dim = c(0L, 4L)), structure(numeric(0), .Dim = c(0L, 4L)));`-`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1283,7 +1324,13 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators257() {
-        assertEval(Ignored.Unknown,
+        // FIXME GnuR outputs extra 'attr(,"class")' for the following:
+        // [1] "withId"
+        // attr(,"class")attr(,"package")
+        // FastR outputs
+        // [1] "withId"
+        // attr(,"package")
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(c(1, 1.4142135623731, 1.73205080756888, 2, 2.23606797749979, 2.44948974278318, 2.64575131106459, 2.82842712474619, 3, 3.16227766016838), id = 'test 1', class = structure('withId', package = '.GlobalEnv')), 1);`%%`(argv[[1]],argv[[2]]);");
     }
 
@@ -1359,7 +1406,8 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators272() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(4, 3, 2, 1, 0), .Tsp = c(-1, 3, 1), class = 'ts'), 1e-05);`>`(argv[[1]],argv[[2]]);");
+        // FIXME FastR output ignores .Tsp attribute of structure()
+        assertEval(Ignored.OutputFormatting, "argv <- list(structure(c(4, 3, 2, 1, 0), .Tsp = c(-1, 3, 1), class = 'ts'), 1e-05);`>`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1374,7 +1422,8 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators275() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(0, 1, 2, 3, 4, 5, 6, 7, 8), .Tsp = c(3, 11, 1), class = 'ts'), 1e-05);`>`(argv[[1]],argv[[2]]);");
+        // FIXME FastR output ignores .Tsp attribute of structure()
+        assertEval(Ignored.OutputFormatting, "argv <- list(structure(c(0, 1, 2, 3, 4, 5, 6, 7, 8), .Tsp = c(3, 11, 1), class = 'ts'), 1e-05);`>`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1419,7 +1468,9 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators284() {
-        assertEval(Ignored.Unknown, "argv <- list(10, -324:-307);`^`(argv[[1]],argv[[2]]);");
+        // FIXME FastR only outputs 0e+00
+        // while GnuR sequence of 0.000000e+00 9.881313e-324 ... 1.000000e-307
+        assertEval(Ignored.ImplementationError, "argv <- list(10, -324:-307);`^`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1444,7 +1495,10 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators289() {
-        assertEval(Ignored.Unknown, "argv <- list(0+0i, -3:3);`^`(argv[[1]],argv[[2]]);");
+        // FIXME
+        // Expected output: [1] Inf+0i Inf+0i Inf+0i 1+0i 0+0i 0+0i 0+0i
+        // FastR output: [1] Inf+NaNi Inf+NaNi Inf+NaNi 1+ 0i 0+ 0i 0+ 0i 0+ 0i
+        assertEval(Ignored.ImplementationError, "argv <- list(0+0i, -3:3);`^`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1464,12 +1518,22 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators293() {
-        assertEval(Ignored.Unknown, "argv <- list(c(NA, -2L, -1L, 0L, 1L, 2L, NA, NA, NA), 0L);`^`(argv[[1]],argv[[2]]);");
+        // FIXME
+        // Expected output: [1] 1 1 1 1 1 1 1 1 1
+        // FastR output: [1] NA 1 1 1 1 1 NA NA NA
+        assertEval(Ignored.ImplementationError, "argv <- list(c(NA, -2L, -1L, 0L, 1L, 2L, NA, NA, NA), 0L);`^`(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testoperators294() {
-        assertEval(Ignored.Unknown,
+        // FIXME 'NaN' instead of 'Inf' in output
+        // Expected output: [1] 0.0000000-0.5000000i 0.0000000-0.5773503i 0.0000000-0.7071068i
+        // [4] 0.0000000-1.0000000i Inf+0.0000000i 1.0000000+0.0000000i
+        // ...
+        // FastR output: [1] 0.0000000-0.5000000i 0.0000000-0.5773503i 0.0000000-0.7071068i
+        // [4] 0.0000000-1.0000000i NaN+ NaNi 1.0000000+0.0000000i
+        // ...
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(c(-4+0i, -3+0i, -2+0i, -1+0i, 0+0i, 1+0i, 2+0i, 3+0i, 4+0i, 5+0i, 6+0i, 7+0i, 8+0i, 9+0i, 10+0i, 11+0i, 12+0i, -4+0i, -3+0i, -2+0i, -1+0i, 0+0i, 1+0i, 2+0i, 3+0i, 4+0i, 5+0i, 6+0i, 7+0i, 8+0i, 9+0i, 10+0i, 11+0i, 12+0i, -4+0i, -3+0i, -2+0i, -1+0i, 0+0i, 1+0i, 2+0i, 3+0i, 4+0i, 5+0i, 6+0i, 7+0i, 8+0i, 9+0i, 10+0i, 11+0i, 12+0i, -4+0i, -3+0i, -2+0i, -1+0i, 0+0i, 1+0i, 2+0i, 3+0i, 4+0i, 5+0i, 6+0i, 7+0i, 8+0i, 9+0i, 10+0i, 11+0i, 12+0i, -4+0i, -3+0i, -2+0i, -1+0i, 0+0i, 1+0i, 2+0i, 3+0i, 4+0i, 5+0i, 6+0i, 7+0i, 8+0i, 9+0i, 10+0i, 11+0i, 12+0i, -4+0i, -3+0i, -2+0i, -1+0i, 0+0i, 1+0i, 2+0i, 3+0i, 4+0i, 5+0i, 6+0i, 7+0i, 8+0i, 9+0i, 10+0i, 11+0i, 12+0i), c(-0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2));`^`(argv[[1]],argv[[2]]);");
     }
 
@@ -1535,7 +1599,8 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators307() {
-        assertEval(Ignored.Unknown, "argv <- list(logical(0), structure(logical(0), .Dim = c(0L, 0L), .Dimnames = list(NULL, NULL)));`|`(argv[[1]],argv[[2]]);");
+        // FIXME FastR ignores .Dim attribute of the structure()
+        assertEval(Ignored.OutputFormatting, "argv <- list(logical(0), structure(logical(0), .Dim = c(0L, 0L), .Dimnames = list(NULL, NULL)));`|`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1560,7 +1625,8 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators312() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR ignores .Dimnames attribute of the structure()
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0), .Dim = c(6L, 3L), .Dimnames = structure(list(`  p L s` = c('. . .', '. | .', '. . |', '. | |', '. . ?', '. | ?'), c('perm', 'LDL', 'super')), .Names = c('  p L s', ''))), c(4, 2, 1));`%*%`(argv[[1]],argv[[2]]);");
     }
 
@@ -1596,7 +1662,9 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators319() {
-        assertEval(Ignored.Unknown, "argv <- list(numeric(0), structure(numeric(0), .Dim = c(1L, 0L)));`%*%`(argv[[1]],argv[[2]]);");
+        // FIXME NullPointerException
+        // at com.oracle.truffle.r.nodes.builtin.base.MatMult.right0Dim(MatMult.java:125)
+        assertEval(Ignored.ImplementationError, "argv <- list(numeric(0), structure(numeric(0), .Dim = c(1L, 0L)));`%*%`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1703,13 +1771,15 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators340() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR ignores .Tsp attribute of the structure()
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), .Tsp = c(1790, 1970, 0.1), class = 'ts'), c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE));`&`(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testoperators341() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR ignores .Tsp attribute of the structure()
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), .Dim = c(101L, 3L), .Dimnames = list(NULL, c('t1', '10 * t1', 't1 - 4')), .Tsp = c(1, 101, 1), class = c('mts', 'ts', 'matrix')), structure(c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = c(101L, 3L), .Dimnames = list(NULL, c('t1', '10 * t1', 't1 - 4'))));`&`(argv[[1]],argv[[2]]);");
     }
 
@@ -1755,7 +1825,10 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators351() {
-        assertEval(Ignored.Unknown, "argv <- list(.Primitive('log'));`(`(argv[[1]]);");
+        // FIXME exp(1) expressed as number in FastR
+        // Expected output: function (x, base = exp(1)) .Primitive("log")
+        // FastR output: function (x, base = 2.718282) .Primitive("log")
+        assertEval(Ignored.OutputFormatting, "argv <- list(.Primitive('log'));`(`(argv[[1]]);");
     }
 
     @Test
@@ -1775,7 +1848,13 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators355() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(NA, .Dim = c(1L, 1L), name = 'Sam', class = structure('Foo', package = '.GlobalEnv')));`(`(argv[[1]]);");
+        // FIXME GnuR outputs extra 'attr(,"class")' for the following:
+        // [1] "Foo"
+        // attr(,"class")attr(,"package")
+        // FastR outputs
+        // [1] "Foo"
+        // attr(,"package")
+        assertEval(Ignored.OutputFormatting, "argv <- list(structure(NA, .Dim = c(1L, 1L), name = 'Sam', class = structure('Foo', package = '.GlobalEnv')));`(`(argv[[1]]);");
     }
 
     @Test

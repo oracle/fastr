@@ -20,7 +20,8 @@ public class TestBuiltin_signif extends TestBase {
 
     @Test
     public void testsignif1() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(0, NaN, 0, 4.94065645841247e-324), class = 'integer64'));do.call('signif', argv)");
+        // FIXME RInternalError: java.lang.NumberFormatException: Infinite or NaN
+        assertEval(Ignored.ImplementationError, "argv <- list(structure(c(0, NaN, 0, 4.94065645841247e-324), class = 'integer64'));do.call('signif', argv)");
     }
 
     @Test

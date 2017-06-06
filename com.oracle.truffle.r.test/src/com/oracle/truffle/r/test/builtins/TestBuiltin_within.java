@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -20,7 +20,7 @@ public class TestBuiltin_within extends TestBase {
 
     @Test
     public void testwithin1() {
-        assertEval(Ignored.Unknown,
+        assertEval(Output.IgnoreErrorMessage,
                         "argv <- structure(list(data = structure(list(a = 1:5, b = 2:6,     c = 3:7), .Names = c('a', 'b', 'c'), row.names = c(NA, -5L),     class = 'data.frame')), .Names = 'data');" +
                                         "do.call('within', argv)");
     }

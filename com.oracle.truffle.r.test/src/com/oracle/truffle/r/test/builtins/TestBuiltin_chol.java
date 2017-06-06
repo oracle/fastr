@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,6 +29,10 @@ public class TestBuiltin_chol extends TestBase {
         assertEval("{ chol(1) }");
         assertEval("{ round( chol(10), digits=5) }");
         assertEval("{ m <- matrix(c(5,1,1,3),2) ; round( chol(m), digits=5 ) }");
-        assertEval(Ignored.Unknown, Output.IgnoreErrorContext, "{ m <- matrix(c(5,-5,-5,3),2,2) ; chol(m) }");
+        // Error messages differ
+        // Expected output: Error in chol.default(m) :
+        // the leading minor of order 2 is not positive definite
+        // FastR output: Error in chol.default(m) : error code 2 from Lapack routine 'dpotrf'
+        assertEval(Output.IgnoreErrorMessage, "{ m <- matrix(c(5,-5,-5,3),2,2) ; chol(m) }");
     }
 }

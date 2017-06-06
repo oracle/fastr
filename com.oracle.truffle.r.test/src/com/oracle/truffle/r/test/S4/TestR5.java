@@ -79,7 +79,9 @@ public class TestR5 extends TestBase {
         assertSuppress("{ clazz <- setRefClass('Foo15R5', fields = c('a'), methods = list(initialize = function() { a <<- 123 })); obj <- clazz$new(); obj$a }");
         assertSuppress("{ setRefClass('A6R5', fields = c('a'), methods = list(initialize = function() { a <<- 'hello' })); clazz <- setRefClass('B6R5', fields = c('a'), contains = 'A6R5'); obj <- clazz$new(); obj$a }");
 
-        assertEval(Ignored.Unknown,
+        // FIXME FastR memory statistics missing completely (NA)
+        // Assuming that they should be provided so ImplementationError.
+        assertEval(Ignored.ImplementationError,
                         "{ clazz <- setRefClass('Foo18R5', fields = c('a'), methods = list(initialize = function() a <<- 456, finalize = function() { print(sprintf('finalizer: %d', a)) } )); (function () { x <- clazz$new(); print('fun') })(); gc() }");
     }
 

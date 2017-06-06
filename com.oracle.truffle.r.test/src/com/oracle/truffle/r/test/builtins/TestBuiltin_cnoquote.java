@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -20,7 +20,9 @@ public class TestBuiltin_cnoquote extends TestBase {
 
     @Test
     public void testcnoquote1() {
-        assertEval(Ignored.Unknown,
+        // FIXME ArrayIndexOutOfBoundsException: 0
+        // com.oracle.truffle.r.runtime.data.RDoubleVector.getDataAt(RDoubleVector.java:127)
+        assertEval(Ignored.ImplementationError,
                         "argv <- structure(list(structure(c('.', '.', '|', '.', '.', '|',     '.', '.'), .Dim = c(2L, 4L), .Dimnames = list(NULL, c('',     '', '', '')), class = 'noquote')), .Names = '');" +
                                         "do.call('c.noquote', argv)");
     }

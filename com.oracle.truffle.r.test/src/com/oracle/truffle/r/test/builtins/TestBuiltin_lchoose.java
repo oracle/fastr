@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -19,16 +19,19 @@ public class TestBuiltin_lchoose extends TestBase {
 
     @Test
     public void testlchoose1() {
-        assertEval(Ignored.Unknown, "argv <- list(FALSE, FALSE); .Internal(lchoose(argv[[1]], argv[[2]]))");
+        // FIXME not implemented: .Internal lchoose
+        assertEval(Ignored.Unimplemented, "argv <- list(FALSE, FALSE); .Internal(lchoose(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testlchoose2() {
-        assertEval(Ignored.Unknown, "argv <- list(50L, 0:48); .Internal(lchoose(argv[[1]], argv[[2]]))");
+        // FIXME not implemented: .Internal lchoose
+        assertEval(Ignored.Unimplemented, "argv <- list(50L, 0:48); .Internal(lchoose(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testlchoose3() {
-        assertEval(Ignored.Unknown, "argv <- list(0.5, 1:9); .Internal(lchoose(argv[[1]], argv[[2]]))");
+        // FIXME not implemented: .Internal lchoose
+        assertEval(Ignored.Unimplemented, "argv <- list(0.5, 1:9); .Internal(lchoose(argv[[1]], argv[[2]]))");
     }
 }

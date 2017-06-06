@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -49,7 +49,11 @@ public class TestBuiltin_sqrt extends TestBase {
 
     @Test
     public void testsqrt7() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1:10, id = 'test 1', class = structure('withId', package = '.GlobalEnv')));sqrt(argv[[1]]);");
+        // FIXME GnuR outputs
+        // attr(,"class")attr(,"package")
+        // while FastR outputs just
+        // attr(,"package")
+        assertEval(Ignored.OutputFormatting, "argv <- list(structure(1:10, id = 'test 1', class = structure('withId', package = '.GlobalEnv')));sqrt(argv[[1]]);");
     }
 
     @Test
@@ -64,7 +68,8 @@ public class TestBuiltin_sqrt extends TestBase {
 
     @Test
     public void testsqrt10() {
-        assertEval(Ignored.Unknown, "argv <- list(c(6L, 5L, 4L, 3L, 2L, 1L, 0L, -1L, -2L, -3L, -4L));sqrt(argv[[1]]);");
+        // FIXME missing warning about NaNs being produced
+        assertEval(Output.MissingWarning, "argv <- list(c(6L, 5L, 4L, 3L, 2L, 1L, 0L, -1L, -2L, -3L, -4L));sqrt(argv[[1]]);");
     }
 
     @Test
@@ -87,7 +92,7 @@ public class TestBuiltin_sqrt extends TestBase {
         assertEval("{ sqrt(c(a=9,b=81)) }");
         assertEval("{ sqrt(1:5) }");
 
-        assertEval(Ignored.Unknown, "{ sqrt(-1L) }"); // FIXME warning
-        assertEval(Ignored.Unknown, "{ sqrt(-1) }"); // FIXME warning
+        assertEval(Output.MissingWarning, "{ sqrt(-1L) }"); // FIXME warning
+        assertEval(Output.MissingWarning, "{ sqrt(-1) }"); // FIXME warning
     }
 }

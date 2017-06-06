@@ -89,7 +89,10 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector15() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(sqrt(abs(`Standardized residuals`))), 'expression'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        // FIXME
+        // Expected output: expression(sqrt(abs(`Standardized residuals`)))
+        // FastR output: expression(sqrt, abs(`Standardized residuals`))
+        assertEval(Ignored.ImplementationError, "argv <- list(quote(sqrt(abs(`Standardized residuals`))), 'expression'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -109,7 +112,10 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector19() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL, 'double'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        // docs do not explicitly handle this so it might be ReferenceError too
+        // Expected output: numeric(0)
+        // FastR output: NULL
+        assertEval(Ignored.ImplementationError, "argv <- list(NULL, 'double'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -119,7 +125,10 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector21() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL, 'integer'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        // docs do not explicitly handle this so it might be ReferenceError too
+        // Expected output: numeric(0)
+        // FastR output: NULL
+        assertEval(Ignored.ImplementationError, "argv <- list(NULL, 'integer'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -204,7 +213,8 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector38() {
-        assertEval(Ignored.Unknown, "argv <- list(integer(0), 'pairlist'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        // RInternalError: not implemented: non-list casts to pairlist
+        assertEval(Ignored.ImplementationError, "argv <- list(integer(0), 'pairlist'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -219,7 +229,13 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector41() {
-        assertEval(Ignored.Unknown,
+        // FIXME
+        // Expected output: [1] character(0)
+        // <0 rows> (or 0-length row.names)
+        // FastR output: $`character(0)`
+        // factor(0)
+        // Levels:
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(list(`character(0)` = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'character(0)', row.names = character(0), class = 'data.frame'), 'pairlist'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
@@ -235,7 +251,8 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector44() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL, 'logical'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        // RInternalError: not implemented: non-list casts to pairlist
+        assertEval(Ignored.ImplementationError, "argv <- list(NULL, 'logical'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -275,12 +292,14 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector53() {
-        assertEval(Ignored.Unknown, "argv <- list('1.3', 'pairlist'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        // RInternalError: not implemented: non-list casts to pairlist
+        assertEval(Ignored.ImplementationError, "argv <- list('1.3', 'pairlist'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testasvector54() {
-        assertEval(Ignored.Unknown, "argv <- list(1L, 'pairlist'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        // RInternalError: not implemented: non-list casts to pairlist
+        assertEval(Ignored.ImplementationError, "argv <- list(1L, 'pairlist'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -295,7 +314,8 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector57() {
-        assertEval(Ignored.Unknown, "argv <- list(FALSE, 'pairlist'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        // RInternalError: not implemented: non-list casts to pairlist
+        assertEval(Ignored.ImplementationError, "argv <- list(FALSE, 'pairlist'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -370,7 +390,8 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector75() {
-        assertEval(Ignored.Unknown, "argv <- list(3.14159265358979, 'pairlist'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        // RInternalError: not implemented: non-list casts to pairlist
+        assertEval(Ignored.ImplementationError, "argv <- list(3.14159265358979, 'pairlist'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test

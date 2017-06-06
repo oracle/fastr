@@ -124,7 +124,10 @@ public class TestBuiltin_match extends TestBase {
 
     @Test
     public void testmatch22() {
-        assertEval(Ignored.Unknown, "argv <- list(c(NA, NA, 3, 4, 5), c(NA, NA, 4, 5), 0L, NA); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        // FIXME docs say "For all types, ‘NA’ matches ‘NA’ and no other value."
+        // Expected output: [1] 0 0 0 3 4
+        // FastR output: Error: usage of 'incomparables' in match not implemented
+        assertEval(Ignored.ImplementationError, "argv <- list(c(NA, NA, 3, 4, 5), c(NA, NA, 4, 5), 0L, NA); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
