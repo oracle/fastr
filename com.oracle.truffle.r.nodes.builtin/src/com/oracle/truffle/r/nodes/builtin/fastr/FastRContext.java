@@ -176,6 +176,7 @@ public class FastRContext {
                         thread.join();
                     }
                 }
+                REnvironment.cleanupSearchpathFromMultiSlot();
             } catch (InterruptedException ex) {
                 throw error(RError.Message.GENERIC, "error finishing eval thread");
 

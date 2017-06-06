@@ -606,8 +606,7 @@ public final class FrameSlotChangeMonitor {
                 FrameSlotInfoImpl info = (FrameSlotInfoImpl) slot.getInfo();
                 if (info.stableValue == null || !replicate) {
                     // create a multi slot for slots whose stableValue is null but also for all
-                    // slots of
-                    // the global frame (which are marked as !replicate)
+                    // slots of the global frame (which are marked as !replicate)
                     info.stableValue = null;
                     info.nonLocalModifiedAssumption.invalidate();
                     info.noMultiSlot.invalidate();
@@ -618,11 +617,9 @@ public final class FrameSlotChangeMonitor {
                     if (prevValue instanceof MultiSlotData) {
                         // this handles the case when we create share contexts for the second time -
                         // existing multi slots are an artifact of the previous executions and must
-                        // be
-                        // discarded
-                        // TOOD: consider re-using multi slots but since we don't expect many of
-                        // them,
-                        // perhaps it's too much work for too little gain
+                        // be discarded
+                        // TODO: consider re-using multi slots but since we don't expect many of
+                        // them, perhaps it's too much work for too little gain
                         prevValue = ((MultiSlotData) prevValue).get(0);
                     } else if (FastROptions.SearchPathForcePromises.getBooleanValue()) {
                         prevValue = RContext.getRRuntimeASTAccess().forcePromise("searchPathPromiseForce", prevValue);
@@ -972,6 +969,45 @@ public final class FrameSlotChangeMonitor {
             return ((MultiSlotData) o).get(RContext.getInstance().getMultiSlotInd());
         } else {
             return frame.getValue(slot);
+        }
+    }
+
+    public static void cleanMultiSlots(MaterializedFrame frame) {
+        CompilerAsserts.neverPartOfCompilation();
+        // make a copy avoid potential updates to the array iterated over
+
+        // first, investigate frame slots if there are multi slots in the frame
+        boolean multiSlotData = false;
+        for (FrameSlot slot : frame.getFrameDescriptor().getSlots()) {
+            if (!getFrameSlotInfo(slot).noMultiSlot.isValid()) {
+                multiSlotData = true;
+                break;
+            }
+        }
+
+        if (multiSlotData) {
+            FrameSlot[] slots = new FrameSlot[frame.getFrameDescriptor().getSlots().size()];
+            slots = frame.getFrameDescriptor().getSlots().toArray(slots);
+            Object[] values = new Object[slots.length];
+
+            FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+            for (int i = slots.length - 1; i >= 0; i--) {
+                values[i] = frame.getValue(slots[i]);
+                frameDescriptor.removeFrameSlot(slots[i].getIdentifier());
+            }
+
+            for (int i = 0; i < slots.length; i++) {
+                // re-add the frame slot
+                FrameSlot newSlot = findOrAddFrameSlot(frameDescriptor, slots[i].getIdentifier(), slots[i].getKind());
+                if (values[i] instanceof MultiSlotData) {
+                    frame.setObject(slots[i], ((MultiSlotData) values[i]).get(0));
+                } else {
+                    frame.setObject(slots[i], values[i]);
+                }
+                if (getFrameSlotInfo(slots[i]).stableValue != null) {
+                    getFrameSlotInfo(newSlot).stableValue = getFrameSlotInfo(slots[i]).stableValue;
+                }
+            }
         }
     }
 }

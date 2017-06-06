@@ -936,6 +936,29 @@ public abstract class REnvironment extends RAttributeStorage {
         }
     }
 
+    public static void cleanupSearchpathFromMultiSlot() {
+        CompilerAsserts.neverPartOfCompilation();
+        ContextStateImpl parentState = RContext.getInstance().stateREnvironment;
+        SearchPath searchPath = parentState.getSearchPath();
+        assert searchPath.size() > 0 && searchPath.get(0).getSearchName() == Global.SEARCHNAME;
+        for (int i = 0; i < searchPath.size(); i++) {
+            FrameSlotChangeMonitor.cleanMultiSlots(searchPath.get(i).getFrame());
+        }
+        REnvironment namespaces = parentState.namespaceRegistry;
+        Frame namespacesFrame = namespaces.getFrame();
+        // make a copy avoid potential updates to the array iterated over
+        FrameSlot[] slots = new FrameSlot[namespacesFrame.getFrameDescriptor().getSlots().size()];
+        slots = namespacesFrame.getFrameDescriptor().getSlots().toArray(slots);
+        for (int i = 0; i < slots.length; i++) {
+            REnvironment namespaceEnv = (REnvironment) namespacesFrame.getValue(slots[i]);
+            if (namespaceEnv != Base.baseNamespaceEnv()) {
+                // base namespace frame redirects all accesses to base frame and this would
+                // result in processing the slots twice
+                FrameSlotChangeMonitor.cleanMultiSlots(namespaceEnv.getFrame());
+            }
+        }
+    }
+
     private static final class BaseNamespace extends REnvironment {
         private BaseNamespace(String name, MaterializedFrame frame) {
             super(name, frame);
