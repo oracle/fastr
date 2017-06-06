@@ -378,10 +378,10 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRInterop.IsExecutable.class, FastRInteropFactory.IsExecutableNodeGen::create);
         add(FastRInterop.IsExternal.class, FastRInteropFactory.IsExternalNodeGen::create);
         add(FastRInterop.JavaClass.class, FastRInteropFactory.JavaClassNodeGen::create);
-        add(FastRInterop.IsJavaArray.class, FastRInteropFactory.IsJavaArrayNodeGen::create);
+        add(FastRInterop.IsForeignArray.class, FastRInteropFactory.IsForeignArrayNodeGen::create);
         add(FastRInterop.NewJavaArray.class, FastRInteropFactory.NewJavaArrayNodeGen::create);
         add(FastRInterop.ToJavaArray.class, FastRInteropFactory.ToJavaArrayNodeGen::create);
-        add(FastRInterop.FromJavaArray.class, FastRInteropFactory.FromJavaArrayNodeGen::create);
+        add(FastRInterop.FromForeignArray.class, FastRInteropFactory.FromForeignArrayNodeGen::create);
         add(FastRInterop.ToBoolean.class, FastRInteropFactory.ToBooleanNodeGen::create);
         add(FastRInterop.ToByte.class, FastRInteropFactory.ToByteNodeGen::create);
         add(FastRInterop.ToChar.class, FastRInteropFactory.ToCharNodeGen::create);

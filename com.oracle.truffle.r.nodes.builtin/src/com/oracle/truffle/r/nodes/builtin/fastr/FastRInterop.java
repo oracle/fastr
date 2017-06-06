@@ -53,7 +53,6 @@ import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.Source.Builder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
@@ -64,6 +63,8 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
@@ -87,6 +88,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
+import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 import java.lang.reflect.Array;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -199,13 +204,11 @@ public class FastRInterop {
         }
 
         @Specialization
-        @TruffleBoundary
         protected Object exportSymbol(@SuppressWarnings("unused") String name, @SuppressWarnings("unused") RMissing value) {
             throw error(RError.Message.ARGUMENT_MISSING, "value");
         }
 
         @Fallback
-        @TruffleBoundary
         protected Object exportSymbol(@SuppressWarnings("unused") Object name, @SuppressWarnings("unused") Object value) {
             throw error(RError.Message.GENERIC, "only R language objects can be exported");
         }
@@ -279,7 +282,7 @@ public class FastRInterop {
     public abstract static class ToByte extends RBuiltinNode.Arg1 {
 
         static {
-            castToJavaNumberType(new Casts(ToByte.class));
+            castToInteroptNumberType(new Casts(ToByte.class));
         }
 
         @Specialization
@@ -343,7 +346,7 @@ public class FastRInterop {
     public abstract static class ToFloat extends RBuiltinNode.Arg1 {
 
         static {
-            castToJavaNumberType(new Casts(ToFloat.class));
+            castToInteroptNumberType(new Casts(ToFloat.class));
         }
 
         @Specialization
@@ -366,7 +369,7 @@ public class FastRInterop {
     public abstract static class ToLong extends RBuiltinNode.Arg1 {
 
         static {
-            castToJavaNumberType(new Casts(ToLong.class));
+            castToInteroptNumberType(new Casts(ToLong.class));
         }
 
         @Specialization
@@ -389,7 +392,7 @@ public class FastRInterop {
     public abstract static class ToShort extends RBuiltinNode.Arg1 {
 
         static {
-            castToJavaNumberType(new Casts(ToShort.class));
+            castToInteroptNumberType(new Casts(ToShort.class));
         }
 
         @Specialization
@@ -409,7 +412,7 @@ public class FastRInterop {
 
     }
 
-    private static void castToJavaNumberType(Casts casts) {
+    private static void castToInteroptNumberType(Casts casts) {
         casts.arg("value").mustBe(integerValue().or(doubleValue().or(rawValue())), RError.Message.INVALID_ARGUMENT_OF_TYPE, "value", Predef.typeName()).asVector().mustBe(singleElement()).findFirst();
     }
 
@@ -451,29 +454,24 @@ public class FastRInterop {
         }
     }
 
-    @ImportStatic({RRuntime.class})
-    @RBuiltin(name = ".fastr.java.isArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"obj"}, behavior = COMPLEX)
-    public abstract static class IsJavaArray extends RBuiltinNode.Arg1 {
+    @ImportStatic({Message.class, RRuntime.class})
+    @RBuiltin(name = ".fastr.interop.isArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"obj"}, behavior = COMPLEX)
+    public abstract static class IsForeignArray extends RBuiltinNode.Arg1 {
 
         static {
-            Casts.noCasts(IsJavaArray.class);
+            Casts.noCasts(IsForeignArray.class);
         }
-
-        private final ConditionProfile isJavaProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile isArrayProfile = ConditionProfile.createBinaryProfile();
 
         @Specialization(guards = {"isForeignObject(obj)"})
         @TruffleBoundary
-        public Object isArray(TruffleObject obj) {
-            // TODO does this return true only for java arrays, or also
-            // js arrays?
-            boolean result = isJavaProfile.profile(JavaInterop.isJavaObject(Object.class, obj)) && isArrayProfile.profile(JavaInterop.isArray(obj));
-            return RRuntime.java2R(result);
+        public byte isArray(TruffleObject obj,
+                        @Cached("HAS_SIZE.createNode()") Node hasSize) {
+            return RRuntime.asLogical(ForeignAccess.sendHasSize(hasSize, obj));
         }
 
         @Fallback
-        public Object isArray(Object obj) {
-            return RRuntime.java2R(false);
+        public byte isArray(Object obj) {
+            return RRuntime.LOGICAL_FALSE;
         }
     }
 
@@ -524,20 +522,23 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractLogicalVector vec, @SuppressWarnings("unused") RMissing className, boolean flat) {
-            return toArray(vec, flat, boolean.class, (array, i) -> Array.set(array, i, RRuntime.r2Java(vec.getDataAt(i))));
+        public Object toArray(RAbstractLogicalVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
+                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
+            return toArray(vec, flat, boolean.class, (array, i) -> Array.set(array, i, r2Foreign.execute(vec.getDataAt(i))));
         }
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractLogicalVector vec, String className, boolean flat) {
-            return toArray(vec, flat, getClazz(className), (array, i) -> Array.set(array, i, RRuntime.r2Java(vec.getDataAt(i))));
+        public Object toArray(RAbstractLogicalVector vec, String className, boolean flat,
+                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
+            return toArray(vec, flat, getClazz(className), (array, i) -> Array.set(array, i, r2Foreign.execute(vec.getDataAt(i))));
         }
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractIntVector vec, @SuppressWarnings("unused") RMissing className, boolean flat) {
-            return toArray(vec, flat, int.class, (array, i) -> Array.set(array, i, RRuntime.r2Java(vec.getDataAt(i))));
+        public Object toArray(RAbstractIntVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
+                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
+            return toArray(vec, flat, int.class, (array, i) -> Array.set(array, i, r2Foreign.execute(vec.getDataAt(i))));
         }
 
         @Specialization
@@ -572,28 +573,36 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractVector vec, @SuppressWarnings("unused") RMissing className, boolean flat) {
-            return toArray(vec, flat, Object.class, (array, i) -> Array.set(array, i, RRuntime.r2Java(vec.getDataAtAsObject(i))));
+        public Object toArray(RAbstractVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
+                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
+            return toArray(vec, flat, Object.class, (array, i) -> Array.set(array, i, r2Foreign.execute(vec.getDataAtAsObject(i))));
         }
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractVector vec, String className, boolean flat) {
-            return toArray(vec, flat, getClazz(className), (array, i) -> Array.set(array, i, RRuntime.r2Java(vec.getDataAtAsObject(i))));
+        public Object toArray(RAbstractVector vec, String className, boolean flat,
+                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
+            return toArray(vec, flat, getClazz(className), (array, i) -> Array.set(array, i, r2Foreign.execute(vec.getDataAtAsObject(i))));
         }
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RInteropScalar ri, String className, boolean flat) {
+        public Object toArray(RInteropScalar ri, String className, boolean flat,
+                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
             RList list = RDataFactory.createList(new Object[]{ri});
-            return toArray(list, flat, getClazz(className), (array, i) -> Array.set(array, i, RRuntime.r2Java(list.getDataAt(i))));
+            return toArray(list, flat, getClazz(className), (array, i) -> Array.set(array, i, r2Foreign.execute(list.getDataAt(i))));
         }
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RInteropScalar ri, RMissing className, boolean flat) {
+        public Object toArray(RInteropScalar ri, RMissing className, boolean flat,
+                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
             RList list = RDataFactory.createList(new Object[]{ri});
-            return toArray(list, flat, ri.getJavaType(), (array, i) -> Array.set(array, i, RRuntime.r2Java(list.getDataAt(i))));
+            return toArray(list, flat, ri.getJavaType(), (array, i) -> Array.set(array, i, r2Foreign.execute(list.getDataAt(i))));
+        }
+
+        protected R2Foreign createR2Foreign() {
+            return R2ForeignNodeGen.create();
         }
 
         private Class<?> getClazz(String className) throws RError {
@@ -688,102 +697,35 @@ public class FastRInterop {
 
     }
 
-    @RBuiltin(name = ".fastr.java.fromArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"array"}, behavior = COMPLEX)
-    public abstract static class FromJavaArray extends RBuiltinNode.Arg1 {
-        @Child Node getSize = Message.GET_SIZE.createNode();
-        @Child Node read;
-        @Child Node isNull;
-        @Child Node isBoxed;
-        @Child Node unbox;
+    @ImportStatic({Message.class, RRuntime.class})
+    @RBuiltin(name = ".fastr.interop.fromArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"array"}, behavior = COMPLEX)
+    public abstract static class FromForeignArray extends RBuiltinNode.Arg1 {
+
         static {
-            Casts casts = new Casts(FromJavaArray.class);
+            Casts casts = new Casts(FromForeignArray.class);
             casts.arg("array").mustNotBeMissing();
         }
 
-        protected boolean isJavaArray(TruffleObject obj) {
-            return JavaInterop.isJavaObject(Object.class, obj) && JavaInterop.isArray(obj);
+        private final ConditionProfile isArrayProfile = ConditionProfile.createBinaryProfile();
+
+        protected ForeignArray2R createForeignArray2R(TruffleObject obj) {
+            return ForeignArray2RNodeGen.create();
         }
 
-        @Specialization(guards = {"isJavaArray(obj)"})
+        @Specialization(guards = {"isForeignObject(obj)"})
         @TruffleBoundary
-        public Object fromArray(TruffleObject obj) {
-            int size;
-            try {
-                size = (int) ForeignAccess.sendGetSize(getSize, obj);
-                if (size == 0) {
-                    return RDataFactory.createList();
-                }
-                Object[] elements = new Object[size];
-                boolean allBoolean = true;
-                boolean allInteger = true;
-                boolean allDouble = true;
-                boolean allString = true;
-                for (int i = 0; i < size; i++) {
-                    if (read == null) {
-                        read = insert(Message.READ.createNode());
-                    }
-                    Object element = ForeignAccess.sendRead(read, obj, i);
-                    if (element instanceof TruffleObject) {
-                        if (isNull == null) {
-                            isNull = insert(Message.IS_NULL.createNode());
-                        }
-                        if (ForeignAccess.sendIsNull(isNull, (TruffleObject) element)) {
-                            element = null;
-                        } else {
-                            if (isBoxed == null) {
-                                isBoxed = insert(Message.IS_BOXED.createNode());
-                            }
-                            if (ForeignAccess.sendIsBoxed(isBoxed, (TruffleObject) element)) {
-                                if (unbox == null) {
-                                    unbox = insert(Message.UNBOX.createNode());
-                                }
-                                element = ForeignAccess.sendIsBoxed(unbox, (TruffleObject) element);
-                            }
-                        }
-                    }
-                    allBoolean &= element instanceof Boolean;
-                    allInteger &= element instanceof Byte || element instanceof Integer || element instanceof Short;
-                    allDouble &= element instanceof Double || element instanceof Float || element instanceof Long;
-                    allString &= element instanceof Character || element instanceof String;
-
-                    elements[i] = RRuntime.java2R(element);
-                }
-                if (allBoolean) {
-                    byte[] ret = new byte[size];
-                    for (int i = 0; i < size; i++) {
-                        ret[i] = ((Number) elements[i]).byteValue();
-                    }
-                    return RDataFactory.createLogicalVector(ret, true);
-                }
-                if (allInteger) {
-                    int[] ret = new int[size];
-                    for (int i = 0; i < size; i++) {
-                        ret[i] = ((Number) elements[i]).intValue();
-                    }
-                    return RDataFactory.createIntVector(ret, true);
-                }
-                if (allDouble) {
-                    double[] ret = new double[size];
-                    for (int i = 0; i < size; i++) {
-                        ret[i] = ((Number) elements[i]).doubleValue();
-                    }
-                    return RDataFactory.createDoubleVector(ret, true);
-                }
-                if (allString) {
-                    String[] ret = new String[size];
-                    for (int i = 0; i < size; i++) {
-                        ret[i] = String.valueOf(elements[i]);
-                    }
-                    return RDataFactory.createStringVector(ret, true);
-                }
-                return RDataFactory.createList(elements);
-            } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                throw error(RError.Message.GENERIC, "error while converting array: " + e.getMessage());
+        public Object fromArray(TruffleObject obj,
+                        @Cached("HAS_SIZE.createNode()") Node hasSize,
+                        @Cached("createForeignArray2R(obj)") ForeignArray2R array2R) {
+            if (isArrayProfile.profile(ForeignAccess.sendHasSize(hasSize, obj))) {
+                return array2R.execute(obj);
+            } else {
+                throw error(RError.Message.GENERIC, "not a java array");
             }
         }
 
         @Fallback
-        public Object fromArray(@SuppressWarnings("unused") Object obj) {
+        public Object fromObject(Object obj) {
             throw error(RError.Message.GENERIC, "not a java array");
         }
     }
@@ -800,14 +742,16 @@ public class FastRInterop {
         @TruffleBoundary
         public Object interopNew(TruffleObject clazz, RArgsValuesAndNames args,
                         @SuppressWarnings("unused") @Cached("args.getLength()") int length,
-                        @Cached("createNew(length).createNode()") Node sendNew) {
+                        @Cached("createNew(length).createNode()") Node sendNew,
+                        @Cached("createR2Foreign()") R2Foreign r2Foreign,
+                        @Cached("createForeign2R()") Foreign2R foreign2R) {
             try {
                 Object[] argValues = new Object[args.getLength()];
                 for (int i = 0; i < argValues.length; i++) {
-                    argValues[i] = RRuntime.r2Java(args.getArgument(i));
+                    argValues[i] = r2Foreign.execute(args.getArgument(i));
                 }
                 Object result = ForeignAccess.sendNew(sendNew, clazz, argValues);
-                return RRuntime.java2R(result);
+                return foreign2R.execute(result);
             } catch (IllegalStateException | SecurityException | IllegalArgumentException | UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
                 String msg = isTesting ? "error during Java object instantiation" : "error during Java object instantiation: " + e.getMessage();
                 throw error(RError.Message.GENERIC, msg);
@@ -817,6 +761,14 @@ public class FastRInterop {
         @Fallback
         public Object interopNew(@SuppressWarnings("unused") Object clazz, @SuppressWarnings("unused") Object args) {
             throw error(RError.Message.GENERIC, "interop object needed as receiver of NEW message");
+        }
+
+        protected R2Foreign createR2Foreign() {
+            return R2ForeignNodeGen.create();
+        }
+
+        protected Foreign2R createForeign2R() {
+            return Foreign2RNodeGen.create();
         }
     }
 
