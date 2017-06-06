@@ -65,8 +65,17 @@ public final class CallRFunctionNode extends Node {
         return callNode;
     }
 
+    public static Object executeSlowpath(RFunction function, RCaller caller, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature, DispatchArgs dispatchArgs) {
+        Object[] callArgs = RArguments.create(function, caller, callerFrame, evaluatedArgs, suppliedSignature, function.getEnclosingFrame(), dispatchArgs);
+        return executeSlowpath(function, caller, callerFrame, callArgs);
+    }
+
     public static Object executeSlowpath(RFunction function, RCaller caller, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
         Object[] callArgs = RArguments.create(function, caller, callerFrame, evaluatedArgs, dispatchArgs);
+        return executeSlowpath(function, caller, callerFrame, callArgs);
+    }
+
+    private static Object executeSlowpath(RFunction function, RCaller caller, MaterializedFrame callerFrame, Object[] callArgs) {
         try {
             return function.getTarget().call(callArgs);
         } finally {

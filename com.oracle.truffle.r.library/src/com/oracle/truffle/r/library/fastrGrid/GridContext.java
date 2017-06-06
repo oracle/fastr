@@ -129,7 +129,7 @@ public final class GridContext {
             internalCode = RInternalCode.lookup(RContext.getInstance(), "grid", RInternalCode.loadSourceRelativeTo(LInitGrid.class, "fastrGrid.R"));
         }
         RFunction redrawAll = internalCode.lookupFunction(functionName);
-        return RContext.getEngine().evalFunction(redrawAll, REnvironment.baseEnv().getFrame(), RCaller.topLevel, null, args);
+        return RContext.getEngine().evalFunction(redrawAll, REnvironment.baseEnv().getFrame(), RCaller.topLevel, true, null, args);
     }
 
     private static final class DeviceAndState {

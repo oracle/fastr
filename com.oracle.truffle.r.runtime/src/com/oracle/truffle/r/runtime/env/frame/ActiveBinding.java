@@ -27,7 +27,6 @@ import java.util.Objects;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -64,11 +63,11 @@ public class ActiveBinding implements RTruffleObject {
     }
 
     public Object writeValue(Object value) {
-        return RContext.getEngine().evalFunction(function, REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), null, value);
+        return RContext.getEngine().evalFunction(function, REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), true, null, value);
     }
 
     public Object readValue() {
-        return RContext.getEngine().evalFunction(function, REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), RDataFactory.createEmptyStringVector());
+        return RContext.getEngine().evalFunction(function, REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), true, null);
     }
 
 }

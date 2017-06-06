@@ -93,7 +93,7 @@ public class PrintFunctions {
                         @Cached("createShowFunction(frame)") RFunction showFunction) {
             if (noOpt) {
                 // S4 should only be called in case noOpt is true
-                RContext.getEngine().evalFunction(showFunction, null, null, null, o);
+                RContext.getEngine().evalFunction(showFunction, null, null, true, null, o);
             } else {
                 printDefault(showFunction, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
             }

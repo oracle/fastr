@@ -232,7 +232,6 @@ public class ArgumentMatcher {
         }, index -> evaluatedArgs.getSignature().getName(index), null);
 
         Object[] evaledArgs = new Object[match.resultPermutation.length];
-
         for (int formalIndex = 0; formalIndex < match.resultPermutation.length; formalIndex++) {
             int suppliedIndex = match.resultPermutation[formalIndex];
 
@@ -260,7 +259,7 @@ public class ArgumentMatcher {
                 evaledArgs[formalIndex] = evaluatedArgs.getArgument(suppliedIndex);
             }
         }
-        return new RArgsValuesAndNames(evaledArgs, formals.getSignature());
+        return new RArgsValuesAndNames(evaledArgs, match.resultSignature);
     }
 
     /**

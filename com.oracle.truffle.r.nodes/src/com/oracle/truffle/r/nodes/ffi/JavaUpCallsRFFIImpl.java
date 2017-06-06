@@ -44,6 +44,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.ffi.ParseResult.ParseStatus;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
@@ -204,7 +205,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public Object R_do_MAKE_CLASS(Object clazz) {
         String name = "getClass";
         RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, REnvironment.getRegisteredNamespace("methods").get(name));
-        return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), null, clazz);
+        return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), true, null, clazz);
     }
 
     @Override
@@ -733,10 +734,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             RFunction f = (RFunction) l.car();
             Object args = l.cdr();
             if (args == RNull.instance) {
-                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), RCaller.topLevel, null, new Object[0]);
+                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), RCaller.topLevel, true, null, new Object[0]);
             } else {
                 RList argsList = ((RPairList) args).toRList();
-                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), RCaller.topLevel, argsList.getNames(),
+                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), RCaller.topLevel, true,
+                                ArgumentsSignature.fromNamesAttribute(argsList.getNames()),
                                 argsList.getDataNonShared());
             }
         } else {
@@ -794,7 +796,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public int R_compute_identical(Object x, Object y, int flags) {
         RFunction indenticalBuiltin = RContext.lookupBuiltin("identical");
-        Object res = RContext.getEngine().evalFunction(indenticalBuiltin, null, null, null, x, y, RRuntime.asLogical((!((flags & 1) == 0))),
+        Object res = RContext.getEngine().evalFunction(indenticalBuiltin, null, null, true, null, x, y, RRuntime.asLogical((!((flags & 1) == 0))),
                         RRuntime.asLogical((!((flags & 2) == 0))), RRuntime.asLogical((!((flags & 4) == 0))), RRuntime.asLogical((!((flags & 8) == 0))), RRuntime.asLogical((!((flags & 16) == 0))));
         return (int) res;
     }

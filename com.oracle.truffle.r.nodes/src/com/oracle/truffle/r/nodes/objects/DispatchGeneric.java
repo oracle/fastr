@@ -73,7 +73,7 @@ public abstract class DispatchGeneric extends RBaseNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
             RFunction currentFunction = ReadVariableNode.lookupFunction(".InheritForDispatch", methodsEnv.getFrame(), true, true);
-            method = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, RASTUtils.getOriginalCall(this)), null, classes, fdef, mtable);
+            method = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, RASTUtils.getOriginalCall(this)), true, null, classes, fdef, mtable);
         }
         method = loadMethod.executeRFunction(frame, method, fname);
         Object ret = executeMethod.executeObject(frame, method, fname);

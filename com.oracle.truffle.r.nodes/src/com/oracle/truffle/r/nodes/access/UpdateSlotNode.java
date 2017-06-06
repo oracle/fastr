@@ -59,7 +59,7 @@ public abstract class UpdateSlotNode extends RBaseNode {
         REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
         Object f = methodsNamespace.findFunction(SET_DATA_PART);
         RFunction dataPart = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(SET_DATA_PART, f);
-        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.createInvalid(null), null, object, prepareValue(value), RRuntime.LOGICAL_TRUE);
+        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.createInvalid(null), true, null, object, prepareValue(value), RRuntime.LOGICAL_TRUE);
     }
 
     protected boolean isData(String name) {

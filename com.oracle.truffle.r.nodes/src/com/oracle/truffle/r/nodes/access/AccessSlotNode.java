@@ -76,7 +76,7 @@ public abstract class AccessSlotNode extends RBaseNode {
                 // TODO: any way to cache it or use a mechanism similar to overrides?
                 REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
                 RFunction dataPart = getDataPartFunction(methodsNamespace);
-                return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(null, RASTUtils.getOriginalCall(this)), null, object);
+                return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(null, RASTUtils.getOriginalCall(this)), true, null, object);
             } else if (name == RRuntime.NAMES_ATTR_KEY && object instanceof RAbstractVector) {
                 assert false; // RS4Object can never be a vector?
                 return RNull.instance;
@@ -126,7 +126,7 @@ public abstract class AccessSlotNode extends RBaseNode {
         // TODO: any way to cache it or use a mechanism similar to overrides?
         REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
         RFunction dataPart = getDataPartFunction(methodsNamespace);
-        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(null, RASTUtils.getOriginalCall(this)), null, object);
+        return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(null, RASTUtils.getOriginalCall(this)), true, null, object);
     }
 
     // this is really a fallback specialization but @Fallback does not work here (because of the
