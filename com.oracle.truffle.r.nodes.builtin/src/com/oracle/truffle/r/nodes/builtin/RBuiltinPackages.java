@@ -28,6 +28,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.function.Supplier;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
@@ -67,6 +69,18 @@ public final class RBuiltinPackages implements RBuiltinLookup {
 
     public static RBuiltinPackages getInstance() {
         return instance;
+    }
+
+    /*
+     * Adds the RBuiltinNodes provided to the base package.
+     */
+    private static ServiceLoader<Extension> packages = ServiceLoader.load(Extension.class);
+    static {
+        for (Extension p : packages) {
+            for (Map.Entry<Class<?>, Supplier<RBuiltinNode>> e : p.entries().entrySet()) {
+                basePackage.add(e.getKey(), e.getValue());
+            }
+        }
     }
 
     public static void loadBase(MaterializedFrame baseFrame) {
