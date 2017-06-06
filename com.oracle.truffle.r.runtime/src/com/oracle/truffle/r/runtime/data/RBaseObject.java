@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,16 +48,16 @@ abstract class RBaseObject implements RTypedValue {
 
     @Override
     public final boolean isS4() {
-        return (getGPBits() & S4_MASK) == S4_MASK;
+        return (getTypedValueInfo() & S4_MASK_SHIFTED) != 0;
     }
 
     @Override
     public final void setS4() {
-        setGPBits(getGPBits() | S4_MASK);
+        setTypedValueInfo(getTypedValueInfo() | S4_MASK_SHIFTED);
     }
 
     @Override
     public final void unsetS4() {
-        setGPBits(getGPBits() & ~S4_MASK);
+        setTypedValueInfo(getTypedValueInfo() & ~S4_MASK_SHIFTED);
     }
 }
