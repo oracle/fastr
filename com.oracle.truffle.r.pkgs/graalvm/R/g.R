@@ -35,11 +35,16 @@ graalvm.status <- function() {
 #' @param port The port at which the GraalVM agent is listening
 #' @param rlibs The value of the FastR R_LIBS environmental variable. The default 
 #' value is calculated as paste0(graalvm.home, "/language/R/library").
+#' @param javaOpts a character vector of Java options
 #' @examples
 #' graalvm.setup("~/work/graalvm-0.21")
+#' # Running GraalVM in debug mode
+#' graalvm.setup("~/work/graalvm-0.21", javaOpts = c("-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=y"))
 #' @export
-graalvm.setup <- function(home, host = "localhost", port = 9876, rlibs = paste0(home, "/language/R/library")) {
-	options(graalvm.home = home, graalvm.host = host, graalvm.port = port, graalvm.rlibs = rlibs)
+graalvm.setup <- function(home, host = "localhost", port = 9876, rlibs = paste0(home, "/language/R/library"), 
+							javaOpts = character(0)) {
+	options(graalvm.home = home, graalvm.host = host, graalvm.port = port, graalvm.rlibs = rlibs,
+	graalvm.javaOpts = paste(sapply(javaOpts, function(opt) { paste0("-J'", opt, "'")  }), collapse = " "))
 }
 
 commandURL <- function(cmd) {
@@ -70,8 +75,9 @@ graalvm.start <- function() {
 	
 		gHost <- getOption("graalvm.host");
 		gPort <- getOption("graalvm.port");
+		javaOpts <- getOption("graalvm.javaOpts");
 	
-		nodeLaunchCmd <- paste0(libEnvVar, " ", gHome, "/bin/node ", serverScriptPath, " ", gHost, " ", gPort, " &")
+		nodeLaunchCmd <- paste0(libEnvVar, " ", gHome, "/bin/node ", javaOpts, " ", serverScriptPath, " ", gHost, " ", gPort, " &")
 		system(nodeLaunchCmd, ignore.stdout = TRUE, ignore.stderr = TRUE)
 	
 		attempts <- 0L

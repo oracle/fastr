@@ -5,7 +5,7 @@
 \title{Set up the GraalVM agent}
 \usage{
 graalvm.setup(home, host = "localhost", port = 9876, rlibs = paste0(home,
-  "/language/R/library"))
+  "/language/R/library"), javaOpts = character(0))
 }
 \arguments{
 \item{home}{The home folder of the GraalVM installation}
@@ -16,10 +16,14 @@ graalvm.setup(home, host = "localhost", port = 9876, rlibs = paste0(home,
 
 \item{rlibs}{The value of the FastR R_LIBS environmental variable. The default 
 value is calculated as paste0(graalvm.home, "/language/R/library").}
+
+\item{javaOpts}{a character vector of Java options}
 }
 \description{
 Set up the GraalVM agent
 }
 \examples{
 graalvm.setup("~/work/graalvm-0.21")
+# Running GraalVM in debug mode
+graalvm.setup("~/work/graalvm-0.21", javaOpts = c("-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=y"))
 }
