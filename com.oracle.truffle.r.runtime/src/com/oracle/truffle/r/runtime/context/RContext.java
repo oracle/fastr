@@ -229,6 +229,9 @@ public final class RContext extends com.oracle.truffle.api.ExecutionContext impl
 
         public static final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
 
+        /** This table is required to create several bunches of child contexts. */
+        public static final Map<Integer, Integer> idToMultiSlotTable = new ConcurrentHashMap<>();
+
         /** We use a separate counter for threads since ConcurrentHashMap.size() is not reliable. */
         public static final AtomicInteger threadCnt = new AtomicInteger(0);
 
@@ -238,6 +241,7 @@ public final class RContext extends com.oracle.truffle.api.ExecutionContext impl
             this.source = source;
             threadCnt.incrementAndGet();
             threads.put(info.getId(), this);
+            idToMultiSlotTable.put(info.getId(), info.getMultiSlotInd());
         }
 
         @Override
@@ -331,6 +335,10 @@ public final class RContext extends com.oracle.truffle.api.ExecutionContext impl
 
         public RList getEvalResult() {
             return evalResult;
+        }
+
+        public ContextInfo getContextInfo() {
+            return info;
         }
     }
 

@@ -96,7 +96,7 @@ public class FastRContext {
     }
 
     private static void handleSharedContexts(ContextKind contextKind) {
-        if (contextKind == ContextKind.SHARE_ALL) {
+        if (contextKind == ContextKind.SHARE_ALL && RContext.EvalThread.threadCnt.get() == 0) {
             RContext current = RContext.getInstance();
             if (EvalThread.threadCnt.get() == 0 && (current.isInitial() || current.getKind() == ContextKind.SHARE_PARENT_RW)) {
                 ContextInfo.resetMultiSlotIndexGenerator();
@@ -137,13 +137,15 @@ public class FastRContext {
             int length = exprs.getLength();
             RContext.EvalThread[] threads = new RContext.EvalThread[length];
             int[] data = new int[length];
+            int[] multiSlotIndices = new int[length];
             for (int i = 0; i < length; i++) {
                 ContextInfo info = createContextInfo(contextKind);
                 threads[i] = new RContext.EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
                 data[i] = info.getId();
+                multiSlotIndices[i] = info.getMultiSlotInd();
             }
             if (contextKind == ContextKind.SHARE_ALL) {
-                REnvironment.convertSearchpathToMultiSlot();
+                REnvironment.convertSearchpathToMultiSlot(multiSlotIndices);
             }
             for (int i = 0; i < length; i++) {
                 threads[i].start();
@@ -167,8 +169,11 @@ public class FastRContext {
         @TruffleBoundary
         protected RNull eval(RAbstractIntVector handle) {
             try {
+                int[] multiSlotIndices = new int[handle.getLength()];
                 for (int i = 0; i < handle.getLength(); i++) {
-                    Thread thread = RContext.EvalThread.threads.get(handle.getDataAt(i));
+                    int id = handle.getDataAt(i);
+                    Thread thread = RContext.EvalThread.threads.get(id);
+                    multiSlotIndices[i] = RContext.EvalThread.idToMultiSlotTable.remove(id);
                     if (thread == null) {
                         // already done
                         continue;
@@ -176,7 +181,12 @@ public class FastRContext {
                         thread.join();
                     }
                 }
-                REnvironment.cleanupSearchpathFromMultiSlot();
+                // If all eval threads died, completely remove multi slot data.
+                if (RContext.EvalThread.threadCnt.get() == 0) {
+                    REnvironment.cleanupSearchpathFromMultiSlot();
+                } else {
+                    REnvironment.cleanupSearchpathFromMultiSlot(multiSlotIndices);
+                }
             } catch (InterruptedException ex) {
                 throw error(RError.Message.GENERIC, "error finishing eval thread");
 
@@ -231,12 +241,14 @@ public class FastRContext {
             } else {
                 // separate threads that run in parallel; invoking thread waits for completion
                 RContext.EvalThread[] threads = new RContext.EvalThread[length];
+                int[] multiSlotIndices = new int[length];
                 for (int i = 0; i < length; i++) {
                     ContextInfo info = createContextInfo(contextKind);
                     threads[i] = new RContext.EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
+                    multiSlotIndices[i] = info.getMultiSlotInd();
                 }
                 if (contextKind == ContextKind.SHARE_ALL) {
-                    REnvironment.convertSearchpathToMultiSlot();
+                    REnvironment.convertSearchpathToMultiSlot(multiSlotIndices);
                 }
                 for (int i = 0; i < length; i++) {
                     threads[i].start();

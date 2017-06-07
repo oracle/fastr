@@ -910,16 +910,16 @@ public abstract class REnvironment extends RAttributeStorage {
         return getPrintName();
     }
 
-    public static void convertSearchpathToMultiSlot() {
+    public static <T> void applyToSearchPath(SearchPathFun fun) {
         CompilerAsserts.neverPartOfCompilation();
         RContext.markNonSingle();
         ContextStateImpl parentState = RContext.getInstance().stateREnvironment;
         SearchPath searchPath = parentState.getSearchPath();
         assert searchPath.size() > 0 && searchPath.get(0).getSearchName() == Global.SEARCHNAME;
         // for global space don't replicate entries as all contexts should see their own values
-        FrameSlotChangeMonitor.handleAllMultiSlots(searchPath.get(0).getFrame(), false);
+        fun.apply(searchPath.get(0).getFrame(), false);
         for (int i = 1; i < searchPath.size(); i++) {
-            FrameSlotChangeMonitor.handleAllMultiSlots(searchPath.get(i).getFrame(), true);
+            fun.apply(searchPath.get(i).getFrame(), true);
         }
         REnvironment namespaces = parentState.namespaceRegistry;
         Frame namespacesFrame = namespaces.getFrame();
@@ -931,32 +931,46 @@ public abstract class REnvironment extends RAttributeStorage {
             if (namespaceEnv != Base.baseNamespaceEnv()) {
                 // base namespace frame redirects all accesses to base frame and this would
                 // result in processing the slots twice
-                FrameSlotChangeMonitor.handleAllMultiSlots(namespaceEnv.getFrame(), true);
+                fun.apply(namespaceEnv.getFrame(), true);
             }
         }
     }
 
-    public static void cleanupSearchpathFromMultiSlot() {
-        CompilerAsserts.neverPartOfCompilation();
-        ContextStateImpl parentState = RContext.getInstance().stateREnvironment;
-        SearchPath searchPath = parentState.getSearchPath();
-        assert searchPath.size() > 0 && searchPath.get(0).getSearchName() == Global.SEARCHNAME;
-        for (int i = 0; i < searchPath.size(); i++) {
-            FrameSlotChangeMonitor.cleanMultiSlots(searchPath.get(i).getFrame());
-        }
-        REnvironment namespaces = parentState.namespaceRegistry;
-        Frame namespacesFrame = namespaces.getFrame();
-        // make a copy avoid potential updates to the array iterated over
-        FrameSlot[] slots = new FrameSlot[namespacesFrame.getFrameDescriptor().getSlots().size()];
-        slots = namespacesFrame.getFrameDescriptor().getSlots().toArray(slots);
-        for (int i = 0; i < slots.length; i++) {
-            REnvironment namespaceEnv = (REnvironment) namespacesFrame.getValue(slots[i]);
-            if (namespaceEnv != Base.baseNamespaceEnv()) {
-                // base namespace frame redirects all accesses to base frame and this would
-                // result in processing the slots twice
-                FrameSlotChangeMonitor.cleanMultiSlots(namespaceEnv.getFrame());
+    private static interface SearchPathFun {
+        void apply(Frame frame, boolean replicate);
+    }
+
+    public static void convertSearchpathToMultiSlot(int[] indices) {
+        applyToSearchPath(new SearchPathFun() {
+
+            @Override
+            public void apply(Frame frame, boolean replicate) {
+                FrameSlotChangeMonitor.handleAllMultiSlots(frame, indices, replicate);
             }
-        }
+
+        });
+    }
+
+    public static void cleanupSearchpathFromMultiSlot() {
+        applyToSearchPath(new SearchPathFun() {
+
+            @Override
+            public void apply(Frame frame, boolean replicate) {
+                FrameSlotChangeMonitor.cleanMultiSlots(frame);
+            }
+
+        });
+    }
+
+    public static void cleanupSearchpathFromMultiSlot(int[] multiSlotIndices) {
+        applyToSearchPath(new SearchPathFun() {
+
+            @Override
+            public void apply(Frame frame, boolean replicate) {
+                FrameSlotChangeMonitor.cleanMultiSlots(frame, multiSlotIndices);
+            }
+
+        });
     }
 
     private static final class BaseNamespace extends REnvironment {

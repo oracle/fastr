@@ -460,7 +460,15 @@ public final class FrameSlotChangeMonitor {
 
     public static final class MultiSlotData {
 
-        private final Object[] data = new Object[ContextInfo.contextNum()];
+        private final Object[] data;
+
+        public MultiSlotData(MultiSlotData prevValue) {
+            data = Arrays.copyOf(prevValue.data, ContextInfo.contextNum());
+        }
+
+        public MultiSlotData() {
+            data = new Object[ContextInfo.contextNum()];
+        }
 
         public Object get(int ind) {
             return data[ind];
@@ -600,7 +608,7 @@ public final class FrameSlotChangeMonitor {
             }
         }
 
-        public static void handleSearchPathMultiSlot(Frame frame, FrameSlot slot, boolean replicate) {
+        public static void handleSearchPathMultiSlot(Frame frame, FrameSlot slot, int[] indices, boolean replicate) {
             CompilerAsserts.neverPartOfCompilation();
             while (true) {
                 FrameSlotInfoImpl info = (FrameSlotInfoImpl) slot.getInfo();
@@ -616,18 +624,28 @@ public final class FrameSlotChangeMonitor {
                     // TODO: do we have to worry that prevValue can be invalid?
                     if (prevValue instanceof MultiSlotData) {
                         // this handles the case when we create share contexts for the second time -
-                        // existing multi slots are an artifact of the previous executions and must
-                        // be discarded
+                        // existing multi slots are an artifact of a previous executions and must
+                        // be extended
                         // TODO: consider re-using multi slots but since we don't expect many of
                         // them, perhaps it's too much work for too little gain
+                        data = new MultiSlotData((MultiSlotData) prevValue);
                         prevValue = ((MultiSlotData) prevValue).get(0);
-                    } else if (FastROptions.SearchPathForcePromises.getBooleanValue()) {
-                        prevValue = RContext.getRRuntimeASTAccess().forcePromise("searchPathPromiseForce", prevValue);
-                    }
-                    if (replicate) {
-                        data.setAll(prevValue);
+
+                        // replicate value only for newly created child contexts
+                        if (replicate) {
+                            for (int i : indices) {
+                                data.set(i, prevValue);
+                            }
+                        }
                     } else {
-                        data.set(0, prevValue);
+                        if (FastROptions.SearchPathForcePromises.getBooleanValue()) {
+                            prevValue = RContext.getRRuntimeASTAccess().forcePromise("searchPathPromiseForce", prevValue);
+                        }
+                        if (replicate) {
+                            data.setAll(prevValue);
+                        } else {
+                            data.set(0, prevValue);
+                        }
                     }
                     frame.setObject(slot, data);
                     break;
@@ -917,13 +935,13 @@ public final class FrameSlotChangeMonitor {
     /*
      * This method should be called for frames of all environments on the search path.
      */
-    public static void handleAllMultiSlots(Frame frame, boolean replicate) {
+    public static void handleAllMultiSlots(Frame frame, int[] indices, boolean replicate) {
         // make a copy avoid potential updates to the array iterated over
         FrameSlot[] slots = new FrameSlot[frame.getFrameDescriptor().getSlots().size()];
         slots = frame.getFrameDescriptor().getSlots().toArray(slots);
         for (int i = 0; i < slots.length; i++) {
             if (!(slots[i].getIdentifier() instanceof RFrameSlot)) {
-                FrameSlotInfoImpl.handleSearchPathMultiSlot(frame, slots[i], replicate);
+                FrameSlotInfoImpl.handleSearchPathMultiSlot(frame, slots[i], indices, replicate);
             }
         }
     }
@@ -972,13 +990,19 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    public static void cleanMultiSlots(MaterializedFrame frame) {
+    /**
+     * Replaces {@link MultiSlotData} objects by the value in the first slot and re-initializes the
+     * frame slot info.
+     */
+    public static void cleanMultiSlots(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         // make a copy avoid potential updates to the array iterated over
 
+        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+
         // first, investigate frame slots if there are multi slots in the frame
         boolean multiSlotData = false;
-        for (FrameSlot slot : frame.getFrameDescriptor().getSlots()) {
+        for (FrameSlot slot : frameDescriptor.getSlots()) {
             if (!getFrameSlotInfo(slot).noMultiSlot.isValid()) {
                 multiSlotData = true;
                 break;
@@ -986,11 +1010,9 @@ public final class FrameSlotChangeMonitor {
         }
 
         if (multiSlotData) {
-            FrameSlot[] slots = new FrameSlot[frame.getFrameDescriptor().getSlots().size()];
-            slots = frame.getFrameDescriptor().getSlots().toArray(slots);
+            FrameSlot[] slots = frameDescriptor.getSlots().toArray(new FrameSlot[0]);
             Object[] values = new Object[slots.length];
 
-            FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             for (int i = slots.length - 1; i >= 0; i--) {
                 values[i] = frame.getValue(slots[i]);
                 frameDescriptor.removeFrameSlot(slots[i].getIdentifier());
@@ -1006,6 +1028,26 @@ public final class FrameSlotChangeMonitor {
                 }
                 if (getFrameSlotInfo(slots[i]).stableValue != null) {
                     getFrameSlotInfo(newSlot).stableValue = getFrameSlotInfo(slots[i]).stableValue;
+                }
+            }
+        }
+    }
+
+    /**
+     * Nullifies a set of slots in a {@link MultiSlotData} to avoid memory leaks.
+     */
+    public static void cleanMultiSlots(Frame frame, int[] indices) {
+        CompilerAsserts.neverPartOfCompilation();
+        // make a copy avoid potential updates to the array iterated over
+        FrameSlot[] slots = frame.getFrameDescriptor().getSlots().toArray(new FrameSlot[0]);
+
+        for (int i = 0; i < slots.length; i++) {
+            // re-add the frame slot
+            Object value = frame.getValue(slots[i]);
+            if (value instanceof MultiSlotData) {
+                MultiSlotData multiSlotData2 = (MultiSlotData) value;
+                for (int j = 0; j < indices.length; j++) {
+                    multiSlotData2.set(indices[j], null);
                 }
             }
         }
