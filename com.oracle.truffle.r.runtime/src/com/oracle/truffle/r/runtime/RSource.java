@@ -27,9 +27,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RSrcref.SrcrefFields;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * A facade for the creation of Truffle {@link Source} objects, which is complicated in R due the
@@ -188,6 +192,18 @@ public class RSource {
     }
 
     /**
+     * Create an (external) source from an R srcfile ({@link RSrcref#createSrcfile(String)}).
+     */
+    public static Source fromSrcfile(REnvironment env) throws IOException {
+        Path filename = Paths.get((String) RRuntime.r2Java(env.get(SrcrefFields.filename.name())));
+        if (filename.isAbsolute()) {
+            return fromFileName(filename.toString(), false);
+        }
+        Path wd = Paths.get((String) RRuntime.r2Java(env.get(SrcrefFields.wd.name())));
+        return fromFileName(wd.resolve(filename).toString(), false);
+    }
+
+    /**
      * Create an unknown source with the given name.
      */
     public static SourceSection createUnknown(String name) {
@@ -214,6 +230,18 @@ public class RSource {
      */
     public static String getPath(Source source) {
         if (source == null || source.isInternal()) {
+            return null;
+        }
+        URI uri = source.getURI();
+        assert uri != null;
+        return uri.getPath();
+    }
+
+    /**
+     * Like {@link #getPath(Source)} but ignoring if {@code source} is "internal".
+     */
+    public static String getPathInternal(Source source) {
+        if (source == null) {
             return null;
         }
         URI uri = source.getURI();

@@ -78,7 +78,7 @@ public class JLineConsoleCompleter implements Completer {
             REnvironment utils = REnvironment.getRegisteredNamespace("utils");
             Object o = utils.get(".completeToken");
             if (o instanceof RPromise) {
-                o = PromiseHelperNode.evaluateSlowPath(null, (RPromise) o);
+                o = PromiseHelperNode.evaluateSlowPath((RPromise) o);
             }
             RFunction completeToken;
             if (o instanceof RFunction) {

@@ -529,6 +529,10 @@ public abstract class PromiseNode extends RNode {
                     size++;
                     evaluatedArgs[i] = promiseCheckHelper.checkEvaluate(frame, argValue);
                 }
+                if (evaluatedArgs[i] == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    throw RInternalError.shouldNotReachHere("evaluated argument must not be null");
+                }
             }
             if (containsVarargProfile.profile(containsVarargs)) {
                 return size;

@@ -43,7 +43,6 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -315,9 +314,9 @@ public class FileFunctions {
                         PosixFileAttributes pfa = Files.readAttributes(path, PosixFileAttributes.class);
                         size = pfa.size();
                         isdir = RRuntime.asLogical(pfa.isDirectory());
-                        mtime = getTimeInSecs(pfa.lastModifiedTime());
-                        ctime = getTimeInSecs(pfa.creationTime());
-                        atime = getTimeInSecs(pfa.lastAccessTime());
+                        mtime = Utils.getTimeInSecs(pfa.lastModifiedTime());
+                        ctime = Utils.getTimeInSecs(pfa.creationTime());
+                        atime = Utils.getTimeInSecs(pfa.lastAccessTime());
                         uname = pfa.owner().getName();
                         grname = pfa.group().getName();
                         mode = Utils.intFilePermissions(pfa.permissions());
@@ -345,14 +344,6 @@ public class FileFunctions {
                 data[n] = createColumnResult(Column.VALUES[n], data[n], complete[n]);
             }
             return RDataFactory.createList(data, NAMES_VECTOR);
-        }
-
-        private static int getTimeInSecs(Object fileTime) {
-            if (fileTime == null) {
-                return RRuntime.INT_NA;
-            } else {
-                return (int) ((FileTime) fileTime).toMillis() / 1000;
-            }
         }
 
         private static Object createColumnData(Column column, int vecLength) {

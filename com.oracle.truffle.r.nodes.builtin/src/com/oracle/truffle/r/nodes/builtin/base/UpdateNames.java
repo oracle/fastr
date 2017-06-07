@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -48,7 +49,8 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
     @Child private CastStringNode castStringNode;
 
     static {
-        Casts.noCasts(UpdateNames.class);
+        Casts casts = new Casts(UpdateNames.class);
+        casts.arg("x").mustNotBeNull(RError.Message.SET_ATTRIBUTES_ON_NULL);
     }
 
     private Object castString(Object o) {

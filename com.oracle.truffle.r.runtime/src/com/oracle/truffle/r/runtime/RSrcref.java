@@ -14,8 +14,12 @@ package com.oracle.truffle.r.runtime;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFileAttributes;
+import java.util.LinkedList;
+import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.Source;
@@ -23,12 +27,21 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 /**
  * Utilities for handling R srcref attributes, in particular conversion from {@link Source},
@@ -50,7 +63,9 @@ public class RSrcref {
         timestamp,
         filename,
         isFile,
-        wd;
+        wd,
+        fixedNewlines,
+        lines;
     }
 
     private static final RStringVector SRCREF_ATTR = RDataFactory.createStringVectorFromScalar(RRuntime.R_SRCREF);
@@ -66,22 +81,28 @@ public class RSrcref {
     @TruffleBoundary
     private static REnvironment createSrcfile(Path path) {
         // A srcref is an environment
-        double mtime;
+        REnvironment env = RContext.getInstance().srcfileEnvironments.get(path);
+        if (env == null) {
+            env = RDataFactory.createNewEnv("");
+            env.safePut(SrcrefFields.Enc.name(), "unknown");
+            env.safePut(SrcrefFields.encoding.name(), "native.enc");
+            env.safePut(SrcrefFields.timestamp.name(), getTimestamp(path));
+            env.safePut(SrcrefFields.filename.name(), path.toString());
+            env.safePut(SrcrefFields.isFile.name(), RRuntime.LOGICAL_TRUE);
+            env.safePut(SrcrefFields.wd.name(), BaseRFFI.GetwdRootNode.create().getCallTarget().call());
+            env.setClassAttr(SRCFILE_ATTR);
+            RContext.getInstance().srcfileEnvironments.put(path, env);
+        }
+        return env;
+    }
+
+    private static int getTimestamp(Path path) {
         try {
             PosixFileAttributes pfa = Files.readAttributes(path, PosixFileAttributes.class);
-            mtime = pfa.lastModifiedTime().toMillis();
+            return Utils.getTimeInSecs(pfa.lastModifiedTime());
         } catch (IOException ex) {
-            mtime = RRuntime.DOUBLE_NA;
+            return RRuntime.INT_NA;
         }
-        REnvironment env = RDataFactory.createNewEnv("");
-        env.safePut(SrcrefFields.Enc.name(), "unknown");
-        env.safePut(SrcrefFields.encoding.name(), "native.enc");
-        env.safePut(SrcrefFields.timestamp.name(), mtime);
-        env.safePut(SrcrefFields.filename.name(), path.toString());
-        env.safePut(SrcrefFields.isFile.name(), RRuntime.LOGICAL_TRUE);
-        env.safePut(SrcrefFields.wd.name(), BaseRFFI.GetwdRootNode.create().getCallTarget().call());
-        env.setClassAttr(SRCFILE_ATTR);
-        return env;
     }
 
     /**
@@ -91,6 +112,35 @@ public class RSrcref {
      */
     public static RIntVector createLloc(SourceSection ss, String path) {
         return createLloc(ss, createSrcfile(path));
+    }
+
+    /**
+     * Creates a block source reference or {@code null} if the function's body is not a block
+     * statement.<br>
+     * Srcref for blocks are different in that it is an RList of srcref vectors whereas each element
+     * corresponds to one syntax call in the block (including the block itself). E.g.
+     * <p>
+     * <code> {<br/>
+     * print('Hello')<br/>
+     * print(x)<br/>
+     * }</code>
+     * </p>
+     * will result in [[1, 20, 4, 1, 20, 1, 1, 4], [2, 2, 2, 15, 2, 15, 2, 2], [3, 2, 3, 9, 2, 9, 3,
+     * 3]]
+     *
+     * @param function
+     */
+    @TruffleBoundary
+    public static RList createBlockSrcrefs(RSyntaxElement function) {
+
+        BlockSrcrefsVisitor v = new BlockSrcrefsVisitor();
+        v.accept(function);
+        List<Object> blockSrcrefs = v.blockSrcrefs;
+
+        if (!blockSrcrefs.isEmpty()) {
+            return RDataFactory.createList(blockSrcrefs.toArray());
+        }
+        return null;
     }
 
     @TruffleBoundary
@@ -107,13 +157,19 @@ public class RSrcref {
             env = RDataFactory.createNewEnv("src");
             env.setClassAttr(RDataFactory.createStringVector(new String[]{"srcfilecopy", RRuntime.R_SRCFILE}, true));
             try {
-                env.put("filename", source.getPath() == null ? "" : source.getPath());
-                env.put("fixedNewlines", RRuntime.LOGICAL_TRUE);
+                String pathStr = RSource.getPathInternal(source);
+                Path path = Paths.get(pathStr != null ? pathStr : "");
+                env.put(SrcrefFields.filename.name(), path.toString());
+                env.put(SrcrefFields.fixedNewlines.name(), RRuntime.LOGICAL_TRUE);
                 String[] lines = new String[source.getLineCount()];
                 for (int i = 0; i < lines.length; i++) {
                     lines[i] = source.getCode(i + 1);
                 }
-                env.put("lines", RDataFactory.createStringVector(lines, true));
+                env.put(SrcrefFields.lines.name(), RDataFactory.createStringVector(lines, true));
+                env.safePut(SrcrefFields.Enc.name(), "unknown");
+                env.safePut(SrcrefFields.isFile.name(), RRuntime.asLogical(Files.isRegularFile(path)));
+                env.safePut(SrcrefFields.timestamp.name(), getTimestamp(path));
+                env.safePut(SrcrefFields.wd.name(), BaseRFFI.GetwdRootNode.create().getCallTarget().call());
             } catch (PutException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
@@ -148,5 +204,99 @@ public class RSrcref {
         lloc.setClassAttr(SRCREF_ATTR);
         lloc.setAttr(RRuntime.R_SRCFILE, srcfile);
         return lloc;
+    }
+
+    public static SourceSection createSourceSection(RAbstractIntVector srcrefVec, Source sharedSource) {
+
+        try {
+            Source source;
+            if (sharedSource != null) {
+                source = sharedSource;
+            } else {
+                Object srcfile = srcrefVec.getAttr(RRuntime.R_SRCFILE);
+                assert srcfile instanceof REnvironment;
+                source = RSource.fromSrcfile((REnvironment) srcfile);
+            }
+            int startLine = srcrefVec.getDataAt(0);
+            int startColumn = srcrefVec.getDataAt(1);
+            int startIdx = getLineStartOffset(source, startLine) + startColumn;
+            int length = getLineStartOffset(source, srcrefVec.getDataAt(2)) + srcrefVec.getDataAt(3) - startIdx + 1;
+            return source.createSection(startLine, startColumn, length);
+        } catch (NoSuchFileException e) {
+            RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, "Missing source file: " + e.getMessage());
+        } catch (IOException e) {
+            RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, "Cannot access source file: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, "Invalid source reference: " + e.getMessage());
+        }
+        return RSourceSectionNode.LAZY_DEPARSE;
+    }
+
+    private static int getLineStartOffset(Source source, int lineNum) {
+        try {
+            return source.getLineStartOffset(lineNum);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(String.format("line %d does not exist in source %s", lineNum, RSource.getPathInternal(source)), e);
+        }
+    }
+
+    private static final class BlockSrcrefsVisitor extends RSyntaxVisitor<Void> {
+        private List<Object> blockSrcrefs = new LinkedList<>();
+        private int depth = 0;
+
+        @Override
+        public Void visit(RSyntaxCall element) {
+
+            if (depth == 0 && !isBlockStatement(element)) {
+                return null;
+            }
+
+            addSrcref(blockSrcrefs, element);
+
+            if (depth == 0) {
+                RSyntaxElement[] syntaxArguments = element.getSyntaxArguments();
+                for (int i = 0; i < syntaxArguments.length; i++) {
+                    if (syntaxArguments[i] != null) {
+                        depth++;
+                        accept(syntaxArguments[i]);
+                        depth--;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private static void addSrcref(List<Object> blockSrcrefs, RSyntaxElement element) {
+            SourceSection lazySourceSection = element.getLazySourceSection();
+            if (lazySourceSection != null) {
+                blockSrcrefs.add(createLloc(lazySourceSection));
+            }
+        }
+
+        private static boolean isBlockStatement(RSyntaxCall element) {
+            RSyntaxElement lhs = element.getSyntaxLHS();
+            if (lhs instanceof RSyntaxLookup) {
+                return "{".equals(((RSyntaxLookup) lhs).getIdentifier());
+            }
+            return false;
+        }
+
+        @Override
+        public Void visit(RSyntaxConstant element) {
+            addSrcref(blockSrcrefs, element);
+            return null;
+        }
+
+        @Override
+        public Void visit(RSyntaxLookup element) {
+            addSrcref(blockSrcrefs, element);
+            return null;
+        }
+
+        @Override
+        public Void visit(RSyntaxFunction element) {
+            accept(element.getSyntaxBody());
+            return null;
+        }
     }
 }

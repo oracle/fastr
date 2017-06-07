@@ -22,15 +22,20 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.runtime.RVisibility.ON;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
@@ -40,25 +45,37 @@ import com.oracle.truffle.r.runtime.data.RNull;
 public abstract class FastRSourceInfo extends RBuiltinNode.Arg1 {
 
     static {
-        Casts.noCasts(FastRSourceInfo.class);
-    }
-
-    @Specialization
-    public Object srcInfo(@SuppressWarnings("unused") RNull fun) {
-        return RNull.instance;
+        Casts casts = new Casts(FastRSourceInfo.class);
+        casts.arg("fun").defaultError(RError.Message.GENERIC, "Only functions are allowed.").mustBe(instanceOf(RFunction.class).or(instanceOf(RLanguage.class)));
     }
 
     @Specialization
     public Object srcInfo(RFunction fun) {
-        SourceSection ss = fun.getRootNode().getSourceSection();
+        return srcInfo(fun.getRootNode());
+    }
+
+    @Specialization
+    public Object srcInfo(RLanguage fun) {
+        return srcInfo(fun.getRep());
+    }
+
+    private Object srcInfo(Node fun) {
+        SourceSection ss = fun.getSourceSection();
         if (ss != null) {
             String path = ss.getSource().getPath();
             if (path != null) {
                 return path + "#" + ss.getStartLine();
+            } else if (ss.getSource().getURI() != null) {
+                return ss.getSource().getURI() + "#" + ss.getStartLine();
             } else {
                 return ss.getSource().getName();
             }
         }
+        return RNull.instance;
+    }
+
+    @Fallback
+    public Object srcInfo(@SuppressWarnings("unused") Object o) {
         return RNull.instance;
     }
 }

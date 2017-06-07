@@ -109,7 +109,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         Result result;
         Object methodsTable = getTable.get();
         if (methodsTable instanceof RPromise) {
-            methodsTable = PromiseHelperNode.evaluateSlowPath(null, (RPromise) methodsTable);
+            methodsTable = PromiseHelperNode.evaluateSlowPath((RPromise) methodsTable);
         }
         MaterializedFrame methodsTableFrame = methodsTable == null ? null : ((REnvironment) methodsTable).getFrame();
 
@@ -173,7 +173,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
 
     private static RFunction checkPromise(Object value) {
         if (value instanceof RPromise) {
-            return (RFunction) PromiseHelperNode.evaluateSlowPath(null, (RPromise) value);
+            return (RFunction) PromiseHelperNode.evaluateSlowPath((RPromise) value);
         } else {
             return (RFunction) value;
         }

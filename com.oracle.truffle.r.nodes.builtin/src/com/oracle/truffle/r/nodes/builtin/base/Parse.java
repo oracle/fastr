@@ -96,9 +96,9 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
     @Child private CastStringNode castStringNode;
     @Child private CastToVectorNode castVectorNode;
 
-    @Child private SetFixedAttributeNode setSrcRefAttrNode = SetFixedAttributeNode.create("srcref");
-    @Child private SetFixedAttributeNode setWholeSrcRefAttrNode = SetFixedAttributeNode.create("wholeSrcref");
-    @Child private SetFixedAttributeNode setSrcFileAttrNode = SetFixedAttributeNode.create("srcfile");
+    @Child private SetFixedAttributeNode setSrcRefAttrNode = SetFixedAttributeNode.create(RRuntime.R_SRCREF);
+    @Child private SetFixedAttributeNode setWholeSrcRefAttrNode = SetFixedAttributeNode.create(RRuntime.R_WHOLE_SRCREF);
+    @Child private SetFixedAttributeNode setSrcFileAttrNode = SetFixedAttributeNode.create(RRuntime.R_SRCFILE);
 
     static {
         Casts casts = new Casts(Parse.class);

@@ -223,6 +223,11 @@ public class PromiseHelperNode extends RBaseNode {
         return generateValueDefault(frame, promise);
     }
 
+    @TruffleBoundary
+    public static Object evaluateSlowPath(RPromise promise) {
+        return evaluateSlowPath(null, promise);
+    }
+
     public static Object evaluateSlowPath(VirtualFrame frame, RPromise promise) {
         CompilerAsserts.neverPartOfCompilation();
         if (promise.isEvaluated()) {

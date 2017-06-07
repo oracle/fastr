@@ -30,6 +30,7 @@ import java.io.InputStreamReader;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Arrays;
 import java.util.Set;
@@ -717,5 +718,13 @@ public final class Utils {
             startingTempDir = "/tmp";
         }
         return startingTempDir;
+    }
+
+    public static int getTimeInSecs(FileTime fileTime) {
+        if (fileTime == null) {
+            return RRuntime.INT_NA;
+        } else {
+            return (int) (fileTime.toMillis() / 1000);
+        }
     }
 }

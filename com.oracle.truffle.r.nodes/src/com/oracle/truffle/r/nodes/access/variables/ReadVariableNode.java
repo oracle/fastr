@@ -755,7 +755,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
                         throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, identifier);
                     }
                     if (value instanceof RPromise) {
-                        return PromiseHelperNode.evaluateSlowPath(null, (RPromise) value);
+                        return PromiseHelperNode.evaluateSlowPath((RPromise) value);
                     }
                     return value;
                 }

@@ -89,6 +89,7 @@ public class ParserGeneration {
         "support for hex float literals",
         "support for hex float literals without decimal point: 0x0p0",
         "different warning for hex and dec integer literals",
-        "raise ZERO_LENGTH_VARIABLE errors in parser"
+        "raise ZERO_LENGTH_VARIABLE errors in parser",
+        "support for file delimiter"
     };
 }

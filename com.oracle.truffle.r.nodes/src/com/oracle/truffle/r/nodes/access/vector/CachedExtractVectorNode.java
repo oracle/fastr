@@ -249,6 +249,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         return extractedVector;
     }
 
+    @TruffleBoundary
     private Object doEnvironment(REnvironment env, Object[] positions) {
         if (mode.isSubset()) {
             throw error(RError.Message.OBJECT_NOT_SUBSETTABLE, RType.Environment.getName());
@@ -258,7 +259,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         if (positionString != null) {
             Object obj = env.get(positionString);
             if (promiseInEnvironment.profile(obj instanceof RPromise)) {
-                obj = PromiseHelperNode.evaluateSlowPath(null, (RPromise) obj);
+                obj = PromiseHelperNode.evaluateSlowPath((RPromise) obj);
             }
             return obj == null ? RNull.instance : obj;
         }
