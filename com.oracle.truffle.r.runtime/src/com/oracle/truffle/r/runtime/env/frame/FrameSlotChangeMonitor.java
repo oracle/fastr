@@ -991,31 +991,8 @@ public final class FrameSlotChangeMonitor {
     }
 
     /**
-     * Replaces {@link MultiSlotData} objects by the value in the first slot and re-initializes the
-     * frame slot info.
-     */
-    @TruffleBoundary
-    public static void cleanMultiSlots(Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
-        // make a copy avoid potential updates to the array iterated over
-        FrameSlot[] slots = frame.getFrameDescriptor().getSlots().toArray(new FrameSlot[0]);
-
-        for (int i = 0; i < slots.length; i++) {
-            // re-add the frame slot
-            if (!(slots[i].getIdentifier() instanceof RFrameSlot)) {
-                Object value = frame.getValue(slots[i]);
-                if (value instanceof MultiSlotData) {
-                    MultiSlotData multiSlotData2 = (MultiSlotData) value;
-                    Object initialValue = multiSlotData2.get(0);
-                    multiSlotData2.setAll(null);
-                    multiSlotData2.set(0, initialValue);
-                }
-            }
-        }
-    }
-
-    /**
-     * Nullifies a set of slots in a {@link MultiSlotData} to avoid memory leaks.
+     * Nullifies a set of slots in a {@link MultiSlotData} to avoid memory leaks. When providing
+     * {@code null} as indices, alls subslots except the first one are nullified.
      */
     public static void cleanMultiSlots(Frame frame, int[] indices) {
         CompilerAsserts.neverPartOfCompilation();
@@ -1023,14 +1000,20 @@ public final class FrameSlotChangeMonitor {
         FrameSlot[] slots = frame.getFrameDescriptor().getSlots().toArray(new FrameSlot[0]);
 
         for (int i = 0; i < slots.length; i++) {
-            // re-add the frame slot
             if (!(slots[i].getIdentifier() instanceof RFrameSlot)) {
                 Object value = frame.getValue(slots[i]);
                 if (value instanceof MultiSlotData) {
-                    MultiSlotData multiSlotData2 = (MultiSlotData) value;
-                    for (int j = 0; j < indices.length; j++) {
-                        assert indices[j] != 0;
-                        multiSlotData2.set(indices[j], null);
+                    MultiSlotData msd = (MultiSlotData) value;
+                    if (indices != null) {
+                        for (int j = 0; j < indices.length; j++) {
+                            assert indices[j] != 0;
+                            msd.set(indices[j], null);
+                        }
+                    } else {
+                        // only safe value of primordial context
+                        Object initialValue = msd.get(0);
+                        msd.setAll(null);
+                        msd.set(0, initialValue);
                     }
                 }
             }

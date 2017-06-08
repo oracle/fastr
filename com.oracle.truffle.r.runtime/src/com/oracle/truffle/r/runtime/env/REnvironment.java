@@ -957,7 +957,7 @@ public abstract class REnvironment extends RAttributeStorage {
 
             @Override
             public void apply(Frame frame, boolean replicate) {
-                FrameSlotChangeMonitor.cleanMultiSlots(frame);
+                FrameSlotChangeMonitor.cleanMultiSlots(frame, null);
             }
 
         });
