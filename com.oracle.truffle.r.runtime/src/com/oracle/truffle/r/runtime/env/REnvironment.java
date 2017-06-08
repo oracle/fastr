@@ -923,11 +923,12 @@ public abstract class REnvironment extends RAttributeStorage {
         }
         REnvironment namespaces = parentState.namespaceRegistry;
         Frame namespacesFrame = namespaces.getFrame();
+        fun.apply(namespacesFrame, true);
         // make a copy avoid potential updates to the array iterated over
         FrameSlot[] slots = new FrameSlot[namespacesFrame.getFrameDescriptor().getSlots().size()];
         slots = namespacesFrame.getFrameDescriptor().getSlots().toArray(slots);
         for (int i = 0; i < slots.length; i++) {
-            REnvironment namespaceEnv = (REnvironment) namespacesFrame.getValue(slots[i]);
+            REnvironment namespaceEnv = (REnvironment) FrameSlotChangeMonitor.getValue(slots[i], namespacesFrame);
             if (namespaceEnv != Base.baseNamespaceEnv()) {
                 // base namespace frame redirects all accesses to base frame and this would
                 // result in processing the slots twice
@@ -936,7 +937,7 @@ public abstract class REnvironment extends RAttributeStorage {
         }
     }
 
-    private static interface SearchPathFun {
+    private interface SearchPathFun {
         void apply(Frame frame, boolean replicate);
     }
 

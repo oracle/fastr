@@ -994,40 +994,21 @@ public final class FrameSlotChangeMonitor {
      * Replaces {@link MultiSlotData} objects by the value in the first slot and re-initializes the
      * frame slot info.
      */
+    @TruffleBoundary
     public static void cleanMultiSlots(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         // make a copy avoid potential updates to the array iterated over
+        FrameSlot[] slots = frame.getFrameDescriptor().getSlots().toArray(new FrameSlot[0]);
 
-        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-
-        // first, investigate frame slots if there are multi slots in the frame
-        boolean multiSlotData = false;
-        for (FrameSlot slot : frameDescriptor.getSlots()) {
-            if (!getFrameSlotInfo(slot).noMultiSlot.isValid()) {
-                multiSlotData = true;
-                break;
-            }
-        }
-
-        if (multiSlotData) {
-            FrameSlot[] slots = frameDescriptor.getSlots().toArray(new FrameSlot[0]);
-            Object[] values = new Object[slots.length];
-
-            for (int i = slots.length - 1; i >= 0; i--) {
-                values[i] = frame.getValue(slots[i]);
-                frameDescriptor.removeFrameSlot(slots[i].getIdentifier());
-            }
-
-            for (int i = 0; i < slots.length; i++) {
-                // re-add the frame slot
-                FrameSlot newSlot = findOrAddFrameSlot(frameDescriptor, slots[i].getIdentifier(), slots[i].getKind());
-                if (values[i] instanceof MultiSlotData) {
-                    frame.setObject(slots[i], ((MultiSlotData) values[i]).get(0));
-                } else {
-                    frame.setObject(slots[i], values[i]);
-                }
-                if (getFrameSlotInfo(slots[i]).stableValue != null) {
-                    getFrameSlotInfo(newSlot).stableValue = getFrameSlotInfo(slots[i]).stableValue;
+        for (int i = 0; i < slots.length; i++) {
+            // re-add the frame slot
+            if (!(slots[i].getIdentifier() instanceof RFrameSlot)) {
+                Object value = frame.getValue(slots[i]);
+                if (value instanceof MultiSlotData) {
+                    MultiSlotData multiSlotData2 = (MultiSlotData) value;
+                    Object initialValue = multiSlotData2.get(0);
+                    multiSlotData2.setAll(null);
+                    multiSlotData2.set(0, initialValue);
                 }
             }
         }
@@ -1043,11 +1024,14 @@ public final class FrameSlotChangeMonitor {
 
         for (int i = 0; i < slots.length; i++) {
             // re-add the frame slot
-            Object value = frame.getValue(slots[i]);
-            if (value instanceof MultiSlotData) {
-                MultiSlotData multiSlotData2 = (MultiSlotData) value;
-                for (int j = 0; j < indices.length; j++) {
-                    multiSlotData2.set(indices[j], null);
+            if (!(slots[i].getIdentifier() instanceof RFrameSlot)) {
+                Object value = frame.getValue(slots[i]);
+                if (value instanceof MultiSlotData) {
+                    MultiSlotData multiSlotData2 = (MultiSlotData) value;
+                    for (int j = 0; j < indices.length; j++) {
+                        assert indices[j] != 0;
+                        multiSlotData2.set(indices[j], null);
+                    }
                 }
             }
         }

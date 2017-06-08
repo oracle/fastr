@@ -173,7 +173,9 @@ public class FastRContext {
                 for (int i = 0; i < handle.getLength(); i++) {
                     int id = handle.getDataAt(i);
                     Thread thread = RContext.EvalThread.threads.get(id);
-                    multiSlotIndices[i] = RContext.EvalThread.idToMultiSlotTable.remove(id);
+                    if (RContext.EvalThread.idToMultiSlotTable.containsKey(id)) {
+                        multiSlotIndices[i] = RContext.EvalThread.idToMultiSlotTable.remove(id);
+                    }
                     if (thread == null) {
                         // already done
                         continue;
