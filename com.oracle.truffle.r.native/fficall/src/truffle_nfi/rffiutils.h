@@ -27,14 +27,25 @@
 #include <string.h>
 #include <limits.h>
 #include <Rinternals.h>
-#include <rffi_callbacks.h>
 #include <trufflenfi.h>
 
+#include "../common/rffi_upcalls.h"
+
 extern void init_memory();
+extern void init_utils();
 
 // use for an unimplemented API function
 void *unimplemented(char *msg) __attribute__((noreturn));
 // use for any fatal error
 void fatalError(char *msg) __attribute__((noreturn));
+
+// checks x against the list of global refs, returning the global version if x matches (IsSameObject)
+SEXP checkRef(SEXP x);
+// creates a global JNI global ref from x. If permanent is non-zero, calls to
+// releaseGlobalRef are ignored and the global ref persists for the entire execution
+// (used for the R global variables such as R_NilValue).
+SEXP createGlobalRef(SEXP x, int permanent);
+// release a previously created global ref
+void releaseGlobalRef(SEXP x);
 
 #endif

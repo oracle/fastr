@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,13 +34,13 @@
 #include <errno.h>
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1getpid(JNIEnv *env, jclass c) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Base_native_1getpid(JNIEnv *env, jclass c) {
 	pid_t pid = getpid();
 	return (jint) pid;
 }
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1getwd(JNIEnv *env, jclass c, jbyteArray jdest, int len) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Base_native_1getwd(JNIEnv *env, jclass c, jbyteArray jdest, int len) {
     char *dest = (*env)->GetPrimitiveArrayCritical(env, jdest, NULL);
     char *r = getcwd(dest, len);
     if (r == NULL) return 0;
@@ -49,7 +49,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1getwd(JNIEnv *env, j
 }
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1setwd(JNIEnv *env, jclass c, jstring jdir) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Base_native_1setwd(JNIEnv *env, jclass c, jstring jdir) {
     const char *dir = (*env)->GetStringUTFChars(env, jdir, NULL);
     int rc = chdir(dir);
     (*env)->ReleaseStringUTFChars(env, jdir, dir);
@@ -57,7 +57,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1setwd(JNIEnv *env, j
 }
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1mkdtemp(JNIEnv *env, jclass c, jbyteArray jtemplate) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Base_native_1mkdtemp(JNIEnv *env, jclass c, jbyteArray jtemplate) {
     char *template = (char*) (*env)->GetByteArrayElements(env, jtemplate, NULL);
     char *r = mkdtemp(template);
     int rc = 1;
@@ -70,7 +70,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1mkdtemp(JNIEnv *env,
 }
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1mkdir(JNIEnv *env, jclass c, jstring jdir, jint mode) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Base_native_1mkdir(JNIEnv *env, jclass c, jstring jdir, jint mode) {
     const char *dir = (*env)->GetStringUTFChars(env, jdir, NULL);
     int rc = mkdir(dir, mode);
     (*env)->ReleaseStringUTFChars(env, jdir, dir);
@@ -78,7 +78,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1mkdir(JNIEnv *env, j
 }
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1chmod(JNIEnv *env, jclass c, jstring jdir, jint mode) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Base_native_1chmod(JNIEnv *env, jclass c, jstring jdir, jint mode) {
     const char *dir = (*env)->GetStringUTFChars(env, jdir, NULL);
     int rc = chmod(dir, mode);
     (*env)->ReleaseStringUTFChars(env, jdir, dir);
@@ -86,7 +86,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1chmod(JNIEnv *env, j
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1strtol(JNIEnv *env, jclass c, jstring js, jint base, jintArray jerrno) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Base_native_1strtol(JNIEnv *env, jclass c, jstring js, jint base, jintArray jerrno) {
     const char *s = (*env)->GetStringUTFChars(env, js, NULL);
     jlong rc = strtol(s, NULL, base);
     if (errno) {
@@ -99,7 +99,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1strtol(JNIEnv *env, 
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1readlink(JNIEnv *env, jclass c, jstring jpath, jintArray jerrno) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Base_native_1readlink(JNIEnv *env, jclass c, jstring jpath, jintArray jerrno) {
     const char *path = (*env)->GetStringUTFChars(env, jpath, NULL);
     char buf[4096];
     int len = readlink(path, buf, 4096);
@@ -120,7 +120,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Base_native_1readlink(JNIEnv *env
 static jmethodID addPathID = 0;
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Glob_doglob(JNIEnv *env, jobject obj, jstring pattern) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Glob_doglob(JNIEnv *env, jobject obj, jstring pattern) {
 	glob_t globstruct;
 
 	if (addPathID == 0) {
@@ -140,7 +140,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Glob_doglob(JNIEnv *env, jobject 
 }
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1UtsName_getutsname(JNIEnv *env, jobject obj) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1UtsName_getutsname(JNIEnv *env, jobject obj) {
 	struct utsname name;
 
 	uname(&name);

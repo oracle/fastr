@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,8 @@ static jmethodID PutRNGstate_MethodID;
 static jmethodID UnifRand_MethodID;
 
 void init_random(JNIEnv *env) {
-	GetRNGstate_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "GetRNGstate", "()V", 0);
-	PutRNGstate_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "PutRNGstate", "()V", 0);
+	GetRNGstate_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "GetRNGstate", "()I", 0);
+	PutRNGstate_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "PutRNGstate", "()I", 0);
 	UnifRand_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "unif_rand", "()D", 0);
 }
 

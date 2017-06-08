@@ -23,11 +23,46 @@
 
 #include <rffiutils.h>
 #include <truffle.h>
+#include "../common/rffi_upcalls.h"
 
 // Most everything in RInternals.h
 
-static char *ensure_truffle_chararray(const char *x);
+void **callbacks = NULL;
+
+void Rinternals_addCallback(int index, void *callback) {
+	if (callbacks == NULL) {
+		callbacks = truffle_managed_malloc(UPCALLS_TABLE_SIZE * sizeof(void*));
+	}
+	callbacks[index] = callback;
+}
+
 static char *ensure_truffle_chararray_n(const char *x, int n);
+
+// R_GlobalEnv et al are not a variables in FASTR as they are RContext specific
+SEXP FASTR_R_GlobalEnv() {
+	IMPORT_CALLHELPER_IMPL();
+	return truffle_invoke(obj, "R_GlobalEnv");
+}
+
+SEXP FASTR_R_BaseEnv() {
+	IMPORT_CALLHELPER_IMPL();
+	return truffle_invoke(obj, "R_BaseEnv");
+}
+
+SEXP FASTR_R_BaseNamespace() {
+	IMPORT_CALLHELPER_IMPL();
+	return truffle_invoke(obj, "R_BaseNamespace");
+}
+
+SEXP FASTR_R_NamespaceRegistry() {
+	IMPORT_CALLHELPER_IMPL();
+	return truffle_invoke(obj, "R_NamespaceRegistry");
+}
+
+Rboolean FASTR_R_Interactive() {
+	IMPORT_CALLHELPER_IMPL();
+	return (Rboolean) truffle_invoke_i(obj, "R_Interactive");
+}
 
 SEXP Rf_ScalarInteger(int value) {
 	IMPORT_CALLHELPER();
@@ -54,11 +89,12 @@ SEXP Rf_allocVector3(SEXPTYPE t, R_xlen_t len, R_allocator_t* allocator) {
 	    return unimplemented("RF_allocVector with custom allocator");
     }
 	IMPORT_CALLHELPER();
-	return truffle_invoke(obj, "Rf_allocateVector", t, len);
+	return truffle_invoke(obj, "Rf_allocVector", t, len);
 }
 
 SEXP Rf_allocArray(SEXPTYPE t, SEXP dims) {
-	return unimplemented("Rf_allocArray");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "Rf_allocArray", t, dims);
 }
 
 SEXP Rf_alloc3DArray(SEXPTYPE t, int x, int y, int z) {
@@ -66,7 +102,8 @@ SEXP Rf_alloc3DArray(SEXPTYPE t, int x, int y, int z) {
 }
 
 SEXP Rf_allocMatrix(SEXPTYPE mode, int nrow, int ncol) {
-	return unimplemented("Rf_allocMatrix");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "Rf_allocMatrix", mode, nrow, ncol);
 }
 
 SEXP Rf_allocList(int x) {
@@ -78,11 +115,13 @@ SEXP Rf_allocSExp(SEXPTYPE t) {
 }
 
 SEXP Rf_cons(SEXP car, SEXP cdr) {
-	return unimplemented("Rf_cons");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "Rf_cons", car, cdr);
 }
 
 void Rf_defineVar(SEXP symbol, SEXP value, SEXP rho) {
-	unimplemented("Rf_defineVar");
+	IMPORT_CALLHELPER();
+    truffle_invoke(obj, "Rf_defineVar", symbol, value, rho);
 }
 
 void Rf_setVar(SEXP x, SEXP y, SEXP z) {
@@ -115,11 +154,13 @@ SEXP Rf_findVarInFrame(SEXP symbol, SEXP rho) {
 }
 
 SEXP Rf_getAttrib(SEXP vec, SEXP name) {
-	return unimplemented("Rf_getAttrib");
+	IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "Rf_getAttrib", vec, name);
 }
 
 SEXP Rf_setAttrib(SEXP vec, SEXP name, SEXP val) {
-	return unimplemented("Rf_setAttrib");
+	IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "Rf_setAttrib", vec, name, val);
 }
 
 SEXP Rf_duplicate(SEXP x) {
@@ -133,11 +174,13 @@ SEXP Rf_shallow_duplicate(SEXP x) {
 }
 
 R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
-	return (R_xlen_t) unimplemented("Rf_any_duplicated");
+	IMPORT_CALLHELPER();
+    return (R_xlen_t) truffle_invoke(obj, "Rf_any_duplicated", x, from_last);
 }
 
 SEXP Rf_duplicated(SEXP x, Rboolean y) {
-	return unimplemented("Rf_duplicated");
+	IMPORT_CALLHELPER();
+    return truffle_invoke(obj, "Rf_duplicated", x, y);
 }
 
 SEXP Rf_applyClosure(SEXP x, SEXP y, SEXP z, SEXP a, SEXP b) {
@@ -153,32 +196,8 @@ void Rf_copyVector(SEXP x, SEXP y) {
 }
 
 Rboolean Rf_inherits(SEXP x, const char * klass) {
-	unimplemented("Rf_inherits");
-	return FALSE;
-}
-
-Rboolean Rf_isReal(SEXP x) {
-    return TYPEOF(x) == REALSXP;
-}
-
-Rboolean Rf_isSymbol(SEXP x) {
-    return TYPEOF(x) == SYMSXP;
-}
-
-Rboolean Rf_isComplex(SEXP x) {
-    return TYPEOF(x) == CPLXSXP;
-}
-
-Rboolean Rf_isEnvironment(SEXP x) {
-    return TYPEOF(x) == ENVSXP;
-}
-
-Rboolean Rf_isExpression(SEXP x) {
-    return TYPEOF(x) == EXPRSXP;
-}
-
-Rboolean Rf_isLogical(SEXP x) {
-    return TYPEOF(x) == LGLSXP;
+	IMPORT_CALLHELPER();
+    return (Rboolean) truffle_invoke(obj, "Rf_inherits", x, klass);
 }
 
 Rboolean Rf_isObject(SEXP s) {
@@ -196,7 +215,8 @@ SEXP Rf_install(const char *name) {
 }
 
 SEXP Rf_installChar(SEXP charsxp) {
-	return unimplemented("Rf_installChar");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "Rf_installChar", charsxp);
 }
 
 Rboolean Rf_isNull(SEXP s) {
@@ -219,20 +239,11 @@ cetype_t Rf_getCharCE(SEXP x) {
     return CE_NATIVE;
 }
 
-static char *ensure_truffle_chararray(const char *x) {
-	if (truffle_is_truffle_object(x)) {
-		return x;
-	} else {
-		IMPORT_CALLHELPER();
-		return truffle_invoke(obj, "bytesToNativeCharArray", truffle_read_bytes(x));
-	}
-}
-
 char *ensure_truffle_chararray_n(const char *x, int n) {
 	if (truffle_is_truffle_object(x)) {
 		return x;
 	} else {
-		IMPORT_CALLHELPER();
+		IMPORT_CALLHELPER_IMPL();
 		return truffle_invoke(obj, "bytesToNativeCharArray", truffle_read_n_bytes(x, n));
 	}
 }
@@ -240,7 +251,7 @@ char *ensure_truffle_chararray_n(const char *x, int n) {
 SEXP Rf_mkCharLenCE_truffle(const char *x, cetype_t enc) {
 	// Assumes x is a NativeCharArray
 	IMPORT_CALLHELPER();
-	return truffle_invoke(obj, "Rf_mkCharLenCE", x, enc);
+	return truffle_invoke(obj, "Rf_mkCharLenCE", x, 0, enc);
 }
 
 SEXP Rf_mkChar(const char *x) {
@@ -269,13 +280,13 @@ SEXP Rf_mkString(const char *s) {
 }
 
 int Rf_ncols(SEXP x) {
-	unimplemented("Rf_ncols");
-	return 0;
+	IMPORT_CALLHELPER();
+	return (int) truffle_invoke(obj, "Rf_ncols", x);
 }
 
 int Rf_nrows(SEXP x) {
-	unimplemented("Rf_nrows");
-	return 0;
+	IMPORT_CALLHELPER();
+	return (int) truffle_invoke(obj, "Rf_nrows", x);
 }
 
 
@@ -316,15 +327,13 @@ void Rf_error(const char *format, ...) {
 	// RError.error does quite a lot of stuff including potentially searching for R condition handlers
 	// and, if it finds any, does not return, but throws a different exception than RError.
 	// We definitely need to exit the FFI call and we certainly cannot return to our caller.
-	// So we call CallRFFIHelper.Rf_error to throw the RError exception. When the pending
-	// exception (whatever it is) is observed by JNI, the call to Rf_error will return where we do a
-	// non-local transfer of control back to the entry point (which will cleanup).
 	char buf[8192];
 	va_list(ap);
 	va_start(ap,format);
 	Rvsnprintf(buf, BUFSIZE - 1, format, ap);
 	va_end(ap);
-	unimplemented("Rf_error");
+	IMPORT_CALLHELPER();
+	truffle_invoke(obj, "Rf_error", ensure_truffle_chararray(buf));
 }
 
 void Rf_errorcall(SEXP x, const char *format, ...) {
@@ -397,11 +406,13 @@ void R_ProcessEvents(void) {
 // Tools package support, not in public API
 
 SEXP R_NewHashedEnv(SEXP parent, SEXP size) {
-	return unimplemented("R_NewHashedEnv");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "R_NewHashedEnv", parent, size);
 }
 
 SEXP Rf_classgets(SEXP x, SEXP y) {
-	return unimplemented("Rf_classgets");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "Rf_classgets", x, y);
 }
 
 const char *Rf_translateChar(SEXP x) {
@@ -440,64 +451,13 @@ SEXP Rf_namesgets(SEXP x, SEXP y) {
 }
 
 SEXP GetOption1(SEXP tag){
-	return unimplemented("GetOption1");
-}
-
-SEXP GetOption(SEXP tag, SEXP rho) {
-    return GetOption1(tag);
-}
-
-int GetOptionCutoff(void)
-{
-    int w;
-    w = asInteger(GetOption1(install("deparse.cutoff")));
-    if (w == NA_INTEGER || w <= 0) {
-	warning(_("invalid 'deparse.cutoff', used 60"));
-	w = 60;
-    }
-    return w;
-}
-
-#define R_MIN_WIDTH_OPT		10
-#define R_MAX_WIDTH_OPT		10000
-#define R_MIN_DIGITS_OPT	0
-#define R_MAX_DIGITS_OPT	22
-
-int GetOptionWidth(void)
-{
-    int w;
-    w = asInteger(GetOption1(install("width")));
-    if (w < R_MIN_WIDTH_OPT || w > R_MAX_WIDTH_OPT) {
-	warning(_("invalid printing width, used 80"));
-	return 80;
-    }
-    return w;
-}
-
-int GetOptionDigits(void)
-{
-    int d;
-    d = asInteger(GetOption1(install("digits")));
-    if (d < R_MIN_DIGITS_OPT || d > R_MAX_DIGITS_OPT) {
-	warning(_("invalid printing digits, used 7"));
-	return 7;
-    }
-    return d;
-}
-
-Rboolean Rf_GetOptionDeviceAsk(void)
-{
-    int ask;
-    ask = asLogical(GetOption1(install("device.ask.default")));
-    if(ask == NA_LOGICAL) {
-	warning(_("invalid value for \"device.ask.default\", using FALSE"));
-	return FALSE;
-    }
-    return ask != 0;
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "GetOption1", tag);
 }
 
 void Rf_gsetVar(SEXP symbol, SEXP value, SEXP rho) {
-	unimplemented("Rf_gsetVar");
+	IMPORT_CALLHELPER();
+    truffle_invoke(obj, "Rf_gsetVar", symbol, value, rho);
 }
 
 SEXP TAG(SEXP e) {
@@ -506,7 +466,8 @@ SEXP TAG(SEXP e) {
 }
 
 SEXP PRINTNAME(SEXP e) {
-	return unimplemented("PRINTNAME");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "PRINTNAME", e);
 }
 
 SEXP CAR(SEXP e) {
@@ -535,7 +496,8 @@ SEXP CADR(SEXP e) {
 }
 
 SEXP CDDR(SEXP e) {
-	return unimplemented("CDDR");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "CDDR", e);
 }
 
 SEXP CDDDR(SEXP e) {
@@ -544,8 +506,8 @@ SEXP CDDDR(SEXP e) {
 }
 
 SEXP CADDR(SEXP e) {
-    unimplemented("CADDR");
-    return NULL;
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "CADDR", e);
 }
 
 SEXP CADDDR(SEXP e) {
@@ -568,20 +530,23 @@ void SET_MISSING(SEXP x, int v) {
 }
 
 void SET_TAG(SEXP x, SEXP y) {
-	unimplemented("SET_TAG");
+	IMPORT_CALLHELPER();
+ truffle_invoke(obj, "SET_TAG", x, y);
 }
 
 SEXP SETCAR(SEXP x, SEXP y) {
-	return unimplemented("SETCAR");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "SETCAR", x, y);
 }
 
 SEXP SETCDR(SEXP x, SEXP y) {
-	return unimplemented("SETCDR");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "SETCDR", x, y);
 }
 
 SEXP SETCADR(SEXP x, SEXP y) {
-    unimplemented("SETCADR");
-    return NULL;
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "SETCADR", x, y);
 }
 
 SEXP SETCADDR(SEXP x, SEXP y) {
@@ -612,13 +577,13 @@ SEXP CLOENV(SEXP x) {
 }
 
 int RDEBUG(SEXP x) {
-    unimplemented("RDEBUG");
-    return 0;
+	IMPORT_CALLHELPER();
+	return (int) truffle_invoke(obj, "RDEBUG", x);
 }
 
 int RSTEP(SEXP x) {
-	unimplemented("RSTEP");
-    return 0;
+	IMPORT_CALLHELPER();
+	return (int) truffle_invoke(obj, "RSTEP", x);
 }
 
 int RTRACE(SEXP x) {
@@ -627,11 +592,13 @@ int RTRACE(SEXP x) {
 }
 
 void SET_RDEBUG(SEXP x, int v) {
-    unimplemented("SET_RDEBUG");
+	IMPORT_CALLHELPER();
+	truffle_invoke(obj, "SET_RDEBUG", x, v);
 }
 
 void SET_RSTEP(SEXP x, int v) {
-    unimplemented("SET_RSTEP");
+	IMPORT_CALLHELPER();
+	truffle_invoke(obj, "SET_RSTEP", x, v);
 }
 
 void SET_RTRACE(SEXP x, int v) {
@@ -651,7 +618,8 @@ void SET_CLOENV(SEXP x, SEXP v) {
 }
 
 SEXP SYMVALUE(SEXP x) {
-	return unimplemented("SYMVALUE");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "SYMVALUE", x);
 }
 
 SEXP INTERNAL(SEXP x) {
@@ -668,7 +636,8 @@ void SET_DDVAL(SEXP x, int v) {
 }
 
 void SET_SYMVALUE(SEXP x, SEXP v) {
-    unimplemented("SET_SYMVALUE");
+	IMPORT_CALLHELPER();
+    truffle_invoke(obj, "SET_SYMVALUE", x, v);
 }
 
 void SET_INTERNAL(SEXP x, SEXP v) {
@@ -681,7 +650,8 @@ SEXP FRAME(SEXP x) {
 }
 
 SEXP ENCLOS(SEXP x) {
-	return unimplemented("ENCLOS");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "ENCLOS", x);
 }
 
 SEXP HASHTAB(SEXP x) {
@@ -711,20 +681,23 @@ void SET_HASHTAB(SEXP x, SEXP v) {
 
 
 SEXP PRCODE(SEXP x) {
-	return unimplemented("PRCODE");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "PRCODE", x);
 }
 
 SEXP PRENV(SEXP x) {
-	unimplemented("PRENV");
-    return 0;
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "PRENV", x);
 }
 
 SEXP PRVALUE(SEXP x) {
-	return unimplemented("PRVALUE");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "PRVALUE", x);
 }
 
 int PRSEEN(SEXP x) {
-	return (int) unimplemented("PRSEEN");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "PRSEEN", x);
 }
 
 void SET_PRSEEN(SEXP x, int v) {
@@ -859,7 +832,8 @@ SEXP Rf_asChar(SEXP x){
 }
 
 SEXP Rf_PairToVectorList(SEXP x){
-	return unimplemented("Rf_PairToVectorList");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "Rf_PairToVectorList", x);
 }
 
 SEXP Rf_VectorToPairList(SEXP x){
@@ -871,12 +845,18 @@ SEXP Rf_asCharacterFactor(SEXP x){
 }
 
 int Rf_asLogical(SEXP x){
-	return (int) unimplemented("Rf_asLogical");
+	IMPORT_CALLHELPER();
+    return truffle_invoke_i(obj, "Rf_asLogical", x);
 }
 
 int Rf_asInteger(SEXP x) {
 	IMPORT_CALLHELPER();
     return truffle_invoke_i(obj, "Rf_asInteger", x);
+}
+
+double Rf_asReal(SEXP x) {
+	IMPORT_CALLHELPER();
+	return (double) truffle_invoke_d(obj, "Rf_asReal", x);
 }
 
 Rcomplex Rf_asComplex(SEXP x){
@@ -899,7 +879,8 @@ int OBJECT(SEXP x){
 }
 
 int MARK(SEXP x){
-    return (int) unimplemented("MARK");
+	IMPORT_CALLHELPER();
+	return (int) truffle_invoke(obj, "MARK", x);
 }
 
 int NAMED(SEXP x){
@@ -920,7 +901,8 @@ void SET_TYPEOF(SEXP x, int v){
 }
 
 SEXP SET_TYPEOF_FASTR(SEXP x, int v){
-	return unimplemented("SET_TYPEOF_FASTR");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "SET_TYPEOF_FASTR", x, v);
 }
 
 void SET_NAMED(SEXP x, int v){
@@ -932,27 +914,13 @@ void SET_ATTRIB(SEXP x, SEXP v){
 }
 
 void DUPLICATE_ATTRIB(SEXP to, SEXP from){
-	unimplemented("DUPLICATE_ATTRIB");
-}
-
-char *dgettext(const char *domainname, const char *msgid) {
-	printf("dgettext: '%s'\n", msgid);
-	return (char*) msgid;
-}
-
-char *dngettext(const char *domainname, const char *msgid, const char * msgid_plural, unsigned long int n) {
-    printf("dngettext: singular - '%s' ; plural - '%s'\n", msgid, msgid_plural);
-    return (char*) (n == 1 ? msgid : msgid_plural);
+	IMPORT_CALLHELPER();
+ truffle_invoke(obj, "DUPLICATE_ATTRIB", to, from);
 }
 
 const char *R_CHAR(SEXP charsxp) {
-	IMPORT_CALLHELPER();
+	IMPORT_CALLHELPER_IMPL();
 	return (char *)truffle_invoke(obj, "charSXPToNativeCharArray", charsxp);
-}
-
-void *(R_DATAPTR)(SEXP x) {
-    unimplemented("R_DATAPTR");
-	return NULL;
 }
 
 void R_qsort_I  (double *v, int *II, int i, int j) {
@@ -972,10 +940,13 @@ int IS_S4_OBJECT(SEXP x) {
 }
 
 void SET_S4_OBJECT(SEXP x) {
-	unimplemented("SET_S4_OBJECT");
+	IMPORT_CALLHELPER();
+ truffle_invoke(obj, "SET_S4_OBJECT", x);
 }
+
 void UNSET_S4_OBJECT(SEXP x) {
-	unimplemented("UNSET_S4_OBJECT");
+	IMPORT_CALLHELPER();
+     truffle_invoke(obj, "UNSET_S4_OBJECT", x);
 }
 
 Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
@@ -1006,7 +977,8 @@ double R_strtod(const char *c, char **end) {
 }
 
 SEXP R_PromiseExpr(SEXP x) {
-	return unimplemented("R_PromiseExpr");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "R_PromiseExpr", x);
 }
 
 SEXP R_ClosureExpr(SEXP x) {
@@ -1028,27 +1000,33 @@ void *R_ExternalPtrAddr(SEXP s) {
 }
 
 SEXP R_ExternalPtrTag(SEXP s) {
-	return unimplemented("R_ExternalPtrTag");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "R_ExternalPtrTag", s);
 }
 
 SEXP R_ExternalPtrProt(SEXP s) {
-	return unimplemented("R_ExternalPtrProt");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "R_ExternalPtrProt", s);
 }
 
 void R_SetExternalPtrAddr(SEXP s, void *p) {
-	unimplemented("R_SetExternalPtrAddr");
+	IMPORT_CALLHELPER();
+	truffle_invoke(obj, "R_SetExternalPtrAddr", s, p);
 }
 
 void R_SetExternalPtrTag(SEXP s, SEXP tag) {
-	unimplemented("R_SetExternalPtrTag");
+	IMPORT_CALLHELPER();
+	truffle_invoke(obj, "R_SetExternalPtrTag", s, tag);
 }
 
 void R_SetExternalPtrProt(SEXP s, SEXP p) {
-	unimplemented("R_SetExternalPtrProt");
+	IMPORT_CALLHELPER();
+	truffle_invoke(obj, "R_SetExternalPtrProt", s, p);
 }
 
 void R_ClearExternalPtr(SEXP s) {
-	R_SetExternalPtrAddr(s, NULL);
+	IMPORT_CALLHELPER();
+	truffle_invoke(obj, "R_ClearExternalPtr", s);
 }
 
 void R_RegisterFinalizer(SEXP s, SEXP fun) {
@@ -1071,12 +1049,14 @@ void R_RunPendingFinalizers(void) {
 	// TODO implement, but not fail for now
 }
 
-SEXP R_do_slot(SEXP obj, SEXP name) {
-	return unimplemented("R_do_slot");
+SEXP R_do_slot(SEXP objx, SEXP name) {
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "R_do_slot", objx, name);
 }
 
-SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
-	return unimplemented("R_do_slot_assign");
+SEXP R_do_slot_assign(SEXP objx, SEXP name, SEXP value) {
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "R_do_slot_assign", objx, name, value);
 }
 
 int R_has_slot(SEXP obj, SEXP name) {
@@ -1084,7 +1064,8 @@ int R_has_slot(SEXP obj, SEXP name) {
 }
 
 SEXP R_do_MAKE_CLASS(const char *what) {
-	return unimplemented("R_do_MAKE_CLASS");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "R_do_MAKE_CLASS", what);
 }
 
 SEXP R_getClassDef (const char *what) {
@@ -1092,7 +1073,8 @@ SEXP R_getClassDef (const char *what) {
 }
 
 SEXP R_do_new_object(SEXP class_def) {
-	return unimplemented("R_do_new_object");
+	IMPORT_CALLHELPER();
+	return truffle_invoke(obj, "R_do_new_object", class_def);
 }
 
 int R_check_class_and_super(SEXP x, const char **valid, SEXP rho) {
@@ -1112,13 +1094,16 @@ void R_ReleaseObject(SEXP x) {
 }
 
 Rboolean R_compute_identical(SEXP x, SEXP y, int flags) {
-	return (Rboolean) unimplemented("R_compute_identical");
+	IMPORT_CALLHELPER();
+	return (Rboolean) truffle_invoke(obj, "R_compute_identical", x, y, flags);
 }
 
 void Rf_copyListMatrix(SEXP s, SEXP t, Rboolean byrow) {
-	unimplemented("Rf_copyListMatrix");
+	IMPORT_CALLHELPER();
+	truffle_invoke(obj, "Rf_copyListMatrix", s, t, byrow);
 }
 
 void Rf_copyMatrix(SEXP s, SEXP t, Rboolean byrow) {
-	unimplemented("Rf_copyMatrix");
+	IMPORT_CALLHELPER();
+	truffle_invoke(obj, "Rf_copyMatrix", s, t, byrow);
 }

@@ -29,6 +29,7 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
@@ -74,6 +75,13 @@ public class RPairListMR {
 
         protected Object access(VirtualFrame frame, RPairList receiver, Integer index) {
             return extract.apply(frame, receiver, new Object[]{index}, RLogical.valueOf(false), RMissing.instance);
+        }
+    }
+
+    @Resolve(message = "TO_NATIVE")
+    public abstract static class RPairListToNativeNode extends Node {
+        protected Object access(RPairList receiver) {
+            return new NativePointer(receiver);
         }
     }
 

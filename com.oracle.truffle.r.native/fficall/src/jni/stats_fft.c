@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ typedef Rboolean (*fft_work)(double *a, int nseg, int n, int nspn, int isn,
 		  double *work, int *iwork);
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Stats_native_1fft_1factor(JNIEnv *env, jclass c, jlong address,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Stats_native_1fft_1factor(JNIEnv *env, jclass c, jlong address,
 		jint n, jintArray jpmaxf, jintArray jpmaxp) {
 	fft_factor f = (fft_factor) address;
 	int *pmaxf = (*env)->GetPrimitiveArrayCritical(env, jpmaxf, NULL);
@@ -39,7 +39,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Stats_native_1fft_1factor(JNIEnv 
 }
 
 JNIEXPORT int JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1Stats_native_1fft_1work(JNIEnv *env, jclass c, jlong address,
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1Stats_native_1fft_1work(JNIEnv *env, jclass c, jlong address,
 		jdoubleArray ja, int nseg, int n, int nsps, int isn, jdoubleArray jwork, jintArray jiwork) {
 	fft_work f = (fft_work) address;
 	double *a = (*env)->GetPrimitiveArrayCritical(env, ja, NULL);

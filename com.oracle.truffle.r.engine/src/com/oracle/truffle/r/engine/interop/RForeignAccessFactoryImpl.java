@@ -27,8 +27,7 @@ import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
-import com.oracle.truffle.r.engine.interop.ffi.nfi.TruffleNFI_Base;
-import com.oracle.truffle.r.engine.interop.ffi.nfi.TruffleNFI_PCRE;
+import com.oracle.truffle.r.ffi.impl.interop.FFI_RForeignAccessFactoryImpl;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -53,14 +52,18 @@ import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
-import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
-import com.oracle.truffle.r.runtime.ffi.DLL;
 
 /**
  * For most types we use the {@link MessageResolution} facility to automatically generate the
  * factory for creating the {@link ForeignAccess} instance. The exceptions are the (many) subclasses
  * of {@link RAbstractVector} as these have the same handling but the generator cannot handle
  * abstract classes.
+ *
+ * The types that must flow across the interop boundary fall into (at least) two categories. Those
+ * listed in this class are those that other peer languages might expect to receive and make sense
+ * of. There are also a large number that are involved in implementing the R Foreign Function
+ * Interface, which are essentially private to the implementation. These are enumerated in
+ * {@link FFI_RForeignAccessFactoryImpl}.
  */
 public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
 
@@ -77,46 +80,20 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return RPairListMRForeign.ACCESS;
         } else if (obj instanceof RFunction) {
             return RFunctionMRForeign.ACCESS;
-        } else if (obj instanceof DLL.DLLInfo) {
-            return DLLInfoMRForeign.ACCESS;
-        } else if (obj instanceof DLL.DotSymbol) {
-            return DLLDotSymbolMRForeign.ACCESS;
         } else if (obj instanceof RSymbol) {
             return RSymbolMRForeign.ACCESS;
         } else if (obj instanceof RExternalPtr) {
             return RExternalPtrMRForeign.ACCESS;
         } else if (obj instanceof RUnboundValue) {
             return RUnboundValueMRForeign.ACCESS;
-        } else if (obj instanceof NativeRawArray) {
-            return NativeRawArrayMRForeign.ACCESS;
-        } else if (obj instanceof NativeLogicalArray) {
-            return NativeLogicalArrayMRForeign.ACCESS;
-        } else if (obj instanceof NativeCharArray) {
-            return NativeCharArrayMRForeign.ACCESS;
-        } else if (obj instanceof NativeDoubleArray) {
-            return NativeDoubleArrayMRForeign.ACCESS;
-        } else if (obj instanceof NativeIntegerArray) {
-            return NativeIntegerArrayMRForeign.ACCESS;
         } else if (obj instanceof RInteger) {
             return RIntegerMRForeign.ACCESS;
         } else if (obj instanceof RDouble) {
             return RDoubleMRForeign.ACCESS;
-        } else if (obj instanceof CharSXPWrapper) {
-            return CharSXPWrapperMRForeign.ACCESS;
         } else if (obj instanceof RConnection) {
             return RConnectionMRForeign.ACCESS;
         } else if (obj instanceof RContext) {
             return RContextMRForeign.ACCESS;
-        } else if (obj instanceof TruffleNFI_Base.TruffleNFI_UnameNode.UnameUpCallImpl) {
-            return UnameUpCallImplMRForeign.ACCESS;
-        } else if (obj instanceof TruffleNFI_Base.TruffleNFI_ReadlinkNode.SetResultImpl) {
-            return SetResultImplMRForeign.ACCESS;
-        } else if (obj instanceof TruffleNFI_Base.TruffleNFI_GlobNode.GlobUpCallImpl) {
-            return GlobUpCallImplMRForeign.ACCESS;
-        } else if (obj instanceof TruffleNFI_PCRE.TruffleNFI_CompileNode.MakeResultImpl) {
-            return MakeResultImplMRForeign.ACCESS;
-        } else if (obj instanceof TruffleNFI_PCRE.TruffleNFI_GetCaptureNamesNode.CaptureNamesImpl) {
-            return CaptureNamesImplMRForeign.ACCESS;
         } else if (obj instanceof RS4Object) {
             return RS4ObjectMRForeign.ACCESS;
         } else if (obj instanceof RPromise) {
@@ -133,19 +110,25 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return RMissingMRForeign.ACCESS;
         } else if (obj instanceof REmpty) {
             return REmptyMRForeign.ACCESS;
-
+        } else if (obj instanceof RAbstractVector) {
+            return ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
         } else {
-            if (obj instanceof RAbstractVector) {
-                return ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
+            ForeignAccess access = FFI_RForeignAccessFactoryImpl.getForeignAccess(obj);
+            if (access != null) {
+                return access;
             } else {
                 throw RInternalError.unimplemented("missing foreign access factory for " + obj.getClass().getSimpleName());
             }
         }
-
     }
 
     @Override
     public Class<? extends TruffleLanguage<RContext>> getTruffleLanguage() {
         return TruffleRLanguage.class;
+    }
+
+    @Override
+    public boolean setIsNull(boolean value) {
+        return RNullMR.setIsNull(value);
     }
 }

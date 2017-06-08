@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,27 +29,27 @@ typedef int* (*call_nSeed)(void);
 typedef int* (*call_seeds)(void);
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1UserRng_nativeInit(JNIEnv *env, jclass c, jlong address, jint seed) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1UserRng_nativeInit(JNIEnv *env, jclass c, jlong address, jint seed) {
 	call_init f = (call_init) address;
 	f(seed);
 }
 
 JNIEXPORT double JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1UserRng_nativeRand(JNIEnv *env, jclass c, jlong address) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1UserRng_nativeRand(JNIEnv *env, jclass c, jlong address) {
 	call_rand f = (call_rand) address;
 	double* dp = f();
 	return *dp;
 }
 
 JNIEXPORT jint JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1UserRng_nativeNSeed(JNIEnv *env, jclass c, jlong address) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1UserRng_nativeNSeed(JNIEnv *env, jclass c, jlong address) {
 	call_nSeed f = (call_nSeed) address;
 	int *pn = f();
 	return *pn;
 }
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jni_JNI_1UserRng_nativeSeeds(JNIEnv *env, jclass c, jlong address, jintArray seedsArray) {
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1UserRng_nativeSeeds(JNIEnv *env, jclass c, jlong address, jintArray seedsArray) {
 	call_seeds f = (call_seeds) address;
 	int *pseeds = f();
 	int seedslen = (*env)->GetArrayLength(env, seedsArray);

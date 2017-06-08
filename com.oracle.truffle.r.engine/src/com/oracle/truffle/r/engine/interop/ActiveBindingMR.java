@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 
-@MessageResolution(receiverType = ActiveBinding.class, language = TruffleRLanguage.class)
+@MessageResolution(receiverType = ActiveBinding.class)
 public class ActiveBindingMR {
     @Resolve(message = "IS_BOXED")
     public abstract static class ActiveBindingIsBoxedNode extends Node {

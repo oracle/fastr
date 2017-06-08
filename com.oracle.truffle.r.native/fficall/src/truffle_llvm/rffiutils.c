@@ -30,3 +30,11 @@ SEXP unimplemented(char *name) {
 	return result;
 }
 
+char *ensure_truffle_chararray(const char *x) {
+	if (truffle_is_truffle_object(x)) {
+		return (char *)x;
+	} else {
+		IMPORT_CALLHELPER_IMPL();
+		return truffle_invoke(obj, "bytesToNativeCharArray", truffle_read_n_bytes(x, strlen(x)));
+	}
+}

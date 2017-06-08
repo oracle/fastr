@@ -33,6 +33,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
@@ -148,6 +149,13 @@ public class RListMR {
                 }
                 return info;
             }
+        }
+    }
+
+    @Resolve(message = "TO_NATIVE")
+    public abstract static class RListToNativeNode extends Node {
+        protected Object access(RList receiver) {
+            return new NativePointer(receiver);
         }
     }
 

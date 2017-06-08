@@ -40,6 +40,9 @@ else
 ifeq ($(FASTR_RFFI),llvm)
 XTRA_C_SOURCES += $(SRC)/truffle_llvm/gramRd_llvm.c
 XTRA_C_OBJECTS += $(OBJ)/gramRd_llvm.o
+SULONG_DIR = $(abspath $(FASTR_R_HOME)/../sulong)
+
+SULONG_INCLUDES = -I$(SULONG_DIR)/include
 else
 ifeq ($(FASTR_RFFI),jni)
 XTRA_C_SOURCES += $(SRC)/jni/gramRd_jni.c
@@ -63,6 +66,9 @@ $(OBJ)/%.o: $(GNUR_SRC)/%.c
 
 $(OBJ)/gramRd_nfi.o: $(SRC)/truffle_nfi/gramRd_nfi.c
 	$(CC) $(CFLAGS) $(FFI_INCLUDES) -c $< -o $@
+
+$(OBJ)/gramRd_llvm.o: $(SRC)/truffle_llvm/gramRd_llvm.c
+	$(CC) $(CFLAGS) $(FFI_INCLUDES) $(SULONG_INCLUDES) -c $< -o $@
 
 $(OBJ)/gramRd_jni.o: $(SRC)/jni/gramRd_jni.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@

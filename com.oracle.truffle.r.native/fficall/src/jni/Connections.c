@@ -59,10 +59,10 @@ static void setFd(Rconnection con, jint fd) {
 
 void init_connections(JNIEnv *env) {
 	/* int readConn(int, byte[]) */
-	readConnMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ReadConnection", "(I[B)I", 0);
+	readConnMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ReadConnection", "(ILjava/lang/Object;)I", 0);
 
 	/* int writeConn(int, byte[]) */
-	writeConnMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_WriteConnection", "(I[B)I", 0);
+	writeConnMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_WriteConnection", "(ILjava/lang/Object;)I", 0);
 
 	/* RConnection getConnection(int) */
 	getConnMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_GetConnection", "(I)Ljava/lang/Object;", 0);

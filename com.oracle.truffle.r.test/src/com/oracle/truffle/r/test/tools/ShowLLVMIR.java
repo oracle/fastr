@@ -26,8 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import com.oracle.truffle.r.ffi.impl.llvm.LLVM_IR;
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
-import com.oracle.truffle.r.runtime.ffi.truffle.LLVM_IR;
 
 public class ShowLLVMIR {
     public static void main(String[] args) {

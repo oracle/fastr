@@ -607,7 +607,6 @@ public class DLL {
         public static RFindSymbolNode create() {
             return new RFindSymbolNode();
         }
-
     }
 
     private static final class RFindSymbolRootNode extends RootNode {

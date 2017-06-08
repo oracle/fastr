@@ -33,6 +33,7 @@ OBJ = ../../lib
 C_HDRS := $(wildcard *.h)
 
 C_SOURCES = $(wildcard *.c)
+#$(info C_SOURCES=$(C_SOURCES))
 C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_SOURCES))
 #$(info C_OBJECTS=$(C_OBJECTS))
 
@@ -52,8 +53,8 @@ $(C_OBJECTS): | $(OBJ)
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(OBJ)/%.o: %.c $(TOPDIR)/include/Rinternals.h rffi_callbacksindex.h $(C_HDRS)
-	$(CC) $(CFLAGS) $(INCLUDES) -I../variable_defs -c $< -o $@
+$(OBJ)/%.o: %.c $(TOPDIR)/include/Rinternals.h ../common/rffi_upcallsindex.h $(C_HDRS)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # for debugging, to see what's really being compiled
 $(OBJ)/%.E: %.c $(TOPDIR)/include/Rinternals.h

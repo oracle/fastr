@@ -152,8 +152,7 @@ def set_graal_options():
 
 def _sulong_options():
     if _mx_sulong:
-        return ['-Dfastr.ffi.factory.class=com.oracle.truffle.r.engine.interop.ffi.llvm.TruffleLLVM_RFFIFactory',
-                '-XX:-UseJVMCIClassLoader']
+        return ['-XX:-UseJVMCIClassLoader']
     else:
         return []
 

@@ -30,9 +30,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.ffi.impl.nodes.AsIntegerNode;
+import com.oracle.truffle.r.ffi.impl.nodes.AsLogicalNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.nodes.ffi.AsIntegerNode;
-import com.oracle.truffle.r.nodes.ffi.AsLogicalNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.RConnection;
@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 
 public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
-    @Child ToolsRFFI.ParseRdNode parseRdNode = RFFIFactory.getRFFI().getToolsRFFI().createParseRdNode();
+    @Child private ToolsRFFI.ParseRdNode parseRdNode = RFFIFactory.getRFFI().getToolsRFFI().createParseRdNode();
 
     static {
         Casts casts = new Casts(C_ParseRd.class);

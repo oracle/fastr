@@ -31,6 +31,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.ffi.impl.nodes.AsRealNode;
+import com.oracle.truffle.r.ffi.impl.nodes.AsRealNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctions.SeqInt.IsIntegralNumericNode;
@@ -40,8 +42,6 @@ import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.IsNumericNode
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.SeqIntNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.SeqIntNodeGen.IsIntegralNumericNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
-import com.oracle.truffle.r.nodes.ffi.AsRealNode;
-import com.oracle.truffle.r.nodes.ffi.AsRealNodeGen;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitBaseEnvCallDispatcher;
