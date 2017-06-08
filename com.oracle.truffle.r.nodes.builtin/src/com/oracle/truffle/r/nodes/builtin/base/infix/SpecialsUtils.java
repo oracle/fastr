@@ -35,7 +35,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNames
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertIndexNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertValueNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -168,7 +167,7 @@ class SpecialsUtils {
         @Specialization(rewriteOn = IllegalArgumentException.class)
         protected int convertDouble(double value) {
             int intValue = (int) value;
-            if (intValue == 0) {
+            if (intValue <= 0) {
                 /*
                  * Conversion from double to an index differs in subscript and subset for values in
                  * the ]0..1[ range (subscript interprets 0.1 as 1, whereas subset treats it as 0).
