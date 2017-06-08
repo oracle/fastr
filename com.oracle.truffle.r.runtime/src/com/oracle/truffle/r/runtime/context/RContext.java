@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.Closeable;
 import java.lang.ref.WeakReference;
 import java.nio.file.Path;
@@ -36,6 +38,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
+import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
@@ -62,6 +65,7 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -69,6 +73,7 @@ import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 
 /**
  * Encapsulates the runtime state ("context") of an R session. All access to that state from the
@@ -327,6 +332,8 @@ public final class RContext implements RTruffleObject {
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
     public final WeakHashMap<Path, REnvironment> srcfileEnvironments = new WeakHashMap<>();
 
+    private final AllocationReporter allocationReporter;
+
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRProfile, stateTempPath, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI,
                         stateRSerialize,
@@ -381,6 +388,9 @@ public final class RContext implements RTruffleObject {
         this.stateDLL = DLL.ContextStateImpl.newContextState();
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
         state.add(State.CONSTRUCTED);
+
+        this.allocationReporter = env.lookup(AllocationReporter.class);
+        this.allocationReporter.addPropertyChangeListener(ALLOCATION_ACTIVATION_LISTENER);
     }
 
     /**
@@ -522,6 +532,8 @@ public final class RContext implements RTruffleObject {
                 threadLocalContext.set(info.getParent());
             }
             state = EnumSet.of(State.DESTROYED);
+
+            this.allocationReporter.removePropertyChangeListener(ALLOCATION_ACTIVATION_LISTENER);
         }
     }
 
@@ -785,4 +797,16 @@ public final class RContext implements RTruffleObject {
     public static Class<? extends TruffleRLanguage> getTruffleRLanguage() {
         return getRRuntimeASTAccess().getTruffleRLanguage();
     }
+
+    public AllocationReporter getAllocationReporter() {
+        return this.allocationReporter;
+    }
+
+    private static final PropertyChangeListener ALLOCATION_ACTIVATION_LISTENER = new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent event) {
+            RDataFactory.setTracingState(event.getNewValue() == Boolean.TRUE);
+        }
+    };
+
 }

@@ -137,6 +137,9 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
     @TruffleBoundary
     public void reportAllocation(RTypedValue data) {
         RprofState profState = RprofState.get();
+        if (profState.memoryQuad == null) {
+            return;
+        }
         long size = RObjectSize.getObjectSize(data, Rprofmem.myIgnoreObjectHandler);
         if (data instanceof RAbstractVector) {
             if (size >= Rprofmem.LARGE_VECTOR) {

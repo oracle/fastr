@@ -204,7 +204,7 @@ public class FastRInterop {
 
         @Specialization(guards = "!isRMissing(value)")
         @TruffleBoundary
-        protected Object exportSymbol(String name, RTypedValue value) {
+        protected Object exportSymbol(String name, TruffleObject value) {
             if (name == null) {
                 throw error(RError.Message.INVALID_ARGUMENT, "name");
             }

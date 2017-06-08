@@ -207,7 +207,7 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
     // fallback
     @Fallback
     protected byte isNA(Object value) {
-        warning(RError.Message.IS_NA_TO_NON_VECTOR, ((RTypedValue) value).getRType().getName());
+        warning(RError.Message.IS_NA_TO_NON_VECTOR, value instanceof RTypedValue ? ((RTypedValue) value).getRType().getName() : value);
         return RRuntime.LOGICAL_FALSE;
     }
 
