@@ -22,6 +22,7 @@ import com.oracle.truffle.r.runtime.ROptions.OptionsException;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -64,9 +65,14 @@ public final class RGridGraphicsAdapter {
     public static void initialize() {
         addDevice(NULL_DEVICE);
         setCurrentDevice(NULL_DEVICE);
-        ROptions.ContextStateImpl options = RContext.getInstance().stateROptions;
+        RContext ctx = RContext.getInstance();
+        ROptions.ContextStateImpl options = ctx.stateROptions;
+        if (options.getValue(DEFAULT_DEVICE_OPTION) != RNull.instance) {
+            return;
+        }
+        String defaultDevice = ctx.isInteractive() ? "awt" : "svg";
         try {
-            options.setValue(DEFAULT_DEVICE_OPTION, "awt");
+            options.setValue(DEFAULT_DEVICE_OPTION, defaultDevice);
         } catch (OptionsException e) {
             RError.warning(RError.NO_CALLER, Message.GENERIC, "FastR could not set the 'device' options to awt.");
         }
