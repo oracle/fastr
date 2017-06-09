@@ -14,6 +14,8 @@ package com.oracle.truffle.r.nodes.builtin.base.foreign;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import java.nio.charset.Charset;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -32,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -56,11 +59,13 @@ public class FortranAndCFunctions {
         private static final int SCALAR_DOUBLE = 0;
         private static final int SCALAR_INT = 1;
         private static final int SCALAR_LOGICAL = 2;
-        @SuppressWarnings("unused") private static final int SCALAR_STRING = 3;
+        private static final int SCALAR_STRING = 3;
         private static final int VECTOR_DOUBLE = 10;
         private static final int VECTOR_INT = 11;
         private static final int VECTOR_LOGICAL = 12;
-        @SuppressWarnings("unused") private static final int VECTOR_STRING = 12;
+        private static final int VECTOR_STRING = 13;
+
+        private static final Charset charset = Charset.forName("US-ASCII");
 
         @Child protected ExtractNativeCallInfoNode extractSymbolInfo = ExtractNativeCallInfoNodeGen.create();
         @Child private CRFFI.InvokeCNode invokeCNode = RFFIFactory.getRFFI().getCRFFI().createInvokeCNode();
@@ -98,6 +103,14 @@ public class FortranAndCFunctions {
                         dataAsInt[j] = RRuntime.isNA(data[j]) ? RRuntime.INT_NA : data[j];
                     }
                     nativeArgs[i] = checkNAs(node, i + 1, dataAsInt);
+                } else if (arg instanceof RAbstractStringVector) {
+                    argTypes[i] = VECTOR_STRING;
+                    checkNAs(node, i + 1, (RAbstractStringVector) arg);
+                    nativeArgs[i] = encodeStrings((RAbstractStringVector) arg);
+                } else if (arg instanceof String) {
+                    argTypes[i] = SCALAR_STRING;
+                    checkNAs(node, i + 1, RString.valueOf((String) arg));
+                    nativeArgs[i] = new byte[][]{encodeString((String) arg)};
                 } else if (arg instanceof Double) {
                     argTypes[i] = SCALAR_DOUBLE;
                     nativeArgs[i] = checkNAs(node, i + 1, new double[]{(double) arg});
@@ -133,6 +146,12 @@ public class FortranAndCFunctions {
                         }
                         results[i] = RDataFactory.createLogicalVector(nativeByteArgs, RDataFactory.COMPLETE_VECTOR);
                         break;
+                    case SCALAR_STRING:
+                        results[i] = RDataFactory.createStringVector(decodeStrings((byte[][]) nativeArgs[i]), RDataFactory.COMPLETE_VECTOR);
+                        break;
+                    case VECTOR_STRING:
+                        results[i] = ((RAbstractStringVector) array[i]).materialize().copyResetData(decodeStrings((byte[][]) nativeArgs[i]));
+                        break;
                     case VECTOR_DOUBLE:
                         results[i] = ((RAbstractDoubleVector) array[i]).materialize().copyResetData((double[]) nativeArgs[i]);
                         break;
@@ -163,6 +182,15 @@ public class FortranAndCFunctions {
             return data;
         }
 
+        private static void checkNAs(RBuiltinNode node, int argIndex, RAbstractStringVector data) {
+            CompilerAsserts.neverPartOfCompilation();
+            for (int i = 0; i < data.getLength(); i++) {
+                if (RRuntime.isNA(data.getDataAt(i))) {
+                    throw node.error(RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, argIndex);
+                }
+            }
+        }
+
         private static double[] checkNAs(RBuiltinNode node, int argIndex, double[] data) {
             CompilerAsserts.neverPartOfCompilation();
             for (int i = 0; i < data.length; i++) {
@@ -183,6 +211,29 @@ public class FortranAndCFunctions {
                 listArgNames[i] = name;
             }
             return RDataFactory.createStringVector(listArgNames, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        private static Object encodeStrings(RAbstractStringVector vector) {
+            byte[][] result = new byte[vector.getLength()][];
+            for (int i = 0; i < vector.getLength(); i++) {
+                result[i] = encodeString(vector.getDataAt(i));
+            }
+            return result;
+        }
+
+        private static byte[] encodeString(String str) {
+            byte[] bytes = str.getBytes(charset);
+            byte[] result = new byte[bytes.length + 1];
+            System.arraycopy(bytes, 0, result, 0, bytes.length);
+            return result;
+        }
+
+        private static String[] decodeStrings(byte[][] bytes) {
+            String[] result = new String[bytes.length];
+            for (int i = 0; i < bytes.length; i++) {
+                result[i] = new String(bytes[i], charset);
+            }
+            return result;
         }
     }
 

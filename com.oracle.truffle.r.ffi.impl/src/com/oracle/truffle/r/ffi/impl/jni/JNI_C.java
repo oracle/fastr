@@ -44,12 +44,19 @@ public class JNI_C implements CRFFI {
                 if (traceEnabled()) {
                     traceDownCall(nativeCallInfo.name, args);
                 }
-                c(nativeCallInfo.address.asAddress(), args);
+                boolean hasStrings = false;
+                for (int i = 0; i < args.length; i++) {
+                    if (args[i] instanceof byte[][]) {
+                        hasStrings = true;
+                        break;
+                    }
+                }
+                c(nativeCallInfo.address.asAddress(), args, hasStrings);
             }
         }
     }
 
-    private static native void c(long address, Object[] args);
+    private static native void c(long address, Object[] args, boolean hasStrings);
 
     @Override
     public InvokeCNode createInvokeCNode() {

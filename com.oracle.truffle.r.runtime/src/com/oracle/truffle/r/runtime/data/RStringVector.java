@@ -94,6 +94,19 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
         return copy;
     }
 
+    public RStringVector copyResetData(String[] newData) {
+        boolean isComplete = true;
+        for (int i = 0; i < newData.length; i++) {
+            if (RRuntime.isNA(newData[i])) {
+                isComplete = false;
+                break;
+            }
+        }
+        RStringVector result = new RStringVector(newData, isComplete, null);
+        setAttributes(result);
+        return result;
+    }
+
     /**
      * Intended for external calls where a copy is not needed. WARNING: think carefully before using
      * this method rather than {@link #getDataCopy()}.
