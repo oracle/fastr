@@ -41,6 +41,7 @@ import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Value;
 import com.oracle.truffle.r.nodes.builtin.base.Quit;
 import com.oracle.truffle.r.runtime.ExitException;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RError;
@@ -48,6 +49,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RStartParams;
+import com.oracle.truffle.r.runtime.StartupTiming;
 import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
@@ -78,10 +80,15 @@ public class RCommand {
     }
 
     public static int doMain(String[] args, String[] env, boolean initial, InputStream inStream, OutputStream outStream) {
+        FastROptions.initialize();
+        StartupTiming.timestamp("Main Entered");
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
         options.printHelpAndVersion();
         ContextInfo info = createContextInfoFromCommandLine(options, false, initial, inStream, outStream, env);
-        return readEvalPrint(info.createVM(), info);
+        PolyglotEngine vm = info.createVM();
+        StartupTiming.timestamp("VM Created");
+        StartupTiming.printSummary();
+        return readEvalPrint(vm, info);
     }
 
     /**

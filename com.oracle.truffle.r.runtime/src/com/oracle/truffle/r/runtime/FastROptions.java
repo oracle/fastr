@@ -67,7 +67,11 @@ public enum FastROptions {
     EagerEvalVariables("Enables optimistic eager evaluation of single variables reads", true),
     EagerEvalDefault("Enables optimistic eager evaluation of single variables reads (for default parameters)", false),
     EagerEvalExpressions("Enables optimistic eager evaluation of trivial expressions", false),
-    PromiseCacheSize("Enables inline caches for promises evaluation", "3", true);
+    PromiseCacheSize("Enables inline caches for promises evaluation", "3", true),
+
+    // Miscellaneous
+
+    StartupTiming("Records and prints various timestamps during initialization", false);
 
     private final String help;
     private final boolean isBoolean;

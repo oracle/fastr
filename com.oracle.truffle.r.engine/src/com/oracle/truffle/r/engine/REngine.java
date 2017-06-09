@@ -81,6 +81,7 @@ import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.RootWithBody;
+import com.oracle.truffle.r.runtime.StartupTiming;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
@@ -163,6 +164,7 @@ final class REngine implements Engine, Engine.Timings {
         RBuiltinPackages.loadBase(baseFrame);
         RGraphics.initialize();
         if (FastROptions.LoadProfiles.getBooleanValue()) {
+            StartupTiming.timestamp("Before Profiles Loaded");
             /*
              * eval the system/site/user profiles. Experimentally GnuR does not report warnings
              * during system profile evaluation, but does for the site/user profiles.
@@ -198,6 +200,8 @@ final class REngine implements Engine, Engine.Timings {
             }
             checkAndRunStartupShutdownFunction(".First");
             checkAndRunStartupShutdownFunction(".First.sys");
+
+            StartupTiming.timestamp("After Profiles Loaded");
         }
     }
 
