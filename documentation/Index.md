@@ -7,3 +7,5 @@
 [For Developers](dev/Index.md)
 
 [Debugging](debugging.md)
+
+[Graphics support](graphics.md)
