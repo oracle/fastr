@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -118,7 +118,8 @@ def copylib(args):
                         return 0
 
     if os.environ.has_key('FASTR_RELEASE'):
-        if args[0] == 'quadmath' and (mx.get_arch() == 'sparcv9' or mx.get_os() == 'solaris'):
+#        if args[0] == 'quadmath' and (mx.get_arch() == 'sparcv9' or mx.get_os() == 'solaris'):
+        if mx.get_arch() == 'sparcv9' or mx.get_os() == 'solaris':
             return 0
         mx.abort(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, but required with FASTR_RELEASE')
 
