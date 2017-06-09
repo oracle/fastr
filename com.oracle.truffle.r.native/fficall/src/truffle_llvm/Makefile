@@ -21,13 +21,6 @@
 # questions.
 #
 
-# This compiles everything in this directory, plus all the code in ../common,
-# including the code referenced in common from GnuR, with the -DFASTR_LLVM flag.
-# This creates an object file with no compiled C/Fortan code, just the equivalent LLVM IR
-# Since, at present, the resulting shared library (libR) must include both the real and the dummy
-# object files, we have to avoid a name clash on the object file,which we achieve by appending
-# "_llvm" to the name of the object file. The wrapper compilers use this name to create the
-# symbol that is looked up to find the LLVM IR at runtime.
 
 # N.B. -g -O2 (which is the FFLAGS default from platform.mk) is currently suppressed
 # due to sulong limitations
@@ -51,26 +44,21 @@ GNUR_MAIN_C_FILES = colors.c devices.c engine.c format.c graphics.c plot.c plot3
 GNUR_MAIN_SRC = $(GNUR_HOME)/src/main
 
 GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_APPL_C_FILES:.c=.o) $(GNUR_MAIN_C_FILES:.c=.o))
-LLVM_GNUR_C_OBJECTS := $(GNUR_C_OBJECTS:.o=_llvm.o)
-$(info LLVM_GNUR_C_OBJECTS: $(LLVM_GNUR_C_OBJECTS))
 
 GNUR_F_OBJECTS := $(addprefix $(OBJ)/, $(notdir $(GNUR_APPL_F_FILES:.f=.o)))
-LLVM_GNUR_F_OBJECTS := $(GNUR_F_OBJECTS:.o=_llvm.o)
-$(info LLVM_GNUR_F_OBJECTS: $(LLVM_GNUR_F_OBJECTS))
 
 C_HDRS := $(wildcard *.h)
 
 LOCAL_C_SOURCES := $(wildcard *.c) 
 COMMON_C_SOURCES := $(wildcard ../common/*.c)
-SHARED_NFI_C_SOURCES := ../truffle_nfi/misc_rffi.c ../truffle_nfi/lapack_rffi.c ../truffle_nfi/appl_rffi.c
-C_SOURCES := $(LOCAL_C_SOURCES) $(COMMON_C_SOURCES) $(SHARED_NFI_C_SOURCES)
-$(info C_SOURCES=$(C_SOURCES))
+TRUFFLE_COMMON_C_SOURCES := $(wildcard ../truffle_common/*.c)
+C_SOURCES := $(LOCAL_C_SOURCES) $(COMMON_C_SOURCES) $(TRUFFLE_COMMON_C_SOURCES)
+#$(info C_SOURCES=$(C_SOURCES))
 LOCAL_C_OBJECTS := $(addprefix $(OBJ)/, $(LOCAL_C_SOURCES:.c=.o))
 COMMON_C_OBJECTS := $(addprefix $(OBJ)/, $(notdir $(COMMON_C_SOURCES:.c=.o)))
-SHARED_NFI_C_OBJECTS := $(addprefix $(OBJ)/, $(notdir $(SHARED_NFI_C_SOURCES:.c=.o)))
-C_OBJECTS := $(LOCAL_C_OBJECTS) $(COMMON_C_OBJECTS) $(SHARED_NFI_C_OBJECTS)
-LLVM_C_OBJECTS := $(C_OBJECTS:.o=_llvm.o)
-$(info LLVM_C_OBJECTS=$(LLVM_C_OBJECTS))
+TRUFFLE_COMMON_C_OBJECTS := $(addprefix $(OBJ)/, $(notdir $(TRUFFLE_COMMON_C_SOURCES:.c=.o)))
+C_OBJECTS := $(LOCAL_C_OBJECTS) $(COMMON_C_OBJECTS) $(TRUFFLE_COMMON_C_OBJECTS)
+#$(info C_OBJECTS=$(C_OBJECTS))
 
 SULONG_DIR = $(abspath $(FASTR_R_HOME)/../sulong)
 
@@ -80,14 +68,12 @@ LOCAL_INCLUDES = -I . -I $(abspath ../include)
 
 INCLUDES := $(LOCAL_INCLUDES) $(FFI_INCLUDES) $(SULONG_INCLUDES)
 
-CFLAGS := $(CFLAGS) -DFASTR_LLVM
-#FFLAGS := $(FFLAGS) -DFASTR_LLVM
-FFLAGS := -DFASTR_LLVM
+FFLAGS :=
 
 # uncomment to see exactly where headers are being read from
 #CFLAGS := $(CFLAGS) -H
 
-all: Makefile $(LLVM_C_OBJECTS) $(LLVM_GNUR_C_OBJECTS) $(LLVM_GNUR_F_OBJECTS)
+all: Makefile $(C_OBJECTS) $(GNUR_C_OBJECTS) $(GNUR_F_OBJECTS)
 
 $(C_OBJECTS): | $(OBJ)
 
@@ -98,22 +84,22 @@ $(GNUR_F_OBJECTS): | $(OBJ)
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(OBJ)/%_llvm.o: $(GNUR_APPL_SRC)/%.c
+$(OBJ)/%.o: $(GNUR_APPL_SRC)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
-$(OBJ)/%_llvm.o: $(GNUR_MAIN_SRC)/%.c
+$(OBJ)/%.o: $(GNUR_MAIN_SRC)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
-$(OBJ)/%_llvm.o: %.c $(FASTR_NATIVE_DIR)/include/Rinternals.h rffiutils.h
+$(OBJ)/%.o: %.c $(FASTR_NATIVE_DIR)/include/Rinternals.h rffiutils.h
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
-$(OBJ)/%_llvm.o: ../common/%.c $(FASTR_NATIVE_DIR)/include/Rinternals.h
+$(OBJ)/%.o: ../common/%.c $(FASTR_NATIVE_DIR)/include/Rinternals.h
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
-$(OBJ)/%_llvm.o: ../truffle_nfi/%.c $(FASTR_NATIVE_DIR)/include/Rinternals.h
-	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
+$(OBJ)/%.o: ../truffle_common/%.c 
+	$(CC) $(CFLAGS) $(INCLUDES) $(SUPPRESS_WARNINGS) -c $< -o $@
 
-$(OBJ)/%_llvm.o: $(GNUR_APPL_SRC)/%.f
+$(OBJ)/%.o: $(GNUR_APPL_SRC)/%.f
 	$(F77) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
 
 clean:

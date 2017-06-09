@@ -22,10 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import java.io.IOException;
 import java.util.Base64;
-
-import com.oracle.truffle.r.runtime.RInternalError;
 
 public abstract class LLVM_IR {
     public static final int TEXT_CODE = 1;
@@ -35,19 +32,9 @@ public abstract class LLVM_IR {
      * The name of the "module", aka object file, that the IR pertains to.
      */
     public final String name;
-    /**
-     * List of exported symbols.
-     */
-    public final String[] exports;
-    /**
-     * List of imported symbols.
-     */
-    public final String[] imports;
 
-    protected LLVM_IR(String name, String[] exports, String[] imports) {
+    protected LLVM_IR(String name) {
         this.name = name;
-        this.exports = exports;
-        this.imports = imports;
     }
 
     @Override
@@ -61,8 +48,8 @@ public abstract class LLVM_IR {
     public static final class Text extends LLVM_IR {
         public final String text;
 
-        public Text(String name, String text, String[] exports, String[] imports) {
-            super(name, exports, imports);
+        public Text(String name, String text) {
+            super(name);
             this.text = text;
         }
     }
@@ -74,23 +61,11 @@ public abstract class LLVM_IR {
         public final byte[] binary;
         public final String base64;
 
-        public Binary(String name, byte[] binary, String[] exports, String[] imports) {
-            super(name, exports, imports);
+        public Binary(String name, byte[] binary) {
+            super(name);
             this.binary = binary;
             base64 = Base64.getEncoder().encodeToString(binary);
         }
     }
 
-    /**
-     * Return an array of {@link LLVM_IR} instances contained in the library denoted by {@code path}
-     * .
-     */
-    public static LLVM_IR[] getLLVMIR(String path) throws IOException {
-        String os = System.getProperty("os.name");
-        if (os.contains("Mac OS")) {
-            return MachOAccess.getLLVMIR(path);
-        } else {
-            throw RInternalError.unimplemented("LLVM_IR_Access for Linux");
-        }
-    }
 }

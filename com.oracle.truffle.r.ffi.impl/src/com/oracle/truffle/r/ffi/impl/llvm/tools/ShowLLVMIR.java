@@ -20,13 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.test.tools;
+package com.oracle.truffle.r.ffi.impl.llvm.tools;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.oracle.truffle.r.ffi.impl.llvm.LLVM_IR;
+import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL;
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
 
 public class ShowLLVMIR {
@@ -34,7 +35,6 @@ public class ShowLLVMIR {
         String objPath = null;
         String llpart = null;
         boolean list = false;
-        boolean xxports = false;
         boolean dis = false;
         int i = 0;
         while (i < args.length) {
@@ -53,9 +53,6 @@ public class ShowLLVMIR {
                 case "--list":
                     list = true;
                     break;
-                case "--xxports":
-                    xxports = true;
-                    break;
                 case "--dis":
                     dis = true;
                     break;
@@ -67,7 +64,7 @@ public class ShowLLVMIR {
             usage();
         }
         try {
-            LLVM_IR[] irs = LLVM_IR.getLLVMIR(objPath);
+            LLVM_IR[] irs = TruffleLLVM_DLL.getZipLLVMIR(objPath);
             if (irs == null) {
                 System.out.printf("no llvm ir in %s\n", objPath);
                 System.exit(1);
@@ -78,18 +75,6 @@ public class ShowLLVMIR {
                 } else {
                     if (llpart == null || ir.name.equals(llpart)) {
                         System.out.printf("Module: %s%n", ir.name);
-                        if (xxports) {
-                            System.out.println("Exports");
-                            System.out.println("=======");
-                            for (String export : ir.exports) {
-                                System.out.println(export);
-                            }
-                            System.out.println("Imports");
-                            System.out.println("=======");
-                            for (String importx : ir.imports) {
-                                System.out.println(importx);
-                            }
-                        }
                         if (dis) {
                             String text = null;
                             if (ir instanceof LLVM_IR.Binary) {

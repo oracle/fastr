@@ -1,0 +1,32 @@
+/^CC =/
+d
+i
+CC = $(R_HOME)/mx.fastr/compilers/fastr-cc
+.
+/^CXX =/
+d
+i
+CXX = $(R_HOME)/mx.fastr/compilers/fastr-c++
+.
+/^CXXCPP =/
+d
+i
+CXXCPP = $(R_HOME)/mx.fastr/compilers/fastr-cpp
+.
+/^FC =/
+d
+i
+FC = $(R_HOME)/mx.fastr/compilers/fastr-fc
+.
+/^F77 =/
+d
+i
+F77 = $(R_HOME)/mx.fastr/compilers/fastr-fc
+.
+/^OBJC =/
+d
+i
+OBJC = $(R_HOME)/mx.fastr/compilers/fastr-cc
+.
+w
+q

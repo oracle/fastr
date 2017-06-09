@@ -97,7 +97,6 @@ final class TruffleLLVM_Call implements CallRFFI {
     private static void initVariables(RContext context) {
         // must have parsed the variables module in libR
         for (INIT_VAR_FUN initVarFun : INIT_VAR_FUN.values()) {
-            TruffleLLVM_DLL.ensureParsed("libR", initVarFun.funName, true);
             initVarFun.symbolHandle = new SymbolHandle(context.getEnv().importSymbol("@" + initVarFun.funName));
         }
         Node executeNode = Message.createExecute(2).createNode();
@@ -128,7 +127,6 @@ final class TruffleLLVM_Call implements CallRFFI {
     }
 
     private static void initCallbacks(RContext context, UpCallsRFFI upCallsImpl) {
-        TruffleLLVM_DLL.ensureParsed("libR", "Rinternals_addCallback", true);
         Node executeNode = Message.createExecute(1).createNode();
         SymbolHandle symbolHandle = new SymbolHandle(context.getEnv().importSymbol("@" + "Rinternals_addCallback"));
 
@@ -148,8 +146,7 @@ final class TruffleLLVM_Call implements CallRFFI {
 
         @Specialization(guards = {"cachedNativeCallInfo.name.equals(nativeCallInfo.name)"})
         protected Object invokeCallCached(NativeCallInfo nativeCallInfo, Object[] args,
-                        @SuppressWarnings("unused") @Cached("nativeCallInfo") NativeCallInfo cachedNativeCallInfo,
-                        @SuppressWarnings("unused") @Cached("ensureReady(nativeCallInfo)") boolean ready) {
+                        @SuppressWarnings("unused") @Cached("nativeCallInfo") NativeCallInfo cachedNativeCallInfo) {
             return doInvoke(messageNode, nativeCallInfo, args);
         }
 
@@ -168,12 +165,6 @@ final class TruffleLLVM_Call implements CallRFFI {
             } finally {
                 RContext.getRForeignAccessFactory().setIsNull(isNullSetting);
             }
-        }
-
-        public static boolean ensureReady(NativeCallInfo nativeCallInfo) {
-            TruffleLLVM_DLL.ensureParsed(nativeCallInfo);
-            ContextStateImpl contextState = TruffleLLVM_RFFIContextState.getContextState().callState;
-            return true;
         }
 
     }

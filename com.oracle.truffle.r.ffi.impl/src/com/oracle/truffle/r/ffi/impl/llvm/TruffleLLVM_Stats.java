@@ -52,26 +52,6 @@ public class TruffleLLVM_Stats implements StatsRFFI {
     static class ContextStateImpl implements RContext.ContextState {
         @Override
         public ContextState initialize(RContext context) {
-            /*
-             * In the case of a SHARE_PARENT_RW context, there is no dlopen call for stats, so the
-             * fft_work/fft_factor functions will not be added into the context symbol map, so we do
-             * it here.
-             */
-            if (context.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
-                TruffleLLVM_DLL.ContextStateImpl contextState = TruffleLLVM_RFFIContextState.getContextState().dllState;
-                TruffleLLVM_DLL.ContextStateImpl parentDLLContextState = TruffleLLVM_RFFIContextState.getContextState(context.getParent()).dllState;
-                TruffleLLVM_DLL.ParseStatus parseStatus = null;
-                for (FFT_FUN f : FFT_FUN.values()) {
-                    String funName = f.name();
-                    TruffleLLVM_DLL.ParseStatus parentParseStatus = parentDLLContextState.parseStatusMap.get(funName);
-                    if (parentParseStatus != null) {
-                        if (parseStatus == null) {
-                            parseStatus = new TruffleLLVM_DLL.ParseStatus("stats", parentParseStatus.ir, false);
-                        }
-                        contextState.parseStatusMap.put(f.name(), parseStatus);
-                    }
-                }
-            }
             return this;
         }
 

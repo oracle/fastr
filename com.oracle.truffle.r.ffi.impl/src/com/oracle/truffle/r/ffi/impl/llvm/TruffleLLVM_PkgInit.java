@@ -69,7 +69,6 @@ class TruffleLLVM_PkgInit {
             array[i] = (DotSymbol) sym;
         }
         dllInfo.setNativeSymbols(nstOrd, array);
-        TruffleLLVM_DLL.registerSymbols(dllInfo, array);
     }
 
     private static Object setSymbol(int nstOrd, long routines, int index, SymbolHandle symbolHandle) {

@@ -25,6 +25,7 @@
 
 ifneq ($(MAKECMDGOALS),clean)
 include $(FASTR_NATIVE_DIR)/platform.mk
+
 endif
 
 .PHONY: all clean
@@ -34,8 +35,12 @@ OBJ = ../../lib
 
 GNUR_APPL_C_FILES = pretty.c interv.c
 GNUR_APPL_SRC = $(GNUR_HOME)/src/appl
-# the Fortran sources are not recompiled, just copied
-GNUR_APPL_F_OBJECTS := $(wildcard $(GNUR_APPL_SRC)/d*.o $(GNUR_APPL_SRC)/d*.ll)
+# the Fortran sources are not recompiled (except for LLVM), just copied
+ifneq ($(FASTR_RFFI),llvm)	
+GNUR_APPL_F_OBJECTS := $(wildcard $(GNUR_APPL_SRC)/d*.o)
+else
+GNUR_APPL_F_OBJECTS :=
+endif
 
 GNUR_MAIN_C_FILES = colors.c devices.c engine.c format.c graphics.c plot.c plot3d.c plotmath.c rlocale.c sort.c
 GNUR_MAIN_SRC = $(GNUR_HOME)/src/main
@@ -64,7 +69,9 @@ endif
 all: Makefile $(C_OBJECTS) $(F_OBJECTS) $(GNUR_C_OBJECTS) $(GNUR_F_OBJECTS) $(OBJ)/copy_appl_objects
 
 $(OBJ)/copy_appl_objects: $(GNUR_APPL_F_OBJECTS)
+ifneq ($(FASTR_RFFI),llvm)
 	cp $(GNUR_APPL_F_OBJECTS) $(OBJ)
+endif
 	touch $(OBJ)/copy_appl_objects
 
 $(C_OBJECTS): | $(OBJ)

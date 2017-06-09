@@ -42,7 +42,7 @@ def _darwin_extract_realpath(lib, libpath):
     except subprocess.CalledProcessError:
         mx.abort('copylib: otool failed')
 
-def _copylib(lib, libpath, target):
+def _copylib(lib, libpath, plain_libpath_base, target):
     '''
     Just copying libxxx.so/dylib isn't sufficient as versioning is involved.
     The path is likely a symlink to libxxx.so.n, for example, but what is really
@@ -67,20 +67,19 @@ def _copylib(lib, libpath, target):
     # copy both files
     shutil.copyfile(real_libpath, os.path.join(target, os.path.basename(real_libpath)))
     mx.log('copied ' + lib + ' library from ' + real_libpath + ' to ' + target)
-    libpath_base = os.path.basename(libpath)
     os.chdir(target)
-    mx.log('libpath: ' + libpath + ' real_libpath: ' + real_libpath)
-    if os.path.basename(libpath) != os.path.basename(real_libpath):
+    mx.log('plain_libpath_base: ' + plain_libpath_base + ' libpath: ' + libpath + ' real_libpath: ' + real_libpath)
+    if os.path.basename(real_libpath) != plain_libpath_base:
         # create a symlink
-        if os.path.exists(libpath_base):
-            os.remove(libpath_base)
-        mx.log('ln -s ' + os.path.basename(real_libpath) + ' ' + libpath_base)
-        os.symlink(os.path.basename(real_libpath), libpath_base)
+        if os.path.exists(plain_libpath_base):
+            os.remove(plain_libpath_base)
+        mx.log('ln -s ' + os.path.basename(real_libpath) + ' ' + plain_libpath_base)
+        os.symlink(os.path.basename(real_libpath), plain_libpath_base)
     # On Darwin we change the id to use @rpath
     if platform.system() == 'Darwin':
         try:
-            mx.log('install_name_tool -id @rpath/' + libpath_base + ' ' + libpath_base)
-            subprocess.check_call(['install_name_tool', '-id', '@rpath/' + libpath_base, libpath_base])
+            mx.log('install_name_tool -id @rpath/' + plain_libpath_base + ' ' + plain_libpath_base)
+            subprocess.check_call(['install_name_tool', '-id', '@rpath/' + plain_libpath_base, plain_libpath_base])
         except subprocess.CalledProcessError:
             mx.abort('copylib: install_name_tool failed')
 
@@ -104,17 +103,17 @@ def copylib(args):
         parts = os.environ['PKG_LDFLAGS_OVERRIDE'].split(' ')
         ext = '.dylib' if platform.system() == 'Darwin' else '.so'
         lib_prefix = 'lib' + args[0]
-        plain_libpath = lib_prefix + ext
+        plain_libpath_base = lib_prefix + ext
         for part in parts:
             path = part.strip('"').lstrip('-L')
             if os.path.exists(path):
                 for f in os.listdir(path):
                     if f.startswith(lib_prefix):
-                        if os.path.exists(os.path.join(path, plain_libpath)):
-                            f = plain_libpath
+                        if os.path.exists(os.path.join(path, plain_libpath_base)):
+                            f = plain_libpath_base
                         target_dir = args[1]
                         if not os.path.exists(os.path.join(target_dir, f)):
-                            _copylib(args[0], os.path.join(path, f), args[1])
+                            _copylib(args[0], os.path.join(path, f), plain_libpath_base, args[1])
                         return 0
 
     if os.environ.has_key('FASTR_RELEASE'):

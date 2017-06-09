@@ -25,6 +25,7 @@ ifeq ($(TOPDIR),)
     TOPDIR = $(abspath ..)
 endif
 
+FASTR_R_HOME := $(abspath $(TOPDIR)/..)
 NATIVE_PROJECT = $(subst test.native,native,$(TOPDIR))
 
 ifneq ($(MAKECMDGOALS),clean)

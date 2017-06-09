@@ -39,8 +39,6 @@ R_LIBNAME := libR$(DYLIB_EXT)
 R_LIB := $(FASTR_LIB_DIR)/$(R_LIBNAME)
 JNIBOOT_LIBNAME := libjniboot$(DYLIB_EXT)
 JNIBOOT_LIB := $(FASTR_LIB_DIR)/$(JNIBOOT_LIBNAME)
-CACCESS_LIBNAME := libcaccess$(DYLIB_EXT)
-CACCESS_LIB := $(FASTR_LIB_DIR)/$(CACCESS_LIBNAME)
 
 ifeq ($(OS_NAME), Darwin)
 VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
@@ -61,11 +59,13 @@ ifeq ($(FASTR_RFFI),managed)
 else
 ifeq ($(OS_NAME),Darwin)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
+ifneq ($(FASTR_RFFI),llvm)	
 	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
 	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
 	install_name_tool -id @rpath/libR.dylib $(R_LIB)
 # check if we captured libpcre/libz, rpath those in libR
 	mx rupdatelib $(FASTR_LIB_DIR)
+endif
 else
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz
 endif
@@ -76,12 +76,13 @@ fficall.done: common.done
 	touch fficall.done
 else
 ifeq ($(FASTR_RFFI),nfi)
-fficall.done: common.done $(CACCESS_LIB)
+fficall.done: common.done
 	$(MAKE) -C src/truffle_nfi all
 	touch fficall.done
+
 else
 ifeq ($(FASTR_RFFI),llvm)
-fficall.done: common.done $(CACCESS_LIB)
+fficall.done: common.done
 	$(MAKE) -C src/truffle_llvm all
 	touch fficall.done
 else
@@ -97,7 +98,9 @@ jniboot.done:
 $(JNIBOOT_LIB): jniboot.done
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(JNIBOOT_LIB) src/jniboot/jniboot.o $(VERSION_FLAGS)
 ifeq ($(OS_NAME),Darwin)
+ifneq ($(FASTR_RFFI),llvm)	
 	install_name_tool -id @rpath/libjniboot.dylib $(JNIBOOT_LIB)
+endif
 endif
 else
 	$(error unknown value for FASTR_RFFI)
@@ -109,11 +112,6 @@ endif #managed
 common.done:
 	$(MAKE) -C src/common all	
 
-$(CACCESS_LIB): src/caccess/caccess.o
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(CACCESS_LIB) src/caccess/caccess.o $(VERSION_FLAGS)
-ifeq ($(OS_NAME),Darwin)
-	install_name_tool -id @rpath/libcaccess.dylib $(CACCESS_LIB)
-endif
 
 clean:
 	$(MAKE) -C src/common clean
@@ -128,6 +126,5 @@ endif
 endif
 	rm -rf $(R_LIB)
 	rm -rf $(JNIBOOT_LIB)
-	rm -rf $(CACCESS_LIB)
 	rm -rf fficall.done
 

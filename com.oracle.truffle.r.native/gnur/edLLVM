@@ -1,0 +1,12 @@
+/^CC =/
+d
+i
+CC = $(FASTR_R_HOME)/mx.fastr/compilers/fastr-cc
+.
+/^F77 =/
+d
+i
+F77 = $(FASTR_R_HOME)/mx.fastr/compilers/fastr-fc
+.
+w
+q
