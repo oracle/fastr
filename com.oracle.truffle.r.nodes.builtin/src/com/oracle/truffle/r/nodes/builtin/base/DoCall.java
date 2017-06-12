@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -184,12 +183,10 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         protected static boolean isSimple(RFunction function, RList args) {
             RBuiltinDescriptor builtin = function.getRBuiltin();
             if (builtin != null && builtin.getDispatch() != RDispatch.DEFAULT) {
-                CompilerDirectives.transferToInterpreter();
                 return false;
             }
             for (int i = 0; i < args.getLength(); i++) {
                 if (args.getDataAt(i) instanceof RLanguage) {
-                    CompilerDirectives.transferToInterpreter();
                     // Note: language is tricky because of formulae, which are language that is
                     // really not meant to be evaluated again in a different frame than the one were
                     // the were evaluated for the first time. The solution should be to clone the
