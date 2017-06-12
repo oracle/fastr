@@ -92,6 +92,10 @@ public class TestBuiltin_prod extends TestBase {
         assertEval("{prod(42,2+3i)}");
         assertEval("{prod('a')}");
         assertEval("{prod(list())}");
+        assertEval("prod()");
+        assertEval("prod(numeric())");
+        assertEval("prod(complex())");
+        assertEval("{ foo <- function(...) prod(...); foo(); }");
     }
 
     @Test
