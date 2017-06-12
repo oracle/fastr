@@ -25,6 +25,7 @@ public enum RType {
     Logical("logical", 1),
     Integer("integer", 2),
     Double("double", "numeric", 3),
+    Numeric("numeric", 3),
     Complex("complex", 4),
     Character("character", 5),
     List("list", 6),
@@ -112,6 +113,15 @@ public enum RType {
     }
 
     public static RType fromMode(String mode) {
+        return fromMode(mode, false);
+    }
+
+    /**
+     * @param includeNumeric if {@code true}, then the method returns {@link #Numeric} for string
+     *            "numeric". This may be useful for callers that need to distinguish "numeric" and
+     *            "double" modes.
+     */
+    public static RType fromMode(String mode, boolean includeNumeric) {
         switch (mode) {
             case "any":
                 return Any;
@@ -126,6 +136,7 @@ public enum RType {
             case "integer":
                 return Integer;
             case "numeric":
+                return includeNumeric ? Numeric : Double;
             case "double":
                 return Double;
             case "complex":

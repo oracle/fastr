@@ -213,5 +213,8 @@ public class TestBuiltin_inherits extends TestBase {
         assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", 1) ;}");
 
         assertEval("inherits(NULL, 'NULL')");
+
+        assertEval("inherits(1L, 'numeric')");
+        assertEval("inherits(1L, 'double')");
     }
 }
