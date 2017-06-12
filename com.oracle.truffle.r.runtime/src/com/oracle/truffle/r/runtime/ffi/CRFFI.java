@@ -32,9 +32,13 @@ public interface CRFFI {
         /**
          * Invoke the native method identified by {@code symbolInfo} passing it the arguments in
          * {@code args}. The values in {@code args} should be native types,e.g., {@code double[]}
-         * not {@code RDoubleVector}.
+         * not {@code RDoubleVector}. Strings are already converted to 2-dimensional byte arrays.
+         *
+         * @param hasStrings if {@code true}, then the {@code args} array may contain one or more
+         *            values of type {@code byte[][]}, which represent arrays of strings in ASCII
+         *            encoding.
          */
-        public abstract void execute(NativeCallInfo nativeCallInfo, Object[] args);
+        public abstract void execute(NativeCallInfo nativeCallInfo, Object[] args, boolean hasStrings);
     }
 
     InvokeCNode createInvokeCNode();

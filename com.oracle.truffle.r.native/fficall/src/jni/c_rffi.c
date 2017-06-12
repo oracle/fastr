@@ -22,6 +22,7 @@
  */
 
 #include <rffiutils.h>
+#include <stdbool.h>
 
 static jclass intArrayClass;
 static jclass doubleArrayClass;
@@ -330,17 +331,8 @@ typedef void (*c65func)(void *arg1, void *arg2, void *arg3, void *arg4, void *ar
         void *arg57, void *arg58, void *arg59, void *arg60, void *arg61, void *arg62, void *arg63, void *arg64,
         void *arg65);
 
-
-JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1C_c(JNIEnv *env, jclass c, jlong address, jobjectArray args) {
-	int len = (*env)->GetArrayLength(env, args);
-	void *cargs[len];
-	jobject jarrays[len];
-	for (int i = 0; i < len; i++) {
-		jarrays[i] = (*env)->GetObjectArrayElement(env, args, i);
-		cargs[i] = (*env)->GetPrimitiveArrayCritical(env, jarrays[i], NULL);
-	}
-	switch (len) {
+static void doCall(jlong address, int len, void** cargs) {
+  switch (len) {
     case 0: {
         c0func c0 = (c0func) address;
         (*c0)();
@@ -969,9 +961,51 @@ Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1C_c(JNIEnv *env, jclass c, jlong add
         break;
     }
 	}
-
-	for (int i = 0; i < len; i++) {
-		(*env)->ReleasePrimitiveArrayCritical(env, jarrays[i], cargs[i], 0);
-	}
 }
 
+// Note: hasStrings indicates that the args array may contain 2 dimensional byte arrays, which represent string vectors.
+JNIEXPORT void JNICALL
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1C_c(JNIEnv *env, jclass c, jlong address, jobjectArray args, jboolean hasStrings) {
+  int len = (*env)->GetArrayLength(env, args);
+  void *cargs[len];     // pointers to primitive arrays suitable for the actual c call
+  jobject jarrays[len]; // jarray instances corresponding to cargs native counterparts
+  jobject *dim2[len];   // if corresponding jarray[i] is 2-dimensional, this holds the array of jarrays, otherwise NULL
+  jclass byteArrayClass = NULL;
+  if (hasStrings) {
+      byteArrayClass = (*env)->FindClass(env, "[[B");
+  }
+
+  for (int i = 0; i < len; i++) {
+    jarrays[i] = (*env)->GetObjectArrayElement(env, args, i);
+    bool isString = hasStrings && (*env)->IsInstanceOf(env, jarrays[i], byteArrayClass);
+    if (isString) {
+      int len2 = (*env)->GetArrayLength(env, jarrays[i]);
+      dim2[i] = calloc(sizeof(jobject), len2);
+      const char **strArgs = calloc(sizeof(const char*), len2);
+      cargs[i] = strArgs;
+      for (int j = 0; j < len2; j++) {
+        dim2[i][j] = (*env)->GetObjectArrayElement(env, jarrays[i], j);
+        strArgs[j] = (*env)->GetPrimitiveArrayCritical(env, dim2[i][j], NULL);
+      }
+    } else {
+      dim2[i] = NULL;
+      cargs[i] = (*env)->GetPrimitiveArrayCritical(env, jarrays[i], NULL);
+    }
+  }
+
+  doCall(address, len, cargs);
+
+  for (int i = 0; i < len; i++) {
+    if (dim2[i] != NULL) {
+      int len2 = (*env)->GetArrayLength(env, jarrays[i]);
+      const char **strArgs = (const char**) cargs[i];
+      for (int j = 0; j < len2; j++) {
+        (*env)->ReleasePrimitiveArrayCritical(env, dim2[i][j], (void*) strArgs[j], 0);
+      }
+      free(dim2[i]);
+      free(cargs[i]);
+    } else {
+      (*env)->ReleasePrimitiveArrayCritical(env, jarrays[i], cargs[i], 0);
+    }
+  }
+}

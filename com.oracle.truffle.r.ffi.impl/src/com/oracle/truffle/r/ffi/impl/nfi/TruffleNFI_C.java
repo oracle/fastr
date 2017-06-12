@@ -42,7 +42,7 @@ public class TruffleNFI_C implements CRFFI {
         @Child private Node bindNode = Message.createInvoke(1).createNode();
 
         @Specialization(guards = "args.length == 0")
-        protected void invokeCall0(NativeCallInfo nativeCallInfo, @SuppressWarnings("unused") Object[] args,
+        protected void invokeCall0(NativeCallInfo nativeCallInfo, @SuppressWarnings("unused") Object[] args, @SuppressWarnings("unused") boolean hasStrings,
                         @Cached("createExecute(args.length)") Node executeNode) {
             synchronized (TruffleNFI_Call.class) {
                 try {
@@ -56,7 +56,7 @@ public class TruffleNFI_C implements CRFFI {
         }
 
         @Specialization(guards = "args.length == 1")
-        protected void invokeCall1(NativeCallInfo nativeCallInfo, Object[] args,
+        protected void invokeCall1(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean hasStrings,
                         @Cached("createExecute(args.length)") Node executeNode) {
             synchronized (TruffleNFI_Call.class) {
                 try {
@@ -71,7 +71,7 @@ public class TruffleNFI_C implements CRFFI {
         }
 
         @Specialization(guards = "args.length == 2")
-        protected void invokeCall2(NativeCallInfo nativeCallInfo, Object[] args,
+        protected void invokeCall2(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean hasStrings,
                         @Cached("createExecute(args.length)") Node executeNode) {
             synchronized (TruffleNFI_Call.class) {
                 try {
@@ -86,7 +86,7 @@ public class TruffleNFI_C implements CRFFI {
         }
 
         @Specialization(guards = "args.length == 3")
-        protected void invokeCall3(NativeCallInfo nativeCallInfo, Object[] args,
+        protected void invokeCall3(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean hasStrings,
                         @Cached("createExecute(args.length)") Node executeNode) {
             synchronized (TruffleNFI_Call.class) {
                 try {
@@ -101,7 +101,7 @@ public class TruffleNFI_C implements CRFFI {
         }
 
         @Specialization(guards = "args.length == 4")
-        protected void invokeCall4(NativeCallInfo nativeCallInfo, Object[] args,
+        protected void invokeCall4(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean hasStrings,
                         @Cached("createExecute(args.length)") Node executeNode) {
             synchronized (TruffleNFI_Call.class) {
                 try {
@@ -116,7 +116,7 @@ public class TruffleNFI_C implements CRFFI {
         }
 
         @Fallback
-        protected void invokeCallN(@SuppressWarnings("unused") NativeCallInfo nativeCallInfo, @SuppressWarnings("unused") Object[] args) {
+        protected void invokeCallN(@SuppressWarnings("unused") NativeCallInfo nativeCallInfo, @SuppressWarnings("unused") Object[] args, @SuppressWarnings("unused") boolean hasStrings) {
             synchronized (TruffleNFI_Call.class) {
                 throw RInternalError.unimplemented(".C (too many args)");
             }
