@@ -85,9 +85,9 @@ public abstract class AccessSlotNode extends RBaseNode {
             CompilerDirectives.transferToInterpreter();
             RStringVector classAttr = getClassNode.getClassAttr(object);
             if (classAttr == null) {
-                throw RError.error(this, RError.Message.SLOT_CANNOT_GET, name, TypeofNode.getTypeof(object).getName());
+                throw error(RError.Message.SLOT_CANNOT_GET, name, TypeofNode.getTypeof(object).getName());
             } else {
-                throw RError.error(this, RError.Message.SLOT_NONE, name, classAttr.getLength() == 0 ? RRuntime.STRING_NA : classAttr.getDataAt(0));
+                throw error(RError.Message.SLOT_NONE, name, classAttr.getLength() == 0 ? RRuntime.STRING_NA : classAttr.getDataAt(0));
             }
         }
         if (value instanceof RSymbol) {
@@ -101,7 +101,7 @@ public abstract class AccessSlotNode extends RBaseNode {
 
     @Specialization
     protected Object getSlotS4(@SuppressWarnings("unused") RNull object, String name) {
-        throw RError.error(this, RError.Message.SLOT_BASIC_CLASS, name, "NULL");
+        throw error(RError.Message.SLOT_BASIC_CLASS, name, "NULL");
     }
 
     @Specialization(guards = {"slotAccessAllowed(object)"})
@@ -138,10 +138,10 @@ public abstract class AccessSlotNode extends RBaseNode {
         if (classAttr == null) {
             RStringVector implicitClassVec = ImplicitClassHierarchyNode.getImplicitClass(object, false);
             assert implicitClassVec.getLength() > 0;
-            throw RError.error(this, RError.Message.SLOT_BASIC_CLASS, name, implicitClassVec.getDataAt(0));
+            throw error(RError.Message.SLOT_BASIC_CLASS, name, implicitClassVec.getDataAt(0));
         } else {
             assert classAttr.getLength() > 0;
-            throw RError.error(this, RError.Message.SLOT_NON_S4, name, classAttr.getDataAt(0));
+            throw error(RError.Message.SLOT_NON_S4, name, classAttr.getDataAt(0));
         }
     }
 

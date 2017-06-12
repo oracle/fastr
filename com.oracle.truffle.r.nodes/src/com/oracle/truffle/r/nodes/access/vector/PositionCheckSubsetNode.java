@@ -108,7 +108,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                 outOfBoundsProfile.enter();
                 if (isMultiDimension()) {
                     error.enter();
-                    throw RError.error(this, RError.Message.LOGICAL_SUBSCRIPT_LONG);
+                    throw error(RError.Message.LOGICAL_SUBSCRIPT_LONG);
                 }
                 length = positionLength;
             }
@@ -265,11 +265,11 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         if (hasSeenPositive || hasSeenNA) {
             if (numDimensions > 1 && outOfBoundsCount > 0) {
                 error.enter();
-                throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
+                throw error(RError.Message.SUBSCRIPT_BOUNDS);
             }
             if (hasSeenNegative) {
                 error.enter();
-                throw RError.error(this, RError.Message.ONLY_0_MIXED);
+                throw error(RError.Message.ONLY_0_MIXED);
             }
             profile.maxOutOfBoundsIndex = maxOutOfBoundsIndex;
             profile.selectedPositionsCount = positionLength - zeroCount;

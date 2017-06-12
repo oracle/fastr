@@ -330,7 +330,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 }
             }
             error = () -> {
-                throw RError.error(this, message, valueType.getName(), vectorType.getName(), false);
+                throw error(message, valueType.getName(), vectorType.getName(), false);
             };
         }
     }
@@ -471,7 +471,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             }
             env.put(positionString, value);
         } catch (PutException ex) {
-            throw RError.error(this, ex);
+            throw error(ex);
         }
         return env;
     }

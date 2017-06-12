@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -45,8 +44,9 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-abstract class PositionCheckNode extends Node {
+abstract class PositionCheckNode extends RBaseNode {
 
     private final Class<?> positionClass;
     private final int dimensionIndex;
@@ -199,7 +199,7 @@ abstract class PositionCheckNode extends Node {
      *
      * A zero/NA anywhere in a row will cause a zero/NA in the same position in the result.
      */
-    public abstract static class Mat2indsubNode extends Node {
+    public abstract static class Mat2indsubNode extends RBaseNode {
 
         public abstract RAbstractVector execute(int[] vectorDimensions, RAbstractVector pos, int[] positionDimensions);
 
@@ -228,12 +228,12 @@ abstract class PositionCheckNode extends Node {
                     }
                     if (k < 0) {
                         error.enter();
-                        throw RError.error(this, RError.Message.GENERIC, "negative values are not allowed in a matrix subscript");
+                        throw error(RError.Message.GENERIC, "negative values are not allowed in a matrix subscript");
                     }
                     int dim = vectorDimensions[j];
                     if (k > dim) {
                         error.enter();
-                        throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
+                        throw error(RError.Message.SUBSCRIPT_BOUNDS);
                     }
                     iv[i] += (k - 1) * tdim;
                     tdim *= dim;
@@ -263,12 +263,12 @@ abstract class PositionCheckNode extends Node {
                     }
                     if (k < 0) {
                         error.enter();
-                        throw RError.error(this, RError.Message.GENERIC, "negative values are not allowed in a matrix subscript");
+                        throw error(RError.Message.GENERIC, "negative values are not allowed in a matrix subscript");
                     }
                     int dim = vectorDimensions[j];
                     if (k > dim) {
                         error.enter();
-                        throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
+                        throw error(RError.Message.SUBSCRIPT_BOUNDS);
                     }
                     iv[i] += (k - 1) * tdim;
                     tdim *= dim;

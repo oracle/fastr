@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.access.vector;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
@@ -35,13 +34,13 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-final class PositionsCheckNode extends Node {
+final class PositionsCheckNode extends RBaseNode {
 
     @Children private final PositionCheckNode[] positionsCheck;
 
     private final ElementAccessMode mode;
-    private final BranchProfile errorBranch = BranchProfile.create();
     private final VectorLengthProfile selectedPositionsCountProfile = VectorLengthProfile.create();
     private final VectorLengthProfile maxOutOfBoundsProfile = VectorLengthProfile.create();
     private final ConditionProfile containsNAProfile = ConditionProfile.createBinaryProfile();
@@ -113,12 +112,10 @@ final class PositionsCheckNode extends Node {
     private void verifyDimensions(int[] vectorDimensions) {
         if (vectorDimensions == null) {
             if (isMultiDimension()) {
-                errorBranch.enter();
                 throw dimensionsError();
             }
         } else {
             if (getDimensions() > vectorDimensions.length || getDimensions() < vectorDimensions.length) {
-                errorBranch.enter();
                 throw dimensionsError();
             }
         }
@@ -129,15 +126,15 @@ final class PositionsCheckNode extends Node {
         if (replace) {
             if (mode.isSubset()) {
                 if (getDimensions() == 2) {
-                    throw RError.error(this, RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
+                    throw error(RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
                 } else {
-                    throw RError.error(this, RError.Message.INCORRECT_SUBSCRIPTS);
+                    throw error(RError.Message.INCORRECT_SUBSCRIPTS);
                 }
             } else {
-                throw RError.error(this, RError.Message.IMPROPER_SUBSCRIPT);
+                throw error(RError.Message.IMPROPER_SUBSCRIPT);
             }
         } else {
-            throw RError.error(this, RError.Message.INCORRECT_DIMENSIONS);
+            throw error(RError.Message.INCORRECT_DIMENSIONS);
         }
     }
 
