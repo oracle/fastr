@@ -182,6 +182,7 @@ public class Graphics2DDevice implements GridDevice {
     void setGraphics2D(Graphics2D newGraphics) {
         assert newGraphics != null;
         graphics = newGraphics;
+        cachedContext = null;
     }
 
     public Graphics2D getGraphics2D() {

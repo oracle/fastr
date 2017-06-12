@@ -30,12 +30,16 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridState.GridDeviceState;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice.DeviceCloseException;
+import com.oracle.truffle.r.library.fastrGrid.device.SVGDevice;
+import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice;
+import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice.NotSupportedImageFormatException;
 import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
 import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalCode;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -97,6 +101,14 @@ public final class GridContext {
             } else {
                 setCurrentDevice(defaultDev, WindowDevice.createWindowDevice());
             }
+        } else if (defaultDev.equals("svg")) {
+            setCurrentDevice(defaultDev, new SVGDevice("Rplot.svg", GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT));
+        } else if (defaultDev.equals("png")) {
+            setCurrentDevice(defaultDev, safeOpenImageDev("Rplot.png", "png"));
+        } else if (defaultDev.equals("bmp")) {
+            setCurrentDevice(defaultDev, safeOpenImageDev("Rplot.bmp", "bmp"));
+        } else if (defaultDev.equals("jpg") || defaultDev.equals("jpeg")) {
+            setCurrentDevice("jpeg", safeOpenImageDev("Rplot.jpg", "jpeg"));
         } else {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "FastR does not support device '" + defaultDev + "'.");
         }
@@ -130,6 +142,14 @@ public final class GridContext {
         }
         RFunction redrawAll = internalCode.lookupFunction(functionName);
         return RContext.getEngine().evalFunction(redrawAll, REnvironment.baseEnv().getFrame(), RCaller.topLevel, true, null, args);
+    }
+
+    private BufferedImageDevice safeOpenImageDev(String filename, String formatName) {
+        try {
+            return BufferedImageDevice.open(filename, formatName, GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT);
+        } catch (NotSupportedImageFormatException e) {
+            throw RInternalError.shouldNotReachHere("Device format " + formatName + " should be supported.");
+        }
     }
 
     private static final class DeviceAndState {
