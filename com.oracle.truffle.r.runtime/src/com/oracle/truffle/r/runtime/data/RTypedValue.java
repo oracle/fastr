@@ -27,6 +27,8 @@ public interface RTypedValue extends RTruffleObject {
     int GP_BITS_MASK_SHIFT = 8;
     int GP_BITS_MASK = 0xFFFF << GP_BITS_MASK_SHIFT;
 
+    int S4_MASK_SHIFTED = 1 << (4 + GP_BITS_MASK_SHIFT);
+
     RType getRType();
 
     int getTypedValueInfo();
@@ -42,14 +44,14 @@ public interface RTypedValue extends RTruffleObject {
     }
 
     default boolean isS4() {
-        return (getGPBits() & S4_MASK) == S4_MASK;
+        return (getTypedValueInfo() & S4_MASK_SHIFTED) != 0;
     }
 
     default void setS4() {
-        setGPBits(getGPBits() | S4_MASK);
+        setTypedValueInfo(getTypedValueInfo() | S4_MASK_SHIFTED);
     }
 
     default void unsetS4() {
-        setGPBits(getGPBits() & ~S4_MASK);
+        setTypedValueInfo(getTypedValueInfo() & ~S4_MASK_SHIFTED);
     }
 }
