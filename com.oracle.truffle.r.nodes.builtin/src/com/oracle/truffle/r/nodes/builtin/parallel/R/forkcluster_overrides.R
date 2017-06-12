@@ -55,9 +55,23 @@ newSHAREDnodes <- function(nnodes, debug, options = defaultClusterOptions) {
 	contexts <- vector("integer", nnodes)
 	channels <- vector("integer", nnodes)
 	outfile <- getClusterOption("outfile", options)
+	
+	# get initial port number
+	port <- as.integer(parallel:::getClusterOption("port", options))
+	
+	# find first unused port number
+	continue <- TRUE
+	firstUnused <- 0
+	while(continue) {
+		tryCatch({
+			.fastr.channel.get(port + (firstUnused + 1) * 1000)
+			firstUnused <- firstUnused + 1 
+		}, error = function(e) { continue <<- FALSE })
+	}
+
 	for (i in 1:nnodes) {
 		# generate unique values for channel keys (addition factor is chosen based on how snow generates port numbers)
-		port <- as.integer(parallel:::getClusterOption("port", options) + i * 1000)
+		port <- as.integer(parallel:::getClusterOption("port", options) + (i + firstUnused) * 1000)
 		
 		startup <- substitute(local({
             makeSHAREDmaster <- function(key) {
