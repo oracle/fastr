@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class RAbstractVectorAccessFactory implements Factory26 {
 
@@ -51,7 +52,7 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
 
         @SuppressWarnings("deprecation")
         VectorSizeNode() {
-            super(TruffleRLanguage.class, null, null);
+            super(TruffleRLanguage.class, RSyntaxNode.INTERNAL, null);
         }
 
         @Override
@@ -69,7 +70,7 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
 
         @SuppressWarnings("deprecation")
         VectorReadNode() {
-            super(TruffleRLanguage.class, null, null);
+            super(TruffleRLanguage.class, RSyntaxNode.INTERNAL, null);
             this.lengthAccess = false;
         }
 
@@ -99,7 +100,7 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
     private abstract class InteropRootNode extends RootNode {
         @SuppressWarnings("deprecation")
         InteropRootNode() {
-            super(TruffleRLanguage.class, null, null);
+            super(TruffleRLanguage.class, RSyntaxNode.INTERNAL, null);
         }
     }
 

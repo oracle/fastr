@@ -41,6 +41,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotAssignNodeGen
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotNodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class FFIUpCallRootNode extends RootNode {
     private static final RootCallTarget[] rootCallTargets = new RootCallTarget[RFFIUpCallTable.values().length];
@@ -50,7 +51,7 @@ public final class FFIUpCallRootNode extends RootNode {
 
     @SuppressWarnings("deprecation")
     private FFIUpCallRootNode(FFIUpCallNode child) {
-        super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
+        super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), RSyntaxNode.INTERNAL, new FrameDescriptor());
         theFFIUpCallNode = child;
         this.numArgs = child.numArgs();
     }

@@ -27,15 +27,15 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class RFFIRootNode<T extends Node> extends RootNode {
     @Child protected T rffiNode;
 
     @SuppressWarnings("deprecation")
     protected RFFIRootNode(T baseRFFINode) {
-        super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
+        super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), RSyntaxNode.INTERNAL, new FrameDescriptor());
         this.rffiNode = baseRFFINode;
         Truffle.getRuntime().createCallTarget(this);
     }
-
 }

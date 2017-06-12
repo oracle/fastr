@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 import com.oracle.truffle.r.runtime.rng.RRNG.Kind;
@@ -80,7 +81,7 @@ public final class UserRNG implements RandomNumberGenerator {
 
         @SuppressWarnings("deprecation")
         protected UserRNGRootNodeAdapter() {
-            super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
+            super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), RSyntaxNode.INTERNAL, new FrameDescriptor());
         }
     }
 
