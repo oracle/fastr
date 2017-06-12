@@ -85,6 +85,7 @@ public class FortranAndCFunctions {
             Object[] array = args.getArguments();
             int[] argTypes = new int[array.length];
             Object[] nativeArgs = new Object[array.length];
+            boolean hasStrings = false;
             for (int i = 0; i < array.length; i++) {
                 Object arg = array[i];
                 if (arg instanceof RAbstractDoubleVector) {
@@ -104,10 +105,12 @@ public class FortranAndCFunctions {
                     }
                     nativeArgs[i] = checkNAs(node, i + 1, dataAsInt);
                 } else if (arg instanceof RAbstractStringVector) {
+                    hasStrings = true;
                     argTypes[i] = VECTOR_STRING;
                     checkNAs(node, i + 1, (RAbstractStringVector) arg);
                     nativeArgs[i] = encodeStrings((RAbstractStringVector) arg);
                 } else if (arg instanceof String) {
+                    hasStrings = true;
                     argTypes[i] = SCALAR_STRING;
                     checkNAs(node, i + 1, RString.valueOf((String) arg));
                     nativeArgs[i] = new byte[][]{encodeString((String) arg)};
@@ -124,7 +127,7 @@ public class FortranAndCFunctions {
                     throw node.error(RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
                 }
             }
-            invokeCNode.execute(nativeCallInfo, nativeArgs);
+            invokeCNode.execute(nativeCallInfo, nativeArgs, hasStrings);
             // we have to assume that the native method updated everything
             RStringVector listNames = validateArgNames(array.length, args.getSignature());
             Object[] results = new Object[array.length];
