@@ -66,12 +66,12 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
         if (positionLength != 1) {
             error.enter();
             if (positionLength >= 3) {
-                throw RError.error(this, RError.Message.SELECT_MORE_1);
+                throw error(RError.Message.SELECT_MORE_1);
             } else {
                 if (value == RRuntime.LOGICAL_TRUE) {
-                    throw RError.error(this, RError.Message.SELECT_MORE_1);
+                    throw error(RError.Message.SELECT_MORE_1);
                 } else {
-                    throw RError.error(this, RError.Message.SELECT_LESS_1);
+                    throw error(RError.Message.SELECT_LESS_1);
                 }
             }
         }
@@ -95,7 +95,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
             } else {
                 message = RError.Message.SELECT_LESS_1;
             }
-            throw RError.error(this, message);
+            throw error(message);
         }
         assert positionLength == 1;
         positionNACheck.enable(position);
@@ -153,9 +153,9 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
                 }
             }
             if (selected <= 1) {
-                throw RError.error(this, RError.Message.SELECT_LESS_1);
+                throw error(RError.Message.SELECT_LESS_1);
             } else {
-                throw RError.error(this, RError.Message.SELECT_MORE_1);
+                throw error(RError.Message.SELECT_MORE_1);
             }
         }
     }
@@ -173,7 +173,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
                     message = RError.Message.SELECT_MORE_1;
                 }
             }
-            throw RError.error(this, message);
+            throw error(message);
         } else {
             if (numDimensions == 1 && isListLike(containerType) && !recursive) {
                 // lists pass on the NA value
@@ -188,7 +188,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
         if (recursive) {
             throw new RecursiveIndexNotFoundError();
         } else {
-            throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
+            throw error(RError.Message.SUBSCRIPT_BOUNDS);
         }
     }
 }

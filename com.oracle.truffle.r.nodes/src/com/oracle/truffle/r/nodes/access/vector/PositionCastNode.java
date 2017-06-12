@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -50,9 +49,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-abstract class PositionCastNode extends Node {
+abstract class PositionCastNode extends RBaseNode {
 
     private final ElementAccessMode mode;
     private final boolean replace;
@@ -137,7 +137,7 @@ abstract class PositionCastNode extends Node {
         if (position.getName().length() == 0) {
             return doMissing(RMissing.instance);
         } else {
-            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
+            throw error(RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
         }
     }
 
@@ -145,9 +145,9 @@ abstract class PositionCastNode extends Node {
     protected RMissing doMissing(@SuppressWarnings("unused") RMissing position) {
         if (mode.isSubscript()) {
             if (replace) {
-                throw RError.error(this, RError.Message.MISSING_SUBSCRIPT);
+                throw error(RError.Message.MISSING_SUBSCRIPT);
             } else {
-                throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
+                throw error(RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
             }
         } else {
             return RMissing.instance;
@@ -167,7 +167,7 @@ abstract class PositionCastNode extends Node {
 
     @Specialization(guards = "getInvalidType(position) != null")
     protected RAbstractVector doInvalidType(Object position) {
-        throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, getInvalidType(position).getName());
+        throw error(RError.Message.INVALID_SUBSCRIPT_TYPE, getInvalidType(position).getName());
     }
 
     protected static RType getInvalidType(Object positionValue) {

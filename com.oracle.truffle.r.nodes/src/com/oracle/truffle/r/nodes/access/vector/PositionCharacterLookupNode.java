@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
@@ -35,8 +34,9 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-final class PositionCharacterLookupNode extends Node {
+final class PositionCharacterLookupNode extends RBaseNode {
 
     private final ElementAccessMode mode;
     private final int numDimensions;
@@ -73,7 +73,7 @@ final class PositionCharacterLookupNode extends Node {
                     result = searchNode.apply(dimName, position, notFoundStartIndex, null);
                 } else {
                     emptyProfile.enter();
-                    throw RError.error(this, Message.SUBSCRIPT_BOUNDS);
+                    throw error(Message.SUBSCRIPT_BOUNDS);
                 }
             } else {
                 emptyProfile.enter();
@@ -85,9 +85,9 @@ final class PositionCharacterLookupNode extends Node {
 
     private RError noDimNames() {
         if (mode.isSubset()) {
-            throw RError.error(this, Message.NO_ARRAY_DIMNAMES);
+            throw error(Message.NO_ARRAY_DIMNAMES);
         } else {
-            throw RError.error(this, Message.SUBSCRIPT_BOUNDS);
+            throw error(Message.SUBSCRIPT_BOUNDS);
         }
     }
 }

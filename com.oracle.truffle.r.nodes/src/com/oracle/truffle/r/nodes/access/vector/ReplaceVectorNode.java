@@ -46,12 +46,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Syntax node for element writes.
  */
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
-public abstract class ReplaceVectorNode extends Node {
+public abstract class ReplaceVectorNode extends RBaseNode {
 
     protected static final int CACHE_LIMIT = 5;
 
@@ -84,7 +85,7 @@ public abstract class ReplaceVectorNode extends Node {
 
     protected Node createForeignWrite(Object[] positions) {
         if (positions.length != 1) {
-            throw RError.error(this, RError.Message.GENERIC, "Invalid number positions for foreign access.");
+            throw error(RError.Message.GENERIC, "Invalid number positions for foreign access.");
         }
         return Message.WRITE.createNode();
     }
@@ -132,7 +133,7 @@ public abstract class ReplaceVectorNode extends Node {
             String string = firstString.executeString(castNode.doCast(position));
             position = string;
         } else if (!(position instanceof String)) {
-            throw RError.error(this, RError.Message.GENERIC, "invalid index during foreign access");
+            throw error(RError.Message.GENERIC, "invalid index during foreign access");
         }
 
         int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, position);
@@ -147,7 +148,7 @@ public abstract class ReplaceVectorNode extends Node {
                 return;
             }
         }
-        throw RError.error(this, RError.Message.GENERIC, "invalid index/identifier during foreign access: " + position);
+        throw error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + position);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(vector, positions)"})

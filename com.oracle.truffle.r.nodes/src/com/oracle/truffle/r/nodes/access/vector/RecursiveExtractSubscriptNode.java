@@ -59,8 +59,7 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
         try {
             return subscriptExtract.apply(frame, vector, positions, exact, dropDimensions);
         } catch (RecursiveIndexNotFoundError e) {
-            errorBranch.enter();
-            throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
+            throw error(RError.Message.SUBSCRIPT_BOUNDS);
         }
     }
 
@@ -74,17 +73,14 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
             Object selection = getPositionExtract.apply(frame, firstPosition, new Object[]{RInteger.valueOf(i)}, RLogical.TRUE, RLogical.TRUE);
             try {
                 if (!(currentVector instanceof RAbstractListVector)) {
-                    errorBranch.enter();
                     throw indexingFailed(i);
                 }
                 currentVector = recursiveSubscriptExtract.apply(frame, currentVector, new Object[]{selection}, exact, dropDimensions);
 
                 if (currentVector == RNull.instance) {
-                    errorBranch.enter();
-                    throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
+                    throw error(RError.Message.SUBSCRIPT_BOUNDS);
                 }
             } catch (RecursiveIndexNotFoundError e) {
-                errorBranch.enter();
                 throw noSuchIndex(i);
             }
         }
@@ -92,8 +88,7 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
         try {
             return subscriptExtract.apply(frame, currentVector, new Object[]{selection}, exact, dropDimensions);
         } catch (RecursiveIndexNotFoundError e) {
-            errorBranch.enter();
-            throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
+            throw error(RError.Message.SUBSCRIPT_BOUNDS);
         }
     }
 

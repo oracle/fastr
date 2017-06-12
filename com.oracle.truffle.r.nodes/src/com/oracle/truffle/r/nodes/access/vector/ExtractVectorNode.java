@@ -52,9 +52,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
-public abstract class ExtractVectorNode extends Node {
+public abstract class ExtractVectorNode extends RBaseNode {
 
     protected static final int CACHE_LIMIT = 5;
 
@@ -114,7 +115,7 @@ public abstract class ExtractVectorNode extends Node {
                     @Cached("IS_BOXED.createNode()") Node isBoxedNode,
                     @Cached("UNBOX.createNode()") Node unboxNode) {
         if (positions.length == 0) {
-            throw RError.error(this, RError.Message.GENERIC, "No positions for foreign access.");
+            throw error(RError.Message.GENERIC, "No positions for foreign access.");
         }
         positions = positionProfile.profile(positions);
         try {
@@ -148,7 +149,7 @@ public abstract class ExtractVectorNode extends Node {
         return RRuntime.java2R(obj);
     }
 
-    public static Object read(Node caller, Object position, Node foreignRead, Node keyInfoNode, TruffleObject object, FirstStringNode firstString, CastStringNode castNode)
+    public static Object read(RBaseNode caller, Object position, Node foreignRead, Node keyInfoNode, TruffleObject object, FirstStringNode firstString, CastStringNode castNode)
                     throws RError, InteropException {
         if (position instanceof Integer) {
             position = ((int) position) - 1;
@@ -161,7 +162,7 @@ public abstract class ExtractVectorNode extends Node {
         } else if (position instanceof RAbstractStringVector) {
             position = firstString.executeString(castNode.doCast(position));
         } else if (!(position instanceof String)) {
-            throw RError.error(caller, RError.Message.GENERIC, "invalid index during foreign access");
+            throw caller.error(RError.Message.GENERIC, "invalid index during foreign access");
         }
 
         int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, position);
@@ -174,7 +175,7 @@ public abstract class ExtractVectorNode extends Node {
                 return ForeignAccess.sendRead(foreignRead, clazz, position);
             }
         }
-        throw RError.error(caller, RError.Message.GENERIC, "invalid index/identifier during foreign access: " + position);
+        throw caller.error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + position);
     }
 
     @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})

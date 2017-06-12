@@ -22,18 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-abstract class RecursiveSubscriptNode extends Node {
+abstract class RecursiveSubscriptNode extends RBaseNode {
 
     protected final Class<?> vectorClass;
     protected final Class<?> positionClass;
-
-    protected final BranchProfile errorBranch = BranchProfile.create();
 
     @Child protected RLengthNode positionLengthNode = RLengthNode.create();
 
@@ -50,12 +47,10 @@ abstract class RecursiveSubscriptNode extends Node {
     }
 
     protected final RError indexingFailed(int i) {
-        errorBranch.enter();
-        throw RError.error(this, RError.Message.RECURSIVE_INDEXING_FAILED, i);
+        throw error(RError.Message.RECURSIVE_INDEXING_FAILED, i);
     }
 
     protected final RError noSuchIndex(int i) {
-        errorBranch.enter();
-        throw RError.error(this, RError.Message.NO_SUCH_INDEX, i);
+        throw error(RError.Message.NO_SUCH_INDEX, i);
     }
 }
