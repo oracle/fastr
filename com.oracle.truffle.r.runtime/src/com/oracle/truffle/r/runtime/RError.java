@@ -16,6 +16,7 @@ import java.io.IOException;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
@@ -46,9 +47,10 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * Currently,there are no such cases.
  */
 @SuppressWarnings("serial")
-public final class RError extends RuntimeException {
+public final class RError extends RuntimeException implements TruffleException {
 
     private final String verboseStackTrace;
+    private final Node location;
 
     /**
      * This exception should be subclassed by subsystems that need to throw subsystem-specific
@@ -123,9 +125,10 @@ public final class RError extends RuntimeException {
     /**
      * TODO the string is not really needed as all output is performed prior to the throw.
      */
-    RError(String msg) {
+    RError(String msg, Node location) {
         super(msg);
-        verboseStackTrace = RInternalError.createVerboseStackTrace();
+        this.location = location;
+        this.verboseStackTrace = RInternalError.createVerboseStackTrace();
     }
 
     @Override
@@ -886,5 +889,10 @@ public final class RError extends RuntimeException {
             this.message = message;
             hasArgs = message.indexOf('%') >= 0;
         }
+    }
+
+    @Override
+    public Node getLocation() {
+        return location;
     }
 }

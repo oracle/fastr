@@ -22,12 +22,15 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.TruffleException;
+import com.oracle.truffle.api.nodes.Node;
+
 /**
  * This exception is thrown when a Polyglot R engine wants to exit, usually via the {@code quit}
  * builtin. It allows systems using multiple contexts via {@code .fastr.context.op} to handle exits
  * gracefully.
  */
-public class ExitException extends RuntimeException {
+public class ExitException extends RuntimeException implements TruffleException {
     private static final long serialVersionUID = 1L;
     private final int status;
 
@@ -36,6 +39,21 @@ public class ExitException extends RuntimeException {
     }
 
     public int getStatus() {
+        return status;
+    }
+
+    @Override
+    public Node getLocation() {
+        return null;
+    }
+
+    @Override
+    public boolean isExit() {
+        return true;
+    }
+
+    @Override
+    public int getExitStatus() {
         return status;
     }
 }
