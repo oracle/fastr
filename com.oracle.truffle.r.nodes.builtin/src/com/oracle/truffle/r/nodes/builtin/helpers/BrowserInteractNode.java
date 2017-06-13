@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.helpers;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -88,7 +87,8 @@ public abstract class BrowserInteractNode extends RNode {
         if (currentCaller == null) {
             currentCaller = RCaller.topLevel;
         }
-        RCaller browserCaller = createCaller(currentCaller);
+        RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
+        RCaller browserCaller = RCaller.create(null, currentCaller, builder.call(RSyntaxNode.INTERNAL, builder.lookup(RSyntaxNode.INTERNAL, "browser", true)));
         try {
             browserState.setInBrowser(browserCaller);
             LW: while (true) {
@@ -176,12 +176,6 @@ public abstract class BrowserInteractNode extends RNode {
             browserState.setInBrowser(null);
         }
         return exitMode;
-    }
-
-    @TruffleBoundary
-    private static RCaller createCaller(RCaller currentCaller) {
-        RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
-        return RCaller.create(null, currentCaller, builder.call(RSyntaxNode.INTERNAL, builder.lookup(RSyntaxNode.INTERNAL, "browser", true)));
     }
 
     private String getSrcinfo(RStringVector element) {

@@ -261,7 +261,8 @@ abstract class ReplacementNode extends OperatorNode {
                 replaceCall.execute(frame);
             } catch (FullCallNeededException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                replace(new GenericReplacementNode(getLazySourceSection(), operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex)).executeReplacement(frame);
+                replace(new GenericReplacementNode(getLazySourceSection(), operator, target, lhs, RContext.getASTBuilder().process(rhs.asRSyntaxNode()).asRNode(), calls, targetVarName, isSuper,
+                                tempNamesStartIndex)).executeReplacement(frame);
             }
         }
     }
@@ -308,7 +309,8 @@ abstract class ReplacementNode extends OperatorNode {
         @Override
         public Object execute(VirtualFrame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            GenericReplacementNode replacement = new GenericReplacementNode(getLazySourceSection(), operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex);
+            GenericReplacementNode replacement = new GenericReplacementNode(getLazySourceSection(), operator, target, lhs, RContext.getASTBuilder().process(rhs.asRSyntaxNode()).asRNode(), calls,
+                            targetVarName, isSuper, tempNamesStartIndex);
             return replace(replacement).execute(frame);
         }
 
@@ -322,7 +324,8 @@ abstract class ReplacementNode extends OperatorNode {
                 replaceCall.execute(frame);
             } catch (FullCallNeededException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                GenericReplacementNode replacement = replace(new GenericReplacementNode(getLazySourceSection(), operator, target, lhs, rhs, calls, targetVarName, isSuper, tempNamesStartIndex));
+                GenericReplacementNode replacement = replace(new GenericReplacementNode(getLazySourceSection(), operator, target, lhs, RContext.getASTBuilder().process(rhs.asRSyntaxNode()).asRNode(),
+                                calls, targetVarName, isSuper, tempNamesStartIndex));
 
                 if (e.rhsValue == null) {
                     // we haven't queried the rhs value yet
@@ -351,7 +354,7 @@ abstract class ReplacementNode extends OperatorNode {
 
         GenericReplacementNode(SourceSection source, RSyntaxLookup operator, RNode target, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls, String targetVarName, boolean isSuper,
                         int tempNamesStartIndex) {
-            super(source, operator, lhs, RContext.getASTBuilder().process(rhs.asRSyntaxNode()).asRNode(), tempNamesStartIndex);
+            super(source, operator, lhs, rhs, tempNamesStartIndex);
             /*
              * When there are more than two function calls in LHS, then we save some function calls
              * by saving the intermediate results into temporary variables and reusing them.

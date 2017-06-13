@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
-import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 
 /**
@@ -39,45 +38,4 @@ public interface RSyntaxFunction extends RSyntaxElement {
 
     String getSyntaxDebugName();
 
-    /**
-     * Helper function: creates a synthetic RSyntaxFunction.
-     */
-    static RSyntaxFunction createDummyFunction(SourceSection originalSource, ArgumentsSignature signature, RSyntaxElement[] arguments, RSyntaxElement body, String debugName) {
-        return new RSyntaxFunction() {
-            @Override
-            public SourceSection getLazySourceSection() {
-                return originalSource;
-            }
-
-            @Override
-            public SourceSection getSourceSection() {
-                return originalSource;
-            }
-
-            @Override
-            public ArgumentsSignature getSyntaxSignature() {
-                return signature;
-            }
-
-            @Override
-            public RSyntaxElement[] getSyntaxArgumentDefaults() {
-                return arguments;
-            }
-
-            @Override
-            public RSyntaxElement getSyntaxBody() {
-                return body;
-            }
-
-            @Override
-            public void setSourceSection(SourceSection src) {
-                // ignored
-            }
-
-            @Override
-            public String getSyntaxDebugName() {
-                return debugName;
-            }
-        };
-    }
 }

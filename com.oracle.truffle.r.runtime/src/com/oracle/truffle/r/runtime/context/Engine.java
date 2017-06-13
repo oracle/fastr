@@ -171,7 +171,7 @@ public interface Engine {
      * namespace, but the current stack is not empty. So when {@code frame} is not {@code null} a
      * {@code caller} should be passed to maintain the call stack correctly. {@code names} string
      * vector describing (optional) argument names
-     * 
+     *
      * @param names signature of the given parameters, may be {@code null} in which case the empty
      *            signature of correct cardinality shall be used.
      * @param evalPromises whether to evaluate promises in args array before calling the function.
