@@ -199,7 +199,7 @@ public class FastRInterop {
             if (name == null) {
                 throw error(RError.Message.INVALID_ARGUMENT, "name");
             }
-            RContext.getInstance().getExportedSymbols().put(name, value);
+            RContext.getInstance().getEnv().exportSymbol(name, value);
             return RNull.instance;
         }
 

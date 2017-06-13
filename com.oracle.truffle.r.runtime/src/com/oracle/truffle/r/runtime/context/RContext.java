@@ -27,7 +27,6 @@ import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.TimeZone;
 import java.util.WeakHashMap;
 
@@ -38,7 +37,6 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.LazyDBCache;
@@ -294,7 +292,6 @@ public final class RContext implements RTruffleObject {
     private static final Assumption isSingleContextAssumption = Truffle.getRuntime().createAssumption("is single RContext");
 
     private final Env env;
-    private final HashMap<String, TruffleObject> exportedSymbols = new HashMap<>();
     private final boolean initial;
     /**
      * State that is used to support interposing on loadNamespace() for overrides.
@@ -754,14 +751,6 @@ public final class RContext implements RTruffleObject {
 
     public boolean getLoadingBase() {
         return loadingBase;
-    }
-
-    public Map<String, TruffleObject> getExportedSymbols() {
-        return exportedSymbols;
-    }
-
-    public void addExportedSymbol(String name, TruffleObject obj) {
-        exportedSymbols.put(name, obj);
     }
 
     public TimeZone getSystemTimeZone() {

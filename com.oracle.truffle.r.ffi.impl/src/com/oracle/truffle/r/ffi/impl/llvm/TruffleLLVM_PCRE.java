@@ -57,7 +57,7 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
         @Override
         public ContextState initialize(RContext context) {
             RFFIFactory.getRFFI().getPCRERFFI();
-            context.addExportedSymbol("_fastr_rffi_pcre", trufflePCRETruffleObject);
+            context.getEnv().exportSymbol("_fastr_rffi_pcre", trufflePCRETruffleObject);
             return this;
         }
     }

@@ -42,6 +42,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.engine.interop.RForeignAccessFactoryImpl;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -67,7 +68,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly
  * integrate the R startup in {@code RCommand} with this API.
  */
-@TruffleLanguage.Registration(name = "R", version = "0.1", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true)
+@TruffleLanguage.Registration(name = "R", id = "R", version = "0.1", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class})
 public final class TruffleRLanguageImpl extends TruffleRLanguage implements ScopeProvider<RContext> {
 
@@ -239,8 +240,12 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage implements Scop
     }
 
     @Override
-    protected Object findExportedSymbol(RContext context, String globalName, boolean onlyExplicit) {
-        return context.getExportedSymbols().get(globalName);
+    protected Object lookupSymbol(RContext context, String symbolName) {
+        Object value = context.stateREnvironment.getGlobalEnv().get(symbolName);
+        if (value instanceof RPromise) {
+            value = PromiseHelperNode.evaluateSlowPath((RPromise) value);
+        }
+        return value != null ? RRuntime.r2Java(value) : null;
     }
 
     @Override

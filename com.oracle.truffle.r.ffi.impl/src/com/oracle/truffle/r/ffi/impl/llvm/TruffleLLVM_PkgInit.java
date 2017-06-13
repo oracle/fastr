@@ -44,7 +44,7 @@ class TruffleLLVM_PkgInit {
         @Override
         public ContextState initialize(RContext context) {
             TruffleLLVM_PkgInit.initialize();
-            context.addExportedSymbol("_fastr_rffi_pkginit", trufflePkgInitTruffleObject);
+            context.getEnv().exportSymbol("_fastr_rffi_pkginit", trufflePkgInitTruffleObject);
             return this;
         }
 
