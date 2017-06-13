@@ -187,7 +187,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
 
     private final RSyntaxNode[] arguments;
     private final ArgumentsSignature signature;
-    private final RFunction expectedFunction;
+    private final RBuiltinDescriptor expectedFunction;
     private final RVisibility visible;
 
     /**
@@ -204,15 +204,15 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     private final boolean inReplace;
     private final int[] ignoredArguments;
 
-    private RCallSpecialNode(SourceSection sourceSection, RNode functionNode, RFunction expectedFunction, RSyntaxNode[] arguments, ArgumentsSignature signature, RNode special, boolean inReplace,
-                    int[] ignoredArguments) {
+    private RCallSpecialNode(SourceSection sourceSection, RNode functionNode, RBuiltinDescriptor expectedFunction, RSyntaxNode[] arguments, ArgumentsSignature signature, RNode special,
+                    boolean inReplace, int[] ignoredArguments) {
         this.sourceSection = sourceSection;
         this.expectedFunction = expectedFunction;
         this.special = special;
         this.functionNode = functionNode;
         this.arguments = arguments;
         this.signature = signature;
-        this.visible = expectedFunction.getRBuiltin().getVisibility();
+        this.visible = expectedFunction.getVisibility();
         this.inReplace = inReplace;
         this.ignoredArguments = ignoredArguments;
     }
@@ -222,7 +222,8 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
      * i.e., does not modify them in any way before passing it to
      * {@link RSpecialFactory#create(ArgumentsSignature, RNode[], boolean)}.
      */
-    public static RSyntaxNode createCallInReplace(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments, int... ignoredArguments) {
+    public static RSyntaxNode createCallInReplace(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments,
+                    int... ignoredArguments) {
         return createCall(sourceSection, functionNode, signature, arguments, true, ignoredArguments);
     }
 
@@ -242,7 +243,8 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
         }
     }
 
-    private static RCallSpecialNode tryCreate(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments, boolean inReplace, int[] ignoredArguments) {
+    private static RCallSpecialNode tryCreate(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments,
+                    boolean inReplace, int[] ignoredArguments) {
         RSyntaxNode syntaxFunction = functionNode.asRSyntaxNode();
         if (!(syntaxFunction instanceof RSyntaxLookup)) {
             // LHS is not a simple lookup -> bail out
@@ -311,7 +313,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
             // the factory refused to create a special call -> bail out
             return null;
         }
-        RFunction expectedFunction = RContext.lookupBuiltin(name);
+        RBuiltinDescriptor expectedFunction = RContext.lookupBuiltinDescriptor(name);
         RInternalError.guarantee(expectedFunction != null);
 
         RCallSpecialNode callSpecial = new RCallSpecialNode(sourceSection, functionNode, expectedFunction, arguments, signature, special, inReplace, ignoredArguments);
@@ -337,7 +339,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     @Override
     public Object execute(VirtualFrame frame, Object function) {
         try {
-            if (function != expectedFunction) {
+            if (!(function instanceof RFunction) || ((RFunction) function).getRBuiltin() != expectedFunction) {
                 // the actual function differs from the expected function
                 throw RSpecialFactory.throwFullCallNeeded();
             }

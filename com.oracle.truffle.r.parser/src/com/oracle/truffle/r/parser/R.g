@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -64,17 +65,19 @@ import com.oracle.truffle.r.runtime.RError;
     private Source source;
     private Source initialSource;
     private RCodeBuilder<T> builder;
+    private TruffleRLanguage language;
     private int fileStartOffset = 0;
     
     /**
      * Always use this constructor to initialize the R specific fields.
      */
-    public RParser(Source source, RCodeBuilder<T> builder) {
+    public RParser(Source source, RCodeBuilder<T> builder, TruffleRLanguage language) {
         super(new CommonTokenStream(new RLexer(new ANTLRStringStream(source.getCode()))));
         assert source != null && builder != null;
         this.source = source;
         this.initialSource = source;
         this.builder = builder;
+        this.language = language;
     }
     
     /**
@@ -243,7 +246,7 @@ root_function [String name] returns [RootCallTarget v]
         	throw RInternalError.shouldNotReachHere("not at EOF after parsing deserialized function"); 
         }
     }
-    : n_ op=FUNCTION n_ LPAR  n_ (par_decl[params] (n_ COMMA n_ par_decl[params])* n_)? RPAR n_ body=expr_or_assign { $v = builder.rootFunction(src($op, last()), params, $body.v, name); }
+    : n_ op=FUNCTION n_ LPAR  n_ (par_decl[params] (n_ COMMA n_ par_decl[params])* n_)? RPAR n_ body=expr_or_assign { $v = builder.rootFunction(language, src($op, last()), params, $body.v, name); }
     ;
 
 statement returns [T v]
@@ -324,7 +327,7 @@ repeat_expr returns [T v]
 
 function [T assignedTo] returns [T v]
     @init { List<Argument<T>> params = new ArrayList<>(); }
-    : op=FUNCTION n_ LPAR  n_ (par_decl[params] (n_ COMMA n_ par_decl[params])* n_)? RPAR n_ body=expr_or_assign { $v = builder.function(src($op, last()), params, $body.v, assignedTo); }
+    : op=FUNCTION n_ LPAR  n_ (par_decl[params] (n_ COMMA n_ par_decl[params])* n_)? RPAR n_ body=expr_or_assign { $v = builder.function(language, src($op, last()), params, $body.v, assignedTo); }
     ;
 
 par_decl [List<Argument<T>> l]

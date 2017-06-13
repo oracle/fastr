@@ -26,6 +26,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 
@@ -34,9 +35,9 @@ import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
  */
 public abstract class RParserFactory {
     public interface Parser<T> {
-        List<T> script(Source source, RCodeBuilder<T> builder) throws ParseException;
+        List<T> script(Source source, RCodeBuilder<T> builder, TruffleRLanguage language) throws ParseException;
 
-        RootCallTarget rootFunction(Source source, String name, RCodeBuilder<T> builder) throws ParseException;
+        RootCallTarget rootFunction(Source source, String name, RCodeBuilder<T> builder, TruffleRLanguage language) throws ParseException;
 
         boolean isRecognitionException(Throwable t);
 

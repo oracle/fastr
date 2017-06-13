@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.Call.CallUtil;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -56,22 +57,24 @@ public abstract class AsCall extends RBuiltinNode.Arg1 {
         Casts.noCasts(AsCall.class);
     }
 
+    @Child private CallUtil util = new CallUtil();
+
     @Specialization
     protected RLanguage asCallFunction(RList x) {
         // TODO error checks
         RArgsValuesAndNames avn = makeNamesAndValues(x);
         if (x.getDataAt(0) instanceof RSymbol) {
-            return Call.makeCallSourceUnavailable(((RSymbol) x.getDataAt(0)).getName(), avn);
+            return util.makeCallSourceUnavailable(((RSymbol) x.getDataAt(0)).getName(), avn);
         } else if (x.getDataAt(0) instanceof String) {
-            return Call.makeCallSourceUnavailable((String) x.getDataAt(0), avn);
+            return util.makeCallSourceUnavailable((String) x.getDataAt(0), avn);
         } else if (x.getDataAt(0) instanceof RAbstractStringVector) {
-            return Call.makeCallSourceUnavailable(((RAbstractStringVector) x.getDataAt(0)).getDataAt(0), avn);
+            return util.makeCallSourceUnavailable(((RAbstractStringVector) x.getDataAt(0)).getDataAt(0), avn);
         } else if (x.getDataAt(0) instanceof RFunction) {
-            return Call.makeCallSourceUnavailable((RFunction) x.getDataAt(0), avn);
+            return CallUtil.makeCallSourceUnavailable((RFunction) x.getDataAt(0), avn);
         } else if (x.getDataAt(0) instanceof Integer) {
-            return Call.makeCallSourceUnavailable((Integer) x.getDataAt(0), avn);
+            return CallUtil.makeCallSourceUnavailable((Integer) x.getDataAt(0), avn);
         } else if (x.getDataAt(0) instanceof Double) {
-            return Call.makeCallSourceUnavailable((Double) x.getDataAt(0), avn);
+            return CallUtil.makeCallSourceUnavailable((Double) x.getDataAt(0), avn);
         } else {
             throw RInternalError.unimplemented();
         }
@@ -87,7 +90,7 @@ public abstract class AsCall extends RBuiltinNode.Arg1 {
             RLanguage l = (RLanguage) x.getDataAt(0);
             f = ((ReadVariableNode) RASTUtils.unwrap(l.getRep())).getIdentifier();
         }
-        return Call.makeCallSourceUnavailable(f, makeNamesAndValues(x));
+        return util.makeCallSourceUnavailable(f, makeNamesAndValues(x));
     }
 
     private RArgsValuesAndNames makeNamesAndValues(RAbstractContainer x) {

@@ -32,14 +32,15 @@ import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -108,7 +109,7 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         }
 
         private static RNode createIndexedLoad(String indexName, String rangeName) {
-            RASTBuilder builder = new RASTBuilder();
+            RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
             RSyntaxNode receiver = builder.lookup(RSyntaxNode.INTERNAL, rangeName, false);
             RSyntaxNode index = builder.lookup(RSyntaxNode.INTERNAL, indexName, false);
             RSyntaxNode access = builder.lookup(RSyntaxNode.INTERNAL, "[[", true);

@@ -26,10 +26,9 @@ import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 
-@MessageResolution(receiverType = RExternalPtr.class, language = TruffleRLanguage.class)
+@MessageResolution(receiverType = RExternalPtr.class)
 public class RExternalPtrMR {
     @CanResolve
     public abstract static class RExternalPtrCheck extends Node {

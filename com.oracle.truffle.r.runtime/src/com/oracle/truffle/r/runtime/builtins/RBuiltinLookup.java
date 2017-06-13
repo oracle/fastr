@@ -22,13 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.builtins;
 
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
 public interface RBuiltinLookup {
 
     boolean isPrimitiveBuiltin(String name);
 
-    RFunction lookupBuiltin(String methodName);
+    RFunction lookupBuiltin(TruffleRLanguage language, String methodName);
 
     RBuiltinDescriptor lookupBuiltinDescriptor(String methodName);
 

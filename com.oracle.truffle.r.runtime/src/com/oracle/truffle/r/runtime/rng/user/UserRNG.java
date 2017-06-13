@@ -25,18 +25,18 @@ package com.oracle.truffle.r.runtime.rng.user;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG.Kind;
 import com.oracle.truffle.r.runtime.rng.RandomNumberGenerator;
 
@@ -79,9 +79,18 @@ public final class UserRNG implements RandomNumberGenerator {
     private abstract static class UserRNGRootNodeAdapter extends RootNode {
         @Child protected UserRngRFFI.UserRngRFFINode userRngRFFINode = RFFIFactory.getRFFI().getUserRngRFFI().createUserRngRFFINode();
 
-        @SuppressWarnings("deprecation")
         protected UserRNGRootNodeAdapter() {
-            super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), RSyntaxNode.INTERNAL, new FrameDescriptor());
+            /*
+             * TODO: Ideally, we wouldn't need to use the generic lookup here, but rather pass along
+             * the language object. However, given the current structure of the RNG code, this is
+             * not practical.
+             */
+            super(RContext.getInstance().getLanguage());
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            return RSyntaxNode.INTERNAL;
         }
     }
 

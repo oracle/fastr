@@ -27,7 +27,7 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
@@ -57,11 +57,10 @@ public class ActiveBindingMR {
 
     @Resolve(message = "UNBOX")
     public abstract static class ActiveBindingUnboxNode extends Node {
-        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         @SuppressWarnings("try")
         protected Object access(ActiveBinding receiver) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
                 return receiver.readValue();
             }
         }

@@ -26,10 +26,9 @@ import java.util.function.Supplier;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.r.ffi.impl.upcalls.RFFIUpCallTable;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADDRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CARNodeGen;
@@ -39,6 +38,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.LENGTHNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoNewObjectNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotAssignNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotNodeGen;
+import com.oracle.truffle.r.ffi.impl.upcalls.RFFIUpCallTable;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -49,11 +49,15 @@ public final class FFIUpCallRootNode extends RootNode {
     @Child private FFIUpCallNode theFFIUpCallNode;
     private final int numArgs;
 
-    @SuppressWarnings("deprecation")
     private FFIUpCallRootNode(FFIUpCallNode child) {
-        super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), RSyntaxNode.INTERNAL, new FrameDescriptor());
+        super(RContext.getInstance().getLanguage());
         theFFIUpCallNode = child;
         this.numArgs = child.numArgs();
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        return RSyntaxNode.INTERNAL;
     }
 
     @Override
@@ -101,5 +105,4 @@ public final class FFIUpCallRootNode extends RootNode {
         FFIUpCallRootNode.add(RFFIUpCallTable.R_do_slot, RDoSlotNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallTable.R_do_slot_assign, RDoSlotAssignNodeGen::create);
     }
-
 }

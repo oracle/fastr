@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,21 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop;
+package com.oracle.truffle.r.runtime.context;
 
-import com.oracle.truffle.api.interop.CanResolve;
-import com.oracle.truffle.api.interop.MessageResolution;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.context.RContext;
+import java.util.HashMap;
 
-@MessageResolution(receiverType = RContext.class)
-public class RContextMR {
-    @CanResolve
-    public abstract static class RContext extends Node {
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.r.runtime.data.RFunction;
 
-        protected static boolean test(TruffleObject receiver) {
-            return receiver instanceof RContext;
-        }
-    }
+public abstract class TruffleRLanguage extends TruffleLanguage<RContext> {
+
+    public abstract HashMap<String, RFunction> getBuiltinFunctionCache();
+
 }

@@ -54,10 +54,10 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
 
     @Specialization
     @TruffleBoundary
-    protected static Object substituteDirect(Object object, REnvironment env) {
+    protected Object substituteDirect(Object object, REnvironment env) {
         if (object instanceof RLanguage) {
             RLanguage lang = (RLanguage) object;
-            return RASTUtils.createLanguageElement(RSubstitute.substitute(env, lang.getRep()));
+            return RASTUtils.createLanguageElement(RSubstitute.substitute(env, lang.getRep(), getRLanguage()));
         } else {
             return object;
         }
@@ -65,13 +65,13 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
 
     @Specialization(guards = {"list.getNames() == null || list.getNames().getLength() == 0"})
     @TruffleBoundary
-    protected static Object substituteDirect(Object object, @SuppressWarnings("unused") RList list) {
+    protected Object substituteDirect(Object object, @SuppressWarnings("unused") RList list) {
         return substituteDirect(object, createNewEnvironment());
     }
 
     @Specialization(guards = {"list.getNames() != null", "list.getNames().getLength() > 0"})
     @TruffleBoundary
-    protected static Object substituteDirect(Object object, RList list,
+    protected Object substituteDirect(Object object, RList list,
                     @Cached("createList2EnvNode()") RList2EnvNode list2Env) {
         return substituteDirect(object, createEnvironment(list, list2Env));
     }

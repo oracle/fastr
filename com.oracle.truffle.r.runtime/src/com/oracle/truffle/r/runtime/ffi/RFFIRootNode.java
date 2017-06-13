@@ -23,19 +23,23 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class RFFIRootNode<T extends Node> extends RootNode {
     @Child protected T rffiNode;
 
-    @SuppressWarnings("deprecation")
     protected RFFIRootNode(T baseRFFINode) {
-        super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), RSyntaxNode.INTERNAL, new FrameDescriptor());
+        super(RContext.getInstance().getLanguage());
         this.rffiNode = baseRFFINode;
         Truffle.getRuntime().createCallTarget(this);
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        return RSyntaxNode.INTERNAL;
     }
 }

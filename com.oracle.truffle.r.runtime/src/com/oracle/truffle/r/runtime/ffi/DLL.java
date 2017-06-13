@@ -19,11 +19,11 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -615,9 +615,13 @@ public class DLL {
 
         @Child RFindSymbolNode findSymbolNode = RFindSymbolNode.create();
 
-        @SuppressWarnings("deprecation")
         private RFindSymbolRootNode() {
-            super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), RSyntaxNode.INTERNAL, new FrameDescriptor());
+            super(RContext.getInstance().getLanguage());
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            return RSyntaxNode.INTERNAL;
         }
 
         @Override
@@ -633,7 +637,6 @@ public class DLL {
             }
             return findSymbolRootNode;
         }
-
     }
 
     public static final class RdlsymNode extends Node {

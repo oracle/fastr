@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
-import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -125,16 +124,15 @@ public abstract class InternalNode extends OperatorNode {
                 throw RError.error(RError.SHOW_CALLER, Message.INVALID_ARG, ".Internal()");
             }
 
-            RFunction function = RContext.lookupBuiltin(name);
-            if (function == null || function.isBuiltin() && function.getRBuiltin().getKind() != RBuiltinKind.INTERNAL) {
+            RBuiltinFactory factory = (RBuiltinFactory) RContext.lookupBuiltinDescriptor(name);
+            if (factory == null || factory.getKind() != RBuiltinKind.INTERNAL) {
                 // determine whether we're supposed to implement this builtin
-                if (function == null && NOT_IMPLEMENTED.contains(name)) {
+                if (factory == null && NOT_IMPLEMENTED.contains(name)) {
                     throw RInternalError.unimplemented(".Internal " + name);
                 }
                 throw RError.error(RError.SHOW_CALLER, RError.Message.NO_SUCH_INTERNAL, name);
             }
 
-            RBuiltinFactory factory = (RBuiltinFactory) function.getRBuiltin();
             RSyntaxElement[] callArgs = call.getSyntaxArguments();
             if (needsCopy) {
                 callArgs = callArgs.clone();

@@ -27,6 +27,7 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
@@ -34,8 +35,7 @@ import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.runtime.HasSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
 /**
  * The base class for R code that can be executed, namely {@link FunctionDefinitionNode} and
@@ -47,11 +47,13 @@ public abstract class RRootNode extends RootNode implements HasSignature {
 
     private FastPathFactory fastPath;
 
-    @SuppressWarnings("deprecation")
-    protected RRootNode(FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
-        super(RContext.getRForeignAccessFactory().getTruffleLanguage(), RSyntaxNode.SOURCE_UNAVAILABLE, frameDescriptor);
+    protected RRootNode(TruffleRLanguage language, FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
+        super(language, frameDescriptor);
         this.fastPath = fastPath;
     }
+
+    @Override
+    public abstract SourceSection getSourceSection();
 
     @Override
     public abstract RootCallTarget duplicateWithNewFrameDescriptor();

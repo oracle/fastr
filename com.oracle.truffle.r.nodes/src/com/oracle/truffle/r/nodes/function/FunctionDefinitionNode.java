@@ -68,6 +68,7 @@ import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -133,14 +134,16 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     private final ConditionProfile returnTopLevelProfile = ConditionProfile.createBinaryProfile();
 
-    public static FunctionDefinitionNode create(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments, RSyntaxNode body,
+    public static FunctionDefinitionNode create(TruffleRLanguage language, SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments,
+                    RSyntaxNode body,
                     FormalArguments formals, String name, PostProcessArgumentsNode argPostProcess) {
-        return new FunctionDefinitionNode(src, frameDesc, argSourceSections, saveArguments, body, formals, name, argPostProcess);
+        return new FunctionDefinitionNode(language, src, frameDesc, argSourceSections, saveArguments, body, formals, name, argPostProcess);
     }
 
-    private FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode saveArguments, RSyntaxNode body, FormalArguments formals,
+    private FunctionDefinitionNode(TruffleRLanguage language, SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode saveArguments, RSyntaxNode body,
+                    FormalArguments formals,
                     String name, PostProcessArgumentsNode argPostProcess) {
-        super(frameDesc, RASTBuilder.createFunctionFastPath(body, formals.getSignature()));
+        super(language, frameDesc, RASTBuilder.createFunctionFastPath(body, formals.getSignature()));
         this.formalArguments = formals;
         this.argSourceSections = argSourceSections;
         assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
@@ -175,8 +178,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             SourceSection source = argSourceSections == null ? getSourceSection() : argSourceSections[i];
             args.add(RCodeBuilder.argument(source, getFormalArguments().getSignature().getName(i), value == null ? null : builder.process(value.asRSyntaxNode())));
         }
-        RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(getSourceSection(), args, builder.process(getBody()), name);
+        RootCallTarget callTarget = builder.rootFunction(getRLanguage(), getSourceSection(), args, builder.process(getBody()), name);
         return callTarget;
+    }
+
+    public TruffleRLanguage getRLanguage() {
+        return getLanguage(RContext.getTruffleRLanguage());
     }
 
     private static boolean containsAnyDispatch(RSyntaxNode body) {

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.engine;
 
+import java.util.HashMap;
 import java.util.Locale;
 
 import com.oracle.truffle.api.CallTarget;
@@ -53,6 +54,7 @@ import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -67,7 +69,14 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 @TruffleLanguage.Registration(name = "R", version = "0.1", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class})
-public final class TruffleRLanguage extends TruffleLanguage<RContext> implements ScopeProvider<RContext> {
+public final class TruffleRLanguageImpl extends TruffleRLanguage implements ScopeProvider<RContext> {
+
+    private final HashMap<String, RFunction> builtinFunctionCache = new HashMap<>();
+
+    @Override
+    public final HashMap<String, RFunction> getBuiltinFunctionCache() {
+        return builtinFunctionCache;
+    }
 
     /**
      * The choice of {@link RFFIFactory} is made statically so that it is bound into an AOT-compiled
@@ -95,13 +104,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> implements
 
     private static boolean systemInitialized;
 
-    public static TruffleRLanguage INSTANCE;
-
     public static final String MIME = RRuntime.R_APP_MIME;
-
-    public TruffleRLanguage() {
-        INSTANCE = this;
-    }
 
     @Override
     protected boolean isObjectOfLanguage(Object object) {
@@ -124,7 +127,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> implements
         if (initialContext) {
             RContext.initializeGlobalState(new RASTBuilder(), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), new RForeignAccessFactoryImpl());
         }
-        RContext result = RContext.create(env, env.lookup(Instrumenter.class), initialContext);
+        RContext result = RContext.create(this, env, env.lookup(Instrumenter.class), initialContext);
         return result;
     }
 
@@ -195,16 +198,21 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> implements
     }
 
     @Override
-    @SuppressWarnings({"try", "deprecation"})
+    @SuppressWarnings("try")
     protected CallTarget parse(ParsingRequest request) throws Exception {
         CompilerAsserts.neverPartOfCompilation();
-        try (RCloseable c = RContext.withinContext(findContext(createFindContextNode()))) {
+        try (RCloseable c = RContext.withinContext(getCurrentContext())) {
             try {
                 return RContext.getEngine().parseToCallTarget(request.getSource(), request.getFrame());
             } catch (IncompleteSourceException e) {
                 throw new com.oracle.truffle.api.vm.IncompleteSourceException(e);
             } catch (ParseException e) {
-                return Truffle.getRuntime().createCallTarget(new RootNode(TruffleRLanguage.class, RSyntaxNode.INTERNAL, new FrameDescriptor()) {
+                return Truffle.getRuntime().createCallTarget(new RootNode(this, new FrameDescriptor()) {
+                    @Override
+                    public SourceSection getSourceSection() {
+                        return RSyntaxNode.INTERNAL;
+                    }
+
                     @Override
                     public Object execute(VirtualFrame frame) {
                         try {
@@ -215,7 +223,12 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> implements
                     }
                 });
             } catch (RError e) {
-                return Truffle.getRuntime().createCallTarget(new RootNode(TruffleRLanguage.class, null, new FrameDescriptor()) {
+                return Truffle.getRuntime().createCallTarget(new RootNode(this, new FrameDescriptor()) {
+                    @Override
+                    public SourceSection getSourceSection() {
+                        return RSyntaxNode.INTERNAL;
+                    }
+
                     @Override
                     public Object execute(VirtualFrame frame) {
                         return null;
@@ -236,15 +249,12 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> implements
         return null;
     }
 
-    // TODO: why isn't the original method public?
-    @SuppressWarnings("deprecation")
-    public Node actuallyCreateFindContextNode() {
-        return createFindContextNode();
+    public static RContext getCurrentContext() {
+        return TruffleLanguage.getCurrentContext(TruffleRLanguage.class);
     }
 
-    @SuppressWarnings("deprecation")
-    public RContext actuallyFindContext0(Node contextNode) {
-        return findContext(contextNode);
+    public static TruffleRLanguage getCurrentLanguage() {
+        return TruffleLanguage.getCurrentLanguage(TruffleRLanguage.class);
     }
 
     @Override

@@ -22,13 +22,12 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
@@ -38,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 
-@MessageResolution(receiverType = RS4Object.class, language = TruffleRLanguage.class)
+@MessageResolution(receiverType = RS4Object.class)
 public class RS4ObjectMR {
 
     @Resolve(message = "IS_BOXED")
@@ -65,11 +64,10 @@ public class RS4ObjectMR {
     @Resolve(message = "READ")
     public abstract static class RS4ObjectReadNode extends Node {
         @Child private GetAttributeNode getAttributeNode = GetAttributeNode.create();
-        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         @SuppressWarnings("try")
-        protected Object access(VirtualFrame frame, RS4Object receiver, String field) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+        protected Object access(RS4Object receiver, String field) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
                 return getAttributeNode.execute(receiver, field);
             }
         }
@@ -78,11 +76,10 @@ public class RS4ObjectMR {
     @Resolve(message = "WRITE")
     public abstract static class RS4ObjectWriteNode extends Node {
         @Child private SetAttributeNode setAttributeNode = SetAttributeNode.create();
-        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         @SuppressWarnings("try")
-        protected Object access(VirtualFrame frame, RS4Object receiver, String field, Object valueObj) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+        protected Object access(RS4Object receiver, String field, Object valueObj) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
                 Object value = Utils.javaToRPrimitive(valueObj);
                 setAttributeNode.execute(receiver, field, value);
                 return value;
@@ -92,12 +89,11 @@ public class RS4ObjectMR {
 
     @Resolve(message = "KEYS")
     public abstract static class RS4ObjectKeysNode extends Node {
-        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
         @Child private ArrayAttributeNode arrayAttrAccess = ArrayAttributeNode.create();
 
         @SuppressWarnings("try")
         protected Object access(RS4Object receiver) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
                 RAttribute[] attributes = arrayAttrAccess.execute(receiver.getAttributes());
                 String[] data = new String[attributes.length];
                 for (int i = 0; i < data.length; i++) {

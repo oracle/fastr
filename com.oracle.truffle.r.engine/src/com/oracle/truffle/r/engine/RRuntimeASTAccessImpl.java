@@ -33,7 +33,6 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.Node;
@@ -41,7 +40,6 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.engine.shell.RCommand;
 import com.oracle.truffle.r.engine.shell.RscriptCommand;
-import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -76,6 +74,7 @@ import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -255,7 +254,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 Argument<RSyntaxNode> arg = RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, argName, argVal == RSymbol.MISSING ? null : (RSyntaxNode) unwrapToRNode(argVal));
                 resArgs.add(arg);
             }
-            RootCallTarget rootCallTarget = new RASTBuilder().rootFunction(RSyntaxNode.LAZY_DEPARSE, resArgs, body, null);
+            RootCallTarget rootCallTarget = RContext.getASTBuilder().rootFunction(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, resArgs, body, null);
             FunctionExpressionNode fnExprNode = FunctionExpressionNode.create(RSyntaxNode.LAZY_DEPARSE, rootCallTarget);
             RLanguage result = RDataFactory.createLanguage(fnExprNode);
             return addAttributes(result, list);
@@ -722,8 +721,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public Class<? extends TruffleLanguage<?>> getTruffleRLanguage() {
-        return TruffleRLanguage.class;
+    public Class<? extends TruffleRLanguage> getTruffleRLanguage() {
+        return TruffleRLanguageImpl.class;
     }
 
     @Override

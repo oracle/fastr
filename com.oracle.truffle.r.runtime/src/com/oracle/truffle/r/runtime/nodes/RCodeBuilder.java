@@ -30,6 +30,8 @@ import java.util.List;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
 /**
  * Implementers of this interface can be used to generate a representation of an R closure.
@@ -111,12 +113,12 @@ public interface RCodeBuilder<T> {
      * names - if it is non-null, it represents the left hand side that this function is assigned
      * to.
      */
-    T function(SourceSection source, List<Argument<T>> arguments, T body, Object assignedTo);
+    T function(TruffleRLanguage language, SourceSection source, List<Argument<T>> arguments, T body, Object assignedTo);
 
     /**
      * Creates a new call target from a given function expression literal.
      */
-    RootCallTarget rootFunction(SourceSection source, List<Argument<T>> arguments, T body, String name);
+    RootCallTarget rootFunction(TruffleRLanguage language, SourceSection source, List<Argument<T>> arguments, T body, String name);
 
     void setContext(CodeBuilderContext context);
 
@@ -156,7 +158,7 @@ public interface RCodeBuilder<T> {
             @Override
             protected T visit(RSyntaxFunction element) {
                 ArrayList<Argument<T>> params = createArguments(element.getSyntaxSignature(), element.getSyntaxArgumentDefaults());
-                return function(element.getLazySourceSection(), params, accept(element.getSyntaxBody()), element.getSyntaxDebugName());
+                return function(RContext.getInstance().getLanguage(), element.getLazySourceSection(), params, accept(element.getSyntaxBody()), element.getSyntaxDebugName());
             }
         }.accept(original);
     }

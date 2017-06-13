@@ -28,7 +28,6 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
@@ -37,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPairList;
 
-@MessageResolution(receiverType = RPairList.class, language = TruffleRLanguage.class)
+@MessageResolution(receiverType = RPairList.class)
 public class RPairListMR {
     @Resolve(message = "IS_BOXED")
     public abstract static class RPairListIsBoxedNode extends Node {

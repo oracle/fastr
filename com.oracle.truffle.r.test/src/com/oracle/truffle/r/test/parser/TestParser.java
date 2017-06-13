@@ -165,7 +165,7 @@ public class TestParser extends TestBase {
                 RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
                 try {
                     source = RSource.fromFile(file);
-                    parser.script(source, new RASTBuilder());
+                    parser.script(source, new RASTBuilder(), null);
                 } catch (Throwable e) {
                     errorCount++;
                     Throwable t = e;

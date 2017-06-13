@@ -30,7 +30,7 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-@MessageResolution(receiverType = RLanguage.class, language = TruffleRLanguage.class)
+@MessageResolution(receiverType = RLanguage.class)
 public class RLanguageMR {
 
     @Resolve(message = "IS_BOXED")
@@ -66,11 +66,10 @@ public class RLanguageMR {
     @Resolve(message = "READ")
     public abstract static class RLanguageReadNode extends Node {
         @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, RLanguage receiver, int label) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
                 return extract.apply(frame, receiver, new Object[]{label + 1}, RLogical.TRUE, RLogical.TRUE);
             }
         }

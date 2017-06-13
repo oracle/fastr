@@ -238,7 +238,7 @@ public class MethodsListDispatch {
             Object opx = op;
             if ((op instanceof RFunction) && !((RFunction) op).isBuiltin()) {
                 String internalName = RRuntime.asString(initAccessSlotNode().executeAccess(op, "internal"));
-                opx = RContext.lookupBuiltin(internalName);
+                opx = RContext.getInstance().lookupBuiltin(internalName);
                 if (opx == null) {
                     throw error(RError.Message.GENERIC, "'internal' slot does not name an internal function: " + internalName);
                 }

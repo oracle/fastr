@@ -32,7 +32,7 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
-@MessageResolution(receiverType = RList.class, language = TruffleRLanguage.class)
+@MessageResolution(receiverType = RList.class)
 public class RListMR {
 
     @Resolve(message = "IS_BOXED")
@@ -72,11 +72,10 @@ public class RListMR {
     @Resolve(message = "READ")
     public abstract static class RListReadNode extends Node {
         @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, RList receiver, String field) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
                 return extract.applyAccessField(frame, receiver, field);
             }
         }
@@ -85,11 +84,10 @@ public class RListMR {
     @Resolve(message = "WRITE")
     public abstract static class RListWriteNode extends Node {
         @Child private ReplaceVectorNode replace = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, RList receiver, String field, Object valueObj) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
                 Object value = javaToRPrimitive(valueObj);
                 return replace.apply(frame, receiver, new Object[]{field}, value);
             }
@@ -98,12 +96,11 @@ public class RListMR {
 
     @Resolve(message = "KEYS")
     public abstract static class RListKeysNode extends Node {
-        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
         @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
         @SuppressWarnings("try")
         protected Object access(RList receiver) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
                 RStringVector names = getNamesNode.getNames(receiver);
                 return names != null ? names : RNull.instance;
             }
@@ -112,7 +109,6 @@ public class RListMR {
 
     @Resolve(message = "KEY_INFO")
     public abstract static class RListKeyInfoNode extends Node {
-        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
         @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
         @Child private ExtractVectorNode extractNode;
 
@@ -121,11 +117,11 @@ public class RListMR {
         private static final int READABLE = 1 << 1;
         private static final int WRITABLE = 1 << 2;
         private static final int INVOCABLE = 1 << 3;
-        private static final int INTERNAL = 1 << 4;
+        @SuppressWarnings("unused") private static final int INTERNAL = 1 << 4;
 
         @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, RList receiver, String identifier) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
                 int info = 0;
                 RStringVector names = getNamesNode.getNames(receiver);
                 for (int i = 0; i < names.getLength(); i++) {

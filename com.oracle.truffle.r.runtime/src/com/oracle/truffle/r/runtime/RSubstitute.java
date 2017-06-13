@@ -28,6 +28,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -87,7 +88,7 @@ public class RSubstitute {
      * <li>..., replace by contents of ... (if bound)</li>
      * </ul>
      */
-    private static <T> T substitute(RCodeBuilder<T> builder, RSyntaxElement original, REnvironment callEnv) {
+    private static <T> T substitute(RCodeBuilder<T> builder, RSyntaxElement original, REnvironment callEnv, TruffleRLanguage language) {
         return new RSyntaxVisitor<T>() {
 
             REnvironment env = callEnv;
@@ -178,13 +179,13 @@ public class RSubstitute {
             @Override
             protected T visit(RSyntaxFunction element) {
                 ArrayList<Argument<T>> params = createArguments(element.getSyntaxSignature(), element.getSyntaxArgumentDefaults());
-                return builder.function(RSyntaxNode.LAZY_DEPARSE, params, accept(element.getSyntaxBody()), element.getSyntaxDebugName());
+                return builder.function(language, RSyntaxNode.LAZY_DEPARSE, params, accept(element.getSyntaxBody()), element.getSyntaxDebugName());
             }
         }.accept(original);
     }
 
     @TruffleBoundary
-    public static RSyntaxNode substitute(REnvironment env, RBaseNode node) {
-        return substitute(RContext.getASTBuilder(), node.asRSyntaxNode(), env);
+    public static RSyntaxNode substitute(REnvironment env, RBaseNode node, TruffleRLanguage language) {
+        return substitute(RContext.getASTBuilder(), node.asRSyntaxNode(), env, language);
     }
 }

@@ -228,7 +228,7 @@ public final class SeqFunctions {
         }
 
         public static RFunction lookupSeqInt() {
-            return RContext.lookupBuiltin("seq.int");
+            return RContext.getInstance().lookupBuiltin("seq.int");
         }
 
         public static GetClassAttributeNode createGetClassAttributeNode() {

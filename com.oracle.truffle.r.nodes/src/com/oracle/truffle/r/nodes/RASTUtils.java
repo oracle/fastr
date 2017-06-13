@@ -61,7 +61,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 /**
  * A collection of useful methods for working with {@code AST} instances.
  */
-public class RASTUtils {
+public final class RASTUtils {
+
+    private RASTUtils() {
+        // no instances
+    }
 
     /**
      * Central location for all node cloning operations, in preference to {@link NodeUtil#cloneNode}
@@ -119,14 +123,6 @@ public class RASTUtils {
     public static boolean isLookup(RBaseNode node, String identifier) {
         RSyntaxNode element = node.asRSyntaxNode();
         return element instanceof RSyntaxLookup && identifier.equals(((RSyntaxLookup) element).getIdentifier());
-    }
-
-    /**
-     * Creates a standard {@link ReadVariableNode}.
-     */
-    @TruffleBoundary
-    public static RSyntaxNode createReadVariableNode(String name) {
-        return RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, name, false);
     }
 
     /**

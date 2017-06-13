@@ -28,6 +28,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
@@ -37,8 +38,11 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class RBuiltinRootNode extends RRootNode {
 
@@ -48,10 +52,15 @@ public final class RBuiltinRootNode extends RRootNode {
 
     private final RBuiltinFactory factory;
 
-    RBuiltinRootNode(RBuiltinFactory factory, FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
-        super(frameDescriptor, fastPath);
+    RBuiltinRootNode(TruffleRLanguage language, RBuiltinFactory factory, FrameDescriptor frameDescriptor, FastPathFactory fastPath) {
+        super(language, frameDescriptor, fastPath);
         this.factory = factory;
         this.args = new AccessArgumentNode[factory.getSignature().getLength()];
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        return RSyntaxNode.INTERNAL;
     }
 
     @Override
@@ -70,7 +79,7 @@ public final class RBuiltinRootNode extends RRootNode {
     public RootCallTarget duplicateWithNewFrameDescriptor() {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("builtin", frameDescriptor);
-        return Truffle.getRuntime().createCallTarget(new RBuiltinRootNode(factory, frameDescriptor, getFastPath()));
+        return Truffle.getRuntime().createCallTarget(new RBuiltinRootNode(getLanguage(RContext.getTruffleRLanguage()), factory, frameDescriptor, getFastPath()));
     }
 
     @Override

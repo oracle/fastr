@@ -32,7 +32,7 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
-@MessageResolution(receiverType = RFunction.class, language = TruffleRLanguage.class)
+@MessageResolution(receiverType = RFunction.class)
 public class RFunctionMR {
     @Resolve(message = "IS_EXECUTABLE")
     public abstract static class RFunctionIsExecutabledNode extends Node {
@@ -64,15 +64,14 @@ public class RFunctionMR {
         }
 
         @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier);
-        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         @SuppressWarnings("try")
-        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, RFunction receiver, Object[] arguments) {
+        protected Object access(RFunction receiver, Object[] arguments) {
             Object[] dummyFrameArgs = RArguments.createUnitialized();
             VirtualFrame dummyFrame = Truffle.getRuntime().createVirtualFrame(dummyFrameArgs, emptyFrameDescriptor);
 
             RArgsValuesAndNames actualArgs = new RArgsValuesAndNames(arguments, ArgumentsSignature.empty(arguments.length));
-            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
                 FrameSlotChangeMonitor.setObject(dummyFrame, slot, actualArgs);
                 return call.execute(dummyFrame, receiver);
             } finally {

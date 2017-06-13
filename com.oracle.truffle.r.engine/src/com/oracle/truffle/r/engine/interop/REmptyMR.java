@@ -27,10 +27,9 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.REmpty;
 
-@MessageResolution(receiverType = REmpty.class, language = TruffleRLanguage.class)
+@MessageResolution(receiverType = REmpty.class)
 public class REmptyMR {
 
     @Resolve(message = "IS_BOXED")
