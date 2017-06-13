@@ -30,9 +30,11 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
 import java.awt.Paint;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.Toolkit;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
@@ -59,7 +61,7 @@ public class Graphics2DDevice implements GridDevice {
     // may wish to apply his/her own transformations to the graphics object and we should not
     // interfere with these. In cases we do use transformation, we make sure to set back the
     // original one after we're done.
-    static final double AWT_POINTS_IN_INCH = 72.;
+    static final double AWT_POINTS_IN_INCH = GraphicsEnvironment.isHeadless() ? 72. : Toolkit.getDefaultToolkit().getScreenResolution();
 
     private static BasicStroke blankStroke;
 
