@@ -35,7 +35,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNames
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertIndexNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertValueNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -68,16 +67,14 @@ class SpecialsUtils {
      */
     abstract static class SubscriptSpecialCommon extends Node {
 
-        @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
-
         protected final boolean inReplacement;
 
         protected SubscriptSpecialCommon(boolean inReplacement) {
             this.inReplacement = inReplacement;
         }
 
-        protected boolean simpleVector(RAbstractVector vector) {
-            return classHierarchy.execute(vector) == null;
+        protected boolean simpleVector(@SuppressWarnings("unused") RAbstractVector vector) {
+            return true;
         }
 
         /**
@@ -123,11 +120,10 @@ class SpecialsUtils {
      */
     abstract static class ListFieldSpecialBase extends RNode {
 
-        @Child private ClassHierarchyNode hierarchyNode = ClassHierarchyNode.create();
         @Child protected GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
         protected final boolean isSimpleList(RList list) {
-            return hierarchyNode.execute(list) == null;
+            return true;
         }
 
         protected static int getIndex(RStringVector names, String field) {
@@ -159,6 +155,8 @@ class SpecialsUtils {
     public abstract static class ConvertIndex extends RNode {
 
         protected abstract RNode getDelegate();
+
+        public abstract Object execute(Object value);
 
         @Specialization
         protected static int convertInteger(int value) {

@@ -70,7 +70,7 @@ public abstract class BinaryArithmeticSpecial extends RNode {
                     } else {
                         return BinaryArithmeticSpecialNodeGen.create(binaryFactory, unaryFactory, arguments[0], arguments[1]);
                     }
-                } else if (arguments.length == 1) {
+                } else if (arguments.length == 1 && unaryFactory != null) {
                     return UnaryArithmeticSpecialNodeGen.create(unaryFactory, arguments[0]);
                 }
             }

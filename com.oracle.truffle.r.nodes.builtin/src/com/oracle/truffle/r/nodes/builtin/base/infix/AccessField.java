@@ -55,7 +55,7 @@ abstract class AccessFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
 
     @Child private ExtractListElement extractListElement = ExtractListElement.create();
 
-    @Specialization(limit = "2", guards = {"isSimpleList(list)", "list.getNames() == cachedNames", "field == cachedField"})
+    @Specialization(limit = "2", guards = {"getNamesNode.getNames(list) == cachedNames", "field == cachedField"})
     public Object doList(RList list, @SuppressWarnings("unused") String field,
                     @SuppressWarnings("unused") @Cached("list.getNames()") RStringVector cachedNames,
                     @SuppressWarnings("unused") @Cached("field") String cachedField,
@@ -66,7 +66,7 @@ abstract class AccessFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
         return extractListElement.execute(list, index);
     }
 
-    @Specialization(replaces = "doList", guards = {"isSimpleList(list)", "list.getNames() != null"})
+    @Specialization(replaces = "doList")
     public Object doListDynamic(RList list, String field) {
         int index = getIndex(getNamesNode.getNames(list), field);
         if (index == -1) {
