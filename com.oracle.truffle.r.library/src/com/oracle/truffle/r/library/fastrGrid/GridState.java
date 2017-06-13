@@ -97,8 +97,8 @@ public final class GridState {
         this.palette = palette;
     }
 
-    public void init(REnvironment gridEnv) {
-        this.gridEnv = gridEnv;
+    public void init(REnvironment newGridEnv) {
+        this.gridEnv = newGridEnv;
         this.currentGrob = RNull.instance;
     }
 

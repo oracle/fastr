@@ -65,7 +65,7 @@ public class RListMRTest {
     }
 
     @Test
-    public void testKeysInfo() throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
+    public void testKeysInfo() {
         TruffleObject l = createRListTruffleObject("n1=1, n2=2");
         int info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, "nnoonnee");
         assertFalse(KeyInfo.isExisting(info));
@@ -90,11 +90,10 @@ public class RListMRTest {
         assertFalse(KeyInfo.isInternal(info));
     }
 
-    private TruffleObject createRListTruffleObject(String values) {
+    private static TruffleObject createRListTruffleObject(String values) {
         PolyglotEngine engine = PolyglotEngine.newBuilder().build();
         Source src = Source.newBuilder("list(" + values + ")").mimeType("text/x-r").name("test.R").build();
         PolyglotEngine.Value result = engine.eval(src);
         return result.as(TruffleObject.class);
     }
-
 }

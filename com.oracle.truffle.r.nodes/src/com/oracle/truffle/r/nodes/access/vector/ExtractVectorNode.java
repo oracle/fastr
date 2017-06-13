@@ -121,17 +121,17 @@ public abstract class ExtractVectorNode extends RBaseNode {
                     @Cached("IS_BOXED.createNode()") Node isBoxedNode,
                     @Cached("UNBOX.createNode()") Node unboxNode,
                     @Cached("createForeign2RNode()") Foreign2R foreign2RNode) {
-        if (positions.length == 0) {
+        Object[] pos = positionProfile.profile(positions);
+        if (pos.length == 0) {
             throw error(RError.Message.GENERIC, "No positions for foreign access.");
         }
-        positions = positionProfile.profile(positions);
         try {
             try {
                 // TODO implicite unboxing ok? method calls seem to behave this way
                 Object result = object;
-                for (int i = 0; i < positions.length; i++) {
-                    result = read(this, positions[i], foreignRead, keyInfoNode, (TruffleObject) result, firstString, castNode);
-                    if (positions.length > 1 && i < positions.length - 1) {
+                for (int i = 0; i < pos.length; i++) {
+                    result = read(this, pos[i], foreignRead, keyInfoNode, (TruffleObject) result, firstString, castNode);
+                    if (pos.length > 1 && i < pos.length - 1) {
                         assert result instanceof TruffleObject;
                     }
                 }
@@ -144,7 +144,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
         }
     }
 
-    private Object unbox(Object obj, Node isNullNode, Node isBoxedNode, Node unboxNode, Foreign2R foreign2RNode) throws UnsupportedMessageException {
+    private static Object unbox(Object obj, Node isNullNode, Node isBoxedNode, Node unboxNode, Foreign2R foreign2RNode) throws UnsupportedMessageException {
         if (RRuntime.isForeignObject(obj)) {
             if (ForeignAccess.sendIsNull(isNullNode, (TruffleObject) obj)) {
                 return RNull.instance;
@@ -156,33 +156,34 @@ public abstract class ExtractVectorNode extends RBaseNode {
         return foreign2RNode.execute(obj);
     }
 
-    public static Object read(RBaseNode caller, Object position, Node foreignRead, Node keyInfoNode, TruffleObject object, FirstStringNode firstString, CastStringNode castNode)
+    public static Object read(RBaseNode caller, Object positions, Node foreignRead, Node keyInfoNode, TruffleObject object, FirstStringNode firstString, CastStringNode castNode)
                     throws RError, InteropException {
-        if (position instanceof Integer) {
-            position = ((int) position) - 1;
-        } else if (position instanceof Double) {
-            position = ((double) position) - 1;
-        } else if (position instanceof RAbstractDoubleVector) {
-            position = ((RAbstractDoubleVector) position).getDataAt(0) - 1;
-        } else if (position instanceof RAbstractIntVector) {
-            position = ((RAbstractIntVector) position).getDataAt(0) - 1;
-        } else if (position instanceof RAbstractStringVector) {
-            position = firstString.executeString(castNode.doCast(position));
-        } else if (!(position instanceof String)) {
+        Object pos = positions;
+        if (pos instanceof Integer) {
+            pos = ((int) pos) - 1;
+        } else if (pos instanceof Double) {
+            pos = ((double) pos) - 1;
+        } else if (pos instanceof RAbstractDoubleVector) {
+            pos = ((RAbstractDoubleVector) pos).getDataAt(0) - 1;
+        } else if (pos instanceof RAbstractIntVector) {
+            pos = ((RAbstractIntVector) pos).getDataAt(0) - 1;
+        } else if (pos instanceof RAbstractStringVector) {
+            pos = firstString.executeString(castNode.doCast(pos));
+        } else if (!(pos instanceof String)) {
             throw caller.error(RError.Message.GENERIC, "invalid index during foreign access");
         }
 
-        int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, position);
+        int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, pos);
         if (KeyInfo.isReadable(info)) {
-            return ForeignAccess.sendRead(foreignRead, object, position);
-        } else if (position instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
+            return ForeignAccess.sendRead(foreignRead, object, pos);
+        } else if (pos instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
             TruffleObject clazz = JavaInterop.toJavaClass(object);
-            info = ForeignAccess.sendKeyInfo(keyInfoNode, clazz, position);
+            info = ForeignAccess.sendKeyInfo(keyInfoNode, clazz, pos);
             if (KeyInfo.isReadable(info)) {
-                return ForeignAccess.sendRead(foreignRead, clazz, position);
+                return ForeignAccess.sendRead(foreignRead, clazz, pos);
             }
         }
-        throw caller.error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + position);
+        throw caller.error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + pos);
     }
 
     @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})

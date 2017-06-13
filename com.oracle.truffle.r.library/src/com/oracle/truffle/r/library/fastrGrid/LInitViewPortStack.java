@@ -25,7 +25,7 @@ final class LInitViewPortStack extends RExternalBuiltinNode {
     }
 
     @Override
-    public Object call(VirtualFrame frame, @SuppressWarnings("unused") RArgsValuesAndNames args) {
+    public Object call(VirtualFrame frame, RArgsValuesAndNames args) {
         initViewPortNode.execute(frame);
         return RNull.instance;
     }

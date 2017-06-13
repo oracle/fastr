@@ -40,7 +40,7 @@ class TruffleLLVM_C implements CRFFI {
         private int numArgs;
 
         @Override
-        public synchronized void execute(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean hasStrings) {
+        public synchronized void execute(NativeCallInfo nativeCallInfo, Object[] args, boolean hasStrings) {
             TruffleLLVM_DLL.ensureParsed(nativeCallInfo);
             Object[] wargs = wrap(args);
             try {

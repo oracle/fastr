@@ -47,7 +47,7 @@ public abstract class ClassHierarchyScalarNode extends UnaryNode {
 
         Object v = RRuntime.asAbstractVector(arg);
         if (v instanceof RAttributable) {
-            RStringVector classHierarchy = ClassHierarchyNode.getClassHierarchy((RAttributable) v);
+            RStringVector classHierarchy = ClassHierarchyNode.getClassHierarchy(v);
             return classHierarchy.getLength() == 0 ? "" : classHierarchy.getDataAt(0);
         } else if (arg == RNull.instance) {
             return "NULL";

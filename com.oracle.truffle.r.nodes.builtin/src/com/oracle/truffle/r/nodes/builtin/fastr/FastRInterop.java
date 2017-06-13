@@ -22,10 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notLogicalNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.RVisibility.ON;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
@@ -33,6 +38,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
@@ -56,15 +64,8 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.Source.Builder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
@@ -88,13 +89,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
-import java.lang.reflect.Array;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class FastRInterop {
 
@@ -326,11 +326,13 @@ public class FastRInterop {
             return toChar(value, 0);
         }
 
+        @SuppressWarnings("unused")
         @Specialization
         public RInteropChar toChar(int value, int pos) {
             throw RError.error(this, RError.Message.POS_NOT_ALLOWED_WITH_NUMERIC);
         }
 
+        @SuppressWarnings("unused")
         @Specialization
         public RInteropChar toChar(double value, int pos) {
             throw RError.error(this, RError.Message.POS_NOT_ALLOWED_WITH_NUMERIC);
@@ -351,7 +353,7 @@ public class FastRInterop {
 
         @Specialization
         public RInteropFloat toFloat(int value) {
-            return RInteropFloat.valueOf((float) value);
+            return RInteropFloat.valueOf(value);
         }
 
         @Specialization
@@ -374,7 +376,7 @@ public class FastRInterop {
 
         @Specialization
         public RInteropLong toLong(int value) {
-            return RInteropLong.valueOf((long) value);
+            return RInteropLong.valueOf(value);
         }
 
         @Specialization
@@ -470,7 +472,7 @@ public class FastRInterop {
         }
 
         @Fallback
-        public byte isArray(Object obj) {
+        public byte isArray(@SuppressWarnings("unused") Object obj) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -595,7 +597,7 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RInteropScalar ri, RMissing className, boolean flat,
+        public Object toArray(RInteropScalar ri, @SuppressWarnings("unused") RMissing className, boolean flat,
                         @Cached("createR2Foreign()") R2Foreign r2Foreign) {
             RList list = RDataFactory.createList(new Object[]{ri});
             return toArray(list, flat, ri.getJavaType(), (array, i) -> Array.set(array, i, r2Foreign.execute(list.getDataAt(i))));
@@ -637,7 +639,7 @@ public class FastRInterop {
             }
         }
 
-        private int[] getDim(boolean flat, RAbstractVector vec) {
+        private static int[] getDim(boolean flat, RAbstractVector vec) {
             int[] dims;
             if (flat) {
                 dims = new int[]{vec.getLength()};
@@ -650,7 +652,7 @@ public class FastRInterop {
             return dims;
         }
 
-        private Object toArray(RAbstractVector vec, boolean flat, Class<?> clazz, VecElementToArray vecToArray) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
+        private static Object toArray(RAbstractVector vec, boolean flat, Class<?> clazz, VecElementToArray vecToArray) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
             int[] dims = getDim(flat, vec);
             final Object array = Array.newInstance(clazz, dims);
             for (int d = 0; d < dims.length; d++) {
@@ -690,8 +692,9 @@ public class FastRInterop {
             throw error(RError.Message.GENERIC, "can't create array from " + obj);
         }
 
+        @SuppressWarnings("unused")
         @Fallback
-        public Object toArray(Object o, @SuppressWarnings("unused") Object className, @SuppressWarnings("unused") Object flat) {
+        public Object toArray(Object o, Object className, Object flat) {
             throw error(RError.Message.GENERIC, "unsupported type");
         }
 
@@ -781,12 +784,12 @@ public class FastRInterop {
         }
 
         @Specialization(guards = {"isForeignObject(obj)"})
-        public byte isExternal(TruffleObject obj) {
+        public byte isExternal(@SuppressWarnings("unused") TruffleObject obj) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Fallback
-        public byte isExternal(Object obj) {
+        public byte isExternal(@SuppressWarnings("unused") Object obj) {
             return RRuntime.LOGICAL_FALSE;
         }
     }

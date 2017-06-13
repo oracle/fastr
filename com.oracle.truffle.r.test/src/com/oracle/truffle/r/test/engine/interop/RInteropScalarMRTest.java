@@ -22,24 +22,23 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.vm.PolyglotEngine;
+
 public class RInteropScalarMRTest {
 
     @Test
-    public void testRInteroptScalar() throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
+    public void testRInteroptScalar() throws UnsupportedMessageException {
         testRIS("toByte", "" + Byte.MAX_VALUE, Byte.class);
         testRIS("toChar", "'a'", Character.class);
         testRIS("toFloat", "" + Float.MAX_VALUE, Float.class);
@@ -47,7 +46,7 @@ public class RInteropScalarMRTest {
         testRIS("toShort", "" + Short.MAX_VALUE, Short.class);
     }
 
-    private void testRIS(String toInteropScalarBuiltin, String value, Class<?> unboxedType) throws UnsupportedMessageException {
+    private static void testRIS(String toInteropScalarBuiltin, String value, Class<?> unboxedType) throws UnsupportedMessageException {
         TruffleObject l = createRInteroptScalarTO(toInteropScalarBuiltin, value);
 
         assertFalse(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), l));
@@ -58,11 +57,10 @@ public class RInteropScalarMRTest {
         assertEquals(unboxedType, ub.getClass());
     }
 
-    private TruffleObject createRInteroptScalarTO(String toInteropScalarBuiltin, String value) {
+    private static TruffleObject createRInteroptScalarTO(String toInteropScalarBuiltin, String value) {
         PolyglotEngine engine = PolyglotEngine.newBuilder().build();
         Source src = Source.newBuilder(".fastr.interop." + toInteropScalarBuiltin + "(" + value + ")").mimeType("text/x-r").name("test.R").build();
         PolyglotEngine.Value result = engine.eval(src);
         return result.as(TruffleObject.class);
     }
-
 }

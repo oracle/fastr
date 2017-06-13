@@ -78,7 +78,7 @@ public abstract class LUnsetViewPort extends RExternalBuiltinNode.Arg1 {
         return RNull.instance;
     }
 
-    private void safeRemoveFromEnv(REnvironment children, String gvpName) {
+    private static void safeRemoveFromEnv(REnvironment children, String gvpName) {
         try {
             children.rm(gvpName);
         } catch (PutException e) {

@@ -102,14 +102,15 @@ public class Graphics2DDevice implements GridDevice {
     public void drawRect(DrawingContext ctx, double leftXIn, double bottomYIn, double widthIn, double heightIn, double rotationAnticlockWise) {
         int leftX = transX(leftXIn);
         int topY = transY(bottomYIn + heightIn);
-        int width = transDim(widthIn);
-        int height = transDim(heightIn);
+        int transWidth = transDim(widthIn);
+        int transHeight = transDim(heightIn);
         setContext(ctx);
         if (rotationAnticlockWise == 0.) {
-            drawShape(ctx, new Rectangle2D.Double(leftX, topY, width, height));
+            drawShape(ctx, new Rectangle2D.Double(leftX, topY, transWidth, transHeight));
             return;
         }
-        transformed(leftX + width / 2, topY + height / 2, rotationAnticlockWise, () -> drawShape(ctx, new Rectangle2D.Double(-(width / 2), -(height / 2), width, height)));
+        transformed(leftX + transWidth / 2, topY + transHeight / 2, rotationAnticlockWise,
+                        () -> drawShape(ctx, new Rectangle2D.Double(-(transWidth / 2), -(transHeight / 2), transWidth, transHeight)));
     }
 
     @Override
@@ -269,7 +270,7 @@ public class Graphics2DDevice implements GridDevice {
 
     // Transformation of DrawingContext data types to AWT constants
 
-    private String getFontName(String gridFontFamily) {
+    private static String getFontName(String gridFontFamily) {
         if (gridFontFamily == null) {
             return null;
         }
@@ -286,7 +287,7 @@ public class Graphics2DDevice implements GridDevice {
         return gridFontFamily;
     }
 
-    private int getAwtFontStyle(GridFontStyle fontStyle) {
+    private static int getAwtFontStyle(GridFontStyle fontStyle) {
         switch (fontStyle) {
             case PLAIN:
                 return Font.PLAIN;
@@ -305,7 +306,7 @@ public class Graphics2DDevice implements GridDevice {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
     }
 
-    private BasicStroke getStrokeFromCtx(DrawingContext ctx) {
+    private static BasicStroke getStrokeFromCtx(DrawingContext ctx) {
         byte[] type = ctx.getLineType();
         double width = ctx.getLineWidth();
         int lineJoin = fromGridLineJoin(ctx.getLineJoin());
@@ -318,7 +319,7 @@ public class Graphics2DDevice implements GridDevice {
         }
         float[] pattern = new float[type.length];
         for (int i = 0; i < pattern.length; i++) {
-            pattern[i] = (float) (type[i]);
+            pattern[i] = type[i];
         }
         return new BasicStroke((float) (width), endCap, lineJoin, lineMitre, pattern, 0f);
     }

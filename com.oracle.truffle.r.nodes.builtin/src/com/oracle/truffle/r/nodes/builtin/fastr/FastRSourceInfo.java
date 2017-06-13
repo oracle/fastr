@@ -59,7 +59,7 @@ public abstract class FastRSourceInfo extends RBuiltinNode.Arg1 {
         return srcInfo(fun.getRep());
     }
 
-    private Object srcInfo(Node fun) {
+    private static Object srcInfo(Node fun) {
         SourceSection ss = fun.getSourceSection();
         if (ss != null) {
             String path = ss.getSource().getPath();

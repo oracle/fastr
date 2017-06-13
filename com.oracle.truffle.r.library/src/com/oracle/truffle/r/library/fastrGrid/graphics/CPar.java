@@ -64,7 +64,7 @@ public final class CPar extends RExternalBuiltinNode {
         return RDataFactory.createList(result, RDataFactory.createStringVector(resultNames, RDataFactory.COMPLETE_VECTOR));
     }
 
-    private Object getParam(String name, GridDevice device) {
+    private static Object getParam(String name, GridDevice device) {
         switch (name) {
             case "din":
                 return RDataFactory.createDoubleVector(new double[]{device.getWidth(), device.getHeight()}, RDataFactory.COMPLETE_VECTOR);

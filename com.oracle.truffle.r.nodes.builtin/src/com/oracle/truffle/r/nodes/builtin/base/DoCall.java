@@ -205,7 +205,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         }
 
         @TruffleBoundary
-        private boolean getVisibility(MaterializedFrame envFrame) {
+        private static boolean getVisibility(MaterializedFrame envFrame) {
             FrameSlot envVisibilitySlot = FrameSlotChangeMonitor.findOrAddFrameSlot(envFrame.getFrameDescriptor(), RFrameSlot.Visibility, FrameSlotKind.Boolean);
             if (envVisibilitySlot != null) {
                 try {
@@ -225,7 +225,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         }
 
         @TruffleBoundary
-        private CallResult doCallGeneric(RFunction function, Object[] argValues, ArgumentsSignature argsSignature, boolean quote, RCaller call, REnvironment env) {
+        private static CallResult doCallGeneric(RFunction function, Object[] argValues, ArgumentsSignature argsSignature, boolean quote, RCaller call, REnvironment env) {
             RSyntaxNode[] argsConstants = new RSyntaxNode[argValues.length];
             for (int i = 0; i < argValues.length; i++) {
                 if (!quote && argValues[i] instanceof RLanguage) {
