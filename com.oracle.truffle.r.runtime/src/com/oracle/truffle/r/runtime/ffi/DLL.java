@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeVoidCallNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG;
 
 /**
@@ -616,7 +617,7 @@ public class DLL {
 
         @SuppressWarnings("deprecation")
         private RFindSymbolRootNode() {
-            super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), null, new FrameDescriptor());
+            super(RContext.getRRuntimeASTAccess().getTruffleRLanguage(), RSyntaxNode.INTERNAL, new FrameDescriptor());
         }
 
         @Override

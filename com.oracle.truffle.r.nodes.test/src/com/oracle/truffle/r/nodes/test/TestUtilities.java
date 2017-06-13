@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public class TestUtilities {
 
@@ -211,7 +212,7 @@ public class TestUtilities {
 
         @SuppressWarnings("deprecation")
         TestRoot(T node, NodeAdapter<T> invoke) {
-            super(TruffleLanguage.class, null, null);
+            super(TruffleLanguage.class, RSyntaxNode.INTERNAL, null);
             this.node = node;
             this.invoke = invoke;
         }

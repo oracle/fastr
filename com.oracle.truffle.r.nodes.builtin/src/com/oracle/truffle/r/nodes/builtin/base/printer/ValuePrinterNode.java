@@ -74,6 +74,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class ValuePrinterNode extends RBaseNode {
 
@@ -563,7 +564,7 @@ public final class ValuePrinterNode extends RBaseNode {
 
     @SuppressWarnings("deprecation")
     public static String prettyPrint(final Object value) {
-        return (String) Truffle.getRuntime().createCallTarget(new RootNode(TruffleLanguage.class, null, null) {
+        return (String) Truffle.getRuntime().createCallTarget(new RootNode(TruffleLanguage.class, RSyntaxNode.INTERNAL, null) {
 
             @Child ValuePrinterNode valuePrinterNode = new ValuePrinterNode();
 

@@ -59,6 +59,7 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.RScope;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly
@@ -203,7 +204,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> implements
             } catch (IncompleteSourceException e) {
                 throw new com.oracle.truffle.api.vm.IncompleteSourceException(e);
             } catch (ParseException e) {
-                return Truffle.getRuntime().createCallTarget(new RootNode(TruffleRLanguage.class, null, new FrameDescriptor()) {
+                return Truffle.getRuntime().createCallTarget(new RootNode(TruffleRLanguage.class, RSyntaxNode.INTERNAL, new FrameDescriptor()) {
                     @Override
                     public Object execute(VirtualFrame frame) {
                         try {
