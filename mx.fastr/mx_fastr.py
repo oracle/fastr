@@ -28,11 +28,11 @@ import mx_gate
 import mx_fastr_pkgs
 import mx_fastr_compile
 import mx_fastr_dists
-import mx_fastr_junit
-from mx_fastr_dists import FastRTestNativeProject, FastRReleaseProject, FastRNativeRecommendedProject #pylint: disable=unused-import
+from mx_fastr_dists import FastRReleaseProject, FastRNativeRecommendedProject #pylint: disable=unused-import
 import mx_copylib
 import mx_fastr_mkgramrd
 import mx_fastr_edinclude
+import mx_unittest
 
 import os
 
@@ -266,23 +266,19 @@ def _fastr_gate_runner(args, tasks):
     # check that the expected test output file is up to date
     with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks) as t:
         if t:
-            if junit(['--tests', _gate_unit_tests(), '--check-expected-output']) != 0:
-                t.abort('unit tests expected output check failed')
+            mx_unittest.unittest(['-Dfastr.test.check.expected', '-Dfastr.test.generate'] + _gate_unit_tests())
 
     with mx_gate.Task('UnitTests: no specials', tasks) as t:
         if t:
-            if junit(['--J', '@-DR:-UseSpecials', '--tests', _gate_noapps_unit_tests()]) != 0:
-                t.abort('unit tests failed')
+            mx_unittest.unittest(['-DR:-UseSpecials'] + _gate_noapps_unit_tests())
 
     with mx_gate.Task('UnitTests: with specials', tasks) as t:
         if t:
-            if junit(['--tests', _gate_noapps_unit_tests()]) != 0:
-                t.abort('unit tests failed')
+            mx_unittest.unittest(_gate_noapps_unit_tests())
 
     with mx_gate.Task('UnitTests: apps', tasks) as t:
         if t:
-            if junit(['--tests', _apps_unit_tests()]) != 0:
-                t.abort('unit tests failed')
+            mx_unittest.unittest(_apps_unit_tests())
 
 mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
 
@@ -294,103 +290,24 @@ def rgate(args):
     '''
     mx_gate.gate(args)
 
-def _test_srcdir():
-    tp = 'com.oracle.truffle.r.test'
-    return join(mx.project(tp).dir, 'src', tp.replace('.', sep))
+def _unittest_config_participant(config):
+    vmArgs, mainClass, mainClassArgs = config
+    # need to pass location of FASTR_UNIT_TESTS_NATIVE
+    d = mx.distribution('FASTR_UNIT_TESTS_NATIVE')
+    vmArgs = ['-Dfastr.test.native=' + d.path] + vmArgs
+    return (vmArgs, mainClass, mainClassArgs)
 
-def _junit_r_harness(args, vmArgs, jdk, junitArgs):
-    # always pass the directory where the expected output file should reside
-    runlistener_arg = 'expected=' + _test_srcdir()
-    # there should not be any unparsed arguments at this stage
-    if args.remainder:
-        mx.abort('unexpected arguments: ' + str(args.remainder).strip('[]') + '; did you forget --tests')
+def ut_simple(args):
+    return mx_unittest.unittest(args + _simple_unit_tests())
 
-    def add_arg_separator():
-        # can't update in Python 2.7
-        arg = runlistener_arg
-        if len(arg) > 0:
-            arg += ','
-        return arg
+def ut_noapps(args):
+    return mx_unittest.unittest(args + _gate_noapps_unit_tests())
 
-    if args.gen_fastr_output:
-        runlistener_arg = add_arg_separator()
-        runlistener_arg += 'gen-fastr=' + args.gen_fastr_output
+def ut_default(args):
+    return mx_unittest.unittest(args + _all_unit_tests())
 
-    if args.check_expected_output:
-        args.gen_expected_output = True
-        runlistener_arg = add_arg_separator()
-        runlistener_arg += 'check-expected'
-
-    if args.gen_expected_output:
-        runlistener_arg = add_arg_separator()
-        runlistener_arg += 'gen-expected'
-        if args.keep_trailing_whitespace:
-            runlistener_arg = add_arg_separator()
-            runlistener_arg += 'keep-trailing-whitespace'
-        if args.gen_expected_quiet:
-            runlistener_arg = add_arg_separator()
-            runlistener_arg += 'gen-expected-quiet'
-
-    if args.gen_diff_output:
-        runlistener_arg = add_arg_separator()
-        runlistener_arg += 'gen-diff=' + args.gen_diff_output
-
-    if args.trace_tests:
-        runlistener_arg = add_arg_separator()
-        runlistener_arg += 'trace-tests'
-
-#    if args.test_methods:
-#        runlistener_arg = add_arg_separator()
-#        runlistener_arg = 'test-methods=' + args.test_methods
-
-    runlistener_arg = add_arg_separator()
-    runlistener_arg += 'test-project-output-dir=' + mx.project('com.oracle.truffle.r.test').output_dir()
-
-    # use a custom junit.RunListener
-    runlistener = 'com.oracle.truffle.r.test.TestBase$RunListener'
-    if len(runlistener_arg) > 0:
-        runlistener += ':' + runlistener_arg
-
-    junitArgs += ['--runlistener', runlistener]
-
-    # on some systems a large Java stack seems necessary
-    vmArgs += ['-Xss12m']
-    # no point in printing errors to file when running tests (that contain errors on purpose)
-    vmArgs += ['-DR:-PrintErrorStacktracesToFile']
-    vmArgs += _sulong_options()
-
-    setREnvironment()
-
-    return mx.run_java(vmArgs + junitArgs, nonZeroIsFatal=False, jdk=jdk)
-
-def junit(args):
-    '''run R Junit tests'''
-    parser = ArgumentParser(prog='r junit')
-    parser.add_argument('--gen-expected-output', action='store_true', help='generate/update expected test output file')
-    parser.add_argument('--gen-expected-quiet', action='store_true', help='suppress output on new tests being added')
-    parser.add_argument('--keep-trailing-whitespace', action='store_true', help='keep trailing whitespace in expected test output file')
-    parser.add_argument('--check-expected-output', action='store_true', help='check but do not update expected test output file')
-    parser.add_argument('--gen-fastr-output', action='store', metavar='<path>', help='generate FastR test output file in given directory (e.g. ".")')
-    parser.add_argument('--gen-diff-output', action='store', metavar='<path>', help='generate difference test output file in given directory (e.g. ".")')
-    parser.add_argument('--trace-tests', action='store_true', help='trace the actual @Test methods as they are executed')
-    # parser.add_argument('--test-methods', action='store', help='pattern to match test methods in test classes')
-
-    if os.environ.has_key('R_PROFILE_USER'):
-        mx.abort('unset R_PROFILE_USER before running unit tests')
-    _unset_conflicting_envs()
-    return mx_fastr_junit.junit(args, _junit_r_harness, parser=parser, jdk_default=get_default_jdk())
-
-def junit_simple(args):
-    return mx.command_function('junit')(['--tests', _simple_unit_tests()] + args)
-
-def junit_noapps(args):
-    return mx.command_function('junit')(['--tests', _gate_noapps_unit_tests()] + args)
-
-def junit_default(args):
-    return mx.command_function('junit')(['--tests', _all_unit_tests()] + args)
-
-def junit_gate(args):
-    return mx.command_function('junit')(['--tests', _gate_unit_tests()] + args)
+def ut_gate(args):
+    return mx_unittest.unittest(args + _gate_unit_tests())
 
 def _test_package():
     return 'com.oracle.truffle.r.test'
@@ -399,37 +316,38 @@ def _test_subpackage(name):
     return '.'.join((_test_package(), name))
 
 def _simple_generated_unit_tests():
-    return ','.join(map(_test_subpackage, ['engine.shell', 'library.base', 'library.fastrGrid', 'library.methods', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'parser', 'rng', 'runtime.data', 'S4']))
+    return map(_test_subpackage, ['engine.shell', 'library.base', 'library.fastrGrid', 'library.methods', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'parser', 'rffi', 'rng', 'runtime.data', 'S4'])
 
 def _simple_unit_tests():
-    return ','.join([_simple_generated_unit_tests(), _test_subpackage('tck')])
+    return _simple_generated_unit_tests() + [_test_subpackage('tck')]
 
 def _nodes_unit_tests():
-    return 'com.oracle.truffle.r.nodes.test'
+    return ['com.oracle.truffle.r.nodes.test']
 
 def _apps_unit_tests():
-    return _test_subpackage('apps')
+    return [_test_subpackage('apps')]
 
 def _gate_noapps_unit_tests():
-    return ','.join([_simple_unit_tests(), _nodes_unit_tests()])
+    return _simple_unit_tests() + _nodes_unit_tests()
 
 def _gate_unit_tests():
-    return ','.join([_gate_noapps_unit_tests(), _apps_unit_tests()])
+    return _gate_noapps_unit_tests() +  _apps_unit_tests()
 
 def _all_unit_tests():
     return _gate_unit_tests()
 
 def _all_generated_unit_tests():
-    return ','.join([_simple_generated_unit_tests()])
+    return _simple_generated_unit_tests()
 
 def testgen(args):
-    '''generate the expected output for unit tests, and All/Failing test classes'''
-    parser = ArgumentParser(prog='r testgen')
-    parser.add_argument('--tests', action='store', default=_all_generated_unit_tests(), help='pattern to match test classes')
-    args = parser.parse_args(args)
+    '''generate the expected output for unit tests'''
     # check we are in the home directory
     if os.getcwd() != _fastr_suite.dir:
         mx.abort('must run rtestgen from FastR home directory')
+
+    def _test_srcdir():
+        tp = 'com.oracle.truffle.r.test'
+        return join(mx.project(tp).dir, 'src', tp.replace('.', sep))
 
     def need_version_check():
         vardef = os.environ.has_key('FASTR_TESTGEN_GNUR')
@@ -452,13 +370,14 @@ def testgen(args):
         except subprocess.CalledProcessError:
             mx.abort('RVersionNumber.main failed')
 
-    # now just invoke junit with the appropriate options
+    tests = _all_generated_unit_tests()
+    # now just invoke unittst with the appropriate options
     mx.log("generating expected output for packages: ")
-    for pkg in args.tests.split(','):
+    for pkg in tests:
         mx.log("    " + str(pkg))
     os.environ["TZDIR"] = "/usr/share/zoneinfo/"
     _unset_conflicting_envs()
-    junit(['--tests', args.tests, '--gen-expected-output', '--gen-expected-quiet'])
+    mx_unittest.unittest(['-Dfastr.test.gen.expected=' + _test_srcdir(), '-Dfastr.test.gen.expected.quiet', '-Dfastr.test.project.output.dir=' + mx.project('com.oracle.truffle.r.test').output_dir()] + tests)
 
 def _unset_conflicting_envs():
     # this can interfere with the recommended packages
@@ -467,9 +386,6 @@ def _unset_conflicting_envs():
     # the default must be vi for unit tests
     if os.environ.has_key('EDITOR'):
         del os.environ['EDITOR']
-
-def unittest(args):
-    print "use 'junit --tests testclasses' or 'junitsimple' to run FastR unit tests"
 
 def rbcheck(args):
     '''Checks FastR builtins against GnuR
@@ -567,6 +483,8 @@ def nativebuild(args):
 def mx_post_parse_cmd_line(opts):
     mx_fastr_dists.mx_post_parse_cmd_line(opts)
 
+mx_unittest.add_config_participant(_unittest_config_participant)
+
 _commands = {
     'r' : [rshell, '[options]'],
     'R' : [rshell, '[options]'],
@@ -574,12 +492,10 @@ _commands = {
     'Rscript' : [rscript, '[options]'],
     'rtestgen' : [testgen, ''],
     'rgate' : [rgate, ''],
-    'junit' : [junit, ['options']],
-    'junitsimple' : [junit_simple, ['options']],
-    'junitdefault' : [junit_default, ['options']],
-    'junitgate' : [junit_gate, ['options']],
-    'junitnoapps' : [junit_noapps, ['options']],
-    'unittest' : [unittest, ['options']],
+    'rutsimple' : [ut_simple, ['options']],
+    'rutdefault' : [ut_default, ['options']],
+    'rutgate' : [ut_gate, ['options']],
+    'rutnoapps' : [ut_noapps, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
     'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep=lite | --sweep=total] [--mnonly] [--noSelfTest] [--matchLevel=same | --matchLevel=error] [--maxSweeps=N] [--outMaxLev=N]'],
     'rrepl' : [rrepl, '[options]'],

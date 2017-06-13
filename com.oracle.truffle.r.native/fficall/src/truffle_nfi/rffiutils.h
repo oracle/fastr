@@ -29,8 +29,6 @@
 #include <Rinternals.h>
 #include <trufflenfi.h>
 
-#include "../common/rffi_upcalls.h"
-
 extern void init_memory();
 extern void init_utils();
 

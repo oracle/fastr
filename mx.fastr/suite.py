@@ -172,10 +172,14 @@ suite = {
     },
 
     "com.oracle.truffle.r.test.native" : {
+      "native" : True,
       "sourceDirs" : [],
       "dependencies" : ["com.oracle.truffle.r.native"],
-      "class" : "FastRTestNativeProject",
-      "native" : "true",
+      "platformDependent" : True,
+      "output" : "com.oracle.truffle.r.test.native",
+      "results" :[
+         "urand/lib/liburand.so",
+       ],
       "workingSets" : "FastR",
     },
 
@@ -248,6 +252,7 @@ suite = {
 
     "com.oracle.truffle.r.native" : {
       "sourceDirs" : [],
+#      "class" : "FastRNativeProject",
       "dependencies" : [
         "GNUR",
         "GNU_ICONV",
@@ -353,27 +358,11 @@ suite = {
 
     "FASTR_UNIT_TESTS_NATIVE" : {
       "description" : "unit tests support (from test.native project)",
-      "exclude" : ["GNUR", "GNU_ICONV"],
-       "os_arch" : {
-         "linux" : {
-           "amd64" : {
-             "path" : "mxbuild/dists/linux/amd64/fastr-unit-tests-native.jar",
-           },
-           "sparcv9" : {
-             "path" : "mxbuild/dists/linux/sparcv9/fastr-unit-tests-native.jar",
-           },
-        },
-        "darwin" : {
-           "amd64" : {
-             "path" : "mxbuild/dists/darwin/amd64/fastr-unit-tests-native.jar",
-           },
-        },
-        "solaris" : {
-           "sparcv9" : {
-             "path" : "mxbuild/dists/solaris/sparcv9/fastr-unit-tests-native.jar",
-           },
-        },
-      },
+       "native" : True,
+       "platformDependent" : True,
+      "dependencies" : [
+        "com.oracle.truffle.r.test.native",
+     ],
     },
 
     "FASTR_RELEASE": {

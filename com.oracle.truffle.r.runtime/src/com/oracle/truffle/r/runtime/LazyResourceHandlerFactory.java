@@ -32,6 +32,8 @@ import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -58,9 +60,9 @@ class LazyResourceHandlerFactory extends ResourceHandlerFactory implements Handl
     }
 
     @Override
-    public String[] getRFiles(Class<?> accessor, String pkgName) {
+    public Map<String, String> getRFiles(Class<?> accessor, String pkgName) {
         CodeSource source = accessor.getProtectionDomain().getCodeSource();
-        ArrayList<String> list = new ArrayList<>();
+        Map<String, String> result = new HashMap<>();
         try {
             URL url = source.getLocation();
             Path sourcePath = Paths.get(url.toURI().getPath());
@@ -73,7 +75,7 @@ class LazyResourceHandlerFactory extends ResourceHandlerFactory implements Handl
                         while ((line = r.readLine()) != null) {
                             if (line.endsWith(".r") || line.endsWith(".R")) {
                                 final String rResource = pkgName + "/R/" + line.trim();
-                                list.add(Utils.getResourceAsString(accessor, rResource, true));
+                                result.put(sourcePath.toString(), Utils.getResourceAsString(accessor, rResource, true));
                             }
                         }
                     }
@@ -97,13 +99,11 @@ class LazyResourceHandlerFactory extends ResourceHandlerFactory implements Handl
                             while ((n = is.read(buf, totalRead, buf.length - totalRead)) > 0) {
                                 totalRead += n;
                             }
-                            list.add(new String(buf));
+                            result.put(p.toString(), new String(buf));
                         }
                     }
                 }
             }
-            String[] result = new String[list.size()];
-            list.toArray(result);
             return result;
         } catch (Exception ex) {
             Utils.rSuicide(ex.getMessage());

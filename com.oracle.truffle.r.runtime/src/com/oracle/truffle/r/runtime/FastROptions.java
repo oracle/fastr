@@ -142,7 +142,7 @@ public enum FastROptions {
 
     private static FastROptions[] VALUES = values();
 
-    static void setValue(String name, Object value) {
+    public static void setValue(String name, Object value) {
         for (FastROptions option : VALUES) {
             if (name.equals(option.name())) {
                 option.value = value;

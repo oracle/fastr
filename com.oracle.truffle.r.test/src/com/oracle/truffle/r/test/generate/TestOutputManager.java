@@ -25,12 +25,15 @@ package com.oracle.truffle.r.test.generate;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -141,8 +144,16 @@ public class TestOutputManager {
      */
     public final File outputFile;
 
+    private final URL urlOutput;
+
     public TestOutputManager(File outputFile) {
         this.outputFile = outputFile;
+        this.urlOutput = null;
+    }
+
+    public TestOutputManager(URL urlOutput) {
+        this.urlOutput = urlOutput;
+        this.outputFile = null;
     }
 
     protected void setRSession(RSession session) {
@@ -214,11 +225,18 @@ public class TestOutputManager {
     }
 
     public String readTestOutputFile() throws IOException {
-        if (!outputFile.exists()) {
+        if (outputFile != null && !outputFile.exists()) {
             return null;
         }
+        InputStream is;
+        if (outputFile != null) {
+            is = new FileInputStream(outputFile);
+        } else {
+            assert urlOutput != null;
+            is = urlOutput.openStream();
+        }
         StringBuilder content = new StringBuilder();
-        try (SaveBufferedReader in = new SaveBufferedReader(new FileReader(outputFile), content)) {
+        try (SaveBufferedReader in = new SaveBufferedReader(new InputStreamReader(is), content)) {
             // line format for element name: ##elementName
             // line format for input lines: #input
             // output lines do not start with ##

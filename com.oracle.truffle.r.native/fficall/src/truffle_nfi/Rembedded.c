@@ -22,6 +22,7 @@
  */
 #include <Rinterface.h>
 #include <rffiutils.h>
+#include "../common/rffi_upcalls.h"
 
 char *R_HomeDir(void) {
 	return ((call_R_HomeDir) callbacks[R_HomeDir_x])();

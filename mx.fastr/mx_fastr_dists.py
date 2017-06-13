@@ -42,32 +42,6 @@ class FastRProjectAdapter(mx.ArchivableProject):
                 if not filterfun or filterfun(f):
                     results.append(join(root, f))
 
-
-class FastRTestNativeProject(FastRProjectAdapter):
-    '''
-    Custom class for building the com.oracle.truffle.r.native project.
-    The customization is to support the creation of an exact FASTR_NATIVE_DEV distribution.
-    '''
-    def __init__(self, suite, name, deps, workingSets, theLicense, **args):
-        FastRProjectAdapter.__init__(self, suite, name, deps, workingSets, theLicense)
-
-    def getBuildTask(self, args):
-        return mx.NativeBuildTask(args, self)
-
-    def getResults(self):
-        '''
-        Capture all the files from the com.oracle.truffle.r.test.native project that are needed
-        for running unit tests in an alternate implementation.
-        '''
-        # plain files
-        results = []
-
-        self._get_files(join('packages', 'recommended'), results)
-        self._get_files(join('packages', 'repo'), results)
-
-        results.append(join(self.dir, 'urand', 'lib', 'liburand.so'))
-        return results
-
 class FastRReleaseProject(FastRProjectAdapter):
     '''
     Custom class for creating the FastR release project, which supports the
@@ -240,4 +214,5 @@ class FastRArchiveParticipant:
 
 def mx_post_parse_cmd_line(opts):
     for dist in mx_fastr._fastr_suite.dists:
-        dist.set_archiveparticipant(FastRArchiveParticipant(dist))
+        if isinstance(dist, mx.JARDistribution):
+            dist.set_archiveparticipant(FastRArchiveParticipant(dist))

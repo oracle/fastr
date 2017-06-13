@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Map;
 
 public abstract class ResourceHandlerFactory {
     /**
@@ -49,7 +50,7 @@ public abstract class ResourceHandlerFactory {
          * Return the contents of all "R" files (ending with ".r" or ".R") relative to
          * {@code accessor} and {@code pkgname/R}. I.e. essentially a directory search.
          */
-        String[] getRFiles(Class<?> accessor, String pkgName);
+        Map<String, String> getRFiles(Class<?> accessor, String pkgName);
     }
 
     static {

@@ -30,7 +30,7 @@ public class TestConditionHandling extends TestRBase {
 
     @Override
     public String getTestDir() {
-        return "library/base/condition";
+        return "condition";
     }
 
     @Test

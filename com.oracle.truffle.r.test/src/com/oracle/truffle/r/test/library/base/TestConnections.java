@@ -57,7 +57,7 @@ public class TestConnections extends TestRBase {
 
     @Override
     protected String getTestDir() {
-        return "builtins/connection";
+        return "connections";
     }
 
     @BeforeClass

@@ -99,31 +99,6 @@ int max_contour_segments = 25000;
 static InputHandler BasicInputHandler = {2, -1, NULL};
 InputHandler *R_InputHandlers = &BasicInputHandler;
 
-// R_GlobalEnv et al are not a variables in FASTR as they are RContext specific
-SEXP FASTR_R_GlobalEnv() {
-	return ((call_R_GlobalEnv) callbacks[R_GlobalEnv_x])();
-}
-
-SEXP FASTR_R_BaseEnv() {
-	return ((call_R_BaseEnv) callbacks[R_BaseEnv_x])();
-}
-
-SEXP FASTR_R_BaseNamespace() {
-	return ((call_R_BaseNamespace) callbacks[R_BaseNamespace_x])();
-}
-
-SEXP FASTR_R_NamespaceRegistry() {
-	return ((call_R_NamespaceRegistry) callbacks[R_NamespaceRegistry_x])();
-}
-
-CTXT FASTR_GlobalContext() {
-	return ((call_R_GlobalContext) callbacks[R_GlobalContext_x])();
-}
-
-Rboolean FASTR_R_Interactive() {
-	return (int) ((call_R_Interactive) callbacks[R_Interactive_x])();
-}
-
 char *FASTR_R_Home() {
 	return (char *) R_Home_static;
 }
@@ -366,5 +341,6 @@ void Call_initvar_obj(int index, void* value) {
     	printf("Call_initvar_obj: unimplemented index %d\n", index);
     	exit(1);
 	}
+//	printf("set index %d, value %p\n", index, value);
 }
 

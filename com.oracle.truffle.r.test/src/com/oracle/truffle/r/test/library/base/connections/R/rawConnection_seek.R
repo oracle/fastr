@@ -1,0 +1,8 @@
+zz <- rawConnection(raw(0), "r+b")
+writeBin(LETTERS, zz)
+seek(zz, 0)
+readChar(zz, 1)
+seek(zz, 0)
+writeBin(letters[1:3], zz)
+rawConnectionValue(zz)
+close(zz)
