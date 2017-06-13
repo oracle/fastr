@@ -106,56 +106,56 @@ public final class CompleteCases extends RExternalBuiltinNode {
             if (arg instanceof RPairList) {
                 for (Object t = ((RPairList) arg).car(); t != RNull.instance; t = ((RPairList) t).cdr()) {
                     Object entry = ((RPairList) t).car();
-                    iterateAbstractVectorContents(len, result, i, entry);
+                    iterateAbstractVectorContents(len, result, entry);
                 }
             } else if (arg instanceof RList) {
                 RList list = (RList) arg;
                 for (int entry = 0; entry < list.getLength(); entry++) {
-                    iterateAbstractVectorContents(len, result, i, list.getDataAt(entry));
+                    iterateAbstractVectorContents(len, result, list.getDataAt(entry));
                 }
             } else {
-                iterateAbstractVectorContents(len, result, i, arg);
+                iterateAbstractVectorContents(len, result, arg);
             }
         }
 
         return RDataFactory.createLogicalVector(result, true);
     }
 
-    private void iterateAbstractVectorContents(int len, byte[] result, int i, Object obj) {
+    private void iterateAbstractVectorContents(int len, byte[] result, Object obj) {
         Object entry = RRuntime.asAbstractVector(obj);
         if (entry instanceof RAbstractIntVector) {
             RAbstractIntVector v = (RAbstractIntVector) entry;
             for (int e = 0; e < v.getLength(); e++) {
                 if (RRuntime.isNA(v.getDataAt(e))) {
-                    result[i % len] = RRuntime.LOGICAL_FALSE;
+                    result[e % len] = RRuntime.LOGICAL_FALSE;
                 }
             }
         } else if (entry instanceof RAbstractLogicalVector) {
             RAbstractLogicalVector v = (RAbstractLogicalVector) entry;
             for (int e = 0; e < v.getLength(); e++) {
                 if (RRuntime.isNA(v.getDataAt(e))) {
-                    result[i % len] = RRuntime.LOGICAL_FALSE;
+                    result[e % len] = RRuntime.LOGICAL_FALSE;
                 }
             }
         } else if (entry instanceof RAbstractDoubleVector) {
             RAbstractDoubleVector v = (RAbstractDoubleVector) entry;
             for (int e = 0; e < v.getLength(); e++) {
                 if (Double.isNaN(v.getDataAt(e))) {
-                    result[i % len] = RRuntime.LOGICAL_FALSE;
+                    result[e % len] = RRuntime.LOGICAL_FALSE;
                 }
             }
         } else if (entry instanceof RAbstractComplexVector) {
             RAbstractComplexVector v = (RAbstractComplexVector) entry;
             for (int e = 0; e < v.getLength(); e++) {
                 if (Double.isNaN(v.getDataAt(e).getRealPart()) || Double.isNaN(v.getDataAt(e).getImaginaryPart())) {
-                    result[i % len] = RRuntime.LOGICAL_FALSE;
+                    result[e % len] = RRuntime.LOGICAL_FALSE;
                 }
             }
         } else if (entry instanceof RAbstractStringVector) {
             RAbstractStringVector v = (RAbstractStringVector) entry;
             for (int e = 0; e < v.getLength(); e++) {
                 if (RRuntime.isNA(v.getDataAt(e))) {
-                    result[i % len] = RRuntime.LOGICAL_FALSE;
+                    result[e % len] = RRuntime.LOGICAL_FALSE;
                 }
             }
         } else {

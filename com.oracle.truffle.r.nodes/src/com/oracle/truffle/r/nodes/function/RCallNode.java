@@ -405,6 +405,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("create()") ClassHierarchyNode classHierarchyNodeY,
                     @Cached("createWithException()") S3FunctionLookupNode dispatchLookupY,
                     @Cached("createIdentityProfile()") ValueProfile builtinProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile emptyArgumentsProfile,
                     @Cached("createBinaryProfile()") ConditionProfile implicitTypeProfileX,
                     @Cached("createBinaryProfile()") ConditionProfile implicitTypeProfileY,
                     @Cached("createBinaryProfile()") ConditionProfile mismatchProfile,
@@ -419,6 +420,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         Object[] args = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getArguments() : callArguments.evaluateFlattenObjects(frame, lookupVarArgs(frame));
         ArgumentsSignature argsSignature = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getSignature() : callArguments.flattenNames(lookupVarArgs(frame));
+
+        if (emptyArgumentsProfile.profile(args.length == 0)) {
+            // nothing to dispatch on, this is a valid situation, e.g. prod() == 1
+            return call.execute(frame, function, new RArgsValuesAndNames(args, argsSignature), null, null);
+        }
 
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         RDispatch dispatch = builtin.getDispatch();

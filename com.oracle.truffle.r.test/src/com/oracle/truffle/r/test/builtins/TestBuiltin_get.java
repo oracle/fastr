@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -34,5 +34,8 @@ public class TestBuiltin_get extends TestBase {
         // behavior specific to RS4Object as environment:
         assertEval("setClass('foo', representation(x='numeric')); f <- new('foo'); e <- new.env(); e$x <- 1; attr(f, '.xData') <- e; get('x', envir=f)");
         assertEval("setClass('foo', representation(x='numeric')); f <- new('foo'); e <- new.env(); e$x <- 1; attr(f, '.Data') <- e; get('x', envir=f)");
+
+        assertEval("{x <- 1L; get('x', mode='numeric'); }");
+        assertEval("{x <- 1L; get('x', mode='double'); }");
     }
 }

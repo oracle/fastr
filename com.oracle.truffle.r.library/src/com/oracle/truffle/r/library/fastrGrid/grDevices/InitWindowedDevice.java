@@ -101,7 +101,7 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
         String filename = name.substring(name.lastIndexOf(':') + 1);
         try {
             BufferedImageDevice device = BufferedImageDevice.open(filename, formatName, width, height);
-            GridContext.getContext().setCurrentDevice(formatName, device);
+            GridContext.getContext().setCurrentDevice(formatName.toUpperCase(), device);
         } catch (NotSupportedImageFormatException e) {
             throw error(Message.GENERIC, String.format("Format '%s' is not supported.", formatName));
         }

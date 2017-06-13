@@ -15,6 +15,7 @@
 package com.oracle.truffle.r.library.fastrGrid.graphics;
 
 import com.oracle.truffle.r.library.fastrGrid.FastRGridExternalLookup;
+import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.ROptions;
@@ -70,7 +71,7 @@ public final class RGridGraphicsAdapter {
         if (options.getValue(DEFAULT_DEVICE_OPTION) != RNull.instance) {
             return;
         }
-        String defaultDevice = ctx.isInteractive() ? "awt" : "svg";
+        String defaultDevice = (ctx.isInteractive() && FastRConfig.InternalGridAwtSupport) ? "awt" : "svg";
         try {
             options.setValue(DEFAULT_DEVICE_OPTION, defaultDevice);
         } catch (OptionsException e) {

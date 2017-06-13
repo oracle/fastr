@@ -576,14 +576,14 @@ public class IsTypeFunctions {
 
         @TruffleBoundary
         protected static RType typeFromMode(String mode) {
-            return RType.fromMode(mode);
+            return RType.fromMode(mode, true);
         }
 
         @Specialization(limit = "5", guards = "cachedMode == mode")
         protected byte isVectorCached(RAbstractVector x, @SuppressWarnings("unused") String mode,
                         @Cached("mode") @SuppressWarnings("unused") String cachedMode,
                         @Cached("typeFromMode(mode)") RType type) {
-            if (namesOnlyOrNoAttr(x) && (type == RType.Any || x.getRType() == type)) {
+            if (namesOnlyOrNoAttr(x) && (type == RType.Any || typesMatch(type, x.getRType()))) {
                 return RRuntime.LOGICAL_TRUE;
             } else {
                 return RRuntime.LOGICAL_FALSE;
@@ -598,6 +598,10 @@ public class IsTypeFunctions {
         @Fallback
         protected byte isVector(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object mode) {
             return RRuntime.LOGICAL_FALSE;
+        }
+
+        private boolean typesMatch(RType expected, RType actual) {
+            return expected == RType.Numeric ? actual == RType.Integer || actual == RType.Double : actual == expected;
         }
 
         private boolean namesOnlyOrNoAttr(RAbstractVector x) {

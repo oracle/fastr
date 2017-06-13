@@ -24,6 +24,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -62,8 +63,8 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             prodRecursive = insert(ProdNodeGen.create());
         }
-        Object ret = prodRecursive.executeObject(args.getArgument(0));
-        if (argsLen != 1) {
+        Object ret = 1d;
+        if (argsLen > 0) {
             double prodReal;
             double prodImg;
             boolean complex;
@@ -77,7 +78,7 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
                 prodImg = 0d;
                 complex = false;
             }
-            for (int i = 1; i < argsLen; i++) {
+            for (int i = 0; i < argsLen; i++) {
                 Object aProd = prodRecursive.executeObject(args.getArgument(i));
                 double aProdReal;
                 double aProdImg;
@@ -108,8 +109,8 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
     @Specialization
     protected double prod(RAbstractDoubleVector x) {
         RAbstractDoubleVector profiledVec = intVecProfile.profile(x);
-        double product = profiledVec.getDataAt(0);
-        for (int k = 1; k < profiledVec.getLength(); k++) {
+        double product = 1;
+        for (int k = 0; k < profiledVec.getLength(); k++) {
             product = prod.op(product, profiledVec.getDataAt(k));
         }
         return product;
@@ -118,8 +119,8 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
     @Specialization
     protected double prod(RAbstractIntVector x) {
         RAbstractIntVector profiledVec = intVecProfile.profile(x);
-        double product = profiledVec.getDataAt(0);
-        for (int k = 1; k < profiledVec.getLength(); k++) {
+        double product = 1;
+        for (int k = 0; k < profiledVec.getLength(); k++) {
             product = prod.op(product, profiledVec.getDataAt(k));
         }
         return product;
@@ -128,8 +129,8 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
     @Specialization
     protected double prod(RAbstractLogicalVector x) {
         RAbstractLogicalVector profiledVec = intVecProfile.profile(x);
-        double product = profiledVec.getDataAt(0);
-        for (int k = 1; k < profiledVec.getLength(); k++) {
+        double product = 1;
+        for (int k = 0; k < profiledVec.getLength(); k++) {
             product = prod.op(product, profiledVec.getDataAt(k));
         }
         return product;
@@ -138,8 +139,8 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
     @Specialization
     protected RComplex prod(RAbstractComplexVector x) {
         RAbstractComplexVector profiledVec = intVecProfile.profile(x);
-        RComplex product = profiledVec.getDataAt(0);
-        for (int k = 1; k < profiledVec.getLength(); k++) {
+        RComplex product = RDataFactory.createComplexRealOne();
+        for (int k = 0; k < profiledVec.getLength(); k++) {
             RComplex a = profiledVec.getDataAt(k);
             product = prod.op(product.getRealPart(), product.getImaginaryPart(), a.getRealPart(), a.getImaginaryPart());
         }
