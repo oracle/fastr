@@ -16,7 +16,7 @@ import static com.oracle.truffle.r.runtime.RDispatch.OPS_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.RRuntime.INT_NA;
 import static com.oracle.truffle.r.runtime.RRuntime.isFinite;
 import static com.oracle.truffle.r.runtime.RRuntime.isNAorNaN;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_ARITHMETIC;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -44,31 +44,31 @@ public abstract class BinaryArithmetic extends Operation {
 
     /* Fake RBuiltins to unify the binary operations */
 
-    @RBuiltin(name = "+", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = "+", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class AddBuiltin {
     }
 
-    @RBuiltin(name = "-", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = "-", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class SubtractBuiltin {
     }
 
-    @RBuiltin(name = "/", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = "/", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class DivBuiltin {
     }
 
-    @RBuiltin(name = "%/%", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = "%/%", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class IntegerDivBuiltin {
     }
 
-    @RBuiltin(name = "%%", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = "%%", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class ModBuiltin {
     }
 
-    @RBuiltin(name = "*", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = "*", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class MultiplyBuiltin {
     }
 
-    @RBuiltin(name = "^", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = "^", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class PowBuiltin {
     }
 

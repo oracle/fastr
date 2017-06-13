@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.ops;
 
 import static com.oracle.truffle.r.runtime.RDispatch.OPS_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_ARITHMETIC;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.r.runtime.RError;
@@ -48,11 +48,11 @@ public abstract class BinaryLogic extends BooleanOperation {
     public static class NonVectorOrBuiltin {
     }
 
-    @RBuiltin(name = "&", kind = PRIMITIVE, parameterNames = {"", ""}, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = "&", kind = PRIMITIVE, parameterNames = {"", ""}, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class AndBuiltin {
     }
 
-    @RBuiltin(name = "|", kind = PRIMITIVE, parameterNames = {"", ""}, dispatch = OPS_GROUP_GENERIC, behavior = PURE)
+    @RBuiltin(name = "|", kind = PRIMITIVE, parameterNames = {"", ""}, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class OrBuiltin {
     }
 
