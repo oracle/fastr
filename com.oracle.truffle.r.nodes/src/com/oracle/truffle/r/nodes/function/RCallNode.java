@@ -70,6 +70,8 @@ import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
@@ -97,9 +99,10 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
+import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -543,7 +546,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             this.arguments = arguments;
         }
 
-        public Object execute(VirtualFrame frame, TruffleObject function) {
+        public Object execute(VirtualFrame frame, TruffleObject function, Foreign2R foreign2R, R2Foreign r2Foreign) {
             Object[] argumentsArray = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getArguments() : arguments.evaluateFlattenObjects(frame, lookupVarArgs(frame));
             if (foreignCall == null || foreignCallArgCount != argumentsArray.length) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -551,7 +554,10 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 foreignCallArgCount = argumentsArray.length;
             }
             try {
-                Object result = ForeignAccess.sendExecute(foreignCall, function, RRuntime.r2Java(argumentsArray));
+                for (int i = 0; i < argumentsArray.length; i++) {
+                    argumentsArray[i] = r2Foreign.execute(argumentsArray[i]);
+                }
+                Object result = ForeignAccess.sendExecute(foreignCall, function, argumentsArray);
                 if (RRuntime.isForeignObject(result)) {
                     if (isNullCall == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -561,7 +567,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                         return RNull.instance;
                     }
                 }
-                return RRuntime.java2R(result);
+                return foreign2R.execute(result);
             } catch (ArityException | UnsupportedMessageException | UnsupportedTypeException e) {
                 CompilerDirectives.transferToInterpreter();
                 RInternalError.reportError(e);
@@ -574,14 +580,24 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return new ForeignCall(createArguments(null, true, true));
     }
 
-    protected static boolean isRTypedValue(Object value) {
-        return value instanceof RTypedValue;
+    protected static boolean isForeignObject(Object value) {
+        return RRuntime.isForeignObject(value);
     }
 
-    @Specialization(guards = "!isRTypedValue(function)")
+    protected static Foreign2R createR2ForeignNode() {
+        return Foreign2RNodeGen.create();
+    }
+
+    protected R2Foreign createR2Foreign() {
+        return R2ForeignNodeGen.create();
+    }
+
+    @Specialization(guards = "isForeignObject(function)")
     public Object call(VirtualFrame frame, TruffleObject function,
-                    @Cached("createForeignCall()") ForeignCall foreignCall) {
-        return foreignCall.execute(frame, function);
+                    @Cached("createForeignCall()") ForeignCall foreignCall,
+                    @Cached("createR2ForeignNode()") Foreign2R foreign2RNode,
+                    @Cached("createR2Foreign()") R2Foreign r2Foreign) {
+        return foreignCall.execute(frame, function, foreign2RNode, r2Foreign);
     }
 
     @TruffleBoundary

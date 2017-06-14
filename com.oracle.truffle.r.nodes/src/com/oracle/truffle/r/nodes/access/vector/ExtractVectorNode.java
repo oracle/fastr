@@ -41,6 +41,7 @@ import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.FirstStringNode;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -52,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
@@ -103,6 +105,10 @@ public abstract class ExtractVectorNode extends RBaseNode {
         return FirstStringNode.createWithError(RError.Message.GENERIC, "Cannot coerce position to character for foreign access.");
     }
 
+    protected static Foreign2R createForeign2RNode() {
+        return Foreign2RNodeGen.create();
+    }
+
     @Specialization(guards = {"isForeignObject(object)", "positions.length == cachedLength"})
     protected Object accessField(TruffleObject object, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
                     @Cached("READ.createNode()") Node foreignRead,
@@ -113,7 +119,8 @@ public abstract class ExtractVectorNode extends RBaseNode {
                     @Cached("createClassProfile()") ValueProfile positionProfile,
                     @Cached("IS_NULL.createNode()") Node isNullNode,
                     @Cached("IS_BOXED.createNode()") Node isBoxedNode,
-                    @Cached("UNBOX.createNode()") Node unboxNode) {
+                    @Cached("UNBOX.createNode()") Node unboxNode,
+                    @Cached("createForeign2RNode()") Foreign2R foreign2RNode) {
         if (positions.length == 0) {
             throw error(RError.Message.GENERIC, "No positions for foreign access.");
         }
@@ -128,7 +135,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
                         assert result instanceof TruffleObject;
                     }
                 }
-                return unbox(result, isNullNode, isBoxedNode, unboxNode);
+                return unbox(result, isNullNode, isBoxedNode, unboxNode, foreign2RNode);
             } catch (UnknownIdentifierException | NoSuchFieldError e) {
                 throw RError.interopError(RError.findParentRBase(this), e, object);
             }
@@ -137,16 +144,16 @@ public abstract class ExtractVectorNode extends RBaseNode {
         }
     }
 
-    private Object unbox(Object obj, Node isNullNode, Node isBoxedNode, Node unboxNode) throws UnsupportedMessageException {
+    private Object unbox(Object obj, Node isNullNode, Node isBoxedNode, Node unboxNode, Foreign2R foreign2RNode) throws UnsupportedMessageException {
         if (RRuntime.isForeignObject(obj)) {
             if (ForeignAccess.sendIsNull(isNullNode, (TruffleObject) obj)) {
                 return RNull.instance;
             }
             if (ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) obj)) {
-                return RRuntime.java2R(ForeignAccess.sendUnbox(unboxNode, (TruffleObject) obj));
+                return foreign2RNode.execute(ForeignAccess.sendUnbox(unboxNode, (TruffleObject) obj));
             }
         }
-        return RRuntime.java2R(obj);
+        return foreign2RNode.execute(obj);
     }
 
     public static Object read(RBaseNode caller, Object position, Node foreignRead, Node keyInfoNode, TruffleObject object, FirstStringNode firstString, CastStringNode castNode)

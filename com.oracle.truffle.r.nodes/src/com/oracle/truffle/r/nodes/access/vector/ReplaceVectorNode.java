@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.FirstStringNode;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -47,6 +48,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 
 /**
  * Syntax node for element writes.
@@ -98,6 +100,10 @@ public abstract class ReplaceVectorNode extends RBaseNode {
         return FirstStringNode.createWithError(RError.Message.GENERIC, "Cannot corce position to character for foreign access.");
     }
 
+    protected R2Foreign createR2Foreign() {
+        return R2ForeignNodeGen.create();
+    }
+
     @Specialization(guards = {"isForeignObject(object)", "positions.length == cachedLength"})
     protected Object accessField(TruffleObject object, Object[] positions, Object value,
                     @Cached("WRITE.createNode()") Node foreignWrite,
@@ -105,21 +111,22 @@ public abstract class ReplaceVectorNode extends RBaseNode {
                     @Cached("KEY_INFO.createNode()") Node keyInfo,
                     @SuppressWarnings("unused") @Cached("positions.length") int cachedLength,
                     @Cached("create()") CastStringNode castNode,
-                    @Cached("createFirstString()") FirstStringNode firstString) {
-        Object writtenValue = RRuntime.r2Java(value);
+                    @Cached("createFirstString()") FirstStringNode firstString,
+                    @Cached("createR2Foreign()") R2Foreign r2Foreign) {
+        Object writtenValue = value;
         try {
             TruffleObject result = object;
             for (int i = 0; i < positions.length - 1; i++) {
                 result = (TruffleObject) ExtractVectorNode.read(this, positions[i], foreignRead, keyInfo, result, firstString, castNode);
             }
-            write(positions[positions.length - 1], foreignWrite, keyInfo, result, writtenValue, firstString, castNode);
+            write(positions[positions.length - 1], foreignWrite, keyInfo, result, writtenValue, firstString, castNode, r2Foreign);
             return object;
         } catch (InteropException e) {
             throw RError.interopError(RError.findParentRBase(this), e, object);
         }
     }
 
-    private void write(Object position, Node foreignWrite, Node keyInfoNode, TruffleObject object, Object writtenValue, FirstStringNode firstString, CastStringNode castNode)
+    private void write(Object position, Node foreignWrite, Node keyInfoNode, TruffleObject object, Object writtenValue, FirstStringNode firstString, CastStringNode castNode, R2Foreign r2Foreign)
                     throws InteropException, RError {
         if (position instanceof Integer) {
             position = ((Integer) position) - 1;
@@ -138,13 +145,13 @@ public abstract class ReplaceVectorNode extends RBaseNode {
 
         int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, position);
         if (KeyInfo.isWritable(info)) {
-            ForeignAccess.sendWrite(foreignWrite, object, position, RRuntime.r2Java(writtenValue));
+            ForeignAccess.sendWrite(foreignWrite, object, position, r2Foreign.execute(writtenValue));
             return;
         } else if (position instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
             TruffleObject clazz = JavaInterop.toJavaClass(object);
             info = ForeignAccess.sendKeyInfo(keyInfoNode, clazz, position);
             if (KeyInfo.isWritable(info)) {
-                ForeignAccess.sendWrite(foreignWrite, clazz, position, RRuntime.r2Java(writtenValue));
+                ForeignAccess.sendWrite(foreignWrite, clazz, position, r2Foreign.execute(writtenValue));
                 return;
             }
         }

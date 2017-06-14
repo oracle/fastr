@@ -33,6 +33,7 @@ import java.nio.file.Paths;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RSrcref.SrcrefFields;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
@@ -195,12 +196,20 @@ public class RSource {
      * Create an (external) source from an R srcfile ({@link RSrcref#createSrcfile(String)}).
      */
     public static Source fromSrcfile(REnvironment env) throws IOException {
-        Path filename = Paths.get((String) RRuntime.r2Java(env.get(SrcrefFields.filename.name())));
+        Path filename = Paths.get(getPath(env, SrcrefFields.filename.name()));
         if (filename.isAbsolute()) {
             return fromFileName(filename.toString(), false);
         }
-        Path wd = Paths.get((String) RRuntime.r2Java(env.get(SrcrefFields.wd.name())));
+        Path wd = Paths.get(getPath(env, SrcrefFields.wd.name()));
         return fromFileName(wd.resolve(filename).toString(), false);
+    }
+
+    private static String getPath(REnvironment env, String name) {
+        Object o = env.get(name);
+        if (o instanceof RAbstractStringVector) {
+            return ((RAbstractStringVector) o).getDataAt(0);
+        }
+        return (String) o;
     }
 
     /**

@@ -69,6 +69,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -102,6 +103,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -335,6 +337,7 @@ final class REngine implements Engine, Engine.Timings {
         private final boolean printResult;
 
         @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
+        @Child private R2Foreign r2Foreign = R2ForeignNodeGen.create();
 
         @SuppressWarnings("deprecation")
         PolyglotEngineRootNode(List<RSyntaxNode> statements, SourceSection sourceSection, MaterializedFrame executionFrame) {
@@ -367,7 +370,7 @@ final class REngine implements Engine, Engine.Timings {
                     }
                     lastValue = calls[i].call(new Object[]{executionFrame != null ? executionFrame : newContext.stateREnvironment.getGlobalFrame()});
                 }
-                return RRuntime.r2Java(lastValue);
+                return r2Foreign.execute(lastValue);
             } catch (ReturnException ex) {
                 return ex.getResult();
             } catch (DebugExitException | JumpToTopLevelException | ExitException | ThreadDeath e) {
