@@ -189,7 +189,7 @@ public final class FrameSlotChangeMonitor {
 
         private WeakReference<FrameDescriptor> enclosingFrameDescriptor = new WeakReference<>(null);
         private Assumption enclosingFrameDescriptorAssumption = Truffle.getRuntime().createAssumption("enclosing frame descriptor");
-        private Assumption containsNoActiveBindingAssumption = Truffle.getRuntime().createAssumption("contains no active binding");
+        private final Assumption containsNoActiveBindingAssumption = Truffle.getRuntime().createAssumption("contains no active binding");
 
         private FrameDescriptorMetaData(String name, MaterializedFrame singletonFrame) {
             this.name = name;
@@ -940,9 +940,7 @@ public final class FrameSlotChangeMonitor {
         FrameSlot[] slots = new FrameSlot[frame.getFrameDescriptor().getSlots().size()];
         slots = frame.getFrameDescriptor().getSlots().toArray(slots);
         for (int i = 0; i < slots.length; i++) {
-            if (!(slots[i].getIdentifier() instanceof RFrameSlot)) {
-                FrameSlotInfoImpl.handleSearchPathMultiSlot(frame, slots[i], indices, replicate);
-            }
+            FrameSlotInfoImpl.handleSearchPathMultiSlot(frame, slots[i], indices, replicate);
         }
     }
 
@@ -1000,21 +998,19 @@ public final class FrameSlotChangeMonitor {
         FrameSlot[] slots = frame.getFrameDescriptor().getSlots().toArray(new FrameSlot[0]);
 
         for (int i = 0; i < slots.length; i++) {
-            if (!(slots[i].getIdentifier() instanceof RFrameSlot)) {
-                Object value = frame.getValue(slots[i]);
-                if (value instanceof MultiSlotData) {
-                    MultiSlotData msd = (MultiSlotData) value;
-                    if (indices != null) {
-                        for (int j = 0; j < indices.length; j++) {
-                            assert indices[j] != 0;
-                            msd.set(indices[j], null);
-                        }
-                    } else {
-                        // only safe value of primordial context
-                        Object initialValue = msd.get(0);
-                        msd.setAll(null);
-                        msd.set(0, initialValue);
+            Object value = frame.getValue(slots[i]);
+            if (value instanceof MultiSlotData) {
+                MultiSlotData msd = (MultiSlotData) value;
+                if (indices != null) {
+                    for (int j = 0; j < indices.length; j++) {
+                        assert indices[j] != 0;
+                        msd.set(indices[j], null);
                     }
+                } else {
+                    // only safe value of primordial context
+                    Object initialValue = msd.get(0);
+                    msd.setAll(null);
+                    msd.set(0, initialValue);
                 }
             }
         }
