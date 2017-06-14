@@ -64,11 +64,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-/**
- * Only does the minimum for running under the debugger. It is not completely clear how to correctly
- * integrate the R startup in {@code RCommand} with this API.
- */
-@TruffleLanguage.Registration(name = "R", id = "R", version = "0.1", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true)
+@TruffleLanguage.Registration(name = "R", id = "R", version = "3.3.2", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class})
 public final class TruffleRLanguageImpl extends TruffleRLanguage implements ScopeProvider<RContext> {
 
