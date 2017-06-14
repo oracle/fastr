@@ -132,6 +132,8 @@ public final class FastRGridExternalLookup {
                 return LCircle.create();
             case "L_points":
                 return LPoints.create();
+            case "L_raster":
+                return LRaster.create();
 
             // Bounds primitive:
             case "L_rectBounds":

@@ -30,6 +30,20 @@ public interface GridDevice {
     int DEFAULT_WIDTH = 720;
     int DEFAULT_HEIGHT = 720;
 
+    /**
+     * Raster image resizing methods.
+     */
+    enum ImageInterpolation {
+        /**
+         * The device should use linear interpolation if available.
+         */
+        LINEAR_INTERPOLATION,
+        /**
+         * The device should use the nearest neighbor interpolation if available.
+         */
+        NEAREST_NEIGHBOR,
+    }
+
     void openNewPage();
 
     /**
@@ -79,6 +93,13 @@ public interface GridDevice {
     void drawPolygon(DrawingContext ctx, double[] x, double[] y, int startIndex, int length);
 
     void drawCircle(DrawingContext ctx, double centerX, double centerY, double radius);
+
+    /**
+     * Draws a raster image at specified position. The pixels array shall be treated as by row
+     * matrix, the values are values compatible with the internal {@link GridColor} representation,
+     * e.g. what {@link GridColor#getRawValue()} would return.
+     */
+    void drawRaster(double leftX, double bottomY, double width, double height, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation);
 
     /**
      * Prints a string with left bottom corner at given position rotated by given angle anti clock

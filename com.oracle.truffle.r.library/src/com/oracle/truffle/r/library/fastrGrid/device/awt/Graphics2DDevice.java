@@ -31,6 +31,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
+import java.awt.Image;
 import java.awt.Paint;
 import java.awt.RenderingHints;
 import java.awt.Shape;
@@ -39,6 +40,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.MemoryImageSource;
 
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridFontStyle;
@@ -131,6 +133,13 @@ public class Graphics2DDevice implements GridDevice {
         int centerY = transY(centerYIn);
         int radius = transDim(radiusIn);
         drawShape(ctx, new Ellipse2D.Double(centerX - radius, centerY - radius, radius * 2d, radius * 2d));
+    }
+
+    @Override
+    public void drawRaster(double leftX, double bottomY, double width, double height, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation) {
+        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, fromInterpolation(interpolation));
+        Image image = Toolkit.getDefaultToolkit().createImage(new MemoryImageSource(pixelsColumnsCount, pixels.length / pixelsColumnsCount, pixels, 0, pixelsColumnsCount));
+        graphics.drawImage(image, transX(leftX), transY(bottomY + height), transDim(width), transDim(height), null);
     }
 
     @Override
@@ -338,5 +347,12 @@ public class Graphics2DDevice implements GridDevice {
             default:
                 throw RInternalError.shouldNotReachHere("unexpected value of GridLineJoin enum");
         }
+    }
+
+    private static Object fromInterpolation(ImageInterpolation interpolation) {
+        if (interpolation == ImageInterpolation.NEAREST_NEIGHBOR) {
+            return RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
+        }
+        return RenderingHints.VALUE_INTERPOLATION_BILINEAR;
     }
 }
