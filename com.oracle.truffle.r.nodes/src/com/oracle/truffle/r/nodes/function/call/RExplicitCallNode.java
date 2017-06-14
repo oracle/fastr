@@ -59,7 +59,6 @@ public abstract class RExplicitCallNode extends Node {
             argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), argsIdentifier, FrameSlotKind.Object);
         }
         try {
-            frame.setObject(argsFrameSlot, args);
             FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, args);
             return call.execute(frame, function);
         } finally {

@@ -77,19 +77,19 @@ public abstract class OnExit extends RBuiltinNode.Arg2 {
         // the empty (RNull.instance) expression is used to clear on.exit
         if (emptyPromiseProfile.profile(expr.isDefaultArgument())) {
             assert expr.getRep() instanceof ConstantNode : "only ConstantNode expected for defaulted promise";
-            frame.setObject(onExitSlot, RDataFactory.createPairList());
+            FrameSlotChangeMonitor.setObject(frame, onExitSlot, RDataFactory.createPairList());
         } else {
             assert !expr.isEvaluated() : "promise cannot already be evaluated";
             Object value;
             try {
-                value = frame.getObject(onExitSlot);
+                value = FrameSlotChangeMonitor.getObject(onExitSlot, frame);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
             RPairList list;
             if (newProfile.profile(value == null)) {
                 // initialize the list of exit handlers
-                frame.setObject(onExitSlot, list = RDataFactory.createPairList());
+                FrameSlotChangeMonitor.setObject(frame, onExitSlot, list = RDataFactory.createPairList());
             } else {
                 list = (RPairList) value;
                 if (addProfile.profile(!add)) {

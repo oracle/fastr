@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 /**
  * Condition handling. Derived from GnUR src/main/errors.c
@@ -71,8 +72,8 @@ public class ConditionFunctions {
                 throw error(RError.Message.BAD_HANDLER_DATA);
             }
             try {
-                if (!frame.isObject(handlerFrameSlot) || frame.getObject(handlerFrameSlot) == null) {
-                    frame.setObject(handlerFrameSlot, RErrorHandling.getHandlerStack());
+                if (!frame.isObject(handlerFrameSlot) || FrameSlotChangeMonitor.getObject(handlerFrameSlot, frame) == null) {
+                    FrameSlotChangeMonitor.setObject(frame, handlerFrameSlot, RErrorHandling.getHandlerStack());
                 }
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
@@ -121,7 +122,7 @@ public class ConditionFunctions {
             }
             try {
                 if (!frame.isObject(restartFrameSlot) || frame.getObject(restartFrameSlot) == null) {
-                    frame.setObject(restartFrameSlot, RErrorHandling.getRestartStack());
+                    FrameSlotChangeMonitor.setObject(frame, restartFrameSlot, RErrorHandling.getRestartStack());
                 }
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
