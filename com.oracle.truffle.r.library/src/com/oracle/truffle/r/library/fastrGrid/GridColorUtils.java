@@ -18,6 +18,10 @@ import com.oracle.truffle.r.library.fastrGrid.GridState.GridPalette;
 import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class GridColorUtils {
 
@@ -25,6 +29,28 @@ public final class GridColorUtils {
 
     private GridColorUtils() {
         // only static members
+    }
+
+    /**
+     * Converts given object into {@link GridColor}. The object may be a vector, in which case the
+     * index modulo its size is used to select element of that vector.
+     */
+    public static GridColor getColor(Object value, int index) {
+        GridColor color = GridColorUtils.getPaletteColor(value, index);
+        if (color != null) {
+            return color;
+        }
+
+        String strValue = null;
+        if (value instanceof String) {
+            strValue = (String) value;
+        } else if (value instanceof RAbstractStringVector && ((RAbstractStringVector) value).getLength() > 0) {
+            strValue = ((RAbstractStringVector) value).getDataAt(index % ((RAbstractStringVector) value).getLength());
+        } else {
+            return GridColor.TRANSPARENT;
+        }
+
+        return gridColorFromString(strValue);
     }
 
     public static GridPalette getDefaultPalette() {
@@ -103,6 +129,44 @@ public final class GridColorUtils {
             isNormalized &= (!Character.isAlphabetic(c) || Character.isLowerCase(c)) && c != ' ';
         }
         return isNormalized ? synonym : synonym.replace(" ", "").toLowerCase(Locale.ROOT);
+    }
+
+    private static GridColor getPaletteColor(Object colorIdIn, int index) {
+        Object colorId = colorIdIn;
+        if (colorId instanceof RAbstractVector) {
+            RAbstractVector vec = (RAbstractVector) colorId;
+            colorId = vec.getDataAtAsObject(index % vec.getLength());
+        }
+        int paletteIdx = RRuntime.INT_NA;
+        if (colorId instanceof Integer) {
+            paletteIdx = (int) colorId;
+        } else if (colorId instanceof Double && !RRuntime.isNA((Double) colorId)) {
+            paletteIdx = (int) (double) colorId;
+        } else if (colorId instanceof String && !RRuntime.isNA((String) colorId)) {
+            paletteIdx = paletteIdxFromString((String) colorId);
+        } else if (colorId instanceof Byte && !RRuntime.isNA((byte) colorId)) {
+            paletteIdx = (int) (byte) colorId;
+        }
+        if (RRuntime.isNA(paletteIdx)) {
+            return null;
+        }
+        if (paletteIdx < 0) {
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, Utils.stringFormat("numerical color values must be >= 0, found %d", paletteIdx));
+        }
+        if (paletteIdx == 0) {
+            return GridColor.TRANSPARENT;
+        }
+        GridPalette palette = GridContext.getContext().getGridState().getPalette();
+        GridColor result = palette.colors[(paletteIdx - 1) % palette.colors.length];
+        return result; // one based index
+    }
+
+    private static int paletteIdxFromString(String colorId) {
+        try {
+            return Integer.parseInt(colorId, 10);
+        } catch (NumberFormatException ex) {
+            return RRuntime.INT_NA;
+        }
     }
 
     private static final class NamesHolder {
