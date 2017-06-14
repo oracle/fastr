@@ -79,6 +79,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -696,6 +697,11 @@ public class CallAndExternalFunctions {
                 throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "Call", packageName);
             }
             return callRFFINode.execute(new NativeCallInfo(symbol, func, rns.getDllInfo()), args.getArguments());
+        }
+
+        @Specialization
+        protected Object callNamedFunctionWithPackage(RExternalPtr symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            return callRFFINode.execute(new NativeCallInfo("", symbol.getAddr(), null), args.getArguments());
         }
 
         @SuppressWarnings("unused")

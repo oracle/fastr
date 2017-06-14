@@ -38,6 +38,11 @@ public class TestBuiltin_pathexpand extends TestBase {
     }
 
     @Test
+    public void testpathexpand6() {
+        assertEval("path.expand('.'); wd <- getwd(); tryCatch({ setwd('/tmp'); path.expand('.') }, finally = { setwd(wd) })");
+    }
+
+    @Test
     public void testArgsValidation() {
         assertEval("path.expand(NULL)");
         assertEval("path.expand(42)");

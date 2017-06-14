@@ -142,6 +142,7 @@ public class TestBuiltin_strsplit extends TestBase {
         assertEval("strsplit(c('1', 'b'), c('1', 'b'), fixed=FALSE)");
         assertEval("strsplit(c('a1a', 'a1b'), c('1', '1'), fixed=FALSE)");
         assertEval("strsplit(c('a1a', 'a1b'), '1', fixed=FALSE)");
+        assertEval("strsplit(c('','a , b'), '[[:space:]]*,[[:space:]]*')");
 
     }
 }
