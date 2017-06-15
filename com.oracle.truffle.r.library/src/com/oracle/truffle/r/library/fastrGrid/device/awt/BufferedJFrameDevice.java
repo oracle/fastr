@@ -147,6 +147,12 @@ public final class BufferedJFrameDevice implements GridDevice, ImageSaver {
     }
 
     @Override
+    public void drawRaster(double leftX, double bottomY, double width, double height, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation) {
+        inner.drawRaster(leftX, bottomY, width, height, pixels, pixelsColumnsCount, interpolation);
+        drawActions.add(() -> inner.drawRaster(leftX, bottomY, width, height, pixels, pixelsColumnsCount, interpolation));
+    }
+
+    @Override
     public void drawString(DrawingContext ctx, double leftX, double bottomY, double rotationAnticlockWise, String text) {
         inner.drawString(ctx, leftX, bottomY, rotationAnticlockWise, text);
         drawActions.add(() -> inner.drawString(ctx, leftX, bottomY, rotationAnticlockWise, text));

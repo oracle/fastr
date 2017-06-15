@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
+import java.util.Base64;
 import java.util.Collections;
 
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridFontStyle;
@@ -106,6 +107,13 @@ public class SVGDevice implements GridDevice {
     public void drawCircle(DrawingContext ctx, double centerX, double centerY, double radius) {
         appendStyle(ctx);
         append("<circle vector-effect='non-scaling-stroke' cx='%.3f' cy='%.3f' r='%.3f'/>", centerX, transY(centerY), radius);
+    }
+
+    @Override
+    public void drawRaster(double leftX, double bottomY, double width, double height, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation) {
+        byte[] bitmap = Bitmap.create(pixels, pixelsColumnsCount);
+        String base64 = Base64.getEncoder().encodeToString(bitmap);
+        append("<image x='%.3f' y='%.3f' width='%.3f' height='%.3f' preserveAspectRatio='none' xlink:href='data:image/bmp;base64,%s'/>", leftX, transY(bottomY + height), width, height, base64);
     }
 
     @Override
@@ -269,5 +277,61 @@ public class SVGDevice implements GridDevice {
 
     private static double toDegrees(double rotationAnticlockWise) {
         return (180. / Math.PI) * -rotationAnticlockWise;
+    }
+
+    private static final class Bitmap {
+        private static final int FILE_HEADER_SIZE = 14;
+        private static final int IMAGE_HEADER_SIZE = 40;
+        private static final int BITS_PER_PIXEL = 24;
+        private static final int COMPRESSION_TYPE = 0;
+
+        static byte[] create(int[] pixels, int width) {
+            int height = pixels.length / width;
+            int widthInBytes = width * 3;
+            int widthPadding = widthInBytes % 2;
+            widthInBytes += widthPadding;
+
+            int len = FILE_HEADER_SIZE + IMAGE_HEADER_SIZE + height * widthInBytes;
+            byte[] result = new byte[len];
+
+            // file header
+            result[0] = 0x42; // B
+            result[1] = 0x4d; // M
+            int offset = putInt(result, 2, len);
+            offset += 4;    // unused 4B must be zero
+            offset = putInt(result, offset, FILE_HEADER_SIZE + IMAGE_HEADER_SIZE);  // data offset
+
+            // image header
+            offset = putInt(result, offset, IMAGE_HEADER_SIZE);
+            offset = putInt(result, offset, width);
+            offset = putInt(result, offset, height);
+            result[offset++] = 1;   // fixed value
+            result[offset++] = 0;   // fixed value
+            result[offset++] = BITS_PER_PIXEL;
+            result[offset++] = 0;   // bits per pixel is 2B value
+            offset = putInt(result, offset, COMPRESSION_TYPE);
+            // followed by 5 unimportant values (each 4B) that we leave 0
+            offset += 4 * 5;
+
+            // image data
+            for (int row = height - 1; row >= 0; row--) {
+                for (int col = 0; col < width; col++) {
+                    GridColor color = GridColor.fromRawValue(pixels[row * width + col]);
+                    result[offset++] = (byte) (color.getBlue() & 0xff);
+                    result[offset++] = (byte) (color.getGreen() & 0xff);
+                    result[offset++] = (byte) (color.getRed() & 0xff);
+                }
+                offset += widthPadding;
+            }
+            return result;
+        }
+
+        private static int putInt(byte[] data, int offset, int value) {
+            data[offset] = (byte) (value & 0xff);
+            data[offset + 1] = (byte) (value >>> 8 & 0xff);
+            data[offset + 2] = (byte) (value >>> 16 & 0xff);
+            data[offset + 3] = (byte) (value >>> 24 & 0xff);
+            return offset + 4;
+        }
     }
 }
