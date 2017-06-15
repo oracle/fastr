@@ -96,18 +96,17 @@ public final class GridContext {
     public void openDefaultDevice() {
         String defaultDev = RGridGraphicsAdapter.getDefaultDevice();
         if (defaultDev.equals("awt") || defaultDev.startsWith("X11")) {
-            ensureAwtSupport();
+            if (!FastRConfig.InternalGridAwtSupport) {
+                throw awtNotSupported();
+            }
             setCurrentDevice(defaultDev, WindowDevice.createWindowDevice());
         } else if (defaultDev.equals("svg")) {
             setCurrentDevice(defaultDev, new SVGDevice("Rplot.svg", GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT));
         } else if (defaultDev.equals("png")) {
-            ensureAwtSupport();
             setCurrentDevice(defaultDev, safeOpenImageDev("Rplot.png", "png"));
         } else if (defaultDev.equals("bmp")) {
-            ensureAwtSupport();
             setCurrentDevice(defaultDev, safeOpenImageDev("Rplot.bmp", "bmp"));
         } else if (defaultDev.equals("jpg") || defaultDev.equals("jpeg")) {
-            ensureAwtSupport();
             setCurrentDevice("jpeg", safeOpenImageDev("Rplot.jpg", "jpeg"));
         } else {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "FastR does not support device '" + defaultDev + "'.");
@@ -144,13 +143,10 @@ public final class GridContext {
         return RContext.getEngine().evalFunction(redrawAll, REnvironment.baseEnv().getFrame(), RCaller.topLevel, true, null, args);
     }
 
-    private static void ensureAwtSupport() {
+    private BufferedImageDevice safeOpenImageDev(String filename, String formatName) {
         if (!FastRConfig.InternalGridAwtSupport) {
             throw awtNotSupported();
         }
-    }
-
-    private BufferedImageDevice safeOpenImageDev(String filename, String formatName) {
         try {
             return BufferedImageDevice.open(filename, formatName, GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT);
         } catch (NotSupportedImageFormatException e) {
