@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -1446,4 +1447,49 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return REnvironment.getRegisteredNamespace("methods");
     }
 
+    private HashMap<String, Integer> name2typeTable;
+
+    @Override
+    @TruffleBoundary
+    public int Rf_str2type(Object name) {
+        if (name == null) {
+            return -1;
+        }
+        initName2typeTable();
+        Integer result = name2typeTable.get(name);
+        return result != null ? result : -1;
+    }
+
+    private void initName2typeTable() {
+        if (name2typeTable != null) {
+            return;
+        }
+        name2typeTable = new HashMap<>(26);
+        name2typeTable.put("NULL", SEXPTYPE.NILSXP.code); /* real types */
+        name2typeTable.put("symbol", SEXPTYPE.SYMSXP.code);
+        name2typeTable.put("pairlist", SEXPTYPE.LISTSXP.code);
+        name2typeTable.put("closure", SEXPTYPE.CLOSXP.code);
+        name2typeTable.put("environment", SEXPTYPE.ENVSXP.code);
+        name2typeTable.put("promise", SEXPTYPE.PROMSXP.code);
+        name2typeTable.put("language", SEXPTYPE.LANGSXP.code);
+        name2typeTable.put("special", SEXPTYPE.SPECIALSXP.code);
+        name2typeTable.put("builtin", SEXPTYPE.BUILTINSXP.code);
+        name2typeTable.put("char", SEXPTYPE.CHARSXP.code);
+        name2typeTable.put("logical", SEXPTYPE.LGLSXP.code);
+        name2typeTable.put("integer", SEXPTYPE.INTSXP.code);
+        name2typeTable.put("double", SEXPTYPE.REALSXP.code); /*-  "real", for R <= 0.61.x */
+        name2typeTable.put("complex", SEXPTYPE.CPLXSXP.code);
+        name2typeTable.put("character", SEXPTYPE.STRSXP.code);
+        name2typeTable.put("...", SEXPTYPE.DOTSXP.code);
+        name2typeTable.put("any", SEXPTYPE.ANYSXP.code);
+        name2typeTable.put("expression", SEXPTYPE.EXPRSXP.code);
+        name2typeTable.put("list", SEXPTYPE.VECSXP.code);
+        name2typeTable.put("externalptr", SEXPTYPE.EXTPTRSXP.code);
+        name2typeTable.put("bytecode", SEXPTYPE.BCODESXP.code);
+        name2typeTable.put("weakref", SEXPTYPE.WEAKREFSXP.code);
+        name2typeTable.put("raw", SEXPTYPE.RAWSXP.code);
+        name2typeTable.put("S4", SEXPTYPE.S4SXP.code);
+        name2typeTable.put("numeric", SEXPTYPE.REALSXP.code);
+        name2typeTable.put("name", SEXPTYPE.SYMSXP.code);
+    }
 }

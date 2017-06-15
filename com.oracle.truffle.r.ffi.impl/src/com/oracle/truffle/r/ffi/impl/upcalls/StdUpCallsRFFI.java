@@ -288,4 +288,6 @@ public interface StdUpCallsRFFI {
 
     Object R_MethodsNamespace();
 
+    int Rf_str2type(@RFFICstring Object name);
+
 }
