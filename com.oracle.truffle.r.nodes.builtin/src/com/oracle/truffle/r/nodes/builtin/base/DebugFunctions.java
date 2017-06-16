@@ -39,7 +39,6 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.Arg3;
-import com.oracle.truffle.r.nodes.builtin.casts.fluent.HeadPhaseBuilder;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -58,10 +57,6 @@ public class DebugFunctions {
         Casts casts = new Casts(extCls);
         casts.arg("fun").mustBe(RFunction.class, Message.ARG_MUST_BE_CLOSURE);
         return casts;
-    }
-
-    protected static HeadPhaseBuilder<Boolean> flag(Casts casts, String parName) {
-        return casts.arg(parName).asLogicalVector().findFirst().map(toBoolean());
     }
 
     protected static void doDebug(RBaseNode node, RFunction fun, Object text, Object condition, boolean once) throws RError {
@@ -148,26 +143,25 @@ public class DebugFunctions {
         @Specialization
         protected Object setBreakpoint(String fileLine, RMissing lineNr, boolean clear) {
 
-            if (!fileLine.contains("#")) {
-                throw error(RError.Message.GENERIC, "Line number missing");
+            int hashIdx = fileLine.lastIndexOf('#');
+            if (hashIdx != -1) {
+
+                String fileName = fileLine.substring(0, hashIdx);
+                int lnr = RRuntime.string2intNoCheck(fileLine.substring(hashIdx));
+                if (lnr != RRuntime.INT_NA) {
+                    return setBreakpoint(fileName, lnr, clear);
+                }
             }
 
-            int lastIndexOf = fileLine.lastIndexOf('#');
-            assert lastIndexOf != -1;
-
-            String fileName = fileLine.substring(0, lastIndexOf);
-            int lnr = Integer.parseInt(fileLine.substring(lastIndexOf));
-
-            return setBreakpoint(fileName, lnr, clear);
+            throw error(RError.Message.GENERIC, "Line number missing");
         }
 
         @SuppressWarnings("unused")
         @Specialization
         protected Object setBreakpoint(String fileName, int lineNr, boolean clear) {
 
-            Source fromSrcfile;
             try {
-                fromSrcfile = RSource.fromFileName(fileName, false);
+                Source fromSrcfile = RSource.fromFileName(fileName, false);
                 DebugHandling.enableLineDebug(fromSrcfile, lineNr);
                 return RDataFactory.createStringVectorFromScalar(fileName + "#" + lineNr);
             } catch (IOException e) {
