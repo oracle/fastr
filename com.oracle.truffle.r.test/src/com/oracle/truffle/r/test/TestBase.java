@@ -481,6 +481,10 @@ public class TestBase {
         return evalAndCompare(getAssertEvalFastR(gnuROutput, input), trait1);
     }
 
+    protected boolean assertEvalFastR(TestTrait trait1, TestTrait trait2, String input, String gnuROutput) {
+        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), trait1, trait2);
+    }
+
     protected boolean assertEvalFastR(String input, String gnuROutput) {
         return evalAndCompare(getAssertEvalFastR(gnuROutput, input));
     }

@@ -22,9 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -39,15 +43,19 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 @NodeChild("operand")
+@ImportStatic(RRuntime.class)
 public abstract class ConvertBooleanNode extends RNode {
 
     private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile invalidElementCountBranch = BranchProfile.create();
+    @Child private ConvertBooleanNode recursiveConvertBoolean;
 
     @Override
     public final Object execute(VirtualFrame frame) {
@@ -165,6 +173,16 @@ public abstract class ConvertBooleanNode extends RNode {
         throw error(RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
     }
 
+    @Specialization(guards = "isForeignObject(obj)")
+    protected byte doForeignObject(VirtualFrame frame, TruffleObject obj,
+                    @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
+        Object o = foreignArray2R.execute(obj);
+        if (!RRuntime.isForeignObject(o)) {
+            return convertBooleanRecursive(frame, o);
+        }
+        throw error(RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+    }
+
     public static ConvertBooleanNode create(RSyntaxNode node) {
         if (node instanceof ConvertBooleanNode) {
             return (ConvertBooleanNode) node;
@@ -176,5 +194,17 @@ public abstract class ConvertBooleanNode extends RNode {
     @Override
     public RSyntaxNode getRSyntaxNode() {
         return getOperand().asRSyntaxNode();
+    }
+
+    protected ForeignArray2R createForeignArray2RNode() {
+        return ForeignArray2RNodeGen.create();
+    }
+
+    protected byte convertBooleanRecursive(VirtualFrame frame, Object o) {
+        if (recursiveConvertBoolean == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            recursiveConvertBoolean = insert(ConvertBooleanNode.create(getRSyntaxNode()));
+        }
+        return recursiveConvertBoolean.executeByte(frame, o);
     }
 }

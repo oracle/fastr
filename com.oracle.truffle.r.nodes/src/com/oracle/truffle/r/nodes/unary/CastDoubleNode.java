@@ -26,7 +26,9 @@ import java.util.function.IntToDoubleFunction;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -44,7 +46,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 
+@ImportStatic(RRuntime.class)
 public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
     protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
@@ -207,6 +212,22 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return ret;
     }
 
+    @Specialization(guards = "isForeignObject(obj)")
+    protected RDoubleVector doForeignObject(TruffleObject obj,
+                    @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
+        Object o = foreignArray2R.execute(obj);
+        if (!RRuntime.isForeignObject(o)) {
+            if (o instanceof RDoubleVector) {
+                return (RDoubleVector) o;
+            }
+            o = castDoubleRecursive(o);
+            if (o instanceof RDoubleVector) {
+                return (RDoubleVector) o;
+            }
+        }
+        throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
+    }
+
     public static CastDoubleNode create() {
         return CastDoubleNodeGen.create(true, true, true);
     }
@@ -218,4 +239,9 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     public static CastDoubleNode createNonPreserving() {
         return CastDoubleNodeGen.create(false, false, false);
     }
+
+    protected ForeignArray2R createForeignArray2RNode() {
+        return ForeignArray2RNodeGen.create();
+    }
+
 }
