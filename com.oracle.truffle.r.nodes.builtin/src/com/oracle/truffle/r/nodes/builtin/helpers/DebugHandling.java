@@ -39,6 +39,7 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
@@ -66,9 +67,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 /**
  * The implementation of the R debug functions.
  *
- * When a function is enabled for debugging a set of {@link DebugEventListener}s are created and
- * attached to key nodes in the AST body associated with the {@link FunctionDefinitionNode}
- * corresponding to the {@link RFunction} instance.
+ * When a function is enabled for debugging a set of {@link InteractingDebugEventListener}s are
+ * created and attached to key nodes in the AST body associated with the
+ * {@link FunctionDefinitionNode} corresponding to the {@link RFunction} instance.
  *
  * Three different listener classes are defined:
  * <ul>
@@ -117,6 +118,7 @@ public class DebugHandling {
             attachDebugHandler(func, text, condition, once, implicit);
         } else {
             fbr.enable();
+            fbr.setParentListener(null);
         }
         return true;
     }
@@ -133,11 +135,15 @@ public class DebugHandling {
 
     public static boolean isDebugged(RFunction func) {
         FunctionStatementsEventListener fser = getFunctionStatementsEventListener(func);
-        return fser != null && !fser.disabled();
+        return fser != null && (!fser.disabled() || fser.parentListener != null && !fser.parentListener.disabled());
     }
 
     private static FunctionStatementsEventListener getFunctionStatementsEventListener(RFunction func) {
         return (FunctionStatementsEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(RInstrumentation.getSourceSection(func));
+    }
+
+    private static LineBreakpointEventListener getLineBreakpointEventListener(Source source, int lineNr) {
+        return (LineBreakpointEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(source.createSection(lineNr));
     }
 
     private static FunctionStatementsEventListener getFunctionStatementsEventListener(FunctionDefinitionNode fdn) {
@@ -194,7 +200,23 @@ public class DebugHandling {
         return fser;
     }
 
-    private static FunctionStatementsEventListener ensureSingleStep(FunctionDefinitionNode fdn) {
+    @TruffleBoundary
+    public static void enableLineDebug(Source fdn, int line) {
+        Instrumenter instrumenter = RInstrumentation.getInstrumenter();
+        SourceSection lineSourceSection = fdn.createSection(line);
+        SourceSectionFilter.Builder functionBuilder = RInstrumentation.createLineFilter(fdn, line, StandardTags.StatementTag.class);
+        instrumenter.attachListener(functionBuilder.build(), new LineBreakpointEventListener(lineSourceSection));
+    }
+
+    @TruffleBoundary
+    public static void disableLineDebug(Source fdn, int line) {
+        LineBreakpointEventListener l = getLineBreakpointEventListener(fdn, line);
+        l.disable();
+        l.fser.setParentListener(null);
+        l.fser.disable();
+    }
+
+    private static FunctionStatementsEventListener ensureSingleStep(FunctionDefinitionNode fdn, LineBreakpointEventListener parentListener) {
         FunctionStatementsEventListener fser = getFunctionStatementsEventListener(fdn);
         if (fser == null) {
             // attach a "once" listener
@@ -206,29 +228,23 @@ public class DebugHandling {
                 fser.enabledForStepInto = true;
             }
         }
+        fser.setParentListener(parentListener);
         return fser;
     }
 
     private abstract static class DebugEventListener implements ExecutionEventListener {
 
-        protected final Object text;
-        protected final Object condition;
-        protected final FunctionDefinitionNode functionDefinitionNode;
-        protected EventBinding<StepIntoInstrumentListener> stepIntoInstrument;
+        @TruffleBoundary
+        protected static void print(String msg, boolean nl) {
+            try {
+                StdConnections.getStdout().writeString(msg, nl);
+            } catch (IOException ex) {
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, ex.getMessage());
+            }
+        }
+
         @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("debug event disabled state unchanged");
-
-        @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
-
-        protected DebugEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition) {
-            this.text = text;
-            this.condition = condition;
-            this.functionDefinitionNode = functionDefinitionNode;
-        }
-
-        @Override
-        public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
-        }
 
         boolean disabled() {
             return disabled || RContext.getInstance().stateInstrumentation.debugGloballyDisabled();
@@ -248,14 +264,25 @@ public class DebugHandling {
                 disabled = newState;
             }
         }
+    }
 
-        @TruffleBoundary
-        protected static void print(String msg, boolean nl) {
-            try {
-                StdConnections.getStdout().writeString(msg, nl);
-            } catch (IOException ex) {
-                throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, ex.getMessage());
-            }
+    private abstract static class InteractingDebugEventListener extends DebugEventListener {
+
+        protected final Object text;
+        protected final Object condition;
+        protected final FunctionDefinitionNode functionDefinitionNode;
+        protected EventBinding<StepIntoInstrumentListener> stepIntoInstrument;
+
+        @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
+
+        protected InteractingDebugEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition) {
+            this.text = text;
+            this.condition = condition;
+            this.functionDefinitionNode = functionDefinitionNode;
+        }
+
+        @Override
+        public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
         }
 
         protected void browserInteract(Node node, VirtualFrame frame) {
@@ -323,7 +350,7 @@ public class DebugHandling {
      * "steps over" the <@code {</code> to the first statement, otherwise it just stops at the first
      * statement.
      */
-    private static class FunctionStatementsEventListener extends DebugEventListener {
+    private static class FunctionStatementsEventListener extends InteractingDebugEventListener {
 
         private final StatementEventListener statementListener;
         ArrayList<LoopStatementEventListener> loopStatementListeners = new ArrayList<>();
@@ -333,17 +360,24 @@ public class DebugHandling {
          * handler established temporarily for step-into.
          */
         private final boolean once;
+
         /**
          * Denotes that this was installed by an explicit call to {@code browser()} on an otherwise
          * undebugged function. {@code assert once == true}.
          */
         private final boolean implicit;
+
         /**
          * Records whether a permanent handler was (temporarily) enabled for a step-into.
-         *
          */
         private boolean enabledForStepInto;
         private boolean continuing;
+
+        /**
+         * The parent listener (a line breakpoint listener) if this function statement listener has
+         * been created due to a line breakpoint.
+         */
+        private LineBreakpointEventListener parentListener;
 
         FunctionStatementsEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, boolean once, boolean implicit) {
             super(functionDefinitionNode, text, condition);
@@ -351,6 +385,15 @@ public class DebugHandling {
             statementListener = new StatementEventListener(functionDefinitionNode, text, condition);
             this.once = once;
             this.implicit = implicit;
+        }
+
+        void setParentListener(LineBreakpointEventListener l) {
+            if (l != null) {
+                super.disable();
+            } else {
+                super.enable();
+            }
+            parentListener = l;
         }
 
         StatementEventListener getStatementListener() {
@@ -366,10 +409,7 @@ public class DebugHandling {
         @Override
         void disable() {
             super.disable();
-            statementListener.disable();
-            for (LoopStatementEventListener lser : loopStatementListeners) {
-                lser.disable();
-            }
+            disableChildren();
         }
 
         @Override
@@ -385,12 +425,16 @@ public class DebugHandling {
             }
         }
 
-        void setContinuing() {
-            continuing = true;
+        void disableChildren() {
             statementListener.disable();
             for (LoopStatementEventListener lser : loopStatementListeners) {
                 lser.disable();
             }
+        }
+
+        void setContinuing() {
+            continuing = true;
+            disableChildren();
         }
 
         void setFinishing(AbstractLoopNode loopNode) {
@@ -409,20 +453,29 @@ public class DebugHandling {
             enableChildren();
         }
 
+        private void onEnterInternal(EventContext context, VirtualFrame frame) {
+            CompilerDirectives.transferToInterpreter();
+            print("debugging in: ", false);
+            printCall(frame);
+            printNode(context.getInstrumentedNode(), true);
+            browserInteract(context.getInstrumentedNode(), frame);
+        }
+
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!disabled()) {
-                CompilerDirectives.transferToInterpreter();
-                print("debugging in: ", false);
-                printCall(frame);
                 /*
                  * If this is a recursive call, then returnCleanup will not have happened, so we
                  * enable our child listeners unconditionally. TODO It is possible that the enabled
                  * state should be stacked to match the call stack in the recursive case.
                  */
                 enableChildren();
-                printNode(context.getInstrumentedNode(), true);
-                browserInteract(context.getInstrumentedNode(), frame);
+                onEnterInternal(context, frame);
+            } else {
+                // This is necessary if a line breakpoint has been set. We disable the children
+                // listeners such that it does not stop until line breakpoint listener has been
+                // invoked.
+                disableChildren();
             }
         }
 
@@ -488,7 +541,7 @@ public class DebugHandling {
         consoleHandler.print("\n");
     }
 
-    private static class StatementEventListener extends DebugEventListener {
+    private static class StatementEventListener extends InteractingDebugEventListener {
 
         StatementEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition) {
             super(functionDefinitionNode, text, condition);
@@ -513,6 +566,50 @@ public class DebugHandling {
         @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
         }
+    }
+
+    /**
+     * A catch-listener that will be invoked if a line breakpoint is hit. It then enables the whole
+     * function for debugging.
+     */
+    private static class LineBreakpointEventListener extends DebugEventListener {
+
+        private final SourceSection ss;
+        private FunctionStatementsEventListener fser;
+
+        LineBreakpointEventListener(SourceSection ss) {
+            this.ss = ss;
+            RContext.getInstance().stateInstrumentation.putDebugListener(ss, this);
+        }
+
+        @Override
+        public void onEnter(EventContext context, VirtualFrame frame) {
+            if (!disabled()) {
+                CompilerDirectives.transferToInterpreter();
+                installFunctionListener(frame);
+                assert fser != null;
+                print(ss.getSource().getName() + "#" + ss.getStartLine(), true);
+                fser.onEnterInternal(context, frame);
+            }
+        }
+
+        private void installFunctionListener(VirtualFrame frame) {
+            if (fser == null) {
+                RFunction function = RArguments.getFunction(frame);
+                fser = ensureSingleStep(RInstrumentation.getFunctionDefinitionNode(function), this);
+            }
+        }
+
+        @Override
+        public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
+            fser.enableChildren();
+        }
+
+        @Override
+        public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
+            fser.enableChildren();
+        }
+
     }
 
     /**
@@ -601,7 +698,7 @@ public class DebugHandling {
                 RootNode rootNode = context.getInstrumentedNode().getRootNode();
                 if (rootNode instanceof FunctionDefinitionNode) {
                     FunctionDefinitionNode fdn = (FunctionDefinitionNode) rootNode;
-                    FunctionStatementsEventListener ensureSingleStep = ensureSingleStep(fdn);
+                    FunctionStatementsEventListener ensureSingleStep = ensureSingleStep(fdn, null);
 
                     functionStatementsEventListener.clearStepInstrument();
                     ensureSingleStep.onEnter(context, frame);

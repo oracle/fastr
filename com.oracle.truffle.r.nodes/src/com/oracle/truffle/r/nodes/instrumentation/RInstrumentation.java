@@ -25,10 +25,13 @@ package com.oracle.truffle.r.nodes.instrumentation;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
+import com.oracle.truffle.api.instrumentation.SourceSectionFilter.IndexRange;
 import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
@@ -77,6 +80,18 @@ public class RInstrumentation {
         SourceSection fdns = fdn.getSourceSection();
         builder.indexIn(fdns.getCharIndex(), fdns.getCharLength());
         builder.sourceIs(fdns.getSource());
+        return builder;
+    }
+
+    public static SourceSectionFilter.Builder createLineFilter(Source src, int line, Class<?> tag) {
+        /* Filter needs to check for statement tags in the range of the function in the Source */
+        SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
+        builder.tagIs(tag);
+        SourceSection lineSourceSection = src.createSection(line);
+        builder.indexIn(lineSourceSection.getCharIndex(), lineSourceSection.getCharLength());
+        builder.lineIn(lineSourceSection.getStartLine(), 1);
+        builder.lineEndsIn(IndexRange.between(lineSourceSection.getEndLine(), lineSourceSection.getEndLine() + 1));
+        builder.sourceIs(visitinSrc -> RSource.getPathInternal(src).equals(RSource.getPathInternal(visitinSrc)));
         return builder;
     }
 

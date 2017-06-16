@@ -34,6 +34,8 @@ import com.oracle.truffle.r.nodes.binary.BinaryBooleanNodeGen;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanScalarNodeGen;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanSpecial;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackage;
+import com.oracle.truffle.r.nodes.builtin.base.DebugFunctions.FastRSetBreakpoint;
+import com.oracle.truffle.r.nodes.builtin.base.DebugFunctionsFactory.FastRSetBreakpointNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.AssignFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.ExistsFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.GetFastPathNodeGen;
@@ -365,6 +367,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRContext.Join.class, FastRContextFactory.JoinNodeGen::create);
         add(FastrDqrls.class, FastrDqrlsNodeGen::create);
         add(FastRDebug.class, FastRDebugNodeGen::create);
+        add(FastRSetBreakpoint.class, FastRSetBreakpointNodeGen::create);
         add(FastRIdentity.class, FastRIdentityNodeGen::create);
         add(FastRTry.class, FastRTryNodeGen::create);
         add(FastRInspect.class, FastRInspectNodeGen::create);
