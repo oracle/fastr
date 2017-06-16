@@ -88,3 +88,4 @@ extern SEXP test_LENGTH(SEXP x);
 
 extern SEXP test_coerceVector(SEXP x, SEXP mode);
 
+extern SEXP test_stringNA(void);

@@ -42,9 +42,9 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.ffi.impl.upcalls.RFFIUpCallTable;
 import com.oracle.truffle.r.ffi.impl.common.ParseResult.ParseStatus;
 import com.oracle.truffle.r.ffi.impl.nodes.FFIUpCallRootNode;
+import com.oracle.truffle.r.ffi.impl.upcalls.RFFIUpCallTable;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
@@ -478,7 +478,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public int SET_STRING_ELT(Object x, int i, Object v) {
         RStringVector vector = guaranteeInstanceOf(x, RStringVector.class);
         CharSXPWrapper element = guaranteeInstanceOf(v, CharSXPWrapper.class);
-        vector.setElement(i, element.getContents());
+        String value = element.getContents();
+        if (RRuntime.isNA(value)) {
+            vector.setComplete(false);
+        }
+        vector.setElement(i, value);
         return 0;
     }
 
