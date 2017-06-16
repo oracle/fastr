@@ -41,7 +41,8 @@ public class TestBuiltin_trunc extends TestBase {
     public void testTrunc() {
         assertEval("{ typeof(trunc(42L)); }");
         assertEval("{ typeof(trunc(TRUE)); }");
-        assertEval("{ trunc(1+1i); }");
+        // not implemented for complex in GNU R
+        assertEvalFastR("{ trunc(1.1+1.9i); }", "1+1i");
         assertEval("{ trunc(\"aaa\"); }");
     }
 }

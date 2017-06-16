@@ -25,11 +25,13 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
@@ -39,13 +41,14 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -57,14 +60,12 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 final class PeekLocalVariableNode extends RNode implements RSyntaxLookup {
 
     @Child private LocalReadVariableNode read;
-
-    private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
-    private final ValueProfile valueProfile = ValueProfile.createClassProfile();
-
     @Child private SetVisibilityNode visibility;
 
+    private final ValueProfile valueProfile = ValueProfile.createClassProfile();
+
     PeekLocalVariableNode(String name) {
-        this.read = LocalReadVariableNode.create(Utils.intern(name), false);
+        this.read = LocalReadVariableNode.create(Utils.intern(name), true);
     }
 
     @Override
@@ -72,13 +73,6 @@ final class PeekLocalVariableNode extends RNode implements RSyntaxLookup {
         Object value = read.execute(frame);
         if (value == null) {
             throw RSpecialFactory.throwFullCallNeeded();
-        }
-        if (isPromiseProfile.profile(value instanceof RPromise)) {
-            RPromise promise = (RPromise) value;
-            if (!promise.isEvaluated()) {
-                throw RSpecialFactory.throwFullCallNeeded();
-            }
-            return valueProfile.profile(promise.getValue());
         }
         return valueProfile.profile(value);
     }
@@ -114,6 +108,46 @@ final class PeekLocalVariableNode extends RNode implements RSyntaxLookup {
     @Override
     public SourceSection getLazySourceSection() {
         return null;
+    }
+}
+
+@NodeChild(value = "delegate", type = RNode.class)
+abstract class ClassCheckNode extends RNode {
+
+    public abstract RNode getDelegate();
+
+    @Override
+    protected RSyntaxNode getRSyntaxNode() {
+        return getDelegate().asRSyntaxNode();
+    }
+
+    @Specialization
+    protected static int doInt(int value) {
+        return value;
+    }
+
+    @Specialization
+    protected static double doDouble(double value) {
+        return value;
+    }
+
+    @Specialization
+    protected static byte doLogical(byte value) {
+        return value;
+    }
+
+    @Specialization
+    protected static String doString(String value) {
+        return value;
+    }
+
+    @Specialization
+    public Object doGeneric(Object value,
+                    @Cached("create()") ClassHierarchyNode classHierarchy) {
+        if (classHierarchy.execute(value) != null) {
+            throw RSpecialFactory.throwFullCallNeeded();
+        }
+        return value;
     }
 }
 
@@ -246,12 +280,10 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
                 if (arg instanceof RSyntaxLookup) {
                     String lookup = ((RSyntaxLookup) arg).getIdentifier();
                     if (ArgumentsSignature.VARARG_NAME.equals(lookup)) {
+                        // cannot map varargs
                         return null;
                     }
                     if (i < evaluatedArgs) {
-                        // not quite correct:
-                        // || (dispatch == RDispatch.DEFAULT
-                        // && builtinDescriptor.evaluatesArg(i))
                         localArguments[i] = arg.asRNode();
                     } else {
                         localArguments[i] = new PeekLocalVariableNode(lookup);
@@ -261,6 +293,16 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
                 } else {
                     assert arg instanceof RCallSpecialNode;
                     localArguments[i] = arg.asRNode();
+                }
+                if (dispatch.isGroupGeneric() || dispatch == RDispatch.INTERNAL_GENERIC && i == 0) {
+                    if (localArguments[i] instanceof RSyntaxConstant) {
+                        Object value = ((RSyntaxConstant) localArguments[i]).getValue();
+                        if (value instanceof RAttributable && ((RAttributable) value).getAttr(RRuntime.CLASS_ATTR_KEY) != null) {
+                            return null;
+                        }
+                    } else {
+                        localArguments[i] = ClassCheckNodeGen.create(localArguments[i]);
+                    }
                 }
             }
         }

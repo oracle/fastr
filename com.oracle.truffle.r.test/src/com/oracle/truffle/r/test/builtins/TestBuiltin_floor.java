@@ -67,7 +67,8 @@ public class TestBuiltin_floor extends TestBase {
         assertEval("{ floor(c(0.2,-3.4,NA,0/0,1/0)) }");
         assertEval("{ typeof(floor(42L)); }");
         assertEval("{ typeof(floor(TRUE)); }");
-        assertEval("{ trunc(1+1i); }");
-        assertEval("{ trunc(\"aaa\"); }");
+        // not implemented for complex in GNU R
+        assertEvalFastR("{ floor(1.1+1.9i); }", "1+1i");
+        assertEval("{ floor(\"aaa\"); }");
     }
 }

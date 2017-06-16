@@ -122,7 +122,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
             throw error(RError.Message.ARGUMENT_EMPTY, 2);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            return UnaryArithmeticNodeGen.create(unary, RError.Message.INVALID_ARG_TYPE_UNARY);
+            return UnaryArithmeticNodeGen.create(unary);
         }
     }
 

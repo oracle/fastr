@@ -66,7 +66,7 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
         return value != RNull.instance && !(value instanceof RList);
     }
 
-    @Specialization(limit = "2", guards = {"isSimpleList(list)", "!list.isShared()", "list.getNames() == cachedNames", "field == cachedField", "isNotRNullRList(value)"})
+    @Specialization(limit = "2", guards = {"!list.isShared()", "getNamesNode.getNames(list) == cachedNames", "field == cachedField", "isNotRNullRList(value)"})
     public Object doList(RList list, @SuppressWarnings("unused") String field, Object value,
                     @SuppressWarnings("unused") @Cached("list.getNames()") RStringVector cachedNames,
                     @SuppressWarnings("unused") @Cached("field") String cachedField,
@@ -83,7 +83,7 @@ abstract class UpdateFieldSpecial extends SpecialsUtils.ListFieldSpecialBase {
         return list;
     }
 
-    @Specialization(replaces = "doList", guards = {"isSimpleList(list)", "!list.isShared()", "list.getNames() != null", "isNotRNullRList(value)"})
+    @Specialization(replaces = "doList", guards = {"!list.isShared()", "list.getNames() != null", "isNotRNullRList(value)"})
     public RList doListDynamic(RList list, String field, Object value) {
         int index = getIndex(getNamesNode.getNames(list), field);
         if (index == -1) {

@@ -124,6 +124,8 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRTry;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTryNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastrDqrls;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastrDqrlsNodeGen;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticSpecial;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNode;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNodeGen;
 import com.oracle.truffle.r.runtime.RVisibility;
@@ -152,6 +154,38 @@ public class BasePackage extends RBuiltinPackage {
          */
         add(UnaryNotNode.class, UnaryNotNodeGen::create);
 
+        addUnaryArithmetic(Ceiling.class, Ceiling::new);
+        addUnaryArithmetic(Floor.class, Floor::new);
+        addUnaryArithmetic(Trunc.class, Trunc::new);
+        addUnaryArithmetic(LogFunctions.Log10.class, LogFunctions.Log10::new);
+        addUnaryArithmetic(LogFunctions.Log1p.class, LogFunctions.Log1p::new);
+        addUnaryArithmetic(LogFunctions.Log2.class, LogFunctions.Log2::new);
+        addUnaryArithmetic(NumericalFunctions.Abs.class, NumericalFunctions.Abs::new);
+        addUnaryArithmetic(NumericalFunctions.Arg.class, NumericalFunctions.Arg::new);
+        addUnaryArithmetic(NumericalFunctions.Conj.class, NumericalFunctions.Conj::new);
+        addUnaryArithmetic(NumericalFunctions.Im.class, NumericalFunctions.Im::new);
+        addUnaryArithmetic(NumericalFunctions.Mod.class, NumericalFunctions.Mod::new);
+        addUnaryArithmetic(NumericalFunctions.Re.class, NumericalFunctions.Re::new);
+        addUnaryArithmetic(NumericalFunctions.Sign.class, NumericalFunctions.Sign::new);
+        addUnaryArithmetic(NumericalFunctions.Sqrt.class, NumericalFunctions.Sqrt::new);
+        addUnaryArithmetic(TrigExpFunctions.Acos.class, TrigExpFunctions.Acos::new);
+        addUnaryArithmetic(TrigExpFunctions.Acosh.class, TrigExpFunctions.Acosh::new);
+        addUnaryArithmetic(TrigExpFunctions.Asin.class, TrigExpFunctions.Asin::new);
+        addUnaryArithmetic(TrigExpFunctions.Asinh.class, TrigExpFunctions.Asinh::new);
+        addUnaryArithmetic(TrigExpFunctions.Atan.class, TrigExpFunctions.Atan::new);
+        addUnaryArithmetic(TrigExpFunctions.Atanh.class, TrigExpFunctions.Atanh::new);
+        addUnaryArithmetic(TrigExpFunctions.Cos.class, TrigExpFunctions.Cos::new);
+        addUnaryArithmetic(TrigExpFunctions.Cosh.class, TrigExpFunctions.Cosh::new);
+        addUnaryArithmetic(TrigExpFunctions.Cospi.class, TrigExpFunctions.Cospi::new);
+        addUnaryArithmetic(TrigExpFunctions.Exp.class, TrigExpFunctions.Exp::new);
+        addUnaryArithmetic(TrigExpFunctions.ExpM1.class, TrigExpFunctions.ExpM1::new);
+        addUnaryArithmetic(TrigExpFunctions.Sin.class, TrigExpFunctions.Sin::new);
+        addUnaryArithmetic(TrigExpFunctions.Sinh.class, TrigExpFunctions.Sinh::new);
+        addUnaryArithmetic(TrigExpFunctions.Sinpi.class, TrigExpFunctions.Sinpi::new);
+        addUnaryArithmetic(TrigExpFunctions.Tan.class, TrigExpFunctions.Tan::new);
+        addUnaryArithmetic(TrigExpFunctions.Tanh.class, TrigExpFunctions.Tanh::new);
+        addUnaryArithmetic(TrigExpFunctions.Tanpi.class, TrigExpFunctions.Tanpi::new);
+
         addBinaryArithmetic(BinaryArithmetic.AddBuiltin.class, BinaryArithmetic.ADD, UnaryArithmetic.PLUS);
         addBinaryArithmetic(BinaryArithmetic.SubtractBuiltin.class, BinaryArithmetic.SUBTRACT, UnaryArithmetic.NEGATE);
         addBinaryArithmetic(BinaryArithmetic.DivBuiltin.class, BinaryArithmetic.DIV, null);
@@ -176,12 +210,10 @@ public class BasePackage extends RBuiltinPackage {
         // Now load the rest of the builtins in "base"
         add(Abbrev.class, AbbrevNodeGen::create);
         add(APerm.class, APermNodeGen::create);
-        add(NumericalFunctions.Abs.class, NumericalFunctionsFactory.AbsNodeGen::create);
         add(All.class, AllNodeGen::create);
         add(AllNames.class, AllNamesNodeGen::create);
         add(Any.class, AnyNodeGen::create);
         add(AnyNA.class, AnyNANodeGen::create);
-        add(Arg.class, ArgNodeGen::create);
         add(Args.class, ArgsNodeGen::create);
         add(Array.class, ArrayNodeGen::create);
         add(AsCall.class, AsCallNodeGen::create);
@@ -228,7 +260,6 @@ public class BasePackage extends RBuiltinPackage {
         add(CallAndExternalFunctions.DotExternalGraphics.class, CallAndExternalFunctionsFactory.DotExternalGraphicsNodeGen::create);
         add(Capabilities.class, CapabilitiesNodeGen::create);
         add(Cat.class, CatNodeGen::create);
-        add(Ceiling.class, CeilingNodeGen::create);
         add(CharMatch.class, CharMatchNodeGen::create);
         add(Col.class, ColNodeGen::create);
         add(Colon.class, ColonNodeGen::create, Colon::special);
@@ -239,7 +270,6 @@ public class BasePackage extends RBuiltinPackage {
         add(Complex.class, ComplexNodeGen::create);
         add(CompileFunctions.CompilePKGS.class, CompileFunctionsFactory.CompilePKGSNodeGen::create);
         add(CompileFunctions.EnableJIT.class, CompileFunctionsFactory.EnableJITNodeGen::create);
-        add(NumericalFunctions.Conj.class, NumericalFunctionsFactory.ConjNodeGen::create);
         add(ConditionFunctions.AddCondHands.class, ConditionFunctionsFactory.AddCondHandsNodeGen::create);
         add(ConditionFunctions.AddRestart.class, ConditionFunctionsFactory.AddRestartNodeGen::create);
         add(ConditionFunctions.DfltStop.class, ConditionFunctionsFactory.DfltStopNodeGen::create);
@@ -421,7 +451,6 @@ public class BasePackage extends RBuiltinPackage {
         add(FileFunctions.ListFiles.class, FileFunctionsFactory.ListFilesNodeGen::create);
         add(FileFunctions.ListDirs.class, FileFunctionsFactory.ListDirsNodeGen::create);
         add(FileFunctions.Unlink.class, FileFunctionsFactory.UnlinkNodeGen::create);
-        add(Floor.class, FloorNodeGen::create);
         add(ForceAndCall.class, ForceAndCallNodeGen::create);
         add(Formals.class, FormalsNodeGen::create);
         add(Format.class, FormatNodeGen::create);
@@ -466,7 +495,6 @@ public class BasePackage extends RBuiltinPackage {
         add(HiddenInternalFunctions.LazyLoadDBinsertValue.class, HiddenInternalFunctionsFactory.LazyLoadDBinsertValueNodeGen::create);
         add(IConv.class, IConvNodeGen::create);
         add(Identical.class, Identical::create);
-        add(NumericalFunctions.Im.class, NumericalFunctionsFactory.ImNodeGen::create);
         add(InheritsBuiltin.class, InheritsBuiltinNodeGen::create);
         add(Interactive.class, InteractiveNodeGen::create);
         add(Internal.class, InternalNodeGen::create);
@@ -529,9 +557,6 @@ public class BasePackage extends RBuiltinPackage {
         add(LocaleFunctions.LocaleConv.class, LocaleFunctionsFactory.LocaleConvNodeGen::create);
         add(LocaleFunctions.SetLocale.class, LocaleFunctionsFactory.SetLocaleNodeGen::create);
         add(LogFunctions.Log.class, LogFunctionsFactory.LogNodeGen::create);
-        add(LogFunctions.Log10.class, LogFunctionsFactory.Log10NodeGen::create);
-        add(LogFunctions.Log1p.class, LogFunctionsFactory.Log1pNodeGen::create);
-        add(LogFunctions.Log2.class, LogFunctionsFactory.Log2NodeGen::create);
         add(Ls.class, LsNodeGen::create);
         add(MakeNames.class, MakeNamesNodeGen::create);
         add(MakeUnique.class, MakeUniqueNodeGen::create);
@@ -546,7 +571,6 @@ public class BasePackage extends RBuiltinPackage {
         add(Merge.class, MergeNodeGen::create);
         add(Min.class, MinNodeGen::create);
         add(Missing.class, MissingNodeGen::create);
-        add(NumericalFunctions.Mod.class, NumericalFunctionsFactory.ModNodeGen::create);
         add(NArgs.class, NArgsNodeGen::create);
         add(NChar.class, NCharNodeGen::create);
         add(NGetText.class, NGetTextNodeGen::create);
@@ -586,7 +610,6 @@ public class BasePackage extends RBuiltinPackage {
         add(RawFunctions.RawToChar.class, RawFunctionsFactory.RawToCharNodeGen::create);
         add(RawFunctions.RawShift.class, RawFunctionsFactory.RawShiftNodeGen::create);
         add(RawToBits.class, RawToBitsNodeGen::create);
-        add(NumericalFunctions.Re.class, NumericalFunctionsFactory.ReNodeGen::create);
         add(ReadDCF.class, ReadDCFNodeGen::create);
         add(ReadREnviron.class, ReadREnvironNodeGen::create);
         add(Readline.class, ReadlineNodeGen::create);
@@ -618,7 +641,6 @@ public class BasePackage extends RBuiltinPackage {
         add(SerializeFunctions.UnserializeFromConn.class, SerializeFunctionsFactory.UnserializeFromConnNodeGen::create);
         add(Setwd.class, SetwdNodeGen::create);
         add(ShortRowNames.class, ShortRowNamesNodeGen::create);
-        add(NumericalFunctions.Sign.class, NumericalFunctionsFactory.SignNodeGen::create);
         add(Signif.class, SignifNodeGen::create);
         add(SinkFunctions.Sink.class, SinkFunctionsFactory.SinkNodeGen::create);
         add(SinkFunctions.SinkNumber.class, SinkFunctionsFactory.SinkNumberNodeGen::create);
@@ -629,7 +651,6 @@ public class BasePackage extends RBuiltinPackage {
         add(SortFunctions.Sort.class, SortFunctionsFactory.SortNodeGen::create);
         add(Split.class, SplitNodeGen::create);
         add(Sprintf.class, SprintfNodeGen::create);
-        add(NumericalFunctions.Sqrt.class, NumericalFunctionsFactory.SqrtNodeGen::create);
         add(StandardGeneric.class, StandardGenericNodeGen::create);
         add(StartsEndsWithFunctions.StartsWith.class, StartsEndsWithFunctionsFactory.StartsWithNodeGen::create);
         add(StartsEndsWithFunctions.EndsWith.class, StartsEndsWithFunctionsFactory.EndsWithNodeGen::create);
@@ -667,25 +688,7 @@ public class BasePackage extends RBuiltinPackage {
         add(TraceFunctions.Retracemem.class, TraceFunctionsFactory.RetracememNodeGen::create);
         add(TraceFunctions.Untracemem.class, TraceFunctionsFactory.UntracememNodeGen::create);
         add(Transpose.class, TransposeNodeGen::create);
-        add(TrigExpFunctions.Acos.class, TrigExpFunctionsFactory.AcosNodeGen::create);
-        add(TrigExpFunctions.Acosh.class, TrigExpFunctionsFactory.AcoshNodeGen::create);
-        add(TrigExpFunctions.Asin.class, TrigExpFunctionsFactory.AsinNodeGen::create);
-        add(TrigExpFunctions.Asinh.class, TrigExpFunctionsFactory.AsinhNodeGen::create);
-        add(TrigExpFunctions.Atan.class, TrigExpFunctionsFactory.AtanNodeGen::create);
         add(TrigExpFunctions.Atan2.class, TrigExpFunctionsFactory.Atan2NodeGen::create);
-        add(TrigExpFunctions.Atanh.class, TrigExpFunctionsFactory.AtanhNodeGen::create);
-        add(TrigExpFunctions.Cos.class, TrigExpFunctionsFactory.CosNodeGen::create);
-        add(TrigExpFunctions.Cosh.class, TrigExpFunctionsFactory.CoshNodeGen::create);
-        add(TrigExpFunctions.Cospi.class, TrigExpFunctionsFactory.CospiNodeGen::create);
-        add(TrigExpFunctions.Exp.class, TrigExpFunctionsFactory.ExpNodeGen::create);
-        add(TrigExpFunctions.ExpM1.class, TrigExpFunctionsFactory.ExpM1NodeGen::create);
-        add(TrigExpFunctions.Sin.class, TrigExpFunctionsFactory.SinNodeGen::create);
-        add(TrigExpFunctions.Sinh.class, TrigExpFunctionsFactory.SinhNodeGen::create);
-        add(TrigExpFunctions.Sinpi.class, TrigExpFunctionsFactory.SinpiNodeGen::create);
-        add(TrigExpFunctions.Tan.class, TrigExpFunctionsFactory.TanNodeGen::create);
-        add(TrigExpFunctions.Tanh.class, TrigExpFunctionsFactory.TanhNodeGen::create);
-        add(TrigExpFunctions.Tanpi.class, TrigExpFunctionsFactory.TanpiNodeGen::create);
-        add(Trunc.class, TruncNodeGen::create);
         add(Typeof.class, TypeofNodeGen::create);
         add(UnClass.class, UnClassNodeGen::create);
         add(Unique.class, UniqueNodeGen::create);
@@ -745,7 +748,11 @@ public class BasePackage extends RBuiltinPackage {
     }
 
     private void addBinaryArithmetic(Class<?> builtinClass, BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
-        add(builtinClass, () -> BinaryArithmeticNodeGen.create(binaryFactory, unaryFactory), BinaryArithmeticSpecial.createSpecialFactory(binaryFactory));
+        add(builtinClass, () -> BinaryArithmeticNodeGen.create(binaryFactory, unaryFactory), BinaryArithmeticSpecial.createSpecialFactory(binaryFactory, unaryFactory));
+    }
+
+    private void addUnaryArithmetic(Class<?> builtinClass, UnaryArithmeticFactory unaryFactory) {
+        add(builtinClass, () -> new UnaryArithmeticBuiltinNode(unaryFactory), UnaryArithmeticSpecial.createSpecialFactory(unaryFactory));
     }
 
     private void addBinaryCompare(Class<?> builtinClass, BooleanOperationFactory factory) {

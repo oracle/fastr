@@ -30,6 +30,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -44,14 +45,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
-import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
-import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "round", kind = PRIMITIVE, parameterNames = {"x", "digits"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
 public abstract class Round extends RBuiltinNode.Arg2 {
-
-    public static final UnaryArithmeticFactory ROUND = RoundArithmetic::new;
 
     @Child private RoundArithmetic roundOp = new RoundArithmetic();
 
@@ -146,7 +143,7 @@ public abstract class Round extends RBuiltinNode.Arg2 {
     @Specialization(guards = "digits == 0")
     protected RComplex round(RComplex x, @SuppressWarnings("unused") int digits) {
         check.enable(x);
-        return check.check(x) ? RComplex.createNA() : roundOp.op(x.getRealPart(), x.getImaginaryPart());
+        return check.check(x) ? RComplex.createNA() : RComplex.valueOf(roundOp.op(x.getRealPart()), roundOp.op(x.getImaginaryPart()));
     }
 
     @Specialization(guards = "digits != 0")
@@ -187,28 +184,23 @@ public abstract class Round extends RBuiltinNode.Arg2 {
         return ret;
     }
 
-    public static class RoundArithmetic extends UnaryArithmetic {
+    public static final class RoundArithmetic extends Node {
 
         @Child private BinaryArithmetic pow;
 
-        @Override
+        @SuppressWarnings("static-method")
         public int op(int op) {
             return op;
         }
 
-        @Override
+        @SuppressWarnings("static-method")
         public double op(double op) {
             return Math.rint(op);
         }
 
-        @Override
+        @SuppressWarnings("static-method")
         public int op(byte op) {
             return op;
-        }
-
-        @Override
-        public RComplex op(double re, double im) {
-            return RDataFactory.createComplex(op(re), op(im));
         }
 
         public double opd(double op, int digits) {

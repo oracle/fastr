@@ -52,7 +52,7 @@ import org.junit.runner.RunWith;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.nodes.builtin.base.Ceiling;
 import com.oracle.truffle.r.nodes.builtin.base.Floor;
-import com.oracle.truffle.r.nodes.builtin.base.Round;
+import com.oracle.truffle.r.nodes.builtin.base.Trunc;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
@@ -64,6 +64,7 @@ import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
 /**
@@ -77,7 +78,7 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
         // to make sure this file is recognized as a test
     }
 
-    public static final UnaryArithmeticFactory[] ALL = new UnaryArithmeticFactory[]{NEGATE, Round.ROUND, Floor.FLOOR, Ceiling.CEILING, PLUS};
+    public static final UnaryArithmeticFactory[] ALL = new UnaryArithmeticFactory[]{NEGATE, PLUS, Floor.FLOOR, Ceiling.CEILING, Trunc.TRUNC};
 
     @DataPoints public static final UnaryArithmeticFactory[] UNARY = ALL;
 
@@ -100,7 +101,7 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
         // sharing does not work if a is a scalar vector
         assumeThat(true, is(isShareable(operand, operand.getRType())));
 
-        RType resultType = getArgumentType(operand);
+        RType resultType = getArgumentType(factory, operand);
         Object sharedResult = null;
         if (isShareable(operand, resultType)) {
             sharedResult = operand;
@@ -161,7 +162,7 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
     public void testPlusFolding(RAbstractVector originalOperand) {
         RAbstractVector operand = copy(originalOperand);
         assumeThat(operand, is(not(instanceOf(RScalarVector.class))));
-        if (operand.getRType() == getArgumentType(operand)) {
+        if (operand.getRType() == getArgumentType(PLUS, operand)) {
             assertFold(true, operand, PLUS);
         } else {
             assertFold(false, operand, PLUS);
@@ -172,8 +173,8 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
     public void testSequenceFolding() {
         assertFold(true, createIntSequence(1, 3, 10), NEGATE);
         assertFold(true, createDoubleSequence(1, 3, 10), NEGATE);
-        assertFold(false, createIntSequence(1, 3, 10), Round.ROUND, Floor.FLOOR, Ceiling.CEILING);
-        assertFold(false, createDoubleSequence(1, 3, 10), Round.ROUND, Floor.FLOOR, Ceiling.CEILING);
+        assertFold(false, createIntSequence(1, 3, 10), Floor.FLOOR, Ceiling.CEILING);
+        assertFold(false, createDoubleSequence(1, 3, 10), Floor.FLOOR, Ceiling.CEILING);
     }
 
     @Theory
@@ -206,8 +207,9 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
         Assert.assertEquals(expectedAttributes, foundAttributes);
     }
 
-    private static RType getArgumentType(RAbstractVector operand) {
-        return RType.maxPrecedence(RType.Integer, operand.getRType());
+    private static RType getArgumentType(UnaryArithmeticFactory factory, RAbstractVector operand) {
+        UnaryArithmetic operation = factory.createOperation();
+        return operation.calculateResultType(RType.maxPrecedence(operation.getMinPrecedence(), operand.getRType()));
     }
 
     private static boolean isPrimitive(Object result) {
@@ -248,7 +250,6 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
     }
 
     private static NodeHandle<UnaryArithmeticNode> create(UnaryArithmeticFactory factory) {
-        return createHandle(UnaryArithmeticNodeGen.create(factory, null),
-                        (node, args) -> node.execute(args[0]));
+        return createHandle(UnaryArithmeticNodeGen.create(factory), (node, args) -> node.execute(args[0]));
     }
 }

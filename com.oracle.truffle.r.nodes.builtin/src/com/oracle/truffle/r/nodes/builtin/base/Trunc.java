@@ -22,51 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_ARITHMETIC;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
-import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNodeGen;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
 @RBuiltin(name = "trunc", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-public abstract class Trunc extends RBuiltinNode.Arg1 {
+public final class Trunc extends UnaryArithmetic {
 
-    private static final UnaryArithmeticFactory TRUNC = TruncArithmetic::new;
+    public static final UnaryArithmeticFactory TRUNC = Trunc::new;
 
-    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
-    @Child private UnaryArithmeticNode trunc = UnaryArithmeticNodeGen.create(TRUNC, RError.Message.NON_NUMERIC_MATH, RType.Double);
-
-    static {
-        Casts casts = new Casts(Trunc.class);
-        casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustNotBeNull().mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue()).asDoubleVector(true,
-                        true, true);
-    }
-
-    @Specialization
-    protected Object trunc(Object value) {
-        return trunc.execute(boxPrimitive.execute(value));
-    }
-
-    private static final class TruncArithmetic extends Round.RoundArithmetic {
-
-        @Override
-        public double op(double op) {
-            if (op > 0) {
-                return Math.floor(op);
-            } else {
-                return Math.ceil(op);
-            }
+    @Override
+    public double op(double op) {
+        if (op > 0) {
+            return Math.floor(op);
+        } else {
+            return Math.ceil(op);
         }
     }
 }

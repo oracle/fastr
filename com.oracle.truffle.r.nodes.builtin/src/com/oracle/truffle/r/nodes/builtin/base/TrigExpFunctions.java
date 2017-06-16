@@ -36,17 +36,10 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.AcosNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.AsinNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.AtanNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.CosNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.SinNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.TrigExpFunctionsFactory.TanNodeGen;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -55,17 +48,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Pow.CHypot;
+import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class TrigExpFunctions {
 
     @RBuiltin(name = "exp", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Exp extends UnaryArithmeticBuiltinNode {
-
-        public Exp() {
-            super(RType.Double);
-        }
-
+    public static final class Exp extends UnaryArithmetic {
         @Child private BinaryArithmetic calculatePowNode;
 
         @Override
@@ -84,11 +73,7 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "expm1", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class ExpM1 extends UnaryArithmeticBuiltinNode {
-
-        public ExpM1() {
-            super(RType.Double);
-        }
+    public static final class ExpM1 extends UnaryArithmetic {
 
         @Child private BinaryArithmetic calculatePowNode;
 
@@ -109,11 +94,7 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "sin", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Sin extends UnaryArithmeticBuiltinNode {
-
-        public Sin() {
-            super(RType.Double);
-        }
+    public static final class Sin extends UnaryArithmetic {
 
         @Override
         public double op(double op) {
@@ -129,11 +110,7 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "sinh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Sinh extends UnaryArithmeticBuiltinNode {
-
-        public Sinh() {
-            super(RType.Double);
-        }
+    public static final class Sinh extends UnaryArithmetic {
 
         @Override
         public double op(double op) {
@@ -149,12 +126,7 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "sinpi", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Sinpi extends UnaryArithmeticBuiltinNode {
-
-        public Sinpi() {
-            super(RType.Double);
-        }
-
+    public static final class Sinpi extends UnaryArithmetic {
         @Override
         public double op(double op) {
             double norm = op % 2d;
@@ -169,15 +141,15 @@ public class TrigExpFunctions {
             }
             return Math.sin(norm * Math.PI);
         }
+
+        @Override
+        public RComplex op(double re, double im) {
+            throw error(Message.UNIMPLEMENTED_COMPLEX_FUN);
+        }
     }
 
     @RBuiltin(name = "cos", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Cos extends UnaryArithmeticBuiltinNode {
-
-        public Cos() {
-            super(RType.Double);
-        }
-
+    public static final class Cos extends UnaryArithmetic {
         @Override
         public double op(double op) {
             return Math.cos(op);
@@ -192,12 +164,7 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "cosh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Cosh extends UnaryArithmeticBuiltinNode {
-
-        public Cosh() {
-            super(RType.Double);
-        }
-
+    public static final class Cosh extends UnaryArithmetic {
         @Override
         public double op(double op) {
             return Math.cosh(op);
@@ -212,12 +179,7 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "cospi", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Cospi extends UnaryArithmeticBuiltinNode {
-
-        public Cospi() {
-            super(RType.Double);
-        }
-
+    public static final class Cospi extends UnaryArithmetic {
         @Override
         public double op(double op) {
             double norm = op % 2d;
@@ -240,14 +202,9 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "tan", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Tan extends UnaryArithmeticBuiltinNode {
-
-        public Tan() {
-            super(RType.Double);
-        }
-
-        @Child private Sin sinNode = SinNodeGen.create();
-        @Child private Cos cosNode = CosNodeGen.create();
+    public static final class Tan extends UnaryArithmetic {
+        @Child private Sin sinNode = new Sin();
+        @Child private Cos cosNode = new Cos();
 
         @Override
         public double op(double op) {
@@ -266,13 +223,8 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "tanh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Tanh extends UnaryArithmeticBuiltinNode {
-
-        public Tanh() {
-            super(RType.Double);
-        }
-
-        @Child private Tan tanNode = TanNodeGen.create();
+    public static final class Tanh extends UnaryArithmetic {
+        @Child private Tan tanNode = new Tan();
 
         @Override
         public double op(double op) {
@@ -287,12 +239,7 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "tanpi", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Tanpi extends UnaryArithmeticBuiltinNode {
-
-        public Tanpi() {
-            super(RType.Double);
-        }
-
+    public static final class Tanpi extends UnaryArithmetic {
         @Override
         public double op(double op) {
             double norm = op % 1d;
@@ -312,13 +259,9 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "asin", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Asin extends UnaryArithmeticBuiltinNode {
+    public static final class Asin extends UnaryArithmetic {
 
         @Child private CHypot chypot;
-
-        public Asin() {
-            super(RType.Double);
-        }
 
         private void ensureChypot() {
             if (chypot == null) {
@@ -371,13 +314,8 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "asinh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Asinh extends UnaryArithmeticBuiltinNode {
-
-        @Child private Asin asinNode = AsinNodeGen.create();
-
-        public Asinh() {
-            super(RType.Double);
-        }
+    public static final class Asinh extends UnaryArithmetic {
+        @Child private Asin asinNode = new Asin();
 
         @Override
         public double op(double x) {
@@ -392,13 +330,8 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "acos", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Acos extends UnaryArithmeticBuiltinNode {
-
-        public Acos() {
-            super(RType.Double);
-        }
-
-        @Child private Asin asinNode = AsinNodeGen.create();
+    public static final class Acos extends UnaryArithmetic {
+        @Child private Asin asinNode = new Asin();
 
         @Override
         public double op(double op) {
@@ -413,13 +346,9 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "acosh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Acosh extends UnaryArithmeticBuiltinNode {
+    public static final class Acosh extends UnaryArithmetic {
 
-        public Acosh() {
-            super(RType.Double);
-        }
-
-        @Child private Acos acosNode = AcosNodeGen.create();
+        @Child private Acos acosNode = new Acos();
 
         @Override
         public double op(double x) {
@@ -434,12 +363,7 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "atan", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Atan extends UnaryArithmeticBuiltinNode {
-
-        public Atan() {
-            super(RType.Double);
-        }
-
+    public static final class Atan extends UnaryArithmetic {
         @Override
         public double op(double x) {
             return Math.atan(x);
@@ -464,13 +388,9 @@ public class TrigExpFunctions {
     }
 
     @RBuiltin(name = "atanh", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
-    public abstract static class Atanh extends UnaryArithmeticBuiltinNode {
+    public static final class Atanh extends UnaryArithmetic {
 
-        public Atanh() {
-            super(RType.Double);
-        }
-
-        @Child private Atan atanNode = AtanNodeGen.create();
+        @Child private Atan atanNode = new Atan();
 
         @Override
         public double op(double x) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.ops;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public class Operation extends RBaseNode {
@@ -45,6 +46,12 @@ public class Operation extends RBaseNode {
     }
 
     public static RuntimeException handleException(Throwable e) {
-        throw e instanceof RError ? (RError) e : RInternalError.shouldNotReachHere(e, "only RErrors should be thrown by arithmetic ops");
+        if (e instanceof RError) {
+            throw (RError) e;
+        } else if (e instanceof ReturnException) {
+            throw (ReturnException) e;
+        } else {
+            throw RInternalError.shouldNotReachHere(e, "only RErrors or ReturnExceptions should be thrown by arithmetic ops");
+        }
     }
 }

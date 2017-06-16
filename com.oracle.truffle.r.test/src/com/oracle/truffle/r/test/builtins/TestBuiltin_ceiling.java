@@ -62,7 +62,8 @@ public class TestBuiltin_ceiling extends TestBase {
         assertEval("{ ceiling(c(0.2,-3.4,NA,0/0,1/0)) }");
         assertEval("{ typeof(ceiling(42L)); }");
         assertEval("{ typeof(ceiling(TRUE)); }");
-        assertEval("{ trunc(1+1i); }");
-        assertEval("{ trunc(\"aaa\"); }");
+        // not implemented for complex in GNU R
+        assertEvalFastR("{ ceiling(1.1+1.9i); }", "2+2i");
+        assertEval("{ ceiling(\"aaa\"); }");
     }
 }

@@ -68,7 +68,9 @@ abstract class SubscriptSpecialBase extends SubscriptSpecialCommon {
         super(inReplacement);
     }
 
-    protected abstract Object execute(VirtualFrame frame, Object vec, Object index);
+    public abstract Object execute(VirtualFrame frame, Object vec, Object index);
+
+    public abstract Object execute(VirtualFrame frame, Object vec, int index);
 
     @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
     protected int access(RAbstractIntVector vector, int index) {
@@ -102,6 +104,8 @@ abstract class SubscriptSpecial2Base extends SubscriptSpecial2Common {
     }
 
     public abstract Object execute(VirtualFrame frame, Object vector, Object index1, Object index2);
+
+    public abstract Object execute(VirtualFrame frame, Object vec, int index1, int index2);
 
     @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
     protected int access(RAbstractIntVector vector, int index1, int index2) {
