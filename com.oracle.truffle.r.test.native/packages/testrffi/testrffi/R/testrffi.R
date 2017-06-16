@@ -156,3 +156,7 @@ rffi.LENGTH <- function(x) {
 rffi.coerceVector <- function(x, mode) {
 	.Call("test_coerceVector", x, mode)
 }
+
+rffi.getStringNA <- function() {
+    .Call("test_stringNA")
+}

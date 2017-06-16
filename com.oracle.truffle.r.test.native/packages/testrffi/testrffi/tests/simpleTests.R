@@ -23,5 +23,8 @@ rffi.interactive()
 x <- 1; rffi.findvar("x", globalenv())
 x <- "12345"; rffi.char_length(x)
 
+strVec <- rffi.getStringNA();
+stopifnot(anyNA(strVec))
+
 # loess invokes loess_raw native function passing in string value as argument and that is what we test here.
 loess(dist ~ speed, cars);
