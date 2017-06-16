@@ -34,7 +34,7 @@ r_internals_vars = ['R_NilValue', 'R_UnboundValue', 'R_MissingArg', 'R_GlobalEnv
     'R_LevelsSymbol', 'R_ModeSymbol', 'R_NameSymbol', 'R_NamesSymbol', 'R_NaRmSymbol', 'R_PackageSymbol',
     'R_QuoteSymbol', 'R_RowNamesSymbol', 'R_SeedsSymbol', 'R_SourceSymbol', 'R_TspSymbol', 'R_dot_defined',
     'R_dot_Method', 'R_dot_target', 'R_SrcrefSymbol', 'R_SrcfileSymbol', 'R_NaString', 'R_BlankString',
-    'R_BlankScalarString', 'R_BaseSymbol', 'R_baseSymbol', 'R_NamespaceEnvSymbol']
+    'R_DoubleColonSymbol', 'R_BlankScalarString', 'R_BaseSymbol', 'R_baseSymbol', 'R_NamespaceEnvSymbol']
 
 interface_vars = ['R_Home', 'R_TempDir',]
 

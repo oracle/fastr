@@ -39,6 +39,7 @@ static SEXP R_BaseSymbol_static;
 static SEXP R_Bracket2Symbol_static;   /* "[[" */
 static SEXP R_BracketSymbol_static;    /* "[" */
 static SEXP R_BraceSymbol_static;      /* "{" */
+static SEXP R_DoubleColonSymbol_static;/* "::" */
 static SEXP R_ClassSymbol_static;     /* "class" */
 static SEXP R_DeviceSymbol_static;     /* ".Device" */
 static SEXP R_DevicesSymbol_static;     /* ".Devices" */
@@ -134,6 +135,10 @@ SEXP FASTR_R_BaseSymbol() {
 
 SEXP FASTR_R_BraceSymbol() {
     return R_BraceSymbol_static;
+}
+
+SEXP FASTR_R_DoubleColonSymbol() {
+    return R_DoubleColonSymbol_static;
 }
 
 SEXP FASTR_R_Bracket2Symbol() {
@@ -306,6 +311,7 @@ void Call_initvar_obj(int index, void* value) {
     case R_Bracket2Symbol_x: R_Bracket2Symbol_static = createGlobalRef(value, 1); break;
     case R_BracketSymbol_x: R_BracketSymbol_static = createGlobalRef(value, 1); break;
     case R_BraceSymbol_x: R_BraceSymbol_static = createGlobalRef(value, 1); break;
+    case R_DoubleColonSymbol_x: R_DoubleColonSymbol_static = createGlobalRef(value, 1); break;
     case R_ClassSymbol_x: R_ClassSymbol_static = createGlobalRef(value, 1); break;
     case R_DeviceSymbol_x: R_DeviceSymbol_static = createGlobalRef(value, 1); break;
     case R_DevicesSymbol_x: R_DevicesSymbol_static = createGlobalRef(value, 1); break;
@@ -343,4 +349,3 @@ void Call_initvar_obj(int index, void* value) {
 	}
 //	printf("set index %d, value %p\n", index, value);
 }
-

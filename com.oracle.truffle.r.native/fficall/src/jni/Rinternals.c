@@ -95,6 +95,7 @@ static jmethodID LENGTH_MethodID;
 static jmethodID R_do_slot_MethodID;
 static jmethodID R_do_slot_assign_MethodID;
 static jmethodID R_MethodsNamespaceMethodID;
+static jmethodID Rf_str2type_MethodID;
 static jmethodID Rf_asIntegerMethodID;
 static jmethodID Rf_asRealMethodID;
 static jmethodID Rf_asCharMethodID;
@@ -212,6 +213,7 @@ void init_internals(JNIEnv *env) {
 	R_do_slot_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_do_slot", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	R_do_slot_assign_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_do_slot_assign", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	R_MethodsNamespaceMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_MethodsNamespace", "()Ljava/lang/Object;", 0);
+	Rf_str2type_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_str2type", "(Ljava/lang/Object;)I", 0);
 	Rf_asIntegerMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asInteger", "(Ljava/lang/Object;)I", 0);
 	Rf_asRealMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asReal", "(Ljava/lang/Object;)D", 0);
 	Rf_asCharMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asChar", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
@@ -1535,6 +1537,12 @@ SEXP R_do_new_object(SEXP class_def) {
     JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_do_new_object_MethodID, class_def);
     return checkRef(thisenv, result);
+}
+
+SEXPTYPE Rf_str2type(const char *name) {
+    JNIEnv *thisenv = getEnv();
+    jstring jsName = (*thisenv)->NewStringUTF(thisenv, name);
+    return (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_str2type_MethodID, jsName);
 }
 
 static SEXP jniGetMethodsNamespace() {

@@ -46,6 +46,7 @@ public enum RFFIVariables {
     R_Bracket2Symbol(RDataFactory.createSymbol("[[")),
     R_BracketSymbol(RDataFactory.createSymbol("[")),
     R_BraceSymbol(RDataFactory.createSymbol("{")),
+    R_DoubleColonSymbol(RDataFactory.createSymbol("::")),
     R_ClassSymbol(RDataFactory.createSymbol("class")),
     R_DeviceSymbol(RDataFactory.createSymbol(".Device")),
     R_DevicesSymbol(RDataFactory.createSymbol(".Devices")),

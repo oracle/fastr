@@ -50,6 +50,7 @@ static SEXP R_BaseSymbol_static;
 static SEXP R_Bracket2Symbol_static;   /* "[[" */
 static SEXP R_BracketSymbol_static;    /* "[" */
 static SEXP R_BraceSymbol_static;      /* "{" */
+static SEXP R_DoubleColonSymbol_static; /* "::" */
 static SEXP R_ClassSymbol_static;     /* "class" */
 static SEXP R_DeviceSymbol_static;     /* ".Device" */
 static SEXP R_DevicesSymbol_static;     /* ".Devices" */
@@ -180,6 +181,10 @@ SEXP FASTR_R_BaseSymbol() {
 
 SEXP FASTR_R_BraceSymbol() {
     return R_BraceSymbol_static;
+}
+
+SEXP FASTR_R_DoubleColonSymbol() {
+    return R_DoubleColonSymbol_static;
 }
 
 SEXP FASTR_R_Bracket2Symbol() {
@@ -371,6 +376,8 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 					R_BracketSymbol_static = ref;
 				} else if (strcmp(nameChars, "R_BraceSymbol") == 0) {
 					R_BraceSymbol_static = ref;
+				} else if (strcmp(nameChars, "R_DoubleColonSymbol") == 0) {
+					R_DoubleColonSymbol_static = ref;
 				} else if (strcmp(nameChars, "R_ClassSymbol") == 0) {
 					R_ClassSymbol_static = ref;
 				} else if (strcmp(nameChars, "R_DeviceSymbol") == 0) {

@@ -825,4 +825,9 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
         return delegate.R_MethodsNamespace();
     }
 
+    @Override
+    public int Rf_str2type(Object name) {
+        RFFIUtils.traceUpCall("Rf_str2type");
+        return delegate.Rf_str2type(name);
+    }
 }

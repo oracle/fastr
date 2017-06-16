@@ -70,7 +70,7 @@ public abstract class RepeatLength extends RBuiltinNode.Arg2 {
     @Specialization
     protected RIntVector repLen(int value, int length) {
         int[] array = new int[length];
-        Arrays.fill(array, length);
+        Arrays.fill(array, value);
         return RDataFactory.createIntVector(array, !RRuntime.isNA(value));
     }
 
