@@ -98,7 +98,7 @@ public class RSource {
     public static Source fromFileName(String text, String path, boolean internal) throws URISyntaxException {
         File file = new File(path).getAbsoluteFile();
         URI uri = new URI("file://" + file.getAbsolutePath());
-        Source.Builder<RuntimeException, RuntimeException, RuntimeException> builder = Source.newBuilder(text).name(file.getName()).uri(uri).mimeType(RRuntime.R_APP_MIME);
+        Source.Builder<RuntimeException, RuntimeException, RuntimeException> builder = Source.newBuilder(file).content(text).uri(uri).mimeType(RRuntime.R_APP_MIME);
         if (internal) {
             builder.internal();
         }
