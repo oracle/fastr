@@ -90,6 +90,8 @@ public interface StdUpCallsRFFI {
 
     Object Rf_findVarInFrame3(Object envArg, Object symbolArg, int doGet);
 
+    Object ATTRIB(Object obj);
+
     Object Rf_getAttrib(Object obj, Object name);
 
     int /* void */ Rf_setAttrib(Object obj, Object name, Object val);

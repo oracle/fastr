@@ -323,6 +323,10 @@ SEXP test_coerceVector(SEXP x, SEXP mode) {
     return Rf_coerceVector(x, intMode);
 }
 
+SEXP test_ATTRIB(SEXP x) {
+    return ATTRIB(x);
+}
+
 SEXP test_stringNA(void) {
     SEXP x = allocVector(STRSXP, 1);
     SET_STRING_ELT(x, 0, NA_STRING);

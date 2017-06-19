@@ -258,6 +258,14 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object ATTRIB(Object obj) {
+        if (obj instanceof RAttributable) {
+            return ((RAttributable) obj).getAttributes();
+        }
+        return RNull.instance;
+    }
+
+    @Override
     public Object Rf_getAttrib(Object obj, Object name) {
         Object result = RNull.instance;
         if (obj instanceof RAttributable) {
