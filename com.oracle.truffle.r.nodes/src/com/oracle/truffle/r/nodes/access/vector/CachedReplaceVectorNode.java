@@ -32,6 +32,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -100,7 +101,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     @Child private DeleteElementsNode deleteElementsNode;
     @Child private SetNamesAttributeNode setNamesNode;
 
-    CachedReplaceVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, RTypedValue value, boolean updatePositionNames, boolean recursive) {
+    CachedReplaceVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, Class<?> valueClass, RType valueType, boolean updatePositionNames, boolean recursive) {
         super(mode, vector, positions, recursive);
 
         if (numberOfDimensions == 1 && positions[0] instanceof String || positions[0] instanceof RAbstractStringVector) {
@@ -110,8 +111,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
 
         this.vectorClass = vector.getClass();
-        this.valueClass = value.getClass();
-        this.valueType = value.getRType();
+        this.valueClass = valueClass;
+        this.valueType = valueType;
         this.castType = resolveCastVectorType();
         verifyCastType(this.castType);
         this.castVectorNode = createCastVectorNode();
@@ -142,7 +143,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         Object castVector = vectorClass.cast(originalVector);
         Object castValue = valueClass.cast(originalValues);
 
-        RTypedValue value;
+        Object value;
         if (valueType == RType.Null) {
             if (vectorType == RType.Null) {
                 // we cast Null to Logical, but in the end it will fold and return Null
@@ -153,7 +154,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 value = castType.getEmpty();
             }
         } else {
-            value = (RTypedValue) castValue;
+            value = castValue;
         }
 
         int appliedValueLength;
@@ -562,7 +563,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
         if (copyPositionNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            copyPositionNames = insert(new CachedReplaceVectorNode(mode, names, positions, positionNames, false, recursive));
+            copyPositionNames = insert(new CachedReplaceVectorNode(mode, names, positions, positionNames.getClass(), positionNames.getRType(), false, recursive));
         }
         assert copyPositionNames.isSupported(names, positions, positionNames);
         RAbstractStringVector newNames = (RAbstractStringVector) copyPositionNames.apply(names, positions, positionNames);

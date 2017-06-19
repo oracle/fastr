@@ -42,6 +42,7 @@ import com.oracle.truffle.r.nodes.unary.FirstStringNode;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -90,10 +91,6 @@ public abstract class ReplaceVectorNode extends RBaseNode {
             throw error(RError.Message.GENERIC, "Invalid number positions for foreign access.");
         }
         return Message.WRITE.createNode();
-    }
-
-    protected static boolean isForeignObject(TruffleObject object) {
-        return RRuntime.isForeignObject(object);
     }
 
     protected FirstStringNode createFirstString() {
@@ -184,7 +181,8 @@ public abstract class ReplaceVectorNode extends RBaseNode {
     }
 
     protected static CachedReplaceVectorNode createDefaultCached(ReplaceVectorNode node, Object vector, Object[] positions, Object value) {
-        return new CachedReplaceVectorNode(node.mode, (RTypedValue) vector, positions, (RTypedValue) value, true, node.recursive);
+        return new CachedReplaceVectorNode(node.mode, (RTypedValue) vector, positions, value.getClass(), RRuntime.isForeignObject(value) ? RType.TruffleObject : ((RTypedValue) value).getRType(), true,
+                        node.recursive);
     }
 
     public ElementAccessMode getMode() {

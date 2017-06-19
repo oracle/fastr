@@ -422,6 +422,14 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
+    public void testAddToList() {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l <- list(to); is.list(l)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l <- list();  l$foreignobject <- to; identical(to, l$foreignobject)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l <- list(1); l$foreignobject <- to; identical(to, l$foreignobject)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l <- list(1); l$foreignobject <- 1; l$foreignobject <- to; identical(to, l$foreignobject)", "TRUE");
+    }
+
+    @Test
     public void testAttributes() {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " attributes(to)", "NULL");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " attr(to, 'a')<-'a'", "cat('Error in attr(to, \"a\") <- \"a\" : external object cannot be attributed\n')");
