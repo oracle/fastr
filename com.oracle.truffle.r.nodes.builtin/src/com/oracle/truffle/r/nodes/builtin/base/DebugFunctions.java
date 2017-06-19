@@ -22,21 +22,32 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
+import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.Arg3;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -82,7 +93,6 @@ public class DebugFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull debugonce(RFunction fun, Object text, Object condition) {
-            // TODO implement
             doDebug(this, fun, text, condition, true);
             return RNull.instance;
         }
@@ -116,6 +126,47 @@ public class DebugFunctions {
         @TruffleBoundary
         protected byte isDebugged(RFunction func) {
             return RRuntime.asLogical(DebugHandling.isDebugged(func));
+        }
+    }
+
+    @RBuiltin(name = ".fastr.setBreakpoint", visibility = OFF, kind = PRIMITIVE, parameterNames = {"srcfile", "line", "clear"}, behavior = COMPLEX)
+    public abstract static class FastRSetBreakpoint extends Arg3 {
+
+        static {
+            Casts casts = new Casts(FastRSetBreakpoint.class);
+            casts.arg("srcfile").mustNotBeMissing().mustBe(nullValue().not()).mustBe(stringValue()).asStringVector().findFirst();
+            casts.arg("line").allowMissing().asIntegerVector().findFirst();
+            casts.arg("clear").asLogicalVector().findFirst().map(toBoolean());
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object setBreakpoint(String fileLine, RMissing lineNr, boolean clear) {
+
+            int hashIdx = fileLine.lastIndexOf('#');
+            if (hashIdx != -1) {
+
+                String fileName = fileLine.substring(0, hashIdx);
+                int lnr = RRuntime.string2intNoCheck(fileLine.substring(hashIdx));
+                if (lnr != RRuntime.INT_NA) {
+                    return setBreakpoint(fileName, lnr, clear);
+                }
+            }
+
+            throw error(RError.Message.GENERIC, "Line number missing");
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object setBreakpoint(String fileName, int lineNr, boolean clear) {
+
+            try {
+                Source fromSrcfile = RSource.fromFileName(fileName, false);
+                DebugHandling.enableLineDebug(fromSrcfile, lineNr);
+                return RDataFactory.createStringVectorFromScalar(fileName + "#" + lineNr);
+            } catch (IOException e) {
+                return RNull.instance;
+            }
         }
     }
 }
