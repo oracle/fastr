@@ -142,6 +142,12 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object ATTRIB(Object obj) {
+        RFFIUtils.traceUpCall("ATTRIB");
+        return delegate.ATTRIB(obj);
+    }
+
+    @Override
     public Object Rf_getAttrib(Object obj, Object name) {
         RFFIUtils.traceUpCall("Rf_getAttrib", obj, name);
         return delegate.Rf_getAttrib(obj, name);

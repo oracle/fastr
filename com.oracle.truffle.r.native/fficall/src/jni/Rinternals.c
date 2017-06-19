@@ -49,6 +49,7 @@ static jmethodID Rf_defineVarMethodID;
 static jmethodID Rf_findVarMethodID;
 static jmethodID Rf_findVarInFrameMethodID;
 static jmethodID Rf_findVarInFrame3MethodID;
+static jmethodID ATTRIBMethodID;
 static jmethodID Rf_getAttribMethodID;
 static jmethodID Rf_setAttribMethodID;
 static jmethodID Rf_isStringMethodID;
@@ -161,6 +162,7 @@ void init_internals(JNIEnv *env) {
 	Rf_findVarMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_findVar", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	Rf_findVarInFrameMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_findVarInFrame", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	Rf_findVarInFrame3MethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_findVarInFrame3", "(Ljava/lang/Object;Ljava/lang/Object;I)Ljava/lang/Object;", 0);
+	ATTRIBMethodID = checkGetMethodID(env, UpCallsRFFIClass, "ATTRIB", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	Rf_getAttribMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_getAttrib", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	Rf_setAttribMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_setAttrib", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)I", 0);
 	Rf_isStringMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_isString", "(Ljava/lang/Object;)I", 0);
@@ -1207,9 +1209,11 @@ int TYPEOF(SEXP x) {
 	return (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, TYPEOF_MethodID, x);
 }
 
-SEXP ATTRIB(SEXP x){
-    unimplemented("ATTRIB");
-    return NULL;
+SEXP ATTRIB(SEXP x) {
+    TRACE(TARGp, x);
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, ATTRIBMethodID, x);
+    return checkRef(thisenv, result);
 }
 
 int OBJECT(SEXP x){
@@ -1582,4 +1586,3 @@ void Rf_copyMatrix(SEXP s, SEXP t, Rboolean byrow) {
     JNIEnv *thisenv = getEnv();
     (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_copyMatrixMethodID, s, t, byrow);
 }
-
