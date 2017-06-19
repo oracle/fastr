@@ -29,12 +29,7 @@ import org.junit.Test;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
-import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.context.ConsoleHandler;
-import com.oracle.truffle.r.runtime.context.ContextInfo;
-import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
-import com.oracle.truffle.r.test.generate.FastRSession.TestConsoleHandler;
 import com.oracle.truffle.tck.TruffleTCK;
 
 public class FastRTckTest extends TruffleTCK {
@@ -160,11 +155,9 @@ public class FastRTckTest extends TruffleTCK {
 
     @Override
     protected PolyglotEngine prepareVM(Builder builder) throws Exception {
-        ConsoleHandler consoleHandler = new TestConsoleHandler();
-        ContextInfo info = ContextInfo.createNoRestore(Client.R, null, ContextKind.SHARE_NOTHING, null, consoleHandler);
-        PolyglotEngine vm = info.createVM(builder);
-        vm.eval(INITIALIZATION);
-        return vm;
+        PolyglotEngine engine = builder.build();
+        engine.eval(INITIALIZATION).get();
+        return engine;
     }
 
     @Override
@@ -219,10 +212,7 @@ public class FastRTckTest extends TruffleTCK {
 
     @Override
     protected String invalidCode() {
-        // @formatter:off
-        return
-            "main <- function() {\n";
-        // @formatter:on
+        return "main <- function() {\n";
     }
 
     @Override
