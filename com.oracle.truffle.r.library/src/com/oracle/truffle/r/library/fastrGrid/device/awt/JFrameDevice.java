@@ -39,24 +39,19 @@ import javax.swing.JPanel;
 
 public final class JFrameDevice extends Graphics2DDevice {
 
-    private final JFrame currentFrame;
-    private final boolean disposeResources;
+    private final FastRFrame currentFrame;
     private Runnable onResize;
+    private Runnable onClose;
 
     /**
      * @param frame The frame that should be used for drawing.
      * @param graphics The graphics object that should be used for drawing. This constructor
-     *            overload allows to initialize the graphics object.
-     * @param disposeResources Should the frame and graphics objects be disposed at {@link #close()}
-     *            .
+     *            overload allows to initialize the graphics object. .
      */
-    private JFrameDevice(JFrame frame, Graphics2D graphics, boolean disposeResources) {
+    private JFrameDevice(FastRFrame frame, Graphics2D graphics) {
         super(graphics, frame.getContentPane().getWidth(), frame.getContentPane().getHeight(), true);
         currentFrame = frame;
-        this.disposeResources = disposeResources;
-        if (currentFrame instanceof FastRFrame) {
-            ((FastRFrame) currentFrame).device = this;
-        }
+        currentFrame.device = this;
     }
 
     /**
@@ -65,19 +60,15 @@ public final class JFrameDevice extends Graphics2DDevice {
      */
     public static JFrameDevice create(int width, int height) {
         FastRFrame frame = new FastRFrame(width, height);
-        frame.setVisible(true);
-        frame.pack();
-        Graphics2D graphics = (Graphics2D) frame.getGraphics();
-        defaultInitGraphics(graphics);
-        return new JFrameDevice(frame, graphics, true);
+        Graphics2D graphics = initFrame(frame);
+        graphics.clearRect(0, 0, width, height);
+        return new JFrameDevice(frame, graphics);
     }
 
     @Override
     public void close() throws DeviceCloseException {
-        if (disposeResources) {
-            getGraphics2D().dispose();
-            currentFrame.dispose();
-        }
+        getGraphics2D().dispose();
+        currentFrame.dispose();
     }
 
     @Override
@@ -90,12 +81,34 @@ public final class JFrameDevice extends Graphics2DDevice {
         return currentFrame.getContentPane().getHeight();
     }
 
+    @Override
+    void ensureOpen() {
+        if (!currentFrame.isVisible()) {
+            getGraphics2D().dispose();
+            setGraphics2D(initFrame(currentFrame));
+            // TODO: for some reason this does not always clear the whole page.
+            getGraphics2D().clearRect(0, 0, currentFrame.getWidth(), currentFrame.getHeight());
+        }
+    }
+
     public void setResizeListener(Runnable onResize) {
         this.onResize = onResize;
     }
 
+    public void setCloseListener(Runnable onClose) {
+        this.onClose = onClose;
+    }
+
     JFrame getCurrentFrame() {
         return currentFrame;
+    }
+
+    private static Graphics2D initFrame(FastRFrame frame) {
+        frame.setVisible(true);
+        frame.pack();
+        Graphics2D graphics = (Graphics2D) frame.getGraphics();
+        defaultInitGraphics(graphics);
+        return graphics;
     }
 
     static class FastRFrame extends JFrame {
@@ -128,7 +141,9 @@ public final class JFrameDevice extends Graphics2DDevice {
             addWindowFocusListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
-                    dispose();
+                    if (device.onClose != null) {
+                        device.onClose.run();
+                    }
                 }
             });
             addComponentListener(new ComponentAdapter() {
@@ -139,20 +154,28 @@ public final class JFrameDevice extends Graphics2DDevice {
                     }
                     if (!resizeScheduled) {
                         resizeScheduled = true;
-                        timer.schedule(new TimerTask() {
-                            @Override
-                            public void run() {
-                                oldWidth = getWidth();
-                                oldHeight = getHeight();
-                                resizeScheduled = false;
-                                if (device.onResize != null) {
-                                    device.onResize.run();
-                                }
-                            }
-                        }, 1000);
+                        scheduleResize();
                     }
                 }
             });
+        }
+
+        private void scheduleResize() {
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if (device == null) {
+                        scheduleResize();
+                        return;
+                    }
+                    oldWidth = getWidth();
+                    oldHeight = getHeight();
+                    resizeScheduled = false;
+                    if (device.onResize != null) {
+                        device.onResize.run();
+                    }
+                }
+            }, 1000);
         }
 
         private void center() {

@@ -96,12 +96,14 @@ public class Graphics2DDevice implements GridDevice {
 
     @Override
     public void openNewPage() {
+        ensureOpen();
         graphics.clearRect(0, 0, getWidthAwt(), getHeightAwt());
         cachedContext = null;
     }
 
     @Override
     public void drawRect(DrawingContext ctx, double leftXIn, double bottomYIn, double widthIn, double heightIn, double rotationAnticlockWise) {
+        ensureOpen();
         double leftXReal = transX(leftXIn);
         double topYReal = transY(bottomYIn + heightIn);
         int rectWidth = transDim(widthIn, leftXReal);
@@ -120,6 +122,7 @@ public class Graphics2DDevice implements GridDevice {
 
     @Override
     public void drawPolyLines(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
+        ensureOpen();
         Path2D.Double path = getPath2D(x, y, startIndex, length);
         setContext(ctx);
         graphics.draw(path);
@@ -127,6 +130,7 @@ public class Graphics2DDevice implements GridDevice {
 
     @Override
     public void drawPolygon(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
+        ensureOpen();
         Path2D.Double path = getPath2D(x, y, startIndex, length);
         setContext(ctx);
         drawShape(ctx, path);
@@ -134,6 +138,7 @@ public class Graphics2DDevice implements GridDevice {
 
     @Override
     public void drawCircle(DrawingContext ctx, double centerXIn, double centerYIn, double radiusIn) {
+        ensureOpen();
         setContext(ctx);
         double xRel = transX(centerXIn - radiusIn);
         double yRel = transY(centerYIn + radiusIn);
@@ -143,6 +148,7 @@ public class Graphics2DDevice implements GridDevice {
 
     @Override
     public void drawRaster(double leftX, double bottomY, double width, double height, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation) {
+        ensureOpen();
         graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, fromInterpolation(interpolation));
         Image image = Toolkit.getDefaultToolkit().createImage(new MemoryImageSource(pixelsColumnsCount, pixels.length / pixelsColumnsCount, pixels, 0, pixelsColumnsCount));
         double yRel = transY(bottomY + height);
@@ -152,6 +158,7 @@ public class Graphics2DDevice implements GridDevice {
 
     @Override
     public void drawString(DrawingContext ctx, double leftXIn, double bottomYIn, double rotationAnticlockWise, String text) {
+        ensureOpen();
         setContextAndFont(ctx);
         int leftX = iround(transX(leftXIn));
         FontMetrics fontMetrics = graphics.getFontMetrics(graphics.getFont());
@@ -196,6 +203,15 @@ public class Graphics2DDevice implements GridDevice {
      */
     int getHeightAwt() {
         return height;
+    }
+
+    /**
+     * If the device can be closed by an action outside of the R interpreter (not e.g. dev.close()),
+     * then the device should be able to re-open itself if any drawing happens after it was closed
+     * in such way.
+     */
+    void ensureOpen() {
+        // nop
     }
 
     void setGraphics2D(Graphics2D newGraphics) {

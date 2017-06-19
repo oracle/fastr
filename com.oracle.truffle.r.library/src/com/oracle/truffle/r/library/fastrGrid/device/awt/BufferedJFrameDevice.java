@@ -59,19 +59,13 @@ public final class BufferedJFrameDevice implements GridDevice, ImageSaver {
 
     public BufferedJFrameDevice(JFrameDevice inner) {
         this.inner = inner;
+        this.inner.setCloseListener(this::clearActions);
     }
 
     @Override
     public void openNewPage() {
         inner.openNewPage();
-        drawActions.clear();
-        if (buffer != null) {
-            // if new page is opened while we are on hold, we should throw away current buffer. In
-            // other words that is like starting new hold without previous flush.
-            buffer.dispose();
-            buffer = null;
-            hold();
-        }
+        clearActions();
     }
 
     @Override
@@ -192,6 +186,17 @@ public final class BufferedJFrameDevice implements GridDevice, ImageSaver {
         }
         ImageIO.write(image, fileType, new File(path));
         setGraphics(inner.getCurrentFrame().getGraphics());
+    }
+
+    private void clearActions() {
+        drawActions.clear();
+        if (buffer != null) {
+            // if new page is opened while we are on hold, we should throw away current buffer. In
+            // other words that is like starting new hold without previous flush.
+            buffer.dispose();
+            buffer = null;
+            hold();
+        }
     }
 
     private void setGraphics(Graphics graphics) {
