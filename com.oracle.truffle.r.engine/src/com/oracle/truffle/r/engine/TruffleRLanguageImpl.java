@@ -61,6 +61,8 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.RScope;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
+import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -71,7 +73,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage implements Scop
     private final HashMap<String, RFunction> builtinFunctionCache = new HashMap<>();
 
     @Override
-    public final HashMap<String, RFunction> getBuiltinFunctionCache() {
+    public HashMap<String, RFunction> getBuiltinFunctionCache() {
         return builtinFunctionCache;
     }
 
@@ -235,13 +237,15 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage implements Scop
         }
     }
 
+    private static final R2Foreign r2foreign = R2ForeignNodeGen.create();
+
     @Override
     protected Object lookupSymbol(RContext context, String symbolName) {
         Object value = context.stateREnvironment.getGlobalEnv().get(symbolName);
         if (value instanceof RPromise) {
             value = PromiseHelperNode.evaluateSlowPath((RPromise) value);
         }
-        return value != null ? RRuntime.r2Java(value) : null;
+        return value != null ? r2foreign.execute(value) : null;
     }
 
     @Override

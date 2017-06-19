@@ -711,7 +711,7 @@ public class FastRInterop {
 
         private final ConditionProfile isArrayProfile = ConditionProfile.createBinaryProfile();
 
-        protected ForeignArray2R createForeignArray2R(TruffleObject obj) {
+        protected ForeignArray2R createForeignArray2R() {
             return ForeignArray2RNodeGen.create();
         }
 
@@ -719,7 +719,7 @@ public class FastRInterop {
         @TruffleBoundary
         public Object fromArray(TruffleObject obj,
                         @Cached("HAS_SIZE.createNode()") Node hasSize,
-                        @Cached("createForeignArray2R(obj)") ForeignArray2R array2R) {
+                        @Cached("createForeignArray2R()") ForeignArray2R array2R) {
             if (isArrayProfile.profile(ForeignAccess.sendHasSize(hasSize, obj))) {
                 return array2R.execute(obj);
             } else {
@@ -728,7 +728,7 @@ public class FastRInterop {
         }
 
         @Fallback
-        public Object fromObject(Object obj) {
+        public Object fromObject(@SuppressWarnings("unused") Object obj) {
             throw error(RError.Message.GENERIC, "not a java array");
         }
     }

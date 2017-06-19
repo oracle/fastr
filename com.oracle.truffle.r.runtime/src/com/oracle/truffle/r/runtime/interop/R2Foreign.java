@@ -127,7 +127,7 @@ public abstract class R2Foreign extends RBaseNode {
     }
 
     @Specialization
-    public TruffleObject doNull(RNull obj) {
+    public TruffleObject doNull(@SuppressWarnings("unused") RNull obj) {
         // TODO this is java interop specific
         return JavaInterop.asTruffleObject(null);
     }
@@ -136,5 +136,4 @@ public abstract class R2Foreign extends RBaseNode {
     public static Object doObject(Object obj) {
         return obj;
     }
-
 }
