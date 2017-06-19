@@ -91,11 +91,13 @@ public class Graphics2DDevice implements GridDevice {
     static void defaultInitGraphics(Graphics2D graphics) {
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         graphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+        graphics.setBackground(Color.WHITE);
     }
 
     @Override
     public void openNewPage() {
         graphics.clearRect(0, 0, getWidthAwt(), getHeightAwt());
+        cachedContext = null;
     }
 
     @Override
