@@ -54,7 +54,7 @@
 #' @export
 .jevalArray <- function (x, contents.class = NULL, dispatch = FALSE) 
 {
-    .fastr.java.fromArray(x)
+    .fastr.interop.fromArray(x)
 }
 
 #' @export

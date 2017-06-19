@@ -11,27 +11,27 @@ test_that(testName, {
     cat(paste0(testName, "\n"))
 	
     a <- .jarray(c(1.1, 2.1, 3.1))
-    expect_true(.fastr.java.isArray(a))
+    expect_true(.fastr.interop.isArray(a))
     expect_equal(length(a), 3)
     expect_equal(a[1], c(1.1))
     expect_equal(a[2], c(2.1))
     expect_equal(a[3], c(3.1))
 
     a <- .jarray(c(1L, 2L, 3L))
-    expect_true(.fastr.java.isArray(a))
+    expect_true(.fastr.interop.isArray(a))
     expect_equal(length(a), 3)
     expect_equal(a[1], c(1))
     expect_equal(a[2], c(2))
     expect_equal(a[3], c(3))
 
     a <- .jarray(c(TRUE, FALSE))
-    expect_true(.fastr.java.isArray(a))
+    expect_true(.fastr.interop.isArray(a))
     expect_equal(length(a), 2)
     expect_equal(a[1], TRUE)
     expect_equal(a[2], FALSE)
 
     a <- .jarray(c(.jbyte(1), .jchar("a"), .jfloat(1.1), .jlong(2), .jshort(123)))
-    expect_true(.fastr.java.isArray(a))
+    expect_true(.fastr.interop.isArray(a))
     expect_equal(length(a), 5)
     expect_equal(a[1], 1)
     expect_equal(a[2], "a")
@@ -41,21 +41,21 @@ test_that(testName, {
 
     to <- .jnew('java.util.ArrayList')
     a <- .jarray(to)
-    expect_true(.fastr.java.isArray(a))
+    expect_true(.fastr.interop.isArray(a))
     expect_equal(length(a), 1)
     # fails at the moment
     # expect_equal(a[1], to)
 
     to <- .jnew('java.util.ArrayList')
     a <- .jarray(c(to, to))
-    expect_true(.fastr.java.isArray(a))
+    expect_true(.fastr.interop.isArray(a))
     expect_equal(length(a), 2)
     # fails at the moment    
     # expect_equal(a[1], to)
     # expect_equal(a[2], to)
 
     a <- .jarray(list(1, 2, 3))
-    expect_true(.fastr.java.isArray(a))
+    expect_true(.fastr.interop.isArray(a))
     expect_equal(length(a), 3)
     expect_equal(a[1], 1)
     expect_equal(a[2], 2)
@@ -85,7 +85,7 @@ test_that(testName, {
         arrayType <- ev[[1]]
         arrayLength <- length(ev) - 1
         a<-t[fieldName]
-        expect_true(.fastr.java.isArray(a), info=paste0("the array was returned for ", fieldName), label=".fastr.java.isArray")
+        expect_true(.fastr.interop.isArray(a), info=paste0("the array was returned for ", fieldName), label=".fastr.interop.isArray")
         ae<-.jevalArray(a)
         expect_true(is.vector(ae), info=paste0("the array was returned for ", fieldName), label="is.vector")
         expect_equal(typeof(ae), arrayType, info=paste0("the array was returned for ", fieldName), label="typeof")
