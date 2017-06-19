@@ -128,34 +128,35 @@ public abstract class ReplaceVectorNode extends RBaseNode {
 
     private void write(Object position, Node foreignWrite, Node keyInfoNode, TruffleObject object, Object writtenValue, FirstStringNode firstString, CastStringNode castNode, R2Foreign r2Foreign)
                     throws InteropException, RError {
-        if (position instanceof Integer) {
-            position = ((Integer) position) - 1;
-        } else if (position instanceof Double) {
-            position = ((Double) position) - 1;
-        } else if (position instanceof RAbstractDoubleVector) {
-            position = ((RAbstractDoubleVector) position).getDataAt(0) - 1;
-        } else if (position instanceof RAbstractIntVector) {
-            position = ((RAbstractIntVector) position).getDataAt(0) - 1;
-        } else if (position instanceof RAbstractStringVector) {
-            String string = firstString.executeString(castNode.doCast(position));
-            position = string;
-        } else if (!(position instanceof String)) {
+        Object pos = position;
+        if (pos instanceof Integer) {
+            pos = ((Integer) pos) - 1;
+        } else if (pos instanceof Double) {
+            pos = ((Double) pos) - 1;
+        } else if (pos instanceof RAbstractDoubleVector) {
+            pos = ((RAbstractDoubleVector) pos).getDataAt(0) - 1;
+        } else if (pos instanceof RAbstractIntVector) {
+            pos = ((RAbstractIntVector) pos).getDataAt(0) - 1;
+        } else if (pos instanceof RAbstractStringVector) {
+            String string = firstString.executeString(castNode.doCast(pos));
+            pos = string;
+        } else if (!(pos instanceof String)) {
             throw error(RError.Message.GENERIC, "invalid index during foreign access");
         }
 
-        int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, position);
+        int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, pos);
         if (KeyInfo.isWritable(info)) {
-            ForeignAccess.sendWrite(foreignWrite, object, position, r2Foreign.execute(writtenValue));
+            ForeignAccess.sendWrite(foreignWrite, object, pos, r2Foreign.execute(writtenValue));
             return;
-        } else if (position instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
+        } else if (pos instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
             TruffleObject clazz = JavaInterop.toJavaClass(object);
-            info = ForeignAccess.sendKeyInfo(keyInfoNode, clazz, position);
+            info = ForeignAccess.sendKeyInfo(keyInfoNode, clazz, pos);
             if (KeyInfo.isWritable(info)) {
-                ForeignAccess.sendWrite(foreignWrite, clazz, position, r2Foreign.execute(writtenValue));
+                ForeignAccess.sendWrite(foreignWrite, clazz, pos, r2Foreign.execute(writtenValue));
                 return;
             }
         }
-        throw error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + position);
+        throw error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + pos);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(vector, positions)"})

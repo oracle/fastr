@@ -75,6 +75,11 @@ abstract class PositionCastNode extends RBaseNode {
     }
 
     @Specialization
+    protected RAbstractVector doLong(long position, @Cached("create()") NACheck check) {
+        return doDouble(position, check);
+    }
+
+    @Specialization
     protected RAbstractVector doString(String position) {
         return RString.valueOf(position);
     }

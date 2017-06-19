@@ -30,7 +30,7 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
-@MessageResolution(receiverType = REnvironment.class, language = TruffleRLanguage.class)
+@MessageResolution(receiverType = REnvironment.class)
 public class REnvironmentMR {
 
     @Resolve(message = "IS_BOXED")
@@ -74,11 +74,10 @@ public class REnvironmentMR {
     @Resolve(message = "READ")
     public abstract static class REnvironmentReadNode extends Node {
         @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, REnvironment receiver, String field) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
                 return extract.applyAccessField(frame, receiver, field);
             }
         }
@@ -87,11 +86,10 @@ public class REnvironmentMR {
     @Resolve(message = "WRITE")
     public abstract static class REnvironmentWriteNode extends Node {
         @Child private ReplaceVectorNode extract = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
         @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, REnvironment receiver, String field, Object valueObj) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
                 Object value = javaToRPrimitive(valueObj);
                 Object x = extract.apply(frame, receiver, new Object[]{field}, value);
                 return x;

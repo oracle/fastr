@@ -23,10 +23,8 @@
 package com.oracle.truffle.r.engine.interop;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.MessageResolution;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.ffi.impl.interop.FFI_RForeignAccessFactoryImpl;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
@@ -120,11 +118,6 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
                 throw RInternalError.unimplemented("missing foreign access factory for " + obj.getClass().getSimpleName());
             }
         }
-    }
-
-    @Override
-    public Class<? extends TruffleLanguage<RContext>> getTruffleLanguage() {
-        return TruffleRLanguage.class;
     }
 
     @Override

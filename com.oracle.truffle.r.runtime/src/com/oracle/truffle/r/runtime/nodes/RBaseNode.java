@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -209,6 +210,10 @@ public abstract class RBaseNode extends Node {
                 }
             }
         }
+    }
+
+    protected final TruffleRLanguage getRLanguage() {
+        return getRootNode().getLanguage(RContext.getTruffleRLanguage());
     }
 
     protected static boolean isRAbstractContainer(Object value) {

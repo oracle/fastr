@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,13 +36,15 @@ import java.util.Date;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * This class is intended to be used for internal errors that do not correspond to R errors.
  */
-public final class RInternalError extends Error {
+public final class RInternalError extends Error implements TruffleException {
 
     private static final long serialVersionUID = 80698622974155216L;
 
@@ -197,5 +199,15 @@ public final class RInternalError extends Error {
                 }
             }
         }
+    }
+
+    @Override
+    public Node getLocation() {
+        return null;
+    }
+
+    @Override
+    public boolean isInternalError() {
+        return true;
     }
 }

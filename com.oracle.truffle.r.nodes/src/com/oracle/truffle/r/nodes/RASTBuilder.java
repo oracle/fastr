@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,6 +54,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -179,14 +180,14 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     }
 
     @Override
-    public RSyntaxNode function(SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, Object assignedTo) {
+    public RSyntaxNode function(TruffleRLanguage language, SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, Object assignedTo) {
         String description = getFunctionDescription(source, assignedTo);
-        RootCallTarget callTarget = rootFunction(source, params, body, description);
+        RootCallTarget callTarget = rootFunction(language, source, params, body, description);
         return FunctionExpressionNode.create(source, callTarget);
     }
 
     @Override
-    public RootCallTarget rootFunction(SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, String name) {
+    public RootCallTarget rootFunction(TruffleRLanguage language, SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, String name) {
         // Parse argument list
         RNode[] defaultValues = new RNode[params.size()];
         SaveArgumentsNode saveArguments;
@@ -233,7 +234,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(name != null && !name.isEmpty() ? name : "<function>", descriptor);
-        FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(source, descriptor, argSourceSections, saveArguments, body, formals, name, argPostProcess);
+        FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(language, source, descriptor, argSourceSections, saveArguments, body, formals, name, argPostProcess);
 
         if (FastROptions.ForceSources.getBooleanValue()) {
             // forces source sections to be generated

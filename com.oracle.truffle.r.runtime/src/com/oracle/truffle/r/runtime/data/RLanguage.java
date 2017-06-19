@@ -76,6 +76,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
         this.length = length;
     }
 
+    @TruffleBoundary
     public static Object fromList(Object o, RLanguage.RepType type) {
         RList l;
         if (o instanceof RPairList) {

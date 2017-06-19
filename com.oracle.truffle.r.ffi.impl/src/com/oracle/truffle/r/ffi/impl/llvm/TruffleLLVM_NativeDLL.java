@@ -68,7 +68,7 @@ class TruffleLLVM_NativeDLL {
             if (truffleNativeDLL == null) {
                 truffleNativeDLL = new TruffleLLVM_NativeDLL();
                 truffleNativeDLLTruffleObject = JavaInterop.asTruffleObject(truffleNativeDLL);
-                context.addExportedSymbol("_fastr_dllnative_helper", truffleNativeDLLTruffleObject);
+                context.getEnv().exportSymbol("_fastr_dllnative_helper", truffleNativeDLLTruffleObject);
             }
             return this;
         }

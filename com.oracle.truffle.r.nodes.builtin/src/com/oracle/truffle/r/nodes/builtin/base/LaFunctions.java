@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.lang.ref.SoftReference;
-import java.lang.ref.WeakReference;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;

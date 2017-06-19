@@ -49,9 +49,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
+import com.oracle.truffle.r.runtime.context.EvalThread;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
-import com.oracle.truffle.r.runtime.context.RContext.EvalThread;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -96,7 +96,7 @@ public class FastRContext {
     }
 
     private static void handleSharedContexts(ContextKind contextKind) {
-        if (contextKind == ContextKind.SHARE_ALL && RContext.EvalThread.threadCnt.get() == 0) {
+        if (contextKind == ContextKind.SHARE_ALL && EvalThread.threadCnt.get() == 0) {
             RContext current = RContext.getInstance();
             if (EvalThread.threadCnt.get() == 0 && (current.isInitial() || current.getKind() == ContextKind.SHARE_PARENT_RW)) {
                 ContextInfo.resetMultiSlotIndexGenerator();
@@ -135,12 +135,12 @@ public class FastRContext {
             handleSharedContexts(contextKind);
 
             int length = exprs.getLength();
-            RContext.EvalThread[] threads = new RContext.EvalThread[length];
+            EvalThread[] threads = new EvalThread[length];
             int[] data = new int[length];
             int[] multiSlotIndices = new int[length];
             for (int i = 0; i < length; i++) {
                 ContextInfo info = createContextInfo(contextKind);
-                threads[i] = new RContext.EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
+                threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
                 data[i] = info.getId();
                 multiSlotIndices[i] = info.getMultiSlotInd();
             }
@@ -172,9 +172,9 @@ public class FastRContext {
                 int[] multiSlotIndices = new int[handle.getLength()];
                 for (int i = 0; i < handle.getLength(); i++) {
                     int id = handle.getDataAt(i);
-                    Thread thread = RContext.EvalThread.threads.get(id);
-                    if (RContext.EvalThread.idToMultiSlotTable.containsKey(id)) {
-                        multiSlotIndices[i] = RContext.EvalThread.idToMultiSlotTable.remove(id);
+                    Thread thread = EvalThread.threads.get(id);
+                    if (EvalThread.idToMultiSlotTable.containsKey(id)) {
+                        multiSlotIndices[i] = EvalThread.idToMultiSlotTable.remove(id);
                     }
                     if (thread == null) {
                         // already done
@@ -184,7 +184,7 @@ public class FastRContext {
                     }
                 }
                 // If all eval threads died, completely remove multi slot data.
-                if (RContext.EvalThread.threadCnt.get() == 0) {
+                if (EvalThread.threadCnt.get() == 0) {
                     REnvironment.cleanupSearchpathFromMultiSlot();
                 } else {
                     REnvironment.cleanupSearchpathFromMultiSlot(multiSlotIndices);
@@ -236,17 +236,17 @@ public class FastRContext {
                 ContextInfo info = createContextInfo(contextKind);
                 PolyglotEngine vm = info.createVM();
                 try {
-                    results[0] = RContext.EvalThread.run(vm, info, RSource.fromTextInternalInvisible(exprs.getDataAt(0), RSource.Internal.CONTEXT_EVAL));
+                    results[0] = EvalThread.run(vm, info, RSource.fromTextInternalInvisible(exprs.getDataAt(0), RSource.Internal.CONTEXT_EVAL));
                 } finally {
                     vm.dispose();
                 }
             } else {
                 // separate threads that run in parallel; invoking thread waits for completion
-                RContext.EvalThread[] threads = new RContext.EvalThread[length];
+                EvalThread[] threads = new EvalThread[length];
                 int[] multiSlotIndices = new int[length];
                 for (int i = 0; i < length; i++) {
                     ContextInfo info = createContextInfo(contextKind);
-                    threads[i] = new RContext.EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
+                    threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
                     multiSlotIndices[i] = info.getMultiSlotInd();
                 }
                 if (contextKind == ContextKind.SHARE_ALL) {

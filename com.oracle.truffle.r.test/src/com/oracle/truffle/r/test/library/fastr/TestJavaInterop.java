@@ -22,19 +22,20 @@
  */
 package com.oracle.truffle.r.test.library.fastr;
 
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop;
-import com.oracle.truffle.r.runtime.RType;
-import org.junit.Test;
-
-import com.oracle.truffle.r.test.TestBase;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
+
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.test.TestBase;
 
 public class TestJavaInterop extends TestBase {
 
@@ -524,6 +525,7 @@ public class TestJavaInterop extends TestBase {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class TestClass {
 
         public static boolean fieldStaticBoolean = true;

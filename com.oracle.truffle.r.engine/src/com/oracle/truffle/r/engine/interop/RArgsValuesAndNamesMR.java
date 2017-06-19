@@ -27,10 +27,9 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 
-@MessageResolution(receiverType = RArgsValuesAndNames.class, language = TruffleRLanguage.class)
+@MessageResolution(receiverType = RArgsValuesAndNames.class)
 public class RArgsValuesAndNamesMR {
     @Resolve(message = "IS_BOXED")
     public abstract static class RArgsValuesAndNamesIsBoxedNode extends Node {

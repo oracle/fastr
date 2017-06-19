@@ -112,7 +112,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
 
     @TruffleBoundary
     @Specialization
-    protected Object parse(int conn, int n, @SuppressWarnings("unused") RNull text, String prompt, Object srcFile, String encoding) {
+    protected RExpression parse(int conn, int n, @SuppressWarnings("unused") RNull text, String prompt, Object srcFile, String encoding) {
         String[] lines;
         RConnection connection = RConnection.fromIndex(conn);
         if (connection == StdConnections.getStdin()) {
@@ -128,12 +128,12 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
 
     @TruffleBoundary
     @Specialization
-    protected Object parse(int conn, int n, RAbstractStringVector text, String prompt, Object srcFile, String encoding) {
+    protected RExpression parse(int conn, int n, RAbstractStringVector text, String prompt, Object srcFile, String encoding) {
         RConnection connection = RConnection.fromIndex(conn);
         return doParse(connection, n, text.materialize().getDataWithoutCopying(), prompt, srcFile, encoding);
     }
 
-    private Object doParse(RConnection conn, int n, String[] lines, @SuppressWarnings("unused") String prompt, Object srcFile, @SuppressWarnings("unused") String encoding) {
+    private RExpression doParse(RConnection conn, int n, String[] lines, @SuppressWarnings("unused") String prompt, Object srcFile, @SuppressWarnings("unused") String encoding) {
         String coalescedLines = coalesce(lines);
         if (coalescedLines.length() == 0 || n == 0) {
             return RDataFactory.createExpression(new Object[0]);

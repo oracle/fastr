@@ -776,7 +776,7 @@ public class RSerialize {
                 case BUILTINSXP: {
                     int len = stream.readInt();
                     String s = stream.readString(len);
-                    result = RContext.lookupBuiltin(s);
+                    result = RContext.getInstance().lookupBuiltin(s);
                     RInternalError.guarantee(result != null, "lookup failed in unserialize for builtin: " + s);
                     break;
                 }
@@ -2498,7 +2498,7 @@ public class RSerialize {
             REnvironment environment = (REnvironment) tag;
 
             MaterializedFrame enclosingFrame = environment.getFrame();
-            RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(RSyntaxNode.LAZY_DEPARSE, processArguments(car), processBody(cdr), functionName);
+            RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, processArguments(car), processBody(cdr), functionName);
 
             FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
             RFunction func = RDataFactory.createFunction(functionName, packageName, callTarget, null, enclosingFrame);
@@ -2576,7 +2576,7 @@ public class RSerialize {
 
         private static RSyntaxNode processFunctionExpression(Object car, Object cdr, @SuppressWarnings("unused") Object tag) {
             // car == arguments, cdr == body
-            return RContext.getASTBuilder().function(RSyntaxNode.LAZY_DEPARSE, processArguments(car), processBody(cdr), null);
+            return RContext.getASTBuilder().function(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, processArguments(car), processBody(cdr), null);
         }
 
         private static List<RCodeBuilder.Argument<RSyntaxNode>> processArguments(Object args) {

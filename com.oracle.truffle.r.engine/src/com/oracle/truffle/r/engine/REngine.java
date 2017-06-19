@@ -34,16 +34,15 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -55,7 +54,6 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
-import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
@@ -69,7 +67,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
-import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -103,6 +100,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -162,7 +160,7 @@ final class REngine implements Engine, Engine.Timings {
         suppressWarnings = true;
         MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame("base");
         REnvironment.baseInitialize(baseFrame, globalFrame);
-        RBuiltinPackages.loadBase(baseFrame);
+        RBuiltinPackages.loadBase(context.getLanguage(), baseFrame);
         RGraphics.initialize();
         if (FastROptions.LoadProfiles.getBooleanValue()) {
             StartupTiming.timestamp("Before Profiles Loaded");
@@ -285,9 +283,9 @@ final class REngine implements Engine, Engine.Timings {
         }
     }
 
-    private static List<RSyntaxNode> parseImpl(Source source) throws ParseException {
+    private List<RSyntaxNode> parseImpl(Source source) throws ParseException {
         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
-        return parser.script(source, new RASTBuilder());
+        return parser.script(source, new RASTBuilder(), context.getLanguage());
     }
 
     @Override
@@ -298,14 +296,18 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public CallTarget parseToCallTarget(Source source, MaterializedFrame executionFrame) throws ParseException {
         if (source == Engine.GET_CONTEXT) {
             /*
              * The "get context" operations should be executed with as little influence on the
              * actual engine as possible, therefore this special case takes care of it explicitly.
              */
-            return Truffle.getRuntime().createCallTarget(new RootNode(TruffleRLanguage.class, source.createUnavailableSection(), new FrameDescriptor()) {
+            return Truffle.getRuntime().createCallTarget(new RootNode(context.getLanguage()) {
+                @Override
+                public SourceSection getSourceSection() {
+                    return source.createUnavailableSection();
+                }
+
                 @Override
                 public Object execute(VirtualFrame frame) {
                     return JavaInterop.asTruffleValue(context);
@@ -335,18 +337,25 @@ final class REngine implements Engine, Engine.Timings {
         private final MaterializedFrame executionFrame;
         @Children private final DirectCallNode[] calls;
         private final boolean printResult;
+        private final SourceSection sourceSection;
+        private final ContextReference<RContext> contextReference;
 
-        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
         @Child private R2Foreign r2Foreign = R2ForeignNodeGen.create();
 
-        @SuppressWarnings("deprecation")
         PolyglotEngineRootNode(List<RSyntaxNode> statements, SourceSection sourceSection, MaterializedFrame executionFrame) {
-            super(TruffleRLanguage.class, sourceSection, new FrameDescriptor());
+            super(context.getLanguage());
+            this.sourceSection = sourceSection;
+            this.contextReference = context.getLanguage().getContextReference();
             // can't print if initializing the system in embedded mode (no builtins yet)
             this.printResult = !sourceSection.getSource().getName().equals(RSource.Internal.INIT_EMBEDDED.string) && sourceSection.getSource().isInteractive();
             this.statements = statements;
             this.executionFrame = executionFrame;
             this.calls = new DirectCallNode[statements.size()];
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            return sourceSection;
         }
 
         /**
@@ -358,7 +367,7 @@ final class REngine implements Engine, Engine.Timings {
         @ExplodeLoop
         public Object execute(VirtualFrame frame) {
             RContext oldContext = RContext.getThreadLocalInstance();
-            RContext newContext = TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext);
+            RContext newContext = contextReference.get();
             RContext.setThreadLocalInstance(newContext);
             try {
                 Object lastValue = RNull.instance;
@@ -529,13 +538,17 @@ final class REngine implements Engine, Engine.Timings {
         @Child private GetVisibilityNode visibility = GetVisibilityNode.create();
         @Child private SetVisibilityNode setVisibility = SetVisibilityNode.create();
 
-        @SuppressWarnings("deprecation")
         protected AnonymousRootNode(RNode body, String description, boolean printResult, boolean topLevel) {
-            super(TruffleRLanguage.class, null, new FrameDescriptor());
+            super(context.getLanguage());
             this.body = body;
             this.description = description;
             this.printResult = printResult;
             this.topLevel = topLevel;
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            return body.getSourceSection();
         }
 
         private VirtualFrame prepareFrame(VirtualFrame frame) {
@@ -647,7 +660,15 @@ final class REngine implements Engine, Engine.Timings {
             ShareObjectNode.unshare(resultValue);
         } else {
             // this supports printing of non-R values (via toString for now)
-            RContext.getInstance().getConsoleHandler().println(toString(result));
+            String str;
+            if (result == null) {
+                str = "[external object (null)]";
+            } else if (result instanceof CharSequence) {
+                str = "[1] \"" + String.valueOf(result) + "\"";
+            } else {
+                str = String.valueOf(result);
+            }
+            RContext.getInstance().getConsoleHandler().println(str);
         }
     }
 
@@ -670,21 +691,6 @@ final class REngine implements Engine, Engine.Timings {
         RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
         RSyntaxNode call = builder.call(RSyntaxNode.LAZY_DEPARSE, builder.constant(RSyntaxNode.LAZY_DEPARSE, function), builder.constant(RSyntaxNode.LAZY_DEPARSE, result));
         doMakeCallTarget(call.asRNode(), RSource.Internal.EVAL_WRAPPER.string, false, false).call(callingFrame);
-    }
-
-    private static String toString(Object originalResult) {
-        Object result = evaluatePromise(originalResult);
-        result = RRuntime.asAbstractVector(result);
-        // this supports printing of non-R values (via toString for now)
-        if (result instanceof RTypedValue || result instanceof TruffleObject) {
-            return ValuePrinterNode.prettyPrint(result);
-        } else if (result == null) {
-            return "[external object (null)]";
-        } else if (result instanceof CharSequence) {
-            return "[1] \"" + String.valueOf(result) + "\"";
-        } else {
-            return String.valueOf(result);
-        }
     }
 
     private static Object evaluatePromise(Object value) {

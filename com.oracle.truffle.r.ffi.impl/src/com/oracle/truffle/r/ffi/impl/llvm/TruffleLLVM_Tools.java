@@ -49,7 +49,7 @@ public class TruffleLLVM_Tools implements ToolsRFFI {
         @Override
         public ContextState initialize(RContext context) {
             RFFIFactory.getRFFI().getToolsRFFI();
-            context.addExportedSymbol("_fastr_rffi_tools", truffleToolsTruffleObject);
+            context.getEnv().exportSymbol("_fastr_rffi_tools", truffleToolsTruffleObject);
             return this;
         }
     }

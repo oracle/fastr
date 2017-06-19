@@ -143,7 +143,7 @@ public final class GridContext {
         return RContext.getEngine().evalFunction(redrawAll, REnvironment.baseEnv().getFrame(), RCaller.topLevel, true, null, args);
     }
 
-    private BufferedImageDevice safeOpenImageDev(String filename, String formatName) {
+    private static BufferedImageDevice safeOpenImageDev(String filename, String formatName) {
         if (!FastRConfig.InternalGridAwtSupport) {
             throw awtNotSupported();
         }

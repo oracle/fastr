@@ -30,9 +30,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.ForeignAccess.Factory26;
 import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactoryFactory.VectorReadNodeGen;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
@@ -44,16 +44,22 @@ import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
+abstract class InteropRootNode extends RootNode {
+    InteropRootNode() {
+        super(TruffleRLanguageImpl.getCurrentLanguage());
+    }
+
+    @Override
+    public final SourceSection getSourceSection() {
+        return RSyntaxNode.INTERNAL;
+    }
+}
+
 public final class RAbstractVectorAccessFactory implements Factory26 {
 
-    static class VectorSizeNode extends RootNode {
+    static class VectorSizeNode extends InteropRootNode {
 
         @Child private RLengthNode lengthNode = RLengthNode.create();
-
-        @SuppressWarnings("deprecation")
-        VectorSizeNode() {
-            super(TruffleRLanguage.class, RSyntaxNode.INTERNAL, null);
-        }
 
         @Override
         public Object execute(VirtualFrame frame) {
@@ -61,23 +67,16 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
         }
     }
 
-    abstract static class VectorReadNode extends RootNode {
+    abstract static class VectorReadNode extends InteropRootNode {
 
-        @CompilationFinal private boolean lengthAccess;
+        @CompilationFinal private boolean lengthAccess = false;
         @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
         @Child private RLengthNode lengthNode = RLengthNode.create();
-        @Child private Node findContext = TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
-
-        @SuppressWarnings("deprecation")
-        VectorReadNode() {
-            super(TruffleRLanguage.class, RSyntaxNode.INTERNAL, null);
-            this.lengthAccess = false;
-        }
 
         @Override
         @SuppressWarnings("try")
         public final Object execute(VirtualFrame frame) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguage.INSTANCE.actuallyFindContext0(findContext))) {
+            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
                 Object label = ForeignAccess.getArguments(frame).get(0);
                 Object receiver = ForeignAccess.getReceiver(frame);
                 return execute(frame, receiver, label);
@@ -92,15 +91,13 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
         }
 
         @Specialization
+        protected Object readIndexed(VirtualFrame frame, Object receiver, long label) {
+            return extract.apply(frame, receiver, new Object[]{label + 1}, RLogical.TRUE, RLogical.TRUE);
+        }
+
+        @Specialization
         protected Object readProperty(VirtualFrame frame, Object receiver, String label) {
             return extract.applyAccessField(frame, receiver, label);
-        }
-    }
-
-    private abstract class InteropRootNode extends RootNode {
-        @SuppressWarnings("deprecation")
-        InteropRootNode() {
-            super(TruffleRLanguage.class, RSyntaxNode.INTERNAL, null);
         }
     }
 

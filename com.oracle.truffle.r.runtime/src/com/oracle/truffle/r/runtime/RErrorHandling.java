@@ -18,6 +18,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -353,7 +354,7 @@ public class RErrorHandling {
                 if (isCallingEntry(entry)) {
                     Object h = entry.getDataAt(ENTRY_HANDLER);
                     if (h == RESTART_TOKEN) {
-                        errorcallDfltWithCall(fromCall(call), Message.GENERIC, msg);
+                        errorcallDfltWithCall(null, fromCall(call), Message.GENERIC, msg);
                     } else {
                         RFunction hf = (RFunction) h;
                         RContext.getEngine().evalFunction(hf, null, null, true, null, cond);
@@ -444,7 +445,7 @@ public class RErrorHandling {
 
     @TruffleBoundary
     public static void dfltStop(String msg, Object call) {
-        errorcallDfltWithCall(fromCall(call), Message.GENERIC, msg);
+        errorcallDfltWithCall(null, fromCall(call), Message.GENERIC, msg);
     }
 
     @TruffleBoundary
@@ -470,14 +471,14 @@ public class RErrorHandling {
     }
 
     static RError errorcallDflt(boolean showCall, RBaseNode callObj, Message msg, Object... objects) throws RError {
-        return errorcallDfltWithCall(showCall ? findCaller(callObj) : RNull.instance, msg, objects);
+        return errorcallDfltWithCall(callObj, showCall ? findCaller(callObj) : RNull.instance, msg, objects);
     }
 
     /**
      * The default error handler. This is where all the error message formatting is done and the
      * output.
      */
-    private static RError errorcallDfltWithCall(Object call, Message msg, Object... objects) throws RError {
+    private static RError errorcallDfltWithCall(Node location, Object call, Message msg, Object... objects) throws RError {
         String fmsg = formatMessage(msg, objects);
 
         String errorMessage = createErrorMessage(call, fmsg);
@@ -493,7 +494,7 @@ public class RErrorHandling {
                 errorHandlingState.warnings.clear();
                 Utils.writeStderr("Lost warning messages", true);
             }
-            throw new RError(errorMessage);
+            throw new RError(errorMessage, location);
         }
 
         Utils.writeStderr(errorMessage, true);
@@ -549,7 +550,7 @@ public class RErrorHandling {
                 throw RInternalError.shouldNotReachHere("cannot write .Traceback");
             }
         }
-        throw new RError(errorMessage);
+        throw new RError(errorMessage, location);
     }
 
     private static MaterializedFrame safeCurrentFrame() {

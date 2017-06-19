@@ -56,7 +56,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
         @Override
         public ContextState initialize(RContext context) {
             RFFIFactory.getRFFI().getBaseRFFI();
-            context.addExportedSymbol("_fastr_rffi_base", truffleBaseTruffleObject);
+            context.getEnv().exportSymbol("_fastr_rffi_base", truffleBaseTruffleObject);
             return this;
         }
 

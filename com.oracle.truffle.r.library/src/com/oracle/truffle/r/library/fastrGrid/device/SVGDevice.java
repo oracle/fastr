@@ -84,11 +84,11 @@ public class SVGDevice implements GridDevice {
     }
 
     @Override
-    public void drawRect(DrawingContext ctx, double leftX, double bottomY, double width, double height, double rotationAnticlockWise) {
+    public void drawRect(DrawingContext ctx, double leftX, double bottomY, double newWidth, double newHeight, double rotationAnticlockWise) {
         appendStyle(ctx);
-        append("<rect vector-effect='non-scaling-stroke' x='%.3f' y='%.3f' width='%.3f' height='%.3f'", leftX, transY(bottomY + height), width, height);
+        append("<rect vector-effect='non-scaling-stroke' x='%.3f' y='%.3f' width='%.3f' height='%.3f'", leftX, transY(bottomY + newHeight), newWidth, newHeight);
         if (rotationAnticlockWise != 0) {
-            append("transform='rotate(%.3f %.3f,%.3f)'", toDegrees(rotationAnticlockWise), (leftX + width / 2.), transY(bottomY + height / 2.));
+            append("transform='rotate(%.3f %.3f,%.3f)'", toDegrees(rotationAnticlockWise), (leftX + newWidth / 2.), transY(bottomY + newHeight / 2.));
         }
         data.append("/>"); // end of 'rect' tag
     }
@@ -150,7 +150,7 @@ public class SVGDevice implements GridDevice {
             factor = 0.62;
         }
         double letterWidth = (ctx.getFontSize() / INCH_TO_POINTS_FACTOR);
-        double result = factor * (double) text.length() * letterWidth;
+        double result = text.length() * factor * letterWidth;
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
             if (c == 'w' || c == 'm') {

@@ -26,10 +26,9 @@ import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 
-@MessageResolution(receiverType = RConnection.class, language = TruffleRLanguage.class)
+@MessageResolution(receiverType = RConnection.class)
 public class RConnectionMR {
     @CanResolve
     public abstract static class RConnection extends Node {
@@ -38,5 +37,4 @@ public class RConnectionMR {
             return receiver instanceof RConnection;
         }
     }
-
 }

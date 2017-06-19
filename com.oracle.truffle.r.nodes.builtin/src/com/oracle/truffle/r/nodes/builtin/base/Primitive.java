@@ -61,7 +61,7 @@ public abstract class Primitive extends RBuiltinNode.Arg1 {
 
     @TruffleBoundary
     protected RFunction lookup(String name) {
-        RFunction function = RContext.lookupBuiltin(name);
+        RFunction function = RContext.getInstance().lookupBuiltin(name);
         if (function == null || function.getRBuiltin() != null && function.getRBuiltin().getKind() != RBuiltinKind.PRIMITIVE) {
             throw error(RError.Message.NO_SUCH_PRIMITIVE, name);
         }

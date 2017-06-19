@@ -190,7 +190,7 @@ public final class GridTextNode extends RBaseNode {
 
     // transcribed from utils.c
 
-    private EdgeDetection.Rectangle textRect(Point loc, double xadj, double yadj, double rotation, String text, DrawingContext drawingCtx, GridDevice device) {
+    private static EdgeDetection.Rectangle textRect(Point loc, double xadj, double yadj, double rotation, String text, DrawingContext drawingCtx, GridDevice device) {
         // TODO: for expressions the h and w are calculated differently
         double h = device.getStringHeight(drawingCtx, text);
         double w = device.getStringWidth(drawingCtx, text);
@@ -208,7 +208,7 @@ public final class GridTextNode extends RBaseNode {
 
     // transcribed from engine.c
 
-    private void text(double x, double y, String text, double xadjIn, double yadj, double rotationDegrees, DrawingContext drawingCtx, GridDevice device) {
+    private static void text(double x, double y, String text, double xadjIn, double yadj, double rotationDegrees, DrawingContext drawingCtx, GridDevice device) {
         if (!Double.isFinite(yadj)) {
             throw RInternalError.unimplemented("'exact' vertical centering, see engine.c:1700");
         }

@@ -53,12 +53,13 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.test.TestBase;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -82,11 +83,15 @@ public class TestCasts extends TestBase {
         private boolean isCompiled = false;
         @Child protected T node;
 
-        @SuppressWarnings("deprecation")
         protected TestRootNode(String name, T node) {
-            super(RContext.getRForeignAccessFactory().getTruffleLanguage(), RSyntaxNode.INTERNAL, descriptor);
+            super(TruffleRLanguageImpl.getCurrentLanguage(), descriptor);
             this.name = name;
             this.node = node;
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            return RSyntaxNode.INTERNAL;
         }
 
         @Override

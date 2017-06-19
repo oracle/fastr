@@ -68,9 +68,9 @@ final class TruffleLLVM_Call implements CallRFFI {
         public ContextState initialize(RContext contextA) {
             this.context = contextA;
             RFFIFactory.getRFFI().getCallRFFI();
-            context.addExportedSymbol("_fastr_rffi_call", truffleCallTruffleObject);
-            context.addExportedSymbol("_fastr_rffi_callhelper", truffleCallHelper);
-            context.addExportedSymbol("_fastr_rffi_callhelper_impl", truffleCallHelperImpl);
+            context.getEnv().exportSymbol("_fastr_rffi_call", truffleCallTruffleObject);
+            context.getEnv().exportSymbol("_fastr_rffi_callhelper", truffleCallHelper);
+            context.getEnv().exportSymbol("_fastr_rffi_callhelper_impl", truffleCallHelperImpl);
             if (!initDone) {
                 initVariables(context);
                 initCallbacks(context, upCallsRFFI);

@@ -50,6 +50,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinLookup;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -69,7 +70,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         return instance;
     }
 
-    public static void loadBase(MaterializedFrame baseFrame) {
+    public static void loadBase(TruffleRLanguage language, MaterializedFrame baseFrame) {
         RBuiltinPackage pkg = basePackage;
         REnvironment baseEnv = REnvironment.baseEnv();
         BaseVariables.initialize(baseEnv);
@@ -82,7 +83,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
             String methodName = entrySet.getKey();
             RBuiltinFactory builtinFactory = entrySet.getValue();
             if (builtinFactory.getKind() != RBuiltinKind.INTERNAL) {
-                RFunction function = createFunction(builtinFactory, methodName);
+                RFunction function = createFunction(language, builtinFactory, methodName);
                 try {
                     baseEnv.put(methodName, function);
                     baseEnv.lockBinding(methodName);
@@ -138,15 +139,10 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         }
     }
 
-    /**
-     * Global builtin cache.
-     */
-    private static final HashMap<String, RFunction> cachedBuiltinFunctions = new HashMap<>();
-
     @Override
-    public RFunction lookupBuiltin(String methodName) {
+    public RFunction lookupBuiltin(TruffleRLanguage language, String methodName) {
         CompilerAsserts.neverPartOfCompilation();
-        RFunction function = cachedBuiltinFunctions.get(methodName);
+        RFunction function = language.getBuiltinFunctionCache().get(methodName);
         if (function != null) {
             return function;
         }
@@ -155,27 +151,28 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         if (builtin == null) {
             return null;
         }
-        return createFunction(builtin, methodName);
+        return createFunction(language, builtin, methodName);
     }
 
-    private static RootCallTarget createArgumentsCallTarget(RBuiltinFactory builtin) {
+    private static RootCallTarget createArgumentsCallTarget(TruffleRLanguage language, RBuiltinFactory builtin) {
         CompilerAsserts.neverPartOfCompilation();
 
         FrameDescriptor frameDescriptor = new FrameDescriptor();
-        RBuiltinRootNode root = new RBuiltinRootNode(builtin, frameDescriptor, null);
+        RBuiltinRootNode root = new RBuiltinRootNode(language, builtin, frameDescriptor, null);
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(builtin.getName(), frameDescriptor);
         return Truffle.getRuntime().createCallTarget(root);
     }
 
-    private static RFunction createFunction(RBuiltinFactory builtinFactory, String methodName) {
+    private static RFunction createFunction(TruffleRLanguage language, RBuiltinFactory builtinFactory, String methodName) {
         try {
-            RFunction function = cachedBuiltinFunctions.get(methodName);
+            HashMap<String, RFunction> cache = language.getBuiltinFunctionCache();
+            RFunction function = cache.get(methodName);
             if (function != null) {
                 return function;
             }
-            RootCallTarget callTarget = createArgumentsCallTarget(builtinFactory);
+            RootCallTarget callTarget = createArgumentsCallTarget(language, builtinFactory);
             function = RDataFactory.createFunction(builtinFactory.getName(), "base", callTarget, builtinFactory, null);
-            cachedBuiltinFunctions.put(methodName, function);
+            cache.put(methodName, function);
             return function;
         } catch (Throwable t) {
             throw new RuntimeException("error while creating builtin " + methodName + " / " + builtinFactory, t);

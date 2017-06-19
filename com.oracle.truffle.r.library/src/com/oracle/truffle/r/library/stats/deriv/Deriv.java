@@ -32,6 +32,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -44,6 +45,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -129,12 +131,22 @@ public abstract class Deriv extends RExternalBuiltinNode {
 
     @Specialization(guards = "isConstant(expr)")
     protected Object derive(VirtualFrame frame, Object expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
-        return derive(frame, RDataFactory.createLanguage(ConstantNode.create(expr)), names, functionArg, tag, hessian);
+        return derive(frame.materialize(), createConstant(expr), names, functionArg, tag, hessian);
+    }
+
+    @TruffleBoundary
+    private static ConstantNode createConstant(Object expr) {
+        return ConstantNode.create(expr);
     }
 
     @Specialization
     protected Object derive(VirtualFrame frame, RSymbol expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
-        return derive(frame, (RBaseNode) RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, expr.getName(), false), names, functionArg, tag, hessian);
+        return derive(frame.materialize(), createLookup(expr), names, functionArg, tag, hessian);
+    }
+
+    @TruffleBoundary
+    private static RBaseNode createLookup(RSymbol expr) {
+        return (RBaseNode) RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, expr.getName(), false);
     }
 
     @Specialization
@@ -145,11 +157,12 @@ public abstract class Deriv extends RExternalBuiltinNode {
 
     @Specialization
     protected Object derive(VirtualFrame frame, RLanguage expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
-        return derive(frame, expr.getRep(), names, functionArg, tag, hessian);
+        return derive(frame.materialize(), expr.getRep(), names, functionArg, tag, hessian);
     }
 
-    private Object derive(VirtualFrame frame, RBaseNode elem, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
-        return findDerive(elem, names, functionArg, tag, hessian).getResult(frame);
+    @TruffleBoundary
+    private Object derive(MaterializedFrame frame, RBaseNode elem, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
+        return findDerive(elem, names, functionArg, tag, hessian).getResult(frame.materialize(), getRLanguage());
     }
 
     private static final class DerivResult {
@@ -169,18 +182,13 @@ public abstract class Deriv extends RExternalBuiltinNode {
             result = null;
         }
 
-        private Object getResult(VirtualFrame frame) {
+        private Object getResult(MaterializedFrame frame, TruffleRLanguage language) {
             if (result != null) {
                 return result;
             }
-            RootCallTarget callTarget = getRootCallTarget();
+            RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(language, RSyntaxNode.LAZY_DEPARSE, targetArgs, blockCall, null);
             FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), frame);
-            return RDataFactory.createFunction(RFunction.NO_NAME, RFunction.NO_NAME, callTarget, null, frame.materialize());
-        }
-
-        @TruffleBoundary
-        private RootCallTarget getRootCallTarget() {
-            return RContext.getASTBuilder().rootFunction(RSyntaxNode.LAZY_DEPARSE, targetArgs, blockCall, null);
+            return RDataFactory.createFunction(RFunction.NO_NAME, RFunction.NO_NAME, callTarget, null, frame);
         }
     }
 

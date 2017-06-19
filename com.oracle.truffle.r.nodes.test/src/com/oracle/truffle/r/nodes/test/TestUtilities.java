@@ -26,10 +26,11 @@ import java.util.function.Supplier;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -210,11 +211,15 @@ public class TestUtilities {
         private final NodeAdapter<T> invoke;
         @Child private T node;
 
-        @SuppressWarnings("deprecation")
         TestRoot(T node, NodeAdapter<T> invoke) {
-            super(TruffleLanguage.class, RSyntaxNode.INTERNAL, null);
+            super(TruffleRLanguageImpl.getCurrentLanguage());
             this.node = node;
             this.invoke = invoke;
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            return RSyntaxNode.INTERNAL;
         }
 
         @Override

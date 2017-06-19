@@ -27,10 +27,9 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RInteger;
 
-@MessageResolution(receiverType = RInteger.class, language = TruffleRLanguage.class)
+@MessageResolution(receiverType = RInteger.class)
 public class RIntegerMR {
     @Resolve(message = "IS_BOXED")
     public abstract static class RIntegerIsBoxedNode extends Node {

@@ -26,16 +26,12 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
@@ -74,7 +70,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class ValuePrinterNode extends RBaseNode {
 
@@ -560,18 +555,5 @@ public final class ValuePrinterNode extends RBaseNode {
         } finally {
             PrintContext.leave();
         }
-    }
-
-    @SuppressWarnings("deprecation")
-    public static String prettyPrint(final Object value) {
-        return (String) Truffle.getRuntime().createCallTarget(new RootNode(TruffleLanguage.class, RSyntaxNode.INTERNAL, null) {
-
-            @Child ValuePrinterNode valuePrinterNode = new ValuePrinterNode();
-
-            @Override
-            public Object execute(VirtualFrame frame) {
-                return valuePrinterNode.prettyPrint(value, AnyVectorToStringVectorWriter::new);
-            }
-        }).call(value);
     }
 }

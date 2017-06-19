@@ -32,10 +32,30 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
     private static final double SMALL = 0.25;
     private static final double RADIUS = 0.375;
     private static final double SQRC = 0.88622692545275801364; /* sqrt(pi / 4) */
-    private static final double DMDC = 1.25331413731550025119; /* sqrt(pi / 4) * sqrt(2) */
-    private static final double TRC0 = 1.55512030155621416073; /* sqrt(4 * pi/(3 * sqrt(3))) */
-    private static final double TRC1 = 1.34677368708859836060; /* TRC0 * sqrt(3) / 2 */
-    private static final double TRC2 = 0.77756015077810708036; /* TRC0 / 2 */
+    @SuppressWarnings("unused") private static final double DMDC = 1.25331413731550025119; /*
+                                                                                            * sqrt(
+                                                                                            * pi /
+                                                                                            * 4) *
+                                                                                            * sqrt(
+                                                                                            * 2)
+                                                                                            */
+    @SuppressWarnings("unused") private static final double TRC0 = 1.55512030155621416073; /*
+                                                                                            * sqrt(4
+                                                                                            * *
+                                                                                            * pi/(3
+                                                                                            * *
+                                                                                            * sqrt(3
+                                                                                            * )))
+                                                                                            */
+    @SuppressWarnings("unused") private static final double TRC1 = 1.34677368708859836060; /*
+                                                                                            * TRC0 *
+                                                                                            * sqrt(
+                                                                                            * 3) / 2
+                                                                                            */
+    @SuppressWarnings("unused") private static final double TRC2 = 0.77756015077810708036; /*
+                                                                                            * TRC0 /
+                                                                                            * 2
+                                                                                            */
 
     static {
         Casts casts = new Casts(LPoints.class);
@@ -80,7 +100,7 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
 
     // transcribed from engine.c function GESymbol
 
-    private PointDrawingContext drawSymbol(PointDrawingContext drawingCtx, GridDevice dev, double cex, int pch, double size, double x, double y) {
+    private static PointDrawingContext drawSymbol(PointDrawingContext drawingCtx, GridDevice dev, double cex, int pch, double size, double x, double y) {
         // pch 0 - 25 are interpreted as geometrical shapes, pch from ascii code of ' ' are
         // interpreted as corresponding ascii character, which should be drawn
         switch (pch) {
@@ -103,19 +123,19 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    private PointDrawingContext drawFilledCircle(PointDrawingContext drawingCtxIn, GridDevice dev, double radius, double x, double y) {
+    private static PointDrawingContext drawFilledCircle(PointDrawingContext drawingCtxIn, GridDevice dev, double radius, double x, double y) {
         PointDrawingContext drawingCtx = drawingCtxIn.update(drawingCtxIn.getWrapped().getColor(), drawingCtxIn.getWrapped().getColor());
         dev.drawCircle(drawingCtx, x, y, radius);
         return drawingCtx;
     }
 
-    private PointDrawingContext drawCircle(PointDrawingContext drawingCtx, GridDevice dev, double size, double x, double y) {
+    private static PointDrawingContext drawCircle(PointDrawingContext drawingCtx, GridDevice dev, double size, double x, double y) {
         double xc = RADIUS * size;
         dev.drawCircle(drawingCtx, x, y, xc);
         return drawingCtx;
     }
 
-    private PointDrawingContext drawSquare(PointDrawingContext drawingCtx, GridDevice dev, double size, double x, double y) {
+    private static PointDrawingContext drawSquare(PointDrawingContext drawingCtx, GridDevice dev, double size, double x, double y) {
         double xc = RADIUS * SQRC * size;
         double yc = RADIUS * SQRC * size;
         dev.drawRect(drawingCtx, x - xc, y - yc, x + xc, y + yc, 0);
@@ -167,18 +187,18 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
         // This allows to re-use the existing instance if it would have the same parameters. The
         // assumption is that the users will actually draw many points in a row with the same
         // parameters.
-        private PointDrawingContext update(GridColor color, GridColor fillColor) {
-            if (this.color.equals(color) && this.fillColor.equals(fillColor)) {
+        private PointDrawingContext update(GridColor newColor, GridColor newFillColor) {
+            if (this.color.equals(newColor) && this.fillColor.equals(newFillColor)) {
                 return this;
             }
-            return new PointDrawingContext(inner, color, fillColor);
+            return new PointDrawingContext(inner, newColor, newFillColor);
         }
 
-        private PointDrawingContext update(DrawingContext inner) {
-            if (this.inner == inner) {
+        private PointDrawingContext update(DrawingContext newInner) {
+            if (this.inner == newInner) {
                 return this;
             }
-            return new PointDrawingContext(inner, this.color, this.fillColor);
+            return new PointDrawingContext(newInner, this.color, this.fillColor);
         }
 
         @Override

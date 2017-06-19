@@ -83,8 +83,7 @@ public abstract class Names extends RBuiltinNode.Arg1 {
                     @Cached("KEYS.createNode()") Node keysNode,
                     @Cached("READ.createNode()") Node readNode,
                     @Cached("IS_BOXED.createNode()") Node isBoxedNode,
-                    @Cached("UNBOX.createNode()") Node unboxNode,
-                    @Cached("createExecute(0).createNode()") Node callNode) {
+                    @Cached("UNBOX.createNode()") Node unboxNode) {
 
         try {
             String[] names;
@@ -115,7 +114,7 @@ public abstract class Names extends RBuiltinNode.Arg1 {
         }
     }
 
-    private String[] readKeys(Node keysNode, TruffleObject obj, Node getSizeNode, Node readNode, Node isBoxedNode, Node unboxNode)
+    private static String[] readKeys(Node keysNode, TruffleObject obj, Node getSizeNode, Node readNode, Node isBoxedNode, Node unboxNode)
                     throws UnknownIdentifierException, InteropException, UnsupportedMessageException {
         TruffleObject keys = (TruffleObject) ForeignAccess.send(keysNode, obj);
         if (keys != null) {

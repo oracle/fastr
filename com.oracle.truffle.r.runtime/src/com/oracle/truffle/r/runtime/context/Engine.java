@@ -25,7 +25,9 @@ package com.oracle.truffle.r.runtime.context;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -42,7 +44,7 @@ public interface Engine {
 
     Source GET_CONTEXT = RSource.fromTextInternal("<<<get_context>>>", RSource.Internal.GET_CONTEXT);
 
-    class ParseException extends RuntimeException {
+    class ParseException extends RuntimeException implements TruffleException {
         private static final long serialVersionUID = 1L;
 
         private final Source source;
@@ -77,6 +79,16 @@ public interface Engine {
             }
             consoleHandler.println("Error: " + msg);
         }
+
+        @Override
+        public Node getLocation() {
+            return null;
+        }
+
+        @Override
+        public boolean isSyntaxError() {
+            return true;
+        }
     }
 
     final class IncompleteSourceException extends ParseException {
@@ -84,6 +96,11 @@ public interface Engine {
 
         public IncompleteSourceException(Throwable cause, Source source, String token, String substring, int line) {
             super(cause, source, token, substring, line);
+        }
+
+        @Override
+        public boolean isIncompleteSource() {
+            return true;
         }
     }
 
@@ -171,7 +188,7 @@ public interface Engine {
      * namespace, but the current stack is not empty. So when {@code frame} is not {@code null} a
      * {@code caller} should be passed to maintain the call stack correctly. {@code names} string
      * vector describing (optional) argument names
-     * 
+     *
      * @param names signature of the given parameters, may be {@code null} in which case the empty
      *            signature of correct cardinality shall be used.
      * @param evalPromises whether to evaluate promises in args array before calling the function.

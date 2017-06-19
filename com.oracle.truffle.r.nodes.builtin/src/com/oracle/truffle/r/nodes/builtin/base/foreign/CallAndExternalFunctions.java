@@ -822,7 +822,7 @@ public class CallAndExternalFunctions {
          * native function that is eventually invoked will always get SPECIALSXP reprenting the
          * .External2, becuase functions exported as .External do not take the "op" argument.
          */
-        @CompilationFinal private static Object op = null;
+        @CompilationFinal private Object op = null;
 
         @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createInvokeCallNode();
 
@@ -830,10 +830,10 @@ public class CallAndExternalFunctions {
             Casts.noCasts(DotExternal2.class);
         }
 
-        private static Object getOp() {
+        private Object getOp() {
             if (op == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                op = RContext.lookupBuiltin(".External2");
+                op = RContext.getInstance().lookupBuiltin(".External2");
             }
             return op;
         }

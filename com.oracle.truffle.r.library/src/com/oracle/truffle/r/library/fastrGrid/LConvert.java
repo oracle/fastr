@@ -103,7 +103,7 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
-    private double toInches(RAbstractVector units, int index, AxisOrDimension axisFrom, UnitConversionContext conversionCtx) {
+    private static double toInches(RAbstractVector units, int index, AxisOrDimension axisFrom, UnitConversionContext conversionCtx) {
         double inches;
         if (axisFrom.isHorizontal()) {
             if (axisFrom.isDimension()) {

@@ -813,8 +813,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public int R_compute_identical(Object x, Object y, int flags) {
-        RFunction indenticalBuiltin = RContext.lookupBuiltin("identical");
+        RFunction indenticalBuiltin = RContext.getInstance().lookupBuiltin("identical");
         Object res = RContext.getEngine().evalFunction(indenticalBuiltin, null, null, true, null, x, y, RRuntime.asLogical((!((flags & 1) == 0))),
                         RRuntime.asLogical((!((flags & 2) == 0))), RRuntime.asLogical((!((flags & 4) == 0))), RRuntime.asLogical((!((flags & 8) == 0))), RRuntime.asLogical((!((flags & 16) == 0))));
         return (int) res;

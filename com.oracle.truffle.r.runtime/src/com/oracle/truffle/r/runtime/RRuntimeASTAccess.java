@@ -22,11 +22,11 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -96,8 +96,7 @@ public interface RRuntimeASTAccess {
     /**
      * Gets {@code TruffleRLanguage} avoiding project circularity.
      */
-    @SuppressWarnings("rawtypes")
-    Class<? extends TruffleLanguage> getTruffleRLanguage();
+    Class<? extends TruffleRLanguage> getTruffleRLanguage();
 
     /**
      * Returns a string for a call as represented by {@code rl}, returned originally by

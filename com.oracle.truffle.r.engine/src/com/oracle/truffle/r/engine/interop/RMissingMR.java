@@ -27,10 +27,9 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
 
-@MessageResolution(receiverType = RMissing.class, language = TruffleRLanguage.class)
+@MessageResolution(receiverType = RMissing.class)
 public class RMissingMR {
 
     @Resolve(message = "IS_BOXED")
