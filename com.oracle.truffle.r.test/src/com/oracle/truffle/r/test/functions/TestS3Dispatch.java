@@ -35,7 +35,9 @@ public class TestS3Dispatch extends TestRBase {
     public void testUseMethodLocalVars() {
         // The variables defined before call to UseMethod should be
         // accessible to target function.
-        assertEval(Ignored.Unknown,
+        // Expected output: f second 1local
+        // FastR output: f second 1Error in f.second(obj) : could not find function "locFun"
+        assertEval(Ignored.ImplementationError,
                         "{f <- function(x){ y<-2;locFun <- function(){cat(\"local\")}; UseMethod(\"f\"); }; f.second <- function(x){cat(\"f second\",x);locFun();}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
     }
 

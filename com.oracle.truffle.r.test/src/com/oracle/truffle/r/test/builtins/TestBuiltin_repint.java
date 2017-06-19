@@ -79,7 +79,9 @@ public class TestBuiltin_repint extends TestBase {
 
     @Test
     public void testrepint13() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1:4, .Label = c('A', 'B', 'C', 'D'), class = 'factor', .Names = c('a', 'b', 'c', 'd')), 2); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        // FIXME FastR output does not honor .Label and .Names in structure()
+        assertEval(Ignored.OutputFormatting,
+                        "argv <- list(structure(1:4, .Label = c('A', 'B', 'C', 'D'), class = 'factor', .Names = c('a', 'b', 'c', 'd')), 2); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test

@@ -342,7 +342,12 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist65() {
-        assertEval(Ignored.Unknown,
+        // FIXME Besides whitespace diff in "function (x, y..." output there's
+        // at several places e.g. after '[1] "signature"' GnuR outputs
+        // attr(,"class")attr(,"package")
+        // while FastR outputs just
+        // attr(,"package")
+        assertEval(Output.IgnoreWhitespace, Ignored.OutputFormatting,
                         "argv <- list(ANY = structure(function (x, y = NULL) .Internal(crossprod(x, y)), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), generic = structure('crossprod', package = 'base'), class = structure('derivedDefaultMethod', package = 'methods')));list(argv[[1]]);");
     }
 

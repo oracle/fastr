@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -40,7 +40,7 @@ public class TestBuiltin_syscall extends TestBase {
         assertEval("{ f <- function(x, y) sys.call() ; f(y=1, x=2) }");
 
         // fails because can't parse out the "name"
-        assertEval(Ignored.Unknown, "{ (function() sys.call())() }");
+        assertEval(Output.IgnoreWhitespace, "{ (function() sys.call())() }");
 
         assertEval("{ foo<-function(x, z) UseMethod(\"foo\"); foo.baz<-function(x, z) NextMethod(); y<-1; class(y)<-c(\"baz\", \"bar\"); foo.bar<-function(x, z) sys.call(0); foo(y, 42) }");
         assertEval("{ foo<-function(x, ...) UseMethod(\"foo\"); foo.baz<-function(x, ...) NextMethod(); y<-1; class(y)<-c(\"baz\", \"bar\"); foo.bar<-function(x, ...) sys.call(0); foo(y, 42) }");

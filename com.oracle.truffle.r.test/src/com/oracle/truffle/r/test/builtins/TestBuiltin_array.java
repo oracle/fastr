@@ -64,7 +64,8 @@ public class TestBuiltin_array extends TestBase {
 
     @Test
     public void testarray10() {
-        assertEval(Ignored.Unknown,
+        // FIXME Column with "\\Sexpr" header shifted one char right in FastR
+        assertEval(Output.IgnoreWhitespace,
                         "argv <- list(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE), c(5L, 16L), list(c('#ifdef', '\\\\Sexpr', 'build', 'install', 'render'), NULL)); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
     }
 

@@ -24,7 +24,8 @@ public class TestBuiltin_sprintf extends TestBase {
 
     @Test
     public void testsprintf2() {
-        assertEval(Ignored.Unknown, "argv <- list('%1.0f', 3.14159265358979); .Internal(sprintf(argv[[1]], argv[[2]]))");
+        // FIXME According to docs "a precision of 0 suppresses the decimal point"
+        assertEval(Ignored.ImplementationError, "argv <- list('%1.0f', 3.14159265358979); .Internal(sprintf(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -50,7 +51,8 @@ public class TestBuiltin_sprintf extends TestBase {
 
     @Test
     public void testsprintf7() {
-        assertEval(Ignored.Unknown, "argv <- list('p,L,S = (%2d,%2d,%2d): ', TRUE, FALSE, NA); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        // FIXME NA translated to -1 in output
+        assertEval(Ignored.ImplementationError, "argv <- list('p,L,S = (%2d,%2d,%2d): ', TRUE, FALSE, NA); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
@@ -65,7 +67,8 @@ public class TestBuiltin_sprintf extends TestBase {
 
     @Test
     public void testsprintf10() {
-        assertEval(Ignored.Unknown, "argv <- list('%.0f%% said yes (out of a sample of size %.0f)', 66.666, 3); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]]))");
+        // FIXME According to docs "a precision of 0 suppresses the decimal point"
+        assertEval(Ignored.ImplementationError, "argv <- list('%.0f%% said yes (out of a sample of size %.0f)', 66.666, 3); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -105,7 +108,8 @@ public class TestBuiltin_sprintf extends TestBase {
 
     @Test
     public void testsprintf18() {
-        assertEval(Ignored.Unknown,
+        // FIXME %5g should mean 5 significant digits but we output six
+        assertEval(Ignored.ImplementationError,
                         "argv <- list('%5g', structure(c(18, 18, 0, 14, 4, 12, 12, 0, 4, 8, 26, 23, 3, 18, 5, 8, 5, 3, 0, 5, 21, 0, 21, 0, 0), .Dim = c(5L, 5L), .Dimnames = list(NULL, c('', '', '', '', '')))); .Internal(sprintf(argv[[1]], argv[[2]]))");
     }
 

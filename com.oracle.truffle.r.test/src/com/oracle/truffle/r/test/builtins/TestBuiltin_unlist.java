@@ -34,9 +34,10 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist4() {
+        // FIXME The default = quote(`\\001... gets evaluated even when quoted
         // Output.IgnoreWhitespace is not enough; '\\001NULL\\001' shows up 'translated' in FastR
         // but not in GnuR
-        assertEval(Ignored.Unknown,
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(list(list(structure(function (e1, e2) standardGeneric('Ops'), generic = structure('Ops', package = 'base'), package = 'base', group = list(), valueClass = character(0), signature = c('e1', 'e2'), default = quote(`\\001NULL\\001`), skeleton = quote((function (e1, e2) stop('invalid call in method dispatch to \\'Ops\\' (no default method)', domain = NA))(e1, e2)), groupMembers = list('Arith', 'Compare', 'Logic'), class = structure('groupGenericFunction', package = 'methods')))), FALSE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
@@ -178,7 +179,9 @@ public class TestBuiltin_unlist extends TestBase {
 
     @Test
     public void testunlist32() {
-        assertEval(Ignored.Unknown,
+        // FIXME Looks like FastR does not honor recursive=TRUE flag
+        // so the nested components are not unlisted
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(list(mean = c(0, 1), vcov = structure(c(1, 1, 1, 0), .Dim = c(2L, 2L))), .Names = c('mean', 'vcov'), class = c('relistable', 'list')), TRUE, TRUE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
     }
 

@@ -165,7 +165,18 @@ public class TestS4 extends TestRBase {
         assertEval(".Internal(bindingIsActive(as.name('someSymbol4'), .GlobalEnv))");
         assertEval("someSymbol5 <- 0; lockBinding('someSymbol5', .GlobalEnv); makeActiveBinding('someSymbol5', function(x) { x }, .GlobalEnv)");
         assertEval("makeActiveBinding('someSymbol6', function(x) { x }, .GlobalEnv); lockBinding('someSymbol6', .GlobalEnv); makeActiveBinding('someSymbol6', function(x) { print('hello') }, .GlobalEnv)");
-        assertEval(Ignored.Unknown,
+        // FIXME
+        // Expected output: [1] "get0"
+        // [1] "set0"
+        // [1] "get1"
+        // [1] "set1"
+        // FastR output: [1] "get0"
+        // [1] "get0"
+        // [1] "set0"
+        // [1] "get1"
+        // [1] "get1"
+        // [1] "set1"
+        assertEval(Ignored.ImplementationError,
                         "makeActiveBinding('someSymbol7', function(x) { if(missing(x)) print('get0') else print('set0') }, .GlobalEnv); someSymbol7; someSymbol7 <- 1; makeActiveBinding('someSymbol7', function(x) { if(missing(x)) print('get1') else print('set1') }, .GlobalEnv); someSymbol7; someSymbol7 <- 1");
         assertEval("makeActiveBinding('someSymbol8', function(x) { print('hello') }, .GlobalEnv); someSymbol9 <- 'world'; print(someSymbol8); print(someSymbol9)");
         assertEval("makeActiveBinding('someSymbol10', function(x) { if(missing(x)) print('get0') else print('set0'); NULL }, .GlobalEnv); someSymbol10; someSymbol10 <- 1; makeActiveBinding('someSymbol10', function(x) { if(missing(x)) print('get1') else print('set1'); NULL }, .GlobalEnv); someSymbol10; someSymbol10 <- 1");

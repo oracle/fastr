@@ -652,6 +652,54 @@ public class TestBase {
                 } else {
                     failedInputCount++;
                     microTestFailed();
+                    if (!ProcessFailedTests || ShowFailedTestsResults) {
+                        // Show hint where first diff occurs - use preprocessed text
+                        int len = Math.min(checkResult.expected.length(), checkResult.result.length());
+                        int line = 0;
+                        int col = 0;
+                        for (int i = 0; i < len; i++) {
+                            char c = checkResult.expected.charAt(i);
+                            if (c != checkResult.result.charAt(i)) {
+                                StringBuilder sb = new StringBuilder(64);
+                                sb.append("index=").append(i).append('[').append(line + 1).append(':').append(col + 1).append("] \"");
+                                int dLen = Math.min(i + 20, len);
+                                for (int j = i; j < dLen; j++) {
+                                    char ch = checkResult.expected.charAt(j);
+                                    switch (ch) {
+                                        case '\n':
+                                            sb.append("\\n");
+                                            break;
+                                        case '\r':
+                                            sb.append("\\r");
+                                            break;
+                                        case '\t':
+                                            sb.append("\\t");
+                                            break;
+                                        case '\b':
+                                            sb.append("\\b");
+                                            break;
+                                        case '\f':
+                                            sb.append("\\f");
+                                            break;
+                                        default:
+                                            sb.append(ch);
+                                    }
+                                }
+                                if (dLen < len) {
+                                    sb.append("...");
+                                }
+                                sb.append('"');
+                                System.err.printf("%16s %s%n", "Prepr.text diff:", sb);
+                                break;
+                            }
+                            col++;
+                            if (c == '\n') {
+                                line++;
+                                col = 0;
+                            }
+                        }
+                    }
+
                     if (inputs.length > 1) {
                         System.out.print('E');
                     }

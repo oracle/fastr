@@ -84,7 +84,8 @@ public class TestBuiltin_tdefault extends TestBase {
 
     @Test
     public void testtdefault14() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR output ignores .Dimnames of structure()
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(c(794, 86, 150, 570), .Dim = c(2L, 2L), .Dimnames = structure(list(`1st Survey` = c('Approve', 'Disapprove'), `2nd Survey` = c('Approve', 'Disapprove')), .Names = c('1st Survey', '2nd Survey')))); .Internal(t.default(argv[[1]]))");
     }
 

@@ -44,7 +44,7 @@ public class TestBuiltin_attrassign extends TestBase {
 
     @Test
     public void testattrassign6() {
-        assertEval(Ignored.Unknown,
+        assertEval(Output.IgnoreWhitespace,
                         "argv <- list(structure(c('o', 'p', 'v', 'i', 'r', 'w', 'b', 'm', 'f', 's'), date = structure(1224086400, class = c('POSIXct', 'POSIXt'), tzone = '')), 'date', value = structure(1224086400, class = c('POSIXct', 'POSIXt'), tzone = ''));`attr<-`(argv[[1]],argv[[2]],argv[[3]]);");
     }
 

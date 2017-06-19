@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -30,8 +30,8 @@ public class TestBuiltin_listfiles extends TestBase {
     @Test
     public void testlistfiles3() {
         // FastR bug; not recursing in to "."
-        assertEval(Ignored.Unknown,
-                        "argv <- list('.', '^CITATION.*', FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); .Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+        assertEval(Output.IgnoreWhitespace,
+                        "print('Work dir: ', getwd()); argv <- list('.', '^CITATION.*', FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); sort(.Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]])))");
     }
 
     @Test

@@ -64,14 +64,35 @@ public class TestBuiltin_sample extends TestBase {
 
         assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(\"Heads\", \"Tails\") ; prob <- c(.3, .7) ; sample(x, 10, TRUE, prob) ; }");
 
-        assertEval(Ignored.Unknown, "{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, TRUE, prob) ; }");
-        assertEval(Ignored.Unknown, "{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, FALSE, prob) ; }");
-        assertEval(Ignored.Unknown, "{ set.seed(4357, \"default\"); x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, TRUE, prob) ; }");
-        assertEval(Ignored.Unknown, "{ set.seed(4357, \"default\"); x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, FALSE, prob) ; }");
+        // FIXME algorithm difference?? ImplementationError for now
+        // Expected output: [1] 3 5 3 1 5
+        // FastR output: [1] 4 5 4 1 5
+        assertEval(Ignored.ImplementationError, "{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, TRUE, prob) ; }");
+        // FIXME algorithm difference?? ImplementationError for now
+        // Expected output: [1] 3 5 2 1 4
+        // FastR output: [1] 4 5 2 1 3
+        assertEval(Ignored.ImplementationError, "{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, FALSE, prob) ; }");
+        // FIXME algorithm difference?? ImplementationError for now
+        // Expected output: [1] 4 2 2 3 4
+        // FastR output: [1] 3 2 2 4 3
+        assertEval(Ignored.ImplementationError, "{ set.seed(4357, \"default\"); x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, TRUE, prob) ; }");
+        // FIXME algorithm difference?? ImplementationError for now
+        // Expected output: [1] 4 2 3 5 1
+        // FastR output: [1] 3 2 4 5 1
+        assertEval(Ignored.ImplementationError, "{ set.seed(4357, \"default\"); x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, FALSE, prob) ; }");
 
-        // Fails because of error message mismatch.
-        assertEval(Ignored.Unknown, "{ set.seed(4357, \"default\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
-        assertEval(Ignored.Unknown, "{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
+        // FIXME GnuR's error message maybe more descriptive
+        // Expected output: Error in sample.int(x, size, replace, prob) :
+        // cannot take a sample larger than the population when 'replace = FALSE'
+        // FastR output: Error in sample.int(x, size, replace, prob) :
+        // incorrect number of probabilities
+        assertEval(Ignored.ImplementationError, "{ set.seed(4357, \"default\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
+        // FIXME GnuR's error message maybe more descriptive
+        // Expected output: Error in sample.int(x, size, replace, prob) :
+        // cannot take a sample larger than the population when 'replace = FALSE'
+        // FastR output: Error in sample.int(x, size, replace, prob) :
+        // incorrect number of probabilities
+        assertEval(Ignored.ImplementationError, "{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
     }
 
     @Test

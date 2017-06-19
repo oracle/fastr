@@ -64,7 +64,11 @@ public class TestBuiltin_gsub extends TestBase {
 
     @Test
     public void testgsub10() {
-        assertEval(Ignored.Unknown, "argv <- list('a*', 'x', 'baaac', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        // FIXME GnuR result appears to be more logical:
+        // Expected output: [1] "xbxcx"
+        // FastR output: [1] "xbxxcx"
+        assertEval(Ignored.ImplementationError,
+                        "argv <- list('a*', 'x', 'baaac', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -79,7 +83,10 @@ public class TestBuiltin_gsub extends TestBase {
 
     @Test
     public void testgsub13() {
-        assertEval(Ignored.Unknown,
+        // FIXME FastR does not recognize word boundary properly:
+        // Expected output: [1] "|The| |quick| |brown| |èé|"
+        // FastR output: [1] "|The| |quick| |brown| èé"
+        assertEval(Ignored.ImplementationError,
                         "argv <- list('\\\\b', '|', 'The quick brown èé', FALSE, TRUE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
@@ -165,7 +172,10 @@ public class TestBuiltin_gsub extends TestBase {
 
     @Test
     public void testgsub31() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(pattern = 'a*', replacement = 'x', x = 'baaaac'),     .Names = c('pattern', 'replacement', 'x'));do.call('gsub', argv)");
+        // FIXME GnuR result appears to be more logical:
+        // Expected output: [1] "xbxcx"
+        // FastR output: [1] "xbxxcx"
+        assertEval(Ignored.ImplementationError, "argv <- structure(list(pattern = 'a*', replacement = 'x', x = 'baaaac'),     .Names = c('pattern', 'replacement', 'x'));do.call('gsub', argv)");
     }
 
     @Test
@@ -178,7 +188,8 @@ public class TestBuiltin_gsub extends TestBase {
         assertEval("{ gsub(\"([a-e])\",\"\\\\1\\\\1\", \"prague alley\") }");
         assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\")) }");
         assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\"), fixed=TRUE) }");
-        assertEval(Ignored.Unknown, "{ gsub(\"a\",\"aa\", \"prAgue alley\", ignore.case=TRUE) }");
+        // FIXME not yet implemented: ignoreCase == true
+        assertEval(Ignored.Unimplemented, "{ gsub(\"a\",\"aa\", \"prAgue alley\", ignore.case=TRUE) }");
 
         assertEval("{ .Internal(gsub(7, \"42\", \"7\", F, F, F, F)) }");
         assertEval("{ .Internal(gsub(character(), \"42\", \"7\", F, F, F, F)) }");
@@ -191,6 +202,6 @@ public class TestBuiltin_gsub extends TestBase {
 
         // Expected output: [1] "xaxbx"
         // FastR output: [1] "axxxxxb"
-        assertEval(Ignored.Unknown, "{ gsub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
+        assertEval(Ignored.ImplementationError, "{ gsub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
     }
 }
