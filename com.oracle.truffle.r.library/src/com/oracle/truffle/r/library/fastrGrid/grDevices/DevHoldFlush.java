@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.GridState;
+import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 
 public abstract class DevHoldFlush extends RExternalBuiltinNode.Arg1 {
@@ -45,14 +46,18 @@ public abstract class DevHoldFlush extends RExternalBuiltinNode.Arg1 {
     int doInteger(int num) {
         GridState gridState = GridContext.getContext().getGridState();
         int result = gridState.getDevHoldCount();
+        GridDevice currentDevice = GridContext.getContext().getCurrentDevice();
+        if (currentDevice == null) {
+            return result;
+        }
         if (num < 0) {
             result = gridState.setDevHoldCount(Math.max(0, result + num));
             if (result == 0) {
-                GridContext.getContext().getCurrentDevice().flush();
+                currentDevice.flush();
             }
         } else if (num > 0) {
             if (result == 0) {
-                GridContext.getContext().getCurrentDevice().hold();
+                currentDevice.hold();
             }
             result = gridState.setDevHoldCount(result + num);
         }
