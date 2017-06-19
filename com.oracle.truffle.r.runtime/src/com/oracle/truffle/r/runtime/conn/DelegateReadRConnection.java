@@ -38,7 +38,7 @@ public abstract class DelegateReadRConnection extends DelegateRConnection {
     }
 
     protected DelegateReadRConnection(BaseRConnection base, int cacheSize) {
-        super(base, cacheSize);
+        super(base, cacheSize, true);
     }
 
     @Override

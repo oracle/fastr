@@ -33,7 +33,11 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 abstract class DelegateWriteRConnection extends DelegateRConnection {
 
     protected DelegateWriteRConnection(BaseRConnection base) {
-        super(base, 0);
+        super(base, 0, false);
+    }
+
+    protected DelegateWriteRConnection(BaseRConnection base, int cacheSize) {
+        super(base, cacheSize, false);
     }
 
     @Override
@@ -74,5 +78,11 @@ abstract class DelegateWriteRConnection extends DelegateRConnection {
     @Override
     public boolean canWrite() {
         return true;
+    }
+
+    @Override
+    public void close() throws IOException {
+        flush();
+        super.close();
     }
 }

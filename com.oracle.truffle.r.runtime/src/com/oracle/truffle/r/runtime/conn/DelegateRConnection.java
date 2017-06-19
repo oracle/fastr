@@ -54,24 +54,38 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  * </p>
  */
 abstract class DelegateRConnection implements RConnection, ByteChannel {
-    private static final int DEFAULT_CACHE_SIZE = 16 * 1024;
+    public static final int DEFAULT_CACHE_SIZE = 16 * 1024;
     protected final BaseRConnection base;
     private final ByteBuffer cache;
+    private final boolean readCache;
 
     DelegateRConnection(BaseRConnection base) {
-        this(base, DEFAULT_CACHE_SIZE);
+        this(base, DEFAULT_CACHE_SIZE, true);
     }
 
-    DelegateRConnection(BaseRConnection base, int cacheSize) {
+    DelegateRConnection(BaseRConnection base, int cacheSize, boolean readCache) {
         this.base = Objects.requireNonNull(base);
+        this.readCache = readCache;
 
         if (cacheSize > 0) {
             cache = ByteBuffer.allocate(cacheSize);
-            // indicate that there are no remaining bytes in the buffer
-            cache.flip();
+
+            // indicate that there are no remaining bytes in the buffer to read
+            if (readCache) {
+                cache.flip();
+            }
         } else {
             cache = null;
         }
+    }
+
+    private static int transfer(ByteBuffer from, ByteBuffer to) {
+        int nbytes = Math.min(to.remaining(), from.remaining());
+        if (nbytes > 0) {
+            to.put(from.array(), from.arrayOffset() + from.position(), nbytes);
+            from.position(from.position() + nbytes);
+        }
+        return nbytes;
     }
 
     @Override
@@ -438,7 +452,7 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
     @Override
     @TruffleBoundary
     public int read(ByteBuffer dst) throws IOException {
-        if (cache != null) {
+        if (readCache && cache != null) {
             final int bytesRequested = dst.remaining();
             int totalBytesRead = 0;
             int bytesToRead = 0;
@@ -459,7 +473,19 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
     @Override
     @TruffleBoundary
     public int write(ByteBuffer src) throws IOException {
-        return getChannel().write(src);
+        if (!readCache && cache != null) {
+            int total = 0;
+            while (src.hasRemaining()) {
+                total += transfer(src, cache);
+                if (!cache.hasRemaining()) {
+                    flush();
+                }
+            }
+            return total;
+        } else {
+            invalidateCache();
+            return getChannel().write(src);
+        }
     }
 
     /**
@@ -471,7 +497,7 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
      * </p>
      */
     protected int readInternal() throws IOException {
-        if (cache != null) {
+        if (readCache && cache != null) {
             ensureDataAvailable(1);
             if (!cache.hasRemaining()) {
                 return -1;
@@ -567,7 +593,11 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
 
     @Override
     public void flush() throws IOException {
-        // nothing to do for channels
+        if (!readCache && cache != null) {
+            cache.flip();
+            getChannel().write(cache);
+            cache.clear();
+        }
     }
 
     @Override
