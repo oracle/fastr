@@ -240,9 +240,14 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                 }
             }
 
+            @Specialization
+            protected Object doRNull(@SuppressWarnings("unused") RNull value) {
+                return RNull.instance;
+            }
+
             @Fallback
             protected Object castPairlist(@SuppressWarnings("unused") Object x) {
-                throw RInternalError.unimplemented("non-list casts to pairlist");
+                throw RInternalError.unimplemented("non-list casts to pairlist for " + x.getClass().getSimpleName());
             }
         }
     }

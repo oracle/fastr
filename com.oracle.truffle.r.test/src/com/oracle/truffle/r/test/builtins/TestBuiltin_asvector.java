@@ -425,6 +425,8 @@ public class TestBuiltin_asvector extends TestBase {
         assertEval(Output.ImprovedErrorContext, "{ as.vector(42, NULL) }");
         assertEval(Output.ImprovedErrorContext, "{ as.vector(42, c(\"character\", \"character\")) }");
         assertEval(Output.ImprovedErrorContext, "{ as.vector(42, character())  }");
+
+        assertEval("as.vector(NULL, mode='pairlist')");
     }
 
     @Test
