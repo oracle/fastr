@@ -78,8 +78,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
             } else if (tmp instanceof RAbstractLogicalVector) {
                 RAbstractLogicalVector lv = (RAbstractLogicalVector) tmp;
                 if (lv.getLength() == 1) {
-                    FormatMetrics fm = LogicalVectorPrinter.formatLogicalVector(lv, 0, 1, pp.getNaWidth());
-                    pbuf = LogicalVectorPrinter.encodeLogical(lv.getDataAt(0), fm.maxWidth, pp);
+                    int width = LogicalVectorPrinter.formatLogicalVectorInternal(lv, 0, 1, pp.getNaWidth());
+                    pbuf = LogicalVectorPrinter.encodeLogical(lv.getDataAt(0), width, pp);
                 } else {
                     pbuf = "Logical," + lv.getLength();
                 }
@@ -90,8 +90,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                     pbuf = "factor," + iv.getLength();
                 } else {
                     if (iv.getLength() == 1) {
-                        FormatMetrics fm = IntegerVectorPrinter.formatIntVector(iv, 0, 1, pp.getNaWidth());
-                        pbuf = IntegerVectorPrinter.encodeInteger(iv.getDataAt(0), fm.maxWidth, pp);
+                        int width = IntegerVectorPrinter.formatIntVectorInternal(iv, 0, 1, pp.getNaWidth());
+                        pbuf = IntegerVectorPrinter.encodeInteger(iv.getDataAt(0), width, pp);
                     } else {
                         pbuf = "Integer," + iv.getLength();
                     }

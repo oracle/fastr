@@ -11,9 +11,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import static com.oracle.truffle.r.nodes.builtin.base.printer.IntegerVectorPrinter.NB;
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
-
 import java.io.IOException;
 
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -47,13 +44,12 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
 
         @Override
         protected FormatMetrics formatVector(int offs, int len) {
-            return formatLogicalVector(vector, offs, len, printCtx.parameters().getNaWidth());
+            return new FormatMetrics(formatLogicalVectorInternal(vector, offs, len, printCtx.parameters().getNaWidth()));
         }
 
         @Override
         protected void printElement(int i, FormatMetrics fm) throws IOException {
-            String v = encodeLogical(vector.getDataAt(i), fm.maxWidth, printCtx.parameters());
-            out.print(v);
+            out.print(encodeLogical(vector.getDataAt(i), fm.maxWidth, printCtx.parameters()));
         }
 
         @Override
@@ -67,7 +63,7 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
         }
     }
 
-    static FormatMetrics formatLogicalVector(RAbstractLogicalVector x, int offs, int n, int naWidth) {
+    static int formatLogicalVectorInternal(RAbstractLogicalVector x, int offs, int n, int naWidth) {
         int fieldwidth = 1;
         for (int i = 0; i < n; i++) {
             byte xi = x.getDataAt(offs + i);
@@ -83,18 +79,29 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
                 /* this is the widest it can be, so stop */
             }
         }
-        return new FormatMetrics(fieldwidth);
+        return fieldwidth;
     }
 
     static String encodeLogical(byte x, int w, PrintParameters pp) {
-        final String fmt = "%" + Utils.asBlankArg(Math.min(w, (NB - 1))) + "s";
+        String id;
         if (x == RRuntime.LOGICAL_NA) {
-            return snprintf(NB, fmt, pp.getNaString());
-        } else if (x != 0) {
-            return snprintf(NB, fmt, "TRUE");
+            id = pp.getNaString();
+        } else if (x != RRuntime.LOGICAL_FALSE) {
+            id = "TRUE";
         } else {
-            return snprintf(NB, fmt, "FALSE");
+            id = "FALSE";
         }
+        if (id.length() == w) {
+            return id;
+        }
+        int blanks = w // target width
+                        - id.length(); // text
+        StringBuilder str = new StringBuilder();
+        for (int i = 0; i < blanks; i++) {
+            str.append(' ');
+        }
+        str.append(id);
+        return str.toString();
     }
 
     public static String[] format(RAbstractLogicalVector value, boolean trim, int width, PrintParameters pp) {
@@ -102,8 +109,7 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
         if (trim) {
             w = 1;
         } else {
-            FormatMetrics metrics = formatLogicalVector(value, 0, value.getLength(), pp.getNaWidth());
-            w = metrics.maxWidth;
+            w = formatLogicalVectorInternal(value, 0, value.getLength(), pp.getNaWidth());
         }
         w = Math.max(w, width);
 
