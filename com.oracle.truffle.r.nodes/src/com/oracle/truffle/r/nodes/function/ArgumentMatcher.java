@@ -38,6 +38,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -359,6 +360,7 @@ public class ArgumentMatcher {
             // Has varargs? Unfold!
             if (suppliedIndex == MatchPermutation.VARARGS) {
                 int varArgsLen = match.varargsPermutation.length;
+                boolean shouldInline = shouldInlineArgument(builtin, formalIndex, fastPath);
                 String[] newNames = new String[varArgsLen];
                 RNode[] newVarArgs = new RNode[varArgsLen];
                 int index = 0;
@@ -375,7 +377,7 @@ public class ArgumentMatcher {
                         }
                     }
                     newNames[index] = match.varargsSignature.getName(i);
-                    newVarArgs[index] = varArg;
+                    newVarArgs[index] = shouldInline ? updateInlinedArg(varArg) : varArg;
                     index++;
                 }
 
@@ -399,7 +401,7 @@ public class ArgumentMatcher {
                 }
 
                 ArgumentsSignature signature = ArgumentsSignature.get(newNames);
-                if (shouldInlineArgument(builtin, formalIndex, fastPath)) {
+                if (shouldInline) {
                     resArgs[formalIndex] = PromiseNode.createVarArgsInlined(newVarArgs, signature);
                 } else {
                     boolean forcedEager = fastPath != null && fastPath.forcedEagerPromise(formalIndex);
@@ -445,6 +447,26 @@ public class ArgumentMatcher {
         // This is for actual function calls. However, if the arguments are meant for a
         // builtin, we have to consider whether they should be forced or not!
         return builtin != null && builtin.evaluatesArg(formalIndex);
+    }
+
+    /**
+     * Reads of the {@link RMissing} values must not be reported as error in inlined varargs. This
+     * method updates any wrapped ReadVariableNode to just return missing values without raising an
+     * error.
+     *
+     * @see com.oracle.truffle.r.nodes.function.PromiseNode.InlineVarArgsNode
+     */
+    private static RNode updateInlinedArg(RNode node) {
+        if (!(node instanceof WrapArgumentNode)) {
+            return node;
+        }
+        WrapArgumentNode wrapper = (WrapArgumentNode) node;
+        if (!(wrapper.getOperand() instanceof ReadVariableNode)) {
+            return node;
+        }
+        ReadVariableNode rvn = (ReadVariableNode) wrapper.getOperand();
+        ReadVariableNode newRvn = ReadVariableNode.createSilentMissing(rvn.getIdentifier(), rvn.getMode());
+        return WrapArgumentNode.create(newRvn, wrapper.getIndex());
     }
 
     private static RNode wrapUnmatched(FormalArguments formals, RBuiltinDescriptor builtin, int formalIndex, boolean noOpt) {

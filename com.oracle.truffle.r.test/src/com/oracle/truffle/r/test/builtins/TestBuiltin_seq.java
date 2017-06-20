@@ -144,6 +144,13 @@ public class TestBuiltin_seq extends TestBase {
         assertEval(Output.MayIgnoreErrorContext, template("%0(1, 20, 3, length.out=10)", SEQFUNS));
     }
 
+    // argument matching corner-case appearing in seq (because it has a fast-path and varargs)
+    // taken and adapted from the scales package
+    @Test
+    public void testSeqArgMatching() {
+        assertEval("{ foo <- function(beg, end, by, len) seq(beg, end, by, length.out = len); foo(beg=1, by=1, len=10) }");
+    }
+
     // Old tests, undoubtedly partially overlapping
 
     @Test
