@@ -54,7 +54,7 @@ public class RInstrumentation {
     }
 
     public static SourceSection getSourceSection(RFunction func) {
-        return getFunctionDefinitionNode(func).getSourceSection();
+        return func.getRootNode().getSourceSection();
     }
 
     /**
