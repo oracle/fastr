@@ -324,7 +324,11 @@ public final class Utils {
                         Path truePath = currentPath.resolve(p);
                         if (keepRelative) {
                             // relativize it (it was relative to start with)
-                            return currentPath.relativize(truePath).toString();
+                            if (".".equals(path) || "..".equals(path)) {
+                                return path;
+                            } else {
+                                return currentPath.relativize(truePath).toString();
+                            }
                         } else {
                             return truePath.toString();
                         }

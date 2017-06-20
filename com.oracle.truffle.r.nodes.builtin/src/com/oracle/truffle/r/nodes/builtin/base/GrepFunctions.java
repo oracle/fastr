@@ -1368,6 +1368,11 @@ public class GrepFunctions {
             }
             for (int i = 0; i < x.getLength(); i++) {
                 String data = x.getDataAt(i);
+                assert data != null;
+                if (data.length() == 0) {
+                    result[i] = RDataFactory.createEmptyStringVector();
+                    continue;
+                }
                 String currentSplit = splits[i % splits.length];
                 if (currentSplit.isEmpty()) {
                     result[i] = na.check(data) ? RDataFactory.createNAStringVector() : emptySplitIntl(data);
