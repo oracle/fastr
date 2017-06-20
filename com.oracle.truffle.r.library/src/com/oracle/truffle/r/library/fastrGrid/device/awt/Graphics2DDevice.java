@@ -91,30 +91,38 @@ public class Graphics2DDevice implements GridDevice {
     static void defaultInitGraphics(Graphics2D graphics) {
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         graphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+        graphics.setBackground(Color.WHITE);
     }
 
     @Override
     public void openNewPage() {
+        ensureOpen();
         graphics.clearRect(0, 0, getWidthAwt(), getHeightAwt());
+        cachedContext = null;
     }
 
     @Override
     public void drawRect(DrawingContext ctx, double leftXIn, double bottomYIn, double widthIn, double heightIn, double rotationAnticlockWise) {
-        int leftX = transX(leftXIn);
-        int topY = transY(bottomYIn + heightIn);
-        int transWidth = transDim(widthIn);
-        int transHeight = transDim(heightIn);
+        ensureOpen();
+        double leftXReal = transX(leftXIn);
+        double topYReal = transY(bottomYIn + heightIn);
+        int rectWidth = transDim(widthIn, leftXReal);
+        int rectHeight = transDim(heightIn, topYReal);
+        int leftX = iround(leftXReal);
+        int topY = iround(topYReal);
         setContext(ctx);
         if (rotationAnticlockWise == 0.) {
-            drawShape(ctx, new Rectangle2D.Double(leftX, topY, transWidth, transHeight));
-            return;
+            drawShape(ctx, new Rectangle2D.Double(leftX, topY, rectWidth, rectHeight));
+        } else {
+            int halfWidth = iround(rectWidth / 2.);
+            int halfHeight = iround(rectHeight / 2.);
+            transformed(iround(leftX + halfWidth), iround(topY + halfHeight), rotationAnticlockWise, () -> drawShape(ctx, new Rectangle2D.Double(-halfWidth, -halfHeight, rectWidth, rectHeight)));
         }
-        transformed(leftX + transWidth / 2, topY + transHeight / 2, rotationAnticlockWise,
-                        () -> drawShape(ctx, new Rectangle2D.Double(-(transWidth / 2), -(transHeight / 2), transWidth, transHeight)));
     }
 
     @Override
     public void drawPolyLines(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
+        ensureOpen();
         Path2D.Double path = getPath2D(x, y, startIndex, length);
         setContext(ctx);
         graphics.draw(path);
@@ -122,6 +130,7 @@ public class Graphics2DDevice implements GridDevice {
 
     @Override
     public void drawPolygon(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
+        ensureOpen();
         Path2D.Double path = getPath2D(x, y, startIndex, length);
         setContext(ctx);
         drawShape(ctx, path);
@@ -129,26 +138,31 @@ public class Graphics2DDevice implements GridDevice {
 
     @Override
     public void drawCircle(DrawingContext ctx, double centerXIn, double centerYIn, double radiusIn) {
+        ensureOpen();
         setContext(ctx);
-        int centerX = transX(centerXIn);
-        int centerY = transY(centerYIn);
-        int radius = transDim(radiusIn);
-        drawShape(ctx, new Ellipse2D.Double(centerX - radius, centerY - radius, radius * 2d, radius * 2d));
+        double xRel = transX(centerXIn - radiusIn);
+        double yRel = transY(centerYIn + radiusIn);
+        int diameter = transDim(radiusIn * 2d, Math.max(xRel % 1, yRel % 1));
+        drawShape(ctx, new Ellipse2D.Double(iround(xRel), iround(yRel), diameter, diameter));
     }
 
     @Override
     public void drawRaster(double leftX, double bottomY, double width, double height, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation) {
+        ensureOpen();
         graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, fromInterpolation(interpolation));
         Image image = Toolkit.getDefaultToolkit().createImage(new MemoryImageSource(pixelsColumnsCount, pixels.length / pixelsColumnsCount, pixels, 0, pixelsColumnsCount));
-        graphics.drawImage(image, transX(leftX), transY(bottomY + height), transDim(width), transDim(height), null);
+        double yRel = transY(bottomY + height);
+        double xRel = transX(leftX);
+        graphics.drawImage(image, iround(xRel), iround(yRel), transDim(width, xRel), transDim(height, yRel), null);
     }
 
     @Override
     public void drawString(DrawingContext ctx, double leftXIn, double bottomYIn, double rotationAnticlockWise, String text) {
+        ensureOpen();
         setContextAndFont(ctx);
-        int leftX = transX(leftXIn);
+        int leftX = iround(transX(leftXIn));
         FontMetrics fontMetrics = graphics.getFontMetrics(graphics.getFont());
-        int bottomY = transY(bottomYIn) - fontMetrics.getDescent();
+        int bottomY = iround(transY(bottomYIn)) - fontMetrics.getDescent();
         transformed(leftX, bottomY, rotationAnticlockWise, () -> graphics.drawString(text, 0, 0));
     }
 
@@ -191,6 +205,15 @@ public class Graphics2DDevice implements GridDevice {
         return height;
     }
 
+    /**
+     * If the device can be closed by an action outside of the R interpreter (not e.g. dev.close()),
+     * then the device should be able to re-open itself if any drawing happens after it was closed
+     * in such way.
+     */
+    void ensureOpen() {
+        // nop
+    }
+
     void setGraphics2D(Graphics2D newGraphics) {
         assert newGraphics != null;
         graphics = newGraphics;
@@ -201,16 +224,16 @@ public class Graphics2DDevice implements GridDevice {
         return graphics;
     }
 
-    private int transY(double y) {
-        return getHeightAwt() - (int) (y * AWT_POINTS_IN_INCH);
+    private double transY(double y) {
+        return getHeightAwt() - y * AWT_POINTS_IN_INCH;
     }
 
-    private static int transX(double x) {
-        return (int) (x * AWT_POINTS_IN_INCH);
+    private static double transX(double x) {
+        return x * AWT_POINTS_IN_INCH;
     }
 
-    private static int transDim(double widthOrHeight) {
-        return (int) (widthOrHeight * AWT_POINTS_IN_INCH);
+    private static int transDim(double widthOrHeight, double transformedAxis) {
+        return (int) Math.round(widthOrHeight * AWT_POINTS_IN_INCH + transformedAxis % 1);
     }
 
     private static void initStrokes() {
@@ -355,5 +378,9 @@ public class Graphics2DDevice implements GridDevice {
             return RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
         }
         return RenderingHints.VALUE_INTERPOLATION_BILINEAR;
+    }
+
+    private static int iround(double val) {
+        return (int) Math.round(val);
     }
 }

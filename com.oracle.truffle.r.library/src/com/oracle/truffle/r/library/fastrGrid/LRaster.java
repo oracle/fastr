@@ -99,6 +99,9 @@ public abstract class LRaster extends RExternalBuiltinNode.Arg8 {
             Point origLoc = Point.fromUnits(xVec, yVec, i, conversionCtx);
             Point transLoc = TransformMatrix.transLocation(origLoc, vpTransform.transform);
             Point loc = transLoc.justify(size, getDataAtMod(hjust, i), getDataAtMod(vjust, i));
+            if (!loc.isFinite() || !size.isFinite()) {
+                continue;
+            }
             ImageInterpolation interpolation = getInterpolation(interpolate, i);
             dev.drawRaster(loc.x, loc.y, size.getWidth(), size.getHeight(), pixels, dims.getDataAt(1), interpolation);
         }
