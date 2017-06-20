@@ -25,50 +25,37 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 @RBuiltin(name = "oldClass", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-public abstract class GetOldClass extends RBuiltinNode.Arg1 {
+public abstract class OldClass extends RBuiltinNode.Arg1 {
 
     private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
     @Child private GetClassAttributeNode getClassNode = GetClassAttributeNode.create();
 
     static {
-        Casts.noCasts(GetOldClass.class);
+        Casts.noCasts(OldClass.class);
     }
 
     @Specialization
-    protected Object getOldClass(RAbstractContainer arg,
-                    @Cached("createWithImplicit()") ClassHierarchyNode hierarchy) {
-        if (isObjectProfile.profile(getClassNode.isObject(arg))) {
-            return hierarchy.execute(arg);
+    protected Object getOldClass(RAttributable arg) {
+        Object clazz = getClassNode.execute(arg);
+        if (isObjectProfile.profile(clazz != null)) {
+            return clazz;
         } else {
             return RNull.instance;
         }
     }
 
-    @Specialization
-    protected Object getOldClass(@SuppressWarnings("unused") RSymbol arg) {
-        return RNull.instance;
-    }
-
-    @Specialization
-    protected Object getOldClass(@SuppressWarnings("unused") RFunction arg) {
-        return RNull.instance;
-    }
-
-    @Specialization
-    protected Object getOldClass(@SuppressWarnings("unused") RNull arg) {
+    @Fallback
+    protected Object getOldClass(@SuppressWarnings("unused") Object arg) {
         return RNull.instance;
     }
 }
