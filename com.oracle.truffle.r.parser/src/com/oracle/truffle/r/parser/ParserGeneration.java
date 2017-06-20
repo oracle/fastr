@@ -91,6 +91,7 @@ public class ParserGeneration {
         "different warning for hex and dec integer literals",
         "raise ZERO_LENGTH_VARIABLE errors in parser",
         "support for file delimiter",
-        "pass along TruffleRLanguage"
+        "pass along TruffleRLanguage",
+        "convert line endings"
     };
 }

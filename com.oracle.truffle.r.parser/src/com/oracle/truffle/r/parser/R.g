@@ -29,6 +29,10 @@ package com.oracle.truffle.r.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.net.URISyntaxException;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -149,9 +153,15 @@ import com.oracle.truffle.r.runtime.RError;
 	    		if(q0 != -1 && q1 != -1) {
 	    			String path = commentLine.substring(q0+1, q1);
 	    			try {
-                        source = RSource.fromFileName(path, false);
+	    			    String content = new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
+	    			    String lineEnding = detectLineEnding(initialSource.getCode());
+	    			    content = convertToLineEnding(content, lineEnding);
+                        source = RSource.fromFileName(content, path, false);
                         fileStartOffset = commentToken.getStopIndex() + 1;
                     } catch (IOException e) {
+                    	resetSource();
+                    } catch (URISyntaxException e) {
+                    	resetSource();
                     }
 	    		} else {
 	    			// fall back and use the initial source (the file being parsed)
@@ -163,6 +173,25 @@ import com.oracle.truffle.r.runtime.RError;
 	private void resetSource() {
 		source = initialSource;
 		fileStartOffset = 0;
+	}
+
+	private String detectLineEnding(String code) {
+		int lf = code.indexOf("\n");
+		int crlf = code.indexOf("\r\n");
+		
+		if(crlf != -1 && crlf < lf) {
+			return "\r\n";
+		}
+		return "\n";
+	}
+	
+	private String convertToLineEnding(String content, String lineEnding) {
+		if("\n".equals(lineEnding)) {
+			return content.replaceAll("\\r\\n", "\n");
+		} else if("\r\n".equals(lineEnding)) {
+			return content.replaceAll("\\n", "\r\n");
+		}
+		return content;
 	}
 
 	// without this override, the parser will not throw exceptions if it can recover    
