@@ -46,7 +46,7 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
 
         @Override
         protected FormatMetrics formatVector(int offs, int len) {
-            return formatIntVector(vector, offs, len, printCtx.parameters().getNaWidth());
+            return new FormatMetrics(formatIntVectorInternal(vector, offs, len, printCtx.parameters().getNaWidth()));
         }
 
         @Override
@@ -66,7 +66,7 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
         }
     }
 
-    public static FormatMetrics formatIntVector(RAbstractIntVector x, int offs, int n, int naWidth) {
+    static int formatIntVectorInternal(RAbstractIntVector x, int offs, int n, int naWidth) {
         int xmin = RRuntime.INT_MAX_VALUE;
         int xmax = RRuntime.INT_MIN_VALUE;
         boolean naflag = false;
@@ -105,21 +105,62 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
                 fieldwidth = l;
             }
         }
-
-        return new FormatMetrics(fieldwidth);
+        return fieldwidth;
     }
 
-    /*
-     * There is no documented (or enforced) limit on 'w' here, so use snprintf
-     */
-    static int NB = 1000;
+    private static final int[][] DECIMAL_VALUES = new int[10][10];
+    private static final int[] DECIMAL_WEIGHTS = new int[10];
 
-    public static String encodeInteger(int x, int w, PrintParameters pp) {
-        if (x == RRuntime.INT_NA) {
-            return Utils.snprintf(NB, "%" + Utils.asBlankArg(Math.min(w, (NB - 1))) + "s", pp.getNaString());
-        } else {
-            return Utils.snprintf(NB, "%" + Utils.asBlankArg(Math.min(w, (NB - 1))) + "d", x);
+    static {
+        for (int i = 0; i < DECIMAL_WEIGHTS.length; i++) {
+            DECIMAL_WEIGHTS[i] = (int) Math.pow(10, i);
         }
+        for (int i = 0; i < DECIMAL_VALUES.length; i++) {
+            for (int i2 = 0; i2 < 10; i2++) {
+                DECIMAL_VALUES[i][i2] = (int) (Math.pow(10, i) * i2);
+            }
+        }
+    }
+
+    public static String encodeInteger(int initialX, int w, PrintParameters pp) {
+        StringBuilder str = new StringBuilder(w);
+
+        int x = initialX;
+        if (RRuntime.isNA(x)) {
+            String id = pp.getNaString();
+            for (int i = w - id.length(); i > 0; i--) {
+                str.append(' ');
+            }
+            str.append(id);
+        } else {
+            boolean negated = false;
+            if (x < 0) {
+                negated = true;
+                x = -x;
+            }
+            int log10 = x == 0 ? 0 : (int) Math.log10(x);
+            int blanks = w // target width
+                            - (negated ? 1 : 0) // "-"
+                            - (log10 + 1); // digits
+
+            for (int i = 0; i < blanks; i++) {
+                str.append(' ');
+            }
+            if (negated) {
+                str.append('-');
+            }
+            for (int i = log10; i >= 0; i--) {
+                x = appendDigit(x, i, str);
+            }
+        }
+        return str.toString();
+    }
+
+    private static int appendDigit(int x, int digit, StringBuilder str) {
+        int c = x / DECIMAL_WEIGHTS[digit];
+        assert c >= 0 && c <= 9;
+        str.append((char) ('0' + c));
+        return x - DECIMAL_VALUES[digit][c];
     }
 
     public static String[] format(RAbstractIntVector value, boolean trim, int width, PrintParameters pp) {
@@ -127,8 +168,7 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
         if (trim) {
             w = 1;
         } else {
-            FormatMetrics metrics = formatIntVector(value, 0, value.getLength(), pp.getNaWidth());
-            w = metrics.maxWidth;
+            w = formatIntVectorInternal(value, 0, value.getLength(), pp.getNaWidth());
         }
         w = Math.max(w, width);
 

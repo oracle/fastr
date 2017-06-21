@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 /**
  * The generic formatting metrics. N.B. This class is public since it is used in the PrettyWriter
  * public API.
- * 
+ *
  * @see PrettyWriter
  */
 public class FormatMetrics {
@@ -34,7 +34,6 @@ public class FormatMetrics {
     int maxWidth;
 
     FormatMetrics(int maxWidth) {
-        super();
         this.originalMaxWidth = maxWidth;
         this.maxWidth = maxWidth;
     }

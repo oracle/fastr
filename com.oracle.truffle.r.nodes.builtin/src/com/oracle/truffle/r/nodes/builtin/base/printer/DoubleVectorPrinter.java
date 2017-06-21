@@ -11,11 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.snprintf;
-
 import java.io.IOException;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -312,9 +308,9 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
                  * assumption that R_dec_min_exponent+303 is in range. Representation of 1e+303 has
                  * low error.
                  */
-                rPrec = (rPrec * 1e+303) / Math.pow(10, kp + 303);
+                rPrec = (rPrec * 1e+303) / DECIMAL_WEIGHTS[kp + 303 + DECIMAL_SHIFT];
             } else {
-                rPrec /= Math.pow(10, kp);
+                rPrec /= DECIMAL_WEIGHTS[kp + DECIMAL_SHIFT];
             }
             if (rPrec < tbl[digits]) {
                 rPrec *= 10.0;
@@ -354,7 +350,6 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
             double fuzz = 0.5 / tbl[1 + rgt];
             // kpower can be bigger than the table.
             roundingwidens = kpower > 0 && kpower <= KP_MAX && r < tbl[kpower + 1] - fuzz;
-
         }
 
         return new ScientificDouble(sgn, kpower, nsig, roundingwidens);
@@ -386,14 +381,27 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         return encodeReal(x, dm.maxWidth, dm.d, dm.e, '.', pp);
     }
 
-    // caching some commonly used formats
-    private static final DecimalFormat[] CACHED_FORMATS = new DecimalFormat[32];
+    private static final int DECIMAL_SHIFT = 350;
+    private static final double[][] DECIMAL_VALUES = new double[700][10];
+    private static final double[] DECIMAL_WEIGHTS = new double[700];
+
+    static {
+        for (int i = 0; i < DECIMAL_WEIGHTS.length; i++) {
+            DECIMAL_WEIGHTS[i] = Math.pow(10, i - DECIMAL_SHIFT);
+        }
+        for (int i = 0; i < DECIMAL_VALUES.length; i++) {
+            for (int i2 = 0; i2 < 10; i2++) {
+                DECIMAL_VALUES[i][i2] = Math.pow(10, i - DECIMAL_SHIFT) * i2;
+            }
+        }
+    }
 
     @TruffleBoundary
     static String encodeReal(double initialX, int w, int d, int e, char cdec, String naString) {
         /* IEEE allows signed zeros (yuck!) */
         double x = RRuntime.normalizeZero(initialX);
 
+        StringBuilder str = new StringBuilder(w);
         if (!RRuntime.isFinite(x)) {
             String id;
             if (RRuntime.isNA(x)) {
@@ -403,49 +411,120 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
             } else {
                 id = x > 0 ? "Inf" : "-Inf";
             }
-            return prependBlanks(w, id);
-        } else if (e != 0) {
-            String fmt = String.format((d != 0) ? "%%#%d.%de" : "%%%d.%de", Math.min(w, (NB - 1)), d);
-            String result;
-            if (Math.abs(x) < 1e-300 && Math.abs(x) >= Double.MIN_VALUE) {
-                // work around java formatting bug for small numbers like 1.53160350210786e-322
-                result = snprintf(NB, fmt, x * 1e100);
-                StringBuilder str = new StringBuilder(result);
-                assert str.charAt(str.length() - 3) == '2';
-                str.setCharAt(str.length() - 3, '3');
-                result = str.toString();
-            } else {
-                result = snprintf(NB, fmt, x);
+            int blanks = w - id.length();
+            for (int i = 0; i < blanks; i++) {
+                str.append(' ');
             }
-            return result.replace('.', cdec);
-        } else { /* e = 0 */
-            DecimalFormat df = null;
-            if (d < CACHED_FORMATS.length) {
-                df = CACHED_FORMATS[d];
+            str.append(id);
+        } else {
+            boolean negated = x < 0;
+            if (negated) {
+                x = -x;
             }
-            if (df == null) {
-                df = new DecimalFormat("#.#");
-                df.setRoundingMode(RoundingMode.HALF_EVEN);
-                df.setDecimalSeparatorAlwaysShown(false);
-                df.setMinimumFractionDigits(d);
-                df.setMaximumFractionDigits(d);
-                if (d < CACHED_FORMATS.length) {
-                    CACHED_FORMATS[d] = df;
+            if (e != 0) {
+
+                boolean shifted = false;
+                int log10;
+                int adjustedE = e;
+                if (x == 0) {
+                    log10 = 0;
+                } else {
+                    if (x < 1e-300) {
+                        shifted = true;
+                        x *= 1e100;
+                    }
+                    log10 = (int) Math.log10(x);
+                    if (DECIMAL_WEIGHTS[log10 + DECIMAL_SHIFT] > x) {
+                        // log10 behaves differently for < 1.0
+                        log10--;
+                    }
+                    if (log10 <= -100 || log10 >= 100) {
+                        adjustedE = 3;
+                    }
+                }
+                int blanks = w // target width
+                                - (negated ? 1 : 0) // "-"
+                                - 1 // digits before "."
+                                - (d > 0 ? 1 : 0)  // "."
+                                - d // digits after "."
+                                - 1 // "e"
+                                - 1 // "+/-" for exponent
+                                - Math.max(2, adjustedE); // digits for exponent
+                for (int i = 0; i < blanks; i++) {
+                    str.append(' ');
+                }
+                // round towards next digit instead of truncating
+                double rounded = x + DECIMAL_VALUES[log10 - d - 1 + DECIMAL_SHIFT][5];
+                if (Double.isFinite(rounded)) {
+                    x = rounded;
+                    // the rounding might have modified the exponent
+                    if (DECIMAL_WEIGHTS[log10 + 1 + DECIMAL_SHIFT] <= x) {
+                        log10++;
+                    }
+                }
+                if (negated) {
+                    str.append('-');
+                }
+                x = appendDigit(x, log10, str);
+                if (d > 0) {
+                    str.append(cdec);
+                    for (int i = 1; i <= d; i++) {
+                        x = appendDigit(x, log10 - i, str);
+                    }
+                }
+                str.append('e');
+                if (log10 < 0) {
+                    str.append('-');
+                    log10 = -log10;
+                } else {
+                    str.append('+');
+                }
+                if (shifted) {
+                    log10 += 100;
+                }
+                if (adjustedE >= 3) {
+                    str.append((char) ('0' + (log10 / 100)));
+                    log10 = log10 % 100;
+                }
+                str.append((char) ('0' + (log10 / 10)));
+                str.append((char) ('0' + (log10 % 10)));
+            } else { /* e == 0 */
+                // round towards next digit instead of truncating
+                x += DECIMAL_VALUES[-d - 1 + DECIMAL_SHIFT][5];
+
+                int log10 = x == 0 ? 0 : Math.max((int) Math.log10(x), 0);
+                int blanks = w // target width
+                                - (negated ? 1 : 0) // "-"
+                                - (log10 + 1) // digits before "."
+                                - (d > 0 ? 1 : 0) // "."
+                                - d; // digits after "."
+
+                for (int i = 0; i < blanks; i++) {
+                    str.append(' ');
+                }
+                if (negated) {
+                    str.append('-');
+                }
+                for (int i = log10; i >= 0; i--) {
+                    x = appendDigit(x, i, str);
+                }
+                if (d > 0) {
+                    str.append(cdec);
+                    for (int i = 1; i <= d; i++) {
+                        x = appendDigit(x, -i, str);
+                    }
                 }
             }
-            return prependBlanks(w, df.format(x)).replace('.', cdec);
         }
+        assert str.length() >= w;
+        return str.toString();
     }
 
-    private static String prependBlanks(int width, String id) {
-        if (id.length() >= width) {
-            return id;
-        }
-        StringBuilder str = new StringBuilder(width);
-        for (int i = 0; i < width - id.length(); i++) {
-            str.append(' ');
-        }
-        return str.append(id).toString();
+    private static double appendDigit(double x, int digit, StringBuilder str) {
+        int c = (int) (x / DECIMAL_WEIGHTS[digit + DECIMAL_SHIFT]);
+        assert c >= 0 && c <= 9;
+        str.append((char) ('0' + c));
+        return x - DECIMAL_VALUES[digit + DECIMAL_SHIFT][c];
     }
 
     public static String[] format(RAbstractDoubleVector value, boolean trim, int nsmall, int width, char decimalMark, PrintParameters pp) {

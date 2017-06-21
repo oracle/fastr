@@ -427,27 +427,14 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
 
     @TruffleBoundary
     private static String encodeComplex(RComplex x, int wr, int dr, int er, int wi, int di, int ei, char cdec, int digits, String naString) {
-        String buff;
-        String im;
-        String re;
-        boolean flagNegIm = false;
-        RComplex y;
-
-        double xr = x.getRealPart();
-        double xi = x.getImaginaryPart();
-
         /* IEEE allows signed zeros; strip these here */
-        if (xr == 0.0) {
-            xr = 0.0;
-        }
-        if (xi == 0.0) {
-            xi = 0.0;
-        }
+        double xr = RRuntime.normalizeZero(x.getRealPart());
+        double xi = RRuntime.normalizeZero(x.getImaginaryPart());
 
         if (RRuntime.isNA(xr) || RRuntime.isNA(xi)) {
             int g = Math.min(wr + wi + 2, (NB - 1));
             String fmt = "%" + Utils.asBlankArg(g) + "s";
-            buff = Utils.snprintf(NB,
+            return Utils.snprintf(NB,
                             fmt, /* was "%*s%*s", R_print.gap, "", */
                             naString);
         } else {
@@ -456,24 +443,25 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
              * get strange trailing zeros. But we do want to avoid printing small exponentials that
              * are probably garbage.
              */
-            y = zprecr(x, digits);
+            RComplex y = zprecr(x, digits);
+            String re;
             if (y.getRealPart() == 0.) {
                 re = DoubleVectorPrinter.encodeReal(y.getRealPart(), wr, dr, er, cdec, naString);
             } else {
                 re = DoubleVectorPrinter.encodeReal(xr, wr, dr, er, cdec, naString);
             }
-            flagNegIm = xi < 0;
+            boolean flagNegIm = xi < 0;
             if (flagNegIm) {
                 xi = -xi;
             }
+            String im;
             if (y.getImaginaryPart() == 0.) {
                 im = DoubleVectorPrinter.encodeReal(y.getImaginaryPart(), wi, di, ei, cdec, naString);
             } else {
                 im = DoubleVectorPrinter.encodeReal(xi, wi, di, ei, cdec, naString);
             }
-            buff = snprintf(NB, "%s%s%si", re, flagNegIm ? "-" : "+", im);
+            return snprintf(NB, "%s%s%si", re, flagNegIm ? "-" : "+", im);
         }
-        return buff;
     }
 
     public static String[] format(RAbstractComplexVector value, boolean trim, int nsmall, int width, char decimalMark, PrintParameters pp) {

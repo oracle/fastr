@@ -324,7 +324,7 @@ public class FileConnections {
         private final FileChannel channel;
 
         FileWriteBinaryConnection(BasePathRConnection base, boolean append) throws IOException {
-            super(base);
+            super(base, 0);
             List<OpenOption> opts = new ArrayList<>();
             opts.add(StandardOpenOption.WRITE);
             opts.add(StandardOpenOption.CREATE);
