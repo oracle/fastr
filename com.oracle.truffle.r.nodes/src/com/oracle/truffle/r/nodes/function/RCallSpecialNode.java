@@ -32,9 +32,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -43,7 +41,6 @@ import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -56,60 +53,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-
-final class PeekLocalVariableNode extends RNode implements RSyntaxLookup {
-
-    @Child private LocalReadVariableNode read;
-    @Child private SetVisibilityNode visibility;
-
-    private final ValueProfile valueProfile = ValueProfile.createClassProfile();
-
-    PeekLocalVariableNode(String name) {
-        this.read = LocalReadVariableNode.create(Utils.intern(name), true);
-    }
-
-    @Override
-    public Object execute(VirtualFrame frame) {
-        Object value = read.execute(frame);
-        if (value == null) {
-            throw RSpecialFactory.throwFullCallNeeded();
-        }
-        return valueProfile.profile(value);
-    }
-
-    @Override
-    public Object visibleExecute(VirtualFrame frame) {
-        try {
-            return execute(frame);
-        } finally {
-            if (visibility == null) {
-                CompilerDirectives.transferToInterpreter();
-                visibility = insert(SetVisibilityNode.create());
-            }
-            visibility.execute(frame, true);
-        }
-    }
-
-    @Override
-    public void setSourceSection(SourceSection source) {
-        // nothing to do
-    }
-
-    @Override
-    public String getIdentifier() {
-        return (String) read.getIdentifier();
-    }
-
-    @Override
-    public boolean isFunctionLookup() {
-        return false;
-    }
-
-    @Override
-    public SourceSection getLazySourceSection() {
-        return null;
-    }
-}
 
 @NodeChild(value = "delegate", type = RNode.class)
 abstract class ClassCheckNode extends RNode {
