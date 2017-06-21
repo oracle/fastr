@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -48,7 +49,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -62,7 +62,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * </ol>
  *
  */
-public abstract class BrowserInteractNode extends RNode {
+public abstract class BrowserInteractNode extends Node {
 
     public static final int STEP = 0;
     public static final int NEXT = 1;
@@ -72,8 +72,10 @@ public abstract class BrowserInteractNode extends RNode {
     @Child private GetFixedAttributeNode getSrcRefAttrNode;
     @Child private GetFixedAttributeNode getSrcFileAttrNode;
 
+    public abstract int execute(VirtualFrame frame, RCaller caller);
+
     @Specialization
-    protected int interact(VirtualFrame frame) {
+    protected int interact(VirtualFrame frame, RCaller caller) {
         CompilerDirectives.transferToInterpreter();
         MaterializedFrame mFrame = frame.materialize();
         ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
@@ -81,9 +83,9 @@ public abstract class BrowserInteractNode extends RNode {
         String savedPrompt = ch.getPrompt();
         RFunction callerFunction = RArguments.getFunction(frame);
         // we may be at top level where there is not caller
-        boolean callerIsDebugged = callerFunction == null ? false : DebugHandling.isDebugged(callerFunction);
+        boolean callerIsDebugged = callerFunction == null || DebugHandling.isDebugged(callerFunction);
         int exitMode = NEXT;
-        RCaller currentCaller = RArguments.getCall(mFrame);
+        RCaller currentCaller = caller;
         if (currentCaller == null) {
             currentCaller = RCaller.topLevel;
         }
@@ -92,7 +94,7 @@ public abstract class BrowserInteractNode extends RNode {
         try {
             browserState.setInBrowser(browserCaller);
             LW: while (true) {
-                ch.setPrompt(browserPrompt(RArguments.getDepth(frame)));
+                ch.setPrompt(browserPrompt(currentCaller.getDepth()));
                 String input = ch.readLine();
                 if (input != null) {
                     input = input.trim();
@@ -130,7 +132,7 @@ public abstract class BrowserInteractNode extends RNode {
                     case "Q":
                         throw new JumpToTopLevelException();
                     case "where": {
-                        if (RArguments.getDepth(mFrame) > 1) {
+                        if (currentCaller.getDepth() > 1) {
                             Object stack = Utils.createTraceback(0);
                             // browser inverts frame depth
                             int idepth = 1;

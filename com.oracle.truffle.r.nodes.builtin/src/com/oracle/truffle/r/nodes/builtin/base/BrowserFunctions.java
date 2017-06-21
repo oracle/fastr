@@ -30,6 +30,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -38,13 +39,16 @@ import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNodeGen;
+import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState.HelperState;
@@ -55,6 +59,7 @@ public class BrowserFunctions {
     public abstract static class BrowserNode extends RBuiltinNode.Arg4 {
 
         @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
+        @Child private GetCallerFrameNode getCallerFrame;
 
         @Override
         public Object[] getDefaultParameterValues() {
@@ -78,8 +83,18 @@ public class BrowserFunctions {
                     browserState.push(new HelperState(text, condition));
                     MaterializedFrame mFrame = frame.materialize();
                     RCaller caller = RArguments.getCall(mFrame);
+                    RFunction fun = RArguments.getFunction(mFrame);
+                    VirtualFrame actualFrame = frame;
+                    if (fun != null && fun.isBuiltin() && fun.getRBuiltin().getBuiltinNodeClass() == BrowserNode.class) {
+                        if (getCallerFrame == null) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            getCallerFrame = insert(new GetCallerFrameNode());
+                        }
+                        actualFrame = SubstituteVirtualFrame.create(getCallerFrame.execute(mFrame));
+                        caller = caller.getParent();
+                    }
                     doPrint(caller);
-                    browserInteractNode.execute(frame);
+                    browserInteractNode.execute(actualFrame, caller);
                 } finally {
                     browserState.pop();
                 }

@@ -286,7 +286,7 @@ public class DebugHandling {
         }
 
         protected void browserInteract(Node node, VirtualFrame frame) {
-            int exitMode = (int) browserInteractNode.execute(frame);
+            int exitMode = browserInteractNode.execute(frame, RArguments.getCall(frame));
             switch (exitMode) {
                 case BrowserInteractNode.NEXT:
                     break;
