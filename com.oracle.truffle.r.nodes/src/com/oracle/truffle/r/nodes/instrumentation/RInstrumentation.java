@@ -79,7 +79,8 @@ public class RInstrumentation {
         builder.tagIs(tag);
         SourceSection fdns = fdn.getSourceSection();
         builder.indexIn(fdns.getCharIndex(), fdns.getCharLength());
-        builder.sourceIs(fdns.getSource());
+        Source source = fdns.getSource();
+        builder.sourceIs(s -> source.equals(s));
         return builder;
     }
 
