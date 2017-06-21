@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.interop;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -71,33 +70,28 @@ public abstract class R2Foreign extends RBaseNode {
         return vec.getValue();
     }
 
-    @Specialization(guards = "length == 1")
-    public double doDoubleVector(RAbstractDoubleVector vec,
-                    @Cached("vec.getLength()") @SuppressWarnings("unused") int length) {
+    @Specialization(guards = "vec.getLength() == 1")
+    public double doDoubleVector(RAbstractDoubleVector vec) {
         return vec.getDataAt(0);
     }
 
-    @Specialization(guards = "length == 1")
-    public int doIntVector(RAbstractIntVector vec,
-                    @Cached("vec.getLength()") @SuppressWarnings("unused") int length) {
+    @Specialization(guards = "vec.getLength() == 1")
+    public int doIntVector(RAbstractIntVector vec) {
         return vec.getDataAt(0);
     }
 
-    @Specialization(guards = "length == 1")
-    public boolean doLogicalVector(RAbstractLogicalVector vec,
-                    @Cached("vec.getLength()") @SuppressWarnings("unused") int length) {
+    @Specialization(guards = "vec.getLength() == 1")
+    public boolean doLogicalVector(RAbstractLogicalVector vec) {
         return vec.getDataAt(0) == RRuntime.LOGICAL_TRUE;
     }
 
-    @Specialization(guards = "length == 1")
-    public byte doRawVector(RAbstractRawVector vec,
-                    @Cached("vec.getLength()") @SuppressWarnings("unused") int length) {
+    @Specialization(guards = "vec.getLength() == 1")
+    public byte doRawVector(RAbstractRawVector vec) {
         return vec.getDataAt(0).getValue();
     }
 
-    @Specialization(guards = "length == 1")
-    public String doStrignVector(RAbstractStringVector vec,
-                    @Cached("vec.getLength()") @SuppressWarnings("unused") int length) {
+    @Specialization(guards = "vec.getLength() == 1")
+    public String doStrignVector(RAbstractStringVector vec) {
         return vec.getDataAt(0);
     }
 
