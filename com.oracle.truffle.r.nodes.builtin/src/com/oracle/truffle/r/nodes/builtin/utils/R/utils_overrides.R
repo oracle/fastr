@@ -26,7 +26,7 @@ setBreakpoint <- function (srcfile, line, nameonly = TRUE, envir = parent.frame(
 {
     res <- .fastr.setBreakpoint(srcfile, line, clear)
     if(is.null(res))
-    	res <- structure(result, class="findLineNumResult")
+    	res <- structure(list(), class="findLineNumResult")
     if (verbose) 
         print(res, steps = !clear)
 }
