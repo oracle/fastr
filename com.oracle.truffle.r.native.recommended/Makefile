@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,7 @@ GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_HOME
 all: install.recommended
 
 ifdef FASTR_RELEASE
+ifneq ($(FASTR_RFFI),managed)
 install.recommended: $(GNUR_RECOMMENDED_TARS)
 	for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
 		$(FASTR_R_HOME)/bin/R CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar; \
@@ -62,6 +63,9 @@ ifeq ($(OS_NAME),Darwin)
 			mx rupdatelib $(FASTR_R_HOME)/library/$$pkgname/libs; \
 		fi \
 	done
+endif
+else
+install.recommended:
 endif
 	touch install.recommended
 else
