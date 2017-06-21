@@ -98,7 +98,10 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         // start the lookup in the enclosing frame
         Super,
         // whether a promise should be forced to check its type or not during lookup
-        ForcedTypeCheck;
+        ForcedTypeCheck,
+        // whether reads of RMissing should not throw error and just proceed, this is the case for
+        // inlined varargs, which should not show missing value error
+        SilentMissing
     }
 
     public static ReadVariableNode create(String name) {
@@ -111,6 +114,10 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     public static ReadVariableNode createSilent(String name, RType mode) {
         return new ReadVariableNode(RSyntaxNode.SOURCE_UNAVAILABLE, name, mode, ReadKind.Silent);
+    }
+
+    public static ReadVariableNode createSilentMissing(String name, RType mode) {
+        return new ReadVariableNode(RSyntaxNode.SOURCE_UNAVAILABLE, name, mode, ReadKind.SilentMissing);
     }
 
     public static ReadVariableNode createSuperLookup(SourceSection src, String name) {
@@ -853,7 +860,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         if ((isNullProfile == null && obj == null) || (isNullProfile != null && isNullProfile.profile(obj == null))) {
             return false;
         }
-        if (obj == RMissing.instance) {
+        if (kind != ReadKind.SilentMissing && obj == RMissing.instance) {
             unexpectedMissingProfile.enter();
             throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, getIdentifier());
         }
@@ -893,7 +900,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         if (obj == null) {
             return false;
         }
-        if (obj == RMissing.instance) {
+        if (kind != ReadKind.SilentMissing && obj == RMissing.instance) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, getIdentifier());
         }
         if (mode == RType.Any) {
