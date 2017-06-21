@@ -43,6 +43,13 @@ public class CompileResultMR {
         }
     }
 
+    @Resolve(message = "IS_EXECUTABLE")
+    public abstract static class CompileResultIsExecutable extends Node {
+        protected Object access(@SuppressWarnings("unused") CompileResult receiver) {
+            return true;
+        }
+    }
+
     @Resolve(message = "EXECUTE")
     public abstract static class ResultCallbackExecute extends Node {
         protected Object access(@SuppressWarnings("unused") VirtualFrame frame, CompileResult receiver, Object[] arguments) {

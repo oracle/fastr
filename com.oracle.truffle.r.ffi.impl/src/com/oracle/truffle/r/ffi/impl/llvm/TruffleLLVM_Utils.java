@@ -28,9 +28,7 @@ import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.ffi.RFFIRootNode;
 
 public class TruffleLLVM_Utils {
@@ -40,18 +38,6 @@ public class TruffleLLVM_Utils {
         }
         long result = (long) asPointerRootNode.getCallTarget().call(llvmTruffleAddress);
         return result;
-    }
-
-    static Object checkNativeAddress(Object object) {
-        if (object instanceof RTruffleObject) {
-            return object;
-        }
-        TruffleObject useObj = (TruffleObject) object;
-        TruffleObject foo = NativePointer.check(useObj);
-        if (foo != null) {
-            useObj = foo;
-        }
-        return useObj;
     }
 
     static final class AsPointerRootNode extends RFFIRootNode<AsPointerNode> {

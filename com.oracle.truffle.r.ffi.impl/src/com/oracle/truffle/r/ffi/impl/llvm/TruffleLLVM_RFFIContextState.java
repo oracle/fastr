@@ -35,21 +35,11 @@ class TruffleLLVM_RFFIContextState implements ContextState {
     TruffleLLVM_DLL.ContextStateImpl dllState;
     TruffleLLVM_PkgInit.ContextStateImpl pkgInitState;
     TruffleLLVM_Call.ContextStateImpl callState;
-    TruffleLLVM_Stats.ContextStateImpl statsState;
-    TruffleLLVM_Tools.ContextStateImpl toolsState;
-    TruffleLLVM_PCRE.ContextStateImpl pcreState;
-    TruffleLLVM_Base.ContextStateImpl baseState;
-    TruffleLLVM_NativeDLL.ContextStateImpl nativeDllState;
 
     TruffleLLVM_RFFIContextState() {
         dllState = new TruffleLLVM_DLL.ContextStateImpl();
         pkgInitState = new TruffleLLVM_PkgInit.ContextStateImpl();
         callState = new TruffleLLVM_Call.ContextStateImpl();
-        statsState = new TruffleLLVM_Stats.ContextStateImpl();
-        toolsState = new TruffleLLVM_Tools.ContextStateImpl();
-        pcreState = new TruffleLLVM_PCRE.ContextStateImpl();
-        baseState = new TruffleLLVM_Base.ContextStateImpl();
-        nativeDllState = new TruffleLLVM_NativeDLL.ContextStateImpl();
     }
 
     static TruffleLLVM_RFFIContextState getContextState() {
@@ -69,11 +59,6 @@ class TruffleLLVM_RFFIContextState implements ContextState {
         dllState.initialize(context);
         pkgInitState.initialize(context);
         callState.initialize(context);
-        statsState.initialize(context);
-        toolsState.initialize(context);
-        pcreState.initialize(context);
-        baseState.initialize(context);
-        nativeDllState.initialize(context);
         return this;
     }
 
@@ -82,10 +67,5 @@ class TruffleLLVM_RFFIContextState implements ContextState {
         dllState.beforeDestroy(context);
         pkgInitState.beforeDestroy(context);
         callState.beforeDestroy(context);
-        statsState.beforeDestroy(context);
-        toolsState.beforeDestroy(context);
-        pcreState.beforeDestroy(context);
-        baseState.beforeDestroy(context);
-        nativeDllState.beforeDestroy(context);
     }
 }

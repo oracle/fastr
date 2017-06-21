@@ -39,6 +39,13 @@ public class StrtolResultMR {
         }
     }
 
+    @Resolve(message = "IS_EXECUTABLE")
+    public abstract static class StrolResultIsExecutable extends Node {
+        protected Object access(@SuppressWarnings("unused") StrtolResult receiver) {
+            return true;
+        }
+    }
+
     @Resolve(message = "EXECUTE")
     public abstract static class BaseStrtolResultCallbackExecute extends Node {
         protected Object access(@SuppressWarnings("unused") VirtualFrame frame, StrtolResult receiver, Object[] arguments) {

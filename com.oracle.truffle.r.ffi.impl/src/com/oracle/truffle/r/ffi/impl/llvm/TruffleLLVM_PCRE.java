@@ -27,7 +27,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.interop.NativeCharArray;
@@ -36,45 +35,16 @@ import com.oracle.truffle.r.ffi.impl.interop.pcre.CaptureNamesResult;
 import com.oracle.truffle.r.ffi.impl.interop.pcre.CompileResult;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public class TruffleLLVM_PCRE implements PCRERFFI {
-    private static TruffleObject trufflePCRETruffleObject;
 
     TruffleLLVM_PCRE() {
-        trufflePCRETruffleObject = JavaInterop.asTruffleObject(this);
         // Need to ensure that the native pcre library is loaded
         String pcrePath = LibPaths.getBuiltinLibPath("pcre");
         System.load(pcrePath);
-    }
-
-    static class ContextStateImpl implements RContext.ContextState {
-        @Override
-        public ContextState initialize(RContext context) {
-            RFFIFactory.getRFFI().getPCRERFFI();
-            context.getEnv().exportSymbol("_fastr_rffi_pcre", trufflePCRETruffleObject);
-            return this;
-        }
-    }
-
-    public CompileResult makeResult(TruffleObject pcreResultObj, NativeCharArray nativeErrorMessage, int errOffset) {
-        long pcreResult = TruffleLLVM_Utils.getNativeAddress(pcreResultObj);
-        String errorMessage = null;
-        if (nativeErrorMessage != null) {
-            errorMessage = new String(nativeErrorMessage.getValue());
-        }
-        CompileResult result = new CompileResult();
-        result.set(pcreResult, errorMessage, errOffset);
-        return result;
-    }
-
-    public void addCaptureName(int i, Object nameObj, CaptureNamesResult captureNamesCallback) {
-        captureNamesCallback.addName(i, new String(((NativeCharArray) nameObj).getValue()));
     }
 
     private static class TruffleLLVM_MaketablesNode extends MaketablesNode {
@@ -154,10 +124,9 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
                     symbolHandle = DLL.findSymbol(LLVMFunction.compile.callName, null);
                 }
                 NativeCharArray pattenChars = new NativeCharArray(pattern.getBytes());
-                Object callResult = ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(),
-                                pattenChars, options, tables);
-                CompileResult result = (CompileResult) callResult;
-                return result.getResult();
+                CompileResult data = new CompileResult();
+                ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), data, pattenChars, options, tables);
+                return data.getResult();
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             }

@@ -34,7 +34,6 @@ import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_StatsFactory.ExecuteFactor
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_StatsFactory.ExecuteWorkNodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -49,14 +48,6 @@ public class TruffleLLVM_Stats implements StatsRFFI {
         fft_factor;
     }
 
-    static class ContextStateImpl implements RContext.ContextState {
-        @Override
-        public ContextState initialize(RContext context) {
-            return this;
-        }
-
-    }
-
     public abstract static class LookupAdapter extends Node {
         @Child private DLLRFFI.DLSymNode dllSymNode = RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
 
@@ -66,8 +57,6 @@ public class TruffleLLVM_Stats implements StatsRFFI {
             // and these symbols are not registered (only fft)
             SymbolHandle result = dllSymNode.execute(dllInfo.handle, name);
             if (result == DLL.SYMBOL_NOT_FOUND) {
-                @SuppressWarnings("unused")
-                TruffleLLVM_RFFIContextState cs = TruffleLLVM_RFFIContextState.getContextState();
                 throw RInternalError.shouldNotReachHere();
             }
             return result;

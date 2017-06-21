@@ -32,12 +32,10 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.interop.NativeCharArray;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.ContextState;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.RFFIRootNode;
@@ -59,27 +57,12 @@ class TruffleLLVM_NativeDLL {
         }
     }
 
-    private static TruffleLLVM_NativeDLL truffleNativeDLL;
-    private static TruffleObject truffleNativeDLLTruffleObject;
-
-    static class ContextStateImpl implements RContext.ContextState {
-        @Override
-        public ContextState initialize(RContext context) {
-            if (truffleNativeDLL == null) {
-                truffleNativeDLL = new TruffleLLVM_NativeDLL();
-                truffleNativeDLLTruffleObject = JavaInterop.asTruffleObject(truffleNativeDLL);
-                context.getEnv().exportSymbol("_fastr_dllnative_helper", truffleNativeDLLTruffleObject);
-            }
-            return this;
-        }
-    }
-
     public interface ErrorCallback {
         void setResult(String errorMessage);
 
     }
 
-    private static class ErrorCallbackImpl implements ErrorCallback, TruffleObject {
+    private static class ErrorCallbackImpl implements ErrorCallback, RTruffleObject {
         private String errorMessage;
 
         @Override
@@ -103,6 +86,13 @@ class TruffleLLVM_NativeDLL {
             }
         }
 
+        @Resolve(message = "IS_EXECUTABLE")
+        public abstract static class ErrorCallbackIsExecutableNode extends Node {
+            protected Object access(@SuppressWarnings("unused") ErrorCallback receiver) {
+                return true;
+            }
+        }
+
         @Resolve(message = "EXECUTE")
         public abstract static class ErrorCallbackExecuteNode extends Node {
             protected Object access(@SuppressWarnings("unused") VirtualFrame frame, ErrorCallback receiver, Object[] arguments) {
@@ -110,10 +100,6 @@ class TruffleLLVM_NativeDLL {
                 return receiver;
             }
         }
-    }
-
-    public void setDlopenResult(ErrorCallback errorCallback, NativeCharArray errorMessage) {
-        errorCallback.setResult(new String(errorMessage.getValue()));
     }
 
     static class TruffleLLVM_NativeDLOpen extends Node {

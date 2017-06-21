@@ -43,6 +43,13 @@ public class CaptureNamesResultMR {
         }
     }
 
+    @Resolve(message = "IS_EXECUTABLE")
+    public abstract static class CaptureNamesResultIsExecutable extends Node {
+        protected Object access(@SuppressWarnings("unused") CaptureNamesResult receiver) {
+            return true;
+        }
+    }
+
     @Resolve(message = "EXECUTE")
     public abstract static class CaptureNamesCallbackExecute extends Node {
         protected Object access(@SuppressWarnings("unused") VirtualFrame frame, CaptureNamesResult receiver, Object[] arguments) {

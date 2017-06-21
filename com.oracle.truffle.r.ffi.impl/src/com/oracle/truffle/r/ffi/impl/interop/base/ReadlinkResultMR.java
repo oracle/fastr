@@ -39,6 +39,13 @@ public class ReadlinkResultMR {
         }
     }
 
+    @Resolve(message = "IS_EXECUTABLE")
+    public abstract static class ReadlinkResultIsExecutable extends Node {
+        protected Object access(@SuppressWarnings("unused") ReadlinkResult receiver) {
+            return true;
+        }
+    }
+
     @Resolve(message = "EXECUTE")
     public abstract static class BaseReadlinkResultCallbackExecute extends Node {
         protected Object access(@SuppressWarnings("unused") VirtualFrame frame, ReadlinkResult receiver, Object[] arguments) {

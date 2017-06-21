@@ -45,12 +45,12 @@ final class JNI_PkgInit {
     }
 
     private static void registerCCallable(String pkgName, String functionName, long address) {
-        DLLInfo lib = safeFindLibrary(pkgName);
+        DLLInfo lib = DLL.safeFindLibrary(pkgName);
         lib.registerCEntry(new CEntry(functionName, new SymbolHandle(address)));
     }
 
     public static long getCCallable(String pkgName, String functionName) {
-        DLLInfo lib = safeFindLibrary(pkgName);
+        DLLInfo lib = DLL.safeFindLibrary(pkgName);
         CEntry result = lib.lookupCEntry(functionName);
         if (result == null) {
             throw RError.error(RError.NO_CALLER, Message.UNKNOWN_OBJECT, functionName);
@@ -84,13 +84,4 @@ final class JNI_PkgInit {
         throw RInternalError.unimplemented();
     }
 
-    private static DLLInfo safeFindLibrary(String pkgName) {
-        DLLInfo lib = DLL.findLibrary(pkgName);
-        if (lib == null) {
-            // It seems GNU R would create an C entry even for non-existing package, we are more
-            // defensive
-            throw RError.error(RError.NO_CALLER, Message.DLL_NOT_LOADED, pkgName);
-        }
-        return lib;
-    }
 }

@@ -215,7 +215,7 @@ public class TruffleNFI_Base implements BaseRFFI {
         public ArrayList<String> glob(String pattern) {
             GlobResult data = new GlobResult();
             try {
-                ForeignAccess.sendExecute(message, NFIFunction.glob.getFunction(), pattern, data);
+                ForeignAccess.sendExecute(message, NFIFunction.glob.getFunction(), data, pattern);
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }

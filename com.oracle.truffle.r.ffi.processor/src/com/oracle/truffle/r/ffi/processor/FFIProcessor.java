@@ -230,7 +230,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("// GENERATED; DO NOT EDIT\n");
         w.append("package ").append("com.oracle.truffle.r.ffi.impl.upcalls").append(";\n\n");
         if (usesUnwrap) {
-            w.append("import static com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_Utils.unwrap;\n");
+            w.append("import static com.oracle.truffle.r.ffi.impl.common.TruffleUnwrap.unwrap;\n");
         }
         w.append("import com.oracle.truffle.api.interop.MessageResolution;\n");
         w.append("import com.oracle.truffle.api.interop.Resolve;\n");

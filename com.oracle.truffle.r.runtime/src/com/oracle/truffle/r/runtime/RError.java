@@ -445,6 +445,7 @@ public final class RError extends RuntimeException implements TruffleException {
         LIST_NAMES_SAME_LENGTH("names(x) must be a character vector of the same length as x"),
         DIMS_CONTAIN_NEGATIVE_VALUES("the dims contain negative values"),
         NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED("negative length vectors are not allowed"),
+        LONG_VECTORS_NOT_SUPPORTED("long length vectors are not suppoted"),
         FIRST_ARG_MUST_BE_ARRAY("invalid first argument, must be an array"),
         IMAGINARY_PARTS_DISCARDED_IN_COERCION("imaginary parts discarded in coercion"),
         DIMS_CONTAIN_NA("the dims contain missing values"),

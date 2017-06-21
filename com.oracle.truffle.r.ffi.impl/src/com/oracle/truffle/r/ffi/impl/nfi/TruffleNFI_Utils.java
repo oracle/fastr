@@ -110,23 +110,6 @@ public class TruffleNFI_Utils {
         throw RInternalError.shouldNotReachHere();
     }
 
-    /**
-     * There are three possibilities as enumerated below. For an {@link RTruffleObject} there is
-     * nothing to do, and indeed, calling {@code unbox} would be disastrous, as that means, e.g.,
-     * for a RVector, extract the first element! We could get a plain {@link Integer}, but we could
-     * also get a {@code JavaObject} (aka a {@code TruffleObject} that wraps such a value. That does
-     * have to be unboxed. Ditto a {@code NativePointer} encoding, say, a C char array.
-     */
-    public static Object unwrap(Object x) {
-        if (x instanceof RTruffleObject) {
-            return x;
-        } else if (x instanceof TruffleObject) {
-            return JavaInterop.unbox((TruffleObject) x);
-        } else {
-            return x;
-        }
-    }
-
     public static void main(String[] args) {
         System.out.printf("argCount: %s%n", getArgCount(args[0]));
     }

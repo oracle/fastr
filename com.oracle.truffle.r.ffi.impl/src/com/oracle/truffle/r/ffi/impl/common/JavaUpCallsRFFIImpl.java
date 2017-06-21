@@ -390,32 +390,33 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_allocVector(int mode, int n) {
+    public Object Rf_allocVector(int mode, long n) {
         SEXPTYPE type = SEXPTYPE.mapInt(mode);
-        if (n < 0) {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
+        if (n > Integer.MAX_VALUE) {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.LONG_VECTORS_NOT_SUPPORTED);
             // TODO check long vector
         }
+        int ni = (int) n;
         switch (type) {
             case INTSXP:
-                return RDataFactory.createIntVector(new int[n], RDataFactory.COMPLETE_VECTOR);
+                return RDataFactory.createIntVector(new int[ni], RDataFactory.COMPLETE_VECTOR);
             case REALSXP:
-                return RDataFactory.createDoubleVector(new double[n], RDataFactory.COMPLETE_VECTOR);
+                return RDataFactory.createDoubleVector(new double[ni], RDataFactory.COMPLETE_VECTOR);
             case LGLSXP:
-                return RDataFactory.createLogicalVector(new byte[n], RDataFactory.COMPLETE_VECTOR);
+                return RDataFactory.createLogicalVector(new byte[ni], RDataFactory.COMPLETE_VECTOR);
             case STRSXP:
                 // fill list with empty strings
-                String[] data = new String[n];
+                String[] data = new String[ni];
                 Arrays.fill(data, "");
                 return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
             case CPLXSXP:
-                return RDataFactory.createComplexVector(new double[2 * n], RDataFactory.COMPLETE_VECTOR);
+                return RDataFactory.createComplexVector(new double[2 * ni], RDataFactory.COMPLETE_VECTOR);
             case RAWSXP:
-                return RDataFactory.createRawVector(new byte[n]);
+                return RDataFactory.createRawVector(new byte[ni]);
             case VECSXP:
-                return RDataFactory.createList(n);
+                return RDataFactory.createList(ni);
             case LANGSXP:
-                return RDataFactory.createLangPairList(n);
+                return RDataFactory.createLangPairList(ni);
             default:
                 throw unimplemented("unexpected SEXPTYPE " + type);
         }
@@ -484,21 +485,21 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int SET_STRING_ELT(Object x, int i, Object v) {
+    public int SET_STRING_ELT(Object x, long i, Object v) {
         RStringVector vector = guaranteeInstanceOf(x, RStringVector.class);
         CharSXPWrapper element = guaranteeInstanceOf(v, CharSXPWrapper.class);
         String value = element.getContents();
         if (RRuntime.isNA(value)) {
             vector.setComplete(false);
         }
-        vector.setElement(i, value);
+        vector.setElement((int) i, value);
         return 0;
     }
 
     @Override
-    public int SET_VECTOR_ELT(Object x, int i, Object v) {
+    public int SET_VECTOR_ELT(Object x, long i, Object v) {
         RList list = guaranteeInstanceOf(x, RList.class);
-        list.setElement(i, v);
+        list.setElement((int) i, v);
         return 0;
     }
 
@@ -558,19 +559,19 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object STRING_ELT(Object x, int i) {
+    public Object STRING_ELT(Object x, long i) {
         RAbstractStringVector vector = guaranteeInstanceOf(RRuntime.asAbstractVector(x), RAbstractStringVector.class);
-        return CharSXPWrapper.create(vector.getDataAt(i));
+        return CharSXPWrapper.create(vector.getDataAt((int) i));
     }
 
     @Override
-    public Object VECTOR_ELT(Object x, int i) {
+    public Object VECTOR_ELT(Object x, long i) {
         Object vec = x;
         if (vec instanceof RExpression) {
-            return ((RExpression) vec).getDataAt(i);
+            return ((RExpression) vec).getDataAt((int) i);
         }
         RAbstractListVector list = guaranteeInstanceOf(RRuntime.asAbstractVector(vec), RAbstractListVector.class);
-        return list.getDataAt(i);
+        return list.getDataAt((int) i);
     }
 
     @Override
@@ -636,7 +637,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int Rf_any_duplicated(Object x, int fromLast) {
+    public long Rf_any_duplicated(Object x, int fromLast) {
         RAbstractVector vec = (RAbstractVector) x;
         if (vec.getLength() == 0) {
             return 0;

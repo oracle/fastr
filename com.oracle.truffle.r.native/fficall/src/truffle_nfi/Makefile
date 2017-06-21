@@ -34,6 +34,7 @@ C_HDRS := $(wildcard *.h)
 
 LOCAL_C_SOURCES = $(wildcard *.c)
 TRUFFLE_COMMON_C_SOURCES := $(wildcard ../truffle_common/*.c)
+TRUFFLE_COMMON_H_SOURCES := $(wildcard ../truffle_common/*.h)
 C_SOURCES := $(LOCAL_C_SOURCES) $(TRUFFLE_COMMON_C_SOURCES)
 #$(info C_SOURCES=$(C_SOURCES))
 TRUFFLE_COMMON_C_OBJECTS := $(addprefix $(OBJ)/, $(notdir $(TRUFFLE_COMMON_C_SOURCES:.c=.o)))
@@ -60,7 +61,7 @@ $(OBJ):
 $(OBJ)/%.o: %.c $(TOPDIR)/include/Rinternals.h ../common/rffi_upcallsindex.h $(C_HDRS)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-$(OBJ)/%.o: ../truffle_common/%.c $(TOPDIR)/include/Rinternals.h ../common/rffi_upcallsindex.h $(C_HDRS)
+$(OBJ)/%.o: ../truffle_common/%.c $(TOPDIR)/include/Rinternals.h $(TRUFFLE_COMMON_H_SOURCES) ../common/rffi_upcallsindex.h $(C_HDRS)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # for debugging, to see what's really being compiled

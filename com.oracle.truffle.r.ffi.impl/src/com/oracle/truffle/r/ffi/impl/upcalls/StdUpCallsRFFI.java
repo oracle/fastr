@@ -116,7 +116,7 @@ public interface StdUpCallsRFFI {
 
     int /* void */ Rf_warningcall(Object call, @RFFICstring Object msg);
 
-    Object Rf_allocVector(int mode, int n);
+    Object Rf_allocVector(int mode, long n);
 
     Object Rf_allocArray(int mode, Object dimsObj);
 
@@ -128,9 +128,9 @@ public interface StdUpCallsRFFI {
 
     int LENGTH(Object x);
 
-    int /* void */ SET_STRING_ELT(Object x, int i, Object v);
+    int /* void */ SET_STRING_ELT(Object x, long i, Object v);
 
-    int /* void */ SET_VECTOR_ELT(Object x, int i, Object v);
+    int /* void */ SET_VECTOR_ELT(Object x, long i, Object v);
 
     Object RAW(Object x);
 
@@ -140,9 +140,9 @@ public interface StdUpCallsRFFI {
 
     Object REAL(Object x);
 
-    Object STRING_ELT(Object x, int i);
+    Object STRING_ELT(Object x, long i);
 
-    Object VECTOR_ELT(Object x, int i);
+    Object VECTOR_ELT(Object x, long i);
 
     int NAMED(Object x);
 
@@ -156,7 +156,7 @@ public interface StdUpCallsRFFI {
 
     Object Rf_duplicate(Object x, int deep);
 
-    int Rf_any_duplicated(Object x, int fromLast);
+    long Rf_any_duplicated(Object x, int fromLast);
 
     Object PRINTNAME(Object x);
 

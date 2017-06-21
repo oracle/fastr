@@ -39,6 +39,13 @@ public class GlobResultMR {
         }
     }
 
+    @Resolve(message = "IS_EXECUTABLE")
+    public abstract static class GlobResultIsExecutable extends Node {
+        protected Object access(@SuppressWarnings("unused") GlobResult receiver) {
+            return true;
+        }
+    }
+
     @Resolve(message = "EXECUTE")
     public abstract static class BaseGlobResultCallbackExecute extends Node {
         protected Object access(@SuppressWarnings("unused") VirtualFrame frame, GlobResult receiver, Object[] arguments) {

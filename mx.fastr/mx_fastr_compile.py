@@ -215,7 +215,7 @@ def _create_bc_lib(args):
     bcfiles = []
     while i < len(args):
         arg = args[i]
-        if arg == '-o' :
+        if arg == '-o':
             # library file
             i = i + 1
             lib = args[i]

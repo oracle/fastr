@@ -30,12 +30,7 @@ double R_NegInf;	/* IEEE -Inf */
 double R_NaReal;	/* NA_REAL: IEEE */
 int R_NaInt;	/* NA_INTEGER:= INT_MIN currently */
 
-void **variables = NULL;
-
-char *FASTR_R_Home() {
-	IMPORT_CALLHELPER_IMPL();
-	return (char *) truffle_invoke(obj, "R_Home");
-}
+static void **variables = NULL;
 
 SEXP FASTR_R_NilValue() {
 	return (SEXP) variables[R_NilValue_x];

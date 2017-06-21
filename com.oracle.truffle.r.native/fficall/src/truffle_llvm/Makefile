@@ -52,6 +52,7 @@ C_HDRS := $(wildcard *.h)
 LOCAL_C_SOURCES := $(wildcard *.c) 
 COMMON_C_SOURCES := $(wildcard ../common/*.c)
 TRUFFLE_COMMON_C_SOURCES := $(wildcard ../truffle_common/*.c)
+TRUFFLE_COMMON_H_SOURCES := $(wildcard ../truffle_common/*.h)
 C_SOURCES := $(LOCAL_C_SOURCES) $(COMMON_C_SOURCES) $(TRUFFLE_COMMON_C_SOURCES)
 #$(info C_SOURCES=$(C_SOURCES))
 LOCAL_C_OBJECTS := $(addprefix $(OBJ)/, $(LOCAL_C_SOURCES:.c=.o))
@@ -63,8 +64,8 @@ C_OBJECTS := $(LOCAL_C_OBJECTS) $(COMMON_C_OBJECTS) $(TRUFFLE_COMMON_C_OBJECTS)
 SULONG_DIR = $(abspath $(FASTR_R_HOME)/../sulong)
 
 SULONG_INCLUDES = -I$(SULONG_DIR)/include
-FFI_INCLUDES = -I$(TOPDIR)/include
-LOCAL_INCLUDES = -I . -I $(abspath ../include)
+FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
+LOCAL_INCLUDES = -I . -I $(abspath ../include) -I $(abspath ../common) 
 
 INCLUDES := $(LOCAL_INCLUDES) $(FFI_INCLUDES) $(SULONG_INCLUDES)
 
@@ -90,7 +91,7 @@ $(OBJ)/%.o: $(GNUR_APPL_SRC)/%.c
 $(OBJ)/%.o: $(GNUR_MAIN_SRC)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
-$(OBJ)/%.o: %.c $(FASTR_NATIVE_DIR)/include/Rinternals.h rffiutils.h
+$(OBJ)/%.o: %.c $(FASTR_NATIVE_DIR)/include/Rinternals.h rffiutils.h $(TRUFFLE_COMMON_H_SOURCES) ../common/rffi_upcallsindex.h
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
 $(OBJ)/%.o: ../common/%.c $(FASTR_NATIVE_DIR)/include/Rinternals.h

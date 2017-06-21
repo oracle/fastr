@@ -39,6 +39,13 @@ public class UnameResultMR {
         }
     }
 
+    @Resolve(message = "IS_EXECUTABLE")
+    public abstract static class BaseUnameResultIsExecutable extends Node {
+        protected Object access(@SuppressWarnings("unused") UnameResult receiver) {
+            return true;
+        }
+    }
+
     @Resolve(message = "EXECUTE")
     public abstract static class BaseUnameResultCallbackExecute extends Node {
         protected Object access(@SuppressWarnings("unused") VirtualFrame frame, UnameResult receiver, Object[] arguments) {
