@@ -456,6 +456,35 @@ public class FastRInterop {
         }
     }
 
+    @ImportStatic({RRuntime.class})
+    @RBuiltin(name = ".fastr.java.className", visibility = ON, kind = PRIMITIVE, parameterNames = {"class"}, behavior = COMPLEX)
+    public abstract static class JavaClassName extends RBuiltinNode.Arg1 {
+
+        static {
+            Casts.noCasts(JavaClassName.class);
+        }
+
+        @Specialization(guards = {"isJavaObject(obj)"})
+        @TruffleBoundary
+        public Object javaClassName(TruffleObject obj) {
+            Object o = JavaInterop.asJavaObject(Object.class, obj);
+            if (o == null) {
+                return RNull.instance;
+            }
+            return o.getClass().getName();
+        }
+
+        protected boolean isJavaObject(TruffleObject obj) {
+            return JavaInterop.isJavaObject(obj);
+        }
+
+        @Fallback
+        public String javaClassName(@SuppressWarnings("unused") Object obj) {
+            throw error(RError.Message.GENERIC, "unsupported type");
+        }
+
+    }
+
     @ImportStatic({Message.class, RRuntime.class})
     @RBuiltin(name = ".fastr.interop.isArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"obj"}, behavior = COMPLEX)
     public abstract static class IsForeignArray extends RBuiltinNode.Arg1 {
@@ -489,21 +518,22 @@ public class FastRInterop {
         @Specialization
         @TruffleBoundary
         public Object newArray(String clazz, int length) {
-            try {
-                // TODO new via ForeignAccess
-                return JavaInterop.asTruffleObject(Array.newInstance(Class.forName(clazz), length));
-            } catch (ClassNotFoundException e) {
-                throw error(RError.Message.GENERIC, "error while accessing Java class: " + e.getMessage());
-            }
+            return JavaInterop.asTruffleObject(Array.newInstance(getClazz(clazz), length));
         }
 
         @Specialization
         @TruffleBoundary
         public Object newArray(String clazz, RAbstractIntVector dim) {
+            int[] dima = new int[dim.getLength()];
+            for (int i = 0; i < dima.length; i++) {
+                dima[i] = dim.getDataAt(i);
+            }
+            return JavaInterop.asTruffleObject(Array.newInstance(getClazz(clazz), dima));
+        }
+
+        private Class<?> getClazz(String className) throws RError {
             try {
-                int[] dima = new int[dim.getLength()];
-                // TODO new via ForeignAccess
-                return JavaInterop.asTruffleObject(Array.newInstance(Class.forName(clazz), dima));
+                return classForName(className);
             } catch (ClassNotFoundException e) {
                 throw error(RError.Message.GENERIC, "error while accessing Java class: " + e.getMessage());
             }
@@ -607,38 +637,6 @@ public class FastRInterop {
             return R2ForeignNodeGen.create();
         }
 
-        private Class<?> getClazz(String className) throws RError {
-            if (className.equals(Byte.TYPE.getName())) {
-                return Byte.TYPE;
-            }
-            if (className.equals(Boolean.TYPE.getName())) {
-                return Boolean.TYPE;
-            }
-            if (className.equals(Character.TYPE.getName())) {
-                return Character.TYPE;
-            }
-            if (className.equals(Double.TYPE.getName())) {
-                return Double.TYPE;
-            }
-            if (className.equals(Float.TYPE.getName())) {
-                return Float.TYPE;
-            }
-            if (className.equals(Integer.TYPE.getName())) {
-                return Integer.TYPE;
-            }
-            if (className.equals(Long.TYPE.getName())) {
-                return Long.TYPE;
-            }
-            if (className.equals(Short.TYPE.getName())) {
-                return Short.TYPE;
-            }
-            try {
-                return Class.forName(className);
-            } catch (ClassNotFoundException e) {
-                throw error(RError.Message.GENERIC, "error while accessing Java class: " + e.getMessage());
-            }
-        }
-
         private static int[] getDim(boolean flat, RAbstractVector vec) {
             int[] dims;
             if (flat) {
@@ -673,7 +671,7 @@ public class FastRInterop {
         @TruffleBoundary
         public Object toArray(TruffleObject obj, @SuppressWarnings("unused") RMissing missing, @SuppressWarnings("unused") boolean flat,
                         @Cached("WRITE.createNode()") Node write) {
-            if (JavaInterop.isJavaObject(Object.class, obj)) {
+            if (JavaInterop.isJavaObject(obj)) {
                 if (JavaInterop.isArray(obj)) {
                     // TODO should return copy?
                     return obj;
@@ -696,6 +694,14 @@ public class FastRInterop {
         @Fallback
         public Object toArray(Object o, Object className, Object flat) {
             throw error(RError.Message.GENERIC, "unsupported type");
+        }
+
+        private Class<?> getClazz(String className) throws RError {
+            try {
+                return classForName(className);
+            } catch (ClassNotFoundException e) {
+                throw error(RError.Message.GENERIC, "error while accessing Java class: " + e.getMessage());
+            }
         }
 
     }
@@ -792,5 +798,33 @@ public class FastRInterop {
         public byte isExternal(@SuppressWarnings("unused") Object obj) {
             return RRuntime.LOGICAL_FALSE;
         }
+    }
+
+    private static Class<?> classForName(String className) throws ClassNotFoundException {
+        if (className.equals(Byte.TYPE.getName())) {
+            return Byte.TYPE;
+        }
+        if (className.equals(Boolean.TYPE.getName())) {
+            return Boolean.TYPE;
+        }
+        if (className.equals(Character.TYPE.getName())) {
+            return Character.TYPE;
+        }
+        if (className.equals(Double.TYPE.getName())) {
+            return Double.TYPE;
+        }
+        if (className.equals(Float.TYPE.getName())) {
+            return Float.TYPE;
+        }
+        if (className.equals(Integer.TYPE.getName())) {
+            return Integer.TYPE;
+        }
+        if (className.equals(Long.TYPE.getName())) {
+            return Long.TYPE;
+        }
+        if (className.equals(Short.TYPE.getName())) {
+            return Short.TYPE;
+        }
+        return Class.forName(className);
     }
 }

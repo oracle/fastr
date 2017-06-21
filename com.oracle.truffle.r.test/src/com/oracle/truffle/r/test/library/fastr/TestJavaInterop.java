@@ -177,6 +177,50 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
+    public void testNewArray() {
+        testNewArray("java.lang.Boolean");
+        testNewArray("java.lang.Byte");
+        testNewArray("java.lang.Character");
+        testNewArray("java.lang.Double");
+        testNewArray("java.lang.Float");
+        testNewArray("java.lang.Integer");
+        testNewArray("java.lang.Long");
+        testNewArray("java.lang.Short");
+        testNewArray("java.lang.String");
+
+        testNewArray("boolean");
+        testNewArray("byte");
+        testNewArray("char");
+        testNewArray("double");
+        testNewArray("float");
+        testNewArray("int");
+        testNewArray("long");
+        testNewArray("short");
+
+        testNewArray("com.oracle.truffle.r.test.library.fastr.TestJavaInterop$TestClass");
+    }
+
+    public void testNewArray(String className) {
+        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', 10L); .fastr.interop.isArray(a);", "TRUE");
+        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', 10L); length(a);", "10L");
+        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', 10L); .fastr.java.className(a);", toArrayClassName(className, 1));
+
+        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', c(2L, 3L)); .fastr.interop.isArray(a);", "TRUE");
+        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', c(2L, 3L)); length(a);", "2L");
+        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', c(2L, 3L)); length(a[1]);", "3L");
+        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', c(2L, 3L)); .fastr.java.className(a);", toArrayClassName(className, 2));
+    }
+
+    @Test
+    public void testGetClass() {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.java.className(to)", "'com.oracle.truffle.r.test.library.fastr.TestJavaInterop$TestClass'");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.java.className(to$methodReturnsNull())", "cat('Error in .fastr.java.className(to$methodReturnsNull()) : unsupported type', '\n')");
+        assertEvalFastR(".fastr.java.className(NULL)", "cat('Error in .fastr.java.className(NULL) : unsupported type', '\n')");
+        assertEvalFastR(".fastr.java.className(1)", "cat('Error in .fastr.java.className(1) : unsupported type', '\n')");
+    }
+
+    @Test
     public void testFromArray() {
         testFromArray("fieldStaticBooleanArray", "logical");
         testFromArray("fieldStaticByteArray", "integer");
@@ -762,6 +806,46 @@ public class TestJavaInterop extends TestBase {
             return " ";
         }
         return "";
+    }
+
+    private String toArrayClassName(String className, int dims) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("'");
+        for (int i = 0; i < dims; i++) {
+            sb.append("[");
+        }
+        switch (className) {
+            case "boolean":
+                sb.append("Z");
+                break;
+            case "byte":
+                sb.append("B");
+                break;
+            case "char":
+                sb.append("C");
+                break;
+            case "double":
+                sb.append("D");
+                break;
+            case "float":
+                sb.append("F");
+                break;
+            case "int":
+                sb.append("I");
+                break;
+            case "long":
+                sb.append("J");
+                break;
+            case "short":
+                sb.append("S");
+                break;
+            default:
+                sb.append('L');
+                sb.append(className);
+                sb.append(';');
+        }
+        sb.append('\'');
+        return sb.toString();
     }
 
     public static class TestNamesClass {
