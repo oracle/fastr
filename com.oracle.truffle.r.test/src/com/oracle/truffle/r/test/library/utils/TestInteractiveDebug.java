@@ -88,4 +88,12 @@ public class TestInteractiveDebug extends TestBase {
         assertEval("fun0 <- function() { print('fun0') }; fun1 <- function() { print('en'); fun0(); fun0(); print('ex') }; debugonce(fun0); fun1()\nc\n");
         assertEval("fun0 <- function() { print('fun0') }; debugonce(fun0); fun0()\nc\n");
     }
+
+    @Test
+    public void testBrowser() {
+        assertEval("foo <- function() { stop('error msg') }; tryCatch(foo(), error=browser)\nprint(msg)\nc\n");
+        assertEval("do.call('browser', list())\nc\n");
+        assertEval("browser()\nwhere\nc\n");
+        assertEval("options(error=browser); prod('a')\nwhere\nc\n");
+    }
 }
