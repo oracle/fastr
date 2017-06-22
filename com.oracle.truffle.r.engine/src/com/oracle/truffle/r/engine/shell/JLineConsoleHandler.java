@@ -36,6 +36,8 @@ import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 
 import jline.console.ConsoleReader;
 import jline.console.UserInterruptException;
+import jline.console.completer.CandidateListCompletionHandler;
+import jline.console.completer.CompletionHandler;
 import jline.console.history.FileHistory;
 import jline.console.history.History;
 
@@ -48,6 +50,10 @@ class JLineConsoleHandler extends ConsoleHandler {
         try {
             console = new ConsoleReader(inStream, outStream);
             console.addCompleter(new JLineConsoleCompleter(this));
+            CompletionHandler completionHandler = console.getCompletionHandler();
+            if (completionHandler instanceof CandidateListCompletionHandler) {
+                ((CandidateListCompletionHandler) completionHandler).setPrintSpaceAfterFullCompletion(false);
+            }
             console.setHandleUserInterrupt(true);
             console.setExpandEvents(false);
         } catch (IOException ex) {
