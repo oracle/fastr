@@ -23,7 +23,9 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -43,8 +45,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
+@ImportStatic(RRuntime.class)
 public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     private final NAProfile naProfile = NAProfile.create();
@@ -216,6 +221,22 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return ret;
     }
 
+    @Specialization(guards = "isForeignObject(obj)")
+    protected RIntVector doForeignObject(TruffleObject obj,
+                    @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
+        Object o = foreignArray2R.execute(obj);
+        if (!RRuntime.isForeignObject(o)) {
+            if (o instanceof RIntVector) {
+                return (RIntVector) o;
+            }
+            o = castIntegerRecursive(o);
+            if (o instanceof RIntVector) {
+                return (RIntVector) o;
+            }
+        }
+        throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
+    }
+
     // TODO Should be type-variable and moved to CastNode
     @Specialization(guards = {"args.getLength() == 1", "isIntVector(args.getArgument(0))"})
     protected RIntVector doRArgsValuesAndNames(RArgsValuesAndNames args) {
@@ -236,5 +257,9 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     public static CastIntegerNode createNonPreserving() {
         return CastIntegerNodeGen.create(false, false, false);
+    }
+
+    protected ForeignArray2R createForeignArray2RNode() {
+        return ForeignArray2RNodeGen.create();
     }
 }

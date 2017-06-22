@@ -32,6 +32,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -59,6 +60,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -70,6 +72,8 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @RBuiltin(name = "as.vector", kind = INTERNAL, parameterNames = {"x", "mode"}, dispatch = INTERNAL_GENERIC, behavior = COMPLEX)
@@ -118,6 +122,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
         return internal.execute(x, mode);
     }
 
+    @ImportStatic(RRuntime.class)
     public abstract static class AsVectorInternal extends Node {
 
         public abstract Object execute(Object x, String mode);
@@ -160,6 +165,10 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             return mode == cachedMode || indirectMatchProfile.profile(cachedMode.equals(mode));
         }
 
+        protected ForeignArray2R createForeignArray2R() {
+            return ForeignArray2RNodeGen.create();
+        }
+
         // there should never be more than ~12 specializations
         @SuppressWarnings("unused")
         @Specialization(limit = "99", guards = "matchesMode(mode, cachedMode)")
@@ -167,7 +176,19 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                         @Cached("mode") String cachedMode,
                         @Cached("fromMode(cachedMode)") RType type,
                         @Cached("createCast(type)") CastNode cast,
-                        @Cached("create()") DropAttributesNode drop) {
+                        @Cached("create()") DropAttributesNode drop,
+                        @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R) {
+            if (RRuntime.isForeignObject(x)) {
+                Object o = foreignArray2R.execute(x);
+                if (!RRuntime.isForeignObject(o)) {
+                    return cast == null ? o : cast.doCast(o);
+                }
+                if (type == RType.List) {
+                    throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "list");
+                } else {
+                    throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
+                }
+            }
             return drop.execute(cast == null ? x : cast.doCast(x));
         }
 

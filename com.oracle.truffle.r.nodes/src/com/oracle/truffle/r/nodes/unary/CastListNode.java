@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -32,6 +33,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -47,7 +49,12 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
+import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 
+@ImportStatic(RRuntime.class)
 public abstract class CastListNode extends CastBaseNode {
 
     @Child private SetClassAttributeNode setClassAttrNode;
@@ -154,9 +161,18 @@ public abstract class CastListNode extends CastBaseNode {
         return RDataFactory.createList(new Object[]{ri});
     }
 
-    @Specialization(guards = {"isForeignObject(to)"})
-    protected RList doForeignObject(TruffleObject to) {
-        return RDataFactory.createList(new Object[]{to});
+    @Specialization(guards = {"isForeignObject(obj)"})
+    protected RList doForeignObject(TruffleObject obj,
+                    @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
+
+        Object o = foreignArray2R.execute(obj);
+        if (!RRuntime.isForeignObject(o)) {
+            if (o instanceof RList) {
+                return (RList) o;
+            }
+            return (RList) execute(o);
+        }
+        return RDataFactory.createList(new Object[]{obj});
     }
 
     public static CastListNode create() {
@@ -170,4 +186,9 @@ public abstract class CastListNode extends CastBaseNode {
     protected boolean isForeignObject(TruffleObject to) {
         return RRuntime.isForeignObject(to);
     }
+
+    protected ForeignArray2R createForeignArray2RNode() {
+        return ForeignArray2RNodeGen.create();
+    }
+
 }

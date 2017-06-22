@@ -22,18 +22,28 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 
+@ImportStatic(RRuntime.class)
 public abstract class CastStringNode extends CastStringBaseNode {
+
+    @Child private CastStringNode recursiveCastString;
 
     protected CastStringNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         this(preserveNames, preserveDimensions, preserveAttributes, false);
@@ -83,6 +93,22 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return vectorCopy(operand, sdata);
     }
 
+    @Specialization(guards = "isForeignObject(obj)")
+    protected RStringVector doForeignObject(TruffleObject obj,
+                    @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
+        Object o = foreignArray2R.execute(obj);
+        if (!RRuntime.isForeignObject(o)) {
+            if (o instanceof RStringVector) {
+                return (RStringVector) o;
+            }
+            o = castStringRecursive(o);
+            if (o instanceof RStringVector) {
+                return (RStringVector) o;
+            }
+        }
+        throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
+    }
+
     @Specialization
     protected String doRSymbol(RSymbol s) {
         return s.getName();
@@ -98,5 +124,17 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     public static CastStringNode createNonPreserving() {
         return CastStringNodeGen.create(false, false, false);
+    }
+
+    protected ForeignArray2R createForeignArray2RNode() {
+        return ForeignArray2RNodeGen.create();
+    }
+
+    private Object castStringRecursive(Object o) {
+        if (recursiveCastString == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            recursiveCastString = insert(CastStringNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
+        }
+        return recursiveCastString.executeString(o);
     }
 }

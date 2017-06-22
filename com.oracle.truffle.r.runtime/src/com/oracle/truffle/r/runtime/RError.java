@@ -617,6 +617,7 @@ public final class RError extends RuntimeException implements TruffleException {
         INVALID_FORMAT_INTEGER("invalid format '%s'; use format %%d, %%i, %%o, %%x or %%X for integer objects"),
         POS_NOT_ALLOWED_WITH_NUMERIC("pos argument not allowed with a numeric value"),
         OBJ_CANNOT_BE_ATTRIBUTED("external object cannot be attributed"),
+        CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR("no method for coercing this external object to a %s"),
         // the following list is incomplete (but like GNU-R)
         INVALID_FORMAT_DOUBLE("invalid format '%s'; use format %%f, %%e, %%g or %%a for numeric objects"),
         INVALID_LOGICAL("'%s' must be TRUE or FALSE"),

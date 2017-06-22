@@ -25,8 +25,12 @@ package com.oracle.truffle.r.nodes.unary;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -40,8 +44,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
+@ImportStatic(RRuntime.class)
 public abstract class CastLogicalNode extends CastLogicalBaseNode {
 
     private final NAProfile naProfile = NAProfile.create();
@@ -186,6 +193,22 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         return missing;
     }
 
+    @Specialization(guards = "isForeignObject(obj)")
+    protected RLogicalVector doForeignObject(TruffleObject obj,
+                    @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
+        Object o = foreignArray2R.execute(obj);
+        if (!RRuntime.isForeignObject(o)) {
+            if (o instanceof RLogicalVector) {
+                return (RLogicalVector) o;
+            }
+            o = castLogicalRecursive(o);
+            if (o instanceof RLogicalVector) {
+                return (RLogicalVector) o;
+            }
+        }
+        throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
+    }
+
     public static CastLogicalNode create() {
         return CastLogicalNodeGen.create(true, true, true);
     }
@@ -196,5 +219,9 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
 
     public static CastLogicalNode createNonPreserving() {
         return CastLogicalNodeGen.create(false, false, false);
+    }
+
+    protected ForeignArray2R createForeignArray2RNode() {
+        return ForeignArray2RNodeGen.create();
     }
 }

@@ -22,11 +22,16 @@
  */
 package com.oracle.truffle.r.test.library.fastr;
 
+import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
@@ -178,7 +183,7 @@ public class TestJavaInterop extends TestBase {
         testFromArray("fieldStaticCharArray", "character");
         testFromArray("fieldStaticDoubleArray", "double");
         testFromArray("fieldStaticFloatArray", "double");
-        testFromArray("fieldStaticIntArray", "integer");
+        testFromArray("fieldStaticIntegerArray", "integer");
         testFromArray("fieldStaticLongArray", "double");
         testFromArray("fieldStaticShortArray", "integer");
         testFromArray("fieldStaticStringArray", "character");
@@ -239,6 +244,12 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("tc <- .fastr.java.class('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t1 <- .fastr.interop.new(tc); class(c(t, t1))", "'list'");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " class(c(1, t))", "'list'");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " class(c(t, 1))", "'list'");
+
+        TestClass t = new TestClass();
+        assertEvalFastR(Ignored.Unimplemented, CREATE_TRUFFLE_OBJECT + " c(to$fieldStringArray)", toRVector(t.fieldStringArray, null));
+        assertEvalFastR(Ignored.Unimplemented, CREATE_TRUFFLE_OBJECT + " c(to$listString)", toRVector(t.listString, null));
+        assertEvalFastR(Ignored.Unimplemented, CREATE_TRUFFLE_OBJECT + " c(to$fieldStringArray, to$fieldStringArray)", "c('a', 'b', 'c', 'a', 'b', 'c')");
+        assertEvalFastR(Ignored.Unimplemented, CREATE_TRUFFLE_OBJECT + " c(to$listString, to$listString)", "c('a', 'b', 'c', 'a', 'b', 'c')");
     }
 
     @Test
@@ -322,8 +333,8 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("a <- .fastr.java.toArray(c(1,2,3)); a[1]", "1");
         assertEvalFastR("a <- .fastr.java.toArray(c(1,2,3)); a[[1]]", "1");
 
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntArray[1];", "1");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntArray[[1]];", "1");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[1];", "1");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[[1]];", "1");
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$int2DimArray[1]", getRValue(new int[]{1, 2, 3}));
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$int2DimArray[[1]]", getRValue(new int[]{1, 2, 3}));
@@ -333,8 +344,8 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("a <- .fastr.java.toArray(c(1,2,3)); a[1] <- 123; a[1]", "123");
         assertEvalFastR("a <- .fastr.java.toArray(c(1,2,3)); a[[1]] <- 123; a[[1]]", "123");
 
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntArray[1] <- 123L; to$fieldIntArray[1]", "123");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntArray[[1]] <- 1234L; to$fieldIntArray[[1]]", "1234");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[1] <- 123L; to$fieldIntegerArray[1]", "123");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[[1]] <- 1234L; to$fieldIntegerArray[[1]]", "1234");
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[1] <- NULL; to$fieldStringArray[1]", "NULL");
 
@@ -449,6 +460,191 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("ll <- .fastr.interop.new(.fastr.java.class('java.util.LinkedList')); al <- .fastr.interop.new(.fastr.java.class('java.util.ArrayList')); identical(al, ll)", "FALSE");
     }
 
+    @Test
+    public void testAsList() {
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listString); is.list(l)", "TRUE");
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listString); l[[1]]", "'a'");
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listString); l[[2]]", "'b'");
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listString); length(l)", "3");
+
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); is.list(l)", "TRUE");
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); l[[1]]$data", "'a'");
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); l[[2]]$data", "'b'");
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); length(l)", "4");
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); l[[4]]$data", "NULL");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$fieldStringArray); is.list(l)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$fieldStringArray); l[[1]]", "'a'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$fieldStringArray); l[[2]]", "'b'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$fieldStringArray); length(l)", "3");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$arrayObject); is.list(l)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$arrayObject); l[[1]]$data", "'a'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$arrayObject); l[[2]]$data", "'b'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$arrayObject); length(l)", "4");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$arrayObject); l[[4]]$data", "NULL");
+
+        assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + " l<-as.list(to);", "cat('Error in as.list(to) : ', '\n', ' no method for coercing this external object to a list', '\n')");
+    }
+
+    @Test
+    public void testAsXXX() throws IllegalArgumentException, IllegalAccessException {
+        testAsXXX("as.character");
+        testAsXXX("as.complex");
+        testAsXXX("as.double");
+        testAsXXX("as.expression");
+        testAsXXX("as.integer");
+        testAsXXX("as.logical");
+        testAsXXX("as.raw");
+        testAsXXX("as.symbol");
+        testAsXXX("as.vector");
+        // TODO more tests
+    }
+
+    public void testAsXXX(String asXXX) throws IllegalArgumentException, IllegalAccessException {
+        TestClass t = new TestClass();
+
+        Field[] fields = t.getClass().getDeclaredFields();
+        for (Field f : fields) {
+            String name = f.getName();
+            String expr = CREATE_TRUFFLE_OBJECT + asXXX + "(to$" + name + ")";
+            // test for each primitive wrapper object and string
+            if (name.startsWith("fieldStatic") && name.endsWith("Object")) {
+                if (asXXX.equals("as.character") && name.contains("Long")) {
+                    assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));
+                } else if (!(asXXX.equals("as.character") || asXXX.equals("as.expression") || asXXX.equals("as.logical") || asXXX.equals("as.symbol") || asXXX.equals("as.vector")) &&
+                                (name.contains("String") || name.contains("Char"))) {
+                    assertEvalFastR(Output.IgnoreWarningMessage, expr, getAsXXX(f.get(t), asXXX));
+                } else if (asXXX.equals("as.expression") && (name.contains("Long") || name.contains("Double"))) {
+                    assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));
+                } else if (asXXX.equals("as.raw") && (name.contains("Short") || name.contains("Integer") || name.contains("Long") || name.contains("Double") || name.contains("NaN"))) {
+                    assertEvalFastR(Output.IgnoreWarningMessage, expr, getAsXXX(f.get(t), asXXX));
+                } else if (asXXX.equals("as.symbol") && (name.contains("Long") || name.contains("Double") || name.contains("Float"))) {
+                    assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));
+                } else if (asXXX.equals("as.symbol") && (name.contains("Null"))) {
+                    assertEvalFastR(Output.IgnoreErrorContext, expr, getAsXXX(f.get(t), asXXX));
+                } else {
+                    assertEvalFastR(expr, getAsXXX(f.get(t), asXXX));
+                }
+            }
+        }
+
+        // test arrays
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldBooleanArray);", toRVector(t.fieldBooleanArray, asXXX));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldByteArray);", toRVector(t.fieldByteArray, asXXX));
+        if (!(asXXX.equals("as.character") || asXXX.equals("as.expression") || asXXX.equals("as.logical") || asXXX.equals("as.symbol") || asXXX.equals("as.vector"))) {
+            assertEvalFastR(Output.IgnoreWarningMessage, CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldCharArray);", toRVector(t.fieldCharArray, asXXX));
+        } else {
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldCharArray);", toRVector(t.fieldCharArray, asXXX));
+        }
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldDoubleArray);", toRVector(t.fieldDoubleArray, asXXX));
+        if (asXXX.equals("as.symbol")) {
+            assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldFloatArray);", toRVector(t.fieldFloatArray, asXXX));
+        } else {
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldFloatArray);", toRVector(t.fieldFloatArray, asXXX));
+        }
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldIntegerArray);", toRVector(t.fieldIntegerArray, asXXX));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldLongArray);", toRVector(t.fieldLongArray, asXXX));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldShortArray);", toRVector(t.fieldShortArray, asXXX));
+        if (!(asXXX.equals("as.character") || asXXX.equals("as.expression") || asXXX.equals("as.logical") || asXXX.equals("as.symbol") || asXXX.equals("as.vector"))) {
+            assertEvalFastR(Output.IgnoreWarningMessage, CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldStringArray);", toRVector(t.fieldStringArray, asXXX));
+        } else {
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldStringArray);", toRVector(t.fieldStringArray, asXXX));
+        }
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldStringIntArray);", toRVector(t.fieldStringIntArray, asXXX));
+        if (!(asXXX.equals("as.complex") || asXXX.equals("as.integer") || asXXX.equals("as.raw") || asXXX.equals("as.double"))) {
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldStringBooleanArray);", toRVector(t.fieldStringBooleanArray, asXXX));
+        } else {
+            assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldStringBooleanArray);", toRVector(t.fieldStringBooleanArray, asXXX));
+        }
+
+        // tests lists
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listBoolean);", toRVector(t.listBoolean, asXXX));
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listByte);", toRVector(t.listByte, asXXX));
+        if (!(asXXX.equals("as.character") || asXXX.equals("as.expression") || asXXX.equals("as.logical") || asXXX.equals("as.symbol") || asXXX.equals("as.vector"))) {
+            assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningMessage, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listChar);", toRVector(t.listChar, asXXX));
+        } else {
+            assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listChar);", toRVector(t.listChar, asXXX));
+        }
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listDouble);", toRVector(t.listDouble, asXXX));
+        if (asXXX.equals("as.symbol")) {
+            assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listFloat);", toRVector(t.listFloat, asXXX));
+        } else {
+            assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listFloat);", toRVector(t.listFloat, asXXX));
+        }
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listInteger);", toRVector(t.listInteger, asXXX));
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listLong);", toRVector(t.listLong, asXXX));
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listShort);", toRVector(t.listShort, asXXX));
+        if (!(asXXX.equals("as.character") || asXXX.equals("as.expression") || asXXX.equals("as.logical") || asXXX.equals("as.symbol") || asXXX.equals("as.vector"))) {
+            assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listString);", toRVector(t.listString, asXXX));
+        } else {
+            assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listString);", toRVector(t.listString, asXXX));
+        }
+
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listStringInt);", toRVector(t.listStringInt, asXXX));
+        if (!(asXXX.equals("as.complex") || asXXX.equals("as.integer") || asXXX.equals("as.raw") || asXXX.equals("as.double"))) {
+            assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listStringBoolean);", toRVector(t.listStringBoolean, asXXX));
+        } else {
+            assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listStringBoolean);", toRVector(t.listStringBoolean, asXXX));
+        }
+
+        if (asXXX.equals("as.expression")) {
+            assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to);",
+                            "cat('Error in " + asXXX + "(to) : ', '\n', ' no method for coercing this external object to a vector', '\n')");
+        } else {
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to);", "cat('Error in " + asXXX + "(to) : ', '\n', ' no method for coercing this external object to a vector', '\n')");
+        }
+    }
+
+    @Test
+    public void testIf() throws IllegalArgumentException, IllegalAccessException {
+        TestClass t = new TestClass();
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "if(to$fieldBoolean) print('OK')", "if(T) print('OK')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "if(to$fieldInteger) print('OK')", "if(1) print('OK')");
+
+        assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "if(to$fieldBooleanArray) print('OK')", "if(c(T, F)) print('OK')");
+        assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "if(to$fieldIntegerArray) print('OK')", "if(c(T, F)) print('OK')");
+        assertEvalFastR(Output.IgnoreWarningContext, Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + "if(to$fieldStringArray) print('OK')", "if(c('a', 'b')) print('OK')");
+
+        assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "if(to$fieldStringBooleanArray) print('OK')", "if(c('TRUE', 'TRUE', 'FALSE')) print('OK')");
+        assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "if(to$listBoolean) print('OK')", "if(c(T, F)) print('OK')");
+        assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "if(to$listInteger) print('OK')", "if(c(T, F)) print('OK')");
+        assertEvalFastR(Ignored.ImplementationError, /* Output.IgnoreWarningContext, */ Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + "if(to$listString) print('OK')",
+                        "if(c('A', 'B')) print('OK')");
+
+        assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "if(to$listStringBoolean) print('OK')",
+                        "if(" + toRVector(t.listStringBoolean, null) + ") print('OK')");
+
+        assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + "if(to) print('OK')",
+                        "cat('Error in if (T) print(\\'OK\\') : ', '\n', '  argument is not interpretable as logical', '\n')");
+    }
+
+    @Test
+    public void testWhile() throws IllegalArgumentException, IllegalAccessException {
+        TestClass t = new TestClass();
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "while(to$fieldBoolean) {print('OK'); break;}", "while(T) {print('OK'); break;}");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "while(to$fieldInteger) {print('OK'); break;}", "while(1) {print('OK'); break;}");
+
+        assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "while(to$fieldBooleanArray) {print('OK'); break;}", "while(c(T, F)) {print('OK'); break;}");
+        assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "while(to$fieldIntegerArray) {print('OK'); break;}", "while(c(T, F)) {print('OK'); break;}");
+        assertEvalFastR(Output.IgnoreWarningContext, Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + "if(to$fieldStringArray) {print('OK'); break;}", "while(c('a', 'b')) {print('OK'); break;}");
+
+        assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "while(to$fieldStringBooleanArray) {print('OK'); break;}", "while(c('TRUE', 'TRUE', 'FALSE')) {print('OK'); break;}");
+        assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "while(to$listBoolean) {print('OK'); break;}", "while(c(T, F)) {print('OK'); break;}");
+        assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "while(to$listInteger) {print('OK'); break;}", "while(c(T, F)) {print('OK'); break;}");
+        assertEvalFastR(Ignored.ImplementationError, /* Output.IgnoreWarningContext, */ Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + "while(to$listString) {print('OK'); break;}",
+                        "while(c('A', 'B')) {print('OK'); break;}");
+
+        assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "while(to$listStringBoolean) {print('OK'); break;}",
+                        "while(" + toRVector(t.listStringBoolean, null) + ") {print('OK'); break;}");
+
+        assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + "while(to) print('OK')",
+                        "cat('Error in if (T) print(\\'OK\\') : ', '\n', '  argument is not interpretable as logical', '\n')");
+    }
+
     private String getRValue(Object value) {
         if (value == null) {
             return "NULL";
@@ -473,14 +669,14 @@ public class TestJavaInterop extends TestBase {
         if (value.getClass().isArray()) {
             StringBuilder sb = new StringBuilder();
             sb.append("cat('[external object]\\n[1] ");
-            int lenght = Array.getLength(value);
-            for (int i = 0; i < lenght; i++) {
-                if (lenght > 1 && value.getClass().getComponentType() == Boolean.TYPE && (boolean) Array.get(value, i)) {
+            int length = Array.getLength(value);
+            for (int i = 0; i < length; i++) {
+                if (length > 1) {
                     // what the heck?
-                    sb.append(" ");
+                    sb.append(getBooleanPrefix(value, i));
                 }
                 sb.append(getRValue(Array.get(value, i)));
-                if (i < lenght - 1) {
+                if (i < length - 1) {
                     sb.append(" ");
                 }
             }
@@ -488,6 +684,61 @@ public class TestJavaInterop extends TestBase {
             return sb.toString();
         }
         return value.toString();
+    }
+
+    private String toRVector(Object o, String asXXX) {
+        if (o.getClass().isArray()) {
+            List<Object> l = new ArrayList<>();
+            for (int i = 0; i < Array.getLength(o); i++) {
+                l.add(Array.get(o, i));
+            }
+            return toRVector(l, asXXX);
+        }
+        Assert.fail(o + " should have been an array");
+        return null;
+    }
+
+    private String toRVector(List<?> l, String asXXX) {
+        StringBuilder sb = new StringBuilder();
+        if (asXXX != null) {
+            sb.append(asXXX);
+            sb.append("(c(");
+        } else {
+            sb.append("c(");
+        }
+        Iterator<?> it = l.iterator();
+        while (it.hasNext()) {
+            Object o = it.next();
+            if (asXXX != null) {
+                if (asXXX.equals("as.character") && (o instanceof Double || o instanceof Float)) {
+                    o = DoubleVectorPrinter.encodeReal(((Number) o).doubleValue());
+                }
+                sb.append(getRValue(o));
+            } else {
+                sb.append(getRValue(o));
+            }
+            if (it.hasNext()) {
+                sb.append(',');
+            }
+        }
+        if (asXXX != null) {
+            sb.append("))");
+        } else {
+            sb.append(")");
+        }
+        return sb.toString();
+    }
+
+    private String getAsXXX(Object o, String asXXX) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(asXXX);
+        sb.append("(");
+        if (asXXX.equals("as.character") && (o instanceof Double || o instanceof Float)) {
+            o = DoubleVectorPrinter.encodeReal(((Number) o).doubleValue());
+        }
+        sb.append(getRValue(o));
+        sb.append(')');
+        return sb.toString();
     }
 
     private String getRValuesAsString(Object... values) {
@@ -500,6 +751,17 @@ public class TestJavaInterop extends TestBase {
             }
         }
         return sb.toString();
+    }
+
+    private String getBooleanPrefix(Object value, int i) {
+        if (value.getClass().getComponentType() == Boolean.TYPE && (boolean) Array.get(value, i)) {
+            return " ";
+        }
+        if (i > 0 && value.getClass().getComponentType() == String.class &&
+                        (Array.get(value, i).equals("T") || Array.get(value, i).equals("F") || Array.get(value, i).equals("TRUE") || Array.get(value, i).equals("FALSE"))) {
+            return " ";
+        }
+        return "";
     }
 
     public static class TestNamesClass {
@@ -582,7 +844,7 @@ public class TestJavaInterop extends TestBase {
         public static char[] fieldStaticCharArray;
         public static double[] fieldStaticDoubleArray;
         public static float[] fieldStaticFloatArray;
-        public static int[] fieldStaticIntArray;
+        public static int[] fieldStaticIntegerArray;
         public static long[] fieldStaticLongArray;
         public static short[] fieldStaticShortArray;
         public static String[] fieldStaticStringArray;
@@ -592,10 +854,12 @@ public class TestJavaInterop extends TestBase {
         public char[] fieldCharArray = fieldStaticCharArray;
         public double[] fieldDoubleArray = fieldStaticDoubleArray;
         public float[] fieldFloatArray = fieldStaticFloatArray;
-        public int[] fieldIntArray = fieldStaticIntArray;
+        public int[] fieldIntegerArray = fieldStaticIntegerArray;
         public long[] fieldLongArray = fieldStaticLongArray;
         public short[] fieldShortArray = fieldStaticShortArray;
         public String[] fieldStringArray = fieldStaticStringArray;
+        public String[] fieldStringIntArray = new String[]{"1", "2", "3"};
+        public String[] fieldStringBooleanArray = new String[]{"TRUE", "TRUE", "FALSE"};
 
         public int[][] int2DimArray;
         public Object[] objectArray;
@@ -610,10 +874,33 @@ public class TestJavaInterop extends TestBase {
         public static Object fieldStaticNullObject = null;
         public Object fieldNullObject = null;
 
+        public List<Boolean> listBoolean = new ArrayList<>(Arrays.asList(true, false, true));
+        public List<Byte> listByte = new ArrayList<>(Arrays.asList((byte) 1, (byte) 2, (byte) 3));
+        public List<Character> listChar = new ArrayList<>(Arrays.asList('a', 'b', 'c'));
+        public List<Double> listDouble = new ArrayList<>(Arrays.asList(1.1, 2.1, 3.1));
+        public List<Float> listFloat = new ArrayList<>(Arrays.asList(1.1f, 2.1f, 3.1f));
+        public List<Integer> listInteger = new ArrayList<>(Arrays.asList(1, 2, 3));
+        public List<Long> listLong = new ArrayList<>(Arrays.asList(1L, 2L, 3L));
+        public List<Short> listShort = new ArrayList<>(Arrays.asList((short) 1, (short) 2, (short) 3));
+        public List<String> listString = new ArrayList<>(Arrays.asList("a", "b", "c"));
+        public List<String> listStringInt = new ArrayList<>(Arrays.asList("1", "2", "3"));
+        public List<String> listStringBoolean = new ArrayList<>(Arrays.asList("TRUE", "TRUE", "FALSE"));
+
+        public static class Element {
+            public final String data;
+
+            public Element(String data) {
+                this.data = data;
+            }
+        }
+
+        public List<Element> listObject = new ArrayList<>(Arrays.asList(new Element("a"), new Element("b"), new Element("c"), null));
+        public Element[] arrayObject = new Element[]{new Element("a"), new Element("b"), new Element("c"), null};
+
         public Map<String, String> map;
 
         public TestClass() {
-            this(true, Byte.MAX_VALUE, 'a', Double.MAX_VALUE, Float.MAX_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE, Short.MAX_VALUE, "a string");
+            this(true, Byte.MAX_VALUE, 'a', Double.MAX_VALUE, 1.1f, Integer.MAX_VALUE, Long.MAX_VALUE, Short.MAX_VALUE, "a string");
         }
 
         public TestClass(boolean bo, byte bt, char c, double d, float f, int i, long l, short sh, String st) {
@@ -660,7 +947,7 @@ public class TestJavaInterop extends TestBase {
             fieldStaticCharArray = new char[]{'a', 'b', 'c'};
             fieldStaticDoubleArray = new double[]{1.1, 2.1, 3.1};
             fieldStaticFloatArray = new float[]{1.1f, 2.1f, 3.1f};
-            fieldStaticIntArray = new int[]{1, 2, 3};
+            fieldStaticIntegerArray = new int[]{1, 2, 3};
             fieldStaticLongArray = new long[]{1, 2, 3};
             fieldStaticShortArray = new short[]{1, 2, 3};
             fieldStaticStringArray = new String[]{"a", "b", "c"};
@@ -670,7 +957,7 @@ public class TestJavaInterop extends TestBase {
             fieldCharArray = fieldStaticCharArray;
             fieldDoubleArray = fieldStaticDoubleArray;
             fieldFloatArray = fieldStaticFloatArray;
-            fieldIntArray = fieldStaticIntArray;
+            fieldIntegerArray = fieldStaticIntegerArray;
             fieldLongArray = fieldStaticLongArray;
             fieldShortArray = fieldStaticShortArray;
             fieldStringArray = fieldStaticStringArray;
@@ -728,7 +1015,7 @@ public class TestJavaInterop extends TestBase {
         }
 
         public static int[] methodStaticIntArray() {
-            return fieldStaticIntArray;
+            return fieldStaticIntegerArray;
         }
 
         public boolean methodBoolean() {
@@ -772,7 +1059,7 @@ public class TestJavaInterop extends TestBase {
         }
 
         public int[] methodIntArray() {
-            return fieldIntArray;
+            return fieldIntegerArray;
         }
 
         public static Boolean methodStaticBooleanObject() {
