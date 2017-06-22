@@ -90,7 +90,7 @@ public abstract class UpdateClass extends RBuiltinNode.Arg2 {
         if (!getClassNode.isObject(arg)) {
             initTypeof();
             RType argType = typeof.execute(arg);
-            if (argType.equals(className) || (mode == RType.Double && (argType == RType.Integer || argType == RType.Double))) {
+            if (argType.getClazz().equals(className) || (mode == RType.Double && (argType == RType.Integer || argType == RType.Double))) {
                 // "explicit" attribute might have been set (e.g. by oldClass<-)
                 return setClass(arg, RNull.instance);
             }
@@ -127,7 +127,16 @@ public abstract class UpdateClass extends RBuiltinNode.Arg2 {
         return result;
     }
 
-    @Specialization
+    @Specialization(guards = "className.getLength() == 1")
+    @TruffleBoundary
+    protected Object setClassLengthOne(RAbstractContainer arg, RStringVector className,
+                    @Cached("create()") TypeFromModeNode typeFromMode,
+                    @Cached("create()") GetClassAttributeNode getClassNode) {
+        RType mode = typeFromMode.execute(className.getDataAt(0));
+        return setClassInternal(arg, className.getDataAt(0), mode, getClassNode);
+    }
+
+    @Specialization(guards = "className.getLength() != 1")
     @TruffleBoundary
     protected Object setClass(RAbstractContainer arg, RStringVector className) {
         RAbstractContainer result = reuseNonShared(arg);

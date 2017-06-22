@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClass
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -88,5 +89,10 @@ public abstract class UpdateOldClass extends RBuiltinNode.Arg2 {
         RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
         setClassAttributeNode.reset(result);
         return result;
+    }
+
+    @Specialization
+    protected Object setOldClass(@SuppressWarnings("unused") RNull arg, @SuppressWarnings("unused") Object className) {
+        throw error(Message.INVALID_NULL_LHS);
     }
 }

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -111,5 +111,14 @@ public class TestSimpleAssignment extends TestBase {
         assertEval("{ f <- function() { if (FALSE) { x <- 1 } ; g <- function() { x } ; g() } ; f() }");
         assertEval("{ f <- function() { if (FALSE) { c <- 1 } ; g <- function() { c } ; g() } ; typeof(f()) }");
         assertEval("{ `f<-` <- function(x, y=42, value) { x[1]<-value+y; x }; y<-1:10; f(y)<-7; y }");
+
+        assertEval("proto <- c(11,11); f <- function() { for (i in 1:2) proto[[i]] <- i; proto }; f()");
+        assertEval("proto <- c(11,11); f <- function() { for (i in 1:2) print(proto[[i]] <- i); proto }; f()");
+        assertEval("proto <- c(11,11); f <- function() { proto <- c(4,5); for (i in 1:2) proto[[i]] <- i; proto }; f()");
+        assertEval("proto <- c(11,11); f <- function() { proto <- c(4,5); for (i in 1:2) print(proto[[i]] <- i); proto }; f()");
+        assertEval("proto <- c(11,11); f <- function() { for (i in 1:2) proto[[i]] <<- i; proto }; f()");
+        assertEval("proto <- c(11,11); f <- function() { for (i in 1:2) print(proto[[i]] <<- i); proto }; f()");
+        assertEval("proto <- c(11,11); f <- function() { proto <- c(4,5); for (i in 1:2) proto[[i]] <<- i; proto }; f()");
+        assertEval("proto <- c(11,11); f <- function() { proto <- c(4,5); for (i in 1:2) print(proto[[i]] <<- i); proto }; f()");
     }
 }

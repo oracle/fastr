@@ -475,7 +475,6 @@ public class BasePackage extends RBuiltinPackage {
         add(GetFunctions.Get.class, GetFunctionsFactory.GetNodeGen::create);
         add(GetFunctions.Get0.class, GetFunctionsFactory.Get0NodeGen::create);
         add(GetFunctions.MGet.class, GetFunctionsFactory.MGetNodeGen::create);
-        add(GetOldClass.class, GetOldClassNodeGen::create);
         add(OptionsFunctions.GetOption.class, OptionsFunctionsFactory.GetOptionNodeGen::create);
         add(GetText.class, GetTextNodeGen::create);
         add(Getwd.class, GetwdNodeGen::create);
@@ -586,6 +585,7 @@ public class BasePackage extends RBuiltinPackage {
         add(NamespaceFunctions.RegisterNamespace.class, NamespaceFunctionsFactory.RegisterNamespaceNodeGen::create);
         add(NamespaceFunctions.UnregisterNamespace.class, NamespaceFunctionsFactory.UnregisterNamespaceNodeGen::create);
         add(NormalizePath.class, NormalizePathNodeGen::create);
+        add(OldClass.class, OldClassNodeGen::create);
         add(OnExit.class, OnExitNodeGen::create);
         add(OptionsFunctions.Options.class, OptionsFunctionsFactory.OptionsNodeGen::create);
         add(Order.class, OrderNodeGen::create);

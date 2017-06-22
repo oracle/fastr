@@ -99,10 +99,7 @@ public class TestBuiltin_anyDuplicated extends TestBase {
 
     @Test
     public void testanyDuplicated18() {
-        // FIXME RInternalError: java.lang.ArrayIndexOutOfBoundsException: 0
-        assertEval(Ignored.ImplementationError,
-                        "argv <- structure(list(x = structure(c(3, 2, 7, 2, 6, 2, 7, 2),     .Dim = c(4L, 2L), .Dimnames = list(c('A', 'B', 'C', 'D'),         c('M', 'F'))), MARGIN = 0), .Names = c('x', 'MARGIN'));" +
-                                        "do.call('anyDuplicated', argv)");
+        assertEval("argv <- structure(list(x = structure(c(3, 2, 7, 2, 6, 2, 7, 2),     .Dim = c(4L, 2L), .Dimnames = list(c('A', 'B', 'C', 'D'),         c('M', 'F'))), MARGIN = 0), .Names = c('x', 'MARGIN'));do.call('anyDuplicated', argv)");
     }
 
     @Test

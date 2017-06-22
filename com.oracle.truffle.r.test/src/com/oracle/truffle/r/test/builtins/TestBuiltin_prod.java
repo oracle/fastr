@@ -39,9 +39,7 @@ public class TestBuiltin_prod extends TestBase {
 
     @Test
     public void testprod5() {
-        // FIXME ArrayIndexOutOfBoundsException: 0
-        // com.oracle.truffle.r.runtime.data.RIntVector.getDataAt(RIntVector.java:75)
-        assertEval(Ignored.ImplementationError, "argv <- list(integer(0));prod(argv[[1]]);");
+        assertEval("argv <- list(integer(0));prod(argv[[1]]);");
     }
 
     @Test
@@ -72,9 +70,7 @@ public class TestBuiltin_prod extends TestBase {
 
     @Test
     public void testprod11() {
-        // FIXME ArrayIndexOutOfBoundsException: 0
-        // com.oracle.truffle.r.runtime.data.RIntVector.getDataAt(RIntVector.java:75)
-        assertEval(Ignored.ImplementationError, "argv <- list(numeric(0));prod(argv[[1]]);");
+        assertEval("argv <- list(numeric(0));prod(argv[[1]]);");
     }
 
     @Test

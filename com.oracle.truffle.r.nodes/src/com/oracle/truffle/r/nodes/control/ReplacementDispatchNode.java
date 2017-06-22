@@ -34,7 +34,6 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableSyntaxNode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -158,16 +157,7 @@ public final class ReplacementDispatchNode extends OperatorNode {
             current = call.getSyntaxArguments()[0];
         }
         RSyntaxLookup variable = (RSyntaxLookup) current;
-        ReadVariableNode varRead = createReplacementForVariableUsing(variable, isSuper);
-        return ReplacementNode.create(getLazySourceSection(), operator, varRead, lhs.asRSyntaxNode(), rhs, calls, variable.getIdentifier(), isSuper, tempNamesStartIndex, isVoid);
-    }
-
-    private static ReadVariableNode createReplacementForVariableUsing(RSyntaxLookup var, boolean isSuper) {
-        if (isSuper) {
-            return ReadVariableNode.createSuperLookup(var.getLazySourceSection(), var.getIdentifier());
-        } else {
-            return ReadVariableNode.create(var.getLazySourceSection(), var.getIdentifier(), true);
-        }
+        return ReplacementNode.create(getLazySourceSection(), operator, variable, lhs.asRSyntaxNode(), rhs, calls, isSuper, tempNamesStartIndex, isVoid);
     }
 
     /*
