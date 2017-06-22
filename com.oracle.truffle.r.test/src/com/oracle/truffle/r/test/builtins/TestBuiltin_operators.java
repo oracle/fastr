@@ -701,11 +701,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators130() {
-        // FIXME
-        // Expected output: [1] TRUE
-        // FastR output: Error in argv[[1]] == argv[[2]] :
-        // operations are possible only for numeric, logical or complex types
-        assertEval(Ignored.ImplementationError, "argv <- list(2, structure(list(2L), class = structure('L', package = '.GlobalEnv')));`==`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(2, structure(list(2L), class = structure('L', package = '.GlobalEnv')));`==`(argv[[1]],argv[[2]]);");
     }
 
     @Test
