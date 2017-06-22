@@ -31,13 +31,13 @@ public final class FastRConfig {
     /**
      * Umbrella option, which changes default values of other options in a way that FastR will not
      * invoke any native code directly and other potentially security sensitive operations are
-     * restricted. Can be configured via environment variable {@code FASTR_MANAGED}.
+     * restricted. Can be configured via environment variable {@code FASTR_RFFI=managed}.
      */
     public static final boolean ManagedMode;
 
     static {
-        String managedModeVal = System.getenv("FASTR_MANAGED");
-        ManagedMode = managedModeVal != null && managedModeVal.equals("true");
+        String rffiVal = System.getenv("FASTR_RFFI");
+        ManagedMode = rffiVal != null && rffiVal.equals("managed");
         if (ManagedMode) {
             InternalGridAwtSupport = false;
         } else {
