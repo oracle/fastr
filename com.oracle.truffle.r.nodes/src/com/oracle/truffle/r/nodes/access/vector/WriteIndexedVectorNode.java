@@ -44,7 +44,6 @@ import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -85,12 +84,12 @@ abstract class WriteIndexedVectorNode extends Node {
     private final NACheck positionNACheck = NACheck.create();
     private final ConditionProfile resetIndexProfile = ConditionProfile.createBinaryProfile();
 
-    @Child private WriteIndexedScalarNode<RAbstractVector, RTypedValue> scalarNode;
+    @Child private WriteIndexedScalarNode<RAbstractVector, Object> scalarNode;
     @Child private WriteIndexedVectorNode innerVectorNode;
 
     @SuppressWarnings("unchecked")
     protected WriteIndexedVectorNode(RType vectorType, int totalDimensions, int dimensionIndex, boolean positionAppliesToRight, boolean skipNA, boolean setListElementAsObject, boolean isReplace) {
-        this.scalarNode = (WriteIndexedScalarNode<RAbstractVector, RTypedValue>) createIndexedAction(vectorType, setListElementAsObject, isReplace);
+        this.scalarNode = (WriteIndexedScalarNode<RAbstractVector, Object>) createIndexedAction(vectorType, setListElementAsObject, isReplace);
         this.dimensionIndex = dimensionIndex;
         this.totalDimensions = totalDimensions;
         this.positionsApplyToRight = positionAppliesToRight;
@@ -125,7 +124,7 @@ abstract class WriteIndexedVectorNode extends Node {
     }
 
     public final void apply(RAbstractVector left, int leftLength,
-                    Object[] positions, RTypedValue right, int rightLength, int[] positionTargetDimensions) {
+                    Object[] positions, Object right, int rightLength, int[] positionTargetDimensions) {
         assert left.getLength() == leftLength;
         assert totalDimensions == positions.length : "totalDimensions must be constant per vector write node";
 
@@ -162,7 +161,7 @@ abstract class WriteIndexedVectorNode extends Node {
     private int applyImpl(//
                     RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
                     Object[] positions, int positionOffset,
-                    RTypedValue right, Object rightStore, int rightBase, int rightLength, boolean parentNA) {
+                    Object right, Object rightStore, int rightBase, int rightLength, boolean parentNA) {
 
         Object position = positionClassProfile.profile(positions[dimensionIndex]);
 
@@ -188,7 +187,7 @@ abstract class WriteIndexedVectorNode extends Node {
 
     protected abstract int execute(RAbstractVector left, Object leftStore, int storeBase, int storeLength, Object targetDimensions, int targetDimension,
                     Object[] positions, Object position, int positionOffset, int positionLength,
-                    RTypedValue right, Object rightStore, int valueBase, int valueLength, boolean parentNA);
+                    Object right, Object rightStore, int valueBase, int valueLength, boolean parentNA);
 
     @Specialization
     protected int doMissing(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
@@ -209,7 +208,7 @@ abstract class WriteIndexedVectorNode extends Node {
     @Specialization
     protected int doLogicalPosition(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
                     Object[] positions, RAbstractLogicalVector position, int positionOffset, int positionLength,
-                    RTypedValue right, Object rightStore, int rightBase, int rightLength, boolean parentNA,
+                    Object right, Object rightStore, int rightBase, int rightLength, boolean parentNA,
                     @Cached("create()") BranchProfile wasTrue,
                     @Cached("create()") AlwaysOnBranchProfile outOfBounds,
                     @Cached("createCountingProfile()") LoopConditionProfile profile,
@@ -254,7 +253,7 @@ abstract class WriteIndexedVectorNode extends Node {
     @Specialization(rewriteOn = SlowPathException.class)
     protected int doIntegerSequencePosition(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension,
                     Object[] positions, RIntSequence position, int positionOffset, int positionLength,
-                    RTypedValue right, Object rightStore, int rightBase, int rightLength, boolean parentNA,
+                    Object right, Object rightStore, int rightBase, int rightLength, boolean parentNA,
                     @Cached("create()") IntValueProfile startProfile,
                     @Cached("create()") IntValueProfile strideProfile,
                     @Cached("createBinaryProfile()") ConditionProfile conditionProfile,
@@ -293,7 +292,7 @@ abstract class WriteIndexedVectorNode extends Node {
     @Specialization(replaces = "doIntegerSequencePosition")
     protected int doIntegerPosition(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension,
                     Object[] positions, RAbstractIntVector position, int positionOffset, int positionLength,
-                    RTypedValue right, Object rightStore, int rightBase, int rightLength, boolean parentNA,
+                    Object right, Object rightStore, int rightBase, int rightLength, boolean parentNA,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
         positionNACheck.enable(position);
         int rightIndex = rightBase;
@@ -318,7 +317,7 @@ abstract class WriteIndexedVectorNode extends Node {
     private int applyInner(//
                     RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions,
                     Object[] positions, int positionOffset, int positionValue,
-                    RTypedValue right, Object rightStore, int rightLength, int actionIndex, boolean isNA) {
+                    Object right, Object rightStore, int rightLength, int actionIndex, boolean isNA) {
         int newTargetIndex = leftBase + positionValue * positionOffset;
         if (dimensionIndex == 0) {
             // for-loops leaf for innermost dimension
@@ -354,7 +353,7 @@ abstract class WriteIndexedVectorNode extends Node {
         }
     }
 
-    private static WriteIndexedScalarNode<? extends RAbstractVector, ? extends RTypedValue> createIndexedAction(RType type, boolean setListElementAsObject, boolean isReplace) {
+    private static WriteIndexedScalarNode<? extends RAbstractVector, ? extends Object> createIndexedAction(RType type, boolean setListElementAsObject, boolean isReplace) {
         switch (type) {
             case Logical:
                 return new WriteLogicalAction();
@@ -378,7 +377,7 @@ abstract class WriteIndexedVectorNode extends Node {
         }
     }
 
-    private abstract static class WriteIndexedScalarNode<A extends RAbstractVector, V extends RTypedValue> extends Node {
+    private abstract static class WriteIndexedScalarNode<A extends RAbstractVector, V extends Object> extends Node {
 
         final NACheck valueNACheck = NACheck.create();
 
@@ -483,7 +482,7 @@ abstract class WriteIndexedVectorNode extends Node {
         }
     }
 
-    private static final class WriteListAction extends WriteIndexedScalarNode<RAbstractListBaseVector, RTypedValue> {
+    private static final class WriteListAction extends WriteIndexedScalarNode<RAbstractListBaseVector, Object> {
 
         private final boolean setListElementAsObject;
         private final boolean isReplace;
@@ -501,7 +500,7 @@ abstract class WriteIndexedVectorNode extends Node {
         }
 
         @Override
-        void apply(RAbstractListBaseVector leftAccess, Object leftStore, int leftIndex, RTypedValue rightAccess, Object rightStore, int rightIndex) {
+        void apply(RAbstractListBaseVector leftAccess, Object leftStore, int leftIndex, Object rightAccess, Object rightStore, int rightIndex) {
             Object rightValue;
             if (setListElementAsObject) {
                 rightValue = rightAccess;
