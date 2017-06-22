@@ -175,10 +175,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         List<RCodeBuilder.Argument<RSyntaxNode>> args = new ArrayList<>();
         for (int i = 0; i < getFormalArguments().getLength(); i++) {
             RNode value = getFormalArguments().getArgument(i);
-            SourceSection source = argSourceSections == null ? getSourceSection() : argSourceSections[i];
+            SourceSection source = argSourceSections == null ? getLazySourceSection() : argSourceSections[i];
             args.add(RCodeBuilder.argument(source, getFormalArguments().getSignature().getName(i), value == null ? null : builder.process(value.asRSyntaxNode())));
         }
-        RootCallTarget callTarget = builder.rootFunction(getRLanguage(), getSourceSection(), args, builder.process(getBody()), name);
+        RootCallTarget callTarget = builder.rootFunction(getRLanguage(), getLazySourceSection(), args, builder.process(getBody()), name);
         return callTarget;
     }
 
