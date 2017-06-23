@@ -365,13 +365,19 @@ public abstract class PromiseNode extends RNode {
         private VarArgsPromiseNode(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache, boolean forcedEager) {
             this.promised = new RNode[nodes.length];
             this.closures = new Closure[nodes.length];
+            boolean noOpt = false;
+            for (int i = 0; !noOpt && i < nodes.length; i++) {
+                if (nodes[i] != null) {
+                    noOpt = EvaluatedArgumentsVisitor.hasAssignmentCall(nodes[i].asRSyntaxNode());
+                }
+            }
             for (int i = 0; i < nodes.length; i++) {
                 Closure closure = closureCache.getOrCreateClosure(nodes[i]);
                 this.closures[i] = closure;
                 if (RASTUtils.isLookup(nodes[i], ArgumentsSignature.VARARG_NAME)) {
                     this.promised[i] = nodes[i];
                 } else {
-                    this.promised[i] = PromiseNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), false, forcedEager);
+                    this.promised[i] = PromiseNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), noOpt, !noOpt && forcedEager);
                 }
             }
             this.signature = signature;

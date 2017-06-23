@@ -79,7 +79,7 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
     private static final Set<String> wellKnownFunctions = new HashSet<>(Arrays.asList("c", "$", "@", "[", "[[", "any", "dim", "dimnames", "rownames", "colnames", "is.null", "list", "names", "return",
                     "print", "length", "rep", "inherits", "min", "max", "matrix", "table", "is.array", "is.element", "is.character", "exp", "all", "pmin", "pmax", "as.numeric", "proc.time",
                     "as.integer", "as.character", "as.matrix", ".Call", "sum", "order", "rev", "integer", "double", "as.numeric", "as.list", "as.integer", ".Call", ".FastR", "unname", "log", "lgamma",
-                    "sin", "cos", "tan", "exp", "log", "expm1", "sinh", "sinpi", "cosh", "cospi", "tanh", "tanpi", "asin", "asinh", "acos", "acosh", "atan", "atanh", "<-", "+", "-",
+                    "sin", "cos", "tan", "exp", "log", "expm1", "sinh", "sinpi", "cosh", "cospi", "tanh", "tanpi", "asin", "asinh", "acos", "acosh", "atan", "atanh", "+", "-",
                     "*", "/", "%%", "^", ":", ">=", ">", "<=", "<", "==", "!=", "||", "|", "&&", "&", "!", "%o%", "%*%", "%/%", "%in%", "{", "for", "while", "repeat", "if", "attributes", "attr"));
 
     private EvaluatedArgumentsVisitor() {
@@ -122,7 +122,26 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
                     }
                 }
             }
-            if (wellKnownFunctions.contains(symbol)) {
+            if (symbol.equals("<-")) {
+                Info info = Info.createNew();
+                assert arguments.length == 2;
+                RSyntaxElement current = arguments[0];
+                if (arguments[0] instanceof RSyntaxLookup) {
+                    info.maybeAssignedNames.add(((RSyntaxLookup) arguments[0]).getIdentifier());
+                } else {
+                    info.addBefore(accept(arguments[0]));
+                    while (current instanceof RSyntaxCall) {
+                        current = ((RSyntaxCall) current).getSyntaxArguments()[0];
+                    }
+                    if (current instanceof RSyntaxLookup) {
+                        info.evaluatedNames.add(((RSyntaxLookup) current).getIdentifier());
+                    } else {
+                        return Info.ANY;
+                    }
+                }
+                info.addBefore(accept(arguments[1]));
+                return info;
+            } else if (wellKnownFunctions.contains(symbol)) {
                 Info info = Info.createNew();
                 switch (symbol) {
                     case "||":
@@ -134,24 +153,6 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
                         if (arguments[0] != null) {
                             info.addBefore(accept(arguments[0]));
                         }
-                        return info;
-                    case "<-":
-                        assert arguments.length == 2;
-                        RSyntaxElement current = arguments[0];
-                        if (arguments[0] instanceof RSyntaxLookup) {
-                            info.maybeAssignedNames.add(((RSyntaxLookup) arguments[0]).getIdentifier());
-                        } else {
-                            info.addBefore(accept(arguments[0]));
-                            while (current instanceof RSyntaxCall) {
-                                current = ((RSyntaxCall) current).getSyntaxArguments()[0];
-                            }
-                            if (current instanceof RSyntaxLookup) {
-                                info.evaluatedNames.add(((RSyntaxLookup) current).getIdentifier());
-                            } else {
-                                return Info.ANY;
-                            }
-                        }
-                        info.addBefore(accept(arguments[1]));
                         return info;
                     case "repeat":
                         assert arguments.length == 1;
@@ -241,6 +242,27 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
             return true;
         } else if (node instanceof RSyntaxConstant) {
             return true;
+        }
+        return false;
+    }
+
+    /**
+     * If any of the arguments has assignment call in it, we fallback to unoptimized promises.
+     */
+    public static boolean hasAssignmentCall(RSyntaxElement node) {
+        if (node instanceof RSyntaxCall) {
+            RSyntaxCall call = (RSyntaxCall) node;
+            RSyntaxElement lhs = call.getSyntaxLHS();
+            if (lhs instanceof RSyntaxLookup) {
+                if (((RSyntaxLookup) lhs).getIdentifier().equals("<-")) {
+                    return true;
+                }
+                for (RSyntaxElement arg : call.getSyntaxArguments()) {
+                    if (hasAssignmentCall(arg)) {
+                        return true;
+                    }
+                }
+            }
         }
         return false;
     }
