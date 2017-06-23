@@ -50,7 +50,7 @@ public class TruffleUnwrap {
         } else if (x instanceof TruffleObject) {
             Object r = JavaInterop.unbox((TruffleObject) x);
             if (r == null) {
-                // didn't UNBOX
+                // didn't UNBOX or really was null (e.g. null String)
                 if (RFFIFactory.getType() == RFFIFactory.Type.LLVM) {
                     TruffleObject xto = (TruffleObject) x;
                     TruffleObject xtoObject = NativePointer.check(xto);
@@ -58,10 +58,8 @@ public class TruffleUnwrap {
                         return xtoObject;
                     }
                 }
-                throw RInternalError.shouldNotReachHere();
-            } else {
-                return r;
             }
+            return r;
         } else {
             return x;
         }

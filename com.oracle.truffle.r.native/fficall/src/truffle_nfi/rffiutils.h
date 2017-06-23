@@ -32,6 +32,10 @@
 extern void init_memory();
 extern void init_utils(TruffleEnv* env);
 
+char *ensure_truffle_chararray(const char *x);
+void *ensure_string(const char *x);
+void *ensure_fun(void *fun);
+
 // use for an unimplemented API function
 void *unimplemented(char *msg) __attribute__((noreturn));
 // use for any fatal error

@@ -28,12 +28,18 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 
 public interface PkgInitUpCalls {
     enum Index {
-        registerRoutines,
-        setDotSymbolValues,
-        useDynamicSymbols,
-        forceSymbols,
-        registerCCallable,
-        getCCallable;
+        registerRoutines("(object, sint32, sint32, uint64): void"),
+        setDotSymbolValues("(object, string, pointer, sint32): object"),
+        useDynamicSymbols("(object, sint32): sint32"),
+        forceSymbols("(object, sint32): sint32"),
+        registerCCallable("(string, string, object): sint32"),
+        getCCallable("(string, string, object): void");
+
+        public final String signature;
+
+        Index(String signature) {
+            this.signature = signature;
+        }
     }
 
     /**

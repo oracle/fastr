@@ -58,7 +58,7 @@ $(C_OBJECTS): | $(OBJ)
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(OBJ)/%.o: %.c $(TOPDIR)/include/Rinternals.h ../common/rffi_upcallsindex.h $(C_HDRS)
+$(OBJ)/%.o: %.c $(TOPDIR)/include/Rinternals.h rffiutils.h $(TRUFFLE_COMMON_H_SOURCES) ../common/rffi_upcallsindex.h $(C_HDRS)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJ)/%.o: ../truffle_common/%.c $(TOPDIR)/include/Rinternals.h $(TRUFFLE_COMMON_H_SOURCES) ../common/rffi_upcallsindex.h $(C_HDRS)
