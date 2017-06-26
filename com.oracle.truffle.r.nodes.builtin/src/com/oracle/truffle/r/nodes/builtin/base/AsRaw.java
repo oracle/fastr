@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
+import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 
-@RBuiltin(name = "as.raw", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
+@RBuiltin(name = "as.raw", kind = PRIMITIVE, dispatch = INTERNAL_GENERIC, parameterNames = {"x"}, behavior = PURE)
 public abstract class AsRaw extends RBuiltinNode.Arg1 {
 
     private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();

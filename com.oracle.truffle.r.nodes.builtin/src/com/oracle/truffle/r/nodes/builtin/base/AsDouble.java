@@ -31,11 +31,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
-@RBuiltin(name = "as.double", aliases = {"as.numeric"}, kind = PRIMITIVE, parameterNames = {"x", "..."}, behavior = PURE)
+@RBuiltin(name = "as.double", aliases = {"as.numeric"}, kind = PRIMITIVE, dispatch = RDispatch.INTERNAL_GENERIC, parameterNames = {"x", "..."}, behavior = PURE)
 public abstract class AsDouble extends RBuiltinNode.Arg2 {
 
     private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();

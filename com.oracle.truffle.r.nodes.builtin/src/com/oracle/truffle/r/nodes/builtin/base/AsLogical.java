@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyLogicalVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
-@RBuiltin(name = "as.logical", kind = PRIMITIVE, parameterNames = {"x", "..."}, behavior = PURE)
+@RBuiltin(name = "as.logical", kind = PRIMITIVE, dispatch = INTERNAL_GENERIC, parameterNames = {"x", "..."}, behavior = PURE)
 public abstract class AsLogical extends RBuiltinNode.Arg2 {
 
     private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();

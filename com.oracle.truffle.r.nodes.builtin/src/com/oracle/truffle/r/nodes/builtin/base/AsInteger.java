@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyIntegerVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
-@RBuiltin(name = "as.integer", kind = PRIMITIVE, parameterNames = {"x", "..."}, behavior = PURE)
+@RBuiltin(name = "as.integer", kind = PRIMITIVE, dispatch = INTERNAL_GENERIC, parameterNames = {"x", "..."}, behavior = PURE)
 public abstract class AsInteger extends RBuiltinNode.Arg2 {
 
     private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();
