@@ -22,6 +22,12 @@
  */
 package com.oracle.truffle.r.test.library.utils;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
@@ -87,5 +93,29 @@ public class TestInteractiveDebug extends TestBase {
     public void testDebugOnce() {
         assertEval("fun0 <- function() { print('fun0') }; fun1 <- function() { print('en'); fun0(); fun0(); print('ex') }; debugonce(fun0); fun1()\nc\n");
         assertEval("fun0 <- function() { print('fun0') }; debugonce(fun0); fun0()\nc\n");
+    }
+
+    @Test
+    public void testBrowser() {
+        assertEval("foo <- function() { stop('error msg') }; tryCatch(foo(), error=browser)\nprint(msg)\nc\n");
+        assertEval("do.call('browser', list())\nc\n");
+        assertEval("browser()\nwhere\nc\n");
+        assertEval("options(error=browser); prod('a')\nwhere\nc\n");
+    }
+
+    private static Path debugFile;
+
+    @BeforeClass
+    public static void setup() throws IOException {
+        Path testDir = TestBase.createTestDir("com.oracle.truffle.r.test.library.utils.rsrc");
+        String content = "bar <- function(x) print(x)\n\nfun <- function(x) {\nprint('Hello')\nfor(i in seq(3)) print(i)\nbar('World')\nprint(x)\n}";
+        debugFile = testDir.resolve("debug.r");
+        Files.write(debugFile, content.getBytes(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+    }
+
+    @Test
+    public void testSetBreakpoint() {
+        assertEval(Output.IgnoreDebugCallString, Output.IgnoreDebugPath, String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); fun(10)\n\n\n\n\n\n\n\n", debugFile, debugFile));
+        assertEval(String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); setBreakpoint('%s', 4, verbose=F, clear=T); fun(10)\n", debugFile, debugFile, debugFile));
     }
 }

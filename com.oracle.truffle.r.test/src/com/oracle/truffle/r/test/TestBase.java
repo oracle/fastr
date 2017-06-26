@@ -12,8 +12,10 @@ package com.oracle.truffle.r.test;
 
 import static org.junit.Assert.fail;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -29,6 +31,7 @@ import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -92,7 +95,8 @@ public class TestBase {
         IgnoreWhitespace, // removes all whitespace from the whole output
         IgnoreCase, // ignores upper/lower case differences
         IgnoreDebugPath, // ignores <path> in debug output like "debug at <path> #..."
-        IgnoreDebugDepth; // ignores call depth printed by the debugger ("Browse[<call depth>]")
+        IgnoreDebugDepth, // ignores call depth printed by the debugger ("Browse[<call depth>]")
+        IgnoreDebugCallString; // ignores the caller string like "debugging in:" or "Called from:"
 
         @Override
         public String getName() {
@@ -600,22 +604,26 @@ public class TestBase {
         }
 
         String preprocessOutput(String out) {
+            String s = out;
             if (output.contains(Output.IgnoreWhitespace)) {
-                return out.replaceAll("\\s+", "");
+                return s.replaceAll("\\s+", "");
             }
             if (output.contains(Output.IgnoreCase)) {
-                return out.toLowerCase();
+                return s.toLowerCase();
             }
             if (output.contains(Output.ContainsReferences)) {
-                return convertReferencesInOutput(out);
+                return convertReferencesInOutput(s);
             }
             if (output.contains(Output.IgnoreDebugPath)) {
-                return convertDebugOutput(out);
+                s = convertDebugOutput(s);
             }
             if (output.contains(Output.IgnoreDebugDepth)) {
-                return removeDebugCallDepth(out);
+                s = removeDebugCallDepth(s);
             }
-            return out;
+            if (output.contains(Output.IgnoreDebugCallString)) {
+                s = removeDebugCallString(s);
+            }
+            return s;
         }
     }
 
@@ -806,6 +814,10 @@ public class TestBase {
         return removeAllOccurrencesBetween(out, prefix, prefix.length(), "]", 0);
     }
 
+    private static String removeDebugCallString(String out) {
+        return removeLines(out, line -> line.startsWith("debugging in:") || line.startsWith("Called from:"));
+    }
+
     private static String removeAllOccurrencesBetween(String out, String prefix, int prefixOffset, String suffix, int suffixOffset) {
         StringBuilder sb = new StringBuilder(out);
 
@@ -814,6 +826,28 @@ public class TestBase {
 
         while ((idxPrefix = sb.indexOf(prefix, idxPrefix + 1)) > 0 && (idxSuffix = sb.indexOf(suffix, idxPrefix)) > idxPrefix) {
             sb.replace(idxPrefix + prefixOffset, idxSuffix + suffixOffset, "");
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Removes the lines from the test output string matching the provided predicate.
+     */
+    private static String removeLines(String out, Predicate<String> pred) {
+        StringBuilder sb = new StringBuilder();
+
+        BufferedReader r = new BufferedReader(new StringReader(out));
+        String line;
+        try {
+            while ((line = r.readLine()) != null) {
+                if (!pred.test(line)) {
+                    sb.append(line);
+                    sb.append(System.lineSeparator());
+                }
+            }
+        } catch (IOException e) {
+            // won't happen
         }
 
         return sb.toString();

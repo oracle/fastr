@@ -164,7 +164,7 @@ public class RSource {
      * Create an (external) source from the file system path {@code path}.
      */
     public static Source fromFileName(String path, boolean internal) throws IOException {
-        Source.Builder<IOException, RuntimeException, RuntimeException> builder = Source.newBuilder(new File(path)).name(path).mimeType(RRuntime.R_APP_MIME);
+        Source.Builder<IOException, RuntimeException, RuntimeException> builder = Source.newBuilder(new File(path)).mimeType(RRuntime.R_APP_MIME);
         if (internal) {
             builder.internal();
         }

@@ -211,9 +211,13 @@ public class DebugHandling {
     @TruffleBoundary
     public static void disableLineDebug(Source fdn, int line) {
         LineBreakpointEventListener l = getLineBreakpointEventListener(fdn, line);
-        l.disable();
-        l.fser.setParentListener(null);
-        l.fser.disable();
+        if (l != null) {
+            l.disable();
+            if (l.fser != null) {
+                l.fser.setParentListener(null);
+                l.fser.disable();
+            }
+        }
     }
 
     private static FunctionStatementsEventListener ensureSingleStep(FunctionDefinitionNode fdn, LineBreakpointEventListener parentListener) {
@@ -286,7 +290,7 @@ public class DebugHandling {
         }
 
         protected void browserInteract(Node node, VirtualFrame frame) {
-            int exitMode = (int) browserInteractNode.execute(frame);
+            int exitMode = browserInteractNode.execute(frame, RArguments.getCall(frame));
             switch (exitMode) {
                 case BrowserInteractNode.NEXT:
                     break;
@@ -602,12 +606,16 @@ public class DebugHandling {
 
         @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
-            fser.enableChildren();
+            if (fser != null) {
+                fser.enableChildren();
+            }
         }
 
         @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
-            fser.enableChildren();
+            if (fser != null) {
+                fser.enableChildren();
+            }
         }
 
     }

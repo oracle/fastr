@@ -139,9 +139,8 @@ public class DebugFunctions {
             casts.arg("clear").asLogicalVector().findFirst().map(toBoolean());
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object setBreakpoint(String fileLine, RMissing lineNr, boolean clear) {
+        protected Object setBreakpoint(String fileLine, @SuppressWarnings("unused") RMissing lineNr, boolean clear) {
 
             int hashIdx = fileLine.lastIndexOf('#');
             if (hashIdx != -1) {
@@ -156,13 +155,16 @@ public class DebugFunctions {
             throw error(RError.Message.GENERIC, "Line number missing");
         }
 
-        @SuppressWarnings("unused")
         @Specialization
         protected Object setBreakpoint(String fileName, int lineNr, boolean clear) {
 
             try {
                 Source fromSrcfile = RSource.fromFileName(fileName, false);
-                DebugHandling.enableLineDebug(fromSrcfile, lineNr);
+                if (!clear) {
+                    DebugHandling.enableLineDebug(fromSrcfile, lineNr);
+                } else {
+                    DebugHandling.disableLineDebug(fromSrcfile, lineNr);
+                }
                 return RDataFactory.createStringVectorFromScalar(fileName + "#" + lineNr);
             } catch (IOException e) {
                 return RNull.instance;
