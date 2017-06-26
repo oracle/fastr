@@ -456,6 +456,7 @@ public class ArgumentMatcher {
      *
      * @see com.oracle.truffle.r.nodes.function.PromiseNode.InlineVarArgsNode
      */
+    @SuppressWarnings("javadoc")
     private static RNode updateInlinedArg(RNode node) {
         if (!(node instanceof WrapArgumentNode)) {
             return node;
