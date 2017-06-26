@@ -66,6 +66,7 @@ public final class RError extends RuntimeException implements TruffleException {
         private final RError.Message msg;
         @CompilationFinal(dimensions = 1) private final Object[] args;
 
+        @TruffleBoundary
         protected RErrorException(Throwable cause, RError.Message msg, Object[] args) {
             super(RErrorHandling.formatMessage(msg, args), cause);
             this.msg = msg;

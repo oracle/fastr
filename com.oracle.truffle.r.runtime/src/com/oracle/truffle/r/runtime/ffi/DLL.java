@@ -366,6 +366,10 @@ public class DLL {
             }
         }
 
+        public boolean isLong() {
+            return value instanceof Long;
+        }
+
         public TruffleObject asTruffleObject() {
             if (value instanceof TruffleObject) {
                 return (TruffleObject) value;

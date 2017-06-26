@@ -22,14 +22,25 @@
  */
 package com.oracle.truffle.r.ffi.impl.common;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
-public class TruffleUnwrap {
+public final class UpCallUnwrap extends Node {
+
+    @Child private Node isBoxed;
+    @Child private Node unbox;
+    private final BranchProfile nativePointerProfile = isLLVM() ? BranchProfile.create() : null;
+
     /**
      * There are three possibilities as enumerated below.
      * <ul>
@@ -44,25 +55,47 @@ public class TruffleUnwrap {
      * to do.</li>
      * </ul>
      */
-    public static Object unwrap(Object x) {
+    public Object unwrap(Object x) {
         if (x instanceof RTruffleObject) {
             return x;
         } else if (x instanceof TruffleObject) {
-            Object r = JavaInterop.unbox((TruffleObject) x);
-            if (r == null) {
+            if (isBoxed == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                isBoxed = insert(Message.IS_BOXED.createNode());
+            }
+            TruffleObject xTo = (TruffleObject) x;
+            if (ForeignAccess.sendIsBoxed(isBoxed, xTo)) {
+                if (unbox == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    unbox = insert(Message.UNBOX.createNode());
+                }
+                try {
+                    return ForeignAccess.sendUnbox(unbox, xTo);
+                } catch (UnsupportedMessageException e) {
+                    throw RInternalError.shouldNotReachHere(e, "UNBOX message fails after IS_BOXED=true");
+                }
+            } else {
                 // didn't UNBOX or really was null (e.g. null String)
-                if (RFFIFactory.getType() == RFFIFactory.Type.LLVM) {
-                    TruffleObject xto = (TruffleObject) x;
-                    TruffleObject xtoObject = NativePointer.check(xto);
+                if (isLLVM()) {
+                    nativePointerProfile.enter();
+                    TruffleObject xtoObject = checkNativePointer(xTo);
                     if (xtoObject != null) {
                         return xtoObject;
                     }
                 }
+                return x;
             }
-            return r;
         } else {
             return x;
         }
     }
 
+    private static boolean isLLVM() {
+        return RFFIFactory.getType() == RFFIFactory.Type.LLVM;
+    }
+
+    @TruffleBoundary
+    private static TruffleObject checkNativePointer(TruffleObject xto) {
+        return NativePointer.check(xto);
+    }
 }

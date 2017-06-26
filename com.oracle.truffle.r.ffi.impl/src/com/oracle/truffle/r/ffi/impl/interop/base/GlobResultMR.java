@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.interop.base;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
@@ -48,10 +47,9 @@ public class GlobResultMR {
 
     @Resolve(message = "EXECUTE")
     public abstract static class BaseGlobResultCallbackExecute extends Node {
-        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, GlobResult receiver, Object[] arguments) {
+        protected Object access(GlobResult receiver, Object[] arguments) {
             receiver.addPath((String) arguments[0]);
             return receiver;
         }
     }
-
 }

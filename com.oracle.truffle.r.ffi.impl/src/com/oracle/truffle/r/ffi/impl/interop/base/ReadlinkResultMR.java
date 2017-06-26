@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.interop.base;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
@@ -48,10 +47,9 @@ public class ReadlinkResultMR {
 
     @Resolve(message = "EXECUTE")
     public abstract static class BaseReadlinkResultCallbackExecute extends Node {
-        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, ReadlinkResult receiver, Object[] arguments) {
+        protected Object access(ReadlinkResult receiver, Object[] arguments) {
             receiver.setResult((String) arguments[0], (int) arguments[1]);
             return receiver;
         }
     }
-
 }

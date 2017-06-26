@@ -113,5 +113,4 @@ public class NativePointer implements TruffleObject {
     protected long asPointerImpl() {
         return System.identityHashCode(object);
     }
-
 }

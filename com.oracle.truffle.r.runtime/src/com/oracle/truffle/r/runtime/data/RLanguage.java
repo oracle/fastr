@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  *
  */
 @ValueType
-public class RLanguage extends RSharingAttributeStorage implements RAbstractContainer {
+public final class RLanguage extends RSharingAttributeStorage implements RAbstractContainer {
 
     /*
      * Used for RLanguage construction from separate AST components.
@@ -193,7 +193,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
     }
 
     @Override
-    public final void setNames(RStringVector newNames) {
+    public void setNames(RStringVector newNames) {
         if (list == null) {
             /* See getNames */
             RContext.getRRuntimeASTAccess().setNames(this, newNames);
@@ -241,7 +241,7 @@ public class RLanguage extends RSharingAttributeStorage implements RAbstractCont
         return String.format("RLanguage(rep=%s)", getRep());
     }
 
-    public final RPairList getPairListInternal() {
+    public RPairList getPairListInternal() {
         return this.list;
     }
 

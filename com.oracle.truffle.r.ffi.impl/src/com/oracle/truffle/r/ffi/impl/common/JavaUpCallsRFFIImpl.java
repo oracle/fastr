@@ -768,6 +768,24 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return result;
     }
 
+    private static final Object processResult(Object value) {
+        if (value instanceof Integer) {
+            int v = (int) value;
+            return RDataFactory.createIntVector(new int[]{v}, RRuntime.isNA(v));
+        } else if (value instanceof Double) {
+            double v = (double) value;
+            return RDataFactory.createDoubleVector(new double[]{v}, RRuntime.isNA(v));
+        } else if (value instanceof Byte) {
+            byte v = (byte) value;
+            return RDataFactory.createLogicalVector(new byte[]{v}, RRuntime.isNA(v));
+        } else if (value instanceof String) {
+            String v = (String) value;
+            return RDataFactory.createStringVector(new String[]{v}, RRuntime.isNA(v));
+        } else {
+            return value;
+        }
+    }
+
     @Override
     public Object Rf_eval(Object expr, Object env) {
         guarantee(env instanceof REnvironment);
@@ -794,7 +812,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             // just return value
             result = expr;
         }
-        return result;
+        return processResult(result);
     }
 
     @Override

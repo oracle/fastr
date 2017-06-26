@@ -18,7 +18,7 @@ On Mac OS, these can be installed with MacPorts (recommended) or Brew. Having in
 
 The above definitions assume a MacPorts installation.
 
-On Linux, the installation is system  dependent, but once installed, set the same environment variables.
+On Linux, the installation is system dependent, but once installed, set the same environment variables.
 
 ## Building Sulong
 The `sulong` repository must be cloned to a sibling directory of `fastr` and built:

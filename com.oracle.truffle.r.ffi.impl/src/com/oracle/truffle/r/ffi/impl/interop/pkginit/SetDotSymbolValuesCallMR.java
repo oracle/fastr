@@ -25,15 +25,17 @@ package com.oracle.truffle.r.ffi.impl.interop.pkginit;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.common.TruffleUnwrap;
+import com.oracle.truffle.r.ffi.impl.common.UpCallUnwrap;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 
 @MessageResolution(receiverType = SetDotSymbolValuesCall.class)
 public class SetDotSymbolValuesCallMR {
     @Resolve(message = "EXECUTE")
     public abstract static class SetDotSymbolValuesCallExecute extends Node {
+        @Child private UpCallUnwrap unwrap = new UpCallUnwrap();
+
         protected java.lang.Object access(SetDotSymbolValuesCall receiver, Object[] arguments) {
-            return receiver.pkgInitUpCalls.setDotSymbolValues((DLLInfo) arguments[0], (String) TruffleUnwrap.unwrap(arguments[1]), arguments[2], (int) arguments[3]);
+            return receiver.pkgInitUpCalls.setDotSymbolValues((DLLInfo) arguments[0], (String) unwrap.unwrap(arguments[1]), arguments[2], (int) arguments[3]);
         }
     }
 

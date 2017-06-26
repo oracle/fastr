@@ -78,7 +78,7 @@ def _analyze_args(args, dragonEgg=False):
     Result is an instance of AnalyzedArgs:
     '''
     compile_args = []
-    emit_llvm_args = []
+    emit_llvm_args = ['-g']
     llvm_ir_file_ext = '.bc'
     if not dragonEgg:
         emit_llvm_args.append('-emit-llvm')
@@ -171,15 +171,22 @@ def cpp(args):
     sulong = _sulong()
     if sulong:
         analyzed_args = _analyze_args(args)
-        if _is_linux():
-            rc = sulong.dragonEggGPP(analyzed_args.compile_args)
-        elif _is_darwin():
-            rc = sulong.compileWithClangPP(analyzed_args.compile_args)
-            if rc == 0:
-                if analyzed_args.llvm_ir_file:
-                    rc = sulong.compileWithClangPP(analyzed_args.emit_llvm_args)
+        rc = 0
+        if analyzed_args.is_link:
+            rc = _create_bc_lib(args)
         else:
-            mx.abort('unsupported platform')
+            if _is_linux():
+                rc = sulong.dragonEggGPP(analyzed_args.compile_args)
+            elif _is_darwin():
+                rc = sulong.compileWithClangPP(analyzed_args.compile_args)
+                if rc == 0:
+                    if analyzed_args.llvm_ir_file:
+                        rc = sulong.compileWithClangPP(analyzed_args.emit_llvm_args)
+            else:
+                mx.abort('unsupported platform')
+        if rc == 0 and not analyzed_args.is_link and analyzed_args.llvm_ir_file:
+            rc = _mem2reg_opt(analyzed_args.llvm_ir_file)
+            _fake_obj(analyzed_args.llvm_ir_file.replace('.bc', '.o'))
     else:
         compiler = 'g++'
         rc = mx.run([compiler] + args, nonZeroIsFatal=False)

@@ -31,6 +31,7 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 @MessageResolution(receiverType = CaptureNamesResult.class)
@@ -52,14 +53,18 @@ public class CaptureNamesResultMR {
 
     @Resolve(message = "EXECUTE")
     public abstract static class CaptureNamesCallbackExecute extends Node {
+
+        @Child private Node isNullNode = Message.IS_NULL.createNode();
+        @Child private Node unboxNode = Message.UNBOX.createNode();
+
         protected Object access(@SuppressWarnings("unused") VirtualFrame frame, CaptureNamesResult receiver, Object[] arguments) {
             try {
                 Object arg1 = arguments[1];
                 if (arg1 instanceof TruffleObject) {
-                    if (ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), (TruffleObject) arg1)) {
+                    if (ForeignAccess.sendIsNull(isNullNode, (TruffleObject) arg1)) {
                         arg1 = null;
                     } else {
-                        arg1 = ForeignAccess.sendUnbox(Message.UNBOX.createNode(), (TruffleObject) arg1);
+                        arg1 = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) arg1);
                     }
                 }
                 receiver.addName((int) arguments[0], (String) arg1);

@@ -466,7 +466,7 @@ public class ArgumentMatcher {
      * method updates any wrapped ReadVariableNode to just return missing values without raising an
      * error.
      *
-     * @see com.oracle.truffle.r.nodes.function.PromiseNode.InlineVarArgsNode
+     * see {@code com.oracle.truffle.r.nodes.function.PromiseNode.InlineVarArgsNode}
      */
     @SuppressWarnings("javadoc")
     private static RNode updateInlinedArg(RNode node) {
