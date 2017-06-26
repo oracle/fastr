@@ -32,7 +32,6 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
@@ -54,6 +53,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R.InteropTypeCheck;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
@@ -97,7 +98,26 @@ public abstract class ExtractVectorNode extends RBaseNode {
 
     protected abstract Object execute(VirtualFrame frame, Object vector, Object[] positions, Object exact, Object dropDimensions);
 
-    protected static boolean isForeignObject(TruffleObject object) {
+    @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})
+    protected Object doExtractSameDimensions(VirtualFrame frame, RAbstractVector vector, Object[] positions, Object exact, Object dropDimensions,  //
+                    @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
+        return cached.apply(frame, vector, positions, exact, dropDimensions);
+    }
+
+    @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})
+    protected Object doExtractRecursive(VirtualFrame frame, RAbstractListVector vector, Object[] positions, Object exact, Object dropDimensions,  //
+                    @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
+        return cached.apply(frame, vector, positions, exact, dropDimensions);
+    }
+
+    protected RecursiveExtractSubscriptNode createRecursiveCache(Object vector, Object[] positions) {
+        if (isRecursiveSubscript(vector, positions)) {
+            return RecursiveExtractSubscriptNode.create((RAbstractListVector) vector, positions[0]);
+        }
+        return null;
+    }
+
+    protected static boolean isForeignObject(Object object) {
         return RRuntime.isForeignObject(object);
     }
 
@@ -109,7 +129,90 @@ public abstract class ExtractVectorNode extends RBaseNode {
         return Foreign2RNodeGen.create();
     }
 
-    @Specialization(guards = {"isForeignObject(object)", "positions.length == cachedLength"})
+    protected boolean positionsByVector(Object[] positions) {
+        return positions.length == 1 && positions[0] instanceof RAbstractVector && ((RAbstractVector) positions[0]).getLength() > 1;
+    }
+
+    private boolean isRecursiveSubscript(Object vector, Object[] positions) {
+        return !recursive && !ignoreRecursive && mode.isSubscript() && vector instanceof RAbstractListVector && positions.length == 1;
+    }
+
+    @Specialization(limit = "CACHE_LIMIT", guards = {"!isForeignObject(vector)", "cached != null", "cached.isSupported(vector, positions, exact, dropDimensions)"})
+    protected Object doExtractDefaultCached(Object vector, Object[] positions, Object exact, Object dropDimensions,  //
+                    @Cached("createDefaultCache(getThis(), vector, positions, exact, dropDimensions)") CachedExtractVectorNode cached) {
+        assert !isRecursiveSubscript(vector, positions);
+        return cached.apply(vector, positions, null, exact, dropDimensions);
+    }
+
+    protected static CachedExtractVectorNode createDefaultCache(ExtractVectorNode node, Object vector, Object[] positions, Object exact, Object dropDimensions) {
+        return new CachedExtractVectorNode(node.getMode(), (RTypedValue) vector, positions, (RTypedValue) exact, (RTypedValue) dropDimensions, node.recursive);
+    }
+
+    @Specialization(replaces = "doExtractDefaultCached", guards = "!isForeignObject(vector)")
+    @TruffleBoundary
+    protected Object doExtractDefaultGeneric(Object vector, Object[] positions, Object exact, Object dropDimensions,  //
+                    @Cached("new(createDefaultCache(getThis(), vector, positions, exact, dropDimensions))") GenericVectorExtractNode generic) {
+        return generic.get(this, vector, positions, exact, dropDimensions).apply(vector, positions, null, exact, dropDimensions);
+    }
+
+    // TODO hack until Truffle-DSL supports this.
+    protected ExtractVectorNode getThis() {
+        return this;
+    }
+
+    protected static final class GenericVectorExtractNode extends TruffleBoundaryNode {
+
+        @Child private CachedExtractVectorNode cached;
+
+        public GenericVectorExtractNode(CachedExtractVectorNode cachedOperation) {
+            this.cached = insert(cachedOperation);
+        }
+
+        public CachedExtractVectorNode get(ExtractVectorNode node, Object vector, Object[] positions, Object exact, Object dropDimensions) {
+            CompilerAsserts.neverPartOfCompilation();
+            if (!cached.isSupported(vector, positions, exact, dropDimensions)) {
+                cached = cached.replace(createDefaultCache(node, vector, positions, exact, dropDimensions));
+            }
+            return cached;
+        }
+    }
+
+    @Specialization(guards = {"isForeignObject(object)", "positionsByVector(positions)"})
+    protected Object accessFieldByVectorPositions(TruffleObject object, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
+                    @Cached("READ.createNode()") Node foreignRead,
+                    @Cached("KEY_INFO.createNode()") Node keyInfoNode,
+                    @Cached("create()") CastStringNode castNode,
+                    @Cached("createFirstString()") FirstStringNode firstString,
+                    @Cached("IS_NULL.createNode()") Node isNullNode,
+                    @Cached("IS_BOXED.createNode()") Node isBoxedNode,
+                    @Cached("UNBOX.createNode()") Node unboxNode,
+                    @Cached("createForeign2RNode()") Foreign2R foreign2RNode) {
+
+        RAbstractVector vec = (RAbstractVector) positions[0];
+        Object[] resultElements = new Object[vec.getLength()];
+        InteropTypeCheck typeCheck = new InteropTypeCheck();
+
+        try {
+            for (int i = 0; i < vec.getLength(); i++) {
+                Object res = read(this, vec.getDataAtAsObject(i), foreignRead, keyInfoNode, object, firstString, castNode);
+                if (RRuntime.isForeignObject(res)) {
+                    if (ForeignAccess.sendIsNull(isNullNode, (TruffleObject) res)) {
+                        res = RNull.instance;
+                    }
+                    if (ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) res)) {
+                        res = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) res);
+                    }
+                }
+                typeCheck.check(res);
+                resultElements[i] = foreign2RNode.execute(res);
+            }
+            return ForeignArray2R.asAbstractVector(resultElements, typeCheck);
+        } catch (InteropException | NoSuchFieldError e) {
+            throw RError.interopError(RError.findParentRBase(this), e, object);
+        }
+    }
+
+    @Specialization(guards = {"isForeignObject(object)", "!positionsByVector(positions)", "positions.length == cachedLength"})
     protected Object accessField(TruffleObject object, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
                     @Cached("READ.createNode()") Node foreignRead,
                     @Cached("KEY_INFO.createNode()") Node keyInfoNode,
@@ -126,20 +229,16 @@ public abstract class ExtractVectorNode extends RBaseNode {
             throw error(RError.Message.GENERIC, "No positions for foreign access.");
         }
         try {
-            try {
-                // TODO implicite unboxing ok? method calls seem to behave this way
-                Object result = object;
-                for (int i = 0; i < pos.length; i++) {
-                    result = read(this, pos[i], foreignRead, keyInfoNode, (TruffleObject) result, firstString, castNode);
-                    if (pos.length > 1 && i < pos.length - 1) {
-                        assert result instanceof TruffleObject;
-                    }
+            // TODO implicite unboxing ok? method calls seem to behave this way
+            Object result = object;
+            for (int i = 0; i < pos.length; i++) {
+                result = read(this, pos[i], foreignRead, keyInfoNode, (TruffleObject) result, firstString, castNode);
+                if (pos.length > 1 && i < pos.length - 1) {
+                    assert result instanceof TruffleObject;
                 }
-                return unbox(result, isNullNode, isBoxedNode, unboxNode, foreign2RNode);
-            } catch (UnknownIdentifierException | NoSuchFieldError e) {
-                throw RError.interopError(RError.findParentRBase(this), e, object);
             }
-        } catch (InteropException e) {
+            return unbox(result, isNullNode, isBoxedNode, unboxNode, foreign2RNode);
+        } catch (InteropException | NoSuchFieldError e) {
             throw RError.interopError(RError.findParentRBase(this), e, object);
         }
     }
@@ -189,68 +288,5 @@ public abstract class ExtractVectorNode extends RBaseNode {
     @TruffleBoundary
     private static TruffleObject toJavaClass(TruffleObject obj) {
         return JavaInterop.toJavaClass(obj);
-    }
-
-    @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})
-    protected Object doExtractSameDimensions(VirtualFrame frame, RAbstractVector vector, Object[] positions, Object exact, Object dropDimensions,  //
-                    @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
-        return cached.apply(frame, vector, positions, exact, dropDimensions);
-    }
-
-    @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})
-    protected Object doExtractRecursive(VirtualFrame frame, RAbstractListVector vector, Object[] positions, Object exact, Object dropDimensions,  //
-                    @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
-        return cached.apply(frame, vector, positions, exact, dropDimensions);
-    }
-
-    protected RecursiveExtractSubscriptNode createRecursiveCache(Object vector, Object[] positions) {
-        if (isRecursiveSubscript(vector, positions)) {
-            return RecursiveExtractSubscriptNode.create((RAbstractListVector) vector, positions[0]);
-        }
-        return null;
-    }
-
-    private boolean isRecursiveSubscript(Object vector, Object[] positions) {
-        return !recursive && !ignoreRecursive && mode.isSubscript() && vector instanceof RAbstractListVector && positions.length == 1;
-    }
-
-    @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(vector, positions, exact, dropDimensions)"})
-    protected Object doExtractDefaultCached(Object vector, Object[] positions, Object exact, Object dropDimensions,  //
-                    @Cached("createDefaultCache(getThis(), vector, positions, exact, dropDimensions)") CachedExtractVectorNode cached) {
-        assert !isRecursiveSubscript(vector, positions);
-        return cached.apply(vector, positions, null, exact, dropDimensions);
-    }
-
-    protected static CachedExtractVectorNode createDefaultCache(ExtractVectorNode node, Object vector, Object[] positions, Object exact, Object dropDimensions) {
-        return new CachedExtractVectorNode(node.getMode(), (RTypedValue) vector, positions, (RTypedValue) exact, (RTypedValue) dropDimensions, node.recursive);
-    }
-
-    @Specialization(replaces = "doExtractDefaultCached")
-    @TruffleBoundary
-    protected Object doExtractDefaultGeneric(Object vector, Object[] positions, Object exact, Object dropDimensions,  //
-                    @Cached("new(createDefaultCache(getThis(), vector, positions, exact, dropDimensions))") GenericVectorExtractNode generic) {
-        return generic.get(this, vector, positions, exact, dropDimensions).apply(vector, positions, null, exact, dropDimensions);
-    }
-
-    // TODO hack until Truffle-DSL supports this.
-    protected ExtractVectorNode getThis() {
-        return this;
-    }
-
-    protected static final class GenericVectorExtractNode extends TruffleBoundaryNode {
-
-        @Child private CachedExtractVectorNode cached;
-
-        public GenericVectorExtractNode(CachedExtractVectorNode cachedOperation) {
-            this.cached = insert(cachedOperation);
-        }
-
-        public CachedExtractVectorNode get(ExtractVectorNode node, Object vector, Object[] positions, Object exact, Object dropDimensions) {
-            CompilerAsserts.neverPartOfCompilation();
-            if (!cached.isSupported(vector, positions, exact, dropDimensions)) {
-                cached = cached.replace(createDefaultCache(node, vector, positions, exact, dropDimensions));
-            }
-            return cached;
-        }
     }
 }

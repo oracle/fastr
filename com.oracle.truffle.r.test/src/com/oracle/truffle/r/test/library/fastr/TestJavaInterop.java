@@ -197,6 +197,12 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
+    public void testArrayAsParameter() {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "ja <- as.java.array(c(1L, 2L, 3L), 'int'); to$isIntArray(ja)", "'" + (new int[1]).getClass().getName() + "'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "ja <- as.java.array(c(1L, 2L, 3L), 'java.lang.Integer'); to$isIntegerArray(ja)", "'" + (new Integer[1]).getClass().getName() + "'");
+    }
+
+    @Test
     public void testNewArray() {
         testNewArray("java.lang.Boolean", true);
         testNewArray("java.lang.Byte", true);
@@ -266,6 +272,31 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- as.vector(to$hasNullIntArray); v[1]", "list(1)");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- as.vector(to$hasNullIntArray); v[2]", "list(NULL)");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- as.vector(to$hasNullIntArray); v[3]", "list(3)");
+    }
+
+    @Test
+    public void testFromArray() {
+        testAsVectorFromArray("fieldStaticBooleanArray", "logical");
+        testAsVectorFromArray("fieldStaticByteArray", "integer");
+        testAsVectorFromArray("fieldStaticCharArray", "character");
+        testAsVectorFromArray("fieldStaticDoubleArray", "double");
+        testAsVectorFromArray("fieldStaticFloatArray", "double");
+        testAsVectorFromArray("fieldStaticIntegerArray", "integer");
+        testAsVectorFromArray("fieldStaticLongArray", "double");
+        testAsVectorFromArray("fieldStaticShortArray", "integer");
+        testAsVectorFromArray("fieldStaticStringArray", "character");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$objectArray); is.list(v)", "TRUE");
+        testAsVectorFromArray("objectIntArray", "integer");
+        testAsVectorFromArray("objectDoubleArray", "double");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$mixedTypesArray); is.list(v)", "TRUE");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$hasNullIntArray); is.list(v)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$hasNullIntArray); v[1]", "list(1)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$hasNullIntArray); v[2]", "list(NULL)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$hasNullIntArray); v[3]", "list(3)");
+
+        assertEvalFastR("ja <- new.java.array('java.lang.String', 0L); .fastr.interop.fromArray(ja)", "list()");
     }
 
     public void testAsVectorFromArray(String field, String type) {
@@ -441,6 +472,17 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$int2DimArray[[1,2]] <- 12345L; to$int2DimArray[[1,2]]", "12345");
     }
 
+    @Test
+    public void testReadByVector() {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(1, 3)]", "c('a', 'c')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$map[c('one', 'three')]", "c('1', '3')");
+
+        TestClass tc = new TestClass();
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[c('fieldStringObject', 'fieldChar')]", "c('" + tc.fieldStringObject + "', '" + tc.fieldChar + "')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[c('fieldStringObject', 'fieldInteger')]", "list('" + tc.fieldStringObject + "', " + tc.fieldInteger + ")");
+    }
+
+    @Test
     public void testMap() {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " m <- to$map; m['one']", "'1'");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " m <- to$map; m['two']", "'2'");
@@ -587,6 +629,11 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$arrayObject); l[[4]]$data", "NULL");
 
         assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + " l<-as.list(to);", "cat('Error in as.list(to) : ', '\n', ' no method for coercing this external object to a list', '\n')");
+    }
+
+    @Test
+    public void testConvertEmptyList() throws IllegalArgumentException, IllegalAccessException {
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + "as.character(to$listEmpty);", "as.character(list())");
     }
 
     @Test
@@ -1168,6 +1215,7 @@ public class TestJavaInterop extends TestBase {
         public List<String> listString = new ArrayList<>(Arrays.asList("a", "b", "c"));
         public List<String> listStringInt = new ArrayList<>(Arrays.asList("1", "2", "3"));
         public List<String> listStringBoolean = new ArrayList<>(Arrays.asList("TRUE", "TRUE", "FALSE"));
+        public List<String> listEmpty = new ArrayList<>();
 
         public static class Element {
             public final String data;
@@ -1255,6 +1303,7 @@ public class TestJavaInterop extends TestBase {
             map = new HashMap<>();
             map.put("one", "1");
             map.put("two", "2");
+            map.put("three", "3");
         }
 
         public static boolean methodStaticBoolean() {
@@ -1443,6 +1492,82 @@ public class TestJavaInterop extends TestBase {
 
         public boolean equals(TestClass tc) {
             return tc == this;
+        }
+
+        public String isOverloaded(boolean b) {
+            return "boolean";
+        }
+
+        public String isOverloaded(Boolean b) {
+            return Boolean.class.getName();
+        }
+
+        public String isOverloaded(byte b) {
+            return "byte";
+        }
+
+        public String isOverloaded(Byte b) {
+            return Byte.class.getName();
+        }
+
+        public String isOverloaded(char c) {
+            return "char";
+        }
+
+        public String isOverloaded(Character c) {
+            return Character.class.getName();
+        }
+
+        public String isOverloaded(double l) {
+            return "double";
+        }
+
+        public String isOverloaded(Double l) {
+            return Double.class.getName();
+        }
+
+        public String isOverloaded(Float f) {
+            return Float.class.getName();
+        }
+
+        public String isOverloaded(float f) {
+            return "float";
+        }
+
+        public String isOverloaded(int c) {
+            return "int";
+        }
+
+        public String isOverloaded(Integer c) {
+            return Integer.class.getName();
+        }
+
+        public String isOverloaded(long l) {
+            return "long";
+        }
+
+        public String isOverloaded(Long l) {
+            return Long.class.getName();
+        }
+
+        public String isOverloaded(short c) {
+            return "short";
+        }
+
+        public String isOverloaded(Short c) {
+            return Short.class.getName();
+        }
+
+        public String isOverloaded(String s) {
+            return String.class.getName();
+        }
+
+        public String isIntArray(int[] a) {
+            return a.getClass().getName();
+        }
+
+        public String isIntegerArray(Integer[] a) {
+            return a.getClass().getName();
         }
     }
 
