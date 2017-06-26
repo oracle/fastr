@@ -97,6 +97,34 @@ public class REnvironmentMR {
         }
     }
 
+    @Resolve(message = "KEYS")
+    public abstract static class REnvironmentKeysNode extends Node {
+
+        protected Object access(REnvironment receiver) {
+            return receiver.ls(true, null, true);
+        }
+    }
+
+    @Resolve(message = "KEY_INFO")
+    public abstract static class REnvironmentKeyInfoNode extends Node {
+
+        private static final int READABLE = 1 << 1;
+        private static final int WRITABLE = 1 << 2;
+
+        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, REnvironment receiver, String identifier) {
+            Object val = receiver.get(identifier);
+            if (val == null) {
+                return 0;
+            }
+
+            int info = READABLE;
+            if (!receiver.isLocked() && !receiver.bindingIsLocked(identifier)) {
+                info += WRITABLE;
+            }
+            return info;
+        }
+    }
+
     @CanResolve
     public abstract static class REnvironmentCheck extends Node {
 
