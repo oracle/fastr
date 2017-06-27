@@ -23,14 +23,14 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.source.Source;
@@ -104,12 +104,10 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     static class LLVM_Handle {
         private final String libName;
         private final LLVM_IR[] irs;
-        private final boolean isZip;
 
-        LLVM_Handle(String libName, LLVM_IR[] irs, boolean isZip) {
+        LLVM_Handle(String libName, LLVM_IR[] irs) {
             this.libName = libName;
             this.irs = irs;
-            this.isZip = isZip;
         }
     }
 
@@ -118,38 +116,26 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         boolean match(String name);
     }
 
-    public static boolean useZip(String path) {
-        String ziplibsProp = System.getenv("FASTR_ZIP_LIBS");
-        if (ziplibsProp == null) {
-            return false;
-        }
-        Path p = Paths.get(path);
-        String fileName = p.getFileName().toString();
-        fileName = fileName.substring(0, fileName.lastIndexOf('.'));
-        String[] ziplibs = ziplibsProp.split(",");
-        for (String ziplib : ziplibs) {
-            if (ziplib.equals(fileName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public static LLVM_IR[] getZipLLVMIR(String path) {
-        try (ZipFile z = new ZipFile(path)) {
-            int numEntries = z.size();
-            LLVM_IR[] result = new LLVM_IR[numEntries];
-            Enumeration<? extends ZipEntry> entries = z.entries();
-            int index = 0;
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = entries.nextElement();
-                try (BufferedInputStream bis = new BufferedInputStream(z.getInputStream(entry))) {
-                    byte[] bc = new byte[(int) entry.getSize()];
-                    bis.read(bc);
+        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(path)))) {
+            ArrayList<LLVM_IR> irList = new ArrayList<>();
+            while (true) {
+                ZipEntry entry = zis.getNextEntry();
+                if (entry == null) {
+                    break;
+                }
+                int size = (int) entry.getSize();
+                byte[] bc = new byte[size];
+                int n;
+                int totalRead = 0;
+                while (totalRead < size && (n = zis.read(bc, totalRead, size - totalRead)) != -1) {
+                    totalRead += n;
                     LLVM_IR ir = new LLVM_IR.Binary(entry.getName(), bc);
-                    result[index++] = ir;
+                    irList.add(ir);
                 }
             }
+            LLVM_IR[] result = new LLVM_IR[irList.size()];
+            irList.toArray(result);
             return result;
         } catch (IOException ex) {
             // not a zip file
@@ -169,7 +155,6 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         @Override
         public Object execute(String path, boolean local, boolean now) {
             try {
-                boolean isZip = false;
                 LLVM_IR[] irs = getZipLLVMIR(path);
                 if (irs == null) {
                     return tryOpenNative(path, local, now);
@@ -182,7 +167,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                 for (LLVM_IR ir : irs) {
                     parseLLVM(libName, ir);
                 }
-                return new LLVM_Handle(libName, irs, isZip);
+                return new LLVM_Handle(libName, irs);
             } catch (
 
             Exception ex) {

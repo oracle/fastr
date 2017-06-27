@@ -44,7 +44,7 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
     TruffleLLVM_PCRE() {
         // Need to ensure that the native pcre library is loaded
         String pcrePath = LibPaths.getBuiltinLibPath("pcre");
-        TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(pcrePath);
+        TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(pcrePath, false, true);
     }
 
     private static class TruffleLLVM_MaketablesNode extends MaketablesNode {
