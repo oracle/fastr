@@ -204,6 +204,16 @@ public class RPromise implements RTypedValue {
     }
 
     /**
+     * Discards any previously evaluated value if this is not an eager promise.
+     */
+    public final void resetValue() {
+        // Only non-eager promises can be reset.
+        if (!PromiseState.isEager(state)) {
+            value = null;
+        }
+    }
+
+    /**
      * Used in case the {@link RPromise} is evaluated outside.
      *
      * @param newValue
