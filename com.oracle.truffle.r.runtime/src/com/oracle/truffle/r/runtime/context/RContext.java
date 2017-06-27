@@ -25,7 +25,11 @@ package com.oracle.truffle.r.runtime.context;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
+import java.io.File;
 import java.lang.ref.WeakReference;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -247,6 +251,9 @@ public final class RContext implements RTruffleObject {
     private EnumSet<State> state = EnumSet.noneOf(State.class);
 
     private PrimitiveMethodsInfo primitiveMethodsInfo;
+
+    /** Class loader for Java interop. */
+    private ClassLoader interopClassLoader = getClass().getClassLoader();
 
     /**
      * Set to {@code true} when in embedded mode to allow other parts of the system to determine
@@ -809,4 +816,16 @@ public final class RContext implements RTruffleObject {
         }
     };
 
+    public ClassLoader getInteropClassLoader() {
+        return interopClassLoader;
+    }
+
+    /**
+     * Adds an entry to the Java interop class loader. This will effectively create a new class
+     * loader with the previous one as parent.
+     */
+    public void addInteropClasspathEntry(String entry) throws MalformedURLException {
+        URL url = new File(entry).toURI().toURL();
+        interopClassLoader = URLClassLoader.newInstance(new URL[]{url}, interopClassLoader);
+    }
 }

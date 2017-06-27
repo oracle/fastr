@@ -39,6 +39,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.net.MalformedURLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -440,12 +441,39 @@ public class FastRInterop {
         @TruffleBoundary
         public TruffleObject javaClass(String clazz, boolean silent) {
             try {
-                return JavaInterop.asTruffleObject(Class.forName(clazz.replaceAll("/", ".")));
+                ClassLoader interopClassLoader = RContext.getInstance().getInteropClassLoader();
+                return JavaInterop.asTruffleObject(interopClassLoader.loadClass(clazz.replaceAll("/", ".")));
             } catch (ClassNotFoundException | SecurityException | IllegalArgumentException e) {
                 if (silent) {
                     return RNull.instance;
                 }
                 throw error(RError.Message.GENERIC, "error while accessing Java class: " + e.getMessage());
+            }
+        }
+    }
+
+    @RBuiltin(name = ".fastr.java.addClasspathEntry", visibility = OFF, kind = PRIMITIVE, parameterNames = {"entry", "silent"}, behavior = COMPLEX)
+    public abstract static class JavaAddClasspathEntry extends RBuiltinNode.Arg2 {
+
+        static {
+            Casts casts = new Casts(JavaAddClasspathEntry.class);
+            casts.arg("entry").mustBe(stringValue()).asStringVector().mustBe(Predef.singleElement()).findFirst();
+            casts.arg("silent").mapMissing(Predef.constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
+                            notLogicalNA()).map(Predef.toBoolean());
+        }
+
+        @Specialization
+        @TruffleBoundary
+        public TruffleObject javaClass(String entry, boolean silent) {
+            try {
+                RContext ctx = RContext.getInstance();
+                ctx.addInteropClasspathEntry(entry);
+                return RNull.instance;
+            } catch (MalformedURLException e) {
+                if (silent) {
+                    return RNull.instance;
+                }
+                throw error(RError.Message.GENERIC, "error while adding classpath entry: " + e.getMessage());
             }
         }
     }
