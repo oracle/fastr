@@ -512,7 +512,7 @@ public class FastRInterop {
         static {
             Casts casts = new Casts(NewJavaArray.class);
             casts.arg("class").mustBe(stringValue()).asStringVector().mustBe(Predef.singleElement()).findFirst();
-            casts.arg("dim").mustBe(integerValue(), RError.Message.INVALID_ARGUMENT_OF_TYPE, "dim", typeName()).asIntegerVector();
+            casts.arg("dim").mustBe(integerValue().or(doubleValue()), RError.Message.INVALID_ARGUMENT_OF_TYPE, "dim", typeName()).asIntegerVector();
         }
 
         @Specialization

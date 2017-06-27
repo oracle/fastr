@@ -178,37 +178,42 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testNewArray() {
-        testNewArray("java.lang.Boolean");
-        testNewArray("java.lang.Byte");
-        testNewArray("java.lang.Character");
-        testNewArray("java.lang.Double");
-        testNewArray("java.lang.Float");
-        testNewArray("java.lang.Integer");
-        testNewArray("java.lang.Long");
-        testNewArray("java.lang.Short");
-        testNewArray("java.lang.String");
+        testNewArray("java.lang.Boolean", true);
+        testNewArray("java.lang.Byte", true);
+        testNewArray("java.lang.Character", true);
+        testNewArray("java.lang.Double", true);
+        testNewArray("java.lang.Float", true);
+        testNewArray("java.lang.Integer", true);
+        testNewArray("java.lang.Long", true);
+        testNewArray("java.lang.Short", true);
+        testNewArray("java.lang.String", true);
 
-        testNewArray("boolean");
-        testNewArray("byte");
-        testNewArray("char");
-        testNewArray("double");
-        testNewArray("float");
-        testNewArray("int");
-        testNewArray("long");
-        testNewArray("short");
+        testNewArray("boolean", true);
+        testNewArray("byte", true);
+        testNewArray("char", true);
+        testNewArray("double", true);
+        testNewArray("float", true);
+        testNewArray("int", true);
+        testNewArray("long", true);
+        testNewArray("short", true);
 
-        testNewArray("com.oracle.truffle.r.test.library.fastr.TestJavaInterop$TestClass");
+        testNewArray("com.oracle.truffle.r.test.library.fastr.TestJavaInterop$TestClass", true);
+
+        // test also with double length/dimensions
+        testNewArray("java.lang.String", false);
     }
 
-    public void testNewArray(String className) {
-        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', 10L); .fastr.interop.isArray(a);", "TRUE");
-        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', 10L); length(a);", "10L");
-        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', 10L); .fastr.java.className(a);", toArrayClassName(className, 1));
+    public void testNewArray(String className, boolean dimInt) {
+        String dim = dimInt ? "10L" : "10.9";
+        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', " + dim + "); .fastr.interop.isArray(a);", "TRUE");
+        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', " + dim + "); length(a);", "10");
+        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', " + dim + "); .fastr.java.className(a);", toArrayClassName(className, 1));
 
-        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', c(2L, 3L)); .fastr.interop.isArray(a);", "TRUE");
-        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', c(2L, 3L)); length(a);", "2L");
-        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', c(2L, 3L)); length(a[1]);", "3L");
-        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', c(2L, 3L)); .fastr.java.className(a);", toArrayClassName(className, 2));
+        dim = dimInt ? "c(2L, 3L)" : "c(2.9, 3.9)";
+        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', " + dim + "); .fastr.interop.isArray(a);", "TRUE");
+        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', " + dim + "); length(a);", "2L");
+        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', " + dim + "); length(a[1]);", "3L");
+        assertEvalFastR("a <- .fastr.java.newArray('" + className + "', " + dim + "); .fastr.java.className(a);", toArrayClassName(className, 2));
     }
 
     @Test
