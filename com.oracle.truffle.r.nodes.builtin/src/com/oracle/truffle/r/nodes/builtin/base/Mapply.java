@@ -136,8 +136,8 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
         protected Object[] cachedMApply(VirtualFrame frame, RAbstractListVector dots, RFunction function, RAbstractListVector moreArgs,
                         @Cached("dots.getLength()") int dotsLength,
                         @Cached("moreArgs.getLength()") int moreArgsLength,
-                        @SuppressWarnings("unused") @Cached("extractNames(dots)") String[] cachedDotsNames,
-                        @SuppressWarnings("unused") @Cached("extractNames(moreArgs)") String[] cachedMoreArgsNames,
+                        @SuppressWarnings("unused") @Cached(value = "extractNames(dots)", dimensions = 1) String[] cachedDotsNames,
+                        @SuppressWarnings("unused") @Cached(value = "extractNames(moreArgs)", dimensions = 1) String[] cachedMoreArgsNames,
                         @Cached("createElementNodeArray(dotsLength, moreArgsLength, cachedDotsNames, cachedMoreArgsNames)") ElementNode[] cachedElementNodeArray,
                         @Cached("createCallNode(cachedElementNodeArray)") RCallNode callNode) {
             int[] lengths = new int[dotsLength];
