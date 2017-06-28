@@ -32,8 +32,8 @@ public interface PkgInitUpCalls {
         setDotSymbolValues("(object, string, pointer, sint32): object"),
         useDynamicSymbols("(object, sint32): sint32"),
         forceSymbols("(object, sint32): sint32"),
-        registerCCallable("(string, string, object): sint32"),
-        getCCallable("(string, string, object): void");
+        registerCCallable("(string, string, uint64): sint32"),
+        getCCallable("(string, string): uint64");
 
         public final String signature;
 

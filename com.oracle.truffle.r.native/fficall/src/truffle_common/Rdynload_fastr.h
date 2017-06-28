@@ -65,7 +65,7 @@ R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
 	}
 	if (fortranRoutines) {
 		for(num = 0; fortranRoutines[num].name != NULL; num++) {;}
-		//printf("R_registerRoutines %p,%p,%d,%d,%p\n", call_registerRoutines, info, FORTRAN_NATIVE_TYPE, num, fortranRoutines);
+		//printf("R_registerRoutines %p,%p,%d,%d,%p\n", info, FORTRAN_NATIVE_TYPE, num, fortranRoutines);
 		((call_registerRoutines) dynload_callbacks[registerRoutines_x])(info, FORTRAN_NATIVE_TYPE, num, (long) fortranRoutines);
 	}
 	if (externalRoutines) {
@@ -77,10 +77,12 @@ R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
 }
 
 Rboolean R_useDynamicSymbols(DllInfo *dllInfo, Rboolean value) {
+	//printf("R_useDynamicSymbols %p %d %p\n", dllInfo, value);
 	return ((call_useDynamicSymbols) dynload_callbacks[useDynamicSymbols_x])(dllInfo, value);
 }
 
 Rboolean R_forceSymbols(DllInfo *dllInfo, Rboolean value) {
+	//printf("R_forceSymbols %p %d\n", dllInfo, value);
 	return ((call_forceSymbols) dynload_callbacks[forceSymbols_x])(dllInfo, value);
 }
 
@@ -125,10 +127,12 @@ void *Rdynload_setSymbol(DllInfo *info, int nstOrd, long routinesAddr, int index
 }
 
 void R_RegisterCCallable(const char *package, const char *name, DL_FUNC fptr) {
-	((call_registerCCallable) dynload_callbacks[registerCCallable_x])(ensure_string(package), ensure_string(name), (void *)fptr);
+	//printf("R_RegisterCCallable %s %s %p\n", package, name, fptr);
+	((call_registerCCallable) dynload_callbacks[registerCCallable_x])(ensure_string(package), ensure_string(name), ensure_fun((void *)fptr));
 }
 
 DL_FUNC R_GetCCallable(const char *package, const char *name) {
+	//printf("R_GetCCallable %s %s %p\n", package, name);
 	return ((call_getCCallable) dynload_callbacks[getCCallable_x])(ensure_string(package), ensure_string(name));
 }
 
