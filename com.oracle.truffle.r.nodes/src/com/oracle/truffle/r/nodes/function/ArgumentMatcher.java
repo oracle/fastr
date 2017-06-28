@@ -61,6 +61,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -352,6 +353,17 @@ public class ArgumentMatcher {
         RBuiltinDescriptor builtin = target.getBuiltin();
         FastPathFactory fastPath = target.getFastPath();
 
+        boolean hasAssignment = false;
+        for (int i = 0; !hasAssignment && i < suppliedArgs.length; i++) {
+            if (suppliedArgs[i] != null) {
+                hasAssignment = EvaluatedArgumentsVisitor.hasAssignmentCall(suppliedArgs[i].asRSyntaxNode());
+            }
+        }
+
+        if (hasAssignment) {
+            fastPath = null;
+        }
+
         // int logicalIndex = 0; As our builtin's 'evalsArgs' is meant for FastR arguments (which
         // take "..." as one), we don't need a logicalIndex
         for (int formalIndex = 0; formalIndex < match.resultPermutation.length; formalIndex++) {
@@ -410,12 +422,12 @@ public class ArgumentMatcher {
             } else if (suppliedIndex == MatchPermutation.UNMATCHED || suppliedArgs[suppliedIndex] == null) {
                 Object defaultValue = getS3DefaultArgumentValue(s3DefaultArguments, formals, formalIndex);
                 if (defaultValue == null) {
-                    resArgs[formalIndex] = wrapUnmatched(formals, builtin, formalIndex, noOpt);
+                    resArgs[formalIndex] = wrapUnmatched(formals, builtin, formalIndex, noOpt && hasAssignment);
                 } else {
                     resArgs[formalIndex] = ConstantNode.create(defaultValue);
                 }
             } else {
-                resArgs[formalIndex] = wrapMatched(formals, builtin, closureCache, suppliedArgs[suppliedIndex], formalIndex, noOpt, fastPath);
+                resArgs[formalIndex] = wrapMatched(formals, builtin, closureCache, suppliedArgs[suppliedIndex], formalIndex, noOpt || hasAssignment, fastPath);
             }
         }
         return Arguments.create(resArgs, match.resultSignature);

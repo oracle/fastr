@@ -213,8 +213,15 @@ public class TestFunctions extends TestBase {
         assertEval("{ f <- function(a) { g <- function(b) { x <<- 2; b } ; g(a) } ; x <- 1 ; f(x) }");
         assertEval("{ f <- function(a) { g <- function(b) { a <<- 3; b } ; g(a) } ; x <- 1 ; f(x) }");
         assertEval("{ f <- function(x) { function() {x} } ; a <- 1 ; b <- f(a) ; a <- 10 ; b() }");
-
         assertEval("{ f <- function(x = y, y = x) { y } ; f() }");
+        assertEval("foo <- function(a,b) { x<<-4; b; }; x <- 0; foo(2, x > 2);");
+        // FIXME eager promises bug
+        // Note: following test fails on the first invocation only, consequent invocations produce
+        // correct result. The problem is that OptForcedEagerPromiseNode is not creating assumptions
+        // that variables involved in the eagerly evaluated expression are no being updated in the
+        // meantime as side effect of evaluation of some other argument.
+        assertEval(Ignored.ImplementationError, "foo <- function(x,z) x + z; x <- 4; bar <- function() { x <<- 10; 1; }; foo(bar(), x);");
+        assertEval(Ignored.ImplementationError, "foo <- function(x,z) list(x,z); x <- 4; bar <- function() { x <<- 10; 1; }; foo(bar(), x > 5);");
     }
 
     @Test
@@ -222,6 +229,11 @@ public class TestFunctions extends TestBase {
         assertEval("g <- function(e) get(\"ex\", e);f <- function(e, en) {  exports <- g(e);  unlist(lapply(en, get, envir = exports, inherits = FALSE))}; " +
                         "e1 <- new.env(); e1n <- new.env(); assign(\"a\", \"isa\", e1n); assign(\"ex\", e1n, e1); " +
                         "e2 <- new.env(); e2n <- new.env(); assign(\"b\", \"isb\", e2n); assign(\"ex\", e2n, e2); ex1 <- c(\"a\"); ex2 <- c(\"b\"); f(e1, ex1); f(e2, ex2) == \"isb\"");
+        assertEval("rule <- 1; stopifnot((lenR <- length(rule)) >= 1L, lenR <= 2L)");
+        assertEval("{ x <- 3; stopifnot((x <- 5) < 10, x == 5); }");
+        // assignment in aguments + function that has a fast path
+        assertEval("{ seq((abc <- 1), length.out = abc + 1) }");
+        assertEval("{ seq((abc <- 1), abc + 10) }");
     }
 
     @Test
