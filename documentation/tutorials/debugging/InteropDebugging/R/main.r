@@ -29,7 +29,7 @@ obj <- .fastr.interop.new(clazz, .fastr.interop.toLong(as.integer(Sys.time())*10
 print(obj$toString())
 
 # add classpath entry to be able to use our class
-.fastr.java.addClasspathEntry("build/classes")
+java.addClasspathEntry("build/classes")
 clazz <- .fastr.java.class("com.oracle.truffle.r.JavaMessage")
 obj <- .fastr.interop.new(clazz, "Hi there")
 print(obj$getMessage())

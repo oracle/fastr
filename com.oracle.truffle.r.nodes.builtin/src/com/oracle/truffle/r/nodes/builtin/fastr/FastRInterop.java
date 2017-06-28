@@ -452,7 +452,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.java.addClasspathEntry", visibility = OFF, kind = PRIMITIVE, parameterNames = {"entry", "silent"}, behavior = COMPLEX)
+    @RBuiltin(name = "java.addClasspathEntry", visibility = OFF, kind = PRIMITIVE, parameterNames = {"entry", "silent"}, behavior = COMPLEX)
     public abstract static class JavaAddClasspathEntry extends RBuiltinNode.Arg2 {
 
         static {
