@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
@@ -45,10 +46,25 @@ public class RArgsValuesAndNamesMR {
         }
     }
 
+    @Resolve(message = "GET_SIZE")
+    public abstract static class RArgsValuesAndNamesGetSizeNode extends Node {
+        protected Object access(RArgsValuesAndNames receiver) {
+            assert false : "GET_SIZE";
+            return receiver.getLength();
+        }
+    }
+
     @Resolve(message = "IS_NULL")
     public abstract static class RArgsValuesAndNamesIsNullNode extends Node {
         protected Object access(@SuppressWarnings("unused") RArgsValuesAndNames receiver) {
             return false;
+        }
+    }
+
+    @Resolve(message = "READ")
+    public abstract static class RArgsValuesAndNamesReadNode extends Node {
+        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, RArgsValuesAndNames receiver, int index) {
+            return receiver.getArgument(index);
         }
     }
 
