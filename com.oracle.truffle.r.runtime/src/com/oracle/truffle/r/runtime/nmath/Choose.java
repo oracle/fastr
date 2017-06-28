@@ -15,6 +15,7 @@ package com.oracle.truffle.r.runtime.nmath;
 import static com.oracle.truffle.r.runtime.nmath.GammaFunctions.lgammafn;
 import static com.oracle.truffle.r.runtime.nmath.GammaFunctions.lgammafnSign;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError.Message;
 
 // transcribed from nmath/choose.c
@@ -26,6 +27,7 @@ public class Choose {
         return -Math.log(n + 1.) - LBeta.lbeta(n - k + 1., k + 1.);
     }
 
+    @TruffleBoundary
     public static double choose(double n, double ka) {
         double k = ka;
         if (Double.isNaN(n) || Double.isNaN(ka)) {
@@ -76,6 +78,7 @@ public class Choose {
         return Math.exp(lfastchoose(n, k));
     }
 
+    @TruffleBoundary
     public static double lchoose(double n, double kIn) {
         double k = RMath.forceint(kIn);
         /* NaNs propagated correctly */
