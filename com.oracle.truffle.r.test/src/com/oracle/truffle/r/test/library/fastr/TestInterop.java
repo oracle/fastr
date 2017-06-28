@@ -51,29 +51,32 @@ public class TestInterop extends TestBase {
 
     @Test
     public void testInteropEval() {
-        assertEvalFastR(".fastr.interop.eval('application/x-r', '14 + 2')", "16");
-        assertEvalFastR(".fastr.interop.eval('application/x-r', '1')", "1");
-        assertEvalFastR(".fastr.interop.eval('application/x-r', '1L')", "1L");
-        assertEvalFastR(".fastr.interop.eval('application/x-r', 'TRUE')", "TRUE");
-        assertEvalFastR(".fastr.interop.eval('application/x-r', 'as.character(123)')", "as.character(123)");
+        assertEvalFastR("eval.external('application/x-r', '14 + 2')", "16");
+        assertEvalFastR("eval.external('application/x-r', '1')", "1");
+        assertEvalFastR("eval.external('application/x-r', '1L')", "1L");
+        assertEvalFastR("eval.external('application/x-r', 'TRUE')", "TRUE");
+        assertEvalFastR("eval.external('application/x-r', 'as.character(123)')", "as.character(123)");
     }
 
     @Test
     public void testInteropExport() {
-        assertEvalFastR(".fastr.interop.export('foo', 14 + 2)", "invisible()");
-        assertEvalFastR(".fastr.interop.export('foo', 'foo')", "invisible()");
-        assertEvalFastR(".fastr.interop.export('foo', 1:100)", "invisible()");
-        assertEvalFastR(".fastr.interop.export('foo', new.env())", "invisible()");
+        assertEvalFastR("export('foo', 14 + 2)", "invisible()");
+        assertEvalFastR("export('foo', 'foo')", "invisible()");
+        assertEvalFastR("export('foo', 1:100)", "invisible()");
+        assertEvalFastR("export('foo', new.env())", "invisible()");
     }
 
     @Test
     public void testInteropEvalFile() {
-        assertEvalFastR("fileConn<-file(\"" + TEST_EVAL_FILE + "\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);.fastr.interop.evalFile(\"" + TEST_EVAL_FILE +
-                        "\",\"application/x-r\")",
+        assertEvalFastR("fileConn<-file(\"" + TEST_EVAL_FILE + "\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);eval.external(mimeType=\"application/x-r\", path=\"" +
+                        TEST_EVAL_FILE + "\")",
                         "x<-c(1);cat(x)");
-        assertEvalFastR("fileConn<-file(\"" + TEST_EVAL_FILE + "\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);.fastr.interop.evalFile(\"" + TEST_EVAL_FILE + "\")",
+        assertEvalFastR("fileConn<-file(\"" + TEST_EVAL_FILE + "\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);eval.external(path=\"" + TEST_EVAL_FILE + "\")",
                         "x<-c(1);cat(x)");
-        assertEvalFastR("tryCatch(.fastr.interop.evalFile(\"/a/b.R\"),  error = function(e) e$message)", "cat('[1] \"Error reading file: /a/b.R\"\\n')");
+        assertEvalFastR("tryCatch(eval.external(path=\"/a/b.R\"),  error = function(e) e$message)", "cat('[1] \"Error reading file: /a/b.R\"\\n')");
+
+        assertEvalFastR("eval.external()", "cat('Error in eval.external() : invalid \\'source\\' or \\'path\\' argument\\n')");
+        assertEvalFastR("eval.external(,'abc',)", "cat('Error in eval.external(, \"abc\", ) : invalid mimeType argument\\n')");
     }
 
     /**
@@ -111,7 +114,7 @@ public class TestInterop extends TestBase {
 
     @Test
     public void testPrinting() {
-        assertEvalFastR("v <- .fastr.interop.import('testPOJO'); print(v)", "cat('[external object]\\n" +
+        assertEvalFastR("v <- import('testPOJO'); print(v)", "cat('[external object]\\n" +
                         "$intValue\\n" +
                         "[1] 1\\n" +
                         "\\n" +
@@ -129,10 +132,10 @@ public class TestInterop extends TestBase {
                         "\\n" +
                         "$stringValue\\n" +
                         "[1] \"foo\"\\n\\n')");
-        assertEvalFastR("v <- .fastr.interop.import('testStringArray'); print(v)", "cat('[external object]\\n[1] \"a\"   \"\"    \"foo\"\\n')");
-        assertEvalFastR("v <- .fastr.interop.import('testIntArray'); print(v)", "cat('[external object]\\n[1]   1  -5 199\\n')");
-        assertEvalFastR("v <- .fastr.interop.import('testIntArray'); v", "cat('[external object]\\n[1]   1  -5 199\\n')");
-        assertEvalFastR("v <- .fastr.interop.import('testPOJO'); names(v)", "c('intValue', 'longValue', 'charValue', 'shortValue', 'booleanValue', 'stringValue')");
+        assertEvalFastR("v <- import('testStringArray'); print(v)", "cat('[external object]\\n[1] \"a\"   \"\"    \"foo\"\\n')");
+        assertEvalFastR("v <- import('testIntArray'); print(v)", "cat('[external object]\\n[1]   1  -5 199\\n')");
+        assertEvalFastR("v <- import('testIntArray'); v", "cat('[external object]\\n[1]   1  -5 199\\n')");
+        assertEvalFastR("v <- import('testPOJO'); names(v)", "c('intValue', 'longValue', 'charValue', 'shortValue', 'booleanValue', 'stringValue')");
     }
 
     @Test
@@ -144,7 +147,7 @@ public class TestInterop extends TestBase {
         CHANNEL.write(line1.getBytes());
         long oldPos = CHANNEL.position();
         CHANNEL.position(0);
-        assertEvalFastR(String.format("v <- .fastr.interop.import('%s'); zz <- .fastr.channelConnection(v, 'r+', 'native.enc'); res <- readLines(zz); close(zz); res",
+        assertEvalFastR(String.format("v <- import('%s'); zz <- .fastr.channelConnection(v, 'r+', 'native.enc'); res <- readLines(zz); close(zz); res",
                         CHANNEL_NAME),
                         "c('Hello, World!', 'second line')");
 
@@ -158,7 +161,7 @@ public class TestInterop extends TestBase {
         }
 
         final String response = "hi there";
-        assertEvalFastR(String.format("v <- .fastr.interop.import('%s'); zz <- .fastr.channelConnection(v, 'r+', 'native.enc'); writeLines('%s', zz); close(zz); NULL ", CHANNEL_NAME, response),
+        assertEvalFastR(String.format("v <- import('%s'); zz <- .fastr.channelConnection(v, 'r+', 'native.enc'); writeLines('%s', zz); close(zz); NULL ", CHANNEL_NAME, response),
                         "NULL");
 
         if (!generatingExpected()) {

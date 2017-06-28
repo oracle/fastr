@@ -104,13 +104,39 @@ public class FastRInterop {
         isTesting = true;
     }
 
-    @RBuiltin(name = ".fastr.interop.eval", visibility = OFF, kind = PRIMITIVE, parameterNames = {"mimeType", "source"}, behavior = COMPLEX)
-    public abstract static class Eval extends RBuiltinNode.Arg2 {
+    @RBuiltin(name = "eval.external", visibility = OFF, kind = PRIMITIVE, parameterNames = {"mimeType", "source", "path"}, behavior = COMPLEX)
+    public abstract static class Eval extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(Eval.class);
-            casts.arg("mimeType").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
-            casts.arg("source").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+            casts.arg("mimeType").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+            casts.arg("source").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+            casts.arg("path").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+        }
+
+        protected DirectCallNode createCall(String mimeType, String source) {
+            return Truffle.getRuntime().createDirectCallNode(parse(mimeType, source));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"cachedMimeType != null", "cachedMimeType.equals(mimeType)", "cachedSource != null", "cachedSource.equals(source)"})
+        protected Object evalCached(String mimeType, String source, @SuppressWarnings("unused") RMissing path,
+                        @Cached("mimeType") String cachedMimeType,
+                        @Cached("source") String cachedSource,
+                        @Cached("createCall(mimeType, source)") DirectCallNode call) {
+            return call.call(EMPTY_OBJECT_ARRAY);
+        }
+
+        @Specialization(replaces = "evalCached")
+        @TruffleBoundary
+        protected Object eval(String mimeType, String source, @SuppressWarnings("unused") RMissing path) {
+            return parse(mimeType, source).call();
+        }
+
+        @Specialization()
+        @TruffleBoundary
+        protected Object eval(@SuppressWarnings("unused") RMissing mimeType, String source, @SuppressWarnings("unused") RMissing path) {
+            throw RError.error(this, RError.Message.INVALID_ARG, "mimeType");
         }
 
         protected CallTarget parse(String mimeType, String source) {
@@ -124,36 +150,25 @@ public class FastRInterop {
             }
         }
 
-        protected DirectCallNode createCall(String mimeType, String source) {
-            return Truffle.getRuntime().createDirectCallNode(parse(mimeType, source));
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"cachedMimeType != null", "cachedMimeType.equals(mimeType)", "cachedSource != null", "cachedSource.equals(source)"})
-        protected Object evalCached(String mimeType, String source,
-                        @Cached("mimeType") String cachedMimeType,
-                        @Cached("source") String cachedSource,
-                        @Cached("createCall(mimeType, source)") DirectCallNode call) {
-            return call.call(EMPTY_OBJECT_ARRAY);
-        }
-
-        @Specialization(replaces = "evalCached")
+        @Specialization
         @TruffleBoundary
-        protected Object eval(String mimeType, String source) {
-            return parse(mimeType, source).call();
-        }
-    }
-
-    @RBuiltin(name = ".fastr.interop.evalFile", visibility = OFF, kind = PRIMITIVE, parameterNames = {"path", "mimeType"}, behavior = COMPLEX)
-    public abstract static class EvalFile extends RBuiltinNode.Arg2 {
-
-        static {
-            Casts casts = new Casts(EvalFile.class);
-            casts.arg("path").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
-            casts.arg("mimeType").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+        protected Object eval(String mimeType, @SuppressWarnings("unused") String source, String path) {
+            return parseFile(path, mimeType).call();
         }
 
-        protected CallTarget parse(String path, String mimeType) {
+        @Specialization
+        @TruffleBoundary
+        protected Object eval(String mimeType, @SuppressWarnings("unused") RMissing source, String path) {
+            return parseFile(path, mimeType).call();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object eval(@SuppressWarnings("unused") RMissing mimeType, @SuppressWarnings("unused") RMissing source, String path) {
+            return parseFile(path, null).call();
+        }
+
+        protected CallTarget parseFile(String path, String mimeType) {
             CompilerAsserts.neverPartOfCompilation();
 
             File file = new File(path);
@@ -173,18 +188,12 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        protected Object eval(String path, @SuppressWarnings("unused") RMissing missing) {
-            return parse(path, null).call();
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected Object eval(String path, String mimeType) {
-            return parse(path, mimeType).call();
+        protected Object eval(@SuppressWarnings("unused") RMissing source, @SuppressWarnings("unused") RMissing mimeType, @SuppressWarnings("unused") RMissing path) {
+            throw RError.error(this, RError.Message.INVALID_ARG, "'source' or 'path'");
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.export", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name", "value"}, behavior = COMPLEX)
+    @RBuiltin(name = "export", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name", "value"}, behavior = COMPLEX)
     public abstract static class Export extends RBuiltinNode.Arg2 {
 
         static {
@@ -214,7 +223,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.import", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name"}, behavior = COMPLEX)
+    @RBuiltin(name = "import", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name"}, behavior = COMPLEX)
     public abstract static class Import extends RBuiltinNode.Arg1 {
 
         static {
@@ -233,22 +242,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.hasSize", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
-    public abstract static class HasSize extends RBuiltinNode.Arg1 {
-
-        @Child private Node node = Message.HAS_SIZE.createNode();
-
-        static {
-            Casts.noCasts(HasSize.class);
-        }
-
-        @Specialization
-        public byte hasSize(TruffleObject obj) {
-            return RRuntime.asLogical(ForeignAccess.sendHasSize(node, obj));
-        }
-    }
-
-    @RBuiltin(name = ".fastr.interop.isNull", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    @RBuiltin(name = "is.external.null", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
     public abstract static class IsNull extends RBuiltinNode.Arg1 {
 
         @Child private Node node = Message.IS_NULL.createNode();
@@ -263,7 +257,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.isExecutable", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    @RBuiltin(name = "is.external.executable", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
     public abstract static class IsExecutable extends RBuiltinNode.Arg1 {
 
         @Child private Node node = Message.IS_EXECUTABLE.createNode();
@@ -278,7 +272,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.toByte", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    @RBuiltin(name = "as.external.byte", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
     public abstract static class ToByte extends RBuiltinNode.Arg1 {
 
         static {
@@ -301,7 +295,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.toChar", visibility = ON, kind = PRIMITIVE, parameterNames = {"value", "pos"}, behavior = COMPLEX)
+    @RBuiltin(name = "as.external.char", visibility = ON, kind = PRIMITIVE, parameterNames = {"value", "pos"}, behavior = COMPLEX)
     public abstract static class ToChar extends RBuiltinNode.Arg2 {
 
         static {
@@ -344,7 +338,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.toFloat", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    @RBuiltin(name = "as.external.float", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
     public abstract static class ToFloat extends RBuiltinNode.Arg1 {
 
         static {
@@ -367,7 +361,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.toLong", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    @RBuiltin(name = "as.external.long", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
     public abstract static class ToLong extends RBuiltinNode.Arg1 {
 
         static {
@@ -390,7 +384,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.interop.toShort", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    @RBuiltin(name = "as.external.short", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
     public abstract static class ToShort extends RBuiltinNode.Arg1 {
 
         static {
@@ -432,7 +426,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.java.class", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "silent"}, behavior = COMPLEX)
+    @RBuiltin(name = "new.java.class", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "silent"}, behavior = COMPLEX)
     public abstract static class JavaClass extends RBuiltinNode.Arg2 {
 
         static {
@@ -457,7 +451,7 @@ public class FastRInterop {
     }
 
     @ImportStatic({RRuntime.class})
-    @RBuiltin(name = ".fastr.java.className", visibility = ON, kind = PRIMITIVE, parameterNames = {"class"}, behavior = COMPLEX)
+    @RBuiltin(name = "java.class", visibility = ON, kind = PRIMITIVE, parameterNames = {"class"}, behavior = COMPLEX)
     public abstract static class JavaClassName extends RBuiltinNode.Arg1 {
 
         static {
@@ -486,7 +480,7 @@ public class FastRInterop {
     }
 
     @ImportStatic({Message.class, RRuntime.class})
-    @RBuiltin(name = ".fastr.interop.isArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"obj"}, behavior = COMPLEX)
+    @RBuiltin(name = "is.external.array", visibility = ON, kind = PRIMITIVE, parameterNames = {"obj"}, behavior = COMPLEX)
     public abstract static class IsForeignArray extends RBuiltinNode.Arg1 {
 
         static {
@@ -506,7 +500,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = ".fastr.java.newArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "dim"}, behavior = COMPLEX)
+    @RBuiltin(name = "new.java.array", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "dim"}, behavior = COMPLEX)
     public abstract static class NewJavaArray extends RBuiltinNode.Arg2 {
 
         static {
@@ -541,7 +535,7 @@ public class FastRInterop {
     }
 
     @ImportStatic({Message.class, RRuntime.class})
-    @RBuiltin(name = ".fastr.java.toArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"x", "className", "flat"}, behavior = COMPLEX)
+    @RBuiltin(name = "as.java.array", visibility = ON, kind = PRIMITIVE, parameterNames = {"x", "className", "flat"}, behavior = COMPLEX)
     public abstract static class ToJavaArray extends RBuiltinNode.Arg3 {
 
         static {
@@ -740,7 +734,7 @@ public class FastRInterop {
     }
 
     @ImportStatic({Message.class, RRuntime.class})
-    @RBuiltin(name = ".fastr.interop.new", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "..."}, behavior = COMPLEX)
+    @RBuiltin(name = "new.external", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "..."}, behavior = COMPLEX)
     public abstract static class InteropNew extends RBuiltinNode.Arg2 {
 
         static {
@@ -782,7 +776,7 @@ public class FastRInterop {
     }
 
     @ImportStatic(RRuntime.class)
-    @RBuiltin(name = ".fastr.interop.isExternal", visibility = ON, kind = PRIMITIVE, parameterNames = {"obj"}, behavior = COMPLEX)
+    @RBuiltin(name = "is.external", visibility = ON, kind = PRIMITIVE, parameterNames = {"obj"}, behavior = COMPLEX)
     public abstract static class IsExternal extends RBuiltinNode.Arg1 {
 
         static {

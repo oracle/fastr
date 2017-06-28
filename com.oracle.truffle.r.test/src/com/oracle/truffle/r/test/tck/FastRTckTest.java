@@ -126,13 +126,13 @@ public class FastRTckTest extends TruffleTCK {
         "  length(o)\n" +
         "}\n" +
         "isNullOfForeign <- function(o) {\n" +
-        "  .fastr.interop.toBoolean(.fastr.interop.isNull(o))\n" +
+        "  .fastr.interop.toBoolean(is.external.null(o))\n" +
         "}\n" +
         "hasSizeOfForeign <- function(o) {\n" +
-        "  .fastr.interop.toBoolean(.fastr.interop.hasSize(o))\n" +
+        "  .fastr.interop.toBoolean(is.external.array(o))\n" +
         "}\n" +
         "isExecutableOfForeign <- function(o) {\n" +
-        "  .fastr.interop.toBoolean(.fastr.interop.isExecutable(o))\n" +
+        "  .fastr.interop.toBoolean(is.external.executable(o))\n" +
         "}\n" +
         "intValue <- function() 42L\n" +
         "intVectorValue <- function() c(42L, 40L)\n" +
@@ -148,7 +148,7 @@ public class FastRTckTest extends TruffleTCK {
         "builtinFunctionType <- function() 'builtin'\n" +
         "valueWithSource <- function() intValue\n" +
         "objectWithKeyInfoAttributes <- function() { list(rw=1, invocable=function(){ 'invoked' }) }\n" +
-        "for (name in ls()) .fastr.interop.export(name, get(name))\n",
+        "for (name in ls()) export(name, get(name))\n",
         RSource.Internal.TCK_INIT
     );
     // @formatter:on
