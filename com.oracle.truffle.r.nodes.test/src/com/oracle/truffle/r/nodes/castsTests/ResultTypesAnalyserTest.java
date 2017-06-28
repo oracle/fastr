@@ -127,8 +127,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testAsLogicalVector() {
         arg.asLogicalVector();
-        assertTypes(RNull.class, RMissing.class, byte.class, RLogicalVector.class,
-                        RArgsValuesAndNames.class);
+        assertTypes(RNull.class, RMissing.class, byte.class, RLogicalVector.class);
     }
 
     @Test

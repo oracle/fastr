@@ -324,9 +324,14 @@ public class CastUtils {
             } else {
                 Casts positiveCasts = new Casts(cs.stream().filter(c -> existsConvertibleActualType(actualInputTypes, c.inputType(), true)).collect(Collectors.toList()));
                 TypeExpr positive = positiveCasts.casts().stream().map(c -> TypeExpr.atom(c.resultType())).reduce((res, te) -> res.or(te)).orElse(TypeExpr.NOTHING);
-
-                Casts negativeCasts = new Casts(cs.stream().filter(c -> !positiveCasts.resultTypes().contains(c.resultType()) &&
-                                !existsConvertibleActualType(actualInputTypes, c.inputType(), true)).collect(Collectors.toList()));
+                Casts negativeCasts = new Casts(
+                                cs.stream().filter(c -> !existsConvertibleActualType(actualInputTypes, c.inputType(), true) &&
+                                                // Make sure that the negativeCasts set contains no
+                                                // cast whose return type is
+                                                // convertible to the return type of any cast from
+                                                // the positiveCasts set
+                                                positiveCasts.resultTypes().stream().allMatch(posResTp -> isConvertible(c.resultType(), posResTp, false) == Cast.Coverage.none)).collect(
+                                                                Collectors.toList()));
                 TypeExpr negative = negativeCasts.casts().stream().map(c -> TypeExpr.atom(c.resultType()).not()).reduce((res, te) -> res.and(te)).orElse(TypeExpr.ANYTHING);
 
                 return positive.and(negative);
