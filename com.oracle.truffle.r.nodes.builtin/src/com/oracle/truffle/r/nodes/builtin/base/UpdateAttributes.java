@@ -31,7 +31,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
@@ -50,8 +49,10 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -247,16 +248,14 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
      * All other, non-performance centric, {@link RAttributable} types, or error case for RNull
      * value.
      */
-    @Fallback
+    @Specialization(guards = "!isRAbstractContainer(o)")
     @TruffleBoundary
-    protected Object doOtherNull(Object o, Object operand) {
-        checkAttributable(o);
-        Object obj = getNonShared(o);
-        RAttributable attrObj = (RAttributable) obj;
-        attrObj.removeAllAttributes();
+    protected Object doOtherNull(RAttributable o, Object operand) {
+        RAttributable obj = getNonShared(o);
+        obj.removeAllAttributes();
 
         if (operand == RNull.instance) {
-            attrObj.setClassAttr(null);
+            obj.setClassAttr(null);
         } else {
             RList list = (RList) operand;
             RStringVector listNames = list.getNames();
@@ -273,24 +272,27 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
                     if (attrValue == null) {
                         throw error(RError.Message.SET_INVALID_CLASS_ATTR);
                     }
-                    attrObj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue));
+                    obj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue));
                 } else {
-                    attrObj.setAttr(attrName.intern(), list.getDataAt(i));
+                    obj.setAttr(attrName.intern(), list.getDataAt(i));
                 }
             }
         }
         return obj;
     }
 
-    private void checkAttributable(Object obj) {
-        if (!(obj instanceof RAttributable)) {
-            throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
-        }
+    @Specialization(guards = {"!isRAttributable(o)", "!isScalar(o)"})
+    protected Object doFallback(@SuppressWarnings("unused") Object o, @SuppressWarnings("unused") Object operand) {
+        throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
-    private static Object getNonShared(Object obj) {
+    protected static boolean isScalar(Object o) {
+        return o instanceof Integer || o instanceof Double || o instanceof Byte || o instanceof RRaw || o instanceof RComplex;
+    }
+
+    private static RAttributable getNonShared(RAttributable obj) {
         if (obj instanceof RShareable) {
-            return ((RShareable) obj).getNonShared();
+            return (RAttributable) ((RShareable) obj).getNonShared();
         }
         return obj;
     }
