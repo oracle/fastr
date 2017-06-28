@@ -1,6 +1,6 @@
 # test recursion - sending environment containing vector with same environment attribute
 
-if (length(grep("FastR", R.Version()$version.string)) == 1) {
+if (any(R.version$engine == "FastR")) {
     ch <- .fastr.channel.create(1L)
     code <- "ch <- .fastr.channel.get(1L); env<-.fastr.channel.receive(ch); .fastr.channel.send(ch, get('v', envir=env))"
     cx <- .fastr.context.spawn(code)

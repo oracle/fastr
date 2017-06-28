@@ -1,6 +1,6 @@
 # test remote updated of atomic vector with shareable attribute (must stay private)
 
-if (length(grep("FastR", R.Version()$version.string)) == 1) {
+if (any(R.version$engine == "FastR")) {
     ch <- .fastr.channel.create(1L)
     code <- "ch <- .fastr.channel.get(1L); x<-.fastr.channel.receive(ch); x[1]<-7; .fastr.channel.send(ch, x)"
     cx <- .fastr.context.spawn(code)

@@ -1,7 +1,7 @@
 # test remote list transfer for read - should use the same vector elements despite non-sharable content
 # also in the list
 
-if (length(grep("FastR", R.Version()$version.string)) == 1) {
+if (any(R.version$engine == "FastR")) {
     ch <- .fastr.channel.create(1L)
     code <- "ch <- .fastr.channel.get(1L); x<-.fastr.channel.receive(ch); y<-x[[1]][1]; z<-c(.fastr.identity(x[[1]]), .fastr.identity(x[[2]])) ; .fastr.channel.send(ch, z)"
     cx <- .fastr.context.spawn(code)

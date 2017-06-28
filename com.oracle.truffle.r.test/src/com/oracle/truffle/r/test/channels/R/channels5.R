@@ -1,6 +1,6 @@
 # test sending global environment as an attribute and assigning it remotely (should assign remotely but not locally)
 
-if (length(grep("FastR", R.Version()$version.string)) == 1) {
+if (any(R.version$engine == "FastR")) {
     ch <- .fastr.channel.create(1L)
     code <- "ch <- .fastr.channel.get(1L); msg<-.fastr.channel.receive(ch); env<-attr(msg, 'GLOBAL'); assign('y', 7, pos=env); .fastr.channel.send(ch, y)"
     cx <- .fastr.context.spawn(code)

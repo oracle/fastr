@@ -1,6 +1,6 @@
 # test remote vector transfer for read - should use the same vector
 
-if (length(grep("FastR", R.Version()$version.string)) == 1) {
+if (any(R.version$engine == "FastR")) {
     ch <- .fastr.channel.create(1L)
     code <- "ch <- .fastr.channel.get(1L); x<-.fastr.channel.receive(ch); y<-x[1]; z<-.fastr.identity(x); .fastr.channel.send(ch, z)"
     cx <- .fastr.context.spawn(code)

@@ -63,14 +63,14 @@ public class TestBuiltin_rowsum extends TestBase {
     public void testRowsumArgCoverage() {
         assertEval("x <- matrix(1:10, ncol=2); g <- c(1,2,3,2,1); ug <-unique(g); .Internal(rowsum_matrix(x, g, ug, FALSE, as.character(ug)))");
         // 2nd parm function => GnuR Error: segfault
-        assertEvalFastR("{ x <- matrix(1:10, ncol=2); g <- c(1,2,3,2,1); ug <-unique(g); .Internal(rowsum_matrix(x, print, ug, FALSE, as.character(ug))); }",
-                        "cat(\"Error in rowsum_matrix(x, print, ug, FALSE, as.character(ug)) :\\n invalid 'g' argument\"");
+        assertEvalFastR("x <- matrix(1:10, ncol=2); g <- c(1,2,3,2,1); ug <-unique(g); .Internal(rowsum_matrix(x, print, ug, FALSE, as.character(ug)));",
+                        "cat(\"Error in rowsum_matrix(x, print, ug, FALSE, as.character(ug)) :\\n invalid 'g' argument\")");
         // 3rd parm is function => GnuR Error: "Error: unimplemented type 'closure' in
         // 'HashTableSetup'"
         assertEval(Output.IgnoreErrorMessage, "x <- matrix(1:10, ncol=2); g <- c(1,2,3,2,1); ug <-unique(g); .Internal(rowsum_matrix(x, g, print, FALSE, as.character(ug)))");
         // 2nd parm NULL => GnuR Error: segfault\n" +
         assertEvalFastR("x <- matrix(1:10, ncol=2); g <- c(1,2,3,2,1); ug <-unique(g); .Internal(rowsum_matrix(x, NULL, ug, FALSE,as.character(ug)))",
-                        "cat(\"Error in rowsum_matrix(x, NULL, ug, FALSE, as.character(ug)) :\\n invalid 'g' argument\"");
+                        "cat(\"Error in rowsum_matrix(x, NULL, ug, FALSE, as.character(ug)) :\\n invalid 'g' argument\")");
         // 3rd parm NULL => GnuR Error: Error: unimplemented type 'NULL' in 'HashTableSetup'
         assertEval(Output.IgnoreErrorMessage, "x <- matrix(1:10, ncol=2); g <- c(1,2,3,2,1); ug <-unique(g); .Internal(rowsum_matrix(x, g, NULL, FALSE,as.character(ug)))");
         assertEval(Output.IgnoreErrorMessage, "x <- matrix(1:10, ncol=2); g <- c(1,2,3,2,1); ug <-unique(g); .Internal(rowsum_matrix(x, , ug, FALSE,as.character(ug)))");
