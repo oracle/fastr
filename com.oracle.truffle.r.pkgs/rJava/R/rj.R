@@ -13,8 +13,8 @@
 .jnew <- function (class, ..., check = TRUE, silent = !check) 
 {
     class <- gsub("/", ".", as.character(class))
-    co <- .fastr.java.class(class)
-    o <- .fastr.interop.new(co, ...)
+    co <- new.java.class(class)
+    o <- new.external(co, ...)
     invisible(o)
 }
 
@@ -25,7 +25,7 @@
 {
     if(is.character(obj)) {
         obj <- gsub("/", ".", as.character(obj))
-        co <- .fastr.java.class(obj)
+        co <- new.java.class(obj)
         r <- co[method](...)
     } else {
         r <- obj[method](...)
@@ -37,7 +37,7 @@
 .jfield <- function (obj, sig = NULL, name, true.class = is.null(sig), convert = TRUE) 
 {
     if(is.character(obj)) {
-        co <- .fastr.java.class(obj)
+        co <- new.java.class(obj)
         r <- co[name]
     } else {
         r <- obj[name]
@@ -48,7 +48,7 @@
 #' @export
 .jarray <- function (x, contents.class = NULL, dispatch = FALSE) 
 {
-    .fastr.java.toArray(x, ,TRUE)
+    as.java.array(x, ,TRUE)
 }
 
 #' @export
@@ -60,35 +60,35 @@
 #' @export
 .jbyte <- function (x) 
 {
-    x <- .fastr.interop.toByte(x)
+    x <- as.external.byte(x)
     invisible(x)
 }
 
 #' @export
 .jchar <- function (x) 
 {
-    x <- .fastr.interop.toChar(x)
+    x <- as.external.char(x)
     invisible(x)
 }
 
 #' @export
 .jshort <- function (x) 
 {
-    x <- .fastr.interop.toShort(x)
+    x <- as.external.short(x)
     invisible(x)
 }
 
 #' @export
 .jlong <- function (x) 
 {
-    x <- .fastr.interop.toLong(x)
+    x <- as.external.long(x)
     invisible(x)
 }
 
 #' @export
 .jfloat <- function (x) 
 {    
-    x <- .fastr.interop.toFloat(x)
+    x <- as.external.float(x)
     invisible(x)
 }
 
@@ -96,7 +96,7 @@
 J <- function (class, method, ...) 
 {    
     class <- gsub("/", ".", as.character(class))
-    javaClass <- .fastr.java.class(class)
+    javaClass <- new.java.class(class)
     if (nargs() == 1L && missing(method)) {
         javaClass
     } else {
