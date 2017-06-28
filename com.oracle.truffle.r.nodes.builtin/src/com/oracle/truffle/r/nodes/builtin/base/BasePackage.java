@@ -43,6 +43,8 @@ import com.oracle.truffle.r.nodes.builtin.base.fastpaths.IntersectFastPathNodeGe
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.IsElementFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.MatrixFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SetDiffFastPathNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SubscriptDataFrameFastPathNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SubsetDataFrameFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.VectorFastPathsFactory.DoubleFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.VectorFastPathsFactory.IntegerFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.CallAndExternalFunctions;
@@ -778,6 +780,8 @@ public class BasePackage extends RBuiltinPackage {
     @Override
     public void loadOverrides(MaterializedFrame baseFrame) {
         super.loadOverrides(baseFrame);
+        addFastPath(baseFrame, "[[.data.frame", SubscriptDataFrameFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "[.data.frame", SubsetDataFrameFastPathNodeGen::create, RVisibility.ON);
         addFastPath(baseFrame, "matrix", MatrixFastPathNodeGen::create, Matrix.class);
         addFastPath(baseFrame, "setdiff", SetDiffFastPathNodeGen::create, RVisibility.ON);
         addFastPath(baseFrame, "get", GetFastPathNodeGen::create, RVisibility.ON);
