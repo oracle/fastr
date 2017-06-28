@@ -73,13 +73,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     public abstract Object executeInt(Object o);
 
     @Specialization
-    protected RIntVector doIntVector(RIntVector operand) {
-        return operand;
-    }
-
-    @Specialization
-    protected RIntSequence doIntVector(RIntSequence operand) {
-        // sequence does not have attributes - nothing to copy or drop
+    protected RAbstractIntVector doIntVector(RAbstractIntVector operand) {
         return operand;
     }
 
