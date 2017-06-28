@@ -213,6 +213,12 @@ class FastRArchiveParticipant:
             shutil.rmtree(include_dir)
 
 def mx_post_parse_cmd_line(opts):
+    if os.environ.has_key('FASTR_RFFI'):
+        val = os.environ['FASTR_RFFI']
+    else:
+        val = ""
+    mx.instantiateDistribution('FASTR_RELEASE<rffi>', dict(rffi=val))
+
     for dist in mx_fastr._fastr_suite.dists:
         if isinstance(dist, mx.JARDistribution):
             dist.set_archiveparticipant(FastRArchiveParticipant(dist))

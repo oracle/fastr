@@ -365,30 +365,29 @@ suite = {
      ],
     },
 
-    "FASTR_RELEASE": {
+    "FASTR_RELEASE<rffi>": {
       "description" : "a binary release of FastR",
       "dependencies" : ["com.oracle.truffle.r.release"],
        "os_arch" : {
          "linux" : {
           "amd64" : {
-            "path" : "mxbuild/dists/linux/amd64/fastr-release.jar",
+            "path" : "mxbuild/dists/linux/amd64/<rffi>/fastr-release.jar",
           },
           "sparcv9" : {
-            "path" : "mxbuild/dists/linux/sparcv9/fastr-release.jar",
+            "path" : "mxbuild/dists/linux/sparcv9/<rffi>/fastr-release.jar",
           },
         },
         "darwin" : {
           "amd64" : {
-            "path" : "mxbuild/dists/darwin/amd64/fastr-release.jar",
+            "path" : "mxbuild/dists/darwin/amd64/<rffi>/fastr-release.jar",
           },
         },
         "solaris" : {
           "sparcv9" : {
-            "path" : "mxbuild/dists/solaris/sparcv9/fastr-release.jar",
+            "path" : "mxbuild/dists/solaris/sparcv9/<rffi>/fastr-release.jar",
           },
         },
       },
     },
   },
 }
-
