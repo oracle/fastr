@@ -26,7 +26,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
 import java.lang.ref.WeakReference;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.TimeZone;
@@ -247,6 +251,9 @@ public final class RContext implements RTruffleObject {
     private EnumSet<State> state = EnumSet.noneOf(State.class);
 
     private PrimitiveMethodsInfo primitiveMethodsInfo;
+
+    /** Class loader for Java interop. */
+    private ClassLoader interopClassLoader = getClass().getClassLoader();
 
     /**
      * Set to {@code true} when in embedded mode to allow other parts of the system to determine
@@ -809,4 +816,19 @@ public final class RContext implements RTruffleObject {
         }
     };
 
+    public ClassLoader getInteropClassLoader() {
+        return interopClassLoader;
+    }
+
+    /**
+     * Adds entries to the Java interop class loader. This will effectively create a new class
+     * loader with the previous one as parent.
+     */
+    public void addInteropClasspathEntries(String... entries) throws MalformedURLException {
+        URL[] urls = new URL[entries.length];
+        for (int i = 0; i < entries.length; i++) {
+            urls[i] = Paths.get(entries[i]).toUri().toURL();
+        }
+        interopClassLoader = URLClassLoader.newInstance(urls, interopClassLoader);
+    }
 }

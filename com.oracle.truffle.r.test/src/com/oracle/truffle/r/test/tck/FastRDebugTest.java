@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.api.debug.Breakpoint;
@@ -152,6 +153,39 @@ public class FastRDebugTest {
         final Number n = value.as(Number.class);
         assertNotNull(n);
         assertEquals("Factorial computed OK", 2, n.intValue());
+    }
+
+    /**
+     * Test is currently ignored because of missing functionality in Truffle.
+     */
+    @Test
+    @Ignore
+    public void testConditionalBreakpoint() throws Throwable {
+        final Source source = RSource.fromTextInternal("main <- function() {\n" +
+                        "  for(i in seq(10)) {\n" +
+                        "    print(i)\n" +
+                        "  }\n" +
+                        "}\n",
+                        RSource.Internal.DEBUGTEST_DEBUG);
+        engine.eval(source);
+
+        run.addLast(() -> {
+            assertNull(suspendedEvent);
+            assertNotNull(debuggerSession);
+            Breakpoint breakpoint = Breakpoint.newBuilder(source).lineIs(3).build();
+            breakpoint.setCondition("i == 5");
+            debuggerSession.install(breakpoint);
+        });
+
+        assertLocation(3, "print(i)", "i", "5");
+        continueExecution();
+
+        // Init before eval:
+        performWork();
+
+        final Source evalSrc = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_DEBUG);
+        engine.eval(evalSrc);
+        assertExecutedOK();
     }
 
     @Test

@@ -45,10 +45,24 @@ public class RArgsValuesAndNamesMR {
         }
     }
 
+    @Resolve(message = "GET_SIZE")
+    public abstract static class RArgsValuesAndNamesGetSizeNode extends Node {
+        protected Object access(RArgsValuesAndNames receiver) {
+            return receiver.getLength();
+        }
+    }
+
     @Resolve(message = "IS_NULL")
     public abstract static class RArgsValuesAndNamesIsNullNode extends Node {
         protected Object access(@SuppressWarnings("unused") RArgsValuesAndNames receiver) {
             return false;
+        }
+    }
+
+    @Resolve(message = "READ")
+    public abstract static class RArgsValuesAndNamesReadNode extends Node {
+        protected Object access(RArgsValuesAndNames receiver, int index) {
+            return receiver.getArgument(index);
         }
     }
 

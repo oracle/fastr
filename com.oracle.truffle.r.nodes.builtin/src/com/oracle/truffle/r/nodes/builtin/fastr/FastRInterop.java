@@ -39,6 +39,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.net.MalformedURLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -83,7 +84,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -120,7 +120,7 @@ public class FastRInterop {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"cachedMimeType != null", "cachedMimeType.equals(mimeType)", "cachedSource != null", "cachedSource.equals(source)"})
-        protected Object evalCached(String mimeType, String source, @SuppressWarnings("unused") RMissing path,
+        protected Object evalCached(String mimeType, String source, RMissing path,
                         @Cached("mimeType") String cachedMimeType,
                         @Cached("source") String cachedSource,
                         @Cached("createCall(mimeType, source)") DirectCallNode call) {
@@ -133,9 +133,10 @@ public class FastRInterop {
             return parse(mimeType, source).call();
         }
 
+        @SuppressWarnings("unused")
         @Specialization()
         @TruffleBoundary
-        protected Object eval(@SuppressWarnings("unused") RMissing mimeType, String source, @SuppressWarnings("unused") RMissing path) {
+        protected Object eval(RMissing mimeType, String source, RMissing path) {
             throw RError.error(this, RError.Message.INVALID_ARG, "mimeType");
         }
 
@@ -440,12 +441,43 @@ public class FastRInterop {
         @TruffleBoundary
         public TruffleObject javaClass(String clazz, boolean silent) {
             try {
-                return JavaInterop.asTruffleObject(Class.forName(clazz.replaceAll("/", ".")));
+                ClassLoader interopClassLoader = RContext.getInstance().getInteropClassLoader();
+                return JavaInterop.asTruffleObject(interopClassLoader.loadClass(clazz.replaceAll("/", ".")));
             } catch (ClassNotFoundException | SecurityException | IllegalArgumentException e) {
                 if (silent) {
                     return RNull.instance;
                 }
                 throw error(RError.Message.GENERIC, "error while accessing Java class: " + e.getMessage());
+            }
+        }
+    }
+
+    @RBuiltin(name = "java.addClasspathEntry", visibility = OFF, kind = PRIMITIVE, parameterNames = {"value", "silent"}, behavior = COMPLEX)
+    public abstract static class JavaAddClasspathEntry extends RBuiltinNode.Arg2 {
+
+        static {
+            Casts casts = new Casts(JavaAddClasspathEntry.class);
+            casts.arg("value").mustBe(stringValue()).asStringVector();
+            casts.arg("silent").mapMissing(Predef.constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
+                            notLogicalNA()).map(Predef.toBoolean());
+        }
+
+        @Specialization
+        @TruffleBoundary
+        public TruffleObject addEntries(RAbstractStringVector value, boolean silent) {
+            try {
+                RContext ctx = RContext.getInstance();
+                String[] entriesArr = new String[value.getLength()];
+                for (int i = 0; i < value.getLength(); i++) {
+                    entriesArr[i] = value.getDataAt(i);
+                }
+                ctx.addInteropClasspathEntries(entriesArr);
+                return value;
+            } catch (MalformedURLException e) {
+                if (silent) {
+                    return RNull.instance;
+                }
+                throw error(RError.Message.GENERIC, "error while adding classpath entry: " + e.getMessage());
             }
         }
     }

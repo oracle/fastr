@@ -24,15 +24,12 @@ package com.oracle.truffle.r.runtime.interop;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropByte;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropChar;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropFloat;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropLong;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropShort;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -91,7 +88,7 @@ public abstract class R2Foreign extends RBaseNode {
     }
 
     @Specialization(guards = "vec.getLength() == 1")
-    public String doStrignVector(RAbstractStringVector vec) {
+    public String doStringVector(RAbstractStringVector vec) {
         return vec.getDataAt(0);
     }
 
@@ -118,12 +115,6 @@ public abstract class R2Foreign extends RBaseNode {
     @Specialization
     public short doInteroptShort(RInteropShort obj) {
         return obj.getValue();
-    }
-
-    @Specialization
-    public TruffleObject doNull(@SuppressWarnings("unused") RNull obj) {
-        // TODO this is java interop specific
-        return JavaInterop.asTruffleObject(null);
     }
 
     @Fallback

@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.test.library.fastr;
 
-import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -38,6 +37,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.test.TestBase;
@@ -265,7 +265,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("tc <- new.java.class('" + Long.class.getName() + "'); t <- new.external(tc, as.external.long(1)); t", "1");
         assertEvalFastR("tc <- new.java.class('" + Short.class.getName() + "'); t <- new.external(tc, as.external.short(1)); t", "1");
         assertEvalFastR("tc <- new.java.class('" + String.class.getName() + "'); t <- new.external(tc, 'abc'); t", "'abc'");
-        assertEvalFastR("tc <- new.java.class('" + TestNullClass.class.getName() + "'); t <- new.external(tc, NULL); class(t)", "'" + RType.TruffleObject.getName() + "'");
+        assertEvalFastR(Ignored.Unknown, "tc <- new.java.class('" + TestNullClass.class.getName() + "'); t <- new.external(tc, NULL); class(t)", "'" + RType.TruffleObject.getName() + "'");
     }
 
     @Test
@@ -647,7 +647,7 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    public void testIf() throws IllegalArgumentException, IllegalAccessException {
+    public void testIf() throws IllegalArgumentException {
         TestClass t = new TestClass();
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "if(to$fieldBoolean) print('OK')", "if(T) print('OK')");
@@ -671,7 +671,7 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    public void testWhile() throws IllegalArgumentException, IllegalAccessException {
+    public void testWhile() throws IllegalArgumentException {
         TestClass t = new TestClass();
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "while(to$fieldBoolean) {print('OK'); break;}", "while(T) {print('OK'); break;}");
@@ -782,10 +782,11 @@ public class TestJavaInterop extends TestBase {
         StringBuilder sb = new StringBuilder();
         sb.append(asXXX);
         sb.append("(");
+        Object val = o;
         if (asXXX.equals("as.character") && (o instanceof Double || o instanceof Float)) {
-            o = DoubleVectorPrinter.encodeReal(((Number) o).doubleValue());
+            val = DoubleVectorPrinter.encodeReal(((Number) o).doubleValue());
         }
-        sb.append(getRValue(o));
+        sb.append(getRValue(val));
         sb.append(')');
         return sb.toString();
     }
@@ -802,7 +803,7 @@ public class TestJavaInterop extends TestBase {
         return sb.toString();
     }
 
-    private String getBooleanPrefix(Object value, int i) {
+    private static String getBooleanPrefix(Object value, int i) {
         if (value.getClass().getComponentType() == Boolean.TYPE && (boolean) Array.get(value, i)) {
             return " ";
         }
@@ -813,7 +814,7 @@ public class TestJavaInterop extends TestBase {
         return "";
     }
 
-    private String toArrayClassName(String className, int dims) {
+    private static String toArrayClassName(String className, int dims) {
         StringBuilder sb = new StringBuilder();
         sb.append("'");
         for (int i = 0; i < dims; i++) {

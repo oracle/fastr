@@ -371,10 +371,10 @@ final class REngine implements Engine, Engine.Timings {
             RContext.setThreadLocalInstance(newContext);
             try {
                 Object lastValue = RNull.instance;
-                for (int i = 0; i < statements.size(); i++) {
-                    RSyntaxNode node = statements.get(i);
+                for (int i = 0; i < calls.length; i++) {
                     if (calls[i] == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
+                        RSyntaxNode node = statements.get(i);
                         calls[i] = insert(Truffle.getRuntime().createDirectCallNode(doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, printResult, true)));
                     }
                     lastValue = calls[i].call(new Object[]{executionFrame != null ? executionFrame : newContext.stateREnvironment.getGlobalFrame()});

@@ -22,24 +22,33 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
+import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 
 @MessageResolution(receiverType = RPromise.class)
 public class RPromiseMR {
+
+    private static final String PROP_VALUE = "value";
+    private static final String PROP_IS_EVALUATED = "isEvaluated";
+    private static final String PROP_IS_EAGER = "isEager";
+
     @Resolve(message = "IS_BOXED")
     public abstract static class RPromiseIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RPromise receiver) {
-            return true;
-        }
-    }
-
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class RPromiseHasSizeNode extends Node {
         protected Object access(@SuppressWarnings("unused") RPromise receiver) {
             return false;
         }
@@ -52,10 +61,86 @@ public class RPromiseMR {
         }
     }
 
-    @Resolve(message = "UNBOX")
-    public abstract static class RPromiseUnboxNode extends Node {
+    @Resolve(message = "READ")
+    public abstract static class RPromiseReadNode extends Node {
+
+        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, RPromise receiver, String field) {
+            if (PROP_IS_EAGER.equals(field)) {
+                return RRuntime.asLogical(RPromise.PromiseState.isEager(receiver.getState()));
+            }
+            if (PROP_IS_EVALUATED.equals(field)) {
+                return RRuntime.asLogical(receiver.isEvaluated());
+            }
+            if (PROP_VALUE.equals(field)) {
+                // only read value if evaluated
+                if (receiver.isEvaluated()) {
+                    return receiver.getValue();
+                }
+                return RNull.instance;
+            }
+            throw UnknownIdentifierException.raise(field);
+        }
+    }
+
+    @Resolve(message = "WRITE")
+    public abstract static class RPromiseWriteNode extends Node {
+
+        @SuppressWarnings("try")
+        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, RPromise receiver, String field, Object valueObj) {
+            if (PROP_IS_EVALUATED.equals(field)) {
+                if (!(valueObj instanceof Boolean)) {
+                    throw UnsupportedTypeException.raise(new Object[]{valueObj});
+                }
+
+                boolean newVal = (boolean) valueObj;
+
+                if (!receiver.isEvaluated() && newVal) {
+                    try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
+                        PromiseHelperNode.evaluateSlowPath(receiver);
+                    }
+                } else if (receiver.isEvaluated() && !newVal) {
+                    try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
+                        receiver.resetValue();
+                    }
+
+                }
+                return RRuntime.asLogical(receiver.isEvaluated());
+            }
+            throw UnknownIdentifierException.raise(field);
+        }
+    }
+
+    @Resolve(message = "KEYS")
+    public abstract static class RPromiseKeysNode extends Node {
+
+        protected Object access(@SuppressWarnings("unused") RPromise receiver) {
+            return RDataFactory.createStringVector(new String[]{PROP_VALUE, PROP_IS_EVALUATED, PROP_IS_EAGER}, true);
+        }
+    }
+
+    @Resolve(message = "KEY_INFO")
+    public abstract static class RPromiseKeyInfoNode extends Node {
+
+        private static final int READABLE = 1 << 1;
+        private static final int WRITABLE = 1 << 2;
+
+        @SuppressWarnings("try")
+        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") RPromise receiver, String identifier) {
+            if (PROP_IS_EAGER.equals(identifier) || PROP_VALUE.equals(identifier)) {
+                return READABLE;
+            }
+
+            if (PROP_IS_EVALUATED.equals(identifier)) {
+                return READABLE + WRITABLE;
+            }
+            return 0;
+        }
+    }
+
+    @Resolve(message = "TO_NATIVE")
+    public abstract static class RPromiseToNativeNode extends Node {
         protected Object access(RPromise receiver) {
-            return receiver.getValue();
+            return new NativePointer(receiver);
         }
     }
 
