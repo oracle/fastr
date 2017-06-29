@@ -26,8 +26,6 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -230,7 +228,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
      */
     private LLVM_IR[] libRModules;
 
-    private static final String[] PARSE_ERRORS = new String[]{"stats", "ppr"};
+    private static final String[] PARSE_ERRORS = new String[0];
 
     private static boolean parseFails(String libName, LLVM_IR ir) {
         for (int i = 0; i < PARSE_ERRORS.length / 2; i++) {
