@@ -40,7 +40,7 @@ while [ $DIR != "/" ] ; do
 done
 
 if [ $with_sulong = 1 ] && [ "$FASTR_SULONG_IGNORE" = "" ] ; then
-	mx --dynamicimport sulong fastr-cc $@
+	MX_PRIMARY_SUITE_PATH=$DIR/fastr mx --dynamicimport sulong fastr-cc $@
 else
     gcc $@
 fi
