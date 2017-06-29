@@ -194,7 +194,7 @@ public abstract class PrecedenceNode extends RBaseNode {
 
     @Specialization
     protected int doExpression(RLanguage val, boolean recursive) {
-        return EXPRESSION_PRECEDENCE;
+        return LIST_PRECEDENCE;
     }
 
     @Specialization

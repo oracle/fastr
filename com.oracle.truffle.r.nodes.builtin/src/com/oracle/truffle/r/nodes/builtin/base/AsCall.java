@@ -75,6 +75,8 @@ public abstract class AsCall extends RBuiltinNode.Arg1 {
             return CallUtil.makeCallSourceUnavailable((Integer) x.getDataAt(0), avn);
         } else if (x.getDataAt(0) instanceof Double) {
             return CallUtil.makeCallSourceUnavailable((Double) x.getDataAt(0), avn);
+        } else if (x.getDataAt(0) instanceof RLanguage) {
+            return (RLanguage) x.getDataAt(0);
         } else {
             throw RInternalError.unimplemented();
         }

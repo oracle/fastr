@@ -212,10 +212,11 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
     @ExplodeLoop
     private int prepareElements(Object[] args, CastNode cast, int precedence, Object[] elements) {
         int size = 0;
+        boolean exprListPrecedence = precedence == EXPRESSION_PRECEDENCE || precedence == LIST_PRECEDENCE;
         for (int i = 0; i < elements.length; i++) {
             CombineInputCast inputCast = getCast(i);
             Object value = args[i];
-            Object element = (precedence == EXPRESSION_PRECEDENCE && value instanceof RLanguage) ? value : cast.doCast(inputCast.cast(value));
+            Object element = (exprListPrecedence && value instanceof RLanguage) ? value : cast.doCast(inputCast.cast(value));
             element = inputCast.valueProfile.profile(element);
             elements[i] = element;
             size += getElementSize(element);
