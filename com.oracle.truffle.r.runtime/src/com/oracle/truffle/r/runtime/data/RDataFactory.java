@@ -33,6 +33,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -40,9 +41,11 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -157,6 +160,7 @@ public final class RDataFactory {
     }
 
     public static RComplexVector createComplexVector(double[] data, boolean complete, int[] dims, RStringVector names) {
+
         return traceDataCreated(new RComplexVector(data, complete, dims, names));
     }
 
@@ -219,6 +223,7 @@ public final class RDataFactory {
     }
 
     public static RLogicalVector createLogicalVector(byte[] data, boolean complete, int[] dims, RStringVector names) {
+
         return traceDataCreated(new RLogicalVector(data, complete, dims, names));
     }
 
@@ -228,25 +233,30 @@ public final class RDataFactory {
 
     public static RIntSequence createAscendingRange(int start, int end) {
         assert start <= end;
+
         return traceDataCreated(new RIntSequence(start, 1, end - start + 1));
     }
 
     public static RIntSequence createDescendingRange(int start, int end) {
         assert start > end;
+
         return traceDataCreated(new RIntSequence(start, -1, start - end + 1));
     }
 
     public static RIntSequence createIntSequence(int start, int stride, int length) {
+
         return traceDataCreated(new RIntSequence(start, stride, length));
     }
 
     public static RDoubleSequence createAscendingRange(double start, double end) {
         assert start <= end;
+
         return traceDataCreated(new RDoubleSequence(start, 1, (int) ((end - start) + 1)));
     }
 
     public static RDoubleSequence createDescendingRange(double start, double end) {
         assert start > end;
+
         return traceDataCreated(new RDoubleSequence(start, -1, (int) ((start - end) + 1)));
     }
 
@@ -388,6 +398,7 @@ public final class RDataFactory {
     }
 
     public static RList createList(Object[] data, int[] newDimensions, RStringVector names) {
+
         return traceDataCreated(new RList(data, newDimensions, names));
     }
 
@@ -462,11 +473,19 @@ public final class RDataFactory {
     }
 
     public static Object createLangPairList(int size) {
-        return size == 0 ? RNull.instance : traceDataCreated(RPairList.create(size, SEXPTYPE.LANGSXP));
+        if (size == 0) {
+            return RNull.instance;
+        } else {
+            return traceDataCreated(RPairList.create(size, SEXPTYPE.LANGSXP));
+        }
     }
 
     public static Object createPairList(int size) {
-        return size == 0 ? RNull.instance : traceDataCreated(RPairList.create(size));
+        if (size == 0) {
+            return RNull.instance;
+        } else {
+            return traceDataCreated(RPairList.create(size));
+        }
     }
 
     public static RPairList createPairList() {
@@ -474,6 +493,7 @@ public final class RDataFactory {
     }
 
     public static RPairList createPairList(Object car) {
+
         return traceDataCreated(new RPairList(car, RNull.instance, RNull.instance, null));
     }
 
@@ -546,23 +566,52 @@ public final class RDataFactory {
      */
 
     private static Deque<Listener> listeners = new ConcurrentLinkedDeque<>();
-    @CompilationFinal private static boolean enabled;
+
+    @CompilationFinal private static byte enabled = RRuntime.LOGICAL_NA;
+
     private static final CyclicAssumption noAllocationTracingAssumption = new CyclicAssumption("data allocation");
 
     public static void setTracingState(boolean newState) {
-        if (enabled != newState) {
+        byte newStateLogical = RRuntime.asLogical(newState);
+        if (enabled != newStateLogical) {
             noAllocationTracingAssumption.invalidate();
-            enabled = newState;
+            enabled = newStateLogical;
         }
     }
 
     private static <T> T traceDataCreated(T data) {
-        if (enabled) {
+        if (RRuntime.isNA(enabled)) {
+            RContext ctx = RContext.getThreadLocalInstance();
+            if (ctx != null) {
+                setTracingState(ctx.getAllocationReporter().isActive());
+            }
+        }
+
+        if (enabled == RRuntime.LOGICAL_TRUE) {
+
+            if (noAllocationTracingAssumption.getAssumption().isValid()) {
+                reportAllocation(data);
+            }
+
             for (Listener listener : listeners) {
                 listener.reportAllocation((RTypedValue) data);
             }
         }
+
         return data;
+    }
+
+    @TruffleBoundary
+    private static void reportAllocation(Object data) {
+        RContext ctx = RContext.getThreadLocalInstance();
+        assert ctx != null;
+        AllocationReporter allocationReporter = ctx.getAllocationReporter();
+
+        allocationReporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
+
+        long size = data instanceof RTypedValue ? getSize((RTypedValue) data) : AllocationReporter.SIZE_UNKNOWN;
+        allocationReporter.onReturnValue(data, 0, size);
+
     }
 
     public interface Listener {
@@ -589,5 +638,29 @@ public final class RDataFactory {
         Object[] data = new Object[size];
         Arrays.fill(data, RNull.instance);
         return data;
+    }
+
+    private static long getSize(RTypedValue data) {
+        long multiplier = 8;
+        switch (data.getRType()) {
+            case Complex:
+                multiplier = 16;
+                break;
+            case Integer:
+                multiplier = 4;
+                break;
+            case Logical:
+            case Raw:
+                multiplier = 1;
+                break;
+        }
+        if (data instanceof RSequence) {
+            return 32 + 2 * multiplier;
+        } else if (data instanceof RAbstractVector) {
+            return 32 + ((RAbstractVector) data).getLength() * multiplier;
+        } else {
+            // take a default value for non-vector objects
+            return 64;
+        }
     }
 }
