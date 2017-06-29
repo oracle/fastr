@@ -32,3 +32,74 @@ setBreakpoint <- function (srcfile, line, nameonly = TRUE, envir = parent.frame(
 }
 
 }), asNamespace("utils"))
+
+eval(expression({
+help <- function (topic, package = NULL, lib.loc = NULL, verbose = getOption("verbose"), try.all.packages = getOption("help.try.all.packages"), help_type = getOption("help_type")) {
+    types <- c("text", "html", "pdf")
+    if (!missing(package))
+        if (is.name(y <- substitute(package)))
+            package <- as.character(y)
+    if (missing(topic)) {
+        if (!is.null(package)) {
+            help_type <- if (!length(help_type))
+                "text"
+                else match.arg(tolower(help_type), types)
+            if (interactive() && help_type == "html") {
+                port <- tools::startDynamicHelp(NA)
+                if (port <= 0L)
+                  return(library(help = package, lib.loc = lib.loc, character.only = TRUE))
+                browser <- if (.Platform$GUI == "AQUA") {
+                  get("aqua.browser", envir = as.environment("tools:RGUI"))
+                }
+                else getOption("browser")
+                browseURL(paste0("http://127.0.0.1:", port, "/library/", package, "/html/00Index.html"), browser)
+                return(invisible())
+            }
+            else return(library(help = package, lib.loc = lib.loc, character.only = TRUE))
+        }
+        if (!is.null(lib.loc))
+            return(library(lib.loc = lib.loc))
+        topic <- "help"
+        package <- "utils"
+        lib.loc <- .Library
+    }
+    ischar <- tryCatch(is.character(topic) && length(topic) == 1L, error = identity)
+    if (inherits(ischar, "error"))
+        ischar <- FALSE
+    if (!ischar) {
+        reserved <- c("TRUE", "FALSE", "NULL", "Inf", "NaN", "NA", "NA_integer_", "NA_real_", "NA_complex_", "NA_character_")
+        stopic <- deparse(substitute(topic))
+        if (!is.name(substitute(topic)) && !stopic %in% reserved)
+            stop("'topic' should be a name, length-one character vector or reserved word")
+        topic <- stopic
+    }
+    # Fastr >>>>
+    fastrHelpRd <- .fastr.interop.getHelpRd(topic)
+    if (!is.null(fastrHelpRd)) {
+        fastrHelpRd <- tools::parse_Rd(textConnection(fastrHelpRd))
+        cat("==== R Help on ‘", topic, "’ ====\n", sep = "")
+        return(tools::Rd2txt(fastrHelpRd))
+    }
+    # Fastr <<<<
+    help_type <- if (!length(help_type))
+        "text"
+        else match.arg(tolower(help_type), types)
+    paths <- index.search(topic, find.package(if (is.null(package))
+        loadedNamespaces()
+        else package, lib.loc, verbose = verbose))
+    tried_all_packages <- FALSE
+    if (!length(paths) && is.logical(try.all.packages) && !is.na(try.all.packages) && try.all.packages && is.null(package) && is.null(lib.loc)) {
+        for (lib in .libPaths()) {
+            packages <- .packages(TRUE, lib)
+            packages <- packages[is.na(match(packages, .packages()))]
+            paths <- c(paths, index.search(topic, file.path(lib, packages)))
+        }
+        paths <- paths[nzchar(paths)]
+        tried_all_packages <- TRUE
+    }
+    paths <- unique(paths)
+    attributes(paths) <- list(call = match.call(), topic = topic, tried_all_packages = tried_all_packages, type = help_type)
+    class(paths) <- "help_files_with_topic"
+    paths
+}
+}), asNamespace("utils"))
