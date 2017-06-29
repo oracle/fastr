@@ -1,6 +1,6 @@
 # test sending environment with a parent and global grandparent and assigning it remotely (should assign remotely but not locally)
 
-if (length(grep("FastR", R.Version()$version.string)) == 1) {
+if (any(R.version$engine == "FastR")) {
     ch <- .fastr.channel.create(1L)
     code <- "ch <- .fastr.channel.get(1L); env<-.fastr.channel.receive(ch); assign('y', 70, pos=env); assign('z', 420, pos=parent.env(env)); .fastr.channel.send(ch, c(get('w', envir=env), get('x', envir=parent.env(env))))"
     cx <- .fastr.context.spawn(code)

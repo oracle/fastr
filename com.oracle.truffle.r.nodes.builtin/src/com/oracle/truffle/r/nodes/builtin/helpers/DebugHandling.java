@@ -176,7 +176,9 @@ public class DebugHandling {
                 }
                 accept(element.getSyntaxLHS());
                 for (RSyntaxElement arg : element.getSyntaxArguments()) {
-                    accept(arg);
+                    if (arg != null) {
+                        accept(arg);
+                    }
                 }
                 return null;
             }

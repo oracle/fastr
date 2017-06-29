@@ -1,4 +1,4 @@
-if (length(grep("FastR", R.Version()$version.string)) == 1) {
+if (any(R.version$engine == "FastR")) {
     ch0 <- .fastr.channel.create(1L)
     ch1 <- .fastr.channel.create(2L)
     code0 <- "ch <- .fastr.channel.get(1L); .fastr.channel.send(ch, 7L)"

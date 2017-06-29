@@ -494,7 +494,7 @@ public class TestBase {
     }
 
     private static String[] getAssertEvalFastR(String gnuROutput, String input) {
-        return new String[]{"if (length(grep(\"FastR\", R.Version()$version.string)) != 1) { " + gnuROutput + " } else { " + input + " }"};
+        return new String[]{"if (!any(R.version$engine == \"FastR\")) { " + gnuROutput + " } else { " + input + " }"};
     }
 
     /*

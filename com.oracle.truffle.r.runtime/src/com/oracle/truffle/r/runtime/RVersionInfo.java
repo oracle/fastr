@@ -40,6 +40,7 @@ public enum RVersionInfo {
     Day(RVersionNumber.RELEASE_DAY),
     SvnRev("svn rev", null),
     Language("R"),
+    Engine("FastR"),
     VersionString("version.string", RVersionNumber.VERSION_STRING);
     // @formatter:on
 

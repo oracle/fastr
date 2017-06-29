@@ -1,6 +1,6 @@
 # test subsequent remote updates in global space - second time value should have been reset
 
-if (length(grep("FastR", R.Version()$version.string)) == 1) {
+if (any(R.version$engine == "FastR")) {
     ch1 <- .fastr.channel.create(1L)
     code <- "ch2 <- .fastr.channel.get(1L); x <- 7; .fastr.channel.send(ch2, x)"
     x <- 42

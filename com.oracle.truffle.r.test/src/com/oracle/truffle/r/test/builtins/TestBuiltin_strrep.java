@@ -38,11 +38,10 @@ public class TestBuiltin_strrep extends TestBase {
     @Test
     public void testArgsCasts() {
         // GnuR fails with segfault
-        assertEvalFastR("{ .Internal(strrep(NULL, 5) }", "cat(\"character(0)\")");
+        assertEvalFastR(".Internal(strrep(NULL, 5))", "cat(\"character(0)\\n\")");
         // GnuR - infinite loop
-        assertEvalFastR("{ .Internal(strrep('aa', NULL) }", "cat(\"character(0)\")");
+        assertEvalFastR(".Internal(strrep('aa', NULL))", "cat(\"character(0)\\n\")");
         assertEval("{ .Internal(strrep(, '') }");
         assertEval("{ .Internal(strrep('', ) }");
     }
-
 }

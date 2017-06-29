@@ -1,6 +1,6 @@
 # test remote updated of function with shareable attribute (attribute must stay private)
 
-if (length(grep("FastR", R.Version()$version.string)) == 1) {
+if (any(R.version$engine == "FastR")) {
     ch <- .fastr.channel.create(1L)
     code <- "ch <- .fastr.channel.get(1L); f<-.fastr.channel.receive(ch); attr(f, 'foo') <- c('baz', 'bar'); .fastr.channel.send(ch, attr(f, 'foo'))"
     cx <- .fastr.context.spawn(code)

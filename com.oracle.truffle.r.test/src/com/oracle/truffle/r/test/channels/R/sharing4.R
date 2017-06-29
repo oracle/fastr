@@ -1,6 +1,6 @@
 # test access to global environment with multiple context instantiations varying context number
 
-if (length(grep("FastR", R.Version()$version.string)) == 1) {
+if (any(R.version$engine == "FastR")) {
     ch1 <- .fastr.channel.create(1L)
     code <- "ch2 <- .fastr.channel.get(1L); x <- .fastr.channel.receive(ch2); .fastr.channel.send(ch2, x)"
     x <- 7
