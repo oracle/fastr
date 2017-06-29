@@ -31,10 +31,10 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
-import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -160,7 +160,6 @@ public final class RDataFactory {
     }
 
     public static RComplexVector createComplexVector(double[] data, boolean complete, int[] dims, RStringVector names) {
-
         return traceDataCreated(new RComplexVector(data, complete, dims, names));
     }
 
@@ -223,7 +222,6 @@ public final class RDataFactory {
     }
 
     public static RLogicalVector createLogicalVector(byte[] data, boolean complete, int[] dims, RStringVector names) {
-
         return traceDataCreated(new RLogicalVector(data, complete, dims, names));
     }
 
@@ -233,30 +231,25 @@ public final class RDataFactory {
 
     public static RIntSequence createAscendingRange(int start, int end) {
         assert start <= end;
-
         return traceDataCreated(new RIntSequence(start, 1, end - start + 1));
     }
 
     public static RIntSequence createDescendingRange(int start, int end) {
         assert start > end;
-
         return traceDataCreated(new RIntSequence(start, -1, start - end + 1));
     }
 
     public static RIntSequence createIntSequence(int start, int stride, int length) {
-
         return traceDataCreated(new RIntSequence(start, stride, length));
     }
 
     public static RDoubleSequence createAscendingRange(double start, double end) {
         assert start <= end;
-
         return traceDataCreated(new RDoubleSequence(start, 1, (int) ((end - start) + 1)));
     }
 
     public static RDoubleSequence createDescendingRange(double start, double end) {
         assert start > end;
-
         return traceDataCreated(new RDoubleSequence(start, -1, (int) ((start - end) + 1)));
     }
 
@@ -398,7 +391,6 @@ public final class RDataFactory {
     }
 
     public static RList createList(Object[] data, int[] newDimensions, RStringVector names) {
-
         return traceDataCreated(new RList(data, newDimensions, names));
     }
 
@@ -565,53 +557,71 @@ public final class RDataFactory {
      * allocated. Owing to the use of the Assumption, there should be no overhead when disabled.
      */
 
-    private static Deque<Listener> listeners = new ConcurrentLinkedDeque<>();
+    private static final Deque<Listener> listeners = new ConcurrentLinkedDeque<>();
+    private static boolean allocationTracingEnabled = false;
 
-    @CompilationFinal private static byte enabled = RRuntime.LOGICAL_NA;
+    @CompilationFinal private static StateAssumption stateAssumption = new StateAssumption();
 
-    private static final CyclicAssumption noAllocationTracingAssumption = new CyclicAssumption("data allocation");
+    /**
+     * As long as "off" is valid, the feature is off. It is on as long as "on" is valid.
+     */
+    public static final class StateAssumption {
+        private final Assumption off = Truffle.getRuntime().createAssumption("off");
+        private final Assumption on = Truffle.getRuntime().createAssumption("on");
 
-    public static void setTracingState(boolean newState) {
-        byte newStateLogical = RRuntime.asLogical(newState);
-        if (enabled != newStateLogical) {
-            noAllocationTracingAssumption.invalidate();
-            enabled = newStateLogical;
+        public boolean isEnabled() {
+            return !off.isValid() && on.isValid();
+        }
+
+        public StateAssumption setState(boolean enabled) {
+            if (enabled && !stateAssumption.isEnabled()) {
+                assert !isEnabled();
+                off.invalidate();
+                return this;
+            } else if (!enabled && stateAssumption.isEnabled()) {
+                assert isEnabled();
+                on.invalidate();
+                return new StateAssumption();
+            } else {
+                // no change needed
+                return this;
+            }
         }
     }
 
+    public static synchronized void setAllocationTracingEnabled(boolean enabled) {
+        allocationTracingEnabled = enabled;
+        updateTracingState();
+    }
+
+    private static synchronized void updateTracingState() {
+        boolean enabled = !listeners.isEmpty() || allocationTracingEnabled;
+        stateAssumption = stateAssumption.setState(enabled);
+    }
+
     private static <T> T traceDataCreated(T data) {
-        if (RRuntime.isNA(enabled)) {
-            RContext ctx = RContext.getThreadLocalInstance();
-            if (ctx != null) {
-                setTracingState(ctx.getAllocationReporter().isActive());
-            }
+        if (stateAssumption.isEnabled()) {
+            reportDataCreated(data);
         }
-
-        if (enabled == RRuntime.LOGICAL_TRUE) {
-
-            if (noAllocationTracingAssumption.getAssumption().isValid()) {
-                reportAllocation(data);
-            }
-
-            for (Listener listener : listeners) {
-                listener.reportAllocation((RTypedValue) data);
-            }
-        }
-
         return data;
     }
 
     @TruffleBoundary
-    private static void reportAllocation(Object data) {
-        RContext ctx = RContext.getThreadLocalInstance();
-        assert ctx != null;
-        AllocationReporter allocationReporter = ctx.getAllocationReporter();
+    private static void reportDataCreated(Object data) {
+        System.out.println("reportDataCreated " + listeners.size() + " " + allocationTracingEnabled);
+        if (allocationTracingEnabled) {
+            RContext ctx = RContext.getThreadLocalInstance();
+            assert ctx != null;
+            AllocationReporter allocationReporter = ctx.getAllocationReporter();
 
-        allocationReporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
+            allocationReporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
 
-        long size = data instanceof RTypedValue ? getSize((RTypedValue) data) : AllocationReporter.SIZE_UNKNOWN;
-        allocationReporter.onReturnValue(data, 0, size);
-
+            long size = data instanceof RTypedValue ? getSize((RTypedValue) data) : AllocationReporter.SIZE_UNKNOWN;
+            allocationReporter.onReturnValue(data, 0, size);
+        }
+        for (Listener listener : listeners) {
+            listener.reportAllocation((RTypedValue) data);
+        }
     }
 
     public interface Listener {
@@ -630,8 +640,14 @@ public final class RDataFactory {
      * Sets the listener of memory tracing events. For the time being there can only be one
      * listener. This can be extended to an array should we need more listeners.
      */
-    public static void addListener(Listener listener) {
+    public static synchronized void addListener(Listener listener) {
         listeners.addLast(listener);
+        updateTracingState();
+    }
+
+    public static synchronized void removeListener(Listener listener) {
+        listeners.remove(listener);
+        updateTracingState();
     }
 
     private static Object[] createRNullArray(int size) {

@@ -267,7 +267,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             }
 
             @Fallback
-            protected Object castPairlist(@SuppressWarnings("unused") Object x) {
+            protected Object castPairlist(Object x) {
                 throw RInternalError.unimplemented("non-list casts to pairlist for " + x.getClass().getSimpleName());
             }
         }

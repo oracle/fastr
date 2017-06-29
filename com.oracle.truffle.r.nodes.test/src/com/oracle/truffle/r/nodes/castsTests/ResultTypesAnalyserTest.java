@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.castsTests;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyIntegerVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullConstant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.atomicIntegerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.atomicLogicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
@@ -32,6 +30,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.dimEq;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleToInt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.elementAt;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyIntegerVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.eq;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
@@ -43,14 +42,15 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mapIf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.matrix;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.not;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullConstant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.squareMatrix;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.nodes.casts.TypeExpr.atom;
 import static com.oracle.truffle.r.nodes.casts.MarkLookup.mark;
+import static com.oracle.truffle.r.nodes.casts.TypeExpr.atom;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -71,7 +71,6 @@ import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.nodes.castsTests.CastBuilderTest.DummyBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;

@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.RprofState;
 
-public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDataFactory.Listener {
+public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(Rprofmem.class);
@@ -75,8 +75,7 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDat
             try {
                 PrintStream out = new PrintStream(new FileOutputStream(filename, append));
                 profmemState.initialize(out, thresholdVec.getDataAt(0));
-                RDataFactory.addListener(this);
-                RDataFactory.setTracingState(true);
+                RDataFactory.addListener(LISTENER);
             } catch (IOException ex) {
                 throw error(RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filename));
             }
@@ -116,39 +115,40 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDat
 
     static final RObjectSize.IgnoreObjectHandler myIgnoreObjectHandler = new MyIgnoreObjectHandler();
 
-    @Override
-    @TruffleBoundary
-    public void reportAllocation(RTypedValue data) {
-        // We could do some in memory buffering
-        // TODO write out full stack
-        RprofmemState profmemState = RprofmemState.get();
-        Frame frame = Utils.getActualCurrentFrame();
-        if (frame == null) {
-            // not an R evaluation, some internal use
-            return;
-        }
-        RFunction func = RArguments.getFunction(frame);
-        if (func == null) {
-            return;
-        }
-        String name = func.getRootNode().getName();
+    private static final RDataFactory.Listener LISTENER = new RDataFactory.Listener() {
+        @Override
+        public void reportAllocation(RTypedValue data) {
+            // We could do some in memory buffering
+            // TODO write out full stack
+            RprofmemState profmemState = RprofmemState.get();
+            Frame frame = Utils.getActualCurrentFrame();
+            if (frame == null) {
+                // not an R evaluation, some internal use
+                return;
+            }
+            RFunction func = RArguments.getFunction(frame);
+            if (func == null) {
+                return;
+            }
+            String name = func.getRootNode().getName();
 
-        long size = RObjectSize.getObjectSize(data, myIgnoreObjectHandler);
-        if (data instanceof RAbstractVector && size >= LARGE_VECTOR) {
-            if (size > profmemState.threshold) {
-                profmemState.out().printf("%d: %s\n", size, name);
-            }
-        } else {
-            int pageCount = profmemState.pageCount;
-            long pcs = pageCount + size;
-            if (pcs > PAGE_SIZE) {
-                profmemState.out().printf("new page: %s\n", name);
-                profmemState.pageCount = (int) (pcs - PAGE_SIZE);
+            long size = RObjectSize.getObjectSize(data, myIgnoreObjectHandler);
+            if (data instanceof RAbstractVector && size >= LARGE_VECTOR) {
+                if (size > profmemState.threshold) {
+                    profmemState.out().printf("%d: %s\n", size, name);
+                }
             } else {
-                profmemState.pageCount = (int) pcs;
+                int pageCount = profmemState.pageCount;
+                long pcs = pageCount + size;
+                if (pcs > PAGE_SIZE) {
+                    profmemState.out().printf("new page: %s\n", name);
+                    profmemState.pageCount = (int) (pcs - PAGE_SIZE);
+                } else {
+                    profmemState.pageCount = (int) pcs;
+                }
             }
         }
-    }
+    };
 
     private static final class RprofmemState extends RprofState {
         private double threshold;
@@ -170,7 +170,7 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 implements RDat
 
         @Override
         public void cleanup(int status) {
-            RDataFactory.setTracingState(false);
+            RDataFactory.removeListener(LISTENER);
             closeAndResetOut();
         }
     }

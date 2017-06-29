@@ -66,10 +66,10 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinLookup;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -77,7 +77,6 @@ import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 
 /**
  * Encapsulates the runtime state ("context") of an R session. All access to that state from the
@@ -398,6 +397,7 @@ public final class RContext implements RTruffleObject {
 
         this.allocationReporter = env.lookup(AllocationReporter.class);
         this.allocationReporter.addPropertyChangeListener(ALLOCATION_ACTIVATION_LISTENER);
+        RDataFactory.setAllocationTracingEnabled(allocationReporter.isActive());
     }
 
     /**
@@ -812,7 +812,7 @@ public final class RContext implements RTruffleObject {
     private static final PropertyChangeListener ALLOCATION_ACTIVATION_LISTENER = new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent event) {
-            RDataFactory.setTracingState(event.getNewValue() == Boolean.TRUE);
+            RDataFactory.setAllocationTracingEnabled(event.getNewValue() == Boolean.TRUE);
         }
     };
 

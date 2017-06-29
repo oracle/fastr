@@ -47,8 +47,8 @@ public final class MemAllocProfilerPaths {
     private final Map<Integer, Entry> entryMap = new ConcurrentHashMap<>();
     private volatile Entry root = new Entry(this, null, "", null);
 
-    private MemAllocProfilerPaths hotSpotsView;
-    private long hotSpotsViewVersion;
+    private MemAllocProfilerPaths hsView;
+    private long hsViewVersion;
 
     /**
      * Clear the model.
@@ -93,14 +93,14 @@ public final class MemAllocProfilerPaths {
         return clonePaths();
     }
 
-    public synchronized MemAllocProfilerPaths toHotSpots() {
+    public synchronized MemAllocProfilerPaths toHS() {
         long curVer = version.get();
-        if (curVer == hotSpotsViewVersion && hotSpotsView != null) {
-            return hotSpotsView;
+        if (curVer == hsViewVersion && hsView != null) {
+            return hsView;
         }
-        hotSpotsViewVersion = curVer;
-        hotSpotsView = invert().groupBySrcSection();
-        return hotSpotsView;
+        hsViewVersion = curVer;
+        hsView = invert().groupBySrcSection();
+        return hsView;
     }
 
     @SuppressWarnings("unused")

@@ -158,7 +158,7 @@ public class FastRStats {
     }
 
     @RBuiltin(name = ".fastr.stats.typecounts", visibility = OFF, kind = PRIMITIVE, parameterNames = {"filename", "append"}, behavior = COMPLEX)
-    public abstract static class FastRProfTypecounts extends RBuiltinNode.Arg2 implements RDataFactory.Listener {
+    public abstract static class FastRProfTypecounts extends RBuiltinNode.Arg2 {
         @Override
         public Object[] getDefaultParameterValues() {
             return new Object[]{"Rproftypecounts.out", RRuntime.LOGICAL_FALSE};
@@ -190,8 +190,7 @@ public class FastRStats {
                 try {
                     PrintStream out = new PrintStream(new FileOutputStream(filenameVec.getDataAt(0), append));
                     state.setOut(out);
-                    RDataFactory.addListener(this);
-                    RDataFactory.setTracingState(true);
+                    RDataFactory.addListener(LISTENER);
                 } catch (IOException ex) {
                     throw error(RError.Message.GENERIC, String.format("Rprofmem: cannot open profile file '%s'", filenameVec.getDataAt(0)));
                 }
@@ -202,36 +201,38 @@ public class FastRStats {
         protected void endProfiling() {
             State state = State.get();
             if (state.out() != null) {
-                RDataFactory.setTracingState(false);
+                RDataFactory.removeListener(LISTENER);
                 state.cleanup(0);
             }
         }
 
-        @Override
-        public void reportAllocation(RTypedValue data) {
-            Class<? extends RTypedValue> klass = data.getClass();
-            boolean isVector = (data instanceof RAbstractVector);
-            State state = State.get();
-            Map<Class<? extends RTypedValue>, SortedMap<Integer, State.Counter>> typecountsMap = state.getTypecountsMap();
-            SortedMap<Integer, State.Counter> countsMap = typecountsMap.get(klass);
-            if (countsMap == null) {
-                countsMap = new TreeMap<>();
-                typecountsMap.put(klass, countsMap);
+        private static final RDataFactory.Listener LISTENER = new RDataFactory.Listener() {
+            @Override
+            public void reportAllocation(RTypedValue data) {
+                Class<? extends RTypedValue> klass = data.getClass();
+                boolean isVector = (data instanceof RAbstractVector);
+                State state = State.get();
+                Map<Class<? extends RTypedValue>, SortedMap<Integer, State.Counter>> typecountsMap = state.getTypecountsMap();
+                SortedMap<Integer, State.Counter> countsMap = typecountsMap.get(klass);
+                if (countsMap == null) {
+                    countsMap = new TreeMap<>();
+                    typecountsMap.put(klass, countsMap);
+                }
+                int length;
+                if (isVector) {
+                    RAbstractVector vector = (RAbstractVector) data;
+                    length = vector.getLength();
+                } else {
+                    length = 1;
+                }
+                State.Counter count = countsMap.get(length);
+                if (count == null) {
+                    count = new State.Counter();
+                    countsMap.put(length, count);
+                }
+                count.incCount();
             }
-            int length;
-            if (isVector) {
-                RAbstractVector vector = (RAbstractVector) data;
-                length = vector.getLength();
-            } else {
-                length = 1;
-            }
-            State.Counter count = countsMap.get(length);
-            if (count == null) {
-                count = new State.Counter();
-                countsMap.put(length, count);
-            }
-            count.incCount();
-        }
+        };
 
         private static class State extends RprofState {
             public static class Counter {

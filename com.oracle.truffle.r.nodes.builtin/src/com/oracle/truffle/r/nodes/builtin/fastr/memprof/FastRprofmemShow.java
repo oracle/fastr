@@ -77,7 +77,7 @@ public abstract class FastRprofmemShow extends RBuiltinNode.Arg6 {
     private static Object show(int levels, boolean desc, Integer entryId, boolean printParents, String view, MemAllocProfilerPaths snapshot) {
         MemAllocProfilerPaths usedSnapshot = snapshot;
         if (FastRprofmem.HOTSPOTS_VIEW.equals(view)) {
-            usedSnapshot = usedSnapshot.toHotSpots();
+            usedSnapshot = usedSnapshot.toHS();
         }
         FastRprofmem.getProfilerPrinter().show(usedSnapshot, entryId, levels, desc, printParents);
         return RNull.instance;
