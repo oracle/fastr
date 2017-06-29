@@ -25,12 +25,12 @@ package com.oracle.truffle.r.runtime.context;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
-import java.io.File;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.TimeZone;
@@ -821,11 +821,14 @@ public final class RContext implements RTruffleObject {
     }
 
     /**
-     * Adds an entry to the Java interop class loader. This will effectively create a new class
+     * Adds entries to the Java interop class loader. This will effectively create a new class
      * loader with the previous one as parent.
      */
-    public void addInteropClasspathEntry(String entry) throws MalformedURLException {
-        URL url = new File(entry).toURI().toURL();
-        interopClassLoader = URLClassLoader.newInstance(new URL[]{url}, interopClassLoader);
+    public void addInteropClasspathEntries(String... entries) throws MalformedURLException {
+        URL[] urls = new URL[entries.length];
+        for (int i = 0; i < entries.length; i++) {
+            urls[i] = Paths.get(entries[i]).toUri().toURL();
+        }
+        interopClassLoader = URLClassLoader.newInstance(urls, interopClassLoader);
     }
 }
