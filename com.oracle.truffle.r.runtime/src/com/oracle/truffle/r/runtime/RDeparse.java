@@ -379,26 +379,35 @@ public class RDeparse {
 
         public void fixupSources() {
             if (FastROptions.EmitTmpSource.getBooleanValue()) {
-                try {
-                    RootNode rootNode = getRootNode();
-                    String name = rootNode != null ? rootNode.getName() : null;
-                    Path path = emitToFile(name);
-                    Source source = RSource.fromFile(path.toFile());
-                    for (SourceSectionElement s : sources) {
-                        if (s.element.getLazySourceSection() == null || s.element.getLazySourceSection() == RSyntaxNode.LAZY_DEPARSE) {
-                            s.element.setSourceSection(source.createSection(s.start, s.length));
-                        }
-                    }
-                } catch (IOException e) {
-                    RInternalError.reportError(e);
-                } catch (NoSuchAlgorithmException e) {
-                    throw RInternalError.shouldNotReachHere("SHA-256 is an unknown algorithm");
-                }
+                fixupSourcesTempFile();
             } else {
-                Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.DEPARSE);
+                fixupSourcesTextInternal();
+            }
+        }
+
+        private void fixupSourcesTextInternal() {
+            Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.DEPARSE);
+            for (SourceSectionElement s : sources) {
+                s.element.setSourceSection(source.createSection(s.start, s.length));
+            }
+        }
+
+        private void fixupSourcesTempFile() {
+            try {
+                RootNode rootNode = getRootNode();
+                String name = rootNode != null ? rootNode.getName() : null;
+                Path path = emitToFile(name);
+                Source source = RSource.fromFile(path.toFile());
                 for (SourceSectionElement s : sources) {
-                    s.element.setSourceSection(source.createSection(s.start, s.length));
+                    if (s.element.getLazySourceSection() == null || s.element.getLazySourceSection() == RSyntaxNode.LAZY_DEPARSE) {
+                        s.element.setSourceSection(source.createSection(s.start, s.length));
+                    }
                 }
+            } catch (IOException e) {
+                RInternalError.reportError(e);
+                fixupSourcesTextInternal();
+            } catch (NoSuchAlgorithmException e) {
+                throw RInternalError.shouldNotReachHere("SHA-256 is an unknown algorithm");
             }
         }
 
