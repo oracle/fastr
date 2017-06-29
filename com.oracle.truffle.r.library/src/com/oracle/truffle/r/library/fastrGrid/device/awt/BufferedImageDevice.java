@@ -32,10 +32,12 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-public final class BufferedImageDevice extends Graphics2DDevice {
+import com.oracle.truffle.r.library.fastrGrid.device.FileGridDevice;
+
+public final class BufferedImageDevice extends Graphics2DDevice implements FileGridDevice {
     private final BufferedImage image;
-    private final String filename;
     private final String fileType;
+    private String filename;
 
     private BufferedImageDevice(String filename, String fileType, BufferedImage image, Graphics2D graphics, int width, int height) {
         super(graphics, width, height, true);
@@ -57,7 +59,18 @@ public final class BufferedImageDevice extends Graphics2DDevice {
     }
 
     @Override
+    public void openNewPage(String newFilename) throws DeviceCloseException {
+        saveImage();
+        filename = newFilename;
+        openNewPage();
+    }
+
+    @Override
     public void close() throws DeviceCloseException {
+        saveImage();
+    }
+
+    private void saveImage() throws DeviceCloseException {
         try {
             ImageIO.write(image, fileType, new File(filename));
         } catch (IOException e) {

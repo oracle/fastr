@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 
 import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
+import com.oracle.truffle.r.library.fastrGrid.grDevices.FileDevUtils;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -163,6 +164,10 @@ public final class GridState {
         return devState.scale;
     }
 
+    public String getNextPageFilename() {
+        return FileDevUtils.formatFilename(devState.filenamePattern, devState.pageIndex++);
+    }
+
     public static final class GridPalette {
         public final GridColor[] colors;
         public final String[] colorNames;
@@ -194,5 +199,11 @@ public final class GridState {
         private boolean isDisplayListOn = true;
         private RList displayList;
         private int displayListIndex = 0;
+        private int pageIndex = 2;
+        private String filenamePattern;
+
+        GridDeviceState(String filenamePattern) {
+            this.filenamePattern = filenamePattern;
+        }
     }
 }

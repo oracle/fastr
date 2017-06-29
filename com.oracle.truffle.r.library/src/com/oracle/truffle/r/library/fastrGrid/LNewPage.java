@@ -14,8 +14,11 @@ package com.oracle.truffle.r.library.fastrGrid;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.library.fastrGrid.device.FileGridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
+import com.oracle.truffle.r.library.fastrGrid.device.GridDevice.DeviceCloseException;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -40,8 +43,17 @@ final class LNewPage extends RExternalBuiltinNode {
     }
 
     @TruffleBoundary
-    private static void openNewPage(GridDevice device) {
-        device.openNewPage();
+    private void openNewPage(GridDevice device) {
+        if (device instanceof FileGridDevice) {
+            String path = GridContext.getContext().getGridState().getNextPageFilename();
+            try {
+                ((FileGridDevice) device).openNewPage(path);
+            } catch (DeviceCloseException e) {
+                throw error(Message.GENERIC, "Cannot save the image. Details: " + e.getMessage());
+            }
+        } else {
+            device.openNewPage();
+        }
     }
 
     @Override

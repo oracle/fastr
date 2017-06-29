@@ -48,7 +48,7 @@ public class DevCairo extends RExternalBuiltinNode {
             throw error(Message.INVALID_ARG_TYPE);
         }
 
-        GridContext.getContext().setCurrentDevice("svg", new SVGDevice(filename, witdh / 72., height / 72.));
+        GridContext.getContext().setCurrentDevice("svg", new SVGDevice(FileDevUtils.formatInitialFilename(filename), witdh / 72., height / 72.), filename);
         return RNull.instance;
     }
 }

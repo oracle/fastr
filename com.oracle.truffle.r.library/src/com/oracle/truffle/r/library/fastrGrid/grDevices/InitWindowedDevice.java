@@ -100,8 +100,8 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
         String formatName = name.substring(0, name.indexOf("::"));
         String filename = name.substring(name.lastIndexOf(':') + 1);
         try {
-            BufferedImageDevice device = BufferedImageDevice.open(filename, formatName, width, height);
-            GridContext.getContext().setCurrentDevice(formatName.toUpperCase(), device);
+            BufferedImageDevice device = BufferedImageDevice.open(FileDevUtils.formatInitialFilename(filename), formatName, width, height);
+            GridContext.getContext().setCurrentDevice(formatName.toUpperCase(), device, filename);
         } catch (NotSupportedImageFormatException e) {
             throw error(Message.GENERIC, String.format("Format '%s' is not supported.", formatName));
         }
