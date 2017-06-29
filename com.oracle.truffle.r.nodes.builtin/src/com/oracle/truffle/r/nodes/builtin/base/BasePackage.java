@@ -94,6 +94,8 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRContext;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContextFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebug;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebugNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRHelp;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRHelpNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRIdentity;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRIdentityNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInspect;
@@ -408,6 +410,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastrDqrls.class, FastrDqrlsNodeGen::create);
         add(FastRDebug.class, FastRDebugNodeGen::create);
         add(FastRSetBreakpoint.class, FastRSetBreakpointNodeGen::create);
+        add(FastRHelp.class, FastRHelpNodeGen::create);
         add(FastRIdentity.class, FastRIdentityNodeGen::create);
         add(FastRTry.class, FastRTryNodeGen::create);
         add(FastRInspect.class, FastRInspectNodeGen::create);
