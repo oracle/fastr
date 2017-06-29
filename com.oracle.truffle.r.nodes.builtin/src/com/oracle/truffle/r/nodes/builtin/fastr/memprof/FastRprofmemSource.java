@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr.memprof;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.fastr.memprof.FastRprofmem.castSnapshotArg;
 import static com.oracle.truffle.r.nodes.builtin.fastr.memprof.FastRprofmem.castViewArg;
@@ -59,18 +58,16 @@ public abstract class FastRprofmemSource extends RBuiltinNode.Arg3 {
     public Object showSource(int entryId, String view, TruffleObject snapshotTO) {
         MemAllocProfilerPaths paths = MemAllocProfilerPaths.fromTruffleObject(snapshotTO);
         return showSource(entryId, view, paths);
-
     }
 
     private static Object showSource(int entryId, String view, MemAllocProfilerPaths snap) {
         MemAllocProfilerPaths snapshot = snap;
         if (FastRprofmem.HOTSPOTS_VIEW.equals(view)) {
-            snapshot = snapshot.toHotSpots();
+            snapshot = snapshot.toHS();
         }
 
         FastRprofmem.getProfilerPrinter().source(snapshot, entryId);
 
         return RNull.instance;
     }
-
 }

@@ -57,7 +57,7 @@ public abstract class FastRprofmemSnapshot extends RBuiltinNode.Arg2 {
         MemAllocProfilerPaths snapshot = MemAllocProfilerStacks.getInstance().getStackPaths().getOrMakeSnapshot(name);
 
         if (FastRprofmem.HOTSPOTS_VIEW.equals(view)) {
-            snapshot = snapshot.toHotSpots();
+            snapshot = snapshot.toHS();
         }
 
         return snapshot.toTruffleObject();

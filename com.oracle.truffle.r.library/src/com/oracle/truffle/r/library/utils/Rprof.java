@@ -81,7 +81,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * the function name.
  *
  */
-public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFactory.Listener, MemoryCopyTracer.Listener {
+public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements MemoryCopyTracer.Listener {
 
     static {
         Casts casts = new Casts(Rprof.class);
@@ -114,8 +114,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
                     warning(RError.Message.GENERIC, "Rprof: gc profiling not supported");
                 }
                 if (memProfiling) {
-                    RDataFactory.addListener(this);
-                    RDataFactory.setTracingState(true);
+                    RDataFactory.addListener(LISTENER);
                     MemoryCopyTracer.addListener(this);
                     MemoryCopyTracer.setTracingState(true);
                 }
@@ -133,24 +132,26 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
         return RNull.instance;
     }
 
-    @Override
-    @TruffleBoundary
-    public void reportAllocation(RTypedValue data) {
-        RprofState profState = RprofState.get();
-        if (profState.memoryQuad == null) {
-            return;
-        }
-        long size = RObjectSize.getObjectSize(data, Rprofmem.myIgnoreObjectHandler);
-        if (data instanceof RAbstractVector) {
-            if (size >= Rprofmem.LARGE_VECTOR) {
-                profState.memoryQuad.largeV += size;
-            } else {
-                profState.memoryQuad.smallV += size;
+    private static final RDataFactory.Listener LISTENER = new RDataFactory.Listener() {
+        @Override
+        @TruffleBoundary
+        public void reportAllocation(RTypedValue data) {
+            RprofState profState = RprofState.get();
+            if (profState.memoryQuad == null) {
+                return;
             }
-        } else {
-            profState.memoryQuad.nodes += size;
+            long size = RObjectSize.getObjectSize(data, Rprofmem.myIgnoreObjectHandler);
+            if (data instanceof RAbstractVector) {
+                if (size >= Rprofmem.LARGE_VECTOR) {
+                    profState.memoryQuad.largeV += size;
+                } else {
+                    profState.memoryQuad.smallV += size;
+                }
+            } else {
+                profState.memoryQuad.nodes += size;
+            }
         }
-    }
+    };
 
     @Override
     @TruffleBoundary
@@ -362,7 +363,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements RDataFa
             out.close();
             this.setOut(null);
             if (this.memoryProfiling) {
-                RDataFactory.setTracingState(false);
+                RDataFactory.removeListener(LISTENER);
                 MemoryCopyTracer.setTracingState(false);
             }
         }

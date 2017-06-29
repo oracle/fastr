@@ -133,10 +133,9 @@ public class FastRInterop {
             return parse(mimeType, source).call();
         }
 
-        @SuppressWarnings("unused")
         @Specialization()
         @TruffleBoundary
-        protected Object eval(RMissing mimeType, String source, RMissing path) {
+        protected Object eval(@SuppressWarnings("unused") RMissing mimeType, @SuppressWarnings("unused") String source, @SuppressWarnings("unused") RMissing path) {
             throw RError.error(this, RError.Message.INVALID_ARG, "mimeType");
         }
 
