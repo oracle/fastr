@@ -112,5 +112,7 @@ public class TestBuiltin_substitute extends TestBase {
         assertEval("substitute(quote(x+1), environment())");
         assertEval("f<-function() {}; substitute(quote(x+1), f)");
         assertEval("substitute(quote(x+1), setClass('a'))");
+
+        assertEval("typeof(substitute(set))");
     }
 }

@@ -17,10 +17,10 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -39,6 +39,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
@@ -1134,22 +1135,52 @@ public class FileFunctions {
                 if (pathPattern.length() == 0 || RRuntime.isNA(pathPattern)) {
                     continue;
                 }
-                if (containsGlobChar(pathPattern) >= 0) {
-                    throw RError.nyi(this, "wildcards");
+                int firstGlobCharIdx = containsGlobChar(pathPattern);
+                if (firstGlobCharIdx >= 0) {
+                    result = removeGlob(pathPattern, recursive, firstGlobCharIdx, result);
+                } else {
+                    result = removeFile(FileSystems.getDefault().getPath(pathPattern), recursive, result);
                 }
-                Path path = fileSystem.getPath(pathPattern);
-                if (Files.isDirectory(path)) {
-                    if (!recursive) {
-                        continue;
-                    } else {
-                        result = recursiveDelete(path);
+            }
+            return result;
+        }
+
+        private int removeGlob(String pathPattern, boolean recursive, int firstGlobCharIdx, int result) {
+            // we take as much as we can from the pathPatter as the search root
+            int lastSeparator = pathPattern.substring(0, firstGlobCharIdx).lastIndexOf(File.separatorChar);
+            String searchRoot = pathPattern.substring(0, lastSeparator);
+            try {
+                int[] tmpResult = new int[]{result};
+                PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + pathPattern);
+                Files.walkFileTree(Paths.get(searchRoot), new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        if (matcher.matches(file)) {
+                            tmpResult[0] = removeFile(file, recursive, tmpResult[0]);
+                            return recursive ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
+                        }
+                        return FileVisitResult.CONTINUE;
                     }
+                });
+                return tmpResult[0];
+            } catch (IOException e) {
+                return 0;
+            }
+        }
+
+        private int removeFile(Path path, boolean recursive, int resultIn) {
+            int result = resultIn;
+            if (Files.isDirectory(path)) {
+                if (!recursive) {
+                    return result;
+                } else {
+                    result = recursiveDelete(path);
                 }
-                try {
-                    Files.deleteIfExists(path);
-                } catch (IOException ex) {
-                    result = 0;
-                }
+            }
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException ex) {
+                result = 0;
             }
             return result;
         }

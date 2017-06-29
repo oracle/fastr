@@ -28,6 +28,7 @@ import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridState.GridDeviceState;
+import com.oracle.truffle.r.library.fastrGrid.device.FileGridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice.DeviceCloseException;
 import com.oracle.truffle.r.library.fastrGrid.device.SVGDevice;
@@ -59,7 +60,7 @@ public final class GridContext {
     private int currentDeviceIdx = 0;
 
     private GridContext() {
-        devices.add(new DeviceAndState(null));
+        devices.add(new DeviceAndState(null, null));
     }
 
     public static GridContext getContext() {
@@ -86,10 +87,15 @@ public final class GridContext {
     }
 
     public void setCurrentDevice(String name, GridDevice currentDevice) {
+        assert !(currentDevice instanceof FileGridDevice) : "FileGridDevice must have filenamePattern";
+        setCurrentDevice(name, currentDevice, null);
+    }
+
+    public void setCurrentDevice(String name, GridDevice currentDevice, String filenamePattern) {
         RGridGraphicsAdapter.addDevice(name);
         RGridGraphicsAdapter.setCurrentDevice(name);
         currentDeviceIdx = this.devices.size();
-        this.devices.add(new DeviceAndState(currentDevice));
+        this.devices.add(new DeviceAndState(currentDevice, filenamePattern));
         assert devices.size() == RGridGraphicsAdapter.getDevicesCount();
     }
 
@@ -158,9 +164,9 @@ public final class GridContext {
         final GridDevice device;
         final GridDeviceState state;
 
-        DeviceAndState(GridDevice device) {
+        DeviceAndState(GridDevice device, String filenamePattern) {
             this.device = device;
-            this.state = new GridDeviceState();
+            this.state = new GridDeviceState(filenamePattern);
         }
     }
 }

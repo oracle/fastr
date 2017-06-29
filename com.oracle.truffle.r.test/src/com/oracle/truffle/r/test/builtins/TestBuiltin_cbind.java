@@ -181,5 +181,8 @@ public class TestBuiltin_cbind extends TestBase {
         assertEval("dput(cbind(c(NULL, NULL), integer(0)))");
         assertEval("dput(cbind(integer(0)))");
         assertEval("dput(cbind(integer(0), NULL, NULL))");
+        // FIXME FastR wrongly adds dimnames to the result
+        assertEval(Ignored.ImplementationError, "dput(cbind(substitute(graphics::par), list(as.symbol('a'))))");
+        assertEval("typeof(cbind(substitute(graphics::par), list(as.symbol('a'))))");
     }
 }

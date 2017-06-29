@@ -543,6 +543,8 @@ public class TestBuiltin_c extends TestBase {
 
         // names vector created by combine cannot be temporary
         assertEval("{ x<-c(a=42); y<-c(b=7); z<-c(x,y); w<-names(z); w[[1]]<-\"c\"; z }");
+
+        assertEval("typeof(c(substitute(graphics::par), list(as.symbol('a'))))");
     }
 
     @Test

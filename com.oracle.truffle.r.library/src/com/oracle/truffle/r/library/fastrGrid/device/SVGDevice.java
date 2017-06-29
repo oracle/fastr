@@ -39,10 +39,10 @@ import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineJoin
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 
-public class SVGDevice implements GridDevice {
+public class SVGDevice implements GridDevice, FileGridDevice {
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.000");
     private final StringBuilder data = new StringBuilder(1024);
-    private final String filename;
+    private String filename;
     private final double width;
     private final double height;
 
@@ -74,13 +74,15 @@ public class SVGDevice implements GridDevice {
     }
 
     @Override
+    public void openNewPage(String newFilename) throws DeviceCloseException {
+        saveFile();
+        filename = newFilename;
+        openNewPage();
+    }
+
+    @Override
     public void close() throws DeviceCloseException {
-        closeSVGDocument();
-        try {
-            Files.write(Paths.get(filename), Collections.singleton(data.toString()), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new DeviceCloseException(e);
-        }
+        saveFile();
     }
 
     @Override
@@ -181,7 +183,19 @@ public class SVGDevice implements GridDevice {
         data.append("' ").append(attributes).append(" />");
     }
 
+    private void saveFile() throws DeviceCloseException {
+        closeSVGDocument();
+        try {
+            Files.write(Paths.get(filename), Collections.singleton(data.toString()), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new DeviceCloseException(e);
+        }
+    }
+
     private void closeSVGDocument() {
+        if (data.length() == 0) {
+            return;
+        }
         if (cachedCtx != null) {
             // see #appendStyle
             append("</g>");
