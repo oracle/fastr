@@ -71,14 +71,6 @@ public class TruffleLLVM_Tools implements ToolsRFFI {
 
     }
 
-    public static int getC(RConnection conn) {
-        try {
-            return conn.getc();
-        } catch (IOException ex) {
-            throw RInternalError.shouldNotReachHere(ex);
-        }
-    }
-
     @Override
     public ParseRdNode createParseRdNode() {
         return new TruffleLLVM_ToolsRFFINode();
