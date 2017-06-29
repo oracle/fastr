@@ -38,7 +38,7 @@ result <- function() deparseObject(out)
 
 isError <- function() err
 
-.fastr.interop.export('parser', parser)
-.fastr.interop.export('deparseObject', deparseObject)
-.fastr.interop.export('result', result)
-.fastr.interop.export('isError', isError)
+export('parser', parser)
+export('deparseObject', deparseObject)
+export('result', result)
+export('isError', isError)

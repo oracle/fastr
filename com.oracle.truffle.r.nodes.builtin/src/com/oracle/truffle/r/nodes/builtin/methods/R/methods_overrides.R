@@ -26,13 +26,13 @@ eval(expression({
 
 new <- function (Class, ...) {
     if(is.character(Class)) {
-        javaClass <- .fastr.java.class(Class, silent=TRUE)
+        javaClass <- new.java.class(Class, silent=TRUE)
         if(!is.null(javaClass)) {
             Class <- javaClass
         }
     }
-    if(.fastr.interop.isExternal(Class)) {
-        .fastr.interop.new(Class, ...)
+    if(is.external(Class)) {
+        new.external(Class, ...)
     } else {
         ClassDef <- getClass(Class, where = topenv(parent.frame()))
         value <- .Call(C_new_object, ClassDef)
