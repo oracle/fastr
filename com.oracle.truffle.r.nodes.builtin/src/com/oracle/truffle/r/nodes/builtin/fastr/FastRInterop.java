@@ -451,11 +451,11 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = "java.addClasspathEntry", visibility = OFF, kind = PRIMITIVE, parameterNames = {"value", "silent"}, behavior = COMPLEX)
-    public abstract static class JavaAddClasspathEntry extends RBuiltinNode.Arg2 {
+    @RBuiltin(name = "java.addToClasspath", visibility = OFF, kind = PRIMITIVE, parameterNames = {"value", "silent"}, behavior = COMPLEX)
+    public abstract static class JavaAddToClasspath extends RBuiltinNode.Arg2 {
 
         static {
-            Casts casts = new Casts(JavaAddClasspathEntry.class);
+            Casts casts = new Casts(JavaAddToClasspath.class);
             casts.arg("value").mustBe(stringValue()).asStringVector();
             casts.arg("silent").mapMissing(Predef.constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
                             notLogicalNA()).map(Predef.toBoolean());
