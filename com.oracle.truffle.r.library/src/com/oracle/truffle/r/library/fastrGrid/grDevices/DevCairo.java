@@ -43,7 +43,7 @@ public class DevCairo extends RExternalBuiltinNode {
 
         String filename = RRuntime.asString(args.getArgument(0));
         int witdh = RRuntime.asInteger(args.getArgument(2));
-        int height = RRuntime.asInteger(args.getArgument(2));
+        int height = RRuntime.asInteger(args.getArgument(3));
         if (RRuntime.isNA(witdh) || RRuntime.isNA(height) || RRuntime.isNA(filename) || filename.isEmpty()) {
             throw error(Message.INVALID_ARG_TYPE);
         }
