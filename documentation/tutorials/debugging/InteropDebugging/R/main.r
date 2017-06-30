@@ -24,17 +24,17 @@
 print("Hello, World! (from file)")
 print("Creating a Java object in FastR")
 
-clazz <- .fastr.java.class("java.util.Date")
-obj <- .fastr.interop.new(clazz, .fastr.interop.toLong(as.integer(Sys.time())*1000))
+clazz <- new.java.class("java.util.Date")
+obj <- new.external(clazz, as.external.long(as.integer(Sys.time())*1000))
 print(obj$toString())
 
 # add classpath entry to be able to use our class
-java.addClasspathEntry("build/classes")
-clazz <- .fastr.java.class("com.oracle.truffle.r.JavaMessage")
-obj <- .fastr.interop.new(clazz, "Hi there")
+java.addToClasspath("build/classes")
+clazz <- new.java.class("com.oracle.truffle.r.JavaMessage")
+obj <- new.external(clazz, "Hi there")
 print(obj$getMessage())
 
 JS_MIME_TYPE <- "application/javascript"
-.fastr.interop.eval(JS_MIME_TYPE, 'var s = "Hello from Javascript"; print(s)')
-.fastr.interop.evalFile("JS/main.js", JS_MIME_TYPE)
+eval.external(JS_MIME_TYPE, source='var s = "Hello from Javascript"; print(s)')
+eval.external(JS_MIME_TYPE, path="JS/main.js")
 

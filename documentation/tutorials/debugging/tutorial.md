@@ -19,7 +19,7 @@ binSearch(1:100, 101) # why does this not stop
 Set a line breakpoint in function binSearch, step through the loop iterations and find the problem.
 
 ## Debugging Packages 1
-Packages are usually loaded lazily from a binary file containing the serialized code and data of the package.
+Packages are loaded lazily from a binary file containing the serialized code and data of the package.
 Therefore, you can usually only install a function breakpoint to package code.
 However, FastR keeps the package source such that you can set a line breakpoint in the package's source files.
 
@@ -40,13 +40,14 @@ As soon as the debugging cursor stops at the line breakpoint, step into the call
 
 ## Debugging Packages 2
 For some reason, it may be that packages do not have source code available.
-In this case installing line breakpoints is not straigt forward.
+In this case installing line breakpoints is not straight forward.
 Therefore, FastR provides a facility to query the source of an R function.
 As in GnuR, if the source is not available for the function, the function's body is deparsed and a string representation is generated.
 FastR then generates a temporary source file containing the deparsed source code.
 This temporary source file can be queried using function `.fastr.srcinfo`.
 
 Let's work through an example: 
+Load the provided file `dummy.r` which defines a function named *fun*.
 ```R
 source("R/dummy.r")
 fun
@@ -83,11 +84,11 @@ The reason is that FastR does not create source reference attributes in the pars
 
 ## Inspecting Promises
 Promises are in particular difficult to handle during debugging.
-The maxime of debugging is to not modify the program as it could change its behavior and make any debugging difficult.
+The maxim of debugging is to not modify the program as it could change its behavior and make any debugging difficult.
 However, this means that you will often not be able to inspect a promise until it is too late since a promise is evaluated at the time it is used.
 FastR allows to inspect promises in the variables view.
 Every promise (a function parameter) has three fields: `value`, `isEvaluated`, and `isEager`
-If `isEager` is `true`, then you will immediately see the value of the promise. An eager promise is a special kind where FastR eagerly evaluated the value for performance reasons.
+If `isEager` is `TRUE`, then you will immediately see the value of the promise. An eager promise is a special kind where FastR eagerly evaluated the value for performance reasons.
 In this case it is safe to have the value already available without changing the semantics of the program.
 If `isEager` is `FALSE`, then `isEvaluated` will initially also be `FALSE` and `value` will be `NULL`.
 As soon as the executed function uses the parameter, the promise will be evaluated and `isEvaluated` becomes `TRUE`.
@@ -110,14 +111,17 @@ The NetBeans debugger is also capable of stepping over language boundaries.
   4. Navigate to the extracted folder of GraalVM and select the __jdk__ subfolder and click *Next*.
   5. Specify an appropriate platform name like __GraalVM JDK__ and click finish. 
 3. Open the NetBeans project *InteropDebugging* and ensure that it uses __GraalVM JDK__ as platform:
+4. Open the NetBeans project *InteropDebugging*
+  1. File -> New Project ...
+  2. Java Project with Existing Sources
+  3. Specify name *InteropDebugging, select folder *InteropDebugging* and click Next
+  4. Add folder *src* to *Source Package Folders* and click Next
+  5. There should be two files *JavaMessage.java* and *Main.java*
+  6. Click Finish
+5. To be able to build the project, ensure that the library *truffle-api.jar* is imported correctly.
   1. Right click on the project and select *Properties*.
-  2. Select *Libraries* and choose __GraalVM JDK__ in the dropdown menu labeled with *Java Platform:*. 
-4. To be able to build the project, ensure that the library *truffle-api.jar* is imported correctly.
-  * The easiest way is to copy or link the wohle GraalVM into the project's root folder using the folder name `graalvm`.
-  * Otherwise: 
-    1. Right click on the project and select *Properties*.
-    2. Then select entry *Libraries*, select the *Compile* tab and look for *Classpath*.
-    3. Click on *...* and add file *graalvm/lib/truffle/truffle-api.jar*, where *graalvm* is the folder where you extracted the downloaded GraalVM into.
+  2. Then select entry *Libraries*, select the *Compile* tab and look for *Classpath*.
+  3. Click on *...* and add file *graalvm/lib/truffle/truffle-api.jar*, where *graalvm* is the folder where you extracted the downloaded GraalVM into.
 5. Clean and build project *InteropDebugging*.
 
 ### Inter-language Debugging 
@@ -139,7 +143,7 @@ During stepping through the R program, you will also step into the Java code.
 
 Next, lines 31 to 35 in *R/main.r* instantiate an object of a class in our NetBeans Java project. 
 Before we can use our class *JavaMessage*, we need to add this project to the class path for the Java interoperability. 
-This is done by statement `java.addClasspathEntry("build/classes")`. 
+This is done by statement `java.addToClasspath("build/classes")`. 
 You can now also set a breakpoint in the `getMessage()` method and the debugger will halt on this breakpoint if the R expression `obj$getMessage()` is evaluated. 
 
 Lines 38 and 39 further evaluate code of a different language, namely JavaScript.
