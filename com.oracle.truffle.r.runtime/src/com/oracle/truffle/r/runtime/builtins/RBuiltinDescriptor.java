@@ -35,6 +35,7 @@ public abstract class RBuiltinDescriptor {
     private static int primitiveMethodCount;
 
     private final String name;
+    private final Class<?> builtinMetaClass;
     private final Class<?> builtinNodeClass;
     private final RVisibility visibility;
     private final String[] aliases;
@@ -51,10 +52,12 @@ public abstract class RBuiltinDescriptor {
     private final int primitiveMethodIndex;
     @CompilationFinal(dimensions = 1) private final boolean[] evaluatesArgument;
 
-    public RBuiltinDescriptor(String name, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller,
+    public RBuiltinDescriptor(String name, Class<?> builtinMetaClass, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature,
+                    int[] nonEvalArgs, boolean splitCaller,
                     boolean alwaysSplit, RDispatch dispatch, String genericName, RBehavior behavior, RSpecialFactory specialCall) {
         this.specialCall = specialCall;
         this.name = name.intern();
+        this.builtinMetaClass = builtinMetaClass;
         this.builtinNodeClass = builtinNodeClass;
         this.visibility = visibility;
         this.aliases = aliases;
@@ -130,6 +133,10 @@ public abstract class RBuiltinDescriptor {
 
     public RVisibility getVisibility() {
         return visibility;
+    }
+
+    public Class<?> getBuiltinMetaClass() {
+        return builtinMetaClass;
     }
 
     public Class<?> getBuiltinNodeClass() {

@@ -269,7 +269,7 @@ public final class RBuiltinCheck {
         BasePackage base = new BasePackage();
         Map<String, BuiltinInfo> result = new TreeMap<>();
         for (Map.Entry<String, RBuiltinFactory> builtin : base.getBuiltins().entrySet()) {
-            Class<?> clazz = builtin.getValue().getBuiltinNodeClass();
+            Class<?> clazz = builtin.getValue().getBuiltinMetaClass();
             RBuiltin annotation = clazz.getAnnotation(RBuiltin.class);
             result.put(builtin.getKey(), new BuiltinInfo(
                             builtin.getValue().getVisibility(),

@@ -146,18 +146,28 @@ public abstract class RBuiltinPackage {
         }
     }
 
+    protected void add(Class<?> builtinMetaClass, Class<?> builtinClass,
+                    Supplier<RBuiltinNode> constructor) {
+        add(builtinMetaClass, builtinClass, constructor, null);
+    }
+
     protected void add(Class<?> builtinClass,
                     Supplier<RBuiltinNode> constructor) {
         add(builtinClass, constructor, null);
     }
 
     protected void add(Class<?> builtinClass, Supplier<RBuiltinNode> constructor, RSpecialFactory specialCall) {
-        RBuiltin annotation = builtinClass.getAnnotation(RBuiltin.class);
+        add(builtinClass, builtinClass, constructor, specialCall);
+    }
+
+    protected void add(Class<?> builtinMetaClass, Class<?> builtinClass, Supplier<RBuiltinNode> constructor, RSpecialFactory specialCall) {
+        RBuiltin annotation = builtinMetaClass.getAnnotation(RBuiltin.class);
         String[] parameterNames = annotation.parameterNames();
         parameterNames = Arrays.stream(parameterNames).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
         ArgumentsSignature signature = ArgumentsSignature.get(parameterNames);
 
-        putBuiltin(new RBuiltinFactory(annotation.name(), builtinClass, annotation.visibility(), annotation.aliases(), annotation.kind(), signature, annotation.nonEvalArgs(), annotation.splitCaller(),
+        putBuiltin(new RBuiltinFactory(annotation.name(), builtinMetaClass, builtinClass, annotation.visibility(), annotation.aliases(), annotation.kind(), signature, annotation.nonEvalArgs(),
+                        annotation.splitCaller(),
                         annotation.alwaysSplit(), annotation.dispatch(), annotation.genericName(), constructor, annotation.behavior(), specialCall));
     }
 }

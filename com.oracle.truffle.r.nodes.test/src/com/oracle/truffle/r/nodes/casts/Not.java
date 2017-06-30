@@ -74,7 +74,6 @@ public final class Not<T> implements Type, TypeAndInstanceCheck {
         if (isNegative(t)) {
             return getPositiveType(t);
         } else {
-            assert t instanceof Class;
             return new Not<>(t);
         }
     }

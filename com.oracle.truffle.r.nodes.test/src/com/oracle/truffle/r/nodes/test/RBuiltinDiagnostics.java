@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GeneratedBy;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -252,7 +253,7 @@ public class RBuiltinDiagnostics {
     }
 
     private static RBuiltinFactory findBuiltInFactory(Class<?> bltnCls, BasePackage bp) {
-        Optional<RBuiltinFactory> bltnFact = bp.getBuiltins().values().stream().filter(bf -> bf.getBuiltinNodeClass().isAssignableFrom(bltnCls)).findFirst();
+        Optional<RBuiltinFactory> bltnFact = bp.getBuiltins().values().stream().filter(bf -> bf.getBuiltinMetaClass().isAssignableFrom(bltnCls)).findFirst();
         if (bltnFact.isPresent()) {
             return bltnFact.get();
         } else {
@@ -359,24 +360,26 @@ public class RBuiltinDiagnostics {
         }
 
         SingleBuiltinDiagnostics init() throws Throwable {
-            String builtinClassName = builtinFactory.getBuiltinNodeClass().getName();
+            String builtinMetaClassName = builtinFactory.getBuiltinMetaClass().getName();
             // causes the invocation of the static initializer in the builtin node class
+            Class<?> bltnMetaCls = NodeWithArgumentCasts.Casts.getBuiltinClass(Class.forName(builtinMetaClassName));
+            String builtinClassName = builtinFactory.getBuiltinNodeClass().getName();
             Class<?> bltnCls = NodeWithArgumentCasts.Casts.getBuiltinClass(Class.forName(builtinClassName));
 
             try {
                 this.casts = builtinFactory.getCasts();
             } catch (RInternalError e) {
                 // It will be converted into an error after all builtins are fixed
-                throw new WarningException("Builtin " + builtinClassName + " should declare argument casts or use Casts.noCasts(" + bltnCls.getSimpleName() + ".class)");
+                throw new WarningException("Builtin " + builtinMetaClassName + " should declare argument casts or use Casts.noCasts(" + bltnMetaCls.getSimpleName() + ".class)");
             }
 
             if (this.casts == null || this.casts.declaresNoCasts()) {
-                throw new InfoException("Builtin " + builtinClassName + " has no-casts");
+                throw new InfoException("Builtin " + builtinMetaClassName + " has no-casts");
             }
 
             argResultSets = createArgResultSets();
 
-            List<Method> specs = CastUtils.getAnnotatedMethods(builtinFactory.getBuiltinNodeClass(), Specialization.class);
+            List<Method> specs = CastUtils.getAnnotatedMethods(bltnCls, Specialization.class, Fallback.class);
             this.specMethods = new ArrayList<>(specs);
             // N.B. The fallback method cannot be found by the Fallback annotation since
             // this annotation has the CLASS retention policy. Nonetheless, the fallback method can
@@ -459,7 +462,7 @@ public class RBuiltinDiagnostics {
             if (!headerPrinted && level <= diagSuite.diagConfig.outputMaxLevel) {
                 diagSuite.print(level, "\n");
                 diagSuite.print(level, "****************************************************************************");
-                diagSuite.print(level, "Builtin: " + builtinName + " (" + builtinFactory.getBuiltinNodeClass().getCanonicalName() + ")");
+                diagSuite.print(level, "Builtin: " + builtinName + " (" + builtinFactory.getBuiltinMetaClass().getCanonicalName() + ")");
                 diagSuite.print(level, "****************************************************************************");
                 headerPrinted = true;
                 diagSuite.reportedBuiltinsCounter++;
@@ -654,6 +657,8 @@ public class RBuiltinDiagnostics {
 
         Class<?> getBuiltinNodeClass();
 
+        Class<?> getBuiltinMetaClass();
+
         String[] getParameterNames();
 
         Object[] getDefaultParameterValues();
@@ -687,13 +692,18 @@ public class RBuiltinDiagnostics {
             return fact.getBuiltinNodeClass();
         }
 
+        @Override
+        public Class<?> getBuiltinMetaClass() {
+            return fact.getBuiltinMetaClass();
+        }
+
         public RBuiltinKind getBuiltinKind() {
             return fact.getKind();
         }
 
         @Override
         public String[] getParameterNames() {
-            RBuiltin annotation = fact.getBuiltinNodeClass().getAnnotation(RBuiltin.class);
+            RBuiltin annotation = fact.getBuiltinMetaClass().getAnnotation(RBuiltin.class);
             String[] pn = annotation.parameterNames();
             return Arrays.stream(pn).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
         }
@@ -705,7 +715,11 @@ public class RBuiltinDiagnostics {
 
         @Override
         public NodeWithArgumentCasts.Casts getCasts() {
-            return NodeWithArgumentCasts.Casts.getCasts(fact.getBuiltinNodeClass());
+            try {
+                return NodeWithArgumentCasts.Casts.getCasts(fact.getBuiltinMetaClass());
+            } catch (RInternalError e) {
+                return NodeWithArgumentCasts.Casts.getCasts(fact.getBuiltinNodeClass());
+            }
         }
 
         @Override
@@ -760,6 +774,11 @@ public class RBuiltinDiagnostics {
         }
 
         @Override
+        public Class<?> getBuiltinMetaClass() {
+            return nodeClass;
+        }
+
+        @Override
         public String[] getParameterNames() {
             return parameterNames;
         }
@@ -775,7 +794,7 @@ public class RBuiltinDiagnostics {
 
         @Override
         public NodeWithArgumentCasts.Casts getCasts() {
-            return NodeWithArgumentCasts.Casts.getCasts(getBuiltinNodeClass());
+            return NodeWithArgumentCasts.Casts.getCasts(getBuiltinMetaClass());
         }
 
         @Override
