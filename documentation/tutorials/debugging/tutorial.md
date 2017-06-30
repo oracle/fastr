@@ -139,7 +139,7 @@ During stepping through the R program, you will also step into the Java code.
 
 Next, lines 31 to 35 in *R/main.r* instantiate an object of a class in our NetBeans Java project. 
 Before we can use our class *JavaMessage*, we need to add this project to the class path for the Java interoperability. 
-This is done by statement `java.addClasspathEntry("build/classes")`. 
+This is done by statement `java.addToClasspath("build/classes")`. 
 You can now also set a breakpoint in the `getMessage()` method and the debugger will halt on this breakpoint if the R expression `obj$getMessage()` is evaluated. 
 
 Lines 38 and 39 further evaluate code of a different language, namely JavaScript.
