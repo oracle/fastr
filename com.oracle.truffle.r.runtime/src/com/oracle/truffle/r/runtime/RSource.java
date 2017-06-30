@@ -200,8 +200,8 @@ public class RSource {
         if (filename.isAbsolute()) {
             return fromFileName(filename.toString(), false);
         }
-        Path wd = Paths.get(getPath(env, SrcrefFields.wd.name()));
-        return fromFileName(wd.resolve(filename).toString(), false);
+        Path rHomePath = Paths.get(REnvVars.rHome());
+        return fromFileName(rHomePath.resolve(filename).toString(), false);
     }
 
     private static String getPath(REnvironment env, String name) {

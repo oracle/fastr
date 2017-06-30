@@ -79,7 +79,7 @@ public class RSrcref {
     }
 
     @TruffleBoundary
-    private static REnvironment createSrcfile(Path path) {
+    static REnvironment createSrcfile(Path path) {
         // A srcref is an environment
         REnvironment env = RContext.getInstance().srcfileEnvironments.get(path);
         if (env == null) {
@@ -159,6 +159,7 @@ public class RSrcref {
             try {
                 String pathStr = RSource.getPathInternal(source);
                 Path path = Paths.get(pathStr != null ? pathStr : "");
+
                 env.put(SrcrefFields.filename.name(), path.toString());
                 env.put(SrcrefFields.fixedNewlines.name(), RRuntime.LOGICAL_TRUE);
                 String[] lines = new String[source.getLineCount()];
