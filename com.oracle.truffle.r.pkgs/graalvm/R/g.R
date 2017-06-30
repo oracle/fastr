@@ -337,7 +337,9 @@ sendAttempt <- function(code, echo, mimetype) {
 	
 	if (resp$status_code >= 400) {
 		stop(respObj)
-	} else {
+	} else if (echo) {
 		respObj
+	} else {
+		invisible(NULL)
 	}
 }
