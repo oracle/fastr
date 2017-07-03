@@ -1,7 +1,7 @@
 # Introduction
 
 There are two main built-in R packages that provide basic graphical output 
-support: *graphics* and *lattice*. They both use some parts of even lower level 
+support: *graphics* and *grid*. They both use some parts of even lower level
 *grDevices* package, which allows users to change the "device" to which the 
 graphical output will be drawn. The probably most popular graphical packages 
 *lattice* and *ggplot2* are build on top of the *grid* package.
@@ -84,5 +84,13 @@ method and pass the graphics object to R code using `PolyglotEngine`.
 The R code can do any *grid* based visualization and it will be directly 
 displayed in the UI.
 
+# Limitations
 
+FastR's grid implementation does not yet support:
 
+* expressions in `grid.text`
+* `grid.xspline` function
+* clipping
+
+FastR does not plan to implement the R graphics engine display list
+and related functions. However, the grid display list is implemented.
