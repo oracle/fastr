@@ -764,15 +764,13 @@ public final class SpecialAttributesFunctions {
             for (int i = 0; loopProfile.inject(i < newDimNamesLength); i++) {
                 Object dimObject = newDimNames.getDataAt(i);
 
-                if ((dimObject instanceof String && dimensions[i] != 1) ||
+                if (dimObject == RNull.instance || (dimObject instanceof RStringVector && ((RStringVector) dimObject).getLength() == 0)) {
+                    nullDimProfile.enter();
+                    newDimNames.updateDataAt(i, RNull.instance, null);
+                } else if ((dimObject instanceof String && dimensions[i] != 1) ||
                                 (dimObject instanceof RStringVector && !isValidDimLength((RStringVector) dimObject, dimensions[i]))) {
                     CompilerDirectives.transferToInterpreter();
                     throw error(RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
-                }
-
-                if (dimObject == null || (dimObject instanceof RStringVector && ((RStringVector) dimObject).getLength() == 0)) {
-                    nullDimProfile.enter();
-                    newDimNames.updateDataAt(i, RNull.instance, null);
                 }
             }
 

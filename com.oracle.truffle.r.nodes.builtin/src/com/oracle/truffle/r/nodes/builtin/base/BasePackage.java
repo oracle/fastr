@@ -333,7 +333,8 @@ public class BasePackage extends RBuiltinPackage {
         add(ConnectionFunctions.IsIncomplete.class, ConnectionFunctionsFactory.IsIncompleteNodeGen::create);
         add(Contributors.class, ContributorsNodeGen::create);
         add(CopyDFAttr.class, CopyDFAttrNodeGen::create);
-        add(Crossprod.class, CrossprodNodeGen::create);
+        add(CrossprodCommon.TCrossprod.class, CrossprodCommon::createTCrossprod);
+        add(CrossprodCommon.Crossprod.class, CrossprodCommon::createCrossprod);
         add(CRC64.class, CRC64NodeGen::create);
         add(CumMax.class, CumMaxNodeGen::create);
         add(CumMin.class, CumMinNodeGen::create);
