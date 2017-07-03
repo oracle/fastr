@@ -15,12 +15,12 @@ All following examples are meant to be executed in the R Console, no additional 
 
 # Working with Java Classes and Objects
 ## Create a Java Class
-By providing the fully qualified class name to he `new.java.class` function. 
+By providing the fully qualified class name to the `new.java.class` function. 
 ```
 > calendarClass <- new.java.class('java.util.GregorianCalendar')
 ```
 
-(Every requested class has to be on FastR`s classpath. Java JDK classes, like GregorianCalendar used above, work our of the box.)
+(Every requested class has to be on FastR`s classpath. Java JDK classes, like GregorianCalendar used above, work out of the box.)
 
 The returned value is an external object representing a Java Class.
 
@@ -30,10 +30,17 @@ By providing an external object representig a Java class to the `new.external` f
 > calendar <- new.external(calendarClass)
 ```
 
-in addition to the class it is also possible pass over additional constructor arguments
+In addition to the class it is also possible to pass over additional constructor arguments.
 
 ```
 > calendar <- new.external(calendarClass, year=2042L, moth=3L, day=1L)
+```
+
+And apart from the interop builtins, the `new` function can be used as well.
+
+```
+calendar <- new("java.util.GregorianCalendar")
+calendar <- new("java.util.GregorianCalendar", year=2042L, moth=3L, day=1L)
 ```
 
 ## Accessing Fields and Methods
@@ -51,7 +58,7 @@ Access to static and instance fields and methods is provided by the `$` and `[` 
 > calendar$setTime(currentTime)
 ```
 
-External objects returned from a field, method or created via `new.external` are either automatically converted into according R values or they live on as external objects in the FastR environment. If necessary, they can be again passed over to java.
+External objects returned from a field, method or created via `new` or `new.external` are either automatically converted into according R values or they live on as external objects in the FastR environment. If necessary, they can be passed over to java.
 
 ```
 > cet <- new.java.class("java.util.TimeZone")$getTimeZone("CET")
@@ -79,7 +86,7 @@ also
 > interopShort <- as.external.short(1)
 ```
 
-R integer values map directly to Java int/Integer, R numeric to Java double/Double, R logical to Java boolean/Boolean and R character to Java String.
+R `integer` values map directly to Java `int`/`Integer`, R `numeric` to Java `double`/`Double`, R `logical` to Java `boolean`/`Boolean` and R `character` to Java `String`.
 
 ### Inspecting external objects
 The `names` function can be used to obtain a list of instance and static members from an external Java Object or Java Class.
@@ -132,7 +139,7 @@ The resulting array component type is either automatically given by the accordin
 ```
 
 ### Converting Java Arrays to R objects 
-Unlike Java primitives or their wrappers, java arrays aren't on access automatically converted into a R vector or list of the according type. Nevertheless, when appropriate they can be handled by FastR builtin functions the same way as native R objects.
+Unlike Java primitives or their wrappers, java arrays aren't on access automatically converted into a R vector. Nevertheless, when appropriate they can be handled by FastR builtin functions the same way as native R objects.
 ```
 > sapply(intArray, function(e) { e })
 > length(stringArray)
@@ -145,7 +152,7 @@ By providing a Java Array to the `as.vector` function.
 > intVec <- as.vector(intArray)
 ```
 
-Arrays where the component type is a Java primitive, a primitive wrapper or String are converted into a R vector of an according R data type, otherwise a list containing the array elements is created.
+Arrays where the component type is a Java primitive, a primitive wrapper or String are converted into a R vector, otherwise a list containing the array elements is created.
 
 See also
 ```
