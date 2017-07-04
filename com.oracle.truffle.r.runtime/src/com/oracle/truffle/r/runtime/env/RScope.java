@@ -43,6 +43,8 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.env.frame.REnvFrameAccess;
+import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
 
 /**
  * Represents a variable scope for external tools like a debugger.<br>
@@ -91,17 +93,19 @@ public final class RScope extends AbstractScope {
 
     @Override
     protected Object getVariables(Frame frame) {
-        return new VariablesMapObject(env, false);
+        return new EnvVariablesObject(env, false);
     }
 
     private static REnvironment getEnv(Frame frame) {
-        assert RArguments.isRFrame(frame);
-        return REnvironment.frameToEnvironment(frame.materialize());
+        if (RArguments.isRFrame(frame)) {
+            return REnvironment.frameToEnvironment(frame.materialize());
+        }
+        return null;
     }
 
     @Override
     protected Object getArguments(Frame frame) {
-        return new VariablesMapObject(env, true);
+        return new EnvVariablesObject(env, true);
     }
 
     @Override
@@ -112,30 +116,12 @@ public final class RScope extends AbstractScope {
         return new RScope(env.getParent());
     }
 
-    private static String[] ls(REnvironment env) {
-        RStringVector ls = env.ls(true, null, false);
-        return ls.getDataWithoutCopying();
-    }
-
-    private static String[] collectArgs(REnvironment env) {
-
-        if (env != REnvironment.emptyEnv()) {
-            assert RArguments.isRFrame(env.getFrame());
-            RFunction f = RArguments.getFunction(env.getFrame());
-            if (f != null) {
-                return RContext.getRRuntimeASTAccess().getArgumentsSignature(f).getNames();
-            } else {
-                ArgumentsSignature suppliedSignature = RArguments.getSuppliedSignature(env.getFrame());
-                if (suppliedSignature != null) {
-                    return suppliedSignature.getNames();
-                }
-            }
+    public static AbstractScope createScope(Node node, Frame frame) {
+        REnvironment env = getEnv(frame);
+        if (env != null && env != REnvironment.emptyEnv()) {
+            return new RScope(node.getRootNode(), env);
         }
-        return new String[0];
-    }
-
-    public static RScope createScope(Node node, Frame frame) {
-        return new RScope(node.getRootNode(), getEnv(frame));
+        return new GenericScope(node, frame.materialize());
     }
 
     /**
@@ -150,38 +136,82 @@ public final class RScope extends AbstractScope {
         return obj;
     }
 
-    static final class VariablesMapObject implements TruffleObject {
+    private static final class GenericScope extends AbstractScope {
 
-        private final REnvironment env;
+        private final MaterializedFrame mFrame;
+        private final Node node;
+
+        protected GenericScope(Node node, MaterializedFrame frame) {
+            this.node = node;
+            this.mFrame = frame;
+        }
+
+        @Override
+        protected String getName() {
+            return node.getRootNode().getName();
+        }
+
+        @Override
+        protected Node getNode() {
+            return node;
+        }
+
+        @Override
+        protected Object getVariables(Frame frame) {
+            return new GenericVariablesObject(mFrame, false);
+        }
+
+        @Override
+        protected Object getArguments(Frame frame) {
+            return new GenericVariablesObject(mFrame, true);
+        }
+
+        @Override
+        protected AbstractScope findParent() {
+            return null;
+        }
+
+    }
+
+    abstract static class VariablesObject implements TruffleObject {
+
+        private final REnvFrameAccess env;
         private final boolean argumentsOnly;
 
-        private VariablesMapObject(REnvironment env, boolean argumentsOnly) {
+        private VariablesObject(REnvFrameAccess env, boolean argumentsOnly) {
             this.env = env;
             this.argumentsOnly = argumentsOnly;
         }
 
         @Override
         public ForeignAccess getForeignAccess() {
-            return VariablesMapMessageResolutionForeign.ACCESS;
+            return VariablesMessageResolutionForeign.ACCESS;
+        }
+
+        private String[] ls() {
+            RStringVector ls = env.ls(true, null, false);
+            return ls.getDataWithoutCopying();
         }
 
         public static boolean isInstance(TruffleObject obj) {
-            return obj instanceof VariablesMapObject;
+            return obj instanceof VariablesObject;
         }
 
-        @MessageResolution(receiverType = VariablesMapObject.class)
-        static final class VariablesMapMessageResolution {
+        protected abstract String[] collectArgs();
+
+        @MessageResolution(receiverType = VariablesObject.class)
+        static final class VariablesMessageResolution {
 
             @Resolve(message = "KEYS")
             abstract static class VarsMapKeysNode extends Node {
 
                 @TruffleBoundary
-                public Object access(VariablesMapObject varMap) {
-                    String[] names;
+                public Object access(VariablesObject varMap) {
+                    String[] names = null;
                     if (varMap.argumentsOnly) {
-                        names = collectArgs(varMap.env);
+                        names = varMap.collectArgs();
                     } else {
-                        names = ls(varMap.env);
+                        names = varMap.ls();
                     }
                     return new ArgumentNamesObject(names);
                 }
@@ -196,8 +226,13 @@ public final class RScope extends AbstractScope {
                 private static final int INVOCABLE = 1 << 3;
 
                 @SuppressWarnings("try")
+<<<<<<< be4151069839c0f92d31afc64fe05e009ec07909
                 protected Object access(VariablesMapObject receiver, String identifier) {
                     int info = EXISTS + READABLE;
+=======
+                protected Object access(VariablesObject receiver, String identifier) {
+                    int info = READABLE;
+>>>>>>> Fix: Return generic scope if frame has not an R frame layout.
 
                     if (!receiver.env.bindingIsLocked(identifier)) {
                         info += WRITABLE;
@@ -213,7 +248,7 @@ public final class RScope extends AbstractScope {
             abstract static class VarsMapReadNode extends Node {
 
                 @TruffleBoundary
-                public Object access(VariablesMapObject varMap, String name) {
+                public Object access(VariablesObject varMap, String name) {
                     if (varMap.env == null) {
                         throw UnsupportedMessageException.raise(Message.READ);
                     }
@@ -232,7 +267,7 @@ public final class RScope extends AbstractScope {
             abstract static class VarsMapWriteNode extends Node {
 
                 @TruffleBoundary
-                public Object access(VariablesMapObject varMap, String name, Object value) {
+                public Object access(VariablesObject varMap, String name, Object value) {
                     if (varMap.env == null) {
                         throw UnsupportedMessageException.raise(Message.WRITE);
                     }
@@ -249,6 +284,48 @@ public final class RScope extends AbstractScope {
             }
 
         }
+    }
+
+    static final class EnvVariablesObject extends VariablesObject {
+
+        private final REnvironment env;
+
+        private EnvVariablesObject(REnvironment env, boolean argumentsOnly) {
+            super(new REnvTruffleFrameAccess(env.getFrame()), argumentsOnly);
+            this.env = env;
+        }
+
+        @Override
+        protected String[] collectArgs() {
+
+            if (env != REnvironment.emptyEnv()) {
+                assert RArguments.isRFrame(env.getFrame());
+                RFunction f = RArguments.getFunction(env.getFrame());
+                if (f != null) {
+                    return RContext.getRRuntimeASTAccess().getArgumentsSignature(f).getNames();
+                } else {
+                    ArgumentsSignature suppliedSignature = RArguments.getSuppliedSignature(env.getFrame());
+                    if (suppliedSignature != null) {
+                        return suppliedSignature.getNames();
+                    }
+                }
+            }
+            return new String[0];
+        }
+
+    }
+
+    static final class GenericVariablesObject extends VariablesObject {
+
+        private GenericVariablesObject(MaterializedFrame frame, boolean argumentsOnly) {
+            super(new REnvTruffleFrameAccess(frame), argumentsOnly);
+        }
+
+        @Override
+        protected String[] collectArgs() {
+            return new String[0];
+        }
+
     }
 
     static final class ArgumentNamesObject implements TruffleObject {
