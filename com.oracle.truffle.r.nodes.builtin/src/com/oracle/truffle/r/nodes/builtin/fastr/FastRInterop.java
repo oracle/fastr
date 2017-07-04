@@ -87,6 +87,7 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
@@ -639,12 +640,24 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
+        public Object toArray(RAbstractRawVector vec, @SuppressWarnings("unused") RMissing className, boolean flat) {
+            return toArray(vec, flat, byte.class, (array, i) -> Array.set(array, i, vec.getDataAt(i).getValue()));
+        }
+
+        @Specialization
+        @TruffleBoundary
+        public Object toArray(RAbstractRawVector vec, String className, boolean flat) {
+            return toArray(vec, flat, getClazz(className), (array, i) -> Array.set(array, i, vec.getDataAt(i).getValue()));
+        }
+
+        @Specialization(guards = "!isJavaLikeVector(vec)")
+        @TruffleBoundary
         public Object toArray(RAbstractVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
                         @Cached("createR2Foreign()") R2Foreign r2Foreign) {
             return toArray(vec, flat, Object.class, (array, i) -> Array.set(array, i, r2Foreign.execute(vec.getDataAtAsObject(i))));
         }
 
-        @Specialization
+        @Specialization(guards = "!isJavaLikeVector(vec)")
         @TruffleBoundary
         public Object toArray(RAbstractVector vec, String className, boolean flat,
                         @Cached("createR2Foreign()") R2Foreign r2Foreign) {
@@ -701,27 +714,26 @@ public class FastRInterop {
             void toArray(Object array, Integer i);
         }
 
-        @Specialization
+        @Specialization(guards = "isJavaObject(obj)")
         @TruffleBoundary
         public Object toArray(TruffleObject obj, @SuppressWarnings("unused") RMissing missing, @SuppressWarnings("unused") boolean flat,
                         @Cached("WRITE.createNode()") Node write) {
-            if (JavaInterop.isJavaObject(obj)) {
-                if (JavaInterop.isArray(obj)) {
-                    // TODO should return copy?
+
+            if (JavaInterop.isArray(obj)) {
+                // TODO should return copy?
+                return obj;
+            }
+            try {
+                Object o = JavaInterop.asJavaObject(Object.class, obj);
+                if (o == null) {
                     return obj;
                 }
-                try {
-                    // TODO should create array with the same component type as the JavaObject
-                    TruffleObject array = JavaInterop.asTruffleObject(Array.newInstance(Object.class, 1));
-                    ForeignAccess.sendWrite(write, array, 0, obj);
-                    return array;
-                } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                    throw error(RError.Message.GENERIC, "error while creating array: " + e.getMessage());
-                } catch (UnsupportedTypeException ex) {
-                    Logger.getLogger(FastRInterop.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                TruffleObject array = JavaInterop.asTruffleObject(Array.newInstance(o.getClass(), 1));
+                ForeignAccess.sendWrite(write, array, 0, obj);
+                return array;
+            } catch (UnsupportedTypeException | UnsupportedMessageException | UnknownIdentifierException e) {
+                throw error(RError.Message.GENERIC, "error while creating array: " + e.getMessage());
             }
-            throw error(RError.Message.GENERIC, "can't create array from " + obj);
         }
 
         @SuppressWarnings("unused")
@@ -736,6 +748,18 @@ public class FastRInterop {
             } catch (ClassNotFoundException e) {
                 throw error(RError.Message.GENERIC, "error while accessing Java class: " + e.getMessage());
             }
+        }
+
+        protected boolean isJavaObject(TruffleObject obj) {
+            return JavaInterop.isJavaObject(obj);
+        }
+
+        protected boolean isJavaLikeVector(RAbstractVector vec) {
+            return vec instanceof RAbstractLogicalVector ||
+                            vec instanceof RAbstractIntVector ||
+                            vec instanceof RAbstractDoubleVector ||
+                            vec instanceof RAbstractStringVector ||
+                            vec instanceof RAbstractRawVector;
         }
 
     }
