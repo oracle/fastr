@@ -273,7 +273,8 @@ suite = {
         "GNU_ICONV",
         "truffle:TRUFFLE_NFI_NATIVE",
       ],
-      "native" : "true",
+      "native" : True,
+      "single_job" : True,
       "workingSets" : "FastR",
       "buildEnv" : {
         "NFI_INCLUDES" : "-I<path:truffle:TRUFFLE_NFI_NATIVE>/include",
@@ -309,7 +310,7 @@ suite = {
         "com.oracle.truffle.r.ffi.impl"
       ],
       "class" : "FastRNativeRecommendedProject",
-      "native" : "true",
+      "native" : True,
       "workingSets" : "FastR",
     },
 
