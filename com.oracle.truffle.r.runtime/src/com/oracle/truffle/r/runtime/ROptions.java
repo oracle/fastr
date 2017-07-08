@@ -19,6 +19,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -159,7 +160,7 @@ public class ROptions {
         map.put("continue", RDataFactory.createSharedStringVectorFromScalar("+ "));
         map.put("deparse.cutoff", RDataFactory.createSharedIntVectorFromScalar(60));
         map.put("digits", RDataFactory.createSharedIntVectorFromScalar(7));
-        map.put("echo", RDataFactory.createSharedLogicalVectorFromScalar(startParams.getSlave() ? false : true));
+        map.put("echo", RDataFactory.createSharedLogicalVectorFromScalar(startParams.isSlave() ? false : true));
         map.put("encoding", RDataFactory.createSharedStringVectorFromScalar("native.enc"));
         map.put("expressions", RDataFactory.createSharedIntVectorFromScalar(5000));
         boolean keepPkgSource = optionFromEnvVar("R_KEEP_PKG_SOURCE", envVars);

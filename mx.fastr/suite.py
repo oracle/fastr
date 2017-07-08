@@ -29,7 +29,7 @@ suite = {
             {
                "name" : "truffle",
                "subdir" : True,
-               "version" : "4190e63be1bacdc1238c4cd526725eaf498d6337",
+               "version" : "8a073fbc3a52b6b023023c5b33773ce8ef3ad939",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -214,6 +214,7 @@ suite = {
     "com.oracle.truffle.r.runtime" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
+        "com.oracle.truffle.r.launcher",
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_DEBUG",
         "XZ-1.5",
@@ -222,6 +223,20 @@ suite = {
       "javaCompliance" : "1.8",
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",
+      ],
+      "workingSets" : "Truffle,FastR",
+      "jacoco" : "include",
+    },
+
+    "com.oracle.truffle.r.launcher" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "sdk:GRAAL_SDK",
+        "truffle:JLINE",
+      ],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "1.8",
+      "annotationProcessors" : [
       ],
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
@@ -319,11 +334,10 @@ suite = {
 
     "FASTR" : {
       "description" : "class files for compiling against FastR in a separate suite",
-      "dependencies" : ["com.oracle.truffle.r.engine", "com.oracle.truffle.r.ffi.impl"],
-      "mainClass" : "com.oracle.truffle.r.engine.shell.RCommand",
+      "dependencies" : ["com.oracle.truffle.r.engine", "com.oracle.truffle.r.launcher", "com.oracle.truffle.r.ffi.impl"],
+      "mainClass" : "com.oracle.truffle.r.launcher.RCommand",
       "exclude" : [
         "truffle:JLINE",
-        "ANTLR-C-3.5",
         "ANTLR-3.5",
         "GNUR",
         "GNU_ICONV",
@@ -334,7 +348,6 @@ suite = {
         "truffle:TRUFFLE_DEBUG",
         "truffle:TRUFFLE_NFI",
         "truffle:TRUFFLE_NFI_NATIVE",
-        "TRUFFLE_R_PARSER_PROCESSOR",
       ],
     },
 

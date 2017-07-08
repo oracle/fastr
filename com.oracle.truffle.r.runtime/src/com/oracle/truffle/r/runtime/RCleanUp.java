@@ -13,10 +13,11 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.ArrayList;
 
-import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
-import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 
 public class RCleanUp {
@@ -35,42 +36,39 @@ public class RCleanUp {
         }
     }
 
-    public static void stdCleanUp(final SA_TYPE saveActionIn, int status, boolean runLast) {
+    public static void stdCleanUp(SA_TYPE saveActionIn, int status, boolean runLast) {
         // Output is not diverted to sink
-        ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
+        ConsoleIO console = RContext.getInstance().getConsole();
         SA_TYPE saveAction = saveActionIn;
-        if (saveAction == SA_TYPE.DEFAULT) {
-            saveAction = RContext.getInstance().getStartParams().getSaveAction();
+        if (saveAction == SA_TYPE.DEFAULT || (saveAction == SA_TYPE.SAVEASK && !RContext.getInstance().isInteractive())) {
+            RStartParams params = RContext.getInstance().getStartParams();
+            saveAction = params.askForSave() ? SA_TYPE.SAVEASK : params.save() ? SA_TYPE.SAVE : SA_TYPE.NOSAVE;
         }
-        if (saveAction == SA_TYPE.SAVEASK) {
-            if (consoleHandler.isInteractive()) {
-                W: while (true) {
-                    consoleHandler.setPrompt("");
-                    consoleHandler.print("Save workspace image? [y/n/c]: ");
-                    String response = consoleHandler.readLine();
-                    if (response == null) {
-                        saveAction = SA_TYPE.NOSAVE;
-                        break;
-                    }
-                    if (response.length() == 0) {
-                        continue;
-                    }
-                    switch (response.charAt(0)) {
-                        case 'c':
-                            consoleHandler.setPrompt("> ");
-                            throw new JumpToTopLevelException();
-                        case 'y':
-                            saveAction = SA_TYPE.SAVE;
-                            break W;
-                        case 'n':
-                            saveAction = SA_TYPE.NOSAVE;
-                            break W;
-                        default:
-                            continue;
-                    }
+        if (saveAction == SA_TYPE.SAVEASK && RContext.getInstance().isInteractive()) {
+            W: while (true) {
+                console.setPrompt("");
+                console.print("Save workspace image? [y/n/c]: ");
+                String response = console.readLine();
+                if (response == null) {
+                    saveAction = SA_TYPE.NOSAVE;
+                    break;
                 }
-            } else {
-                saveAction = RContext.getInstance().getStartParams().getSaveAction();
+                if (response.length() == 0) {
+                    continue;
+                }
+                switch (response.charAt(0)) {
+                    case 'c':
+                        console.setPrompt("> ");
+                        throw new JumpToTopLevelException();
+                    case 'y':
+                        saveAction = SA_TYPE.SAVE;
+                        break W;
+                    case 'n':
+                        saveAction = SA_TYPE.NOSAVE;
+                        break W;
+                    default:
+                        continue;
+                }
             }
         }
 
@@ -84,18 +82,16 @@ public class RCleanUp {
                  * we save always
                  */
                 RContext.getEngine().checkAndRunStartupShutdownFunction("sys.save.image", new String[]{"\".RData\""});
-                RContext.getInstance().getConsoleHandler().flushHistory();
+                String history = RContext.getInstance().getConsole().getHistory();
+                // TODO: write out history
                 break;
-
             case NOSAVE:
                 if (runLast) {
                     runDotLast();
                 }
                 break;
-
-            case SUICIDE:
             default:
-
+                throw RInternalError.shouldNotReachHere();
         }
         for (InstrumentationState.CleanupHandler cleanupHandler : cleanupHandlers) {
             try {
@@ -105,8 +101,7 @@ public class RCleanUp {
             }
         }
         // TODO run exit finalizers (FFI) (this should happen in the FFI context beforeDestroy)
-        throw new ExitException(status);
-
+        throw new ExitException(status, false);
     }
 
     private static void runDotLast() {

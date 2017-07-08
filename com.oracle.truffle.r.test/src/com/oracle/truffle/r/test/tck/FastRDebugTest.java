@@ -52,11 +52,9 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Value;
-import com.oracle.truffle.r.runtime.RCmdOptions.Client;
+import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
-import com.oracle.truffle.r.runtime.context.DefaultConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -76,8 +74,7 @@ public class FastRDebugTest {
     public void before() {
         suspendedEvent = null;
 
-        ConsoleHandler consoleHandler = new DefaultConsoleHandler(System.in, out);
-        ContextInfo info = ContextInfo.createNoRestore(Client.R, null, ContextKind.SHARE_NOTHING, null, consoleHandler);
+        ContextInfo info = ContextInfo.createNoRestore(Client.R, null, ContextKind.SHARE_NOTHING, null, System.in, out, err);
         engine = info.createVM(PolyglotEngine.newBuilder().setOut(out).setErr(err));
         debugger = Debugger.find(engine);
         debuggerSession = debugger.startSession(event -> {

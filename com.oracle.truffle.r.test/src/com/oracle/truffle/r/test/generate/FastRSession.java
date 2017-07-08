@@ -22,28 +22,31 @@
  */
 package com.oracle.truffle.r.test.generate;
 
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Deque;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.debug.Debugger;
 import com.oracle.truffle.api.debug.SuspendedCallback;
 import com.oracle.truffle.api.debug.SuspendedEvent;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.launcher.RCmdOptions;
+import com.oracle.truffle.r.launcher.RCmdOptions.Client;
+import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
-import com.oracle.truffle.r.runtime.RCmdOptions;
-import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.RStartParams;
-import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
@@ -61,78 +64,28 @@ public final class FastRSession implements RSession {
      */
     private static int longTimeoutValue = 300000;
 
-    /**
-     * A (virtual) console handler that collects the output in a {@link StringBuilder} for
-     * comparison. It does not separate error output as the test analysis doesn't need it.
-     */
-    public static class TestConsoleHandler extends ConsoleHandler {
-        private final StringBuilder buffer = new StringBuilder();
-        private final Deque<String> input = new ArrayDeque<>();
+    private static final class TestByteArrayInputStream extends ByteArrayInputStream {
 
-        public void setInput(String[] lines) {
-            input.clear();
-            input.addAll(Arrays.asList(lines));
+        TestByteArrayInputStream() {
+            super(new byte[0]);
+        }
+
+        public void setContents(String data) {
+            this.buf = data.getBytes(StandardCharsets.UTF_8);
+            this.count = this.buf.length;
+            this.pos = 0;
         }
 
         @Override
-        @TruffleBoundary
-        public void println(String s) {
-            buffer.append(s);
-            buffer.append('\n');
-        }
-
-        @Override
-        @TruffleBoundary
-        public void print(String s) {
-            buffer.append(s);
-        }
-
-        @Override
-        public String readLine() {
-            return input.pollFirst();
-        }
-
-        @Override
-        public boolean isInteractive() {
-            return false;
-        }
-
-        @Override
-        @TruffleBoundary
-        public void printErrorln(String s) {
-            println(s);
-        }
-
-        @Override
-        @TruffleBoundary
-        public void printError(String s) {
-            print(s);
-        }
-
-        @Override
-        public String getPrompt() {
-            return null;
-        }
-
-        @Override
-        public void setPrompt(String prompt) {
-            // ignore
-        }
-
-        @TruffleBoundary
-        void reset() {
-            buffer.delete(0, buffer.length());
-        }
-
-        @Override
-        public String getInputDescription() {
-            return "<test input>";
+        public synchronized int read() {
+            return super.read();
         }
     }
 
     private static FastRSession singleton;
 
-    private final TestConsoleHandler consoleHandler;
+    private final ByteArrayOutputStream output = new ByteArrayOutputStream();
+    private final TestByteArrayInputStream input = new TestByteArrayInputStream();
     private final PolyglotEngine main;
     private final RContext mainContext;
 
@@ -157,8 +110,8 @@ public final class FastRSession implements RSession {
     }
 
     public ContextInfo createContextInfo(ContextKind contextKind) {
-        RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, new String[]{"--no-restore"}, false), false);
-        return ContextInfo.create(params, null, contextKind, mainContext, consoleHandler, TimeZone.getTimeZone("GMT"));
+        RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.R, new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
+        return ContextInfo.create(params, null, contextKind, mainContext, input, output, output, TimeZone.getTimeZone("GMT"));
     }
 
     private FastRSession() {
@@ -173,21 +126,65 @@ public final class FastRSession implements RSession {
                 // no need to scale longTimeoutValue
             }
         }
-        consoleHandler = new TestConsoleHandler();
         try {
-            RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.RSCRIPT, new String[]{"--no-restore"}, false), false);
-            ContextInfo info = ContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, consoleHandler);
+            RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.R, new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
+            ContextInfo info = ContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, input, output, output);
             main = info.createVM();
             mainContext = main.eval(GET_CONTEXT).as(RContext.class);
         } finally {
-            System.out.print(consoleHandler.buffer.toString());
+            try {
+                System.out.print(output.toString("UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private final CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
+
+    {
+        decoder.onMalformedInput(CodingErrorAction.IGNORE);
+        decoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+    }
+
+    private String readLine() {
+        /*
+         * We cannot use an InputStreamReader because it buffers characters internally, whereas
+         * readLine() should not buffer across newlines.
+         */
+
+        ByteBuffer bytes = ByteBuffer.allocate(16);
+        CharBuffer chars = CharBuffer.allocate(16);
+        StringBuilder str = new StringBuilder();
+        decoder.reset();
+        boolean initial = true;
+        while (true) {
+            int inputByte = input.read();
+            if (inputByte == -1) {
+                return initial ? null : str.toString();
+            }
+            initial = false;
+            bytes.put((byte) inputByte);
+            bytes.flip();
+            decoder.decode(bytes, chars, false);
+            chars.flip();
+            while (chars.hasRemaining()) {
+                char c = chars.get();
+                if (c == '\n' || c == '\r') {
+                    return str.toString();
+                }
+                str.append(c);
+            }
+            bytes.compact();
+            chars.clear();
         }
     }
 
     @Override
     public String eval(TestBase testClass, String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable {
         Timer timer = null;
-        consoleHandler.reset();
+        output.reset();
+        input.setContents(expression);
         try {
             ContextInfo actualContextInfo = checkContext(contextInfo);
             // set up some interop objects used by fastr-specific tests:
@@ -197,11 +194,10 @@ public final class FastRSession implements RSession {
             }
             PolyglotEngine vm = actualContextInfo.createVM(builder);
             timer = scheduleTimeBoxing(vm, longTimeout ? longTimeoutValue : timeoutValue);
-            consoleHandler.setInput(expression.split("\n"));
             try {
-                String input = consoleHandler.readLine();
-                while (input != null) {
-                    Source source = RSource.fromTextInternal(input, RSource.Internal.UNIT_TEST);
+                String consoleInput = readLine();
+                while (consoleInput != null) {
+                    Source source = RSource.fromTextInternal(consoleInput, RSource.Internal.UNIT_TEST);
                     try {
                         try {
                             vm.eval(source);
@@ -213,20 +209,20 @@ public final class FastRSession implements RSession {
                                 throw e;
                             }
                         }
-                        input = consoleHandler.readLine();
+                        consoleInput = readLine();
                     } catch (IncompleteSourceException e) {
-                        String additionalInput = consoleHandler.readLine();
+                        String additionalInput = readLine();
                         if (additionalInput == null) {
                             throw e;
                         }
-                        input += "\n" + additionalInput;
+                        consoleInput += "\n" + additionalInput;
                     }
                 }
             } finally {
                 vm.dispose();
             }
         } catch (ParseException e) {
-            e.report(consoleHandler);
+            e.report(output);
         } catch (ExitException | JumpToTopLevelException e) {
             // exit and jumpToTopLevel exceptions are legitimate if a test case calls "q()" or "Q"
             // during debugging
@@ -245,7 +241,12 @@ public final class FastRSession implements RSession {
                 timer.cancel();
             }
         }
-        return consoleHandler.buffer.toString();
+        try {
+            return output.toString("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return "<exception>";
+        }
     }
 
     private static Timer scheduleTimeBoxing(PolyglotEngine engine, long timeout) {

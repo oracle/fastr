@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,6 @@ public interface RSession {
      *
      * This result will always be non-null or an exception will be thrown in, say, a timeout
      * occurring.
-     *
      */
     String eval(TestBase testClass, String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable;
 

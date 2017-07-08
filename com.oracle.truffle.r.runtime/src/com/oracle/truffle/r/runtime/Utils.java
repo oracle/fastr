@@ -52,9 +52,10 @@ import com.oracle.truffle.api.nodes.GraphPrintVisitor;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.launcher.ConsoleHandler;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -204,7 +205,7 @@ public final class Utils {
      */
     public static RuntimeException rSuicideDefault(String msg) {
         System.err.println("FastR unexpected failure: " + msg);
-        throw new ExitException(2);
+        throw new ExitException(2, false);
     }
 
     /**
@@ -644,10 +645,9 @@ public final class Utils {
             StdConnections.getStderr().writeString(s, nl);
         } catch (IOException ex) {
             // Very unlikely
-            ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
-            consoleHandler.printErrorln("Error writing to stderr: " + ex.getMessage());
-            consoleHandler.printErrorln(s);
-
+            ConsoleIO console = RContext.getInstance().getConsole();
+            console.printErrorln("Error writing to stderr: " + ex.getMessage());
+            console.printErrorln(s);
         }
     }
 

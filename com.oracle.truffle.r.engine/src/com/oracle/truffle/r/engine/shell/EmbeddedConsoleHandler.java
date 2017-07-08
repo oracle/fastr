@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
+import org.graalvm.polyglot.Engine;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.launcher.ConsoleHandler;
+import com.oracle.truffle.r.launcher.DefaultConsoleHandler;
+import com.oracle.truffle.r.launcher.JLineConsoleHandler;
+import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.RInterfaceCallbacks;
-import com.oracle.truffle.r.runtime.RStartParams;
-import com.oracle.truffle.r.runtime.context.ConsoleHandler;
-import com.oracle.truffle.r.runtime.context.DefaultConsoleHandler;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
@@ -57,61 +60,61 @@ public class EmbeddedConsoleHandler extends ConsoleHandler {
         if (rEmbedRFFI == null) {
             rEmbedRFFI = RFFIFactory.getRFFI().getREmbedRFFI();
             if (!(RInterfaceCallbacks.R_WriteConsole.isOverridden() || RInterfaceCallbacks.R_ReadConsole.isOverridden())) {
-                if (startParams.getNoReadline()) {
+                if (startParams.noReadline()) {
                     delegate = new DefaultConsoleHandler(System.in, System.out);
                 } else {
-                    delegate = new JLineConsoleHandler(startParams, System.in, System.out);
+                    delegate = new JLineConsoleHandler(System.in, System.out, startParams.isSlave());
                 }
             }
         }
         return rEmbedRFFI;
     }
 
-    @Override
-    @TruffleBoundary
-    public void println(String s) {
-        getREmbedRFFI();
-        if (delegate == null) {
-            getREmbedRFFI().writeConsole(s);
-            getREmbedRFFI().writeConsole("\n");
-        } else {
-            delegate.println(s);
-        }
-    }
-
-    @Override
-    @TruffleBoundary
-    public void print(String s) {
-        getREmbedRFFI();
-        if (delegate == null) {
-            rEmbedRFFI.writeConsole(s);
-        } else {
-            delegate.print(s);
-        }
-    }
-
-    @Override
-    @TruffleBoundary
-    public void printErrorln(String s) {
-        getREmbedRFFI();
-        if (delegate == null) {
-            rEmbedRFFI.writeErrConsole(s);
-            rEmbedRFFI.writeErrConsole("\n");
-        } else {
-            delegate.printErrorln(s);
-        }
-    }
-
-    @Override
-    @TruffleBoundary
-    public void printError(String s) {
-        getREmbedRFFI();
-        if (delegate == null) {
-            rEmbedRFFI.writeErrConsole(s);
-        } else {
-            delegate.printError(s);
-        }
-    }
+    // @Override
+    // @TruffleBoundary
+    // public void println(String s) {
+    // getREmbedRFFI();
+    // if (delegate == null) {
+    // getREmbedRFFI().writeConsole(s);
+    // getREmbedRFFI().writeConsole("\n");
+    // } else {
+    // delegate.println(s);
+    // }
+    // }
+    //
+    // @Override
+    // @TruffleBoundary
+    // public void print(String s) {
+    // getREmbedRFFI();
+    // if (delegate == null) {
+    // rEmbedRFFI.writeConsole(s);
+    // } else {
+    // delegate.print(s);
+    // }
+    // }
+    //
+    // @Override
+    // @TruffleBoundary
+    // public void printErrorln(String s) {
+    // getREmbedRFFI();
+    // if (delegate == null) {
+    // rEmbedRFFI.writeErrConsole(s);
+    // rEmbedRFFI.writeErrConsole("\n");
+    // } else {
+    // delegate.printErrorln(s);
+    // }
+    // }
+    //
+    // @Override
+    // @TruffleBoundary
+    // public void printError(String s) {
+    // getREmbedRFFI();
+    // if (delegate == null) {
+    // rEmbedRFFI.writeErrConsole(s);
+    // } else {
+    // delegate.printError(s);
+    // }
+    // }
 
     @Override
     @TruffleBoundary
@@ -125,26 +128,11 @@ public class EmbeddedConsoleHandler extends ConsoleHandler {
     }
 
     @Override
-    public boolean isInteractive() {
-        return startParams.getInteractive();
-    }
-
-    @Override
-    public String getPrompt() {
-        return prompt;
-    }
-
-    @Override
     @TruffleBoundary
     public void setPrompt(String prompt) {
         this.prompt = prompt;
         if (delegate != null) {
             delegate.setPrompt(prompt);
         }
-    }
-
-    @Override
-    public String getInputDescription() {
-        return "<embedded input>";
     }
 }

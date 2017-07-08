@@ -100,12 +100,12 @@ public class TestInterop extends TestBase {
      * Used for testing interop functionality.
      */
     public static final class POJO {
-        public int intValue = 1;
-        public long longValue = 123412341234L;
+        public String stringValue = "foo";
         public char charValue = 'R';
+        public int intValue = 1;
         public short shortValue = -100;
         public boolean booleanValue = true;
-        public String stringValue = "foo";
+        public long longValue = 123412341234L;
     }
 
     private static final class TestJavaObject {
@@ -132,14 +132,14 @@ public class TestInterop extends TestBase {
     @Test
     public void testPrinting() {
         assertEvalFastR("v <- import('testPOJO'); print(v)", "cat('[external object]\\n" +
-                        "$intValue\\n" +
-                        "[1] 1\\n" +
-                        "\\n" +
-                        "$longValue\\n" +
-                        "[1] 123412341234\\n" +
+                        "$stringValue\\n" +
+                        "[1] \"foo\"\\n" +
                         "\\n" +
                         "$charValue\\n" +
                         "[1] \"R\"\\n" +
+                        "\\n" +
+                        "$intValue\\n" +
+                        "[1] 1\\n" +
                         "\\n" +
                         "$shortValue\\n" +
                         "[1] -100\\n" +
@@ -147,12 +147,12 @@ public class TestInterop extends TestBase {
                         "$booleanValue\\n" +
                         "[1] TRUE\\n" +
                         "\\n" +
-                        "$stringValue\\n" +
-                        "[1] \"foo\"\\n\\n')");
+                        "$longValue\\n" +
+                        "[1] 123412341234\\n\\n')");
         assertEvalFastR("v <- import('testStringArray'); print(v)", "cat('[external object]\\n[1] \"a\"   \"\"    \"foo\"\\n')");
         assertEvalFastR("v <- import('testIntArray'); print(v)", "cat('[external object]\\n[1]   1  -5 199\\n')");
         assertEvalFastR("v <- import('testIntArray'); v", "cat('[external object]\\n[1]   1  -5 199\\n')");
-        assertEvalFastR("v <- import('testPOJO'); names(v)", "c('intValue', 'longValue', 'charValue', 'shortValue', 'booleanValue', 'stringValue')");
+        assertEvalFastR("v <- import('testPOJO'); names(v)", "c('stringValue', 'charValue', 'intValue', 'shortValue', 'booleanValue', 'longValue')");
     }
 
     @Test

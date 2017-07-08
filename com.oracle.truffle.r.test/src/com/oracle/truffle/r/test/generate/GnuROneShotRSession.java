@@ -29,9 +29,9 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
+import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
 import com.oracle.truffle.r.runtime.REnvVars;
-import com.oracle.truffle.r.runtime.RVersionNumber;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.test.TestBase;
 

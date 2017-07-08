@@ -38,8 +38,8 @@ import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.r.engine.shell.RCommand;
-import com.oracle.truffle.r.engine.shell.RscriptCommand;
+import com.oracle.truffle.r.launcher.RCommand;
+import com.oracle.truffle.r.launcher.RscriptCommand;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -584,7 +584,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public Object rcommandMain(String[] args, String[] env, boolean intern) {
         IORedirect redirect = handleIORedirect(args, intern);
-        Object result = RCommand.doMain(redirect.args, env, false, redirect.in, redirect.out);
+        Object result = RCommand.doMain(redirect.args, env, redirect.in, redirect.out, redirect.err);
         return redirect.getInternResult(result);
     }
 
@@ -593,19 +593,21 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         IORedirect redirect = handleIORedirect(args, intern);
         // TODO argument parsing can fail with ExitException, which needs to be handled correctly in
         // nested context
-        Object result = RscriptCommand.doMain(redirect.args, env, false, redirect.in, redirect.out);
+        Object result = RscriptCommand.doMain(redirect.args, env, redirect.in, redirect.out, redirect.err);
         return redirect.getInternResult(result);
     }
 
     private static final class IORedirect {
         private final InputStream in;
+        private final OutputStream err;
         private final OutputStream out;
         private final String[] args;
         private final boolean intern;
 
-        private IORedirect(InputStream in, OutputStream out, String[] args, boolean intern) {
+        private IORedirect(InputStream in, OutputStream out, OutputStream err, String[] args, boolean intern) {
             this.in = in;
             this.out = out;
+            this.err = err;
             this.args = args;
             this.intern = intern;
         }
@@ -645,6 +647,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
          */
         InputStream in = System.in;
         OutputStream out = System.out;
+        OutputStream err = System.err;
         ArrayList<String> newArgsList = new ArrayList<>();
         int i = 0;
         while (i < args.length) {
@@ -692,7 +695,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         if (intern) {
             out = new ByteArrayOutputStream();
         }
-        return new IORedirect(in, out, newArgs, intern);
+        return new IORedirect(in, out, err, newArgs, intern);
     }
 
     @Override

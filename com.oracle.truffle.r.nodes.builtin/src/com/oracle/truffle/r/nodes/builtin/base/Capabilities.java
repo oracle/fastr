@@ -83,7 +83,7 @@ public abstract class Capabilities extends RBuiltinNode.Arg0 {
             boolean value = c.defValue;
             switch (c) {
                 case cledit:
-                    value = RContext.getInstance().isInteractive() && !RContext.getInstance().getStartParams().getNoReadline();
+                    value = RContext.getInstance().isInteractive() && !RContext.getInstance().getStartParams().noReadline();
                     break;
             }
             data[c.ordinal()] = RRuntime.asLogical(value);

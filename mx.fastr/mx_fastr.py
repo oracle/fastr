@@ -51,12 +51,10 @@ If this is None, then we run under the standard VM in interpreted mode only.
 _mx_graal = mx.suite("compiler", fatalIfMissing=False)
 _mx_sulong = mx.suite("sulong", fatalIfMissing=False)
 
-_r_command_package = 'com.oracle.truffle.r.engine'
-_repl_command = 'com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient'
-_command_class_dict = {'r': _r_command_package + ".shell.RCommand",
-                       'rscript': _r_command_package + ".shell.RscriptCommand",
-                        'rrepl': _repl_command,
-                        'rembed': _r_command_package + ".shell.REmbedded",
+_command_class_dict = {'r': "com.oracle.truffle.r.launcher.RCommand",
+                       'rscript': "com.oracle.truffle.r.launcher.RscriptCommand",
+                        'rrepl': "com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient",
+                        'rembed': "com.oracle.truffle.r.engine.shell.REmbedded",
                     }
 # benchmarking support
 def r_path():

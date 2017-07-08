@@ -69,8 +69,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -1034,7 +1034,7 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull show(RAbstractStringVector files, RAbstractStringVector header, RAbstractStringVector title, boolean deleteFile, @SuppressWarnings("unused") String pager) {
-            ConsoleHandler console = RContext.getInstance().getConsoleHandler();
+            ConsoleIO console = RContext.getInstance().getConsole();
             for (int i = 0; i < title.getLength(); i++) {
                 console.println("==== " + title.getDataAt(i) + " ====");
             }

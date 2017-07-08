@@ -39,7 +39,7 @@ public abstract class CommandArgs extends RBuiltinNode.Arg0 {
     @Specialization
     @TruffleBoundary
     protected RStringVector commandArgs() {
-        String[] s = RContext.getInstance().getStartParams().getArguments();
+        String[] s = RContext.getInstance().getEnv().getApplicationArguments();
         return RDataFactory.createStringVector(s, RDataFactory.COMPLETE_VECTOR);
     }
 }

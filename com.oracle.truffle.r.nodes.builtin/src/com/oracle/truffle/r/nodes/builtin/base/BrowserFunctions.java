@@ -110,7 +110,7 @@ public class BrowserFunctions {
             } else {
                 callerString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
             }
-            RContext.getInstance().getConsoleHandler().printf("Called from: %s%n", callerString);
+            RContext.getInstance().getConsole().printf("Called from: %s%n", callerString);
 
         }
     }

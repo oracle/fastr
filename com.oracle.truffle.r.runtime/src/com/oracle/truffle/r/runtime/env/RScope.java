@@ -190,13 +190,14 @@ public final class RScope extends AbstractScope {
             @Resolve(message = "KEY_INFO")
             public abstract static class VarMapsKeyInfoNode extends Node {
 
+                private static final int EXISTS = 1 << 0;
                 private static final int READABLE = 1 << 1;
                 private static final int WRITABLE = 1 << 2;
                 private static final int INVOCABLE = 1 << 3;
 
                 @SuppressWarnings("try")
                 protected Object access(VariablesMapObject receiver, String identifier) {
-                    int info = READABLE;
+                    int info = EXISTS + READABLE;
 
                     if (!receiver.env.bindingIsLocked(identifier)) {
                         info += WRITABLE;

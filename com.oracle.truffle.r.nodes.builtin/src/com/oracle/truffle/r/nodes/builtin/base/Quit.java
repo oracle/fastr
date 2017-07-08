@@ -24,11 +24,10 @@ import com.oracle.truffle.r.runtime.RCleanUp;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RStartParams;
-import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 
 @RBuiltin(name = "quit", visibility = OFF, kind = INTERNAL, parameterNames = {"save", "status", "runLast"}, behavior = COMPLEX)
 public abstract class Quit extends RBuiltinNode.Arg3 {
@@ -41,9 +40,9 @@ public abstract class Quit extends RBuiltinNode.Arg3 {
     }
 
     private SA_TYPE checkSaveValue(String save) throws RError {
-        for (String saveValue : SA_TYPE.SAVE_VALUES) {
-            if (saveValue.equals(save)) {
-                return SA_TYPE.fromString(save);
+        for (SA_TYPE saveValue : SA_TYPE.values()) {
+            if (saveValue.getName().equals(save)) {
+                return saveValue;
             }
         }
         throw error(RError.Message.QUIT_SAVE);
@@ -57,8 +56,8 @@ public abstract class Quit extends RBuiltinNode.Arg3 {
             warning(RError.Message.BROWSER_QUIT);
             return RNull.instance;
         }
-        RStartParams.SA_TYPE ask = checkSaveValue(save);
-        if (ask == SA_TYPE.SAVEASK && !RContext.getInstance().getConsoleHandler().isInteractive()) {
+        SA_TYPE ask = checkSaveValue(save);
+        if (ask == SA_TYPE.SAVEASK && !RContext.getInstance().isInteractive()) {
             warning(RError.Message.QUIT_ASK_INTERACTIVE);
         }
         if (status == RRuntime.INT_NA) {

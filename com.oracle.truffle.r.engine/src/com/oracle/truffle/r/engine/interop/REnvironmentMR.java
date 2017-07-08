@@ -108,6 +108,7 @@ public class REnvironmentMR {
     @Resolve(message = "KEY_INFO")
     public abstract static class REnvironmentKeyInfoNode extends Node {
 
+        private static final int EXISTS = 1 << 0;
         private static final int READABLE = 1 << 1;
         private static final int WRITABLE = 1 << 2;
 
@@ -117,7 +118,7 @@ public class REnvironmentMR {
                 return 0;
             }
 
-            int info = READABLE;
+            int info = READABLE | EXISTS;
             if (!receiver.isLocked() && !receiver.bindingIsLocked(identifier)) {
                 info += WRITABLE;
             }

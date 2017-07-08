@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.engine;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,6 +47,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.launcher.StartupTiming;
 import com.oracle.truffle.r.library.graphics.RGraphics;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
@@ -76,10 +76,8 @@ import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.RStartParams.SA_TYPE;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.RootWithBody;
-import com.oracle.truffle.r.runtime.StartupTiming;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
@@ -192,10 +190,9 @@ final class REngine implements Engine, Engine.Timings {
                     throw new RInternalError(e, "error while parsing user profile from %s", userProfile.getName());
                 }
             }
-            if (!(context.getStartParams().getRestoreAction() == SA_TYPE.NORESTORE)) {
+            if (context.getStartParams().restore()) {
                 // call sys.load.image(".RData", RCmdOption.QUIET
-                checkAndRunStartupShutdownFunction("sys.load.image", new String[]{"\".RData\"", context.getStartParams().getQuiet() ? "TRUE" : "FALSE"});
-                context.getConsoleHandler().setHistoryFrom(new File("./.Rhistory"));
+                checkAndRunStartupShutdownFunction("sys.load.image", new String[]{"\".RData\"", context.getStartParams().isQuiet() ? "TRUE" : "FALSE"});
             }
             checkAndRunStartupShutdownFunction(".First");
             checkAndRunStartupShutdownFunction(".First.sys");
@@ -273,11 +270,11 @@ final class REngine implements Engine, Engine.Timings {
         } catch (UnsupportedSpecializationException use) {
             String message = "FastR internal error: Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
                             Arrays.asList(use.getSuppliedValues()).stream().map(v -> v == null ? "null" : v.getClass().getSimpleName()).collect(Collectors.toList());
-            context.getConsoleHandler().printErrorln(message);
+            context.getConsole().printErrorln(message);
             RInternalError.reportError(use);
             return null;
         } catch (Throwable t) {
-            context.getConsoleHandler().printErrorln("FastR internal error: " + t.getMessage());
+            context.getConsole().printErrorln("FastR internal error: " + t.getMessage());
             RInternalError.reportError(t);
             return null;
         }
@@ -668,7 +665,7 @@ final class REngine implements Engine, Engine.Timings {
             } else {
                 str = String.valueOf(result);
             }
-            RContext.getInstance().getConsoleHandler().println(str);
+            RContext.getInstance().getConsole().println(str);
         }
     }
 

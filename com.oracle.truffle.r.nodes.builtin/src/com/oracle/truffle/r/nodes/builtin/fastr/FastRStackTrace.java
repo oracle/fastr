@@ -52,7 +52,7 @@ public abstract class FastRStackTrace extends RBuiltinNode.Arg1 {
     @TruffleBoundary
     @Specialization
     protected RNull printStackTrace(boolean printFrameContents) {
-        RContext.getInstance().getConsoleHandler().print(Utils.createStackTrace(printFrameContents));
+        RContext.getInstance().getConsole().print(Utils.createStackTrace(printFrameContents));
         return RNull.instance;
     }
 }

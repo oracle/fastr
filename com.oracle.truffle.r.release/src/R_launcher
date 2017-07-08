@@ -12,4 +12,4 @@ do
   esac
 done
 
-exec java "${JAVA_ARGS[@]}" -cp %%CLASSPATH com.oracle.truffle.r.engine.shell.RCommand "${PROGRAM_ARGS[@]}"
+exec java "${JAVA_ARGS[@]}" -cp %%CLASSPATH com.oracle.truffle.r.launchers.RCommand "${PROGRAM_ARGS[@]}"
