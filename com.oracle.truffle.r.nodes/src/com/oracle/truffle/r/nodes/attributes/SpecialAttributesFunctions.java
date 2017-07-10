@@ -838,7 +838,8 @@ public final class SpecialAttributesFunctions {
         }
 
         public final RList getDimNames(Object x) {
-            return (RList) execute(x);
+            Object result = execute(x);
+            return result == RNull.instance ? null : (RList) result;
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")
