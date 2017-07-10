@@ -285,7 +285,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("tc <- new.java.class('" + Long.class.getName() + "'); t <- new.external(tc, as.external.long(1)); t", "1");
         assertEvalFastR("tc <- new.java.class('" + Short.class.getName() + "'); t <- new.external(tc, as.external.short(1)); t", "1");
         assertEvalFastR("tc <- new.java.class('" + String.class.getName() + "'); t <- new.external(tc, 'abc'); t", "'abc'");
-        assertEvalFastR(Ignored.Unknown, "tc <- new.java.class('" + TestNullClass.class.getName() + "'); t <- new.external(tc, NULL); class(t)", "'" + RType.TruffleObject.getName() + "'");
+        assertEvalFastR("tc <- new.java.class('" + TestNullClass.class.getName() + "'); t <- new.external(tc, NULL); class(t)", "'" + RType.TruffleObject.getName() + "'");
     }
 
     @Test
@@ -392,9 +392,28 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testOverloaded() {
-        assertEvalFastR(Ignored.Unimplemented, CREATE_TRUFFLE_OBJECT + " to$isOverloaded(TRUE)", "boolean");
-        assertEvalFastR(Ignored.Unimplemented, CREATE_TRUFFLE_OBJECT + " to$isOverloaded('string')", String.class.getName());
-        // TODO add remaining isOverloaded(...) calls once this is fixed
+        String className = TestOverload.class.getName();
+        String createClass = "toc <- new.java.class('" + className + "'); ";
+
+        assertEvalFastR(createClass + " toc$isOverloaded(TRUE)", "'boolean'");
+        assertEvalFastR(createClass + " toc$isOverloaded(as.external.byte(1))", "'byte'");
+        assertEvalFastR(createClass + " toc$isOverloaded(as.external.char('a'))", "'char'");
+        assertEvalFastR(createClass + " toc$isOverloaded(1)", "'double'");
+        assertEvalFastR(createClass + " toc$isOverloaded(as.external.float(1))", "'float'");
+        assertEvalFastR(createClass + " toc$isOverloaded(1L)", "'int'");
+        assertEvalFastR(createClass + " toc$isOverloaded(as.external.long(1))", "'long'");
+        assertEvalFastR(createClass + " toc$isOverloaded(as.external.short(1))", "'short'");
+        assertEvalFastR(createClass + " toc$isOverloaded('string')", getRValue(String.class.getName()));
+
+        assertEvalFastR("new('" + className + "', TRUE)$type", "'boolean'");
+        assertEvalFastR("new('" + className + "', as.external.byte(1))$type", "'byte'");
+        assertEvalFastR("new('" + className + "', as.external.char('a'))$type", "'char'");
+        assertEvalFastR("new('" + className + "', 1)$type", "'double'");
+        assertEvalFastR("new('" + className + "', as.external.float(1))$type", "'float'");
+        assertEvalFastR("new('" + className + "', 1L)$type", "'int'");
+        assertEvalFastR("new('" + className + "', as.external.long(1))$type", "'long'");
+        assertEvalFastR("new('" + className + "', as.external.short(1))$type", "'short'");
+        assertEvalFastR("new('" + className + "', 'string')$type", getRValue(String.class.getName()));
     }
 
     @Test
@@ -545,16 +564,16 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testAsList() {
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listString); is.list(l)", "TRUE");
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listString); l[[1]]", "'a'");
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listString); l[[2]]", "'b'");
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listString); length(l)", "3");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listString); is.list(l)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listString); l[[1]]", "'a'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listString); l[[2]]", "'b'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listString); length(l)", "3");
 
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); is.list(l)", "TRUE");
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); l[[1]]$data", "'a'");
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); l[[2]]$data", "'b'");
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); length(l)", "4");
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); l[[4]]$data", "NULL");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); is.list(l)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); l[[1]]$data", "'a'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); l[[2]]$data", "'b'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); length(l)", "4");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$listObject); l[[4]]$data", "NULL");
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$fieldStringArray); is.list(l)", "TRUE");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$fieldStringArray); l[[1]]", "'a'");
@@ -643,33 +662,33 @@ public class TestJavaInterop extends TestBase {
         }
 
         // tests lists
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listBoolean);", toRVector(t.listBoolean, asXXX));
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listByte);", toRVector(t.listByte, asXXX));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listBoolean);", toRVector(t.listBoolean, asXXX));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listByte);", toRVector(t.listByte, asXXX));
         if (!(asXXX.equals("as.character") || asXXX.equals("as.expression") || asXXX.equals("as.logical") || asXXX.equals("as.symbol") || asXXX.equals("as.vector"))) {
-            assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningMessage, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listChar);", toRVector(t.listChar, asXXX));
+            assertEvalFastR(Output.IgnoreWarningMessage, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listChar);", toRVector(t.listChar, asXXX));
         } else {
-            assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listChar);", toRVector(t.listChar, asXXX));
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listChar);", toRVector(t.listChar, asXXX));
         }
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listDouble);", toRVector(t.listDouble, asXXX));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listDouble);", toRVector(t.listDouble, asXXX));
         if (asXXX.equals("as.symbol")) {
             assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listFloat);", toRVector(t.listFloat, asXXX));
         } else {
-            assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listFloat);", toRVector(t.listFloat, asXXX));
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listFloat);", toRVector(t.listFloat, asXXX));
         }
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listInteger);", toRVector(t.listInteger, asXXX));
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listLong);", toRVector(t.listLong, asXXX));
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listShort);", toRVector(t.listShort, asXXX));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listInteger);", toRVector(t.listInteger, asXXX));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listLong);", toRVector(t.listLong, asXXX));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listShort);", toRVector(t.listShort, asXXX));
         if (!(asXXX.equals("as.character") || asXXX.equals("as.expression") || asXXX.equals("as.logical") || asXXX.equals("as.symbol") || asXXX.equals("as.vector"))) {
-            assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listString);", toRVector(t.listString, asXXX));
+            assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listString);", toRVector(t.listString, asXXX));
         } else {
-            assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listString);", toRVector(t.listString, asXXX));
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listString);", toRVector(t.listString, asXXX));
         }
 
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listStringInt);", toRVector(t.listStringInt, asXXX));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listStringInt);", toRVector(t.listStringInt, asXXX));
         if (!(asXXX.equals("as.complex") || asXXX.equals("as.integer") || asXXX.equals("as.raw") || asXXX.equals("as.double"))) {
-            assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listStringBoolean);", toRVector(t.listStringBoolean, asXXX));
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listStringBoolean);", toRVector(t.listStringBoolean, asXXX));
         } else {
-            assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listStringBoolean);", toRVector(t.listStringBoolean, asXXX));
+            assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listStringBoolean);", toRVector(t.listStringBoolean, asXXX));
         }
 
         if (asXXX.equals("as.expression")) {
@@ -692,12 +711,12 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(Output.IgnoreWarningContext, Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + "if(to$fieldStringArray) print('OK')", "if(c('a', 'b')) print('OK')");
 
         assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "if(to$fieldStringBooleanArray) print('OK')", "if(c('TRUE', 'TRUE', 'FALSE')) print('OK')");
-        assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "if(to$listBoolean) print('OK')", "if(c(T, F)) print('OK')");
-        assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "if(to$listInteger) print('OK')", "if(c(T, F)) print('OK')");
-        assertEvalFastR(Ignored.ImplementationError, /* Output.IgnoreWarningContext, */ Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + "if(to$listString) print('OK')",
+        assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "if(to$listBoolean) print('OK')", "if(c(T, F)) print('OK')");
+        assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "if(to$listInteger) print('OK')", "if(c(T, F)) print('OK')");
+        assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + "if(to$listString) print('OK')",
                         "if(c('A', 'B')) print('OK')");
 
-        assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "if(to$listStringBoolean) print('OK')",
+        assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "if(to$listStringBoolean) print('OK')",
                         "if(" + toRVector(t.listStringBoolean, null) + ") print('OK')");
 
         assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + "if(to) print('OK')",
@@ -716,12 +735,12 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(Output.IgnoreWarningContext, Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + "if(to$fieldStringArray) {print('OK'); break;}", "while(c('a', 'b')) {print('OK'); break;}");
 
         assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "while(to$fieldStringBooleanArray) {print('OK'); break;}", "while(c('TRUE', 'TRUE', 'FALSE')) {print('OK'); break;}");
-        assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "while(to$listBoolean) {print('OK'); break;}", "while(c(T, F)) {print('OK'); break;}");
-        assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "while(to$listInteger) {print('OK'); break;}", "while(c(T, F)) {print('OK'); break;}");
-        assertEvalFastR(Ignored.ImplementationError, /* Output.IgnoreWarningContext, */ Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + "while(to$listString) {print('OK'); break;}",
+        assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "while(to$listBoolean) {print('OK'); break;}", "while(c(T, F)) {print('OK'); break;}");
+        assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "while(to$listInteger) {print('OK'); break;}", "while(c(T, F)) {print('OK'); break;}");
+        assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + "while(to$listString) {print('OK'); break;}",
                         "while(c('A', 'B')) {print('OK'); break;}");
 
-        assertEvalFastR(Ignored.ImplementationError, Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "while(to$listStringBoolean) {print('OK'); break;}",
+        assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + "while(to$listStringBoolean) {print('OK'); break;}",
                         "while(" + toRVector(t.listStringBoolean, null) + ") {print('OK'); break;}");
 
         assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + "while(to) print('OK')",
@@ -919,6 +938,146 @@ public class TestJavaInterop extends TestBase {
     public static class TestNullClass {
         public TestNullClass(Object o) {
             assert o == null;
+        }
+    }
+
+    public static class TestOverload {
+        public String type;
+
+        public TestOverload(boolean o) {
+            type = boolean.class.getName();
+        }
+
+        public TestOverload(Boolean o) {
+            type = o.getClass().getName();
+        }
+
+        public TestOverload(byte o) {
+            type = byte.class.getName();
+        }
+
+        public TestOverload(Byte o) {
+            type = o.getClass().getName();
+        }
+
+        public TestOverload(char o) {
+            type = char.class.getName();
+        }
+
+        public TestOverload(Character o) {
+            type = o.getClass().getName();
+        }
+
+        public TestOverload(double o) {
+            type = double.class.getName();
+        }
+
+        public TestOverload(Double o) {
+            type = o.getClass().getName();
+        }
+
+        public TestOverload(int o) {
+            type = int.class.getName();
+        }
+
+        public TestOverload(Integer o) {
+            type = o.getClass().getName();
+        }
+
+        public TestOverload(float o) {
+            type = float.class.getName();
+        }
+
+        public TestOverload(Float o) {
+            type = o.getClass().getName();
+        }
+
+        public TestOverload(long o) {
+            type = long.class.getName();
+        }
+
+        public TestOverload(Long o) {
+            type = o.getClass().getName();
+        }
+
+        public TestOverload(short o) {
+            type = short.class.getName();
+        }
+
+        public TestOverload(Short o) {
+            type = o.getClass().getName();
+        }
+
+        public TestOverload(String o) {
+            type = o.getClass().getName();
+        }
+
+        public static String isOverloaded(boolean b) {
+            return "boolean";
+        }
+
+        public static String isOverloaded(Boolean b) {
+            return Boolean.class.getName();
+        }
+
+        public static String isOverloaded(byte b) {
+            return "byte";
+        }
+
+        public static String isOverloaded(Byte b) {
+            return Byte.class.getName();
+        }
+
+        public static String isOverloaded(char c) {
+            return "char";
+        }
+
+        public static String isOverloaded(Character c) {
+            return Character.class.getName();
+        }
+
+        public static String isOverloaded(double l) {
+            return "double";
+        }
+
+        public static String isOverloaded(Double l) {
+            return Double.class.getName();
+        }
+
+        public static String isOverloaded(Float f) {
+            return Float.class.getName();
+        }
+
+        public static String isOverloaded(float f) {
+            return "float";
+        }
+
+        public static String isOverloaded(int c) {
+            return "int";
+        }
+
+        public static String isOverloaded(Integer c) {
+            return Integer.class.getName();
+        }
+
+        public static String isOverloaded(long l) {
+            return "long";
+        }
+
+        public static String isOverloaded(Long l) {
+            return Long.class.getName();
+        }
+
+        public static String isOverloaded(short c) {
+            return "short";
+        }
+
+        public static String isOverloaded(Short c) {
+            return Short.class.getName();
+        }
+
+        public static String isOverloaded(String s) {
+            return String.class.getName();
         }
     }
 
@@ -1284,74 +1443,6 @@ public class TestJavaInterop extends TestBase {
 
         public boolean equals(TestClass tc) {
             return tc == this;
-        }
-
-        public String isOverloaded(boolean b) {
-            return "boolean";
-        }
-
-        public String isOverloaded(Boolean b) {
-            return Boolean.class.getName();
-        }
-
-        public String isOverloaded(byte b) {
-            return "byte";
-        }
-
-        public String isOverloaded(Byte b) {
-            return Byte.class.getName();
-        }
-
-        public String isOverloaded(char c) {
-            return "char";
-        }
-
-        public String isOverloaded(Character c) {
-            return Character.class.getName();
-        }
-
-        public String isOverloaded(double l) {
-            return "double";
-        }
-
-        public String isOverloaded(Double l) {
-            return Double.class.getName();
-        }
-
-        public String isOverloaded(Float f) {
-            return Float.class.getName();
-        }
-
-        public String isOverloaded(float f) {
-            return "float";
-        }
-
-        public String isOverloaded(int c) {
-            return "int";
-        }
-
-        public String isOverloaded(Integer c) {
-            return Integer.class.getName();
-        }
-
-        public String isOverloaded(long l) {
-            return "long";
-        }
-
-        public String isOverloaded(Long l) {
-            return Long.class.getName();
-        }
-
-        public String isOverloaded(short c) {
-            return "short";
-        }
-
-        public String isOverloaded(Short c) {
-            return Short.class.getName();
-        }
-
-        public String isOverloaded(String s) {
-            return String.class.getName();
         }
     }
 
