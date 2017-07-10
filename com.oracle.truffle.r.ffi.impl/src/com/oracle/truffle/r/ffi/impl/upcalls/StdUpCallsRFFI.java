@@ -146,6 +146,8 @@ public interface StdUpCallsRFFI {
 
     int NAMED(Object x);
 
+    Object SET_NAMED_FASTR(Object x, int v);
+
     Object SET_TYPEOF_FASTR(Object x, int v);
 
     int TYPEOF(Object x);

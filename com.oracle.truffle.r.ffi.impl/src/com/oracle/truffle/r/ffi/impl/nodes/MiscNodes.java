@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObject;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
@@ -78,6 +79,11 @@ public final class MiscNodes {
         @Specialization
         protected int length(RAbstractContainer obj) {
             // Should this use RLengthNode?
+            return obj.getLength();
+        }
+
+        @Specialization
+        protected int length(RArgsValuesAndNames obj) {
             return obj.getLength();
         }
 

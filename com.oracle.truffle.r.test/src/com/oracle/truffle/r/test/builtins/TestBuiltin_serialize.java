@@ -115,5 +115,6 @@ public class TestBuiltin_serialize extends TestBase {
     @Test
     public void testSerializeWithPromises() {
         assertEval("{ f <- function(...) serialize(mget('...'),NULL); length(unserialize(f(a=3,b=2,c=1))[[1]]); }");
+        assertEval("{ f <- function(...) serialize(environment()[['...']],NULL); x <- unserialize(f(a=3,b=2,c=1)); typeof(x) }");
     }
 }

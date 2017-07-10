@@ -582,6 +582,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object SET_NAMED_FASTR(Object x, int v) {
+        if (x instanceof RShareable) {
+            ((RShareable) x).incRefCount();
+            return RLanguage.fromList(x, RLanguage.RepType.CALL);
+        } else {
+            throw unimplemented();
+        }
+    }
+
+    @Override
     public Object SET_TYPEOF_FASTR(Object x, int v) {
         int code = SEXPTYPE.gnuRCodeForObject(x);
         if (code == SEXPTYPE.LISTSXP.code && v == SEXPTYPE.LANGSXP.code) {

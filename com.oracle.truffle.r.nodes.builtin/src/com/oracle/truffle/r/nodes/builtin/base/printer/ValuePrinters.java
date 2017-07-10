@@ -31,6 +31,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -107,6 +108,8 @@ final class ValuePrinters implements ValuePrinter<Object> {
                     printer = RawVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractListVector) {
                     printer = ListPrinter.INSTANCE;
+                } else if (x instanceof RArgsValuesAndNames) {
+                    printer = RArgsValuesAndNamesPrinter.INSTANCE;
                 } else if (x instanceof REnvironment) {
                     printer = EnvironmentPrinter.INSTANCE;
                 } else if (x instanceof TruffleObject) {
