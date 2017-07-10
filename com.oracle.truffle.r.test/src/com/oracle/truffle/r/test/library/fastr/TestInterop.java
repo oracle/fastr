@@ -67,6 +67,23 @@ public class TestInterop extends TestBase {
     }
 
     @Test
+    public void testIsExternalExecutable() {
+        assertEvalFastR("is.external.executable(sum)", "TRUE");
+        assertEvalFastR("is.external.executable(NULL)", "FALSE");
+        assertEvalFastR("is.external.executable(c(1))", "FALSE");
+        assertEvalFastR("is.external.executable(list(1))", "FALSE");
+        assertEvalFastR("is.external.executable()", "FALSE");
+    }
+
+    @Test
+    public void testIsExternalNull() {
+        assertEvalFastR("is.external.null(NULL)", "TRUE");
+        assertEvalFastR("is.external.null(c(1))", "FALSE");
+        assertEvalFastR("is.external.null(list(1))", "FALSE");
+        assertEvalFastR("is.external.null()", "FALSE");
+    }
+
+    @Test
     public void testInteropEvalFile() {
         assertEvalFastR("fileConn<-file(\"" + TEST_EVAL_FILE + "\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);eval.external(mimeType=\"application/x-r\", path=\"" +
                         TEST_EVAL_FILE + "\")",

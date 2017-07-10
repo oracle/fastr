@@ -428,6 +428,20 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
+    public void testIsExternalExecutable() {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.external.executable(to)", "FALSE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.external.executable(to$methodBoolean)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.external.executable(to$fieldBoolean)", "FALSE");
+    }
+
+    @Test
+    public void testIsExternalNull() {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.external.null(to)", "FALSE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.external.null(to$methodReturnsNull)", "FALSE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.external.null(to$methodReturnsNull())", "TRUE");
+    }
+
+    @Test
     public void testIsXXXForForeignObject() {
         // missing: is.element, is.empty.model, is.leaf, is.loaded, is.na.data.frame,
         // is.na.numeric_version, is.na.POSIXlt

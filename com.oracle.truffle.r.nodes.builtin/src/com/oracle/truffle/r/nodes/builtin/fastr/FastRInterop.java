@@ -255,6 +255,11 @@ public class FastRInterop {
         public byte isNull(TruffleObject obj) {
             return RRuntime.asLogical(ForeignAccess.sendIsNull(node, obj));
         }
+
+        @Fallback
+        public byte isNull(Object obj) {
+            return RRuntime.asLogical(false);
+        }
     }
 
     @RBuiltin(name = "is.external.executable", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
@@ -269,6 +274,11 @@ public class FastRInterop {
         @Specialization
         public byte isExecutable(TruffleObject obj) {
             return RRuntime.asLogical(ForeignAccess.sendIsExecutable(node, obj));
+        }
+
+        @Fallback
+        public byte isExecutable(Object obj) {
+            return RRuntime.asLogical(false);
         }
     }
 
