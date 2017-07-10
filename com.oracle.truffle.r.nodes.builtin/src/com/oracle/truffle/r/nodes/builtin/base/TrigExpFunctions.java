@@ -31,9 +31,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -416,8 +419,8 @@ public class TrigExpFunctions {
 
         static {
             Casts casts = new Casts(Atan2.class);
-            casts.arg(0).mapIf(numericValue(), asDoubleVector());
-            casts.arg(1).mapIf(numericValue(), asDoubleVector());
+            casts.arg(0).mapIf(numericValue(), asDoubleVector(true, true, true));
+            casts.arg(1).mapIf(numericValue(), asDoubleVector(true, true, true));
         }
 
         @FunctionalInterface
@@ -448,7 +451,9 @@ public class TrigExpFunctions {
         }
 
         @Specialization(guards = "x.getLength() > 0")
-        protected RDoubleVector atan2(double y, RAbstractDoubleVector x) {
+        protected RDoubleVector atan2(double y, RAbstractDoubleVector x,
+                        @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
+                        @Cached("createBinaryProfile()") ConditionProfile xLengthProfile) {
             xNACheck.enable(x);
             yNACheck.enable(y);
             double[] array = prepareArray(x.getLength());
@@ -460,11 +465,17 @@ public class TrigExpFunctions {
                     array[i] = Math.atan2(y, xValue);
                 }
             }
-            return createResult(array);
+            RDoubleVector result = createResult(array);
+            if (xLengthProfile.profile(result.getLength() == x.getLength())) {
+                copyAttributesNode.execute(result, x);
+            }
+            return result;
         }
 
         @Specialization(guards = "y.getLength() > 0")
-        protected RDoubleVector atan2(RAbstractDoubleVector y, double x) {
+        protected RDoubleVector atan2(RAbstractDoubleVector y, double x,
+                        @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
+                        @Cached("createBinaryProfile()") ConditionProfile yLengthProfile) {
             xNACheck.enable(x);
             yNACheck.enable(y);
             double[] array = prepareArray(y.getLength());
@@ -476,11 +487,18 @@ public class TrigExpFunctions {
                     array[i] = Math.atan2(yValue, x);
                 }
             }
-            return createResult(array);
+            RDoubleVector result = createResult(array);
+            if (yLengthProfile.profile(result.getLength() == y.getLength())) {
+                copyAttributesNode.execute(result, y);
+            }
+            return result;
         }
 
         @Specialization(guards = {"y.getLength() > 0", "x.getLength() > 0"})
-        protected RDoubleVector atan2(RAbstractDoubleVector y, RAbstractDoubleVector x) {
+        protected RDoubleVector atan2(RAbstractDoubleVector y, RAbstractDoubleVector x,
+                        @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
+                        @Cached("createBinaryProfile()") ConditionProfile xLengthProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile yLengthProfile) {
             int xLength = x.getLength();
             int yLength = y.getLength();
             xNACheck.enable(x);
@@ -495,7 +513,13 @@ public class TrigExpFunctions {
                     array[i] = Math.atan2(yValue, xValue);
                 }
             }
-            return createResult(array);
+            RDoubleVector result = createResult(array);
+            if (yLengthProfile.profile(result.getLength() == y.getLength())) {
+                copyAttributesNode.execute(result, y);
+            } else if (xLengthProfile.profile(result.getLength() == x.getLength())) {
+                copyAttributesNode.execute(result, x);
+            }
+            return result;
         }
 
         @Specialization(guards = "y.getLength() == 0 || x.getLength() == 0")
