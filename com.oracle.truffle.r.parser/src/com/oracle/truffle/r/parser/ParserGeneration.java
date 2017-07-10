@@ -92,6 +92,7 @@ public class ParserGeneration {
         "raise ZERO_LENGTH_VARIABLE errors in parser",
         "support for file delimiter",
         "pass along TruffleRLanguage",
-        "convert line endings"
+        "convert line endings",
+        "handle four and more dots as identifier"
     };
 }
