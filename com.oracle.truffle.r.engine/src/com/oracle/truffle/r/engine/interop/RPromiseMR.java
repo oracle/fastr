@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
@@ -64,7 +64,9 @@ public class RPromiseMR {
     @Resolve(message = "READ")
     public abstract static class RPromiseReadNode extends Node {
 
-        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, RPromise receiver, String field) {
+        @SuppressWarnings("try")
+        @TruffleBoundary
+        protected Object access(RPromise receiver, String field) {
             if (PROP_EXPR.equals(field)) {
                 try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
                     return RDataFactory.createLanguage(receiver.getRep());
@@ -88,7 +90,7 @@ public class RPromiseMR {
     public abstract static class RPromiseWriteNode extends Node {
 
         @SuppressWarnings("try")
-        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, RPromise receiver, String field, Object valueObj) {
+        protected Object access(RPromise receiver, String field, Object valueObj) {
             if (PROP_IS_EVALUATED.equals(field)) {
                 if (!(valueObj instanceof Boolean)) {
                     throw UnsupportedTypeException.raise(new Object[]{valueObj});
@@ -127,8 +129,7 @@ public class RPromiseMR {
         private static final int READABLE = 1 << 1;
         private static final int WRITABLE = 1 << 2;
 
-        @SuppressWarnings("try")
-        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") RPromise receiver, String identifier) {
+        protected Object access(@SuppressWarnings("unused") RPromise receiver, String identifier) {
             if (PROP_EXPR.equals(identifier) || PROP_VALUE.equals(identifier)) {
                 return EXISTS + READABLE;
             }

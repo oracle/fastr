@@ -175,11 +175,11 @@ public final class RScope extends AbstractScope {
 
     abstract static class VariablesObject implements TruffleObject {
 
-        private final REnvFrameAccess env;
+        private final REnvFrameAccess frameAccess;
         private final boolean argumentsOnly;
 
-        private VariablesObject(REnvFrameAccess env, boolean argumentsOnly) {
-            this.env = env;
+        private VariablesObject(REnvFrameAccess frameAccess, boolean argumentsOnly) {
+            this.frameAccess = frameAccess;
             this.argumentsOnly = argumentsOnly;
         }
 
@@ -189,7 +189,7 @@ public final class RScope extends AbstractScope {
         }
 
         private String[] ls() {
-            RStringVector ls = env.ls(true, null, false);
+            RStringVector ls = frameAccess.ls(true, null, false);
             return ls.getDataWithoutCopying();
         }
 
@@ -226,13 +226,13 @@ public final class RScope extends AbstractScope {
                 private static final int INVOCABLE = 1 << 3;
 
                 @SuppressWarnings("try")
-                protected Object access(VariablesMapObject receiver, String identifier) {
+                protected Object access(VariablesObject receiver, String identifier) {
                     int info = EXISTS + READABLE;
 
-                    if (!receiver.env.bindingIsLocked(identifier)) {
+                    if (!receiver.frameAccess.bindingIsLocked(identifier)) {
                         info += WRITABLE;
                     }
-                    if (receiver.env.get(identifier) instanceof RFunction) {
+                    if (receiver.frameAccess.get(identifier) instanceof RFunction) {
                         info += INVOCABLE;
                     }
                     return info;
@@ -244,10 +244,10 @@ public final class RScope extends AbstractScope {
 
                 @TruffleBoundary
                 public Object access(VariablesObject varMap, String name) {
-                    if (varMap.env == null) {
+                    if (varMap.frameAccess == null) {
                         throw UnsupportedMessageException.raise(Message.READ);
                     }
-                    Object value = varMap.env.get(name);
+                    Object value = varMap.frameAccess.get(name);
 
                     // If Java-null is returned, the identifier does not exist !
                     if (value == null) {
@@ -263,14 +263,14 @@ public final class RScope extends AbstractScope {
 
                 @TruffleBoundary
                 public Object access(VariablesObject varMap, String name, Object value) {
-                    if (varMap.env == null) {
+                    if (varMap.frameAccess == null) {
                         throw UnsupportedMessageException.raise(Message.WRITE);
                     }
                     if (!(value instanceof RTypedValue)) {
                         throw UnsupportedTypeException.raise(new Object[]{value});
                     }
                     try {
-                        varMap.env.put(name, value);
+                        varMap.frameAccess.put(name, value);
                         return value;
                     } catch (PutException e) {
                         throw RInternalError.shouldNotReachHere(e);
