@@ -104,6 +104,51 @@ J <- function (class, method, ...)
     }    
 }
 
+#' @export
+.jpackage <- function (name, jars='*', morePaths='', nativeLibrary=FALSE, lib.loc=NULL)
+{    
+    classes <- system.file("java", package = name, lib.loc = lib.loc)
+    if (nchar(classes)) {
+        .jaddClassPath(classes)
+        if (length(jars)) {
+            if (length(jars) == 1 && jars == "*") {
+                jars <- grep(".*\\.jar", list.files(classes, 
+                  full.names = TRUE), TRUE, value = TRUE)
+                if (length(jars)) 
+                  .jaddClassPath(jars)
+            }
+            else .jaddClassPath(paste(classes, jars, sep = .Platform$file.sep))
+        }
+    }
+    if (any(nchar(morePaths))) {
+        cl <- as.character(morePaths)
+        cl <- cl[nchar(cl) > 0]
+        .jaddClassPath(cl)
+    }
+    if (is.logical(nativeLibrary)) {
+        if (nativeLibrary) {
+            libs <- "libs"
+            if (nchar(.Platform$r_arch)) 
+                lib <- file.path("libs", .Platform$r_arch)
+            lib <- system.file(libs, paste(name, .Platform$dynlib.ext, 
+                sep = ""), package = name, lib.loc = lib.loc)
+            if (nchar(lib)) 
+                .jaddLibrary(name, lib)
+            else warning("Native library for `", name, "' could not be found.")
+        }
+    }
+    else {
+        .jaddLibrary(name, nativeLibrary)
+    }
+    invisible(TRUE)
+}
+
+#' @export
+.jaddClassPath <- function (path)
+{
+    java.addToClasspath(path)
+}
+
 #
 # noop stubs
 #
@@ -132,29 +177,13 @@ J <- function (class, method, ...)
 }
 
 #' @export
-.jpackage <- function (name, jars='*', morePaths='', nativeLibrary=FALSE, lib.loc=NULL)
-{    
-    javalibs <- system.file("java", package = name, lib.loc = lib.loc)
-    if(javalibs == "") {
-        javalibs = paste0("library/", name, "/java")
-    }
-    cat(paste0("********************************************************\n",
-               "*** WARNING!!!\n",
-               "*** .jpackage is not yet implemented.\n",
-               "*** Please ensure that all java libraries from:\n",
-               "*** ", javalibs, "\n",
-               "*** are on FastR classpath\n",
-               "********************************************************\n"))
-}
-
-#' @export
-.jaddClassPath <- function (path)
+.jaddLibrary <- function (name, path) 
 {
     cat(paste0("********************************************************\n",
-               "*** WARNING!!!\n",
-               "*** .jaddClasPath is not yet implemented.\n",
-               "*** Please ensure that \n",
-               "*** ", path, "\n",
-               "*** is on FastR classpath\n",
-               "********************************************************\n"))
+           "*** WARNING!!!\n",
+           "*** .jaddLibrary is not yet implemented.\n",
+           "*** Please ensure that all native libraries from:\n",
+           "*** ", path, "\n",
+           "*** are set on LD_LIBRARY_PATH or java.library.path\n",
+           "********************************************************\n"))
 }
