@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 public class TruffleNFI_Call implements CallRFFI {
 
     private enum INIT_VAR_FUN {
-        OBJ("(sint32, object) : void"),
+        OBJ("(env, sint32, object) : void"),
         DOUBLE("(sint32, double): void"),
         STRING("(sint32, string): void"),
         INT("(sint32, sint32) : void");
@@ -122,7 +122,7 @@ public class TruffleNFI_Call implements CallRFFI {
         try {
             Callbacks.createCalls(upCallsImpl);
             for (Callbacks callback : Callbacks.values()) {
-                String addCallbackSignature = String.format("(sint32, %s): void", callback.nfiSignature);
+                String addCallbackSignature = String.format("(env, sint32, %s): void", callback.nfiSignature);
                 TruffleObject addCallbackFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, symbolHandle.asTruffleObject(), "bind", addCallbackSignature);
                 ForeignAccess.sendExecute(executeNode, addCallbackFunction, callback.ordinal(), callback.call);
             }

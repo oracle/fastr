@@ -270,7 +270,7 @@ typedef SEXP (*call_R_BaseNamespace)();
 typedef SEXP (*call_R_MethodsNamespace)();
 typedef SEXP (*call_R_GlobalEnv)();
 typedef SEXP (*call_R_NamespaceRegistry)();
-typedef SEXP (*call_R_Interactive)();
+typedef int (*call_R_Interactive)();
 typedef SEXP (*call_R_GlobalContext)();
 typedef SEXP (*call_R_CHAR)(SEXP x);
 typedef char *(*call_R_HomeDir)();
