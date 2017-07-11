@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -91,6 +91,8 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	cp -r $(DOC_FILES) $(FASTR_DOC_DIR)
 	# overrides
 	cp examples-header.R examples-footer.R $(FASTR_SHARE_DIR)/R
+	# record the FFI version
+	bash -c "echo -n $(FASTR_RFFI) >$(FASTR_ETC_DIR)/ffibuildtype"
 
 includedir: $(FASTR_R_HOME)/include/Rinternals.h
 
