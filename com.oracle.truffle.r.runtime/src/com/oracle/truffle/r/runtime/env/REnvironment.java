@@ -181,7 +181,7 @@ public abstract class REnvironment extends RAttributeStorage {
 
         @TruffleBoundary
         public PutException(RError.Message msg, Object... args) {
-            super(msg, args);
+            super(null, msg, args);
         }
     }
 
@@ -589,7 +589,7 @@ public abstract class REnvironment extends RAttributeStorage {
         private static final long serialVersionUID = 1L;
 
         DetachException(RError.Message msg, Object... args) {
-            super(msg, args);
+            super(null, msg, args);
         }
     }
 

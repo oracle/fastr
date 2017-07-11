@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
-import org.graalvm.polyglot.Engine;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.launcher.ConsoleHandler;
 import com.oracle.truffle.r.launcher.DefaultConsoleHandler;

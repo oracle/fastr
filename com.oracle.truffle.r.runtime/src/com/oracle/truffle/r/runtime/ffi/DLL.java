@@ -396,8 +396,8 @@ public class DLL {
     public static class DLLException extends RErrorException {
         private static final long serialVersionUID = 1L;
 
-        public DLLException(RError.Message msg, Object... args) {
-            super(msg, args);
+        public DLLException(Throwable cause, RError.Message msg, Object... args) {
+            super(cause, msg, args);
         }
     }
 
@@ -463,9 +463,9 @@ public class DLL {
                     throw ex;
                 } catch (Throwable ex) {
                     if (RContext.isInitialContextInitialized()) {
-                        throw new DLLException(RError.Message.DLL_RINIT_ERROR);
+                        throw new DLLException(ex, RError.Message.DLL_RINIT_ERROR);
                     } else {
-                        throw Utils.rSuicide(RError.Message.DLL_RINIT_ERROR.message + " on default package: " + path);
+                        throw Utils.rSuicide(ex, RError.Message.DLL_RINIT_ERROR.message + " on default package: " + path);
                     }
                 }
             } catch (UnsatisfiedLinkError ex) {
@@ -489,9 +489,9 @@ public class DLL {
             } catch (UnsatisfiedLinkError ex) {
                 String dlError = ex.getMessage();
                 if (RContext.isInitialContextInitialized()) {
-                    throw new DLLException(RError.Message.DLL_LOAD_ERROR, absPath, dlError);
+                    throw new DLLException(ex, RError.Message.DLL_LOAD_ERROR, absPath, dlError);
                 } else {
-                    throw Utils.rSuicide("error loading default package: " + absPath + "\n" + dlError);
+                    throw Utils.rSuicide(ex, "error loading default package: " + absPath + "\n" + dlError);
                 }
             }
         }
@@ -509,13 +509,13 @@ public class DLL {
                 if (info.path.equals(absPath)) {
                     int rc = dlCloseNode.execute(info.handle);
                     if (rc != 0) {
-                        throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, "");
+                        throw new DLLException(null, RError.Message.DLL_LOAD_ERROR, path, "");
                     }
                     contextState.list.remove(info);
                     return;
                 }
             }
-            throw new DLLException(RError.Message.DLL_NOT_LOADED, path);
+            throw new DLLException(null, RError.Message.DLL_NOT_LOADED, path);
         }
 
         public static UnloadNode create() {

@@ -197,6 +197,14 @@ public final class Utils {
         throw rSuicideDefault(msg);
     }
 
+    public static RuntimeException rSuicide(Throwable cause, String msg) {
+        cause.printStackTrace();
+        if (RInterfaceCallbacks.R_Suicide.isOverridden()) {
+            RFFIFactory.getRFFI().getREmbedRFFI().suicide(msg);
+        }
+        throw rSuicideDefault(msg);
+    }
+
     /**
      * The default, non-overrideable, suicide call. It prints the message and throws
      * {@link ExitException}.

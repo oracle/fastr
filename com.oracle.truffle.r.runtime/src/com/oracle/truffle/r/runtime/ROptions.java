@@ -136,7 +136,7 @@ public class ROptions {
     @SuppressWarnings("serial")
     public static final class OptionsException extends RError.RErrorException {
         private OptionsException(RError.Message msg, Object... args) {
-            super(msg, args);
+            super(null, msg, args);
         }
 
         private static OptionsException createInvalid(String name) {

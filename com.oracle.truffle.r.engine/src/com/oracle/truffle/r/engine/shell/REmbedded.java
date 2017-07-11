@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
-import org.graalvm.polyglot.Context.Builder;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Context.Builder;
 import org.graalvm.polyglot.Engine;
 
 import com.oracle.truffle.api.vm.PolyglotEngine;
@@ -36,7 +36,6 @@ import com.oracle.truffle.r.runtime.RSource.Internal;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
 /**
  * Support for embedding FastR in a C/C++ application according to {@code Rembedded.h}. The

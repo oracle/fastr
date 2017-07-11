@@ -50,7 +50,7 @@ public final class TruffleNFI_PkgInit {
     /**
      * The upcalls from native code that support symbol registration.
      */
-    interface UpCalls {
+    public interface UpCalls {
 
         /**
          * This is the start, called from {@code R_RegisterRoutines}.
