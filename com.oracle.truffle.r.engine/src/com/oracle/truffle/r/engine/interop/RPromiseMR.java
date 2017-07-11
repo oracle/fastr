@@ -45,7 +45,7 @@ public class RPromiseMR {
 
     private static final String PROP_VALUE = "value";
     private static final String PROP_IS_EVALUATED = "isEvaluated";
-    private static final String PROP_IS_EAGER = "isEager";
+    private static final String PROP_EXPR = "expression";
 
     @Resolve(message = "IS_BOXED")
     public abstract static class RPromiseIsBoxedNode extends Node {
@@ -65,8 +65,10 @@ public class RPromiseMR {
     public abstract static class RPromiseReadNode extends Node {
 
         protected Object access(@SuppressWarnings("unused") VirtualFrame frame, RPromise receiver, String field) {
-            if (PROP_IS_EAGER.equals(field)) {
-                return RRuntime.asLogical(RPromise.PromiseState.isEager(receiver.getState()));
+            if (PROP_EXPR.equals(field)) {
+                try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
+                    return RDataFactory.createLanguage(receiver.getRep());
+                }
             }
             if (PROP_IS_EVALUATED.equals(field)) {
                 return RRuntime.asLogical(receiver.isEvaluated());
@@ -114,7 +116,7 @@ public class RPromiseMR {
     public abstract static class RPromiseKeysNode extends Node {
 
         protected Object access(@SuppressWarnings("unused") RPromise receiver) {
-            return RDataFactory.createStringVector(new String[]{PROP_VALUE, PROP_IS_EVALUATED, PROP_IS_EAGER}, true);
+            return RDataFactory.createStringVector(new String[]{PROP_VALUE, PROP_IS_EVALUATED, PROP_EXPR}, true);
         }
     }
 
@@ -127,7 +129,7 @@ public class RPromiseMR {
 
         @SuppressWarnings("try")
         protected Object access(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") RPromise receiver, String identifier) {
-            if (PROP_IS_EAGER.equals(identifier) || PROP_VALUE.equals(identifier)) {
+            if (PROP_EXPR.equals(identifier) || PROP_VALUE.equals(identifier)) {
                 return EXISTS + READABLE;
             }
 

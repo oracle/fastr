@@ -226,13 +226,8 @@ public final class RScope extends AbstractScope {
                 private static final int INVOCABLE = 1 << 3;
 
                 @SuppressWarnings("try")
-<<<<<<< be4151069839c0f92d31afc64fe05e009ec07909
                 protected Object access(VariablesMapObject receiver, String identifier) {
                     int info = EXISTS + READABLE;
-=======
-                protected Object access(VariablesObject receiver, String identifier) {
-                    int info = READABLE;
->>>>>>> Fix: Return generic scope if frame has not an R frame layout.
 
                     if (!receiver.env.bindingIsLocked(identifier)) {
                         info += WRITABLE;
