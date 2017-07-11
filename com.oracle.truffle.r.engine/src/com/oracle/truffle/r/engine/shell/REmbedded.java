@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
+import org.graalvm.polyglot.Context.Builder;
+import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
-import org.graalvm.polyglot.PolyglotContext;
-import org.graalvm.polyglot.PolyglotContext.Builder;
 
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.launcher.ConsoleHandler;
@@ -65,9 +65,8 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 public class REmbedded {
 
     private static ConsoleHandler consoleHandler;
-    private static ContextInfo info;
     private static Engine engine;
-    private static PolyglotContext context;
+    private static Context context;
 
     /**
      * Creates the {@link Engine} and initializes it. Called from native code when FastR is
@@ -77,20 +76,15 @@ public class REmbedded {
      */
     private static void initializeR(String[] args) {
         assert engine == null;
-        assert info == null;
         RContext.setEmbedded();
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
 
-        RStartParams rsp = new RStartParams(options, true);
-        info = ContextInfo.create(rsp, null, ContextKind.SHARE_NOTHING, null, System.in, System.out, System.err);
-
-        engine = info.createEngine();
-        context = engine.createPolyglotContext();
+        engine = Engine.create();
         consoleHandler = RCommand.createConsoleHandler(options, true, System.in, System.out);
-        Builder builder = engine.newPolyglotContextBuilder();
-        try (PolyglotContext cntx = builder.setArguments("R", options.getArguments()).setIn(consoleHandler.createInputStream()).setOut(System.out).setErr(System.err).build()) {
+        Builder builder = Context.newBuilder().engine(engine);
+        try (Context cntx = builder.arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(System.out).err(System.err).build()) {
             context = cntx;
-            consoleHandler.setPolyglotContext(context);
+            consoleHandler.setContext(context);
             context.eval("R", INIT);
         }
     }

@@ -26,8 +26,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 
+import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
-import org.graalvm.polyglot.PolyglotContext;
 
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
 
@@ -111,9 +111,9 @@ public class RscriptCommand {
 
         try (Engine engine = Engine.create()) {
             ConsoleHandler consoleHandler = RCommand.createConsoleHandler(options, false, inStream, outStream);
-            try (PolyglotContext context = engine.newPolyglotContextBuilder().setArguments("R",
-                            options.getArguments()).setIn(consoleHandler.createInputStream()).setOut(outStream).setErr(errStream).build()) {
-                consoleHandler.setPolyglotContext(context);
+            try (Context context = Context.newBuilder().engine(engine).arguments("R",
+                            options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
+                consoleHandler.setContext(context);
                 return RCommand.readEvalPrint(context, consoleHandler);
             }
         }

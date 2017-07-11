@@ -109,10 +109,6 @@ public final class ContextInfo {
         multiSlotInds.set(0); // to account for primordial context
     }
 
-    public org.graalvm.polyglot.Engine createEngine() {
-        return org.graalvm.polyglot.Engine.newBuilder().setIn(stdin).setOut(stdout).setErr(stderr).build();
-    }
-
     public PolyglotEngine createVM() {
         Builder builder = PolyglotEngine.newBuilder();
         if (startParams.isInteractive()) {

@@ -28,9 +28,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.LinkedList;
 
+import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
-import org.graalvm.polyglot.PolyglotContext;
-import org.graalvm.polyglot.PolyglotContext.Builder;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,15 +40,14 @@ import com.oracle.truffle.r.launcher.JLineConsoleCompleter;
 public class TestJLineConsoleCompleter {
 
     private Engine engine;
-    private PolyglotContext context;
+    private Context context;
     private JLineConsoleCompleter consoleCompleter;
 
     @Before
     public void before() {
         JLineConsoleCompleter.testingMode();
         engine = Engine.create();
-        Builder builder = engine.newPolyglotContextBuilder();
-        context = builder.build();
+        context = Context.newBuilder().engine(engine).build();
         consoleCompleter = new JLineConsoleCompleter(context);
     }
 

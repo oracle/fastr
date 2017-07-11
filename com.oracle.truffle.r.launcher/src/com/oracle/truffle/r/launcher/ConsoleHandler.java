@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-import org.graalvm.polyglot.PolyglotContext;
+import org.graalvm.polyglot.Context;
 
 /**
  * The interface to a source of input/output for the context, which may have different
@@ -44,7 +44,7 @@ public abstract class ConsoleHandler {
      */
     public abstract void setPrompt(String prompt);
 
-    public void setPolyglotContext(@SuppressWarnings("unused") PolyglotContext context) {
+    public void setContext(@SuppressWarnings("unused") Context context) {
         // ignore by default
     }
 

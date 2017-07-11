@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.graalvm.polyglot.PolyglotContext;
+import org.graalvm.polyglot.Context;
 
 import jline.console.ConsoleReader;
 import jline.console.UserInterruptException;
@@ -53,7 +53,7 @@ public class JLineConsoleHandler extends ConsoleHandler {
     }
 
     @Override
-    public void setPolyglotContext(PolyglotContext context) {
+    public void setContext(Context context) {
         console.addCompleter(new JLineConsoleCompleter(context));
         CompletionHandler completionHandler = console.getCompletionHandler();
         if (completionHandler instanceof CandidateListCompletionHandler) {

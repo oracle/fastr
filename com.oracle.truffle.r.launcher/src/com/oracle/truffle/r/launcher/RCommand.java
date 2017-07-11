@@ -30,9 +30,9 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.List;
 
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Context.Builder;
 import org.graalvm.polyglot.Engine;
-import org.graalvm.polyglot.PolyglotContext;
-import org.graalvm.polyglot.PolyglotContext.Builder;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 
@@ -97,9 +97,9 @@ public class RCommand {
         try (Engine engine = Engine.create()) {
             assert env == null : "re-enable setting environments";
             ConsoleHandler consoleHandler = createConsoleHandler(options, false, inStream, outStream);
-            Builder builder = engine.newPolyglotContextBuilder();
-            try (PolyglotContext context = builder.setArguments("R", options.getArguments()).setIn(consoleHandler.createInputStream()).setOut(outStream).setErr(errStream).build()) {
-                consoleHandler.setPolyglotContext(context);
+            Builder builder = Context.newBuilder().engine(engine);
+            try (Context context = builder.arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
+                consoleHandler.setContext(context);
                 StartupTiming.timestamp("VM Created");
                 StartupTiming.printSummary();
                 return readEvalPrint(context, consoleHandler);
@@ -180,7 +180,7 @@ public class RCommand {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
-    public static int readEvalPrint(PolyglotContext context, ConsoleHandler consoleHandler) {
+    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler) {
         int lastStatus = 0;
         try {
             while (true) { // processing inputs
@@ -202,7 +202,7 @@ public class RCommand {
                     while (true) { // processing subsequent lines while input is incomplete
                         lastStatus = 0;
                         try {
-                            context.eval("R", Source.newBuilder(sb.toString()).interactive().build());
+                            context.eval(Source.newBuilder("R", sb.toString(), "<REPL>").interactive(true).buildLiteral());
                         } catch (PolyglotException e) {
                             if (continuePrompt == null) {
                                 continuePrompt = doEcho ? getContinuePrompt(context) : "";
@@ -222,11 +222,10 @@ public class RCommand {
                                 // usually from quit
                                 throw new ExitException(e.getExitStatus());
                             } else if (e.isHostException()) {
-                                // We continue the repl even though the system may be broken
+                                // we continue the repl even though the system may be broken
                                 lastStatus = 1;
                             } else if (e.isGuestException()) {
-                                // drop through to continue REPL and remember last eval was an
-                                // error
+                                // drop through to continue REPL and remember last eval was an error
                                 lastStatus = 1;
                             }
                         }
@@ -260,7 +259,7 @@ public class RCommand {
         }
     }
 
-    private static boolean doEcho(PolyglotContext context) {
+    private static boolean doEcho(Context context) {
         try {
             return context.eval("R", GET_ECHO).asBoolean();
         } catch (PolyglotException e) {
@@ -271,25 +270,25 @@ public class RCommand {
         }
     }
 
-    private static String getPrompt(PolyglotContext context) {
+    private static String getPrompt(Context context) {
         try {
             return context.eval("R", GET_PROMPT).asString();
         } catch (PolyglotException e) {
             if (e.isExit()) {
                 throw new ExitException(e.getExitStatus());
             }
-            throw fatal(e, "error while retrieving echo");
+            throw fatal(e, "error while retrieving prompt");
         }
     }
 
-    private static String getContinuePrompt(PolyglotContext context) {
+    private static String getContinuePrompt(Context context) {
         try {
             return context.eval("R", GET_CONTINUE_PROMPT).asString();
         } catch (PolyglotException e) {
             if (e.isExit()) {
                 throw new ExitException(e.getExitStatus());
             }
-            throw fatal(e, "error while retrieving echo");
+            throw fatal(e, "error while retrieving continue prompt");
         }
     }
 }

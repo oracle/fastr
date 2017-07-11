@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.graalvm.polyglot.PolyglotContext;
+import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 
 import jline.console.completer.Completer;
@@ -34,13 +34,13 @@ import jline.console.completer.Completer;
 public class JLineConsoleCompleter implements Completer {
 
     private static boolean isTesting = false;
-    private final PolyglotContext context;
+    private final Context context;
 
     public static void testingMode() {
         isTesting = true;
     }
 
-    public JLineConsoleCompleter(PolyglotContext context) {
+    public JLineConsoleCompleter(Context context) {
         this.context = context;
     }
 
