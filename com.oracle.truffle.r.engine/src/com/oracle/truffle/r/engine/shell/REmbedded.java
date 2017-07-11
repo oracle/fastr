@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.engine.shell;
 
 import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Context.Builder;
 import org.graalvm.polyglot.Engine;
 
 import com.oracle.truffle.api.vm.PolyglotEngine;
@@ -64,7 +63,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 public class REmbedded {
 
     private static ConsoleHandler consoleHandler;
-    private static Engine engine;
     private static Context context;
 
     /**
@@ -74,14 +72,12 @@ public class REmbedded {
      * the {@link RStartParams}, which happens after this call returns.
      */
     private static void initializeR(String[] args) {
-        assert engine == null;
+        assert context == null;
         RContext.setEmbedded();
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
 
-        engine = Engine.create();
         consoleHandler = RCommand.createConsoleHandler(options, true, System.in, System.out);
-        Builder builder = Context.newBuilder().engine(engine);
-        try (Context cntx = builder.arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(System.out).err(System.err).build()) {
+        try (Context cntx = Context.newBuilder().arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(System.out).err(System.err).build()) {
             context = cntx;
             consoleHandler.setContext(context);
             context.eval("R", INIT);
@@ -114,7 +110,6 @@ public class REmbedded {
         }
         int status = RCommand.readEvalPrint(context, consoleHandler);
         context.close();
-        engine.close();
         Utils.systemExit(status);
     }
 

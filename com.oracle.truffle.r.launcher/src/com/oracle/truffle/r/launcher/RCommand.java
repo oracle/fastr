@@ -31,8 +31,6 @@ import java.nio.file.Files;
 import java.util.List;
 
 import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Context.Builder;
-import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 
@@ -94,16 +92,13 @@ public class RCommand {
         }
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
         options.printHelpAndVersion();
-        try (Engine engine = Engine.create()) {
-            assert env == null : "re-enable setting environments";
-            ConsoleHandler consoleHandler = createConsoleHandler(options, false, inStream, outStream);
-            Builder builder = Context.newBuilder().engine(engine);
-            try (Context context = builder.arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
-                consoleHandler.setContext(context);
-                StartupTiming.timestamp("VM Created");
-                StartupTiming.printSummary();
-                return readEvalPrint(context, consoleHandler);
-            }
+        assert env == null : "re-enable setting environments";
+        ConsoleHandler consoleHandler = createConsoleHandler(options, false, inStream, outStream);
+        try (Context context = Context.newBuilder().arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
+            consoleHandler.setContext(context);
+            StartupTiming.timestamp("VM Created");
+            StartupTiming.printSummary();
+            return readEvalPrint(context, consoleHandler);
         }
     }
 
