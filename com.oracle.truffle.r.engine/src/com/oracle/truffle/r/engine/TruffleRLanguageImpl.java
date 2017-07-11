@@ -107,7 +107,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage implements Scop
 
     @Override
     protected boolean isObjectOfLanguage(Object object) {
-        return false;
+        return object instanceof RTypedValue;
     }
 
     @Override

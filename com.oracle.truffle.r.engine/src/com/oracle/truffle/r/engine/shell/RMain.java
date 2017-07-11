@@ -20,7 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.launcher;
+package com.oracle.truffle.r.engine.shell;
+
+import com.oracle.truffle.r.launcher.RCommand;
+import com.oracle.truffle.r.launcher.RscriptCommand;
 
 /**
  * Convenience class that allows the R/Rscript entry to be chosen by an initial argument.
@@ -66,5 +69,4 @@ public class RMain {
         System.arraycopy(args, 1, nargs, 0, nargs.length);
         return nargs;
     }
-
 }
