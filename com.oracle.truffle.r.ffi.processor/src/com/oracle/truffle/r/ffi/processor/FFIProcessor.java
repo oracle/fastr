@@ -341,12 +341,16 @@ public final class FFIProcessor extends AbstractProcessor {
                 return "uint8";
             case "int":
                 return "sint32";
+            case "long":
+                return "sint64";
             case "double":
                 return "double";
             case "void":
                 return "void";
             case "int[]":
                 return "[sint32]";
+            case "long[]":
+                return "[sint64]";
             case "double[]":
                 return "[double]";
             case "byte[]":

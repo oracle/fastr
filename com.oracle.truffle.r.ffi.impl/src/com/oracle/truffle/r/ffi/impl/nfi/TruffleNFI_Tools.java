@@ -22,20 +22,17 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import java.io.IOException;
-
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.Generic_Tools;
-import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.ffi.impl.interop.tools.RConnGetCCall;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -46,24 +43,6 @@ import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 public class TruffleNFI_Tools implements ToolsRFFI {
 
     private static class TruffleNFI_ToolsRFFINode extends Generic_Tools.Generic_ToolsRFFINode {
-        private interface RConnGetC {
-            int getc(RConnection conn);
-        }
-
-        private static class RConnGetCImpl implements RConnGetC, RTruffleObject {
-            @Override
-            public int getc(RConnection conn) {
-                RFFIUtils.traceUpCall("getc");
-                try {
-                    int r = conn.getc();
-                    RFFIUtils.traceUpCallReturn("getc", r);
-                    return r;
-                } catch (IOException ex) {
-                    return -1;
-                }
-            }
-        }
-
         private static boolean initialized;
 
         @Child private DLLRFFI.DLSymNode dysymNode = DLLRFFI.DLSymNode.create();
@@ -86,8 +65,8 @@ public class TruffleNFI_Tools implements ToolsRFFI {
             Node bind = Message.createInvoke(1).createNode();
             Node executeNode = Message.createExecute(1).createNode();
             try {
-                TruffleObject function = (TruffleObject) ForeignAccess.sendInvoke(bind, symbolHandle.asTruffleObject(), "bind", "((object): sint32): void");
-                ForeignAccess.sendExecute(executeNode, function, new RConnGetCImpl());
+                TruffleObject function = (TruffleObject) ForeignAccess.sendInvoke(bind, symbolHandle.asTruffleObject(), "bind", "(env, (object): sint32): void");
+                ForeignAccess.sendExecute(executeNode, function, new RConnGetCCall());
             } catch (InteropException t) {
                 throw RInternalError.shouldNotReachHere(t);
             }
