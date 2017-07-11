@@ -66,7 +66,7 @@ public final class RProfile implements RContext.ContextState {
             }
         }
 
-        if (context.getStartParams().getLoadInitFile()) {
+        if (context.getStartParams().loadInitFile()) {
             String userProfilePath = envVars.get("R_PROFILE_USER");
             if (userProfilePath == null) {
                 String dotRenviron = ".Rprofile";

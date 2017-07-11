@@ -114,6 +114,7 @@ public class RListMR {
 
         private final ConditionProfile unknownIdentifier = ConditionProfile.createBinaryProfile();
 
+        private static final int EXISTS = 1 << 0;
         private static final int READABLE = 1 << 1;
         private static final int WRITABLE = 1 << 2;
         private static final int INVOCABLE = 1 << 3;
@@ -126,7 +127,7 @@ public class RListMR {
                 RStringVector names = getNamesNode.getNames(receiver);
                 for (int i = 0; i < names.getLength(); i++) {
                     if (identifier.equals(names.getDataAt(i))) {
-                        info = 1;
+                        info = EXISTS;
                         break;
                     }
                 }

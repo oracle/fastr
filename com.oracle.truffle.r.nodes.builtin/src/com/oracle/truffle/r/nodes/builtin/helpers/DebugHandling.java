@@ -42,6 +42,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
+import com.oracle.truffle.r.launcher.ConsoleHandler;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
@@ -52,8 +53,8 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -525,7 +526,7 @@ public class DebugHandling {
 
     @TruffleBoundary
     private static void printNode(Node node, boolean startFunction) {
-        ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
+        ConsoleIO console = RContext.getInstance().getConsole();
         /*
          * N.B. It would seem that GnuR does a deparse that because, e.g., a function that ends with
          * } without a preceding newline prints with one and indentation is standardized.
@@ -534,17 +535,17 @@ public class DebugHandling {
         boolean curly = RSyntaxCall.isCallTo((RSyntaxElement) node, "{");
 
         if (startFunction && !curly) {
-            consoleHandler.print("debug: ");
+            console.print("debug: ");
         } else {
             SourceSection source = ((RBaseNode) node).asRSyntaxNode().getSourceSection();
             String path = RSource.getPath(source.getSource());
             if (path == null) {
                 path = "";
             }
-            consoleHandler.print("debug at " + path + "#" + source.getStartLine() + ": ");
+            console.print("debug at " + path + "#" + source.getStartLine() + ": ");
         }
-        consoleHandler.print(RDeparse.deparseSyntaxElement(rNode.asRSyntaxNode()));
-        consoleHandler.print("\n");
+        console.print(RDeparse.deparseSyntaxElement(rNode.asRSyntaxNode()));
+        console.print("\n");
     }
 
     private static class StatementEventListener extends InteractingDebugEventListener {

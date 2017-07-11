@@ -107,7 +107,7 @@ public class EvalThread extends ContextThread {
             PolyglotEngine.Value resultValue = vm.eval(source);
             evalResult = createEvalResult(resultValue);
         } catch (ParseException e) {
-            e.report(info.getConsoleHandler());
+            e.report(info.getStdout());
             evalResult = createErrorResult(e.getMessage());
         } catch (ExitException e) {
             // termination, treat this as "success"
@@ -117,7 +117,7 @@ public class EvalThread extends ContextThread {
             evalResult = RDataFactory.createList(new Object[]{RNull.instance});
         } catch (Throwable t) {
             // some internal error
-            RInternalError.reportErrorAndConsoleLog(t, info.getConsoleHandler(), info.getId());
+            RInternalError.reportErrorAndConsoleLog(t, info.getId());
             evalResult = createErrorResult(t.getClass().getSimpleName());
         }
         return evalResult;

@@ -29,13 +29,14 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.launcher.ConsoleHandler;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
-import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class StdConnections {
@@ -63,11 +64,11 @@ public class StdConnections {
 
         @Override
         public RContext.ContextState initialize(RContext context) {
-            ConsoleHandler consoleHandler = context.getConsoleHandler();
+            ConsoleIO console = context.getConsole();
             try {
-                stdin = new StdinConnection();
-                stdout = new StdoutConnection(consoleHandler);
-                stderr = new StderrConnection(consoleHandler);
+                stdin = new StdinConnection(console);
+                stdout = new StdoutConnection(console);
+                stderr = new StderrConnection(console);
             } catch (IOException ex) {
                 throw Utils.rSuicide("failed to open stdconnections:");
             }
@@ -178,8 +179,11 @@ public class StdConnections {
 
     private static class StdinConnection extends StdConnection {
 
-        StdinConnection() throws IOException {
+        private final ConsoleIO console;
+
+        StdinConnection(ConsoleIO console) throws IOException {
             super(AbstractOpenMode.Read, 0);
+            this.console = console;
         }
 
         @Override
@@ -200,7 +204,6 @@ public class StdConnections {
         @Override
         @TruffleBoundary
         public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
-            ConsoleHandler console = RContext.getInstance().getConsoleHandler();
             ArrayList<String> lines = new ArrayList<>();
             String line;
             while ((line = console.readLine()) != null) {
@@ -221,11 +224,11 @@ public class StdConnections {
     }
 
     private abstract static class StdoutputAdapter extends StdConnection {
-        protected final ConsoleHandler consoleHandler;
+        protected final ConsoleIO console;
 
-        StdoutputAdapter(int index, ConsoleHandler consoleHandler) throws IOException {
+        StdoutputAdapter(int index, ConsoleIO console) throws IOException {
             super(AbstractOpenMode.Write, index);
-            this.consoleHandler = consoleHandler;
+            this.console = console;
             this.opened = true;
         }
 
@@ -247,8 +250,8 @@ public class StdConnections {
 
     private static class StdoutConnection extends StdoutputAdapter {
 
-        StdoutConnection(ConsoleHandler consoleHandler) throws IOException {
-            super(1, consoleHandler);
+        StdoutConnection(ConsoleIO console) throws IOException {
+            super(1, console);
         }
 
         int numDiversions() {
@@ -292,9 +295,9 @@ public class StdConnections {
             ContextStateImpl state = getContextState();
             if (state.top < 0) {
                 if (nl) {
-                    consoleHandler.println(s);
+                    console.println(s);
                 } else {
-                    consoleHandler.print(s);
+                    console.print(s);
                 }
             } else {
                 getContextState().diversions[state.top].conn.writeString(s, nl);
@@ -327,8 +330,8 @@ public class StdConnections {
     private static class StderrConnection extends StdoutputAdapter {
         RConnection diversion;
 
-        StderrConnection(ConsoleHandler consoleHandler) throws IOException {
-            super(2, consoleHandler);
+        StderrConnection(ConsoleIO console) throws IOException {
+            super(2, console);
         }
 
         void divertErr(RConnection conn) {
@@ -379,9 +382,9 @@ public class StdConnections {
                 diversion.writeString(s, nl);
             } else {
                 if (nl) {
-                    consoleHandler.printErrorln(s);
+                    console.printErrorln(s);
                 } else {
-                    consoleHandler.printError(s);
+                    console.printError(s);
                 }
             }
         }

@@ -22,6 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
@@ -33,7 +37,9 @@ import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -70,14 +76,27 @@ public interface Engine {
         }
 
         @TruffleBoundary
-        public void report(ConsoleHandler consoleHandler) {
+        public void report(OutputStream output) {
+            try {
+                output.write(getErrorMessage().getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                throw new RInternalError(e, "error while printing parse exception");
+            }
+        }
+
+        @TruffleBoundary
+        public void report(ConsoleIO console) {
+            console.println(getErrorMessage());
+        }
+
+        private String getErrorMessage() {
             String msg;
             if (source.getLineCount() == 1) {
                 msg = String.format(RError.Message.UNEXPECTED.message, token, substring);
             } else {
                 msg = String.format(RError.Message.UNEXPECTED_LINE.message, token, substring, line);
             }
-            consoleHandler.println("Error: " + msg);
+            return "Error: " + msg;
         }
 
         @Override

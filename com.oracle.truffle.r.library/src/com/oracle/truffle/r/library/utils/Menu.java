@@ -14,11 +14,11 @@ package com.oracle.truffle.r.library.utils;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 // Translated from GnuR: library/utils/io.c
@@ -33,10 +33,10 @@ public abstract class Menu extends RExternalBuiltinNode.Arg1 {
     @Specialization
     @TruffleBoundary
     protected int menu(RAbstractStringVector choices) {
-        ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
+        ConsoleIO console = RContext.getInstance().getConsole();
         int first = choices.getLength() + 1;
-        ch.print("Selection: ");
-        String response = ch.readLine().trim();
+        console.print("Selection: ");
+        String response = console.readLine().trim();
         if (response.length() > 0) {
             if (Character.isDigit(response.charAt(0))) {
                 try {

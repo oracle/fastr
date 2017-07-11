@@ -33,9 +33,11 @@ import com.oracle.truffle.api.nodes.Node;
 public class ExitException extends RuntimeException implements TruffleException {
     private static final long serialVersionUID = 1L;
     private final int status;
+    private final boolean saveHistory;
 
-    public ExitException(int status) {
+    public ExitException(int status, boolean saveHistory) {
         this.status = status;
+        this.saveHistory = saveHistory;
     }
 
     public int getStatus() {
@@ -55,5 +57,9 @@ public class ExitException extends RuntimeException implements TruffleException 
     @Override
     public int getExitStatus() {
         return status;
+    }
+
+    public boolean saveHistory() {
+        return saveHistory;
     }
 }

@@ -25,16 +25,26 @@ package com.oracle.truffle.r.runtime.context;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.TimeZone;
 import java.util.WeakHashMap;
+import java.util.concurrent.Executor;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -44,23 +54,31 @@ import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.launcher.RCmdOptions;
+import com.oracle.truffle.r.launcher.RCmdOptions.Client;
+import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
-import com.oracle.truffle.r.runtime.RCmdOptions;
-import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalCode.ContextStateImpl;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.RProfile;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.RStartParams;
 import com.oracle.truffle.r.runtime.TempPathName;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinLookup;
@@ -213,7 +231,26 @@ public final class RContext implements RTruffleObject {
         }
     }
 
-    private final ContextInfo info;
+    private final RStartParams startParameters;
+    private final RCmdOptions cmdOptions;
+    private final String[] environment;
+    private final RContext.ContextKind contextKind;
+    private final TimeZone systemTimeZone;
+
+    /**
+     * Any context created by another has a parent. When such a context is destroyed we must reset
+     * the RContext.threadLocalContext to the parent.
+     */
+    private final RContext parentContext;
+    private final int id;
+    private final int multiSlotIndex;
+    private PolyglotEngine polyglotEngine;
+    public Executor executor;
+
+    private final InputStream stdin;
+    private final OutputStreamWriter stdout;
+    private final OutputStreamWriter stderr;
+
     private final Engine engine;
     private final TruffleRLanguage language;
 
@@ -342,8 +379,7 @@ public final class RContext implements RTruffleObject {
 
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRProfile, stateTempPath, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI,
-                        stateRSerialize,
-                        stateLazyDBCache, stateInstrumentation, stateDLL};
+                        stateRSerialize, stateLazyDBCache, stateInstrumentation, stateDLL};
     }
 
     public static void setEmbedded() {
@@ -363,6 +399,13 @@ public final class RContext implements RTruffleObject {
      */
     private RContext(TruffleRLanguage language, Env env, Instrumenter instrumenter, boolean isInitial) {
         this.language = language;
+        String[] args;
+        if (env.getApplicationArguments().length == 0) {
+            args = new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"};
+        } else {
+            args = env.getApplicationArguments();
+        }
+
         Object initialInfo = env.getConfig().get(ContextInfo.CONFIG_KEY);
         if (initialInfo == null) {
             /*
@@ -370,11 +413,35 @@ public final class RContext implements RTruffleObject {
              * not via RCommand/RscriptCommand. In this case, we also assume that no previously
              * stored session should be restored.
              */
-            this.info = ContextInfo.create(new RStartParams(RCmdOptions.parseArguments(Client.R, new String[]{"--no-restore"}, false), false), null,
-                            ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env.in(), env.out()));
+            this.cmdOptions = RCmdOptions.parseArguments(Client.R, args, true);
+            this.startParameters = new RStartParams(cmdOptions, false);
+            this.environment = null;
+            this.contextKind = ContextKind.SHARE_NOTHING;
+            this.systemTimeZone = TimeZone.getDefault();
+            this.parentContext = null;
+            this.id = ContextInfo.contextInfoIds.incrementAndGet();
+            this.multiSlotIndex = 0;
+            this.polyglotEngine = null;
+            this.executor = null;
         } else {
-            this.info = (ContextInfo) initialInfo;
+            ContextInfo info = (ContextInfo) initialInfo;
+            this.cmdOptions = RCmdOptions.parseArguments(Client.R, args, true);
+            this.startParameters = info.getStartParams();
+            this.environment = info.getEnv();
+            this.contextKind = info.getKind();
+            this.systemTimeZone = info.getSystemTimeZone();
+            this.parentContext = info.getParent();
+            this.id = info.getId();
+            this.multiSlotIndex = info.getMultiSlotInd();
+            this.polyglotEngine = info.getVM();
+            this.executor = info.executor;
         }
+
+        outputWelcomeMessage(startParameters);
+
+        this.stdin = env.in();
+        this.stdout = new OutputStreamWriter(env.out());
+        this.stderr = new OutputStreamWriter(env.err());
 
         this.initial = isInitial;
         this.env = env;
@@ -400,27 +467,34 @@ public final class RContext implements RTruffleObject {
         RDataFactory.setAllocationTracingEnabled(allocationReporter.isActive());
     }
 
+    static void outputWelcomeMessage(RStartParams rsp) {
+        /*
+         * Outputting the welcome message here has the virtue that the VM initialization delay
+         * occurs later. However, it does not work in embedded mode as console redirects have not
+         * been installed at this point. So we do it later in REmbedded.
+         */
+        if (!rsp.isQuiet() && !embedded) {
+            System.out.println(RRuntime.WELCOME_MESSAGE);
+        }
+    }
+
     /**
      * Performs the real initialization of the context, invoked from
      * {@link TruffleLanguage#initializeContext}.
      */
     public RContext initializeContext() {
         // this must happen before engine activation in the code below
-        if (info.getKind() == ContextKind.SHARE_NOTHING) {
-            if (info.getParent() == null) {
+        if (contextKind == ContextKind.SHARE_NOTHING) {
+            if (parentContext == null) {
                 this.primitiveMethodsInfo = new PrimitiveMethodsInfo();
             } else {
                 // share nothing contexts need their own copy of the primitive methods meta-data as
                 // they can run (and update this meta data) concurrently with the parent;
                 // alternative would be to copy on-write but we would need some kind of locking
                 // machinery to avoid races
-                assert info.getParent().getPrimitiveMethodsInfo() != null;
-                this.primitiveMethodsInfo = info.getParent().getPrimitiveMethodsInfo().duplicate();
+                assert parentContext.getPrimitiveMethodsInfo() != null;
+                this.primitiveMethodsInfo = parentContext.getPrimitiveMethodsInfo().duplicate();
             }
-        }
-
-        if (info.getConsoleHandler() == null) {
-            throw Utils.rSuicide("no console handler set");
         }
 
         if (singleContextAssumption.isValid()) {
@@ -470,14 +544,14 @@ public final class RContext implements RTruffleObject {
             state.add(State.ACTIVE);
         }
 
-        if (info.getKind() == ContextKind.SHARE_PARENT_RW) {
-            if (info.getParent().sharedChild != null) {
+        if (contextKind == ContextKind.SHARE_PARENT_RW) {
+            if (parentContext.sharedChild != null) {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "can't have multiple active SHARED_PARENT_RW contexts");
             }
-            info.getParent().sharedChild = this;
+            parentContext.sharedChild = this;
             // this one must be shared between contexts - otherwise testing contexts do not know
             // that methods package is loaded
-            this.methodTableDispatchOn = info.getParent().methodTableDispatchOn;
+            this.methodTableDispatchOn = parentContext.methodTableDispatchOn;
         }
         if (initial && !embedded) {
             initialContextInitialized = true;
@@ -530,13 +604,13 @@ public final class RContext implements RTruffleObject {
                     contextState.beforeDestroy(this);
                 }
             }
-            if (info.getKind() == ContextKind.SHARE_PARENT_RW) {
-                info.getParent().sharedChild = null;
+            if (contextKind == ContextKind.SHARE_PARENT_RW) {
+                parentContext.sharedChild = null;
             }
-            if (info.getParent() == null) {
+            if (parentContext == null) {
                 threadLocalContext.set(null);
             } else {
-                threadLocalContext.set(info.getParent());
+                threadLocalContext.set(parentContext);
             }
             state = EnumSet.of(State.DESTROYED);
 
@@ -545,7 +619,7 @@ public final class RContext implements RTruffleObject {
     }
 
     public RContext getParent() {
-        return info.getParent();
+        return parentContext;
     }
 
     public Env getEnv() {
@@ -557,15 +631,15 @@ public final class RContext implements RTruffleObject {
     }
 
     public ContextKind getKind() {
-        return info.getKind();
+        return contextKind;
     }
 
     public int getId() {
-        return info.getId();
+        return id;
     }
 
     public int getMultiSlotInd() {
-        return info.getMultiSlotInd();
+        return multiSlotIndex;
     }
 
     @TruffleBoundary
@@ -608,6 +682,10 @@ public final class RContext implements RTruffleObject {
         } else {
             return getInstanceInternal();
         }
+    }
+
+    public boolean isInteractive() {
+        return startParameters.isInteractive();
     }
 
     /**
@@ -655,20 +733,12 @@ public final class RContext implements RTruffleObject {
         if (primitiveMethodsInfo == null) {
             // shared contexts do not run concurrently with their parent and re-use primitive
             // methods information
-            assert info.getKind() != ContextKind.SHARE_NOTHING;
-            assert info.getParent() != null;
-            return info.getParent().getPrimitiveMethodsInfo();
+            assert contextKind != ContextKind.SHARE_NOTHING;
+            assert parentContext != null;
+            return parentContext.getPrimitiveMethodsInfo();
         } else {
             return primitiveMethodsInfo;
         }
-    }
-
-    public boolean isInteractive() {
-        return info.getConsoleHandler().isInteractive();
-    }
-
-    public ConsoleHandler getConsoleHandler() {
-        return info.getConsoleHandler();
     }
 
     /**
@@ -712,16 +782,20 @@ public final class RContext implements RTruffleObject {
         return foreignAccessFactory;
     }
 
+    public RCmdOptions getCmdOptions() {
+        return cmdOptions;
+    }
+
     public RStartParams getStartParams() {
-        return info.getStartParams();
+        return startParameters;
     }
 
     public String[] getEnvSettings() {
-        return info.getEnv();
+        return environment;
     }
 
     public boolean hasExecutor() {
-        return info.executor != null;
+        return executor != null;
     }
 
     /**
@@ -730,12 +804,12 @@ public final class RContext implements RTruffleObject {
      */
     public void schedule(Runnable action) {
         assert hasExecutor() : "Cannot run RContext#schedule() when there is no executor.";
-        info.executor.execute(action);
+        executor.execute(action);
     }
 
     @Override
     public String toString() {
-        return "context: " + info.getId();
+        return "context: " + id;
     }
 
     /*
@@ -757,7 +831,7 @@ public final class RContext implements RTruffleObject {
     }
 
     public PolyglotEngine getVM() {
-        return info.getVM();
+        return polyglotEngine;
     }
 
     public boolean isInitial() {
@@ -773,7 +847,7 @@ public final class RContext implements RTruffleObject {
     }
 
     public TimeZone getSystemTimeZone() {
-        return info.getSystemTimeZone();
+        return systemTimeZone;
     }
 
     public String getNamespaceName() {
@@ -830,5 +904,181 @@ public final class RContext implements RTruffleObject {
             urls[i] = Paths.get(entries[i]).toUri().toURL();
         }
         interopClassLoader = URLClassLoader.newInstance(urls, interopClassLoader);
+    }
+
+    public final class ConsoleIO {
+
+        private final CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
+
+        {
+            decoder.onMalformedInput(CodingErrorAction.IGNORE);
+            decoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+        }
+
+        @TruffleBoundary
+        public String readLine() {
+            /*
+             * We cannot use an InputStreamReader because it buffers characters internally, whereas
+             * readLine() should not buffer across newlines.
+             */
+
+            ByteBuffer bytes = ByteBuffer.allocate(16);
+            CharBuffer chars = CharBuffer.allocate(16);
+            StringBuilder str = new StringBuilder();
+            decoder.reset();
+            while (true) {
+                int inputByte;
+                try {
+                    inputByte = stdin.read();
+                } catch (IOException e) {
+                    throw new RInternalError(e, "error writing to stderr");
+                }
+                if (inputByte == -1) {
+                    return str.toString();
+                }
+                bytes.put((byte) inputByte);
+                bytes.flip();
+                decoder.decode(bytes, chars, false);
+                chars.flip();
+                while (chars.hasRemaining()) {
+                    char c = chars.get();
+                    if (c == '\n' || c == '\r') {
+                        return str.toString();
+                    }
+                    str.append(c);
+                }
+                bytes.compact();
+                chars.clear();
+            }
+        }
+
+        @TruffleBoundary
+        public void print(String message) {
+            try {
+                stdout.write(message);
+                stdout.flush();
+            } catch (IOException e) {
+                throw new RInternalError(e, "error writing to stdout");
+            }
+        }
+
+        @TruffleBoundary
+        public void println(String message) {
+            try {
+                stdout.write(message);
+                stdout.write('\n');
+                stdout.flush();
+            } catch (IOException e) {
+                throw new RInternalError(e, "error writing to stdout");
+            }
+        }
+
+        @TruffleBoundary
+        public void printf(String format, Object... args) {
+            try {
+                stdout.write(String.format(format, args));
+                stdout.flush();
+            } catch (IOException e) {
+                throw new RInternalError(e, "error writing to stdout");
+            }
+        }
+
+        @TruffleBoundary
+        public void printError(String message) {
+            try {
+                stderr.write(message);
+                stderr.flush();
+            } catch (IOException e) {
+                throw new RInternalError(e, "error writing to stderr");
+            }
+        }
+
+        @TruffleBoundary
+        public void printErrorln(String message) {
+            try {
+                stderr.write(message);
+                stderr.write('\n');
+                stderr.flush();
+            } catch (IOException e) {
+                throw new RInternalError(e, "error writing to stderr");
+            }
+        }
+
+        private final Node read = Message.READ.createNode();
+        private final Node write = Message.WRITE.createNode();
+
+        @TruffleBoundary
+        public String getPrompt() {
+            if (handler != null) {
+                Object result;
+                try {
+                    result = ForeignAccess.sendRead(read, handler, "prompt");
+                } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+                    throw new RInternalError(e, "error while reading prompt");
+                }
+                return (String) result;
+            }
+            return "";
+        }
+
+        @TruffleBoundary
+        public void setPrompt(String prompt) {
+            if (handler != null) {
+                try {
+                    ForeignAccess.sendWrite(write, handler, "prompt", prompt);
+                } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException e) {
+                    throw new RInternalError(e, "error while writing prompt");
+                }
+            }
+        }
+
+        @TruffleBoundary
+        public String getHistory() {
+            if (handler != null) {
+                Object result;
+                try {
+                    result = ForeignAccess.sendRead(read, handler, "history");
+                } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+                    throw new RInternalError(e, "error while reading history");
+                }
+                return (String) result;
+            }
+            return "";
+        }
+
+        @TruffleBoundary
+        public void setHistory(String history) {
+            if (handler != null) {
+                try {
+                    ForeignAccess.sendWrite(write, handler, "history", history);
+                } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException e) {
+                    throw new RInternalError(e, "error while writing history");
+                }
+            }
+        }
+
+        public InputStream getStdin() {
+            return env.in();
+        }
+
+        public OutputStream getStdout() {
+            return env.out();
+        }
+
+        public OutputStream getStderr() {
+            return env.err();
+        }
+
+        private TruffleObject handler;
+
+        public void setHandler(TruffleObject handler) {
+            this.handler = handler;
+        }
+    }
+
+    private final ConsoleIO console = new ConsoleIO();
+
+    public ConsoleIO getConsole() {
+        return console;
     }
 }

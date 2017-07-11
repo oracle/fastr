@@ -22,41 +22,42 @@
  */
 package com.oracle.truffle.r.test.engine.shell;
 
-import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.r.engine.shell.JLineConsoleCompleter;
-import com.oracle.truffle.r.runtime.RCmdOptions;
-import com.oracle.truffle.r.runtime.context.ConsoleHandler;
-import com.oracle.truffle.r.runtime.context.ContextInfo;
-import com.oracle.truffle.r.runtime.context.RContext;
-import java.io.File;
-import org.junit.Test;
-
-import java.util.LinkedList;
-import org.junit.After;
-import org.junit.Assert;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+import java.util.LinkedList;
+
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Engine;
+import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
+
+import com.oracle.truffle.r.launcher.JLineConsoleCompleter;
 
 public class TestJLineConsoleCompleter {
 
-    private PolyglotEngine engine;
-    private ConsoleHandler consoleHandler;
+    private Engine engine;
+    private Context context;
     private JLineConsoleCompleter consoleCompleter;
 
     @Before
     public void before() {
-        consoleHandler = new DummyConsoleHandler();
-        consoleCompleter = new JLineConsoleCompleter(consoleHandler);
         JLineConsoleCompleter.testingMode();
-        ContextInfo info = ContextInfo.createNoRestore(RCmdOptions.Client.R, null, RContext.ContextKind.SHARE_NOTHING, null, consoleHandler);
-        engine = info.createVM(PolyglotEngine.newBuilder());
+        engine = Engine.create();
+        context = Context.newBuilder().engine(engine).build();
+        consoleCompleter = new JLineConsoleCompleter(context);
     }
 
     @After
     public void dispose() {
+        if (context != null) {
+            context.close();
+        }
         if (engine != null) {
-            engine.dispose();
+            engine.close();
         }
     }
 
@@ -115,49 +116,6 @@ public class TestJLineConsoleCompleter {
             assertFalse(l.isEmpty());
         } else {
             Assert.assertArrayEquals(expected, l.toArray(new CharSequence[l.size()]));
-        }
-    }
-
-    private class DummyConsoleHandler extends ConsoleHandler {
-
-        @Override
-        public void println(String s) {
-        }
-
-        @Override
-        public void print(String s) {
-        }
-
-        @Override
-        public void printErrorln(String s) {
-        }
-
-        @Override
-        public void printError(String s) {
-        }
-
-        @Override
-        public String readLine() {
-            return "";
-        }
-
-        @Override
-        public boolean isInteractive() {
-            return false;
-        }
-
-        @Override
-        public String getPrompt() {
-            return "";
-        }
-
-        @Override
-        public void setPrompt(String prompt) {
-        }
-
-        @Override
-        public String getInputDescription() {
-            return "";
         }
     }
 }

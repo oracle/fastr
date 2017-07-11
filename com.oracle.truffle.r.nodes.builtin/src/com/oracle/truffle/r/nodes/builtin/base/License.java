@@ -30,9 +30,9 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -44,7 +44,7 @@ public abstract class License extends RBuiltinNode.Arg0 {
     @TruffleBoundary
     protected Object license() {
         try {
-            StdConnections.getStdout().writeString(RRuntime.LICENSE, true);
+            StdConnections.getStdout().writeString(RVersionNumber.LICENSE, true);
         } catch (IOException ex) {
             throw error(RError.Message.GENERIC, ex.getMessage());
         }

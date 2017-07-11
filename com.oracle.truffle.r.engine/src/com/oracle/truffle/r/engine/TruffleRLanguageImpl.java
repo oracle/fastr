@@ -204,7 +204,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage implements Scop
             try {
                 return RContext.getEngine().parseToCallTarget(request.getSource(), request.getFrame());
             } catch (IncompleteSourceException e) {
-                throw new com.oracle.truffle.api.vm.IncompleteSourceException(e);
+                throw e;
             } catch (ParseException e) {
                 return Truffle.getRuntime().createCallTarget(new RootNode(this, new FrameDescriptor()) {
                     @Override
@@ -214,11 +214,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage implements Scop
 
                     @Override
                     public Object execute(VirtualFrame frame) {
-                        try {
-                            throw e.throwAsRError();
-                        } catch (RError e2) {
-                            return null;
-                        }
+                        throw e.throwAsRError();
                     }
                 });
             } catch (RError e) {
@@ -230,7 +226,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage implements Scop
 
                     @Override
                     public Object execute(VirtualFrame frame) {
-                        return null;
+                        throw e;
                     }
                 });
             }

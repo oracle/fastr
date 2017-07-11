@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
 

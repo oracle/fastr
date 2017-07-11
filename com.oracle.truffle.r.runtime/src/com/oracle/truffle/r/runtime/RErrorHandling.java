@@ -541,7 +541,7 @@ public class RErrorHandling {
             }
         }
 
-        if (RContext.getInstance().getConsoleHandler().isInteractive() || errorExpr != RNull.instance) {
+        if (RContext.getInstance().isInteractive() || errorExpr != RNull.instance) {
             Object trace = Utils.createTraceback(0);
             try {
                 REnvironment env = RContext.getInstance().stateREnvironment.getBaseEnv();

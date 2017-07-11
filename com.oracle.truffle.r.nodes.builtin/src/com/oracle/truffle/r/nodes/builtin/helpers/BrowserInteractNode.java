@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.launcher.ConsoleHandler;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -37,10 +38,10 @@ import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -78,7 +79,7 @@ public abstract class BrowserInteractNode extends Node {
     protected int interact(VirtualFrame frame, RCaller caller) {
         CompilerDirectives.transferToInterpreter();
         MaterializedFrame mFrame = frame.materialize();
-        ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
+        ConsoleIO ch = RContext.getInstance().getConsole();
         BrowserState browserState = RContext.getInstance().stateInstrumentation.getBrowserState();
         String savedPrompt = ch.getPrompt();
         RFunction callerFunction = RArguments.getFunction(frame);

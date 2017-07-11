@@ -21,6 +21,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
@@ -63,13 +64,6 @@ public class RRuntime {
         "\n" +
         "Type 'q()' to quit R.";
 
-    public static final String LICENSE =
-        "This software is distributed under the terms of the GNU General Public License\n" +
-        "Version 2, June 1991. The terms of the license are in a file called COPYING\n" +
-        "which you should have received with this software. A copy of the license can be\n" +
-        "found at http://www.gnu.org/licenses/gpl-2.0.html.\n" +
-        "\n" +
-        "'Share and Enjoy.'";
     //@formatter:on
 
     public static final String R_APP_MIME = "application/x-r";

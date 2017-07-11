@@ -39,11 +39,11 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RChannel;
-import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.EvalThread;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -337,7 +338,9 @@ public class FastRContext {
     }
 
     private static ContextInfo createContextInfo(RContext.ContextKind contextKind) {
-        return ContextInfo.createNoRestore(Client.RSCRIPT, null, contextKind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
+        RContext context = RContext.getInstance();
+        ConsoleIO console = context.getConsole();
+        return ContextInfo.createNoRestore(Client.RSCRIPT, null, contextKind, context, console.getStdin(), console.getStdout(), console.getStderr());
     }
 
     @RBuiltin(name = ".fastr.channel.create", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)

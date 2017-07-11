@@ -121,17 +121,18 @@ public class RPromiseMR {
     @Resolve(message = "KEY_INFO")
     public abstract static class RPromiseKeyInfoNode extends Node {
 
+        private static final int EXISTS = 1 << 0;
         private static final int READABLE = 1 << 1;
         private static final int WRITABLE = 1 << 2;
 
         @SuppressWarnings("try")
         protected Object access(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") RPromise receiver, String identifier) {
             if (PROP_IS_EAGER.equals(identifier) || PROP_VALUE.equals(identifier)) {
-                return READABLE;
+                return EXISTS + READABLE;
             }
 
             if (PROP_IS_EVALUATED.equals(identifier)) {
-                return READABLE + WRITABLE;
+                return EXISTS + READABLE + WRITABLE;
             }
             return 0;
         }

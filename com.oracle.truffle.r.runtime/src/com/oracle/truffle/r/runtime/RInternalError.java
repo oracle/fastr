@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -38,7 +39,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.TruffleException;
-import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.launcher.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
@@ -149,16 +150,16 @@ public final class RInternalError extends Error implements TruffleException {
     }
 
     @TruffleBoundary
-    public static void reportErrorAndConsoleLog(Throwable throwable, ConsoleHandler consoleHandler, int contextId) {
-        reportError(throwable, consoleHandler, contextId);
+    public static void reportErrorAndConsoleLog(Throwable throwable, int contextId) {
+        reportError(throwable, contextId);
     }
 
     @TruffleBoundary
     public static void reportError(Throwable throwable) {
-        reportError(throwable, null, 0);
+        reportError(throwable, 0);
     }
 
-    private static void reportError(Throwable throwable, ConsoleHandler consoleHandler, int contextId) {
+    private static void reportError(Throwable throwable, int contextId) {
         Throwable t = throwable;
         if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue() || FastROptions.PrintErrorStacktraces.getBooleanValue()) {
 
@@ -190,12 +191,10 @@ public final class RInternalError extends Error implements TruffleException {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                String message = t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : "internal error: " + t.getClass().getSimpleName();
+                System.out.println(message + " (see fastr_errors.log" + suffix + ")");
                 if (RContext.isEmbedded()) {
                     Utils.rSuicide("FastR internal error");
-                }
-                if (consoleHandler != null) {
-                    String message = t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : "internal error: " + t.getClass().getSimpleName();
-                    consoleHandler.println(message + " (see fastr_errors.log" + suffix + ")");
                 }
             }
         }

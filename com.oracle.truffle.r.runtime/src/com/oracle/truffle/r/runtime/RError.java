@@ -20,10 +20,12 @@ import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * A facade for handling errors. This class extends {@link RuntimeException} so that it can be
@@ -64,9 +66,8 @@ public final class RError extends RuntimeException implements TruffleException {
         private final RError.Message msg;
         @CompilationFinal(dimensions = 1) private final Object[] args;
 
-        @TruffleBoundary
-        protected RErrorException(RError.Message msg, Object[] args) {
-            super(RErrorHandling.formatMessage(msg, args), null);
+        protected RErrorException(Throwable cause, RError.Message msg, Object[] args) {
+            super(RErrorHandling.formatMessage(msg, args), cause);
             this.msg = msg;
             this.args = args;
         }
@@ -81,10 +82,19 @@ public final class RError extends RuntimeException implements TruffleException {
         protected RBaseNode getErrorContext() {
             return this;
         }
+
+        @Override
+        public SourceSection getEncapsulatingSourceSection() {
+            return RSyntaxNode.INTERNAL;
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            return RSyntaxNode.INTERNAL;
+        }
     }
 
     private static final class ErrorContextImpl extends ErrorContext {
-
     }
 
     public static ErrorContext contextForBuiltin(RBuiltin builtin) {
