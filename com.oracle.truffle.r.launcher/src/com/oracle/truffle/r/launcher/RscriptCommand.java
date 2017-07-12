@@ -27,7 +27,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 
 import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Engine;
 
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
 
@@ -109,13 +108,11 @@ public class RscriptCommand {
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.RSCRIPT, args, false);
         preprocessRScriptOptions(options);
 
-        try (Engine engine = Engine.create()) {
-            ConsoleHandler consoleHandler = RCommand.createConsoleHandler(options, false, inStream, outStream);
-            try (Context context = Context.newBuilder().engine(engine).arguments("R",
-                            options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
-                consoleHandler.setContext(context);
-                return RCommand.readEvalPrint(context, consoleHandler);
-            }
+        ConsoleHandler consoleHandler = RCommand.createConsoleHandler(options, false, inStream, outStream);
+        try (Context context = Context.newBuilder().arguments("R",
+                        options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
+            consoleHandler.setContext(context);
+            return RCommand.readEvalPrint(context, consoleHandler);
         }
     }
 

@@ -29,7 +29,6 @@ import java.io.File;
 import java.util.LinkedList;
 
 import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Engine;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -39,15 +38,13 @@ import com.oracle.truffle.r.launcher.JLineConsoleCompleter;
 
 public class TestJLineConsoleCompleter {
 
-    private Engine engine;
     private Context context;
     private JLineConsoleCompleter consoleCompleter;
 
     @Before
     public void before() {
         JLineConsoleCompleter.testingMode();
-        engine = Engine.create();
-        context = Context.newBuilder().engine(engine).build();
+        context = Context.create();
         consoleCompleter = new JLineConsoleCompleter(context);
     }
 
@@ -55,9 +52,6 @@ public class TestJLineConsoleCompleter {
     public void dispose() {
         if (context != null) {
             context.close();
-        }
-        if (engine != null) {
-            engine.close();
         }
     }
 
