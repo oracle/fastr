@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.dsl.Cached;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -29,6 +30,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -59,13 +61,15 @@ public abstract class Substr extends RBuiltinNode.Arg3 {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg(arg)", "wrongParams(start, stop)"})
-    protected RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop,
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         RInternalError.shouldNotReachHere();
         return RNull.instance; // dummy
     }
 
     @Specialization(guards = {"!emptyArg(arg)", "!wrongParams(start, stop)"})
-    protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop,
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         String[] res = new String[arg.getLength()];
         na.enable(arg);
         na.enable(start);
@@ -77,7 +81,9 @@ public abstract class Substr extends RBuiltinNode.Arg3 {
             // Checkstyle: resume modified control variable check
             res[i] = substr0(arg.getDataAt(i), start.getDataAt(j), stop.getDataAt(k));
         }
-        return RDataFactory.createStringVector(res, na.neverSeenNA());
+        RStringVector result = RDataFactory.createStringVector(res, na.neverSeenNA());
+        copyAttributesNode.execute(result, arg);
+        return result;
     }
 
     private String substr0(String x, int start, int stop) {

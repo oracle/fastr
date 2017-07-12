@@ -62,18 +62,12 @@ public class TestBuiltin_iconv extends TestBase {
 
     @Test
     public void testiconv8() {
-        // FIXME FastR does not carry extra Rd_tag attr in its output
-        // which is required according to iconv() GnuR docs.
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(structure('Prediction matrix for soap film smooth', Rd_tag = 'TEXT'), 'UTF-8', 'ASCII', NA_character_, FALSE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval("argv <- list(structure('Prediction matrix for soap film smooth', Rd_tag = 'TEXT'), 'UTF-8', 'ASCII', NA_character_, FALSE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testiconv9() {
-        // FIXME FastR does not carry extra .Names attr in its output
-        // which is required according to iconv() GnuR docs.
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(structure(c('Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance'), .Names = c('Q1_MISSING_NONE', 'Q1_MISSING_1', 'Q1_MISSING_2', 'Q1_MISSING_3', 'Q1_MISSING_RANGE', 'Q1_MISSING_LOW', 'Q1_MISSING_HIGH', 'Q1_MISSING_RANGE_1', 'Q1_MISSING_LOW_1', 'Q1_MISSING_HIGH_1')), 'latin1', '', NA_character_, TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval("argv <- list(structure(c('Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance', 'Q.1 Opinion of presidents job performance'), .Names = c('Q1_MISSING_NONE', 'Q1_MISSING_1', 'Q1_MISSING_2', 'Q1_MISSING_3', 'Q1_MISSING_RANGE', 'Q1_MISSING_LOW', 'Q1_MISSING_HIGH', 'Q1_MISSING_RANGE_1', 'Q1_MISSING_LOW_1', 'Q1_MISSING_HIGH_1')), 'latin1', '', NA_character_, TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test

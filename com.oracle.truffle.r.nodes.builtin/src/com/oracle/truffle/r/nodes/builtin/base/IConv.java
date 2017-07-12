@@ -22,12 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.dsl.Cached;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -53,9 +56,15 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RStringVector doIConv(RAbstractStringVector x, Object from, Object to, Object sub, byte mark, byte toRaw) {
+    protected RStringVector doIConv(RAbstractStringVector x, Object from, Object to, Object sub, byte mark, byte toRaw,
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
+                    @Cached("createBinaryProfile()") ConditionProfile xLengthProfile) {
         // TODO implement
         RStringVector xv = x.materialize();
-        return RDataFactory.createStringVector(xv.getDataCopy(), RDataFactory.COMPLETE_VECTOR);
+        RStringVector result = RDataFactory.createStringVector(xv.getDataCopy(), RDataFactory.COMPLETE_VECTOR);
+        if (xLengthProfile.profile(result.getLength() == x.getLength())) {
+            copyAttributesNode.execute(result, x);
+        }
+        return result;
     }
 }

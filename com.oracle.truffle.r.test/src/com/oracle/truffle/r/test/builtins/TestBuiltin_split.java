@@ -24,6 +24,7 @@ public class TestBuiltin_split extends TestBase {
 
     @Test
     public void testsplit2() {
+        assertEval(Ignored.OutputFormatting, ".Internal(split(structure(1:4, names=c('a','b','c','d')), c(1,5)))");
         // FIXME FastR does not output the explicitly given .Names
         // Although docs do not explicitly require that it's expectable
         assertEval(Ignored.OutputFormatting,
