@@ -25,9 +25,15 @@ package com.oracle.truffle.r.launcher;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
 
+import com.oracle.truffle.r.launcher.Launcher.VersionAction;
+import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
 
 /**
@@ -37,17 +43,13 @@ import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
  *
  */
 public class RscriptCommand {
+
     // CheckStyle: stop system..print check
 
-    private static void preprocessRScriptOptions(RCmdOptions options) {
+    private static void preprocessRScriptOptions(RLauncher launcher, RCmdOptions options) {
         String[] arguments = options.getArguments();
         int resultArgsLength = arguments.length;
         int firstNonOptionArgIndex = options.getFirstNonOptionArgIndex();
-        if (options.getBoolean(RCmdOption.HELP)) {
-            RCmdOptions.printHelpAndExit(RCmdOptions.Client.RSCRIPT);
-        } else if (options.getBoolean(RCmdOption.VERSION)) {
-            printVersionAndExit();
-        }
         // Now reformat the args, setting --slave and --no-restore as per the spec
         ArrayList<String> adjArgs = new ArrayList<>(resultArgsLength + 1);
         adjArgs.add(arguments[0]);
@@ -58,8 +60,9 @@ public class RscriptCommand {
         // Either -e options are set or first non-option arg is a file
         if (options.getStringList(RCmdOption.EXPR) == null) {
             if (firstNonOptionArgIndex == resultArgsLength) {
+                launcher.setHelpCategory(OptionCategory.USER);
                 // does not return
-                RCmdOptions.printHelpAndExit(RCmdOptions.Client.RSCRIPT);
+                launcher.runPolyglotAction();
             } else {
                 if (arguments[firstNonOptionArgIndex].startsWith("-")) {
                     throw RCommand.fatal("file name is missing");
@@ -103,23 +106,32 @@ public class RscriptCommand {
 
     public static int doMain(String[] args, String[] env, InputStream inStream, OutputStream outStream, OutputStream errStream) {
         assert env == null : "re-enble environment variables";
-        // Since many of the options are shared parse them from an RSCRIPT perspective.
-        // Handle --help and --version specially, as they exit.
-        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.RSCRIPT, args, false);
-        preprocessRScriptOptions(options);
+
+        ArrayList<String> argsList = new ArrayList<>(Arrays.asList(args));
+        RLauncher launcher = new RLauncher(Client.RSCRIPT) {
+            @Override
+            protected void printVersion() {
+                System.out.print("R scripting front-end version ");
+                System.out.println(RVersionNumber.FULL);
+            }
+        };
+        Map<String, String> polyglotOptions = new HashMap<>();
+        for (int i = 1; i < argsList.size(); i++) {
+            String arg = argsList.get(i);
+            if (launcher.parsePolyglotOption("R", polyglotOptions, arg)) {
+                argsList.remove(i);
+            }
+        }
+        if (launcher.runPolyglotAction()) {
+            return 0;
+        }
+        RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, argsList.toArray(new String[argsList.size()]), false);
+        preprocessRScriptOptions(launcher, options);
 
         ConsoleHandler consoleHandler = RCommand.createConsoleHandler(options, false, inStream, outStream);
-        try (Context context = Context.newBuilder().arguments("R",
-                        options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
+        try (Context context = Context.newBuilder().options(polyglotOptions).arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
             consoleHandler.setContext(context);
             return RCommand.readEvalPrint(context, consoleHandler);
         }
-    }
-
-    private static void printVersionAndExit() {
-        // TODO Not ok in nested context
-        System.out.print("FastR scripting front-end version ");
-        System.out.println(RVersionNumber.FULL);
-        System.exit(0);
     }
 }
