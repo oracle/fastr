@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
@@ -45,7 +45,7 @@ public class RPromiseMR {
 
     private static final String PROP_VALUE = "value";
     private static final String PROP_IS_EVALUATED = "isEvaluated";
-    private static final String PROP_IS_EAGER = "isEager";
+    private static final String PROP_EXPR = "expression";
 
     @Resolve(message = "IS_BOXED")
     public abstract static class RPromiseIsBoxedNode extends Node {
@@ -64,9 +64,13 @@ public class RPromiseMR {
     @Resolve(message = "READ")
     public abstract static class RPromiseReadNode extends Node {
 
-        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, RPromise receiver, String field) {
-            if (PROP_IS_EAGER.equals(field)) {
-                return RRuntime.asLogical(RPromise.PromiseState.isEager(receiver.getState()));
+        @SuppressWarnings("try")
+        @TruffleBoundary
+        protected Object access(RPromise receiver, String field) {
+            if (PROP_EXPR.equals(field)) {
+                try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
+                    return RDataFactory.createLanguage(receiver.getRep());
+                }
             }
             if (PROP_IS_EVALUATED.equals(field)) {
                 return RRuntime.asLogical(receiver.isEvaluated());
@@ -86,7 +90,7 @@ public class RPromiseMR {
     public abstract static class RPromiseWriteNode extends Node {
 
         @SuppressWarnings("try")
-        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, RPromise receiver, String field, Object valueObj) {
+        protected Object access(RPromise receiver, String field, Object valueObj) {
             if (PROP_IS_EVALUATED.equals(field)) {
                 if (!(valueObj instanceof Boolean)) {
                     throw UnsupportedTypeException.raise(new Object[]{valueObj});
@@ -114,7 +118,7 @@ public class RPromiseMR {
     public abstract static class RPromiseKeysNode extends Node {
 
         protected Object access(@SuppressWarnings("unused") RPromise receiver) {
-            return RDataFactory.createStringVector(new String[]{PROP_VALUE, PROP_IS_EVALUATED, PROP_IS_EAGER}, true);
+            return RDataFactory.createStringVector(new String[]{PROP_VALUE, PROP_IS_EVALUATED, PROP_EXPR}, true);
         }
     }
 
@@ -125,9 +129,8 @@ public class RPromiseMR {
         private static final int READABLE = 1 << 1;
         private static final int WRITABLE = 1 << 2;
 
-        @SuppressWarnings("try")
-        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") RPromise receiver, String identifier) {
-            if (PROP_IS_EAGER.equals(identifier) || PROP_VALUE.equals(identifier)) {
+        protected Object access(@SuppressWarnings("unused") RPromise receiver, String identifier) {
+            if (PROP_EXPR.equals(identifier) || PROP_VALUE.equals(identifier)) {
                 return EXISTS + READABLE;
             }
 

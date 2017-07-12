@@ -20,6 +20,8 @@ import java.io.PrintStream;
 import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
@@ -1171,7 +1173,6 @@ public class RSerialize {
             return ensureData(8).readDouble();
         }
 
-        @SuppressWarnings("deprecation")
         @Override
         String readString(int len) throws IOException {
             return ensureData(len).readString(len);
@@ -2491,8 +2492,11 @@ public class RSerialize {
         SourceSection ss = getFileSourceSection(syntaxElement);
         if (ss != null && serObj instanceof RAttributable) {
             String pathInternal = RSource.getPathInternal(ss.getSource());
+            String wd = REnvVars.rHome();
+            Path wdPath = Paths.get(wd);
+            Path relPath = wdPath.relativize(Paths.get(pathInternal));
             RAttributable attributable = (RAttributable) serObj;
-            attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(pathInternal));
+            attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(relPath));
             RList createBlockSrcrefs = RSrcref.createBlockSrcrefs(syntaxElement);
             if (createBlockSrcrefs != null) {
                 attributable.setAttr(RRuntime.R_SRCREF, createBlockSrcrefs);
