@@ -66,6 +66,7 @@ import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RStartParams;
+import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.REnvVars;
@@ -289,7 +290,7 @@ public final class RContext implements RTruffleObject {
     private PrimitiveMethodsInfo primitiveMethodsInfo;
 
     /** Class loader for Java interop. */
-    private ClassLoader interopClassLoader = getClass().getClassLoader();
+    private ClassLoader interopClassLoader = FastRConfig.InternalGridAwtSupport ? getClass().getClassLoader() : null;
 
     /**
      * Set to {@code true} when in embedded mode to allow other parts of the system to determine
@@ -890,8 +891,11 @@ public final class RContext implements RTruffleObject {
         }
     };
 
-    public ClassLoader getInteropClassLoader() {
-        return interopClassLoader;
+    public Class<?> loadClass(String className) throws ClassNotFoundException {
+        if (FastRConfig.InternalGridAwtSupport) {
+            return interopClassLoader.loadClass(className);
+        }
+        return Class.forName(className);
     }
 
     /**
@@ -899,6 +903,10 @@ public final class RContext implements RTruffleObject {
      * loader with the previous one as parent.
      */
     public void addInteropClasspathEntries(String... entries) throws MalformedURLException {
+        if (!FastRConfig.InternalGridAwtSupport) {
+            throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Custom class loading not supported.");
+        }
+
         URL[] urls = new URL[entries.length];
         for (int i = 0; i < entries.length; i++) {
             urls[i] = Paths.get(entries[i]).toUri().toURL();
