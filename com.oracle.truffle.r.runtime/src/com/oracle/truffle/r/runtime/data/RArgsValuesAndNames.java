@@ -67,7 +67,8 @@ public final class RArgsValuesAndNames extends Arguments<Object> implements RTyp
         ArgumentsSignature signature = getSignature();
         assert signature.getLength() == getLength();
         for (int i = 0; i < getLength(); i++) {
-            RPairList cur = RDataFactory.createPairList(getArgument(i), RNull.instance, signature.getName(i), SEXPTYPE.DOTSXP);
+            String name = signature.getName(i);
+            RPairList cur = RDataFactory.createPairList(getArgument(i), RNull.instance, name != null ? name : RNull.instance, SEXPTYPE.DOTSXP);
 
             if (head == null) {
                 head = cur;

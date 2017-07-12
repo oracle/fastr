@@ -28,7 +28,9 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 
 /**
@@ -52,6 +54,16 @@ public final class ListAccessNodes {
         @Specialization
         protected Object car(RArgsValuesAndNames args) {
             return args.getArgument(0);
+        }
+
+        @Specialization
+        protected Object car(RSymbol sym) {
+            return sym;
+        }
+
+        @Specialization
+        protected Object car(@SuppressWarnings("unused") RNull nil) {
+            return RNull.instance;
         }
 
         @Fallback

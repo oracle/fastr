@@ -271,7 +271,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return result;
     }
 
-    private static RNode unwrapToRNode(Object objArg) {
+    private RNode unwrapToRNode(Object objArg) {
         Object obj = objArg;
         // obj is RSymbol or a primitive value.
         // A symbol needs to be converted back to a ReadVariableNode
@@ -279,6 +279,9 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             return (RNode) RASTUtils.unwrap(((RLanguage) obj).getRep());
         } else if (obj instanceof RSymbol) {
             return ReadVariableNode.create(((RSymbol) obj).getName());
+        } else if (obj instanceof RPromise) {
+            // Evaluate promise and return the result as constant.
+            return ConstantNode.create(forcePromise("unwrapToRNode", objArg));
         } else {
             return ConstantNode.create(obj);
         }
