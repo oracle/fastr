@@ -117,7 +117,6 @@ public final class UpperBoundsConjunction implements WildcardType, TypeAndInstan
     }
 
     public Coverage coverageTo(Type to, boolean includeImplicits) {
-        assert to instanceof Not || to instanceof Class;
         return adjustCoverageTo(upperBounds.stream().map(ubt -> {
             return TypeAndInstanceCheck.coverage(ubt, to, includeImplicits);
         }).reduce((res, cvg) -> res == Coverage.none || cvg == Coverage.none ? Coverage.none : cvg.or(res)).orElse(Coverage.none));

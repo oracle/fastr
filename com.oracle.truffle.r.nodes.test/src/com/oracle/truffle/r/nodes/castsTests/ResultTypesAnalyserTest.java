@@ -120,7 +120,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testAsIntegerVector() {
         arg.asIntegerVector();
-        assertTypes(RNull.class, RMissing.class, int.class, RIntSequence.class, RIntVector.class);
+        assertTypes(RNull.class, RMissing.class, int.class, RIntSequence.class, RIntVector.class, RAbstractIntVector.class);
     }
 
     @Test
@@ -436,7 +436,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testReturnIf2() {
         arg.returnIf(nullValue(), emptyIntegerVector()).returnIf(missingValue(), emptyIntegerVector()).asIntegerVector();
-        assertTypes(atom(int.class).or(atom(RIntSequence.class)).or(atom(RIntVector.class)), true);
+        assertTypes(atom(int.class).or(atom(RAbstractIntVector.class)).or(atom(RIntSequence.class)).or(atom(RIntVector.class)), true);
     }
 
     @Test

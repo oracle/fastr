@@ -227,7 +227,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
         this.castNodes = builtinFactory.getCastNodes();
 
-        print(0, "\n*** Chimney-sweeping of '" + builtinName + "' (" + builtinFactory.getBuiltinNodeClass().getName() + ") ***");
+        print(0, "\n*** Chimney-sweeping of '" + builtinName + "' (" + builtinFactory.getBuiltinMetaClass().getName() + ") ***");
 
         this.validArgsList = extractValidArgsForBuiltin();
         this.argSamples = createSamples();

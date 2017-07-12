@@ -36,9 +36,10 @@ public final class RBuiltinFactory extends RBuiltinDescriptor {
 
     private final Supplier<RBuiltinNode> constructor;
 
-    RBuiltinFactory(String name, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller,
+    RBuiltinFactory(String name, Class<?> builtinMetaClass, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs,
+                    boolean splitCaller,
                     boolean alwaysSplit, RDispatch dispatch, String genericName, Supplier<RBuiltinNode> constructor, RBehavior behavior, RSpecialFactory specialCall) {
-        super(name, builtinNodeClass, visibility, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, dispatch, genericName, behavior, specialCall);
+        super(name, builtinMetaClass, builtinNodeClass, visibility, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, dispatch, genericName, behavior, specialCall);
         this.constructor = constructor;
     }
 

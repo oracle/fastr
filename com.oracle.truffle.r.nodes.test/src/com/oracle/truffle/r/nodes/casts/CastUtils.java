@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -393,7 +394,7 @@ public class CastUtils {
         }
 
         public static Casts createCastNodeCasts(Class<?> castNodeClass) {
-            return createCastsFromMethods(castNodeClass, Specialization.class);
+            return createCastsFromMethods(castNodeClass, Specialization.class, Fallback.class);
         }
 
         public static Casts createImplicitCasts() {
@@ -408,8 +409,9 @@ public class CastUtils {
             return new Casts(cs);
         }
 
-        public static Casts createCastsFromMethods(Class<?> clazz, Class<? extends Annotation> annotClass) {
-            List<Method> specs = getAnnotatedMethods(clazz, annotClass);
+        @SafeVarargs
+        public static Casts createCastsFromMethods(Class<?> clazz, Class<? extends Annotation>... annotClasses) {
+            List<Method> specs = getAnnotatedMethods(clazz, annotClasses);
             return new Casts(specs.stream().map(s -> new Cast(s.getParameterTypes()[0], s.getReturnType(), Cast.Coverage.full)).filter(c -> c.rt != Object.class).collect(Collectors.toList()));
         }
 
@@ -450,13 +452,22 @@ public class CastUtils {
         }
     }
 
-    public static List<Method> getAnnotatedMethods(Class<?> clazz, Class<? extends Annotation> annotClass) {
+    @SafeVarargs
+    public static List<Method> getAnnotatedMethods(Class<?> clazz, Class<? extends Annotation>... annotClasses) {
+        List<Method> annotMethList = new ArrayList<>();
+        for (Class<? extends Annotation> annotClass : annotClasses) {
+            annotMethList.addAll(getMethodsAnnotatedBy(clazz, annotClass));
+        }
+        return annotMethList;
+    }
+
+    private static List<Method> getMethodsAnnotatedBy(Class<?> clazz, Class<? extends Annotation> annotClass) {
         List<Method> annotMethList = new ArrayList<>(Arrays.asList(clazz.getDeclaredMethods()).stream().filter(dm -> {
             return dm.getAnnotation(annotClass) != null;
         }).collect(Collectors.toList()));
 
         if (clazz.getSuperclass() != Object.class) {
-            annotMethList.addAll(getAnnotatedMethods(clazz.getSuperclass(), annotClass));
+            annotMethList.addAll(getMethodsAnnotatedBy(clazz.getSuperclass(), annotClass));
         }
 
         return annotMethList;

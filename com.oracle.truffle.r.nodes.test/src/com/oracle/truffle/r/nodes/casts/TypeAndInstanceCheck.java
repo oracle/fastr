@@ -49,9 +49,6 @@ public interface TypeAndInstanceCheck {
     Type normalize();
 
     static Coverage coverage(Type from, Type to, boolean includeImplicits) {
-        assert (from instanceof Not || from instanceof Class);
-        assert (to instanceof Not || to instanceof Class);
-
         if (Not.negateType(to).equals(from)) {
             return Coverage.none;
         }
