@@ -30,7 +30,7 @@ eval(expression({
         NULL
     }
 
-    plot <- function (x, y = NULL, type = "p", xlim = NULL, ylim = NULL,
+    plot.default <- function (x, y = NULL, type = "p", xlim = NULL, ylim = NULL,
         log = "", main = NULL, sub = NULL, xlab = NULL, ylab = NULL,
         ann = par("ann"), axes = TRUE, frame.plot = axes, panel.first = NULL,
         panel.last = NULL, asp = NA, ...)
@@ -87,10 +87,8 @@ eval(expression({
     axis.Date <- graphicsWarning;
     axis.POSIXct <- graphicsWarning;
     axTicks <- graphicsWarning;
-    barplot <- graphicsWarning;
     barplot.default <- graphicsWarning;
     box <- graphicsWarning;
-    boxplot <- graphicsWarning;
     boxplot.default <- graphicsWarning;
     boxplot.matrix <- graphicsWarning;
     bxp <- graphicsWarning;
@@ -132,7 +130,6 @@ eval(expression({
     panel.smooth <- graphicsWarning;
     persp <- graphicsWarning;
     pie <- graphicsWarning;
-    plot.default <- graphicsWarning;
     plot.design <- graphicsWarning;
     plot.function <- graphicsWarning;
     plot.new <- graphicsWarning;

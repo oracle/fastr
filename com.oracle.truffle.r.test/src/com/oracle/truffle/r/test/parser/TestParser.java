@@ -142,6 +142,14 @@ public class TestParser extends TestBase {
         assertEval(Output.IgnoreErrorMessage, "%0");
     }
 
+    @Test
+    public void testDotIdentifiers() {
+        assertEval("{ .. <- 42; cat(..); }");
+        assertEval("{ .... <- 42; cat(....); }");
+        assertEval("{ ....x <- 42; cat(....x); }");
+        assertEval("{ ...... <- 42; cat(......); }");
+    }
+
     /**
      * Recursively look for .r source files in the args[0] directory and parse them.
      */

@@ -34,6 +34,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.GridDevice.DeviceCloseExcep
 import com.oracle.truffle.r.library.fastrGrid.device.SVGDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice.NotSupportedImageFormatException;
+import com.oracle.truffle.r.library.fastrGrid.grDevices.FileDevUtils;
 import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
 import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -107,13 +108,15 @@ public final class GridContext {
             }
             setCurrentDevice(defaultDev, WindowDevice.createWindowDevice());
         } else if (defaultDev.equals("svg")) {
-            setCurrentDevice(defaultDev, new SVGDevice("Rplot.svg", GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT));
+            String filename = "Rplot%03d.svg";
+            SVGDevice svgDevice = new SVGDevice(FileDevUtils.formatInitialFilename(filename), GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT);
+            setCurrentDevice(defaultDev, svgDevice, filename);
         } else if (defaultDev.equals("png")) {
-            setCurrentDevice(defaultDev, safeOpenImageDev("Rplot.png", "png"));
+            safeOpenImageDev("Rplot%03d.png", "png");
         } else if (defaultDev.equals("bmp")) {
-            setCurrentDevice(defaultDev, safeOpenImageDev("Rplot.bmp", "bmp"));
+            safeOpenImageDev("Rplot%03d.bmp", "bmp");
         } else if (defaultDev.equals("jpg") || defaultDev.equals("jpeg")) {
-            setCurrentDevice("jpeg", safeOpenImageDev("Rplot.jpg", "jpeg"));
+            safeOpenImageDev("Rplot%03d.jpg", "jpeg");
         } else {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "FastR does not support device '" + defaultDev + "'.");
         }
@@ -149,15 +152,17 @@ public final class GridContext {
         return RContext.getEngine().evalFunction(redrawAll, REnvironment.baseEnv().getFrame(), RCaller.topLevel, true, null, args);
     }
 
-    private static BufferedImageDevice safeOpenImageDev(String filename, String formatName) {
+    private void safeOpenImageDev(String filename, String formatName) {
         if (!FastRConfig.InternalGridAwtSupport) {
             throw awtNotSupported();
         }
+        BufferedImageDevice dev = null;
         try {
-            return BufferedImageDevice.open(filename, formatName, GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT);
+            dev = BufferedImageDevice.open(FileDevUtils.formatInitialFilename(filename), formatName, GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT);
         } catch (NotSupportedImageFormatException e) {
             throw RInternalError.shouldNotReachHere("Device format " + formatName + " should be supported.");
         }
+        setCurrentDevice(formatName, dev, filename);
     }
 
     private static final class DeviceAndState {
