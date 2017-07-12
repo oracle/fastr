@@ -156,6 +156,7 @@ public class DebugFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object setBreakpoint(String fileName, int lineNr, boolean clear) {
 
             try {

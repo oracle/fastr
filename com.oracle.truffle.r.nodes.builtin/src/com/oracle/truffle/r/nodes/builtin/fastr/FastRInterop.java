@@ -257,7 +257,7 @@ public class FastRInterop {
         }
 
         @Fallback
-        public byte isNull(Object obj) {
+        public byte isNull(@SuppressWarnings("unused") Object obj) {
             return RRuntime.asLogical(false);
         }
     }
@@ -277,7 +277,7 @@ public class FastRInterop {
         }
 
         @Fallback
-        public byte isExecutable(Object obj) {
+        public byte isExecutable(@SuppressWarnings("unused") Object obj) {
             return RRuntime.asLogical(false);
         }
     }
@@ -450,8 +450,7 @@ public class FastRInterop {
         @TruffleBoundary
         public TruffleObject javaClass(String clazz, boolean silent) {
             try {
-                ClassLoader interopClassLoader = RContext.getInstance().getInteropClassLoader();
-                return JavaInterop.asTruffleObject(interopClassLoader.loadClass(clazz.replaceAll("/", ".")));
+                return JavaInterop.asTruffleObject(RContext.getInstance().loadClass(clazz.replaceAll("/", ".")));
             } catch (ClassNotFoundException | SecurityException | IllegalArgumentException e) {
                 if (silent) {
                     return RNull.instance;
