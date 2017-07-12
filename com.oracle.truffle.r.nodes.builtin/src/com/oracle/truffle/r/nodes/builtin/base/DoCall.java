@@ -168,7 +168,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
                 shareObjectNode.execute(argValues[i]);
             }
             ArgumentsSignature signature = getArgsNames(argsAsList);
-            RCaller caller = RCaller.create(virtualFrame, RCallerHelper.createFromArguments(func, new RArgsValuesAndNames(argValues, signature)));
+            RCaller caller = RCaller.createWithInternalParent(virtualFrame, RCallerHelper.createFromArguments(func, new RArgsValuesAndNames(argValues, signature)));
             try {
                 Object resultValue = RContext.getEngine().evalFunction(func, envFrame, caller, false, signature, argValues);
                 setVisibilityNode.execute(virtualFrame, getVisibility(envFrame));
@@ -246,7 +246,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
             }
             RLanguage lang = RDataFactory.createLanguage(RASTUtils.createCall(ConstantNode.create(function), true, argsSignature, argsConstants).asRNode());
             try {
-                Object resultValue = RContext.getEngine().eval(lang, env, call);
+                Object resultValue = RContext.getEngine().eval(lang, env, call.withInternalParent());
                 MaterializedFrame envFrame = env.getFrame();
                 FrameSlot envVisibilitySlot = FrameSlotChangeMonitor.findOrAddFrameSlot(envFrame.getFrameDescriptor(), RFrameSlot.Visibility, FrameSlotKind.Boolean);
                 boolean resultVisibility = false;
