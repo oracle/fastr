@@ -52,6 +52,7 @@ post.done:
 # rebuild GNU R in compressed mode
 	(cd $(GNUR_HOME); $(MAKE))
 	touch post.done
+	find $(FASTR_LIBRARY_DIR)/base -type f -exec touch {} +
 
 clean.done:
 	rm -f post.done pre.done
