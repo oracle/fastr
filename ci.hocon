@@ -36,6 +36,7 @@ logfiles : [
     "com.oracle.truffle.r.native/gnur/R-*/Makeconf"
     "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_configure.log"
     "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_make.log"
+    "*-tests/*.Rout"
   ]
 
 # This is needed by all (Linux) builds but is specific to the module system employed
