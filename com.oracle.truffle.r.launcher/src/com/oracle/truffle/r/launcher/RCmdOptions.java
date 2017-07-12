@@ -97,11 +97,11 @@ public final class RCmdOptions {
         // Whether this option is actually implemented in FastR
         private final boolean implemented;
         // The short option name prefixed by {@code -} or {@code null} if no {@code -} form.
-        private final String shortName;
+        final String shortName;
         // The option name prefixed by {@code --} or {@code null} if no {@code --} form.
         private final String name;
         // The plain option name as passed to the constructor.
-        public final String plainName;
+        final String plainName;
         // The '=' separated suffix, e.g. {@code --file=FILE}.
         private final String suffix;
         // The space separated suffix, e.g. {@code -g TYPE}.
@@ -161,6 +161,7 @@ public final class RCmdOptions {
             }
             return result;
         }
+
     }
 
     private final EnumMap<RCmdOption, Object> optionValues;
@@ -322,7 +323,7 @@ public final class RCmdOptions {
             }
         }
         // adjust for inserted executable name
-        return new RCmdOptions(options, args, firstNonOptionArgIndex + 1);
+        return new RCmdOptions(options, args, firstNonOptionArgIndex);
     }
 
     public String[] getArguments() {
@@ -337,7 +338,7 @@ public final class RCmdOptions {
         this.arguments = arguments;
     }
 
-    public void printHelpAndVersion() {
+    void printHelpAndVersion() {
         if (getBoolean(HELP)) {
             throw printHelpAndExit(RCmdOptions.Client.R);
         } else if (getBoolean(VERSION)) {
@@ -345,7 +346,7 @@ public final class RCmdOptions {
         }
     }
 
-    private static void printHelp(Client client) {
+    static void printHelp(Client client) {
         System.out.println(client.usage());
         System.out.println("Options:");
         for (RCmdOption option : RCmdOption.values()) {
@@ -354,16 +355,20 @@ public final class RCmdOptions {
         System.out.println("\nFILE may contain spaces but not shell metacharacters.\n");
     }
 
-    public static RuntimeException printHelpAndExit(Client client) {
+    private static RuntimeException printHelpAndExit(Client client) {
         printHelp(client);
         System.exit(0);
         throw RCommand.fatal("should not reach here");
     }
 
-    private static RuntimeException printVersionAndExit() {
+    static void printVersion() {
         System.out.print("FastR version ");
         System.out.println(RVersionNumber.FULL);
         System.out.println(RVersionNumber.LICENSE);
+    }
+
+    private static RuntimeException printVersionAndExit() {
+        printVersion();
         System.exit(0);
         throw RCommand.fatal("should not reach here");
     }

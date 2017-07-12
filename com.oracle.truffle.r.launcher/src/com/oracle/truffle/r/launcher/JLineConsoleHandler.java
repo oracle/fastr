@@ -75,7 +75,7 @@ public class JLineConsoleHandler extends ConsoleHandler {
 
     @Override
     public void setPrompt(String prompt) {
-        console.setPrompt(noPrompt ? "" : prompt);
+        console.setPrompt(noPrompt ? "" : prompt != null ? prompt : "");
     }
 
     public void clearHistory() {

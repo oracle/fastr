@@ -28,21 +28,60 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 
+import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
 
 import jline.console.UserInterruptException;
 
+class RLauncher extends Launcher {
+
+    private final Client client;
+
+    RLauncher(Client client) {
+        this.client = client;
+    }
+
+    @Override
+    protected void printHelp(OptionCategory maxCategory) {
+        RCmdOptions.printHelp(client);
+    }
+
+    @Override
+    protected void printVersion() {
+        RCmdOptions.printVersion();
+    }
+
+    @Override
+    protected void collectArguments(Set<String> options) {
+        for (RCmdOption option : RCmdOption.values()) {
+            if (option.shortName != null) {
+                options.add(option.shortName);
+            }
+            if (option.plainName != null) {
+                options.add(option.plainName);
+            }
+        }
+    }
+}
+
 /*
  * TODO:
+ *
  * - create a replacement for "executor"
+ *
  * - fatal needs to be handled more carefully in nested/spawned contexts
- * - handle R_DEFAULT_PACKAGES in REnvVars
  */
 
 /**
@@ -77,24 +116,38 @@ public class RCommand {
         return result;
     }
 
-    public static int doMain(String[] inArgs, String[] env, InputStream inStream, OutputStream outStream, OutputStream errStream) {
+    public static int doMain(String[] args, String[] env, InputStream inStream, OutputStream outStream, OutputStream errStream) {
         StartupTiming.timestamp("Main Entered");
-        String[] args = inArgs;
+        ArrayList<String> argsList = new ArrayList<>(Arrays.asList(args));
         if (System.console() != null) {
             // add "--interactive" to force interactive mode
-            RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
-            if (!options.getBoolean(RCmdOption.INTERACTIVE)) {
-                args = new String[inArgs.length + 1];
-                args[0] = inArgs[0];
-                args[1] = "--interactive";
-                System.arraycopy(inArgs, 1, args, 2, inArgs.length - 1);
+            boolean addArg = true;
+            for (String arg : args) {
+                if ("--interactive".equals(arg)) {
+                    addArg = false;
+                    break;
+                }
+            }
+            if (addArg) {
+                argsList.add(1, "--interactive");
             }
         }
-        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
-        options.printHelpAndVersion();
+
+        RLauncher launcher = new RLauncher(Client.R);
+        Map<String, String> polyglotOptions = new HashMap<>();
+        for (int i = 1; i < argsList.size(); i++) {
+            String arg = argsList.get(i);
+            if (launcher.parsePolyglotOption("R", polyglotOptions, arg)) {
+                argsList.remove(i);
+            }
+        }
+        if (launcher.runPolyglotAction()) {
+            return 0;
+        }
+        RCmdOptions options = RCmdOptions.parseArguments(Client.R, argsList.toArray(new String[argsList.size()]), false);
         assert env == null : "re-enable setting environments";
         ConsoleHandler consoleHandler = createConsoleHandler(options, false, inStream, outStream);
-        try (Context context = Context.newBuilder().arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
+        try (Context context = Context.newBuilder().options(polyglotOptions).arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
             consoleHandler.setContext(context);
             StartupTiming.timestamp("VM Created");
             StartupTiming.printSummary();
@@ -180,7 +233,7 @@ public class RCommand {
         try {
             while (true) { // processing inputs
                 boolean doEcho = doEcho(context);
-                consoleHandler.setPrompt(doEcho ? getPrompt(context) : "");
+                consoleHandler.setPrompt(doEcho ? getPrompt(context) : null);
                 try {
                     String input = consoleHandler.readLine();
                     if (input == null) {
@@ -200,7 +253,7 @@ public class RCommand {
                             context.eval(Source.newBuilder("R", sb.toString(), "<REPL>").interactive(true).buildLiteral());
                         } catch (PolyglotException e) {
                             if (continuePrompt == null) {
-                                continuePrompt = doEcho ? getContinuePrompt(context) : "";
+                                continuePrompt = doEcho ? getContinuePrompt(context) : null;
                             }
                             if (e.isIncompleteSource()) {
                                 // read another line of input
