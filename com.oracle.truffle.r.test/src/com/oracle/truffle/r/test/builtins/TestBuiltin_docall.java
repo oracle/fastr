@@ -43,5 +43,10 @@ public class TestBuiltin_docall extends TestBase {
         assertEval("{ e <- new.env(); assign('foo', function() 42, e); foo <- function(x) 1; do.call('foo', list(), envir=e); }");
         assertEval("{ e <- new.env(); assign('foo', 42, e); foo <- function(x) 1; do.call('foo', list(), envir=e); }");
         assertEval("{ do.call('+', list(data.frame(1), data.frame(2)), envir = new.env()); do.call('assign', list('a',2,new.env()), envir = new.env()); }");
+
+        assertEval("{ boo <- function(c) ls(parent.frame(2)); foo <- function(a,b) boo(a); bar <- function(x,z) do.call('foo', list(1,2)); bar() }");
+        assertEval("{ boo <- function(c) ls(parent.frame(2)); foo <- function(a,b) boo(a); bar <- function(x,z) do.call('foo', list(parse(text='goo()'),2)); bar() }");
+        assertEval("{ boo <- function(c) ls(parent.frame(3)); foo <- function(a,b) boo(a); bar <- function(x,z) do.call('foo', list(parse(text='goo()'),2)); baz <- function(bazX) bar(bazX,1); baz(); }");
+        assertEval("{ f1 <- function(a) ls(parent.frame(2)); f2 <- function(b) f1(b); f3 <- function(c) f2(c); f4 <- function(d) do.call('f3', list(d)); f4(42); }");
     }
 }
