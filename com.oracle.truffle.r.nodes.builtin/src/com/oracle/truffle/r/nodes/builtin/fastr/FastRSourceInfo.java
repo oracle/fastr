@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.runtime.RVisibility.ON;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
@@ -59,6 +60,7 @@ public abstract class FastRSourceInfo extends RBuiltinNode.Arg1 {
         return srcInfo(fun.getRep());
     }
 
+    @TruffleBoundary
     private static Object srcInfo(Node fun) {
         SourceSection ss = fun.getSourceSection();
         if (ss != null) {
