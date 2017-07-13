@@ -29,6 +29,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 
@@ -51,7 +52,7 @@ public class TruffleNFI_CAccess {
 
         public TruffleObject getSymbolFunction() {
             if (handle == null) {
-                handle = (TruffleNFI_DLL.NFIHandle) DLLRFFI.DLOpenRootNode.create().getCallTarget().call(LibPaths.getBuiltinLibPath("caccess"), true, true);
+                handle = (TruffleNFI_DLL.NFIHandle) DLLRFFI.DLOpenRootNode.create(RContext.getInstance()).call(LibPaths.getBuiltinLibPath("caccess"), true, true);
             }
             if (symbolFunction == null) {
                 DLL.SymbolHandle symbolHandle = (DLL.SymbolHandle) DLLRFFI.DLSymRootNode.create().getCallTarget().call(handle, cName());

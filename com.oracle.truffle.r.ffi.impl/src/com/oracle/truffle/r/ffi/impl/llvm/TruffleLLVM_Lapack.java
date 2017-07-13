@@ -32,6 +32,7 @@ import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.interop.NativeDoubleArray;
 import com.oracle.truffle.r.ffi.impl.interop.NativeIntegerArray;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
@@ -75,8 +76,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     }
 
     private static RootCallTarget openLLVMLibraries() {
-        DLLRFFI.DLOpenRootNode rootNode = DLLRFFI.DLOpenRootNode.create();
-        return rootNode.getCallTarget();
+        return DLLRFFI.DLOpenRootNode.create(RContext.getInstance());
     }
 
     private static RootCallTarget openNativeLibraries() {

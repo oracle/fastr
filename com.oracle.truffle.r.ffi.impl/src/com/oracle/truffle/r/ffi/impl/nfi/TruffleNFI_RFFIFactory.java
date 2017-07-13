@@ -48,9 +48,12 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory implements RFFI {
     private static class ContextStateImpl implements RContext.ContextState {
         @Override
         public ContextState initialize(RContext context) {
+            String librffiPath = LibPaths.getBuiltinLibPath("R");
             if (context.isInitial()) {
-                String librffiPath = LibPaths.getBuiltinLibPath("R");
                 DLL.loadLibR(librffiPath);
+            } else {
+                // force initialization of NFI
+                DLLRFFI.DLOpenRootNode.create(context).call(librffiPath, false, false);
             }
             return this;
         }

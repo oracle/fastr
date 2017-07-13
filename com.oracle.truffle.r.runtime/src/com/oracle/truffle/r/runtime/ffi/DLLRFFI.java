@@ -22,8 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 public interface DLLRFFI {
@@ -74,8 +77,6 @@ public interface DLLRFFI {
     // RootNodes
 
     final class DLOpenRootNode extends RFFIRootNode<DLOpenNode> {
-        private static DLOpenRootNode dlOpenRootNode;
-
         private DLOpenRootNode() {
             super(RFFIFactory.getRFFI().getDLLRFFI().createDLOpenNode());
         }
@@ -86,11 +87,8 @@ public interface DLLRFFI {
             return rffiNode.execute((String) args[0], (boolean) args[1], (boolean) args[2]);
         }
 
-        public static DLOpenRootNode create() {
-            if (dlOpenRootNode == null) {
-                dlOpenRootNode = new DLOpenRootNode();
-            }
-            return dlOpenRootNode;
+        public static RootCallTarget create(RContext context) {
+            return context.getOrCreateNativeCallTarget(DLOpenRootNode.class, () -> new DLOpenRootNode().getCallTarget());
         }
     }
 

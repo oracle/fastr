@@ -33,6 +33,7 @@ import org.graalvm.polyglot.Engine;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.r.launcher.JLineConsoleCompleter;
@@ -61,6 +62,8 @@ public class TestJLineConsoleCompleter {
         }
     }
 
+    // disabled because it uses Engine, which clashes with other tests that use PolyglotEngine
+    @Ignore
     @Test
     public void testCompl() {
         assertCompl("", 0);
