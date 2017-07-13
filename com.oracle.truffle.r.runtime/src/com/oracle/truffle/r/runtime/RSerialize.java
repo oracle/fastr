@@ -1821,7 +1821,8 @@ public class RSerialize {
                 if (ss != null) {
                     String path = RSource.getPathInternal(ss.getSource());
                     if (path != null) {
-                        REnvironment createSrcfile = RSrcref.createSrcfile(path);
+                        Path relPath = Paths.get(REnvVars.rHome()).relativize(Paths.get(path));
+                        REnvironment createSrcfile = RSrcref.createSrcfile(relPath);
                         Object createLloc = RSrcref.createLloc(ss, createSrcfile);
                         writePairListEntry(RRuntime.R_SRCREF, createLloc);
                         writePairListEntry(RRuntime.R_SRCFILE, createSrcfile);
@@ -2492,9 +2493,7 @@ public class RSerialize {
         SourceSection ss = getFileSourceSection(syntaxElement);
         if (ss != null && serObj instanceof RAttributable) {
             String pathInternal = RSource.getPathInternal(ss.getSource());
-            String wd = REnvVars.rHome();
-            Path wdPath = Paths.get(wd);
-            Path relPath = wdPath.relativize(Paths.get(pathInternal));
+            Path relPath = Paths.get(REnvVars.rHome()).relativize(Paths.get(pathInternal));
             RAttributable attributable = (RAttributable) serObj;
             attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(relPath));
             RList createBlockSrcrefs = RSrcref.createBlockSrcrefs(syntaxElement);
@@ -2739,10 +2738,15 @@ public class RSerialize {
                     }
                 }
             } catch (NoSuchFileException e) {
-                RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, "Missing source file: " + e.getMessage());
+                assert debugWarning("Missing source file: " + e.getMessage());
             } catch (IOException e) {
-                RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, "Cannot access source file: " + e.getMessage());
+                assert debugWarning("Cannot access source file: " + e.getMessage());
             }
         }
+    }
+
+    private static boolean debugWarning(String message) {
+        RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, message);
+        return true;
     }
 }
