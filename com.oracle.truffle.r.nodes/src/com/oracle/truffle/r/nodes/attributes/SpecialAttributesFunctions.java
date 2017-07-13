@@ -764,7 +764,7 @@ public final class SpecialAttributesFunctions {
             for (int i = 0; loopProfile.inject(i < newDimNamesLength); i++) {
                 Object dimObject = newDimNames.getDataAt(i);
 
-                if (dimObject == RNull.instance || (dimObject instanceof RStringVector && ((RStringVector) dimObject).getLength() == 0)) {
+                if (dimObject instanceof RStringVector && ((RStringVector) dimObject).getLength() == 0) {
                     nullDimProfile.enter();
                     newDimNames.updateDataAt(i, RNull.instance, null);
                 } else if ((dimObject instanceof String && dimensions[i] != 1) ||
