@@ -224,13 +224,18 @@ public class RSrcref {
             int length = getLineStartOffset(source, srcrefVec.getDataAt(2)) + srcrefVec.getDataAt(3) - startIdx + 1;
             return source.createSection(startLine, startColumn, length);
         } catch (NoSuchFileException e) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, "Missing source file: " + e.getMessage());
+            assert debugWarning("Missing source file: " + e.getMessage());
         } catch (IOException e) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, "Cannot access source file: " + e.getMessage());
+            assert debugWarning("Cannot access source file: " + e.getMessage());
         } catch (IllegalArgumentException e) {
-            RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, "Invalid source reference: " + e.getMessage());
+            assert debugWarning("Invalid source reference: " + e.getMessage());
         }
         return RSourceSectionNode.LAZY_DEPARSE;
+    }
+
+    private static boolean debugWarning(String message) {
+        RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, message);
+        return true;
     }
 
     private static int getLineStartOffset(Source source, int lineNum) {
