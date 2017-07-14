@@ -32,7 +32,6 @@ import java.util.Map;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
 
-import com.oracle.truffle.r.launcher.Launcher.VersionAction;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
 
@@ -62,7 +61,9 @@ public class RscriptCommand {
             if (firstNonOptionArgIndex == resultArgsLength) {
                 launcher.setHelpCategory(OptionCategory.USER);
                 // does not return
-                launcher.runPolyglotAction();
+                if (launcher.runPolyglotAction()) {
+                    System.exit(1);
+                }
             } else {
                 if (arguments[firstNonOptionArgIndex].startsWith("-")) {
                     throw RCommand.fatal("file name is missing");
