@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,30 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#ifndef RFFIUTILS_H
-#define RFFIUTILS_H
+package com.oracle.truffle.r.ffi.impl.interop.tools;
 
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
-#include <Rinternals.h>
-#include <trufflenfi.h>
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
-extern void init_memory();
-extern void init_utils(TruffleEnv* env);
+public class RConnGetCCall implements RTruffleObject {
+    public static boolean isInstance(TruffleObject value) {
+        return value instanceof RConnGetCCall;
+    }
 
-// use for an unimplemented API function
-void *unimplemented(char *msg) __attribute__((noreturn));
-// use for any fatal error
-void fatalError(char *msg) __attribute__((noreturn));
+    @Override
+    public ForeignAccess getForeignAccess() {
+        return RConnGetCCallMRForeign.ACCESS;
+    }
 
-// checks x against the list of global refs, returning the global version if x matches (IsSameObject)
-SEXP checkRef(SEXP x);
-// creates a global JNI global ref from x. If permanent is non-zero, calls to
-// releaseGlobalRef are ignored and the global ref persists for the entire execution
-// (used for the R global variables such as R_NilValue).
-SEXP createGlobalRef(SEXP x, int permanent);
-// release a previously created global ref
-void releaseGlobalRef(SEXP x);
-
-#endif
+}

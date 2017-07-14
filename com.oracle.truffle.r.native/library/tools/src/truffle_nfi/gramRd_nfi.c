@@ -21,10 +21,12 @@
  * questions.
  */
 #include "../gramRd_fastr.h"
+#include <trufflenfi.h>
 
 static int (*call_RConnGetC)(void *conn);
 
-void gramRd_nfi_init(void *closure) {
+void gramRd_nfi_init(TruffleEnv* env, void *closure) {
+	(*env)->newClosureRef(env, closure);
 	call_RConnGetC = closure;
 }
 

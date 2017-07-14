@@ -133,7 +133,7 @@ public final class TruffleNFI_PkgInit {
         try {
             for (UpCall upCall : UpCall.values()) {
                 Object upCallMethodObject = ForeignAccess.sendRead(readNode, upCallsObject, upCall.name());
-                String addCallbackSignature = String.format("(sint32, %s): void", upCall.signature);
+                String addCallbackSignature = String.format("(env, sint32, %s): void", upCall.signature);
                 TruffleObject addCallbackFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, symbolHandle.asTruffleObject(), "bind", addCallbackSignature);
                 ForeignAccess.sendExecute(executeNode, addCallbackFunction, upCall.ordinal(), upCallMethodObject);
             }

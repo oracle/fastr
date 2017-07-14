@@ -23,8 +23,8 @@ static int (*call_forceSymbols)(DllInfo *dllInfo, Rboolean value);
 #define setDotSymbolValues_x 2
 #define forceSymbols_x 3
 
-void Rdynload_init(int index, void* closure) {
-	newClosureRef(closure);
+void Rdynload_init(TruffleEnv* env, int index, void* closure) {
+	(*env)->newClosureRef(env, closure);
 	switch (index) {
 	case registerRoutines_x: call_registerRoutines = closure; break;
 	case useDynamicSymbols_x: call_useDynamicSymbols = closure; break;

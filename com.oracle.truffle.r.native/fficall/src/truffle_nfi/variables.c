@@ -300,8 +300,8 @@ void Call_initvar_string(int index, char *value) {
 	}
 }
 
-void Call_initvar_obj(int index, void* value) {
-	init_utils();
+void Call_initvar_obj(TruffleEnv* env, int index, void* value) {
+	init_utils(env);
 	switch (index) {
     case R_NilValue_x: R_NilValue_static = createGlobalRef(value, 1); break;
     case R_UnboundValue_x: R_UnboundValue_static = createGlobalRef(value, 1); break;

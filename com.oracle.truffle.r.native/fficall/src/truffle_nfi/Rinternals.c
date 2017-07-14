@@ -27,11 +27,16 @@
 
 void **callbacks = NULL;
 
-void Rinternals_addCallback(int index, void *closure) {
+static TruffleContext* truffleContext = NULL;
+
+void Rinternals_addCallback(TruffleEnv* env, int index, void *closure) {
+    if (truffleContext == NULL) {
+        truffleContext = (*env)->getTruffleContext(env);
+    }
 	if (callbacks == NULL) {
 		callbacks = malloc(UPCALLS_TABLE_SIZE * sizeof(void*));
 	}
-	newClosureRef(closure);
+	(*env)->newClosureRef(env, closure);
 	callbacks[index] = closure;
 }
 
@@ -104,7 +109,7 @@ CTXT FASTR_GlobalContext() {
 }
 
 Rboolean FASTR_R_Interactive() {
-	return (int) ((call_R_Interactive) callbacks[R_Interactive_x])();
+	return ((call_R_Interactive) callbacks[R_Interactive_x])();
 }
 
 SEXP CAR(SEXP e) {
@@ -368,7 +373,7 @@ SEXP Rf_shallow_duplicate(SEXP x) {
 }
 
 R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
-	return (R_xlen_t) ((call_Rf_any_duplicated) callbacks[Rf_any_duplicated_x])(x, from_last);
+	return ((call_Rf_any_duplicated) callbacks[Rf_any_duplicated_x])(x, from_last);
 }
 
 SEXP Rf_duplicated(SEXP x, Rboolean y) {
@@ -389,11 +394,12 @@ void Rf_copyVector(SEXP x, SEXP y) {
 }
 
 int Rf_countContexts(int x, int y) {
-	return (int) unimplemented("Rf_countContexts");
+	unimplemented("Rf_countContexts");
+	return 0;
 }
 
 Rboolean Rf_inherits(SEXP x, const char * klass) {
-	return (Rboolean) ((call_Rf_inherits) callbacks[Rf_inherits_x])(x, klass);
+	return ((call_Rf_inherits) callbacks[Rf_inherits_x])(x, klass);
 }
 
 Rboolean Rf_isObject(SEXP s) {
@@ -414,16 +420,16 @@ SEXP Rf_installChar(SEXP charsxp) {
 }
 
 Rboolean Rf_isNull(SEXP s) {
-	return (Rboolean) ((call_Rf_isNull) callbacks[Rf_isNull_x])(s);
+	return ((call_Rf_isNull) callbacks[Rf_isNull_x])(s);
 }
 
 Rboolean Rf_isString(SEXP s) {
-	return (Rboolean) ((call_Rf_isString) callbacks[Rf_isString_x])(s);
+	return ((call_Rf_isString) callbacks[Rf_isString_x])(s);
 }
 
 Rboolean R_cycle_detected(SEXP s, SEXP child) {
 	unimplemented("R_cycle_detected");
-	return 0;
+	return FALSE;
 }
 
 cetype_t Rf_getCharCE(SEXP x) {
@@ -438,11 +444,11 @@ const char *Rf_reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst) 
 }
 
 int Rf_ncols(SEXP x) {
-	return (int) ((call_Rf_ncols) callbacks[Rf_ncols_x])(x);
+	return ((call_Rf_ncols) callbacks[Rf_ncols_x])(x);
 }
 
 int Rf_nrows(SEXP x) {
-	return (int) ((call_Rf_nrows) callbacks[Rf_nrows_x])(x);
+	return ((call_Rf_nrows) callbacks[Rf_nrows_x])(x);
 }
 
 
@@ -856,11 +862,12 @@ double Rf_asReal(SEXP x) {
 
 Rcomplex Rf_asComplex(SEXP x){
 	unimplemented("Rf_asComplex");
-	Rcomplex c; return c;
+	Rcomplex c;
+	return c;
 }
 
 int TYPEOF(SEXP x) {
-	return (int) ((call_TYPEOF) callbacks[TYPEOF_x])(x);
+	return ((call_TYPEOF) callbacks[TYPEOF_x])(x);
 }
 
 SEXP ATTRIB(SEXP x){
@@ -869,7 +876,7 @@ SEXP ATTRIB(SEXP x){
 }
 
 int OBJECT(SEXP x){
-	return (int) ((call_OBJECT) callbacks[OBJECT_x])(x);
+	return ((call_OBJECT) callbacks[OBJECT_x])(x);
 }
 
 int MARK(SEXP x){
@@ -878,7 +885,7 @@ int MARK(SEXP x){
 }
 
 int NAMED(SEXP x){
-	return (int) ((call_NAMED) callbacks[NAMED_x])(x);
+	return ((call_NAMED) callbacks[NAMED_x])(x);
 }
 
 int REFCNT(SEXP x){
@@ -919,11 +926,12 @@ void R_qsort_int_I(int *iv, int *II, int i, int j) {
 }
 
 R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
-	return (R_len_t) unimplemented("R_BadLongVector");
+    unimplemented("R_BadLongVector");
+	return 0;
 }
 
 int IS_S4_OBJECT(SEXP x) {
-	return (int) ((call_IS_S4_OBJECT) callbacks[IS_S4_OBJECT_x])(x);
+	return ((call_IS_S4_OBJECT) callbacks[IS_S4_OBJECT_x])(x);
 }
 
 void SET_S4_OBJECT(SEXP x) {
@@ -935,7 +943,8 @@ void UNSET_S4_OBJECT(SEXP x) {
 }
 
 Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
-	return (Rboolean) unimplemented("R_ToplevelExec");
+	unimplemented("R_ToplevelExec");
+	return FALSE;
 }
 
 SEXP R_ExecWithCleanup(SEXP (*fun)(void *), void *data,
@@ -961,7 +970,8 @@ SEXP R_FindPackageEnv(SEXP info) {
 }
 
 Rboolean R_IsNamespaceEnv(SEXP rho) {
-	return (Rboolean) unimplemented("R_IsNamespaceEnv");
+	unimplemented("R_IsNamespaceEnv");
+	return FALSE;
 }
 
 SEXP R_FindNamespace(SEXP info) {
@@ -993,16 +1003,17 @@ void R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env) {
 }
 
 Rboolean R_BindingIsLocked(SEXP sym, SEXP env) {
-	return (Rboolean) ((call_R_BindingIsLocked) callbacks[R_BindingIsLocked_x])(sym, env);
+	return ((call_R_BindingIsLocked) callbacks[R_BindingIsLocked_x])(sym, env);
 }
 
 Rboolean R_BindingIsActive(SEXP sym, SEXP env) {
     // TODO: for now, I believe all bindings are false
-    return (Rboolean)0;
+    return FALSE;
 }
 
 Rboolean R_HasFancyBindings(SEXP rho) {
-	return (Rboolean) unimplemented("R_HasFancyBindings");
+    unimplemented("R_HasFancyBindings");
+	return FALSE;
 }
 
 Rboolean Rf_isS4(SEXP x) {
@@ -1011,10 +1022,12 @@ Rboolean Rf_isS4(SEXP x) {
 
 SEXP Rf_asS4(SEXP x, Rboolean b, int i) {
 	unimplemented("Rf_asS4");
+	return NULL;
 }
 
 static SEXP R_tryEvalInternal(SEXP x, SEXP y, int *ErrorOccurred, int silent) {
 	unimplemented("R_tryEvalInternal");
+	return NULL;
 }
 
 SEXP R_tryEval(SEXP x, SEXP y, int *ErrorOccurred) {
@@ -1088,7 +1101,6 @@ void R_RegisterCFinalizer(SEXP s, R_CFinalizer_t fun) {
 
 void R_RegisterFinalizerEx(SEXP s, SEXP fun, Rboolean onexit) {
 	// TODO implement, but not fail for now
-
 }
 
 void R_RegisterCFinalizerEx(SEXP s, R_CFinalizer_t fun, Rboolean onexit) {
@@ -1101,18 +1113,22 @@ void R_RunPendingFinalizers(void) {
 
 SEXP R_MakeWeakRef(SEXP key, SEXP val, SEXP fin, Rboolean onexit) {
 	unimplemented("R_MakeWeakRef");
+	return NULL;
 }
 
 SEXP R_MakeWeakRefC(SEXP key, SEXP val, R_CFinalizer_t fin, Rboolean onexit) {
 	unimplemented("R_MakeWeakRefC");
+	return NULL;
 }
 
 SEXP R_WeakRefKey(SEXP w) {
 	unimplemented("R_WeakRefKey");
+	return NULL;
 }
 
 SEXP R_WeakRefValue(SEXP w) {
 	unimplemented("R_WeakRefValue");
+	return NULL;
 }
 
 void R_RunWeakRefFinalizer(SEXP w) {
@@ -1128,7 +1144,8 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
 }
 
 int R_has_slot(SEXP obj, SEXP name) {
-	return (int) unimplemented("R_has_slot");
+	unimplemented("R_has_slot");
+	return 0;
 }
 
 SEXP R_do_MAKE_CLASS(const char *what) {
@@ -1152,11 +1169,13 @@ int R_check_class_etc (SEXP x, const char **valid) {
 }
 
 SEXP R_PreserveObject(SEXP x) {
-	return newObjectRef(x);
+    TruffleEnv* env = (*truffleContext)->getTruffleEnv(truffleContext);
+	return (*env)->newObjectRef(env, x);
 }
 
 void R_ReleaseObject(SEXP x) {
-	releaseObjectRef(x);
+    TruffleEnv* env = (*truffleContext)->getTruffleEnv(truffleContext);
+	(*env)->releaseObjectRef(env, x);
 }
 
 void R_dot_Last(void) {
@@ -1165,7 +1184,7 @@ void R_dot_Last(void) {
 
 
 Rboolean R_compute_identical(SEXP x, SEXP y, int flags) {
-	return (Rboolean) ((call_R_compute_identical) callbacks[R_compute_identical_x])(x, y, flags);
+	return ((call_R_compute_identical) callbacks[R_compute_identical_x])(x, y, flags);
 }
 
 void Rf_copyListMatrix(SEXP s, SEXP t, Rboolean byrow) {

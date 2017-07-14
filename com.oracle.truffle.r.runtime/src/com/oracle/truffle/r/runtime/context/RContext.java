@@ -42,13 +42,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.WeakHashMap;
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
@@ -237,6 +241,16 @@ public final class RContext implements RTruffleObject {
     private final String[] environment;
     private final RContext.ContextKind contextKind;
     private final TimeZone systemTimeZone;
+    public final Map<Class<?>, RootCallTarget> nativeCallTargets = new HashMap<>();
+
+    public RootCallTarget getOrCreateNativeCallTarget(Class<?> clazz, Supplier<RootCallTarget> creatFunction) {
+        RootCallTarget result = nativeCallTargets.get(clazz);
+        if (result == null) {
+            result = creatFunction.get();
+            nativeCallTargets.put(clazz, result);
+        }
+        return result;
+    }
 
     /**
      * Any context created by another has a parent. When such a context is destroyed we must reset

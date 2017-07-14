@@ -34,24 +34,28 @@ typedef struct globalRefTable_struct {
 } GlobalRefElem;
 
 #define CACHED_GLOBALREFS_INITIAL_SIZE 64
+
 static GlobalRefElem *cachedGlobalRefs = NULL;
 static int cachedGlobalRefsHwm;
 static int cachedGlobalRefsLength;
+static TruffleContext* truffleContext;
 
-void init_utils() {
+void init_utils(TruffleEnv* env) {
 	if (cachedGlobalRefs == NULL) {
+	    truffleContext = (*env)->getTruffleContext(env);
 		cachedGlobalRefs = calloc(CACHED_GLOBALREFS_INITIAL_SIZE, sizeof(GlobalRefElem));
 		cachedGlobalRefsLength = CACHED_GLOBALREFS_INITIAL_SIZE;
 		cachedGlobalRefsHwm = 0;
 	}
 }
 static SEXP findCachedGlobalRef(SEXP obj) {
+    TruffleEnv* env = (*truffleContext)->getTruffleEnv(truffleContext);
     for (int i = 0; i < cachedGlobalRefsHwm; i++) {
         GlobalRefElem elem = cachedGlobalRefs[i];
         if (elem.gref == NULL) {
             continue;
         }
-        if (isSameObject(elem.gref, obj)) {
+        if ((*env)->isSameObject(env, elem.gref, obj)) {
             return elem.gref;
         }
     }
@@ -71,7 +75,8 @@ SEXP addGlobalRef(SEXP obj, int permanent) {
         cachedGlobalRefs = newCachedGlobalRefs;
         cachedGlobalRefsLength = newLength;
     }
-    gref = newObjectRef(obj);
+    TruffleEnv* env = (*truffleContext)->getTruffleEnv(truffleContext);
+    gref = (*env)->newObjectRef(env, obj);
     cachedGlobalRefs[cachedGlobalRefsHwm].gref = gref;
     cachedGlobalRefs[cachedGlobalRefsHwm].permanent = permanent;
     cachedGlobalRefsHwm++;
@@ -96,13 +101,14 @@ SEXP createGlobalRef(SEXP obj, int permanent) {
 }
 
 void releaseGlobalRef(SEXP obj) {
+    TruffleEnv* env = (*truffleContext)->getTruffleEnv(truffleContext);
     for (int i = 0; i < cachedGlobalRefsHwm; i++) {
         GlobalRefElem elem = cachedGlobalRefs[i];
         if (elem.gref == NULL || elem.permanent) {
             continue;
         }
-        if (isSameObject(elem.gref, obj)) {
-        	releaseObjectRef(elem.gref);
+        if ((*env)->isSameObject(env, elem.gref, obj)) {
+        	(*env)->releaseObjectRef(env, elem.gref);
             cachedGlobalRefs[i].gref = NULL;
         }
     }

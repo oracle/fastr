@@ -406,7 +406,7 @@ public class DLL {
      */
     public static void loadLibR(String path) {
         RContext context = RContext.getInstance();
-        Object handle = DLLRFFI.DLOpenRootNode.create().getCallTarget().call(path, false, false);
+        Object handle = DLLRFFI.DLOpenRootNode.create(context).call(path, false, false);
         if (handle == null) {
             throw Utils.rSuicide("error loading libR from: " + path + "\n");
         }

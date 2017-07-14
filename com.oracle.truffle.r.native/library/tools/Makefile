@@ -65,7 +65,7 @@ $(OBJ)/%.o: $(GNUR_SRC)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJ)/gramRd_nfi.o: $(SRC)/truffle_nfi/gramRd_nfi.c
-	$(CC) $(CFLAGS) $(FFI_INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(FFI_INCLUDES) $(NFI_INCLUDES) -c $< -o $@
 
 $(OBJ)/gramRd_llvm.o: $(SRC)/truffle_llvm/gramRd_llvm.c
 	$(CC) $(CFLAGS) $(FFI_INCLUDES) $(SULONG_INCLUDES) -c $< -o $@
