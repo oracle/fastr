@@ -650,8 +650,6 @@ public class FrameFunctions {
         @Specialization(guards = "n == 1")
         protected REnvironment parentFrameDirect(VirtualFrame frame, @SuppressWarnings("unused") int n,
                         @Cached("new()") GetCallerFrameNode getCaller) {
-            // Note: this works even without checking the call#hasInternalParent()
-            // The environment in the arguments array is the right one even after 'do.call'.
             return REnvironment.frameToEnvironment(getCaller.execute(frame));
         }
 
@@ -665,8 +663,7 @@ public class FrameFunctions {
                 promiseProfile.enter();
                 call = call.getParent();
             }
-            int i = 0;
-            while (i < n) {
+            for (int i = 0; i < n; i++) {
                 call = call.getParent();
                 if (call == null) {
                     nullCallerProfile.enter();
@@ -675,9 +672,6 @@ public class FrameFunctions {
                 while (call.isPromise()) {
                     promiseProfile.enter();
                     call = call.getParent();
-                }
-                if (!call.hasInternalParent()) {
-                    i++;
                 }
             }
             nonNullCallerProfile.enter();
