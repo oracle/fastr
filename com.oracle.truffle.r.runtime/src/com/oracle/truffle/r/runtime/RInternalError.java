@@ -179,6 +179,7 @@ public final class RInternalError extends Error implements TruffleException {
                     System.err.println(out.toString());
                     System.err.println(verboseStackTrace);
                 }
+                String message = t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : "internal error: " + t.getClass().getSimpleName();
                 if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
                     String suffix = contextId == 0 ? "" : "-" + Integer.toString(contextId);
                     Path logfile = Utils.getLogPath("fastr_errors.log" + suffix);
@@ -190,11 +191,13 @@ public final class RInternalError extends Error implements TruffleException {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    String message = t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : "internal error: " + t.getClass().getSimpleName();
-                    System.out.println(message + " (see fastr_errors.log" + suffix + ")");
+                    System.err.println(message + " (see fastr_errors.log" + suffix + ")");
                     if (RContext.isEmbedded()) {
                         Utils.rSuicide("FastR internal error");
                     }
+                }
+                if (!FastROptions.PrintErrorStacktraces.getBooleanValue() && !FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
+                    System.err.println(message);
                 }
             }
         } catch (Throwable t) {
