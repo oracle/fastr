@@ -177,13 +177,18 @@ public abstract class ExtractVectorNode extends RBaseNode {
         if (KeyInfo.isReadable(info)) {
             return ForeignAccess.sendRead(foreignRead, object, pos);
         } else if (pos instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
-            TruffleObject clazz = JavaInterop.toJavaClass(object);
+            TruffleObject clazz = toJavaClass(object);
             info = ForeignAccess.sendKeyInfo(keyInfoNode, clazz, pos);
             if (KeyInfo.isReadable(info)) {
                 return ForeignAccess.sendRead(foreignRead, clazz, pos);
             }
         }
         throw caller.error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + pos);
+    }
+
+    @TruffleBoundary
+    private static TruffleObject toJavaClass(TruffleObject obj) {
+        return JavaInterop.toJavaClass(obj);
     }
 
     @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})

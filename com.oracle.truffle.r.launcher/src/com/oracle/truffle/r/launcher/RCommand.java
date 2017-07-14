@@ -213,10 +213,10 @@ public class RCommand {
         return input.replace("~+~", " ");
     }
 
-    private static final String GET_ECHO = "invisible(getOption('echo'))";
-    private static final String QUIT_EOF = "quit(\"default\", 0L, TRUE)";
-    private static final String GET_PROMPT = "invisible(getOption('prompt'))";
-    private static final String GET_CONTINUE_PROMPT = "invisible(getOption('continue'))";
+    private static final Source GET_ECHO = Source.newBuilder("R", ".Internal(getOption('echo'))", "<echo>").internal(true).buildLiteral();
+    private static final Source QUIT_EOF = Source.newBuilder("R", ".Internal(quit('default', 0L, TRUE))", "<quit-on-eof>").internal(true).buildLiteral();
+    private static final Source GET_PROMPT = Source.newBuilder("R", ".Internal(getOption('prompt'))", "<prompt>").internal(true).buildLiteral();
+    private static final Source GET_CONTINUE_PROMPT = Source.newBuilder("R", ".Internal(getOption('continue'))", "<continue-prompt>").internal(true).buildLiteral();
 
     /**
      * The read-eval-print loop, which can take input from a console, command line expression or a
@@ -285,7 +285,7 @@ public class RCommand {
             }
         } catch (EOFException e) {
             try {
-                context.eval("R", QUIT_EOF);
+                context.eval(QUIT_EOF);
             } catch (PolyglotException e2) {
                 if (e2.isExit()) {
                     return e2.getExitStatus();
@@ -309,7 +309,7 @@ public class RCommand {
 
     private static boolean doEcho(Context context) {
         try {
-            return context.eval("R", GET_ECHO).asBoolean();
+            return context.eval(GET_ECHO).asBoolean();
         } catch (PolyglotException e) {
             if (e.isExit()) {
                 throw new ExitException(e.getExitStatus());
@@ -320,7 +320,7 @@ public class RCommand {
 
     private static String getPrompt(Context context) {
         try {
-            return context.eval("R", GET_PROMPT).asString();
+            return context.eval(GET_PROMPT).asString();
         } catch (PolyglotException e) {
             if (e.isExit()) {
                 throw new ExitException(e.getExitStatus());
@@ -331,7 +331,7 @@ public class RCommand {
 
     private static String getContinuePrompt(Context context) {
         try {
-            return context.eval("R", GET_CONTINUE_PROMPT).asString();
+            return context.eval(GET_CONTINUE_PROMPT).asString();
         } catch (PolyglotException e) {
             if (e.isExit()) {
                 throw new ExitException(e.getExitStatus());

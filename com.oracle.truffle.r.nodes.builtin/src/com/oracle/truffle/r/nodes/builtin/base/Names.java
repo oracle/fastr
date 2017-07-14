@@ -96,8 +96,7 @@ public abstract class Names extends RBuiltinNode.Arg1 {
             String[] staticNames = new String[0];
             try {
                 if (JavaInterop.isJavaObject(Object.class, obj)) {
-                    TruffleObject clazz = JavaInterop.toJavaClass(obj);
-                    staticNames = readKeys(keysNode, clazz, getSizeNode, readNode, isBoxedNode, unboxNode);
+                    staticNames = readKeys(keysNode, toJavaClass(obj), getSizeNode, readNode, isBoxedNode, unboxNode);
                 }
             } catch (UnknownIdentifierException | NoSuchFieldError | UnsupportedMessageException e) {
                 // because it is a class ... ?
@@ -112,6 +111,11 @@ public abstract class Names extends RBuiltinNode.Arg1 {
         } catch (InteropException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
+    }
+
+    @TruffleBoundary
+    private static TruffleObject toJavaClass(TruffleObject obj) {
+        return JavaInterop.toJavaClass(obj);
     }
 
     private static String[] readKeys(Node keysNode, TruffleObject obj, Node getSizeNode, Node readNode, Node isBoxedNode, Node unboxNode)

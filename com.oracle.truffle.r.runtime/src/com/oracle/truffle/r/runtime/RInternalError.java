@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -37,9 +36,8 @@ import java.util.Date;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.TruffleException;
-import com.oracle.truffle.r.launcher.ConsoleHandler;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
@@ -160,43 +158,48 @@ public final class RInternalError extends Error implements TruffleException {
     }
 
     private static void reportError(Throwable throwable, int contextId) {
-        Throwable t = throwable;
-        if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue() || FastROptions.PrintErrorStacktraces.getBooleanValue()) {
+        try {
+            Throwable t = throwable;
+            if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue() || FastROptions.PrintErrorStacktraces.getBooleanValue()) {
 
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            t.printStackTrace(new PrintStream(out));
-            String verboseStackTrace;
-            if (t instanceof IOException) {
-                t = t.getCause();
-            }
-            if (t instanceof RInternalError) {
-                verboseStackTrace = ((RInternalError) t).getVerboseStackTrace();
-            } else if (t instanceof RError) {
-                verboseStackTrace = ((RError) t).getVerboseStackTrace();
-            } else {
-                verboseStackTrace = "";
-            }
-            if (FastROptions.PrintErrorStacktraces.getBooleanValue()) {
-                System.err.println(out.toString());
-                System.err.println(verboseStackTrace);
-            }
-            if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
-                String suffix = contextId == 0 ? "" : "-" + Integer.toString(contextId);
-                Path logfile = Utils.getLogPath("fastr_errors.log" + suffix);
-                try (BufferedWriter writer = Files.newBufferedWriter(logfile, StandardCharsets.UTF_8, StandardOpenOption.APPEND,
-                                StandardOpenOption.CREATE)) {
-                    writer.append(new Date().toString()).append('\n');
-                    writer.append(out.toString()).append('\n');
-                    writer.append(verboseStackTrace).append("\n\n");
-                } catch (IOException e) {
-                    e.printStackTrace();
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                t.printStackTrace(new PrintStream(out));
+                String verboseStackTrace;
+                if (t instanceof IOException) {
+                    t = t.getCause();
                 }
-                String message = t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : "internal error: " + t.getClass().getSimpleName();
-                System.out.println(message + " (see fastr_errors.log" + suffix + ")");
-                if (RContext.isEmbedded()) {
-                    Utils.rSuicide("FastR internal error");
+                if (t instanceof RInternalError) {
+                    verboseStackTrace = ((RInternalError) t).getVerboseStackTrace();
+                } else if (t instanceof RError) {
+                    verboseStackTrace = ((RError) t).getVerboseStackTrace();
+                } else {
+                    verboseStackTrace = "";
+                }
+                if (FastROptions.PrintErrorStacktraces.getBooleanValue()) {
+                    System.err.println(out.toString());
+                    System.err.println(verboseStackTrace);
+                }
+                if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
+                    String suffix = contextId == 0 ? "" : "-" + Integer.toString(contextId);
+                    Path logfile = Utils.getLogPath("fastr_errors.log" + suffix);
+                    try (BufferedWriter writer = Files.newBufferedWriter(logfile, StandardCharsets.UTF_8, StandardOpenOption.APPEND,
+                                    StandardOpenOption.CREATE)) {
+                        writer.append(new Date().toString()).append('\n');
+                        writer.append(out.toString()).append('\n');
+                        writer.append(verboseStackTrace).append("\n\n");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    String message = t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : "internal error: " + t.getClass().getSimpleName();
+                    System.out.println(message + " (see fastr_errors.log" + suffix + ")");
+                    if (RContext.isEmbedded()) {
+                        Utils.rSuicide("FastR internal error");
+                    }
                 }
             }
+        } catch (Throwable t) {
+            System.err.println("error while reporting internal error:");
+            t.printStackTrace();
         }
     }
 
