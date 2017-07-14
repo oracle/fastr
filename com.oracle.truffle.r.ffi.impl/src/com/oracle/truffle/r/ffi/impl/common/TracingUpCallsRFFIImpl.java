@@ -310,6 +310,12 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object SET_NAMED_FASTR(Object x, int v) {
+        RFFIUtils.traceUpCall("SET_NAMED_FASTR", x, v);
+        return delegate.SET_NAMED_FASTR(x, v);
+    }
+
+    @Override
     public Object SET_TYPEOF_FASTR(Object x, int v) {
         RFFIUtils.traceUpCall("SET_TYPEOF_FASTR", x, v);
         return delegate.SET_TYPEOF_FASTR(x, v);

@@ -45,16 +45,10 @@ INLINE_FUN R_len_t length(SEXP s)
     case VECSXP:
     case EXPRSXP:
     case RAWSXP:
+    case DOTSXP:
 	return LENGTH(s);
     case LISTSXP:
     case LANGSXP:
-    case DOTSXP:
-	i = 0;
-	while (s != NULL && s != R_NilValue) {
-	    i++;
-	    s = CDR(s);
-	}
-	return i;
     case ENVSXP:
 	return Rf_envlength(s);
     default:
@@ -77,16 +71,10 @@ INLINE_FUN R_xlen_t xlength(SEXP s)
     case VECSXP:
     case EXPRSXP:
     case RAWSXP:
+    case DOTSXP:
 	return XLENGTH(s);
     case LISTSXP:
     case LANGSXP:
-    case DOTSXP:
-	i = 0;
-	while (s != NULL && s != R_NilValue) {
-	    i++;
-	    s = CDR(s);
-	}
-	return i;
     case ENVSXP:
 	return Rf_envlength(s);
     default:

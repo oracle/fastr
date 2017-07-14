@@ -84,7 +84,8 @@ use_internals_end = '''#endif
 
 '''
 preserveObject = '''#ifdef FASTR
-SEXP R_PreserveObject(SEXP);
+SEXP R_PreserveObject_FASTR(SEXP);
+#define R_PreserveObject(var) ((var) = R_PreserveObject_FASTR((var)))
 #else
 '''
 

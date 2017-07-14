@@ -67,6 +67,7 @@ import com.oracle.truffle.r.runtime.conn.NativeConnections.NativeRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -582,6 +583,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object SET_NAMED_FASTR(Object x, int v) {
+        if (x instanceof RShareable) {
+            ((RShareable) x).incRefCount();
+            return RNull.instance;
+        } else {
+            throw unimplemented();
+        }
+    }
+
+    @Override
     public Object SET_TYPEOF_FASTR(Object x, int v) {
         int code = SEXPTYPE.gnuRCodeForObject(x);
         if (code == SEXPTYPE.LISTSXP.code && v == SEXPTYPE.LANGSXP.code) {
@@ -644,6 +655,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public Object TAG(Object e) {
         if (e instanceof RPairList) {
             return ((RPairList) e).getTag();
+        } else if (e instanceof RArgsValuesAndNames) {
+            ArgumentsSignature signature = ((RArgsValuesAndNames) e).getSignature();
+            if (signature.getLength() > 0 && signature.getName(0) != null) {
+                return signature.getName(0);
+            }
+            return RNull.instance;
         } else {
             guaranteeInstanceOf(e, RExternalPtr.class);
             // at the moment, this can only be used to null out the pointer
@@ -691,8 +708,14 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object SETCAR(Object x, Object y) {
-        guaranteeInstanceOf(x, RPairList.class);
-        ((RPairList) x).setCar(y);
+        RPairList pl;
+        if (x instanceof RLanguage) {
+            pl = ((RLanguage) x).getPairList();
+        } else {
+            guaranteeInstanceOf(x, RPairList.class);
+            pl = (RPairList) x;
+        }
+        pl.setCar(y);
         return y;
     }
 

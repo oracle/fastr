@@ -1085,7 +1085,7 @@ int R_check_class_etc (SEXP x, const char **valid) {
 	return (int) unimplemented("R_check_class_etc");
 }
 
-SEXP R_PreserveObject(SEXP x) {
+SEXP R_PreserveObject_FASTR(SEXP x) {
 	return unimplemented("R_PreserveObject");
 }
 

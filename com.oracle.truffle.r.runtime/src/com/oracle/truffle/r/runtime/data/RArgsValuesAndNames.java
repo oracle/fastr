@@ -28,6 +28,7 @@ import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 /**
  * A simple wrapper class for passing the ... argument through RArguments
@@ -59,5 +60,25 @@ public final class RArgsValuesAndNames extends Arguments<Object> implements RTyp
     @Override
     public void setTypedValueInfo(int value) {
         throw RInternalError.shouldNotReachHere();
+    }
+
+    public RPairList toPairlist() {
+        RPairList head = null;
+        ArgumentsSignature signature = getSignature();
+        assert signature.getLength() == getLength();
+        for (int i = 0; i < getLength(); i++) {
+            String name = signature.getName(i);
+            RPairList cur = RDataFactory.createPairList(getArgument(i), RNull.instance, name != null ? name : RNull.instance, SEXPTYPE.DOTSXP);
+
+            if (head == null) {
+                head = cur;
+            } else {
+                head.appendToEnd(cur);
+            }
+        }
+        if (head != null) {
+            return head;
+        }
+        return RDataFactory.createPairList(RNull.instance);
     }
 }

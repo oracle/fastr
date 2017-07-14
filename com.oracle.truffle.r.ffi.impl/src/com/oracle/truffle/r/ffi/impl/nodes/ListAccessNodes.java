@@ -26,8 +26,11 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 
 /**
@@ -48,6 +51,21 @@ public final class ListAccessNodes {
             return lang.getDataAtAsObject(0);
         }
 
+        @Specialization
+        protected Object car(RArgsValuesAndNames args) {
+            return args.getArgument(0);
+        }
+
+        @Specialization
+        protected Object car(RSymbol sym) {
+            return sym;
+        }
+
+        @Specialization
+        protected Object car(@SuppressWarnings("unused") RNull nil) {
+            return RNull.instance;
+        }
+
         @Fallback
         protected Object car(@SuppressWarnings("unused") Object obj) {
             throw RInternalError.unimplemented("CAR only works on pair lists and language objects");
@@ -66,6 +84,11 @@ public final class ListAccessNodes {
         protected Object cdr(RLanguage lang) {
             RPairList l = lang.getPairList();
             return l.cdr();
+        }
+
+        @Specialization
+        protected Object cdr(RArgsValuesAndNames args) {
+            return args.toPairlist().cdr();
         }
 
         @Fallback
