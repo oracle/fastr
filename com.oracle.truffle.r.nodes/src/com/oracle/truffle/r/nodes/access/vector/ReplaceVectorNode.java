@@ -146,7 +146,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
             ForeignAccess.sendWrite(foreignWrite, object, pos, r2Foreign.execute(writtenValue));
             return;
         } else if (pos instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
-            TruffleObject clazz = JavaInterop.toJavaClass(object);
+            TruffleObject clazz = toJavaClass(object);
             info = ForeignAccess.sendKeyInfo(keyInfoNode, clazz, pos);
             if (KeyInfo.isWritable(info)) {
                 ForeignAccess.sendWrite(foreignWrite, clazz, pos, r2Foreign.execute(writtenValue));
@@ -154,6 +154,11 @@ public abstract class ReplaceVectorNode extends RBaseNode {
             }
         }
         throw error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + pos);
+    }
+
+    @TruffleBoundary
+    private static TruffleObject toJavaClass(TruffleObject obj) {
+        return JavaInterop.toJavaClass(obj);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(vector, positions)"})
