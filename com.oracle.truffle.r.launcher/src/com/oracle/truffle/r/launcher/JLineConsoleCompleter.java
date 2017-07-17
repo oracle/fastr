@@ -60,7 +60,6 @@ public class JLineConsoleCompleter implements Completer {
     private static final String GET_COMPLETION_ENV = "utils:::.CompletionEnv";
     private static final String SET_FUNCTION = "`$<-`";
 
-    @SuppressWarnings("try")
     private int completeImpl(String buffer, int cursor, List<CharSequence> candidates) {
         if (buffer.isEmpty()) {
             return cursor;

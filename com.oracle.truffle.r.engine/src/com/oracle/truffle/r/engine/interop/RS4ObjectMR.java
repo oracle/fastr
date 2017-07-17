@@ -27,12 +27,9 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RS4Object;
@@ -65,11 +62,8 @@ public class RS4ObjectMR {
     public abstract static class RS4ObjectReadNode extends Node {
         @Child private GetAttributeNode getAttributeNode = GetAttributeNode.create();
 
-        @SuppressWarnings("try")
         protected Object access(RS4Object receiver, String field) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
-                return getAttributeNode.execute(receiver, field);
-            }
+            return getAttributeNode.execute(receiver, field);
         }
     }
 
@@ -77,13 +71,10 @@ public class RS4ObjectMR {
     public abstract static class RS4ObjectWriteNode extends Node {
         @Child private SetAttributeNode setAttributeNode = SetAttributeNode.create();
 
-        @SuppressWarnings("try")
         protected Object access(RS4Object receiver, String field, Object valueObj) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
-                Object value = Utils.javaToRPrimitive(valueObj);
-                setAttributeNode.execute(receiver, field, value);
-                return value;
-            }
+            Object value = Utils.javaToRPrimitive(valueObj);
+            setAttributeNode.execute(receiver, field, value);
+            return value;
         }
     }
 
@@ -91,16 +82,13 @@ public class RS4ObjectMR {
     public abstract static class RS4ObjectKeysNode extends Node {
         @Child private ArrayAttributeNode arrayAttrAccess = ArrayAttributeNode.create();
 
-        @SuppressWarnings("try")
         protected Object access(RS4Object receiver) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
-                RAttribute[] attributes = arrayAttrAccess.execute(receiver.getAttributes());
-                String[] data = new String[attributes.length];
-                for (int i = 0; i < data.length; i++) {
-                    data[i] = attributes[i].getName();
-                }
-                return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+            RAttribute[] attributes = arrayAttrAccess.execute(receiver.getAttributes());
+            String[] data = new String[attributes.length];
+            for (int i = 0; i < data.length; i++) {
+                data[i] = attributes[i].getName();
             }
+            return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
         }
     }
 

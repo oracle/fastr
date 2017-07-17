@@ -35,8 +35,6 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -160,11 +158,8 @@ public class TestUtilities {
      * Certain code needs to be run within valid RContext, e.g. copying, which tries to report to
      * memory tracer taken from RContext.
      */
-    @SuppressWarnings("try")
     public static <T> T withinTestContext(Supplier<T> action) {
-        try (RCloseable c = RContext.withinContext(TestBase.testVMContext)) {
-            return action.get();
-        }
+        return action.get();
     }
 
     /**
@@ -198,11 +193,8 @@ public class TestUtilities {
             return ((TestRoot<T>) target.getRootNode()).node;
         }
 
-        @SuppressWarnings("try")
         public Object call(Object... args) {
-            try (RCloseable c = RContext.withinContext(TestBase.testVMContext)) {
-                return target.call(RArguments.createUnitialized((Object) args));
-            }
+            return target.call(RArguments.createUnitialized((Object) args));
         }
     }
 

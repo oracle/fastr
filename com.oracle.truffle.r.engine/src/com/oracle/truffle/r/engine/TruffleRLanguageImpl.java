@@ -27,17 +27,13 @@ import java.util.Locale;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.metadata.ScopeProvider;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.engine.interop.RForeignAccessFactoryImpl;
 import com.oracle.truffle.r.nodes.RASTBuilder;
@@ -48,13 +44,11 @@ import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
 import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -64,7 +58,6 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @TruffleLanguage.Registration(name = "R", id = "R", version = "3.3.2", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class})
@@ -197,39 +190,14 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage implements Scop
     }
 
     @Override
-    @SuppressWarnings("try")
     protected CallTarget parse(ParsingRequest request) throws Exception {
         CompilerAsserts.neverPartOfCompilation();
-        try (RCloseable c = RContext.withinContext(getCurrentContext())) {
-            try {
-                return RContext.getEngine().parseToCallTarget(request.getSource(), request.getFrame());
-            } catch (IncompleteSourceException e) {
-                throw e;
-            } catch (ParseException e) {
-                return Truffle.getRuntime().createCallTarget(new RootNode(this, new FrameDescriptor()) {
-                    @Override
-                    public SourceSection getSourceSection() {
-                        return RSyntaxNode.INTERNAL;
-                    }
-
-                    @Override
-                    public Object execute(VirtualFrame frame) {
-                        throw e.throwAsRError();
-                    }
-                });
-            } catch (RError e) {
-                return Truffle.getRuntime().createCallTarget(new RootNode(this, new FrameDescriptor()) {
-                    @Override
-                    public SourceSection getSourceSection() {
-                        return RSyntaxNode.INTERNAL;
-                    }
-
-                    @Override
-                    public Object execute(VirtualFrame frame) {
-                        throw e;
-                    }
-                });
-            }
+        try {
+            return RContext.getEngine().parseToCallTarget(request.getSource(), request.getFrame());
+        } catch (IncompleteSourceException e) {
+            throw e;
+        } catch (ParseException e) {
+            throw e.throwAsRError();
         }
     }
 

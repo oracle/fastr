@@ -26,17 +26,16 @@ import static com.oracle.truffle.r.engine.interop.Utils.javaToRPrimitive;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
+import com.oracle.truffle.api.interop.KeyInfo;
+import com.oracle.truffle.api.interop.KeyInfo.Builder;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @MessageResolution(receiverType = REnvironment.class)
@@ -75,11 +74,8 @@ public class REnvironmentMR {
     public abstract static class REnvironmentReadNode extends Node {
         @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
 
-        @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, REnvironment receiver, String field) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
-                return extract.applyAccessField(frame, receiver, field);
-            }
+            return extract.applyAccessField(frame, receiver, field);
         }
     }
 
@@ -87,13 +83,9 @@ public class REnvironmentMR {
     public abstract static class REnvironmentWriteNode extends Node {
         @Child private ReplaceVectorNode extract = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
 
-        @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, REnvironment receiver, String field, Object valueObj) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
-                Object value = javaToRPrimitive(valueObj);
-                Object x = extract.apply(frame, receiver, new Object[]{field}, value);
-                return x;
-            }
+            Object value = javaToRPrimitive(valueObj);
+            return extract.apply(frame, receiver, new Object[]{field}, value);
         }
     }
 
@@ -108,21 +100,17 @@ public class REnvironmentMR {
     @Resolve(message = "KEY_INFO")
     public abstract static class REnvironmentKeyInfoNode extends Node {
 
-        private static final int EXISTS = 1 << 0;
-        private static final int READABLE = 1 << 1;
-        private static final int WRITABLE = 1 << 2;
-
-        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, REnvironment receiver, String identifier) {
+        protected Object access(REnvironment receiver, String identifier) {
             Object val = receiver.get(identifier);
             if (val == null) {
                 return 0;
             }
-
-            int info = READABLE | EXISTS;
+            Builder builder = KeyInfo.newBuilder();
+            builder.setReadable(true);
             if (!receiver.isLocked() && !receiver.bindingIsLocked(identifier)) {
-                info += WRITABLE;
+                builder.setWritable(true);
             }
-            return info;
+            return builder.build();
         }
     }
 

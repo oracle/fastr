@@ -26,17 +26,15 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RootWithBody;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -261,7 +259,6 @@ public class SpecialCallTest extends TestBase {
         assertCallCounts("{}", test, initialSpecialCount, initialNormalCount, finalSpecialCount, finalNormalCount);
     }
 
-    @SuppressWarnings("try")
     private static void assertCallCounts(String setup, String test, int initialSpecialCount, int initialNormalCount, int finalSpecialCount, int finalNormalCount) {
         if (!FastROptions.UseSpecials.getBooleanValue()) {
             return;
@@ -276,14 +273,15 @@ public class SpecialCallTest extends TestBase {
         RootCallTarget setupCallTarget = testVMContext.getThisEngine().makePromiseCallTarget(((RLanguage) setupExpression.getDataAt(0)).getRep().asRSyntaxNode().asRNode(), "test");
         RootCallTarget testCallTarget = testVMContext.getThisEngine().makePromiseCallTarget(((RLanguage) testExpression.getDataAt(0)).getRep().asRSyntaxNode().asRNode(), "test");
 
-        try (RCloseable c = RContext.withinContext(TestBase.testVMContext)) {
+        try {
             CountCallsVisitor count1 = new CountCallsVisitor(testCallTarget);
             Assert.assertEquals("initial special call count '" + setup + "; " + test + "': ", initialSpecialCount, count1.special);
             Assert.assertEquals("initial normal call count '" + setup + "; " + test + "': ", initialNormalCount, count1.normal);
 
+            MaterializedFrame frame = TestBase.testVMContext.stateREnvironment.getGlobalFrame();
             try {
-                setupCallTarget.call(REnvironment.globalEnv().getFrame());
-                testCallTarget.call(REnvironment.globalEnv().getFrame());
+                setupCallTarget.call(frame);
+                testCallTarget.call(frame);
             } catch (RError e) {
                 // ignore
             }
@@ -293,8 +291,8 @@ public class SpecialCallTest extends TestBase {
             Assert.assertEquals("normal call count after first call '" + setup + "; " + test + "': ", finalNormalCount, count2.normal);
 
             try {
-                setupCallTarget.call(REnvironment.globalEnv().getFrame());
-                testCallTarget.call(REnvironment.globalEnv().getFrame());
+                setupCallTarget.call(frame);
+                testCallTarget.call(frame);
             } catch (RError e) {
                 // ignore
             }
