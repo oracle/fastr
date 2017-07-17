@@ -24,6 +24,7 @@ package com.oracle.truffle.r.engine.shell;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
+import org.graalvm.polyglot.Source;
 
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.launcher.ConsoleHandler;
@@ -80,7 +81,7 @@ public class REmbedded {
         try (Context cntx = Context.newBuilder().arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(System.out).err(System.err).build()) {
             context = cntx;
             consoleHandler.setContext(context);
-            context.eval("R", INIT);
+            context.eval(INIT);
         }
     }
 
@@ -89,7 +90,7 @@ public class REmbedded {
      * is evaluated the R builtins have not been installed, see {@link #initializeR}. The
      * suppression of printing is handled a a special case based on {@link Internal#INIT_EMBEDDED}.
      */
-    private static final String INIT = "1";
+    private static final Source INIT = Source.newBuilder("R", "1", "<embedded>").buildLiteral();
 
     /**
      * GnuR distinguishes {@code setup_Rmainloop} and {@code run_Rmainloop}. Currently we don't have
