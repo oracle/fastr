@@ -259,6 +259,14 @@ public class FortranAndCFunctions {
                     return Dqrdc2.create();
                 case "dqrcf":
                     return DqrcfNodeGen.create();
+                case "dqrqty":
+                    return DqrqtyNodeGen.create();
+                case "dqrqy":
+                    return DqrqyNodeGen.create();
+                case "dqrrsd":
+                    return DqrrsdNodeGen.create();
+                case "dqrxb":
+                    return DqrxbNodeGen.create();
                 default:
                     return null;
             }

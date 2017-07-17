@@ -148,4 +148,24 @@ public class TruffleLLVM_RAppl implements RApplRFFI {
     public DqrlsNode createDqrlsNode() {
         return new TruffleLLVM_DqrlsNode();
     }
+
+    @Override
+    public DqrqtyNode createDqrqtyNode() {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public DqrqyNode createDqrqyNode() {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public DqrrsdNode createDqrrsdNode() {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public DqrxbNode createDqrxbNode() {
+        throw RInternalError.unimplemented();
+    }
 }

@@ -11,9 +11,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
-import com.oracle.truffle.api.dsl.Specialization;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -34,14 +35,14 @@ public abstract class Dqrcf extends RExternalBuiltinNode.Arg8 {
 
     static {
         Casts casts = new Casts(Dqrcf.class);
-        casts.arg(0).mustBe(doubleValue()).asDoubleVector();
-        casts.arg(1).mustBe(integerValue()).asIntegerVector().findFirst();
-        casts.arg(2).mustBe(integerValue()).asIntegerVector().findFirst();
-        casts.arg(3).mustBe(doubleValue()).asDoubleVector();
-        casts.arg(4).mustBe(doubleValue()).asDoubleVector();
-        casts.arg(5).mustBe(integerValue()).asIntegerVector().findFirst();
-        casts.arg(6).mustBe(doubleValue()).asDoubleVector();
-        casts.arg(7).mustBe(integerValue()).asIntegerVector();
+        casts.arg(0, "x").mustBe(doubleValue()).asDoubleVector();
+        casts.arg(1, "nx").mustBe(integerValue()).asIntegerVector().findFirst();
+        casts.arg(2, "k").mustBe(integerValue()).asIntegerVector().findFirst();
+        casts.arg(3, "qraux").mustBe(doubleValue()).asDoubleVector();
+        casts.arg(4, "y").mustBe(doubleValue()).asDoubleVector();
+        casts.arg(5, "ny").mustBe(integerValue()).asIntegerVector().findFirst();
+        casts.arg(6, "b").mustBe(doubleValue()).asDoubleVector();
+        casts.arg(7, "info").mustBe(integerValue()).asIntegerVector();
     }
 
     @Specialization
