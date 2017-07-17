@@ -132,29 +132,46 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testToArray() {
         assertEvalFastR("a <- as.java.array(1L); a;", getRValue(new int[]{1}));
+        assertEvalFastR("a <- as.java.array(1L); java.class(a);", "'[I'");
         assertEvalFastR("a <- as.java.array(c(1L, 2L)); a;", getRValue(new int[]{1, 2}));
         assertEvalFastR("a <- as.java.array(1L,,T); a;", getRValue(new int[]{1}));
         assertEvalFastR("a <- as.java.array(c(1L, 2L),,T); a;", getRValue(new int[]{1, 2}));
+        assertEvalFastR("a <- as.java.array(c(1L, 2L),'double',T); a;", getRValue(new double[]{1, 2}));
 
         assertEvalFastR("a <- as.java.array(1.1); a;", getRValue(new double[]{1.1}));
+        assertEvalFastR("a <- as.java.array(1.1); java.class(a);", "'[D'");
         assertEvalFastR("a <- as.java.array(c(1.1, 1.2)); a;", getRValue(new double[]{1.1, 1.2}));
         assertEvalFastR("a <- as.java.array(1.1,,T); a;", getRValue(new double[]{1.1}));
         assertEvalFastR("a <- as.java.array(c(1.1, 1.2),,T); a;", getRValue(new double[]{1.1, 1.2}));
+        assertEvalFastR("a <- as.java.array(c(1.1, 1.2),'double',T); a;", getRValue(new double[]{1.1, 1.2}));
 
         assertEvalFastR("a <- as.java.array(T); a;", getRValue(new boolean[]{true}));
+        assertEvalFastR("a <- as.java.array(T); java.class(a);", "'[Z'");
         assertEvalFastR("a <- as.java.array(c(T, F)); a;", getRValue(new boolean[]{true, false}));
         assertEvalFastR("a <- as.java.array(T,,T); a;", getRValue(new boolean[]{true}));
         assertEvalFastR("a <- as.java.array(c(T, F),,T); a;", getRValue(new boolean[]{true, false}));
+        assertEvalFastR("a <- as.java.array(c(T, F),'boolean',T); a;", getRValue(new boolean[]{true, false}));
 
         assertEvalFastR("a <- as.java.array('a'); a;", getRValue(new String[]{"a"}));
+        assertEvalFastR("a <- as.java.array('a'); java.class(a);", "'[Ljava.lang.String;'");
         assertEvalFastR("a <- as.java.array(c('a', 'b')); a;", getRValue(new String[]{"a", "b"}));
         assertEvalFastR("a <- as.java.array('a',,T); a;", getRValue(new String[]{"a"}));
         assertEvalFastR("a <- as.java.array(c('a', 'b'),,T); a;", getRValue(new String[]{"a", "b"}));
+        assertEvalFastR("a <- as.java.array(c('a', 'b'),'java.lang.String',T); a;", getRValue(new String[]{"a", "b"}));
+
+        assertEvalFastR("a <- as.java.array(as.raw(1)); a", getRValue(new byte[]{1}));
+        assertEvalFastR("a <- as.java.array(as.raw(1)); java.class(a);", "'[B'");
+        assertEvalFastR("a <- as.java.array(as.raw(1)); length(a);", "1");
+        assertEvalFastR("a <- as.java.array(as.raw(c(1, 2, 3))); length(a);", "3");
+        assertEvalFastR("a <- as.java.array(as.raw(c(1, 2, 3))); java.class(a);", "'[B'");
+        assertEvalFastR("a <- as.java.array(as.raw(c(1, 2, 3)), 'int'); java.class(a);", "'[I'");
 
         assertEvalFastR("a <- as.java.array(as.external.short(1)); a;", getRValue(new short[]{1}));
+        assertEvalFastR("a <- as.java.array(as.external.short(1)); java.class(a);", "'[S'");
         assertEvalFastR("a <- as.java.array(c(as.external.short(1), as.external.short(2))); a;", getRValue(new short[]{1, 2}));
         assertEvalFastR("a <- as.java.array(as.external.short(1),,T); a;", getRValue(new short[]{1}));
         assertEvalFastR("a <- as.java.array(c(as.external.short(1), as.external.short(2)),,T); a;", getRValue(new short[]{1, 2}));
+        assertEvalFastR("a <- as.java.array(c(as.external.short(1), as.external.short(2)),'int',T); a;", getRValue(new int[]{1, 2}));
 
         assertEvalFastR("a <- as.java.array(as.external.short(1), 'java.lang.Short'); a;", getRValue(new short[]{1}));
         assertEvalFastR("a <- as.java.array(c(as.external.short(1), as.external.short(2)), 'java.lang.Short'); a;", getRValue(new short[]{1, 2}));
@@ -172,6 +189,9 @@ public class TestJavaInterop extends TestBase {
 
         assertEvalFastR("tc <- new.java.class('" + TEST_CLASS + "'); to <- new.external(tc); a <- as.java.array(to); is.external.array(a)", "TRUE");
         assertEvalFastR("tc <- new.java.class('" + TEST_CLASS + "'); to <- new.external(tc); a <- as.java.array(c(to, to)); is.external.array(a)", "TRUE");
+        assertEvalFastR("tc <- new.java.class('" + TEST_CLASS + "'); to <- new.external(tc); a <- as.java.array(c(to, to)); length(a)", "2");
+        assertEvalFastR("tc <- new.java.class('" + TEST_CLASS + "'); to <- new.external(tc); a <- as.java.array(c(to, to)); java.class(a);",
+                        "[Lcom.oracle.truffle.r.test.library.fastr.TestJavaInterop$TestClass;");
 
         assertEvalFastR(Ignored.Unimplemented, "a <- as.java.array(1L,,F); a;", getRValue(new int[]{1}));
     }
