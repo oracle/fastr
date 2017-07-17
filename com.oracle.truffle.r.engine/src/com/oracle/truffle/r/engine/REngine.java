@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.engine;
 
+import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -380,11 +382,15 @@ final class REngine implements Engine, Engine.Timings {
             } catch (ReturnException ex) {
                 return ex.getResult();
             } catch (DebugExitException | JumpToTopLevelException | ExitException | ThreadDeath e) {
+                CompilerDirectives.transferToInterpreter();
                 throw e;
             } catch (RError e) {
                 CompilerDirectives.transferToInterpreter();
                 throw e;
             } catch (Throwable t) {
+                CompilerDirectives.transferToInterpreter();
+                // other errors didn't produce an output yet
+                RInternalError.reportError(t);
                 throw t;
             } finally {
                 RContext.setThreadLocalInstance(oldContext);

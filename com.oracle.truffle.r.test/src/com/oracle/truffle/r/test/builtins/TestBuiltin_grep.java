@@ -98,6 +98,15 @@ public class TestBuiltin_grep extends TestBase {
         // Expected output: integer(0)
         // FastR output: [1] 1
         assertEval(Ignored.ImplementationError, "{ grep('^ *$', ' \\n') }");
+
+        assertEval("grep('[(]', ')')");
+        assertEval("grep('[)]', ')')");
+        assertEval("grep('(())', ')')");
+        assertEval("grep('))', ')')");
+        assertEval("grep('))', '))')");
+        assertEval(Output.IgnoreErrorMessage, "grep('([)]', ')')");
+        assertEval(Output.IgnoreErrorMessage, "grep('([(]', ')')");
+        assertEval(Output.IgnoreErrorMessage, "grep('(()', ')')");
     }
 
     @Test

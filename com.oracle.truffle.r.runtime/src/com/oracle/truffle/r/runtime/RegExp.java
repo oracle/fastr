@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,14 +68,33 @@ public class RegExp {
          * predefined classes like "[:alpha:]" with "\p{Alpha}".
          */
         boolean withinCharClass = false;
+        int parensNesting = 0;
         int i = 0;
         while (i < result.length()) {
             switch (result.charAt(i)) {
+                case '(':
+                    if (withinCharClass) {
+                        result = result.substring(0, i) + '\\' + result.substring(i);
+                        i++; // skip the newly inserted '\\'
+                    } else {
+                        parensNesting++;
+                    }
+                    break;
+                case ')':
+                    if (withinCharClass || parensNesting == 0) {
+                        result = result.substring(0, i) + '\\' + result.substring(i);
+                        i++; // skip the newly inserted '\\'
+                    } else {
+                        parensNesting--;
+                    }
+                    break;
                 case '\\':
                     if (withinCharClass) {
                         result = result.substring(0, i) + '\\' + result.substring(i);
+                        i++; // skip the newly inserted '\\'
+                    } else {
+                        i++; // skip the next character
                     }
-                    i++;
                     break;
                 case '[':
                     if (withinCharClass) {

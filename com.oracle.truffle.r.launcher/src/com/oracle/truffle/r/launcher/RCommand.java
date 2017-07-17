@@ -269,7 +269,7 @@ public class RCommand {
                             } else if (e.isExit()) {
                                 // usually from quit
                                 throw new ExitException(e.getExitStatus());
-                            } else if (e.isHostException()) {
+                            } else if (e.isHostException() || e.isInternalError()) {
                                 // we continue the repl even though the system may be broken
                                 lastStatus = 1;
                             } else if (e.isGuestException()) {
