@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.interop.pcre;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
@@ -31,7 +30,6 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 @MessageResolution(receiverType = CaptureNamesResult.class)
@@ -57,7 +55,7 @@ public class CaptureNamesResultMR {
         @Child private Node isNullNode = Message.IS_NULL.createNode();
         @Child private Node unboxNode = Message.UNBOX.createNode();
 
-        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, CaptureNamesResult receiver, Object[] arguments) {
+        protected Object access(CaptureNamesResult receiver, Object[] arguments) {
             try {
                 Object arg1 = arguments[1];
                 if (arg1 instanceof TruffleObject) {
@@ -74,5 +72,4 @@ public class CaptureNamesResultMR {
             }
         }
     }
-
 }

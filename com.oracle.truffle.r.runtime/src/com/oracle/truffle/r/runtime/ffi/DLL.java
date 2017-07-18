@@ -374,7 +374,7 @@ public class DLL {
             if (value instanceof TruffleObject) {
                 return (TruffleObject) value;
             } else {
-                throw RInternalError.shouldNotReachHere();
+                throw RInternalError.shouldNotReachHere("value: " + value);
             }
         }
     }

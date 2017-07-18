@@ -87,7 +87,7 @@ public final class FFIProcessor extends AbstractProcessor {
 
     private void processElement(Element e) throws IOException {
         if (e.getKind() != ElementKind.INTERFACE) {
-            processingEnv.getMessager().printMessage(Kind.ERROR, "RFFIUpCallRoot mjusty annotate an interface");
+            processingEnv.getMessager().printMessage(Kind.ERROR, "RFFIUpCallRoot must annotate an interface");
         }
         Types types = processingEnv.getTypeUtils();
         TypeElement typeElement = (TypeElement) e;
