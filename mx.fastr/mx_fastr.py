@@ -150,7 +150,7 @@ def set_graal_options():
 
 def _sulong_options():
     if _mx_sulong:
-        return ['-XX:-UseJVMCIClassLoader']
+        return ['-Dpolyglot.llvm.libraryPath=' + _mx_sulong.dir + '/mxbuild/sulong-libs']
     else:
         return []
 
