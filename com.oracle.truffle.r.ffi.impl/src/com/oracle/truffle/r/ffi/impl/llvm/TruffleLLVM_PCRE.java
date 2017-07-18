@@ -99,7 +99,7 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
                 }
                 CaptureNamesResult captureNamesCallback = new CaptureNamesResult(captureCount);
                 int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(),
-                                code, extra, captureNamesCallback);
+                                captureNamesCallback, code, extra);
                 if (result < 0) {
                     CompilerDirectives.transferToInterpreter();
                     throw RError.error(RError.NO_CALLER, RError.Message.WRONG_PCRE_INFO, result);

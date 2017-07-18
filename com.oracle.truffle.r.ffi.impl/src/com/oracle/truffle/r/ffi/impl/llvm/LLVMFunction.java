@@ -32,7 +32,6 @@ import com.oracle.truffle.api.nodes.Node;
  * with a complex result or, in the case of Fortran, to handle call by reference conveniently, or to
  * just have LLVM handle the underlying native call. The wrapper functions names are all of the form
  * {@code call_xxx_function}, where {@code xxx} is the subsystem.
- *
  */
 public enum LLVMFunction {
     // base
@@ -43,14 +42,14 @@ public enum LLVMFunction {
     readlink(2, "call_base_"),
     mkdtemp(1, "call_base_"),
     chmod(2, "call_base_"),
-    strtol(2, "call_base_"),
-    uname(0, "call_base_"),
+    strtol(3, "call_base_"),
+    uname(1, "call_base_"),
     glob(2, "call_base_"),
     // PCRE
     maketables(0, "call_pcre_"),
-    compile(3, "call_pcre_"),
-    getcapturecount(0, "call_pcre_"),
-    getcapturenames(2, "call_pcre_"),
+    compile(4, "call_pcre_"),
+    getcapturecount(2, "call_pcre_"),
+    getcapturenames(3, "call_pcre_"),
     study(2, "call_pcre_"),
     exec(8, "call_pcre_"),
     // RAppl
@@ -87,5 +86,4 @@ public enum LLVMFunction {
         CompilerAsserts.neverPartOfCompilation();
         return Message.createExecute(argCount).createNode();
     }
-
 }

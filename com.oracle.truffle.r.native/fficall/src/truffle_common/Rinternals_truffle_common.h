@@ -1080,7 +1080,7 @@ int R_check_class_etc (SEXP x, const char **valid) {
 	return R_check_class_etc_helper(x, valid, nfiGetMethodsNamespace);
 }
 
-SEXP R_PreserveObject(SEXP x) {
+SEXP R_PreserveObject_FASTR(SEXP x) {
 	return newObjectHandle(x);
 }
 
