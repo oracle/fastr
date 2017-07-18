@@ -131,9 +131,6 @@ def compileWithClangPP(args=None, version=None, out=None, err=None):
 def opt(args=None, version=None, out=None, err=None):
     return mx.run([_sulong().findLLVMProgram('opt', version)] + args, out=out, err=err)
 
-def link(args=None):
-    return mx.run_java(getClasspathOptions() + ["com.oracle.truffle.llvm.runtime.Linker"] + args)
-
 def cc(args):
     _log('fastr:cc', args)
     compiler = None
