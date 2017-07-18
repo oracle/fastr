@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,5 +82,8 @@ public class TestBuiltin_matchfun extends TestBase {
         assertEval("x <- min; f <- function(x) { min <- function(x) x; match.fun(x, descend=T)}; f(min)");
         assertEval("min <- function(x) x; f <- function(x) { match.fun(x, descend=T)}; f(min)");
         assertEval("f <- function(x) { match.fun(x, descend=T)}; f2 <- function() { min <- max; f(min) }; f2()");
+        assertEval("{ foo <- function() { myfunc <- function(x) 42; lapply(2, 'myfunc'); }; " +
+                        "boo <- function() { myfunc <- function(x) 42; lapply(2, 'myfunc'); }; " +
+                        "list(foo = foo(), boo = boo()); }");
     }
 }
