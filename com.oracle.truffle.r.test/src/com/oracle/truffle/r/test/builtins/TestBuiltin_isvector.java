@@ -200,8 +200,7 @@ public class TestBuiltin_isvector extends TestBase {
         assertEval("{x<-1;class(x)<-\"a\";is.vector(x);}");
         assertEval("{x<-1;names(x)<-\"a\";is.vector(x);}");
         assertEval("is.vector(1L, 'numeric');");
-        // FastR produces better error contexts
-        assertEval(Output.IgnoreErrorContext, "{is.vector(c(1,2), c(\"sss\", \"dddd\"));}");
-        assertEval(Output.IgnoreErrorContext, "{is.vector(c(1,2), TRUE);}");
+        assertEval("{is.vector(c(1,2), c(\"sss\", \"dddd\"));}");
+        assertEval("{is.vector(c(1,2), TRUE);}");
     }
 }

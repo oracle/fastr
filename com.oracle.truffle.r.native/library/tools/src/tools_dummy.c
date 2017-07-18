@@ -36,7 +36,6 @@ SEXP startHTTPD(SEXP sIP, SEXP sPort) UNIMPLEMENTED
 SEXP stopHTTPD(void) UNIMPLEMENTED
 SEXP splitString(SEXP string, SEXP delims) UNIMPLEMENTED
 
-SEXP C_parseLatex(SEXP call, SEXP op, SEXP args, SEXP env) UNIMPLEMENTED
-//SEXP C_parseRd(SEXP call, SEXP op, SEXP args, SEXP env);
-SEXP C_parseRd(SEXP con, SEXP source, SEXP verbose, SEXP fragment, SEXP basename, SEXP warningcalls);
-SEXP C_deparseRd(SEXP e, SEXP state) UNIMPLEMENTED
+SEXP parseLatex(SEXP call, SEXP op, SEXP args, SEXP env) UNIMPLEMENTED
+SEXP parseRd(SEXP call, SEXP op, SEXP args, SEXP env);
+SEXP deparseRd(SEXP e, SEXP state) UNIMPLEMENTED

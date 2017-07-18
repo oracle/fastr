@@ -67,7 +67,8 @@ public class TestBuiltin_crossprod extends TestBase {
         assertEval("{ crossprod(1:3, matrix(1:6, ncol=2)) }");
         assertEval("{ crossprod(t(1:2), 5) }");
         assertEval("{ crossprod(c(1,NA,2), matrix(1:6, ncol=2)) }");
-        assertEval("{ x <- matrix(c(NaN,2,3,4,5,NA), nrow=3); crossprod(x) }");
+        // The following test works if options(matprod = 'blas')
+        assertEval(Ignored.ImplementationError, "{ x <- matrix(c(NaN,2,3,4,5,NA), nrow=3); crossprod(x) }");
 
         // FIXME Number at [2][2] position of resulting matrix differs
         assertEval(Ignored.ImplementationError, "{ x <- matrix(c(NaN,2+3i,3,4+1i,5,NA), nrow=3); crossprod(x) }");

@@ -248,7 +248,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
 
         RType argumentType = RType.maxPrecedence(leftVector.getRType(), rightVector.getRType());
         RType resultType = RType.Logical;
-        if (isLogicOp(operation) && argumentType == RType.Raw) {
+        if (isLogicOp(operation) && argumentType == RType.Raw && leftVector.getLength() > 0 && rightVector.getLength() > 0) {
             resultType = RType.Raw;
         } else {
             resultType = RType.Logical;

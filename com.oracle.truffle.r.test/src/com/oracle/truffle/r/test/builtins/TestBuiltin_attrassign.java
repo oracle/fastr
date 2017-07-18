@@ -109,4 +109,10 @@ public class TestBuiltin_attrassign extends TestBase {
         assertEval("x<-42; attr(x, NULL) <- NULL");
         assertEval("x<-42; attr(x, 42) <- NULL");
     }
+
+    @Test
+    public void testSetAttrOnNull() {
+        assertEval("x<-NULL; attr(x, 'a') <- NULL");
+        assertEval("x<-NULL; attr(x, 'a') <- 42");
+    }
 }

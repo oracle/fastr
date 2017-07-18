@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -215,8 +215,10 @@ public class TestBuiltin_dim extends TestBase {
         assertEval("{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; dim(x)<-NULL; attributes(x) }");
         // reset dimensions and dimnames
         assertEval("{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; attr(x, \"foo\")<-\"foo\"; attr(x, \"dim\")<-NULL; attributes(x) }");
-        // second names() invocation sets "dimnames"
+        // second names() invocation sets "dimnames" and "names" also since the names are already
         assertEval("{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; attributes(x) }");
+        // the single names() invocation sets "dimnames" but "names" are not set since it's not
+        assertEval("{ x<-c(42); attr(x, \"dim\")<-1; names(x)<-\"z\"; attributes(x) }");
         // third names() invocation resets "names" (and not "dimnames")
         assertEval("{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; names(x)<-NULL; attributes(x) }");
         // both names and dimnames are set and then re-set

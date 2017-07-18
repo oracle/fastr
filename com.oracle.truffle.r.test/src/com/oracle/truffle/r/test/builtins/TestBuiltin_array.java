@@ -167,5 +167,11 @@ public class TestBuiltin_array extends TestBase {
         assertEval("{ .Internal(array(NULL, 1, NULL)) }");
         assertEval("{ .Internal(array(NA, 1, NULL)) }");
         assertEval("{ f<-function() 42; .Internal(array(f, 1, NULL)) }");
+        assertEval("{ array(integer(0), dim=2, dimnames=list(c(\"1\", \"2\")))}");
+        assertEval("{ array(double(0), dim=2, dimnames=list(c(\"1\", \"2\")))}");
+        assertEval("{ array(complex(0), dim=2, dimnames=list(c(\"1\", \"2\")))}");
+        assertEval("{ array(logical(0), dim=2, dimnames=list(c(\"1\", \"2\")))}");
+        assertEval("{ array(character(0), dim=2, dimnames=list(c(\"1\", \"2\")))}");
+        assertEval("{ array(list(0), dim=2, dimnames=list(c(\"1\", \"2\")))}");
     }
 }

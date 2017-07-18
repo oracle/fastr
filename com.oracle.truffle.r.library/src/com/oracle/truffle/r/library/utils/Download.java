@@ -16,6 +16,9 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,10 +31,13 @@ import java.nio.file.StandardCopyOption;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
+import com.oracle.truffle.r.runtime.nodes.builtin.RBuiltinBaseNode;
 
 /**
  * Support for the "internal"method of "utils::download.file". TODO take note of "quiet", "mode" and
@@ -100,5 +106,31 @@ public abstract class Download extends RExternalBuiltinNode.Arg5 {
         } catch (IOException e) {
             throw error(RError.Message.GENERIC, e.getMessage());
         }
+    }
+
+    /**
+     * This builtin is a tentative implementation of the <code>curlDownload</code> internal builtin.
+     * It just delegates invocations to the {@link Download} builtin.
+     */
+    @RBuiltin(name = "curlDownload", visibility = OFF, kind = INTERNAL, parameterNames = {"url", "destfile", "quite", "mode", "cacheOK"}, behavior = IO)
+    public abstract static class CurlDownload extends RBuiltinNode.Arg5 {
+
+        static {
+            Casts casts = new Casts(CurlDownload.class);
+            casts.arg(0).mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst();
+            casts.arg(1).mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst();
+            casts.arg(2).mustBe(logicalValue()).asLogicalVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst().map(toBoolean());
+            casts.arg(3).mustBe(stringValue()).asStringVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst();
+            casts.arg(4).mustBe(logicalValue()).asLogicalVector().mustBe(notEmpty()).shouldBe(singleElement(), Message.ONLY_FIRST_USED).findFirst().map(toBoolean());
+
+        }
+
+        @Child private Download downloadBuiltin = DownloadNodeGen.create();
+
+        @Specialization
+        protected int download(String urlString, String destFile, boolean quiet, String mode, boolean cacheOK) {
+            return downloadBuiltin.download(urlString, destFile, quiet, mode, cacheOK);
+        }
+
     }
 }

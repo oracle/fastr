@@ -31,8 +31,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -66,6 +69,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public abstract class Array extends RBuiltinNode.Arg3 {
 
     @Child private UpdateDimNames updateDimNames;
+    private final ConditionProfile nonEmptyVectorProfile = ConditionProfile.createBinaryProfile();
 
     // it's OK for the following method to update dimnames in-place as the container is "fresh"
     private void updateDimNames(RAbstractContainer container, Object o) {
@@ -105,10 +109,18 @@ public abstract class Array extends RBuiltinNode.Arg3 {
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
         int[] data = new int[totalLength];
-        for (int i = 0; i < totalLength; i++) {
-            data[i] = vec.getDataAt(i % vec.getLength());
+        int vecLength = vec.getLength();
+        if (nonEmptyVectorProfile.profile(totalLength > 0 && vecLength > 0)) {
+            for (int i = 0; i < totalLength; i++) {
+                data[i] = vec.getDataAt(i % vec.getLength());
+            }
+            return RDataFactory.createIntVector(data, vec.isComplete(), dimData);
+        } else {
+            for (int i = 0; i < totalLength; i++) {
+                data[i] = RRuntime.INT_NA;
+            }
+            return RDataFactory.createIntVector(data, RDataFactory.INCOMPLETE_VECTOR, dimData);
         }
-        return RDataFactory.createIntVector(data, vec.isComplete(), dimData);
     }
 
     @Specialization
@@ -127,10 +139,18 @@ public abstract class Array extends RBuiltinNode.Arg3 {
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
         double[] data = new double[totalLength];
-        for (int i = 0; i < totalLength; i++) {
-            data[i] = vec.getDataAt(i % vec.getLength());
+        int vecLength = vec.getLength();
+        if (totalLength > 0 && vecLength > 0) {
+            for (int i = 0; i < totalLength; i++) {
+                data[i] = vec.getDataAt(i % vec.getLength());
+            }
+            return RDataFactory.createDoubleVector(data, vec.isComplete(), dimData);
+        } else {
+            for (int i = 0; i < totalLength; i++) {
+                data[i] = RRuntime.DOUBLE_NA;
+            }
+            return RDataFactory.createDoubleVector(data, RDataFactory.INCOMPLETE_VECTOR, dimData);
         }
-        return RDataFactory.createDoubleVector(data, vec.isComplete(), dimData);
     }
 
     @Specialization
@@ -149,10 +169,18 @@ public abstract class Array extends RBuiltinNode.Arg3 {
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
         byte[] data = new byte[totalLength];
-        for (int i = 0; i < totalLength; i++) {
-            data[i] = vec.getDataAt(i % vec.getLength());
+        int vecLength = vec.getLength();
+        if (totalLength > 0 && vecLength > 0) {
+            for (int i = 0; i < totalLength; i++) {
+                data[i] = vec.getDataAt(i % vec.getLength());
+            }
+            return RDataFactory.createLogicalVector(data, vec.isComplete(), dimData);
+        } else {
+            for (int i = 0; i < totalLength; i++) {
+                data[i] = RRuntime.LOGICAL_NA;
+            }
+            return RDataFactory.createLogicalVector(data, RDataFactory.INCOMPLETE_VECTOR, dimData);
         }
-        return RDataFactory.createLogicalVector(data, vec.isComplete(), dimData);
     }
 
     @Specialization
@@ -171,10 +199,19 @@ public abstract class Array extends RBuiltinNode.Arg3 {
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
         String[] data = new String[totalLength];
-        for (int i = 0; i < totalLength; i++) {
-            data[i] = vec.getDataAt(i % vec.getLength());
+        int vecLength = vec.getLength();
+        if (totalLength > 0 && vecLength > 0) {
+            for (int i = 0; i < totalLength; i++) {
+                data[i] = vec.getDataAt(i % vec.getLength());
+            }
+            return RDataFactory.createStringVector(data, vec.isComplete(), dimData);
+        } else {
+            String empty = Utils.intern("");
+            for (int i = 0; i < totalLength; i++) {
+                data[i] = empty;
+            }
+            return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR, dimData);
         }
-        return RDataFactory.createStringVector(data, vec.isComplete(), dimData);
     }
 
     @Specialization
@@ -194,12 +231,21 @@ public abstract class Array extends RBuiltinNode.Arg3 {
         int totalLength = dimDataHelper(dim, dimData);
         double[] data = new double[totalLength << 1];
         int ind = 0;
-        for (int i = 0; i < totalLength; i++) {
-            RComplex d = vec.getDataAt(i % vec.getLength());
-            data[ind++] = d.getRealPart();
-            data[ind++] = d.getImaginaryPart();
+        int vecLength = vec.getLength();
+        if (totalLength > 0 && vecLength > 0) {
+            for (int i = 0; i < totalLength; i++) {
+                RComplex d = vec.getDataAt(i % vec.getLength());
+                data[ind++] = d.getRealPart();
+                data[ind++] = d.getImaginaryPart();
+            }
+            return RDataFactory.createComplexVector(data, vec.isComplete(), dimData);
+        } else {
+            for (int i = 0; i < totalLength; i++) {
+                data[ind++] = RRuntime.COMPLEX_NA_REAL_PART;
+                data[ind++] = RRuntime.COMPLEX_NA_IMAGINARY_PART;
+            }
+            return RDataFactory.createComplexVector(data, RDataFactory.INCOMPLETE_VECTOR, dimData);
         }
-        return RDataFactory.createComplexVector(data, vec.isComplete(), dimData);
     }
 
     @Specialization
@@ -218,8 +264,15 @@ public abstract class Array extends RBuiltinNode.Arg3 {
         int[] dimData = new int[dim.getLength()];
         int totalLength = dimDataHelper(dim, dimData);
         byte[] data = new byte[totalLength];
-        for (int i = 0; i < totalLength; i++) {
-            data[i] = vec.getDataAt(i % vec.getLength()).getValue();
+        int vecLength = vec.getLength();
+        if (totalLength > 0 && vecLength > 0) {
+            for (int i = 0; i < totalLength; i++) {
+                data[i] = vec.getDataAt(i % vec.getLength()).getValue();
+            }
+        } else {
+            for (int i = 0; i < totalLength; i++) {
+                data[i] = 0;
+            }
         }
         return RDataFactory.createRawVector(data, dimData);
     }

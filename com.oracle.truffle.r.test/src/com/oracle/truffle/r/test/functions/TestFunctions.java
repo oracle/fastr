@@ -18,10 +18,10 @@ public class TestFunctions extends TestBase {
 
     @Test
     public void testFunctionLookup() {
-        assertEval("{ f<-1; f() }");
+        assertEval(Output.IgnoreErrorContext, "{ f<-1; f() }");
         assertEval("{ abs }");
-        assertEval("{ foo() }");
-        assertEval("{ 'foo'() }");
+        assertEval(Output.IgnoreErrorContext, "{ foo() }");
+        assertEval(Output.IgnoreErrorContext, "{ 'foo'() }");
         // these errors will be fixed by proper handling of "("
         assertEval("{ (foo)() }");
         assertEval("{ ('foo')() }");
@@ -301,12 +301,12 @@ public class TestFunctions extends TestBase {
 
         assertEval(Output.IgnoreErrorContext, "{ f <- function(...) { ..3 } ; f(1,2) }");
 
-        assertEval("{ f <- function() { dummy() } ; f() }");
-        assertEval("{ f <- function() { if (FALSE) { dummy <- 2 } ; dummy() } ; f() }");
-        assertEval("{ f <- function() { if (FALSE) { dummy <- 2 } ; g <- function() { dummy() } ; g() } ; f() }");
-        assertEval("{ f <- function() { dummy <- 2 ; g <- function() { dummy() } ; g() } ; f() }");
-        assertEval("{ f <- function() { dummy() } ; dummy <- 2 ; f() }");
-        assertEval("{ dummy <- 2 ; dummy() }");
+        assertEval(Output.IgnoreErrorContext, "{ f <- function() { dummy() } ; f() }");
+        assertEval(Output.IgnoreErrorContext, "{ f <- function() { if (FALSE) { dummy <- 2 } ; dummy() } ; f() }");
+        assertEval(Output.IgnoreErrorContext, "{ f <- function() { if (FALSE) { dummy <- 2 } ; g <- function() { dummy() } ; g() } ; f() }");
+        assertEval(Output.IgnoreErrorContext, "{ f <- function() { dummy <- 2 ; g <- function() { dummy() } ; g() } ; f() }");
+        assertEval(Output.IgnoreErrorContext, "{ f <- function() { dummy() } ; dummy <- 2 ; f() }");
+        assertEval(Output.IgnoreErrorContext, "{ dummy <- 2 ; dummy() }");
         assertEval("{ f <- function(a, b) { a + b } ; g <- function(...) { f(a=1, ...) } ; g(a=2) }");
         assertEval("{ f <- function(a, barg, bextra) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(b=2,3) }");
         assertEval("{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...) } ; g(be=2,bex=3, 3) }");

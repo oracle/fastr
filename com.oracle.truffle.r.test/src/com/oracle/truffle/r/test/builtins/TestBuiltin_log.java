@@ -91,12 +91,12 @@ public class TestBuiltin_log extends TestBase {
     public void testLogComplex() {
         assertEval("{ log(0+0i) }");
 
-        // NaN warnigns
-        assertEval("{ log(0+0i, 0) }");
-        assertEval("{ log(0L, 0+0i) }");
-        assertEval("{ log(0.0, 0+0i) }");
-        assertEval("{ log(F, 0+0i) }");
-        assertEval("{ log(0+0i, 0+0i) }");
+        // NaN warnings
+        assertEval(Output.IgnoreWarningContext, "{ log(0+0i, 0) }");
+        assertEval(Output.IgnoreWarningContext, "{ log(0L, 0+0i) }");
+        assertEval(Output.IgnoreWarningContext, "{ log(0.0, 0+0i) }");
+        assertEval(Output.IgnoreWarningContext, "{ log(F, 0+0i) }");
+        assertEval(Output.IgnoreWarningContext, "{ log(0+0i, 0+0i) }");
 
         // division by complex(r=0, i=0) returns NaN+NaNi, instead of -Inf+NaNi
         assertEval(Ignored.ImplementationError, "{ log(0+0i, 1) }");
@@ -163,12 +163,12 @@ public class TestBuiltin_log extends TestBase {
         assertEval("{ log(c(F, F), F) }");
         assertEval("{ log(c(1L, 1L), 1L) }");
         assertEval("{ log(c(1.0, 1.0), 1.0) }");
-        assertEval("{ log(c(0+0i, 0+0i), 0) }");
+        assertEval(Output.IgnoreWarningContext, "{ log(c(0+0i, 0+0i), 0) }");
 
-        assertEval("{ log(c(F, F), 0+0i) }");
-        assertEval("{ log(c(0L, 0L), 0+0i) }");
-        assertEval("{ log(c(0.0, 0.0), 0+0i) }");
-        assertEval("{ log(c(0+0i, 0+0i), 0+0i) }");
+        assertEval(Output.IgnoreWarningContext, "{ log(c(F, F), 0+0i) }");
+        assertEval(Output.IgnoreWarningContext, "{ log(c(0L, 0L), 0+0i) }");
+        assertEval(Output.IgnoreWarningContext, "{ log(c(0.0, 0.0), 0+0i) }");
+        assertEval(Output.IgnoreWarningContext, "{ log(c(0+0i, 0+0i), 0+0i) }");
     }
 
     @Test

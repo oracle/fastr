@@ -539,6 +539,11 @@ public class RDeparse {
                                 case PAREN:
                                     append(func.op, lhs).append(args[0]).append(func.closeOp);
                                     return null;
+                                case ASSIGN:
+                                    appendWithParens(args[0], info, true);
+                                    append(" <- NULL");
+                                    return null;
+
                             }
                         } else if (args.length == 2) {
                             switch (info.kind) {

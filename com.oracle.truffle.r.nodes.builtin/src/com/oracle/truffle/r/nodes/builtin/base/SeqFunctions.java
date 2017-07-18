@@ -843,9 +843,8 @@ public final class SeqFunctions {
                 if (lout == 1) {
                     result = RDataFactory.createDoubleVectorFromScalar(from);
                 } else {
-                    if (seqFastPath && !fromMissing && isInt(fromObj) && (int) to == to) {
-                        // differing behavior between seq.default and seq.int; may be fixed in
-                        // upcoming GNU R release
+                    boolean useDouble = fromMissing && !isInt(lengthOut);
+                    if ((int) from == from && (int) to == to && !useDouble) {
                         result = RDataFactory.createIntVector(new int[]{(int) from, (int) to}, RDataFactory.COMPLETE_VECTOR);
                     } else {
                         result = RDataFactory.createDoubleVector(new double[]{from, to}, RDataFactory.COMPLETE_VECTOR);
@@ -956,7 +955,7 @@ public final class SeqFunctions {
 
         private int validateIntParam(int v, String vName) {
             if (RRuntime.isNA(v)) {
-                throw error(RError.Message.CANNOT_BE_INVALID, vName);
+                throw error(RError.Message.MUST_BE_FINITE, vName);
             }
             return v;
         }
@@ -968,7 +967,7 @@ public final class SeqFunctions {
         private double validateDoubleParam(double v, Object vObj, String vName) {
             if (vObj != RMissing.instance) {
                 if (!isFinite(v)) {
-                    throw error(RError.Message.CANNOT_BE_INVALID, vName);
+                    throw error(RError.Message.MUST_BE_FINITE, vName);
                 }
             }
             return v;

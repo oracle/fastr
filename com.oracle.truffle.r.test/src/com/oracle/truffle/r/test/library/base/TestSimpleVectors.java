@@ -2260,7 +2260,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ a <- list(a = 1, b = 2); a$c <- 67; a; }");
         assertEval("{ v <- list(xb=1, b=2, aa=3, aa=4) ; v$aa }");
         assertEval("{ x <- list(1, 2) ; x$b }");
-        assertEval("{ x <- list(a=1, b=2) ; f <- function(x) { x$b } ; f(x) ; f(1:3) }");
+        assertEval(Output.IgnoreErrorContext, "{ x <- list(a=1, b=2) ; f <- function(x) { x$b } ; f(x) ; f(1:3) }");
         assertEval("{ x <- list(a=1, b=2) ; f <- function(x) { x$b } ; f(x) ; f(x) }");
         assertEval("{ x <- list(a=1, b=2) ; f <- function(x) { x$b } ; f(x) ; x <- list(c=2,b=10) ; f(x) }");
 

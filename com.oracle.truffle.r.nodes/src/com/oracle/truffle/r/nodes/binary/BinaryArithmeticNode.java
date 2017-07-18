@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNode;
@@ -64,6 +65,8 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
     protected final BinaryArithmeticFactory binary;
     private final UnaryArithmeticFactory unary;
 
+    @Child private BinaryArithmetic operation;
+
     static {
         Casts casts = new Casts(BinaryArithmeticNode.class);
         casts.arg(0).boxPrimitive();
@@ -72,6 +75,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
 
     public BinaryArithmeticNode(BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
         this.binary = binaryFactory;
+        this.operation = binaryFactory.createOperation();
         this.unary = unaryFactory;
     }
 
@@ -129,22 +133,33 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected static Object doBothNull(@SuppressWarnings("unused") RNull left, @SuppressWarnings("unused") RNull right) {
-        return RType.Double.getEmpty();
+    protected Object doBothNull(@SuppressWarnings("unused") RNull left, @SuppressWarnings("unused") RNull right) {
+        return operation instanceof BinaryArithmetic.Div || operation instanceof BinaryArithmetic.Pow ? RType.Double.getEmpty() : RType.Integer.getEmpty();
     }
 
     @Specialization(guards = {"isNumericVector(right)"})
-    protected static Object doLeftNull(@SuppressWarnings("unused") RNull left, Object right,
+    protected Object doLeftNull(@SuppressWarnings("unused") RNull left, Object right,
                     @Cached("createClassProfile()") ValueProfile classProfile) {
-        if (((RAbstractVector) classProfile.profile(right)).getRType() == RType.Complex) {
+        RType rType = ((RAbstractVector) classProfile.profile(right)).getRType();
+        if (rType == RType.Complex) {
             return RDataFactory.createEmptyComplexVector();
         } else {
-            return RDataFactory.createEmptyDoubleVector();
+            if (rType == RType.Integer || rType == RType.Logical) {
+                if (operation instanceof BinaryArithmetic.Div || operation instanceof BinaryArithmetic.Pow) {
+                    return RType.Double.getEmpty();
+                } else {
+                    return RType.Integer.getEmpty();
+                }
+            } else if (rType == RType.Double) {
+                return RType.Double.getEmpty();
+            } else {
+                throw error(Message.NON_NUMERIC_BINARY);
+            }
         }
     }
 
     @Specialization(guards = {"isNumericVector(left)"})
-    protected static Object doRightNull(Object left, RNull right,
+    protected Object doRightNull(Object left, RNull right,
                     @Cached("createClassProfile()") ValueProfile classProfile) {
         return doLeftNull(right, left, classProfile);
     }

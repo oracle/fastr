@@ -337,7 +337,7 @@ public final class RError extends RuntimeException implements TruffleException {
         MUST_BE_SQUARE("'%s' (%d x %d) must be square"),
         MUST_BE_SQUARE_COMPATIBLE("'%s' (%d x %d) must be compatible with '%s' (%d x %d)"),
         INVALID_TFB_SD("invalid (to - from)/by in seq(.)"),
-        INVALID_TFB("invalid '(to - from)/by' in 'seq'"),
+        INVALID_TFB("invalid '(to - from)/by'"),
         WRONG_SIGN_IN_BY("wrong sign in 'by' argument"),
         BY_TOO_SMALL("'by' argument is much too small"),
         TOO_LONG_VECTOR("result would be too long a vector"),
@@ -430,6 +430,7 @@ public final class RError extends RuntimeException implements TruffleException {
         AS_ENV_NULL_DEFUNCT("using 'as.environment(NULL)' is defunct"),
         REPLACEMENT_NOT_ENVIRONMENT("replacement object is not an environment"),
         ARGUMENT_NOT_MATRIX("argument is not a matrix"),
+        ARGUMENT_NOT_FUNCTION("argument is not a function"),
         OBJECT_NOT_MATRIX("object is not a matrix"),
         ARGUMENT_NOT_ENVIRONMENT("argument is not an environment"),
         ARGUMENT_NAME_NOT_ENVIRONMENT("'%s' is not an environment"),
@@ -749,7 +750,7 @@ public final class RError extends RuntimeException implements TruffleException {
         ARGUMENT_NOT_CHAR_VECTOR("argument is not a character vector"),
         NOT_VALID_NAMES("not a valid named list"),
         CHAR_ARGUMENT("character argument expected"),
-        CANNOT_BE_INVALID("'%s' cannot be NA, NaN or infinite"),
+        MUST_BE_FINITE("'%s' must be a finite number"),
         UNKNOWN_VALUE("unknown '%s' value"),
         MUST_BE_VECTOR("'%s' must be a vector"),
         NO_SUCH_CONNECTION("there is no connection %d"),
@@ -901,7 +902,8 @@ public final class RError extends RuntimeException implements TruffleException {
         REPLACING_IN_NON_CHAR_OBJ("replacing substrings in a non-character object"),
         FILE_NOT_FOUND_IN_ZIP("requested file not found in the zip file"),
         LIST_NO_VALID_NAMES("list argument has no valid names"),
-        VALUES_MUST_BE_LENGTH("values must be length %s,\n but FUN(X[[%d]]) result is length %s");
+        VALUES_MUST_BE_LENGTH("values must be length %s,\n but FUN(X[[%d]]) result is length %s"),
+        INVALID_TYPE("invalid type (%s) for '%s' (must be a %s)");
 
         public final String message;
         final boolean hasArgs;

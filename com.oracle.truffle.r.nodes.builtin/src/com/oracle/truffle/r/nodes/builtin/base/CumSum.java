@@ -126,8 +126,11 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
         for (int i = 0; i < arg.getLength(); i++) {
             double value = arg.getDataAt(i);
             // cumsum behaves different than cumprod for NaNs:
-            if (na.checkNAorNaN(value)) {
+            if (na.check(value)) {
                 Arrays.fill(res, i, res.length, RRuntime.DOUBLE_NA);
+                break;
+            } else if (na.checkNAorNaN(value)) {
+                Arrays.fill(res, i, res.length, Double.NaN);
                 break;
             }
             prev = add.op(prev, value);

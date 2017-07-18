@@ -96,7 +96,7 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
         Casts casts = new Casts(UpdateAttr.class);
         // Note: cannot check 'attributability' easily because atomic values, e.g int, are not
         // RAttributable.
-        casts.arg("x"); // disallows null
+        casts.arg("x");
         casts.arg("which").defaultError(MUST_BE_NONNULL_STRING, "name").mustBe(stringValue()).asStringVector().findFirst();
     }
 
@@ -130,6 +130,11 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
             castVector = insert(CastToVectorNodeGen.create(false));
         }
         return (RAbstractVector) castVector.doCast(value);
+    }
+
+    @Specialization
+    protected RNull updateAttr(@SuppressWarnings("unused") RNull nullTarget, @SuppressWarnings("unused") String attrName, @SuppressWarnings("unused") RNull nullAttrVal) {
+        return RNull.instance;
     }
 
     @Specialization
@@ -246,8 +251,10 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
             return object;
         } else if (RRuntime.isForeignObject(obj)) {
             throw RError.error(this, Message.OBJ_CANNOT_BE_ATTRIBUTED);
+        } else if (obj == RNull.instance) {
+            throw RError.error(this, Message.SET_ATTRIBUTES_ON_NULL);
         } else {
-            throw RError.nyi(this, "object cannot be attributed");
+            throw RError.nyi(this, "object cannot be attributed: ");
         }
     }
 }

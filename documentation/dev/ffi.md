@@ -22,7 +22,7 @@ for compatibility with GNU R.
 
 ## The `fficall/include` directory
 
-`include` should be thought as analgous to GNU R's `src/include`, i.e. internal headers needed by the code in `src/main`.
+`include` should be thought as analogous to GNU R's `src/include`, i.e. internal headers needed by the code in `src/main`.
 What we are trying to do by redefining them here is provide a boundary so that we don`t accidently capture code from GNU R that
 is specific to the implementation of GNU R that is different in FastR, e.g., the representation of R objects. Evidently not every
 piece of GNU R code or an internal header has that characteristic but this strategy allows us some control to draw the boundary as

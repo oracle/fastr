@@ -29,4 +29,6 @@ int callGetCMethod(void *conn) {
     return FASTR_getConnectionChar(conn);
 }
 
+void* R_GetFastRConnection(void *conn);
+
 #endif //GRAMRD_FASTR_H

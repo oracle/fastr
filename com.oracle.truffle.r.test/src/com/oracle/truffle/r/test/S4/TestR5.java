@@ -38,6 +38,10 @@ public class TestR5 extends TestBase {
         assertEval("print(suppressMessages({" + test + "}))");
     }
 
+    private void assertSuppressAndIgnoreWarnings(String test) {
+        assertEval(Output.IgnoreWarningMessage, "print(suppressMessages({" + test + "}))");
+    }
+
     private void assertSuppress(TestTrait trait, String test) {
         assertEval(trait, "print(suppressMessages({" + test + "}))");
     }
@@ -65,7 +69,7 @@ public class TestR5 extends TestBase {
 
     @Test
     public void testInstanceMethods() {
-        assertSuppress("{ clazz <- setRefClass('Foo0R5', c('a', 'b')); clazz$methods(mean = function() { (a + b) / 2 }); obj <- clazz$new(a = 1, b = 5); obj$mean() }");
+        assertSuppressAndIgnoreWarnings("{ clazz <- setRefClass('Foo0R5', c('a', 'b')); clazz$methods(mean = function() { (a + b) / 2 }); obj <- clazz$new(a = 1, b = 5); obj$mean() }");
         assertEval("{ clazz <- setRefClass('Foo1R5', c('a', 'b')); obj <- clazz$new(a = 1, b = 5); cobj <- obj$copy(); obj$a; cobj$a; obj$a <- 10; obj$a; cobj$a}");
         assertEval("clazz <- setRefClass('Foo2R5', c('a', 'b')); obj <- clazz$new(a = 1, b = 5); obj$field('a'); obj$field('b')");
         assertEval("clazz <- setRefClass('Foo3R5', c('a', 'b')); obj <- clazz$new(); obj$initFields(a = 5, b = 6)");

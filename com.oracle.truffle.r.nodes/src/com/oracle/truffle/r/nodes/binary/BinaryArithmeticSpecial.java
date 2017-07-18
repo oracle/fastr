@@ -31,7 +31,17 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticSpecialNodeGen.IntegerBinaryArithmeticSpecialNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticSpecialNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
@@ -94,6 +104,14 @@ public abstract class BinaryArithmeticSpecial extends RNode {
 
     protected BinaryArithmeticNode createFull() {
         return BinaryArithmeticNodeGen.create(binaryFactory, unaryFactory);
+    }
+
+    // TODO There is a equivalence in logic between similar code in BinaryArithmeticNode, but
+    // this code cannot assume RAbstractVector arguments.
+
+    @Specialization
+    protected Object doBothNull(@SuppressWarnings("unused") RNull left, @SuppressWarnings("unused") RNull right) {
+        return operation instanceof BinaryArithmetic.Div || operation instanceof BinaryArithmetic.Pow ? RType.Double.getEmpty() : RType.Integer.getEmpty();
     }
 
     @Specialization

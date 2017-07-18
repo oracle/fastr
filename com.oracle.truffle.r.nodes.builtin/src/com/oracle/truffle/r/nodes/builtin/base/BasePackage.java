@@ -26,6 +26,9 @@ import java.util.function.Supplier;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.library.fastrGrid.DoSetViewPortBuiltin;
+import com.oracle.truffle.r.library.utils.Download;
+import com.oracle.truffle.r.library.utils.Download.CurlDownload;
+import com.oracle.truffle.r.library.utils.DownloadNodeGen.CurlDownloadNodeGen;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNodeGen;
@@ -343,6 +346,7 @@ public class BasePackage extends RBuiltinPackage {
         add(CumProd.class, CumProdNodeGen::create);
         add(CumSum.class, CumSumNodeGen::create);
         add(CacheClass.class, CacheClassNodeGen::create);
+        add(CurlDownload.class, CurlDownloadNodeGen::create);
         add(Date.class, DateNodeGen::create);
         add(DatePOSIXFunctions.Date2POSIXlt.class, DatePOSIXFunctionsFactory.Date2POSIXltNodeGen::create);
         add(DatePOSIXFunctions.AsPOSIXct.class, DatePOSIXFunctionsFactory.AsPOSIXctNodeGen::create);
@@ -522,6 +526,7 @@ public class BasePackage extends RBuiltinPackage {
         add(InheritsBuiltin.class, InheritsBuiltinNodeGen::create);
         add(Interactive.class, InteractiveNodeGen::create);
         add(Internal.class, InternalNodeGen::create);
+        add(InternalsID.class, InternalsIDNodeGen::create);
         add(IntToBits.class, IntToBitsNodeGen::create);
         add(IntToUtf8.class, IntToUtf8NodeGen::create);
         add(Invisible.class, InvisibleNodeGen::create);
@@ -733,6 +738,7 @@ public class BasePackage extends RBuiltinPackage {
         add(UpdateSlot.class, UpdateSlotNodeGen::create);
         add(UpdateStorageMode.class, UpdateStorageModeNodeGen::create);
         add(UpdateSubstr.class, UpdateSubstrNodeGen::create);
+        add(ValidEnc.class, ValidEncNodeGen::create);
         add(VApply.class, VApplyNodeGen::create);
         add(Vector.class, VectorNodeGen::create);
         add(Warning.class, WarningNodeGen::create);

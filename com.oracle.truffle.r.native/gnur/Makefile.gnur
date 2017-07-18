@@ -57,7 +57,6 @@ all: Makefile $(GNUR_HOME) iconv config build
 
 $(GNUR_HOME): 
 	tar xf $(TOPDIR)/../libdownloads/R-$(R_VERSION).tar.gz
-	(cd $(GNUR_HOME) && patch < $(TOPDIR)/gnur/configure.patch) # to fix the zlib version check (fixed in GNUR in the meantime)
 
 # After this platform check, GNUR_CONFIG_FLAGS must be set
 ifeq ($(OSNAME), SunOS)
@@ -116,7 +115,7 @@ ifneq ($(PKG_INCLUDE_FLAGS_OVERRIDE),)
 endif
 
 ifneq ($(PKG_LDFLAGS_OVERRIDE),)
-        GNUR_CONFIG_FLAGS := $(GNUR_CONFIG_FLAGS) LDFLAGS=$(PKG_LDFLAGS_OVERRIDE)
+        GNUR_CONFIG_FLAGS := $(GNUR_CONFIG_FLAGS) LDFLAGS="$(PKG_LDFLAGS_OVERRIDE)"
 endif
 
 # setup for LLVM (if enabled)

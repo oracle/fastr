@@ -14,8 +14,8 @@
 #include <sys/stat.h>
 #include <rffiutils.h>
 #define R_INTERFACE_PTRS
-#include <Rinterface.h>
 #include <R_ext/RStartup.h>
+#include <Rinterface.h>
 
 extern char **environ;
 

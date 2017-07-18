@@ -94,8 +94,17 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
     }
 
+    /**
+     * To exclude the possibility of the presence of NA in the vector, it is not possible to rely on
+     * the value of the "complete" flag only, since this flag concerns the "pure" NA only and not
+     * NaN in double or complex vectors that the order builtin regard as NA.
+     */
+    private static boolean mayContainNAorNaN(RAbstractVector v) {
+        return !v.isComplete() || v instanceof RAbstractDoubleVector || v instanceof RAbstractComplexVector;
+    }
+
     private int[] createIndexes(RAbstractVector v, int len, byte naLast) {
-        if (notRemoveNAs.profile(!RRuntime.isNA(naLast) || v.isComplete())) {
+        if (notRemoveNAs.profile(!RRuntime.isNA(naLast) || !mayContainNAorNaN(v))) {
             int[] result = new int[v.getLength()];
             for (int i = 0; i < result.length; i++) {
                 result[i] = i;
@@ -710,7 +719,8 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
         @Specialization
         protected boolean doDouble(RAbstractDoubleVector v, int idx) {
-            return RRuntime.isNA(v.getDataAt(idx));
+            double d = v.getDataAt(idx);
+            return RRuntime.isNA(d) || Double.isNaN(d);
         }
 
         @Specialization

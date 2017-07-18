@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -169,7 +169,7 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ xx<-c(Package=\"digest\", Version=\"0.6.4\"); db<-list(xx); db <- do.call(\"rbind\", db); attributes(db) }");
         assertEval("{ xx<-c(Package=\"digest\", Version=\"0.6.4\"); db<-list(xx); db <- rbind(db); attributes(db) }");
 
-        assertEval("{ x<-matrix(1, ncol=1); y<-c(1,2,3,4); x*y }");
+        assertEval(Ignored.OutputFormatting, "{ x<-matrix(1, ncol=1); y<-c(1,2,3,4); x*y }");
 
         assertEval("{ x<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(y)<-NULL; x }");
 

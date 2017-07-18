@@ -60,7 +60,7 @@ public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
     static {
         Casts casts = new Casts(RepeatInternal.class);
         casts.arg("x").mustBe(abstractVectorValue(), RError.Message.ATTEMPT_TO_REPLICATE, typeName());
-        casts.arg("times").defaultError(RError.Message.INCORRECT_ARG_TYPE, "second").mustBe(abstractVectorValue()).asIntegerVector().mustBe(notEmpty(),
+        casts.arg("times").defaultError(RError.Message.INVALID_TYPE, typeName(), "times", "vector").mustBe(abstractVectorValue()).asIntegerVector().mustBe(notEmpty(),
                         RError.Message.INVALID_VALUE, "times");
     }
 

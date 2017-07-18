@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -102,5 +102,7 @@ public class TestBuiltin_diag extends TestBase {
         assertEval("{ diag(1, 7) }");
         assertEval("{ diag(1, 7, 2) }");
         assertEval("{ diag(1, 2, 7) }");
+        assertEval("{ diag('a', 3, 4) }");
+        assertEval("{ diag(c('a','b','c'), 3, 4) }");
     }
 }

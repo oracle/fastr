@@ -42,7 +42,7 @@ public class TestBuiltin_eval extends TestBase {
         assertEval("{ eval({ xx <- pi; xx^2}) ; xx }");
 
         assertEval("eval('foo')");
-        assertEval(Output.IgnoreErrorContext, "eval(as.symbol('foo'))");
+        assertEval("eval(as.symbol('foo'))");
         assertEval("eval(as.symbol('baseenv'))");
 
         // should print two values, xx^2 and xx
@@ -55,8 +55,8 @@ public class TestBuiltin_eval extends TestBase {
     @Test
     public void testWithEnvirAndEnclose() {
         // note: symbol 'list' is from base environment
-        assertEval("a <- 1; lang <- quote(list(a)); eval(lang, data.frame(), NULL)");
-        assertEval("a <- 1; lang <- quote(list(a)); eval(lang, NULL, NULL)");
+        assertEval(Output.IgnoreErrorContext, "a <- 1; lang <- quote(list(a)); eval(lang, data.frame(), NULL)");
+        assertEval(Output.IgnoreErrorContext, "a <- 1; lang <- quote(list(a)); eval(lang, NULL, NULL)");
         assertEval("a <- 1; lang <- quote(list(a)); eval(lang, new.env(), new.env())");
         assertEval(Output.IgnoreErrorMessage, "y <- 2; x <- 2 ; eval(quote(x+y), c(-1, -2))");
 

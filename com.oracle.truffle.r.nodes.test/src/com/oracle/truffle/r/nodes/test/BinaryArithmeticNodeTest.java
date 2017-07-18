@@ -68,8 +68,10 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNode;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
@@ -203,14 +205,31 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
     public void testRNullConstantResult(BinaryArithmeticFactory factory, RAbstractVector originalVector) {
         RAbstractVector vector = withinTestContext(() -> originalVector.copy());
 
-        RType type = vector.getRType() == RType.Complex ? RType.Complex : RType.Double;
+        RType type = null;
+        RType rType = vector.getRType();
+        if (rType == RType.Complex) {
+            type = RType.Complex;
+        } else {
+            if (rType == RType.Integer || rType == RType.Logical) {
+                if (factory == BinaryArithmetic.DIV || factory == BinaryArithmetic.POW) {
+                    type = RType.Double;
+                } else {
+                    type = RType.Integer;
+                }
+            } else if (rType == RType.Double) {
+                type = RType.Double;
+            } else {
+                Assert.fail();
+            }
+        }
+
         assertThat(executeArithmetic(factory, vector, RNull.instance), isEmptyVectorOf(type));
         assertThat(executeArithmetic(factory, RNull.instance, vector), isEmptyVectorOf(type));
     }
 
     @Theory
     public void testBothNull(BinaryArithmeticFactory factory) {
-        assertThat(executeArithmetic(factory, RNull.instance, RNull.instance), isEmptyVectorOf(RType.Double));
+        assertThat(executeArithmetic(factory, RNull.instance, RNull.instance), isEmptyVectorOf(factory == BinaryArithmetic.DIV || factory == BinaryArithmetic.POW ? RType.Double : RType.Integer));
     }
 
     @Theory

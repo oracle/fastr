@@ -36,7 +36,7 @@ public class TestBuiltin_lapply extends TestBase {
 
         assertEval("lapply(NULL, function(x){x})");
         assertEval("lapply(NA, FUN=function(x){x})");
-        assertEval("lapply(FUN=function(x){x})");
+        assertEval(Output.IgnoreErrorMessage, "lapply(FUN=function(x){x})");
         assertEval("lapply(1:4, NULL)");
         assertEval("lapply(1:4, NA)");
         assertEval(Output.IgnoreErrorContext, "lapply(X=1:4)");

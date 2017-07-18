@@ -60,8 +60,8 @@ def r_path():
     return join(_fastr_suite.dir, 'bin', 'R')
 
 def r_version():
-    # Could figure this out dynamically
-    return 'R-3.3.2'
+    # Could figure this out dynamically?
+    return 'R-3.4.0'
 
 def get_default_jdk():
     if _mx_graal:
@@ -313,7 +313,7 @@ def _test_subpackage(name):
     return '.'.join((_test_package(), name))
 
 def _simple_generated_unit_tests():
-    return map(_test_subpackage, ['engine.shell', 'engine.interop', 'library.base', 'library.grid', 'library.fastrGrid', 'library.methods', 'library.stats', 'library.utils', 'library.fastr', 'builtins', 'functions', 'parser', 'rffi', 'rng', 'runtime.data', 'S4'])
+    return map(_test_subpackage, ['engine.shell', 'engine.interop', 'library.base', 'library.grid', 'library.fastrGrid', 'library.methods', 'library.stats', 'library.tools', 'library.utils', 'library.fastr', 'builtins', 'functions', 'parser', 'rffi', 'rng', 'runtime.data', 'S4'])
 
 def _simple_unit_tests():
     return _simple_generated_unit_tests() + [_test_subpackage('tck')]

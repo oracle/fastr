@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,7 +77,7 @@ public class TestStatFunctions extends TestBase {
         // first parameter wrong
         assertEval(Output.IgnoreWhitespace, template("set.seed(1); %0(%1)", FUNCTION2_2_NAMES, new String[]{"c(NA, 0, NaN, 1/0, -1/0), rep(c(1, 0, 0.1), 5)"}));
         // second parameter wrong
-        assertEval(Output.IgnoreWhitespace, template("set.seed(1); %0(%1)", FUNCTION2_2_NAMES, new String[]{"rep(c(1, 0, 0.1), 5), c(NA, 0, NaN, 1/0, -1/0)"}));
+        assertEval(Output.MayIgnoreWarningMessage, template("set.seed(1); %0(%1)", FUNCTION2_2_NAMES, new String[]{"rep(c(1, 0, 0.1), 5), c(NA, 0, NaN, 1/0, -1/0)"}));
     }
 
     private static final String[] FUNCTION3_2_NAMES = {"qlnorm", "plnorm", "qlogis", "pf", "plogis", "qf"};

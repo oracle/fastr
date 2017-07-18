@@ -23,10 +23,13 @@
 package com.oracle.truffle.r.ffi.impl.interop.base;
 
 import com.oracle.truffle.api.interop.CanResolve;
+import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.RInternalError;
 
 @MessageResolution(receiverType = ReadlinkResult.class)
 public class ReadlinkResultMR {
@@ -47,9 +50,17 @@ public class ReadlinkResultMR {
 
     @Resolve(message = "EXECUTE")
     public abstract static class BaseReadlinkResultCallbackExecute extends Node {
+
+        @Child private Node uboxNode = com.oracle.truffle.api.interop.Message.UNBOX.createNode();
+
         protected Object access(ReadlinkResult receiver, Object[] arguments) {
-            receiver.setResult((String) arguments[0], (int) arguments[1]);
-            return receiver;
+            try {
+                Object link = ForeignAccess.sendUnbox(uboxNode, (TruffleObject) arguments[0]);
+                receiver.setResult(link instanceof String ? (String) link : null, (int) arguments[1]);
+                return receiver;
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
         }
     }
 }

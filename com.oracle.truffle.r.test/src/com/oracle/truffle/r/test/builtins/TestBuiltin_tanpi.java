@@ -70,7 +70,7 @@ public class TestBuiltin_tanpi extends TestBase {
         // FIXME Missing warning about NaNs produced
         assertEval(Output.IgnoreWarningMessage, "{ tanpi(c(0,0.5,-0.5)) }");
         assertEval("{ tanpi(1.2) }");
-        assertEval("{ tannpi(c(0.3,0.6,0.9)) }");
+        assertEval(Output.IgnoreErrorContext, "{ tannpi(c(0.3,0.6,0.9)) }");
         assertEval("{ tanpi() }");
     }
 }

@@ -97,6 +97,7 @@ public class TestBase {
         IgnoreWarningMessage, // the warning message is ignored
         MayIgnoreErrorContext, // like IgnoreErrorContext, but no warning if the messages match
         MayIgnoreWarningContext,
+        MayIgnoreWarningMessage,
         MissingWarning, // Test output is correct but a warning msg is missing in FastR output
         ContainsReferences, // replaces references in form of 0xbcdef1 for numbers
         IgnoreWhitespace, // removes all whitespace from the whole output
@@ -776,10 +777,10 @@ public class TestBase {
                 ok = expectedContainsWarning && !result.contains(WARNING);
                 expected = getOutputWithoutWarning(expected);
             } else if (traits.output.contains(Output.IgnoreWarningContext) || traits.output.contains(Output.IgnoreWarningMessage) ||
-                            (traits.output.contains(Output.MayIgnoreWarningContext) && expected.contains(WARNING))) {
+                            ((traits.output.contains(Output.MayIgnoreWarningContext) || traits.output.contains(Output.MayIgnoreWarningMessage)) && expected.contains(WARNING))) {
                 String resultWarning = getWarningMessage(result);
                 String expectedWarning = getWarningMessage(expected);
-                ok = resultWarning.equals(expectedWarning) || traits.output.contains(Output.IgnoreWarningMessage);
+                ok = resultWarning.equals(expectedWarning) || traits.output.contains(Output.IgnoreWarningMessage) || traits.output.contains(Output.MayIgnoreWarningMessage);
                 result = getOutputWithoutWarning(result);
                 expected = getOutputWithoutWarning(expected);
             } else {

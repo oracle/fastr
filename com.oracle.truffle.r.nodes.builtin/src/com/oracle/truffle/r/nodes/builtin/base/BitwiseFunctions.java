@@ -43,7 +43,7 @@ public class BitwiseFunctions {
         AND("bitwAnd"),
         OR("bitwOr"),
         XOR("bitwXor"),
-        NOT("bitNot"),
+        NOT("bitwNot"),
         SHIFTR("bitShiftR"),
         SHIFTL("bitShiftL");
 

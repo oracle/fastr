@@ -39,11 +39,12 @@ public class TestBuiltin_body extends TestBase {
 
     @Test
     public void testbody5() {
-        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame')); .Internal(body(argv[[1]]))");
+        assertEval(Output.IgnoreWarningMessage,
+                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame')); .Internal(body(argv[[1]]))");
     }
 
     @Test
     public void testbody6() {
-        assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L))); .Internal(body(argv[[1]]))");
+        assertEval(Output.IgnoreWarningMessage, "argv <- list(structure(numeric(0), .Dim = c(0L, 0L))); .Internal(body(argv[[1]]))");
     }
 }

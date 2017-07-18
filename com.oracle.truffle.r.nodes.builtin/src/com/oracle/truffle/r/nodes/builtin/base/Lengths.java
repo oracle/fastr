@@ -85,7 +85,7 @@ public abstract class Lengths extends RBuiltinNode.Arg2 {
         return createResult(xa, data, useNames);
     }
 
-    private static RIntVector createResult(RAbstractVector x, int[] data, boolean useNames) {
+    private RIntVector createResult(RAbstractVector x, int[] data, boolean useNames) {
         RIntVector result = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
         if (useNames) {
             copyNames(x, result);
@@ -93,8 +93,7 @@ public abstract class Lengths extends RBuiltinNode.Arg2 {
         return result;
     }
 
-    @TruffleBoundary
-    private static void copyNames(RAbstractVector x, RIntVector result) {
-        result.copyNamesFrom(x);
+    private void copyNames(RAbstractVector x, RIntVector result) {
+        result.copyNamesDimsDimNamesFrom(x, this);
     }
 }
