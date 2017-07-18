@@ -122,6 +122,18 @@ def _analyze_args(args, dragonEgg=False):
     _log('emit-llvm-args', emit_llvm_args)
     return AnalyzedArgs(llvm_ir_file, is_link, compile_args, emit_llvm_args)
 
+def compileWithClang(args=None, version=None, out=None, err=None):
+    return mx.run([_sulong().findLLVMProgram('clang', version)] + args, out=out, err=err)
+
+def compileWithClangPP(args=None, version=None, out=None, err=None):
+    return mx.run([_sulong().findLLVMProgram('clang++', version)] + args, out=out, err=err)
+
+def opt(args=None, version=None, out=None, err=None):
+    return mx.run([_sulong().findLLVMProgram('opt', version)] + args, out=out, err=err)
+
+def link(args=None):
+    return mx.run_java(getClasspathOptions() + ["com.oracle.truffle.llvm.runtime.Linker"] + args)
+
 def cc(args):
     _log('fastr:cc', args)
     compiler = None
@@ -133,7 +145,7 @@ def cc(args):
             rc = _create_bc_lib(args)
         else:
             if analyzed_args.llvm_ir_file:
-                rc = sulong.compileWithClang(analyzed_args.emit_llvm_args)
+                rc = compileWithClang(analyzed_args.emit_llvm_args)
         if rc == 0 and not analyzed_args.is_link and analyzed_args.llvm_ir_file:
             rc = _mem2reg_opt(analyzed_args.llvm_ir_file)
             _fake_obj(analyzed_args.llvm_ir_file.replace('.bc', '.o'))
@@ -178,10 +190,10 @@ def cpp(args):
             if _is_linux():
                 rc = sulong.dragonEggGPP(analyzed_args.compile_args)
             elif _is_darwin():
-                rc = sulong.compileWithClangPP(analyzed_args.compile_args)
+                rc = compileWithClangPP(analyzed_args.compile_args)
                 if rc == 0:
                     if analyzed_args.llvm_ir_file:
-                        rc = sulong.compileWithClangPP(analyzed_args.emit_llvm_args)
+                        rc = compileWithClangPP(analyzed_args.emit_llvm_args)
             else:
                 mx.abort('unsupported platform')
         if rc == 0 and not analyzed_args.is_link and analyzed_args.llvm_ir_file:
