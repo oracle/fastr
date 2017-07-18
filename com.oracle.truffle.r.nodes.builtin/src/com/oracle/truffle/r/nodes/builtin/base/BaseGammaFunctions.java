@@ -27,8 +27,10 @@ import static com.oracle.truffle.r.runtime.nmath.RMath.fmax2;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.BaseGammaFunctionsFactory.DpsiFnCalcNodeGen;
 import com.oracle.truffle.r.runtime.RError;
@@ -53,7 +55,8 @@ public class BaseGammaFunctions {
         }
 
         @Specialization
-        protected RDoubleVector digamma(RAbstractDoubleVector x) {
+        protected RDoubleVector digamma(RAbstractDoubleVector x,
+                        @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
             naValCheck.enable(x);
             double[] result = new double[x.getLength()];
             boolean warnNaN = false;
@@ -73,7 +76,9 @@ public class BaseGammaFunctions {
             if (warnNaN) {
                 warning(RError.Message.NAN_PRODUCED);
             }
-            return RDataFactory.createDoubleVector(result, naValCheck.neverSeenNA());
+            RDoubleVector resultVector = RDataFactory.createDoubleVector(result, naValCheck.neverSeenNA());
+            copyAttributesNode.execute(resultVector, x);
+            return resultVector;
         }
 
         protected double scalarFunction(@SuppressWarnings("unused") double xv) {

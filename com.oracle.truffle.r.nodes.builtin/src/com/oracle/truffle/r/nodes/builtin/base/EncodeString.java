@@ -22,8 +22,10 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -94,7 +96,8 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"leftJustify(justify)", "encodeNA"})
-    protected RStringVector encodeStringLeftJustifyEncodeNA(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA) {
+    protected RStringVector encodeStringLeftJustifyEncodeNA(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA,
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
         na.enable(x);
@@ -110,12 +113,15 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
                 result[i] = Utils.stringFormat(concat("%-", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
             }
         }
-        return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+        RStringVector resultVector = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+        copyAttributesNode.execute(resultVector, x);
+        return resultVector;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"leftJustify(justify)", "!encodeNA"})
-    protected RStringVector encodeStringLeftJustify(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA) {
+    protected RStringVector encodeStringLeftJustify(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA,
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
         na.enable(x);
@@ -130,12 +136,15 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
                 result[i] = Utils.stringFormat(concat("%-", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
             }
         }
-        return RDataFactory.createStringVector(result, !seenNA);
+        RStringVector resultVector = RDataFactory.createStringVector(result, !seenNA);
+        copyAttributesNode.execute(resultVector, x);
+        return resultVector;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"rightJustify(justify)", "encodeNA"})
-    protected RStringVector encodeStringRightJustifyEncodeNA(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA) {
+    protected RStringVector encodeStringRightJustifyEncodeNA(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA,
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
         na.enable(x);
@@ -151,12 +160,15 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
                 result[i] = Utils.stringFormat(concat("%", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
             }
         }
-        return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+        RStringVector resultVector = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+        copyAttributesNode.execute(resultVector, x);
+        return resultVector;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"rightJustify(justify)", "!encodeNA"})
-    protected RStringVector encodeStringRightJustify(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA) {
+    protected RStringVector encodeStringRightJustify(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA,
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
         na.enable(x);
@@ -171,12 +183,15 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
                 result[i] = Utils.stringFormat(concat("%", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
             }
         }
-        return RDataFactory.createStringVector(result, !seenNA);
+        RStringVector resultVector = RDataFactory.createStringVector(result, !seenNA);
+        copyAttributesNode.execute(resultVector, x);
+        return resultVector;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"centerJustify(justify)", "encodeNA"})
-    protected RStringVector encodeStringCenterJustifyEncodeNA(RAbstractStringVector x, int width, String quoteEl, RAbstractIntVector justify, boolean encodeNA) {
+    protected RStringVector encodeStringCenterJustifyEncodeNA(RAbstractStringVector x, int width, String quoteEl, RAbstractIntVector justify, boolean encodeNA,
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
         final int quoteLength = quoteEl.length() > 0 ? 2 : 0;
@@ -199,12 +214,15 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
             final int rightPadding = totalPadding - leftPadding;
             result[i] = addPadding(currentEl, leftPadding, rightPadding, quoteEl);
         }
-        return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+        RStringVector resultVector = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+        copyAttributesNode.execute(resultVector, x);
+        return resultVector;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"centerJustify(justify)", "!encodeNA"})
-    protected RStringVector encodeStringCenterJustify(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA) {
+    protected RStringVector encodeStringCenterJustify(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA,
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
         final int quoteLength = quoteEl.length() > 0 ? 2 : 0;
@@ -224,7 +242,9 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
                 result[i] = addPaddingIgnoreNA(currentEl, leftPadding, rightPadding, quoteEl);
             }
         }
-        return RDataFactory.createStringVector(result, !seenNA);
+        RStringVector resultVector = RDataFactory.createStringVector(result, !seenNA);
+        copyAttributesNode.execute(resultVector, x);
+        return resultVector;
     }
 
     @TruffleBoundary
@@ -270,7 +290,8 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"noJustify(width, justify)", "encodeNA"})
-    protected RStringVector encodeStringNoJustifyEncodeNA(RAbstractStringVector x, int width, String quoteEl, RAbstractIntVector justify, boolean encodeNA) {
+    protected RStringVector encodeStringNoJustifyEncodeNA(RAbstractStringVector x, int width, String quoteEl, RAbstractIntVector justify, boolean encodeNA,
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         final String[] result = new String[x.getLength()];
         na.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
@@ -282,12 +303,15 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
                 result[i] = concat(quoteEl, currentEl, quoteEl);
             }
         }
-        return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+        RStringVector resultVector = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+        copyAttributesNode.execute(resultVector, x);
+        return resultVector;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"noJustify(width, justify)", "!encodeNA"})
-    protected RStringVector encodeStringNoJustify(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA) {
+    protected RStringVector encodeStringNoJustify(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA,
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         final String[] result = new String[x.getLength()];
         na.enable(x);
         boolean seenNA = false;
@@ -301,7 +325,9 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
                 result[i] = concat(quoteEl, currentEl, quoteEl);
             }
         }
-        return RDataFactory.createStringVector(result, !seenNA);
+        RStringVector resultVector = RDataFactory.createStringVector(result, !seenNA);
+        copyAttributesNode.execute(resultVector, x);
+        return resultVector;
     }
 
     protected boolean leftJustify(RAbstractIntVector justify) {

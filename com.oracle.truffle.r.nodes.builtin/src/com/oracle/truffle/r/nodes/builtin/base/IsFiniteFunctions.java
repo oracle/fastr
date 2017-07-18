@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -30,12 +31,17 @@ import java.util.function.DoublePredicate;
 import java.util.function.IntPredicate;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -43,6 +49,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -60,6 +67,10 @@ public class IsFiniteFunctions {
 
         @Child private GetDimAttributeNode getDims = GetDimAttributeNode.create();
         @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
+        @Child private GetDimNamesAttributeNode getDimNames = GetDimNamesAttributeNode.create();
+        @Child private SetDimNamesAttributeNode setDimNames;
+
+        @CompilationFinal private ConditionProfile setDimNamesProfile;
 
         @FunctionalInterface
         protected interface ComplexPredicate {
@@ -109,7 +120,7 @@ public class IsFiniteFunctions {
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
             }
-            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x));
+            return transferDimNames(RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x)), x);
         }
 
         protected RLogicalVector doFunLogical(RAbstractLogicalVector x, LogicalPredicate fun) {
@@ -117,7 +128,7 @@ public class IsFiniteFunctions {
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
             }
-            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x));
+            return transferDimNames(RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x)), x);
         }
 
         protected RLogicalVector doFunInt(RAbstractIntVector x, IntPredicate fun) {
@@ -125,7 +136,7 @@ public class IsFiniteFunctions {
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
             }
-            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x));
+            return transferDimNames(RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x)), x);
         }
 
         protected RLogicalVector doFunComplex(RAbstractComplexVector x, ComplexPredicate fun) {
@@ -133,7 +144,23 @@ public class IsFiniteFunctions {
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
             }
-            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x));
+            return transferDimNames(RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x)), x);
+        }
+
+        RLogicalVector transferDimNames(RLogicalVector result, RAbstractVector src) {
+            RList dimNames = getDimNames.getDimNames(src);
+            if (setDimNamesProfile == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setDimNamesProfile = ConditionProfile.createBinaryProfile();
+            }
+            if (setDimNamesProfile.profile(dimNames != null)) {
+                if (setDimNames == null) {
+                    setDimNames = SetDimNamesAttributeNode.create();
+                    insert(setDimNames);
+                }
+                setDimNames.setDimNames(result, dimNames);
+            }
+            return result;
         }
     }
 

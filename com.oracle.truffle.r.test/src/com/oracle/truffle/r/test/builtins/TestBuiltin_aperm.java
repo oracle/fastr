@@ -228,4 +228,10 @@ public class TestBuiltin_aperm extends TestBase {
         // Complex Vector
         assertEval("{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }");
     }
+
+    @Test
+    public void testApermAttrs() {
+        assertEval(Ignored.OutputFormatting, "{ a<-array(1:24, c(2,3,4), dimnames=list(x=c('x1','x2'),y=c('y1','y2','y3'),z=c('z1','z2','z3','z4'))); b<-aperm(a,c(3,1,2)); a; b; }");
+    }
+
 }
