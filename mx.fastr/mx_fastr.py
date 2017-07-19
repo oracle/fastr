@@ -26,7 +26,6 @@ from argparse import ArgumentParser
 import mx
 import mx_gate
 import mx_fastr_pkgs
-import mx_fastr_compile
 import mx_fastr_dists
 from mx_fastr_dists import FastRReleaseProject, FastRNativeRecommendedProject #pylint: disable=unused-import
 import mx_copylib
@@ -511,5 +510,4 @@ _commands = {
     'nativebuild' : [nativebuild, '[]'],
     }
 
-_commands.update(mx_fastr_compile._commands)
 mx.update_commands(_fastr_suite, _commands)

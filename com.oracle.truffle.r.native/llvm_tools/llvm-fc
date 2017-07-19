@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -23,24 +23,42 @@
 #!/bin/bash
 
 SOURCE="$0"
-while [ -h "$SOURCE" ]; do
-  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-  SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
-done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-with_sulong=0
-while [ $DIR != "/" ] ; do
-  if [ -d $DIR/sulong ] && [ -d $DIR/sulong/mx.sulong ] ; then
-    with_sulong=1
-    break
-  fi
-  DIR=`dirname $DIR`
-done
+. $DIR/llvm-helper
+fortran=1
+analyze_args "$@"
 
-if [ $with_sulong = 1 ] && [ "$FASTR_SULONG_IGNORE" = "" ] ; then
-	MX_PRIMARY_SUITE_PATH=$DIR/fastr mx --dynamicimport sulong fastr-cpp $@
-else
-    cpp $@
+if [ -z "$FASTR_LLVM_GFORTRAN" ]
+then
+  echo FASTR_LLVM_GFORTRAN must be set
+  exit 1
 fi
+
+if [ -z "$FASTR_LLVM_GFORTRAN_LLVM_AS" ]
+then
+  echo FASTR_LLVM_GFORTRAN_LLVM_AS must be set
+  exit 1
+fi
+
+if [ -z "$FASTR_LLVM_DRAGONEGG" ]
+then
+  echo FASTR_DRAGONEGG must be set
+  exit 1
+fi
+
+function ll_to_bc() {
+  f=`basename $llvm_ir_file`
+  d=`dirname $llvm_ir_file`
+  llvm_ir_bc_file=${d}/${f%%.*}.bc
+}
+
+
+runit $FASTR_LLVM_GFORTRAN -fplugin=$FASTR_LLVM_DRAGONEGG -fplugin-arg-dragonegg-emit-ir $llvm_args
+ll_to_bc
+runit $FASTR_LLVM_GFORTRAN_LLVM_AS $llvm_ir_file -o $llvm_ir_bc_file
+runit rm $llvm_ir_file
+llvm_ir_file=$llvm_ir_bc_file
+mem2reg_opt
+fake_obj
+

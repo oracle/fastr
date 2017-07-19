@@ -23,12 +23,19 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
+import javax.naming.NameAlreadyBoundException;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.source.Source;
@@ -128,8 +135,23 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                 int totalRead = 0;
                 while (totalRead < size && (n = zis.read(bc, totalRead, size - totalRead)) != -1) {
                     totalRead += n;
-                    LLVM_IR ir = new LLVM_IR.Binary(entry.getName(), bc);
-                    irList.add(ir);
+                }
+                Path zipName = Paths.get(entry.getName());
+                String name = zipName.getFileName().toString();
+                int ix = name.indexOf('.');
+                if (ix > 0) {
+                    name = name.substring(0, ix);
+                }
+                LLVM_IR.Binary ir = new LLVM_IR.Binary(name, bc);
+                irList.add(ir);
+                // debugging
+                if (System.getenv("FASTR_LLVM_DEBUG") != null) {
+                    try (FileOutputStream bs = new FileOutputStream(Paths.get("tmpzip", name).toString())) {
+                        bs.write(bc);
+                    }
+                    try (PrintStream bs = new PrintStream(new FileOutputStream(Paths.get("tmpb64", name).toString()))) {
+                        bs.print(ir.base64);
+                    }
                 }
             }
             LLVM_IR[] result = new LLVM_IR[irList.size()];

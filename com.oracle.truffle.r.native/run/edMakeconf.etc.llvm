@@ -1,32 +1,27 @@
 /^CC =/
 d
 i
-CC = $(R_HOME)/mx.fastr/compilers/fastr-cc
+CC = $(R_HOME)/bin/llvm-cc
 .
 /^CXX =/
 d
 i
-CXX = $(R_HOME)/mx.fastr/compilers/fastr-c++
-.
-/^CXXCPP =/
-d
-i
-CXXCPP = $(R_HOME)/mx.fastr/compilers/fastr-cpp
+CXX = $(R_HOME)/bin/llvm-c++
 .
 /^FC =/
 d
 i
-FC = $(R_HOME)/mx.fastr/compilers/fastr-fc
+FC = $(R_HOME)/bin/llvm-fc
 .
 /^F77 =/
 d
 i
-F77 = $(R_HOME)/mx.fastr/compilers/fastr-fc
+F77 = $(R_HOME)/bin/llvm-fc
 .
 /^OBJC =/
 d
 i
-OBJC = $(R_HOME)/mx.fastr/compilers/fastr-cc
+OBJC = $(R_HOME)/bin/llvm-cc
 .
 w
 q

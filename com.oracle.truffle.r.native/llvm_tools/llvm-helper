@@ -1,0 +1,160 @@
+#
+# Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+# Helper functions for llvm-cc et al
+# Global variables are set by these functions
+
+if [ -n "$FASTR_LLVM_TOOLMODE" ]
+then
+  run_mode=$FASTR_LLVM_TOOLMODE
+else
+  run_mode="run"
+fi
+
+function runit() {
+  if [ $run_mode == "echo" ]
+  then
+    echo $@
+  elif [ $run_mode == "echorun" ]
+  then
+    echo $@
+    $@
+  else
+    $@
+  fi
+}
+
+# Input: all the arguments to the original command line
+# Global variables set:
+# llvm_ir_file: name of file containing LLVM IR, e.g. foo.bc
+# llvm_file_ext: extension of above, e.g. .bc
+# llvm_args: processed arguments to pass to llvm tool, e.g. clang
+
+function analyze_args() {
+  llvm_args="-g "
+  if [ $fortran -eq 1 ]
+  then
+    llvm_args+='-S '
+    llvm_file_ext='.ll'
+  else
+    llvm_file_ext='.bc'
+    llvm_args+='-emit-llvm '
+  fi
+
+  is_link=0
+  llvm_ir_file=""
+  
+  while [[ $# -gt 0 ]]
+  do
+    llvm_args+="$1 "
+    case $1 in
+      -o)
+        shift
+	p=$1
+	f=`basename $p`
+	d=`dirname $p`
+	ext=${f##*.}
+	if [ $ext == 'so' ] || [ $ext == 'dylib' ]
+	then
+	  is_link=1
+	elif [ $ext == 'o' ]
+	then
+	  llvm_ir_file=${d}/${f%%.*}
+	  llvm_ir_file+=$llvm_file_ext
+	  llvm_args+="$llvm_ir_file "
+	fi
+      ;;
+     *)
+     ;;
+    esac
+    shift
+  done
+}
+
+# Input arguments:
+# llvm_tool: name of tool to find
+# Global variables set:
+# path to tool (defaults to plain ${llvm_tool}, assumed to be on the PATH)
+
+function get_llvm_tool() {
+  if [ -n "${FASTR_LLVM_HOME}" ]
+  then
+    llvm_tool_bin=${FASTR_LLVM_HOME}/${llvm_tool}
+  else
+    llvm_tool_uc=`echo ${llvm_tool} | tr /a-z/ /A-Z/ | tr /+/ /P/`
+    x=FASTR_LLVM_${llvm_tool_uc}
+    if [ -n  "${!x}" ]
+    then
+      llvm_tool_bin=${!x}
+    else
+      llvm_tool_bin=${llvm_tool}
+    fi
+  fi
+}
+
+
+function mem2reg_opt() {
+   llvm_tool="opt"
+   get_llvm_tool
+   runit ${llvm_tool_bin} -mem2reg $llvm_ir_file -o ${llvm_ir_file}.opt
+   rc=$?
+   if [ $rc -eq 0 ]
+   then
+     runit mv ${llvm_ir_file}.opt $llvm_ir_file
+   fi
+}
+
+function fake_obj() {
+  f=`basename $llvm_ir_file`
+  d=`dirname $llvm_ir_file`
+  runit touch ${d}/${f%%.*}.o 
+}
+
+# Input: all the arguments to the original command line
+function create_bc_lib() {
+  bcfiles=""
+  lib=""
+  while [[ $# -gt 0 ]]
+  do
+    case $1 in
+      -o)
+        shift
+	lib=$1
+      ;;
+     *)
+        f=$1
+     	ext=${f##*.}
+	if [ $ext == 'o' ]
+	then
+	  fn=${f%%.*}.bc
+	  bcfiles+="$fn "
+	fi
+     ;;
+    esac
+    shift
+  done
+
+# we do not have the luxury of controlling the name of the entry (unlike in python)
+# it will be the pathname, which we will reduce to a module name on input in FastR
+
+  runit zip -r $lib $bcfiles
+}

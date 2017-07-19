@@ -1,12 +1,12 @@
 /^CC =/
 d
 i
-CC = $(FASTR_R_HOME)/mx.fastr/compilers/fastr-cc
+CC = $(FASTR_NATIVE_DIR)/llvm_tools/llvm-cc
 .
 /^F77 =/
 d
 i
-F77 = $(FASTR_R_HOME)/mx.fastr/compilers/fastr-fc
+F77 = $(FASTR_NATIVE_DIR)/llvm_tools/llvm-fc
 .
 w
 q
