@@ -25,6 +25,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -365,11 +366,15 @@ public class DLL {
             }
         }
 
+        public boolean isLong() {
+            return value instanceof Long;
+        }
+
         public TruffleObject asTruffleObject() {
             if (value instanceof TruffleObject) {
                 return (TruffleObject) value;
             } else {
-                throw RInternalError.shouldNotReachHere();
+                throw RInternalError.shouldNotReachHere("value: " + value);
             }
         }
     }
@@ -749,6 +754,16 @@ public class DLL {
             result = DLLInfo.create(EMBEDDING, EMBEDDING, false, null, true);
         }
         return result;
+    }
+
+    public static DLLInfo safeFindLibrary(String pkgName) {
+        DLLInfo lib = DLL.findLibrary(pkgName);
+        if (lib == null) {
+            // It seems GNU R would create an C entry even for non-existing package, we are more
+            // defensive
+            throw RError.error(RError.NO_CALLER, Message.DLL_NOT_LOADED, pkgName);
+        }
+        return lib;
     }
 
 }

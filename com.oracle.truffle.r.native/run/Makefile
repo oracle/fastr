@@ -85,6 +85,9 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	cp $(GNUR_HOME)/etc/repositories $(FASTR_ETC_DIR)/repositories
 	cp $(GNUR_HOME)/etc/ldpaths $(FASTR_ETC_DIR)/ldpaths
 	ed Makeconf.etc < edMakeconf.etc
+ifeq ($(FASTR_RFFI),llvm)
+	ed Makeconf.etc < edMakeconf.etc.llvm
+endif
 	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf
 	cp -r $(SHARE_FILES) $(FASTR_SHARE_DIR)
 	# TODO may need filtering

@@ -25,88 +25,76 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.ffi.impl.common.PkgInitUpCalls;
+import com.oracle.truffle.r.ffi.impl.interop.pkginit.ForceSymbolsCall;
+import com.oracle.truffle.r.ffi.impl.interop.pkginit.GetCCallableCall;
+import com.oracle.truffle.r.ffi.impl.interop.pkginit.RegisterCCallableCall;
+import com.oracle.truffle.r.ffi.impl.interop.pkginit.RegisterRoutinesCall;
+import com.oracle.truffle.r.ffi.impl.interop.pkginit.SetDotSymbolValuesCall;
+import com.oracle.truffle.r.ffi.impl.interop.pkginit.UseDynamicSymbolsCall;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.ffi.impl.common.Generic_PkgInit;
 
-class TruffleLLVM_PkgInit {
+final class TruffleLLVM_PkgInit extends Generic_PkgInit {
 
     private static TruffleLLVM_PkgInit trufflePkgInit;
-    private static TruffleObject trufflePkgInitTruffleObject;
+    private static TruffleObject setSymbolHandle;
 
     static class ContextStateImpl implements RContext.ContextState {
         @Override
         public ContextState initialize(RContext context) {
-            TruffleLLVM_PkgInit.initialize();
-            context.getEnv().exportSymbol("_fastr_rffi_pkginit", trufflePkgInitTruffleObject);
+            if (context.isInitial()) {
+                TruffleLLVM_PkgInit.initialize(context);
+            }
             return this;
         }
 
-        @Override
-        public void beforeDestroy(RContext context) {
-        }
     }
 
-    private static TruffleLLVM_PkgInit initialize() {
-        if (trufflePkgInit == null) {
-            trufflePkgInit = new TruffleLLVM_PkgInit();
-            trufflePkgInitTruffleObject = JavaInterop.asTruffleObject(trufflePkgInit);
-        }
-        return trufflePkgInit;
-    }
-
-    public void registerRoutines(DLLInfo dllInfo, int nstOrd, int num, long routines) {
-        DotSymbol[] array = new DotSymbol[num];
-        SymbolHandle setSymbolHandle = new SymbolHandle(RContext.getInstance().getEnv().importSymbol("@" + "PkgInit_setSymbol"));
-        for (int i = 0; i < num; i++) {
-            Object sym = setSymbol(nstOrd, routines, i, setSymbolHandle);
-            array[i] = (DotSymbol) sym;
-        }
-        dllInfo.setNativeSymbols(nstOrd, array);
-        TruffleLLVM_DLL.registerSymbols(dllInfo, array);
-    }
-
-    private static Object setSymbol(int nstOrd, long routines, int index, SymbolHandle symbolHandle) {
-        Node executeNode = Message.createExecute(3).createNode();
+    private static void initialize(RContext context) {
+        trufflePkgInit = new TruffleLLVM_PkgInit();
+        setSymbolHandle = new SymbolHandle(context.getEnv().importSymbol("@" + "Rdynload_setSymbol")).asTruffleObject();
+        Node executeNode = Message.createExecute(2).createNode();
+        TruffleObject callbackSymbol = new SymbolHandle(context.getEnv().importSymbol("@" + "Rdynload_addCallback")).asTruffleObject();
         try {
-            Object result = ForeignAccess.sendExecute(executeNode, symbolHandle.asTruffleObject(), nstOrd, routines, index);
+            ForeignAccess.sendExecute(executeNode, callbackSymbol, PkgInitUpCalls.Index.registerRoutines.ordinal(), new RegisterRoutinesCall(trufflePkgInit));
+            ForeignAccess.sendExecute(executeNode, callbackSymbol, PkgInitUpCalls.Index.setDotSymbolValues.ordinal(), new SetDotSymbolValuesCall(trufflePkgInit));
+            ForeignAccess.sendExecute(executeNode, callbackSymbol, PkgInitUpCalls.Index.useDynamicSymbols.ordinal(), new UseDynamicSymbolsCall(trufflePkgInit));
+            ForeignAccess.sendExecute(executeNode, callbackSymbol, PkgInitUpCalls.Index.forceSymbols.ordinal(), new ForceSymbolsCall(trufflePkgInit));
+            ForeignAccess.sendExecute(executeNode, callbackSymbol, PkgInitUpCalls.Index.registerCCallable.ordinal(), new RegisterCCallableCall(trufflePkgInit));
+            ForeignAccess.sendExecute(executeNode, callbackSymbol, PkgInitUpCalls.Index.getCCallable.ordinal(), new GetCCallableCall(trufflePkgInit));
+        } catch (Throwable t) {
+            throw RInternalError.shouldNotReachHere(t);
+        }
+    }
+
+    @Override
+    public Object getCCallable(String pkgName, String functionName) {
+        DLLInfo lib = DLL.safeFindLibrary(pkgName);
+        CEntry result = lib.lookupCEntry(functionName);
+        if (result == null) {
+            throw RError.error(RError.NO_CALLER, RError.Message.UNKNOWN_OBJECT, functionName);
+        }
+        return result.address.asTruffleObject();
+    }
+
+    @Override
+    protected Object setSymbol(DLLInfo dllInfo, int nstOrd, long routines, int index) {
+        Node executeNode = Message.createExecute(4).createNode();
+        try {
+            Object result = ForeignAccess.sendExecute(executeNode, setSymbolHandle, dllInfo, nstOrd, routines, index);
             return result;
         } catch (Throwable t) {
             throw RInternalError.shouldNotReachHere();
         }
     }
 
-    @SuppressWarnings("unused")
-    public void registerCCallable(String pkgName, String functionName, long address) {
-        // TBD
-        System.console();
-    }
-
-    @SuppressWarnings({"unused", "static-method"})
-    private long getCCallable(String pkgName, String functionName) {
-        // TBD
-        throw RInternalError.unimplemented();
-    }
-
-    /**
-     * Upcall from native to create a {@link DotSymbol} value.
-     */
-    public DotSymbol createDotSymbol(String name, Object fundesc, int numArgs) {
-        DotSymbol result = new DotSymbol(name, new SymbolHandle(fundesc), numArgs);
-        return result;
-    }
-
-    public int useDynamicSymbols(DLLInfo dllInfo, int value) {
-        return DLL.useDynamicSymbols(dllInfo, value);
-    }
-
-    public int forceSymbols(DLLInfo dllInfo, int value) {
-        return DLL.forceSymbols(dllInfo, value);
-    }
 }

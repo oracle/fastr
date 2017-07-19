@@ -76,6 +76,7 @@ public class DynLoadFunctions {
                 DLLInfo dllInfo = loadPackageDLLNode.execute(lib, local, now);
                 return dllInfo.toRList();
             } catch (DLLException ex) {
+                ex.printStackTrace();
                 throw error(ex);
             }
         }

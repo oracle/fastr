@@ -26,13 +26,6 @@
 # that it shares, but is simpler and safer to just build all of it. The relevant 
 # pieces are then copied to other FastR directories.
 #
-# The configuration of GnuR for FastR is platform specific and a special step
-# is needed for Linux where, ordinarily, the PCRE library is compiled non-PIC
-# as it is built as a library archive. FastR needs a shared library, which can be
-# enabled by setting --enable-R-shlib, but unfortunately this also sets the visibility
-# of the functions to hidden, so FastR cannot find them. There does not appear to be a 
-# way to fix this simply using configure args, so we patch up the Makeconf file.
-
 # Portions of the Makeconf file are then extracted to use in building the native
 # parts of FastR, especially packages with native code.
 
@@ -40,13 +33,9 @@
 
 OSNAME := $(shell uname)
 
-ifeq ($(FASTR_RFFI),llvm)
-FC_DIR := $(abspath $(TOPDIR)/../mx.fastr/compilers)
-FASTR_COMPILERS := CC=$(FC_DIR)/fastr-cc FC=$(FC_DIR)/fastr-fc F77=$(FC_DIR)/fastr-fc CXX=$(FC_DIR)/fastr-c++ CXXCPP=$(FC_DIR)/fastr-cpp OBJC=$(FC_DIR)/fastr-cc
-endif
-
 ifneq ($(FASTR_RFFI),llvm)
 # LLVM text parser and -g don't get on
+# TODO check still true
 OPT_FLAGS := -g -O2
 OPT_FLAGS := -O2
 

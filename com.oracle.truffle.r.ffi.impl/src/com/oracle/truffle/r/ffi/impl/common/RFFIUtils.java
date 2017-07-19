@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.ffi.impl.nodes.FFIUpCallRootNode;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
@@ -192,10 +193,12 @@ public class RFFIUtils {
 
     // Error handling
     static RuntimeException unimplemented() {
+        CompilerDirectives.transferToInterpreter();
         return unimplemented("");
     }
 
     static RuntimeException unimplemented(String message) {
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.unimplemented(message);
     }
 
@@ -205,15 +208,18 @@ public class RFFIUtils {
 
     static void guarantee(boolean condition, String message) {
         if (!condition) {
+            CompilerDirectives.transferToInterpreter();
             unimplemented(message);
         }
     }
 
     public static <T> T guaranteeInstanceOf(Object x, Class<T> clazz) {
         if (x == null) {
-            guarantee(false, "unexpected type: null instead of " + clazz.getSimpleName());
+            CompilerDirectives.transferToInterpreter();
+            unimplemented("unexpected type: null instead of " + clazz.getSimpleName());
         } else if (!clazz.isInstance(x)) {
-            guarantee(false, "unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of " + clazz.getSimpleName());
+            CompilerDirectives.transferToInterpreter();
+            unimplemented("unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of " + clazz.getSimpleName());
         }
         return clazz.cast(x);
     }

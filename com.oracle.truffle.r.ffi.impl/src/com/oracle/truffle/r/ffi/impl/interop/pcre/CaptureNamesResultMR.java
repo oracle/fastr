@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.interop.pcre;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
@@ -43,16 +42,27 @@ public class CaptureNamesResultMR {
         }
     }
 
+    @Resolve(message = "IS_EXECUTABLE")
+    public abstract static class CaptureNamesResultIsExecutable extends Node {
+        protected Object access(@SuppressWarnings("unused") CaptureNamesResult receiver) {
+            return true;
+        }
+    }
+
     @Resolve(message = "EXECUTE")
     public abstract static class CaptureNamesCallbackExecute extends Node {
-        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, CaptureNamesResult receiver, Object[] arguments) {
+
+        @Child private Node isNullNode = Message.IS_NULL.createNode();
+        @Child private Node unboxNode = Message.UNBOX.createNode();
+
+        protected Object access(CaptureNamesResult receiver, Object[] arguments) {
             try {
                 Object arg1 = arguments[1];
                 if (arg1 instanceof TruffleObject) {
-                    if (ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), (TruffleObject) arg1)) {
+                    if (ForeignAccess.sendIsNull(isNullNode, (TruffleObject) arg1)) {
                         arg1 = null;
                     } else {
-                        arg1 = ForeignAccess.sendUnbox(Message.UNBOX.createNode(), (TruffleObject) arg1);
+                        arg1 = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) arg1);
                     }
                 }
                 receiver.addName((int) arguments[0], (String) arg1);
@@ -62,5 +72,4 @@ public class CaptureNamesResultMR {
             }
         }
     }
-
 }

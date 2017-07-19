@@ -30,12 +30,10 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.ffi.impl.interop.UnsafeAdapter;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
 public class TruffleNFI_Utils {
 
@@ -108,23 +106,6 @@ public class TruffleNFI_Utils {
             }
         }
         throw RInternalError.shouldNotReachHere();
-    }
-
-    /**
-     * There are three possibilities as enumerated below. For an {@link RTruffleObject} there is
-     * nothing to do, and indeed, calling {@code unbox} would be disastrous, as that means, e.g.,
-     * for a RVector, extract the first element! We could get a plain {@link Integer}, but we could
-     * also get a {@code JavaObject} (aka a {@code TruffleObject} that wraps such a value. That does
-     * have to be unboxed. Ditto a {@code NativePointer} encoding, say, a C char array.
-     */
-    public static Object unwrap(Object x) {
-        if (x instanceof RTruffleObject) {
-            return x;
-        } else if (x instanceof TruffleObject) {
-            return JavaInterop.unbox((TruffleObject) x);
-        } else {
-            return x;
-        }
     }
 
     public static void main(String[] args) {

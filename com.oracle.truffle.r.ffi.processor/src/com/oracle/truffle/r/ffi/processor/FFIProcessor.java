@@ -87,7 +87,7 @@ public final class FFIProcessor extends AbstractProcessor {
 
     private void processElement(Element e) throws IOException {
         if (e.getKind() != ElementKind.INTERFACE) {
-            processingEnv.getMessager().printMessage(Kind.ERROR, "RFFIUpCallRoot mjusty annotate an interface");
+            processingEnv.getMessager().printMessage(Kind.ERROR, "RFFIUpCallRoot must annotate an interface");
         }
         Types types = processingEnv.getTypeUtils();
         TypeElement typeElement = (TypeElement) e;
@@ -189,7 +189,6 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("    public ForeignAccess getForeignAccess() {\n");
         w.append("        return ").append(callName).append("MRForeign.ACCESS;\n");
         w.append("    }\n");
-        w.append('\n');
         w.append("}\n");
         w.close();
     }
@@ -203,6 +202,7 @@ public final class FFIProcessor extends AbstractProcessor {
         StringBuilder arguments = new StringBuilder();
         boolean usesUnwrap = false;
 
+        // process arguments first to see if unwrap is necessary
         int lparams = params.size();
         for (int i = 0; i < lparams; i++) {
             String is = Integer.toString(i);
@@ -214,7 +214,7 @@ public final class FFIProcessor extends AbstractProcessor {
             }
             if (isScalar) {
                 usesUnwrap = true;
-                arguments.append("unwrap(");
+                arguments.append("unwrap.unwrap(");
             }
             arguments.append("arguments[").append(is).append("]");
             if (isScalar) {
@@ -229,19 +229,21 @@ public final class FFIProcessor extends AbstractProcessor {
         Writer w = fileObj.openWriter();
         w.append("// GENERATED; DO NOT EDIT\n");
         w.append("package ").append("com.oracle.truffle.r.ffi.impl.upcalls").append(";\n\n");
-        if (usesUnwrap) {
-            w.append("import static com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_Utils.unwrap;\n");
-        }
         w.append("import com.oracle.truffle.api.interop.MessageResolution;\n");
         w.append("import com.oracle.truffle.api.interop.Resolve;\n");
         w.append("import com.oracle.truffle.api.nodes.Node;\n");
-        w.append("import com.oracle.truffle.r.ffi.impl.interop.NativePointer;\n");
+        if (usesUnwrap) {
+            w.append("import com.oracle.truffle.r.ffi.impl.common.UpCallUnwrap;\n");
+        }
         w.append("// Checkstyle: stop method name check\n\n");
 
         w.append("@MessageResolution(receiverType = ").append(name).append("Call.class)\n");
         w.append("public class ").append(callName).append("MR {\n");
         w.append("    @Resolve(message = \"EXECUTE\")\n");
         w.append("    public abstract static class ").append(callName).append("Execute extends Node {\n");
+        if (usesUnwrap) {
+            w.append("\n        @Child private UpCallUnwrap unwrap = new UpCallUnwrap();\n\n");
+        }
         w.append("        protected ").append(returnType).append(" access(").append(callName).append(" receiver, ");
         if (params.size() == 0) {
             w.append("@SuppressWarnings(\"unused\") ");
@@ -262,8 +264,6 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("            return true;\n");
         w.append("        }\n");
         w.append("    }\n");
-        w.append("\n");
-
         w.append("}\n");
         w.close();
 
@@ -386,5 +386,4 @@ public final class FFIProcessor extends AbstractProcessor {
         string.flush();
         return e.getMessage() + "\r\n" + string.toString();
     }
-
 }

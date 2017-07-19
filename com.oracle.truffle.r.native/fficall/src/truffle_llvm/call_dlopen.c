@@ -36,13 +36,13 @@
 #include <dlfcn.h>
 #include <errno.h>
 
-long call_dlopen(void *callback, char *path, int local, int now) {
+long call_dlopen(void *callback(char *result), char *path, int local, int now) {
 	int flags = (local ? RTLD_LOCAL : RTLD_GLOBAL) | (now ? RTLD_NOW : RTLD_LAZY);
 	void *handle = dlopen(path, flags);
 	if (handle == NULL) {
 		int cerrno = errno;
 		char *error = dlerror();
-	    truffle_invoke(truffle_import_cached("_fastr_dllnative_helper"), "setDlopenResult", callback, error);
+	    callback(error);
 	}
 	return (long) handle;
 }

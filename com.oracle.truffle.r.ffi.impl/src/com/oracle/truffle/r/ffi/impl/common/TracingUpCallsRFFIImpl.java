@@ -220,7 +220,7 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_allocVector(int mode, int n) {
+    public Object Rf_allocVector(int mode, long n) {
         RFFIUtils.traceUpCall("Rf_allocateVector", mode, n);
         return delegate.Rf_allocVector(mode, n);
     }
@@ -256,13 +256,13 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int SET_STRING_ELT(Object x, int i, Object v) {
+    public int SET_STRING_ELT(Object x, long i, Object v) {
         RFFIUtils.traceUpCall("SET_STRING_ELT", x, i, v);
         return delegate.SET_STRING_ELT(x, i, v);
     }
 
     @Override
-    public int SET_VECTOR_ELT(Object x, int i, Object v) {
+    public int SET_VECTOR_ELT(Object x, long i, Object v) {
         RFFIUtils.traceUpCall("SET_VECTOR_ELT", i, v);
         return delegate.SET_VECTOR_ELT(x, i, v);
     }
@@ -292,13 +292,13 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object STRING_ELT(Object x, int i) {
+    public Object STRING_ELT(Object x, long i) {
         RFFIUtils.traceUpCall("STRING_ELT", x, i);
         return delegate.STRING_ELT(x, i);
     }
 
     @Override
-    public Object VECTOR_ELT(Object x, int i) {
+    public Object VECTOR_ELT(Object x, long i) {
         RFFIUtils.traceUpCall("VECTOR_ELT", x, i);
         return delegate.VECTOR_ELT(x, i);
     }
@@ -340,7 +340,7 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int Rf_any_duplicated(Object x, int fromLast) {
+    public long Rf_any_duplicated(Object x, int fromLast) {
         RFFIUtils.traceUpCall("Rf_anyDuplicated", x, fromLast);
         return delegate.Rf_any_duplicated(x, fromLast);
     }

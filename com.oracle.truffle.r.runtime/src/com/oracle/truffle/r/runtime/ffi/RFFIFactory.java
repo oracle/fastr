@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
  * point.
  */
 public abstract class RFFIFactory {
-    private enum Factory {
+    public enum Type {
         JNI("com.oracle.truffle.r.ffi.impl.jni.JNI_RFFIFactory"),
         LLVM("com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_RFFIFactory"),
         MANAGED("com.oracle.truffle.r.ffi.impl.managed.Managed_RFFIFactory"),
@@ -46,15 +46,14 @@ public abstract class RFFIFactory {
 
         private final String klassName;
 
-        Factory(String klassName) {
+        Type(String klassName) {
             this.klassName = klassName;
         }
     }
 
-    private static final String FACTORY_CLASS_PROPERTY = "fastr.rffi.factory.class";
-    private static final String FACTORY_CLASS_NAME_PROPERTY = "fastr.rffi.factory";
+    private static final String FACTORY_TYPE_PROPERTY = "fastr.rffi.factory.type";
     private static final String FACTORY_CLASS_ENV = "FASTR_RFFI";
-    private static final Factory DEFAULT_FACTORY = Factory.JNI;
+    private static final Type DEFAULT_FACTORY = Type.JNI;
 
     /**
      * Singleton instance of the factory.
@@ -62,10 +61,12 @@ public abstract class RFFIFactory {
     private static RFFIFactory instance;
 
     @CompilationFinal protected static RFFI theRFFI;
+    @CompilationFinal private static Type type;
 
     static {
         if (instance == null) {
-            String klassName = getFactoryClassName();
+            type = getFactoryType();
+            String klassName = type.klassName;
             try {
                 instance = (RFFIFactory) Class.forName(klassName).newInstance();
                 theRFFI = instance.createRFFI();
@@ -75,12 +76,8 @@ public abstract class RFFIFactory {
         }
     }
 
-    private static String getFactoryClassName() {
-        String prop = System.getProperty(FACTORY_CLASS_PROPERTY);
-        if (prop != null) {
-            return prop;
-        }
-        prop = System.getProperty(FACTORY_CLASS_NAME_PROPERTY);
+    private static Type getFactoryType() {
+        String prop = System.getProperty(FACTORY_TYPE_PROPERTY);
         if (prop != null) {
             return checkFactoryName(prop);
         }
@@ -89,15 +86,15 @@ public abstract class RFFIFactory {
             return checkFactoryName(prop);
         }
         if (FastRConfig.ManagedMode) {
-            return Factory.MANAGED.klassName;
+            return Type.MANAGED;
         }
-        return DEFAULT_FACTORY.klassName;
+        return DEFAULT_FACTORY;
     }
 
-    private static String checkFactoryName(String prop) {
+    private static Type checkFactoryName(String prop) {
         try {
-            Factory factory = Factory.valueOf(prop.toUpperCase());
-            return factory.klassName;
+            Type factory = Type.valueOf(prop.toUpperCase());
+            return factory;
         } catch (IllegalArgumentException ex) {
             throw Utils.rSuicide("No RFFI factory: " + prop);
         }
@@ -112,6 +109,10 @@ public abstract class RFFIFactory {
     public static RFFI getRFFI() {
         assert theRFFI != null : "RFFI factory is not initialized!";
         return theRFFI;
+    }
+
+    public static Type getType() {
+        return type;
     }
 
     /**

@@ -347,5 +347,4 @@ void Call_initvar_obj(TruffleEnv* env, int index, void* value) {
     	printf("Call_initvar_obj: unimplemented index %d\n", index);
     	exit(1);
 	}
-//	printf("set index %d, value %p\n", index, value);
 }

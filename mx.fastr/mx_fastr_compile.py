@@ -26,7 +26,7 @@ When not running with sulong is simply forwards to the default compiler for the 
 When running under sulong, it uses sulong to do two compilations; first to generate object code
 and second to generate LLVM bitcode.
 """
-import os, sys
+import os, sys, zipfile
 import mx
 import mx_fastr
 
@@ -78,7 +78,7 @@ def _analyze_args(args, dragonEgg=False):
     Result is an instance of AnalyzedArgs:
     '''
     compile_args = []
-    emit_llvm_args = []
+    emit_llvm_args = ['-g']
     llvm_ir_file_ext = '.bc'
     if not dragonEgg:
         emit_llvm_args.append('-emit-llvm')
@@ -122,36 +122,32 @@ def _analyze_args(args, dragonEgg=False):
     _log('emit-llvm-args', emit_llvm_args)
     return AnalyzedArgs(llvm_ir_file, is_link, compile_args, emit_llvm_args)
 
+def compileWithClang(args=None, version=None, out=None, err=None):
+    return mx.run([_sulong().findLLVMProgram('clang', version)] + args, out=out, err=err)
+
+def compileWithClangPP(args=None, version=None, out=None, err=None):
+    return mx.run([_sulong().findLLVMProgram('clang++', version)] + args, out=out, err=err)
+
+def opt(args=None, version=None, out=None, err=None):
+    return mx.run([_sulong().findLLVMProgram('opt', version)] + args, out=out, err=err)
+
 def cc(args):
     _log('fastr:cc', args)
     compiler = None
     sulong = _sulong()
     if sulong:
         analyzed_args = _analyze_args(args)
-        if _is_linux():
-            rc = sulong.compileWithGCC(analyzed_args.compile_args)
-            if rc == 0 and analyzed_args.llvm_ir_file:
-                if not analyzed_args.is_link:
-                    rc = sulong.compileWithGCC(analyzed_args.emit_llvm_args)
-        elif _is_darwin():
-            rc = sulong.compileWithClang(analyzed_args.compile_args)
-            if rc == 0 and analyzed_args.llvm_ir_file:
-                if not analyzed_args.is_link:
-                    rc = sulong.compileWithClang(analyzed_args.emit_llvm_args)
+        rc = 0
+        if analyzed_args.is_link:
+            rc = _create_bc_lib(args)
         else:
-            mx.abort('unsupported platform')
+            if analyzed_args.llvm_ir_file:
+                rc = compileWithClang(analyzed_args.emit_llvm_args)
         if rc == 0 and not analyzed_args.is_link and analyzed_args.llvm_ir_file:
             rc = _mem2reg_opt(analyzed_args.llvm_ir_file)
-            if rc == 0:
-                rc = _embed_ir(analyzed_args.llvm_ir_file)
+            _fake_obj(analyzed_args.llvm_ir_file.replace('.bc', '.o'))
     else:
-        if _is_linux():
-            compiler = 'gcc'
-        elif _is_darwin():
-            compiler = 'clang'
-        else:
-            mx.abort('unsupported platform')
-
+        compiler = 'clang'
         rc = mx.run([compiler] + args, nonZeroIsFatal=False)
 
     return rc
@@ -162,17 +158,16 @@ def fc(args):
     sulong = _sulong()
     if sulong:
         analyzed_args = _analyze_args(args, dragonEgg=True)
-        rc = mx.run([sulong.getGFortran()] + analyzed_args.compile_args, nonZeroIsFatal=False)
-        if rc == 0:
-            rc = sulong.dragonEggGFortran(analyzed_args.emit_llvm_args)
-            if rc == 0 and analyzed_args.llvm_ir_file:
-                # create bitcode from textual IR
-                llvm_as = sulong.findLLVMProgram('llvm-as')
-                llvm_bc_file = os.path.splitext(analyzed_args.llvm_ir_file)[0] + '.bc'
-                rc = mx.run([llvm_as, analyzed_args.llvm_ir_file, '-o', llvm_bc_file])
-                rc = _mem2reg_opt(llvm_bc_file)
-                if rc == 0:
-                    rc = _embed_ir(llvm_bc_file)
+        rc = 0
+        rc = sulong.dragonEggGFortran(analyzed_args.emit_llvm_args)
+        if rc == 0 and analyzed_args.llvm_ir_file:
+            # create bitcode from textual IR
+            llvm_as = sulong.findLLVMProgram('llvm-as')
+            llvm_bc_file = os.path.splitext(analyzed_args.llvm_ir_file)[0] + '.bc'
+            rc = mx.run([llvm_as, analyzed_args.llvm_ir_file, '-o', llvm_bc_file])
+            os.remove(analyzed_args.llvm_ir_file)
+            rc = _mem2reg_opt(llvm_bc_file)
+            _fake_obj(llvm_bc_file.replace('.bc', '.o'))
     else:
         compiler = 'gfortran'
         rc = mx.run([compiler] + args, nonZeroIsFatal=False)
@@ -185,17 +180,22 @@ def cpp(args):
     sulong = _sulong()
     if sulong:
         analyzed_args = _analyze_args(args)
-        if _is_linux():
-            rc = sulong.dragonEggGPP(analyzed_args.compile_args)
-        elif _is_darwin():
-            rc = sulong.compileWithClangPP(analyzed_args.compile_args)
-            if rc == 0:
-                if analyzed_args.llvm_ir_file:
-                    rc = sulong.compileWithClangPP(analyzed_args.emit_llvm_args)
+        rc = 0
+        if analyzed_args.is_link:
+            rc = _create_bc_lib(args)
         else:
-            mx.abort('unsupported platform')
-        if rc == 0 and not analyzed_args.is_link:
-            rc = _embed_ir(analyzed_args.llvm_ir_file)
+            if _is_linux():
+                rc = sulong.dragonEggGPP(analyzed_args.compile_args)
+            elif _is_darwin():
+                rc = compileWithClangPP(analyzed_args.compile_args)
+                if rc == 0:
+                    if analyzed_args.llvm_ir_file:
+                        rc = compileWithClangPP(analyzed_args.emit_llvm_args)
+            else:
+                mx.abort('unsupported platform')
+        if rc == 0 and not analyzed_args.is_link and analyzed_args.llvm_ir_file:
+            rc = _mem2reg_opt(analyzed_args.llvm_ir_file)
+            _fake_obj(analyzed_args.llvm_ir_file.replace('.bc', '.o'))
     else:
         compiler = 'g++'
         rc = mx.run([compiler] + args, nonZeroIsFatal=False)
@@ -218,124 +218,32 @@ def _mem2reg_opt(llvm_ir_file):
         os.rename(opt_filename, llvm_ir_file)
     return rc
 
-def _embed_ir(llvm_ir_file):
-    '''
-    Given an llvm_ir_file, generates an assembler file containing the content as a sequence
-    of .byte directives, then uses ld to merge that with the original .o file, replacing
-    the original .o file.
-    '''
-
-    def write_hexbyte(f, b):
-        f.write("0x%0.2X" % b)
-
-    def write_int(f, n):
-        write_hexbyte(f, n & 255)
-        f.write(',')
-        write_hexbyte(f, (n >> 8) & 255)
-        f.write(',')
-        write_hexbyte(f, (n >> 16) & 255)
-        f.write(',')
-        write_hexbyte(f, (n >> 24) & 255)
-
-    def write_symbol(f, sym):
-        write_dot_byte(f)
-        write_hexbyte(f, len(sym))
-        f.write(', ')
-        first = True
-        for ch in sym:
-            if first:
-                first = False
-            else:
-                f.write(', ')
-            write_hexbyte(f, ord(ch))
-        f.write('\n')
-
-    def write_dot_byte(f):
-        f.write('        .byte ')
-
-    def checkchars(s):
-        return s.replace("-", "_")
-
-    # find the exported symbols
-    llvm_nm = _sulong().findLLVMProgram("llvm-nm")
-
-    class NMOutputCapture:
-        def __init__(self):
-            self.exports = []
-            self.imports = []
-
-        def __call__(self, data):
-            # T name
-            s = data.strip()
-            if s[0] == 'T':
-                self.exports.append(s[2:])
-            elif s[0] == 'U':
-                self.imports.append(s[2:])
-
-    llvm_nm_out = NMOutputCapture()
-    mx.run([llvm_nm, llvm_ir_file], out=llvm_nm_out)
-
-    with open(llvm_ir_file) as f:
-        content = bytearray(f.read())
-    filename = os.path.splitext(llvm_ir_file)[0]
-    ext = os.path.splitext(llvm_ir_file)[1]
-    as_file = llvm_ir_file + '.s'
-    gsym = "__llvm_" + checkchars(os.path.basename(filename))
-    with open(as_file, 'w') as f:
-        f.write('        .const\n')
-        f.write('        .globl ' + gsym + '\n')
-        f.write(gsym + ':\n')
-        count = 0
-        lenc = len(content)
-        write_dot_byte(f)
-        # 1 for text, 2 for binary, followed by length
-        write_hexbyte(f, 1 if ext == '.ll' else 2)
-        f.write(',')
-        write_int(f, lenc)
-        f.write('\n')
-        # now the exported symbols
-        write_dot_byte(f)
-        write_int(f, len(llvm_nm_out.exports))
-        f.write('\n')
-        for sym in llvm_nm_out.exports:
-            write_symbol(f, sym)
-        # now the imported symbols
-        write_dot_byte(f)
-        write_int(f, len(llvm_nm_out.imports))
-        f.write('\n')
-        for sym in llvm_nm_out.imports:
-            write_symbol(f, sym)
-        # now the content
-        write_dot_byte(f)
-        first = True
-        for b in content:
-            if first:
-                first = False
-            else:
-                f.write(',')
-            write_hexbyte(f, b)
-            count = count + 1
-            if count % 20 == 0 and count < lenc:
-                f.write('\n')
-                write_dot_byte(f)
-                first = True
-        f.write('\n')
-
-    ll_o_file = llvm_ir_file + '.o'
-    rc = mx.run(['gcc', '-c', as_file, '-o', ll_o_file], nonZeroIsFatal=False)
-    if rc == 0:
-        # combine
-        o_file = filename + '.o'
-        dot_o_file = o_file + '.o'
-        os.rename(o_file, dot_o_file)
-        rc = mx.run(['ld', '-r', dot_o_file, ll_o_file, '-o', o_file], nonZeroIsFatal=False)
-        os.remove(dot_o_file)
-        os.remove(as_file)
-        os.remove(ll_o_file)
-    return rc
+def _fake_obj(name):
+    '''create an empty object file to keep make happy'''
+#    print 'creating ' + name
+    open(name, 'w').close()
 
 def mem2reg(args):
     _mem2reg_opt(args[0])
+
+def _create_bc_lib(args):
+    i = 0
+    bcfiles = []
+    while i < len(args):
+        arg = args[i]
+        if arg == '-o':
+            # library file
+            i = i + 1
+            lib = args[i]
+        else:
+            if '.o' in arg:
+                bcfiles.append(arg.replace('.o', '.bc'))
+        i = i + 1
+
+    with zipfile.ZipFile(lib, 'w') as arc:
+        for bcfile in bcfiles:
+            arc.write(bcfile, os.path.basename(bcfile).replace('.bc', ''))
+    return 0
 
 _commands = {
     'fastr-cc' : [cc, '[options]'],

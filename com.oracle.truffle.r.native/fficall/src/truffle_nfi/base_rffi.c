@@ -28,44 +28,6 @@
 #include <glob.h>
 #include <sys/utsname.h>
 #include <errno.h>
+#include <rffiutils.h>
 
-
-void call_base_uname(void (*call_uname_setfields)(char *sysname, char *release, char *version, char *machine, char *nodename)) {
-	struct utsname name;
-
-	uname(&name);
-	call_uname_setfields(name.sysname, name.release, name.version, name.machine, name.nodename);
-}
-
-void call_base_glob(char *pattern, void *closure) {
-	void (*call_addpath)(char *path) = closure;
-
-	glob_t globstruct;
-	int rc = glob(pattern, 0, NULL, &globstruct);
-	if (rc == 0) {
-		int i;
-		for (i = 0; i < globstruct.gl_pathc; i++) {
-			char *path = globstruct.gl_pathv[i];
-			call_addpath(path);
-		}
-	}
-}
-
-void call_base_readlink(void (*call_setresult)(char *link, int cerrno), char *path) {
-	char *link = NULL;
-	int cerrno = 0;
-    char buf[4096];
-    int len = readlink(path, buf, 4096);
-    if (len == -1) {
-    	cerrno = errno;
-    } else {
-    	buf[len] = 0;
-    	link = buf;
-    }
-	call_setresult(link, cerrno);
-}
-
-void call_base_strtol(void (*call_setresult)(long result, int cerrno), char *s, int base) {
-    long rc = strtol(s, NULL, base);
-	call_setresult(rc, errno);
-}
+#include "../truffle_common/base_rffi.h"

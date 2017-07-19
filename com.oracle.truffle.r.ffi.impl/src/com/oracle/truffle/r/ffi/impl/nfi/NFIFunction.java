@@ -48,7 +48,7 @@ enum NFIFunction {
     chmod("(string, sint32): sint32"),
     strtol("((sint64, sint32): void, string, sint32): void", "call_base_"),
     uname("((string, string, string, string, string): void): void", "call_base_"),
-    glob("(string, (string): void): void", "call_base_"),
+    glob("((string): void, string): void", "call_base_"),
     // PCRE, N.B. The "pcre_" prefixes are actually direct calls
     maketables("(): sint64", "pcre_"),
     compile("((uint64, string, sint32): void, string, sint32, uint64): void", "call_pcre_"),

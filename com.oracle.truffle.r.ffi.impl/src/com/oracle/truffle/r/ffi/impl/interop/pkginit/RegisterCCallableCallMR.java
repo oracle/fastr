@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,19 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package com.oracle.truffle.r.ffi.impl.interop.pkginit;
 
-int caccess_read_pointer_int(int *address) {
-	return *address;
-}
+import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.Resolve;
+import com.oracle.truffle.api.nodes.Node;
 
-double caccess_read_pointer_double(double *address) {
-	return *address;
-}
+@MessageResolution(receiverType = RegisterCCallableCall.class)
+public class RegisterCCallableCallMR {
+    @Resolve(message = "EXECUTE")
+    public abstract static class RegisterCCallableCallExecute extends Node {
+        protected java.lang.Object access(RegisterCCallableCall receiver, Object[] arguments) {
+            return receiver.pkgInitUpCalls.registerCCallable((String) arguments[0], (String) arguments[1], arguments[2]);
+        }
+    }
 
-int caccess_read_array_int(int *address, int index) {
-	return address[index];
-}
+    @Resolve(message = "IS_EXECUTABLE")
+    public abstract static class RegisterCCallableCallIsExecutable extends Node {
+        protected Object access(@SuppressWarnings("unused") RegisterCCallableCall receiver) {
+            return true;
+        }
+    }
 
-double caccess_read_array_double(double *address, int index) {
-	return address[index];
 }

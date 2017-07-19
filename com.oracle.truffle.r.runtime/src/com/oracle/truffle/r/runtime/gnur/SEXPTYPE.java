@@ -11,9 +11,6 @@
  */
 package com.oracle.truffle.r.runtime.gnur;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -98,21 +95,22 @@ public enum SEXPTYPE {
     public final int code;
     public final Class<?>[] fastRClasses;
 
+    private static final SEXPTYPE[] codeMap = new SEXPTYPE[501];
+
     SEXPTYPE(int code, Class<?>... fastRClasses) {
         this.code = code;
         this.fastRClasses = fastRClasses;
     }
 
-    private static final Map<Integer, SEXPTYPE> codeMap = new HashMap<>();
-
     static {
         for (SEXPTYPE type : SEXPTYPE.values()) {
-            SEXPTYPE.codeMap.put(type.code, type);
+            assert type.code >= 0 && type.code < codeMap.length;
+            codeMap[type.code] = type;
         }
     }
 
     public static SEXPTYPE mapInt(int type) {
-        return codeMap.get(type);
+        return codeMap[type];
     }
 
     /**

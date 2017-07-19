@@ -22,11 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import static com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_Utils.checkNativeAddress;
-
-import java.nio.charset.StandardCharsets;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
 import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
 import com.oracle.truffle.r.ffi.impl.interop.NativeCharArray;
@@ -37,7 +32,6 @@ import com.oracle.truffle.r.ffi.impl.interop.NativeRawArray;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -56,6 +50,11 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         return new NativeCharArray(chars.getContents().getBytes());
     }
 
+    public Object bytesToNativeCharArray(byte[] bytes) {
+        Object result = new NativeCharArray(bytes);
+        return result;
+    }
+
     // Checkstyle: stop method name check
 
     @Override
@@ -63,26 +62,6 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         if (obj instanceof NativeCharArray) {
             byte[] bytes = ((NativeCharArray) obj).getValue();
             return super.Rf_mkCharLenCE(bytes, bytes.length, encoding);
-        } else {
-            throw RInternalError.unimplemented();
-        }
-    }
-
-    @Override
-    public int Rf_error(Object msg) {
-        if (msg instanceof NativeCharArray) {
-            String smsg = new String(((NativeCharArray) msg).getValue(), StandardCharsets.UTF_8);
-            super.Rf_error(smsg);
-        } else {
-            throw RInternalError.unimplemented();
-        }
-        return 0;
-    }
-
-    @Override
-    public Object Rf_install(Object name) {
-        if (name instanceof NativeCharArray) {
-            return RDataFactory.createSymbolInterned(new String(((NativeCharArray) name).getValue(), StandardCharsets.UTF_8));
         } else {
             throw RInternalError.unimplemented();
         }
@@ -102,7 +81,7 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     public Object INTEGER(Object x) {
-        int[] value = (int[]) super.INTEGER(checkNativeAddress(x));
+        int[] value = (int[]) super.INTEGER(x);
         return new NativeIntegerArray(x, value);
     }
 
@@ -121,62 +100,12 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     public Object Rf_findVar(Object symbolArg, Object envArg) {
-        Object v = super.Rf_findVar(symbolArg, checkNativeAddress(envArg));
+        Object v = super.Rf_findVar(symbolArg, envArg);
         if (v instanceof RTypedValue) {
             return v;
         } else {
             return wrapPrimitive(v);
         }
-    }
-
-    @Override
-    public int Rf_defineVar(Object symbolArg, Object value, Object envArg) {
-        super.Rf_defineVar(symbolArg, value, checkNativeAddress(envArg));
-        return 0;
-    }
-
-    @Override
-    @TruffleBoundary
-    public int Rf_setAttrib(Object obj, Object name, Object val) {
-        super.Rf_setAttrib(checkNativeAddress(obj), name, checkNativeAddress(val));
-        return 0;
-    }
-
-    @Override
-    public Object Rf_getAttrib(Object obj, Object name) {
-        Object checkedObj = checkNativeAddress(obj);
-        return super.Rf_getAttrib(checkedObj, name);
-    }
-
-    @Override
-    public Object Rf_cons(Object car, Object cdr) {
-        return super.Rf_cons(checkNativeAddress(car), checkNativeAddress(cdr));
-    }
-
-    @Override
-    public Object CAR(Object e) {
-        return super.CAR(checkNativeAddress(e));
-    }
-
-    @Override
-    public Object CDR(Object e) {
-        return super.CDR(checkNativeAddress(e));
-    }
-
-    @Override
-    public Object CADR(Object e) {
-        Object ne = checkNativeAddress(e);
-        return super.CADR(ne);
-    }
-
-    @Override
-    public Object SETCAR(Object x, Object y) {
-        return super.SETCAR(checkNativeAddress(x), y);
-    }
-
-    public Object bytesToNativeCharArray(byte[] bytes) {
-        Object result = new NativeCharArray(bytes);
-        return result;
     }
 
     private static RScalar wrapPrimitive(Object x) {

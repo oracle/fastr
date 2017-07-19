@@ -24,17 +24,10 @@
 
 SEXP unimplemented(char *name) {
 	printf("unimplemented %s\n", name);
-	void *nameString = truffle_read_string(name);
-	void *obj = truffle_import_cached("_fastr_rffi_call");
-	void *result = truffle_invoke(obj, "unimplemented", nameString);
-	return result;
+	exit(1);
 }
 
-char *ensure_truffle_chararray(const char *x) {
-	if (truffle_is_truffle_object(x)) {
-		return (char *)x;
-	} else {
-		IMPORT_CALLHELPER_IMPL();
-		return truffle_invoke(obj, "bytesToNativeCharArray", truffle_read_n_bytes(x, strlen(x)));
-	}
+void fatalError(char *msg) {
+	printf("faatal error %s\n", msg);
+    exit(1);
 }

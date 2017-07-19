@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.interop.base;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
@@ -39,12 +38,18 @@ public class StrtolResultMR {
         }
     }
 
+    @Resolve(message = "IS_EXECUTABLE")
+    public abstract static class StrolResultIsExecutable extends Node {
+        protected Object access(@SuppressWarnings("unused") StrtolResult receiver) {
+            return true;
+        }
+    }
+
     @Resolve(message = "EXECUTE")
     public abstract static class BaseStrtolResultCallbackExecute extends Node {
-        protected Object access(@SuppressWarnings("unused") VirtualFrame frame, StrtolResult receiver, Object[] arguments) {
+        protected Object access(StrtolResult receiver, Object[] arguments) {
             receiver.setResult((long) arguments[0], (int) arguments[1]);
             return receiver;
         }
     }
-
 }

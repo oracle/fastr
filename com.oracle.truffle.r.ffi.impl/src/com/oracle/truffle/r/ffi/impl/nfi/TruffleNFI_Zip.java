@@ -40,7 +40,7 @@ public class TruffleNFI_Zip implements ZipRFFI {
             try {
                 int result = (int) ForeignAccess.sendExecute(message, NFIFunction.compress.getFunction(),
                                 JavaInterop.asTruffleObject(dest), JavaInterop.asTruffleObject(destlen),
-                                JavaInterop.asTruffleObject(source), JavaInterop.asTruffleObject(source.length));
+                                JavaInterop.asTruffleObject(source), source.length);
                 return result;
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
@@ -57,7 +57,7 @@ public class TruffleNFI_Zip implements ZipRFFI {
             try {
                 int result = (int) ForeignAccess.sendExecute(message, NFIFunction.uncompress.getFunction(),
                                 JavaInterop.asTruffleObject(dest), JavaInterop.asTruffleObject(destlen),
-                                JavaInterop.asTruffleObject(source), JavaInterop.asTruffleObject(source.length));
+                                JavaInterop.asTruffleObject(source), source.length);
                 return result;
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);

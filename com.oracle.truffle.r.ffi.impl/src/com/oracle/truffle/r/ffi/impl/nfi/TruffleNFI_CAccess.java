@@ -27,15 +27,11 @@ import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 public class TruffleNFI_CAccess {
-    private static TruffleNFI_DLL.NFIHandle handle;
-
     public enum Function {
         READ_POINTER_INT("(pointer): sint32"),
         READ_ARRAY_INT("(pointer, sint64): sint32"),
@@ -47,15 +43,11 @@ public class TruffleNFI_CAccess {
 
         Function(String signature) {
             this.signature = signature;
-
         }
 
         public TruffleObject getSymbolFunction() {
-            if (handle == null) {
-                handle = (TruffleNFI_DLL.NFIHandle) DLLRFFI.DLOpenRootNode.create(RContext.getInstance()).call(LibPaths.getBuiltinLibPath("caccess"), true, true);
-            }
             if (symbolFunction == null) {
-                DLL.SymbolHandle symbolHandle = (DLL.SymbolHandle) DLLRFFI.DLSymRootNode.create().getCallTarget().call(handle, cName());
+                SymbolHandle symbolHandle = DLL.findSymbol(cName(), null);
                 assert symbolHandle != null;
                 Node bind = Message.createInvoke(1).createNode();
                 try {
@@ -72,5 +64,4 @@ public class TruffleNFI_CAccess {
             return "caccess_" + name().toLowerCase();
         }
     }
-
 }

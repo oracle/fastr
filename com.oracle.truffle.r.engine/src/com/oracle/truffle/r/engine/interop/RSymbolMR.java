@@ -24,12 +24,22 @@ package com.oracle.truffle.r.engine.interop;
 
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 
 @MessageResolution(receiverType = RSymbol.class)
 public class RSymbolMR {
+
+    @Resolve(message = "TO_NATIVE")
+    public abstract static class RSymbolToNativeNode extends Node {
+        protected Object access(RSymbol receiver) {
+            return new NativePointer(receiver);
+        }
+    }
+
     @CanResolve
     public abstract static class RSymbolCheck extends Node {
 

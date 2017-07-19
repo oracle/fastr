@@ -29,8 +29,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.interop.NativeCharArray;
 import com.oracle.truffle.r.ffi.impl.interop.base.GlobResult;
@@ -38,30 +36,11 @@ import com.oracle.truffle.r.ffi.impl.interop.base.ReadlinkResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.StrtolResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.UnameResult;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public class TruffleLLVM_Base implements BaseRFFI {
-    private static TruffleObject truffleBaseTruffleObject;
-
-    TruffleLLVM_Base() {
-        truffleBaseTruffleObject = JavaInterop.asTruffleObject(this);
-    }
-
-    static class ContextStateImpl implements RContext.ContextState {
-        @Override
-        public ContextState initialize(RContext context) {
-            RFFIFactory.getRFFI().getBaseRFFI();
-            context.getEnv().exportSymbol("_fastr_rffi_base", truffleBaseTruffleObject);
-            return this;
-        }
-
-    }
-
     public static class TruffleLLVM_GetpidNode extends GetpidNode {
         @Child private Node message = LLVMFunction.getpid.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
@@ -153,14 +132,6 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
-    public void setReadlinkResult(ReadlinkResult baseReadlinkResultCallback, NativeCharArray nativePath, int errno) {
-        String path = null;
-        if (nativePath != null) {
-            path = new String(nativePath.getValue());
-        }
-        baseReadlinkResultCallback.setResult(path, errno);
-    }
-
     public static class TruffleLLVM_ReadlinkNode extends ReadlinkNode {
         private static final int EINVAL = 22;
         @Child private Node message = LLVMFunction.readlink.createMessage();
@@ -246,10 +217,6 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
-    public void setStrtolResult(StrtolResult callback, long value, int errno) {
-        callback.setResult(value, errno);
-    }
-
     public static class TruffleLLVM_StrolNode extends StrolNode {
         @Child private Node message = LLVMFunction.strtol.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
@@ -275,12 +242,6 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
-    public void setUnameResult(UnameResult baseUnameResultCallback, NativeCharArray sysname, NativeCharArray release,
-                    NativeCharArray version, NativeCharArray machine, NativeCharArray nodename) {
-        baseUnameResultCallback.setResult(new String(sysname.getValue()), new String(release.getValue()), new String(version.getValue()),
-                        new String(machine.getValue()), new String(nodename.getValue()));
-    }
-
     public static class TruffleLLVM_UnameNode extends UnameNode {
         @Child private Node message = LLVMFunction.uname.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
@@ -299,10 +260,6 @@ public class TruffleLLVM_Base implements BaseRFFI {
                 throw RInternalError.shouldNotReachHere(ex);
             }
         }
-    }
-
-    public void setGlobResult(GlobResult baseGlobResultCallback, NativeCharArray path) {
-        baseGlobResultCallback.addPath(new String(path.getValue()));
     }
 
     public static class TruffleLLVM_GlobNode extends GlobNode {
