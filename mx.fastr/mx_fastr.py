@@ -264,7 +264,7 @@ def _fastr_gate_runner(args, tasks):
     # check that the expected test output file is up to date
     with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks) as t:
         if t:
-            mx_unittest.unittest(['-Dfastr.test.check.expected', '-Dfastr.test.generate'] + _gate_unit_tests())
+            mx_unittest.unittest(['-Dfastr.test.gen.expected=' + _test_srcdir(), '-Dfastr.test.check.expected'] + _gate_unit_tests())
 
     with mx_gate.Task('UnitTests: no specials', tasks) as t:
         if t:
@@ -337,15 +337,15 @@ def _all_unit_tests():
 def _all_generated_unit_tests():
     return _simple_generated_unit_tests()
 
+def _test_srcdir():
+    tp = 'com.oracle.truffle.r.test'
+    return join(mx.project(tp).dir, 'src', tp.replace('.', sep))
+
 def testgen(args):
     '''generate the expected output for unit tests'''
     # check we are in the home directory
     if os.getcwd() != _fastr_suite.dir:
         mx.abort('must run rtestgen from FastR home directory')
-
-    def _test_srcdir():
-        tp = 'com.oracle.truffle.r.test'
-        return join(mx.project(tp).dir, 'src', tp.replace('.', sep))
 
     def need_version_check():
         vardef = os.environ.has_key('FASTR_TESTGEN_GNUR')
