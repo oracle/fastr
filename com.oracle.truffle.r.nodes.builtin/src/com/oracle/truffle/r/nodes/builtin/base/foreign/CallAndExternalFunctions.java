@@ -62,6 +62,7 @@ import com.oracle.truffle.r.library.tools.ToolsTextFactory.DoTabExpandNodeGen;
 import com.oracle.truffle.r.library.utils.CountFieldsNodeGen;
 import com.oracle.truffle.r.library.utils.Crc64NodeGen;
 import com.oracle.truffle.r.library.utils.DownloadNodeGen;
+import com.oracle.truffle.r.library.utils.UnzipNodeGen;
 import com.oracle.truffle.r.library.utils.MenuNodeGen;
 import com.oracle.truffle.r.library.utils.ObjectSizeNodeGen;
 import com.oracle.truffle.r.library.utils.RprofNodeGen;
@@ -760,6 +761,7 @@ public class CallAndExternalFunctions {
                 case "signrank_free":
                     return new SignrankFreeNode();
                 case "unzip":
+                    return UnzipNodeGen.create();
                 case "addhistory":
                 case "loadhistory":
                 case "savehistory":
