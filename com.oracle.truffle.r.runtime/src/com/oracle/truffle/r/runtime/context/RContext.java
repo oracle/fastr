@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.context;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -49,7 +48,6 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
@@ -218,21 +216,6 @@ public final class RContext implements RTruffleObject {
         @SuppressWarnings("unused")
         default void beforeDestroy(RContext context) {
             // default empty implementation
-        }
-    }
-
-    /**
-     * A thread that is explicitly associated with a context for efficient lookup.
-     */
-    public abstract static class ContextThread extends Thread {
-        protected RContext context;
-
-        public ContextThread(RContext context) {
-            this.context = context;
-        }
-
-        public void setContext(RContext context) {
-            this.context = context;
         }
     }
 
