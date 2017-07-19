@@ -32,6 +32,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -124,9 +125,10 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "LIMIT", guards = {"funValue.getLength() == 1", "funValue.getDataAt(0) == cachedName"})
+        @Specialization(limit = "LIMIT", guards = {"funValue.getLength() == 1", "funValue.getDataAt(0) == cachedName", "getCallerFrameDescriptor(frame) == cachedCallerFrameDescriptor"})
         protected RFunction matchfunCached(VirtualFrame frame, RPromise funPromise, RAbstractStringVector funValue, boolean descend,
                         @Cached("firstString(funValue)") String cachedName,
+                        @Cached("getCallerFrameDescriptor(frame)") FrameDescriptor cachedCallerFrameDescriptor,
                         @Cached("createLookup(cachedName, descend)") ReadVariableNode lookup) {
             return checkResult(lookup.execute(frame, getCallerFrame.execute(frame)));
         }
@@ -137,9 +139,10 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "LIMIT", guards = {"funValue.getName() == cachedName"})
+        @Specialization(limit = "LIMIT", guards = {"funValue.getName() == cachedName", "getCallerFrameDescriptor(frame) == cachedCallerFrameDescriptor"})
         protected RFunction matchfunCached(VirtualFrame frame, RPromise funPromise, RSymbol funValue, boolean descend,
                         @Cached("firstString(funValue)") String cachedName,
+                        @Cached("getCallerFrameDescriptor(frame)") FrameDescriptor cachedCallerFrameDescriptor,
                         @Cached("createLookup(cachedName, descend)") ReadVariableNode lookup) {
             return checkResult(lookup.execute(frame, getCallerFrame.execute(frame)));
         }
@@ -197,6 +200,10 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
             } else {
                 return FrameSlotChangeMonitor.getValue(slot, frame);
             }
+        }
+
+        protected FrameDescriptor getCallerFrameDescriptor(VirtualFrame frame) {
+            return getCallerFrame.execute(frame).getFrameDescriptor();
         }
     }
 }
