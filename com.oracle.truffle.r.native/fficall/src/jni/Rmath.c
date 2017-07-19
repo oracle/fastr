@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -682,8 +682,11 @@ double Rf_fprec(double a, double b) {
 }
 
 double Rf_fsign(double a, double b) {
-    unimplemented("Rf_fsign");
-    return 0;
+#ifdef IEEE_754
+    if (ISNAN(a) || ISNAN(b))
+	return a + b;
+#endif
+    return ((b >= 0) ? fabs(a) : -fabs(b));
 }
 
 double Rf_ftrunc(double a) {

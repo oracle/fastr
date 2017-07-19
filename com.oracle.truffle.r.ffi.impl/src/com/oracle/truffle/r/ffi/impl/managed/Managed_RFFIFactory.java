@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.managed;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
@@ -79,6 +80,26 @@ public class Managed_RFFIFactory extends RFFIFactory implements RFFI {
             @Override
             public DqrlsNode createDqrlsNode() {
                 throw unsupported("dqrls");
+            }
+
+            @Override
+            public DqrqtyNode createDqrqtyNode() {
+                throw RInternalError.unimplemented();
+            }
+
+            @Override
+            public DqrqyNode createDqrqyNode() {
+                throw RInternalError.unimplemented();
+            }
+
+            @Override
+            public DqrrsdNode createDqrrsdNode() {
+                throw RInternalError.unimplemented();
+            }
+
+            @Override
+            public DqrxbNode createDqrxbNode() {
+                throw RInternalError.unimplemented();
             }
         };
     }

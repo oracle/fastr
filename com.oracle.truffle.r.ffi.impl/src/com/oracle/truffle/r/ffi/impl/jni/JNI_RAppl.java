@@ -51,6 +51,38 @@ public class JNI_RAppl implements RApplRFFI {
         }
     }
 
+    private static class JNI_DqrqtyNode extends DqrqtyNode {
+        @Override
+        @TruffleBoundary
+        public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] qty) {
+            native_dqrqty(x, n, k, qraux, y, ny, qty);
+        }
+    }
+
+    private static class JNI_DqrqyNode extends DqrqyNode {
+        @Override
+        @TruffleBoundary
+        public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] qy) {
+            native_dqrqy(x, n, k, qraux, y, ny, qy);
+        }
+    }
+
+    private static class JNI_DqrrsdNode extends DqrrsdNode {
+        @Override
+        @TruffleBoundary
+        public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] rsd) {
+            native_dqrrsd(x, n, k, qraux, y, ny, rsd);
+        }
+    }
+
+    private static class JNI_DqrxbNode extends DqrxbNode {
+        @Override
+        @TruffleBoundary
+        public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] xb) {
+            native_dqrxb(x, n, k, qraux, y, ny, xb);
+        }
+    }
+
     @Override
     public Dqrdc2Node createDqrdc2Node() {
         return new JNI_Dqrdc2Node();
@@ -66,6 +98,26 @@ public class JNI_RAppl implements RApplRFFI {
         return new JNI_DqrlsNode();
     }
 
+    @Override
+    public DqrqtyNode createDqrqtyNode() {
+        return new JNI_DqrqtyNode();
+    }
+
+    @Override
+    public DqrqyNode createDqrqyNode() {
+        return new JNI_DqrqyNode();
+    }
+
+    @Override
+    public DqrrsdNode createDqrrsdNode() {
+        return new JNI_DqrrsdNode();
+    }
+
+    @Override
+    public DqrxbNode createDqrxbNode() {
+        return new JNI_DqrxbNode();
+    }
+
     // Checkstyle: stop method name
 
     private static native void native_dqrdc2(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work);
@@ -74,4 +126,11 @@ public class JNI_RAppl implements RApplRFFI {
 
     private static native void native_dqrls(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work);
 
+    private static native void native_dqrqty(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] qty);
+
+    private static native void native_dqrqy(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] qy);
+
+    private static native void native_dqrrsd(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] rsd);
+
+    private static native void native_dqrxb(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] xb);
 }

@@ -96,6 +96,86 @@ public class TruffleNFI_RAppl implements RApplRFFI {
         }
     }
 
+    private static class TruffleNFI_DqrqtyNode extends DqrqtyNode {
+        @Child private Node message = NFIFunction.dqrqty.createMessage();
+
+        @Override
+        public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] qty) {
+            try {
+                ForeignAccess.sendExecute(message, NFIFunction.dqrqty.getFunction(),
+                                JavaInterop.asTruffleObject(x),
+                                n, k,
+                                JavaInterop.asTruffleObject(qraux),
+                                JavaInterop.asTruffleObject(y),
+                                ny,
+                                JavaInterop.asTruffleObject(qty));
+
+            } catch (InteropException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+        }
+    }
+
+    private static class TruffleNFI_DqrqyNode extends DqrqyNode {
+        @Child private Node message = NFIFunction.dqrqy.createMessage();
+
+        @Override
+        public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] qy) {
+            try {
+                ForeignAccess.sendExecute(message, NFIFunction.dqrqy.getFunction(),
+                                JavaInterop.asTruffleObject(x),
+                                n, k,
+                                JavaInterop.asTruffleObject(qraux),
+                                JavaInterop.asTruffleObject(y),
+                                ny,
+                                JavaInterop.asTruffleObject(qy));
+
+            } catch (InteropException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+        }
+    }
+
+    private static class TruffleNFI_DqrrsdNode extends DqrrsdNode {
+        @Child private Node message = NFIFunction.dqrrsd.createMessage();
+
+        @Override
+        public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] rsd) {
+            try {
+                ForeignAccess.sendExecute(message, NFIFunction.dqrrsd.getFunction(),
+                                JavaInterop.asTruffleObject(x),
+                                n, k,
+                                JavaInterop.asTruffleObject(qraux),
+                                JavaInterop.asTruffleObject(y),
+                                ny,
+                                JavaInterop.asTruffleObject(rsd));
+
+            } catch (InteropException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+        }
+    }
+
+    private static class TruffleNFI_DqrxbNode extends DqrxbNode {
+        @Child private Node message = NFIFunction.dqrxb.createMessage();
+
+        @Override
+        public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] xb) {
+            try {
+                ForeignAccess.sendExecute(message, NFIFunction.dqrxb.getFunction(),
+                                JavaInterop.asTruffleObject(x),
+                                n, k,
+                                JavaInterop.asTruffleObject(qraux),
+                                JavaInterop.asTruffleObject(y),
+                                ny,
+                                JavaInterop.asTruffleObject(xb));
+
+            } catch (InteropException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+        }
+    }
+
     @Override
     public Dqrdc2Node createDqrdc2Node() {
         return new TruffleNFI_Dqrdc2Node();
@@ -109,5 +189,25 @@ public class TruffleNFI_RAppl implements RApplRFFI {
     @Override
     public DqrlsNode createDqrlsNode() {
         return new TruffleNFI_DqrlsNode();
+    }
+
+    @Override
+    public DqrqtyNode createDqrqtyNode() {
+        return new TruffleNFI_DqrqtyNode();
+    }
+
+    @Override
+    public DqrqyNode createDqrqyNode() {
+        return new TruffleNFI_DqrqyNode();
+    }
+
+    @Override
+    public DqrrsdNode createDqrrsdNode() {
+        return new TruffleNFI_DqrrsdNode();
+    }
+
+    @Override
+    public DqrxbNode createDqrxbNode() {
+        return new TruffleNFI_DqrxbNode();
     }
 }

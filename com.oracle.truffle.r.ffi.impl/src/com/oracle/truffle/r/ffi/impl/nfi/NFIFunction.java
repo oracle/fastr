@@ -60,6 +60,10 @@ enum NFIFunction {
     dqrdc2("([double], sint32, sint32, sint32, double, [sint32], [double], [sint32], [double]): void", "call_appl_"),
     dqrcf("([double], sint32, sint32, [double], [double], sint32, [double], [sint32]): void", "call_appl_"),
     dqrls("([double], sint32, sint32, [double], sint32, double, [double], [double], [double], [sint32], [sint32], [double], [double]): void", "call_appl_"),
+    dqrqty("([double], sint32, sint32, [double], [double], sint32, [double]): void", "call_appl_"),
+    dqrqy("([double], sint32, sint32, [double], [double], sint32, [double]): void", "call_appl_"),
+    dqrrsd("([double], sint32, sint32, [double], [double], sint32, [double]): void", "call_appl_"),
+    dqrxb("([double], sint32, sint32, [double], [double], sint32, [double]): void", "call_appl_"),
     // zip
     compress("([uint8], [uint64], [uint8], uint64): sint32"),
     uncompress("([uint8], [uint64], [uint8], uint64): sint32"),

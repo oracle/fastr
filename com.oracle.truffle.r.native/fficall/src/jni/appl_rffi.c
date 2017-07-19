@@ -26,6 +26,10 @@
 extern void dqrdc2_(double *x, int *ldx, int *n, int *p, double *tol, int *rank, double *qraux, int* pivot, double *work);
 extern void dqrcf_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *b, int* info);
 extern void dqrls_(double *x, int *n, int *p, double *y, int *ny, double *tol, double *b, double *rsd, double *qty, int *k, int *jpvt, double *qraux, double *work);
+extern void dqrqty_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *qty);
+extern void dqrqy_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *qy);
+extern void dqrrsd_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *rsd);
+extern void dqrxb_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *xb);
 
 JNIEXPORT void JNICALL
 Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1RAppl_native_1dqrdc2(JNIEnv *env, jclass c,
@@ -83,4 +87,60 @@ Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1RAppl_native_1dqrls(JNIEnv *env, jcl
 	(*env)->ReleasePrimitiveArrayCritical(env, jjpvt, jpvt, 0);
 	(*env)->ReleasePrimitiveArrayCritical(env, jqraux, qraux, 0);
 	(*env)->ReleasePrimitiveArrayCritical(env, jwork, work, 0);
+}
+
+JNIEXPORT void JNICALL
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1RAppl_native_1dqrqty(JNIEnv *env, jclass c,
+		jdoubleArray jx, int n, int k, jdoubleArray jqraux, jdoubleArray jy, int ny, jdoubleArray jqty) {
+	double *x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
+	double *qraux = (*env)->GetPrimitiveArrayCritical(env, jqraux, NULL);
+	double *y = (*env)->GetPrimitiveArrayCritical(env, jy, NULL);
+	double *qty = (*env)->GetPrimitiveArrayCritical(env, jqty, NULL);
+	dqrqty_(x, &n, &k, qraux, y, &ny, qty);
+	(*env)->ReleasePrimitiveArrayCritical(env, jx, x, 0);
+	(*env)->ReleasePrimitiveArrayCritical(env, jqraux, qraux, 0);
+	(*env)->ReleasePrimitiveArrayCritical(env, jy, y, 0);
+	(*env)->ReleasePrimitiveArrayCritical(env, jqty, qty, 0);
+}
+
+JNIEXPORT void JNICALL
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1RAppl_native_1dqrqy(JNIEnv *env, jclass c,
+		jdoubleArray jx, int n, int k, jdoubleArray jqraux, jdoubleArray jy, int ny, jdoubleArray jqy) {
+	double *x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
+	double *qraux = (*env)->GetPrimitiveArrayCritical(env, jqraux, NULL);
+	double *y = (*env)->GetPrimitiveArrayCritical(env, jy, NULL);
+	double *qy = (*env)->GetPrimitiveArrayCritical(env, jqy, NULL);
+	dqrqy_(x, &n, &k, qraux, y, &ny, qy);
+	(*env)->ReleasePrimitiveArrayCritical(env, jx, x, 0);
+	(*env)->ReleasePrimitiveArrayCritical(env, jqraux, qraux, 0);
+	(*env)->ReleasePrimitiveArrayCritical(env, jy, y, 0);
+	(*env)->ReleasePrimitiveArrayCritical(env, jqy, qy, 0);
+}
+
+JNIEXPORT void JNICALL
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1RAppl_native_1dqrrsd(JNIEnv *env, jclass c,
+		jdoubleArray jx, int n, int k, jdoubleArray jqraux, jdoubleArray jy, int ny, jdoubleArray jrsd) {
+	double *x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
+	double *qraux = (*env)->GetPrimitiveArrayCritical(env, jqraux, NULL);
+	double *y = (*env)->GetPrimitiveArrayCritical(env, jy, NULL);
+	double *rsd = (*env)->GetPrimitiveArrayCritical(env, jrsd, NULL);
+	dqrrsd_(x, &n, &k, qraux, y, &ny, rsd);
+	(*env)->ReleasePrimitiveArrayCritical(env, jx, x, 0);
+	(*env)->ReleasePrimitiveArrayCritical(env, jqraux, qraux, 0);
+	(*env)->ReleasePrimitiveArrayCritical(env, jy, y, 0);
+	(*env)->ReleasePrimitiveArrayCritical(env, jrsd, rsd, 0);
+}
+
+JNIEXPORT void JNICALL
+Java_com_oracle_truffle_r_ffi_impl_jni_JNI_1RAppl_native_1dqrxb(JNIEnv *env, jclass c,
+		jdoubleArray jx, int n, int k, jdoubleArray jqraux, jdoubleArray jy, int ny, jdoubleArray jxb) {
+	double *x = (*env)->GetPrimitiveArrayCritical(env, jx, NULL);
+	double *qraux = (*env)->GetPrimitiveArrayCritical(env, jqraux, NULL);
+	double *y = (*env)->GetPrimitiveArrayCritical(env, jy, NULL);
+	double *xb = (*env)->GetPrimitiveArrayCritical(env, jxb, NULL);
+	dqrxb_(x, &n, &k, qraux, y, &ny, xb);
+	(*env)->ReleasePrimitiveArrayCritical(env, jx, x, 0);
+	(*env)->ReleasePrimitiveArrayCritical(env, jqraux, qraux, 0);
+	(*env)->ReleasePrimitiveArrayCritical(env, jy, y, 0);
+	(*env)->ReleasePrimitiveArrayCritical(env, jxb, xb, 0);
 }

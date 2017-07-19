@@ -54,10 +54,50 @@ public interface RApplRFFI {
         }
     }
 
+    abstract class DqrqtyNode extends Node {
+        public abstract void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] qty);
+
+        public static DqrqtyNode create() {
+
+            return RFFIFactory.getRFFI().getRApplRFFI().createDqrqtyNode();
+        }
+    }
+
+    abstract class DqrqyNode extends Node {
+        public abstract void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] qy);
+
+        public static DqrqyNode create() {
+            return RFFIFactory.getRFFI().getRApplRFFI().createDqrqyNode();
+        }
+    }
+
+    abstract class DqrrsdNode extends Node {
+        public abstract void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] rsd);
+
+        public static DqrrsdNode create() {
+            return RFFIFactory.getRFFI().getRApplRFFI().createDqrrsdNode();
+        }
+    }
+
+    abstract class DqrxbNode extends Node {
+        public abstract void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] xb);
+
+        public static DqrxbNode create() {
+            return RFFIFactory.getRFFI().getRApplRFFI().createDqrxbNode();
+        }
+    }
+
     Dqrdc2Node createDqrdc2Node();
 
     DqrcfNode createDqrcfNode();
 
     DqrlsNode createDqrlsNode();
 
+    DqrqtyNode createDqrqtyNode();
+
+    DqrqyNode createDqrqyNode();
+
+    DqrrsdNode createDqrrsdNode();
+
+    DqrxbNode createDqrxbNode();
 }
