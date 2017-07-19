@@ -41,7 +41,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAt
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -155,8 +154,7 @@ public class IsFiniteFunctions {
             }
             if (setDimNamesProfile.profile(dimNames != null)) {
                 if (setDimNames == null) {
-                    setDimNames = SetDimNamesAttributeNode.create();
-                    insert(setDimNames);
+                    setDimNames = insert(SetDimNamesAttributeNode.create());
                 }
                 setDimNames.setDimNames(result, dimNames);
             }

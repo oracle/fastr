@@ -23,9 +23,11 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -34,6 +36,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -45,6 +48,10 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
 
     private final BranchProfile emptyPermVector = BranchProfile.create();
     private final ConditionProfile mustResize = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile setDimNamesProfile = ConditionProfile.createBinaryProfile();
+
+    @Child private SetDimNamesAttributeNode setDimNames;
+    @Child private ExtractListElement extractListElement;
 
     static {
         Casts casts = new Casts(APerm.class);
@@ -104,7 +111,8 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
     @Specialization
     protected RAbstractVector aPerm(RAbstractVector vector, RAbstractIntVector permVector, byte resize,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
-                    @Cached("create()") SetDimAttributeNode setDimsNode) {
+                    @Cached("create()") SetDimAttributeNode setDimsNode,
+                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
 
         int[] dim = getDimsNode.getDimensions(vector);
         checkErrorConditions(dim);
@@ -122,6 +130,25 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
             int pos = toPos(applyPermute(posV, perm, true), dim);
             result.transferElementSameType(i, vector, pos);
             posV = incArray(posV, pDim);
+        }
+
+        RList dimNames = getDimNamesNode.getDimNames(vector);
+        if (setDimNamesProfile.profile(dimNames != null)) {
+            if (setDimNames == null) {
+                setDimNames = insert(SetDimNamesAttributeNode.create());
+                extractListElement = insert(ExtractListElement.create());
+            }
+            Object[] permData = new Object[dimNames.getLength()];
+            RStringVector names = dimNames.getNames(); // May be null for "list(NULL,NULL)"
+            String[] permNames = (names != null) ? new String[permData.length] : null;
+            for (int i = 0; i < permData.length; i++) {
+                permData[i] = extractListElement.execute(dimNames, perm[i]);
+                if (permNames != null) {
+                    permNames[i] = names.getDataAt(perm[i]);
+                }
+            }
+            RList permDimNames = RDataFactory.createList(permData, (names != null) ? RDataFactory.createStringVector(permNames, names.isComplete()) : null);
+            setDimNames.setDimNames(result, permDimNames);
         }
 
         return result;
@@ -150,7 +177,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         }
 
         // Note: if this turns out to be slow, we can cache the permutation
-        return aPerm(vector, RDataFactory.createIntVector(perm, true), resize, getDimsNode, setDimsNode);
+        return aPerm(vector, RDataFactory.createIntVector(perm, true), resize, getDimsNode, setDimsNode, getDimNamesNode);
     }
 
     private static int[] getReverse(int[] dim) {

@@ -29,6 +29,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.RFactorNodes;
 import com.oracle.truffle.r.runtime.Utils;
@@ -57,8 +58,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public abstract class Split extends RBuiltinNode.Arg2 {
 
     @Child private RFactorNodes.GetLevels getLevelNode = new RFactorNodes.GetLevels();
+    @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
 
     @SuppressWarnings("unused") private final ConditionProfile noStringLevels = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile namesProfile = ConditionProfile.createBinaryProfile();
 
     private static final int INITIAL_SIZE = 5;
     private static final int SCALE_FACTOR = 2;
@@ -124,10 +127,27 @@ public abstract class Split extends RBuiltinNode.Arg2 {
             collect[collectResultSize[resultIndex]++] = x.getDataAt(i);
         }
 
-        // assemble result vectors and level names
         Object[] results = new Object[nLevels];
-        for (int i = 0; i < nLevels; i++) {
-            results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete());
+        RStringVector xNames = getNames.getNames(x);
+        if (namesProfile.profile(xNames != null)) {
+            String[][] resultNames = new String[nLevels][];
+            int[] resultNamesIdxs = new int[nLevels];
+            for (int i = 0; i < nLevels; i++) {
+                resultNames[i] = new String[collectResultSize[i]];
+            }
+            for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factor.length)) {
+                int resultIndex = factor[fi] - 1; // a factor is a 1-based int vector
+                resultNames[resultIndex][resultNamesIdxs[resultIndex]++] = xNames.getDataAt(i);
+            }
+            for (int i = 0; i < nLevels; i++) {
+                results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete(),
+                                RDataFactory.createStringVector(resultNames[i], xNames.isComplete()));
+            }
+        } else {
+            // assemble result vectors and level names
+            for (int i = 0; i < nLevels; i++) {
+                results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete());
+            }
         }
 
         return RDataFactory.createList(results, names);

@@ -497,7 +497,6 @@ public class TrigExpFunctions {
         @Specialization(guards = {"y.getLength() > 0", "x.getLength() > 0"})
         protected RDoubleVector atan2(RAbstractDoubleVector y, RAbstractDoubleVector x,
                         @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
-                        @Cached("createBinaryProfile()") ConditionProfile xLengthProfile,
                         @Cached("createBinaryProfile()") ConditionProfile yLengthProfile) {
             int xLength = x.getLength();
             int yLength = y.getLength();
@@ -516,7 +515,8 @@ public class TrigExpFunctions {
             RDoubleVector result = createResult(array);
             if (yLengthProfile.profile(result.getLength() == y.getLength())) {
                 copyAttributesNode.execute(result, y);
-            } else if (xLengthProfile.profile(result.getLength() == x.getLength())) {
+            } else {
+                assert (result.getLength() == x.getLength()) : "Result length=" + result.getLength() + " != x.getLength()=" + x.getLength();
                 copyAttributesNode.execute(result, x);
             }
             return result;
