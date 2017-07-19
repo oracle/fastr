@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import java.io.IOException;
-
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -36,8 +34,8 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 
 public class TruffleLLVM_Tools implements ToolsRFFI {
 
@@ -75,5 +73,4 @@ public class TruffleLLVM_Tools implements ToolsRFFI {
     public ParseRdNode createParseRdNode() {
         return new TruffleLLVM_ToolsRFFINode();
     }
-
 }

@@ -64,5 +64,4 @@ public class TruffleNFI_CAccess {
             return "caccess_" + name().toLowerCase();
         }
     }
-
 }
