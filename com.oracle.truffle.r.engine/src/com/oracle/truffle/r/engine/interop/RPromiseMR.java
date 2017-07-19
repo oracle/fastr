@@ -24,18 +24,16 @@ package com.oracle.truffle.r.engine.interop;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.CanResolve;
+import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -64,13 +62,10 @@ public class RPromiseMR {
     @Resolve(message = "READ")
     public abstract static class RPromiseReadNode extends Node {
 
-        @SuppressWarnings("try")
         @TruffleBoundary
         protected Object access(RPromise receiver, String field) {
             if (PROP_EXPR.equals(field)) {
-                try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
-                    return RDataFactory.createLanguage(receiver.getRep());
-                }
+                return RDataFactory.createLanguage(receiver.getRep());
             }
             if (PROP_IS_EVALUATED.equals(field)) {
                 return RRuntime.asLogical(receiver.isEvaluated());
@@ -89,7 +84,6 @@ public class RPromiseMR {
     @Resolve(message = "WRITE")
     public abstract static class RPromiseWriteNode extends Node {
 
-        @SuppressWarnings("try")
         protected Object access(RPromise receiver, String field, Object valueObj) {
             if (PROP_IS_EVALUATED.equals(field)) {
                 if (!(valueObj instanceof Boolean)) {
@@ -97,16 +91,10 @@ public class RPromiseMR {
                 }
 
                 boolean newVal = (boolean) valueObj;
-
                 if (!receiver.isEvaluated() && newVal) {
-                    try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
-                        PromiseHelperNode.evaluateSlowPath(receiver);
-                    }
+                    PromiseHelperNode.evaluateSlowPath(receiver);
                 } else if (receiver.isEvaluated() && !newVal) {
-                    try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
-                        receiver.resetValue();
-                    }
-
+                    receiver.resetValue();
                 }
                 return RRuntime.asLogical(receiver.isEvaluated());
             }
@@ -125,19 +113,14 @@ public class RPromiseMR {
     @Resolve(message = "KEY_INFO")
     public abstract static class RPromiseKeyInfoNode extends Node {
 
-        private static final int EXISTS = 1 << 0;
-        private static final int READABLE = 1 << 1;
-        private static final int WRITABLE = 1 << 2;
-
         protected Object access(@SuppressWarnings("unused") RPromise receiver, String identifier) {
             if (PROP_EXPR.equals(identifier) || PROP_VALUE.equals(identifier)) {
-                return EXISTS + READABLE;
+                return KeyInfo.newBuilder().setReadable(true).build();
+            } else if (PROP_IS_EVALUATED.equals(identifier)) {
+                return KeyInfo.newBuilder().setReadable(true).setWritable(true).build();
+            } else {
+                return 0;
             }
-
-            if (PROP_IS_EVALUATED.equals(identifier)) {
-                return EXISTS + READABLE + WRITABLE;
-            }
-            return 0;
         }
     }
 

@@ -30,11 +30,8 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -67,11 +64,8 @@ public class RLanguageMR {
     public abstract static class RLanguageReadNode extends Node {
         @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
 
-        @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, RLanguage receiver, int label) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
-                return extract.apply(frame, receiver, new Object[]{label + 1}, RLogical.TRUE, RLogical.TRUE);
-            }
+            return extract.apply(frame, receiver, new Object[]{label + 1}, RLogical.TRUE, RLogical.TRUE);
         }
     }
 
@@ -79,7 +73,7 @@ public class RLanguageMR {
     public abstract static class RLanguageWriteNode extends Node {
 
         @SuppressWarnings("unused")
-        protected Object access(VirtualFrame frame, RLanguage receiver, int label, Object valueObj) {
+        protected Object access(RLanguage receiver, int label, Object valueObj) {
             throw UnsupportedMessageException.raise(Message.WRITE);
         }
     }

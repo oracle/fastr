@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.context;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -49,7 +48,6 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
@@ -221,21 +219,6 @@ public final class RContext implements RTruffleObject {
         }
     }
 
-    /**
-     * A thread that is explicitly associated with a context for efficient lookup.
-     */
-    public abstract static class ContextThread extends Thread {
-        protected RContext context;
-
-        public ContextThread(RContext context) {
-            this.context = context;
-        }
-
-        public void setContext(RContext context) {
-            this.context = context;
-        }
-    }
-
     private final RStartParams startParameters;
     private final RCmdOptions cmdOptions;
     private final String[] environment;
@@ -281,16 +264,6 @@ public final class RContext implements RTruffleObject {
     private RContext sharedChild;
 
     /**
-     * Typically there is a 1-1 relationship between an {@link RContext} and the thread that is
-     * performing the evaluation, so we can store the {@link RContext} in a {@link ThreadLocal}.
-     *
-     * When a context is first created no threads are attached, to allow contexts to be used as
-     * values in the experimental {@code fastr.context.xxx} functions. Additional threads can be
-     * added by the {@link #attachThread} method.
-     */
-    private static final ThreadLocal<RContext> threadLocalContext = new ThreadLocal<>();
-
-    /**
      * Used by the MethodListDispatch class.
      */
     private boolean methodTableDispatchOn = false;
@@ -334,21 +307,6 @@ public final class RContext implements RTruffleObject {
         RContext.builtinLookup = rBuiltinLookup;
         RContext.foreignAccessFactory = rForeignAccessFactory;
     }
-
-    /**
-     * Associates this {@link RContext} with the current thread.
-     */
-    private void attachThread() {
-        Thread current = Thread.currentThread();
-        if (current instanceof ContextThread) {
-            ((ContextThread) current).setContext(this);
-        } else {
-            threadLocalContext.set(this);
-        }
-    }
-
-    private static final Assumption singleContextAssumption = Truffle.getRuntime().createAssumption("single RContext");
-    @CompilationFinal private static RContext singleContext;
 
     // need an additional flag as we don't want multi-slot processing to start until context
     // initialization is fully complete - singleContext flag is not good enough for that
@@ -512,25 +470,9 @@ public final class RContext implements RTruffleObject {
             }
         }
 
-        if (singleContextAssumption.isValid()) {
-            if (singleContext == null) {
-                singleContext = this;
-            } else {
-                singleContext = null;
-                singleContextAssumption.invalidate();
-            }
-        }
-
         /*
-         * Activate the context by attaching the current thread and initializing the {@link
-         * ContextState} objects. Note that we attach the thread before creating the new context
-         * state. This means that code that accesses the state through this interface will receive a
-         * {@code null} value. Access to the parent state is available through the {@link RContext}
-         * argument passed to the newContext methods. It might be better to attach the thread after
-         * state creation but it is a finely balanced decision and risks incorrectly accessing the
-         * parent state.
+         * Activate the context by initializing the {@link ContextState} objects.
          */
-        attachThread();
         state.add(State.ATTACHED);
 
         stateDLL.initialize(this);
@@ -622,11 +564,6 @@ public final class RContext implements RTruffleObject {
             if (contextKind == ContextKind.SHARE_PARENT_RW) {
                 parentContext.sharedChild = null;
             }
-            if (parentContext == null) {
-                threadLocalContext.set(null);
-            } else {
-                threadLocalContext.set(parentContext);
-            }
             state = EnumSet.of(State.DESTROYED);
 
             this.allocationReporter.removePropertyChangeListener(ALLOCATION_ACTIVATION_LISTENER);
@@ -657,24 +594,6 @@ public final class RContext implements RTruffleObject {
         return multiSlotIndex;
     }
 
-    @TruffleBoundary
-    public static RContext getThreadLocalInstance() {
-        return threadLocalContext.get();
-    }
-
-    @TruffleBoundary
-    public static void setThreadLocalInstance(RContext context) {
-        threadLocalContext.set(context);
-    }
-
-    @TruffleBoundary
-    private static RContext getInstanceInternal() {
-        RContext result = threadLocalContext.get();
-        assert result != null;
-        assert result.state.contains(State.ATTACHED);
-        return result;
-    }
-
     public static boolean isSingle() {
         return isSingleContextAssumption.isValid();
     }
@@ -684,19 +603,7 @@ public final class RContext implements RTruffleObject {
     }
 
     public static RContext getInstance() {
-        RContext context = singleContext;
-        if (singleContextAssumption.isValid() && context != null) {
-            return context;
-        }
-
-        Thread current = Thread.currentThread();
-        if (current instanceof ContextThread) {
-            context = ((ContextThread) current).context;
-            assert context != null;
-            return context;
-        } else {
-            return getInstanceInternal();
-        }
+        return getRRuntimeASTAccess().getCurrentContext();
     }
 
     public boolean isInteractive() {
@@ -871,23 +778,6 @@ public final class RContext implements RTruffleObject {
 
     public void setNamespaceName(String name) {
         nameSpaceName = name;
-    }
-
-    public interface RCloseable extends Closeable {
-        @Override
-        void close();
-    }
-
-    @TruffleBoundary
-    public static RCloseable withinContext(RContext context) {
-        RContext oldContext = RContext.threadLocalContext.get();
-        RContext.threadLocalContext.set(context);
-        return new RCloseable() {
-            @Override
-            public void close() {
-                RContext.threadLocalContext.set(oldContext);
-            }
-        };
     }
 
     public static Class<? extends TruffleRLanguage> getTruffleRLanguage() {

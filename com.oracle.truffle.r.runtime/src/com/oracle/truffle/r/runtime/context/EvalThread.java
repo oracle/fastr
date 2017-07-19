@@ -36,7 +36,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
-import com.oracle.truffle.r.runtime.context.RContext.ContextThread;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -44,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 /**
  * A thread for performing an evaluation (used by {@code .fastr} builtins).
  */
-public class EvalThread extends ContextThread {
+public class EvalThread extends Thread {
 
     private final Source source;
     private final ContextInfo info;
@@ -60,7 +59,6 @@ public class EvalThread extends ContextThread {
     public static final AtomicInteger threadCnt = new AtomicInteger(0);
 
     public EvalThread(ContextInfo info, Source source) {
-        super(null);
         this.info = info;
         this.source = source;
         threadCnt.incrementAndGet();
@@ -71,11 +69,6 @@ public class EvalThread extends ContextThread {
     @Override
     public void run() {
         PolyglotEngine vm = info.createVM(PolyglotEngine.newBuilder());
-        try {
-            setContext(vm.eval(Engine.GET_CONTEXT).as(RContext.class));
-        } catch (Throwable t) {
-            throw new RInternalError(t, "error while initializing eval thread");
-        }
         init.release();
         try {
             evalResult = run(vm, info, source);

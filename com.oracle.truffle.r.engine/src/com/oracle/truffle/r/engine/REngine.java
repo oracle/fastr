@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.engine;
 
-import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -365,9 +363,7 @@ final class REngine implements Engine, Engine.Timings {
         @Override
         @ExplodeLoop
         public Object execute(VirtualFrame frame) {
-            RContext oldContext = RContext.getThreadLocalInstance();
-            RContext newContext = contextReference.get();
-            RContext.setThreadLocalInstance(newContext);
+            Object actualFrame = executionFrame != null ? executionFrame : contextReference.get().stateREnvironment.getGlobalFrame();
             try {
                 Object lastValue = RNull.instance;
                 for (int i = 0; i < calls.length; i++) {
@@ -376,7 +372,7 @@ final class REngine implements Engine, Engine.Timings {
                         RSyntaxNode node = statements.get(i);
                         calls[i] = insert(Truffle.getRuntime().createDirectCallNode(doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, printResult, true)));
                     }
-                    lastValue = calls[i].call(new Object[]{executionFrame != null ? executionFrame : newContext.stateREnvironment.getGlobalFrame()});
+                    lastValue = calls[i].call(new Object[]{actualFrame});
                 }
                 return r2Foreign.execute(lastValue);
             } catch (ReturnException ex) {
@@ -392,8 +388,6 @@ final class REngine implements Engine, Engine.Timings {
                 // other errors didn't produce an output yet
                 RInternalError.reportError(t);
                 throw t;
-            } finally {
-                RContext.setThreadLocalInstance(oldContext);
             }
         }
     }

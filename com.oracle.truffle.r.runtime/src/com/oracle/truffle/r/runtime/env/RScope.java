@@ -26,6 +26,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.KeyInfo;
+import com.oracle.truffle.api.interop.KeyInfo.Builder;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
@@ -220,22 +222,17 @@ public final class RScope extends AbstractScope {
             @Resolve(message = "KEY_INFO")
             public abstract static class VarMapsKeyInfoNode extends Node {
 
-                private static final int EXISTS = 1 << 0;
-                private static final int READABLE = 1 << 1;
-                private static final int WRITABLE = 1 << 2;
-                private static final int INVOCABLE = 1 << 3;
-
-                @SuppressWarnings("try")
                 protected Object access(VariablesObject receiver, String identifier) {
-                    int info = EXISTS + READABLE;
+                    Builder builder = KeyInfo.newBuilder();
+                    builder.setReadable(true);
 
                     if (!receiver.frameAccess.bindingIsLocked(identifier)) {
-                        info += WRITABLE;
+                        builder.setWritable(true);
                     }
                     if (receiver.frameAccess.get(identifier) instanceof RFunction) {
-                        info += INVOCABLE;
+                        builder.setInvocable(true);
                     }
-                    return info;
+                    return builder.build();
                 }
             }
 
@@ -373,8 +370,6 @@ public final class RScope extends AbstractScope {
                     }
                 }
             }
-
         }
     }
-
 }

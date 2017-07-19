@@ -735,4 +735,9 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     public RAbstractStringVector getClassHierarchy(RAttributable value) {
         return ClassHierarchyNode.getClassHierarchy(value);
     }
+
+    @Override
+    public RContext getCurrentContext() {
+        return TruffleRLanguageImpl.getCurrentContext();
+    }
 }

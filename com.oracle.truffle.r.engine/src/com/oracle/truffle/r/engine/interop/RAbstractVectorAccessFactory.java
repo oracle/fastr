@@ -38,8 +38,6 @@ import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -74,13 +72,10 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
         @Child private RLengthNode lengthNode = RLengthNode.create();
 
         @Override
-        @SuppressWarnings("try")
         public final Object execute(VirtualFrame frame) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
-                Object label = ForeignAccess.getArguments(frame).get(0);
-                Object receiver = ForeignAccess.getReceiver(frame);
-                return execute(frame, receiver, label);
-            }
+            Object label = ForeignAccess.getArguments(frame).get(0);
+            Object receiver = ForeignAccess.getReceiver(frame);
+            return execute(frame, receiver, label);
         }
 
         protected abstract Object execute(VirtualFrame frame, Object reciever, Object label);

@@ -27,19 +27,18 @@ import static com.oracle.truffle.r.engine.interop.Utils.javaToRPrimitive;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
+import com.oracle.truffle.api.interop.KeyInfo;
+import com.oracle.truffle.api.interop.KeyInfo.Builder;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -73,11 +72,8 @@ public class RListMR {
     public abstract static class RListReadNode extends Node {
         @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
 
-        @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, RList receiver, String field) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
-                return extract.applyAccessField(frame, receiver, field);
-            }
+            return extract.applyAccessField(frame, receiver, field);
         }
     }
 
@@ -85,12 +81,9 @@ public class RListMR {
     public abstract static class RListWriteNode extends Node {
         @Child private ReplaceVectorNode replace = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
 
-        @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, RList receiver, String field, Object valueObj) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
-                Object value = javaToRPrimitive(valueObj);
-                return replace.apply(frame, receiver, new Object[]{field}, value);
-            }
+            Object value = javaToRPrimitive(valueObj);
+            return replace.apply(frame, receiver, new Object[]{field}, value);
         }
     }
 
@@ -98,12 +91,9 @@ public class RListMR {
     public abstract static class RListKeysNode extends Node {
         @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
-        @SuppressWarnings("try")
         protected Object access(RList receiver) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
-                RStringVector names = getNamesNode.getNames(receiver);
-                return names != null ? names : RNull.instance;
-            }
+            RStringVector names = getNamesNode.getNames(receiver);
+            return names != null ? names : RNull.instance;
         }
     }
 
@@ -114,38 +104,28 @@ public class RListMR {
 
         private final ConditionProfile unknownIdentifier = ConditionProfile.createBinaryProfile();
 
-        private static final int EXISTS = 1 << 0;
-        private static final int READABLE = 1 << 1;
-        private static final int WRITABLE = 1 << 2;
-        private static final int INVOCABLE = 1 << 3;
-        @SuppressWarnings("unused") private static final int INTERNAL = 1 << 4;
-
-        @SuppressWarnings("try")
         protected Object access(VirtualFrame frame, RList receiver, String identifier) {
-            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
-                int info = 0;
-                RStringVector names = getNamesNode.getNames(receiver);
-                for (int i = 0; i < names.getLength(); i++) {
-                    if (identifier.equals(names.getDataAt(i))) {
-                        info = EXISTS;
-                        break;
-                    }
+            RStringVector names = getNamesNode.getNames(receiver);
+            boolean exists = false;
+            for (int i = 0; i < names.getLength(); i++) {
+                if (identifier.equals(names.getDataAt(i))) {
+                    exists = true;
+                    break;
                 }
-                if (unknownIdentifier.profile(info == 0)) {
-                    return info;
-                }
-
-                info = info + READABLE + WRITABLE;
-                if (extractNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    extractNode = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
-                }
-                Object value = extractNode.applyAccessField(frame, receiver, identifier);
-                if (value instanceof RFunction) {
-                    info = info + INVOCABLE;
-                }
-                return info;
             }
+            if (unknownIdentifier.profile(!exists)) {
+                return 0;
+            }
+
+            Builder builder = KeyInfo.newBuilder();
+            builder.setReadable(true).setWritable(true);
+            if (extractNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                extractNode = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
+            }
+            Object value = extractNode.applyAccessField(frame, receiver, identifier);
+            builder.setInvocable(value instanceof RFunction);
+            return builder.build();
         }
     }
 

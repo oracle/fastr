@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
 import jline.console.completer.Completer;
@@ -56,18 +57,17 @@ public class JLineConsoleCompleter implements Completer {
         }
     }
 
-    private static final String GET_COMPLETION_FUNCTION = "utils:::.completeToken";
-    private static final String GET_COMPLETION_ENV = "utils:::.CompletionEnv";
-    private static final String SET_FUNCTION = "`$<-`";
+    private static final Source GET_COMPLETION_FUNCTION = Source.newBuilder("R", "utils:::.completeToken", "<completion>").internal(true).buildLiteral();
+    private static final Source GET_COMPLETION_ENV = Source.newBuilder("R", "utils:::.CompletionEnv", "<completion>").internal(true).buildLiteral();
+    private static final Source SET_FUNCTION = Source.newBuilder("R", "`$<-`", "<completion>").internal(true).buildLiteral();
 
-    @SuppressWarnings("try")
     private int completeImpl(String buffer, int cursor, List<CharSequence> candidates) {
         if (buffer.isEmpty()) {
             return cursor;
         }
-        Value completionFunction = context.eval("R", GET_COMPLETION_FUNCTION);
-        Value completionEnv = context.eval("R", GET_COMPLETION_ENV);
-        Value setFunction = context.eval("R", SET_FUNCTION);
+        Value completionFunction = context.eval(GET_COMPLETION_FUNCTION);
+        Value completionEnv = context.eval(GET_COMPLETION_ENV);
+        Value setFunction = context.eval(SET_FUNCTION);
 
         int start = getStart(buffer, completionEnv, cursor);
         setFunction.execute(completionEnv, "start", start);

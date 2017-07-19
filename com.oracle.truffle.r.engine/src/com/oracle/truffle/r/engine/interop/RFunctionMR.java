@@ -32,13 +32,10 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.RCloseable;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -65,13 +62,12 @@ public class RFunctionMR {
 
         @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier);
 
-        @SuppressWarnings("try")
         protected Object access(RFunction receiver, Object[] arguments) {
             Object[] dummyFrameArgs = RArguments.createUnitialized();
             VirtualFrame dummyFrame = Truffle.getRuntime().createVirtualFrame(dummyFrameArgs, emptyFrameDescriptor);
 
             RArgsValuesAndNames actualArgs = new RArgsValuesAndNames(arguments, ArgumentsSignature.empty(arguments.length));
-            try (RCloseable c = RContext.withinContext(TruffleRLanguageImpl.getCurrentContext())) {
+            try {
                 FrameSlotChangeMonitor.setObject(dummyFrame, slot, actualArgs);
                 return call.execute(dummyFrame, receiver);
             } finally {

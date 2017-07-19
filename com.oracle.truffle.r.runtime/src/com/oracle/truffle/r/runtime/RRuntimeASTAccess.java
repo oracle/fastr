@@ -203,4 +203,6 @@ public interface RRuntimeASTAccess {
     void checkDebugRequest(RFunction func);
 
     RAbstractStringVector getClassHierarchy(RAttributable value);
+
+    RContext getCurrentContext();
 }

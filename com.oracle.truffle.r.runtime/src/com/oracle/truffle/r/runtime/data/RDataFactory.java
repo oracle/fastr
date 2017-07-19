@@ -610,7 +610,7 @@ public final class RDataFactory {
     private static void reportDataCreated(Object data) {
         System.out.println("reportDataCreated " + listeners.size() + " " + allocationTracingEnabled);
         if (allocationTracingEnabled) {
-            RContext ctx = RContext.getThreadLocalInstance();
+            RContext ctx = RContext.getInstance();
             assert ctx != null;
             AllocationReporter allocationReporter = ctx.getAllocationReporter();
 
