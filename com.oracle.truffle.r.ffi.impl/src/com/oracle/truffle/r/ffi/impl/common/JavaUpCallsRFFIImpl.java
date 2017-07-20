@@ -47,6 +47,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.FFIUpCallRootNode;
 import com.oracle.truffle.r.ffi.impl.upcalls.RFFIUpCallTable;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -54,6 +55,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -84,6 +86,7 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
@@ -576,20 +579,41 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public int NAMED(Object x) {
         if (x instanceof RShareable) {
-            return ((RShareable) x).isShared() ? 1 : 0;
+            return getNamed((RShareable) x);
         } else {
-            throw unimplemented();
+            // Note: it may be that we need to remember this for all types, GNUR does
+            return 2;
         }
     }
 
     @Override
     public Object SET_NAMED_FASTR(Object x, int v) {
+        // Note: In GNUR this is a macro that sets the sxpinfo.named regardless of whether it makes
+        // sense to name the actual value, for compatibilty we simply ignore values that are not
+        // RShareable, e.g. RSymbol. However we ignore and report attemps to decrease the ref-count,
+        // which as it seems GNUR would just let proceede
         if (x instanceof RShareable) {
-            ((RShareable) x).incRefCount();
-            return RNull.instance;
-        } else {
-            throw unimplemented();
+            RShareable r = (RShareable) x;
+            int actual = getNamed(r);
+            if (v < actual) {
+                RError.warning(RError.NO_CALLER, Message.GENERIC, "Native code attempted to decrease the reference count. This operation is ignored.");
+                return RNull.instance;
+            }
+            if (v == 2) {
+                // we play it safe: if the caller wants this instance to be shared, they may expect
+                // it to never become non-shared again, which could happen in FastR
+                r.makeSharedPermanent();
+                return RNull.instance;
+            }
+            if (v == 1 && r.isTemporary()) {
+                r.incRefCount();
+            }
         }
+        return RNull.instance;
+    }
+
+    private static int getNamed(RShareable r) {
+        return r.isTemporary() ? 0 : r.isShared() ? 2 : 1;
     }
 
     @Override
@@ -789,6 +813,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                                 ArgumentsSignature.fromNamesAttribute(argsList.getNames()),
                                 argsList.getDataNonShared());
             }
+        } else if (expr instanceof RSymbol) {
+            ReadVariableNode rvn = ReadVariableNode.create(((RSymbol) expr).getName());
+            result = RContext.getEngine().eval(RDataFactory.createLanguage(rvn), (REnvironment) env, RCaller.topLevel);
         } else {
             // just return value
             result = expr;
@@ -1383,6 +1410,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object PRENV(Object x) {
         RPromise promise = RFFIUtils.guaranteeInstanceOf(x, RPromise.class);
+        if (promise instanceof EagerPromise) {
+            ((EagerPromise) promise).materialize();
+        }
         final MaterializedFrame frame = promise.getFrame();
         return frame != null ? REnvironment.frameToEnvironment(frame) : RNull.instance;
     }

@@ -776,13 +776,11 @@ SEXP CDR(SEXP e) {
 }
 
 SEXP CAAR(SEXP e) {
-    unimplemented("CAAR");
-    return NULL;
+    return CAR(CAR(e));
 }
 
 SEXP CDAR(SEXP e) {
-    unimplemented("CDAR");
-    return NULL;
+    return CDR(CAR(e));
 }
 
 SEXP CADR(SEXP e) {
