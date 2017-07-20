@@ -600,7 +600,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_FALSE;
         }
 
-        private boolean typesMatch(RType expected, RType actual) {
+        private static boolean typesMatch(RType expected, RType actual) {
             return expected == RType.Numeric ? actual == RType.Integer || actual == RType.Double : actual == expected;
         }
 

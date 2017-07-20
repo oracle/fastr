@@ -1,0 +1,53 @@
+/*
+ * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+package com.oracle.truffle.r.test.builtins;
+
+import org.junit.Test;
+
+import com.oracle.truffle.r.test.TestBase;
+
+public class TestBuiltin_unzip extends TestBase {
+
+    @Test
+    public void testunzip() {
+        // writes out a small dummy zip file
+        assertEval("n <- tempfile(); writeBin(con=n,as.raw(c(0x50, 0x4b, 0x03, 0x04, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x60, 0x6e, 0xf3, 0x4a, 0xb7, 0xef, 0xdc, 0x83, 0x01, " +
+                        "0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x1c, 0x00, 0x66, 0x6f, 0x6f, 0x31, 0x55, 0x54, 0x09, 0x00, 0x03, 0xa3, 0x47, 0x6f, 0x59, 0xad, " +
+                        "0x47, 0x6f, 0x59, 0x75, 0x78, 0x0b, 0x00, 0x01, 0x04, 0xf5, 0x01, 0x00, 0x00, 0x04, 0x14, 0x00, 0x00, 0x00, 0x31, 0x50, 0x4b, 0x01, 0x02, 0x1e, 0x03, " +
+                        "0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x60, 0x6e, 0xf3, 0x4a, 0xb7, 0xef, 0xdc, 0x83, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x18, " +
+                        "0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0xa4, 0x81, 0x00, 0x00, 0x00, 0x00, 0x66, 0x6f, 0x6f, 0x31, 0x55, 0x54, 0x05, 0x00, 0x03, 0xa3, " +
+                        "0x47, 0x6f, 0x59, 0x75, 0x78, 0x0b, 0x00, 0x01, 0x04, 0xf5, 0x01, 0x00, 0x00, 0x04, 0x14, 0x00, 0x00, 0x00, 0x50, 0x4b, 0x05, 0x06, 0x00, 0x00, 0x00, " +
+                        "0x00, 0x01, 0x00, 0x01, 0x00, 0x4a, 0x00, 0x00, 0x00, 0x3f, 0x00, 0x00, 0x00, 0x00, 0x00)))\n" +
+                        "length(unzip(n,list=T))\n" +
+                        "names(unzip(n,list=T))\n" +
+                        "unzip(n,list=T)[1:2]\n" + // leave out date (depends on time zone)
+                        "target <- tempdir()\n" +
+                        "v <- unzip(n,exdir=target, files=c('bar','baz'))\n" +
+                        "v\n" +
+                        "file.exists(paste0(target, '/foo1'))\n" +
+                        "v <- unzip(n,exdir=target)\n" +
+                        "length(v)\n" +
+                        "file.exists(v)\n" +
+                        "readBin(paste0(target, '/foo1'), what='raw', n=1000)");
+    }
+}

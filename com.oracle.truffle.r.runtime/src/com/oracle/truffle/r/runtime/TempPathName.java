@@ -87,8 +87,7 @@ public class TempPathName implements RContext.ContextState {
     }
 
     public static String tempDirPath() {
-        String result = RContext.getInstance().stateTempPath.tempDirPath;
-        return result;
+        return RContext.getInstance().stateTempPath.tempDirPath;
     }
 
     public static TempPathName newContextState() {

@@ -894,7 +894,8 @@ public final class RError extends RuntimeException implements TruffleException {
         NO_BINDING_FOR("no binding for \"%s\""),
         INVALID_SUBSTRING_ARGS("invalid substring arguments"),
         OBJECT_SIZE_ESTIMATE("The object size is only estimated."),
-        REPLACING_IN_NON_CHAR_OBJ("replacing substrings in a non-character object");
+        REPLACING_IN_NON_CHAR_OBJ("replacing substrings in a non-character object"),
+        FILE_NOT_FOUND_IN_ZIP("requested file not found in the zip file");
 
         public final String message;
         final boolean hasArgs;

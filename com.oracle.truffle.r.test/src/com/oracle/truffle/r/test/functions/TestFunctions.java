@@ -195,9 +195,8 @@ public class TestFunctions extends TestBase {
         assertEval("{ f<-function(i) { if(i==1) { 1 } else { f(i-1) } } ; f(10) }");
         assertEval("{ f<-function(i) { if(i<=1) 1 else i*f(i-1) } ; f(10) }"); // factorial
         assertEval("{ f<-function(i) { if(i<=1L) 1L else i*f(i-1L) } ; f(10L) }"); // factorial
-        // 100 times calculate factorial of 120
-        // the GNU R outputs 6.689503e+198
-        assertEval("{ f<-function(i) { if(i<=1) 1 else i*f(i-1) } ; g<-function(n, f, a) { if (n==1) { f(a) } else { f(a) ; g(n-1, f, a) } } ; g(100,f,120) }");
+        // 100 times calculate factorial of 100
+        assertEval("{ f<-function(i) { if(i<=1) 1 else i*f(i-1) } ; g<-function(n, f, a) { if (n==1) { f(a) } else { f(a) ; g(n-1, f, a) } } ; g(100,f,100) }");
 
         // Fibonacci numbers
         assertEval("{ f<-function(i) { if (i==1) { 1 } else if (i==2) { 1 } else { f(i-1) + f(i-2) } } ; f(10) }");
@@ -231,7 +230,7 @@ public class TestFunctions extends TestBase {
                         "e2 <- new.env(); e2n <- new.env(); assign(\"b\", \"isb\", e2n); assign(\"ex\", e2n, e2); ex1 <- c(\"a\"); ex2 <- c(\"b\"); f(e1, ex1); f(e2, ex2) == \"isb\"");
         assertEval("rule <- 1; stopifnot((lenR <- length(rule)) >= 1L, lenR <= 2L)");
         assertEval("{ x <- 3; stopifnot((x <- 5) < 10, x == 5); }");
-        // assignment in aguments + function that has a fast path
+        // assignment in arguments + function that has a fast path
         assertEval("{ seq((abc <- 1), length.out = abc + 1) }");
         assertEval("{ seq((abc <- 1), abc + 10) }");
     }

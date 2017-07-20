@@ -464,7 +464,7 @@ public class DLL {
                     invokeVoidCallNode.execute(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
                 } catch (ReturnException ex) {
                     // An error call can, due to condition handling, throw this which we must
-                    // propogate
+                    // propagate
                     throw ex;
                 } catch (Throwable ex) {
                     if (RContext.isInitialContextInitialized()) {
