@@ -29,6 +29,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -783,9 +784,16 @@ public class RRuntime {
     /**
      * Java equivalent of GnuR asLogical for use outside Truffle boundary. TODO support for warnings
      */
-    public static byte asLogicalObject(Object objArg) {
-        Object obj = asAbstractVector(objArg);
-        if (obj instanceof RAbstractIntVector) {
+    public static byte asLogicalObject(Object obj) {
+        if (obj instanceof Integer) {
+            return int2logical((int) obj);
+        } else if (obj instanceof Double) {
+            return double2logical((double) obj);
+        } else if (obj instanceof Byte) {
+            return (byte) obj;
+        } else if (obj instanceof String) {
+            return string2logical((String) obj);
+        } else if (obj instanceof RAbstractIntVector) {
             return int2logical(((RAbstractIntVector) obj).getDataAt(0));
         } else if (obj instanceof RAbstractDoubleVector) {
             return double2logical(((RAbstractDoubleVector) obj).getDataAt(0));
@@ -803,9 +811,16 @@ public class RRuntime {
     /**
      * Java equivalent of GnuR asInteger for use outside Truffle boundary. TODO support for warnings
      */
-    public static int asInteger(Object objArg) {
-        Object obj = asAbstractVector(objArg);
-        if (obj instanceof RAbstractIntVector) {
+    public static int asInteger(Object obj) {
+        if (obj instanceof Integer) {
+            return (int) obj;
+        } else if (obj instanceof Double) {
+            return double2int((double) obj);
+        } else if (obj instanceof Byte) {
+            return logical2int((byte) obj);
+        } else if (obj instanceof String) {
+            return string2int((String) obj);
+        } else if (obj instanceof RAbstractIntVector) {
             return ((RAbstractIntVector) obj).getDataAt(0);
         } else if (obj instanceof RAbstractDoubleVector) {
             return double2int(((RAbstractDoubleVector) obj).getDataAt(0));
@@ -851,6 +866,25 @@ public class RRuntime {
             return RDataFactory.createLogicalVectorFromScalar((Byte) obj);
         } else if (obj instanceof String) {
             return RDataFactory.createStringVectorFromScalar((String) obj);
+        } else {
+            return obj;
+        }
+    }
+
+    /**
+     * Convert Java boxing classes to {@link RScalar} subclasses, which implement the proper
+     * {@link RAbstractVector} interfaces. This doesn't go through {@link RDataFactory}, but it
+     * increases polymorphism by not using the normal vector classes.
+     */
+    public static Object convertScalarVectors(Object obj) {
+        if (obj instanceof Integer) {
+            return RInteger.valueOf((int) obj);
+        } else if (obj instanceof Double) {
+            return RDouble.valueOf((double) obj);
+        } else if (obj instanceof Byte) {
+            return RLogical.valueOf((byte) obj);
+        } else if (obj instanceof String) {
+            return RString.valueOf((String) obj);
         } else {
             return obj;
         }

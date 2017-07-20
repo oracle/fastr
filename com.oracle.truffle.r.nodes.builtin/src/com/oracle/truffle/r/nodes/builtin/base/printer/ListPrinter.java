@@ -71,7 +71,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         int ns = s.getLength();
         String[] t = new String[ns];
         for (int i = 0; i < ns; i++) {
-            Object tmp = RRuntime.asAbstractVector(s.getDataAtAsObject(i));
+            Object tmp = RRuntime.convertScalarVectors(s.getDataAtAsObject(i));
             final String pbuf;
             if (tmp == null || tmp == RNull.instance) {
                 pbuf = RRuntime.NULL;
@@ -165,7 +165,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         int ns = s.getLength();
 
         RAbstractStringVector names;
-        names = Utils.castTo(RRuntime.asAbstractVector(s.getNames()));
+        names = Utils.castTo(RRuntime.convertScalarVectors(s.getNames()));
 
         if (ns > 0) {
             int npr = (ns <= pp.getMax() + 1) ? ns : pp.getMax();

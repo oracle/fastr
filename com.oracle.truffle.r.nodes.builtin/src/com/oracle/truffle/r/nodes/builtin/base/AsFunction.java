@@ -106,7 +106,7 @@ public abstract class AsFunction extends RBuiltinNode.Arg2 {
                     } else {
                         defaultValue = ReadVariableNode.create(symbol.getName());
                     }
-                } else if (RRuntime.asAbstractVector(arg) instanceof RAttributable) {
+                } else if (RRuntime.convertScalarVectors(arg) instanceof RAttributable) {
                     defaultValue = ConstantNode.create(arg);
                 } else {
                     throw RInternalError.unimplemented();

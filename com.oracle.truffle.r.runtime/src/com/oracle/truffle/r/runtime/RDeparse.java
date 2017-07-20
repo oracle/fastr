@@ -717,7 +717,7 @@ public class RDeparse {
 
         @SuppressWarnings("try")
         private DeparseVisitor appendConstant(Object originalValue) {
-            Object value = RRuntime.asAbstractVector(originalValue);
+            Object value = RRuntime.convertScalarVectors(originalValue);
             if (value instanceof RExpression) {
                 append("expression(").appendListContents((RExpression) value).append(')');
             } else if (value instanceof RAbstractListVector) {
@@ -857,7 +857,7 @@ public class RDeparse {
             assert v != null;
             assert !(v instanceof RSyntaxElement) : v.getClass();
 
-            Object value = RRuntime.asAbstractVector(v);
+            Object value = RRuntime.convertScalarVectors(v);
             assert value instanceof RTypedValue : v.getClass();
 
             try {

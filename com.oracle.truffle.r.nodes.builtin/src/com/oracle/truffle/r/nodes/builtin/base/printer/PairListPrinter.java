@@ -50,7 +50,7 @@ final class PairListPrinter extends AbstractValuePrinter<RPairList> {
         if (dims != null && dims.getLength() > 1) {
             String[] t = new String[ns];
             for (int i = 0; i < ns; i++) {
-                Object tmp = RRuntime.asAbstractVector(s.getDataAtAsObject(i));
+                Object tmp = RRuntime.convertScalarVectors(s.getDataAtAsObject(i));
                 final String pbuf;
                 if (tmp == null || tmp == RNull.instance) {
                     pbuf = RRuntime.NULL;

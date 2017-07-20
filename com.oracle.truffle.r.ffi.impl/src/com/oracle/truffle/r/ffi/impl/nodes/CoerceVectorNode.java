@@ -149,7 +149,7 @@ public abstract class CoerceVectorNode extends FFIUpCallNode.Arg2 {
         }
 
         private static String getTypeName(Object val) {
-            Object value = RRuntime.asAbstractVector(val);
+            Object value = RRuntime.convertScalarVectors(val);
             if (value == null) {
                 return "null";
             }

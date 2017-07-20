@@ -47,7 +47,7 @@ public final class CompleteCases extends RExternalBuiltinNode {
     }
 
     private int checkAbstractVectorLength(int len, Object obj) {
-        Object entry = RRuntime.asAbstractVector(obj);
+        Object entry = RRuntime.convertScalarVectors(obj);
         if (entry instanceof RAbstractVector) {
             RAbstractVector vector = (RAbstractVector) entry;
             int entryLength = vector.isMatrix() ? vector.getDimensions()[0] : vector.getLength();
