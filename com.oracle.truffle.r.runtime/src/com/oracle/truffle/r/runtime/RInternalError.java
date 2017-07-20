@@ -165,7 +165,7 @@ public final class RInternalError extends Error implements TruffleException {
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 t.printStackTrace(new PrintStream(out));
                 String verboseStackTrace;
-                if (t instanceof IOException) {
+                if (t.getCause() != null && t instanceof IOException) {
                     t = t.getCause();
                 }
                 if (t instanceof RInternalError) {
