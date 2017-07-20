@@ -243,7 +243,6 @@ public class SeekableMemoryByteChannel implements SeekableByteChannel {
         public int read() throws IOException {
             return SeekableMemoryByteChannel.this.read();
         }
-
     }
 
     public OutputStream getOutputStream() {
@@ -277,5 +276,4 @@ public class SeekableMemoryByteChannel implements SeekableByteChannel {
             SeekableMemoryByteChannel.this.write(ByteBuffer.wrap(b, off, len));
         }
     }
-
 }

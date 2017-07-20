@@ -281,7 +281,6 @@ public class EnvFunctions {
             }
             return REnvironment.globalEnv();
         }
-
     }
 
     @RBuiltin(name = "parent.env", kind = INTERNAL, parameterNames = {"env"}, behavior = READS_FRAME)

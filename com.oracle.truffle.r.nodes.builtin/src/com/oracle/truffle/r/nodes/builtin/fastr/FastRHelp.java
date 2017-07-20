@@ -65,5 +65,4 @@ public abstract class FastRHelp extends RBuiltinNode.Arg1 {
         }
         return RNull.instance;
     }
-
 }

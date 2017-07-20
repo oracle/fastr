@@ -42,5 +42,4 @@ public class RegisterRoutinesCall implements RTruffleObject {
     public ForeignAccess getForeignAccess() {
         return RegisterRoutinesCallMRForeign.ACCESS;
     }
-
 }

@@ -574,7 +574,6 @@ public class RBuiltinDiagnostics {
                                 te = te.and(rmissingType.not());
                             }
                         }
-
                     }
                 } catch (Exception e) {
                     throw new RuntimeException("Cannot create sampler for argument " + parameterNames[i], e);

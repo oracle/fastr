@@ -55,5 +55,4 @@ public class TruffleNFI_REmbed implements REmbedRFFI {
         throw RInternalError.unimplemented();
 
     }
-
 }

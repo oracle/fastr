@@ -429,5 +429,4 @@ public class ForwardedValuesAnalyserTest {
         assertTrue(result.isStringForwarded());
         assertTrue(result.isMissingForwarded());
     }
-
 }

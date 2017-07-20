@@ -99,5 +99,4 @@ public interface ZipRFFI {
             return uncompressRootNode;
         }
     }
-
 }

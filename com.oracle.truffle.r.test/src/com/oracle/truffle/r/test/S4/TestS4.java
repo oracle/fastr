@@ -182,5 +182,4 @@ public class TestS4 extends TestRBase {
         assertEval("makeActiveBinding('someSymbol10', function(x) { if(missing(x)) print('get0') else print('set0'); NULL }, .GlobalEnv); someSymbol10; someSymbol10 <- 1; makeActiveBinding('someSymbol10', function(x) { if(missing(x)) print('get1') else print('set1'); NULL }, .GlobalEnv); someSymbol10; someSymbol10 <- 1");
         assertEval("makeActiveBinding('var_a', function(x) { if(missing(x)) { print('get'); return(123) } else { print('set'); return(x) } }, .GlobalEnv); inherits(var_a, 'numeric')");
     }
-
 }

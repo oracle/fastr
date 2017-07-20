@@ -68,5 +68,4 @@ public class JNIUpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     public Object R_CHAR(Object x) {
         throw RInternalError.shouldNotReachHere();
     }
-
 }

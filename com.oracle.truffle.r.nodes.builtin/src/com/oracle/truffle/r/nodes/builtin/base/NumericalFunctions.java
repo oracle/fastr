@@ -103,7 +103,6 @@ public class NumericalFunctions {
         public double opd(double re, double im) {
             return re;
         }
-
     }
 
     @RBuiltin(name = "Im", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = COMPLEX_GROUP_GENERIC, behavior = PURE)

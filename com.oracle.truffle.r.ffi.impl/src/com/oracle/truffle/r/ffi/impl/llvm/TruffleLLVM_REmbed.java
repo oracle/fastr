@@ -51,5 +51,4 @@ public class TruffleLLVM_REmbed implements REmbedRFFI {
     public void writeErrConsole(String x) {
         throw RInternalError.unimplemented();
     }
-
 }

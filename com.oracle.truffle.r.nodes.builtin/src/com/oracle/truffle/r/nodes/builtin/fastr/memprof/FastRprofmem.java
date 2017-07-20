@@ -91,5 +91,4 @@ public abstract class FastRprofmem extends RBuiltinNode.Arg1 {
 
         return profPrinter;
     }
-
 }

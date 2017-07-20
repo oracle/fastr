@@ -1214,7 +1214,6 @@ public class RSerialize {
             }
             return usedBuffer;
         }
-
     }
 
     /**
@@ -2191,7 +2190,6 @@ public class RSerialize {
         public SourceSection getSourceReferenceAttributes() {
             return ss;
         }
-
     }
 
     /**

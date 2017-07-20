@@ -132,5 +132,4 @@ public interface DLLRFFI {
             return dlCloseRootNode;
         }
     }
-
 }

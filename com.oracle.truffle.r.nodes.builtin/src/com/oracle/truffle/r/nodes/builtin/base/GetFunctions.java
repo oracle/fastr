@@ -201,7 +201,6 @@ public class GetFunctions {
         protected Object get(VirtualFrame frame, String x, int envir, String mode, boolean inherits) {
             throw RInternalError.unimplemented();
         }
-
     }
 
     @RBuiltin(name = "get0", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits", "ifnotfound"}, behavior = COMPLEX)

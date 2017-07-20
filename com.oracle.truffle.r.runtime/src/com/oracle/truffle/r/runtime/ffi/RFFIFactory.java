@@ -98,7 +98,6 @@ public abstract class RFFIFactory {
         } catch (IllegalArgumentException ex) {
             throw Utils.rSuicide("No RFFI factory: " + prop);
         }
-
     }
 
     public static RFFIFactory getInstance() {

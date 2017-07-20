@@ -470,7 +470,6 @@ public class SampleCollectorTest {
             Set<Object> samples = (Set<Object>) item;
             return samples.stream().filter(s -> s instanceof String && s.toString().length() == expectedLength).findAny().isPresent();
         }
-
     }
 
     static final class VectorSizeMatcher extends CustomMatcher<Set<Object>> {
@@ -490,7 +489,6 @@ public class SampleCollectorTest {
             Set<Object> samples = (Set<Object>) item;
             return samples.stream().filter(s -> s instanceof RAbstractVector && ((RAbstractVector) s).getRType() == type && ((RAbstractVector) s).getLength() == expectedSize).findAny().isPresent();
         }
-
     }
 
     static final class VectorMatcher extends CustomMatcher<Set<Object>> {
@@ -530,6 +528,5 @@ public class SampleCollectorTest {
             }
             return false;
         }
-
     }
 }

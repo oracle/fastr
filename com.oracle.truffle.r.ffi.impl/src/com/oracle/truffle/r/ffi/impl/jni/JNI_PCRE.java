@@ -121,5 +121,4 @@ public class JNI_PCRE implements PCRERFFI {
     public ExecNode createExecNode() {
         return new JNI_ExecNode();
     }
-
 }

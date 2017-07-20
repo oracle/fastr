@@ -83,5 +83,4 @@ final class JNI_PkgInit {
     public static int findSymbol(String name, String pkg, DLL.RegisteredNativeSymbol rns) {
         throw RInternalError.unimplemented();
     }
-
 }

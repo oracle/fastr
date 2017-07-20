@@ -172,7 +172,6 @@ public final class RScope extends AbstractScope {
         protected AbstractScope findParent() {
             return null;
         }
-
     }
 
     abstract static class VariablesObject implements TruffleObject {
@@ -274,7 +273,6 @@ public final class RScope extends AbstractScope {
                     }
                 }
             }
-
         }
     }
 
@@ -304,7 +302,6 @@ public final class RScope extends AbstractScope {
             }
             return new String[0];
         }
-
     }
 
     static final class GenericVariablesObject extends VariablesObject {
@@ -317,7 +314,6 @@ public final class RScope extends AbstractScope {
         protected String[] collectArgs() {
             return new String[0];
         }
-
     }
 
     static final class ArgumentNamesObject implements TruffleObject {

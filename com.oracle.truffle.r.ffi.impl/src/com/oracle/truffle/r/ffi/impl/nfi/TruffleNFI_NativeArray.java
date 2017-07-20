@@ -163,5 +163,4 @@ public class TruffleNFI_NativeArray {
         tableHwm++;
         return t.arrayAddress;
     }
-
 }

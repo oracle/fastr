@@ -42,5 +42,4 @@ public class GetCCallableCall implements RTruffleObject {
     public ForeignAccess getForeignAccess() {
         return GetCCallableCallMRForeign.ACCESS;
     }
-
 }

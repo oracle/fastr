@@ -206,5 +206,4 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory implements RFFI {
         }
         return miscRFFI;
     }
-
 }

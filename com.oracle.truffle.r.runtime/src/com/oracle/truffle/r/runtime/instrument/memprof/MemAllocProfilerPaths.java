@@ -234,7 +234,6 @@ public final class MemAllocProfilerPaths {
                     paths.version.incrementAndGet();
                 }
             }
-
         };
 
         Entry(MemAllocProfilerPaths paths, Entry parent, String name, SourceSection sourceSection) {
@@ -402,7 +401,6 @@ public final class MemAllocProfilerPaths {
         final void add(Stats other) {
             add(other.allocated, other.count);
         }
-
     }
 
 }

@@ -121,7 +121,6 @@ public class MemAllocProfilerInstrument extends TruffleInstrument {
                 private void popEntry() {
                     memAllocStacks.pop();
                 }
-
             };
         }
     }

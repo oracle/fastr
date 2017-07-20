@@ -56,7 +56,6 @@ final class TruffleLLVM_PkgInit extends Generic_PkgInit {
             }
             return this;
         }
-
     }
 
     private static void initialize(RContext context) {
@@ -96,5 +95,4 @@ final class TruffleLLVM_PkgInit extends Generic_PkgInit {
             throw RInternalError.shouldNotReachHere();
         }
     }
-
 }

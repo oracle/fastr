@@ -78,7 +78,6 @@ final class TruffleLLVM_Call implements CallRFFI {
             }
             return this;
         }
-
     }
 
     private enum INIT_VAR_FUN {
@@ -247,7 +246,6 @@ final class TruffleLLVM_Call implements CallRFFI {
         public Node createMessageNode(Object[] args) {
             return Message.createExecute(args.length).createNode();
         }
-
     }
 
     private static class TruffleLLVM_InvokeVoidCallNode extends InvokeVoidCallNode {
@@ -257,7 +255,6 @@ final class TruffleLLVM_Call implements CallRFFI {
         public synchronized void execute(NativeCallInfo nativeCallInfo, Object[] args) {
             invokeCallNode.execute(nativeCallInfo, args);
         }
-
     }
 
     /**

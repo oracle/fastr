@@ -243,5 +243,4 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     protected ForeignArray2R createForeignArray2RNode() {
         return ForeignArray2RNodeGen.create();
     }
-
 }

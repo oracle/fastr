@@ -1358,5 +1358,4 @@ public class TestJavaInterop extends TestBase {
     public static class TestArrayClass {
         public static TestArrayClass[] testArray = new TestArrayClass[]{new TestArrayClass(), new TestArrayClass(), new TestArrayClass()};
     }
-
 }

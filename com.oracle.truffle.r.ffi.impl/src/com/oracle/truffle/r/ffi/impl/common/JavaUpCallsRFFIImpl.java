@@ -993,7 +993,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                     }
                 }
             }
-
         } else { // source is non-RAbstractContainer
             throw unimplemented();
         }

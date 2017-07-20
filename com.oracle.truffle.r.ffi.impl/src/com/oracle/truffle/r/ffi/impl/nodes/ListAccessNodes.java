@@ -70,7 +70,6 @@ public final class ListAccessNodes {
         protected Object car(@SuppressWarnings("unused") Object obj) {
             throw RInternalError.unimplemented("CAR only works on pair lists and language objects");
         }
-
     }
 
     @TypeSystemReference(RTypes.class)
@@ -114,7 +113,6 @@ public final class ListAccessNodes {
         protected Object cadr(@SuppressWarnings("unused") Object obj) {
             throw RInternalError.unimplemented("CADR only works on pair lists and language objects");
         }
-
     }
 
     @TypeSystemReference(RTypes.class)
@@ -133,7 +131,6 @@ public final class ListAccessNodes {
         protected Object caddr(@SuppressWarnings("unused") Object obj) {
             throw RInternalError.unimplemented("CADDR only works on pair lists and language objects");
         }
-
     }
 
     @TypeSystemReference(RTypes.class)

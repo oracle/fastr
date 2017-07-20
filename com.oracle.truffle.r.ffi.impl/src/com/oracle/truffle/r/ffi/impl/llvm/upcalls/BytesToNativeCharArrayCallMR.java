@@ -43,5 +43,4 @@ public class BytesToNativeCharArrayCallMR {
             return true;
         }
     }
-
 }

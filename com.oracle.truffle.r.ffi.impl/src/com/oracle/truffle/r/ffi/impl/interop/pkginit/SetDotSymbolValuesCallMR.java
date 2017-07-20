@@ -45,5 +45,4 @@ public class SetDotSymbolValuesCallMR {
             return true;
         }
     }
-
 }

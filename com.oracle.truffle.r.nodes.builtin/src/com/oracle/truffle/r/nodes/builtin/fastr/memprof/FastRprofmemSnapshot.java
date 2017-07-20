@@ -62,5 +62,4 @@ public abstract class FastRprofmemSnapshot extends RBuiltinNode.Arg2 {
 
         return snapshot.toTruffleObject();
     }
-
 }

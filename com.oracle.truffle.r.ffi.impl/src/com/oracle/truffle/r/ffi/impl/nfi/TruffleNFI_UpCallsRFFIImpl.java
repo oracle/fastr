@@ -96,5 +96,4 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         }
         return x;
     }
-
 }

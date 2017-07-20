@@ -62,7 +62,6 @@ public class JNI_Stats implements StatsRFFI {
             native_fft_factor(fftFactorAddress.asAddress(), n, pmaxf, pmaxp);
 
         }
-
     }
 
     private static SymbolHandle fftAddress(String symbol, DLLRFFI.DLSymNode dlSymNode) {

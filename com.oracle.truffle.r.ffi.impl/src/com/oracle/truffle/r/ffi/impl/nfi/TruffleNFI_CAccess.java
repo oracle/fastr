@@ -55,7 +55,6 @@ public class TruffleNFI_CAccess {
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
                 }
-
             }
             return symbolFunction;
         }

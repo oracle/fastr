@@ -48,5 +48,4 @@ public class RConnGetCCallMR {
             return true;
         }
     }
-
 }

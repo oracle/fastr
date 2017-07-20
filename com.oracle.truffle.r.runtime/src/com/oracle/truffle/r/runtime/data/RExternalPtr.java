@@ -91,5 +91,4 @@ public class RExternalPtr extends RAttributeStorage implements RTypedValue {
     public RType getRType() {
         return RType.ExternalPtr;
     }
-
 }

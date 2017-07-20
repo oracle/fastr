@@ -75,5 +75,4 @@ public abstract class NZChar extends RBuiltinNode.Arg2 {
     protected RLogicalVector rev(@SuppressWarnings("unused") RMissing value, @SuppressWarnings("unused") boolean keepNA) {
         throw RError.error(this, RError.Message.ARGUMENT_NOT_MATCH, "keepNA", "x");
     }
-
 }

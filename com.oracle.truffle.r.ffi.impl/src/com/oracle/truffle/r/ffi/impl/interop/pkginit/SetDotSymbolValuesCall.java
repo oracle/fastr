@@ -42,5 +42,4 @@ public class SetDotSymbolValuesCall implements RTruffleObject {
     public ForeignAccess getForeignAccess() {
         return SetDotSymbolValuesCallMRForeign.ACCESS;
     }
-
 }

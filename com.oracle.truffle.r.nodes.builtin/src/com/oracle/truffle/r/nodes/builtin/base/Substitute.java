@@ -115,5 +115,4 @@ public abstract class Substitute extends RBuiltinNode.Arg2 {
     protected static RList2EnvNode createList2EnvNode() {
         return new RList2EnvNode(true);
     }
-
 }

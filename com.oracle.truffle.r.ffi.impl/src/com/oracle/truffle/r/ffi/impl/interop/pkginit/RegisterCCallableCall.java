@@ -42,5 +42,4 @@ public class RegisterCCallableCall implements RTruffleObject {
     public ForeignAccess getForeignAccess() {
         return RegisterCCallableCallMRForeign.ACCESS;
     }
-
 }

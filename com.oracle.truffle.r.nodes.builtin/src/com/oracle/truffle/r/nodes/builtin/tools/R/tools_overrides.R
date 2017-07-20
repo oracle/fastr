@@ -161,5 +161,4 @@ function(dir, outDir)
     parse(outFile)
     invisible()
 }
-
 }), asNamespace("tools"))

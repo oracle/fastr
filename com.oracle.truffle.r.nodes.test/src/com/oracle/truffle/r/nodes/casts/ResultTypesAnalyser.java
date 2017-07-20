@@ -416,5 +416,4 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<TypeExpr> implemen
     public TypeExpr visit(Dim dim, byte operation, TypeExpr previous) {
         return previous.and(NOT_NULL_NOT_MISSING);
     }
-
 }

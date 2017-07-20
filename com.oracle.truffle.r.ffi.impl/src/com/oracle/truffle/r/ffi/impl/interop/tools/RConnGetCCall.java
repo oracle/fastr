@@ -35,5 +35,4 @@ public class RConnGetCCall implements RTruffleObject {
     public ForeignAccess getForeignAccess() {
         return RConnGetCCallMRForeign.ACCESS;
     }
-
 }

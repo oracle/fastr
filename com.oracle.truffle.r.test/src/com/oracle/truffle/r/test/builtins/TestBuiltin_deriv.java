@@ -197,5 +197,4 @@ public class TestBuiltin_deriv extends TestBase {
         assertEval("(df <- deriv(1, \"x\"));df(0)");
         assertEval("x<-1;(df <- deriv(x, \"x\"));df(0)");
     }
-
 }

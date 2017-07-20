@@ -73,5 +73,4 @@ public class TestBuiltin_strptime extends TestBase {
         assertEval("{ .Internal(strptime('',,'') }");
         assertEval("{ .Internal(strptime('','',) }");
     }
-
 }

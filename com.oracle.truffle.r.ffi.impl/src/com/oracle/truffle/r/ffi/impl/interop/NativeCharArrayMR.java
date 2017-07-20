@@ -87,6 +87,5 @@ public class NativeCharArrayMR {
             long result = nativeCharArray.convertToNative();
             return result;
         }
-
     }
 }

@@ -181,9 +181,7 @@ public class PipeConnections {
             public int write(ByteBuffer src) throws IOException {
                 return wchannel.write(src);
             }
-
         }
 
     }
-
 }

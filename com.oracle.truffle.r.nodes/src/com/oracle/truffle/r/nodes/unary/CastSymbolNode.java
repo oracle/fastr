@@ -178,5 +178,4 @@ public abstract class CastSymbolNode extends CastBaseNode {
         }
         return recursiveCastSymbol.executeSymbol(o);
     }
-
 }

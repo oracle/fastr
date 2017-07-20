@@ -195,7 +195,6 @@ public class SortFunctions {
         protected RNull sort(@SuppressWarnings("unused") RNull vec, @SuppressWarnings("unused") boolean decreasing) {
             return RNull.instance;
         }
-
     }
 
     @RBuiltin(name = "qsort", kind = INTERNAL, parameterNames = {"x", "decreasing"}, behavior = PURE)

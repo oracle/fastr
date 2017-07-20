@@ -131,7 +131,6 @@ public class JNI_Call implements CallRFFI {
                 }
             }
         }
-
     }
 
     public JNI_Call() {

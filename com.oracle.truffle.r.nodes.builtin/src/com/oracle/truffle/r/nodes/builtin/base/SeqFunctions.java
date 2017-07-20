@@ -168,7 +168,6 @@ public final class SeqFunctions {
         protected int getIntegralNumeric(@SuppressWarnings("unused") Object obj) {
             throw RInternalError.shouldNotReachHere();
         }
-
     }
 
     public static GetIntegralNumericNode createGetIntegralNumericNode() {

@@ -34,7 +34,6 @@ public abstract class FFIUpCallNode extends Node {
         protected int numArgs() {
             return 0;
         }
-
     }
 
     public abstract static class Arg1 extends FFIUpCallNode {
@@ -63,5 +62,4 @@ public abstract class FFIUpCallNode extends Node {
             return 3;
         }
     }
-
 }

@@ -43,5 +43,4 @@ public class BytesToNativeCharArrayCall implements RTruffleObject {
     public ForeignAccess getForeignAccess() {
         return BytesToNativeCharArrayCallMRForeign.ACCESS;
     }
-
 }
