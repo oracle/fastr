@@ -37,11 +37,11 @@ import com.oracle.truffle.r.ffi.impl.interop.base.StrtolResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.UnameResult;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
-import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 public class TruffleLLVM_Base implements BaseRFFI {
-    public static class TruffleLLVM_GetpidNode extends GetpidNode {
+    private static class TruffleLLVM_GetpidNode extends Node implements GetpidNode {
+
         @Child private Node message = LLVMFunction.getpid.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -50,7 +50,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.getpid.callName, null);
+                    symbolHandle = LLVMFunction.getpid.createSymbol();
                 }
                 int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject());
                 return result;
@@ -60,7 +60,8 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleLLVM_GetwdNode extends GetwdNode {
+    private static class TruffleLLVM_GetwdNode extends Node implements GetwdNode {
+
         @Child private Node message = LLVMFunction.getwd.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -71,7 +72,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.getwd.callName, null);
+                    symbolHandle = LLVMFunction.getwd.createSymbol();
                 }
                 int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), nativeBuf, buf.length);
                 if (result == 0) {
@@ -90,7 +91,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleLLVM_SetwdNode extends SetwdNode {
+    private static class TruffleLLVM_SetwdNode extends Node implements SetwdNode {
         @Child private Node message = LLVMFunction.setwd.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -100,7 +101,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.setwd.callName, null);
+                    symbolHandle = LLVMFunction.setwd.createSymbol();
                 }
                 int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), nativeBuf);
                 return result;
@@ -110,7 +111,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleLLVM_MkdirNode extends MkdirNode {
+    private static class TruffleLLVM_MkdirNode extends Node implements MkdirNode {
         @Child private Node message = LLVMFunction.mkdir.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -120,7 +121,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.mkdir.callName, null);
+                    symbolHandle = LLVMFunction.mkdir.createSymbol();
                 }
                 int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), nativeBuf, mode);
                 if (result != 0) {
@@ -132,7 +133,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleLLVM_ReadlinkNode extends ReadlinkNode {
+    private static class TruffleLLVM_ReadlinkNode extends Node implements ReadlinkNode {
         private static final int EINVAL = 22;
         @Child private Node message = LLVMFunction.readlink.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
@@ -143,7 +144,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.readlink.callName, null);
+                    symbolHandle = LLVMFunction.readlink.createSymbol();
                 }
                 ReadlinkResult callback = new ReadlinkResult();
                 ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), callback, nativePath);
@@ -163,7 +164,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleLLVM_MkdtempNode extends MkdtempNode {
+    private static class TruffleLLVM_MkdtempNode extends Node implements MkdtempNode {
         @Child private Node message = LLVMFunction.mkdtemp.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -181,7 +182,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.mkdtemp.callName, null);
+                    symbolHandle = LLVMFunction.mkdtemp.createSymbol();
                 }
                 int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), nativeZtbytes);
                 if (result == 0) {
@@ -197,7 +198,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleLLVM_ChmodNode extends ChmodNode {
+    private static class TruffleLLVM_ChmodNode extends Node implements ChmodNode {
         @Child private Node message = LLVMFunction.chmod.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -207,7 +208,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.chmod.callName, null);
+                    symbolHandle = LLVMFunction.chmod.createSymbol();
                 }
                 int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), nativePath, mode);
                 return result;
@@ -217,7 +218,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleLLVM_StrolNode extends StrolNode {
+    private static class TruffleLLVM_StrolNode extends Node implements StrolNode {
         @Child private Node message = LLVMFunction.strtol.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -227,7 +228,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.strtol.callName, null);
+                    symbolHandle = LLVMFunction.strtol.createSymbol();
                 }
                 StrtolResult callback = new StrtolResult();
                 ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), callback, nativeString, base);
@@ -242,7 +243,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleLLVM_UnameNode extends UnameNode {
+    private static class TruffleLLVM_UnameNode extends Node implements UnameNode {
         @Child private Node message = LLVMFunction.uname.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -251,7 +252,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.uname.callName, null);
+                    symbolHandle = LLVMFunction.uname.createSymbol();
                 }
                 UnameResult baseUnameResultCallback = new UnameResult();
                 ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), baseUnameResultCallback);
@@ -262,7 +263,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleLLVM_GlobNode extends GlobNode {
+    private static class TruffleLLVM_GlobNode extends Node implements GlobNode {
         @Child private Node message = LLVMFunction.glob.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -271,7 +272,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.glob.callName, null);
+                    symbolHandle = LLVMFunction.glob.createSymbol();
                 }
                 NativeCharArray nativePattern = new NativeCharArray(pattern.getBytes());
                 GlobResult baseGlobResultCallback = new GlobResult();

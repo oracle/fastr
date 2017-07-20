@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 public class TruffleNFI_Zip implements ZipRFFI {
 
-    private static class TruffleNFI_CompressNode extends ZipRFFI.CompressNode {
+    private static class TruffleNFI_CompressNode extends Node implements ZipRFFI.CompressNode {
         @Child private Node message = NFIFunction.compress.createMessage();
 
         @Override
@@ -48,7 +48,7 @@ public class TruffleNFI_Zip implements ZipRFFI {
         }
     }
 
-    private static class TruffleNFI_UncompressNode extends ZipRFFI.UncompressNode {
+    private static class TruffleNFI_UncompressNode extends Node implements ZipRFFI.UncompressNode {
         @Child private Node message = NFIFunction.uncompress.createMessage();
 
         @Override

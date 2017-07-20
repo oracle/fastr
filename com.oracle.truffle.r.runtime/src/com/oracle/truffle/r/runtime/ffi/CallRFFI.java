@@ -23,14 +23,14 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
  * Support for the {.Call} and {.External} calls.
  */
 public interface CallRFFI {
-    abstract class InvokeCallNode extends Node {
+    interface InvokeCallNode extends NodeInterface {
         /**
          * Invoke the native function identified by {@code symbolInfo} passing it the arguments in
          * {@code args}. The values in {@code args} can be any of the types used to represent
@@ -39,7 +39,7 @@ public interface CallRFFI {
         public abstract Object execute(NativeCallInfo nativeCallInfo, Object[] args);
     }
 
-    abstract class InvokeVoidCallNode extends Node {
+    interface InvokeVoidCallNode extends NodeInterface {
         /**
          * Variant that does not return a result (primarily for library "init" methods).
          */
@@ -55,7 +55,7 @@ public interface CallRFFI {
         private static InvokeCallRootNode invokeCallRootNode;
 
         private InvokeCallRootNode() {
-            super(RFFIFactory.getRFFI().getCallRFFI().createInvokeCallNode());
+            super(RFFIFactory.getCallRFFI().createInvokeCallNode());
         }
 
         @Override
@@ -76,7 +76,7 @@ public interface CallRFFI {
         private static InvokeVoidCallRootNode InvokeVoidCallRootNode;
 
         private InvokeVoidCallRootNode() {
-            super(RFFIFactory.getRFFI().getCallRFFI().createInvokeVoidCallNode());
+            super(RFFIFactory.getCallRFFI().createInvokeVoidCallNode());
         }
 
         @Override

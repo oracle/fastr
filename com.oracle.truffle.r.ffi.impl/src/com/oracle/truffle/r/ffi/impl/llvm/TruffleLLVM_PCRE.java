@@ -47,7 +47,7 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
         TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(pcrePath, false, true);
     }
 
-    private static class TruffleLLVM_MaketablesNode extends MaketablesNode {
+    private static class TruffleLLVM_MaketablesNode extends Node implements MaketablesNode {
         @Child private Node message = LLVMFunction.maketables.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -56,7 +56,7 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.maketables.callName, null);
+                    symbolHandle = LLVMFunction.maketables.createSymbol();
                 }
                 TruffleObject callResult = (TruffleObject) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject());
                 long result = TruffleLLVM_Utils.getNativeAddress(callResult);
@@ -67,7 +67,7 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
         }
     }
 
-    private static class TruffleLLVM_GetCaptureCountNode extends GetCaptureCountNode {
+    private static class TruffleLLVM_GetCaptureCountNode extends Node implements GetCaptureCountNode {
         @Child private Node message = LLVMFunction.getcapturecount.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -76,7 +76,7 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.getcapturecount.callName, null);
+                    symbolHandle = LLVMFunction.getcapturecount.createSymbol();
                 }
                 int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), code, extra);
                 return result;
@@ -86,7 +86,7 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
         }
     }
 
-    public static class TruffleLLVM_GetCaptureNamesNode extends GetCaptureNamesNode {
+    private static class TruffleLLVM_GetCaptureNamesNode extends Node implements GetCaptureNamesNode {
         @Child private Node message = LLVMFunction.getcapturenames.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -95,7 +95,7 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.getcapturenames.callName, null);
+                    symbolHandle = LLVMFunction.getcapturenames.createSymbol();
                 }
                 CaptureNamesResult captureNamesCallback = new CaptureNamesResult(captureCount);
                 int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(),
@@ -112,7 +112,7 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
         }
     }
 
-    public static class TruffleLLVM_CompileNode extends CompileNode {
+    private static class TruffleLLVM_CompileNode extends Node implements CompileNode {
         @Child private Node message = LLVMFunction.compile.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -121,7 +121,7 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.compile.callName, null);
+                    symbolHandle = LLVMFunction.compile.createSymbol();
                 }
                 NativeCharArray pattenChars = new NativeCharArray(pattern.getBytes());
                 CompileResult data = new CompileResult();
@@ -133,7 +133,7 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
         }
     }
 
-    private static class TruffleLLVM_ExecNode extends ExecNode {
+    private static class TruffleLLVM_ExecNode extends Node implements ExecNode {
         @Child private Node message = LLVMFunction.exec.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -143,7 +143,7 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.exec.callName, null);
+                    symbolHandle = LLVMFunction.exec.createSymbol();
                 }
                 byte[] subjectBytes = subject.getBytes();
                 NativeCharArray subjectChars = new NativeCharArray(subjectBytes);

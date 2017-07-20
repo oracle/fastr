@@ -23,10 +23,11 @@
 package com.oracle.truffle.r.ffi.impl.jni;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 
 public class JNI_RAppl implements RApplRFFI {
-    private static class JNI_Dqrdc2Node extends Dqrdc2Node {
+    private static class JNI_Dqrdc2Node extends Node implements Dqrdc2Node {
         @Override
         @TruffleBoundary
         public void execute(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work) {
@@ -34,7 +35,7 @@ public class JNI_RAppl implements RApplRFFI {
         }
     }
 
-    private static class JNI_DqrcfNode extends DqrcfNode {
+    private static class JNI_DqrcfNode extends Node implements DqrcfNode {
 
         @Override
         @TruffleBoundary
@@ -43,7 +44,7 @@ public class JNI_RAppl implements RApplRFFI {
         }
     }
 
-    private static class JNI_DqrlsNode extends DqrlsNode {
+    private static class JNI_DqrlsNode extends Node implements DqrlsNode {
         @Override
         @TruffleBoundary
         public void execute(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work) {
@@ -51,7 +52,7 @@ public class JNI_RAppl implements RApplRFFI {
         }
     }
 
-    private static class JNI_DqrqtyNode extends DqrqtyNode {
+    private static class JNI_DqrqtyNode extends Node implements DqrqtyNode {
         @Override
         @TruffleBoundary
         public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] qty) {
@@ -59,7 +60,7 @@ public class JNI_RAppl implements RApplRFFI {
         }
     }
 
-    private static class JNI_DqrqyNode extends DqrqyNode {
+    private static class JNI_DqrqyNode extends Node implements DqrqyNode {
         @Override
         @TruffleBoundary
         public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] qy) {
@@ -67,7 +68,7 @@ public class JNI_RAppl implements RApplRFFI {
         }
     }
 
-    private static class JNI_DqrrsdNode extends DqrrsdNode {
+    private static class JNI_DqrrsdNode extends Node implements DqrrsdNode {
         @Override
         @TruffleBoundary
         public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] rsd) {
@@ -75,7 +76,7 @@ public class JNI_RAppl implements RApplRFFI {
         }
     }
 
-    private static class JNI_DqrxbNode extends DqrxbNode {
+    private static class JNI_DqrxbNode extends Node implements DqrxbNode {
         @Override
         @TruffleBoundary
         public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] xb) {

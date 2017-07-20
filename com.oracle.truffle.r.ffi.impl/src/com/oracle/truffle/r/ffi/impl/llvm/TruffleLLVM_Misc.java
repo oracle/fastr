@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 
 public class TruffleLLVM_Misc implements MiscRFFI {
 
-    private static class TruffleLLVM_ExactSumNode extends ExactSumNode {
+    private static class TruffleLLVM_ExactSumNode extends Node implements ExactSumNode {
         @CompilationFinal private SymbolHandle symbolHandle;
         @Child private Node executeNode = Message.createExecute(4).createNode();
 

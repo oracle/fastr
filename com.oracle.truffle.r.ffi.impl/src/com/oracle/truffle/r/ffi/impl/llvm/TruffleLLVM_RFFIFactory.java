@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
-public class TruffleLLVM_RFFIFactory extends RFFIFactory implements RFFI {
+public class TruffleLLVM_RFFIFactory extends RFFIFactory {
 
     @Override
     public ContextState newContextState() {
@@ -50,141 +50,142 @@ public class TruffleLLVM_RFFIFactory extends RFFIFactory implements RFFI {
 
     @Override
     protected RFFI createRFFI() {
-        return this;
-    }
+        return new RFFI() {
 
-    @CompilationFinal private BaseRFFI baseRFFI;
+            @CompilationFinal private BaseRFFI baseRFFI;
 
-    @Override
-    public BaseRFFI getBaseRFFI() {
-        if (baseRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            baseRFFI = new TruffleLLVM_Base();
-        }
-        return baseRFFI;
-    }
+            @Override
+            public BaseRFFI getBaseRFFI() {
+                if (baseRFFI == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    baseRFFI = new TruffleLLVM_Base();
+                }
+                return baseRFFI;
+            }
 
-    @CompilationFinal private CRFFI cRFFI;
+            @CompilationFinal private CRFFI cRFFI;
 
-    @Override
-    public CRFFI getCRFFI() {
-        if (cRFFI == null) {
-            cRFFI = new TruffleLLVM_C();
-        }
-        return cRFFI;
-    }
+            @Override
+            public CRFFI getCRFFI() {
+                if (cRFFI == null) {
+                    cRFFI = new TruffleLLVM_C();
+                }
+                return cRFFI;
+            }
 
-    @CompilationFinal private DLLRFFI dllRFFI;
+            @CompilationFinal private DLLRFFI dllRFFI;
 
-    @Override
-    public DLLRFFI getDLLRFFI() {
-        if (dllRFFI == null) {
-            dllRFFI = new TruffleLLVM_DLL();
-        }
-        return dllRFFI;
-    }
+            @Override
+            public DLLRFFI getDLLRFFI() {
+                if (dllRFFI == null) {
+                    dllRFFI = new TruffleLLVM_DLL();
+                }
+                return dllRFFI;
+            }
 
-    @CompilationFinal private UserRngRFFI truffleUserRngRFFI;
+            @CompilationFinal private UserRngRFFI truffleUserRngRFFI;
 
-    @Override
-    public UserRngRFFI getUserRngRFFI() {
-        if (truffleUserRngRFFI == null) {
-            truffleUserRngRFFI = new TruffleLLVM_UserRng();
-        }
-        return truffleUserRngRFFI;
-    }
+            @Override
+            public UserRngRFFI getUserRngRFFI() {
+                if (truffleUserRngRFFI == null) {
+                    truffleUserRngRFFI = new TruffleLLVM_UserRng();
+                }
+                return truffleUserRngRFFI;
+            }
 
-    @CompilationFinal private CallRFFI truffleCallRFFI;
+            @CompilationFinal private CallRFFI truffleCallRFFI;
 
-    @Override
-    public CallRFFI getCallRFFI() {
-        if (truffleCallRFFI == null) {
-            truffleCallRFFI = new TruffleLLVM_Call();
-        }
-        return truffleCallRFFI;
-    }
+            @Override
+            public CallRFFI getCallRFFI() {
+                if (truffleCallRFFI == null) {
+                    truffleCallRFFI = new TruffleLLVM_Call();
+                }
+                return truffleCallRFFI;
+            }
 
-    @CompilationFinal private StatsRFFI truffleStatsRFFI;
+            @CompilationFinal private StatsRFFI truffleStatsRFFI;
 
-    @Override
-    public StatsRFFI getStatsRFFI() {
-        if (truffleStatsRFFI == null) {
-            truffleStatsRFFI = new TruffleLLVM_Stats();
-        }
-        return truffleStatsRFFI;
-    }
+            @Override
+            public StatsRFFI getStatsRFFI() {
+                if (truffleStatsRFFI == null) {
+                    truffleStatsRFFI = new TruffleLLVM_Stats();
+                }
+                return truffleStatsRFFI;
+            }
 
-    @CompilationFinal private RApplRFFI rApplRFFI;
+            @CompilationFinal private RApplRFFI rApplRFFI;
 
-    @Override
-    public RApplRFFI getRApplRFFI() {
-        if (rApplRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            rApplRFFI = new TruffleLLVM_RAppl();
-        }
-        return rApplRFFI;
-    }
+            @Override
+            public RApplRFFI getRApplRFFI() {
+                if (rApplRFFI == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    rApplRFFI = new TruffleLLVM_RAppl();
+                }
+                return rApplRFFI;
+            }
 
-    @CompilationFinal private LapackRFFI lapackRFFI;
+            @CompilationFinal private LapackRFFI lapackRFFI;
 
-    @Override
-    public LapackRFFI getLapackRFFI() {
-        if (lapackRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            lapackRFFI = new TruffleLLVM_Lapack();
-        }
-        return lapackRFFI;
-    }
+            @Override
+            public LapackRFFI getLapackRFFI() {
+                if (lapackRFFI == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    lapackRFFI = new TruffleLLVM_Lapack();
+                }
+                return lapackRFFI;
+            }
 
-    @CompilationFinal private ToolsRFFI toolsRFFI;
+            @CompilationFinal private ToolsRFFI toolsRFFI;
 
-    @Override
-    public ToolsRFFI getToolsRFFI() {
-        if (toolsRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            toolsRFFI = new TruffleLLVM_Tools();
-        }
-        return toolsRFFI;
-    }
+            @Override
+            public ToolsRFFI getToolsRFFI() {
+                if (toolsRFFI == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    toolsRFFI = new TruffleLLVM_Tools();
+                }
+                return toolsRFFI;
+            }
 
-    @CompilationFinal private PCRERFFI pcreRFFI;
+            @CompilationFinal private PCRERFFI pcreRFFI;
 
-    @Override
-    public PCRERFFI getPCRERFFI() {
-        if (pcreRFFI == null) {
-            pcreRFFI = new TruffleLLVM_PCRE();
-        }
-        return pcreRFFI;
-    }
+            @Override
+            public PCRERFFI getPCRERFFI() {
+                if (pcreRFFI == null) {
+                    pcreRFFI = new TruffleLLVM_PCRE();
+                }
+                return pcreRFFI;
+            }
 
-    @CompilationFinal private ZipRFFI zipRFFI;
+            @CompilationFinal private ZipRFFI zipRFFI;
 
-    @Override
-    public ZipRFFI getZipRFFI() {
-        if (zipRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            zipRFFI = new TruffleLLVM_Zip();
-        }
-        return zipRFFI;
-    }
+            @Override
+            public ZipRFFI getZipRFFI() {
+                if (zipRFFI == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    zipRFFI = new TruffleLLVM_Zip();
+                }
+                return zipRFFI;
+            }
 
-    @CompilationFinal private MiscRFFI miscRFFI;
+            @CompilationFinal private MiscRFFI miscRFFI;
 
-    @Override
-    public MiscRFFI getMiscRFFI() {
-        if (miscRFFI == null) {
-            miscRFFI = new TruffleLLVM_Misc();
-        }
-        return miscRFFI;
-    }
+            @Override
+            public MiscRFFI getMiscRFFI() {
+                if (miscRFFI == null) {
+                    miscRFFI = new TruffleLLVM_Misc();
+                }
+                return miscRFFI;
+            }
 
-    private REmbedRFFI rEmbedRFFI;
+            private REmbedRFFI rEmbedRFFI;
 
-    @Override
-    public REmbedRFFI getREmbedRFFI() {
-        if (rEmbedRFFI == null) {
-            rEmbedRFFI = new TruffleLLVM_REmbed();
-        }
-        return rEmbedRFFI;
+            @Override
+            public REmbedRFFI getREmbedRFFI() {
+                if (rEmbedRFFI == null) {
+                    rEmbedRFFI = new TruffleLLVM_REmbed();
+                }
+                return rEmbedRFFI;
+            }
+        };
     }
 }

@@ -192,7 +192,7 @@ public final class Utils {
      */
     public static RuntimeException rSuicide(String msg) {
         if (RInterfaceCallbacks.R_Suicide.isOverridden()) {
-            RFFIFactory.getRFFI().getREmbedRFFI().suicide(msg);
+            RFFIFactory.getREmbedRFFI().suicide(msg);
         }
         throw rSuicideDefault(msg);
     }
@@ -200,7 +200,7 @@ public final class Utils {
     public static RuntimeException rSuicide(Throwable cause, String msg) {
         cause.printStackTrace();
         if (RInterfaceCallbacks.R_Suicide.isOverridden()) {
-            RFFIFactory.getRFFI().getREmbedRFFI().suicide(msg);
+            RFFIFactory.getREmbedRFFI().suicide(msg);
         }
         throw rSuicideDefault(msg);
     }

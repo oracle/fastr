@@ -39,7 +39,8 @@ import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 public class TruffleNFI_Base implements BaseRFFI {
 
-    public static class TruffleNFI_GetpidNode extends GetpidNode {
+    private static class TruffleNFI_GetpidNode extends Node implements GetpidNode {
+
         @Child private Node message = NFIFunction.getpid.createMessage();
 
         @Override
@@ -53,7 +54,8 @@ public class TruffleNFI_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleNFI_GetwdNode extends GetwdNode {
+    private static class TruffleNFI_GetwdNode extends Node implements GetwdNode {
+
         @Child private Node message = NFIFunction.getcwd.createMessage();
 
         @TruffleBoundary
@@ -77,7 +79,8 @@ public class TruffleNFI_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleNFI_SetwdNode extends SetwdNode {
+    private static class TruffleNFI_SetwdNode extends Node implements SetwdNode {
+
         @Child private Node message = NFIFunction.chdir.createMessage();
 
         @Override
@@ -90,7 +93,8 @@ public class TruffleNFI_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleNFI_MkdirNode extends MkdirNode {
+    private static class TruffleNFI_MkdirNode extends Node implements MkdirNode {
+
         @Child private Node message = NFIFunction.mkdir.createMessage();
 
         @Override
@@ -106,7 +110,7 @@ public class TruffleNFI_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleNFI_ReadlinkNode extends ReadlinkNode {
+    private static class TruffleNFI_ReadlinkNode extends Node implements ReadlinkNode {
         private static final int EINVAL = 22;
 
         @Child private Node message = NFIFunction.readlink.createMessage();
@@ -131,7 +135,8 @@ public class TruffleNFI_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleNFI_MkdtempNode extends MkdtempNode {
+    private static class TruffleNFI_MkdtempNode extends Node implements MkdtempNode {
+
         @Child private Node message = NFIFunction.mkdtemp.createMessage();
 
         @TruffleBoundary
@@ -158,7 +163,7 @@ public class TruffleNFI_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleNFI_ChmodNode extends ChmodNode {
+    private static class TruffleNFI_ChmodNode extends Node implements ChmodNode {
         @Child private Node message = NFIFunction.chmod.createMessage();
 
         @Override
@@ -171,7 +176,7 @@ public class TruffleNFI_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleNFI_StrolNode extends StrolNode {
+    private static class TruffleNFI_StrolNode extends Node implements StrolNode {
 
         @Child private Node message = NFIFunction.strtol.createMessage();
 
@@ -191,7 +196,7 @@ public class TruffleNFI_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleNFI_UnameNode extends UnameNode {
+    private static class TruffleNFI_UnameNode extends Node implements UnameNode {
 
         @Child private Node message = NFIFunction.uname.createMessage();
 
@@ -207,7 +212,7 @@ public class TruffleNFI_Base implements BaseRFFI {
         }
     }
 
-    public static class TruffleNFI_GlobNode extends GlobNode {
+    private static class TruffleNFI_GlobNode extends Node implements GlobNode {
 
         @Child private Node message = NFIFunction.glob.createMessage();
 

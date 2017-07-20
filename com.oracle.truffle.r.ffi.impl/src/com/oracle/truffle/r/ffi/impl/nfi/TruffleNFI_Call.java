@@ -230,7 +230,7 @@ public class TruffleNFI_Call implements CallRFFI {
         }
     }
 
-    public abstract static class TruffleNFI_InvokeCallNode extends InvokeCallNode {
+    public abstract static class TruffleNFI_InvokeCallNode extends Node implements InvokeCallNode {
         @Child private Node bindNode = Message.createInvoke(1).createNode();
 
         @Specialization(guards = "args.length == 0")
@@ -416,7 +416,7 @@ public class TruffleNFI_Call implements CallRFFI {
         }
     }
 
-    public static class TruffleNFI_InvokeVoidCallNode extends InvokeVoidCallNode {
+    private static class TruffleNFI_InvokeVoidCallNode extends Node implements InvokeVoidCallNode {
         private static final String CallVoid1Sig = "(object): void";
         private static final String CallVoid0Sig = "(): void";
         @Child private Node bindNode = Message.createInvoke(1).createNode();

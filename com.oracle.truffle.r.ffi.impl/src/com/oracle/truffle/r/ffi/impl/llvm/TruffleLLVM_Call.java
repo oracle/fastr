@@ -70,7 +70,7 @@ final class TruffleLLVM_Call implements CallRFFI {
         @Override
         public ContextState initialize(RContext contextA) {
             this.context = contextA;
-            RFFIFactory.getRFFI().getCallRFFI();
+            RFFIFactory.getCallRFFI();
             if (!initDone) {
                 initVariables(context);
                 initCallbacks(context, upCallsRFFI);
@@ -185,7 +185,7 @@ final class TruffleLLVM_Call implements CallRFFI {
     }
 
     @ImportStatic({Message.class})
-    public abstract static class TruffleLLVM_InvokeCallNode extends InvokeCallNode {
+    abstract static class TruffleLLVM_InvokeCallNode extends Node implements InvokeCallNode {
 
         @Child private UpCallUnwrap unwrap;
         private final boolean isVoid;
@@ -248,7 +248,7 @@ final class TruffleLLVM_Call implements CallRFFI {
         }
     }
 
-    private static class TruffleLLVM_InvokeVoidCallNode extends InvokeVoidCallNode {
+    private static class TruffleLLVM_InvokeVoidCallNode extends Node implements InvokeVoidCallNode {
         @Child private TruffleLLVM_InvokeCallNode invokeCallNode = TruffleLLVM_InvokeCallNodeGen.create(true);
 
         @Override

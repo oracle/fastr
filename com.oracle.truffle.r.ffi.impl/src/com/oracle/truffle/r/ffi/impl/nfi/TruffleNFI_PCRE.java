@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 
 public class TruffleNFI_PCRE implements PCRERFFI {
 
-    private static class TruffleNFI_MaketablesNode extends MaketablesNode {
+    private static class TruffleNFI_MaketablesNode extends Node implements MaketablesNode {
         @Child private Node message = NFIFunction.maketables.createMessage();
 
         @Override
@@ -51,7 +51,7 @@ public class TruffleNFI_PCRE implements PCRERFFI {
         }
     }
 
-    private static class TruffleNFI_GetCaptureCountNode extends GetCaptureCountNode {
+    private static class TruffleNFI_GetCaptureCountNode extends Node implements GetCaptureCountNode {
         @Child private Node message = NFIFunction.getcapturecount.createMessage();
 
         @Override
@@ -65,7 +65,7 @@ public class TruffleNFI_PCRE implements PCRERFFI {
         }
     }
 
-    public static class TruffleNFI_GetCaptureNamesNode extends GetCaptureNamesNode {
+    private static class TruffleNFI_GetCaptureNamesNode extends Node implements GetCaptureNamesNode {
 
         @Child private Node message = NFIFunction.getcapturenames.createMessage();
 
@@ -86,7 +86,7 @@ public class TruffleNFI_PCRE implements PCRERFFI {
         }
     }
 
-    public static class TruffleNFI_CompileNode extends CompileNode {
+    private static class TruffleNFI_CompileNode extends Node implements CompileNode {
 
         @Child private Node message = NFIFunction.compile.createMessage();
 
@@ -102,7 +102,7 @@ public class TruffleNFI_PCRE implements PCRERFFI {
         }
     }
 
-    private static class TruffleNFI_ExecNode extends ExecNode {
+    private static class TruffleNFI_ExecNode extends Node implements ExecNode {
         @Child private Node message = NFIFunction.exec.createMessage();
 
         @Override

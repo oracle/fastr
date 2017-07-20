@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * Interface to native (C) methods provided by the {@code tools} package.
  */
 public interface ToolsRFFI {
-    abstract class ParseRdNode extends Node {
+    interface ParseRdNode extends NodeInterface {
         /**
          * This invokes the Rd parser, written in C, and part of GnuR, that does its work using the
          * R FFI interface. The R code initially invokes this via {@code .External2(C_parseRd, ...)}

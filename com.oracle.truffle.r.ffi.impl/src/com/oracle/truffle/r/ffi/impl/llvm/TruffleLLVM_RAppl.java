@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
  */
 public class TruffleLLVM_RAppl implements RApplRFFI {
 
-    private static class TruffleLLVM_Dqrdc2Node extends Dqrdc2Node {
+    private static class TruffleLLVM_Dqrdc2Node extends Node implements Dqrdc2Node {
         @Child private Node message = LLVMFunction.dqrdc2.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -53,7 +53,7 @@ public class TruffleLLVM_RAppl implements RApplRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dqrdc2.callName, null);
+                    symbolHandle = LLVMFunction.dqrdc2.createSymbol();
                 }
                 ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), xN, ldx, n, p, tol, rankN, qrauxN, pivotN, workN);
                 // sync up in case copied to native memory
@@ -68,7 +68,7 @@ public class TruffleLLVM_RAppl implements RApplRFFI {
         }
     }
 
-    private static class TruffleLLVM_DqrcfNode extends DqrcfNode {
+    private static class TruffleLLVM_DqrcfNode extends Node implements DqrcfNode {
         @Child private Node message = LLVMFunction.dqrcf.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -82,7 +82,7 @@ public class TruffleLLVM_RAppl implements RApplRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dqrcf.callName, null);
+                    symbolHandle = LLVMFunction.dqrcf.createSymbol();
                 }
                 ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), xN, n, k, qrauxN, yN, ny, bN, infoN);
                 // sync up in case copied to native memory
@@ -97,7 +97,7 @@ public class TruffleLLVM_RAppl implements RApplRFFI {
         }
     }
 
-    private static class TruffleLLVM_DqrlsNode extends DqrlsNode {
+    private static class TruffleLLVM_DqrlsNode extends Node implements DqrlsNode {
         @Child private Node message = LLVMFunction.dqrls.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -115,7 +115,7 @@ public class TruffleLLVM_RAppl implements RApplRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dqrls.callName, null);
+                    symbolHandle = LLVMFunction.dqrls.createSymbol();
                 }
                 ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), xN, n, p, yN, ny, tol, bN, rsdN, qtyN, kN, jpvtN, qrauxN, workN);
                 // sync up in case copied to native memory

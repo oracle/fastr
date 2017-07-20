@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 
 public class TruffleNFI_RAppl implements RApplRFFI {
 
-    private static class TruffleNFI_Dqrdc2Node extends Dqrdc2Node {
+    private static class TruffleNFI_Dqrdc2Node extends Node implements Dqrdc2Node {
         @Child private Node message = NFIFunction.dqrdc2.createMessage();
 
         @Override
@@ -50,7 +50,7 @@ public class TruffleNFI_RAppl implements RApplRFFI {
         }
     }
 
-    private static class TruffleNFI_DqrcfNode extends DqrcfNode {
+    private static class TruffleNFI_DqrcfNode extends Node implements DqrcfNode {
         @Child private Node message = NFIFunction.dqrcf.createMessage();
 
         @Override
@@ -71,7 +71,7 @@ public class TruffleNFI_RAppl implements RApplRFFI {
         }
     }
 
-    private static class TruffleNFI_DqrlsNode extends DqrlsNode {
+    private static class TruffleNFI_DqrlsNode extends Node implements DqrlsNode {
         @Child private Node message = NFIFunction.dqrls.createMessage();
 
         @Override
@@ -96,7 +96,7 @@ public class TruffleNFI_RAppl implements RApplRFFI {
         }
     }
 
-    private static class TruffleNFI_DqrqtyNode extends DqrqtyNode {
+    private static class TruffleNFI_DqrqtyNode extends Node implements DqrqtyNode {
         @Child private Node message = NFIFunction.dqrqty.createMessage();
 
         @Override
@@ -116,7 +116,7 @@ public class TruffleNFI_RAppl implements RApplRFFI {
         }
     }
 
-    private static class TruffleNFI_DqrqyNode extends DqrqyNode {
+    private static class TruffleNFI_DqrqyNode extends Node implements DqrqyNode {
         @Child private Node message = NFIFunction.dqrqy.createMessage();
 
         @Override
@@ -136,7 +136,7 @@ public class TruffleNFI_RAppl implements RApplRFFI {
         }
     }
 
-    private static class TruffleNFI_DqrrsdNode extends DqrrsdNode {
+    private static class TruffleNFI_DqrrsdNode extends Node implements DqrrsdNode {
         @Child private Node message = NFIFunction.dqrrsd.createMessage();
 
         @Override
@@ -156,7 +156,7 @@ public class TruffleNFI_RAppl implements RApplRFFI {
         }
     }
 
-    private static class TruffleNFI_DqrxbNode extends DqrxbNode {
+    private static class TruffleNFI_DqrxbNode extends Node implements DqrxbNode {
         @Child private Node message = NFIFunction.dqrxb.createMessage();
 
         @Override

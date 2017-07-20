@@ -23,11 +23,12 @@
 package com.oracle.truffle.r.ffi.impl.jni;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 
 public class JNI_UserRng implements UserRngRFFI {
-    private static class JNI_UserRngRFFINode extends UserRngRFFINode {
+    private static class JNI_UserRngRFFINode extends Node implements UserRngRFFINode {
         @Override
         @TruffleBoundary
         public void init(int seed) {

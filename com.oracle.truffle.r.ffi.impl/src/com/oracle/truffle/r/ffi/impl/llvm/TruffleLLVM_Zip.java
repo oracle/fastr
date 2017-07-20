@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 public class TruffleLLVM_Zip implements ZipRFFI {
-    private static class TruffleLLVM_CompressNode extends ZipRFFI.CompressNode {
+    private static class TruffleLLVM_CompressNode extends Node implements ZipRFFI.CompressNode {
         @Child private Node message = LLVMFunction.compress.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -45,7 +45,7 @@ public class TruffleLLVM_Zip implements ZipRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.compress.callName, null);
+                    symbolHandle = LLVMFunction.compress.createSymbol();
                 }
                 int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(),
                                 nativeDest, dest.length, nativeSource, source.length);
@@ -58,7 +58,7 @@ public class TruffleLLVM_Zip implements ZipRFFI {
         }
     }
 
-    private static class TruffleLLVM_UncompressNode extends ZipRFFI.UncompressNode {
+    private static class TruffleLLVM_UncompressNode extends Node implements ZipRFFI.UncompressNode {
         @Child private Node message = LLVMFunction.uncompress.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -69,7 +69,7 @@ public class TruffleLLVM_Zip implements ZipRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.uncompress.callName, null);
+                    symbolHandle = LLVMFunction.uncompress.createSymbol();
                 }
                 int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(),
                                 nativeDest, dest.length, nativeSource, source.length);

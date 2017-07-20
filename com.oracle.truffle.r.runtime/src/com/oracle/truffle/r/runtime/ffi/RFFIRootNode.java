@@ -23,13 +23,13 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public abstract class RFFIRootNode<T extends Node> extends RootNode {
+public abstract class RFFIRootNode<T extends NodeInterface> extends RootNode {
     @Child protected T rffiNode;
 
     protected RFFIRootNode(T baseRFFINode) {

@@ -49,7 +49,7 @@ public class TruffleLLVM_Stats implements StatsRFFI {
     }
 
     public abstract static class LookupAdapter extends Node {
-        @Child private DLLRFFI.DLSymNode dllSymNode = RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
+        @Child private DLLRFFI.DLSymNode dllSymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
 
         public SymbolHandle lookup(String name) {
             DLLInfo dllInfo = DLL.findLibrary("stats");
@@ -145,7 +145,7 @@ public class TruffleLLVM_Stats implements StatsRFFI {
         }
     }
 
-    public static class Truffle_FactorNode extends FactorNode {
+    private static class Truffle_FactorNode extends Node implements FactorNode {
         @Child private ExecuteFactor executeFactor = ExecuteFactor.create();
 
         @Override
@@ -154,7 +154,7 @@ public class TruffleLLVM_Stats implements StatsRFFI {
         }
     }
 
-    public static class Truffle_WorkNode extends WorkNode {
+    private static class Truffle_WorkNode extends Node implements WorkNode {
         @Child private ExecuteWork executeWork = ExecuteWork.create();
 
         @Override

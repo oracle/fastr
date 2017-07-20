@@ -26,11 +26,12 @@ import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCall;
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCallReturn;
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceEnabled;
 
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 
 public class JNI_Misc implements MiscRFFI {
 
-    private static class JNI_ExactSumNode extends ExactSumNode {
+    private static class JNI_ExactSumNode extends Node implements ExactSumNode {
         @Override
         public double execute(double[] values, boolean hasNa, boolean naRm) {
             if (traceEnabled()) {

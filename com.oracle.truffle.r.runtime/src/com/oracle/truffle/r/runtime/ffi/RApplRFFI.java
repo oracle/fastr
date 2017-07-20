@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 
 /**
  * Collection of statically typed methods (from Linpack and elsewhere) that are built in to a GnuR
@@ -30,60 +30,60 @@ import com.oracle.truffle.api.nodes.Node;
  * {@code libappl} library in GnuR.
  */
 public interface RApplRFFI {
-    abstract class Dqrdc2Node extends Node {
+    interface Dqrdc2Node extends NodeInterface {
         public abstract void execute(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work);
 
         public static Dqrdc2Node create() {
-            return RFFIFactory.getRFFI().getRApplRFFI().createDqrdc2Node();
+            return RFFIFactory.getRApplRFFI().createDqrdc2Node();
         }
     }
 
-    abstract class DqrcfNode extends Node {
+    interface DqrcfNode extends NodeInterface {
         public abstract void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info);
 
         public static Dqrdc2Node create() {
-            return RFFIFactory.getRFFI().getRApplRFFI().createDqrdc2Node();
+            return RFFIFactory.getRApplRFFI().createDqrdc2Node();
         }
     }
 
-    abstract class DqrlsNode extends Node {
+    interface DqrlsNode extends NodeInterface {
         public abstract void execute(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work);
 
         public static DqrlsNode create() {
-            return RFFIFactory.getRFFI().getRApplRFFI().createDqrlsNode();
+            return RFFIFactory.getRApplRFFI().createDqrlsNode();
         }
     }
 
-    abstract class DqrqtyNode extends Node {
+    interface DqrqtyNode extends NodeInterface {
         public abstract void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] qty);
 
         public static DqrqtyNode create() {
 
-            return RFFIFactory.getRFFI().getRApplRFFI().createDqrqtyNode();
+            return RFFIFactory.getRApplRFFI().createDqrqtyNode();
         }
     }
 
-    abstract class DqrqyNode extends Node {
+    interface DqrqyNode extends NodeInterface {
         public abstract void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] qy);
 
         public static DqrqyNode create() {
-            return RFFIFactory.getRFFI().getRApplRFFI().createDqrqyNode();
+            return RFFIFactory.getRApplRFFI().createDqrqyNode();
         }
     }
 
-    abstract class DqrrsdNode extends Node {
+    interface DqrrsdNode extends NodeInterface {
         public abstract void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] rsd);
 
         public static DqrrsdNode create() {
-            return RFFIFactory.getRFFI().getRApplRFFI().createDqrrsdNode();
+            return RFFIFactory.getRApplRFFI().createDqrrsdNode();
         }
     }
 
-    abstract class DqrxbNode extends Node {
+    interface DqrxbNode extends NodeInterface {
         public abstract void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] xb);
 
         public static DqrxbNode create() {
-            return RFFIFactory.getRFFI().getRApplRFFI().createDqrxbNode();
+            return RFFIFactory.getRApplRFFI().createDqrxbNode();
         }
     }
 

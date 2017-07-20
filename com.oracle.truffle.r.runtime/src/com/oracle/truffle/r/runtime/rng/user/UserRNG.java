@@ -77,7 +77,7 @@ public final class UserRNG implements RandomNumberGenerator {
     private int nSeeds = 0;
 
     private abstract static class UserRNGRootNodeAdapter extends RootNode {
-        @Child protected UserRngRFFI.UserRngRFFINode userRngRFFINode = RFFIFactory.getRFFI().getUserRngRFFI().createUserRngRFFINode();
+        @Child protected UserRngRFFI.UserRngRFFINode userRngRFFINode = RFFIFactory.getUserRngRFFI().createUserRngRFFINode();
 
         protected UserRNGRootNodeAdapter() {
             /*

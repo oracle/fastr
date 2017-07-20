@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 
 public class TruffleNFI_Lapack implements LapackRFFI {
 
-    private static class TruffleNFI_IlaverNode extends IlaverNode {
+    private static class TruffleNFI_IlaverNode extends Node implements IlaverNode {
         @Child private Node message = NFIFunction.ilaver.createMessage();
 
         @Override
@@ -44,7 +44,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleNFI_DgeevNode extends DgeevNode {
+    private static class TruffleNFI_DgeevNode extends Node implements DgeevNode {
         @Child private Node message = NFIFunction.dgeev.createMessage();
 
         @Override
@@ -59,7 +59,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleNFI_Dgeqp3Node extends Dgeqp3Node {
+    private static class TruffleNFI_Dgeqp3Node extends Node implements Dgeqp3Node {
         @Child private Node message = NFIFunction.dgeqp3.createMessage();
 
         @Override
@@ -73,7 +73,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleNFI_DormqrNode extends DormqrNode {
+    private static class TruffleNFI_DormqrNode extends Node implements DormqrNode {
         @Child private Node message = NFIFunction.dormq.createMessage();
 
         @Override
@@ -87,7 +87,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleNFI_DtrtrsNode extends DtrtrsNode {
+    private static class TruffleNFI_DtrtrsNode extends Node implements DtrtrsNode {
         @Child private Node message = NFIFunction.dtrtrs.createMessage();
 
         @Override
@@ -101,7 +101,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleNFI_DgetrfNode extends DgetrfNode {
+    private static class TruffleNFI_DgetrfNode extends Node implements DgetrfNode {
         @Child private Node message = NFIFunction.dgetrf.createMessage();
 
         @Override
@@ -114,7 +114,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleNFI_DpotrfNode extends DpotrfNode {
+    private static class TruffleNFI_DpotrfNode extends Node implements DpotrfNode {
         @Child private Node message = NFIFunction.dpotrf.createMessage();
 
         @Override
@@ -127,7 +127,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleNFI_DpotriNode extends DpotriNode {
+    private static class TruffleNFI_DpotriNode extends Node implements DpotriNode {
         @Child private Node message = NFIFunction.dpotri.createMessage();
 
         @Override
@@ -140,7 +140,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleNFI_DpstrfNode extends DpstrfNode {
+    private static class TruffleNFI_DpstrfNode extends Node implements DpstrfNode {
         @Child private Node message = NFIFunction.dpstrf.createMessage();
 
         @Override
@@ -154,7 +154,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleNFI_DgesvNode extends DgesvNode {
+    private static class TruffleNFI_DgesvNode extends Node implements DgesvNode {
         @Child private Node message = NFIFunction.dgesv.createMessage();
 
         @Override
@@ -168,7 +168,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleNFI_DlangeNode extends DlangeNode {
+    private static class TruffleNFI_DlangeNode extends Node implements DlangeNode {
         @Child private Node message = NFIFunction.dlange.createMessage();
 
         @Override
@@ -182,7 +182,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleNFI_DgeconNode extends DgeconNode {
+    private static class TruffleNFI_DgeconNode extends Node implements DgeconNode {
         @Child private Node message = NFIFunction.dgecon.createMessage();
 
         @Override
@@ -196,7 +196,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleNFI_DsyevrNode extends DsyevrNode {
+    private static class TruffleNFI_DsyevrNode extends Node implements DsyevrNode {
         @Child private Node message = NFIFunction.dsyevr.createMessage();
 
         @Override

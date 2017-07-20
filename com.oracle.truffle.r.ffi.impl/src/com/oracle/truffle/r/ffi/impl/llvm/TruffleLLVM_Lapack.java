@@ -84,7 +84,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         return rootNode.getCallTarget();
     }
 
-    private static class TruffleLLVM_IlaverNode extends IlaverNode {
+    private static class TruffleLLVM_IlaverNode extends Node implements IlaverNode {
         @Child private Node message = LLVMFunction.ilaver.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -94,7 +94,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.ilaver.callName, null);
+                    symbolHandle = LLVMFunction.ilaver.createSymbol();
                 }
                 ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), versionN);
             } catch (InteropException e) {
@@ -105,7 +105,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleLLVM_DgeevNode extends DgeevNode {
+    private static class TruffleLLVM_DgeevNode extends Node implements DgeevNode {
         @Child private Node message = LLVMFunction.dgeev.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -121,7 +121,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dgeev.callName, null);
+                    symbolHandle = LLVMFunction.dgeev.createSymbol();
                 }
                 return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), jobVL, jobVR, n, aN, lda,
                                 wrN, wiN, vlN, ldvl, vrN, ldvr, workN, lwork);
@@ -142,7 +142,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleLLVM_Dgeqp3Node extends Dgeqp3Node {
+    private static class TruffleLLVM_Dgeqp3Node extends Node implements Dgeqp3Node {
         @Child private Node message = LLVMFunction.dgeqp3.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -155,7 +155,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dgeqp3.callName, null);
+                    symbolHandle = LLVMFunction.dgeqp3.createSymbol();
                 }
                 return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), m, n, aN, lda, jpvtN,
                                 tauN, workN, lwork);
@@ -170,7 +170,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleLLVM_DormqrNode extends DormqrNode {
+    private static class TruffleLLVM_DormqrNode extends Node implements DormqrNode {
         @Child private Node message = LLVMFunction.dormq.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -183,7 +183,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dormq.callName, null);
+                    symbolHandle = LLVMFunction.dormq.createSymbol();
                 }
                 return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), side, trans, m, n, k, aN, lda,
                                 tauN, cN, ldc, workN, lwork);
@@ -196,7 +196,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleLLVM_DtrtrsNode extends DtrtrsNode {
+    private static class TruffleLLVM_DtrtrsNode extends Node implements DtrtrsNode {
         @Child private Node message = LLVMFunction.dtrtrs.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -207,7 +207,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dtrtrs.callName, null);
+                    symbolHandle = LLVMFunction.dtrtrs.createSymbol();
                 }
                 return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), uplo, trans, diag, n, nrhs, aN, lda,
                                 bN, ldb);
@@ -219,7 +219,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleLLVM_DgetrfNode extends DgetrfNode {
+    private static class TruffleLLVM_DgetrfNode extends Node implements DgetrfNode {
         @Child private Node message = LLVMFunction.dgetrf.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -230,7 +230,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dgetrf.callName, null);
+                    symbolHandle = LLVMFunction.dgetrf.createSymbol();
                 }
                 return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), m, n, aN, lda, ipivN);
             } catch (InteropException e) {
@@ -242,7 +242,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleLLVM_DpotrfNode extends DpotrfNode {
+    private static class TruffleLLVM_DpotrfNode extends Node implements DpotrfNode {
         @Child private Node message = LLVMFunction.dpotrf.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -252,7 +252,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dpotrf.callName, null);
+                    symbolHandle = LLVMFunction.dpotrf.createSymbol();
                 }
                 return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), uplo, n, aN, lda);
             } catch (InteropException e) {
@@ -263,7 +263,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleLLVM_DpotriNode extends DpotriNode {
+    private static class TruffleLLVM_DpotriNode extends Node implements DpotriNode {
         @Child private Node message = LLVMFunction.dpotri.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -273,7 +273,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dpotri.callName, null);
+                    symbolHandle = LLVMFunction.dpotri.createSymbol();
                 }
                 return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), uplo, n, aN, lda);
             } catch (InteropException e) {
@@ -284,7 +284,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleLLVM_DpstrfNode extends DpstrfNode {
+    private static class TruffleLLVM_DpstrfNode extends Node implements DpstrfNode {
         @Child private Node message = LLVMFunction.dpstrf.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -297,7 +297,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dpstrf.callName, null);
+                    symbolHandle = LLVMFunction.dpstrf.createSymbol();
                 }
                 return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), uplo, n, aN, lda,
                                 pivN, rankN, tol, workN);
@@ -312,7 +312,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleLLVM_DgesvNode extends DgesvNode {
+    private static class TruffleLLVM_DgesvNode extends Node implements DgesvNode {
         @Child private Node message = LLVMFunction.dgesv.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -324,7 +324,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dgesv.callName, null);
+                    symbolHandle = LLVMFunction.dgesv.createSymbol();
                 }
                 return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), n, nrhs, aN, lda, ipivN, bN, ldb);
             } catch (InteropException e) {
@@ -337,7 +337,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleLLVM_DlangeNode extends DlangeNode {
+    private static class TruffleLLVM_DlangeNode extends Node implements DlangeNode {
         @Child private Node message = LLVMFunction.dlange.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -349,7 +349,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dlange.callName, null);
+                    symbolHandle = LLVMFunction.dlange.createSymbol();
                 }
                 return (double) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), norm, m, n, aN, lda, workN);
             } catch (InteropException e) {
@@ -358,7 +358,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleLLVM_DgeconNode extends DgeconNode {
+    private static class TruffleLLVM_DgeconNode extends Node implements DgeconNode {
         @Child private Node message = LLVMFunction.dgecon.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -371,7 +371,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dgecon.callName, null);
+                    symbolHandle = LLVMFunction.dgecon.createSymbol();
                 }
                 return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), norm, n, aN, lda, anorm, rcondN, workN, iworkN);
             } catch (InteropException e) {
@@ -384,7 +384,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         }
     }
 
-    private static class TruffleLLVM_DsyevrNode extends DsyevrNode {
+    private static class TruffleLLVM_DsyevrNode extends Node implements DsyevrNode {
         @Child private Node message = LLVMFunction.dsyevr.createMessage();
         @CompilationFinal private SymbolHandle symbolHandle;
 
@@ -401,7 +401,7 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
             try {
                 if (symbolHandle == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.dsyevr.callName, null);
+                    symbolHandle = LLVMFunction.dsyevr.createSymbol();
                 }
                 return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), jobz, range, uplo, n, aN,
                                 lda, vl, vu, il, iu, abstol, mN, wN, zN, ldz,

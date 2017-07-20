@@ -23,10 +23,11 @@
 package com.oracle.truffle.r.ffi.impl.jni;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 
 public class JNI_Lapack implements LapackRFFI {
-    private static class JNI_IlaverNode extends IlaverNode {
+    private static class JNI_IlaverNode extends Node implements IlaverNode {
         @Override
         @TruffleBoundary
         public void execute(int[] version) {
@@ -34,7 +35,7 @@ public class JNI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class JNI_DgeevNode extends DgeevNode {
+    private static class JNI_DgeevNode extends Node implements DgeevNode {
         @Override
         @TruffleBoundary
         public int execute(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi, double[] vl, int ldvl, double[] vr, int ldvr, double[] work, int lwork) {
@@ -42,7 +43,7 @@ public class JNI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class JNI_Dgeqp3Node extends Dgeqp3Node {
+    private static class JNI_Dgeqp3Node extends Node implements Dgeqp3Node {
         @Override
         @TruffleBoundary
         public int execute(int m, int n, double[] a, int lda, int[] jpvt, double[] tau, double[] work, int lwork) {
@@ -50,7 +51,7 @@ public class JNI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class JNI_DormqrNode extends DormqrNode {
+    private static class JNI_DormqrNode extends Node implements DormqrNode {
         @Override
         @TruffleBoundary
         public int execute(char side, char trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc, double[] work, int lwork) {
@@ -58,7 +59,7 @@ public class JNI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class JNI_DtrtrsNode extends DtrtrsNode {
+    private static class JNI_DtrtrsNode extends Node implements DtrtrsNode {
         @Override
         @TruffleBoundary
         public int execute(char uplo, char trans, char diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb) {
@@ -66,7 +67,7 @@ public class JNI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class JNI_DgetrfNode extends DgetrfNode {
+    private static class JNI_DgetrfNode extends Node implements DgetrfNode {
         @Override
         @TruffleBoundary
         public int execute(int m, int n, double[] a, int lda, int[] ipiv) {
@@ -74,7 +75,7 @@ public class JNI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class JNI_DpotrfNode extends DpotrfNode {
+    private static class JNI_DpotrfNode extends Node implements DpotrfNode {
         @Override
         @TruffleBoundary
         public int execute(char uplo, int n, double[] a, int lda) {
@@ -82,7 +83,7 @@ public class JNI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class JNI_DpotriNode extends DpotriNode {
+    private static class JNI_DpotriNode extends Node implements DpotriNode {
         @Override
         @TruffleBoundary
         public int execute(char uplo, int n, double[] a, int lda) {
@@ -90,7 +91,7 @@ public class JNI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class JNI_DpstrfNode extends DpstrfNode {
+    private static class JNI_DpstrfNode extends Node implements DpstrfNode {
         @Override
         @TruffleBoundary
         public int execute(char uplo, int n, double[] a, int lda, int[] piv, int[] rank, double tol, double[] work) {
@@ -98,7 +99,7 @@ public class JNI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class JNI_DgesvNode extends DgesvNode {
+    private static class JNI_DgesvNode extends Node implements DgesvNode {
         @Override
         @TruffleBoundary
         public int execute(int n, int nrhs, double[] a, int lda, int[] ipiv, double[] b, int ldb) {
@@ -106,7 +107,7 @@ public class JNI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class JNI_DlangeNode extends DlangeNode {
+    private static class JNI_DlangeNode extends Node implements DlangeNode {
         @Override
         @TruffleBoundary
         public double execute(char norm, int m, int n, double[] a, int lda, double[] work) {
@@ -114,7 +115,7 @@ public class JNI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class JNI_DgeconNode extends DgeconNode {
+    private static class JNI_DgeconNode extends Node implements DgeconNode {
         @Override
         @TruffleBoundary
         public int execute(char norm, int n, double[] a, int lda, double anorm, double[] rcond, double[] work, int[] iwork) {
@@ -122,7 +123,7 @@ public class JNI_Lapack implements LapackRFFI {
         }
     }
 
-    private static class JNI_DsyevrNode extends DsyevrNode {
+    private static class JNI_DsyevrNode extends Node implements DsyevrNode {
         @Override
         public int execute(char jobz, char range, char uplo, int n, double[] a, int lda, double vl, double vu, int il, int iu, double abstol, int[] m,
                         double[] w, double[] z, int ldz, int[] isuppz, double[] work, int lwork, int[] iwork, int liwork) {

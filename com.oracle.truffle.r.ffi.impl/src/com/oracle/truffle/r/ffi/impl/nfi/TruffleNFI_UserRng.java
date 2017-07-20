@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 
 public class TruffleNFI_UserRng implements UserRngRFFI {
 
-    private static class NFIUserRngRFFINode extends UserRngRFFINode {
+    private static class TruffleNFI_UserRngRFFINode extends Node implements UserRngRFFINode {
         Node initMessage;
         Node randMessage;
         Node nSeedMessage;
@@ -119,6 +119,6 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
 
     @Override
     public UserRngRFFINode createUserRngRFFINode() {
-        return new NFIUserRngRFFINode();
+        return new TruffleNFI_UserRngRFFINode();
     }
 }

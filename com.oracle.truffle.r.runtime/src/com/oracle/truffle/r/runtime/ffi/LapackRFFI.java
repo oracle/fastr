@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 
 /**
  * Collection of statically typed Lapack methods that are used in the {@code base} package. The
@@ -30,51 +30,51 @@ import com.oracle.truffle.api.nodes.Node;
  * the result of the call.
  */
 public interface LapackRFFI {
-    abstract class IlaverNode extends Node {
+    interface IlaverNode extends NodeInterface {
         /**
          * Return version info, mjor, minor, patch, in {@code version}.
          */
         public abstract void execute(int[] version);
 
         public static IlaverNode create() {
-            return RFFIFactory.getRFFI().getLapackRFFI().createIlaverNode();
+            return RFFIFactory.getLapackRFFI().createIlaverNode();
         }
     }
 
-    abstract class DgeevNode extends Node {
+    interface DgeevNode extends NodeInterface {
         /**
          * See <a href="http://www.netlib.org/lapack/explore-html/d9/d28/dgeev_8f.html">spec</a>.
          */
         public abstract int execute(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi, double[] vl, int ldvl, double[] vr, int ldvr, double[] work, int lwork);
 
         public static DgeevNode create() {
-            return RFFIFactory.getRFFI().getLapackRFFI().createDgeevNode();
+            return RFFIFactory.getLapackRFFI().createDgeevNode();
         }
     }
 
-    abstract class Dgeqp3Node extends Node {
+    interface Dgeqp3Node extends NodeInterface {
         /**
          * See <a href="http://www.netlib.org/lapack/explore-html/db/de5/dgeqp3_8f.html">spec</a>.
          */
         public abstract int execute(int m, int n, double[] a, int lda, int[] jpvt, double[] tau, double[] work, int lwork);
 
         public static Dgeqp3Node create() {
-            return RFFIFactory.getRFFI().getLapackRFFI().createDgeqp3Node();
+            return RFFIFactory.getLapackRFFI().createDgeqp3Node();
         }
     }
 
-    abstract class DormqrNode extends Node {
+    interface DormqrNode extends NodeInterface {
         /**
          * See <a href="http://www.netlib.org/lapack/explore-html/da/d82/dormqr_8f.html">spec</a>.
          */
         public abstract int execute(char side, char trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc, double[] work, int lwork);
 
         public static DormqrNode create() {
-            return RFFIFactory.getRFFI().getLapackRFFI().createDormqrNode();
+            return RFFIFactory.getLapackRFFI().createDormqrNode();
         }
     }
 
-    abstract class DtrtrsNode extends Node {
+    interface DtrtrsNode extends NodeInterface {
 
         /**
          * See <a href="http://www.netlib.org/lapack/explore-html/d6/d6f/dtrtrs_8f.html">spec</a>.
@@ -82,11 +82,11 @@ public interface LapackRFFI {
         public abstract int execute(char uplo, char trans, char diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb);
 
         public static DtrtrsNode create() {
-            return RFFIFactory.getRFFI().getLapackRFFI().createDtrtrsNode();
+            return RFFIFactory.getLapackRFFI().createDtrtrsNode();
         }
     }
 
-    abstract class DgetrfNode extends Node {
+    interface DgetrfNode extends NodeInterface {
 
         /**
          * See <a href="http://www.netlib.org/lapack/explore-html/d3/d6a/dgetrf_8f.html">spec</a>.
@@ -94,11 +94,11 @@ public interface LapackRFFI {
         public abstract int execute(int m, int n, double[] a, int lda, int[] ipiv);
 
         public static DgetrfNode create() {
-            return RFFIFactory.getRFFI().getLapackRFFI().createDgetrfNode();
+            return RFFIFactory.getLapackRFFI().createDgetrfNode();
         }
     }
 
-    abstract class DpotrfNode extends Node {
+    interface DpotrfNode extends NodeInterface {
 
         /**
          * See <a href="http://www.netlib.org/lapack/explore-html/d0/d8a/dpotrf_8f.html">spec</a>.
@@ -106,11 +106,11 @@ public interface LapackRFFI {
         public abstract int execute(char uplo, int n, double[] a, int lda);
 
         public static DpotrfNode create() {
-            return RFFIFactory.getRFFI().getLapackRFFI().createDpotrfNode();
+            return RFFIFactory.getLapackRFFI().createDpotrfNode();
         }
     }
 
-    abstract class DpotriNode extends Node {
+    interface DpotriNode extends NodeInterface {
 
         /**
          * See <a href="http://www.netlib.org/lapack/explore-html/d0/d8a/dpotri_8f.html">spec</a>.
@@ -118,33 +118,33 @@ public interface LapackRFFI {
         public abstract int execute(char uplo, int n, double[] a, int lda);
 
         public static DpotriNode create() {
-            return RFFIFactory.getRFFI().getLapackRFFI().createDpotriNode();
+            return RFFIFactory.getLapackRFFI().createDpotriNode();
         }
     }
 
-    abstract class DpstrfNode extends Node {
+    interface DpstrfNode extends NodeInterface {
         /**
          * See <a href="http://www.netlib.org/lapack/explore-html/dd/dad/dpstrf_8f.html">spec</a>.
          */
         public abstract int execute(char uplo, int n, double[] a, int lda, int[] piv, int[] rank, double tol, double[] work);
 
         public static DpstrfNode create() {
-            return RFFIFactory.getRFFI().getLapackRFFI().createDpstrfNode();
+            return RFFIFactory.getLapackRFFI().createDpstrfNode();
         }
     }
 
-    abstract class DgesvNode extends Node {
+    interface DgesvNode extends NodeInterface {
         /**
          * See <a href="http://www.netlib.org/lapack/explore-html/d8/d72/dgesv_8f.html">spec</a>.
          */
         public abstract int execute(int n, int nrhs, double[] a, int lda, int[] ipiv, double[] b, int ldb);
 
         public static DgesvNode create() {
-            return RFFIFactory.getRFFI().getLapackRFFI().createDgesvNode();
+            return RFFIFactory.getLapackRFFI().createDgesvNode();
         }
     }
 
-    abstract class DlangeNode extends Node {
+    interface DlangeNode extends NodeInterface {
 
         /**
          * See <a href="http://www.netlib.org/lapack/explore-html/dc/d09/dlange_8f.html">spec</a>.
@@ -152,11 +152,11 @@ public interface LapackRFFI {
         public abstract double execute(char norm, int m, int n, double[] a, int lda, double[] work);
 
         public static DlangeNode create() {
-            return RFFIFactory.getRFFI().getLapackRFFI().createDlangeNode();
+            return RFFIFactory.getLapackRFFI().createDlangeNode();
         }
     }
 
-    abstract class DgeconNode extends Node {
+    interface DgeconNode extends NodeInterface {
 
         /**
          * See <a href="http://www.netlib.org/lapack/explore-html/db/de4/dgecon_8f.html">spec</a>.
@@ -164,17 +164,17 @@ public interface LapackRFFI {
         public abstract int execute(char norm, int n, double[] a, int lda, double anorm, double[] rcond, double[] work, int[] iwork);
 
         public static DgeconNode create() {
-            return RFFIFactory.getRFFI().getLapackRFFI().createDgeconNode();
+            return RFFIFactory.getLapackRFFI().createDgeconNode();
         }
     }
 
-    abstract class DsyevrNode extends Node {
+    interface DsyevrNode extends NodeInterface {
 
         public abstract int execute(char jobz, char range, char uplo, int n, double[] a, int lda, double vl, double vu, int il, int iu, double abstol, int[] m, double[] w,
                         double[] z, int ldz, int[] isuppz, double[] work, int lwork, int[] iwork, int liwork);
 
         public static DsyevrNode create() {
-            return RFFIFactory.getRFFI().getLapackRFFI().createDsyevrNode();
+            return RFFIFactory.getLapackRFFI().createDsyevrNode();
         }
     }
 

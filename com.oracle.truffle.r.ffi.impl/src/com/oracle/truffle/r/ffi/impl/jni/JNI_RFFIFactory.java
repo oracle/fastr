@@ -48,10 +48,7 @@ import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 /**
  * JNI-based factory. The majority of the FFI instances are instantiated on demand.
  */
-public class JNI_RFFIFactory extends RFFIFactory implements RFFI {
-
-    public JNI_RFFIFactory() {
-    }
+public class JNI_RFFIFactory extends RFFIFactory {
 
     private static class ContextStateImpl implements RContext.ContextState {
         @Override
@@ -86,145 +83,146 @@ public class JNI_RFFIFactory extends RFFIFactory implements RFFI {
 
     @Override
     protected RFFI createRFFI() {
-        return this;
-    }
+        return new RFFI() {
 
-    @CompilationFinal private BaseRFFI baseRFFI;
+            @CompilationFinal private BaseRFFI baseRFFI;
 
-    @Override
-    public BaseRFFI getBaseRFFI() {
-        if (baseRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            baseRFFI = new JNI_Base();
-        }
-        return baseRFFI;
-    }
+            @Override
+            public BaseRFFI getBaseRFFI() {
+                if (baseRFFI == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    baseRFFI = new JNI_Base();
+                }
+                return baseRFFI;
+            }
 
-    @CompilationFinal private LapackRFFI lapackRFFI;
+            @CompilationFinal private LapackRFFI lapackRFFI;
 
-    @Override
-    public LapackRFFI getLapackRFFI() {
-        if (lapackRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            lapackRFFI = new JNI_Lapack();
-        }
-        return lapackRFFI;
-    }
+            @Override
+            public LapackRFFI getLapackRFFI() {
+                if (lapackRFFI == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    lapackRFFI = new JNI_Lapack();
+                }
+                return lapackRFFI;
+            }
 
-    @CompilationFinal private RApplRFFI rApplRFFI;
+            @CompilationFinal private RApplRFFI rApplRFFI;
 
-    @Override
-    public RApplRFFI getRApplRFFI() {
-        if (rApplRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            rApplRFFI = new JNI_RAppl();
-        }
-        return rApplRFFI;
-    }
+            @Override
+            public RApplRFFI getRApplRFFI() {
+                if (rApplRFFI == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    rApplRFFI = new JNI_RAppl();
+                }
+                return rApplRFFI;
+            }
 
-    @CompilationFinal private StatsRFFI statsRFFI;
+            @CompilationFinal private StatsRFFI statsRFFI;
 
-    @Override
-    public StatsRFFI getStatsRFFI() {
-        if (statsRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            statsRFFI = new JNI_Stats();
-        }
-        return statsRFFI;
-    }
+            @Override
+            public StatsRFFI getStatsRFFI() {
+                if (statsRFFI == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    statsRFFI = new JNI_Stats();
+                }
+                return statsRFFI;
+            }
 
-    @CompilationFinal private ToolsRFFI toolsRFFI;
+            @CompilationFinal private ToolsRFFI toolsRFFI;
 
-    @Override
-    public ToolsRFFI getToolsRFFI() {
-        if (toolsRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            toolsRFFI = new Generic_Tools();
-        }
-        return toolsRFFI;
-    }
+            @Override
+            public ToolsRFFI getToolsRFFI() {
+                if (toolsRFFI == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    toolsRFFI = new Generic_Tools();
+                }
+                return toolsRFFI;
+            }
 
-    @CompilationFinal private UserRngRFFI userRngRFFI;
+            @CompilationFinal private UserRngRFFI userRngRFFI;
 
-    @Override
-    public UserRngRFFI getUserRngRFFI() {
-        if (userRngRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            userRngRFFI = new JNI_UserRng();
-        }
-        return userRngRFFI;
-    }
+            @Override
+            public UserRngRFFI getUserRngRFFI() {
+                if (userRngRFFI == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    userRngRFFI = new JNI_UserRng();
+                }
+                return userRngRFFI;
+            }
 
-    @CompilationFinal private CRFFI cRFFI;
+            @CompilationFinal private CRFFI cRFFI;
 
-    @Override
-    public CRFFI getCRFFI() {
-        if (cRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            cRFFI = new JNI_C();
-        }
-        return cRFFI;
-    }
+            @Override
+            public CRFFI getCRFFI() {
+                if (cRFFI == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    cRFFI = new JNI_C();
+                }
+                return cRFFI;
+            }
 
-    @CompilationFinal private CallRFFI callRFFI;
+            @CompilationFinal private CallRFFI callRFFI;
 
-    @Override
-    public CallRFFI getCallRFFI() {
-        if (callRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callRFFI = new JNI_Call();
-        }
-        return callRFFI;
-    }
+            @Override
+            public CallRFFI getCallRFFI() {
+                if (callRFFI == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    callRFFI = new JNI_Call();
+                }
+                return callRFFI;
+            }
 
-    @CompilationFinal private ZipRFFI zipRFFI;
+            @CompilationFinal private ZipRFFI zipRFFI;
 
-    @Override
-    public ZipRFFI getZipRFFI() {
-        if (zipRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            zipRFFI = new JNI_Zip();
-        }
-        return zipRFFI;
-    }
+            @Override
+            public ZipRFFI getZipRFFI() {
+                if (zipRFFI == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    zipRFFI = new JNI_Zip();
+                }
+                return zipRFFI;
+            }
 
-    @CompilationFinal private PCRERFFI pcreRFFI;
+            @CompilationFinal private PCRERFFI pcreRFFI;
 
-    @Override
-    public PCRERFFI getPCRERFFI() {
-        if (pcreRFFI == null) {
-            pcreRFFI = new JNI_PCRE();
-        }
-        return pcreRFFI;
-    }
+            @Override
+            public PCRERFFI getPCRERFFI() {
+                if (pcreRFFI == null) {
+                    pcreRFFI = new JNI_PCRE();
+                }
+                return pcreRFFI;
+            }
 
-    private DLLRFFI dllRFFI;
+            private DLLRFFI dllRFFI;
 
-    @Override
-    public DLLRFFI getDLLRFFI() {
-        if (dllRFFI == null) {
-            dllRFFI = new JNI_DLL();
-        }
-        return dllRFFI;
-    }
+            @Override
+            public DLLRFFI getDLLRFFI() {
+                if (dllRFFI == null) {
+                    dllRFFI = new JNI_DLL();
+                }
+                return dllRFFI;
+            }
 
-    private REmbedRFFI rEmbedRFFI;
+            private REmbedRFFI rEmbedRFFI;
 
-    @Override
-    public REmbedRFFI getREmbedRFFI() {
-        if (rEmbedRFFI == null) {
-            rEmbedRFFI = new JNI_REmbed();
-        }
-        return rEmbedRFFI;
-    }
+            @Override
+            public REmbedRFFI getREmbedRFFI() {
+                if (rEmbedRFFI == null) {
+                    rEmbedRFFI = new JNI_REmbed();
+                }
+                return rEmbedRFFI;
+            }
 
-    private MiscRFFI miscRFFI;
+            private MiscRFFI miscRFFI;
 
-    @Override
-    public MiscRFFI getMiscRFFI() {
-        if (miscRFFI == null) {
-            miscRFFI = new JNI_Misc();
-        }
-        return miscRFFI;
+            @Override
+            public MiscRFFI getMiscRFFI() {
+                if (miscRFFI == null) {
+                    miscRFFI = new JNI_Misc();
+                }
+                return miscRFFI;
+            }
+        };
     }
 }

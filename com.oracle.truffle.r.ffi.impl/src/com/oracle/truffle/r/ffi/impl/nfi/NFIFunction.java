@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.ffi.impl.common.NativeFunction;
 
 /**
  * Enumerates all the C functions that are internal to the implementation and called via Truffle
@@ -37,7 +38,7 @@ import com.oracle.truffle.api.nodes.Node;
  * {@code xxx} is the subsystem.
  *
  */
-enum NFIFunction {
+enum NFIFunction implements NativeFunction {
     // base
     getpid("(): sint32"),
     getcwd("([uint8], sint32): sint32"),
@@ -85,26 +86,26 @@ enum NFIFunction {
                     "[sint32], sint32) : sint32", "call_lapack_");
     //@formatter:on
 
-    private final int argCount;
+    private final int argumentCount;
     private final String signature;
     private final String callName;
     @CompilationFinal private TruffleObject function;
 
     NFIFunction(String signature) {
-        this.argCount = TruffleNFI_Utils.getArgCount(signature);
+        this.argumentCount = TruffleNFI_Utils.getArgCount(signature);
         this.signature = signature;
         this.callName = name();
     }
 
     NFIFunction(String signature, String prefix) {
-        this.argCount = TruffleNFI_Utils.getArgCount(signature);
+        this.argumentCount = TruffleNFI_Utils.getArgCount(signature);
         this.signature = signature;
         this.callName = prefix + name();
     }
 
     Node createMessage() {
         CompilerAsserts.neverPartOfCompilation();
-        return Message.createExecute(argCount).createNode();
+        return Message.createExecute(argumentCount).createNode();
     }
 
     TruffleObject getFunction() {
@@ -113,5 +114,10 @@ enum NFIFunction {
             function = TruffleNFI_Utils.lookupAndBind(callName, signature);
         }
         return function;
+    }
+
+    @Override
+    public int getArgumentCount() {
+        return argumentCount;
     }
 }

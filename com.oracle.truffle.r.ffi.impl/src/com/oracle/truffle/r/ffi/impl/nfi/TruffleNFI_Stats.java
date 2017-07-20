@@ -40,12 +40,12 @@ import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 
 public class TruffleNFI_Stats implements StatsRFFI {
 
-    private static class TruffleNFI_FactorNode extends FactorNode {
+    private static class TruffleNFI_FactorNode extends Node implements FactorNode {
         private static final String FFT_FACTOR = "fft_factor";
         private static final String FFT_FACTOR_SIGNATURE = "(sint32, [sint32], [sint32]): void";
 
         @Child private Node factorMessage = Message.createExecute(3).createNode();
-        @Child private DLLRFFI.DLSymNode dlsymNode = RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
+        @Child private DLLRFFI.DLSymNode dlsymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
 
         @CompilationFinal private TruffleObject fftFactorFunction;
 
@@ -64,11 +64,11 @@ public class TruffleNFI_Stats implements StatsRFFI {
         }
     }
 
-    private static class TruffleNFI_WorkNode extends WorkNode {
+    private static class TruffleNFI_WorkNode extends Node implements WorkNode {
         private static final String FFT_WORK = "fft_work";
         private static final String FFT_WORK_SIGNATURE = "([double], sint32, sint32, sint32, sint32, [double], [sint32]): sint32";
 
-        @Child private DLLRFFI.DLSymNode dlsymNode = RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
+        @Child private DLLRFFI.DLSymNode dlsymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
         @Child private Node workMessage = Message.createExecute(7).createNode();
 
         @CompilationFinal private TruffleObject fftWorkFunction;
