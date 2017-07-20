@@ -27,16 +27,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 public class TestInteractiveDebug extends TestBase {
+    @After
+    public void cleanupDebugListeners() {
+        DebugHandling.dispose();
+    }
+
     @Test
     public void testSimple() {
         assertEval("f <- function(x) {\n  t <- x + 1\n  print(t)\n  t}\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn");
+        assertEval("f <- function(x) {\n  t <- x + 1\n  print(t)\n  t}\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn\nundebug(f)\nf(3)\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn");
     }
 
     @Test
@@ -117,5 +125,8 @@ public class TestInteractiveDebug extends TestBase {
     public void testSetBreakpoint() {
         assertEval(Output.IgnoreDebugCallString, Output.IgnoreDebugPath, String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); fun(10)\n\n\n\n\n\n\n\n", debugFile, debugFile));
         assertEval(String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); setBreakpoint('%s', 4, verbose=F, clear=T); fun(10)\n", debugFile, debugFile, debugFile));
+        assertEval(Output.IgnoreDebugCallString, Output.IgnoreDebugPath, String.format(
+                        "source('%s'); setBreakpoint('%s', 4, verbose=F); fun(10)\n\n\n\n\n\n\n\n\nsetBreakpoint('%s', 4, verbose=F, clear=T); fun(10)\nsetBreakpoint('%s', 4, verbose=F); invisible(fun(10))\n\n\n\n\n\n\n\n\n",
+                        debugFile, debugFile, debugFile, debugFile));
     }
 }
