@@ -620,7 +620,6 @@ public class DebugHandling {
                 fser.enableChildren();
             }
         }
-
     }
 
     /**

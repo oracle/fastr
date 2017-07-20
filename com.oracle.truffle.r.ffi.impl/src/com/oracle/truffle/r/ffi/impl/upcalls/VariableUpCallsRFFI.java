@@ -54,5 +54,4 @@ public interface VariableUpCallsRFFI {
     default Object R_TempDir() {
         return null;
     }
-
 }

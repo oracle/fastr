@@ -241,7 +241,6 @@ public abstract class Deriv extends RExternalBuiltinNode {
                         k++;
                     }
                 }
-
             } else {
                 // the first derivative is constant or simple variable
                 // TODO: do not call the d twice
@@ -306,7 +305,6 @@ public abstract class Deriv extends RExternalBuiltinNode {
                     }
                 }
             }
-
         }
         // attr(.value, "gradient") <- .grad
         exprlist.set(p++, addGrad());
@@ -356,7 +354,6 @@ public abstract class Deriv extends RExternalBuiltinNode {
             RExpression res = RDataFactory.createExpression(new Object[]{lan});
             return new DerivResult(res);
         }
-
     }
 
     private int findSubexpression(RBaseNode expr, List<RSyntaxNode> exprlist, String tag) {
@@ -399,7 +396,6 @@ public abstract class Deriv extends RExternalBuiltinNode {
             protected Integer visit(RSyntaxFunction element) {
                 throw RError.error(RError.SHOW_CALLER, RError.Message.INVALID_EXPRESSION, "FindSubexprs");
             }
-
         };
         return vis.accept((RSyntaxElement) expr);
     }
@@ -611,7 +607,6 @@ public abstract class Deriv extends RExternalBuiltinNode {
             protected RSyntaxElement visit(RSyntaxFunction element) {
                 throw RInternalError.shouldNotReachHere();
             }
-
         };
 
         exprlist.set(fromIndex, (RSyntaxNode) vis.accept(exprListNode));

@@ -53,7 +53,6 @@ public class REnvironmentMR {
         protected Object access(REnvironment receiver) {
             return new NativePointer(receiver);
         }
-
     }
 
     @Resolve(message = "HAS_SIZE")

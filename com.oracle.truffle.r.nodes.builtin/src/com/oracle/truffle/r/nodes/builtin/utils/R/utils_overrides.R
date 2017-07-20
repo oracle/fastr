@@ -30,7 +30,6 @@ setBreakpoint <- function (srcfile, line, nameonly = TRUE, envir = parent.frame(
     if (verbose) 
         print(res, steps = !clear)
 }
-
 }), asNamespace("utils"))
 
 eval(expression({

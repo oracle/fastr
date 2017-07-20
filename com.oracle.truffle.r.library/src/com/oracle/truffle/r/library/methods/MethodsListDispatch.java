@@ -100,7 +100,6 @@ public class MethodsListDispatch {
         protected Object initMethodFallback(@SuppressWarnings("unused") Object x) {
             return RNull.instance;
         }
-
     }
 
     public abstract static class R_methodsPackageMetaName extends RExternalBuiltinNode.Arg3 {
@@ -172,7 +171,6 @@ public class MethodsListDispatch {
         protected RS4Object callGetClassFromCache(RS4Object klass, @SuppressWarnings("unused") REnvironment table) {
             return klass;
         }
-
     }
 
     public abstract static class R_set_method_dispatch extends RExternalBuiltinNode.Arg1 {

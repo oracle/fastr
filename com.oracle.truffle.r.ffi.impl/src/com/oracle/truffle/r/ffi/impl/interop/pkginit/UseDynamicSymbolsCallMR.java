@@ -42,5 +42,4 @@ public class UseDynamicSymbolsCallMR {
             return true;
         }
     }
-
 }

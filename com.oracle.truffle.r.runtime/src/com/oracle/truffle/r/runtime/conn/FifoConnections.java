@@ -182,7 +182,6 @@ public class FifoConnections {
         public ByteChannel getChannel() {
             return raf.getChannel();
         }
-
     }
 
     static class FifoReadNonBlockingRConnection extends DelegateReadRConnection {
@@ -240,7 +239,6 @@ public class FifoConnections {
         public boolean isSeekable() {
             return false;
         }
-
     }
 
     private static final String MKFIFO_ERROR_FILE_EXISTS = "File exists";
@@ -295,5 +293,4 @@ public class FifoConnections {
             // fall through
         }
     }
-
 }

@@ -111,7 +111,6 @@ public class RawConnections {
             }
             return origPos;
         }
-
     }
 
     static class RawReadRConnection extends DelegateReadRConnection {
@@ -235,5 +234,4 @@ public class RawConnections {
             channel.truncate(channel.position());
         }
     }
-
 }

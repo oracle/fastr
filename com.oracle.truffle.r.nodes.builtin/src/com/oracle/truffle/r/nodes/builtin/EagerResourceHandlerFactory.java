@@ -149,5 +149,4 @@ public class EagerResourceHandlerFactory extends ResourceHandlerFactory implemen
         }
         return result;
     }
-
 }

@@ -287,7 +287,6 @@ public class FileConnections {
         public ByteChannel getChannel() {
             return channel;
         }
-
     }
 
     static class FileReadTextRConnection extends FileReadBinaryRConnection {
@@ -355,7 +354,6 @@ public class FileConnections {
         public void truncate() throws IOException {
             channel.truncate(channel.position());
         }
-
     }
 
     private static class FileReadWriteTextConnection extends DelegateReadWriteRConnection {
@@ -525,7 +523,6 @@ public class FileConnections {
             // different as expected.
             writeOffset = channel.position();
         }
-
     }
 
     private static class FileReadWriteBinaryConnection extends DelegateReadWriteRConnection {
@@ -683,7 +680,6 @@ public class FileConnections {
             // different as expected.
             writeOffset = raf.getFilePointer();
         }
-
     }
 
     private static class CompressedInputRConnection extends DelegateReadRConnection {

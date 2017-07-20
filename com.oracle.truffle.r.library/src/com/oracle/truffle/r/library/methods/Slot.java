@@ -56,7 +56,6 @@ public class Slot {
         protected Object getSlot(Object object, String name) {
             return accessSlotNode.executeAccess(castAttributable.executeObject(object), getInternedName(name));
         }
-
     }
 
     public abstract static class R_setSlot extends RExternalBuiltinNode.Arg3 {
@@ -84,6 +83,5 @@ public class Slot {
         protected Object setSlot(Object object, String name, Object value) {
             return updateSlotNode.executeUpdate(castAttributable.executeObject(object), getInternedName(name), value);
         }
-
     }
 }

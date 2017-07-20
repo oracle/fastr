@@ -38,5 +38,4 @@ public final class RArgsValuesAndNamesPrinter extends AbstractValuePrinter<RArgs
     protected void printValue(RArgsValuesAndNames value, PrintContext printCtx) throws IOException {
         StringVectorPrinter.INSTANCE.print(RDataFactory.createStringVector("<...>"), printCtx);
     }
-
 }

@@ -54,7 +54,6 @@ public class JNI_DLL implements DLLRFFI {
             long nativeHandle = (Long) handle;
             return native_dlclose(nativeHandle);
         }
-
     }
 
     // Checkstyle: stop method name check
@@ -81,5 +80,4 @@ public class JNI_DLL implements DLLRFFI {
     public DLCloseNode createDLCloseNode() {
         return new JNI_DLCloseNode();
     }
-
 }

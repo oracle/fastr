@@ -112,7 +112,6 @@ public final class MiscNodes {
         Object doSlot(@SuppressWarnings("unused") Object o, Object name) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.INVALID_ARGUMENT_OF_TYPE, "name", SEXPTYPE.gnuRTypeForObject(name).name());
         }
-
     }
 
     @TypeSystemReference(RTypes.class)
@@ -133,7 +132,6 @@ public final class MiscNodes {
         Object doSlot(@SuppressWarnings("unused") Object o, Object name, @SuppressWarnings("unused") Object value) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.INVALID_ARGUMENT_OF_TYPE, "name", SEXPTYPE.gnuRTypeForObject(name).name());
         }
-
     }
 
     @TypeSystemReference(RTypes.class)
@@ -149,7 +147,6 @@ public final class MiscNodes {
         Object doNewObject(Object classDef) {
             return newObjectNode.execute(classDef);
         }
-
     }
 
 }

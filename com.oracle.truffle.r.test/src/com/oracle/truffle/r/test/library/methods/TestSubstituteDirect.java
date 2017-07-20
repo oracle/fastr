@@ -71,5 +71,4 @@ public class TestSubstituteDirect extends TestBase {
         assertEval("substituteDirect(quote(x+1), list(x=1), cleanFunction=c(1))");
         assertEval("substituteDirect(quote(x+1), list(x=1), cleanFunction=environment())");
     }
-
 }

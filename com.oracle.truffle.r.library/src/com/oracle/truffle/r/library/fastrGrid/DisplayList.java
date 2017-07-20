@@ -103,6 +103,5 @@ public class DisplayList {
             initDisplayList(gridState);
             return RNull.instance;
         }
-
     }
 }

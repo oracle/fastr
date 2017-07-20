@@ -43,5 +43,4 @@ public class CharSXPToNativeArrayCallMR implements RTruffleObject {
             return true;
         }
     }
-
 }

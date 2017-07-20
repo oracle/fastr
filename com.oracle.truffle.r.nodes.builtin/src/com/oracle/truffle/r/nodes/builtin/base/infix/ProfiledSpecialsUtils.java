@@ -126,7 +126,6 @@ public class ProfiledSpecialsUtils {
             }
             return defaultAccessNode.execute(frame, vector, index1, index2);
         }
-
     }
 
     public abstract static class ProfiledSubscriptSpecial2 extends ProfiledSubscriptSpecial2Base {
@@ -139,7 +138,6 @@ public class ProfiledSpecialsUtils {
         protected SubscriptSpecial2Base createAccessNode() {
             return SubscriptSpecial2NodeGen.create(inReplacement);
         }
-
     }
 
     public abstract static class ProfiledSubsetSpecial2 extends ProfiledSubscriptSpecial2Base {

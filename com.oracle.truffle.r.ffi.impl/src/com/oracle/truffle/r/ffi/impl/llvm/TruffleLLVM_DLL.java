@@ -85,7 +85,6 @@ public class TruffleLLVM_DLL implements DLLRFFI {
             }
             return this;
         }
-
     }
 
     private static TruffleLLVM_DLL truffleDLL;
@@ -199,7 +198,6 @@ public class TruffleLLVM_DLL implements DLLRFFI {
             assert handle instanceof LLVM_Handle;
             return 0;
         }
-
     }
 
     @Override
@@ -264,5 +262,4 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         }
         return result;
     }
-
 }

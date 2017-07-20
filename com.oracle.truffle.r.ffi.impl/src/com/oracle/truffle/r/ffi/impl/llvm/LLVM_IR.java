@@ -67,5 +67,4 @@ public abstract class LLVM_IR {
             base64 = Base64.getEncoder().encodeToString(binary);
         }
     }
-
 }

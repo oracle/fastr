@@ -458,5 +458,4 @@ public class SamplesCollector extends ExecutionPathVisitor<Consumer<Object>>
             this.size = size;
         }
     }
-
 }

@@ -45,5 +45,4 @@ public class NativePointerMR {
             return result;
         }
     }
-
 }

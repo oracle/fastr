@@ -948,7 +948,6 @@ public abstract class REnvironment extends RAttributeStorage {
             public void apply(Frame frame, boolean replicate) {
                 FrameSlotChangeMonitor.handleAllMultiSlots(frame, indices, replicate);
             }
-
         });
     }
 
@@ -959,7 +958,6 @@ public abstract class REnvironment extends RAttributeStorage {
             public void apply(Frame frame, boolean replicate) {
                 FrameSlotChangeMonitor.cleanMultiSlots(frame, null);
             }
-
         });
     }
 
@@ -970,7 +968,6 @@ public abstract class REnvironment extends RAttributeStorage {
             public void apply(Frame frame, boolean replicate) {
                 FrameSlotChangeMonitor.cleanMultiSlots(frame, multiSlotIndices);
             }
-
         });
     }
 

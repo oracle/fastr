@@ -42,5 +42,4 @@ public class CharSXPToNativeArrayCall implements RTruffleObject {
     public ForeignAccess getForeignAccess() {
         return CharSXPToNativeArrayCallMRForeign.ACCESS;
     }
-
 }

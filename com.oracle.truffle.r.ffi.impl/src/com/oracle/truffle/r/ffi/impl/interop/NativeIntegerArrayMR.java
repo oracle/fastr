@@ -78,6 +78,5 @@ public class NativeIntegerArrayMR {
             long result = nativeIntegerArray.convertToNative();
             return result;
         }
-
     }
 }

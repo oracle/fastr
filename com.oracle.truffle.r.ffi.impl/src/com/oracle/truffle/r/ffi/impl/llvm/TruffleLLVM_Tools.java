@@ -52,7 +52,6 @@ public class TruffleLLVM_Tools implements ToolsRFFI {
                 throw RInternalError.shouldNotReachHere(t);
             }
         }
-
     }
 
     private static class TruffleLLVM_ToolsRFFINode extends Generic_Tools.Generic_ToolsRFFINode {
@@ -66,7 +65,6 @@ public class TruffleLLVM_Tools implements ToolsRFFI {
             Object result = super.execute(con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups);
             return result;
         }
-
     }
 
     @Override

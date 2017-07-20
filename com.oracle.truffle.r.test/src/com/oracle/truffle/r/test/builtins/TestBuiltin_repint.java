@@ -188,5 +188,4 @@ public class TestBuiltin_repint extends TestBase {
         assertEval("{ rep.int(c(1+2i,100-400i,20+30i), c(3,7)) }");
         assertEval("{ rep.int(c(1+2i,100-400i,20+30i), c(3,-7)) }");
     }
-
 }

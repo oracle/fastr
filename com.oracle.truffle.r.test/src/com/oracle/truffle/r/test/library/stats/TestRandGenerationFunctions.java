@@ -101,5 +101,4 @@ public class TestRandGenerationFunctions extends TestBase {
     public void testGenerators() {
         assertEval("for(gen in c(\"Buggy Kinderman-Ramage\", \"Ahrens-Dieter\", \"Box-Muller\", \"Inversion\", \"Kinderman-Ramage\", \"default\")) { print(paste0(gen, \":\")); RNGkind(NULL,gen); set.seed(42); print(rnorm(30)); }");
     }
-
 }

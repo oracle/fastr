@@ -33,5 +33,4 @@ public class TestSharedCluster extends TestBase {
     public void testSharedCluster() {
         assertEval(TestBase.template("fun <- function(data) { cl <- makeCluster(%0, 'SHARED'); parLapply(cl, data, function(x) x+1); stopCluster(cl) }; fun(1:100)", "123456789".split("")));
     }
-
 }

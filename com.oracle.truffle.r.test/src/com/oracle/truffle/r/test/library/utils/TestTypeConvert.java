@@ -93,5 +93,4 @@ public class TestTypeConvert extends TestBase {
         assertEval(".External2(utils:::C_typeconvert, environment(), 'NA', FALSE, '.', 'allow.loss')");
         assertEval(".External2(utils:::C_typeconvert, c('1'), environment(), FALSE, '.', 'allow.loss')");
     }
-
 }

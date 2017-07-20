@@ -166,7 +166,6 @@ public abstract class Filter<T, R extends T> {
         public ResultForArg resultForMissing() {
             return ResultForArg.FALSE;
         }
-
     }
 
     /**
@@ -393,7 +392,6 @@ public abstract class Filter<T, R extends T> {
                 return ResultForArg.FALSE;
             }
         }
-
     }
 
     public abstract static class MatrixFilter<T extends RAbstractVector> extends Filter<T, T> {
@@ -597,7 +595,6 @@ public abstract class Filter<T, R extends T> {
             public ResultForArg or(ResultForArg other) {
                 return TRUE;
             }
-
         },
         FALSE {
 
@@ -615,7 +612,6 @@ public abstract class Filter<T, R extends T> {
             public ResultForArg or(ResultForArg other) {
                 return other;
             }
-
         },
         UNDEFINED {
 
@@ -641,5 +637,4 @@ public abstract class Filter<T, R extends T> {
 
         public abstract ResultForArg or(ResultForArg other);
     }
-
 }

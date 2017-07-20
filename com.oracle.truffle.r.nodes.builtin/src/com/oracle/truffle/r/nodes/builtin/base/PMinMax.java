@@ -348,7 +348,6 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
         static {
             createCasts(PMax.class);
         }
-
     }
 
     @RBuiltin(name = "pmin", kind = INTERNAL, parameterNames = {"na.rm", "..."}, behavior = PURE)
@@ -362,7 +361,6 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
         static {
             createCasts(PMin.class);
         }
-
     }
 
     protected boolean isIntegerPrecedence(RArgsValuesAndNames args) {

@@ -206,5 +206,4 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
-
 }

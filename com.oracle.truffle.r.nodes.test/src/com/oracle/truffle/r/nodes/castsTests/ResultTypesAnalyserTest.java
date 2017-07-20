@@ -503,5 +503,4 @@ public class ResultTypesAnalyserTest {
         Assert.assertNotNull(result.get(mark));
         return result.get(mark);
     }
-
 }

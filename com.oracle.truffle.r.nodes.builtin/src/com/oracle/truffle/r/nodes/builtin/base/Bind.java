@@ -631,7 +631,6 @@ public abstract class Bind extends RBaseNode {
             }
             return result != null ? result.function : null;
         }
-
     }
 
     public RVector<?> genericRBind(RArgsValuesAndNames promiseArgs, RAbstractVector[] vectors, RVector<?> result, int[] resultDimensions, int[] firstDims, boolean rowsAndColumnsNotEqual,

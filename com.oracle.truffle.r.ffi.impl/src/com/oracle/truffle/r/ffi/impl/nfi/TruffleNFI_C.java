@@ -125,7 +125,6 @@ public class TruffleNFI_C implements CRFFI {
         public static Node createExecute(int n) {
             return Message.createExecute(n).createNode();
         }
-
     }
 
     private static String getSignature(Object[] args, Object[] nargs) {

@@ -481,7 +481,6 @@ public final class FrameSlotChangeMonitor {
         public void setAll(Object val) {
             Arrays.fill(data, val);
         }
-
     }
 
     private static final class FrameSlotInfoImpl {
@@ -655,7 +654,6 @@ public final class FrameSlotChangeMonitor {
                     }
                     // otherwise stable value may get nullified and slot turned into multi slot
                 }
-
             }
         }
 

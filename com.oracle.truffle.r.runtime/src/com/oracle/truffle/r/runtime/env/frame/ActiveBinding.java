@@ -69,5 +69,4 @@ public class ActiveBinding implements RTruffleObject {
     public Object readValue() {
         return RContext.getEngine().evalFunction(function, REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), true, null);
     }
-
 }

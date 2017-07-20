@@ -42,5 +42,4 @@ public abstract class IsSingle extends RBuiltinNode.Arg1 {
     protected Object isSingle(@SuppressWarnings("unused") Object x) {
         throw error(RError.Message.UNIMPLEMENTED_TYPE_IN_R, "single");
     }
-
 }

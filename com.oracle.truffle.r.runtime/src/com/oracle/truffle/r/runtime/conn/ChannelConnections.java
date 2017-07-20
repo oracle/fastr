@@ -69,7 +69,6 @@ public class ChannelConnections {
         public String getSummaryDescription() {
             return description;
         }
-
     }
 
     private static class ChannelReadWriteRConnection extends DelegateReadWriteRConnection {
@@ -90,7 +89,6 @@ public class ChannelConnections {
         public boolean isSeekable() {
             return false;
         }
-
     }
 
 }

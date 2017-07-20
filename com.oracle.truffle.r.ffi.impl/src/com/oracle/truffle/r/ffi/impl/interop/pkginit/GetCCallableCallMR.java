@@ -41,5 +41,4 @@ public class GetCCallableCallMR {
             return true;
         }
     }
-
 }

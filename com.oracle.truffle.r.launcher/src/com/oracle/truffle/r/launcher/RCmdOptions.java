@@ -161,7 +161,6 @@ public final class RCmdOptions {
             }
             return result;
         }
-
     }
 
     private final EnumMap<RCmdOption, Object> optionValues;

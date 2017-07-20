@@ -358,7 +358,6 @@ public final class FFIProcessor extends AbstractProcessor {
             default:
                 return "object";
         }
-
     }
 
     private String getTypeName(TypeMirror type) {

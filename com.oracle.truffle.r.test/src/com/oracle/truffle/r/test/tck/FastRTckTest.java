@@ -500,5 +500,4 @@ public class FastRTckTest extends TruffleTCK {
     protected String objectWithKeyInfoAttributes() {
         return "objectWithKeyInfoAttributes";
     }
-
 }

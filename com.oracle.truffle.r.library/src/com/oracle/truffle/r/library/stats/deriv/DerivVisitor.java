@@ -404,5 +404,4 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
         Number n = (Number) ((RSyntaxConstant) elem).getValue();
         return ConstantNode.create(n.intValue() + 1);
     }
-
 }

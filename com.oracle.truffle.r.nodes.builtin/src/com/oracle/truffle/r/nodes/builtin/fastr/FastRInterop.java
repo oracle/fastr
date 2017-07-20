@@ -414,7 +414,6 @@ public class FastRInterop {
         public RInteropShort toShort(RRaw value) {
             return RInteropShort.valueOf(value.getValue());
         }
-
     }
 
     private static void castToInteroptNumberType(Casts casts) {
@@ -515,7 +514,6 @@ public class FastRInterop {
         public String javaClassName(@SuppressWarnings("unused") Object obj) {
             throw error(RError.Message.GENERIC, "unsupported type");
         }
-
     }
 
     @ImportStatic({Message.class, RRuntime.class})
@@ -759,7 +757,6 @@ public class FastRInterop {
                             vec instanceof RAbstractStringVector ||
                             vec instanceof RAbstractRawVector;
         }
-
     }
 
     @ImportStatic({Message.class, RRuntime.class})

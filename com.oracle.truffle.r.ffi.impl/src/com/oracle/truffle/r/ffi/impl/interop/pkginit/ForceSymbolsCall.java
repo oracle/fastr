@@ -42,5 +42,4 @@ public class ForceSymbolsCall implements RTruffleObject {
     public ForeignAccess getForeignAccess() {
         return ForceSymbolsCallMRForeign.ACCESS;
     }
-
 }

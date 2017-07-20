@@ -100,7 +100,6 @@ public class TruffleNFI_DLL implements DLLRFFI {
             // TODO
             return 0;
         }
-
     }
 
     @Override

@@ -93,5 +93,4 @@ public interface CallRFFI {
             return InvokeVoidCallRootNode;
         }
     }
-
 }

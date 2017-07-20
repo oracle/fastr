@@ -42,5 +42,4 @@ public final class GlobResult implements RTruffleObject {
     public ForeignAccess getForeignAccess() {
         return GlobResultMRForeign.ACCESS;
     }
-
 }

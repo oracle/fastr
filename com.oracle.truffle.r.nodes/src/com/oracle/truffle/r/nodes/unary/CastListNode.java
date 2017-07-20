@@ -187,5 +187,4 @@ public abstract class CastListNode extends CastBaseNode {
     protected ForeignArray2R createForeignArray2RNode() {
         return ForeignArray2RNodeGen.create();
     }
-
 }

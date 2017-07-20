@@ -80,5 +80,4 @@ public abstract class DelegateReadRConnection extends DelegateRConnection {
     public void truncate() {
         throw RError.error(RError.SHOW_CALLER, RError.Message.TRUNCATE_ONLY_WRITE_CONNECTION);
     }
-
 }

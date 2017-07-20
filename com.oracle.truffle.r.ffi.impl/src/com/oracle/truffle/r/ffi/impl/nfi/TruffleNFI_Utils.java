@@ -58,7 +58,6 @@ public class TruffleNFI_Utils {
             Env env = RContext.getInstance().getEnv();
             defaultLibrary = (TruffleObject) env.parse(Source.newBuilder("default").name("(load default)").mimeType("application/x-native").build()).call();
         }
-
     }
 
     /**

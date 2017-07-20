@@ -42,5 +42,4 @@ public class UseDynamicSymbolsCall implements RTruffleObject {
     public ForeignAccess getForeignAccess() {
         return UseDynamicSymbolsCallMRForeign.ACCESS;
     }
-
 }

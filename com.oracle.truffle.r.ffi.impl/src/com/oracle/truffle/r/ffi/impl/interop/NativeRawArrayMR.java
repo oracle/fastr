@@ -80,6 +80,5 @@ public class NativeRawArrayMR {
             long result = nativeRawArray.convertToNative();
             return result;
         }
-
     }
 }

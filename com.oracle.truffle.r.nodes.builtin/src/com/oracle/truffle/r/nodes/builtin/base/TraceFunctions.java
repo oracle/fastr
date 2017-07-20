@@ -109,7 +109,6 @@ public class TraceFunctions {
             }
             return RNull.instance;
         }
-
     }
 
     @RBuiltin(name = ".primUntrace", visibility = OFF, kind = PRIMITIVE, parameterNames = "what", behavior = COMPLEX)
@@ -134,7 +133,6 @@ public class TraceFunctions {
             }
             return RNull.instance;
         }
-
     }
 
     @RBuiltin(name = "traceOnOff", kind = INTERNAL, parameterNames = "state", behavior = COMPLEX)

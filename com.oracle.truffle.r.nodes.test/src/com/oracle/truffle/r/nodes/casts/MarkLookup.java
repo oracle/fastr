@@ -234,5 +234,4 @@ public final class MarkLookup implements PipelineStepVisitor<Map<String, Object>
     public Map<String, Object> visit(MapToCharAt mapper, Map<String, Object> foundMarks) {
         return visitMapper(mapper, foundMarks);
     }
-
 }
