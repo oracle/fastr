@@ -19,14 +19,17 @@ public class TestBuiltin_atan2 extends TestBase {
 
     @Test
     public void testatan21() {
-        // FIXME Result ok but FastR does not honor .Names
-        assertEval(Ignored.OutputFormatting, "argv <- list(structure(0.142857142857143, .Names = 'Var2'), structure(1.75510204081633, .Names = 'Var1')); .Internal(atan2(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(0.142857142857143, .Names = 'Var2'), structure(1.75510204081633, .Names = 'Var1')); .Internal(atan2(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(0.142857142857143, .Names = 'Var2'), 1.75510204081633); .Internal(atan2(argv[[1]], argv[[2]]))");
+        assertEval(".Internal(atan2(structure(c(1,2), .Names = c('a','b')), 1));");
+        assertEval(".Internal(atan2(structure(1:2, .Names = c('a','b')), 1));");
+        assertEval(".Internal(atan2(structure(1:6, dim = c(2,3)), 1));");
+        assertEval("x <- 1:4; class(x) <- 'asdfasdf'; attr(x, 'f') <- 'fff'; names(x) <- c('a','b','c','d'); y <- 1:2; class(y) <- 'fds'; attr(y, 'a') <- 'Asdf'; names(y) <- c('v','y'); .Internal(atan2(x,1)); .Internal(atan2(x,x)); .Internal(atan2(x,y)); .Internal(atan2(y,x)); .Internal(atan2(y,1))");
     }
 
     @Test
     public void testatan22() {
-        // FIXME Result ok but FastR does not honor .Names
-        assertEval(Ignored.OutputFormatting, "argv <- list(structure(-0.224489795918367, .Names = 'Var2'), structure(-0.816326530612245, .Names = 'Var1')); .Internal(atan2(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(-0.224489795918367, .Names = 'Var2'), structure(-0.816326530612245, .Names = 'Var1')); .Internal(atan2(argv[[1]], argv[[2]]))");
     }
 
     @Test

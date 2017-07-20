@@ -29,9 +29,7 @@ public class TestBuiltin_substr extends TestBase {
 
     @Test
     public void testsubstr3() {
-        // FIXME: We do not treat .Names as column headers while GnuR does
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(structure(c('as.formula', 'coef', 'makepredictcall', 'na.fail', 'predict'), .Names = c('as.formula', 'coef', 'makepredictcall', 'na.fail', 'predict')), 1L, 6L); .Internal(substr(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(c('as.formula', 'coef', 'makepredictcall', 'na.fail', 'predict'), .Names = c('as.formula', 'coef', 'makepredictcall', 'na.fail', 'predict')), 1L, 6L); .Internal(substr(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -41,11 +39,7 @@ public class TestBuiltin_substr extends TestBase {
 
     @Test
     public void testsubstr5() {
-        // FIXME: GnuR outputs all params to structure(...) as result of substr() i.e. here:
-        // attr(,"Rd_tag")
-        // [1] "TEXT"
-        // IMHO superfluous => ReferenceError
-        assertEval(Ignored.ReferenceError, "argv <- list(structure('to be supported).', Rd_tag = 'TEXT'), 17L, 17L); .Internal(substr(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure('to be supported).', Rd_tag = 'TEXT'), 17L, 17L); .Internal(substr(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -60,9 +54,7 @@ public class TestBuiltin_substr extends TestBase {
 
     @Test
     public void testsubstr8() {
-        // FIXME: We do not treat .Names as column headers while GnuR does
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(structure(c('model.frame', 'predict', 'residuals'), .Names = c('model.frame', 'predict', 'residuals')), 1L, 6L); .Internal(substr(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(c('model.frame', 'predict', 'residuals'), .Names = c('model.frame', 'predict', 'residuals')), 1L, 6L); .Internal(substr(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test

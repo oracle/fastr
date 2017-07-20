@@ -50,9 +50,7 @@ public class TestBuiltin_encodeString extends TestBase {
 
     @Test
     public void testencodeString9() {
-        // FIXME .Names headers ignored in output
-        assertEval(Ignored.OutputFormatting,
-                        "argv <- list(structure('integer(0)', .Names = 'c0', row.names = character(0)), 0L, '', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(structure('integer(0)', .Names = 'c0', row.names = character(0)), 0L, '', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -64,11 +62,7 @@ public class TestBuiltin_encodeString extends TestBase {
 
     @Test
     public void testencodeString11() {
-        // FIXME FastR seems to ignore .Dim
-        // Expected output: <0 x 0 matrix>
-        // FastR output: character(0)
-        assertEval(Ignored.OutputFormatting,
-                        "argv <- list(structure(character(0), .Dim = c(0L, 0L)), 0L, '', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(structure(character(0), .Dim = c(0L, 0L)), 0L, '', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -79,9 +73,7 @@ public class TestBuiltin_encodeString extends TestBase {
 
     @Test
     public void testencodeString13() {
-        // FIXME .Names headers ignored in output by FastR
-        assertEval(Ignored.OutputFormatting,
-                        "argv <- list(structure('integer(0)', .Names = 'c0', row.names = character(0)), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), '', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(structure('integer(0)', .Names = 'c0', row.names = character(0)), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), '', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
