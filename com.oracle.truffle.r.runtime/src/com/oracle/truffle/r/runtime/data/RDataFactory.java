@@ -608,7 +608,6 @@ public final class RDataFactory {
 
     @TruffleBoundary
     private static void reportDataCreated(Object data) {
-        System.out.println("reportDataCreated " + listeners.size() + " " + allocationTracingEnabled);
         if (allocationTracingEnabled) {
             RContext ctx = RContext.getInstance();
             assert ctx != null;
