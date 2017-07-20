@@ -18,6 +18,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -154,6 +155,6 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
 
     @Fallback
     protected Object prod(Object o) {
-        throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, ((RTypedValue) RRuntime.asAbstractVector(o)).getRType().getName());
+        throw error(RError.Message.INVALID_TYPE_ARGUMENT, Predef.typeName().apply(o));
     }
 }

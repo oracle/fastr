@@ -50,9 +50,9 @@ import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -83,6 +83,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
 
     private final ConditionProfile useNamesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile dimsProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile zeroLengthProfile = ConditionProfile.createBinaryProfile();
     private final NACheck naCheck = NACheck.create();
 
     @Child private LapplyInternalNode doApply = LapplyInternalNodeGen.create();
@@ -96,6 +97,8 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
     @Child private SetNamesAttributeNode setNamesNode = SetNamesAttributeNode.create();
 
+    @Child private CastToVectorNode castToVector = CastToVectorNode.create();
+
     static {
         Casts casts = new Casts(VApply.class);
         casts.arg("X").mapNull(emptyList());
@@ -104,44 +107,44 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         casts.arg("USE.NAMES").defaultError(RError.Message.INVALID_VALUE, "USE.NAMES").mustBe(numericValue()).asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
     }
 
-    private Object castComplex(Object operand, boolean preserveAllAttr) {
+    private Object castComplex(Object operand) {
         if (castComplex == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplex = insert(CastComplexNodeGen.create(true, preserveAllAttr, preserveAllAttr));
+            castComplex = insert(CastComplexNodeGen.create(true, false, false));
         }
-        return castComplex.doCast(operand);
+        return castToVector.doCast(castComplex.doCast(operand));
     }
 
-    private Object castDouble(Object operand, boolean preserveAllAttr) {
+    private Object castDouble(Object operand) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeGen.create(true, preserveAllAttr, preserveAllAttr));
+            castDouble = insert(CastDoubleNodeGen.create(true, false, false));
         }
-        return castDouble.doCast(operand);
+        return castToVector.doCast(castDouble.doCast(operand));
     }
 
-    private Object castInteger(Object operand, boolean preserveAllAttr) {
+    private Object castInteger(Object operand) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeGen.create(true, preserveAllAttr, preserveAllAttr));
+            castInteger = insert(CastIntegerNodeGen.create(true, false, false));
         }
-        return castInteger.doCast(operand);
+        return castToVector.doCast(castInteger.doCast(operand));
     }
 
-    private Object castLogical(Object operand, boolean preserveAllAttr) {
+    private Object castLogical(Object operand) {
         if (castLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogical = insert(CastLogicalNodeGen.create(true, preserveAllAttr, preserveAllAttr));
+            castLogical = insert(CastLogicalNodeGen.create(true, false, false));
         }
-        return castLogical.doCast(operand);
+        return castToVector.doCast(castLogical.doCast(operand));
     }
 
-    private Object castString(Object operand, boolean preserveAllAttr) {
+    private Object castString(Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(true, preserveAllAttr, preserveAllAttr));
+            castString = insert(CastStringNodeGen.create(true, false, false));
         }
-        return castString.doCast(operand);
+        return castToVector.doCast(castString.doCast(operand));
     }
 
     @Specialization
@@ -172,7 +175,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         Object[] applyResult = doApply.execute(frame, vecMat, fun);
 
         RVector<?> result;
-        boolean applyResultZeroLength = applyResult.length == 0;
+        boolean applyResultZeroLength = zeroLengthProfile.profile(applyResult.length == 0);
 
         naCheck.enable(true);
         // TODO check funValueLen against length of result
@@ -223,7 +226,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         double[] newArray = new double[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractDoubleVector v = (RAbstractDoubleVector) RRuntime.asAbstractVector(castDouble(values[i], false));
+            RAbstractDoubleVector v = (RAbstractDoubleVector) castDouble(values[i]);
             for (int j = 0; j < v.getLength(); j++) {
                 double val = v.getDataAt(j);
                 naCheck.check(val);
@@ -237,7 +240,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         int[] newArray = new int[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractIntVector v = (RAbstractIntVector) RRuntime.asAbstractVector(castInteger(values[i], false));
+            RAbstractIntVector v = (RAbstractIntVector) castInteger(values[i]);
             for (int j = 0; j < v.getLength(); j++) {
                 int val = v.getDataAt(j);
                 naCheck.check(val);
@@ -251,7 +254,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         byte[] newArray = new byte[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractLogicalVector v = (RAbstractLogicalVector) RRuntime.asAbstractVector(castLogical(values[i], false));
+            RAbstractLogicalVector v = (RAbstractLogicalVector) castLogical(values[i]);
             for (int j = 0; j < v.getLength(); j++) {
                 byte val = v.getDataAt(j);
                 naCheck.check(val);
@@ -265,7 +268,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         String[] newArray = new String[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractStringVector v = (RAbstractStringVector) RRuntime.asAbstractVector(castString(values[i], false));
+            RAbstractStringVector v = (RAbstractStringVector) castString(values[i]);
             for (int j = 0; j < v.getLength(); j++) {
                 String val = v.getDataAt(j);
                 naCheck.check(val);
@@ -279,7 +282,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         double[] newArray = new double[values.length * len * 2];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractComplexVector v = (RAbstractComplexVector) RRuntime.asAbstractVector(castComplex(values[i], false));
+            RAbstractComplexVector v = (RAbstractComplexVector) castComplex(values[i]);
             for (int j = 0; j < v.getLength(); j++) {
                 RComplex val = v.getDataAt(j);
                 naCheck.check(val);

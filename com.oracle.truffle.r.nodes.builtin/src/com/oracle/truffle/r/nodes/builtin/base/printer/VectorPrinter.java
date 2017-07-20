@@ -81,7 +81,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                 if (dims.getLength() == 1) {
                     RList t = Utils.<RList> castTo(getDimNames(vector));
                     if (t != null && t.getDataAt(0) != null) {
-                        RAbstractStringVector nn = Utils.castTo(RRuntime.asAbstractVector(t.getNames()));
+                        RAbstractStringVector nn = Utils.castTo(RRuntime.convertScalarVectors(t.getNames()));
 
                         if (nn != null) {
                             title = nn.getDataAt(0);
@@ -90,7 +90,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                         }
 
                         jobMode = vector.getLength() == 0 ? JobMode.namedEmpty : JobMode.named;
-                        names = Utils.castTo(RRuntime.asAbstractVector(t.getDataAt(0)));
+                        names = Utils.castTo(RRuntime.convertScalarVectors(t.getDataAt(0)));
                     } else {
                         title = null;
                         names = null;
@@ -112,7 +112,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                 Object namesAttr = Utils.castTo(getNames(vector));
                 if (namesAttr != null) {
                     if (vector.getLength() > 0) {
-                        names = Utils.castTo(RRuntime.asAbstractVector(namesAttr));
+                        names = Utils.castTo(RRuntime.convertScalarVectors(namesAttr));
                         jobMode = JobMode.named;
                     } else {
                         names = null;

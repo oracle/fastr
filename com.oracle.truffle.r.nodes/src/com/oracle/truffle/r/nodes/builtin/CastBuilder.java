@@ -772,7 +772,7 @@ public final class CastBuilder {
         public static Function<Object, String> typeName() {
             return arg -> {
                 CompilerAsserts.neverPartOfCompilation();
-                return ((RTypedValue) RRuntime.asAbstractVector(arg)).getRType().getName();
+                return ((RTypedValue) RRuntime.convertScalarVectors(arg)).getRType().getName();
             };
         }
     }

@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
@@ -377,10 +378,10 @@ public class ROptions {
     }
 
     private static Object coerceStringVector(Object value, String name) throws OptionsException {
-        Object valueAbs = RRuntime.asAbstractVector(value);
+        Object valueAbs = RRuntime.convertScalarVectors(value);
         // TODO supposed to be coerced
-        if (valueAbs instanceof RStringVector) {
-            String p = ((RStringVector) valueAbs).getDataAt(0);
+        if (valueAbs instanceof RAbstractStringVector) {
+            String p = ((RAbstractStringVector) valueAbs).getDataAt(0);
             if (p.length() == 0 || RRuntime.isNA(p)) {
                 throw OptionsException.createInvalid(name);
             } else {

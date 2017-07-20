@@ -165,8 +165,8 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage implements Scop
                 unwrappedValue = promise.getValue();
             }
         }
-        unwrappedValue = RRuntime.asAbstractVector(unwrappedValue); // Wrap scalars "Integer",
-                                                                    // "Double" etc.
+        // Wrap scalars Integer, Double, etc.
+        unwrappedValue = RRuntime.convertScalarVectors(unwrappedValue);
         if (unwrappedValue instanceof RTypedValue) {
             return ((RTypedValue) unwrappedValue).getRType().getName();
         } else {

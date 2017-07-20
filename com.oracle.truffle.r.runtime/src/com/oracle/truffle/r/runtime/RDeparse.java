@@ -53,13 +53,14 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -717,7 +718,7 @@ public class RDeparse {
 
         @SuppressWarnings("try")
         private DeparseVisitor appendConstant(Object originalValue) {
-            Object value = RRuntime.asAbstractVector(originalValue);
+            Object value = RRuntime.convertScalarVectors(originalValue);
             if (value instanceof RExpression) {
                 append("expression(").appendListContents((RExpression) value).append(')');
             } else if (value instanceof RAbstractListVector) {
@@ -725,10 +726,10 @@ public class RDeparse {
                 try (C c = withAttributes(obj)) {
                     append("list(").appendListContents(obj).append(')');
                 }
-            } else if (value instanceof RAbstractVector) {
-                RAbstractVector obj = (RAbstractVector) value;
+            } else if (value instanceof RAbstractAtomicVector) {
+                RAbstractVector obj = (RAbstractAtomicVector) value;
                 try (C c = withAttributes(obj)) {
-                    appendVector((RAbstractVector) value);
+                    appendVector((RAbstractAtomicVector) value);
                 }
             } else if (value instanceof RNull) {
                 append("NULL");
@@ -745,7 +746,6 @@ public class RDeparse {
                 }
             } else if (value instanceof RPairList) {
                 RPairList arglist = (RPairList) value;
-                assert arglist.getType() == null || arglist.getType() == SEXPTYPE.LISTSXP : arglist.getType();
                 append("pairlist(");
                 int i = 0;
                 boolean lbreak = false;
@@ -761,7 +761,6 @@ public class RDeparse {
                         }
                     }
                     appendValue(arglist.car());
-
                     arglist = next(arglist);
                 }
                 append(')');
@@ -795,7 +794,7 @@ public class RDeparse {
             } else if (value instanceof TruffleObject) {
                 append("<truffle object>");
             } else {
-                throw RInternalError.shouldNotReachHere("unexpected: " + value);
+                throw RInternalError.shouldNotReachHere("unexpected type while deparsing constant: " + value == null ? "null" : value.getClass().getSimpleName());
             }
             return this;
         }
@@ -857,7 +856,7 @@ public class RDeparse {
             assert v != null;
             assert !(v instanceof RSyntaxElement) : v.getClass();
 
-            Object value = RRuntime.asAbstractVector(v);
+            Object value = RRuntime.convertScalarVectors(v);
             assert value instanceof RTypedValue : v.getClass();
 
             try {
@@ -893,13 +892,21 @@ public class RDeparse {
             }
         }
 
-        private void appendVector(RAbstractVector vec) {
-            SEXPTYPE type = SEXPTYPE.typeForClass(vec.getClass());
+        private void appendVector(RAbstractAtomicVector vec) {
             int len = vec.getLength();
             if (len == 0) {
                 append(vec.getRType().getClazz() + "(0)");
+            } else if (vec instanceof RAbstractRawVector) {
+                append("as.raw(c(");
+                for (int i = 0; i < len; i++) {
+                    if (i > 0) {
+                        append(", ");
+                    }
+                    vecElement2buff(vec.getDataAtAsObject(i), false);
+                }
+                append("))");
             } else if (len == 1) {
-                vecElement2buff(type, vec.getDataAtAsObject(0), true);
+                vecElement2buff(vec.getDataAtAsObject(0), true);
             } else {
                 RIntSequence sequence = asIntSequence(vec);
                 if (sequence != null) {
@@ -907,25 +914,14 @@ public class RDeparse {
                     return;
                 } else {
                     // TODO COMPAT?
-                    if (type == SEXPTYPE.RAWSXP) {
-                        append("as.raw(c(");
-                        for (int i = 0; i < len; i++) {
-                            if (i > 0) {
-                                append(", ");
-                            }
-                            vecElement2buff(type, vec.getDataAtAsObject(i), false);
+                    append("c(");
+                    for (int i = 0; i < len; i++) {
+                        if (i > 0) {
+                            append(", ");
                         }
-                        append("))");
-                    } else {
-                        append("c(");
-                        for (int i = 0; i < len; i++) {
-                            if (i > 0) {
-                                append(", ");
-                            }
-                            vecElement2buff(type, vec.getDataAtAsObject(i), false);
-                        }
-                        append(')');
+                        vecElement2buff(vec.getDataAtAsObject(i), false);
                     }
+                    append(')');
                 }
             }
         }
@@ -952,44 +948,37 @@ public class RDeparse {
             return RDataFactory.createIntSequence(start, 1, intVec.getLength());
         }
 
-        private DeparseVisitor vecElement2buff(SEXPTYPE type, Object element, boolean singleElement) {
-            switch (type) {
-                case STRSXP:
-                    String s = (String) element;
-                    append(RRuntime.isNA(s) ? (singleElement ? "NA_character_" : "NA") : RRuntime.escapeString(s, true, true));
-                    break;
-                case LGLSXP:
-                    append(RRuntime.logicalToString((byte) element));
-                    break;
-                case REALSXP:
-                    double d = (double) element;
-                    append(RRuntime.isNA(d) ? (singleElement ? "NA_real_" : "NA") : RContext.getRRuntimeASTAccess().encodeDouble(d));
-                    break;
-                case INTSXP:
-                    int i = (int) element;
-                    if (RRuntime.isNA(i)) {
-                        append((singleElement ? "NA_integer_" : "NA"));
-                    } else {
-                        append(RRuntime.intToStringNoCheck(i));
-                        if ((opts & KEEPINTEGER) != 0) {
-                            append('L');
-                        }
+        private DeparseVisitor vecElement2buff(Object element, boolean singleElement) {
+            if (element instanceof String) {
+                String s = (String) element;
+                append(RRuntime.isNA(s) ? (singleElement ? "NA_character_" : "NA") : RRuntime.escapeString(s, true, true));
+            } else if (element instanceof Byte) {
+                // simply "NA" is already the logical NA, so no special handling needed
+                append(RRuntime.logicalToString((byte) element));
+            } else if (element instanceof Double) {
+                double d = (double) element;
+                append(RRuntime.isNA(d) ? (singleElement ? "NA_real_" : "NA") : RContext.getRRuntimeASTAccess().encodeDouble(d));
+            } else if (element instanceof Integer) {
+                int i = (int) element;
+                if (RRuntime.isNA(i)) {
+                    append((singleElement ? "NA_integer_" : "NA"));
+                } else {
+                    append(RRuntime.intToStringNoCheck(i));
+                    if ((opts & KEEPINTEGER) != 0) {
+                        append('L');
                     }
-                    break;
-                case CPLXSXP:
-                    RComplex c = (RComplex) element;
-                    if (RRuntime.isNA(c)) {
-                        append((singleElement ? "NA_complex_" : "NA"));
-                    } else {
-                        append(RContext.getRRuntimeASTAccess().encodeComplex(c));
-                    }
-                    break;
-                case RAWSXP:
-                    RRaw r = (RRaw) element;
-                    append(Utils.stringFormat("0x%02x", r.getValue()));
-                    break;
-                default:
-                    throw RInternalError.shouldNotReachHere("unexpected SEXPTYPE: " + type);
+                }
+            } else if (element instanceof RComplex) {
+                RComplex c = (RComplex) element;
+                if (RRuntime.isNA(c)) {
+                    append((singleElement ? "NA_complex_" : "NA"));
+                } else {
+                    append(RContext.getRRuntimeASTAccess().encodeComplex(c));
+                }
+            } else if (element instanceof RRaw) {
+                append(Utils.stringFormat("0x%02x", ((RRaw) element).getValue()));
+            } else {
+                throw RInternalError.shouldNotReachHere("unexpected vector element type during deparsing: " + (element == null ? "null" : element.getClass().getSimpleName()));
             }
             return this;
         }
