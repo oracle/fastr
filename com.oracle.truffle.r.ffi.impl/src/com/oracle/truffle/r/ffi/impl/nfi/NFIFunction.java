@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import java.util.function.BiFunction;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -81,26 +83,39 @@ enum NFIFunction implements NativeFunction {
     dgesv("(sint32, sint32, [double], sint32, [sint32], [double], sint32) : sint32", "call_lapack_"),
     dlange("(uint8, sint32, sint32, [double], sint32, [double]) : double", "call_lapack_"),
     dgecon("(uint8, sint32, [double], sint32, double, [double], [double], [sint32]) : sint32", "call_lapack_"),
-    //@formatter:off
     dsyevr("(uint8, uint8, uint8, sint32, [double], sint32, double, double, sint32, sint32, double, [sint32], [double], [double], sint32, [sint32], [double], sint32, " +
-                    "[sint32], sint32) : sint32", "call_lapack_");
-    //@formatter:on
+                    "[sint32], sint32) : sint32", "call_lapack_"),
+    // misc
+    exactSumFunc("([double], sint32, sint32, sint32): double"),
+    // stats
+    fft_factor("(sint32, [sint32], [sint32]): void", TruffleNFI_Utils::lookupAndBindStats),
+    fft_work("([double], sint32, sint32, sint32, sint32, [double], [sint32]): sint32", TruffleNFI_Utils::lookupAndBindStats);
 
     private final int argumentCount;
     private final String signature;
     private final String callName;
+    private final BiFunction<String, String, TruffleObject> lookup;
     @CompilationFinal private TruffleObject function;
 
     NFIFunction(String signature) {
         this.argumentCount = TruffleNFI_Utils.getArgCount(signature);
         this.signature = signature;
         this.callName = name();
+        this.lookup = TruffleNFI_Utils::lookupAndBind;
+    }
+
+    NFIFunction(String signature, BiFunction<String, String, TruffleObject> lookup) {
+        this.argumentCount = TruffleNFI_Utils.getArgCount(signature);
+        this.signature = signature;
+        this.callName = name();
+        this.lookup = lookup;
     }
 
     NFIFunction(String signature, String prefix) {
         this.argumentCount = TruffleNFI_Utils.getArgCount(signature);
         this.signature = signature;
         this.callName = prefix + name();
+        this.lookup = TruffleNFI_Utils::lookupAndBind;
     }
 
     Node createMessage() {
@@ -111,7 +126,7 @@ enum NFIFunction implements NativeFunction {
     TruffleObject getFunction() {
         if (function == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            function = TruffleNFI_Utils.lookupAndBind(callName, signature);
+            function = lookup.apply(callName, signature);
         }
         return function;
     }

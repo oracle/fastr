@@ -77,7 +77,10 @@ public final class UserRNG implements RandomNumberGenerator {
     private int nSeeds = 0;
 
     private abstract static class UserRNGRootNodeAdapter extends RootNode {
-        @Child protected UserRngRFFI.UserRngRFFINode userRngRFFINode = RFFIFactory.getUserRngRFFI().createUserRngRFFINode();
+        @Child protected UserRngRFFI.InitNode initNode = RFFIFactory.getUserRngRFFI().createInitNode();
+        @Child protected UserRngRFFI.RandNode randNode = RFFIFactory.getUserRngRFFI().createRandNode();
+        @Child protected UserRngRFFI.NSeedNode nSeedNode = RFFIFactory.getUserRngRFFI().createNSeedNode();
+        @Child protected UserRngRFFI.SeedsNode seedsNode = RFFIFactory.getUserRngRFFI().createSeedsNode();
 
         protected UserRNGRootNodeAdapter() {
             /*
@@ -101,12 +104,12 @@ public final class UserRNG implements RandomNumberGenerator {
             Function function = (Function) args[0];
             switch (function) {
                 case Init:
-                    userRngRFFINode.init((int) args[1]);
+                    initNode.execute((int) args[1]);
                     return RNull.instance;
                 case NSeed:
-                    return userRngRFFINode.nSeed();
+                    return nSeedNode.execute();
                 case Seedloc:
-                    userRngRFFINode.seeds((int[]) args[1]);
+                    seedsNode.execute((int[]) args[1]);
                     return RNull.instance;
                 default:
                     throw RInternalError.shouldNotReachHere();
@@ -118,7 +121,7 @@ public final class UserRNG implements RandomNumberGenerator {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return userRngRFFINode.rand();
+            return randNode.execute();
         }
     }
 

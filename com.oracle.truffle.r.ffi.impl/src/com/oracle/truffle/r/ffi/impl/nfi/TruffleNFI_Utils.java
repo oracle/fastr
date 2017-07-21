@@ -32,8 +32,11 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.ffi.impl.interop.UnsafeAdapter;
+import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 
 public class TruffleNFI_Utils {
 
@@ -74,6 +77,16 @@ public class TruffleNFI_Utils {
         try {
             TruffleObject symbol = ((TruffleObject) ForeignAccess.sendRead(Message.READ.createNode(), defaultLibrary, name));
             return (TruffleObject) ForeignAccess.sendInvoke(Message.createInvoke(1).createNode(), symbol, "bind", signature);
+        } catch (InteropException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
+    }
+
+    static TruffleObject lookupAndBindStats(String name, String signature) {
+        DLLInfo dllInfo = DLL.findLibrary("stats");
+        try {
+            TruffleObject result = (TruffleObject) ForeignAccess.sendRead(Message.READ.createNode(), ((NFIHandle) dllInfo.handle).libHandle, name);
+            return (TruffleObject) ForeignAccess.sendInvoke(Message.createInvoke(1).createNode(), result, "bind", signature);
         } catch (InteropException e) {
             throw RInternalError.shouldNotReachHere(e);
         }

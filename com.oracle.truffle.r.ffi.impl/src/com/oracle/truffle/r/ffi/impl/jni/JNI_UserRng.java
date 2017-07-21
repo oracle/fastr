@@ -22,42 +22,62 @@
  */
 package com.oracle.truffle.r.ffi.impl.jni;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 
 public class JNI_UserRng implements UserRngRFFI {
-    private static class JNI_UserRngRFFINode extends Node implements UserRngRFFINode {
+
+    private final static class JNI_InitNode extends Node implements InitNode {
+
         @Override
-        @TruffleBoundary
-        public void init(int seed) {
+        public void execute(int seed) {
             nativeInit(Function.Init.getSymbolHandle().asAddress(), seed);
-
         }
+    }
+
+    private final static class JNI_RandNode extends Node implements RandNode {
 
         @Override
-        @TruffleBoundary
-        public double rand() {
+        public double execute() {
             return nativeRand(Function.Rand.getSymbolHandle().asAddress());
         }
+    }
+
+    private final static class JNI_NSeedNode extends Node implements NSeedNode {
 
         @Override
-        @TruffleBoundary
-        public int nSeed() {
+        public int execute() {
             return nativeNSeed(Function.NSeed.getSymbolHandle().asAddress());
         }
+    }
+
+    private final static class JNI_SeedsNode extends Node implements SeedsNode {
 
         @Override
-        @TruffleBoundary
-        public void seeds(int[] n) {
+        public void execute(int[] n) {
             nativeSeeds(Function.Seedloc.getSymbolHandle().asAddress(), n);
         }
     }
 
     @Override
-    public UserRngRFFINode createUserRngRFFINode() {
-        return new JNI_UserRngRFFINode();
+    public InitNode createInitNode() {
+        return new JNI_InitNode();
+    }
+
+    @Override
+    public RandNode createRandNode() {
+        return new JNI_RandNode();
+    }
+
+    @Override
+    public NSeedNode createNSeedNode() {
+        return new JNI_NSeedNode();
+    }
+
+    @Override
+    public SeedsNode createSeedsNode() {
+        return new JNI_SeedsNode();
     }
 
     private static native void nativeInit(long address, int seed);

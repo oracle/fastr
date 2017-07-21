@@ -33,7 +33,6 @@ import com.oracle.truffle.r.ffi.impl.interop.NativeDoubleArray;
 import com.oracle.truffle.r.ffi.impl.interop.NativeIntegerArray;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;

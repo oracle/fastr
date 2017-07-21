@@ -25,10 +25,7 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 import java.nio.charset.StandardCharsets;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.interop.pcre.CaptureNamesResult;
 import com.oracle.truffle.r.ffi.impl.interop.pcre.CompileResult;
 import com.oracle.truffle.r.runtime.RError;
@@ -37,84 +34,73 @@ import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 
 public class TruffleNFI_PCRE implements PCRERFFI {
 
-    private static class TruffleNFI_MaketablesNode extends Node implements MaketablesNode {
-        @Child private Node message = NFIFunction.maketables.createMessage();
+    private static class TruffleNFI_MaketablesNode extends TruffleNFI_DownCallNode implements MaketablesNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.maketables;
+        }
 
         @Override
         public long execute() {
-            try {
-                long result = (long) ForeignAccess.sendExecute(message, NFIFunction.maketables.getFunction());
-                return result;
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (long) call();
         }
     }
 
-    private static class TruffleNFI_GetCaptureCountNode extends Node implements GetCaptureCountNode {
-        @Child private Node message = NFIFunction.getcapturecount.createMessage();
+    private static class TruffleNFI_GetCaptureCountNode extends TruffleNFI_DownCallNode implements GetCaptureCountNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.getcapturecount;
+        }
 
         @Override
         public int execute(long code, long extra) {
-            try {
-                int result = (int) ForeignAccess.sendExecute(message, NFIFunction.getcapturecount.getFunction(), code, extra);
-                return result;
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(code, extra);
         }
     }
 
-    private static class TruffleNFI_GetCaptureNamesNode extends Node implements GetCaptureNamesNode {
-
-        @Child private Node message = NFIFunction.getcapturenames.createMessage();
+    private static class TruffleNFI_GetCaptureNamesNode extends TruffleNFI_DownCallNode implements GetCaptureNamesNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.getcapturenames;
+        }
 
         @Override
         public String[] execute(long code, long extra, int captureCount) {
-            try {
-                CaptureNamesResult data = new CaptureNamesResult(captureCount);
-                int result = (int) ForeignAccess.sendExecute(message, NFIFunction.getcapturenames.getFunction(), data, code, extra);
-                if (result < 0) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.error(RError.NO_CALLER, RError.Message.WRONG_PCRE_INFO, result);
-                } else {
-                    return data.getCaptureNames();
-                }
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
+            CaptureNamesResult data = new CaptureNamesResult(captureCount);
+            int result = (int) call(data, code, extra);
+            if (result < 0) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(RError.NO_CALLER, RError.Message.WRONG_PCRE_INFO, result);
+            } else {
+                return data.getCaptureNames();
             }
         }
     }
 
-    private static class TruffleNFI_CompileNode extends Node implements CompileNode {
-
-        @Child private Node message = NFIFunction.compile.createMessage();
+    private static class TruffleNFI_CompileNode extends TruffleNFI_DownCallNode implements CompileNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.compile;
+        }
 
         @Override
         public Result execute(String pattern, int options, long tables) {
-            try {
-                CompileResult data = new CompileResult();
-                ForeignAccess.sendExecute(message, NFIFunction.compile.getFunction(), data, pattern, options, tables);
-                return data.getResult();
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            CompileResult data = new CompileResult();
+            call(data, pattern, options, tables);
+            return data.getResult();
         }
     }
 
-    private static class TruffleNFI_ExecNode extends Node implements ExecNode {
-        @Child private Node message = NFIFunction.exec.createMessage();
+    private static class TruffleNFI_ExecNode extends TruffleNFI_DownCallNode implements ExecNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.exec;
+        }
 
         @Override
         public int execute(long code, long extra, String subject, int offset, int options, int[] ovector) {
-            try {
-                byte[] subjectBytes = subject.getBytes(StandardCharsets.UTF_8);
-                return (int) ForeignAccess.sendExecute(message, NFIFunction.exec.getFunction(), code, extra,
-                                JavaInterop.asTruffleObject(subjectBytes), subjectBytes.length,
-                                offset, options, JavaInterop.asTruffleObject(ovector), ovector.length);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            byte[] subjectBytes = subject.getBytes(StandardCharsets.UTF_8);
+            return (int) call(code, extra, JavaInterop.asTruffleObject(subjectBytes), subjectBytes.length, offset, options, JavaInterop.asTruffleObject(ovector), ovector.length);
         }
     }
 

@@ -22,34 +22,20 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 
 public class TruffleNFI_Misc implements MiscRFFI {
 
-    private static class TruffleNFI_ExactSumNode extends Node implements ExactSumNode {
-        @Child private Node messageNode = Message.createExecute(4).createNode();
-        @CompilationFinal private TruffleObject function;
+    private static final class TruffleNFI_ExactSumNode extends TruffleNFI_DownCallNode implements ExactSumNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.exactSumFunc;
+        }
 
         @Override
         public double execute(double[] values, boolean hasNa, boolean naRm) {
-            if (function == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                function = TruffleNFI_Utils.lookupAndBind("exactSumFunc", "([double], sint32, sint32, sint32): double");
-            }
-            try {
-                return (double) ForeignAccess.sendExecute(messageNode, function, JavaInterop.asTruffleObject(values), values.length, hasNa ? 1 : 0, naRm ? 1 : 0);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (double) call(JavaInterop.asTruffleObject(values), values.length, hasNa ? 1 : 0, naRm ? 1 : 0);
         }
     }
 

@@ -22,81 +22,33 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
-import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 
 public class TruffleNFI_Stats implements StatsRFFI {
 
-    private static class TruffleNFI_FactorNode extends Node implements FactorNode {
-        private static final String FFT_FACTOR = "fft_factor";
-        private static final String FFT_FACTOR_SIGNATURE = "(sint32, [sint32], [sint32]): void";
-
-        @Child private Node factorMessage = Message.createExecute(3).createNode();
-        @Child private DLLRFFI.DLSymNode dlsymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
-
-        @CompilationFinal private TruffleObject fftFactorFunction;
+    private static class TruffleNFI_FactorNode extends TruffleNFI_DownCallNode implements FactorNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.fft_factor;
+        }
 
         @Override
         public void execute(int n, int[] pmaxf, int[] pmaxp) {
-            try {
-                if (fftFactorFunction == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    Node bind = Message.createInvoke(1).createNode();
-                    fftFactorFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, findSymbol(FFT_FACTOR, dlsymNode).asTruffleObject(), "bind", FFT_FACTOR_SIGNATURE);
-                }
-                ForeignAccess.sendExecute(factorMessage, fftFactorFunction, n, JavaInterop.asTruffleObject(pmaxf), JavaInterop.asTruffleObject(pmaxp));
-            } catch (InteropException t) {
-                throw RInternalError.shouldNotReachHere();
-            }
+            call(n, JavaInterop.asTruffleObject(pmaxf), JavaInterop.asTruffleObject(pmaxp));
         }
     }
 
-    private static class TruffleNFI_WorkNode extends Node implements WorkNode {
-        private static final String FFT_WORK = "fft_work";
-        private static final String FFT_WORK_SIGNATURE = "([double], sint32, sint32, sint32, sint32, [double], [sint32]): sint32";
-
-        @Child private DLLRFFI.DLSymNode dlsymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
-        @Child private Node workMessage = Message.createExecute(7).createNode();
-
-        @CompilationFinal private TruffleObject fftWorkFunction;
+    private static class TruffleNFI_WorkNode extends TruffleNFI_DownCallNode implements WorkNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.fft_work;
+        }
 
         @Override
         public int execute(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
-            try {
-                if (fftWorkFunction == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    Node bind = Message.createInvoke(1).createNode();
-                    fftWorkFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, findSymbol(FFT_WORK, dlsymNode).asTruffleObject(), "bind", FFT_WORK_SIGNATURE);
-                }
-                return (int) ForeignAccess.sendExecute(workMessage, fftWorkFunction, JavaInterop.asTruffleObject(a), nseg, n, nspn, isn,
-                                JavaInterop.asTruffleObject(work), JavaInterop.asTruffleObject(iwork));
-            } catch (InteropException t) {
-                throw RInternalError.shouldNotReachHere();
-            }
+            return (int) call(JavaInterop.asTruffleObject(a), nseg, n, nspn, isn, JavaInterop.asTruffleObject(work), JavaInterop.asTruffleObject(iwork));
         }
-    }
-
-    private static SymbolHandle findSymbol(String symbol, DLLRFFI.DLSymNode dlsymNode) {
-        SymbolHandle fftAddress;
-        DLLInfo dllInfo = DLL.findLibrary("stats");
-        assert dllInfo != null;
-        // maybe DLL.findSymbol(symbol, dllInfo); ?
-        fftAddress = dlsymNode.execute(dllInfo.handle, symbol);
-        assert fftAddress != DLL.SYMBOL_NOT_FOUND;
-        return fftAddress;
     }
 
     @Override

@@ -28,17 +28,33 @@ import com.oracle.truffle.api.nodes.NodeInterface;
  * Explicit statically typed interface to user-supplied random number generators.
  */
 public interface UserRngRFFI {
-    interface UserRngRFFINode extends NodeInterface {
+    interface InitNode extends NodeInterface {
 
-        public abstract void init(int seed);
-
-        public abstract double rand();
-
-        public abstract int nSeed();
-
-        public abstract void seeds(int[] n);
+        public abstract void execute(int seed);
     }
 
-    UserRngRFFINode createUserRngRFFINode();
+    interface RandNode extends NodeInterface {
 
+        public abstract double execute();
+
+    }
+
+    interface NSeedNode extends NodeInterface {
+
+        public abstract int execute();
+
+    }
+
+    interface SeedsNode extends NodeInterface {
+
+        public abstract void execute(int[] n);
+    }
+
+    InitNode createInitNode();
+
+    RandNode createRandNode();
+
+    NSeedNode createNSeedNode();
+
+    SeedsNode createSeedsNode();
 }

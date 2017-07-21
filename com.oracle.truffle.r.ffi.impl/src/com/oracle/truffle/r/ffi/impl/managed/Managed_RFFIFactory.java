@@ -157,7 +157,22 @@ public class Managed_RFFIFactory extends RFFIFactory {
             public UserRngRFFI getUserRngRFFI() {
                 return new UserRngRFFI() {
                     @Override
-                    public UserRngRFFINode createUserRngRFFINode() {
+                    public InitNode createInitNode() {
+                        throw unsupported("user defined RNG");
+                    }
+
+                    @Override
+                    public RandNode createRandNode() {
+                        throw unsupported("user defined RNG");
+                    }
+
+                    @Override
+                    public NSeedNode createNSeedNode() {
+                        throw unsupported("user defined RNG");
+                    }
+
+                    @Override
+                    public SeedsNode createSeedsNode() {
                         throw unsupported("user defined RNG");
                     }
                 };
