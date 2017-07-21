@@ -27,8 +27,8 @@ strVec <- rffi.getStringNA();
 stopifnot(anyNA(strVec))
 
 x <- list(1)
-attribute(x, 'myattr') <- 'hello';
-attrs <- ATTRIB(x)
+attr(x, 'myattr') <- 'hello';
+attrs <- rffi.ATTRIB(x)
 stopifnot(attrs[[1]] == 'hello')
 
 # loess invokes loess_raw native function passing in string value as argument and that is what we test here.
