@@ -42,7 +42,6 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
-import com.oracle.truffle.r.launcher.ConsoleHandler;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
@@ -110,8 +109,6 @@ public class DebugHandling {
 
     /**
      * Attach the DebugHandling instrument to the FunctionStatementsNode and all syntactic nodes.
-     *
-     * @param implicit TODO
      */
     public static boolean enableDebug(RFunction func, Object text, Object condition, boolean once, boolean implicit) {
         FunctionStatementsEventListener fbr = getFunctionStatementsEventListener(func);
@@ -120,18 +117,21 @@ public class DebugHandling {
         } else {
             fbr.enable();
             fbr.setParentListener(null);
+
+            if (!fbr.isAttached()) {
+                fbr.attach();
+            }
         }
         return true;
     }
 
     public static boolean undebug(RFunction func) {
-        FunctionStatementsEventListener fbr = getFunctionStatementsEventListener(func);
-        if (fbr == null) {
-            return false;
-        } else {
-            fbr.disable();
+        FunctionStatementsEventListener fsel = getFunctionStatementsEventListener(func);
+        if (fsel != null && !fsel.disabled()) {
+            fsel.dispose();
             return true;
         }
+        return false;
     }
 
     public static boolean isDebugged(RFunction func) {
@@ -139,12 +139,19 @@ public class DebugHandling {
         return fser != null && (!fser.disabled() || fser.parentListener != null && !fser.parentListener.disabled());
     }
 
-    private static FunctionStatementsEventListener getFunctionStatementsEventListener(RFunction func) {
-        return (FunctionStatementsEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(RInstrumentation.getSourceSection(func));
+    /**
+     *
+     */
+    public static void dispose() {
+        for (ExecutionEventListener l : RContext.getInstance().stateInstrumentation.getDebugListeners()) {
+            if (l instanceof DebugEventListener) {
+                ((DebugEventListener) l).dispose();
+            }
+        }
     }
 
-    private static LineBreakpointEventListener getLineBreakpointEventListener(Source source, int lineNr) {
-        return (LineBreakpointEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(source.createSection(lineNr));
+    private static FunctionStatementsEventListener getFunctionStatementsEventListener(RFunction func) {
+        return (FunctionStatementsEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(RInstrumentation.getSourceSection(func));
     }
 
     private static FunctionStatementsEventListener getFunctionStatementsEventListener(FunctionDefinitionNode fdn) {
@@ -158,48 +165,10 @@ public class DebugHandling {
     @TruffleBoundary
     private static FunctionStatementsEventListener attachDebugHandler(FunctionDefinitionNode fdn, Object text, Object condition, boolean once, boolean implicit) {
         FunctionStatementsEventListener fser = new FunctionStatementsEventListener(fdn, text, condition, once, implicit);
+
         // First attach the main listener on the START_FUNCTION
-        Instrumenter instrumenter = RInstrumentation.getInstrumenter();
-        SourceSectionFilter.Builder functionBuilder = RInstrumentation.createFunctionFilter(fdn, StandardTags.RootTag.class);
-        instrumenter.attachListener(functionBuilder.build(), fser);
-        // Next attach statement handler to all STATEMENTs except LOOPs
-        SourceSectionFilter.Builder statementBuilder = RInstrumentation.createFunctionStatementFilter(fdn);
-        statementBuilder.tagIsNot(RSyntaxTags.LoopTag.class);
-        instrumenter.attachListener(statementBuilder.build(), fser.getStatementListener());
-        // Finally attach loop listeners to all loop nodes
-        SourceSectionFilter.Builder loopBuilder = RInstrumentation.createFunctionFilter(fdn, RSyntaxTags.LoopTag.class);
-        new RSyntaxVisitor<Void>() {
+        fser.attach();
 
-            @Override
-            protected Void visit(RSyntaxCall element) {
-                if (element instanceof AbstractLoopNode) {
-                    instrumenter.attachListener(loopBuilder.build(), fser.getLoopStatementReceiver((AbstractLoopNode) element));
-                }
-                accept(element.getSyntaxLHS());
-                for (RSyntaxElement arg : element.getSyntaxArguments()) {
-                    if (arg != null) {
-                        accept(arg);
-                    }
-                }
-                return null;
-            }
-
-            @Override
-            protected Void visit(RSyntaxConstant element) {
-                return null;
-            }
-
-            @Override
-            protected Void visit(RSyntaxLookup element) {
-                return null;
-            }
-
-            @Override
-            protected Void visit(RSyntaxFunction element) {
-                accept(element.getSyntaxBody());
-                return null;
-            }
-        }.accept(fdn);
         return fser;
     }
 
@@ -208,14 +177,17 @@ public class DebugHandling {
         Instrumenter instrumenter = RInstrumentation.getInstrumenter();
         SourceSection lineSourceSection = fdn.createSection(line);
         SourceSectionFilter.Builder functionBuilder = RInstrumentation.createLineFilter(fdn, line, StandardTags.StatementTag.class);
-        instrumenter.attachListener(functionBuilder.build(), new LineBreakpointEventListener(lineSourceSection));
+        LineBreakpointEventListener listener = new LineBreakpointEventListener(lineSourceSection);
+        listener.setBinding(instrumenter.attachListener(functionBuilder.build(), listener));
+        RContext.getInstance().stateInstrumentation.putDebugListener(lineSourceSection, listener);
     }
 
     @TruffleBoundary
     public static void disableLineDebug(Source fdn, int line) {
-        LineBreakpointEventListener l = getLineBreakpointEventListener(fdn, line);
+        LineBreakpointEventListener l = (LineBreakpointEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(fdn.createSection(line));
         if (l != null) {
-            l.disable();
+            l.dispose();
+
             if (l.fser != null) {
                 l.fser.setParentListener(null);
                 l.fser.disable();
@@ -234,12 +206,17 @@ public class DebugHandling {
                 // record initial state was disabled for undo
                 fser.enabledForStepInto = true;
             }
+            if (!fser.isAttached()) {
+                fser.attach();
+            }
         }
         fser.setParentListener(parentListener);
         return fser;
     }
 
     private abstract static class DebugEventListener implements ExecutionEventListener {
+
+        private EventBinding<? extends DebugEventListener> binding;
 
         @TruffleBoundary
         protected static void print(String msg, boolean nl) {
@@ -269,6 +246,23 @@ public class DebugHandling {
             if (newState != disabled) {
                 disabledUnchangedAssumption.invalidate();
                 disabled = newState;
+            }
+        }
+
+        public EventBinding<? extends DebugEventListener> getBinding() {
+            return binding;
+        }
+
+        public void setBinding(EventBinding<? extends DebugEventListener> binding) {
+            assert binding != null;
+            assert this.binding == null;
+            this.binding = binding;
+        }
+
+        public void dispose() {
+            if (binding != null && !binding.isDisposed()) {
+                binding.dispose();
+                binding = null;
             }
         }
     }
@@ -348,6 +342,12 @@ public class DebugHandling {
                 stepIntoInstrument = null;
             }
         }
+
+        @Override
+        public void dispose() {
+            super.dispose();
+            clearStepInstrument();
+        }
     }
 
     /**
@@ -360,7 +360,7 @@ public class DebugHandling {
     private static class FunctionStatementsEventListener extends InteractingDebugEventListener {
 
         private final StatementEventListener statementListener;
-        ArrayList<LoopStatementEventListener> loopStatementListeners = new ArrayList<>();
+        private final ArrayList<LoopStatementEventListener> loopStatementListeners = new ArrayList<>();
 
         /**
          * Denotes the {@code debugOnce} function, debugging disabled after one execution, or a
@@ -403,14 +403,82 @@ public class DebugHandling {
             parentListener = l;
         }
 
-        StatementEventListener getStatementListener() {
-            return statementListener;
+        void attachStatementListener() {
+            if (statementListener.getBinding() == null) {
+                SourceSectionFilter.Builder statementBuilder = RInstrumentation.createFunctionStatementFilter(functionDefinitionNode);
+                statementBuilder.tagIsNot(RSyntaxTags.LoopTag.class);
+                Instrumenter instrumenter = RInstrumentation.getInstrumenter();
+                statementListener.setBinding(instrumenter.attachListener(statementBuilder.build(), statementListener));
+            }
         }
 
-        LoopStatementEventListener getLoopStatementReceiver(RSyntaxNode loopNode) {
+        LoopStatementEventListener getLoopStatementReceiver(SourceSectionFilter ssf, RSyntaxNode loopNode) {
             LoopStatementEventListener lser = new LoopStatementEventListener(functionDefinitionNode, text, condition, loopNode, this);
             loopStatementListeners.add(lser);
+            Instrumenter instrumenter = RInstrumentation.getInstrumenter();
+            lser.setBinding(instrumenter.attachListener(ssf, lser));
             return lser;
+        }
+
+        @Override
+        public void dispose() {
+            disable();
+            super.dispose();
+            statementListener.dispose();
+
+            for (LoopStatementEventListener lser : loopStatementListeners) {
+                lser.dispose();
+            }
+            loopStatementListeners.clear();
+        }
+
+        public boolean isAttached() {
+            return getBinding() != null && !getBinding().isDisposed();
+        }
+
+        public void attach() {
+
+            Instrumenter instrumenter = RInstrumentation.getInstrumenter();
+            SourceSectionFilter.Builder functionBuilder = RInstrumentation.createFunctionFilter(functionDefinitionNode, StandardTags.RootTag.class);
+            setBinding(instrumenter.attachListener(functionBuilder.build(), this));
+
+            // Next attach statement handler to all STATEMENTs except LOOPs
+            attachStatementListener();
+
+            // Finally attach loop listeners to all loop nodes
+            SourceSectionFilter.Builder loopBuilder = RInstrumentation.createFunctionFilter(functionDefinitionNode, RSyntaxTags.LoopTag.class);
+            new RSyntaxVisitor<Void>() {
+
+                @Override
+                protected Void visit(RSyntaxCall element) {
+                    if (element instanceof AbstractLoopNode) {
+                        getLoopStatementReceiver(loopBuilder.build(), (AbstractLoopNode) element);
+                    }
+                    accept(element.getSyntaxLHS());
+                    for (RSyntaxElement arg : element.getSyntaxArguments()) {
+                        if (arg != null) {
+                            accept(arg);
+                        }
+                    }
+                    return null;
+                }
+
+                @Override
+                protected Void visit(RSyntaxConstant element) {
+                    return null;
+                }
+
+                @Override
+                protected Void visit(RSyntaxLookup element) {
+                    return null;
+                }
+
+                @Override
+                protected Void visit(RSyntaxFunction element) {
+                    accept(element.getSyntaxBody());
+                    return null;
+                }
+            }.accept(functionDefinitionNode);
         }
 
         @Override
@@ -586,7 +654,6 @@ public class DebugHandling {
 
         LineBreakpointEventListener(SourceSection ss) {
             this.ss = ss;
-            RContext.getInstance().stateInstrumentation.putDebugListener(ss, this);
         }
 
         @Override
@@ -618,6 +685,15 @@ public class DebugHandling {
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
             if (fser != null) {
                 fser.enableChildren();
+            }
+        }
+
+        @Override
+        public void dispose() {
+            super.dispose();
+            disable();
+            if (fser != null) {
+                fser.dispose();
             }
         }
     }

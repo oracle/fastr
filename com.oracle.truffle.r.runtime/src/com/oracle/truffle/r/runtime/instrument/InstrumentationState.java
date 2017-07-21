@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.instrument;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -203,8 +204,8 @@ public final class InstrumentationState implements RContext.ContextState {
     }
 
     @TruffleBoundary
-    public void putDebugListener(SourceSection ss, ExecutionEventListener listener) {
-        debugListenerMap.put(ss, listener);
+    public void putDebugListener(SourceSection sourceSection, ExecutionEventListener listener) {
+        debugListenerMap.put(sourceSection, listener);
     }
 
     @TruffleBoundary
@@ -213,6 +214,11 @@ public final class InstrumentationState implements RContext.ContextState {
         traceBindingMap.values().toArray(result);
         return result;
 
+    }
+
+    @TruffleBoundary
+    public Collection<ExecutionEventListener> getDebugListeners() {
+        return debugListenerMap.values();
     }
 
     @TruffleBoundary
