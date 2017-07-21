@@ -74,6 +74,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(test_coerceVector, 2),
         CALLDEF(test_ATTRIB, 1),
         CALLDEF(test_stringNA, 0),
+        CALLDEF(test_captureDotsWithSingleElement, 1),
         {NULL, NULL, 0}
 };
 

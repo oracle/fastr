@@ -164,3 +164,7 @@ rffi.ATTRIB <- function(x) {
 rffi.getStringNA <- function() {
     .Call("test_stringNA")
 }
+
+rffi.captureDotsWithSingleElement <- function(env) {
+    .Call('test_captureDotsWithSingleElement', env)
+}

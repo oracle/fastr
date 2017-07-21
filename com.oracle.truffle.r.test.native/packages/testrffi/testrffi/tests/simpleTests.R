@@ -33,3 +33,12 @@ stopifnot(attrs[[1]] == 'hello')
 
 # loess invokes loess_raw native function passing in string value as argument and that is what we test here.
 loess(dist ~ speed, cars);
+
+# code snippet that simulates work with promises ala rlang package
+tmp <- c(1,2,4)
+some_unique_name <- TRUE
+foo <- function(...) { tmp <- 'this is not the right tmp'; bar(); }
+bar <- function() rffi.captureDotsWithSingleElement(parent.frame())
+promiseInfo <- foo(tmp)
+stopifnot('some_unique_name' %in% ls(promiseInfo[[2]]))
+eval(promiseInfo[[1]], promiseInfo[[2]])
