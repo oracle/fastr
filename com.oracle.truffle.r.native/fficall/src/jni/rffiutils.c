@@ -233,30 +233,30 @@ void updateNativeArrays(JNIEnv *env) {
 }
 
 
-static void *findNativeArray(JNIEnv *env, SEXP x) {
+static NativeArrayElem *findNativeArray(JNIEnv *env, SEXP x) {
     if (nativeArrayTableLastIndex < nativeArrayTableHwm) {
-        NativeArrayElem cv = nativeArrayTable[nativeArrayTableLastIndex];
-        if (cv.obj != NULL && (cv.obj == x || fast_IsSameObject(cv.obj, x))) {
-            void *data = cv.data;
+        NativeArrayElem *cv = &nativeArrayTable[nativeArrayTableLastIndex];
+        if (cv->obj != NULL && (cv->obj == x || fast_IsSameObject(cv->obj, x))) {
+            void *data = cv->data;
 #if TRACE_NATIVE_ARRAYS
             fprintf(traceFile, "findNativeArray(%p): found %p (cached)\n", x, data);
 #endif
-            return data;
+            return cv;
         }
     }
     int i;
     assert(isValidJNIRef(env, x));
     for (i = 0; i < nativeArrayTableHwm; i++) {
-        NativeArrayElem cv = nativeArrayTable[i];
-        if (cv.obj != NULL) {
-            assert(isValidJNIRef(env, cv.obj));
-            if (fast_IsSameObject(cv.obj, x)) {
+        NativeArrayElem *cv = &nativeArrayTable[i];
+        if (cv->obj != NULL) {
+            assert(isValidJNIRef(env, cv->obj));
+            if (fast_IsSameObject(cv->obj, x)) {
                 nativeArrayTableLastIndex = i;
-                void *data = cv.data;
+                void *data = cv->data;
 #if TRACE_NATIVE_ARRAYS
                 fprintf(traceFile, "findNativeArray(%p): found %p\n", x, data);
 #endif
-                return data;
+                return cv;
             }
         }
     }
@@ -264,6 +264,19 @@ static void *findNativeArray(JNIEnv *env, SEXP x) {
     fprintf(traceFile, "findNativeArray(%p): not found\n", x);
 #endif
     return NULL;
+}
+
+void updateNativeArray(JNIEnv *env, SEXP x) {
+	NativeArrayElem *cv = findNativeArray(env, x);
+	void *data = NULL;
+	if (cv != NULL) {
+		data = cv->data;
+	}
+
+	if (data != NULL) {
+		int len = (*env)->GetArrayLength(env, cv->jArray);
+		(*env)->SetByteArrayRegion(env, cv->jArray, 0, len, data);
+	}
 }
 
 static void addNativeArray(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, void *data) {
@@ -290,10 +303,14 @@ static void addNativeArray(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, voi
 }
 
 void *getNativeArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
-    void *data = findNativeArray(thisenv, x);
-    jboolean isCopy;
+	NativeArrayElem *cv = findNativeArray(thisenv, x);
+	void *data = NULL;
+	if (cv != NULL) {
+		data = cv->data;
+	}
     if (data == NULL) {
         jarray jArray;
+	    jboolean isCopy;
         switch (type) {
         case INTSXP: {
             jintArray intArray = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, INTEGER_MethodID, x);
@@ -354,7 +371,7 @@ void *getNativeArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
 static void releaseNativeArray(JNIEnv *env, int i) {
     NativeArrayElem cv = nativeArrayTable[i];
 #if TRACE_NATIVE_ARRAYS
-               fprintf(traceFile, "releaseNativeArray(x=%p, ix=%d, freedata=%d)\n", cv.obj, i, freedata);
+               fprintf(traceFile, "releaseNativeArray(x=%p, ix=%d)\n", cv.obj, i);
 #endif
     if (cv.obj != NULL) {
         assert(isValidJNIRef(env, cv.obj));

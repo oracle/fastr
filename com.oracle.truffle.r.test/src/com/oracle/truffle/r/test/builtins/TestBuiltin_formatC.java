@@ -97,4 +97,11 @@ public class TestBuiltin_formatC extends TestBase {
         assertEval(Ignored.ReferenceError,
                         "argv <- list(structure(c(1962.25, 1962.5, 1962.75, 1963, 1963.25, 1963.5, 1963.75, 1964, 1964.25, 1964.5, 1964.75, 1965, 1965.25, 1965.5, 1965.75, 1966, 1966.25, 1966.5, 1966.75, 1967, 1967.25, 1967.5, 1967.75, 1968, 1968.25, 1968.5, 1968.75, 1969, 1969.25, 1969.5, 1969.75, 1970, 1970.25, 1970.5, 1970.75, 1971, 1971.25, 1971.5, 1971.75), .Tsp = c(1962.25, 1971.75, 4), class = 'ts'), 'double', 1, 4L, 'g', '', c(12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L, 12L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
+
+    @Test
+    public void testformatC15() {
+        assertEval(".Internal(formatC(1e-15, \"double\", 1L, 6L, \"g\", \"\", 12))");
+        assertEval("y <- structure(c(2, 14.1776856316985), .Dim = c(2L, 1L), .Dimnames = list(c(\"m.ship.expon.\", \"objective\"), \" \")); formatC(y, digits = 6)");
+    }
+
 }

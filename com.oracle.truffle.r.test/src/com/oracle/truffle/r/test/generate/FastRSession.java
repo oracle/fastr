@@ -147,6 +147,10 @@ public final class FastRSession implements RSession {
         decoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
     }
 
+    public RContext getContext() {
+        return mainContext;
+    }
+
     private String readLine() {
         /*
          * We cannot use an InputStreamReader because it buffers characters internally, whereas

@@ -407,7 +407,7 @@ SEXP Rf_getAttrib(SEXP vec, SEXP name) {
 SEXP Rf_setAttrib(SEXP vec, SEXP name, SEXP val) {
 	TRACE(TARGppp, vec,name, val);
 	JNIEnv *thisenv = getEnv();
-	updateNativeArrays(thisenv);
+	updateNativeArray(thisenv, val);
 	(*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, Rf_setAttribMethodID, vec, name, val);
 	return val;
 }

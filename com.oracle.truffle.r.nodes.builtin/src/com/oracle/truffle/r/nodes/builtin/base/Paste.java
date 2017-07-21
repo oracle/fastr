@@ -105,7 +105,11 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         int length = lengthProfile.profile(values.getLength());
         if (hasNonNullElements(values, length)) {
             String[] result = pasteListElements(frame, values, sep, length);
-            return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+            if (result == ONE_EMPTY_STRING) {
+                return RDataFactory.createEmptyStringVector();
+            } else {
+                return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+            }
         } else {
             return RDataFactory.createEmptyStringVector();
         }
@@ -136,13 +140,21 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
     private String[] pasteListElements(VirtualFrame frame, RAbstractListVector values, String sep, int length) {
         String[][] converted = new String[length][];
         int maxLength = 1;
+        int emptyCnt = 0;
         for (int i = 0; i < length; i++) {
             Object element = values.getDataAt(i);
             String[] array = castCharacterVector(frame, element).materialize().getDataWithoutCopying();
             maxLength = Math.max(maxLength, array.length);
-            converted[i] = array.length == 0 ? ONE_EMPTY_STRING : array;
+            if (array.length == 0) {
+                converted[i] = ONE_EMPTY_STRING;
+                emptyCnt++;
+            } else {
+                converted[i] = array;
+            }
         }
-        if (length == 1) {
+        if (emptyCnt == length) {
+            return ONE_EMPTY_STRING;
+        } else if (length == 1) {
             return converted[0];
         } else {
             return prepareResult(sep, length, converted, maxLength);

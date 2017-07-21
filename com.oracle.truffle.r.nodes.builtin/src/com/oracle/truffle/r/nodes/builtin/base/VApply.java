@@ -36,6 +36,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.Lapply.LapplyInternalNode;
@@ -57,6 +58,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -94,7 +96,9 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
     @Child private CastLogicalNode castLogical;
     @Child private CastStringNode castString;
     @Child private SetDimAttributeNode setDimNode;
-    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
+    @Child private GetNamesAttributeNode getColNamesNode = GetNamesAttributeNode.create();
+    @Child private GetNamesAttributeNode getRowNamesNode = GetNamesAttributeNode.create();
+    @Child private SetDimNamesAttributeNode setDimNamesNode = SetDimNamesAttributeNode.create();
     @Child private SetNamesAttributeNode setNamesNode = SetNamesAttributeNode.create();
 
     @Child private CastToVectorNode castToVector = CastToVectorNode.create();
@@ -204,11 +208,30 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
                 setDimNode = insert(SetDimAttributeNode.create());
             }
             setDimNode.setDimensions(result, new int[]{funValueVecLen, applyResult.length});
-        }
 
-        // TODO: handle names in case of matrices
-        if (useNamesProfile.profile(useNames)) {
-            RStringVector names = getNamesNode.getNames(vecMat);
+            if (useNamesProfile.profile(useNames)) {
+                // the names from the input vector are used as the column names in the result
+                RStringVector names = getColNamesNode.getNames(vecMat);
+                RStringVector colNames = null;
+                if (names != null) {
+                    colNames = names;
+                } else if (vecMat instanceof RStringVector) {
+                    colNames = (RStringVector) vecMat.copy();
+                }
+                Object rowNames = RNull.instance;
+                if (!applyResultZeroLength) {
+                    // take the names from the first input vector and use it as the row names in the
+                    // result
+                    Object firstVec = applyResult[0];
+                    Object rn = getRowNamesNode.getNames(firstVec);
+                    rowNames = rn == null ? RNull.instance : rn;
+                }
+                if (colNames != null) {
+                    setDimNamesNode.setDimNames(result, RDataFactory.createList(new Object[]{rowNames, colNames}));
+                }
+            }
+        } else if (useNamesProfile.profile(useNames)) {
+            RStringVector names = getColNamesNode.getNames(vecMat);
             RStringVector newNames = null;
             if (names != null) {
                 newNames = names;
@@ -219,6 +242,8 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
                 setNamesNode.setNames(result, newNames);
             }
         }
+
+        // TODO: handle names in case of matrices
         return result;
     }
 

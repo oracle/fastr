@@ -80,6 +80,7 @@ public class TestBuiltin_paste extends TestBase {
         assertEval("{ paste(1:2, 1:3, FALSE, collapse=NULL) }");
         assertEval("{ paste(sep=\"\") }");
         assertEval("{ paste(1:2, 1:3, FALSE, collapse=\"-\", sep=\"+\") }");
+        assertEval("{ paste(NULL, list(), sep = \"=\") }");
     }
 
     @Test

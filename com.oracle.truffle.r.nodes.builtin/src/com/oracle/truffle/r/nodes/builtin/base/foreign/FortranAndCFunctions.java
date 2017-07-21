@@ -22,8 +22,11 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.foreign.FortranAndCFunctionsFactory.FortranResultNamesSetterNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.LookupAdapter.ExtractNativeCallInfoNode;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.LookupAdapterFactory.ExtractNativeCallInfoNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -31,6 +34,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -44,6 +48,7 @@ import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * {@code .C} and {@code .Fortran} functions, which share a common signature.
@@ -251,6 +256,8 @@ public class FortranAndCFunctions {
             Casts.noCasts(Fortran.class);
         }
 
+        @Child private FortranResultNamesSetter resNamesSetter = FortranResultNamesSetterNodeGen.create();
+
         @Override
         @TruffleBoundary
         public RExternalBuiltinNode lookupBuiltin(RList symbol) {
@@ -277,7 +284,7 @@ public class FortranAndCFunctions {
         protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding,
                         @Cached("symbol") RList cached,
                         @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
-            return builtin.call(frame, args);
+            return resNamesSetter.execute(builtin.call(frame, args), args);
         }
 
         @Specialization(guards = "lookupBuiltin(symbol) == null")
@@ -303,6 +310,40 @@ public class FortranAndCFunctions {
         @Fallback
         protected Object fallback(Object symbol, Object args, Object naok, Object dup, Object rPackage, Object encoding) {
             throw LookupAdapter.fallback(this, symbol);
+        }
+    }
+
+    public abstract static class FortranResultNamesSetter extends RBaseNode {
+
+        public abstract Object execute(Object result, RArgsValuesAndNames argNames);
+
+        @Specialization
+        public Object handleArgNames(RAttributable result, RArgsValuesAndNames argValNames,
+                        @Cached("create()") SetNamesAttributeNode namesSetter,
+                        @Cached("create()") BranchProfile namesProfile) {
+            ArgumentsSignature sig = argValNames.getSignature();
+            if (sig.getNonNullCount() > 0) {
+                namesProfile.enter();
+                String[] argNames = sig.getNames();
+                String[] names = new String[sig.getLength()];
+                for (int i = 0; i < sig.getLength(); i++) {
+                    String argName = argNames[i];
+                    if (argName == null) {
+                        names[i] = "";
+                    } else {
+                        names[i] = argName;
+                    }
+                }
+                namesSetter.execute(result, RDataFactory.createStringVector(names, true));
+            }
+
+            return result;
+        }
+
+        @Fallback
+        public Object handleOthers(@SuppressWarnings("unused") Object result, @SuppressWarnings("unused") RArgsValuesAndNames argNames) {
+            // do nothing
+            return result;
         }
     }
 

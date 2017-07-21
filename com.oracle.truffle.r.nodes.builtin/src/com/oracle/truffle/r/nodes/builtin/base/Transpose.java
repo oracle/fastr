@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -37,6 +38,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -62,6 +64,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
     @Child private SetFixedAttributeNode putDimensions = SetFixedAttributeNode.createDim();
     @Child private SetFixedAttributeNode putDimNames = SetFixedAttributeNode.createDimNames();
     @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
+    @Child private GetNamesAttributeNode getAxisNamesNode = GetNamesAttributeNode.create();
     @Child private GetDimAttributeNode getDimNode;
 
     static {
@@ -113,7 +116,9 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
         if (dimNames != null) {
             hasDimNamesProfile.enter();
             assert dimNames.getLength() == 2;
-            RList newDimNames = RDataFactory.createList(new Object[]{dimNames.getDataAt(1), dimNames.getDataAt(0)});
+            RStringVector axisNames = getAxisNamesNode.getNames(dimNames);
+            RStringVector transAxisNames = axisNames == null ? null : RDataFactory.createStringVector(new String[]{axisNames.getDataAt(1), axisNames.getDataAt(0)}, true);
+            RList newDimNames = RDataFactory.createList(new Object[]{dimNames.getDataAt(1), dimNames.getDataAt(0)}, transAxisNames);
             putDimNames.execute(r.getAttributes(), newDimNames);
         }
         return r;

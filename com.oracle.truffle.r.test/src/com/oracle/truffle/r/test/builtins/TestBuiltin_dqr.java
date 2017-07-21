@@ -41,7 +41,7 @@ public class TestBuiltin_dqr extends TestBase {
 
     @Test
     public void testdqrqty() {
-        assertEval(".Fortran(.F_dqrqty, 1, 1L, 1L, 1, 1, 1L, 1)");
+        assertEval(".Fortran(.F_dqrqty, 1, 1L, 1L, 1, 1, 1L, qty=1)");
     }
 
     @Test
