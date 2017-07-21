@@ -34,6 +34,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -116,6 +117,11 @@ public abstract class RLengthNode extends RNode {
          * decide whether to include a name is still necessary
          */
         return lengthProfile.profile(env.ls(true, null, false).getLength());
+    }
+
+    @Specialization
+    protected int getLength(RArgsValuesAndNames vargs) {
+        return vargs.getLength();
     }
 
     @Specialization

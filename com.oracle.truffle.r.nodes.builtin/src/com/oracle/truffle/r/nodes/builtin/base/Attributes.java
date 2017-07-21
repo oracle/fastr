@@ -25,109 +25,44 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.GetAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "attributes", kind = PRIMITIVE, parameterNames = {"obj"}, behavior = PURE)
 public abstract class Attributes extends RBuiltinNode.Arg1 {
 
-    private final BranchProfile rownamesBranch = BranchProfile.create();
-    @Child private ArrayAttributeNode arrayAttrAccess = ArrayAttributeNode.create();
-    @Child private SetNamesAttributeNode setNamesNode = SetNamesAttributeNode.create();
+    @Child private GetAttributesNode getAttributesNode = GetAttributesNode.create();
 
     static {
         Casts.noCasts(Attributes.class);
     }
 
     @Specialization
-    protected Object attributesNull(RAbstractContainer container,
-                    @Cached("createBinaryProfile()") ConditionProfile hasAttributesProfile) {
-        if (hasAttributesProfile.profile(hasAttributes(container))) {
-            return createResult(container, container instanceof RLanguage);
-        } else {
-            return RNull.instance;
-        }
+    protected Object attributesNull(RAbstractContainer container) {
+        return getAttributesNode.execute(container);
     }
 
     /**
-     * Unusual cases that it is not worth specializing on as they are not performance-centric,
-     * basically any type that is not an {@link RAbstractContainer} but is {@link RAttributable},
-     * e.g. {@link REnvironment}.
+     * Unusual cases that it is not worth specializing on as they are not performance-centric.
      */
     @Fallback
     @TruffleBoundary
     protected Object attributes(Object object) {
         if (object instanceof RAttributable) {
-            if (!hasAttributes((RAttributable) object)) {
-                return RNull.instance;
-            } else {
-                return createResult((RAttributable) object, false);
-            }
+            return getAttributesNode.execute((RAttributable) object);
         } else if (object == RNull.instance || RRuntime.isForeignObject(object)) {
             return RNull.instance;
         } else {
             throw RError.nyi(this, "object cannot be attributed");
         }
-    }
-
-    /**
-     * {@code language} objects behave differently regarding "names"; they don't get included.
-     */
-    private Object createResult(RAttributable attributable, boolean ignoreNames) {
-        DynamicObject attributes = attributable.getAttributes();
-        int size = attributes.size();
-        String[] names = new String[size];
-        Object[] values = new Object[size];
-        int z = 0;
-        for (RAttributesLayout.RAttribute attr : arrayAttrAccess.execute(attributes)) {
-            String name = attr.getName();
-            if (ignoreNames && name.equals(RRuntime.NAMES_ATTR_KEY)) {
-                continue;
-            }
-            names[z] = name;
-            if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
-                rownamesBranch.enter();
-                values[z] = Attr.getFullRowNames(attr.getValue());
-            } else {
-                values[z] = attr.getValue();
-            }
-            z++;
-        }
-        if (ignoreNames && z != names.length) {
-            if (z == 0) {
-                return RNull.instance;
-            } else {
-                names = Arrays.copyOfRange(names, 0, names.length - 1);
-                values = Arrays.copyOfRange(values, 0, values.length - 1);
-            }
-        }
-        RList result = RDataFactory.createList(values);
-        setNamesNode.setNames(result, RDataFactory.createStringVector(names, true));
-        return result;
-    }
-
-    private static boolean hasAttributes(RAttributable attributable) {
-        return attributable.getAttributes() != null && !attributable.getAttributes().isEmpty();
     }
 }

@@ -35,7 +35,7 @@ INLINE_FUN R_len_t length(SEXP s)
     int i;
     switch (TYPEOF(s)) {
     case NILSXP:
-	return 0;
+        return 0;
     case LGLSXP:
     case INTSXP:
     case REALSXP:
@@ -46,13 +46,14 @@ INLINE_FUN R_len_t length(SEXP s)
     case EXPRSXP:
     case RAWSXP:
     case DOTSXP:
-	return LENGTH(s);
+    case ENVSXP:
     case LISTSXP:
     case LANGSXP:
-    case ENVSXP:
-	return Rf_envlength(s);
+        // Note: all these types should have specialization in MiscNodes$LENGTHNode
+        return LENGTH(s);
     default:
-	return 1;
+        // e.g. SYMSXP (symbol), CLOSXP (closure)
+        return 1;
     }
 }
 
@@ -61,7 +62,7 @@ INLINE_FUN R_xlen_t xlength(SEXP s)
     int i;
     switch (TYPEOF(s)) {
     case NILSXP:
-	return 0;
+        return 0;
     case LGLSXP:
     case INTSXP:
     case REALSXP:
@@ -72,13 +73,12 @@ INLINE_FUN R_xlen_t xlength(SEXP s)
     case EXPRSXP:
     case RAWSXP:
     case DOTSXP:
-	return XLENGTH(s);
+    case ENVSXP:
     case LISTSXP:
     case LANGSXP:
-    case ENVSXP:
-	return Rf_envlength(s);
+        return XLENGTH(s);
     default:
-	return 1;
+        return 1;
     }
 }
 

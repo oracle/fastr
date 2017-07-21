@@ -86,8 +86,12 @@ extern SEXP test_CDR(SEXP x);
 
 extern SEXP test_LENGTH(SEXP x);
 
+extern SEXP test_inlined_length(SEXP x);
+
 extern SEXP test_coerceVector(SEXP x, SEXP mode);
 
 extern SEXP test_ATTRIB(SEXP);
 
 extern SEXP test_stringNA(void);
+
+extern SEXP test_captureDotsWithSingleElement(SEXP env);

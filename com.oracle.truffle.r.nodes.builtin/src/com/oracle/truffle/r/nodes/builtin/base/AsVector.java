@@ -70,7 +70,6 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
@@ -244,7 +243,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
 
             @Specialization
             @TruffleBoundary
-            protected Object castPairlist(RAbstractListVector x) {
+            protected Object castPairlist(RAbstractVector x) {
                 // TODO implement non-empty element list conversion; this is a placeholder for type
                 // test
                 if (x.getLength() == 0) {
@@ -254,7 +253,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                     RStringVector names = x.getNames();
                     for (int i = x.getLength() - 1; i >= 0; i--) {
                         Object name = names == null ? RNull.instance : RDataFactory.createSymbolInterned(names.getDataAt(i));
-                        Object data = x.getDataAt(i);
+                        Object data = x.getDataAtAsObject(i);
                         list = RDataFactory.createPairList(data, list, name);
                     }
                     return list;

@@ -35,6 +35,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.GetAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.IterableAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -47,11 +48,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @RBuiltin(name = "attr", kind = PRIMITIVE, parameterNames = {"x", "which", "exact"}, behavior = PURE)
 public abstract class Attr extends RBuiltinNode.Arg3 {
@@ -124,7 +123,7 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
         if (attributes == null) {
             return RNull.instance;
         } else {
-            return getFullRowNames(getRowNamesNode.getRowNames(container));
+            return GetAttributesNode.getFullRowNames(getRowNamesNode.getRowNames(container));
         }
     }
 
@@ -140,20 +139,6 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
             throw RError.error(this, Message.OBJ_CANNOT_BE_ATTRIBUTED);
         } else {
             throw RError.nyi(this, "object cannot be attributed");
-        }
-    }
-
-    public static Object getFullRowNames(Object a) {
-        if (a == RNull.instance) {
-            return RNull.instance;
-        } else {
-            if (a instanceof RAbstractIntVector) {
-                RAbstractIntVector rowNames = (RAbstractIntVector) a;
-                if (rowNames.getLength() == 2 && RRuntime.isNA(rowNames.getDataAt(0))) {
-                    return RDataFactory.createIntSequence(1, 1, Math.abs(rowNames.getDataAt(1)));
-                }
-            }
-            return a;
         }
     }
 

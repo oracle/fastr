@@ -318,6 +318,10 @@ SEXP test_LENGTH(SEXP x) {
 	return ScalarInteger(LENGTH(x));
 }
 
+SEXP test_inlined_length(SEXP x) {
+    return ScalarInteger(length(x));
+}
+
 SEXP test_coerceVector(SEXP x, SEXP mode) {
     int intMode = INTEGER_VALUE(mode);
     return Rf_coerceVector(x, intMode);
@@ -331,4 +335,26 @@ SEXP test_stringNA(void) {
     SEXP x = allocVector(STRSXP, 1);
     SET_STRING_ELT(x, 0, NA_STRING);
     return x;
+}
+
+// This function is expected to be called only with environment that has single
+// promise value in the '...' variable and this is asserted inside this function.
+// The return value is list with the promises' expression and environment.
+SEXP test_captureDotsWithSingleElement(SEXP env) {
+    SEXP dots = findVarInFrame3(env, R_DotsSymbol, TRUE);
+    int n_dots = length(dots);
+    if (n_dots != 1) {
+        printf("Error: test_captureDotsWithSingleElement expectes single promise in ...\n");
+        return R_NilValue;
+    }
+    SEXP promise = CAR(dots);
+    if (TYPEOF(promise) != PROMSXP) {
+        printf("Error: test_captureDotsWithSingleElement expectes a promise in ...\n");
+        return R_NilValue;
+    }
+    SEXP info = PROTECT(allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(info, 0, R_PromiseExpr(promise));
+    SET_VECTOR_ELT(info, 1, PRENV(promise));
+    UNPROTECT(1);
+    return info;
 }

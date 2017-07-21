@@ -153,6 +153,10 @@ rffi.LENGTH <- function(x) {
 	.Call("test_LENGTH", x)
 }
 
+rffi.inlined_length <- function(x) {
+    .Call("test_inlined_length", x)
+}
+
 rffi.coerceVector <- function(x, mode) {
 	.Call("test_coerceVector", x, mode)
 }
@@ -163,4 +167,8 @@ rffi.ATTRIB <- function(x) {
 
 rffi.getStringNA <- function() {
     .Call("test_stringNA")
+}
+
+rffi.captureDotsWithSingleElement <- function(env) {
+    .Call('test_captureDotsWithSingleElement', env)
 }

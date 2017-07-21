@@ -23,9 +23,11 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
@@ -38,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
@@ -80,6 +83,14 @@ public final class MiscNodes {
         protected int length(RAbstractContainer obj) {
             // Should this use RLengthNode?
             return obj.getLength();
+        }
+
+        @Specialization
+        protected int length(REnvironment env,
+                        @Cached("createClassProfile()") ValueProfile frameAccessProfile) {
+            // May seem wasteful of resources, but simple env.getFrame().getDescriptor().getSize()
+            // is not correct!
+            return env.ls(true, null, false).getLength();
         }
 
         @Specialization
