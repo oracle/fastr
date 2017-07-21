@@ -318,6 +318,10 @@ SEXP test_LENGTH(SEXP x) {
 	return ScalarInteger(LENGTH(x));
 }
 
+SEXP test_inlined_length(SEXP x) {
+    return ScalarInteger(length(x));
+}
+
 SEXP test_coerceVector(SEXP x, SEXP mode) {
     int intMode = INTEGER_VALUE(mode);
     return Rf_coerceVector(x, intMode);

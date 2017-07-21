@@ -86,6 +86,8 @@ extern SEXP test_CDR(SEXP x);
 
 extern SEXP test_LENGTH(SEXP x);
 
+extern SEXP test_inlined_length(SEXP x);
+
 extern SEXP test_coerceVector(SEXP x, SEXP mode);
 
 extern SEXP test_ATTRIB(SEXP);
