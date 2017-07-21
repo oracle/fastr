@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,49 +20,34 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.ffi.impl.nodes;
 
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.GetAttributesNode;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
-@RBuiltin(name = "attributes", kind = PRIMITIVE, parameterNames = {"obj"}, behavior = PURE)
-public abstract class Attributes extends RBuiltinNode.Arg1 {
-
+public abstract class ATTRIB extends FFIUpCallNode.Arg1 {
     @Child private GetAttributesNode getAttributesNode = GetAttributesNode.create();
 
-    static {
-        Casts.noCasts(Attributes.class);
-    }
-
     @Specialization
-    protected Object attributesNull(RAbstractContainer container) {
-        return getAttributesNode.execute(container);
+    public Object doAttributable(RAttributable obj) {
+        return getAttributesNode.execute(obj);
     }
 
-    /**
-     * Unusual cases that it is not worth specializing on as they are not performance-centric.
-     */
     @Fallback
-    @TruffleBoundary
-    protected Object attributes(Object object) {
-        if (object instanceof RAttributable) {
-            return getAttributesNode.execute((RAttributable) object);
-        } else if (object == RNull.instance || RRuntime.isForeignObject(object)) {
+    public RNull doOthers(Object obj) {
+        if (obj == RNull.instance || RRuntime.isForeignObject(obj)) {
             return RNull.instance;
         } else {
-            throw RError.nyi(this, "object cannot be attributed");
+            CompilerDirectives.transferToInterpreter();
+            String type = obj == null ? "null" : obj.getClass().getSimpleName();
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, "object of type '" + type + "' cannot be attributed");
         }
     }
 }

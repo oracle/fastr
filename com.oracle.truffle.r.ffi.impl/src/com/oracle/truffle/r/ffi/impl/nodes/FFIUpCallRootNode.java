@@ -90,6 +90,7 @@ public final class FFIUpCallRootNode extends RootNode {
     }
 
     public static void register() {
+        FFIUpCallRootNode.add(RFFIUpCallTable.ATTRIB, ATTRIBNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallTable.Rf_asReal, AsRealNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallTable.Rf_asLogical, AsLogicalNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallTable.Rf_asInteger, AsIntegerNodeGen::create);
