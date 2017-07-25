@@ -53,6 +53,8 @@ ETC_FILES := $(addprefix $(GNUR_HOME)/etc/,javaconf ldpaths Renviron repositorie
 
 SHARE_FILES := $(addprefix $(GNUR_HOME)/share/,R Rd make java encodings)
 
+LLVM_TOOLS := $(wildcard $(FASTR_NATIVE_DIR)/llvm_tools/*)
+
 all: rundirs rcmds includedir
 
 rundirs:
@@ -87,6 +89,7 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	ed Makeconf.etc < edMakeconf.etc
 ifeq ($(FASTR_RFFI),llvm)
 	ed Makeconf.etc < edMakeconf.etc.llvm
+	cp $(LLVM_TOOLS) $(FASTR_BIN_DIR)
 endif
 	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf
 	cp -r $(SHARE_FILES) $(FASTR_SHARE_DIR)

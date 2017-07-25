@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -23,25 +23,20 @@
 #!/bin/bash
 
 SOURCE="$0"
-while [ -h "$SOURCE" ]; do
-  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-  SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
-done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-with_sulong=0
-while [ $DIR != "/" ] ; do
-  if [ -d $DIR/sulong ] && [ -d $DIR/sulong/mx.sulong ] ; then
-    with_sulong=1
-    break
-  fi
-  DIR=`dirname $DIR`
-done
+. $DIR/llvm-helper
+fortran=0
+analyze_args "$@"
 
-if [ $with_sulong = 1 ] && [ "$FASTR_SULONG_IGNORE" = "" ] ; then
-	MX_PRIMARY_SUITE_PATH=$DIR/fastr mx --dynamicimport sulong fastr-cc $@
+if [ $is_link -eq 1 ]
+then
+  create_bc_lib "$@"
 else
-    gcc $@
+  llvm_tool=clang++
+  get_llvm_tool
+  runit $llvm_tool_bin $llvm_args
+  mem2reg_opt
+  fake_obj
 fi
 
