@@ -81,10 +81,9 @@ public class TruffleLLVM_Stats implements StatsRFFI {
         }
 
         private static int doWork(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork, Node messageNode, SymbolHandle fftWork) {
-            NativeDoubleArray na = new NativeDoubleArray(a);
-            NativeDoubleArray nwork = new NativeDoubleArray(work);
-            NativeIntegerArray niwork = new NativeIntegerArray(iwork);
-            try {
+            try (NativeDoubleArray na = new NativeDoubleArray(a);
+                            NativeDoubleArray nwork = new NativeDoubleArray(work);
+                            NativeIntegerArray niwork = new NativeIntegerArray(iwork)) {
                 return (int) ForeignAccess.sendExecute(messageNode, fftWork.asTruffleObject(), na, nseg, n, nspn, isn, nwork, niwork);
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere(t);
@@ -122,10 +121,8 @@ public class TruffleLLVM_Stats implements StatsRFFI {
         }
 
         private static void doFactor(int n, int[] pmaxf, int[] pmaxp, Node messageNode, SymbolHandle fftFactor) {
-            NativeIntegerArray npmaxf = new NativeIntegerArray(pmaxf);
-            NativeIntegerArray npmaxp = new NativeIntegerArray(pmaxp);
-
-            try {
+            try (NativeIntegerArray npmaxf = new NativeIntegerArray(pmaxf);
+                            NativeIntegerArray npmaxp = new NativeIntegerArray(pmaxp)) {
                 ForeignAccess.sendExecute(messageNode, fftFactor.asTruffleObject(), n, npmaxf, npmaxp);
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere(t);

@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 
 public class TruffleNFI_Misc implements MiscRFFI {
@@ -35,7 +34,7 @@ public class TruffleNFI_Misc implements MiscRFFI {
 
         @Override
         public double execute(double[] values, boolean hasNa, boolean naRm) {
-            return (double) call(JavaInterop.asTruffleObject(values), values.length, hasNa ? 1 : 0, naRm ? 1 : 0);
+            return (double) call(values, values.length, hasNa ? 1 : 0, naRm ? 1 : 0);
         }
     }
 

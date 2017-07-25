@@ -22,10 +22,11 @@
  */
 package com.oracle.truffle.r.ffi.impl.managed;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
@@ -51,20 +52,24 @@ import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 public class Managed_RFFIFactory extends RFFIFactory {
     @Override
     protected RFFI createRFFI() {
+        CompilerAsserts.neverPartOfCompilation();
         return new RFFI() {
 
             @Override
             public BaseRFFI getBaseRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 return new Managed_Base();
             }
 
             @Override
             public LapackRFFI getLapackRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 return new Managed_LapackRFFI();
             }
 
             @Override
             public RApplRFFI getRApplRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 return new RApplRFFI() {
                     @Override
                     public Dqrdc2Node createDqrdc2Node() {
@@ -105,6 +110,7 @@ public class Managed_RFFIFactory extends RFFIFactory {
 
             @Override
             public StatsRFFI getStatsRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 return new StatsRFFI() {
                     @Override
                     public FactorNode createFactorNode() {
@@ -120,6 +126,7 @@ public class Managed_RFFIFactory extends RFFIFactory {
 
             @Override
             public ToolsRFFI getToolsRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 return new ToolsRFFI() {
                     @Override
                     public ParseRdNode createParseRdNode() {
@@ -130,6 +137,7 @@ public class Managed_RFFIFactory extends RFFIFactory {
 
             @Override
             public CRFFI getCRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 return new CRFFI() {
                     @Override
                     public InvokeCNode createInvokeCNode() {
@@ -140,6 +148,7 @@ public class Managed_RFFIFactory extends RFFIFactory {
 
             @Override
             public CallRFFI getCallRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 return new CallRFFI() {
                     @Override
                     public InvokeCallNode createInvokeCallNode() {
@@ -155,6 +164,7 @@ public class Managed_RFFIFactory extends RFFIFactory {
 
             @Override
             public UserRngRFFI getUserRngRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 return new UserRngRFFI() {
                     @Override
                     public InitNode createInitNode() {
@@ -180,11 +190,13 @@ public class Managed_RFFIFactory extends RFFIFactory {
 
             @Override
             public PCRERFFI getPCRERFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 return new Managed_PCRERFFI();
             }
 
             @Override
             public ZipRFFI getZipRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 return new ZipRFFI() {
                     @Override
                     public CompressNode createCompressNode() {
@@ -200,6 +212,7 @@ public class Managed_RFFIFactory extends RFFIFactory {
 
             @Override
             public DLLRFFI getDLLRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 return new DLLRFFI() {
                     @Override
                     public DLOpenNode createDLOpenNode() {
@@ -220,11 +233,13 @@ public class Managed_RFFIFactory extends RFFIFactory {
 
             @Override
             public REmbedRFFI getREmbedRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 return new Managed_REmbedRFFI();
             }
 
             @Override
             public MiscRFFI getMiscRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 return new MiscRFFI() {
                     @Override
                     public ExactSumNode createExactSumNode() {

@@ -23,19 +23,14 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.interop.NativeCharArray;
-import com.oracle.truffle.r.ffi.impl.interop.NativeIntegerArray;
 import com.oracle.truffle.r.ffi.impl.interop.pcre.CaptureNamesResult;
 import com.oracle.truffle.r.ffi.impl.interop.pcre.CompileResult;
+import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_Utils.AsPointerNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 
 public class TruffleLLVM_PCRE implements PCRERFFI {
@@ -46,115 +41,78 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
         TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(pcrePath, false, true);
     }
 
-    private static class TruffleLLVM_MaketablesNode extends Node implements MaketablesNode {
-        @Child private Node message = LLVMFunction.maketables.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static class TruffleLLVM_MaketablesNode extends TruffleLLVM_DownCallNode implements MaketablesNode {
+
+        @Child private AsPointerNode asPointer = new AsPointerNode();
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.maketables;
+        }
 
         @Override
         public long execute() {
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.maketables.createSymbol();
-                }
-                TruffleObject callResult = (TruffleObject) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject());
-                long result = TruffleLLVM_Utils.getNativeAddress(callResult);
-                return result;
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
+            return asPointer.execute((TruffleObject) call());
         }
     }
 
-    private static class TruffleLLVM_GetCaptureCountNode extends Node implements GetCaptureCountNode {
-        @Child private Node message = LLVMFunction.getcapturecount.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static class TruffleLLVM_GetCaptureCountNode extends TruffleLLVM_DownCallNode implements GetCaptureCountNode {
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.getcapturecount;
+        }
 
         @Override
         public int execute(long code, long extra) {
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.getcapturecount.createSymbol();
-                }
-                int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), code, extra);
-                return result;
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(code, extra);
         }
     }
 
-    private static class TruffleLLVM_GetCaptureNamesNode extends Node implements GetCaptureNamesNode {
-        @Child private Node message = LLVMFunction.getcapturenames.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static class TruffleLLVM_GetCaptureNamesNode extends TruffleLLVM_DownCallNode implements GetCaptureNamesNode {
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.getcapturenames;
+        }
 
         @Override
         public String[] execute(long code, long extra, int captureCount) {
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.getcapturenames.createSymbol();
-                }
-                CaptureNamesResult captureNamesCallback = new CaptureNamesResult(captureCount);
-                int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(),
-                                captureNamesCallback, code, extra);
-                if (result < 0) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw RError.error(RError.NO_CALLER, RError.Message.WRONG_PCRE_INFO, result);
-                } else {
-                    return captureNamesCallback.getCaptureNames();
-                }
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
+            CaptureNamesResult captureNamesCallback = new CaptureNamesResult(captureCount);
+            int result = (int) call(captureNamesCallback, code, extra);
+            if (result < 0) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(RError.NO_CALLER, RError.Message.WRONG_PCRE_INFO, result);
+            } else {
+                return captureNamesCallback.getCaptureNames();
             }
         }
     }
 
-    private static class TruffleLLVM_CompileNode extends Node implements CompileNode {
-        @Child private Node message = LLVMFunction.compile.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static class TruffleLLVM_CompileNode extends TruffleLLVM_DownCallNode implements CompileNode {
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.compile;
+        }
 
         @Override
         public Result execute(String pattern, int options, long tables) {
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.compile.createSymbol();
-                }
-                NativeCharArray pattenChars = new NativeCharArray(pattern.getBytes());
-                CompileResult data = new CompileResult();
-                ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), data, pattenChars, options, tables);
-                return data.getResult();
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
+            NativeCharArray pattenChars = new NativeCharArray(pattern.getBytes());
+            CompileResult data = new CompileResult();
+            call(data, pattenChars, options, tables);
+            return data.getResult();
         }
     }
 
-    private static class TruffleLLVM_ExecNode extends Node implements ExecNode {
-        @Child private Node message = LLVMFunction.exec.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static class TruffleLLVM_ExecNode extends TruffleLLVM_DownCallNode implements ExecNode {
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.exec;
+        }
 
         @Override
         public int execute(long code, long extra, String subject, int offset, int options, int[] ovector) {
-            NativeIntegerArray nativeOvector = new NativeIntegerArray(ovector);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.exec.createSymbol();
-                }
-                byte[] subjectBytes = subject.getBytes();
-                NativeCharArray subjectChars = new NativeCharArray(subjectBytes);
-                int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), code, extra,
-                                subjectChars, subjectBytes.length,
-                                offset, options, nativeOvector, ovector.length);
-                return result;
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            } finally {
-                nativeOvector.getValue();
-            }
+            byte[] subjectBytes = subject.getBytes();
+            NativeCharArray subjectChars = new NativeCharArray(subjectBytes);
+            return (int) call(code, extra, subjectChars, subjectBytes.length, offset, options, ovector, ovector.length);
         }
     }
 

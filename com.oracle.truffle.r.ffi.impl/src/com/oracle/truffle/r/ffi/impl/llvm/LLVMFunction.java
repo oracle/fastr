@@ -75,7 +75,9 @@ public enum LLVMFunction implements NativeFunction {
     dgesv(7, "call_lapack_"),
     dlange(6, "call_lapack_"),
     dgecon(8, "call_lapack_"),
-    dsyevr(20, "call_lapack_");
+    dsyevr(20, "call_lapack_"),
+    // misc
+    exactSumFunc(4, "");
 
     private final int argumentCount;
     private final String callName;

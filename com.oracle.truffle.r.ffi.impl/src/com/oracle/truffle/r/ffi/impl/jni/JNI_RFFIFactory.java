@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.jni;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.ffi.impl.common.Generic_Tools;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
@@ -83,14 +83,15 @@ public class JNI_RFFIFactory extends RFFIFactory {
 
     @Override
     protected RFFI createRFFI() {
+        CompilerAsserts.neverPartOfCompilation();
         return new RFFI() {
 
             @CompilationFinal private BaseRFFI baseRFFI;
 
             @Override
             public BaseRFFI getBaseRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (baseRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     baseRFFI = new JNI_Base();
                 }
                 return baseRFFI;
@@ -100,8 +101,8 @@ public class JNI_RFFIFactory extends RFFIFactory {
 
             @Override
             public LapackRFFI getLapackRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (lapackRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     lapackRFFI = new JNI_Lapack();
                 }
                 return lapackRFFI;
@@ -111,8 +112,8 @@ public class JNI_RFFIFactory extends RFFIFactory {
 
             @Override
             public RApplRFFI getRApplRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (rApplRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     rApplRFFI = new JNI_RAppl();
                 }
                 return rApplRFFI;
@@ -122,8 +123,8 @@ public class JNI_RFFIFactory extends RFFIFactory {
 
             @Override
             public StatsRFFI getStatsRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (statsRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     statsRFFI = new JNI_Stats();
                 }
                 return statsRFFI;
@@ -133,8 +134,8 @@ public class JNI_RFFIFactory extends RFFIFactory {
 
             @Override
             public ToolsRFFI getToolsRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (toolsRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     toolsRFFI = new Generic_Tools();
                 }
                 return toolsRFFI;
@@ -144,8 +145,8 @@ public class JNI_RFFIFactory extends RFFIFactory {
 
             @Override
             public UserRngRFFI getUserRngRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (userRngRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     userRngRFFI = new JNI_UserRng();
                 }
                 return userRngRFFI;
@@ -155,8 +156,8 @@ public class JNI_RFFIFactory extends RFFIFactory {
 
             @Override
             public CRFFI getCRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (cRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     cRFFI = new JNI_C();
                 }
                 return cRFFI;
@@ -166,8 +167,8 @@ public class JNI_RFFIFactory extends RFFIFactory {
 
             @Override
             public CallRFFI getCallRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (callRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     callRFFI = new JNI_Call();
                 }
                 return callRFFI;
@@ -177,8 +178,8 @@ public class JNI_RFFIFactory extends RFFIFactory {
 
             @Override
             public ZipRFFI getZipRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (zipRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     zipRFFI = new JNI_Zip();
                 }
                 return zipRFFI;
@@ -188,6 +189,7 @@ public class JNI_RFFIFactory extends RFFIFactory {
 
             @Override
             public PCRERFFI getPCRERFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (pcreRFFI == null) {
                     pcreRFFI = new JNI_PCRE();
                 }
@@ -198,6 +200,7 @@ public class JNI_RFFIFactory extends RFFIFactory {
 
             @Override
             public DLLRFFI getDLLRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (dllRFFI == null) {
                     dllRFFI = new JNI_DLL();
                 }
@@ -208,6 +211,7 @@ public class JNI_RFFIFactory extends RFFIFactory {
 
             @Override
             public REmbedRFFI getREmbedRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (rEmbedRFFI == null) {
                     rEmbedRFFI = new JNI_REmbed();
                 }
@@ -218,6 +222,7 @@ public class JNI_RFFIFactory extends RFFIFactory {
 
             @Override
             public MiscRFFI getMiscRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (miscRFFI == null) {
                     miscRFFI = new JNI_Misc();
                 }

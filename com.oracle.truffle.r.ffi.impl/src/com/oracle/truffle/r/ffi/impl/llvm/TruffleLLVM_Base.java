@@ -25,148 +25,116 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.interop.NativeCharArray;
 import com.oracle.truffle.r.ffi.impl.interop.base.GlobResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.ReadlinkResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.StrtolResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.UnameResult;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 public class TruffleLLVM_Base implements BaseRFFI {
-    private static class TruffleLLVM_GetpidNode extends Node implements GetpidNode {
+    private static final class TruffleLLVM_GetpidNode extends TruffleLLVM_DownCallNode implements GetpidNode {
 
-        @Child private Node message = LLVMFunction.getpid.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.getpid;
+        }
 
         @Override
         public int execute() {
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.getpid.createSymbol();
-                }
-                int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject());
-                return result;
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call();
         }
     }
 
-    private static class TruffleLLVM_GetwdNode extends Node implements GetwdNode {
+    private static class TruffleLLVM_GetwdNode extends TruffleLLVM_DownCallNode implements GetwdNode {
 
-        @Child private Node message = LLVMFunction.getwd.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.getwd;
+        }
 
         @Override
         public String execute() {
             byte[] buf = new byte[4096];
             NativeCharArray nativeBuf = new NativeCharArray(buf);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.getwd.createSymbol();
+            int result = (int) call(nativeBuf, buf.length);
+            if (result == 0) {
+                return null;
+            } else {
+                byte[] mbuf = nativeBuf.getValue();
+                int i = 0;
+                while (mbuf[i] != 0 && i < mbuf.length) {
+                    i++;
                 }
-                int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), nativeBuf, buf.length);
-                if (result == 0) {
-                    return null;
-                } else {
-                    byte[] mbuf = nativeBuf.getValue();
-                    int i = 0;
-                    while (mbuf[i] != 0 && i < mbuf.length) {
-                        i++;
-                    }
-                    return new String(mbuf, 0, i);
-                }
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
+                return new String(mbuf, 0, i);
             }
         }
     }
 
-    private static class TruffleLLVM_SetwdNode extends Node implements SetwdNode {
-        @Child private Node message = LLVMFunction.setwd.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static class TruffleLLVM_SetwdNode extends TruffleLLVM_DownCallNode implements SetwdNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.setwd;
+        }
 
         @Override
         public int execute(String dir) {
             NativeCharArray nativeBuf = new NativeCharArray(dir.getBytes());
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.setwd.createSymbol();
-                }
-                int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), nativeBuf);
-                return result;
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(nativeBuf);
         }
     }
 
-    private static class TruffleLLVM_MkdirNode extends Node implements MkdirNode {
-        @Child private Node message = LLVMFunction.mkdir.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static class TruffleLLVM_MkdirNode extends TruffleLLVM_DownCallNode implements MkdirNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.mkdir;
+        }
 
         @Override
         public void execute(String dir, int mode) throws IOException {
             NativeCharArray nativeBuf = new NativeCharArray(dir.getBytes());
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.mkdir.createSymbol();
-                }
-                int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), nativeBuf, mode);
-                if (result != 0) {
-                    throw new IOException("mkdir " + dir + " failed");
-                }
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
+            int result = (int) call(nativeBuf, mode);
+            if (result != 0) {
+                throw new IOException("mkdir " + dir + " failed");
             }
         }
     }
 
-    private static class TruffleLLVM_ReadlinkNode extends Node implements ReadlinkNode {
+    private static class TruffleLLVM_ReadlinkNode extends TruffleLLVM_DownCallNode implements ReadlinkNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.readlink;
+        }
+
         private static final int EINVAL = 22;
-        @Child private Node message = LLVMFunction.readlink.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
 
         @Override
         public String execute(String path) throws IOException {
             NativeCharArray nativePath = new NativeCharArray(path.getBytes());
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.readlink.createSymbol();
+            ReadlinkResult callback = new ReadlinkResult();
+            call(callback, nativePath);
+            String link = callback.getLink();
+            if (link == null) {
+                if (callback.getErrno() == EINVAL) {
+                    return path;
+                } else {
+                    // some other error
+                    throw new IOException("readlink failed: " + callback.getErrno());
                 }
-                ReadlinkResult callback = new ReadlinkResult();
-                ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), callback, nativePath);
-                String link = callback.getLink();
-                if (link == null) {
-                    if (callback.getErrno() == EINVAL) {
-                        return path;
-                    } else {
-                        // some other error
-                        throw new IOException("readlink failed: " + callback.getErrno());
-                    }
-                }
-                return link;
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
             }
+            return link;
         }
     }
 
-    private static class TruffleLLVM_MkdtempNode extends Node implements MkdtempNode {
-        @Child private Node message = LLVMFunction.mkdtemp.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static class TruffleLLVM_MkdtempNode extends TruffleLLVM_DownCallNode implements MkdtempNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.mkdtemp;
+        }
 
         @Override
         public String execute(String template) {
@@ -179,108 +147,78 @@ public class TruffleLLVM_Base implements BaseRFFI {
             System.arraycopy(bytes, 0, ztbytes, 0, bytes.length);
             ztbytes[bytes.length] = 0;
             NativeCharArray nativeZtbytes = new NativeCharArray(ztbytes);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.mkdtemp.createSymbol();
-                }
-                int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), nativeZtbytes);
-                if (result == 0) {
-                    return null;
-                } else {
-                    byte[] mztBytes = nativeZtbytes.getValue();
-                    String path = new String(mztBytes, 0, bytes.length);
-                    return path;
-                }
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
+            int result = (int) call(nativeZtbytes);
+            if (result == 0) {
+                return null;
+            } else {
+                byte[] mztBytes = nativeZtbytes.getValue();
+                return new String(mztBytes, 0, bytes.length);
             }
         }
     }
 
-    private static class TruffleLLVM_ChmodNode extends Node implements ChmodNode {
-        @Child private Node message = LLVMFunction.chmod.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static class TruffleLLVM_ChmodNode extends TruffleLLVM_DownCallNode implements ChmodNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.chmod;
+        }
 
         @Override
         public int execute(String path, int mode) {
             NativeCharArray nativePath = new NativeCharArray(path.getBytes());
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.chmod.createSymbol();
-                }
-                int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), nativePath, mode);
-                return result;
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(nativePath, mode);
         }
     }
 
-    private static class TruffleLLVM_StrolNode extends Node implements StrolNode {
-        @Child private Node message = LLVMFunction.strtol.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static class TruffleLLVM_StrolNode extends TruffleLLVM_DownCallNode implements StrolNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.strtol;
+        }
 
         @Override
         public long execute(String s, int base) throws IllegalArgumentException {
             NativeCharArray nativeString = new NativeCharArray(s.getBytes());
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.strtol.createSymbol();
-                }
-                StrtolResult callback = new StrtolResult();
-                ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), callback, nativeString, base);
-                if (callback.getErrno() != 0) {
-                    throw new IllegalArgumentException("strtol failure");
-                } else {
-                    return callback.getResult();
-                }
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
+            StrtolResult callback = new StrtolResult();
+            call(callback, nativeString, base);
+            if (callback.getErrno() != 0) {
+                throw new IllegalArgumentException("strtol failure");
+            } else {
+                return callback.getResult();
             }
         }
     }
 
-    private static class TruffleLLVM_UnameNode extends Node implements UnameNode {
-        @Child private Node message = LLVMFunction.uname.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static class TruffleLLVM_UnameNode extends TruffleLLVM_DownCallNode implements UnameNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.uname;
+        }
 
         @Override
         public UtsName execute() {
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.uname.createSymbol();
-                }
-                UnameResult baseUnameResultCallback = new UnameResult();
-                ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), baseUnameResultCallback);
-                return baseUnameResultCallback;
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
+            UnameResult baseUnameResultCallback = new UnameResult();
+            call(baseUnameResultCallback);
+            return baseUnameResultCallback;
         }
     }
 
-    private static class TruffleLLVM_GlobNode extends Node implements GlobNode {
-        @Child private Node message = LLVMFunction.glob.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static class TruffleLLVM_GlobNode extends TruffleLLVM_DownCallNode implements GlobNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.glob;
+        }
 
         @Override
         public ArrayList<String> glob(String pattern) {
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.glob.createSymbol();
-                }
-                NativeCharArray nativePattern = new NativeCharArray(pattern.getBytes());
-                GlobResult baseGlobResultCallback = new GlobResult();
-                ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), baseGlobResultCallback, nativePattern);
-                return baseGlobResultCallback.getPaths();
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
+            NativeCharArray nativePattern = new NativeCharArray(pattern.getBytes());
+            GlobResult baseGlobResultCallback = new GlobResult();
+            call(baseGlobResultCallback, nativePattern);
+            return baseGlobResultCallback.getPaths();
         }
     }
 

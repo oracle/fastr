@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.interop;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.nodes.Node;
@@ -31,18 +30,15 @@ import com.oracle.truffle.api.nodes.Node;
 public class NativePointerMR {
     @Resolve(message = "IS_POINTER")
     public abstract static class AcceptIsPointer extends Node {
-        @SuppressWarnings("unused")
-        public Object access(VirtualFrame frame, NativePointer object) {
+        public Object access(@SuppressWarnings("unused") NativePointer object) {
             return true;
         }
     }
 
     @Resolve(message = "AS_POINTER")
     public abstract static class AcceptAsPointer extends Node {
-        @SuppressWarnings("unused")
-        public long access(VirtualFrame frame, NativePointer object) {
-            long result = object.asPointer();
-            return result;
+        public long access(NativePointer object) {
+            return object.asPointer();
         }
     }
 }

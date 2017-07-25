@@ -22,36 +22,20 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.interop.NativeDoubleArray;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 
 public class TruffleLLVM_Misc implements MiscRFFI {
 
-    private static class TruffleLLVM_ExactSumNode extends Node implements ExactSumNode {
-        @CompilationFinal private SymbolHandle symbolHandle;
-        @Child private Node executeNode = Message.createExecute(4).createNode();
+    private static class TruffleLLVM_ExactSumNode extends TruffleLLVM_DownCallNode implements ExactSumNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.exactSumFunc;
+        }
 
         @Override
         public double execute(double[] values, boolean hasNa, boolean naRm) {
-            NativeDoubleArray nativeValues = new NativeDoubleArray(values);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol("exactSum", null);
-                }
-                return (double) ForeignAccess.sendExecute(executeNode, symbolHandle.asTruffleObject(), nativeValues, values.length, hasNa ? 1 : 0, naRm ? 1 : 0);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (double) call(values, values.length, hasNa ? 1 : 0, naRm ? 1 : 0);
         }
     }
 

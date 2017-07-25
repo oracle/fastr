@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 public class TruffleNFI_RFFIFactory extends RFFIFactory {
-    
+
     private static class ContextStateImpl implements RContext.ContextState {
         @Override
         public ContextState initialize(RContext context) {
@@ -67,14 +67,15 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory {
 
     @Override
     protected RFFI createRFFI() {
+        CompilerAsserts.neverPartOfCompilation();
         return new RFFI() {
 
             @CompilationFinal private CRFFI cRFFI;
 
             @Override
             public CRFFI getCRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (cRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     cRFFI = new TruffleNFI_C();
                 }
                 return cRFFI;
@@ -84,8 +85,8 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory {
 
             @Override
             public BaseRFFI getBaseRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (baseRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     baseRFFI = new TruffleNFI_Base();
                 }
                 return baseRFFI;
@@ -95,8 +96,8 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory {
 
             @Override
             public CallRFFI getCallRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (callRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     callRFFI = new TruffleNFI_Call();
                 }
                 return callRFFI;
@@ -106,6 +107,8 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory {
 
             @Override
             public DLLRFFI getDLLRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                CompilerAsserts.neverPartOfCompilation();
                 if (dllRFFI == null) {
                     dllRFFI = new TruffleNFI_DLL();
                 }
@@ -116,6 +119,7 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory {
 
             @Override
             public UserRngRFFI getUserRngRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (userRngRFFI == null) {
                     userRngRFFI = new TruffleNFI_UserRng();
                 }
@@ -126,8 +130,8 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory {
 
             @Override
             public ZipRFFI getZipRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (zipRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     zipRFFI = new TruffleNFI_Zip();
                 }
                 return zipRFFI;
@@ -137,6 +141,7 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory {
 
             @Override
             public PCRERFFI getPCRERFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (pcreRFFI == null) {
                     pcreRFFI = new TruffleNFI_PCRE();
                 }
@@ -147,8 +152,8 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory {
 
             @Override
             public LapackRFFI getLapackRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (lapackRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     lapackRFFI = new TruffleNFI_Lapack();
                 }
                 return lapackRFFI;
@@ -158,8 +163,8 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory {
 
             @Override
             public RApplRFFI getRApplRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (rApplRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     rApplRFFI = new TruffleNFI_RAppl();
                 }
                 return rApplRFFI;
@@ -169,8 +174,8 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory {
 
             @Override
             public StatsRFFI getStatsRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (statsRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     statsRFFI = new TruffleNFI_Stats();
                 }
                 return statsRFFI;
@@ -180,8 +185,8 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory {
 
             @Override
             public ToolsRFFI getToolsRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (toolsRFFI == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     toolsRFFI = new TruffleNFI_Tools();
                 }
                 return toolsRFFI;
@@ -191,6 +196,7 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory {
 
             @Override
             public REmbedRFFI getREmbedRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (rEmbedRFFI == null) {
                     rEmbedRFFI = new TruffleNFI_REmbed();
                 }
@@ -201,6 +207,7 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory {
 
             @Override
             public MiscRFFI getMiscRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
                 if (miscRFFI == null) {
                     miscRFFI = new TruffleNFI_Misc();
                 }

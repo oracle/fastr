@@ -22,18 +22,9 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
-import com.oracle.truffle.r.ffi.impl.interop.NativeDoubleArray;
-import com.oracle.truffle.r.ffi.impl.interop.NativeIntegerArray;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 
@@ -83,342 +74,173 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         return rootNode.getCallTarget();
     }
 
-    private static class TruffleLLVM_IlaverNode extends Node implements IlaverNode {
-        @Child private Node message = LLVMFunction.ilaver.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_IlaverNode extends TruffleLLVM_DownCallNode implements IlaverNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.ilaver;
+        }
 
         @Override
         public void execute(int[] version) {
-            NativeIntegerArray versionN = new NativeIntegerArray(version);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.ilaver.createSymbol();
-                }
-                ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), versionN);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            } finally {
-                versionN.getValue();
-            }
+            call(version);
         }
     }
 
-    private static class TruffleLLVM_DgeevNode extends Node implements DgeevNode {
-        @Child private Node message = LLVMFunction.dgeev.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_DgeevNode extends TruffleLLVM_DownCallNode implements DgeevNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dgeev;
+        }
 
         @Override
         public int execute(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi, double[] vl, int ldvl, double[] vr, int ldvr, double[] work, int lwork) {
-            // vl, vr may be null
-            NativeDoubleArray aN = new NativeDoubleArray(a);
-            NativeDoubleArray wrN = new NativeDoubleArray(wr);
-            NativeDoubleArray wiN = new NativeDoubleArray(wi);
-            Object vlN = vl == null ? 0 : new NativeDoubleArray(vl);
-            Object vrN = vr == null ? 0 : new NativeDoubleArray(vr);
-            NativeDoubleArray workN = new NativeDoubleArray(work);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dgeev.createSymbol();
-                }
-                return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), jobVL, jobVR, n, aN, lda,
-                                wrN, wiN, vlN, ldvl, vrN, ldvr, workN, lwork);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            } finally {
-                aN.getValue();
-                wrN.getValue();
-                wiN.getValue();
-                if (vl != null) {
-                    ((NativeDoubleArray) vlN).getValue();
-                }
-                if (vr != null) {
-                    ((NativeDoubleArray) vrN).getValue();
-                }
-                workN.getValue();
-            }
+            return (int) call(jobVL, jobVR, n, a, lda, wr, wi, vl, ldvl, vr, ldvr, work, lwork);
         }
     }
 
-    private static class TruffleLLVM_Dgeqp3Node extends Node implements Dgeqp3Node {
-        @Child private Node message = LLVMFunction.dgeqp3.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_Dgeqp3Node extends TruffleLLVM_DownCallNode implements Dgeqp3Node {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dgeqp3;
+        }
 
         @Override
         public int execute(int m, int n, double[] a, int lda, int[] jpvt, double[] tau, double[] work, int lwork) {
-            NativeDoubleArray aN = new NativeDoubleArray(a);
-            NativeIntegerArray jpvtN = new NativeIntegerArray(jpvt);
-            NativeDoubleArray tauN = new NativeDoubleArray(tau);
-            NativeDoubleArray workN = new NativeDoubleArray(work);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dgeqp3.createSymbol();
-                }
-                return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), m, n, aN, lda, jpvtN,
-                                tauN, workN, lwork);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            } finally {
-                aN.getValue();
-                jpvtN.getValue();
-                tauN.getValue();
-                workN.getValue();
-            }
+            return (int) call(m, n, a, lda, jpvt, tau, work, lwork);
         }
     }
 
-    private static class TruffleLLVM_DormqrNode extends Node implements DormqrNode {
-        @Child private Node message = LLVMFunction.dormq.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_DormqrNode extends TruffleLLVM_DownCallNode implements DormqrNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dormq;
+        }
 
         @Override
         public int execute(char side, char trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc, double[] work, int lwork) {
-            NativeDoubleArray aN = new NativeDoubleArray(a);
-            NativeDoubleArray tauN = new NativeDoubleArray(tau);
-            NativeDoubleArray cN = new NativeDoubleArray(c);
-            NativeDoubleArray workN = new NativeDoubleArray(work);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dormq.createSymbol();
-                }
-                return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), side, trans, m, n, k, aN, lda,
-                                tauN, cN, ldc, workN, lwork);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            } finally {
-                cN.getValue();
-                workN.getValue();
-            }
+            return (int) call(side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork);
         }
     }
 
-    private static class TruffleLLVM_DtrtrsNode extends Node implements DtrtrsNode {
-        @Child private Node message = LLVMFunction.dtrtrs.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_DtrtrsNode extends TruffleLLVM_DownCallNode implements DtrtrsNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dtrtrs;
+        }
 
         @Override
         public int execute(char uplo, char trans, char diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb) {
-            NativeDoubleArray aN = new NativeDoubleArray(a);
-            NativeDoubleArray bN = new NativeDoubleArray(b);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dtrtrs.createSymbol();
-                }
-                return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), uplo, trans, diag, n, nrhs, aN, lda,
-                                bN, ldb);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            } finally {
-                bN.getValue();
-            }
+            return (int) call(uplo, trans, diag, n, nrhs, a, lda, b, ldb);
         }
     }
 
-    private static class TruffleLLVM_DgetrfNode extends Node implements DgetrfNode {
-        @Child private Node message = LLVMFunction.dgetrf.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_DgetrfNode extends TruffleLLVM_DownCallNode implements DgetrfNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dgetrf;
+        }
 
         @Override
         public int execute(int m, int n, double[] a, int lda, int[] ipiv) {
-            NativeDoubleArray aN = new NativeDoubleArray(a);
-            NativeIntegerArray ipivN = new NativeIntegerArray(ipiv);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dgetrf.createSymbol();
-                }
-                return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), m, n, aN, lda, ipivN);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            } finally {
-                aN.getValue();
-                ipivN.getValue();
-            }
+            return (int) call(m, n, a, lda, ipiv);
         }
     }
 
-    private static class TruffleLLVM_DpotrfNode extends Node implements DpotrfNode {
-        @Child private Node message = LLVMFunction.dpotrf.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_DpotrfNode extends TruffleLLVM_DownCallNode implements DpotrfNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dpotrf;
+        }
 
         @Override
         public int execute(char uplo, int n, double[] a, int lda) {
-            NativeDoubleArray aN = new NativeDoubleArray(a);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dpotrf.createSymbol();
-                }
-                return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), uplo, n, aN, lda);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            } finally {
-                aN.getValue();
-            }
+            return (int) call(uplo, n, a, lda);
         }
     }
 
-    private static class TruffleLLVM_DpotriNode extends Node implements DpotriNode {
-        @Child private Node message = LLVMFunction.dpotri.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_DpotriNode extends TruffleLLVM_DownCallNode implements DpotriNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dpotri;
+        }
 
         @Override
         public int execute(char uplo, int n, double[] a, int lda) {
-            NativeDoubleArray aN = new NativeDoubleArray(a);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dpotri.createSymbol();
-                }
-                return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), uplo, n, aN, lda);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            } finally {
-                aN.getValue();
-            }
+            return (int) call(uplo, n, a, lda);
         }
     }
 
-    private static class TruffleLLVM_DpstrfNode extends Node implements DpstrfNode {
-        @Child private Node message = LLVMFunction.dpstrf.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_DpstrfNode extends TruffleLLVM_DownCallNode implements DpstrfNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dpstrf;
+        }
 
         @Override
         public int execute(char uplo, int n, double[] a, int lda, int[] piv, int[] rank, double tol, double[] work) {
-            NativeDoubleArray aN = new NativeDoubleArray(a);
-            NativeIntegerArray pivN = new NativeIntegerArray(piv);
-            NativeIntegerArray rankN = new NativeIntegerArray(rank);
-            NativeDoubleArray workN = new NativeDoubleArray(work);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dpstrf.createSymbol();
-                }
-                return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), uplo, n, aN, lda,
-                                pivN, rankN, tol, workN);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            } finally {
-                aN.getValue();
-                pivN.getValue();
-                rankN.getValue();
-                workN.getValue();
-            }
+            return (int) call(uplo, n, a, lda, piv, rank, tol, work);
         }
     }
 
-    private static class TruffleLLVM_DgesvNode extends Node implements DgesvNode {
-        @Child private Node message = LLVMFunction.dgesv.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_DgesvNode extends TruffleLLVM_DownCallNode implements DgesvNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dgesv;
+        }
 
         @Override
         public int execute(int n, int nrhs, double[] a, int lda, int[] ipiv, double[] b, int ldb) {
-            NativeDoubleArray aN = new NativeDoubleArray(a);
-            NativeIntegerArray ipivN = new NativeIntegerArray(ipiv);
-            NativeDoubleArray bN = new NativeDoubleArray(b);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dgesv.createSymbol();
-                }
-                return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), n, nrhs, aN, lda, ipivN, bN, ldb);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            } finally {
-                aN.getValue();
-                ipivN.getValue();
-                bN.getValue();
-            }
+            return (int) call(n, nrhs, a, lda, ipiv, b, ldb);
         }
     }
 
-    private static class TruffleLLVM_DlangeNode extends Node implements DlangeNode {
-        @Child private Node message = LLVMFunction.dlange.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_DlangeNode extends TruffleLLVM_DownCallNode implements DlangeNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dlange;
+        }
 
         @Override
         public double execute(char norm, int m, int n, double[] a, int lda, double[] work) {
-            // work may be null
-            NativeDoubleArray aN = new NativeDoubleArray(a);
-            Object workN = work == null ? 0 : new NativeDoubleArray(work);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dlange.createSymbol();
-                }
-                return (double) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), norm, m, n, aN, lda, workN);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (double) call(norm, m, n, a, lda, work);
         }
     }
 
-    private static class TruffleLLVM_DgeconNode extends Node implements DgeconNode {
-        @Child private Node message = LLVMFunction.dgecon.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_DgeconNode extends TruffleLLVM_DownCallNode implements DgeconNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dgecon;
+        }
 
         @Override
         public int execute(char norm, int n, double[] a, int lda, double anorm, double[] rcond, double[] work, int[] iwork) {
-            NativeDoubleArray aN = new NativeDoubleArray(a);
-            NativeDoubleArray rcondN = new NativeDoubleArray(rcond);
-            NativeDoubleArray workN = new NativeDoubleArray(work);
-            NativeIntegerArray iworkN = new NativeIntegerArray(iwork);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dgecon.createSymbol();
-                }
-                return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), norm, n, aN, lda, anorm, rcondN, workN, iworkN);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            } finally {
-                rcondN.getValue();
-                workN.getValue();
-                iworkN.getValue();
-            }
+            return (int) call(norm, n, a, lda, anorm, rcond, work, iwork);
         }
     }
 
-    private static class TruffleLLVM_DsyevrNode extends Node implements DsyevrNode {
-        @Child private Node message = LLVMFunction.dsyevr.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_DsyevrNode extends TruffleLLVM_DownCallNode implements DsyevrNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dsyevr;
+        }
 
         @Override
         public int execute(char jobz, char range, char uplo, int n, double[] a, int lda, double vl, double vu, int il, int iu, double abstol, int[] m, double[] w, double[] z, int ldz, int[] isuppz,
                         double[] work, int lwork, int[] iwork, int liwork) {
-            NativeDoubleArray aN = new NativeDoubleArray(a);
-            NativeIntegerArray mN = new NativeIntegerArray(m);
-            NativeDoubleArray wN = new NativeDoubleArray(w);
-            Object zN = z == null ? 0 : new NativeDoubleArray(z);
-            NativeIntegerArray isuppzN = new NativeIntegerArray(isuppz);
-            NativeDoubleArray workN = new NativeDoubleArray(work);
-            NativeIntegerArray iworkN = new NativeIntegerArray(iwork);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dsyevr.createSymbol();
-                }
-                return (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), jobz, range, uplo, n, aN,
-                                lda, vl, vu, il, iu, abstol, mN, wN, zN, ldz,
-                                isuppzN, workN, lwork, iworkN, liwork);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            } finally {
-                aN.getValue();
-                mN.getValue();
-                wN.getValue();
-                if (z != null) {
-                    ((NativeDoubleArray) zN).getValue();
-
-                }
-                isuppzN.getValue();
-                workN.getValue();
-                iworkN.getValue();
-            }
+            return (int) call(jobz, range, uplo, n, a, lda, vl, vu, il, iu, abstol, m, w, z, ldz, isuppz, work, lwork, iwork, liwork);
         }
     }
 

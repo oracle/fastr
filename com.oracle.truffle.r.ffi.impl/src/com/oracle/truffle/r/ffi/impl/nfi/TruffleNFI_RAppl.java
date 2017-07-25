@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 
 public class TruffleNFI_RAppl implements RApplRFFI {
@@ -35,13 +34,7 @@ public class TruffleNFI_RAppl implements RApplRFFI {
 
         @Override
         public void execute(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work) {
-            call(
-                            JavaInterop.asTruffleObject(x),
-                            ldx, n, p, tol,
-                            JavaInterop.asTruffleObject(rank),
-                            JavaInterop.asTruffleObject(qraux),
-                            JavaInterop.asTruffleObject(pivot),
-                            JavaInterop.asTruffleObject(work));
+            call(x, ldx, n, p, tol, rank, qraux, pivot, work);
         }
     }
 
@@ -53,14 +46,7 @@ public class TruffleNFI_RAppl implements RApplRFFI {
 
         @Override
         public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info) {
-            call(
-                            JavaInterop.asTruffleObject(x),
-                            n, k,
-                            JavaInterop.asTruffleObject(qraux),
-                            JavaInterop.asTruffleObject(y),
-                            ny,
-                            JavaInterop.asTruffleObject(b),
-                            JavaInterop.asTruffleObject(info));
+            call(x, n, k, qraux, y, ny, b, info);
         }
     }
 
@@ -72,18 +58,7 @@ public class TruffleNFI_RAppl implements RApplRFFI {
 
         @Override
         public void execute(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work) {
-            call(
-                            JavaInterop.asTruffleObject(x),
-                            n, p,
-                            JavaInterop.asTruffleObject(y),
-                            ny, tol,
-                            JavaInterop.asTruffleObject(b),
-                            JavaInterop.asTruffleObject(rsd),
-                            JavaInterop.asTruffleObject(qty),
-                            JavaInterop.asTruffleObject(k),
-                            JavaInterop.asTruffleObject(jpvt),
-                            JavaInterop.asTruffleObject(qraux),
-                            JavaInterop.asTruffleObject(work));
+            call(x, n, p, y, ny, tol, b, rsd, qty, k, jpvt, qraux, work);
         }
     }
 
@@ -95,13 +70,7 @@ public class TruffleNFI_RAppl implements RApplRFFI {
 
         @Override
         public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] qty) {
-            call(
-                            JavaInterop.asTruffleObject(x),
-                            n, k,
-                            JavaInterop.asTruffleObject(qraux),
-                            JavaInterop.asTruffleObject(y),
-                            ny,
-                            JavaInterop.asTruffleObject(qty));
+            call(x, n, k, qraux, y, ny, qty);
         }
     }
 
@@ -113,13 +82,7 @@ public class TruffleNFI_RAppl implements RApplRFFI {
 
         @Override
         public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] qy) {
-            call(
-                            JavaInterop.asTruffleObject(x),
-                            n, k,
-                            JavaInterop.asTruffleObject(qraux),
-                            JavaInterop.asTruffleObject(y),
-                            ny,
-                            JavaInterop.asTruffleObject(qy));
+            call(x, n, k, qraux, y, ny, qy);
         }
     }
 
@@ -131,13 +94,7 @@ public class TruffleNFI_RAppl implements RApplRFFI {
 
         @Override
         public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] rsd) {
-            call(
-                            JavaInterop.asTruffleObject(x),
-                            n, k,
-                            JavaInterop.asTruffleObject(qraux),
-                            JavaInterop.asTruffleObject(y),
-                            ny,
-                            JavaInterop.asTruffleObject(rsd));
+            call(x, n, k, qraux, y, ny, rsd);
         }
     }
 
@@ -149,13 +106,7 @@ public class TruffleNFI_RAppl implements RApplRFFI {
 
         @Override
         public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] xb) {
-            call(
-                            JavaInterop.asTruffleObject(x),
-                            n, k,
-                            JavaInterop.asTruffleObject(qraux),
-                            JavaInterop.asTruffleObject(y),
-                            ny,
-                            JavaInterop.asTruffleObject(xb));
+            call(x, n, k, qraux, y, ny, xb);
         }
     }
 

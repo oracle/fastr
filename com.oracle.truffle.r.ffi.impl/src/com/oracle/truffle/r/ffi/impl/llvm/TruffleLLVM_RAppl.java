@@ -22,15 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.interop.NativeDoubleArray;
-import com.oracle.truffle.r.ffi.impl.interop.NativeIntegerArray;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 
 /**
@@ -38,98 +30,42 @@ import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
  */
 public class TruffleLLVM_RAppl implements RApplRFFI {
 
-    private static class TruffleLLVM_Dqrdc2Node extends Node implements Dqrdc2Node {
-        @Child private Node message = LLVMFunction.dqrdc2.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_Dqrdc2Node extends TruffleLLVM_DownCallNode implements Dqrdc2Node {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dqrdc2;
+        }
 
         @Override
         public void execute(double[] x, int ldx, int n, int p, double tol, int[] rank, double[] qraux, int[] pivot, double[] work) {
-            NativeDoubleArray xN = new NativeDoubleArray(x);
-            NativeIntegerArray rankN = new NativeIntegerArray(rank);
-            NativeDoubleArray qrauxN = new NativeDoubleArray(qraux);
-            NativeIntegerArray pivotN = new NativeIntegerArray(pivot);
-            NativeDoubleArray workN = new NativeDoubleArray(work);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dqrdc2.createSymbol();
-                }
-                ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), xN, ldx, n, p, tol, rankN, qrauxN, pivotN, workN);
-                // sync up in case copied to native memory
-                xN.getValue();
-                rankN.getValue();
-                qrauxN.getValue();
-                pivotN.getValue();
-                workN.getValue();
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
+            call(x, ldx, n, p, tol, rank, qraux, pivot, work);
         }
     }
 
-    private static class TruffleLLVM_DqrcfNode extends Node implements DqrcfNode {
-        @Child private Node message = LLVMFunction.dqrcf.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_DqrcfNode extends TruffleLLVM_DownCallNode implements DqrcfNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dqrcf;
+        }
 
         @Override
         public void execute(double[] x, int n, int k, double[] qraux, double[] y, int ny, double[] b, int[] info) {
-            NativeDoubleArray xN = new NativeDoubleArray(x);
-            NativeDoubleArray qrauxN = new NativeDoubleArray(qraux);
-            NativeDoubleArray yN = new NativeDoubleArray(y);
-            NativeDoubleArray bN = new NativeDoubleArray(b);
-            NativeIntegerArray infoN = new NativeIntegerArray(info);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dqrcf.createSymbol();
-                }
-                ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), xN, n, k, qrauxN, yN, ny, bN, infoN);
-                // sync up in case copied to native memory
-                xN.getValue();
-                qrauxN.getValue();
-                yN.getValue();
-                bN.getValue();
-                infoN.getValue();
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
+            call(x, n, k, qraux, y, ny, b, info);
         }
     }
 
-    private static class TruffleLLVM_DqrlsNode extends Node implements DqrlsNode {
-        @Child private Node message = LLVMFunction.dqrls.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static final class TruffleLLVM_DqrlsNode extends TruffleLLVM_DownCallNode implements DqrlsNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.dqrls;
+        }
 
         @Override
         public void execute(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work) {
-            NativeDoubleArray xN = new NativeDoubleArray(x);
-            NativeDoubleArray yN = new NativeDoubleArray(y);
-            NativeDoubleArray bN = new NativeDoubleArray(b);
-            NativeDoubleArray rsdN = new NativeDoubleArray(rsd);
-            NativeDoubleArray qtyN = new NativeDoubleArray(qty);
-            NativeIntegerArray kN = new NativeIntegerArray(k);
-            NativeIntegerArray jpvtN = new NativeIntegerArray(jpvt);
-            NativeDoubleArray qrauxN = new NativeDoubleArray(qraux);
-            NativeDoubleArray workN = new NativeDoubleArray(work);
-            try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = LLVMFunction.dqrls.createSymbol();
-                }
-                ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(), xN, n, p, yN, ny, tol, bN, rsdN, qtyN, kN, jpvtN, qrauxN, workN);
-                // sync up in case copied to native memory
-                xN.getValue();
-                yN.getValue();
-                bN.getValue();
-                rsdN.getValue();
-                qtyN.getValue();
-                kN.getValue();
-                jpvtN.getValue();
-                qrauxN.getValue();
-                workN.getValue();
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
+            call(x, n, p, y, ny, tol, b, rsd, qty, k, jpvt, qraux, work);
         }
     }
 

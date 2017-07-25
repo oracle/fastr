@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 
 public class TruffleNFI_Lapack implements LapackRFFI {
@@ -35,7 +34,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
         @Override
         public void execute(int[] version) {
-            call(JavaInterop.asTruffleObject(version));
+            call(version);
         }
     }
 
@@ -47,9 +46,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
         @Override
         public int execute(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi, double[] vl, int ldvl, double[] vr, int ldvr, double[] work, int lwork) {
-            return (int) call(jobVL, jobVR, n, JavaInterop.asTruffleObject(a), lda,
-                            JavaInterop.asTruffleObject(wr), JavaInterop.asTruffleObject(wi), JavaInterop.asTruffleObject(vl), ldvl,
-                            JavaInterop.asTruffleObject(vr), ldvr, JavaInterop.asTruffleObject(work), lwork);
+            return (int) call(jobVL, jobVR, n, a, lda, wr, wi, vl, ldvl, vr, ldvr, work, lwork);
         }
     }
 
@@ -61,7 +58,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
         @Override
         public int execute(int m, int n, double[] a, int lda, int[] jpvt, double[] tau, double[] work, int lwork) {
-            return (int) call(m, n, JavaInterop.asTruffleObject(a), lda, JavaInterop.asTruffleObject(jpvt), JavaInterop.asTruffleObject(tau), JavaInterop.asTruffleObject(work), lwork);
+            return (int) call(m, n, a, lda, jpvt, tau, work, lwork);
         }
     }
 
@@ -73,8 +70,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
         @Override
         public int execute(char side, char trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc, double[] work, int lwork) {
-            return (int) call(side, trans, m, n, k, JavaInterop.asTruffleObject(a), lda, JavaInterop.asTruffleObject(tau), JavaInterop.asTruffleObject(c), ldc, JavaInterop.asTruffleObject(work),
-                            lwork);
+            return (int) call(side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork);
         }
     }
 
@@ -86,7 +82,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
         @Override
         public int execute(char uplo, char trans, char diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb) {
-            return (int) call(uplo, trans, diag, n, nrhs, JavaInterop.asTruffleObject(a), lda, JavaInterop.asTruffleObject(b), ldb);
+            return (int) call(uplo, trans, diag, n, nrhs, a, lda, b, ldb);
         }
     }
 
@@ -98,7 +94,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
         @Override
         public int execute(int m, int n, double[] a, int lda, int[] ipiv) {
-            return (int) call(m, n, JavaInterop.asTruffleObject(a), lda, JavaInterop.asTruffleObject(ipiv));
+            return (int) call(m, n, a, lda, ipiv);
         }
     }
 
@@ -110,7 +106,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
         @Override
         public int execute(char uplo, int n, double[] a, int lda) {
-            return (int) call(uplo, n, JavaInterop.asTruffleObject(a), lda);
+            return (int) call(uplo, n, a, lda);
         }
     }
 
@@ -122,7 +118,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
         @Override
         public int execute(char uplo, int n, double[] a, int lda) {
-            return (int) call(uplo, n, JavaInterop.asTruffleObject(a), lda);
+            return (int) call(uplo, n, a, lda);
         }
     }
 
@@ -134,7 +130,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
         @Override
         public int execute(char uplo, int n, double[] a, int lda, int[] piv, int[] rank, double tol, double[] work) {
-            return (int) call(uplo, n, JavaInterop.asTruffleObject(a), lda, JavaInterop.asTruffleObject(piv), JavaInterop.asTruffleObject(rank), tol, JavaInterop.asTruffleObject(work));
+            return (int) call(uplo, n, a, lda, piv, rank, tol, work);
         }
     }
 
@@ -146,7 +142,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
         @Override
         public int execute(int n, int nrhs, double[] a, int lda, int[] ipiv, double[] b, int ldb) {
-            return (int) call(n, nrhs, JavaInterop.asTruffleObject(a), lda, JavaInterop.asTruffleObject(ipiv), JavaInterop.asTruffleObject(b), ldb);
+            return (int) call(n, nrhs, a, lda, ipiv, b, ldb);
         }
     }
 
@@ -158,7 +154,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
         @Override
         public double execute(char norm, int m, int n, double[] a, int lda, double[] work) {
-            return (double) call(norm, m, n, JavaInterop.asTruffleObject(a), lda, JavaInterop.asTruffleObject(work));
+            return (double) call(norm, m, n, a, lda, work);
         }
     }
 
@@ -170,7 +166,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
         @Override
         public int execute(char norm, int n, double[] a, int lda, double anorm, double[] rcond, double[] work, int[] iwork) {
-            return (int) call(norm, n, JavaInterop.asTruffleObject(a), lda, anorm, JavaInterop.asTruffleObject(rcond), JavaInterop.asTruffleObject(work), JavaInterop.asTruffleObject(iwork));
+            return (int) call(norm, n, a, lda, anorm, rcond, work, iwork);
         }
     }
 
@@ -183,9 +179,7 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         @Override
         public int execute(char jobz, char range, char uplo, int n, double[] a, int lda, double vl, double vu, int il, int iu, double abstol, int[] m, double[] w, double[] z, int ldz, int[] isuppz,
                         double[] work, int lwork, int[] iwork, int liwork) {
-            return (int) call(jobz, range, uplo, n, JavaInterop.asTruffleObject(a),
-                            lda, vl, vu, il, iu, abstol, JavaInterop.asTruffleObject(m), JavaInterop.asTruffleObject(w), JavaInterop.asTruffleObject(z), ldz,
-                            JavaInterop.asTruffleObject(isuppz), JavaInterop.asTruffleObject(work), lwork, JavaInterop.asTruffleObject(iwork), liwork);
+            return (int) call(jobz, range, uplo, n, a, lda, vl, vu, il, iu, abstol, m, w, z, ldz, isuppz, work, lwork, iwork, liwork);
         }
     }
 

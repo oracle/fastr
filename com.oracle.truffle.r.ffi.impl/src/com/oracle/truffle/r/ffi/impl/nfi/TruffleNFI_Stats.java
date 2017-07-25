@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 
 public class TruffleNFI_Stats implements StatsRFFI {
@@ -35,7 +34,7 @@ public class TruffleNFI_Stats implements StatsRFFI {
 
         @Override
         public void execute(int n, int[] pmaxf, int[] pmaxp) {
-            call(n, JavaInterop.asTruffleObject(pmaxf), JavaInterop.asTruffleObject(pmaxp));
+            call(n, pmaxf, pmaxp);
         }
     }
 
@@ -47,7 +46,7 @@ public class TruffleNFI_Stats implements StatsRFFI {
 
         @Override
         public int execute(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
-            return (int) call(JavaInterop.asTruffleObject(a), nseg, n, nspn, isn, JavaInterop.asTruffleObject(work), JavaInterop.asTruffleObject(iwork));
+            return (int) call(a, nseg, n, nspn, isn, work, iwork);
         }
     }
 

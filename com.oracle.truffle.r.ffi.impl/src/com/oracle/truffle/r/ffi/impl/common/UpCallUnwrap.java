@@ -47,10 +47,10 @@ public final class UpCallUnwrap extends Node {
      * <li>For an {@link RTruffleObject} there is nothing to do, and indeed, calling {@code unbox}
      * would be disastrous, as that means, e.g., for a RVector, extract the first element!</li>
      * <li>Or we could get a {@code TruffleObject} from another language domain, e.g a
-     * {@code JavaObject} that wraps, say, an {@code Integer}.S Such a value has to be unboxed.
-     * Similarly a {@code NativePointer} encoding, say, a C char array. One special case in the LLVM
-     * implementation is {@code NativePointer} that represents an object stored to memory, which
-     * requires a lookup (and not an {@code UNBOX}).</li>
+     * {@code JavaObject} that wraps, e.g., an {@code Integer}. Such a value has to be unboxed.
+     * Similarly a {@code NativePointer} encoding, e.g., a C char array. One special case in the
+     * LLVM implementation is {@code NativePointer} that represents an object stored to memory,
+     * which requires a lookup (and not an {@code UNBOX}).</li>
      * <li>We could also get a plain {@link Integer} or similar type in which case there is nothing
      * to do.</li>
      * </ul>

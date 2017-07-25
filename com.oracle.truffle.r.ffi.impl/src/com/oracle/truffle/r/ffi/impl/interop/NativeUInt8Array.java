@@ -24,8 +24,8 @@ package com.oracle.truffle.r.ffi.impl.interop;
 
 import static com.oracle.truffle.r.ffi.impl.interop.UnsafeAdapter.UNSAFE;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
 import sun.misc.Unsafe;
@@ -42,6 +42,7 @@ import sun.misc.Unsafe;
  * similar for {@link #write}.
  */
 public abstract class NativeUInt8Array implements RTruffleObject {
+
     public final byte[] bytes;
 
     /**
@@ -97,21 +98,30 @@ public abstract class NativeUInt8Array implements RTruffleObject {
 
     long convertToNative() {
         if (nativeAddress == 0) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            nativeAddress = UNSAFE.allocateMemory(effectiveLength);
-            UNSAFE.copyMemory(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, nativeAddress, bytes.length);
-            if (fakeNull()) {
-                UNSAFE.putByte(nativeAddress + bytes.length, (byte) 0);
-            }
+            allocateNative();
         }
         return nativeAddress;
     }
 
+    @TruffleBoundary
+    private void allocateNative() {
+        nativeAddress = UNSAFE.allocateMemory(effectiveLength);
+        UNSAFE.copyMemory(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, nativeAddress, bytes.length);
+        if (fakeNull()) {
+            UNSAFE.putByte(nativeAddress + bytes.length, (byte) 0);
+        }
+    }
+
     public byte[] getValue() {
         if (nativeAddress != 0) {
-            // copy back
-            UNSAFE.copyMemory(null, nativeAddress, bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, bytes.length);
+            copyBackFromNative();
         }
         return bytes;
+    }
+
+    @TruffleBoundary
+    private void copyBackFromNative() {
+        // copy back
+        UNSAFE.copyMemory(null, nativeAddress, bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, bytes.length);
     }
 }

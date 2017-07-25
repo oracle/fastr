@@ -54,7 +54,6 @@ public class NativeLogicalArrayMR {
 
     @CanResolve
     public abstract static class NLACheck extends Node {
-
         protected static boolean test(TruffleObject receiver) {
             return receiver instanceof NativeLogicalArray;
         }

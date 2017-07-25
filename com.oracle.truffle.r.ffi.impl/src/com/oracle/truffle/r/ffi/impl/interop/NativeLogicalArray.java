@@ -22,8 +22,9 @@
  */
 package com.oracle.truffle.r.ffi.impl.interop;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
@@ -31,8 +32,9 @@ import com.oracle.truffle.r.runtime.data.RTruffleObject;
  * Handles the requirement that the R FFI sees "logical" arrays as {@code int[]} but the actual
  * array in FastR is represented as {@code byte[]}.
  */
-public final class NativeLogicalArray extends NativeNACheck implements RTruffleObject {
-    @CompilationFinal(dimensions = 1) public final byte[] data;
+public final class NativeLogicalArray extends NativeNACheck<byte[]> implements RTruffleObject {
+
+    public final byte[] data;
 
     public NativeLogicalArray(Object obj, byte[] value) {
         super(obj);
@@ -57,5 +59,16 @@ public final class NativeLogicalArray extends NativeNACheck implements RTruffleO
     @Override
     public ForeignAccess getForeignAccess() {
         return NativeLogicalArrayMRForeign.ACCESS;
+    }
+
+    @Override
+    @TruffleBoundary
+    protected void allocateNative() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    protected void copyBackFromNative() {
+        throw RInternalError.shouldNotReachHere();
     }
 }
