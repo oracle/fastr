@@ -38,7 +38,7 @@ public interface CRFFI {
          *            values of type {@code byte[][]}, which represent arrays of strings in ASCII
          *            encoding.
          */
-        public abstract void execute(NativeCallInfo nativeCallInfo, Object[] args, boolean hasStrings);
+        void execute(NativeCallInfo nativeCallInfo, Object[] args, boolean hasStrings);
     }
 
     InvokeCNode createInvokeCNode();

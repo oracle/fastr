@@ -35,9 +35,9 @@ public interface DLLRFFI {
          *
          * @return {@code null} on error, opaque handle for following calls otherwise.
          */
-        public abstract Object execute(String path, boolean local, boolean now) throws UnsatisfiedLinkError;
+        Object execute(String path, boolean local, boolean now) throws UnsatisfiedLinkError;
 
-        public static DLOpenNode create() {
+        static DLOpenNode create() {
             return RFFIFactory.getDLLRFFI().createDLOpenNode();
         }
     }
@@ -49,9 +49,9 @@ public interface DLLRFFI {
          * implementation this will encapsulate a {@link Long} or {@code null} if an error occurred.
          *
          */
-        public abstract SymbolHandle execute(Object handle, String symbol) throws UnsatisfiedLinkError;
+        SymbolHandle execute(Object handle, String symbol) throws UnsatisfiedLinkError;
 
-        public static DLSymNode create() {
+        static DLSymNode create() {
             return RFFIFactory.getDLLRFFI().createDLSymNode();
         }
     }
@@ -60,9 +60,9 @@ public interface DLLRFFI {
         /**
          * Close DLL specified by {@code handle}.
          */
-        public abstract int execute(Object handle);
+        int execute(Object handle);
 
-        public static DLCloseNode create() {
+        static DLCloseNode create() {
             return RFFIFactory.getDLLRFFI().createDLCloseNode();
         }
     }

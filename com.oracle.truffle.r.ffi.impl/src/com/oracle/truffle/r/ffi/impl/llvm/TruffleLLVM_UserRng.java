@@ -46,7 +46,7 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
         }
     }
 
-    private final static class TruffleLLVMInitNode extends RNGNode implements InitNode {
+    private static final class TruffleLLVMInitNode extends RNGNode implements InitNode {
 
         @Override
         public void execute(int seed) {
@@ -59,7 +59,7 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
         }
     }
 
-    private final static class TruffleLLVM_RandNode extends RNGNode implements RandNode {
+    private static final class TruffleLLVM_RandNode extends RNGNode implements RandNode {
 
         @Override
         public double execute() {
@@ -73,7 +73,7 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
         }
     }
 
-    private final static class TruffleLLVM_NSeedNode extends RNGNode implements NSeedNode {
+    private static final class TruffleLLVM_NSeedNode extends RNGNode implements NSeedNode {
 
         @Override
         public int execute() {
@@ -87,7 +87,7 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
         }
     }
 
-    private final static class TruffleLLVM_SeedsNode extends RNGNode implements SeedsNode {
+    private static final class TruffleLLVM_SeedsNode extends RNGNode implements SeedsNode {
 
         @Override
         public void execute(int[] n) {

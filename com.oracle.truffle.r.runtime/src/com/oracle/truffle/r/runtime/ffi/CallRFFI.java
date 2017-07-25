@@ -36,15 +36,14 @@ public interface CallRFFI {
          * {@code args}. The values in {@code args} can be any of the types used to represent
          * {@code R} values in the implementation.
          */
-        public abstract Object execute(NativeCallInfo nativeCallInfo, Object[] args);
+        Object execute(NativeCallInfo nativeCallInfo, Object[] args);
     }
 
     interface InvokeVoidCallNode extends NodeInterface {
         /**
          * Variant that does not return a result (primarily for library "init" methods).
          */
-        public abstract void execute(NativeCallInfo nativeCallInfo, Object[] args);
-
+        void execute(NativeCallInfo nativeCallInfo, Object[] args);
     }
 
     InvokeCallNode createInvokeCallNode();

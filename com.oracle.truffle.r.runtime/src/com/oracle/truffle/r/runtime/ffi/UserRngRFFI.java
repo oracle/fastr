@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,24 +30,22 @@ import com.oracle.truffle.api.nodes.NodeInterface;
 public interface UserRngRFFI {
     interface InitNode extends NodeInterface {
 
-        public abstract void execute(int seed);
+        void execute(int seed);
     }
 
     interface RandNode extends NodeInterface {
 
-        public abstract double execute();
-
+        double execute();
     }
 
     interface NSeedNode extends NodeInterface {
 
-        public abstract int execute();
-
+        int execute();
     }
 
     interface SeedsNode extends NodeInterface {
 
-        public abstract void execute(int[] n);
+        void execute(int[] n);
     }
 
     InitNode createInitNode();

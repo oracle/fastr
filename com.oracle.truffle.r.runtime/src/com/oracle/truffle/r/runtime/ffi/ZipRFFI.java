@@ -36,9 +36,9 @@ public interface ZipRFFI {
          *
          * @return standard return code (0 ok)
          */
-        public abstract int execute(byte[] dest, byte[] source);
+        int execute(byte[] dest, byte[] source);
 
-        public static CompressNode create() {
+        static CompressNode create() {
             return RFFIFactory.getZipRFFI().createCompressNode();
         }
     }
@@ -49,7 +49,7 @@ public interface ZipRFFI {
          *
          * @return standard return code (0 ok)
          */
-        public abstract int execute(byte[] dest, byte[] source);
+        int execute(byte[] dest, byte[] source);
     }
 
     CompressNode createCompressNode();

@@ -50,52 +50,49 @@ public interface PCRERFFI {
     }
 
     interface MaketablesNode extends NodeInterface {
+        long execute();
 
-        public abstract long execute();
-
-        public static MaketablesNode create() {
+        static MaketablesNode create() {
             return RFFIFactory.getPCRERFFI().createMaketablesNode();
         }
     }
 
     interface CompileNode extends NodeInterface {
+        Result execute(String pattern, int options, long tables);
 
-        public abstract Result execute(String pattern, int options, long tables);
-
-        public static CompileNode create() {
+        static CompileNode create() {
             return RFFIFactory.getPCRERFFI().createCompileNode();
         }
     }
 
     interface GetCaptureCountNode extends NodeInterface {
+        int execute(long code, long extra);
 
-        public abstract int execute(long code, long extra);
-
-        public static GetCaptureCountNode create() {
+        static GetCaptureCountNode create() {
             return RFFIFactory.getPCRERFFI().createGetCaptureCountNode();
         }
     }
 
     interface GetCaptureNamesNode extends NodeInterface {
-        public abstract String[] execute(long code, long extra, int captureCount);
+        String[] execute(long code, long extra, int captureCount);
 
-        public static GetCaptureNamesNode create() {
+        static GetCaptureNamesNode create() {
             return RFFIFactory.getPCRERFFI().createGetCaptureNamesNode();
         }
     }
 
     interface StudyNode extends NodeInterface {
-        public abstract Result execute(long code, int options);
+        Result execute(long code, int options);
 
-        public static StudyNode create() {
+        static StudyNode create() {
             return RFFIFactory.getPCRERFFI().createStudyNode();
         }
     }
 
     interface ExecNode extends NodeInterface {
-        public abstract int execute(long code, long extra, String subject, int offset, int options, int[] ovector);
+        int execute(long code, long extra, String subject, int offset, int options, int[] ovector);
 
-        public static ExecNode create() {
+        static ExecNode create() {
             return RFFIFactory.getPCRERFFI().createExecNode();
         }
     }

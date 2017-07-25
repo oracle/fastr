@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 
 public class JNI_UserRng implements UserRngRFFI {
 
-    private final static class JNI_InitNode extends Node implements InitNode {
+    private static final class JNI_InitNode extends Node implements InitNode {
 
         @Override
         public void execute(int seed) {
@@ -36,7 +36,7 @@ public class JNI_UserRng implements UserRngRFFI {
         }
     }
 
-    private final static class JNI_RandNode extends Node implements RandNode {
+    private static final class JNI_RandNode extends Node implements RandNode {
 
         @Override
         public double execute() {
@@ -44,7 +44,7 @@ public class JNI_UserRng implements UserRngRFFI {
         }
     }
 
-    private final static class JNI_NSeedNode extends Node implements NSeedNode {
+    private static final class JNI_NSeedNode extends Node implements NSeedNode {
 
         @Override
         public int execute() {
@@ -52,7 +52,7 @@ public class JNI_UserRng implements UserRngRFFI {
         }
     }
 
-    private final static class JNI_SeedsNode extends Node implements SeedsNode {
+    private static final class JNI_SeedsNode extends Node implements SeedsNode {
 
         @Override
         public void execute(int[] n) {

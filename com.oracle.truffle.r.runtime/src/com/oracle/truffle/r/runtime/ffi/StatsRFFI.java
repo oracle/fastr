@@ -31,17 +31,17 @@ import com.oracle.truffle.api.nodes.NodeInterface;
  */
 public interface StatsRFFI {
     interface FactorNode extends NodeInterface {
-        public abstract void execute(int n, int[] pmaxf, int[] pmaxp);
+        void execute(int n, int[] pmaxf, int[] pmaxp);
 
-        public static FactorNode create() {
+        static FactorNode create() {
             return RFFIFactory.getStatsRFFI().createFactorNode();
         }
     }
 
     interface WorkNode extends NodeInterface {
-        public abstract int execute(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork);
+        int execute(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork);
 
-        public static WorkNode create() {
+        static WorkNode create() {
             return RFFIFactory.getStatsRFFI().createWorkNode();
         }
     }

@@ -30,9 +30,9 @@ import com.oracle.truffle.api.nodes.NodeInterface;
  */
 public interface MiscRFFI {
     interface ExactSumNode extends NodeInterface {
-        public abstract double execute(double[] values, boolean hasNa, boolean naRm);
+        double execute(double[] values, boolean hasNa, boolean naRm);
 
-        public static ExactSumNode create() {
+        static ExactSumNode create() {
             return RFFIFactory.getMiscRFFI().createExactSumNode();
         }
     }

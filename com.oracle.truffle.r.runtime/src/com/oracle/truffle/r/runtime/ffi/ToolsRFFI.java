@@ -41,7 +41,7 @@ public interface ToolsRFFI {
          * code. We can't go straight to the GnuR C entry point as that makes GnuR-specific
          * assumptions about, for example, how connections are implemented.
          */
-        public abstract Object execute(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
+        Object execute(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
                         RLogicalVector warndups);
     }
 

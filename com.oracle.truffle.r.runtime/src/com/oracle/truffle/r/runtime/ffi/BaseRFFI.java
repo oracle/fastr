@@ -36,9 +36,9 @@ import com.oracle.truffle.api.nodes.NodeInterface;
 public interface BaseRFFI {
 
     interface GetpidNode extends NodeInterface {
-        public abstract int execute();
+        int execute();
 
-        public static GetpidNode create() {
+        static GetpidNode create() {
             return RFFIFactory.getBaseRFFI().createGetpidNode();
         }
     }
@@ -47,9 +47,9 @@ public interface BaseRFFI {
         /**
          * Returns the current working directory, in the face of calls to {@code setwd}.
          */
-        public abstract String execute();
+        String execute();
 
-        public static GetwdNode create() {
+        static GetwdNode create() {
             return RFFIFactory.getBaseRFFI().createGetwdNode();
         }
     }
@@ -60,9 +60,9 @@ public interface BaseRFFI {
          *
          * @return 0 if successful.
          */
-        public abstract int execute(String dir);
+        int execute(String dir);
 
-        public static SetwdNode create() {
+        static SetwdNode create() {
             return RFFIFactory.getBaseRFFI().createSetwdNode();
         }
     }
@@ -71,9 +71,9 @@ public interface BaseRFFI {
         /**
          * Create directory with given mode. Exception is thrown on error.
          */
-        public abstract void execute(String dir, int mode) throws IOException;
+        void execute(String dir, int mode) throws IOException;
 
-        public static MkdirNode create() {
+        static MkdirNode create() {
             return RFFIFactory.getBaseRFFI().createMkdirNode();
         }
     }
@@ -86,9 +86,9 @@ public interface BaseRFFI {
          * @return the target if {@code path} is a link else {@code null}
          * @throws IOException for any other error except "not a link"
          */
-        public abstract String execute(String path) throws IOException;
+        String execute(String path) throws IOException;
 
-        public static ReadlinkNode create() {
+        static ReadlinkNode create() {
             return RFFIFactory.getBaseRFFI().createReadlinkNode();
         }
     }
@@ -98,9 +98,9 @@ public interface BaseRFFI {
          * Creates a temporary directory using {@code template} and return the resulting path or
          * {@code null} if error.
          */
-        public abstract String execute(String template);
+        String execute(String template);
 
-        public static MkdtempNode create() {
+        static MkdtempNode create() {
             return RFFIFactory.getBaseRFFI().createMkdtempNode();
         }
     }
@@ -109,9 +109,9 @@ public interface BaseRFFI {
         /**
          * Change the file mode of {@code path}.
          */
-        public abstract int execute(String path, int mode);
+        int execute(String path, int mode);
 
-        public static ChmodNode create() {
+        static ChmodNode create() {
             return RFFIFactory.getBaseRFFI().createChmodNode();
         }
     }
@@ -120,9 +120,9 @@ public interface BaseRFFI {
         /**
          * Convert string to long.
          */
-        public abstract long execute(String s, int base) throws IllegalArgumentException;
+        long execute(String s, int base) throws IllegalArgumentException;
 
-        public static StrolNode create() {
+        static StrolNode create() {
             return RFFIFactory.getBaseRFFI().createStrolNode();
         }
     }
@@ -143,9 +143,9 @@ public interface BaseRFFI {
         /**
          * Return {@code utsname} info.
          */
-        public abstract UtsName execute();
+        UtsName execute();
 
-        public static UnameNode create() {
+        static UnameNode create() {
             return RFFIFactory.getBaseRFFI().createUnameNode();
         }
     }
@@ -156,9 +156,9 @@ public interface BaseRFFI {
          * is done in native code because it is very hard to write in Java in the face of
          * {@code setwd}.
          */
-        public abstract ArrayList<String> glob(String pattern);
+        ArrayList<String> glob(String pattern);
 
-        public static GlobNode create() {
+        static GlobNode create() {
             return RFFIFactory.getBaseRFFI().createGlobNode();
         }
     }
