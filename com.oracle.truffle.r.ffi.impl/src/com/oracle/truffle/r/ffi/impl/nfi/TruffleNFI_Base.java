@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.ffi.impl.interop.base.GlobResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.ReadlinkResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.StrtolResult;
@@ -58,7 +59,7 @@ public class TruffleNFI_Base implements BaseRFFI {
         @Override
         public String execute() {
             byte[] buf = new byte[4096];
-            int result = (int) call(buf, buf.length);
+            int result = (int) call(JavaInterop.asTruffleObject(buf), buf.length);
             if (result == 0) {
                 return null;
             } else {
@@ -141,7 +142,7 @@ public class TruffleNFI_Base implements BaseRFFI {
             byte[] ztbytes = new byte[bytes.length + 1];
             System.arraycopy(bytes, 0, ztbytes, 0, bytes.length);
             ztbytes[bytes.length] = 0;
-            int result = (int) call(ztbytes);
+            int result = (int) call(JavaInterop.asTruffleObject(ztbytes));
             if (result == 0) {
                 return null;
             } else {

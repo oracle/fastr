@@ -25,6 +25,7 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 import java.nio.charset.StandardCharsets;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.ffi.impl.interop.pcre.CaptureNamesResult;
 import com.oracle.truffle.r.ffi.impl.interop.pcre.CompileResult;
 import com.oracle.truffle.r.runtime.RError;
@@ -99,7 +100,7 @@ public class TruffleNFI_PCRE implements PCRERFFI {
         @Override
         public int execute(long code, long extra, String subject, int offset, int options, int[] ovector) {
             byte[] subjectBytes = subject.getBytes(StandardCharsets.UTF_8);
-            return (int) call(code, extra, subjectBytes, subjectBytes.length, offset, options, ovector, ovector.length);
+            return (int) call(code, extra, JavaInterop.asTruffleObject(subjectBytes), subjectBytes.length, offset, options, ovector, ovector.length);
         }
     }
 

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 public class TruffleNFI_Zip implements ZipRFFI {
@@ -35,7 +36,8 @@ public class TruffleNFI_Zip implements ZipRFFI {
         @Override
         public int execute(byte[] dest, byte[] source) {
             long[] destlen = new long[]{dest.length};
-            return (int) call(dest, destlen, source, source.length);
+            int result = (int) call(JavaInterop.asTruffleObject(dest), JavaInterop.asTruffleObject(destlen), JavaInterop.asTruffleObject(source), source.length);
+            return result;
         }
     }
 
@@ -48,7 +50,8 @@ public class TruffleNFI_Zip implements ZipRFFI {
         @Override
         public int execute(byte[] dest, byte[] source) {
             long[] destlen = new long[]{dest.length};
-            return (int) call(dest, destlen, source, source.length);
+            int result = (int) call(JavaInterop.asTruffleObject(dest), JavaInterop.asTruffleObject(destlen), JavaInterop.asTruffleObject(source), source.length);
+            return result;
         }
     }
 
