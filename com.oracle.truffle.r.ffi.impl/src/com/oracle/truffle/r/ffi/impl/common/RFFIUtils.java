@@ -26,10 +26,11 @@ import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.r.ffi.impl.nodes.FFIUpCallRootNode;
-import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
@@ -45,7 +46,6 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
  * Embedded mode requires special treatment. Experimentally the primary embedding app, RStudio, sets
  * a very constrained environment (i.e. does not propagate environment variables set in the shell
  * that launches RStudio.) and sets the cwd to "/", which is not writeable.
- *
  */
 public class RFFIUtils {
     /**
@@ -55,7 +55,7 @@ public class RFFIUtils {
     /**
      * Is set by initialization and caches whether we are tracing.
      */
-    private static boolean traceEnabled;
+    @CompilationFinal public static boolean traceEnabled;
 
     /**
      * Always trace to a file because stdout is problematic for embedded mode.
@@ -68,23 +68,15 @@ public class RFFIUtils {
     private static int depth;
 
     /**
-     * Handles the initialization of the RFFI downcalls/upcall implementation.
-     *
-     * @param upCallsRFFIImpl the concrete, implementation-specific variant of {@link UpCallsRFFI}.
-     * @return if tracing is enabled an instance of {@link TracingUpCallsRFFIImpl} that wraps
-     *         {@code upCallsRFFIImpl} else {@code upCallsRFFIImpl}.
+     * Handles the initialization of the RFFI downcalls/upcall tracing implementation.
      */
-    public static UpCallsRFFI initialize(UpCallsRFFI upCallsRFFIImpl) {
-        UpCallsRFFI returnUpCallsRFFIImpl = upCallsRFFIImpl;
+    public static void initializeTracing() {
         traceEnabled = alwaysTrace || FastROptions.TraceNativeCalls.getBooleanValue();
         if (traceEnabled) {
             if (traceStream == null) {
                 initTraceStream();
             }
-            returnUpCallsRFFIImpl = new TracingUpCallsRFFIImpl(upCallsRFFIImpl);
         }
-        FFIUpCallRootNode.register();
-        return returnUpCallsRFFIImpl;
     }
 
     private static void initTraceStream() {
@@ -129,18 +121,22 @@ public class RFFIUtils {
         }
     }
 
-    public static void traceUpCall(String name, Object... args) {
-        traceCall(CallMode.UP, name, depth, args);
+    @TruffleBoundary
+    public static void traceUpCall(String name, List<Object> args) {
+        traceCall(CallMode.UP, name, depth, args.toArray());
     }
 
+    @TruffleBoundary
     public static void traceUpCallReturn(String name, Object result) {
         traceCall(CallMode.UP_RETURN, name, depth, result);
     }
 
+    @TruffleBoundary
     public static void traceDownCall(String name, Object... args) {
         traceCall(CallMode.DOWN, name, ++depth, args);
     }
 
+    @TruffleBoundary
     public static void traceDownCallReturn(String name, Object result) {
         traceCall(CallMode.DOWN_RETURN, name, depth--, result);
     }

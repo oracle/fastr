@@ -20,29 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.interop.pkginit;
+package com.oracle.truffle.r.ffi.impl.upcalls;
 
-import com.oracle.truffle.api.interop.MessageResolution;
-import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.upcalls.FFIUnwrapNode;
-import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 
-@MessageResolution(receiverType = SetDotSymbolValuesCall.class)
-public class SetDotSymbolValuesCallMR {
-    @Resolve(message = "EXECUTE")
-    public abstract static class SetDotSymbolValuesCallExecute extends Node {
-        @Child private FFIUnwrapNode unwrap = new FFIUnwrapNode();
+public final class FFIWrapNode extends Node {
 
-        protected java.lang.Object access(SetDotSymbolValuesCall receiver, Object[] arguments) {
-            return receiver.pkgInitUpCalls.setDotSymbolValues((DLLInfo) arguments[0], (String) unwrap.execute(arguments[1]), arguments[2], (int) arguments[3]);
-        }
+    @SuppressWarnings("static-method")
+    public Object execute(Object value) {
+        return value;
     }
 
-    @Resolve(message = "IS_EXECUTABLE")
-    public abstract static class SetDotSymbolValuesCallIsExecutable extends Node {
-        protected Object access(@SuppressWarnings("unused") SetDotSymbolValuesCall receiver) {
-            return true;
-        }
+    public static FFIWrapNode create() {
+        return new FFIWrapNode();
     }
 }

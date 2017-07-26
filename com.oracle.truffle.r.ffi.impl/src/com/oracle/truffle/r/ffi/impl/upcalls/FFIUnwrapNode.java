@@ -35,10 +35,11 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
-public final class UpCallUnwrap extends Node {
+public final class FFIUnwrapNode extends Node {
 
     @Child private Node isBoxed;
     @Child private Node unbox;
+
     private final BranchProfile nativePointerProfile = isLLVM() ? BranchProfile.create() : null;
 
     /**
@@ -55,7 +56,7 @@ public final class UpCallUnwrap extends Node {
      * to do.</li>
      * </ul>
      */
-    public Object unwrap(Object x) {
+    public Object execute(Object x) {
         if (x instanceof RTruffleObject) {
             return x;
         } else if (x instanceof TruffleObject) {
@@ -97,5 +98,9 @@ public final class UpCallUnwrap extends Node {
     @TruffleBoundary
     private static TruffleObject checkNativePointer(TruffleObject xto) {
         return NativePointer.check(xto);
+    }
+
+    public static FFIUnwrapNode create() {
+        return new FFIUnwrapNode();
     }
 }

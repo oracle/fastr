@@ -43,8 +43,6 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.ffi.impl.common.ParseResult.ParseStatus;
-import com.oracle.truffle.r.ffi.impl.nodes.FFIUpCallRootNode;
-import com.oracle.truffle.r.ffi.impl.upcalls.RFFIUpCallTable;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
@@ -130,6 +128,10 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     private final Map<String, Object> nameSymbolCache = new ConcurrentHashMap<>();
 
+    private static RuntimeException implementedAsNode() {
+        throw RInternalError.shouldNotReachHere("upcall function is implemented via a node");
+    }
+
     // Checkstyle: stop method name check
 
     @Override
@@ -161,27 +163,27 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int Rf_asInteger(Object x) {
-        return (int) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_asInteger).call(x);
+        throw implementedAsNode();
     }
 
     @Override
     public double Rf_asReal(Object x) {
-        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_asReal).call(x);
+        throw implementedAsNode();
     }
 
     @Override
     public int Rf_asLogical(Object x) {
-        return (int) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_asLogical).call(x);
+        throw implementedAsNode();
     }
 
     @Override
     public Object Rf_asChar(Object x) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_asChar).call(x);
+        throw implementedAsNode();
     }
 
     @Override
     public Object Rf_coerceVector(Object x, int mode) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_coerceVector).call(x, mode);
+        throw implementedAsNode();
     }
 
     @Override
@@ -216,7 +218,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object R_do_new_object(Object classDef) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.R_do_new_object).call(classDef);
+        throw implementedAsNode();
     }
 
     @Override
@@ -261,10 +263,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object ATTRIB(Object obj) {
-        if (obj instanceof RAttributable) {
-            return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.ATTRIB).call(obj);
-        }
-        return RNull.instance;
+        throw implementedAsNode();
     }
 
     @Override
@@ -488,7 +487,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int LENGTH(Object x) {
-        return (int) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.LENGTH).call(x);
+        throw implementedAsNode();
     }
 
     @Override
@@ -687,28 +686,27 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object CAR(Object e) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.CAR).call(e);
+        throw implementedAsNode();
     }
 
     @Override
     public Object CDR(Object e) {
-        Object result = FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.CDR).call(e);
-        return result;
+        throw implementedAsNode();
     }
 
     @Override
     public Object CADR(Object e) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.CADR).call(e);
+        throw implementedAsNode();
     }
 
     @Override
     public Object CADDR(Object e) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.CADDR).call(e);
+        throw implementedAsNode();
     }
 
     @Override
     public Object CDDR(Object e) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.CDDR).call(e);
+        throw implementedAsNode();
     }
 
     @Override
@@ -1510,12 +1508,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object R_do_slot(Object o, Object name) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.R_do_slot).call(o, name);
+        throw implementedAsNode();
     }
 
     @Override
     public Object R_do_slot_assign(Object o, Object name, Object value) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.R_do_slot_assign).call(o, name, value);
+        throw implementedAsNode();
     }
 
     @Override

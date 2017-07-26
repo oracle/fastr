@@ -53,7 +53,7 @@ public abstract class RFFIFactory {
 
     private static final String FACTORY_TYPE_PROPERTY = "fastr.rffi.factory.type";
     private static final String FACTORY_CLASS_ENV = "FASTR_RFFI";
-    private static final Type DEFAULT_FACTORY = Type.JNI;
+    private static final Type DEFAULT_FACTORY = Type.NFI;
 
     /**
      * Singleton instance of the factory.

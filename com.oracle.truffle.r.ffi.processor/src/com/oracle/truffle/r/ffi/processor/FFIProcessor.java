@@ -38,6 +38,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.MirroredTypeException;
@@ -46,7 +47,6 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
-
 import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
@@ -163,36 +163,46 @@ public final class FFIProcessor extends AbstractProcessor {
 
     private void generateCallClass(ExecutableElement m) throws IOException {
         RFFIUpCallNode nodeAnnotation = m.getAnnotation(RFFIUpCallNode.class);
-        String node = null;
+        String nodeClassName = null;
+        TypeElement nodeClass = null;
         if (nodeAnnotation != null) {
             try {
                 nodeAnnotation.value();
             } catch (MirroredTypeException e) {
-                node = ((TypeElement) processingEnv.getTypeUtils().asElement(e.getTypeMirror())).getQualifiedName().toString();
+                nodeClass = (TypeElement) processingEnv.getTypeUtils().asElement(e.getTypeMirror());
+                nodeClassName = nodeClass.getQualifiedName().toString();
             }
         }
         // process arguments first to see if unwrap is necessary
         List<? extends VariableElement> params = m.getParameters();
         StringBuilder arguments = new StringBuilder();
-        int unwrapCount = 0;
+        StringBuilder unwrapNodes = new StringBuilder();
         for (int i = 0; i < params.size(); i++) {
             if (i != 0) {
                 arguments.append(", ");
             }
-            String paramTypeName = getTypeName(params.get(i).asType());
-            boolean isScalar = true;
+            TypeMirror paramType = params.get(i).asType();
+            String paramName = params.get(i).getSimpleName().toString();
+            String paramTypeName = getTypeName(paramType);
+            boolean isScalar = paramType.getKind().isPrimitive();
             boolean needCast = !paramTypeName.equals("java.lang.Object");
             if (needCast) {
                 arguments.append('(').append(paramTypeName).append(") ");
             }
-            if (isScalar) {
-                arguments.append("unwrap").append(unwrapCount).append(".unwrap(");
-                unwrapCount++;
+            if (!isScalar) {
+                arguments.append(paramName).append("Unwrap").append(".execute(");
+                unwrapNodes.append("                @Child private FFIUnwrapNode ").append(paramName).append("Unwrap").append(" = FFIUnwrapNode.create();\n");
             }
             arguments.append("arguments.get(").append(i).append(")");
-            if (isScalar) {
+            if (!isScalar) {
                 arguments.append(')');
             }
+        }
+
+        TypeKind returnKind = m.getReturnType().getKind();
+        boolean needsReturnWrap = returnKind != TypeKind.VOID && !returnKind.isPrimitive() && !"java.lang.String".equals(getTypeName(m.getReturnType()));
+        if (needsReturnWrap) {
+            unwrapNodes.append("                @Child private FFIWrapNode returnWrap").append(" = FFIWrapNode.create();\n");
         }
 
         String name = m.getSimpleName().toString();
@@ -211,59 +221,85 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("import com.oracle.truffle.api.interop.ForeignAccess;\n");
         w.append("import com.oracle.truffle.api.interop.TruffleObject;\n");
         w.append("import com.oracle.truffle.api.nodes.RootNode;\n");
+        w.append("import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n");
         w.append("import com.oracle.truffle.r.runtime.data.RTruffleObject;\n");
         w.append("\n");
         w.append("// Checkstyle: stop method name check\n");
         w.append("\n");
-        w.append("final class ").append(callName).append(" implements RTruffleObject {\n");
+        w.append("final class " + callName + " implements RTruffleObject {\n");
         w.append('\n');
-        if (node == null) {
+        if (nodeClass == null) {
             w.append("    private final UpCallsRFFI upCallsImpl;\n");
             w.append('\n');
         }
-        w.append("    ").append(callName).append("(UpCallsRFFI upCallsImpl) {\n");
+        w.append("    " + callName + "(UpCallsRFFI upCallsImpl) {\n");
         w.append("        assert upCallsImpl != null;\n");
-        if (node == null) {
+        if (nodeClass == null) {
             w.append("        this.upCallsImpl = upCallsImpl;\n");
         }
         w.append("    }\n");
         w.append('\n');
-        w.append("    private static final class ").append(callName).append("Factory extends AbstractDowncallForeign {\n");
+        w.append("    private static final class " + callName + "Factory extends AbstractDowncallForeign {\n");
         w.append("        @Override\n");
         w.append("        public boolean canHandle(TruffleObject obj) {\n");
-        w.append("            return obj instanceof ").append(callName).append(";\n");
+        w.append("            return obj instanceof " + callName + ";\n");
         w.append("        }\n");
         w.append("\n");
         w.append("        @Override\n");
         w.append("        public CallTarget accessExecute(int argumentsLength) {\n");
         w.append("            return Truffle.getRuntime().createCallTarget(new RootNode(null) {\n");
         w.append("\n");
-        if (unwrapCount > 0) {
-            for (int i = 0; i < unwrapCount; i++) {
-                w.append("                @Child private UpCallUnwrap unwrap").append(Integer.toString(i)).append(" = new UpCallUnwrap();\n");
-            }
+        if (unwrapNodes.length() > 0) {
+            w.append(unwrapNodes);
             w.append("\n");
         }
-        if (node != null) {
-            w.append("                @Child private ").append(node).append(" node").append(" = ").append(node).append(".create();\n");
+        if (nodeClass != null) {
+            boolean createFunction = false;
+            for (Element element : nodeClass.getEnclosedElements()) {
+                if (element.getKind() == ElementKind.METHOD && element.getModifiers().contains(Modifier.STATIC) && "create".equals(element.getSimpleName().toString())) {
+                    createFunction = true;
+                    break;
+                }
+            }
+            if (createFunction) {
+                w.append("                @Child private " + nodeClassName + " node = " + nodeClassName + ".create();\n");
+            } else if (nodeClass.getModifiers().contains(Modifier.ABSTRACT)) {
+                w.append("                @Child private " + nodeClassName + " node;\n");
+                processingEnv.getMessager().printMessage(Kind.ERROR, "Need static create for abstract classes", m);
+            } else {
+                w.append("                @Child private " + nodeClassName + " node = new " + nodeClassName + "();\n");
+            }
             w.append("\n");
         }
         w.append("                @Override\n");
         w.append("                public Object execute(VirtualFrame frame) {\n");
         w.append("                    List<Object> arguments = ForeignAccess.getArguments(frame);\n");
-        w.append("                    assert arguments.size() == ").append(Integer.toString(params.size())).append(" : \"wrong number of arguments passed to ").append(name).append("\";\n");
-        if (node != null) {
-            w.append("                    return node.executeObject(").append(arguments).append(");\n");
+        w.append("                    assert arguments.size() == " + params.size() + " : \"wrong number of arguments passed to " + name + "\";\n");
+        w.append("                    if (RFFIUtils.traceEnabled) {\n");
+        w.append("                        RFFIUtils.traceUpCall(\"" + name + "\", arguments);\n");
+        w.append("                    }\n");
+        w.append("                    return ");
+        if (needsReturnWrap) {
+            w.append("returnWrap.execute(");
+        }
+        if (nodeClass != null) {
+            w.append("node.executeObject");
         } else {
-            w.append("                    return ((").append(callName).append(") ForeignAccess.getReceiver(frame)).upCallsImpl.").append(name).append("(").append(arguments).append(");\n");
+            w.append("((" + callName + ") ForeignAccess.getReceiver(frame)).upCallsImpl." + name);
+        }
+        w.append("(" + arguments + ")");
+        if (needsReturnWrap) {
+            w.append(");\n");
+        } else {
+            w.append(";\n");
         }
         w.append("                }\n");
         w.append("            });\n");
         w.append("        }\n");
         w.append("    }\n");
         w.append("\n");
-        w.append("    private static final ForeignAccess ACCESS = ForeignAccess.create(new ").append(callName).append("Factory(), null);\n");
+        w.append("    private static final ForeignAccess ACCESS = ForeignAccess.create(new " + callName + "Factory(), null);\n");
         w.append("\n");
         w.append("    @Override\n");
         w.append("    public ForeignAccess getForeignAccess() {\n");
@@ -276,8 +312,8 @@ public final class FFIProcessor extends AbstractProcessor {
     private void generateCallbacks(ExecutableElement[] methods) throws IOException {
         JavaFileObject fileObj = processingEnv.getFiler().createSourceFile("com.oracle.truffle.r.ffi.impl.upcalls.Callbacks");
         Writer w = fileObj.openWriter();
-        w.append("// GENERATED; DO NOT EDIT\n");
-        w.append("package ").append("com.oracle.truffle.r.ffi.impl.upcalls").append(";\n\n");
+        w.append("// GENERATED; DO NOT EDIT\n\n");
+        w.append("package com.oracle.truffle.r.ffi.impl.upcalls;\n\n");
         w.append("import com.oracle.truffle.api.interop.TruffleObject;\n");
         w.append("import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n\n");
@@ -321,7 +357,7 @@ public final class FFIProcessor extends AbstractProcessor {
         for (int i = 0; i < lparams; i++) {
             VariableElement param = params.get(i);
             RFFICstring[] annotations = param.getAnnotationsByType(RFFICstring.class);
-            String nfiParam = nfiParamName(getTypeName(param.asType()), annotations.length == 0 ? null : annotations[0]);
+            String nfiParam = nfiParamName(param.asType(), annotations.length == 0 ? null : annotations[0], false, param);
             sb.append(nfiParam);
             if (i != lparams - 1) {
                 sb.append(", ");
@@ -329,19 +365,20 @@ public final class FFIProcessor extends AbstractProcessor {
         }
         sb.append(')');
         sb.append(" : ");
-        sb.append(nfiParamName(getTypeName(m.getReturnType()), null));
+        sb.append(nfiParamName(m.getReturnType(), null, true, m));
         return sb.toString();
     }
 
-    private static String nfiParamName(String paramType, RFFICstring rffiCstring) {
-        switch (paramType) {
+    private String nfiParamName(TypeMirror paramType, RFFICstring rffiCstring, boolean isReturn, Element m) {
+        String paramTypeName = getTypeName(paramType);
+        switch (paramTypeName) {
             case "java.lang.Object":
                 if (rffiCstring == null) {
                     return "object";
                 } else {
                     return rffiCstring.convert() ? "string" : "pointer";
                 }
-            case "char":
+            case "boolean":
                 return "uint8";
             case "int":
                 return "sint32";
@@ -360,6 +397,14 @@ public final class FFIProcessor extends AbstractProcessor {
             case "byte[]":
                 return "[uint8]";
             default:
+                if (isReturn) {
+                    if ("java.lang.String".equals(paramTypeName)) {
+                        return "string";
+                    }
+                    processingEnv.getMessager().printMessage(Kind.ERROR, "Invalid return type " + paramTypeName, m);
+                } else {
+                    processingEnv.getMessager().printMessage(Kind.ERROR, "Invalid parameter type " + paramTypeName, m);
+                }
                 return "object";
         }
     }

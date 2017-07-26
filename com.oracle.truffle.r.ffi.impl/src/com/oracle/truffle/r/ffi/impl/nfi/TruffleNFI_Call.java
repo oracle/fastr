@@ -215,12 +215,12 @@ public class TruffleNFI_Call implements CallRFFI {
     }
 
     private static void initialize() {
-        UpCallsRFFI upCallsImpl = RFFIUtils.initialize(new TruffleNFI_UpCallsRFFIImpl());
+        RFFIUtils.initializeTracing();
         if (traceEnabled()) {
             traceDownCall("initialize");
         }
         try {
-            initCallbacks(upCallsImpl);
+            initCallbacks(new TruffleNFI_UpCallsRFFIImpl());
             initVariables();
             initReturnArray();
         } finally {

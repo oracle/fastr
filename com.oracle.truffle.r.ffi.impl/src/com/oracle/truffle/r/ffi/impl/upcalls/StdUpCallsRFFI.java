@@ -35,11 +35,6 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RExternalPtr;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 
 /**
  * This class defines methods that match the functionality of the macro/function definitions in the
@@ -64,13 +59,13 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 public interface StdUpCallsRFFI {
     // Checkstyle: stop method name check
 
-    RIntVector Rf_ScalarInteger(int value);
+    Object Rf_ScalarInteger(int value);
 
-    RLogicalVector Rf_ScalarLogical(int value);
+    Object Rf_ScalarLogical(int value);
 
-    RDoubleVector Rf_ScalarDouble(double value);
+    Object Rf_ScalarDouble(double value);
 
-    RStringVector Rf_ScalarString(Object value);
+    Object Rf_ScalarString(Object value);
 
     @RFFIUpCallNode(AsIntegerNode.class)
     int Rf_asInteger(Object x);
@@ -266,7 +261,7 @@ public interface StdUpCallsRFFI {
 
     Object Rf_classgets(Object x, Object y);
 
-    RExternalPtr R_MakeExternalPtr(long addr, Object tag, Object prot);
+    Object R_MakeExternalPtr(long addr, Object tag, Object prot);
 
     long R_ExternalPtrAddr(Object x);
 

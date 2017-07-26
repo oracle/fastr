@@ -138,13 +138,13 @@ public class JNI_Call implements CallRFFI {
 
     @TruffleBoundary
     private static void initialize() {
-        UpCallsRFFI upCallsRFFIImpl = RFFIUtils.initialize(new JNIUpCallsRFFIImpl());
+        RFFIUtils.initializeTracing();
 
         if (traceEnabled()) {
             traceDownCall("initialize");
         }
         try {
-            initialize(upCallsRFFIImpl, RFFIVariables.initialize());
+            initialize(new JNIUpCallsRFFIImpl(), RFFIVariables.initialize());
         } finally {
             if (traceEnabled()) {
                 traceDownCallReturn("initialize", null);
