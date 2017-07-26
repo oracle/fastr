@@ -34,6 +34,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -827,13 +828,28 @@ public abstract class ConnectionFunctions {
 
         static {
             Casts casts = new Casts(ReadBin.class);
-            // TODO con can be a RAWSXP (not implemented)
-            CastsHelper.connection(casts);
+            casts.arg("con").defaultError(Message.INVALID_CONNECTION).mustNotBeNull().returnIf(rawValue()).asIntegerVector().findFirst();
             casts.arg("what").asStringVector().findFirst();
             CastsHelper.n(casts);
             CastsHelper.size(casts);
             casts.arg("signed").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
             CastsHelper.swap(casts);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        @TruffleBoundary
+        protected Object readBin(RAbstractRawVector con, String what, int n, int sizeInput, boolean signed, boolean swap) {
+            Object result;
+            switch (what) {
+                case "character":
+                    result = readString(con, con.getLength());
+                    break;
+
+                default:
+                    throw RInternalError.unimplemented();
+            }
+            return result;
         }
 
         @Specialization
@@ -983,6 +999,23 @@ public abstract class ConnectionFunctions {
             return RDataFactory.createStringVector(stringData, RDataFactory.COMPLETE_VECTOR);
         }
 
+        private static RStringVector readString(RAbstractRawVector vec, int n) {
+            ArrayList<String> strings = new ArrayList<>(n);
+            byte[] chars;
+            if (vec instanceof RRaw) {
+                chars = new byte[1];
+                chars[0] = ((RRaw) vec).getRawDataAt(0);
+            } else {
+                chars = ((RRawVector) vec).getDataWithoutCopying();
+            }
+            strings.add(new String(chars, 0, n));
+
+            // There is no special encoding for NA_character_
+            String[] stringData = new String[1];
+            strings.toArray(stringData);
+            return RDataFactory.createStringVector(stringData, RDataFactory.COMPLETE_VECTOR);
+        }
+
         private static RRawVector readRaw(RConnection con, int n) throws IOException {
             ByteBuffer buffer = ByteBuffer.allocate(n);
             int bytesRead = con.readBin(buffer);
@@ -994,6 +1027,13 @@ public abstract class ConnectionFunctions {
             buffer.get(data);
             return RDataFactory.createRawVector(data);
         }
+
+        /*
+         * private static RRawVector readRaw(RAbstractRawVector raw, int n) { ByteBuffer buffer =
+         * ByteBuffer.allocate(n); int bytesRead = con.readBin(buffer); if (bytesRead == 0) { return
+         * RDataFactory.createEmptyRawVector(); } buffer.flip(); byte[] data = new byte[bytesRead];
+         * buffer.get(data); return RDataFactory.createRawVector(data); }
+         */
 
         private static RLogicalVector readLogical(RConnection con, int n, boolean swap) throws IOException {
             ByteBuffer buffer = ByteBuffer.allocate(n * 4);

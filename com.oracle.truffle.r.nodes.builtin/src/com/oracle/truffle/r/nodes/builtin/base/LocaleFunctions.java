@@ -34,15 +34,16 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.nio.charset.Charset;
+import java.util.Locale;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -50,6 +51,46 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class LocaleFunctions {
+
+    enum LC {
+        COLLATE(stdDefault()),
+        CTYPE(stdDefault()),
+        MONETARY(stdDefault()),
+        NUMERIC("C"),
+        TIME(stdDefault()),
+        MESSAGES(stdDefault()),
+        PAPER(""),
+        MEASUREMENT("");
+
+        private String value;
+        private String defaultValue;
+
+        LC(String defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
+        static String stdDefault() {
+            String defLocale = Locale.getDefault().toString() + "_";
+            String defCharSet = Charset.defaultCharset().name();
+            return defLocale + defCharSet;
+        }
+
+        private String getLCEnvVar() {
+            if (value != null) {
+                return value;
+            }
+            String val = RContext.getInstance().stateREnvVars.get("LC_" + name());
+            if (val == null) {
+                return defaultValue;
+            } else {
+                return val;
+            }
+        }
+
+        private static int getLCCategory(int category) {
+            return category - 2;
+        }
+    }
 
     @RBuiltin(name = "Sys.getlocale", kind = INTERNAL, parameterNames = {"category"}, behavior = READS_STATE)
     public abstract static class GetLocale extends RBuiltinNode.Arg1 {
@@ -59,33 +100,33 @@ public class LocaleFunctions {
             CastsHelper.category(casts);
         }
 
+        private static final int[] ALL_CATEGORIES = new int[]{3, 2, 4, 5, 6, 7, 8, 9};
+
         @Specialization
         @TruffleBoundary
         protected Object getLocale(int category) {
-            // TODO implement all: for now just return not available (NULL)
-            switch (category) {
-                case 3: // "LC_CTYPE",
-                    return RDataFactory.createStringVector(Charset.defaultCharset().name());
-                case 1: // "LC_ALL"
-                    break;
-                case 2: // "LC_COLLATE"
-                    break;
-                case 4: // "LC_MONETARY"
-                    break;
-                case 5: // "LC_NUMERIC"
-                    break;
-                case 6: // "LC_TIME"
-                    break;
-                case 7: // "LC_MESSAGES"
-                    break;
-                case 8: // "LC_PAPER"
-                    return RDataFactory.createStringVectorFromScalar("");
-                case 9: // "LC_MEASUREMENT"
-                    break;
-                default:
-                    throw RInternalError.shouldNotReachHere();
+            return RDataFactory.createStringVector(getLocaleData(category));
+        }
+
+        protected String getLocaleData(int category) {
+            String data = "";
+            if (category == 1) {
+                // "LC_ALL"
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < ALL_CATEGORIES.length; i++) {
+                    String d = getLocaleData(ALL_CATEGORIES[i]);
+                    if (d.length() > 0) {
+                        sb.append(d);
+                        if (i != ALL_CATEGORIES.length - 1) {
+                            sb.append('/');
+                        }
+                    }
+                }
+                data = sb.toString();
+            } else {
+                data = LC.values()[LC.getLCCategory(category)].getLCEnvVar();
             }
-            return RNull.instance;
+            return data;
         }
     }
 
@@ -100,8 +141,8 @@ public class LocaleFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object setLocale(@SuppressWarnings("unused") int category, String locale) {
-            // TODO implement properly!!
+        protected Object setLocale(int category, String locale) {
+            LC.values()[LC.getLCCategory(category)].value = locale;
             return locale;
         }
     }
@@ -185,5 +226,9 @@ public class LocaleFunctions {
         private static void category(Casts casts) {
             casts.arg("category").mustBe(numericValue(), INVALID_ARGUMENT, "category").asIntegerVector().findFirst();
         }
+    }
+
+    public static void main(String[] args) {
+        System.out.println(Locale.getDefault());
     }
 }

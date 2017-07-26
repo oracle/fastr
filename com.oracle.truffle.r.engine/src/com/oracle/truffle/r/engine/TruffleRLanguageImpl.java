@@ -77,7 +77,6 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage implements Scop
      */
     private static void initialize() {
         try {
-            Locale.setDefault(Locale.ROOT);
             RAccuracyInfo.initialize();
         } catch (Throwable t) {
             t.printStackTrace();
