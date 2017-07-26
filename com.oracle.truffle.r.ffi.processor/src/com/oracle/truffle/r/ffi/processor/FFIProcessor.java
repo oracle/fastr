@@ -40,6 +40,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
@@ -157,55 +158,27 @@ public final class FFIProcessor extends AbstractProcessor {
         for (int i = 0; i < methods.length; i++) {
             ExecutableElement m = methods[i];
             generateCallClass(m);
-            generateMessageClass(m);
         }
     }
 
     private void generateCallClass(ExecutableElement m) throws IOException {
-        String name = m.getSimpleName().toString();
-        String callName = name + "Call";
-        JavaFileObject fileObj = processingEnv.getFiler().createSourceFile("com.oracle.truffle.r.ffi.impl.upcalls." + callName);
-        Writer w = fileObj.openWriter();
-        w.append("// GENERATED; DO NOT EDIT\n");
-        w.append("package ").append("com.oracle.truffle.r.ffi.impl.upcalls").append(";\n\n");
-        w.append("import com.oracle.truffle.api.interop.ForeignAccess;\n");
-        w.append("import com.oracle.truffle.api.interop.TruffleObject;\n");
-        w.append("import com.oracle.truffle.r.runtime.data.RTruffleObject;\n");
-        w.append("// Checkstyle: stop method name check\n\n");
-        w.append("public final class ").append(callName).append(" implements RTruffleObject {\n");
-        w.append('\n');
-        w.append("    public final UpCallsRFFI upCallsImpl;\n");
-        w.append('\n');
-        w.append("    protected ").append(callName).append("(UpCallsRFFI upCallsImpl) {\n");
-        w.append("        this.upCallsImpl = upCallsImpl;\n");
-        w.append("    }\n");
-        w.append('\n');
-        w.append("    public static boolean isInstance(TruffleObject value) {\n");
-        w.append("        return value instanceof ").append(callName).append(";\n");
-        w.append("    }\n");
-        w.append('\n');
-
-        w.append("    @Override\n");
-        w.append("    public ForeignAccess getForeignAccess() {\n");
-        w.append("        return ").append(callName).append("MRForeign.ACCESS;\n");
-        w.append("    }\n");
-        w.append("}\n");
-        w.close();
-    }
-
-    private void generateMessageClass(ExecutableElement m) throws IOException {
-        String name = m.getSimpleName().toString();
-        String callName = name + "Call";
-        String returnType = getTypeName(m.getReturnType());
-        List<? extends VariableElement> params = m.getParameters();
-
-        StringBuilder arguments = new StringBuilder();
-        boolean usesUnwrap = false;
-
+        RFFIUpCallNode nodeAnnotation = m.getAnnotation(RFFIUpCallNode.class);
+        String node = null;
+        if (nodeAnnotation != null) {
+            try {
+                nodeAnnotation.value();
+            } catch (MirroredTypeException e) {
+                node = ((TypeElement) processingEnv.getTypeUtils().asElement(e.getTypeMirror())).getQualifiedName().toString();
+            }
+        }
         // process arguments first to see if unwrap is necessary
-        int lparams = params.size();
-        for (int i = 0; i < lparams; i++) {
-            String is = Integer.toString(i);
+        List<? extends VariableElement> params = m.getParameters();
+        StringBuilder arguments = new StringBuilder();
+        int unwrapCount = 0;
+        for (int i = 0; i < params.size(); i++) {
+            if (i != 0) {
+                arguments.append(", ");
+            }
             String paramTypeName = getTypeName(params.get(i).asType());
             boolean isScalar = true;
             boolean needCast = !paramTypeName.equals("java.lang.Object");
@@ -213,60 +186,91 @@ public final class FFIProcessor extends AbstractProcessor {
                 arguments.append('(').append(paramTypeName).append(") ");
             }
             if (isScalar) {
-                usesUnwrap = true;
-                arguments.append("unwrap.unwrap(");
+                arguments.append("unwrap").append(unwrapCount).append(".unwrap(");
+                unwrapCount++;
             }
-            arguments.append("arguments[").append(is).append("]");
+            arguments.append("arguments.get(").append(i).append(")");
             if (isScalar) {
                 arguments.append(')');
             }
-            if (i != lparams - 1) {
-                arguments.append(", ");
-            }
         }
 
-        JavaFileObject fileObj = processingEnv.getFiler().createSourceFile("com.oracle.truffle.r.ffi.impl.upcalls." + callName + "MR");
+        String name = m.getSimpleName().toString();
+        String callName = name + "Call";
+        JavaFileObject fileObj = processingEnv.getFiler().createSourceFile("com.oracle.truffle.r.ffi.impl.upcalls." + callName);
         Writer w = fileObj.openWriter();
         w.append("// GENERATED; DO NOT EDIT\n");
-        w.append("package ").append("com.oracle.truffle.r.ffi.impl.upcalls").append(";\n\n");
-        w.append("import com.oracle.truffle.api.interop.MessageResolution;\n");
-        w.append("import com.oracle.truffle.api.interop.Resolve;\n");
-        w.append("import com.oracle.truffle.api.nodes.Node;\n");
-        if (usesUnwrap) {
-            w.append("import com.oracle.truffle.r.ffi.impl.common.UpCallUnwrap;\n");
+        w.append("\n");
+        w.append("package com.oracle.truffle.r.ffi.impl.upcalls;\n");
+        w.append("\n");
+        w.append("import java.util.List;\n");
+        w.append("\n");
+        w.append("import com.oracle.truffle.api.CallTarget;\n");
+        w.append("import com.oracle.truffle.api.Truffle;\n");
+        w.append("import com.oracle.truffle.api.frame.VirtualFrame;\n");
+        w.append("import com.oracle.truffle.api.interop.ForeignAccess;\n");
+        w.append("import com.oracle.truffle.api.interop.TruffleObject;\n");
+        w.append("import com.oracle.truffle.api.nodes.RootNode;\n");
+        w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n");
+        w.append("import com.oracle.truffle.r.runtime.data.RTruffleObject;\n");
+        w.append("\n");
+        w.append("// Checkstyle: stop method name check\n");
+        w.append("\n");
+        w.append("final class ").append(callName).append(" implements RTruffleObject {\n");
+        w.append('\n');
+        if (node == null) {
+            w.append("    private final UpCallsRFFI upCallsImpl;\n");
+            w.append('\n');
         }
-        w.append("// Checkstyle: stop method name check\n\n");
-
-        w.append("@MessageResolution(receiverType = ").append(name).append("Call.class)\n");
-        w.append("public class ").append(callName).append("MR {\n");
-        w.append("    @Resolve(message = \"EXECUTE\")\n");
-        w.append("    public abstract static class ").append(callName).append("Execute extends Node {\n");
-        if (usesUnwrap) {
-            w.append("\n        @Child private UpCallUnwrap unwrap = new UpCallUnwrap();\n\n");
+        w.append("    ").append(callName).append("(UpCallsRFFI upCallsImpl) {\n");
+        w.append("        assert upCallsImpl != null;\n");
+        if (node == null) {
+            w.append("        this.upCallsImpl = upCallsImpl;\n");
         }
-        w.append("        protected ").append(returnType).append(" access(").append(callName).append(" receiver, ");
-        if (params.size() == 0) {
-            w.append("@SuppressWarnings(\"unused\") ");
+        w.append("    }\n");
+        w.append('\n');
+        w.append("    private static final class ").append(callName).append("Factory extends AbstractDowncallForeign {\n");
+        w.append("        @Override\n");
+        w.append("        public boolean canHandle(TruffleObject obj) {\n");
+        w.append("            return obj instanceof ").append(callName).append(";\n");
+        w.append("        }\n");
+        w.append("\n");
+        w.append("        @Override\n");
+        w.append("        public CallTarget accessExecute(int argumentsLength) {\n");
+        w.append("            return Truffle.getRuntime().createCallTarget(new RootNode(null) {\n");
+        w.append("\n");
+        if (unwrapCount > 0) {
+            for (int i = 0; i < unwrapCount; i++) {
+                w.append("                @Child private UpCallUnwrap unwrap").append(Integer.toString(i)).append(" = new UpCallUnwrap();\n");
+            }
+            w.append("\n");
         }
-        w.append("Object[] arguments) {\n");
-        w.append("            ").append("return").append(" receiver.upCallsImpl.").append(name).append("(");
-
-        w.append(arguments);
-
-        w.append(");\n");
+        if (node != null) {
+            w.append("                @Child private ").append(node).append(" node").append(" = ").append(node).append(".create();\n");
+            w.append("\n");
+        }
+        w.append("                @Override\n");
+        w.append("                public Object execute(VirtualFrame frame) {\n");
+        w.append("                    List<Object> arguments = ForeignAccess.getArguments(frame);\n");
+        w.append("                    assert arguments.size() == ").append(Integer.toString(params.size())).append(" : \"wrong number of arguments passed to ").append(name).append("\";\n");
+        if (node != null) {
+            w.append("                    return node.executeObject(").append(arguments).append(");\n");
+        } else {
+            w.append("                    return ((").append(callName).append(") ForeignAccess.getReceiver(frame)).upCallsImpl.").append(name).append("(").append(arguments).append(");\n");
+        }
+        w.append("                }\n");
+        w.append("            });\n");
         w.append("        }\n");
         w.append("    }\n");
         w.append("\n");
-
-        w.append("    @Resolve(message = \"IS_EXECUTABLE\")\n");
-        w.append("    public abstract static class ").append(callName).append("IsExecutable extends Node {\n");
-        w.append("        protected Object access(@SuppressWarnings(\"unused\") ").append(callName).append(" receiver) {\n");
-        w.append("            return true;\n");
-        w.append("        }\n");
+        w.append("    private static final ForeignAccess ACCESS = ForeignAccess.create(new ").append(callName).append("Factory(), null);\n");
+        w.append("\n");
+        w.append("    @Override\n");
+        w.append("    public ForeignAccess getForeignAccess() {\n");
+        w.append("        return ACCESS;\n");
         w.append("    }\n");
         w.append("}\n");
         w.close();
-
     }
 
     private void generateCallbacks(ExecutableElement[] methods) throws IOException {

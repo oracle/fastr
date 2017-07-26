@@ -22,7 +22,19 @@
  */
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
+import com.oracle.truffle.r.ffi.impl.nodes.ATTRIB;
+import com.oracle.truffle.r.ffi.impl.nodes.AsCharNode;
+import com.oracle.truffle.r.ffi.impl.nodes.AsIntegerNode;
+import com.oracle.truffle.r.ffi.impl.nodes.AsLogicalNode;
+import com.oracle.truffle.r.ffi.impl.nodes.AsRealNode;
+import com.oracle.truffle.r.ffi.impl.nodes.CoerceVectorNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADDRNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADRNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CARNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDRNode;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
+import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -60,14 +72,19 @@ public interface StdUpCallsRFFI {
 
     RStringVector Rf_ScalarString(Object value);
 
+    @RFFIUpCallNode(AsIntegerNode.class)
     int Rf_asInteger(Object x);
 
+    @RFFIUpCallNode(AsRealNode.class)
     double Rf_asReal(Object x);
 
+    @RFFIUpCallNode(AsLogicalNode.class)
     int Rf_asLogical(Object x);
 
+    @RFFIUpCallNode(AsCharNode.class)
     Object Rf_asChar(Object x);
 
+    @RFFIUpCallNode(CoerceVectorNode.class)
     Object Rf_coerceVector(Object x, int mode);
 
     Object Rf_mkCharLenCE(@RFFICstring(convert = false) Object bytes, int len, int encoding);
@@ -89,6 +106,7 @@ public interface StdUpCallsRFFI {
 
     Object Rf_findVarInFrame3(Object envArg, Object symbolArg, int doGet);
 
+    @RFFIUpCallNode(ATTRIB.class)
     Object ATTRIB(Object obj);
 
     Object Rf_getAttrib(Object obj, Object name);
@@ -127,6 +145,7 @@ public interface StdUpCallsRFFI {
 
     int Rf_ncols(Object x);
 
+    @RFFIUpCallNode(LENGTHNode.class)
     int LENGTH(Object x);
 
     int /* void */ SET_STRING_ELT(Object x, long i, Object v);
@@ -163,12 +182,16 @@ public interface StdUpCallsRFFI {
 
     Object TAG(Object e);
 
+    @RFFIUpCallNode(CARNode.class)
     Object CAR(Object e);
 
+    @RFFIUpCallNode(CDRNode.class)
     Object CDR(Object e);
 
+    @RFFIUpCallNode(CADRNode.class)
     Object CADR(Object e);
 
+    @RFFIUpCallNode(CADDRNode.class)
     Object CADDR(Object e);
 
     Object CDDR(Object e);

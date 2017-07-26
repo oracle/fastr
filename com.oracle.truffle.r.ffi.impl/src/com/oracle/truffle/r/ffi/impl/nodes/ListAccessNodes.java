@@ -28,6 +28,11 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADDRNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADRNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CARNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDDRNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDRNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -83,6 +88,10 @@ public final class ListAccessNodes {
         protected Object car(@SuppressWarnings("unused") Object obj) {
             throw RInternalError.unimplemented("CAR only works on pair lists, language objects, argument lists, and symbols");
         }
+
+        public static CARNode create() {
+            return CARNodeGen.create();
+        }
     }
 
     @TypeSystemReference(RTypes.class)
@@ -123,7 +132,10 @@ public final class ListAccessNodes {
         @Fallback
         protected Object cdr(@SuppressWarnings("unused") Object obj) {
             throw RInternalError.unimplemented("CDR only works on pair lists, language objects, and argument lists");
+        }
 
+        public static CDRNode create() {
+            return CDRNodeGen.create();
         }
     }
 
@@ -143,6 +155,10 @@ public final class ListAccessNodes {
         protected Object cadr(@SuppressWarnings("unused") Object obj) {
             throw RInternalError.unimplemented("CADR only works on pair lists and language objects");
         }
+
+        public static CADRNode create() {
+            return CADRNodeGen.create();
+        }
     }
 
     @TypeSystemReference(RTypes.class)
@@ -160,6 +176,10 @@ public final class ListAccessNodes {
         @Fallback
         protected Object caddr(@SuppressWarnings("unused") Object obj) {
             throw RInternalError.unimplemented("CADDR only works on pair lists and language objects");
+        }
+
+        public static CADDRNode create() {
+            return CADDRNodeGen.create();
         }
     }
 
@@ -179,7 +199,10 @@ public final class ListAccessNodes {
         @Fallback
         protected Object cddr(@SuppressWarnings("unused") Object obj) {
             throw RInternalError.unimplemented("CDDR only works on pair lists and language objects");
+        }
 
+        public static CDDRNode create() {
+            return CDDRNodeGen.create();
         }
     }
 }

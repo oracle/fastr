@@ -25,7 +25,7 @@ package com.oracle.truffle.r.ffi.impl.interop.pkginit;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.common.UpCallUnwrap;
+import com.oracle.truffle.r.ffi.impl.upcalls.UpCallUnwrap;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 
 @MessageResolution(receiverType = SetDotSymbolValuesCall.class)
