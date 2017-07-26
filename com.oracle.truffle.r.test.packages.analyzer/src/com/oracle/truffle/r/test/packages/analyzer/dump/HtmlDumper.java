@@ -26,6 +26,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -94,47 +95,41 @@ public class HtmlDumper extends AbstractDumper {
         List<Class<? extends Problem>> collect = groupByType.keySet().stream().sorted((a, b) -> Integer.compare(groupByType.get(b).size(), groupByType.get(a).size())).collect(Collectors.toList());
         pw.println("<table>");
         for (Class<? extends Problem> class1 : collect) {
-            try {
-                Path dumpProblemClass = dumpProblemClass(class1, groupByType);
-                pw.println("<tr>");
-                pw.print("<td><a href=\"");
-                pw.print(dumpProblemClass.toUri().toURL().toString());
-                pw.print("\">");
-                pw.print(class1.getSimpleName());
-                pw.print("</a></td>");
-                pw.print("<td>");
-                pw.print(groupByType.get(class1).size());
-                pw.print("</td>");
-                pw.println("</tr>");
-            } catch (MalformedURLException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            String problemClassFileName = dumpProblemClass(class1, groupByType);
+            pw.println("<tr>");
+            pw.print("<td><a href=\"");
+            pw.print(problemClassFileName);
+            pw.print("\">");
+            pw.print(class1.getSimpleName());
+            pw.print("</a></td>");
+            pw.print("<td>");
+            pw.print(groupByType.get(class1).size());
+            pw.print("</td>");
+            pw.println("</tr>");
         }
         pw.println("</table>");
     }
 
-    private Path dumpProblemClass(Class<? extends Problem> class1,
+    private String dumpProblemClass(Class<? extends Problem> class1,
                     Map<Class<? extends Problem>, List<Problem>> groupByType) {
 
-        Path problemClassFile = destDir.resolve(class1.getName() + ".html");
+        Path problemClassFile = destDir.resolve(class1.getSimpleName() + ".html");
         try (BufferedWriter bw = Files.newBufferedWriter(problemClassFile, StandardOpenOption.CREATE,
                         StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
             PrintWriter pw = new PrintWriter(bw);
-            PrintWriter writer = new PrintWriter(bw);
 
-            writer.println(
+            pw.println(
                             "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
-            writer.println("<html xmlns=\"http://www.w3.org/1999/xhtml\"><head>");
-            writeTitle(writer, class1.getName());
-            writer.println("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n</head><body>");
+            pw.println("<html xmlns=\"http://www.w3.org/1999/xhtml\"><head>");
+            writeTitle(pw, class1.getName());
+            pw.println("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n</head><body>");
 
             pw.println("<table border=\"1\">");
             for (Problem p : groupByType.get(class1)) {
                 pw.println("<tr>");
                 pw.print("<td><a href=\"");
                 Location loc = p.getLocation();
-                pw.print(loc.file.toUri().toURL().toString());
+                pw.print(loc.file.toUri().toURL());
                 pw.print("#L");
                 pw.print(loc.lineNr);
                 pw.print("\">");
@@ -150,9 +145,9 @@ public class HtmlDumper extends AbstractDumper {
             }
             pw.println("</table>");
 
-            writer.println("</body>");
-            writer.println("</html>");
-            return problemClassFile;
+            pw.println("</body>");
+            pw.println("</html>");
+            return problemClassFile.getFileName().toString();
         } catch (IOException e) {
             e.printStackTrace();
         }
