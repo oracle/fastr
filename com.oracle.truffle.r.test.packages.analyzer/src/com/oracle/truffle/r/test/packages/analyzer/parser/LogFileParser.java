@@ -102,9 +102,13 @@ public class LogFileParser {
         return parseStatus(trim(curLine.text).substring((getPkgName() + ": ").length()));
     }
 
+    private boolean isEOF(Line l) {
+        return l.text == null;
+    }
+
     void expectEOF() throws IOException {
         consumeLine();
-        if (curLine.text != null) {
+        if (!isEOF(curLine)) {
             throw new LogFileParseException("Expected end of file but was " + curLine.text);
         }
     }
@@ -213,8 +217,12 @@ public class LogFileParser {
                     List<DiffChunk> diffResult = new DiffParser(this).parseDiff();
                     testing.problems.addAll(applyTestResultDetectors(diffResult));
                     diffResult.stream().forEach(chunk -> {
-                        testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getLeftFile(), chunk.getLeftStartLine(), chunk.getLeft()));
-                        testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getRightFile(), chunk.getRightStartLine(), chunk.getRight()));
+                        if (!chunk.getLeft().isEmpty()) {
+                            testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getLeftFile(), chunk.getLeftStartLine(), chunk.getLeft()));
+                        }
+                        if (!chunk.getRight().isEmpty()) {
+                            testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getRightFile(), chunk.getRightStartLine(), chunk.getRight()));
+                        }
                     });
                 }
 
@@ -339,7 +347,7 @@ public class LogFileParser {
      */
     private List<Line> collectBody(Token endSuggestsInstall) throws IOException {
         List<Line> lines = new ArrayList<>();
-        while (!laMatches(endSuggestsInstall)) {
+        while (!laMatches(endSuggestsInstall) && !isEOF(la)) {
             consumeLine();
             lines.add(curLine);
         }
@@ -348,7 +356,7 @@ public class LogFileParser {
 
     private List<Line> collectBody(Token... endSuggestsInstall) throws IOException {
         List<Line> lines = new ArrayList<>();
-        while (!startsWithOneOf(endSuggestsInstall)) {
+        while (!startsWithOneOf(endSuggestsInstall) && !isEOF(la)) {
             consumeLine();
             lines.add(curLine);
         }
@@ -369,7 +377,7 @@ public class LogFileParser {
     }
 
     boolean laMatches(String prefix) {
-        return trim(la.text).startsWith(prefix);
+        return la.text != null && trim(la.text).startsWith(prefix);
     }
 
     void expect(Token expected) throws IOException {
@@ -378,8 +386,8 @@ public class LogFileParser {
 
     void expect(String linePrefix) throws IOException {
         consumeLine();
-        if (!trim(curLine.text).startsWith(linePrefix)) {
-            throw new LogFileParseException("Unexpected line " + (curLine.lineNr + 1) + " (expected \"" + linePrefix + "\" but was \"" + curLine.text + "\"");
+        if (isEOF(curLine) || !trim(curLine.text).startsWith(linePrefix)) {
+            throw new LogFileParseException("Unexpected line " + (curLine.lineNr + 1) + " (expected \"" + linePrefix + "\" but was \"" + (isEOF(curLine) ? "<EOF>" : curLine.text) + "\"");
         }
     }
 
@@ -387,7 +395,7 @@ public class LogFileParser {
         do {
             curLine = la;
             la = new Line(lineNr++, reader.readLine());
-        } while (curLine != null && curLine.isEmpty());
+        } while (curLine != null && curLine.text != null && curLine.isEmpty());
     }
 
     LogFile getLogFile() {
