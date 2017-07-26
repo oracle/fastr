@@ -57,11 +57,7 @@ all: Makefile $(GNUR_HOME) iconv config build
 
 $(GNUR_HOME): 
 	tar xf $(TOPDIR)/../libdownloads/R-$(R_VERSION).tar.gz
-# Solaris doesn't need this and ed can't handle the size of the configure file!
-ifneq ($(OSNAME), SunOS)
-	ed $(GNUR_HOME)/configure < edconfigure # to fix the zlib version check (fixed in GNUR in the meantime)
-endif
-
+	(cd $(GNUR_HOME) && patch < $(TOPDIR)/gnur/configure.patch) # to fix the zlib version check (fixed in GNUR in the meantime)
 
 # After this platform check, GNUR_CONFIG_FLAGS must be set
 ifeq ($(OSNAME), SunOS)
