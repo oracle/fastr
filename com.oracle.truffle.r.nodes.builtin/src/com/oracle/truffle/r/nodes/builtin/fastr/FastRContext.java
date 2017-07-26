@@ -34,6 +34,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -48,7 +49,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.ContextInfo;
+import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.EvalThread;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
@@ -100,7 +101,7 @@ public class FastRContext {
         if (contextKind == ContextKind.SHARE_ALL && EvalThread.threadCnt.get() == 0) {
             RContext current = RContext.getInstance();
             if (EvalThread.threadCnt.get() == 0 && (current.isInitial() || current.getKind() == ContextKind.SHARE_PARENT_RW)) {
-                ContextInfo.resetMultiSlotIndexGenerator();
+                ChildContextInfo.resetMultiSlotIndexGenerator();
             } else {
                 throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Shared contexts can be created only if no other child contexts exist");
             }
@@ -140,8 +141,12 @@ public class FastRContext {
             int[] data = new int[length];
             int[] multiSlotIndices = new int[length];
             for (int i = 0; i < length; i++) {
-                ContextInfo info = createContextInfo(contextKind);
-                threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
+                ChildContextInfo info = createContextInfo(contextKind);
+                if (FastROptions.SpawnUsesPloyglot.getBooleanValue()) {
+                    threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL), true);
+                } else {
+                    threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
+                }
                 data[i] = info.getId();
                 multiSlotIndices[i] = info.getMultiSlotInd();
             }
@@ -234,19 +239,15 @@ public class FastRContext {
             int length = exprs.getLength();
             Object[] results = new Object[length];
             if (length == 1) {
-                ContextInfo info = createContextInfo(contextKind);
-                PolyglotEngine vm = info.createVM();
-                try {
-                    results[0] = EvalThread.run(vm, info, RSource.fromTextInternalInvisible(exprs.getDataAt(0), RSource.Internal.CONTEXT_EVAL));
-                } finally {
-                    vm.dispose();
-                }
+                ChildContextInfo info = createContextInfo(contextKind);
+                TruffleContext truffleContext = info.createTruffleContext();
+                results[0] = EvalThread.run(truffleContext, info, RSource.fromTextInternalInvisible(exprs.getDataAt(0), RSource.Internal.CONTEXT_EVAL));
             } else {
                 // separate threads that run in parallel; invoking thread waits for completion
                 EvalThread[] threads = new EvalThread[length];
                 int[] multiSlotIndices = new int[length];
                 for (int i = 0; i < length; i++) {
-                    ContextInfo info = createContextInfo(contextKind);
+                    ChildContextInfo info = createContextInfo(contextKind);
                     threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
                     multiSlotIndices[i] = info.getMultiSlotInd();
                 }
@@ -291,7 +292,7 @@ public class FastRContext {
         @Specialization
         @TruffleBoundary
         protected Object r(RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
-            Object rc = RContext.getRRuntimeASTAccess().rcommandMain(args.materialize().getDataCopy(), env.materialize().getDataCopy(), intern);
+            Object rc = RContext.getRRuntimeASTAccess().rcommandMain(prependCommand(args, "R"), env.materialize().getDataCopy(), intern);
             return rc;
         }
 
@@ -327,7 +328,7 @@ public class FastRContext {
         @Specialization
         @TruffleBoundary
         protected Object rscript(RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
-            return RContext.getRRuntimeASTAccess().rscriptMain(args.materialize().getDataCopy(), env.materialize().getDataCopy(), intern);
+            return RContext.getRRuntimeASTAccess().rscriptMain(prependCommand(args, "Rscript"), env.materialize().getDataCopy(), intern);
         }
 
         @Specialization
@@ -337,10 +338,18 @@ public class FastRContext {
         }
     }
 
-    private static ContextInfo createContextInfo(RContext.ContextKind contextKind) {
+    private static String[] prependCommand(RAbstractStringVector argsVec, String command) {
+        String[] argsVecArgs = argsVec.materialize().getDataCopy();
+        String[] result = new String[argsVecArgs.length + 1];
+        result[0] = command;
+        System.arraycopy(argsVecArgs, 0, result, 1, argsVecArgs.length);
+        return result;
+    }
+
+    private static ChildContextInfo createContextInfo(RContext.ContextKind contextKind) {
         RContext context = RContext.getInstance();
         ConsoleIO console = context.getConsole();
-        return ContextInfo.createNoRestore(Client.RSCRIPT, null, contextKind, context, console.getStdin(), console.getStdout(), console.getStderr());
+        return ChildContextInfo.createNoRestore(Client.RSCRIPT, null, contextKind, context, console.getStdin(), console.getStdout(), console.getStderr());
     }
 
     @RBuiltin(name = ".fastr.channel.create", kind = PRIMITIVE, parameterNames = {"key"}, behavior = COMPLEX)

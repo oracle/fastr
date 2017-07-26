@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
 import com.oracle.truffle.r.runtime.REnvVars;
-import com.oracle.truffle.r.runtime.context.ContextInfo;
+import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.test.TestBase;
 
 /**
@@ -93,7 +93,7 @@ public class GnuROneShotRSession implements RSession {
     }
 
     @Override
-    public String eval(TestBase testBase, String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable {
+    public String eval(TestBase testBase, String expression, ChildContextInfo contextInfo, boolean longTimeout) throws Throwable {
         if (expression.contains("library(") && !TestBase.generatingExpected()) {
             System.out.println("==============================================");
             System.out.println("LIBRARY LOADING WHEN NOT GENERATING EXPECTED OUTPUT");

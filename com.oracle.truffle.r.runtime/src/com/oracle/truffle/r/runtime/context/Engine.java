@@ -237,4 +237,10 @@ public interface Engine {
      * Essentially this is equivalent to {@link #evalFunction} using the {@code "print"} function.
      */
     void printResult(Object value);
+
+    /**
+     * Return the "global" frame for this {@link Engine}, aka {@code globalEnv}.
+     *
+     */
+    MaterializedFrame getGlobalFrame();
 }

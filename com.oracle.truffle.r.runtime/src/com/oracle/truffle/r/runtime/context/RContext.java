@@ -52,6 +52,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
@@ -106,7 +107,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  *
  * Contexts are created during construction of the {@link PolyglotEngine} instance. In case a
  * context needs to be configured, the PolyglotEngine needs to be created via the
- * {@code RContextFactory} class, which takes a {@link ContextInfo} object for configuration.
+ * {@code RContextFactory} class, which takes a {@link ChildContextInfo} object for configuration.
  *
  * The context provides a so-called {@link Engine} (accessed via {@link #getEngine()}), which
  * provides basic parsing and execution functionality .
@@ -242,7 +243,9 @@ public final class RContext implements RTruffleObject {
     private final RContext parentContext;
     private final int id;
     private final int multiSlotIndex;
-    private PolyglotEngine polyglotEngine;
+    private TruffleContext truffleContext;
+    private PolyglotEngine vm;
+
     public Executor executor;
 
     private final InputStream stdin;
@@ -379,11 +382,11 @@ public final class RContext implements RTruffleObject {
             args = env.getApplicationArguments();
         }
 
-        Object initialInfo = env.getConfig().get(ContextInfo.CONFIG_KEY);
+        Object initialInfo = env.getConfig().get(ChildContextInfo.CONFIG_KEY);
         if (initialInfo == null) {
             /*
-             * This implies that FastR is being invoked initially from another Truffle language and
-             * not via RCommand/RscriptCommand. In this case, we also assume that no previously
+             * This implies that FastR is being invoked initially from another Truffle language or
+             * via RCommand/RscriptCommand. TODO How to deciden if session state is to be restored
              * stored session should be restored.
              */
             this.cmdOptions = RCmdOptions.parseArguments(Client.R, args, true);
@@ -392,12 +395,13 @@ public final class RContext implements RTruffleObject {
             this.contextKind = ContextKind.SHARE_NOTHING;
             this.systemTimeZone = TimeZone.getDefault();
             this.parentContext = null;
-            this.id = ContextInfo.contextInfoIds.incrementAndGet();
+            this.id = ChildContextInfo.contextInfoIds.incrementAndGet();
             this.multiSlotIndex = 0;
-            this.polyglotEngine = null;
+            this.truffleContext = null; // TODO
             this.executor = null;
         } else {
-            ContextInfo info = (ContextInfo) initialInfo;
+            // child spawned explicitly by R
+            ChildContextInfo info = (ChildContextInfo) initialInfo;
             this.cmdOptions = RCmdOptions.parseArguments(Client.R, args, true);
             this.startParameters = info.getStartParams();
             this.environment = info.getEnv();
@@ -406,7 +410,7 @@ public final class RContext implements RTruffleObject {
             this.parentContext = info.getParent();
             this.id = info.getId();
             this.multiSlotIndex = info.getMultiSlotInd();
-            this.polyglotEngine = info.getVM();
+            this.truffleContext = info.getTruffleContext();
             this.executor = info.executor;
         }
 
@@ -752,8 +756,12 @@ public final class RContext implements RTruffleObject {
         return stateRFFI;
     }
 
+    public TruffleContext getTruffleContext() {
+        return truffleContext;
+    }
+
     public PolyglotEngine getVM() {
-        return polyglotEngine;
+        return vm;
     }
 
     public boolean isInitial() {

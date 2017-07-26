@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.test.generate;
 
-import com.oracle.truffle.r.runtime.context.ContextInfo;
+import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.test.TestBase;
 
 /**
@@ -42,7 +42,7 @@ public interface RSession {
      * This result will always be non-null or an exception will be thrown in, say, a timeout
      * occurring.
      */
-    String eval(TestBase testClass, String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable;
+    String eval(TestBase testClass, String expression, ChildContextInfo contextInfo, boolean longTimeout) throws Throwable;
 
     /**
      * A name to identify the session.

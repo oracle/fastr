@@ -235,6 +235,11 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
+    public MaterializedFrame getGlobalFrame() {
+        return globalFrame;
+    }
+
+    @Override
     public long elapsedTimeInNanos() {
         return System.nanoTime() - startTime;
     }

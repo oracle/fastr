@@ -30,6 +30,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
 import com.oracle.truffle.r.launcher.RCmdOptions;
@@ -54,12 +55,16 @@ final class ConsoleHandlerOutputStream extends OutputStream {
 }
 
 /**
- * Represents custom initialization state for an R instance.
+ * Represents custom initialization state for a "spawned" R instance, that is one created by, e.g.,
+ * {@code .fastr.context.eval} and test contexts. In particular there is no {@link ChildContextInfo}
+ * for the initial context, whether created by the {@code R/RScript} command or whether invoked from
+ * another language.
  *
- * Use {@link #createVM()} to apply this information to a newly-built {@link PolyglotEngine}
- * instance (it will be stored in the "fastrContextInfo" global symbol).
+ * There are some legacy functions that still use {@link PolyglotEngine} but the new way is to use
+ * {@link TruffleContext}.
+ *
  */
-public final class ContextInfo {
+public final class ChildContextInfo {
     static final String CONFIG_KEY = "fastrContextInfo";
 
     static final AtomicInteger contextInfoIds = new AtomicInteger();
@@ -80,10 +85,11 @@ public final class ContextInfo {
     private final OutputStream stderr;
     private final int id;
     private final int multiSlotInd;
+    private TruffleContext truffleContext;
     private PolyglotEngine vm;
     public Executor executor;
 
-    private ContextInfo(RStartParams startParams, String[] env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr, TimeZone systemTimeZone, int id,
+    private ChildContextInfo(RStartParams startParams, String[] env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr, TimeZone systemTimeZone, int id,
                     int multiSlotInd) {
         this.startParams = startParams;
         this.env = env;
@@ -109,6 +115,16 @@ public final class ContextInfo {
         multiSlotInds.set(0); // to account for primordial context
     }
 
+    public TruffleContext createTruffleContext() {
+        this.truffleContext = RContext.getInstance().getEnv().newContextBuilder().config("parentContext", parent.getVM()).config(CONFIG_KEY, this).build();
+        return this.truffleContext;
+    }
+
+    public TruffleContext createVM(ChildContextInfo childContextInfo) {
+        this.truffleContext = RContext.getInstance().getEnv().newContextBuilder().config("parentContext", parent.getVM()).config(CONFIG_KEY, this).build();
+        return this.truffleContext;
+    }
+
     public PolyglotEngine createVM() {
         Builder builder = PolyglotEngine.newBuilder();
         if (startParams.isInteractive()) {
@@ -129,13 +145,14 @@ public final class ContextInfo {
     /**
      * Create a context configuration object.
      *
-     * @param startParams the start parameters passed this R session
+     * @param startParams the start parameters passed this spawned R session
      * @param kind defines the degree to which this context shares base and package environments
      *            with its parent
      * @param parent if non-null {@code null}, the parent creating the context
      * @param systemTimeZone the system's time zone
      */
-    public static ContextInfo create(RStartParams startParams, String[] env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr, TimeZone systemTimeZone) {
+    public static ChildContextInfo create(RStartParams startParams, String[] env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr,
+                    TimeZone systemTimeZone) {
         int id = contextInfoIds.incrementAndGet();
         int multiSlotInd = multiSlotInds.get();
         if (kind == ContextKind.SHARE_ALL || kind == ContextKind.SHARE_NOTHING) {
@@ -147,10 +164,10 @@ public final class ContextInfo {
             throw RInternalError.shouldNotReachHere();
         }
         assert kind != ContextKind.SHARE_PARENT_RW || (kind == ContextKind.SHARE_PARENT_RW && parent.getKind() == ContextKind.SHARE_NOTHING && parent.getMultiSlotInd() == 0);
-        return new ContextInfo(startParams, env, kind, parent, stdin, stdout, stderr, systemTimeZone, id, kind == ContextKind.SHARE_PARENT_RW ? 0 : multiSlotInd);
+        return new ChildContextInfo(startParams, env, kind, parent, stdin, stdout, stderr, systemTimeZone, id, kind == ContextKind.SHARE_PARENT_RW ? 0 : multiSlotInd);
     }
 
-    public static ContextInfo create(RStartParams startParams, String[] env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr) {
+    public static ChildContextInfo create(RStartParams startParams, String[] env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr) {
         return create(startParams, env, kind, parent, stdin, stdout, stderr, TimeZone.getDefault());
     }
 
@@ -163,7 +180,7 @@ public final class ContextInfo {
      *            with its parent
      * @param parent if non-null {@code null}, the parent creating the context
      */
-    public static ContextInfo createNoRestore(Client client, String[] env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr) {
+    public static ChildContextInfo createNoRestore(Client client, String[] env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr) {
         RStartParams params = new RStartParams(RCmdOptions.parseArguments(client, new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
         return create(params, env, kind, parent, stdin, stdout, stderr);
     }
@@ -196,6 +213,11 @@ public final class ContextInfo {
         return multiSlotInd;
     }
 
+    public TruffleContext getTruffleContext() {
+        return truffleContext;
+    }
+
+    @Deprecated
     public PolyglotEngine getVM() {
         return vm;
     }

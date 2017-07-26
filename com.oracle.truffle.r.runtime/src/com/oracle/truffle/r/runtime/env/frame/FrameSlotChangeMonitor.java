@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.StableValue;
-import com.oracle.truffle.r.runtime.context.ContextInfo;
+import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPromise;
 
@@ -463,11 +463,11 @@ public final class FrameSlotChangeMonitor {
         private final Object[] data;
 
         public MultiSlotData(MultiSlotData prevValue) {
-            data = Arrays.copyOf(prevValue.data, ContextInfo.contextNum());
+            data = Arrays.copyOf(prevValue.data, ChildContextInfo.contextNum());
         }
 
         public MultiSlotData() {
-            data = new Object[ContextInfo.contextNum()];
+            data = new Object[ChildContextInfo.contextNum()];
         }
 
         public Object get(int ind) {

@@ -129,7 +129,11 @@ public class RCommand {
                 }
             }
             if (addArg) {
-                argsList.add(1, "--interactive");
+                if (argsList.size() == 0) {
+                    argsList.add("--interactive");
+                } else {
+                    argsList.add(1, "--interactive");
+                }
             }
         }
 
@@ -145,7 +149,7 @@ public class RCommand {
             return 0;
         }
         RCmdOptions options = RCmdOptions.parseArguments(Client.R, argsList.toArray(new String[argsList.size()]), false);
-        assert env == null : "re-enable setting environments";
+        assert env == null || env.length == 0 : "re-enable setting environments";
         ConsoleHandler consoleHandler = createConsoleHandler(options, false, inStream, outStream);
         try (Context context = Context.newBuilder().options(polyglotOptions).arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
             consoleHandler.setContext(context);

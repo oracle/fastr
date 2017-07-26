@@ -34,7 +34,7 @@ import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource.Internal;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.ContextInfo;
+import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
@@ -54,12 +54,13 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * </pre>
  *
  * {@code Rf_initialize_R} invokes {@link #initializeR(String[])}. This creates an
- * {@link RStartParams} object in {@code embedded} mode that is recorded in the {@link ContextInfo}
- * object which is itself stored as a global symbol in the associated {@link PolyglotEngine}
- * instance. The FastR {@link PolyglotEngine} is then partially initialized. The call to
- * {@code R_SetParams} will adjust the values stored in the {@link RStartParams} object and then
- * {@code Rf_mainloop}, which calls {@link #setupRmainloop()} and then {@link #runRmainloop()},
- * which will complete the FastR initialization and enter the read-eval-print loop.
+ * {@link RStartParams} object in {@code embedded} mode that is recorded in the
+ * {@link ChildContextInfo} object which is itself stored as a global symbol in the associated
+ * {@link PolyglotEngine} instance. The FastR {@link PolyglotEngine} is then partially initialized.
+ * The call to {@code R_SetParams} will adjust the values stored in the {@link RStartParams} object
+ * and then {@code Rf_mainloop}, which calls {@link #setupRmainloop()} and then
+ * {@link #runRmainloop()}, which will complete the FastR initialization and enter the
+ * read-eval-print loop.
  */
 public class REmbedded {
 
