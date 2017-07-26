@@ -68,16 +68,32 @@ public class PTAMain {
         OptionsParser parser = new OptionsParser();
         String[] remainingArgs = parser.parseOptions(args);
         if (remainingArgs.length != 1) {
+            System.err.println("Unknown arguments: " + Arrays.toString(remainingArgs));
             printHelp();
             System.exit(1);
         }
-        ftw(Paths.get(remainingArgs[0]), parser.get("--glob", "*"));
+
+        Path outDir = Paths.get(parser.get("--outDir", "html"));
+        ftw(Paths.get(remainingArgs[0]), outDir, parser.get("--glob", "*"));
     }
 
     private static final String LF = System.lineSeparator();
 
-    private static void ftw(Path root, String glob) throws IOException {
+    private static void ftw(Path root, Path outDir, String glob) throws IOException {
         // TODO FS checking
+
+        HtmlDumper htmlDumper = new HtmlDumper(outDir);
+
+        // fail early
+        try {
+            if (!htmlDumper.createAndCheckOutDir()) {
+                LOGGER.severe("Cannot write to output directory: " + outDir);
+                System.exit(1);
+            }
+        } catch (IOException e) {
+            LOGGER.severe(String.format("Cannot create output directory: %s ", e.getMessage()));
+            System.exit(1);
+        }
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(root, glob)) {
             Collection<RPackage> pkgs = new LinkedList<>();
@@ -88,7 +104,7 @@ public class PTAMain {
                 }
             }
             Collection<Problem> allProblems = collectAllProblems(pkgs);
-            new HtmlDumper(Paths.get("html")).dump(allProblems);
+            htmlDumper.dump(allProblems);
         }
     }
 

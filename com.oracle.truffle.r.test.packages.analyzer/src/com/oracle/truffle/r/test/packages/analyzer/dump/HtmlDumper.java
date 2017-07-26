@@ -47,13 +47,21 @@ public class HtmlDumper extends AbstractDumper {
         this.destDir = Objects.requireNonNull(destDir);
     }
 
+    /**
+     * Creates the output directory if it does not exists and checks if the directory is writable.
+     * This method may throw an {@link IOException} if it cannot create the directory.
+     */
+    public boolean createAndCheckOutDir() throws IOException {
+        if (!Files.exists(destDir)) {
+            Files.createDirectories(destDir);
+        }
+        return Files.isWritable(destDir);
+    }
+
     @Override
     public void dump(Collection<Problem> problems) {
-
         try {
-            if (!Files.exists(destDir)) {
-                Files.createDirectory(destDir);
-            }
+            createAndCheckOutDir();
             dumpIndexFile(problems);
         } catch (IOException e) {
             e.printStackTrace();
@@ -63,8 +71,7 @@ public class HtmlDumper extends AbstractDumper {
     private void dumpIndexFile(Collection<Problem> problems) {
         Path indexFile = destDir.resolve("index.html");
 
-        try (BufferedWriter bw = Files.newBufferedWriter(indexFile, StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+        try (BufferedWriter bw = Files.newBufferedWriter(indexFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
             PrintWriter writer = new PrintWriter(bw);
 
             writer.println(
