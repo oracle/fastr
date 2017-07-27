@@ -27,12 +27,24 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.oracle.truffle.r.test.packages.analyzer.detectors.DiffDetector;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.InstallationProblemDetector;
@@ -63,23 +75,96 @@ import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParser.LogFile;
  */
 public class PTAMain {
     private static final Logger LOGGER = Logger.getLogger(PTAMain.class.getName());
+    private static final String LOG_FILE_NAME = "pta.log";
 
     public static void main(String[] args) throws IOException {
         OptionsParser parser = new OptionsParser();
+        parser.registerOption("help");
+        parser.registerOption("outDir", "html");
+        parser.registerOption("glob", "*");
+        parser.registerOption("since", "last2weeks");
+        parser.registerOption("console");
+
         String[] remainingArgs = parser.parseOptions(args);
-        if (remainingArgs.length != 1) {
-            System.err.println("Unknown arguments: " + Arrays.toString(remainingArgs));
-            printHelp();
-            System.exit(1);
+        if (parser.has("help")) {
+            printHelpAndExit();
         }
 
-        Path outDir = Paths.get(parser.get("--outDir", "html"));
-        ftw(Paths.get(remainingArgs[0]), outDir, parser.get("--glob", "*"));
+        if (remainingArgs.length != 1) {
+            System.err.println("Unknown arguments: " + Arrays.toString(remainingArgs));
+            printHelpAndExit();
+        }
+
+        configureLogger(parser);
+
+        Date sinceDate = parseSinceDate(parser);
+        LOGGER.info("Considering only test runs since: " + sinceDate);
+
+        Path outDir = Paths.get(parser.get("outDir"));
+        ftw(Paths.get(remainingArgs[0]), outDir, sinceDate, parser.get("glob"));
+    }
+
+    private static final Pattern REL_SINCE_PATTERN = Pattern.compile("last(\\d+)(days?|weeks?|months?)");
+
+    private static Date parseSinceDate(OptionsParser parser) {
+        String sinceDateStr = parser.get("since");
+
+        Matcher matcher = REL_SINCE_PATTERN.matcher(sinceDateStr);
+
+        if (matcher.matches()) {
+            int amount = Integer.parseInt(matcher.group(1));
+            String unit = matcher.group(2);
+
+            GregorianCalendar cal = new GregorianCalendar();
+            switch (unit) {
+                case "day":
+                case "days":
+                    cal.add(Calendar.DATE, -amount);
+                    break;
+                case "week":
+                case "weeks":
+                    cal.add(Calendar.WEEK_OF_YEAR, -amount);
+                    break;
+                case "month":
+                case "months":
+                    cal.add(Calendar.MONTH, -amount);
+                    break;
+                default:
+                    throw new RuntimeException("Invalid unit: " + unit);
+            }
+
+            return cal.getTime();
+        }
+
+        try {
+            return new SimpleDateFormat("MM-dd-yyyy").parse(sinceDateStr);
+        } catch (ParseException e) {
+            LOGGER.severe("Invalid date: " + e.getMessage());
+            System.exit(1);
+        }
+        // should never be reached
+        return null;
+    }
+
+    private static void configureLogger(OptionsParser parser) throws IOException {
+        LogManager.getLogManager().reset();
+        Logger rootLogger = Logger.getLogger("");
+        ConsoleHandler consoleHandler = new ConsoleHandler();
+        if (parser.has("console")) {
+            consoleHandler.setLevel(Level.INFO);
+        } else {
+            // set log level of console handlers to SEVERE
+            consoleHandler.setLevel(Level.SEVERE);
+            FileHandler fileHandler = new FileHandler(LOG_FILE_NAME);
+            fileHandler.setLevel(Level.INFO);
+            rootLogger.addHandler(fileHandler);
+        }
+        rootLogger.addHandler(consoleHandler);
     }
 
     private static final String LF = System.lineSeparator();
 
-    private static void ftw(Path root, Path outDir, String glob) throws IOException {
+    private static void ftw(Path root, Path outDir, Date sinceDate, String glob) throws IOException {
         // TODO FS checking
 
         HtmlDumper htmlDumper = new HtmlDumper(outDir);
@@ -99,7 +184,7 @@ public class PTAMain {
             Collection<RPackage> pkgs = new LinkedList<>();
             for (Path p : stream) {
                 if (Files.isDirectory(p)) {
-                    Collection<RPackage> pkgVersions = visitPackageRoot(p);
+                    Collection<RPackage> pkgVersions = visitPackageRoot(p, sinceDate);
                     pkgs.addAll(pkgVersions);
                 }
             }
@@ -118,21 +203,21 @@ public class PTAMain {
         return problems;
     }
 
-    private static Collection<RPackage> visitPackageRoot(Path pkgRoot) throws IOException {
+    private static Collection<RPackage> visitPackageRoot(Path pkgRoot, Date sinceDate) throws IOException {
         String pkgName = pkgRoot.getFileName().toString();
 
         Collection<RPackage> pkgs = new LinkedList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(pkgRoot)) {
             for (Path p : stream) {
                 if (Files.isDirectory(p)) {
-                    pkgs.add(visitPackageVersion(p, pkgName));
+                    pkgs.add(visitPackageVersion(p, pkgName, sinceDate));
                 }
             }
         }
         return pkgs;
     }
 
-    private static RPackage visitPackageVersion(Path pkgVersionDir, String pkgName) {
+    private static RPackage visitPackageVersion(Path pkgVersionDir, String pkgName, Date sinceDate) {
         String pkgVersion = pkgVersionDir.getFileName().toString();
         RPackage pkg = new RPackage(pkgName, pkgVersion);
         LOGGER.info("Found package " + pkg);
@@ -141,7 +226,7 @@ public class PTAMain {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(pkgVersionDir)) {
             for (Path p : stream) {
                 if (Files.isDirectory(p)) {
-                    RPackageTestRun testRun = visitTestRun(p, pkg);
+                    RPackageTestRun testRun = visitTestRun(p, pkg, sinceDate);
                     if (testRun != null) {
                         runs.add(testRun);
                     }
@@ -155,20 +240,30 @@ public class PTAMain {
         return pkg;
     }
 
-    private static RPackageTestRun visitTestRun(Path testRunDir, RPackage pkg) {
+    private static RPackageTestRun visitTestRun(Path testRunDir, RPackage pkg, Date sinceDate) {
         int testRun = Integer.parseInt(testRunDir.getFileName().toString());
         LOGGER.info("Visiting test run " + testRun + " of package " + pkg);
         try {
             RPackageTestRun pkgTestRun = new RPackageTestRun(pkg, testRun);
             Path logFile = testRunDir.resolve(pkg.getName() + ".log");
-            Collection<Problem> problems = parseLogFile(logFile, pkgTestRun);
-            pkgTestRun.setProblems(problems);
-            return pkgTestRun;
+            FileTime lastModifiedTime = Files.getLastModifiedTime(logFile);
+            if (isNewerThan(lastModifiedTime, sinceDate)) {
+                Collection<Problem> problems = parseLogFile(logFile, pkgTestRun);
+                pkgTestRun.setProblems(problems);
+                return pkgTestRun;
+            } else {
+                LOGGER.info(String.format("Skipping package test run %s because it is too old (%s must be newer than %s)", pkgTestRun, lastModifiedTime, sinceDate));
+            }
         } catch (IOException | LogFileParseException e) {
             LOGGER.severe(String.format("Error while parsing test run %d of package \"%s-%s\": %s", testRun,
                             pkg.getName(), pkg.getVersion(), e.getMessage()));
         }
         return null;
+    }
+
+    private static boolean isNewerThan(FileTime lastModifiedTime, Date sinceDate) {
+        Date lastModDate = new Date(lastModifiedTime.toMillis());
+        return sinceDate.compareTo(lastModDate) <= 0;
     }
 
     private static Collection<Problem> parseLogFile(Path logFile, RPackageTestRun pkgTestRun) throws IOException {
@@ -191,36 +286,53 @@ public class PTAMain {
         return problems;
     }
 
-    private static void printHelp() {
+    private static void printHelpAndExit() {
         StringBuilder sb = new StringBuilder();
         sb.append("USAGE: ").append(PTAMain.class.getSimpleName()).append(" [OPTIONS] ROOT").append(LF);
         sb.append(LF);
         sb.append("OPTIONS:").append(LF);
-        sb.append(
-                        "    --since MM-dd-YYYY\tOnly consider package tests since the provided date (default: no restriction).").append(LF);
+        sb.append("    --help\t\tShow this help page").append(LF);
+        sb.append("    --since SPEC\tOnly consider package tests satisfying the specified age (default: \"last2weeks\").").append(LF);
+        sb.append("    \t\t\tSPEC is either an absolute date in format MM-dd-yyyy or relative in format:").append(LF);
+        sb.append("    \t\t\tlast<n>(days|weeks|months).").append(LF);
         sb.append("    --glob GLOB\t\tGlob-style directory filter for packages to consider (default: \"*\").").append(LF);
         sb.append("    --outDir PATH\tPath to directory for HTML output (default: \"html\").").append(LF);
+        sb.append("    --console\t\tPrint output to console (by default, only errors are printed).").append(LF);
         System.out.println(sb.toString());
+        System.exit(1);
     }
 
     private static class OptionsParser {
 
         private Map<String, String> options = new HashMap<>();
+        private Map<String, Option> registered = new HashMap<>();
 
         public String[] parseOptions(String[] args) {
             int i = 0;
             while (i < args.length) {
                 String key = args[i];
-                if (key.startsWith("--since") || key.startsWith("--glob") || key.startsWith("--outDir")) {
-                    String value = getOptionArg(args, i);
-                    ++i;
-                    options.put(key, value);
+                if (key.startsWith("--") && registered.containsKey(getBareName(key))) {
+                    Option option = registered.get(getBareName(key));
+                    String value = null;
+                    if (option.hasValue) {
+                        value = getOptionArg(args, i);
+                        ++i;
+                    }
+                    options.put(getBareName(key), value);
                 } else {
                     break;
                 }
                 ++i;
             }
             return Arrays.copyOfRange(args, i, args.length);
+        }
+
+        private static String getBareName(String key) {
+            if (key.startsWith("--")) {
+                return key.substring(2);
+
+            }
+            throw new RuntimeException("Invalid option name: " + key);
         }
 
         private static String getOptionArg(String[] args, int keyIndex) {
@@ -234,11 +346,33 @@ public class PTAMain {
             return options.containsKey(key);
         }
 
-        public String get(String key, String defaultValue) {
+        public String get(String key) {
             if (has(key)) {
                 return options.get(key);
             }
-            return defaultValue;
+            if (registered.containsKey(key)) {
+                return registered.get(key).defaultValue;
+            }
+            throw new RuntimeException("Unknown option: " + key);
+        }
+
+        public void registerOption(String optionName, String defaultValue) {
+            registered.put(optionName, new Option(true, defaultValue));
+        }
+
+        public void registerOption(String optionName) {
+            registered.put(optionName, new Option(false, null));
+        }
+
+        private static class Option {
+            final boolean hasValue;
+            final String defaultValue;
+
+            protected Option(boolean hasValue, String defaultValue) {
+                this.hasValue = hasValue;
+                this.defaultValue = defaultValue;
+            }
+
         }
     }
 }
