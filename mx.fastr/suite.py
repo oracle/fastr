@@ -189,6 +189,16 @@ suite = {
       "workingSets" : "FastR",
     },
 
+    "com.oracle.truffle.r.test.packages.analyzer" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "mx:JUNIT"
+      ],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "1.8",
+      "workingSets" : "FastR",
+    },
+
     "com.oracle.truffle.r.engine" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
