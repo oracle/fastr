@@ -433,8 +433,8 @@ public class DLL {
 
     public static class LoadPackageDLLNode extends Node {
         @Child private InvokeVoidCallNode invokeVoidCallNode;
-        @Child private DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
-        @Child private DLLRFFI.DLOpenNode dlOpenNode = RFFIFactory.getRFFI().getDLLRFFI().createDLOpenNode();
+        @Child private DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
+        @Child private DLLRFFI.DLOpenNode dlOpenNode = RFFIFactory.getDLLRFFI().createDLOpenNode();
 
         public static LoadPackageDLLNode create() {
             return new LoadPackageDLLNode();
@@ -459,7 +459,7 @@ public class DLL {
                 try {
                     if (invokeVoidCallNode == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        invokeVoidCallNode = insert(RFFIFactory.getRFFI().getCallRFFI().createInvokeVoidCallNode());
+                        invokeVoidCallNode = (InvokeVoidCallNode) insert((Node) RFFIFactory.getCallRFFI().createInvokeVoidCallNode());
                     }
                     invokeVoidCallNode.execute(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
                 } catch (ReturnException ex) {
@@ -503,7 +503,7 @@ public class DLL {
     }
 
     public static class UnloadNode extends Node {
-        @Child private DLLRFFI.DLCloseNode dlCloseNode = RFFIFactory.getRFFI().getDLLRFFI().createDLCloseNode();
+        @Child private DLLRFFI.DLCloseNode dlCloseNode = RFFIFactory.getDLLRFFI().createDLCloseNode();
 
         @TruffleBoundary
         public void execute(String path) throws DLLException {
@@ -644,7 +644,7 @@ public class DLL {
     }
 
     public static final class RdlsymNode extends Node {
-        @Child DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
+        @Child DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
 
         /**
          * Directly analogous to the GnuR function {@code R_dlsym}. Checks first for a

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.jni;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 /**
@@ -30,7 +31,7 @@ import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
  */
 public class JNI_Zip implements ZipRFFI {
 
-    public static class JNI_CompressNode extends ZipRFFI.CompressNode {
+    private static class JNI_CompressNode extends Node implements ZipRFFI.CompressNode {
         @Override
         @TruffleBoundary
         public int execute(byte[] dest, byte[] source) {
@@ -39,7 +40,7 @@ public class JNI_Zip implements ZipRFFI {
         }
     }
 
-    public static class JNI_UncompressNode extends ZipRFFI.UncompressNode {
+    private static class JNI_UncompressNode extends Node implements ZipRFFI.UncompressNode {
         @Override
         @TruffleBoundary
         public int execute(byte[] dest, byte[] source) {

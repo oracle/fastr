@@ -22,193 +22,164 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.java.JavaInterop;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 
 public class TruffleNFI_Lapack implements LapackRFFI {
 
-    private static class TruffleNFI_IlaverNode extends IlaverNode {
-        @Child private Node message = NFIFunction.ilaver.createMessage();
+    private static class TruffleNFI_IlaverNode extends TruffleNFI_DownCallNode implements IlaverNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.ilaver;
+        }
 
         @Override
         public void execute(int[] version) {
-            try {
-                ForeignAccess.sendExecute(message, NFIFunction.ilaver.getFunction(), JavaInterop.asTruffleObject(version));
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            call(version);
         }
     }
 
-    private static class TruffleNFI_DgeevNode extends DgeevNode {
-        @Child private Node message = NFIFunction.dgeev.createMessage();
+    private static class TruffleNFI_DgeevNode extends TruffleNFI_DownCallNode implements DgeevNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.dgeev;
+        }
 
         @Override
         public int execute(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi, double[] vl, int ldvl, double[] vr, int ldvr, double[] work, int lwork) {
-            try {
-                return (int) ForeignAccess.sendExecute(message, NFIFunction.dgeev.getFunction(), jobVL, jobVR, n, JavaInterop.asTruffleObject(a), lda,
-                                JavaInterop.asTruffleObject(wr), JavaInterop.asTruffleObject(wi), JavaInterop.asTruffleObject(vl), ldvl,
-                                JavaInterop.asTruffleObject(vr), ldvr, JavaInterop.asTruffleObject(work), lwork);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(jobVL, jobVR, n, a, lda, wr, wi, vl, ldvl, vr, ldvr, work, lwork);
         }
     }
 
-    private static class TruffleNFI_Dgeqp3Node extends Dgeqp3Node {
-        @Child private Node message = NFIFunction.dgeqp3.createMessage();
+    private static class TruffleNFI_Dgeqp3Node extends TruffleNFI_DownCallNode implements Dgeqp3Node {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.dgeqp3;
+        }
 
         @Override
         public int execute(int m, int n, double[] a, int lda, int[] jpvt, double[] tau, double[] work, int lwork) {
-            try {
-                return (int) ForeignAccess.sendExecute(message, NFIFunction.dgeqp3.getFunction(), m, n, JavaInterop.asTruffleObject(a), lda, JavaInterop.asTruffleObject(jpvt),
-                                JavaInterop.asTruffleObject(tau), JavaInterop.asTruffleObject(work), lwork);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(m, n, a, lda, jpvt, tau, work, lwork);
         }
     }
 
-    private static class TruffleNFI_DormqrNode extends DormqrNode {
-        @Child private Node message = NFIFunction.dormq.createMessage();
+    private static class TruffleNFI_DormqrNode extends TruffleNFI_DownCallNode implements DormqrNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.dormq;
+        }
 
         @Override
         public int execute(char side, char trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc, double[] work, int lwork) {
-            try {
-                return (int) ForeignAccess.sendExecute(message, NFIFunction.dormq.getFunction(), side, trans, m, n, k, JavaInterop.asTruffleObject(a), lda,
-                                JavaInterop.asTruffleObject(tau), JavaInterop.asTruffleObject(c), ldc, JavaInterop.asTruffleObject(work), lwork);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork);
         }
     }
 
-    private static class TruffleNFI_DtrtrsNode extends DtrtrsNode {
-        @Child private Node message = NFIFunction.dtrtrs.createMessage();
+    private static class TruffleNFI_DtrtrsNode extends TruffleNFI_DownCallNode implements DtrtrsNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.dtrtrs;
+        }
 
         @Override
         public int execute(char uplo, char trans, char diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb) {
-            try {
-                return (int) ForeignAccess.sendExecute(message, NFIFunction.dtrtrs.getFunction(), uplo, trans, diag, n, nrhs, JavaInterop.asTruffleObject(a), lda,
-                                JavaInterop.asTruffleObject(b), ldb);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(uplo, trans, diag, n, nrhs, a, lda, b, ldb);
         }
     }
 
-    private static class TruffleNFI_DgetrfNode extends DgetrfNode {
-        @Child private Node message = NFIFunction.dgetrf.createMessage();
+    private static class TruffleNFI_DgetrfNode extends TruffleNFI_DownCallNode implements DgetrfNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.dgetrf;
+        }
 
         @Override
         public int execute(int m, int n, double[] a, int lda, int[] ipiv) {
-            try {
-                return (int) ForeignAccess.sendExecute(message, NFIFunction.dgetrf.getFunction(), m, n, JavaInterop.asTruffleObject(a), lda, JavaInterop.asTruffleObject(ipiv));
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(m, n, a, lda, ipiv);
         }
     }
 
-    private static class TruffleNFI_DpotrfNode extends DpotrfNode {
-        @Child private Node message = NFIFunction.dpotrf.createMessage();
+    private static class TruffleNFI_DpotrfNode extends TruffleNFI_DownCallNode implements DpotrfNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.dpotrf;
+        }
 
         @Override
         public int execute(char uplo, int n, double[] a, int lda) {
-            try {
-                return (int) ForeignAccess.sendExecute(message, NFIFunction.dpotrf.getFunction(), uplo, n, JavaInterop.asTruffleObject(a), lda);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(uplo, n, a, lda);
         }
     }
 
-    private static class TruffleNFI_DpotriNode extends DpotriNode {
-        @Child private Node message = NFIFunction.dpotri.createMessage();
+    private static class TruffleNFI_DpotriNode extends TruffleNFI_DownCallNode implements DpotriNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.dpotri;
+        }
 
         @Override
         public int execute(char uplo, int n, double[] a, int lda) {
-            try {
-                return (int) ForeignAccess.sendExecute(message, NFIFunction.dpotri.getFunction(), uplo, n, JavaInterop.asTruffleObject(a), lda);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(uplo, n, a, lda);
         }
     }
 
-    private static class TruffleNFI_DpstrfNode extends DpstrfNode {
-        @Child private Node message = NFIFunction.dpstrf.createMessage();
+    private static class TruffleNFI_DpstrfNode extends TruffleNFI_DownCallNode implements DpstrfNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.dpstrf;
+        }
 
         @Override
         public int execute(char uplo, int n, double[] a, int lda, int[] piv, int[] rank, double tol, double[] work) {
-            try {
-                return (int) ForeignAccess.sendExecute(message, NFIFunction.dpstrf.getFunction(), uplo, n, JavaInterop.asTruffleObject(a), lda,
-                                JavaInterop.asTruffleObject(piv), JavaInterop.asTruffleObject(rank), tol, JavaInterop.asTruffleObject(work));
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(uplo, n, a, lda, piv, rank, tol, work);
         }
     }
 
-    private static class TruffleNFI_DgesvNode extends DgesvNode {
-        @Child private Node message = NFIFunction.dgesv.createMessage();
+    private static class TruffleNFI_DgesvNode extends TruffleNFI_DownCallNode implements DgesvNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.dgesv;
+        }
 
         @Override
         public int execute(int n, int nrhs, double[] a, int lda, int[] ipiv, double[] b, int ldb) {
-            try {
-                return (int) ForeignAccess.sendExecute(message, NFIFunction.dgesv.getFunction(), n, nrhs, JavaInterop.asTruffleObject(a), lda, JavaInterop.asTruffleObject(ipiv),
-                                JavaInterop.asTruffleObject(b), ldb);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(n, nrhs, a, lda, ipiv, b, ldb);
         }
     }
 
-    private static class TruffleNFI_DlangeNode extends DlangeNode {
-        @Child private Node message = NFIFunction.dlange.createMessage();
+    private static class TruffleNFI_DlangeNode extends TruffleNFI_DownCallNode implements DlangeNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.dlange;
+        }
 
         @Override
         public double execute(char norm, int m, int n, double[] a, int lda, double[] work) {
-            try {
-                return (double) ForeignAccess.sendExecute(message, NFIFunction.dlange.getFunction(), norm, m, n, JavaInterop.asTruffleObject(a), lda,
-                                JavaInterop.asTruffleObject(work));
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (double) call(norm, m, n, a, lda, work);
         }
     }
 
-    private static class TruffleNFI_DgeconNode extends DgeconNode {
-        @Child private Node message = NFIFunction.dgecon.createMessage();
+    private static class TruffleNFI_DgeconNode extends TruffleNFI_DownCallNode implements DgeconNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.dgecon;
+        }
 
         @Override
         public int execute(char norm, int n, double[] a, int lda, double anorm, double[] rcond, double[] work, int[] iwork) {
-            try {
-                return (int) ForeignAccess.sendExecute(message, NFIFunction.dgecon.getFunction(), norm, n, JavaInterop.asTruffleObject(a), lda, anorm, JavaInterop.asTruffleObject(rcond),
-                                JavaInterop.asTruffleObject(work), JavaInterop.asTruffleObject(iwork));
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(norm, n, a, lda, anorm, rcond, work, iwork);
         }
     }
 
-    private static class TruffleNFI_DsyevrNode extends DsyevrNode {
-        @Child private Node message = NFIFunction.dsyevr.createMessage();
+    private static class TruffleNFI_DsyevrNode extends TruffleNFI_DownCallNode implements DsyevrNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.dsyevr;
+        }
 
         @Override
         public int execute(char jobz, char range, char uplo, int n, double[] a, int lda, double vl, double vu, int il, int iu, double abstol, int[] m, double[] w, double[] z, int ldz, int[] isuppz,
                         double[] work, int lwork, int[] iwork, int liwork) {
-            try {
-                return (int) ForeignAccess.sendExecute(message, NFIFunction.dsyevr.getFunction(), jobz, range, uplo, n, JavaInterop.asTruffleObject(a),
-                                lda, vl, vu, il, iu, abstol, JavaInterop.asTruffleObject(m), JavaInterop.asTruffleObject(w), JavaInterop.asTruffleObject(z), ldz,
-                                JavaInterop.asTruffleObject(isuppz), JavaInterop.asTruffleObject(work), lwork, JavaInterop.asTruffleObject(iwork), liwork);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(jobz, range, uplo, n, a, lda, vl, vu, il, iu, abstol, m, w, z, ldz, isuppz, work, lwork, iwork, liwork);
         }
     }
 

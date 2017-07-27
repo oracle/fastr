@@ -38,6 +38,7 @@ import java.util.zip.ZipInputStream;
 import javax.naming.NameAlreadyBoundException;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -162,7 +163,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         }
     }
 
-    private static class TruffleLLVM_DLOpenNode extends DLOpenNode {
+    private static class TruffleLLVM_DLOpenNode extends Node implements DLOpenNode {
         @Child private TruffleLLVM_NativeDLL.TruffleLLVM_NativeDLOpen nativeDLLOpenNode;
 
         /**
@@ -202,7 +203,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         }
     }
 
-    private static class TruffleLLVM_DLSymNode extends DLSymNode {
+    private static class TruffleLLVM_DLSymNode extends Node implements DLSymNode {
         @Override
         public SymbolHandle execute(Object handle, String symbol) throws UnsatisfiedLinkError {
             assert handle instanceof LLVM_Handle;
@@ -214,7 +215,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         }
     }
 
-    private static class TruffleLLVM_DLCloseNode extends DLCloseNode {
+    private static class TruffleLLVM_DLCloseNode extends Node implements DLCloseNode {
         @Override
         public int execute(Object handle) {
             assert handle instanceof LLVM_Handle;

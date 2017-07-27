@@ -24,46 +24,46 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 public interface DLLRFFI {
-    abstract class DLOpenNode extends Node {
+    interface DLOpenNode extends NodeInterface {
         /**
          * Open a DLL.
          *
          * @return {@code null} on error, opaque handle for following calls otherwise.
          */
-        public abstract Object execute(String path, boolean local, boolean now) throws UnsatisfiedLinkError;
+        Object execute(String path, boolean local, boolean now) throws UnsatisfiedLinkError;
 
-        public static DLOpenNode create() {
-            return RFFIFactory.getRFFI().getDLLRFFI().createDLOpenNode();
+        static DLOpenNode create() {
+            return RFFIFactory.getDLLRFFI().createDLOpenNode();
         }
     }
 
-    abstract class DLSymNode extends Node {
+    interface DLSymNode extends NodeInterface {
         /**
          * Search for {@code symbol} in DLL specified by {@code handle}. To accommodate differing
          * implementations of this interface the result is {@link SymbolHandle}. For the standard OS
          * implementation this will encapsulate a {@link Long} or {@code null} if an error occurred.
          *
          */
-        public abstract SymbolHandle execute(Object handle, String symbol) throws UnsatisfiedLinkError;
+        SymbolHandle execute(Object handle, String symbol) throws UnsatisfiedLinkError;
 
-        public static DLSymNode create() {
-            return RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
+        static DLSymNode create() {
+            return RFFIFactory.getDLLRFFI().createDLSymNode();
         }
     }
 
-    abstract class DLCloseNode extends Node {
+    interface DLCloseNode extends NodeInterface {
         /**
          * Close DLL specified by {@code handle}.
          */
-        public abstract int execute(Object handle);
+        int execute(Object handle);
 
-        public static DLCloseNode create() {
-            return RFFIFactory.getRFFI().getDLLRFFI().createDLCloseNode();
+        static DLCloseNode create() {
+            return RFFIFactory.getDLLRFFI().createDLCloseNode();
         }
     }
 
@@ -77,7 +77,7 @@ public interface DLLRFFI {
 
     final class DLOpenRootNode extends RFFIRootNode<DLOpenNode> {
         private DLOpenRootNode() {
-            super(RFFIFactory.getRFFI().getDLLRFFI().createDLOpenNode());
+            super(RFFIFactory.getDLLRFFI().createDLOpenNode());
         }
 
         @Override
@@ -95,7 +95,7 @@ public interface DLLRFFI {
         private static DLSymRootNode dlSymRootNode;
 
         private DLSymRootNode() {
-            super(RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode());
+            super(RFFIFactory.getDLLRFFI().createDLSymNode());
         }
 
         @Override
@@ -116,7 +116,7 @@ public interface DLLRFFI {
         private static DLCloseRootNode dlCloseRootNode;
 
         private DLCloseRootNode() {
-            super(RFFIFactory.getRFFI().getDLLRFFI().createDLCloseNode());
+            super(RFFIFactory.getDLLRFFI().createDLCloseNode());
         }
 
         @Override

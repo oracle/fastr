@@ -22,13 +22,13 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 
 /**
  * Support for the {.C} and {.Fortran} calls.
  */
 public interface CRFFI {
-    abstract class InvokeCNode extends Node {
+    interface InvokeCNode extends NodeInterface {
         /**
          * Invoke the native method identified by {@code symbolInfo} passing it the arguments in
          * {@code args}. The values in {@code args} should be native types,e.g., {@code double[]}
@@ -38,7 +38,7 @@ public interface CRFFI {
          *            values of type {@code byte[][]}, which represent arrays of strings in ASCII
          *            encoding.
          */
-        public abstract void execute(NativeCallInfo nativeCallInfo, Object[] args, boolean hasStrings);
+        void execute(NativeCallInfo nativeCallInfo, Object[] args, boolean hasStrings);
     }
 
     InvokeCNode createInvokeCNode();

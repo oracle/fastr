@@ -23,26 +23,27 @@
 package com.oracle.truffle.r.ffi.impl.jni;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 
 public class JNI_PCRE implements PCRERFFI {
-    private static class JNI_MaketablesNode extends MaketablesNode {
+    private static class JNI_MaketablesNode extends Node implements MaketablesNode {
         @Override
         public long execute() {
             return nativeMaketables();
         }
     }
 
-    private static class JNI_CompileNode extends CompileNode {
+    private static class JNI_CompileNode extends Node implements CompileNode {
         @Override
         public Result execute(String pattern, int options, long tables) {
             return nativeCompile(pattern, options, tables);
         }
     }
 
-    private static class JNI_GetCaptureCountNode extends GetCaptureCountNode {
+    private static class JNI_GetCaptureCountNode extends Node implements GetCaptureCountNode {
         @Override
         public int execute(long code, long extra) {
             int res = nativeGetCaptureCount(code, extra);
@@ -54,7 +55,7 @@ public class JNI_PCRE implements PCRERFFI {
         }
     }
 
-    private static class JNI_GetCaptureNamesNode extends GetCaptureNamesNode {
+    private static class JNI_GetCaptureNamesNode extends Node implements GetCaptureNamesNode {
         @Override
         public String[] execute(long code, long extra, int captureCount) {
             String[] ret = new String[captureCount];
@@ -67,14 +68,14 @@ public class JNI_PCRE implements PCRERFFI {
         }
     }
 
-    private static class JNI_StudyNode extends StudyNode {
+    private static class JNI_StudyNode extends Node implements StudyNode {
         @Override
         public Result execute(long code, int options) {
             throw RInternalError.unimplemented("pcre_study");
         }
     }
 
-    private static class JNI_ExecNode extends ExecNode {
+    private static class JNI_ExecNode extends Node implements ExecNode {
         @Override
         public int execute(long code, long extra, String subject, int offset, int options, int[] ovector) {
             return nativeExec(code, extra, subject, offset, options, ovector, ovector.length);

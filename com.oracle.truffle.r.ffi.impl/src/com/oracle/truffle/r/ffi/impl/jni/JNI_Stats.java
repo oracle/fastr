@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.jni;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -33,9 +34,9 @@ import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 
 public class JNI_Stats implements StatsRFFI {
 
-    public static class JNI_WorkNode extends WorkNode {
+    private static class JNI_WorkNode extends Node implements WorkNode {
         private static final String FFT_WORK = "fft_work";
-        @Child private DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
+        @Child private DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
         private SymbolHandle fftWorkAddress;
 
         @Override
@@ -48,9 +49,9 @@ public class JNI_Stats implements StatsRFFI {
         }
     }
 
-    public static class JNI_FactorNode extends FactorNode {
+    private static class JNI_FactorNode extends Node implements FactorNode {
         private static final String FFT_FACTOR = "fft_factor";
-        @Child private DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
+        @Child private DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
         private SymbolHandle fftFactorAddress;
 
         @Override

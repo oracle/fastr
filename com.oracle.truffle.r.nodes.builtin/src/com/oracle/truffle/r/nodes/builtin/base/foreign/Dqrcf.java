@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public abstract class Dqrcf extends RExternalBuiltinNode.Arg8 {
-    @Child private RApplRFFI.DqrcfNode dqcrfNode = RFFIFactory.getRFFI().getRApplRFFI().createDqrcfNode();
+    @Child private RApplRFFI.DqrcfNode dqcrfNode = RFFIFactory.getRApplRFFI().createDqrcfNode();
 
     private static final String E = RRuntime.NAMES_ATTR_EMPTY_VALUE;
     private static final RStringVector DQRCF_NAMES = RDataFactory.createStringVector(new String[]{E, E, E, E, E, E, "coef", "info"}, RDataFactory.COMPLETE_VECTOR);

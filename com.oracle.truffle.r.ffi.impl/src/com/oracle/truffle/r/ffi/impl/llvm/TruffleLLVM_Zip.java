@@ -22,60 +22,42 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.interop.NativeRawArray;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 public class TruffleLLVM_Zip implements ZipRFFI {
-    private static class TruffleLLVM_CompressNode extends ZipRFFI.CompressNode {
-        @Child private Node message = LLVMFunction.compress.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static class TruffleLLVM_CompressNode extends TruffleLLVM_DownCallNode implements CompressNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.compress;
+        }
 
         @Override
         public int execute(byte[] dest, byte[] source) {
             NativeRawArray nativeDest = new NativeRawArray(dest);
             NativeRawArray nativeSource = new NativeRawArray(source);
             try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.compress.callName, null);
-                }
-                int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(),
-                                nativeDest, dest.length, nativeSource, source.length);
-                return result;
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
+                return (int) call(nativeDest, dest.length, nativeSource, source.length);
             } finally {
                 nativeDest.getValue();
             }
         }
     }
 
-    private static class TruffleLLVM_UncompressNode extends ZipRFFI.UncompressNode {
-        @Child private Node message = LLVMFunction.uncompress.createMessage();
-        @CompilationFinal private SymbolHandle symbolHandle;
+    private static class TruffleLLVM_UncompressNode extends TruffleLLVM_DownCallNode implements UncompressNode {
+
+        @Override
+        protected LLVMFunction getFunction() {
+            return LLVMFunction.uncompress;
+        }
 
         @Override
         public int execute(byte[] dest, byte[] source) {
             NativeRawArray nativeDest = new NativeRawArray(dest);
             NativeRawArray nativeSource = new NativeRawArray(source);
             try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(LLVMFunction.uncompress.callName, null);
-                }
-                int result = (int) ForeignAccess.sendExecute(message, symbolHandle.asTruffleObject(),
-                                nativeDest, dest.length, nativeSource, source.length);
-                return result;
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
+                return (int) call(nativeDest, dest.length, nativeSource, source.length);
             } finally {
                 nativeDest.getValue();
             }

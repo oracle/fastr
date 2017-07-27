@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,23 +22,37 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 
 /**
  * Explicit statically typed interface to user-supplied random number generators.
  */
 public interface UserRngRFFI {
-    abstract class UserRngRFFINode extends Node {
+    interface InitNode extends NodeInterface {
 
-        public abstract void init(int seed);
-
-        public abstract double rand();
-
-        public abstract int nSeed();
-
-        public abstract void seeds(int[] n);
+        void execute(int seed);
     }
 
-    UserRngRFFINode createUserRngRFFINode();
+    interface RandNode extends NodeInterface {
 
+        double execute();
+    }
+
+    interface NSeedNode extends NodeInterface {
+
+        int execute();
+    }
+
+    interface SeedsNode extends NodeInterface {
+
+        void execute(int[] n);
+    }
+
+    InitNode createInitNode();
+
+    RandNode createRandNode();
+
+    NSeedNode createNSeedNode();
+
+    SeedsNode createSeedsNode();
 }

@@ -26,113 +26,110 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.interop.base.GlobResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.ReadlinkResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.StrtolResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.UnameResult;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 public class TruffleNFI_Base implements BaseRFFI {
 
-    public static class TruffleNFI_GetpidNode extends GetpidNode {
-        @Child private Node message = NFIFunction.getpid.createMessage();
+    private static class TruffleNFI_GetpidNode extends TruffleNFI_DownCallNode implements GetpidNode {
+
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.getpid;
+        }
 
         @Override
         public int execute() {
-            try {
-                int result = (int) ForeignAccess.sendExecute(message, NFIFunction.getpid.getFunction());
-                return result;
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call();
         }
     }
 
-    public static class TruffleNFI_GetwdNode extends GetwdNode {
-        @Child private Node message = NFIFunction.getcwd.createMessage();
+    private static final class TruffleNFI_GetwdNode extends TruffleNFI_DownCallNode implements GetwdNode {
+
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.getcwd;
+        }
 
         @TruffleBoundary
         @Override
         public String execute() {
-            try {
-                byte[] buf = new byte[4096];
-                int result = (int) ForeignAccess.sendExecute(message, NFIFunction.getcwd.getFunction(), JavaInterop.asTruffleObject(buf), buf.length);
-                if (result == 0) {
-                    return null;
-                } else {
-                    int i = 0;
-                    while (buf[i] != 0 && i < buf.length) {
-                        i++;
-                    }
-                    return new String(buf, 0, i);
+            byte[] buf = new byte[4096];
+            int result = (int) call(JavaInterop.asTruffleObject(buf), buf.length);
+            if (result == 0) {
+                return null;
+            } else {
+                int i = 0;
+                while (buf[i] != 0 && i < buf.length) {
+                    i++;
                 }
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
+                return new String(buf, 0, i);
             }
         }
     }
 
-    public static class TruffleNFI_SetwdNode extends SetwdNode {
-        @Child private Node message = NFIFunction.chdir.createMessage();
+    private static class TruffleNFI_SetwdNode extends TruffleNFI_DownCallNode implements SetwdNode {
+
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.chdir;
+        }
 
         @Override
         public int execute(String dir) {
-            try {
-                return (int) ForeignAccess.sendExecute(message, NFIFunction.chdir.getFunction(), dir);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(dir);
         }
     }
 
-    public static class TruffleNFI_MkdirNode extends MkdirNode {
-        @Child private Node message = NFIFunction.mkdir.createMessage();
+    private static class TruffleNFI_MkdirNode extends TruffleNFI_DownCallNode implements MkdirNode {
+
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.mkdir;
+        }
 
         @Override
         public void execute(String dir, int mode) throws IOException {
-            try {
-                int result = (int) ForeignAccess.sendExecute(message, NFIFunction.mkdir.getFunction(), dir, mode);
-                if (result != 0) {
-                    throw new IOException("mkdir " + dir + " failed");
-                }
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
+            if ((int) call(dir, mode) != 0) {
+                throw new IOException("mkdir " + dir + " failed");
             }
         }
     }
 
-    public static class TruffleNFI_ReadlinkNode extends ReadlinkNode {
+    private static class TruffleNFI_ReadlinkNode extends TruffleNFI_DownCallNode implements ReadlinkNode {
         private static final int EINVAL = 22;
 
-        @Child private Node message = NFIFunction.readlink.createMessage();
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.readlink;
+        }
 
         @Override
         public String execute(String path) throws IOException {
-            try {
-                ReadlinkResult data = new ReadlinkResult();
-                ForeignAccess.sendExecute(message, NFIFunction.readlink.getFunction(), data, path);
-                if (data.getLink() == null) {
-                    if (data.getErrno() == EINVAL) {
-                        return path;
-                    } else {
-                        // some other error
-                        throw new IOException("readlink failed: " + data.getErrno());
-                    }
+            ReadlinkResult data = new ReadlinkResult();
+            call(data, path);
+            if (data.getLink() == null) {
+                if (data.getErrno() == EINVAL) {
+                    return path;
+                } else {
+                    // some other error
+                    throw new IOException("readlink failed: " + data.getErrno());
                 }
-                return data.getLink();
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
             }
+            return data.getLink();
         }
     }
 
-    public static class TruffleNFI_MkdtempNode extends MkdtempNode {
-        @Child private Node message = NFIFunction.mkdtemp.createMessage();
+    private static class TruffleNFI_MkdtempNode extends TruffleNFI_DownCallNode implements MkdtempNode {
+
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.mkdtemp;
+        }
 
         @TruffleBoundary
         @Override
@@ -145,80 +142,73 @@ public class TruffleNFI_Base implements BaseRFFI {
             byte[] ztbytes = new byte[bytes.length + 1];
             System.arraycopy(bytes, 0, ztbytes, 0, bytes.length);
             ztbytes[bytes.length] = 0;
-            try {
-                int result = (int) ForeignAccess.sendExecute(message, NFIFunction.mkdtemp.getFunction(), JavaInterop.asTruffleObject(ztbytes));
-                if (result == 0) {
-                    return null;
-                } else {
-                    return new String(ztbytes, 0, bytes.length);
-                }
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
+            int result = (int) call(JavaInterop.asTruffleObject(ztbytes));
+            if (result == 0) {
+                return null;
+            } else {
+                return new String(ztbytes, 0, bytes.length);
             }
         }
     }
 
-    public static class TruffleNFI_ChmodNode extends ChmodNode {
-        @Child private Node message = NFIFunction.chmod.createMessage();
+    private static class TruffleNFI_ChmodNode extends TruffleNFI_DownCallNode implements ChmodNode {
+
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.chmod;
+        }
 
         @Override
         public int execute(String path, int mode) {
-            try {
-                return (int) ForeignAccess.sendExecute(message, NFIFunction.chmod.getFunction(), path, mode);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return (int) call(path, mode);
         }
     }
 
-    public static class TruffleNFI_StrolNode extends StrolNode {
+    private static class TruffleNFI_StrolNode extends TruffleNFI_DownCallNode implements StrolNode {
 
-        @Child private Node message = NFIFunction.strtol.createMessage();
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.strtol;
+        }
 
         @Override
         public long execute(String s, int base) throws IllegalArgumentException {
-            try {
-                StrtolResult data = new StrtolResult();
-                ForeignAccess.sendExecute(message, NFIFunction.strtol.getFunction(), data, s, base);
-                if (data.getErrno() != 0) {
-                    throw new IllegalArgumentException("strtol failure");
-                } else {
-                    return data.getResult();
-                }
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
+            StrtolResult data = new StrtolResult();
+            call(data, s, base);
+            if (data.getErrno() != 0) {
+                throw new IllegalArgumentException("strtol failure");
+            } else {
+                return data.getResult();
             }
         }
     }
 
-    public static class TruffleNFI_UnameNode extends UnameNode {
+    private static class TruffleNFI_UnameNode extends TruffleNFI_DownCallNode implements UnameNode {
 
-        @Child private Node message = NFIFunction.uname.createMessage();
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.uname;
+        }
 
         @Override
         public UtsName execute() {
             UnameResult data = new UnameResult();
-            try {
-                ForeignAccess.sendExecute(message, NFIFunction.uname.getFunction(), data);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            call(data);
             return data;
         }
     }
 
-    public static class TruffleNFI_GlobNode extends GlobNode {
+    private static class TruffleNFI_GlobNode extends TruffleNFI_DownCallNode implements GlobNode {
 
-        @Child private Node message = NFIFunction.glob.createMessage();
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.glob;
+        }
 
         @Override
         public ArrayList<String> glob(String pattern) {
             GlobResult data = new GlobResult();
-            try {
-                ForeignAccess.sendExecute(message, NFIFunction.glob.getFunction(), data, pattern);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            call(data, pattern);
             return data.getPaths();
         }
     }

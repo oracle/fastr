@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public abstract class Dqrxb extends RExternalBuiltinNode.Arg7 {
-    @Child private RApplRFFI.DqrxbNode dqrrsdNode = RFFIFactory.getRFFI().getRApplRFFI().createDqrxbNode();
+    @Child private RApplRFFI.DqrxbNode dqrrsdNode = RFFIFactory.getRApplRFFI().createDqrxbNode();
 
     static {
         Casts casts = new Casts(Dqrxb.class);

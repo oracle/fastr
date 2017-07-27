@@ -49,7 +49,7 @@ public class TruffleLLVM_Stats implements StatsRFFI {
     }
 
     public abstract static class LookupAdapter extends Node {
-        @Child private DLLRFFI.DLSymNode dllSymNode = RFFIFactory.getRFFI().getDLLRFFI().createDLSymNode();
+        @Child private DLLRFFI.DLSymNode dllSymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
 
         public SymbolHandle lookup(String name) {
             DLLInfo dllInfo = DLL.findLibrary("stats");
@@ -81,10 +81,9 @@ public class TruffleLLVM_Stats implements StatsRFFI {
         }
 
         private static int doWork(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork, Node messageNode, SymbolHandle fftWork) {
-            NativeDoubleArray na = new NativeDoubleArray(a);
-            NativeDoubleArray nwork = new NativeDoubleArray(work);
-            NativeIntegerArray niwork = new NativeIntegerArray(iwork);
-            try {
+            try (NativeDoubleArray na = new NativeDoubleArray(a);
+                            NativeDoubleArray nwork = new NativeDoubleArray(work);
+                            NativeIntegerArray niwork = new NativeIntegerArray(iwork)) {
                 return (int) ForeignAccess.sendExecute(messageNode, fftWork.asTruffleObject(), na, nseg, n, nspn, isn, nwork, niwork);
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere(t);
@@ -122,10 +121,8 @@ public class TruffleLLVM_Stats implements StatsRFFI {
         }
 
         private static void doFactor(int n, int[] pmaxf, int[] pmaxp, Node messageNode, SymbolHandle fftFactor) {
-            NativeIntegerArray npmaxf = new NativeIntegerArray(pmaxf);
-            NativeIntegerArray npmaxp = new NativeIntegerArray(pmaxp);
-
-            try {
+            try (NativeIntegerArray npmaxf = new NativeIntegerArray(pmaxf);
+                            NativeIntegerArray npmaxp = new NativeIntegerArray(pmaxp)) {
                 ForeignAccess.sendExecute(messageNode, fftFactor.asTruffleObject(), n, npmaxf, npmaxp);
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere(t);
@@ -145,7 +142,7 @@ public class TruffleLLVM_Stats implements StatsRFFI {
         }
     }
 
-    public static class Truffle_FactorNode extends FactorNode {
+    private static class Truffle_FactorNode extends Node implements FactorNode {
         @Child private ExecuteFactor executeFactor = ExecuteFactor.create();
 
         @Override
@@ -154,7 +151,7 @@ public class TruffleLLVM_Stats implements StatsRFFI {
         }
     }
 
-    public static class Truffle_WorkNode extends WorkNode {
+    private static class Truffle_WorkNode extends Node implements WorkNode {
         @Child private ExecuteWork executeWork = ExecuteWork.create();
 
         @Override

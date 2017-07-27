@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 
 /**
  * An interface to the <a href="http://www.pcre.org/original/doc/html/index.html">PCRE</a> library
@@ -49,54 +49,51 @@ public interface PCRERFFI {
         }
     }
 
-    abstract class MaketablesNode extends Node {
+    interface MaketablesNode extends NodeInterface {
+        long execute();
 
-        public abstract long execute();
-
-        public static MaketablesNode create() {
-            return RFFIFactory.getRFFI().getPCRERFFI().createMaketablesNode();
+        static MaketablesNode create() {
+            return RFFIFactory.getPCRERFFI().createMaketablesNode();
         }
     }
 
-    abstract class CompileNode extends Node {
+    interface CompileNode extends NodeInterface {
+        Result execute(String pattern, int options, long tables);
 
-        public abstract Result execute(String pattern, int options, long tables);
-
-        public static CompileNode create() {
-            return RFFIFactory.getRFFI().getPCRERFFI().createCompileNode();
+        static CompileNode create() {
+            return RFFIFactory.getPCRERFFI().createCompileNode();
         }
     }
 
-    abstract class GetCaptureCountNode extends Node {
+    interface GetCaptureCountNode extends NodeInterface {
+        int execute(long code, long extra);
 
-        public abstract int execute(long code, long extra);
-
-        public static GetCaptureCountNode create() {
-            return RFFIFactory.getRFFI().getPCRERFFI().createGetCaptureCountNode();
+        static GetCaptureCountNode create() {
+            return RFFIFactory.getPCRERFFI().createGetCaptureCountNode();
         }
     }
 
-    abstract class GetCaptureNamesNode extends Node {
-        public abstract String[] execute(long code, long extra, int captureCount);
+    interface GetCaptureNamesNode extends NodeInterface {
+        String[] execute(long code, long extra, int captureCount);
 
-        public static GetCaptureNamesNode create() {
-            return RFFIFactory.getRFFI().getPCRERFFI().createGetCaptureNamesNode();
+        static GetCaptureNamesNode create() {
+            return RFFIFactory.getPCRERFFI().createGetCaptureNamesNode();
         }
     }
 
-    abstract class StudyNode extends Node {
-        public abstract Result execute(long code, int options);
+    interface StudyNode extends NodeInterface {
+        Result execute(long code, int options);
 
-        public static StudyNode create() {
-            return RFFIFactory.getRFFI().getPCRERFFI().createStudyNode();
+        static StudyNode create() {
+            return RFFIFactory.getPCRERFFI().createStudyNode();
         }
     }
 
-    abstract class ExecNode extends Node {
-        public abstract int execute(long code, long extra, String subject, int offset, int options, int[] ovector);
+    interface ExecNode extends NodeInterface {
+        int execute(long code, long extra, String subject, int offset, int options, int[] ovector);
 
-        public static ExecNode create() {
-            return RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
+        static ExecNode create() {
+            return RFFIFactory.getPCRERFFI().createExecNode();
         }
     }
 

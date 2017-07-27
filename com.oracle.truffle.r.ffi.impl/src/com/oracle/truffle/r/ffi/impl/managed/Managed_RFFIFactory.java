@@ -22,10 +22,11 @@
  */
 package com.oracle.truffle.r.ffi.impl.managed;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
@@ -48,173 +49,203 @@ import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
  * Operations that can be, at least partially, implemented in Java are implemented, other operations
  * throw {@link RError}.
  */
-public class Managed_RFFIFactory extends RFFIFactory implements RFFI {
+public class Managed_RFFIFactory extends RFFIFactory {
     @Override
     protected RFFI createRFFI() {
-        return this;
-    }
+        CompilerAsserts.neverPartOfCompilation();
+        return new RFFI() {
 
-    @Override
-    public BaseRFFI getBaseRFFI() {
-        return new Managed_Base();
-    }
-
-    @Override
-    public LapackRFFI getLapackRFFI() {
-        return new Managed_LapackRFFI();
-    }
-
-    @Override
-    public RApplRFFI getRApplRFFI() {
-        return new RApplRFFI() {
             @Override
-            public Dqrdc2Node createDqrdc2Node() {
-                throw unsupported("dqrdc");
+            public BaseRFFI getBaseRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                return new Managed_Base();
             }
 
             @Override
-            public DqrcfNode createDqrcfNode() {
-                throw unsupported("dqrcf");
+            public LapackRFFI getLapackRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                return new Managed_LapackRFFI();
             }
 
             @Override
-            public DqrlsNode createDqrlsNode() {
-                throw unsupported("dqrls");
+            public RApplRFFI getRApplRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                return new RApplRFFI() {
+                    @Override
+                    public Dqrdc2Node createDqrdc2Node() {
+                        throw unsupported("dqrdc");
+                    }
+
+                    @Override
+                    public DqrcfNode createDqrcfNode() {
+                        throw unsupported("dqrcf");
+                    }
+
+                    @Override
+                    public DqrlsNode createDqrlsNode() {
+                        throw unsupported("dqrls");
+                    }
+
+                    @Override
+                    public DqrqtyNode createDqrqtyNode() {
+                        throw RInternalError.unimplemented();
+                    }
+
+                    @Override
+                    public DqrqyNode createDqrqyNode() {
+                        throw RInternalError.unimplemented();
+                    }
+
+                    @Override
+                    public DqrrsdNode createDqrrsdNode() {
+                        throw RInternalError.unimplemented();
+                    }
+
+                    @Override
+                    public DqrxbNode createDqrxbNode() {
+                        throw RInternalError.unimplemented();
+                    }
+                };
             }
 
             @Override
-            public DqrqtyNode createDqrqtyNode() {
-                throw RInternalError.unimplemented();
+            public StatsRFFI getStatsRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                return new StatsRFFI() {
+                    @Override
+                    public FactorNode createFactorNode() {
+                        throw unsupported("factor");
+                    }
+
+                    @Override
+                    public WorkNode createWorkNode() {
+                        throw unsupported("work");
+                    }
+                };
             }
 
             @Override
-            public DqrqyNode createDqrqyNode() {
-                throw RInternalError.unimplemented();
+            public ToolsRFFI getToolsRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                return new ToolsRFFI() {
+                    @Override
+                    public ParseRdNode createParseRdNode() {
+                        throw unsupported("parseRD");
+                    }
+                };
             }
 
             @Override
-            public DqrrsdNode createDqrrsdNode() {
-                throw RInternalError.unimplemented();
+            public CRFFI getCRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                return new CRFFI() {
+                    @Override
+                    public InvokeCNode createInvokeCNode() {
+                        throw unsupported("invoke");
+                    }
+                };
             }
 
             @Override
-            public DqrxbNode createDqrxbNode() {
-                throw RInternalError.unimplemented();
-            }
-        };
-    }
+            public CallRFFI getCallRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                return new CallRFFI() {
+                    @Override
+                    public InvokeCallNode createInvokeCallNode() {
+                        throw unsupported("native code invocation");
+                    }
 
-    @Override
-    public StatsRFFI getStatsRFFI() {
-        return new StatsRFFI() {
-            @Override
-            public FactorNode createFactorNode() {
-                throw unsupported("factor");
-            }
-
-            @Override
-            public WorkNode createWorkNode() {
-                throw unsupported("work");
-            }
-        };
-    }
-
-    @Override
-    public ToolsRFFI getToolsRFFI() {
-        return new ToolsRFFI() {
-            @Override
-            public ParseRdNode createParseRdNode() {
-                throw unsupported("parseRD");
-            }
-        };
-    }
-
-    @Override
-    public CRFFI getCRFFI() {
-        return new CRFFI() {
-            @Override
-            public InvokeCNode createInvokeCNode() {
-                throw unsupported("invoke");
-            }
-        };
-    }
-
-    @Override
-    public CallRFFI getCallRFFI() {
-        return new CallRFFI() {
-            @Override
-            public InvokeCallNode createInvokeCallNode() {
-                throw unsupported("native code invocation");
+                    @Override
+                    public InvokeVoidCallNode createInvokeVoidCallNode() {
+                        throw unsupported("native code invocation");
+                    }
+                };
             }
 
             @Override
-            public InvokeVoidCallNode createInvokeVoidCallNode() {
-                throw unsupported("native code invocation");
-            }
-        };
-    }
+            public UserRngRFFI getUserRngRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                return new UserRngRFFI() {
+                    @Override
+                    public InitNode createInitNode() {
+                        throw unsupported("user defined RNG");
+                    }
 
-    @Override
-    public UserRngRFFI getUserRngRFFI() {
-        return new UserRngRFFI() {
-            @Override
-            public UserRngRFFINode createUserRngRFFINode() {
-                throw unsupported("user defined RNG");
-            }
-        };
-    }
+                    @Override
+                    public RandNode createRandNode() {
+                        throw unsupported("user defined RNG");
+                    }
 
-    @Override
-    public PCRERFFI getPCRERFFI() {
-        return new Managed_PCRERFFI();
-    }
+                    @Override
+                    public NSeedNode createNSeedNode() {
+                        throw unsupported("user defined RNG");
+                    }
 
-    @Override
-    public ZipRFFI getZipRFFI() {
-        return new ZipRFFI() {
-            @Override
-            public CompressNode createCompressNode() {
-                throw unsupported("zip compression");
+                    @Override
+                    public SeedsNode createSeedsNode() {
+                        throw unsupported("user defined RNG");
+                    }
+                };
             }
 
             @Override
-            public UncompressNode createUncompressNode() {
-                throw unsupported("zip decompression");
-            }
-        };
-    }
-
-    @Override
-    public DLLRFFI getDLLRFFI() {
-        return new DLLRFFI() {
-            @Override
-            public DLOpenNode createDLOpenNode() {
-                throw unsupported("DLL open");
+            public PCRERFFI getPCRERFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                return new Managed_PCRERFFI();
             }
 
             @Override
-            public DLSymNode createDLSymNode() {
-                throw unsupported("createDLSym");
+            public ZipRFFI getZipRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                return new ZipRFFI() {
+                    @Override
+                    public CompressNode createCompressNode() {
+                        throw unsupported("zip compression");
+                    }
+
+                    @Override
+                    public UncompressNode createUncompressNode() {
+                        throw unsupported("zip decompression");
+                    }
+                };
             }
 
             @Override
-            public DLCloseNode createDLCloseNode() {
-                throw unsupported("createDLClose");
+            public DLLRFFI getDLLRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                return new DLLRFFI() {
+                    @Override
+                    public DLOpenNode createDLOpenNode() {
+                        throw unsupported("DLL open");
+                    }
+
+                    @Override
+                    public DLSymNode createDLSymNode() {
+                        throw unsupported("createDLSym");
+                    }
+
+                    @Override
+                    public DLCloseNode createDLCloseNode() {
+                        throw unsupported("createDLClose");
+                    }
+                };
             }
-        };
-    }
 
-    @Override
-    public REmbedRFFI getREmbedRFFI() {
-        return new Managed_REmbedRFFI();
-    }
-
-    @Override
-    public MiscRFFI getMiscRFFI() {
-        return new MiscRFFI() {
             @Override
-            public ExactSumNode createExactSumNode() {
-                throw unsupported("exactsum");
+            public REmbedRFFI getREmbedRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                return new Managed_REmbedRFFI();
+            }
+
+            @Override
+            public MiscRFFI getMiscRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                return new MiscRFFI() {
+                    @Override
+                    public ExactSumNode createExactSumNode() {
+                        throw unsupported("exactsum");
+                    }
+                };
             }
         };
     }

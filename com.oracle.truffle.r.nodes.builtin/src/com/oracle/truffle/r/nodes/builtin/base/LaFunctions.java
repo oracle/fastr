@@ -75,7 +75,7 @@ public class LaFunctions {
 
     @RBuiltin(name = "La_version", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class Version extends RBuiltinNode.Arg0 {
-        @Child LapackRFFI.IlaverNode ilaverNode = RFFIFactory.getRFFI().getLapackRFFI().createIlaverNode();
+        @Child LapackRFFI.IlaverNode ilaverNode = RFFIFactory.getLapackRFFI().createIlaverNode();
 
         @Specialization
         @TruffleBoundary

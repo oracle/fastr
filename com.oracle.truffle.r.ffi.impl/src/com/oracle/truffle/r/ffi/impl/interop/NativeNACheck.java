@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.interop;
 
+import static com.oracle.truffle.r.ffi.impl.interop.UnsafeAdapter.UNSAFE;
 import com.oracle.truffle.r.runtime.data.RVector;
 
 /**
@@ -29,8 +30,15 @@ import com.oracle.truffle.r.runtime.data.RVector;
  * native code.
  *
  */
-public class NativeNACheck {
+public abstract class NativeNACheck<T> implements AutoCloseable {
+
     private final RVector<?> vec;
+
+    /**
+     * If the array escapes the Truffle world via {@link #convertToNative()}, this value will be
+     * non-zero and is used exclusively thereafter.
+     */
+    protected long nativeAddress;
 
     protected NativeNACheck(Object x) {
         if (x instanceof RVector<?>) {
@@ -44,6 +52,25 @@ public class NativeNACheck {
     public void setIncomplete() {
         if (vec != null) {
             vec.setComplete(false);
+        }
+    }
+
+    protected abstract void allocateNative();
+
+    protected abstract void copyBackFromNative();
+
+    final long convertToNative() {
+        if (nativeAddress == 0) {
+            allocateNative();
+        }
+        return nativeAddress;
+    }
+
+    @Override
+    public final void close() {
+        if (nativeAddress != 0) {
+            copyBackFromNative();
+            UNSAFE.freeMemory(nativeAddress);
         }
     }
 }

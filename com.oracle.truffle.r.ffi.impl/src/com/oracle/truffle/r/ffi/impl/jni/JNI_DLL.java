@@ -22,13 +22,14 @@
  */
 package com.oracle.truffle.r.ffi.impl.jni;
 
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 
 public class JNI_DLL implements DLLRFFI {
 
-    public static class JNI_DLOpenNode extends DLOpenNode {
+    private static class JNI_DLOpenNode extends Node implements DLOpenNode {
         @Override
         @TruffleBoundary
         public Object execute(String path, boolean local, boolean now) throws UnsatisfiedLinkError {
@@ -37,7 +38,7 @@ public class JNI_DLL implements DLLRFFI {
         }
     }
 
-    public static class JNI_DLSymNode extends DLSymNode {
+    private static class JNI_DLSymNode extends Node implements DLSymNode {
         @Override
         @TruffleBoundary
         public SymbolHandle execute(Object handle, String symbol) throws UnsatisfiedLinkError {
@@ -47,7 +48,7 @@ public class JNI_DLL implements DLLRFFI {
         }
     }
 
-    public static class JNI_DLCloseNode extends DLCloseNode {
+    private static class JNI_DLCloseNode extends Node implements DLCloseNode {
         @Override
         @TruffleBoundary
         public int execute(Object handle) {

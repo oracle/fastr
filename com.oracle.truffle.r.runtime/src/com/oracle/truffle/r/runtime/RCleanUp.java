@@ -30,7 +30,7 @@ public class RCleanUp {
 
     public static void cleanUp(SA_TYPE saveType, int status, boolean runLast) {
         if (RInterfaceCallbacks.R_CleanUp.isOverridden()) {
-            RFFIFactory.getRFFI().getREmbedRFFI().cleanUp(saveType.ordinal(), status, runLast ? 1 : 0);
+            RFFIFactory.getREmbedRFFI().cleanUp(saveType.ordinal(), status, runLast ? 1 : 0);
         } else {
             stdCleanUp(saveType, status, runLast);
         }

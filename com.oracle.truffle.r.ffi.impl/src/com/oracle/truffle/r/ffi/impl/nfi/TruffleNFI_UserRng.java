@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -32,84 +34,79 @@ import com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 
 public class TruffleNFI_UserRng implements UserRngRFFI {
 
-    private static class NFIUserRngRFFINode extends UserRngRFFINode {
-        Node initMessage;
-        Node randMessage;
-        Node nSeedMessage;
-        Node seedsMessage;
-        Node readPointerNode = Message.createExecute(1).createNode();
+    private abstract static class RNGNode extends Node {
 
-        TruffleObject initFunction;
-        TruffleObject nSeedFunction;
-        TruffleObject randFunction;
-        TruffleObject seedsFunction;
+        @CompilationFinal protected Node message;
+        @CompilationFinal protected Node readPointerNode = Message.createExecute(1).createNode();
+        @CompilationFinal protected TruffleObject targetFunction;
+
+        protected void init(Function function, String signature) {
+            if (message == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                message = Message.createExecute(TruffleNFI_Utils.getArgCount(signature)).createNode();
+            }
+            if (targetFunction == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                Node bind = Message.createInvoke(1).createNode();
+                try {
+                    targetFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, function.getSymbolHandle().asTruffleObject(), "bind", signature);
+                } catch (Throwable t) {
+                    throw RInternalError.shouldNotReachHere();
+                }
+            }
+        }
+    }
+
+    private static final class TruffleNFI_InitNode extends RNGNode implements InitNode {
 
         @Override
-        public void init(int seed) {
-            if (initMessage == null) {
-                initMessage = Message.createExecute(1).createNode();
-            }
+        public void execute(int seed) {
+            init(Function.Init, "(sint32): void");
             try {
-                if (initFunction == null) {
-                    Node bind = Message.createInvoke(1).createNode();
-                    initFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, Function.Init.getSymbolHandle().asTruffleObject(), "bind", "(sint32): void");
-                }
-                ForeignAccess.sendExecute(initMessage, initFunction, seed);
+                ForeignAccess.sendExecute(message, targetFunction, seed);
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere();
             }
         }
+    }
+
+    private static final class TruffleNFI_RandNode extends RNGNode implements RandNode {
 
         @Override
-        public double rand() {
-            if (randMessage == null) {
-                randMessage = Message.createExecute(0).createNode();
-            }
+        public double execute() {
+            init(Function.Rand, "(): pointer");
             try {
-                if (randFunction == null) {
-                    Node bind = Message.createInvoke(1).createNode();
-                    randFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, Function.Rand.getSymbolHandle().asTruffleObject(), "bind", "(): pointer");
-                }
-                Object address = ForeignAccess.sendExecute(randMessage, randFunction);
-                Object value = ForeignAccess.sendExecute(readPointerNode, TruffleNFI_CAccess.Function.READ_POINTER_DOUBLE.getSymbolFunction(), address);
-                return (double) value;
+                Object address = ForeignAccess.sendExecute(message, targetFunction);
+                return (double) ForeignAccess.sendExecute(readPointerNode, TruffleNFI_CAccess.Function.READ_POINTER_DOUBLE.getSymbolFunction(), address);
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere();
             }
         }
+    }
+
+    private static final class TruffleNFI_NSeedNode extends RNGNode implements NSeedNode {
 
         @Override
-        public int nSeed() {
-            if (nSeedMessage == null) {
-                nSeedMessage = Message.createExecute(0).createNode();
-            }
+        public int execute() {
+            init(Function.NSeed, "(): pointer");
             try {
-                if (nSeedFunction == null) {
-                    Node bind = Message.createInvoke(1).createNode();
-                    nSeedFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, Function.NSeed.getSymbolHandle().asTruffleObject(), "bind", "(): pointer");
-                }
-                Object address = ForeignAccess.sendExecute(nSeedMessage, nSeedFunction);
-                Object n = ForeignAccess.sendExecute(readPointerNode, TruffleNFI_CAccess.Function.READ_POINTER_INT.getSymbolFunction(), address);
-                return (int) n;
+                Object address = ForeignAccess.sendExecute(message, targetFunction);
+                return (int) ForeignAccess.sendExecute(readPointerNode, TruffleNFI_CAccess.Function.READ_POINTER_INT.getSymbolFunction(), address);
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere();
             }
         }
+    }
+
+    private static final class TruffleNFI_SeedsNode extends RNGNode implements SeedsNode {
 
         @Override
-        public void seeds(int[] n) {
-            if (seedsMessage == null) {
-                seedsMessage = Message.createExecute(0).createNode();
-            }
+        public void execute(int[] n) {
+            init(Function.Seedloc, "(): pointer");
             try {
-                if (seedsFunction == null) {
-                    Node bind = Message.createInvoke(1).createNode();
-                    seedsFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, Function.Seedloc.getSymbolHandle().asTruffleObject(), "bind", "(): pointer");
-                }
-                Object address = ForeignAccess.sendExecute(seedsMessage, seedsFunction);
+                Object address = ForeignAccess.sendExecute(message, targetFunction);
                 for (int i = 0; i < n.length; i++) {
-                    Object seed = ForeignAccess.sendExecute(readPointerNode, TruffleNFI_CAccess.Function.READ_ARRAY_INT.getSymbolFunction(), address, i);
-                    n[i] = (int) seed;
+                    n[i] = (int) ForeignAccess.sendExecute(readPointerNode, TruffleNFI_CAccess.Function.READ_ARRAY_INT.getSymbolFunction(), address, i);
                 }
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere();
@@ -118,7 +115,22 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
     }
 
     @Override
-    public UserRngRFFINode createUserRngRFFINode() {
-        return new NFIUserRngRFFINode();
+    public InitNode createInitNode() {
+        return new TruffleNFI_InitNode();
+    }
+
+    @Override
+    public RandNode createRandNode() {
+        return new TruffleNFI_RandNode();
+    }
+
+    @Override
+    public NSeedNode createNSeedNode() {
+        return new TruffleNFI_NSeedNode();
+    }
+
+    @Override
+    public SeedsNode createSeedsNode() {
+        return new TruffleNFI_SeedsNode();
     }
 }

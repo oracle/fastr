@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 
 /**
  * Interface to native (C) methods provided by the {@code stats} package that are used to implement
@@ -30,19 +30,19 @@ import com.oracle.truffle.api.nodes.Node;
  * {@code fft_factor} and {@code fft_work}. functions from the GNU R C code.
  */
 public interface StatsRFFI {
-    abstract class FactorNode extends Node {
-        public abstract void execute(int n, int[] pmaxf, int[] pmaxp);
+    interface FactorNode extends NodeInterface {
+        void execute(int n, int[] pmaxf, int[] pmaxp);
 
-        public static FactorNode create() {
-            return RFFIFactory.getRFFI().getStatsRFFI().createFactorNode();
+        static FactorNode create() {
+            return RFFIFactory.getStatsRFFI().createFactorNode();
         }
     }
 
-    abstract class WorkNode extends Node {
-        public abstract int execute(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork);
+    interface WorkNode extends NodeInterface {
+        int execute(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork);
 
-        public static WorkNode create() {
-            return RFFIFactory.getRFFI().getStatsRFFI().createWorkNode();
+        static WorkNode create() {
+            return RFFIFactory.getStatsRFFI().createWorkNode();
         }
     }
 

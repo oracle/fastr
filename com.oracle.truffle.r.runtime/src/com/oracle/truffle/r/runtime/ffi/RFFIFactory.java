@@ -105,9 +105,65 @@ public abstract class RFFIFactory {
         return instance;
     }
 
-    public static RFFI getRFFI() {
+    private static RFFI getRFFI() {
         assert theRFFI != null : "RFFI factory is not initialized!";
         return theRFFI;
+    }
+
+    /*
+     * Some shortcuts to the specific RFFI interfaces:
+     */
+
+    public static BaseRFFI getBaseRFFI() {
+        return getRFFI().getBaseRFFI();
+    }
+
+    public static LapackRFFI getLapackRFFI() {
+        return getRFFI().getLapackRFFI();
+    }
+
+    public static RApplRFFI getRApplRFFI() {
+        return getRFFI().getRApplRFFI();
+    }
+
+    public static StatsRFFI getStatsRFFI() {
+        return getRFFI().getStatsRFFI();
+    }
+
+    public static ToolsRFFI getToolsRFFI() {
+        return getRFFI().getToolsRFFI();
+    }
+
+    public static CRFFI getCRFFI() {
+        return getRFFI().getCRFFI();
+    }
+
+    public static CallRFFI getCallRFFI() {
+        return getRFFI().getCallRFFI();
+    }
+
+    public static UserRngRFFI getUserRngRFFI() {
+        return getRFFI().getUserRngRFFI();
+    }
+
+    public static PCRERFFI getPCRERFFI() {
+        return getRFFI().getPCRERFFI();
+    }
+
+    public static ZipRFFI getZipRFFI() {
+        return getRFFI().getZipRFFI();
+    }
+
+    public static DLLRFFI getDLLRFFI() {
+        return getRFFI().getDLLRFFI();
+    }
+
+    public static REmbedRFFI getREmbedRFFI() {
+        return getRFFI().getREmbedRFFI();
+    }
+
+    public static MiscRFFI getMiscRFFI() {
+        return getRFFI().getMiscRFFI();
     }
 
     public static Type getType() {

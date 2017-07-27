@@ -22,46 +22,36 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 public class TruffleNFI_Zip implements ZipRFFI {
 
-    private static class TruffleNFI_CompressNode extends ZipRFFI.CompressNode {
-        @Child private Node message = NFIFunction.compress.createMessage();
+    private static class TruffleNFI_CompressNode extends TruffleNFI_DownCallNode implements ZipRFFI.CompressNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.compress;
+        }
 
         @Override
         public int execute(byte[] dest, byte[] source) {
             long[] destlen = new long[]{dest.length};
-            try {
-                int result = (int) ForeignAccess.sendExecute(message, NFIFunction.compress.getFunction(),
-                                JavaInterop.asTruffleObject(dest), JavaInterop.asTruffleObject(destlen),
-                                JavaInterop.asTruffleObject(source), source.length);
-                return result;
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            int result = (int) call(JavaInterop.asTruffleObject(dest), JavaInterop.asTruffleObject(destlen), JavaInterop.asTruffleObject(source), source.length);
+            return result;
         }
     }
 
-    private static class TruffleNFI_UncompressNode extends ZipRFFI.UncompressNode {
-        @Child private Node message = NFIFunction.uncompress.createMessage();
+    private static class TruffleNFI_UncompressNode extends TruffleNFI_DownCallNode implements ZipRFFI.UncompressNode {
+        @Override
+        protected NFIFunction getFunction() {
+            return NFIFunction.uncompress;
+        }
 
         @Override
         public int execute(byte[] dest, byte[] source) {
             long[] destlen = new long[]{dest.length};
-            try {
-                int result = (int) ForeignAccess.sendExecute(message, NFIFunction.uncompress.getFunction(),
-                                JavaInterop.asTruffleObject(dest), JavaInterop.asTruffleObject(destlen),
-                                JavaInterop.asTruffleObject(source), source.length);
-                return result;
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            int result = (int) call(JavaInterop.asTruffleObject(dest), JavaInterop.asTruffleObject(destlen), JavaInterop.asTruffleObject(source), source.length);
+            return result;
         }
     }
 

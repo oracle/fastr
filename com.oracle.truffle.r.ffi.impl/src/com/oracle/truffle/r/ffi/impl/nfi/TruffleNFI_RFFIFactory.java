@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -44,7 +44,8 @@ import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
-public class TruffleNFI_RFFIFactory extends RFFIFactory implements RFFI {
+public class TruffleNFI_RFFIFactory extends RFFIFactory {
+
     private static class ContextStateImpl implements RContext.ContextState {
         @Override
         public ContextState initialize(RContext context) {
@@ -66,144 +67,152 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory implements RFFI {
 
     @Override
     protected RFFI createRFFI() {
-        return this;
-    }
+        CompilerAsserts.neverPartOfCompilation();
+        return new RFFI() {
 
-    @CompilationFinal private CRFFI cRFFI;
+            @CompilationFinal private CRFFI cRFFI;
 
-    @Override
-    public CRFFI getCRFFI() {
-        if (cRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            cRFFI = new TruffleNFI_C();
-        }
-        return cRFFI;
-    }
+            @Override
+            public CRFFI getCRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                if (cRFFI == null) {
+                    cRFFI = new TruffleNFI_C();
+                }
+                return cRFFI;
+            }
 
-    @CompilationFinal private BaseRFFI baseRFFI;
+            @CompilationFinal private BaseRFFI baseRFFI;
 
-    @Override
-    public BaseRFFI getBaseRFFI() {
-        if (baseRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            baseRFFI = new TruffleNFI_Base();
-        }
-        return baseRFFI;
-    }
+            @Override
+            public BaseRFFI getBaseRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                if (baseRFFI == null) {
+                    baseRFFI = new TruffleNFI_Base();
+                }
+                return baseRFFI;
+            }
 
-    @CompilationFinal private CallRFFI callRFFI;
+            @CompilationFinal private CallRFFI callRFFI;
 
-    @Override
-    public CallRFFI getCallRFFI() {
-        if (callRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callRFFI = new TruffleNFI_Call();
-        }
-        return callRFFI;
-    }
+            @Override
+            public CallRFFI getCallRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                if (callRFFI == null) {
+                    callRFFI = new TruffleNFI_Call();
+                }
+                return callRFFI;
+            }
 
-    @CompilationFinal private DLLRFFI dllRFFI;
+            @CompilationFinal private DLLRFFI dllRFFI;
 
-    @Override
-    public DLLRFFI getDLLRFFI() {
-        if (dllRFFI == null) {
-            dllRFFI = new TruffleNFI_DLL();
-        }
-        return dllRFFI;
-    }
+            @Override
+            public DLLRFFI getDLLRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                CompilerAsserts.neverPartOfCompilation();
+                if (dllRFFI == null) {
+                    dllRFFI = new TruffleNFI_DLL();
+                }
+                return dllRFFI;
+            }
 
-    @CompilationFinal private UserRngRFFI userRngRFFI;
+            @CompilationFinal private UserRngRFFI userRngRFFI;
 
-    @Override
-    public UserRngRFFI getUserRngRFFI() {
-        if (userRngRFFI == null) {
-            userRngRFFI = new TruffleNFI_UserRng();
-        }
-        return userRngRFFI;
-    }
+            @Override
+            public UserRngRFFI getUserRngRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                if (userRngRFFI == null) {
+                    userRngRFFI = new TruffleNFI_UserRng();
+                }
+                return userRngRFFI;
+            }
 
-    @CompilationFinal private ZipRFFI zipRFFI;
+            @CompilationFinal private ZipRFFI zipRFFI;
 
-    @Override
-    public ZipRFFI getZipRFFI() {
-        if (zipRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            zipRFFI = new TruffleNFI_Zip();
-        }
-        return zipRFFI;
-    }
+            @Override
+            public ZipRFFI getZipRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                if (zipRFFI == null) {
+                    zipRFFI = new TruffleNFI_Zip();
+                }
+                return zipRFFI;
+            }
 
-    @CompilationFinal private PCRERFFI pcreRFFI;
+            @CompilationFinal private PCRERFFI pcreRFFI;
 
-    @Override
-    public PCRERFFI getPCRERFFI() {
-        if (pcreRFFI == null) {
-            pcreRFFI = new TruffleNFI_PCRE();
-        }
-        return pcreRFFI;
-    }
+            @Override
+            public PCRERFFI getPCRERFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                if (pcreRFFI == null) {
+                    pcreRFFI = new TruffleNFI_PCRE();
+                }
+                return pcreRFFI;
+            }
 
-    @CompilationFinal private LapackRFFI lapackRFFI;
+            @CompilationFinal private LapackRFFI lapackRFFI;
 
-    @Override
-    public LapackRFFI getLapackRFFI() {
-        if (lapackRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            lapackRFFI = new TruffleNFI_Lapack();
-        }
-        return lapackRFFI;
-    }
+            @Override
+            public LapackRFFI getLapackRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                if (lapackRFFI == null) {
+                    lapackRFFI = new TruffleNFI_Lapack();
+                }
+                return lapackRFFI;
+            }
 
-    @CompilationFinal private RApplRFFI rApplRFFI;
+            @CompilationFinal private RApplRFFI rApplRFFI;
 
-    @Override
-    public RApplRFFI getRApplRFFI() {
-        if (rApplRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            rApplRFFI = new TruffleNFI_RAppl();
-        }
-        return rApplRFFI;
-    }
+            @Override
+            public RApplRFFI getRApplRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                if (rApplRFFI == null) {
+                    rApplRFFI = new TruffleNFI_RAppl();
+                }
+                return rApplRFFI;
+            }
 
-    @CompilationFinal private StatsRFFI statsRFFI;
+            @CompilationFinal private StatsRFFI statsRFFI;
 
-    @Override
-    public StatsRFFI getStatsRFFI() {
-        if (statsRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            statsRFFI = new TruffleNFI_Stats();
-        }
-        return statsRFFI;
-    }
+            @Override
+            public StatsRFFI getStatsRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                if (statsRFFI == null) {
+                    statsRFFI = new TruffleNFI_Stats();
+                }
+                return statsRFFI;
+            }
 
-    @CompilationFinal private ToolsRFFI toolsRFFI;
+            @CompilationFinal private ToolsRFFI toolsRFFI;
 
-    @Override
-    public ToolsRFFI getToolsRFFI() {
-        if (toolsRFFI == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            toolsRFFI = new TruffleNFI_Tools();
-        }
-        return toolsRFFI;
-    }
+            @Override
+            public ToolsRFFI getToolsRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                if (toolsRFFI == null) {
+                    toolsRFFI = new TruffleNFI_Tools();
+                }
+                return toolsRFFI;
+            }
 
-    private REmbedRFFI rEmbedRFFI;
+            private REmbedRFFI rEmbedRFFI;
 
-    @Override
-    public REmbedRFFI getREmbedRFFI() {
-        if (rEmbedRFFI == null) {
-            rEmbedRFFI = new TruffleNFI_REmbed();
-        }
-        return rEmbedRFFI;
-    }
+            @Override
+            public REmbedRFFI getREmbedRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                if (rEmbedRFFI == null) {
+                    rEmbedRFFI = new TruffleNFI_REmbed();
+                }
+                return rEmbedRFFI;
+            }
 
-    private MiscRFFI miscRFFI;
+            private MiscRFFI miscRFFI;
 
-    @Override
-    public MiscRFFI getMiscRFFI() {
-        if (miscRFFI == null) {
-            miscRFFI = new TruffleNFI_Misc();
-        }
-        return miscRFFI;
+            @Override
+            public MiscRFFI getMiscRFFI() {
+                CompilerAsserts.neverPartOfCompilation();
+                if (miscRFFI == null) {
+                    miscRFFI = new TruffleNFI_Misc();
+                }
+                return miscRFFI;
+            }
+        };
     }
 }

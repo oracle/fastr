@@ -123,8 +123,8 @@ public class GrepFunctions {
 
     @NodeInfo(cost = NodeCost.NONE)
     public static class CommonCodeNode extends RBaseNode {
-        @Child protected PCRERFFI.MaketablesNode maketablesNode = RFFIFactory.getRFFI().getPCRERFFI().createMaketablesNode();
-        @Child protected PCRERFFI.CompileNode compileNode = RFFIFactory.getRFFI().getPCRERFFI().createCompileNode();
+        @Child protected PCRERFFI.MaketablesNode maketablesNode = RFFIFactory.getPCRERFFI().createMaketablesNode();
+        @Child protected PCRERFFI.CompileNode compileNode = RFFIFactory.getPCRERFFI().createCompileNode();
 
         /**
          * Temporary method that handles the check for the arguments that are common to the majority
@@ -218,7 +218,7 @@ public class GrepFunctions {
     }
 
     protected static final class GrepCommonCodeNode extends CommonCodeNode {
-        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
+        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getPCRERFFI().createExecNode();
 
         protected Object doGrep(String patternArg, RAbstractStringVector vector, boolean ignoreCase, boolean value, boolean perlPar, boolean fixed,
                         @SuppressWarnings("unused") boolean useBytes, boolean invert, boolean grepl) {
@@ -422,7 +422,7 @@ public class GrepFunctions {
     }
 
     protected static final class SubCommonCodeNode extends CommonCodeNode {
-        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
+        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getPCRERFFI().createExecNode();
 
         protected RStringVector doSub(String patternArg, String replacementArg, RAbstractStringVector vector, boolean ignoreCase, boolean perlPar,
                         boolean fixedPar, @SuppressWarnings("unused") boolean useBytes, boolean gsub) {
@@ -745,9 +745,9 @@ public class GrepFunctions {
         @Child SetFixedAttributeNode setCaptureLengthAttrNode = SetFixedAttributeNode.create("capture.length");
         @Child SetFixedAttributeNode setCaptureNamesAttrNode = SetFixedAttributeNode.create("capture.names");
         @Child SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
-        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
-        @Child PCRERFFI.GetCaptureNamesNode getCaptureNamesNode = RFFIFactory.getRFFI().getPCRERFFI().createGetCaptureNamesNode();
-        @Child PCRERFFI.GetCaptureCountNode getCaptureCountNode = RFFIFactory.getRFFI().getPCRERFFI().createGetCaptureCountNode();
+        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getPCRERFFI().createExecNode();
+        @Child PCRERFFI.GetCaptureNamesNode getCaptureNamesNode = RFFIFactory.getPCRERFFI().createGetCaptureNamesNode();
+        @Child PCRERFFI.GetCaptureCountNode getCaptureCountNode = RFFIFactory.getPCRERFFI().createGetCaptureCountNode();
 
         static {
             Casts casts = new Casts(Regexpr.class);
@@ -1343,7 +1343,7 @@ public class GrepFunctions {
     @ImportStatic(GrepFunctions.class)
     @RBuiltin(name = "strsplit", kind = INTERNAL, parameterNames = {"x", "split", "fixed", "perl", "useBytes"}, behavior = PURE)
     public abstract static class Strsplit extends RBuiltinNode.Arg5 {
-        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getRFFI().getPCRERFFI().createExecNode();
+        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getPCRERFFI().createExecNode();
 
         static {
             Casts casts = new Casts(Strsplit.class);

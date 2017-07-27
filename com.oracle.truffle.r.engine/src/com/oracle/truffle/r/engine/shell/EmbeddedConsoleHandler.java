@@ -56,7 +56,7 @@ public class EmbeddedConsoleHandler extends ConsoleHandler {
     @TruffleBoundary
     private REmbedRFFI getREmbedRFFI() {
         if (rEmbedRFFI == null) {
-            rEmbedRFFI = RFFIFactory.getRFFI().getREmbedRFFI();
+            rEmbedRFFI = RFFIFactory.getREmbedRFFI();
             if (!(RInterfaceCallbacks.R_WriteConsole.isOverridden() || RInterfaceCallbacks.R_ReadConsole.isOverridden())) {
                 if (startParams.noReadline()) {
                     delegate = new DefaultConsoleHandler(System.in, System.out);

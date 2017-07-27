@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCallReturn
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceEnabled;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -46,7 +47,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
  */
 public class JNI_Call implements CallRFFI {
 
-    public static class JNI_InvokeCallNode extends InvokeCallNode {
+    private static class JNI_InvokeCallNode extends Node implements InvokeCallNode {
 
         @Override
         @TruffleBoundary
@@ -103,7 +104,7 @@ public class JNI_Call implements CallRFFI {
         }
     }
 
-    public static class JNI_InvokeVoidCallNode extends InvokeVoidCallNode {
+    private static class JNI_InvokeVoidCallNode extends Node implements InvokeVoidCallNode {
 
         @Override
         @TruffleBoundary

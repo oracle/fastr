@@ -68,7 +68,7 @@ public class FortranAndCFunctions {
         private static final Charset charset = Charset.forName("US-ASCII");
 
         @Child protected ExtractNativeCallInfoNode extractSymbolInfo = ExtractNativeCallInfoNodeGen.create();
-        @Child private CRFFI.InvokeCNode invokeCNode = RFFIFactory.getRFFI().getCRFFI().createInvokeCNode();
+        @Child private CRFFI.InvokeCNode invokeCNode = RFFIFactory.getCRFFI().createInvokeCNode();
 
         @Override
         public Object[] getDefaultParameterValues() {

@@ -30,13 +30,13 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 @RBuiltin(name = "setwd", visibility = OFF, kind = INTERNAL, parameterNames = "path", behavior = IO)
 public abstract class Setwd extends RBuiltinNode.Arg1 {
@@ -46,11 +46,12 @@ public abstract class Setwd extends RBuiltinNode.Arg1 {
         casts.arg("path").defaultError(CHAR_ARGUMENT).mustBe(stringValue()).asStringVector().mustBe(notEmpty()).findFirst();
     }
 
+    @Child private BaseRFFI.GetwdNode getwdNode = RFFIFactory.getBaseRFFI().createGetwdNode();
+    @Child private BaseRFFI.SetwdNode setwdNode = RFFIFactory.getBaseRFFI().createSetwdNode();
+
     @Specialization
     @TruffleBoundary
-    protected Object setwd(String path,
-                    @Cached("create()") BaseRFFI.GetwdNode getwdNode,
-                    @Cached("create()") BaseRFFI.SetwdNode setwdNode) {
+    protected Object setwd(String path) {
         String owd = getwdNode.execute();
         String nwd = Utils.tildeExpand(path);
         int rc = setwdNode.execute(nwd);

@@ -23,33 +23,33 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 
 /**
  * zip compression/uncompression.
  */
 public interface ZipRFFI {
 
-    abstract class CompressNode extends Node {
+    interface CompressNode extends NodeInterface {
         /**
          * compress {@code source} into {@code dest}.
          *
          * @return standard return code (0 ok)
          */
-        public abstract int execute(byte[] dest, byte[] source);
+        int execute(byte[] dest, byte[] source);
 
-        public static CompressNode create() {
-            return RFFIFactory.getRFFI().getZipRFFI().createCompressNode();
+        static CompressNode create() {
+            return RFFIFactory.getZipRFFI().createCompressNode();
         }
     }
 
-    abstract class UncompressNode extends Node {
+    interface UncompressNode extends NodeInterface {
         /**
          * uncompress {@code source} into {@code dest}.
          *
          * @return standard return code (0 ok)
          */
-        public abstract int execute(byte[] dest, byte[] source);
+        int execute(byte[] dest, byte[] source);
     }
 
     CompressNode createCompressNode();
@@ -62,7 +62,7 @@ public interface ZipRFFI {
         private static CompressRootNode compressRootNode;
 
         private CompressRootNode() {
-            super(RFFIFactory.getRFFI().getZipRFFI().createCompressNode());
+            super(RFFIFactory.getZipRFFI().createCompressNode());
         }
 
         @Override
@@ -83,7 +83,7 @@ public interface ZipRFFI {
         private static UncompressRootNode uncompressRootNode;
 
         private UncompressRootNode() {
-            super(RFFIFactory.getRFFI().getZipRFFI().createUncompressNode());
+            super(RFFIFactory.getZipRFFI().createUncompressNode());
         }
 
         @Override

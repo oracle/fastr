@@ -24,20 +24,15 @@ package com.oracle.truffle.r.ffi.impl.interop;
 
 import static com.oracle.truffle.r.ffi.impl.interop.UnsafeAdapter.UNSAFE;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
 import sun.misc.Unsafe;
 
-public final class NativeDoubleArray extends NativeNACheck implements RTruffleObject {
+public final class NativeDoubleArray extends NativeNACheck<double[]> implements RTruffleObject {
+
     public final double[] value;
-    /**
-     * If the array escapes the Truffle world via {@link #convertToNative()}, this value will be
-     * non-zero and is used exclusively thereafter.
-     */
-    @CompilationFinal protected long nativeAddress;
 
     public NativeDoubleArray(Object obj, double[] value) {
         super(obj);
@@ -64,21 +59,18 @@ public final class NativeDoubleArray extends NativeNACheck implements RTruffleOb
         }
     }
 
-    long convertToNative() {
-        if (nativeAddress == 0) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            nativeAddress = UNSAFE.allocateMemory(value.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
-            UNSAFE.copyMemory(value, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, null, nativeAddress, value.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
-        }
-        return nativeAddress;
+    @Override
+    @TruffleBoundary
+    protected void allocateNative() {
+        nativeAddress = UNSAFE.allocateMemory(value.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+        UNSAFE.copyMemory(value, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, null, nativeAddress, value.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
     }
 
-    public double[] getValue() {
-        if (nativeAddress != 0) {
-            // copy back
-            UNSAFE.copyMemory(null, nativeAddress, value, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, value.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
-        }
-        return value;
+    @Override
+    @TruffleBoundary
+    protected void copyBackFromNative() {
+        // copy back
+        UNSAFE.copyMemory(null, nativeAddress, value, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, value.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
     }
 
     @Override

@@ -70,18 +70,24 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     @Override
     public Object RAW(Object x) {
         byte[] value = (byte[]) super.RAW(x);
+
+        // TODO: this will leak memory if the pointer escapes
         return new NativeRawArray(value);
     }
 
     @Override
     public Object LOGICAL(Object x) {
         byte[] value = (byte[]) super.LOGICAL(x);
+
+        // TODO: this will leak memory if the pointer escapes
         return new NativeLogicalArray(x, value);
     }
 
     @Override
     public Object INTEGER(Object x) {
         int[] value = (int[]) super.INTEGER(x);
+
+        // TODO: this will leak memory if the pointer escapes
         return new NativeIntegerArray(x, value);
     }
 
@@ -89,6 +95,8 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     public Object REAL(Object x) {
         // Special handling in Truffle variant
         double[] value = (double[]) super.REAL(x);
+
+        // TODO: this will leak memory if the pointer escapes
         return new NativeDoubleArray(x, value);
     }
 

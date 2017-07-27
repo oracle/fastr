@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  */
 @RBuiltin(name = ".fastr.dqrls", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x", "n", "p", "y", "ny", "tol", "coeff"}, behavior = PURE)
 public abstract class FastrDqrls extends RBuiltinNode.Arg7 {
-    @Child private RApplRFFI.DqrlsNode dqrlsNode = RFFIFactory.getRFFI().getRApplRFFI().createDqrlsNode();
+    @Child private RApplRFFI.DqrlsNode dqrlsNode = RFFIFactory.getRApplRFFI().createDqrlsNode();
 
     private static final String[] NAMES = new String[]{"qr", "coefficients", "residuals", "effects", "rank", "pivot", "qraux", "tol", "pivoted"};
     private static RStringVector namesVector = null;

@@ -49,7 +49,7 @@ public class TruffleNFI_DLL implements DLLRFFI {
         }
     }
 
-    private static class TruffleNFI_DLOpenNode extends DLLRFFI.DLOpenNode {
+    private static class TruffleNFI_DLOpenNode extends Node implements DLLRFFI.DLOpenNode {
 
         @TruffleBoundary
         @Override
@@ -74,7 +74,7 @@ public class TruffleNFI_DLL implements DLLRFFI {
         return sb.toString();
     }
 
-    private static class TruffleNFI_DLSymNode extends DLLRFFI.DLSymNode {
+    private static class TruffleNFI_DLSymNode extends Node implements DLLRFFI.DLSymNode {
 
         @Override
         public SymbolHandle execute(Object handle, String symbol) {
@@ -92,7 +92,7 @@ public class TruffleNFI_DLL implements DLLRFFI {
         }
     }
 
-    private static class TruffleNFI_DLCloseNode extends DLLRFFI.DLCloseNode {
+    private static class TruffleNFI_DLCloseNode extends Node implements DLLRFFI.DLCloseNode {
 
         @Override
         public int execute(Object handle) {

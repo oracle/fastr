@@ -62,8 +62,7 @@ public class TruffleLLVM_Tools implements ToolsRFFI {
         public synchronized Object execute(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
                         RLogicalVector warndups) {
             addCallback();
-            Object result = super.execute(con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups);
-            return result;
+            return super.execute(con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups);
         }
     }
 

@@ -25,6 +25,9 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.ffi.impl.common.NativeFunction;
+import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 /**
  * Enumerates all the C functions that are internal to the implementation and called via Truffle
@@ -33,7 +36,7 @@ import com.oracle.truffle.api.nodes.Node;
  * just have LLVM handle the underlying native call. The wrapper functions names are all of the form
  * {@code call_xxx_function}, where {@code xxx} is the subsystem.
  */
-public enum LLVMFunction {
+public enum LLVMFunction implements NativeFunction {
     // base
     getpid(0, "call_base_"),
     getwd(2, "call_base_"),
@@ -72,18 +75,29 @@ public enum LLVMFunction {
     dgesv(7, "call_lapack_"),
     dlange(6, "call_lapack_"),
     dgecon(8, "call_lapack_"),
-    dsyevr(20, "call_lapack_");
+    dsyevr(20, "call_lapack_"),
+    // misc
+    exactSumFunc(4, "");
 
-    private final int argCount;
-    final String callName;
+    private final int argumentCount;
+    private final String callName;
 
     LLVMFunction(int argCount, String prefix) {
-        this.argCount = argCount;
-        callName = prefix + name();
+        this.argumentCount = argCount;
+        this.callName = prefix + name();
     }
 
     Node createMessage() {
         CompilerAsserts.neverPartOfCompilation();
-        return Message.createExecute(argCount).createNode();
+        return Message.createExecute(argumentCount).createNode();
+    }
+
+    SymbolHandle createSymbol() {
+        return DLL.findSymbol(callName, null);
+    }
+
+    @Override
+    public int getArgumentCount() {
+        return argumentCount;
     }
 }

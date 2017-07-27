@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.nodes.Node;
@@ -30,60 +32,68 @@ import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 
 public class TruffleLLVM_UserRng implements UserRngRFFI {
-    private static class TruffleUserRngRFFINode extends UserRngRFFINode {
-        Node initMessage;
-        Node randMessage;
-        Node nSeedMessage;
-        Node seedsMessage;
-        Node readPointerNode = Message.createExecute(1).createNode();
+
+    private abstract static class RNGNode extends Node {
+
+        @CompilationFinal protected Node message;
+        @CompilationFinal protected Node readPointerNode = Message.createExecute(1).createNode();
+
+        protected void init(int argumentCount) {
+            if (message == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                message = Message.createExecute(argumentCount).createNode();
+            }
+        }
+    }
+
+    private static final class TruffleLLVMInitNode extends RNGNode implements InitNode {
 
         @Override
-        public void init(int seed) {
-            if (initMessage == null) {
-                initMessage = Message.createExecute(1).createNode();
-            }
+        public void execute(int seed) {
+            init(1);
             try {
-                ForeignAccess.sendExecute(initMessage, Function.Init.getSymbolHandle().asTruffleObject(), seed);
+                ForeignAccess.sendExecute(message, Function.Init.getSymbolHandle().asTruffleObject(), seed);
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere();
             }
         }
+    }
+
+    private static final class TruffleLLVM_RandNode extends RNGNode implements RandNode {
 
         @Override
-        public double rand() {
-            if (randMessage == null) {
-                randMessage = Message.createExecute(0).createNode();
-            }
+        public double execute() {
+            init(0);
             try {
-                Object address = ForeignAccess.sendExecute(randMessage, Function.Rand.getSymbolHandle().asTruffleObject());
-                Object value = ForeignAccess.sendExecute(readPointerNode, TruffleLLVM_CAccess.Function.READ_POINTER_DOUBLE.getSymbolHandle().asTruffleObject(), address);
-                return (double) value;
+                Object address = ForeignAccess.sendExecute(message, Function.Rand.getSymbolHandle().asTruffleObject());
+                return (double) ForeignAccess.sendExecute(readPointerNode, TruffleLLVM_CAccess.Function.READ_POINTER_DOUBLE.getSymbolHandle().asTruffleObject(), address);
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere();
             }
         }
+    }
+
+    private static final class TruffleLLVM_NSeedNode extends RNGNode implements NSeedNode {
 
         @Override
-        public int nSeed() {
-            if (nSeedMessage == null) {
-                nSeedMessage = Message.createExecute(0).createNode();
-            }
+        public int execute() {
+            init(0);
             try {
-                Object address = ForeignAccess.sendExecute(nSeedMessage, Function.NSeed.getSymbolHandle().asTruffleObject());
-                Object n = ForeignAccess.sendExecute(readPointerNode, TruffleLLVM_CAccess.Function.READ_POINTER_INT.getSymbolHandle().asTruffleObject(), address);
-                return (int) n;
+                Object address = ForeignAccess.sendExecute(message, Function.NSeed.getSymbolHandle().asTruffleObject());
+                return (int) ForeignAccess.sendExecute(readPointerNode, TruffleLLVM_CAccess.Function.READ_POINTER_INT.getSymbolHandle().asTruffleObject(), address);
             } catch (Throwable t) {
                 throw RInternalError.shouldNotReachHere();
             }
         }
+    }
+
+    private static final class TruffleLLVM_SeedsNode extends RNGNode implements SeedsNode {
 
         @Override
-        public void seeds(int[] n) {
-            if (seedsMessage == null) {
-                seedsMessage = Message.createExecute(0).createNode();
-            }
+        public void execute(int[] n) {
+            init(0);
             try {
-                Object address = ForeignAccess.sendExecute(seedsMessage, Function.Seedloc.getSymbolHandle().asTruffleObject());
+                Object address = ForeignAccess.sendExecute(message, Function.Seedloc.getSymbolHandle().asTruffleObject());
                 for (int i = 0; i < n.length; i++) {
                     Object seed = ForeignAccess.sendExecute(readPointerNode, TruffleLLVM_CAccess.Function.READ_ARRAY_INT.getSymbolHandle().asTruffleObject(), address, i);
                     n[i] = (int) seed;
@@ -95,7 +105,22 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
     }
 
     @Override
-    public UserRngRFFINode createUserRngRFFINode() {
-        return new TruffleUserRngRFFINode();
+    public InitNode createInitNode() {
+        return new TruffleLLVMInitNode();
+    }
+
+    @Override
+    public RandNode createRandNode() {
+        return new TruffleLLVM_RandNode();
+    }
+
+    @Override
+    public NSeedNode createNSeedNode() {
+        return new TruffleLLVM_NSeedNode();
+    }
+
+    @Override
+    public SeedsNode createSeedsNode() {
+        return new TruffleLLVM_SeedsNode();
     }
 }

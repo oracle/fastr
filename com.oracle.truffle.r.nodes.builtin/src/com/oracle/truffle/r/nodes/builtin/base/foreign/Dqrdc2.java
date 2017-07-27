@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public abstract class Dqrdc2 extends RExternalBuiltinNode.Arg9 {
-    @Child private RApplRFFI.Dqrdc2Node dqrdc2Node = RFFIFactory.getRFFI().getRApplRFFI().createDqrdc2Node();
+    @Child private RApplRFFI.Dqrdc2Node dqrdc2Node = RFFIFactory.getRApplRFFI().createDqrdc2Node();
 
     private static final String E = RRuntime.NAMES_ATTR_EMPTY_VALUE;
     private static final RStringVector DQRDC2_NAMES = RDataFactory.createStringVector(new String[]{"qr", E, E, E, E, "rank", "qraux", "pivot", E}, RDataFactory.COMPLETE_VECTOR);

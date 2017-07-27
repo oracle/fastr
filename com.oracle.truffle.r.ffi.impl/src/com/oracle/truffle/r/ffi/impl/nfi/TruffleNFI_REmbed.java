@@ -30,13 +30,11 @@ public class TruffleNFI_REmbed implements REmbedRFFI {
     @Override
     public void suicide(String x) {
         throw RInternalError.unimplemented();
-
     }
 
     @Override
     public void cleanUp(int type, int x, int y) {
         throw RInternalError.unimplemented();
-
     }
 
     @Override
@@ -47,12 +45,10 @@ public class TruffleNFI_REmbed implements REmbedRFFI {
     @Override
     public void writeConsole(String x) {
         throw RInternalError.unimplemented();
-
     }
 
     @Override
     public void writeErrConsole(String x) {
         throw RInternalError.unimplemented();
-
     }
 }

@@ -20,49 +20,40 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.llvm;
+package com.oracle.truffle.r.ffi.impl.common;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.ffi.RFFIRootNode;
 
-public class TruffleLLVM_Utils {
-    public static long getNativeAddress(TruffleObject llvmTruffleAddress) {
-        if (asPointerRootNode == null) {
-            asPointerRootNode = new AsPointerRootNode();
-        }
-        long result = (long) asPointerRootNode.getCallTarget().call(llvmTruffleAddress);
-        return result;
-    }
+public abstract class DownCallNode<T extends NativeFunction> extends Node {
 
-    static final class AsPointerRootNode extends RFFIRootNode<AsPointerNode> {
-        private AsPointerRootNode() {
-            super(new AsPointerNode());
-        }
+    @Child private Node message;
 
-        @Override
-        public Object execute(VirtualFrame frame) {
-            Object[] args = frame.getArguments();
-            return rffiNode.execute((TruffleObject) args[0]);
-        }
-    }
+    protected abstract TruffleObject getTarget();
 
-    private static AsPointerRootNode asPointerRootNode;
+    protected abstract T getFunction();
 
-    static final class AsPointerNode extends Node {
-        @Child private Node asPointerMessageNode = Message.AS_POINTER.createNode();
-
-        public long execute(TruffleObject pointer) {
-            try {
-                return ForeignAccess.sendAsPointer(asPointerMessageNode, pointer);
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
+    protected final Object call(Object... args) {
+        try {
+            if (message == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                message = insert(Message.createExecute(getFunction().getArgumentCount()).createNode());
             }
+            wrapArguments(args);
+            return ForeignAccess.sendExecute(message, getTarget(), args);
+        } catch (InteropException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        } finally {
+            finishArguments(args);
         }
     }
+
+    protected abstract void wrapArguments(Object[] args);
+
+    protected abstract void finishArguments(Object[] args);
 }

@@ -22,18 +22,18 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 
 /**
  * Miscellaneous methods implemented in native code.
  *
  */
 public interface MiscRFFI {
-    abstract class ExactSumNode extends Node {
-        public abstract double execute(double[] values, boolean hasNa, boolean naRm);
+    interface ExactSumNode extends NodeInterface {
+        double execute(double[] values, boolean hasNa, boolean naRm);
 
-        public static ExactSumNode create() {
-            return RFFIFactory.getRFFI().getMiscRFFI().createExactSumNode();
+        static ExactSumNode create() {
+            return RFFIFactory.getMiscRFFI().createExactSumNode();
         }
     }
 

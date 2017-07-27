@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 
 /**
  * A statically typed interface to exactly those native functions required by the R {@code base}
@@ -34,50 +34,51 @@ import com.oracle.truffle.api.nodes.Node;
  * map 1-1 to a native function, they may involve the invocation of several native functions.
  */
 public interface BaseRFFI {
-    abstract class GetpidNode extends Node {
-        public abstract int execute();
 
-        public static GetpidNode create() {
-            return RFFIFactory.getRFFI().getBaseRFFI().createGetpidNode();
+    interface GetpidNode extends NodeInterface {
+        int execute();
+
+        static GetpidNode create() {
+            return RFFIFactory.getBaseRFFI().createGetpidNode();
         }
     }
 
-    abstract class GetwdNode extends Node {
+    interface GetwdNode extends NodeInterface {
         /**
          * Returns the current working directory, in the face of calls to {@code setwd}.
          */
-        public abstract String execute();
+        String execute();
 
-        public static GetwdNode create() {
-            return RFFIFactory.getRFFI().getBaseRFFI().createGetwdNode();
+        static GetwdNode create() {
+            return RFFIFactory.getBaseRFFI().createGetwdNode();
         }
     }
 
-    abstract class SetwdNode extends Node {
+    interface SetwdNode extends NodeInterface {
         /**
          * Sets the current working directory to {@code dir}. (cf. Unix {@code chdir}).
          *
          * @return 0 if successful.
          */
-        public abstract int execute(String dir);
+        int execute(String dir);
 
-        public static SetwdNode create() {
-            return RFFIFactory.getRFFI().getBaseRFFI().createSetwdNode();
+        static SetwdNode create() {
+            return RFFIFactory.getBaseRFFI().createSetwdNode();
         }
     }
 
-    abstract class MkdirNode extends Node {
+    interface MkdirNode extends NodeInterface {
         /**
-         * Create directory with given mode. Exception is thrown omn error.
+         * Create directory with given mode. Exception is thrown on error.
          */
-        public abstract void execute(String dir, int mode) throws IOException;
+        void execute(String dir, int mode) throws IOException;
 
-        public static MkdirNode create() {
-            return RFFIFactory.getRFFI().getBaseRFFI().createMkdirNode();
+        static MkdirNode create() {
+            return RFFIFactory.getBaseRFFI().createMkdirNode();
         }
     }
 
-    abstract class ReadlinkNode extends Node {
+    interface ReadlinkNode extends NodeInterface {
         /**
          * Try to convert a symbolic link to it's target.
          *
@@ -85,44 +86,44 @@ public interface BaseRFFI {
          * @return the target if {@code path} is a link else {@code null}
          * @throws IOException for any other error except "not a link"
          */
-        public abstract String execute(String path) throws IOException;
+        String execute(String path) throws IOException;
 
-        public static ReadlinkNode create() {
-            return RFFIFactory.getRFFI().getBaseRFFI().createReadlinkNode();
+        static ReadlinkNode create() {
+            return RFFIFactory.getBaseRFFI().createReadlinkNode();
         }
     }
 
-    abstract class MkdtempNode extends Node {
+    interface MkdtempNode extends NodeInterface {
         /**
          * Creates a temporary directory using {@code template} and return the resulting path or
          * {@code null} if error.
          */
-        public abstract String execute(String template);
+        String execute(String template);
 
-        public static MkdtempNode create() {
-            return RFFIFactory.getRFFI().getBaseRFFI().createMkdtempNode();
+        static MkdtempNode create() {
+            return RFFIFactory.getBaseRFFI().createMkdtempNode();
         }
     }
 
-    abstract class ChmodNode extends Node {
+    interface ChmodNode extends NodeInterface {
         /**
          * Change the file mode of {@code path}.
          */
-        public abstract int execute(String path, int mode);
+        int execute(String path, int mode);
 
-        public static ChmodNode create() {
-            return RFFIFactory.getRFFI().getBaseRFFI().createChmodNode();
+        static ChmodNode create() {
+            return RFFIFactory.getBaseRFFI().createChmodNode();
         }
     }
 
-    abstract class StrolNode extends Node {
+    interface StrolNode extends NodeInterface {
         /**
          * Convert string to long.
          */
-        public abstract long execute(String s, int base) throws IllegalArgumentException;
+        long execute(String s, int base) throws IllegalArgumentException;
 
-        public static StrolNode create() {
-            return RFFIFactory.getRFFI().getBaseRFFI().createStrolNode();
+        static StrolNode create() {
+            return RFFIFactory.getBaseRFFI().createStrolNode();
         }
     }
 
@@ -138,27 +139,27 @@ public interface BaseRFFI {
         String nodename();
     }
 
-    abstract class UnameNode extends Node {
+    interface UnameNode extends NodeInterface {
         /**
          * Return {@code utsname} info.
          */
-        public abstract UtsName execute();
+        UtsName execute();
 
-        public static UnameNode create() {
-            return RFFIFactory.getRFFI().getBaseRFFI().createUnameNode();
+        static UnameNode create() {
+            return RFFIFactory.getBaseRFFI().createUnameNode();
         }
     }
 
-    abstract class GlobNode extends Node {
+    interface GlobNode extends NodeInterface {
         /**
          * Returns an array of pathnames that match {@code pattern} using the OS glob function. This
          * is done in native code because it is very hard to write in Java in the face of
          * {@code setwd}.
          */
-        public abstract ArrayList<String> glob(String pattern);
+        ArrayList<String> glob(String pattern);
 
-        public static GlobNode create() {
-            return RFFIFactory.getRFFI().getBaseRFFI().createGlobNode();
+        static GlobNode create() {
+            return RFFIFactory.getBaseRFFI().createGlobNode();
         }
     }
 
@@ -196,7 +197,7 @@ public interface BaseRFFI {
         private static GetpidRootNode getpidRootNode;
 
         private GetpidRootNode() {
-            super(RFFIFactory.getRFFI().getBaseRFFI().createGetpidNode());
+            super(RFFIFactory.getBaseRFFI().createGetpidNode());
         }
 
         @Override
@@ -216,7 +217,7 @@ public interface BaseRFFI {
         private static GetwdRootNode getwdRootNode;
 
         private GetwdRootNode() {
-            super(RFFIFactory.getRFFI().getBaseRFFI().createGetwdNode());
+            super(RFFIFactory.getBaseRFFI().createGetwdNode());
         }
 
         @Override
@@ -236,7 +237,7 @@ public interface BaseRFFI {
         private static MkdtempRootNode mkdtempRootNode;
 
         private MkdtempRootNode() {
-            super(RFFIFactory.getRFFI().getBaseRFFI().createMkdtempNode());
+            super(RFFIFactory.getBaseRFFI().createMkdtempNode());
         }
 
         @Override
@@ -257,7 +258,7 @@ public interface BaseRFFI {
         private static UnameRootNode unameRootNode;
 
         private UnameRootNode() {
-            super(RFFIFactory.getRFFI().getBaseRFFI().createUnameNode());
+            super(RFFIFactory.getBaseRFFI().createUnameNode());
         }
 
         @Override

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.common;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -37,11 +38,11 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 
 public class Generic_Tools implements ToolsRFFI {
-    public static class Generic_ToolsRFFINode extends ParseRdNode {
+    public static class Generic_ToolsRFFINode extends Node implements ParseRdNode {
         private static final String C_PARSE_RD = "C_parseRd";
         protected static final String TOOLS = "tools";
 
-        @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getRFFI().getCallRFFI().createInvokeCallNode();
+        @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
         @Child private DLL.RFindSymbolNode findSymbolNode = DLL.RFindSymbolNode.create();
 
         @CompilationFinal private NativeCallInfo nativeCallInfo;

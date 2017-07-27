@@ -26,10 +26,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 public class JNI_Base implements BaseRFFI {
-    public static class JNI_GetpidNode extends GetpidNode {
+    private static class JNI_GetpidNode extends Node implements GetpidNode {
         @TruffleBoundary
         @Override
         public int execute() {
@@ -37,7 +38,7 @@ public class JNI_Base implements BaseRFFI {
         }
     }
 
-    public static class JNI_GetwdNode extends GetwdNode {
+    private static class JNI_GetwdNode extends Node implements GetwdNode {
         @TruffleBoundary
         @Override
         public String execute() {
@@ -55,7 +56,7 @@ public class JNI_Base implements BaseRFFI {
         }
     }
 
-    public static class JNI_SetwdNode extends SetwdNode {
+    private static class JNI_SetwdNode extends Node implements SetwdNode {
         @TruffleBoundary
         @Override
         public int execute(String dir) {
@@ -63,7 +64,7 @@ public class JNI_Base implements BaseRFFI {
         }
     }
 
-    public static class JNI_ReadlinkNode extends ReadlinkNode {
+    private static class JNI_ReadlinkNode extends Node implements ReadlinkNode {
         private static final int EINVAL = 22;
 
         @TruffleBoundary
@@ -83,7 +84,7 @@ public class JNI_Base implements BaseRFFI {
         }
     }
 
-    public static class JNI_MkdtempNode extends MkdtempNode {
+    private static class JNI_MkdtempNode extends Node implements MkdtempNode {
         @TruffleBoundary
         @Override
         public String execute(String template) {
@@ -104,7 +105,7 @@ public class JNI_Base implements BaseRFFI {
         }
     }
 
-    public static class JNI_MkdirNode extends MkdirNode {
+    private static class JNI_MkdirNode extends Node implements MkdirNode {
         @TruffleBoundary
         @Override
         public void execute(String dir, int mode) throws IOException {
@@ -115,7 +116,7 @@ public class JNI_Base implements BaseRFFI {
         }
     }
 
-    public static class JNI_ChmodNode extends ChmodNode {
+    private static class JNI_ChmodNode extends Node implements ChmodNode {
         @TruffleBoundary
         @Override
         public int execute(String path, int mode) {
@@ -123,7 +124,7 @@ public class JNI_Base implements BaseRFFI {
         }
     }
 
-    public static class JNI_StrolNode extends StrolNode {
+    private static class JNI_StrolNode extends Node implements StrolNode {
         @TruffleBoundary
         @Override
         public long execute(String s, int base) throws IllegalArgumentException {
@@ -137,7 +138,7 @@ public class JNI_Base implements BaseRFFI {
         }
     }
 
-    public static class JNI_UnameNode extends UnameNode {
+    private static class JNI_UnameNode extends Node implements UnameNode {
         @TruffleBoundary
         @Override
         public UtsName execute() {
@@ -145,7 +146,7 @@ public class JNI_Base implements BaseRFFI {
         }
     }
 
-    public static class JNI_GlobNode extends GlobNode {
+    private static class JNI_GlobNode extends Node implements GlobNode {
         @TruffleBoundary
         @Override
         public ArrayList<String> glob(String pattern) {

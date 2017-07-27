@@ -26,11 +26,12 @@ import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCall;
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceEnabled;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
 public class JNI_C implements CRFFI {
-    public static class JNI_InvokeCNode extends InvokeCNode {
+    private static class JNI_InvokeCNode extends Node implements InvokeCNode {
         /**
          * This is rather similar to {@link JNI_Call}, except the objects are guaranteed to be
          * native array types, no upcalls are possible, and no result is returned. However, the
