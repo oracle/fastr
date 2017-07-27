@@ -43,6 +43,7 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -157,6 +158,7 @@ public class PTAMain {
             consoleHandler.setLevel(Level.SEVERE);
             FileHandler fileHandler = new FileHandler(LOG_FILE_NAME);
             fileHandler.setLevel(Level.INFO);
+            fileHandler.setFormatter(new SimpleFormatter());
             rootLogger.addHandler(fileHandler);
         }
         rootLogger.addHandler(consoleHandler);

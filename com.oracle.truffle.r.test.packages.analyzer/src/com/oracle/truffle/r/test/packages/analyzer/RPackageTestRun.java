@@ -57,7 +57,7 @@ public class RPackageTestRun {
 
     @Override
     public String toString() {
-        return super.toString();
+        return pkg + "/" + nr;
     }
 
 }
