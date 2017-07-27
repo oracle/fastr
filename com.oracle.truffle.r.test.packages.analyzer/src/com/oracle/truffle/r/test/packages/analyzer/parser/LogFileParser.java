@@ -277,7 +277,7 @@ public class LogFileParser {
     }
 
     private String getPkgName() {
-        return pkg.getPkg().getName();
+        return pkg.getPackage().getName();
     }
 
     private static boolean parseStatus(String substring) {

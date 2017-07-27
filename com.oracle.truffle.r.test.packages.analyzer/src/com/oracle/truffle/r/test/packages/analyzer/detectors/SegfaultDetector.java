@@ -79,12 +79,12 @@ public class SegfaultDetector extends LineDetector {
 
         @Override
         public String toString() {
-            return getLocation() + ": SIGSEGV in " + getPkg();
+            return getLocation() + ": SIGSEGV in " + getPackage();
         }
 
         @Override
         public String getSummary() {
-            return ": SIGSEGV in " + getPkg();
+            return ": SIGSEGV in " + getPackage();
         }
 
         @Override

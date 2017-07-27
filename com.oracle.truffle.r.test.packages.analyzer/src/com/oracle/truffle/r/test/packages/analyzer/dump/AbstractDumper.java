@@ -39,7 +39,7 @@ public abstract class AbstractDumper {
     }
 
     protected Map<RPackage, List<Problem>> groupByPkg(Collection<Problem> problems) {
-        return problems.stream().collect(Collectors.groupingBy(p -> p.getPackageTestRun().getPkg()));
+        return problems.stream().collect(Collectors.groupingBy(p -> p.getPackageTestRun().getPackage()));
     }
 
 }

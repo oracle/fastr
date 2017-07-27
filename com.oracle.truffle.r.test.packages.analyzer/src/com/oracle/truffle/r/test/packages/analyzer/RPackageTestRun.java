@@ -36,7 +36,7 @@ public class RPackageTestRun {
         this.nr = nr;
     }
 
-    public RPackage getPkg() {
+    public RPackage getPackage() {
         return pkg;
     }
 

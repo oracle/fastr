@@ -71,13 +71,13 @@ public class InstallationProblemDetector extends LineDetector {
 
         @Override
         public String toString() {
-            return String.format("%s: Installation failed in '%s'; message: %s", getLocation(), getPkg().getName(),
+            return String.format("%s: Installation failed in '%s'; message: %s", getLocation(), getPackage().getName(),
                             message);
         }
 
         @Override
         public String getSummary() {
-            return String.format("Installation failed in pacakge '%s'", getPkg().getName());
+            return String.format("Installation failed in package '%s'", getPackage().getName());
         }
 
         @Override

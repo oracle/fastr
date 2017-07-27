@@ -88,7 +88,7 @@ public class RErrorDetector extends LineDetector {
 
         @Override
         public String toString() {
-            return String.format("%s: RError in '%s' (msg = '%s'), args)", getLocation(), getPkg().getName(), message);
+            return String.format("%s: RError in '%s' (msg = '%s'), args)", getLocation(), getPackage().getName(), message);
         }
 
         @Override

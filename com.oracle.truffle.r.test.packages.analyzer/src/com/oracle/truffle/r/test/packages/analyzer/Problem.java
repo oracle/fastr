@@ -37,8 +37,8 @@ public abstract class Problem {
         this.location = Objects.requireNonNull(location);
     }
 
-    public RPackage getPkg() {
-        return pkgTestRun.getPkg();
+    public RPackage getPackage() {
+        return pkgTestRun.getPackage();
     }
 
     public RPackageTestRun getPackageTestRun() {
