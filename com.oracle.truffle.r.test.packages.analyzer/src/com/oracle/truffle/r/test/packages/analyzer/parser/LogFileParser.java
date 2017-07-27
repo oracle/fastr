@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
@@ -43,6 +44,8 @@ import com.oracle.truffle.r.test.packages.analyzer.detectors.LineDetector;
 import com.oracle.truffle.r.test.packages.analyzer.parser.DiffParser.DiffChunk;
 
 public class LogFileParser {
+
+    private static final Logger LOGGER = Logger.getLogger(LogFileParser.class.getName());
 
     private RPackageTestRun pkg;
     private BufferedReader reader;
@@ -83,12 +86,12 @@ public class LogFileParser {
             this.reader = r;
             consumeLine();
             Section installTest = parseInstallTest();
-            if (!installTest.success()) {
+            if (!installTest.isSuccess()) {
                 return logFile;
             }
-            logFile.sections.add(parseInstallTest());
-            logFile.sections.add(parseCheckResults());
-            logFile.success = parseOverallStatus();
+            logFile.addSection(parseInstallTest());
+            logFile.addSection(parseCheckResults());
+            logFile.setSuccess(parseOverallStatus());
             expectEOF();
         } finally {
             this.reader = null;
@@ -118,6 +121,7 @@ public class LogFileParser {
         consumeLine();
 
         Section checkResults = new Section(logFile, Token.BEGIN_CHECKING.linePrefix, curLine.lineNr);
+        checkResults.problems = new LinkedList<>();
 
         // TODO depending on the result, parse other files
         if (curLine.text.contains(Token.FAIL_OUTPUT_GNUR.linePrefix)) {
@@ -133,7 +137,20 @@ public class LogFileParser {
             // format: <pkg name>: FastR output mismatch: <out file name>
             int idx = curLine.text.indexOf(Token.OUTPUT_MISMATCH_FASTR.linePrefix);
             String fileNameStr = curLine.text.substring(idx + Token.OUTPUT_MISMATCH_FASTR.linePrefix.length()).trim();
-            checkResults.problems = parseOutputFile(logFile.path.resolveSibling(fileNameStr));
+            Path outputFile = logFile.path.resolveSibling(fileNameStr);
+
+            // report the problem
+            checkResults.problems.add(new OutputMismatchProblem(pkg, getCurrentLocation(), fileNameStr));
+
+            if (!Files.isReadable(outputFile)) {
+                LOGGER.warning("Cannot read output file " + outputFile);
+
+                // consume any lines to be able to continue
+                collectBody(Token.END_CHECKING);
+            } else {
+                checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, outputFile, 0, Files.readAllLines(outputFile)));
+            }
+            checkResults.setSuccess(false);
         } else {
             throw new LogFileParseException("Unexpected checking message: " + curLine.text);
         }
@@ -142,12 +159,8 @@ public class LogFileParser {
         return checkResults;
     }
 
-    private Collection<Problem> parseOutputFile(Path path) throws IOException {
-        if (!Files.isReadable(path)) {
-            throw new LogFileParseException("Cannot read output file " + path);
-        }
-
-        return applyDetectors(Token.OUTPUT_MISMATCH_FASTR, path, 0, Files.readAllLines(path));
+    private Location getCurrentLocation() {
+        return new Location(logFile.path, curLine.lineNr);
     }
 
     private Section parseInstallTest() throws IOException {
@@ -161,13 +174,13 @@ public class LogFileParser {
         }
 
         Section installationTask = parseInstallationTask();
-        installTest.subsections.add(installationTask);
+        installTest.addSection(installationTask);
         if ("FastR".equals(mode)) {
-            installTest.success = parseInstallStatus() && success;
+            installTest.setSuccess(parseInstallStatus() && success);
 
         }
         parseInstallSuggests();
-        installTest.success = parseTesting() && success;
+        installTest.setSuccess(parseTesting() && success);
         expect(Token.END_INSTALL_TEST);
 
         return installTest;
@@ -254,7 +267,7 @@ public class LogFileParser {
         expect(Token.BEGIN_INSTALLATION);
         Section installation = new Section(logFile, Token.BEGIN_INSTALLATION.linePrefix, curLine.lineNr);
         Section processing = parseProcessingTask();
-        installation.subsections.add(processing);
+        installation.addSection(processing);
         expect(Token.END_INSTALLATION);
         return installation;
     }
@@ -511,22 +524,44 @@ public class LogFileParser {
 
     }
 
-    public static class LogFile {
+    public abstract static class AbstractSection {
+        private List<Section> sections = new LinkedList<>();
+        private boolean success;
+
+        public List<Section> getSections() {
+            return sections;
+        }
+
+        public void addSection(Section sub) {
+            sections.add(sub);
+        }
+
+        public abstract Collection<Problem> collectProblems();
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public void setSuccess(boolean success) {
+            this.success = success;
+        }
+
+    }
+
+    public static class LogFile extends AbstractSection {
         public LogFile(Path path) {
             this.path = path;
         }
 
         private Path path;
-        private List<Section> sections = new LinkedList<>();
-        private boolean success;
 
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append("LogFile ").append(path);
-            if (!sections.isEmpty()) {
+            if (!getSections().isEmpty()) {
                 sb.append("(");
-                for (Section section : sections) {
+                for (Section section : getSections()) {
                     sb.append(section).append(", ");
                 }
                 sb.append(")");
@@ -534,44 +569,31 @@ public class LogFileParser {
             return sb.toString();
         }
 
+        @Override
+        public Collection<Problem> collectProblems() {
+            return getSections().stream().flatMap(s -> s.collectProblems().stream()).collect(Collectors.toList());
+        }
+
         public Path getPath() {
             return path;
         }
 
-        public List<Section> getSections() {
-            return sections;
-        }
-
-        public boolean isSuccess() {
-            return success;
-        }
-
-        public Collection<Problem> collectProblems() {
-            List<Problem> problems = new LinkedList<>();
-            for (Section sec : sections) {
-                problems.addAll(Section.collectProblems(sec));
-            }
-            return problems;
-        }
     }
 
-    public static class Section {
+    public static class Section extends AbstractSection {
         private String name;
-        private LogFile logFile;
         private int startLine;
+        private AbstractSection parent;
         Collection<Problem> problems;
-        Collection<Section> subsections = new LinkedList<>();
-        private boolean success;
 
-        protected Section(LogFile logFile, String name, int startLine) {
-            this.logFile = logFile;
+        protected Section(AbstractSection parent, String name, int startLine) {
+            this.parent = parent;
             this.startLine = startLine;
             this.name = name;
-            logFile.sections.add(this);
         }
 
-        public boolean success() {
-            return success;
+        public AbstractSection getParent() {
+            return parent;
         }
 
         @Override
@@ -579,19 +601,43 @@ public class LogFileParser {
             return String.format("Section %s (start: %d, problems: %d)", name, startLine, problems != null ? problems.size() : 0);
         }
 
-        public static Collection<Problem> collectProblems(Section s) {
-            List<Problem> problems = new LinkedList<>();
-            if (s.problems != null) {
-                problems.addAll(s.problems);
+        @Override
+        public Collection<Problem> collectProblems() {
+            Collection<Problem> collected = new ArrayList<>();
+            if (problems != null) {
+                collected.addAll(problems);
             }
-            for (Section sec : s.subsections) {
-                if (sec.problems != null) {
-                    problems.addAll(sec.problems);
-                }
+            for (Section child : getSections()) {
+                collected.addAll(child.collectProblems());
             }
-            return problems;
+            return collected;
         }
 
+    }
+
+    public static class OutputMismatchProblem extends Problem {
+
+        private final String details;
+
+        protected OutputMismatchProblem(RPackageTestRun pkg, Location location, String details) {
+            super(pkg, location);
+            this.details = details;
+        }
+
+        @Override
+        public String getSummary() {
+            return Token.OUTPUT_MISMATCH_FASTR.linePrefix;
+        }
+
+        @Override
+        public String getDetails() {
+            return details;
+        }
+
+        @Override
+        public String toString() {
+            return getSummary() + details;
+        }
     }
 
 }

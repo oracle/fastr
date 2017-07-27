@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.RPackage;
+import com.oracle.truffle.r.test.packages.analyzer.RPackageTestRun;
 import com.oracle.truffle.r.test.packages.analyzer.dump.html.HTMLBuilder;
 import com.oracle.truffle.r.test.packages.analyzer.dump.html.HTMLBuilder.Tag;
 
@@ -77,8 +78,8 @@ public class HtmlDumper extends AbstractDumper {
         try (BufferedWriter bw = Files.newBufferedWriter(indexFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
             HTMLBuilder builder = new HTMLBuilder(new PrintWriter(bw));
 
-            Tag errorDistributionTable = generateDistributionTable(builder, groupByType(problems));
-            Tag pkgDistributionTable = generatePkgDistributionTable(builder, groupByPkg(problems));
+            Tag errorDistributionTable = generateTypeDistributionTable(builder, groupByType(problems));
+            Tag pkgDistributionTable = generateTestRunDistributionTable(builder, groupByTestRuns(problems));
 
             builder.html(builder.head(builder.title(TITLE)),
                             builder.body(builder.h1(TITLE), builder.h2("Distribution by Problem Type"), errorDistributionTable, builder.h2("Distribution by Package"), pkgDistributionTable));
@@ -88,19 +89,32 @@ public class HtmlDumper extends AbstractDumper {
         }
     }
 
-    private Tag generatePkgDistributionTable(HTMLBuilder builder, Map<RPackage, List<Problem>> groupByPkg) {
-        List<RPackage> collect = groupByPkg.keySet().stream().sorted((a, b) -> Integer.compare(groupByPkg.get(b).size(), groupByPkg.get(a).size())).collect(Collectors.toList());
+    private Tag generateTestRunDistributionTable(HTMLBuilder builder, Map<RPackageTestRun, List<Problem>> groupByPkg) {
+        List<RPackageTestRun> collect = groupByPkg.keySet().stream().sorted((a, b) -> Integer.compare(groupByPkg.get(b).size(), groupByPkg.get(a).size())).collect(Collectors.toList());
 
-        Tag table = builder.table();
-        for (RPackage pkg : collect) {
-            String pkgFileName = dumpRPackage(pkg, groupByPkg);
-            table.addChild(builder.tr(builder.td(builder.a(pkgFileName, pkg.toString())),
-                            builder.td(Integer.toString(groupByPkg.get(pkg).size()))));
+        Tag table = builder.table(builder.tr(
+                        builder.th("Package"),
+                        builder.th("Test Run"),
+                        builder.th("Result"),
+                        builder.th("Problem Count")));
+
+        for (RPackageTestRun testRun : collect) {
+            String pkgFileName = dumpRPackage(testRun, groupByPkg);
+            int n = groupByPkg.get(testRun).size();
+            Tag tableRow = builder.tr(
+                            builder.td(builder.a(pkgFileName, testRun.getPackage().toString())),
+                            builder.td(Integer.toString(testRun.getNr())),
+                            builder.td(testRun.isSuccess() ? "OK" : "FAILED"),
+                            builder.td(Integer.toString(n)));
+            if (testRun.isSuccess() && n > 0) {
+                tableRow.addAttribute("bgcolor", "#fdae61");
+            }
+            table.addChild(tableRow);
         }
         return table;
     }
 
-    private Tag generateDistributionTable(HTMLBuilder builder, Map<Class<? extends Problem>, List<Problem>> groupByType) {
+    private Tag generateTypeDistributionTable(HTMLBuilder builder, Map<Class<? extends Problem>, List<Problem>> groupByType) {
         List<Class<? extends Problem>> collect = groupByType.keySet().stream().sorted((a, b) -> Integer.compare(groupByType.get(b).size(), groupByType.get(a).size())).collect(Collectors.toList());
 
         Tag table = builder.table();
@@ -111,9 +125,9 @@ public class HtmlDumper extends AbstractDumper {
         return table;
     }
 
-    private String dumpRPackage(RPackage pkg, Map<RPackage, List<Problem>> groupByPkg) {
+    private String dumpRPackage(RPackageTestRun pkg, Map<RPackageTestRun, List<Problem>> groupByPkg) {
 
-        Path problemClassFile = destDir.resolve(pkg.toString() + ".html");
+        Path problemClassFile = destDir.resolve(pkg.getPackage().toString() + "_" + pkg.getNr() + ".html");
         try (BufferedWriter bw = Files.newBufferedWriter(problemClassFile, StandardOpenOption.CREATE,
                         StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
             HTMLBuilder builder = new HTMLBuilder(new PrintWriter(bw));

@@ -85,6 +85,7 @@ public class PTAMain {
         parser.registerOption("glob", "*");
         parser.registerOption("since", "last2weeks");
         parser.registerOption("console");
+        parser.registerOption("verbose");
 
         String[] remainingArgs = parser.parseOptions(args);
         if (parser.has("help")) {
@@ -151,13 +152,20 @@ public class PTAMain {
         LogManager.getLogManager().reset();
         Logger rootLogger = Logger.getLogger("");
         ConsoleHandler consoleHandler = new ConsoleHandler();
+
+        Level defaultLogLevel = Level.INFO;
+        if (parser.has("verbose")) {
+            defaultLogLevel = Level.ALL;
+        }
+        rootLogger.setLevel(defaultLogLevel);
+
         if (parser.has("console")) {
-            consoleHandler.setLevel(Level.INFO);
+            consoleHandler.setLevel(defaultLogLevel);
         } else {
             // set log level of console handlers to SEVERE
             consoleHandler.setLevel(Level.SEVERE);
             FileHandler fileHandler = new FileHandler(LOG_FILE_NAME);
-            fileHandler.setLevel(Level.INFO);
+            fileHandler.setLevel(defaultLogLevel);
             fileHandler.setFormatter(new SimpleFormatter());
             rootLogger.addHandler(fileHandler);
         }
@@ -281,8 +289,12 @@ public class PTAMain {
 
         LogFile parseLogFile = lfParser.parseLogFile();
         Collection<Problem> problems = parseLogFile.collectProblems();
+        pkgTestRun.setSuccess(parseLogFile.isSuccess());
+
+        // log problems
+        LOGGER.fine("Overall test result: " + (pkgTestRun.isSuccess() ? "OK" : "FAILED"));
         for (Problem problem : problems) {
-            LOGGER.info(problem.toString());
+            LOGGER.fine(problem.toString());
         }
 
         return problems;

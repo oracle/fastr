@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.RPackage;
+import com.oracle.truffle.r.test.packages.analyzer.RPackageTestRun;
 
 public abstract class AbstractDumper {
 
@@ -40,6 +41,10 @@ public abstract class AbstractDumper {
 
     protected Map<RPackage, List<Problem>> groupByPkg(Collection<Problem> problems) {
         return problems.stream().collect(Collectors.groupingBy(p -> p.getPackageTestRun().getPackage()));
+    }
+
+    protected Map<RPackageTestRun, List<Problem>> groupByTestRuns(Collection<Problem> problems) {
+        return problems.stream().collect(Collectors.groupingBy(p -> p.getPackageTestRun()));
     }
 
 }

@@ -74,6 +74,14 @@ public class HTMLBuilder {
         return generic("tr", children);
     }
 
+    public Tag th(String content) {
+        return generic("th", content);
+    }
+
+    public Tag th(Tag... children) {
+        return generic("th", children);
+    }
+
     public Tag td(String content) {
         return generic("td", content);
     }
