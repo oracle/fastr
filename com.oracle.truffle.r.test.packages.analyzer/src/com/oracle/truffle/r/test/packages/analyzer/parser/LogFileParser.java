@@ -349,6 +349,7 @@ public class LogFileParser {
         List<Line> lines = new ArrayList<>();
         while (!laMatches(endSuggestsInstall) && !isEOF(la)) {
             consumeLine();
+            assert curLine.text != null;
             lines.add(curLine);
         }
         return lines;
@@ -392,10 +393,11 @@ public class LogFileParser {
     }
 
     void consumeLine() throws IOException {
+        curLine = la;
+        // skip empty lines
         do {
-            curLine = la;
             la = new Line(lineNr++, reader.readLine());
-        } while (curLine != null && curLine.text != null && curLine.isEmpty());
+        } while (la != null && la.text != null && la.isEmpty());
     }
 
     LogFile getLogFile() {
