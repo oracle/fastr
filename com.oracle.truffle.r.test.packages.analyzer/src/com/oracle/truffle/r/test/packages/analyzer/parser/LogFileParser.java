@@ -102,7 +102,7 @@ public class LogFileParser {
         return parseStatus(trim(curLine.text).substring((getPkgName() + ": ").length()));
     }
 
-    private boolean isEOF(Line l) {
+    private static boolean isEOF(Line l) {
         return l.text == null;
     }
 
@@ -280,7 +280,7 @@ public class LogFileParser {
         return pkg.getPkg().getName();
     }
 
-    private boolean parseStatus(String substring) {
+    private static boolean parseStatus(String substring) {
         if (Token.OK.linePrefix.equals(substring.trim())) {
             return true;
         } else if (Token.FAILED.linePrefix.equals(substring.trim())) {

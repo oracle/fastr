@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
+import com.oracle.truffle.r.test.packages.analyzer.RPackage;
 
 public abstract class AbstractDumper {
 
@@ -35,6 +36,10 @@ public abstract class AbstractDumper {
 
     protected Map<Class<? extends Problem>, List<Problem>> groupByType(Collection<Problem> problems) {
         return problems.stream().collect(Collectors.groupingBy(p -> p.getClass()));
+    }
+
+    protected Map<RPackage, List<Problem>> groupByPkg(Collection<Problem> problems) {
+        return problems.stream().collect(Collectors.groupingBy(p -> p.getPackageTestRun().getPkg()));
     }
 
 }

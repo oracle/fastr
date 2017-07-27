@@ -25,6 +25,7 @@ package com.oracle.truffle.r.test.packages.analyzer.dump;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -36,6 +37,9 @@ import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
+import com.oracle.truffle.r.test.packages.analyzer.RPackage;
+import com.oracle.truffle.r.test.packages.analyzer.dump.html.HTMLBuilder;
+import com.oracle.truffle.r.test.packages.analyzer.dump.html.HTMLBuilder.Tag;
 
 public class HtmlDumper extends AbstractDumper {
 
@@ -71,80 +75,54 @@ public class HtmlDumper extends AbstractDumper {
         Path indexFile = destDir.resolve("index.html");
 
         try (BufferedWriter bw = Files.newBufferedWriter(indexFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
-            PrintWriter writer = new PrintWriter(bw);
+            HTMLBuilder builder = new HTMLBuilder(new PrintWriter(bw));
 
-            writer.println(
-                            "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
-            writer.println("<html xmlns=\"http://www.w3.org/1999/xhtml\"><head>");
-            writeTitle(writer, TITLE);
-            writer.println("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n</head><body>");
+            Tag errorDistributionTable = generateDistributionTable(builder, groupByType(problems));
+            Tag pkgDistributionTable = generatePkgDistributionTable(builder, groupByPkg(problems));
 
-            generateDistributionTable(writer, groupByType(problems));
-
-            writer.println("</body>");
-            writer.println("</html>");
+            builder.html(builder.head(builder.title(TITLE)),
+                            builder.body(builder.h1(TITLE), builder.h2("Distribution by Problem Type"), errorDistributionTable, builder.h2("Distribution by Package"), pkgDistributionTable));
+            builder.dump();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void generateDistributionTable(PrintWriter pw, Map<Class<? extends Problem>, List<Problem>> groupByType) {
+    private Tag generatePkgDistributionTable(HTMLBuilder builder, Map<RPackage, List<Problem>> groupByPkg) {
+        List<RPackage> collect = groupByPkg.keySet().stream().sorted((a, b) -> Integer.compare(groupByPkg.get(b).size(), groupByPkg.get(a).size())).collect(Collectors.toList());
 
-        List<Class<? extends Problem>> collect = groupByType.keySet().stream().sorted((a, b) -> Integer.compare(groupByType.get(b).size(), groupByType.get(a).size())).collect(Collectors.toList());
-        pw.println("<table>");
-        for (Class<? extends Problem> class1 : collect) {
-            String problemClassFileName = dumpProblemClass(class1, groupByType);
-            pw.println("<tr>");
-            pw.print("<td><a href=\"");
-            pw.print(problemClassFileName);
-            pw.print("\">");
-            pw.print(class1.getSimpleName());
-            pw.print("</a></td>");
-            pw.print("<td>");
-            pw.print(groupByType.get(class1).size());
-            pw.print("</td>");
-            pw.println("</tr>");
+        Tag table = builder.table();
+        for (RPackage pkg : collect) {
+            String pkgFileName = dumpRPackage(pkg, groupByPkg);
+            table.addChild(builder.tr(builder.td(builder.a(pkgFileName, pkg.toString())),
+                            builder.td(Integer.toString(groupByPkg.get(pkg).size()))));
         }
-        pw.println("</table>");
+        return table;
     }
 
-    private String dumpProblemClass(Class<? extends Problem> class1,
-                    Map<Class<? extends Problem>, List<Problem>> groupByType) {
+    private Tag generateDistributionTable(HTMLBuilder builder, Map<Class<? extends Problem>, List<Problem>> groupByType) {
+        List<Class<? extends Problem>> collect = groupByType.keySet().stream().sorted((a, b) -> Integer.compare(groupByType.get(b).size(), groupByType.get(a).size())).collect(Collectors.toList());
 
-        Path problemClassFile = destDir.resolve(class1.getSimpleName() + ".html");
+        Tag table = builder.table();
+        for (Class<? extends Problem> class1 : collect) {
+            String problemClassFileName = dumpProblemClass(class1, groupByType);
+            table.addChild(builder.tr(builder.td(builder.a(problemClassFileName, class1.getSimpleName())), builder.td(Integer.toString(groupByType.get(class1).size()))));
+        }
+        return table;
+    }
+
+    private String dumpRPackage(RPackage pkg, Map<RPackage, List<Problem>> groupByPkg) {
+
+        Path problemClassFile = destDir.resolve(pkg.toString() + ".html");
         try (BufferedWriter bw = Files.newBufferedWriter(problemClassFile, StandardOpenOption.CREATE,
                         StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
-            PrintWriter pw = new PrintWriter(bw);
+            HTMLBuilder builder = new HTMLBuilder(new PrintWriter(bw));
 
-            pw.println(
-                            "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
-            pw.println("<html xmlns=\"http://www.w3.org/1999/xhtml\"><head>");
-            writeTitle(pw, class1.getName());
-            pw.println("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n</head><body>");
+            Tag table = dumpProblemTable(pkg, groupByPkg, builder);
 
-            pw.println("<table border=\"1\">");
-            for (Problem p : groupByType.get(class1)) {
-                pw.println("<tr>");
-                pw.print("<td><a href=\"");
-                Location loc = p.getLocation();
-                pw.print(loc.file.toUri().toURL());
-                pw.print("#L");
-                pw.print(loc.lineNr);
-                pw.print("\">");
-                pw.print(loc.toString());
-                pw.print("</a></td>");
-                pw.print("<td>");
-                pw.print(p.getSummary());
-                pw.print("</td>");
-                pw.print("<td>");
-                pw.print(p.getDetails());
-                pw.print("</td>");
-                pw.println("</tr>");
-            }
-            pw.println("</table>");
+            builder.html(builder.head(builder.title(pkg.toString())), builder.body(table));
+            builder.dump();
 
-            pw.println("</body>");
-            pw.println("</html>");
             return problemClassFile.getFileName().toString();
         } catch (IOException e) {
             e.printStackTrace();
@@ -152,11 +130,35 @@ public class HtmlDumper extends AbstractDumper {
         return null;
     }
 
-    private void writeTitle(PrintWriter writer, String title2) {
-        writer.print("<title>");
-        writer.print(title2);
-        writer.println("</title>");
+    private String dumpProblemClass(Class<? extends Problem> type, Map<Class<? extends Problem>, List<Problem>> groupByType) {
 
+        Path problemClassFile = destDir.resolve(type.getSimpleName() + ".html");
+        try (BufferedWriter bw = Files.newBufferedWriter(problemClassFile, StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+            HTMLBuilder builder = new HTMLBuilder(new PrintWriter(bw));
+
+            Tag table = dumpProblemTable(type, groupByType, builder);
+
+            builder.html(builder.head(builder.title(type.getName())), builder.body(table));
+            builder.dump();
+
+            return problemClassFile.getFileName().toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private static <T> Tag dumpProblemTable(T pkg, Map<T, List<Problem>> groupByPkg, HTMLBuilder builder) throws MalformedURLException {
+        Tag table = builder.table();
+        table.addAttribute("border", "1");
+        for (Problem p : groupByPkg.get(pkg)) {
+            Location loc = p.getLocation();
+            table.addChild(builder.tr(builder.td(builder.a(loc.file.toUri().toURL().toString(), loc.toString())),
+                            builder.td(builder.escape(p.getSummary())),
+                            builder.td(builder.escape(p.getDetails()))));
+        }
+        return table;
     }
 
 }
