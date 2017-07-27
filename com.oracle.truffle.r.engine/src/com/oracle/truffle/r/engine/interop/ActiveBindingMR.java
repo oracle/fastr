@@ -60,6 +60,13 @@ public class ActiveBindingMR {
         }
     }
 
+    @Resolve(message = "KEY_INFO")
+    public abstract static class ActiveBindingKeyInfoNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object idx) {
+            return 0;
+        }
+    }
+
     @CanResolve
     public abstract static class ActiveBindingCheck extends Node {
 

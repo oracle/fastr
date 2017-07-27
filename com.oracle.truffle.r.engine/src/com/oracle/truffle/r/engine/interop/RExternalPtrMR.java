@@ -24,12 +24,41 @@ package com.oracle.truffle.r.engine.interop;
 
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 
 @MessageResolution(receiverType = RExternalPtr.class)
 public class RExternalPtrMR {
+    @Resolve(message = "IS_BOXED")
+    public abstract static class RExternalPtrIsBoxedNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
+            return false;
+        }
+    }
+
+    @Resolve(message = "HAS_SIZE")
+    public abstract static class RExternalPtrHasSizeNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
+            return false;
+        }
+    }
+
+    @Resolve(message = "IS_NULL")
+    public abstract static class RExternalPtrIsNullNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
+            return false;
+        }
+    }
+
+    @Resolve(message = "KEY_INFO")
+    public abstract static class RExternalPtrKeyInfoNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {
+            return 0;
+        }
+    }
+
     @CanResolve
     public abstract static class RExternalPtrCheck extends Node {
 

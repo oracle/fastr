@@ -52,9 +52,16 @@ public class RIntegerMR {
         }
     }
 
+    @Resolve(message = "KEY_INFO")
+    public abstract static class RIntegerKeyInfoNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {
+            return 0;
+        }
+    }
+
     @Resolve(message = "UNBOX")
     public abstract static class RIntegerUnboxNode extends Node {
-        protected double access(RInteger receiver) {
+        protected int access(RInteger receiver) {
             return receiver.getValue();
         }
     }

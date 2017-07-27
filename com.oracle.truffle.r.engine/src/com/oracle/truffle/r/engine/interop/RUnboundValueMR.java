@@ -52,6 +52,13 @@ public class RUnboundValueMR {
         }
     }
 
+    @Resolve(message = "KEY_INFO")
+    public abstract static class RUnboundValueKeyInfoNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {
+            return 0;
+        }
+    }
+
     @CanResolve
     public abstract static class RUnboundValueCheck extends Node {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,26 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop;
+package com.oracle.truffle.r.test.engine.interop;
 
-import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.data.REmpty;
 
-class Utils {
-    static Object javaToRPrimitive(Object valueObj) {
-        Object value = valueObj;
-        if (value instanceof Short) {
-            value = (int) ((Short) value).shortValue();
-        } else if (value instanceof Float) {
-            float floatValue = ((Float) value).floatValue();
-            value = new Double(floatValue);
-        } else if (value instanceof Boolean) {
-            boolean booleanValue = ((Boolean) value).booleanValue();
-            value = booleanValue ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
-        } else if (value instanceof Character) {
-            value = (int) ((Character) value).charValue();
-        } else if (value instanceof Byte) {
-            value = (int) ((Byte) value).byteValue();
-        }
-        return value;
+public class REmptyMRTest extends AbstractMRTest {
+
+    @Override
+    protected TruffleObject[] createTruffleObjects() throws Exception {
+        return new TruffleObject[]{REmpty.instance};
+    }
+
+    @Override
+    protected TruffleObject createEmptyTruffleObject() throws Exception {
+        return null;
     }
 }

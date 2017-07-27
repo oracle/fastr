@@ -24,12 +24,42 @@ package com.oracle.truffle.r.engine.interop;
 
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 
 @MessageResolution(receiverType = RConnection.class)
 public class RConnectionMR {
+
+    @Resolve(message = "IS_BOXED")
+    public abstract static class RConnectionIsBoxedNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
+            return false;
+        }
+    }
+
+    @Resolve(message = "HAS_SIZE")
+    public abstract static class RConnectionHasSizeNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
+            return false;
+        }
+    }
+
+    @Resolve(message = "IS_NULL")
+    public abstract static class RConnectionIsNullNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
+            return false;
+        }
+    }
+
+    @Resolve(message = "KEY_INFO")
+    public abstract static class RConnectionKeyInfoNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {
+            return 0;
+        }
+    }
+
     @CanResolve
     public abstract static class RConnection extends Node {
 

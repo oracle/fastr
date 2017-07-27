@@ -53,6 +53,13 @@ public class REmptyMR {
         }
     }
 
+    @Resolve(message = "KEY_INFO")
+    public abstract static class REmptyKeyInfoNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {
+            return 0;
+        }
+    }
+
     @CanResolve
     public abstract static class REmptyCheck extends Node {
 

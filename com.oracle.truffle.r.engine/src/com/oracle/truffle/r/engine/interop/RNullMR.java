@@ -58,6 +58,13 @@ public class RNullMR {
         }
     }
 
+    @Resolve(message = "KEY_INFO")
+    public abstract static class RNullKeyInfoNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {
+            return 0;
+        }
+    }
+
     @Resolve(message = "TO_NATIVE")
     public abstract static class RNullToNativeNode extends Node {
         protected Object access(@SuppressWarnings("unused") RNull receiver) {

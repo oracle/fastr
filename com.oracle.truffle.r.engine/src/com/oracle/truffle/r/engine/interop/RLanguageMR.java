@@ -22,20 +22,27 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
+import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 
 @MessageResolution(receiverType = RLanguage.class)
 public class RLanguageMR {
@@ -51,6 +58,13 @@ public class RLanguageMR {
     public abstract static class RLanguageHasSizeNode extends Node {
         protected Object access(@SuppressWarnings("unused") RLanguage receiver) {
             return true;
+        }
+    }
+
+    @Resolve(message = "GET_SIZE")
+    public abstract static class RLanguageGetSizeNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RLanguage receiver) {
+            return receiver.getLength();
         }
     }
 
@@ -70,36 +84,19 @@ public class RLanguageMR {
 
     @Resolve(message = "READ")
     public abstract static class RLanguageReadNode extends Node {
-        @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        @Child private ReadNode readNode = RLanguageMRFactory.ReadNodeGen.create();
 
-        protected Object access(VirtualFrame frame, RLanguage receiver, int label) {
-            return extract.apply(frame, receiver, new Object[]{label + 1}, RLogical.TRUE, RLogical.TRUE);
-        }
-    }
-
-    @Resolve(message = "WRITE")
-    public abstract static class RLanguageWriteNode extends Node {
-
-        @SuppressWarnings("unused")
-        protected Object access(RLanguage receiver, int label, Object valueObj) {
-            throw UnsupportedMessageException.raise(Message.WRITE);
-        }
-    }
-
-    @Resolve(message = "KEYS")
-    public abstract static class RLanguageKeysNode extends Node {
-
-        protected Object access(@SuppressWarnings("unused") RLanguage receiver) {
-            return RNull.instance;
+        protected Object access(VirtualFrame frame, RLanguage receiver, Object identifier) {
+            return readNode.execute(frame, receiver, identifier);
         }
     }
 
     @Resolve(message = "KEY_INFO")
-    public abstract static class RLanguageKeyInfoNode extends Node {
+    public abstract static class RLanguageNode extends Node {
+        @Node.Child private KeyInfoNode keyInfoNode = RLanguageMRFactory.KeyInfoNodeGen.create();
 
-        @SuppressWarnings("unused")
-        protected Object access(VirtualFrame frame, RLanguage receiver, String identifier) {
-            return 0;
+        protected Object access(VirtualFrame frame, RLanguage receiver, Object obj) {
+            return keyInfoNode.execute(receiver, obj);
         }
     }
 
@@ -108,6 +105,72 @@ public class RLanguageMR {
 
         protected static boolean test(TruffleObject receiver) {
             return receiver instanceof RLanguage;
+        }
+    }
+
+    abstract static class ReadNode extends Node {
+        @Child private ExtractVectorNode extract;
+        @Child private R2Foreign r2Foreign;
+
+        private final ConditionProfile unknownIdentifier = ConditionProfile.createBinaryProfile();
+
+        abstract Object execute(VirtualFrame frame, RLanguage receiver, Object identifier);
+
+        @Specialization
+        protected Object access(VirtualFrame frame, RLanguage receiver, int idx,
+                        @Cached("createKeyInfoNode()") KeyInfoNode keyInfo) {
+
+            int info = keyInfo.execute(receiver, idx);
+            if (unknownIdentifier.profile(!KeyInfo.isExisting(info))) {
+                throw UnknownIdentifierException.raise("" + idx);
+            }
+
+            if (extract == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                extract = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
+            }
+            Object value = extract.apply(frame, receiver, new Object[]{idx + 1}, RLogical.TRUE, RLogical.TRUE);
+            if (value == null) {
+                return RNull.instance;
+            }
+
+            if (r2Foreign == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                r2Foreign = insert(R2ForeignNodeGen.create());
+            }
+            return r2Foreign.execute(value);
+        }
+
+        @Fallback
+        protected Object access(VirtualFrame frame, RLanguage receiver, Object identifier) {
+            throw UnknownIdentifierException.raise("" + identifier);
+        }
+
+        protected static KeyInfoNode createKeyInfoNode() {
+            return RLanguageMRFactory.KeyInfoNodeGen.create();
+        }
+    }
+
+    abstract static class KeyInfoNode extends Node {
+        private final ConditionProfile unknownIdentifier = ConditionProfile.createBinaryProfile();
+
+        abstract int execute(RLanguage receiver, Object identifier);
+
+        @Specialization
+        protected int access(RLanguage receiver, int idx) {
+            if (unknownIdentifier.profile(idx < 0 || idx >= receiver.getLength())) {
+                return 0;
+            }
+
+            KeyInfo.Builder builder = KeyInfo.newBuilder();
+            builder.setReadable(true);
+            // TODO what about writeble/invocable/...
+            return builder.build();
+        }
+
+        @Fallback
+        protected int access(RLanguage receiver, Object identifier) {
+            return 0;
         }
     }
 }

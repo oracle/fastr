@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
@@ -108,8 +109,8 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return RMissingMRForeign.ACCESS;
         } else if (obj instanceof REmpty) {
             return REmptyMRForeign.ACCESS;
-        } else if (obj instanceof RAbstractVector) {
-            return ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
+        } else if (obj instanceof RAbstractAtomicVector) {
+            return ForeignAccess.create(RAbstractAtomicVector.class, new RAbstractVectorAccessFactory());
         } else {
             ForeignAccess access = FFI_RForeignAccessFactoryImpl.getForeignAccess(obj);
             if (access != null) {

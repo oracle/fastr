@@ -53,6 +53,13 @@ public class RMissingMR {
         }
     }
 
+    @Resolve(message = "KEY_INFO")
+    public abstract static class RMissingKeyInfoNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {
+            return 0;
+        }
+    }
+
     @CanResolve
     public abstract static class RMissingCheck extends Node {
 
