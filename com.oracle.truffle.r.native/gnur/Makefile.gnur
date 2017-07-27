@@ -57,11 +57,7 @@ all: Makefile $(GNUR_HOME) iconv config build
 
 $(GNUR_HOME): 
 	tar xf $(TOPDIR)/../libdownloads/R-$(R_VERSION).tar.gz
-# Solaris doesn't need this and ed can't handle the size of the configure file!
-ifneq ($(OSNAME), SunOS)
-	ed $(GNUR_HOME)/configure < edconfigure # to fix the zlib version check (fixed in GNUR in the meantime)
-endif
-
+	(cd $(GNUR_HOME) && patch < $(TOPDIR)/gnur/configure.patch) # to fix the zlib version check (fixed in GNUR in the meantime)
 
 # After this platform check, GNUR_CONFIG_FLAGS must be set
 ifeq ($(OSNAME), SunOS)
@@ -76,10 +72,11 @@ ifeq ($(OSNAME), SunOS)
     FLIBS_COMMON := -lsunimath -lfai -lsunmath -lmtsk
     ifeq ($(OS_ARCH), i386)
         SUB_ARCH := amd64
-        FLIBS_SUB_ARCH := $(SSTUDIO_HOME)prod/lib/$(SUB_ARCH)/libfsu.so.1 $(SSTUDIO_HOME)prod/lib/$(SUB_ARCH)/libfui.so.2
+        FLIBS_SUB_ARCH := $(SSTUDIO_HOME)lib/$(SUB_ARCH)/libfsu.so.1 $(SSTUDIO_HOME)lib/$(SUB_ARCH)/libfui.so.2
+        GNUR_CONFIG_FLAGS := --build=x86_64-pc-solaris2.11
     else
         SUB_ARCH := sparc/64
-        FLIBS_SUB_ARCH := -lifai -lfai2 -lfsumai -lfprodai -lfminlai -lfmaxlai -lfminvai -lfmaxvai -lfui $(SSTUDIO_HOME)prod/lib/$(SUB_ARCH)/libfsu.so.1
+        FLIBS_SUB_ARCH := -lifai -lfai2 -lfsumai -lfprodai -lfminlai -lfmaxlai -lfminvai -lfmaxvai -lfui $(SSTUDIO_HOME)lib/$(SUB_ARCH)/libfsu.so.1
     endif
     ICONV := libiconv-1.14
     $(shell mkdir -p iconv_install)
@@ -89,8 +86,8 @@ ifeq ($(OSNAME), SunOS)
     ICONV_CONFIG_FLAGS := CC=cc CXX=CC CFLAGS=$(ICONV_CFLAGS) LDFLAGS=$(ICONV_LDFLAGS)
 # required for Solaris compiler >=12.2, see Appendix C of R installation guide: 
 # http://cran.r-project.org/doc/manuals/r-release/R-admin.html#Solaris 
-    GNUR_FLIBS := FLIBS="-R$(SSTUDIO_HOME)prod/lib/$(SUB_ARCH) $(FLIBS_COMMON) $(FLIBS_SUB_ARCH)"
-    GNUR_CONFIG_FLAGS := $(ICONV_CONFIG_FLAGS) CPPFLAGS=$(ICONV_CFLAGS) DYLIB_LDFLAGS=$(ICONV_LDFLAGS) $(GNUR_FLIBS) F77="sunf95 -m64 -xcode=pic32"
+    GNUR_FLIBS := FLIBS="-R$(SSTUDIO_HOME)lib/$(SUB_ARCH) $(FLIBS_COMMON) $(FLIBS_SUB_ARCH)"
+    GNUR_CONFIG_FLAGS += $(ICONV_CONFIG_FLAGS) CPPFLAGS=$(ICONV_CFLAGS) DYLIB_LDFLAGS=$(ICONV_LDFLAGS) $(GNUR_FLIBS) F77="sunf95 -m64 -xcode=pic32"
 
 iconv: $(ICONV) iconv_config iconv_build
 

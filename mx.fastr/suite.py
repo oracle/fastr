@@ -397,6 +397,9 @@ suite = {
           },
         },
         "solaris" : {
+          "amd64" : {
+            "path" : "mxbuild/dists/solaris/amd64/<rffi>/fastr-release.jar",
+          },
           "sparcv9" : {
             "path" : "mxbuild/dists/solaris/sparcv9/<rffi>/fastr-release.jar",
           },
