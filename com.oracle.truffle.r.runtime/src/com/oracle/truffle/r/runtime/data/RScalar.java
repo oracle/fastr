@@ -26,7 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 @ValueType
-public abstract class RScalar implements RTypedValue {
+public abstract class RScalar extends RObject implements RTypedValue {
 
     @Override
     public final int getTypedValueInfo() {

@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
@@ -44,70 +44,29 @@ public class TruffleNFI_C implements CRFFI {
         @Specialization(guards = "args.length == 0")
         protected void invokeCall0(NativeCallInfo nativeCallInfo, @SuppressWarnings("unused") Object[] args, @SuppressWarnings("unused") boolean hasStrings,
                         @Cached("createExecute(args.length)") Node executeNode) {
-            try {
-                TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
-                                nativeCallInfo.address.asTruffleObject(), "bind", "(): void");
-                ForeignAccess.sendExecute(executeNode, callFunction);
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
+            synchronized (TruffleNFI_Call.class) {
+                try {
+                    TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode, nativeCallInfo.address.asTruffleObject(), "bind", "(): void");
+                    ForeignAccess.sendExecute(executeNode, callFunction);
+                } catch (InteropException ex) {
+                    throw RInternalError.shouldNotReachHere(ex);
+                }
             }
         }
 
-        @Specialization(guards = "args.length == 1")
+        @Specialization(limit = "99", guards = "args.length == cachedArgsLength")
         protected void invokeCall1(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean hasStrings,
-                        @Cached("createExecute(args.length)") Node executeNode) {
-            try {
-                Object[] nargs = new Object[args.length];
-                TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
-                                nativeCallInfo.address.asTruffleObject(), "bind", getSignature(args, nargs));
-                ForeignAccess.sendExecute(executeNode, callFunction, nargs[0]);
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
+                        @Cached("args.length") int cachedArgsLength,
+                        @Cached("createExecute(cachedArgsLength)") Node executeNode) {
+            synchronized (TruffleNFI_Call.class) {
+                try {
+                    Object[] nargs = new Object[cachedArgsLength];
+                    TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode, nativeCallInfo.address.asTruffleObject(), "bind", getSignature(args, nargs));
+                    ForeignAccess.sendExecute(executeNode, callFunction, nargs);
+                } catch (InteropException ex) {
+                    throw RInternalError.shouldNotReachHere(ex);
+                }
             }
-        }
-
-        @Specialization(guards = "args.length == 2")
-        protected void invokeCall2(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean hasStrings,
-                        @Cached("createExecute(args.length)") Node executeNode) {
-            try {
-                Object[] nargs = new Object[args.length];
-                TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
-                                nativeCallInfo.address.asTruffleObject(), "bind", getSignature(args, nargs));
-                ForeignAccess.sendExecute(executeNode, callFunction, nargs[0], nargs[1]);
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
-        }
-
-        @Specialization(guards = "args.length == 3")
-        protected void invokeCall3(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean hasStrings,
-                        @Cached("createExecute(args.length)") Node executeNode) {
-            try {
-                Object[] nargs = new Object[args.length];
-                TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
-                                nativeCallInfo.address.asTruffleObject(), "bind", getSignature(args, nargs));
-                ForeignAccess.sendExecute(executeNode, callFunction, nargs[0], nargs[1], nargs[2]);
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
-        }
-
-        @Specialization(guards = "args.length == 4")
-        protected void invokeCall4(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean hasStrings,
-                        @Cached("createExecute(args.length)") Node executeNode) {
-            try {
-                Object[] nargs = new Object[args.length];
-                TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
-                                nativeCallInfo.address.asTruffleObject(), "bind", getSignature(args, nargs));
-                ForeignAccess.sendExecute(executeNode, callFunction, nargs[0], nargs[1], nargs[2], nargs[3]);
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
-        }
-
-        @Fallback
-        protected void invokeCallN(@SuppressWarnings("unused") NativeCallInfo nativeCallInfo, @SuppressWarnings("unused") Object[] args, @SuppressWarnings("unused") boolean hasStrings) {
-            throw RInternalError.unimplemented(".C (too many args)");
         }
 
         public static Node createExecute(int n) {
@@ -115,6 +74,7 @@ public class TruffleNFI_C implements CRFFI {
         }
     }
 
+    @TruffleBoundary
     private static String getSignature(Object[] args, Object[] nargs) {
         StringBuilder sb = new StringBuilder();
         sb.append('(');
@@ -124,8 +84,8 @@ public class TruffleNFI_C implements CRFFI {
                 sb.append("[sint32]");
             } else if (arg instanceof double[]) {
                 sb.append("[double]");
-            } else if (arg instanceof byte[]) {
-                sb.append("[uint8]");
+            } else if (arg instanceof byte[][]) {
+                sb.append("[pointer]");
             } else {
                 throw RInternalError.unimplemented(".C type: " + arg.getClass().getSimpleName());
             }

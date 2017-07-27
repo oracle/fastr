@@ -22,42 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-abstract class RBaseObject extends RObject implements RTypedValue {
+public abstract class RObject {
 
-    private int typedValueInfo;
+    private Object nativeMirror;
 
-    @Override
-    public final int getTypedValueInfo() {
-        return typedValueInfo;
+    public final void setNativeMirror(Object mirror) {
+        this.nativeMirror = mirror;
     }
 
-    @Override
-    public final void setTypedValueInfo(int value) {
-        typedValueInfo = value;
-    }
-
-    @Override
-    public final int getGPBits() {
-        return (getTypedValueInfo() & GP_BITS_MASK) >>> GP_BITS_MASK_SHIFT;
-    }
-
-    @Override
-    public final void setGPBits(int gpbits) {
-        setTypedValueInfo((getTypedValueInfo() & ~GP_BITS_MASK) | (gpbits << GP_BITS_MASK_SHIFT));
-    }
-
-    @Override
-    public final boolean isS4() {
-        return (getTypedValueInfo() & S4_MASK_SHIFTED) != 0;
-    }
-
-    @Override
-    public final void setS4() {
-        setTypedValueInfo(getTypedValueInfo() | S4_MASK_SHIFTED);
-    }
-
-    @Override
-    public final void unsetS4() {
-        setTypedValueInfo(getTypedValueInfo() & ~S4_MASK_SHIFTED);
+    public final Object getNativeMirror() {
+        return nativeMirror;
     }
 }

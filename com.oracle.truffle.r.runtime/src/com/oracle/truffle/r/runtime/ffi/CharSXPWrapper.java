@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
 /**
@@ -32,9 +33,8 @@ import com.oracle.truffle.r.runtime.data.RTruffleObject;
  * represent a {@code CHARSXP}, so this class exists to do so.
  *
  * N.B. Use limited to RFFI implementations.
- *
  */
-public final class CharSXPWrapper implements RTruffleObject {
+public final class CharSXPWrapper extends RObject implements RTruffleObject {
     private final String contents;
 
     private CharSXPWrapper(String contents) {
