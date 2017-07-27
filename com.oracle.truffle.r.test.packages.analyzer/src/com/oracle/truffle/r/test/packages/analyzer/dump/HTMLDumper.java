@@ -37,17 +37,16 @@ import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
-import com.oracle.truffle.r.test.packages.analyzer.RPackage;
 import com.oracle.truffle.r.test.packages.analyzer.RPackageTestRun;
 import com.oracle.truffle.r.test.packages.analyzer.dump.html.HTMLBuilder;
 import com.oracle.truffle.r.test.packages.analyzer.dump.html.HTMLBuilder.Tag;
 
-public class HtmlDumper extends AbstractDumper {
+public class HTMLDumper extends AbstractDumper {
 
     private static final String TITLE = "FastR Package Test Dashboard";
     private Path destDir;
 
-    public HtmlDumper(Path destDir) {
+    public HTMLDumper(Path destDir) {
         this.destDir = Objects.requireNonNull(destDir);
     }
 
@@ -80,9 +79,11 @@ public class HtmlDumper extends AbstractDumper {
 
             Tag errorDistributionTable = generateTypeDistributionTable(builder, groupByType(problems));
             Tag pkgDistributionTable = generateTestRunDistributionTable(builder, groupByTestRuns(problems));
+            Tag distrinctProblemDistributionTable = generateDistinctProblemDistribution(builder, groupByProblemContent(problems));
 
             builder.html(builder.head(builder.title(TITLE)),
-                            builder.body(builder.h1(TITLE), builder.h2("Distribution by Problem Type"), errorDistributionTable, builder.h2("Distribution by Package"), pkgDistributionTable));
+                            builder.body(builder.h1(TITLE), builder.h2("Distribution by Problem Type"), errorDistributionTable, builder.h2("Distribution by Package"), pkgDistributionTable,
+                                            builder.h2("Distribution by Problem Content"), distrinctProblemDistributionTable));
             builder.dump();
         } catch (IOException e) {
             e.printStackTrace();
@@ -114,6 +115,23 @@ public class HtmlDumper extends AbstractDumper {
         return table;
     }
 
+    private Tag generateDistinctProblemDistribution(HTMLBuilder builder, Map<ProblemContent, List<Problem>> groupByPkg) {
+        List<ProblemContent> collect = groupByPkg.keySet().stream().sorted((a, b) -> Integer.compare(groupByPkg.get(b).size(), groupByPkg.get(a).size())).collect(Collectors.toList());
+
+        Tag table = builder.table(builder.tr(
+                        builder.th("Problem"),
+                        builder.th("Problem Count")));
+
+        for (ProblemContent problem : collect) {
+            int n = groupByPkg.get(problem).size();
+            Tag tableRow = builder.tr(
+                            builder.td(problem.toString()),
+                            builder.td(Integer.toString(n)));
+            table.addChild(tableRow);
+        }
+        return table;
+    }
+
     private Tag generateTypeDistributionTable(HTMLBuilder builder, Map<Class<? extends Problem>, List<Problem>> groupByType) {
         List<Class<? extends Problem>> collect = groupByType.keySet().stream().sorted((a, b) -> Integer.compare(groupByType.get(b).size(), groupByType.get(a).size())).collect(Collectors.toList());
 
@@ -132,7 +150,7 @@ public class HtmlDumper extends AbstractDumper {
                         StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
             HTMLBuilder builder = new HTMLBuilder(new PrintWriter(bw));
 
-            Tag table = dumpProblemTable(pkg, groupByPkg, builder);
+            Tag table = generateProblemTable(pkg, groupByPkg, builder);
 
             builder.html(builder.head(builder.title(pkg.toString())), builder.body(table));
             builder.dump();
@@ -151,7 +169,7 @@ public class HtmlDumper extends AbstractDumper {
                         StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
             HTMLBuilder builder = new HTMLBuilder(new PrintWriter(bw));
 
-            Tag table = dumpProblemTable(type, groupByType, builder);
+            Tag table = generateProblemTable(type, groupByType, builder);
 
             builder.html(builder.head(builder.title(type.getName())), builder.body(table));
             builder.dump();
@@ -163,10 +181,10 @@ public class HtmlDumper extends AbstractDumper {
         return null;
     }
 
-    private static <T> Tag dumpProblemTable(T pkg, Map<T, List<Problem>> groupByPkg, HTMLBuilder builder) throws MalformedURLException {
+    private static <T> Tag generateProblemTable(T key, Map<T, List<Problem>> groupingTable, HTMLBuilder builder) throws MalformedURLException {
         Tag table = builder.table();
         table.addAttribute("border", "1");
-        for (Problem p : groupByPkg.get(pkg)) {
+        for (Problem p : groupingTable.get(key)) {
             Location loc = p.getLocation();
             table.addChild(builder.tr(builder.td(builder.a(loc.file.toUri().toURL().toString(), loc.toString())),
                             builder.td(builder.escape(p.getSummary())),

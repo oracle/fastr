@@ -91,14 +91,6 @@ public class UnsupportedSpecializationDetector extends LineDetector {
         public final String message;
         public final String stackTrace;
 
-        public String getMessage() {
-            return message;
-        }
-
-        public String getStackTrace() {
-            return stackTrace;
-        }
-
         @Override
         public String toString() {
             return getLocation() + ": com.oracle.truffle.api.dsl.UnsupportedSpecializationException: " + message;

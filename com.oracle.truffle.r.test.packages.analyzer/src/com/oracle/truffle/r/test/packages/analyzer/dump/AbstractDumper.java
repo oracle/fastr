@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.test.packages.analyzer.dump;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -45,6 +46,77 @@ public abstract class AbstractDumper {
 
     protected Map<RPackageTestRun, List<Problem>> groupByTestRuns(Collection<Problem> problems) {
         return problems.stream().collect(Collectors.groupingBy(p -> p.getPackageTestRun()));
+    }
+
+    protected Map<ProblemContent, List<Problem>> groupByProblemContent(Collection<Problem> problems) {
+        final Map<ProblemContent, ProblemContent> table = new HashMap<>();
+        return problems.stream().collect(Collectors.groupingBy(
+                        p -> getOrAdd(table, new ProblemContent(p.getSummary(), p.getDetails()))));
+    }
+
+    private static <T> T getOrAdd(Map<T, T> cache, T val) {
+        T t = cache.get(val);
+        if (t == null) {
+            cache.put(val, val);
+            t = val;
+        }
+        return t;
+    }
+
+    protected static class ProblemContent {
+
+        final String summary;
+        final String details;
+
+        protected ProblemContent(String summary, String details) {
+            this.summary = summary;
+            this.details = details;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((details == null) ? 0 : details.hashCode());
+            result = prime * result + ((summary == null) ? 0 : summary.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            ProblemContent other = (ProblemContent) obj;
+            if (details == null) {
+                if (other.details != null) {
+                    return false;
+                }
+            } else if (!details.equals(other.details)) {
+                return false;
+            }
+            if (summary == null) {
+                if (other.summary != null) {
+                    return false;
+                }
+            } else if (!summary.equals(other.summary)) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            int indexOf = details.indexOf("\n");
+            return summary + ": " + details.substring(0, Math.max(indexOf, Math.min(details.length(), 150)));
+        }
+
     }
 
 }

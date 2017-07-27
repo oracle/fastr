@@ -86,6 +86,7 @@ public class LogFileParser {
             this.reader = r;
             consumeLine();
             Section installTest = parseInstallTest();
+            logFile.addSection(installTest);
             if (!installTest.isSuccess()) {
                 return logFile;
             }
@@ -179,27 +180,31 @@ public class LogFileParser {
             installTest.setSuccess(parseInstallStatus() && success);
 
         }
-        parseInstallSuggests();
-        installTest.setSuccess(parseTesting() && success);
+        installTest.addSection(parseInstallSuggests());
+        Section testing = parseTesting();
+        installTest.addSection(testing);
+        installTest.setSuccess(testing.isSuccess() && success);
         expect(Token.END_INSTALL_TEST);
 
         return installTest;
     }
 
-    private boolean parseTesting() throws IOException {
+    private Section parseTesting() throws IOException {
         expect(Token.BEGIN_PACKAGE_TESTS);
 
-        boolean result = true;
+        Section packageTests = new Section(logFile, Token.BEGIN_PACKAGE_TESTS.linePrefix, curLine.lineNr);
+
         if (("install failed, not testing: " + getPkgName()).equals(trim(la.text))) {
             consumeLine();
-            result = false;
+            packageTests.setSuccess(false);
         } else {
             while (laMatches(Token.BEGIN_TESTING)) {
-                parsePackageTest();
+                packageTests.addSection(parsePackageTest());
             }
+            packageTests.setSuccess(true);
         }
         expect(Token.END_PACKAGE_TESTS);
-        return result;
+        return packageTests;
     }
 
     private Section parsePackageTest() throws IOException {

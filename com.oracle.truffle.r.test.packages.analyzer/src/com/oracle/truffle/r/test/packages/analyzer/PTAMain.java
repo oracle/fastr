@@ -53,7 +53,7 @@ import com.oracle.truffle.r.test.packages.analyzer.detectors.RErrorDetector;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.RInternalErrorDetector;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.SegfaultDetector;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.UnsupportedSpecializationDetector;
-import com.oracle.truffle.r.test.packages.analyzer.dump.HtmlDumper;
+import com.oracle.truffle.r.test.packages.analyzer.dump.HTMLDumper;
 import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParseException;
 import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParser;
 import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParser.LogFile;
@@ -177,7 +177,7 @@ public class PTAMain {
     private static void ftw(Path root, Path outDir, Date sinceDate, String glob) throws IOException {
         // TODO FS checking
 
-        HtmlDumper htmlDumper = new HtmlDumper(outDir);
+        HTMLDumper htmlDumper = new HTMLDumper(outDir);
 
         // fail early
         try {
