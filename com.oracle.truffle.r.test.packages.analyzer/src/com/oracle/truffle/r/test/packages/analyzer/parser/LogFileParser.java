@@ -26,6 +26,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -103,7 +104,7 @@ public class LogFileParser {
     private boolean parseOverallStatus() throws IOException {
         expect(Token.TEST_STATUS);
         consumeLine();
-        return parseStatus(trim(curLine.text).substring((getPkgName() + ": ").length()));
+        return parseStatus(trim(curLine.text).substring((getPkgName() + ": ").length())).toBoolean();
     }
 
     private static boolean isEOF(Line l) {
@@ -119,41 +120,49 @@ public class LogFileParser {
 
     private Section parseCheckResults() throws IOException {
         expect(Token.BEGIN_CHECKING);
-        consumeLine();
 
         Section checkResults = new Section(logFile, Token.BEGIN_CHECKING.linePrefix, curLine.lineNr);
         checkResults.problems = new LinkedList<>();
 
         // TODO depending on the result, parse other files
-        if (curLine.text.contains(Token.FAIL_OUTPUT_GNUR.linePrefix)) {
-            // TODO
-        } else if (curLine.text.contains(Token.FAIL_OUTPUT_FASTR.linePrefix)) {
-            // TODO
-        } else if (curLine.text.contains(Token.MISSING_OUTPUT_FILE.linePrefix)) {
-            // TODO
-        } else if (curLine.text.contains(Token.CONTENT_MALFORMED.linePrefix)) {
-            // TODO
-        } else if (curLine.text.contains(Token.OUTPUT_MISMATCH_FASTR.linePrefix)) {
-            // extract file name of output file
-            // format: <pkg name>: FastR output mismatch: <out file name>
-            int idx = curLine.text.indexOf(Token.OUTPUT_MISMATCH_FASTR.linePrefix);
-            String fileNameStr = curLine.text.substring(idx + Token.OUTPUT_MISMATCH_FASTR.linePrefix.length()).trim();
-            Path outputFile = logFile.path.resolveSibling(fileNameStr);
+        for (;;) {
+            if (la.text.contains(Token.FAIL_OUTPUT_GNUR.linePrefix)) {
+                consumeLine();
+                // TODO
+            } else if (la.text.contains(Token.FAIL_OUTPUT_FASTR.linePrefix)) {
+                consumeLine();
+                // TODO
+            } else if (la.text.contains(Token.MISSING_OUTPUT_FILE.linePrefix)) {
+                consumeLine();
+                // TODO
+            } else if (la.text.contains(Token.CONTENT_MALFORMED.linePrefix)) {
+                consumeLine();
+                int idx = curLine.text.indexOf(Token.CONTENT_MALFORMED.linePrefix);
+                String fileNameStr = curLine.text.substring(idx + Token.CONTENT_MALFORMED.linePrefix.length()).trim();
+                checkResults.problems.add(new ContentMalformedProblem(pkg, getCurrentLocation(), fileNameStr));
+            } else if (la.text.contains(Token.OUTPUT_MISMATCH_FASTR.linePrefix)) {
+                consumeLine();
+                // extract file name of output file
+                // format: <pkg name>: FastR output mismatch: <out file name>
+                int idx = curLine.text.indexOf(Token.OUTPUT_MISMATCH_FASTR.linePrefix);
+                String fileNameStr = curLine.text.substring(idx + Token.OUTPUT_MISMATCH_FASTR.linePrefix.length()).trim();
+                Path outputFile = logFile.path.resolveSibling(Paths.get("testfiles", "fastr", fileNameStr));
 
-            // report the problem
-            checkResults.problems.add(new OutputMismatchProblem(pkg, getCurrentLocation(), fileNameStr));
+                // report the problem
+                checkResults.problems.add(new OutputMismatchProblem(pkg, getCurrentLocation(), fileNameStr));
 
-            if (!Files.isReadable(outputFile)) {
-                LOGGER.warning("Cannot read output file " + outputFile);
+                if (!Files.isReadable(outputFile)) {
+                    LOGGER.warning("Cannot read output file " + outputFile);
 
-                // consume any lines to be able to continue
-                collectBody(Token.END_CHECKING);
+                    // consume any lines to be able to continue
+                    collectBody(Token.END_CHECKING);
+                } else {
+                    checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, outputFile, 0, Files.readAllLines(outputFile)));
+                }
+                checkResults.setSuccess(false);
             } else {
-                checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, outputFile, 0, Files.readAllLines(outputFile)));
+                break;
             }
-            checkResults.setSuccess(false);
-        } else {
-            throw parseError("Unexpected checking message: " + curLine.text);
         }
         expect(Token.END_CHECKING);
 
@@ -173,11 +182,12 @@ public class LogFileParser {
         if (!("FastR".equals(mode) || "GnuR".equals(mode))) {
             throw parseError("Invalid mode: " + mode);
         }
+        installTest.setMode(mode);
 
         Section installationTask = parseInstallationTask();
         installTest.addSection(installationTask);
         if ("FastR".equals(mode)) {
-            installTest.setSuccess(parseInstallStatus() && success);
+            installTest.setSuccess(parseInstallStatus().toBoolean() && success);
 
         }
         installTest.addSection(parseInstallSuggests());
@@ -222,8 +232,6 @@ public class LogFileParser {
         if (laMatches(Token.RUNNING_SPECIFIC_TESTS)) {
             consumeLine();
 
-            boolean success = true;
-
             // e.g.: Running ‘runRUnitTests.R’
             while (laMatches("Running ")) {
                 consumeLine();
@@ -244,10 +252,12 @@ public class LogFileParser {
                                 testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getRightFile(), chunk.getRightStartLine(), chunk.getRight()));
                             }
                         });
+                        consumeLine();
+                        parseStatus(trim(curLine.text));
+                    } else {
+                        int dotsIdx = curLine.text.lastIndexOf("...");
+                        parseStatus(trim(curLine.text.substring(dotsIdx + "...".length())));
                     }
-
-                    consumeLine();
-                    success = parseStatus(trim(curLine.text)) && success;
                 }
             }
         }
@@ -288,24 +298,26 @@ public class LogFileParser {
         return installation;
     }
 
-    private boolean parseInstallStatus() throws IOException {
+    private TestResult parseInstallStatus() throws IOException {
         expect(Token.BEGIN_INSTALL_STATUS);
         // pkgName: FAILED / OK
         expect(getPkgName());
-        boolean success = parseStatus(trim(curLine.text).substring((getPkgName() + ": ").length()));
+        TestResult res = parseStatus(trim(curLine.text).substring((getPkgName() + ": ").length()));
         expect(Token.END_INSTALL_STATUS);
-        return success;
+        return res;
     }
 
     private String getPkgName() {
         return pkg.getPackage().getName();
     }
 
-    private boolean parseStatus(String substring) {
+    private TestResult parseStatus(String substring) {
         if (Token.OK.linePrefix.equals(substring.trim())) {
-            return true;
+            return TestResult.OK;
         } else if (Token.FAILED.linePrefix.equals(substring.trim())) {
-            return false;
+            return TestResult.FAILED;
+        } else if (Token.INDETERMINATE.linePrefix.equals(substring.trim())) {
+            return TestResult.INDETERMINATE;
         }
         throw parseError("Unexpected status: " + substring);
     }
@@ -494,6 +506,16 @@ public class LogFileParser {
         }
     }
 
+    public enum TestResult {
+        OK,
+        FAILED,
+        INDETERMINATE;
+
+        boolean toBoolean() {
+            return OK.equals(this);
+        }
+    }
+
     public enum Token {
 
         BEGIN_INSTALL_TEST("BEGIN install/test with "),
@@ -526,6 +548,7 @@ public class LogFileParser {
         RUNNING_VIGNETTES("Running vignettes for package"),
 
         FAILED("FAILED"),
+        INDETERMINATE("INDETERMINATE"),
         OK("OK");
 
         String linePrefix;
@@ -594,6 +617,7 @@ public class LogFileParser {
 
     public static class Section extends AbstractSection {
         private String name;
+        private String mode;
         private int startLine;
         private AbstractSection parent;
         Collection<Problem> problems;
@@ -606,6 +630,14 @@ public class LogFileParser {
 
         public AbstractSection getParent() {
             return parent;
+        }
+
+        public String getMode() {
+            return mode;
+        }
+
+        public void setMode(String mode) {
+            this.mode = mode;
         }
 
         @Override
@@ -639,6 +671,41 @@ public class LogFileParser {
         @Override
         public String getSummary() {
             return Token.OUTPUT_MISMATCH_FASTR.linePrefix;
+        }
+
+        @Override
+        public String getDetails() {
+            return details;
+        }
+
+        @Override
+        public String toString() {
+            return getSummary() + details;
+        }
+
+        @Override
+        public int getSimilarityTo(Problem other) {
+            return 0;
+        }
+
+        @Override
+        public boolean isSimilarTo(Problem other) {
+            return true;
+        }
+    }
+
+    public static class ContentMalformedProblem extends Problem {
+
+        private final String details;
+
+        protected ContentMalformedProblem(RPackageTestRun pkg, Location location, String details) {
+            super(pkg, location);
+            this.details = details;
+        }
+
+        @Override
+        public String getSummary() {
+            return Token.CONTENT_MALFORMED.linePrefix;
         }
 
         @Override
