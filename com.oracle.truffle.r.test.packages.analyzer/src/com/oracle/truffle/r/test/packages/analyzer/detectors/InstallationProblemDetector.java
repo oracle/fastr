@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
-import com.oracle.truffle.r.test.packages.analyzer.RPackageTestRun;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 
 public class InstallationProblemDetector extends LineDetector {
 
@@ -83,6 +83,19 @@ public class InstallationProblemDetector extends LineDetector {
         @Override
         public String getDetails() {
             return message;
+        }
+
+        @Override
+        public int getSimilarityTo(Problem other) {
+            if (other.getClass() == PackageInstallationProblem.class) {
+                return Problem.computeLevenshteinDistance(getDetails().trim(), other.getDetails().trim());
+            }
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isSimilarTo(Problem other) {
+            return getSimilarityTo(other) < 3;
         }
     }
 }

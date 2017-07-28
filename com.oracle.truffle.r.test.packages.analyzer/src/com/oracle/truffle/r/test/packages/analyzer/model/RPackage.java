@@ -20,22 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.test.packages.analyzer;
+package com.oracle.truffle.r.test.packages.analyzer.model;
 
 import java.nio.file.Path;
 import java.util.Collection;
 
 /**
- * Represents a tested R package.
+ * Represents a tested R package in a specific version.
  */
 public class RPackage {
 
-    private String name;
-    private String version;
+    private final String name;
+    private final String version;
     private Path location;
     private Collection<RPackageTestRun> testRuns;
 
-    protected RPackage(String name, String version) {
+    public RPackage(String name, String version) {
         this.name = name;
         this.version = version;
     }
@@ -44,16 +44,8 @@ public class RPackage {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getVersion() {
         return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
     }
 
     public Path getLocation() {

@@ -30,16 +30,17 @@ import java.util.regex.Pattern;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
-import com.oracle.truffle.r.test.packages.analyzer.RPackageTestRun;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 
 public class UnsupportedSpecializationDetector extends LineDetector {
 
     public static final UnsupportedSpecializationDetector INSTANCE = new UnsupportedSpecializationDetector();
+
     private static final Pattern PATTERN = Pattern.compile(
                     "com\\.oracle\\.truffle\\.r\\.runtime\\.RInternalError: com\\.oracle\\.truffle\\.api\\.dsl\\.UnsupportedSpecializationException: (?<MSG>.*)");
-    private static final String TRACE_END = "Frame(d=0)";
 
     protected UnsupportedSpecializationDetector() {
+        super(RInternalErrorDetector.INSTANCE);
     }
 
     @Override
@@ -50,30 +51,16 @@ public class UnsupportedSpecializationDetector extends LineDetector {
     @Override
     public Collection<Problem> detect(RPackageTestRun pkg, Location startLocation, List<String> body) {
         Collection<Problem> problems = new LinkedList<>();
-        StringBuilder stackTrace = new StringBuilder();
-        int state = 0;
         String message = null;
         assert body.isEmpty() || startLocation != null;
         int lineNr = startLocation != null ? startLocation.lineNr : 0;
+        int problemStartLine = lineNr;
         for (String line : body) {
-            switch (state) {
-                case 0:
-                    Matcher matcher = PATTERN.matcher(line);
-                    if (matcher.find()) {
-                        message = matcher.group("MSG");
-                        state = 1;
-                    }
-                    break;
-                case 1:
-                    if (line.contains(TRACE_END)) {
-                        problems.add(new UnsupportedSpecializationProblem(pkg, new Location(startLocation.file, lineNr), message, stackTrace.toString()));
-                        stackTrace.setLength(0);
-                        message = null;
-                        state = 0;
-                    } else {
-                        stackTrace.append(line).append(System.lineSeparator());
-                    }
-                    break;
+            Matcher matcher = PATTERN.matcher(line);
+            if (matcher.find()) {
+                message = matcher.group("MSG");
+                problemStartLine = lineNr;
+                problems.add(new UnsupportedSpecializationProblem(pkg, new Location(startLocation.file, problemStartLine), message));
             }
             ++lineNr;
         }
@@ -82,22 +69,12 @@ public class UnsupportedSpecializationDetector extends LineDetector {
 
     private static class UnsupportedSpecializationProblem extends Problem {
 
-        protected UnsupportedSpecializationProblem(RPackageTestRun pkg, Location location, String message, String stackTrace) {
+        protected UnsupportedSpecializationProblem(RPackageTestRun pkg, Location location, String message) {
             super(pkg, location);
             this.message = message;
-            this.stackTrace = stackTrace;
         }
 
         public final String message;
-        public final String stackTrace;
-
-        public String getMessage() {
-            return message;
-        }
-
-        public String getStackTrace() {
-            return stackTrace;
-        }
 
         @Override
         public String toString() {
@@ -106,14 +83,26 @@ public class UnsupportedSpecializationDetector extends LineDetector {
 
         @Override
         public String getSummary() {
-            return "com.oracle.truffle.api.dsl.UnsupportedSpecializationException: " + message;
+            return "com.oracle.truffle.api.dsl.UnsupportedSpecializationException";
         }
 
         @Override
         public String getDetails() {
-            return stackTrace;
+            return message;
         }
 
+        @Override
+        public int getSimilarityTo(Problem other) {
+            if (other.getClass() == UnsupportedSpecializationProblem.class) {
+                return Problem.computeLevenshteinDistance(getDetails().trim(), other.getDetails().trim());
+            }
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isSimilarTo(Problem other) {
+            return getSimilarityTo(other) < 5;
+        }
     }
 
 }

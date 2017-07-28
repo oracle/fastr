@@ -23,11 +23,8 @@
 package com.oracle.truffle.r.test.packages.analyzer;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.FileTime;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -36,7 +33,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
@@ -47,16 +43,8 @@ import java.util.logging.SimpleFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.oracle.truffle.r.test.packages.analyzer.detectors.DiffDetector;
-import com.oracle.truffle.r.test.packages.analyzer.detectors.InstallationProblemDetector;
-import com.oracle.truffle.r.test.packages.analyzer.detectors.RErrorDetector;
-import com.oracle.truffle.r.test.packages.analyzer.detectors.RInternalErrorDetector;
-import com.oracle.truffle.r.test.packages.analyzer.detectors.SegfaultDetector;
-import com.oracle.truffle.r.test.packages.analyzer.detectors.UnsupportedSpecializationDetector;
-import com.oracle.truffle.r.test.packages.analyzer.dump.HtmlDumper;
-import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParseException;
-import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParser;
-import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParser.LogFile;
+import com.oracle.truffle.r.test.packages.analyzer.dump.HTMLDumper;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackage;
 
 /**
  * Main class of the package analysis tool.<br>
@@ -75,6 +63,12 @@ import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParser.LogFile;
  * </p>
  */
 public class PTAMain {
+
+    // must be before the logger is created to take effect
+    static {
+        System.setProperty("java.util.logging.SimpleFormatter.format", "%4$s: %5$s [%1$tc]%n");
+    }
+
     private static final Logger LOGGER = Logger.getLogger(PTAMain.class.getName());
     private static final String LOG_FILE_NAME = "pta.log";
 
@@ -85,6 +79,7 @@ public class PTAMain {
         parser.registerOption("glob", "*");
         parser.registerOption("since", "last2weeks");
         parser.registerOption("console");
+        parser.registerOption("verbose");
 
         String[] remainingArgs = parser.parseOptions(args);
         if (parser.has("help")) {
@@ -103,6 +98,29 @@ public class PTAMain {
 
         Path outDir = Paths.get(parser.get("outDir"));
         ftw(Paths.get(remainingArgs[0]), outDir, sinceDate, parser.get("glob"));
+    }
+
+    private static void ftw(Path root, Path outDir, Date sinceDate, String glob) {
+        HTMLDumper htmlDumper = new HTMLDumper(outDir);
+
+        // fail early
+        try {
+            if (!htmlDumper.createAndCheckOutDir()) {
+                LOGGER.severe("Cannot write to output directory: " + outDir);
+                System.exit(1);
+            }
+        } catch (IOException e) {
+            LOGGER.severe(String.format("Cannot create output directory: %s ", e.getMessage()));
+            System.exit(1);
+        }
+
+        try {
+            FileTreeWalker walker = new FileTreeWalker();
+            Collection<RPackage> pkgs = walker.ftw(root, sinceDate, glob);
+            htmlDumper.dump(pkgs, walker.getParseErrors());
+        } catch (IOException e) {
+            LOGGER.severe("Error while traversing package test directory: " + e.getMessage());
+        }
     }
 
     private static final Pattern REL_SINCE_PATTERN = Pattern.compile("last(\\d+)(days?|weeks?|months?)");
@@ -151,13 +169,21 @@ public class PTAMain {
         LogManager.getLogManager().reset();
         Logger rootLogger = Logger.getLogger("");
         ConsoleHandler consoleHandler = new ConsoleHandler();
+
+        Level defaultLogLevel = Level.INFO;
+        if (parser.has("verbose")) {
+            defaultLogLevel = Level.ALL;
+        }
+        rootLogger.setLevel(defaultLogLevel);
+
+        System.setProperty("java.util.logging.SimpleFormatter.format", "%4$s: %5$s [%1$tc]%n");
         if (parser.has("console")) {
-            consoleHandler.setLevel(Level.INFO);
+            consoleHandler.setLevel(defaultLogLevel);
         } else {
             // set log level of console handlers to SEVERE
             consoleHandler.setLevel(Level.SEVERE);
             FileHandler fileHandler = new FileHandler(LOG_FILE_NAME);
-            fileHandler.setLevel(Level.INFO);
+            fileHandler.setLevel(defaultLogLevel);
             fileHandler.setFormatter(new SimpleFormatter());
             rootLogger.addHandler(fileHandler);
         }
@@ -165,128 +191,6 @@ public class PTAMain {
     }
 
     private static final String LF = System.lineSeparator();
-
-    private static void ftw(Path root, Path outDir, Date sinceDate, String glob) throws IOException {
-        // TODO FS checking
-
-        HtmlDumper htmlDumper = new HtmlDumper(outDir);
-
-        // fail early
-        try {
-            if (!htmlDumper.createAndCheckOutDir()) {
-                LOGGER.severe("Cannot write to output directory: " + outDir);
-                System.exit(1);
-            }
-        } catch (IOException e) {
-            LOGGER.severe(String.format("Cannot create output directory: %s ", e.getMessage()));
-            System.exit(1);
-        }
-
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(root, glob)) {
-            Collection<RPackage> pkgs = new LinkedList<>();
-            for (Path p : stream) {
-                if (Files.isDirectory(p)) {
-                    Collection<RPackage> pkgVersions = visitPackageRoot(p, sinceDate);
-                    pkgs.addAll(pkgVersions);
-                }
-            }
-            Collection<Problem> allProblems = collectAllProblems(pkgs);
-            htmlDumper.dump(allProblems);
-        }
-    }
-
-    private static Collection<Problem> collectAllProblems(Collection<RPackage> pkgs) {
-        Collection<Problem> problems = new LinkedList<>();
-        for (RPackage pkg : pkgs) {
-            for (RPackageTestRun run : pkg.getTestRuns()) {
-                problems.addAll(run.getProblems());
-            }
-        }
-        return problems;
-    }
-
-    private static Collection<RPackage> visitPackageRoot(Path pkgRoot, Date sinceDate) throws IOException {
-        String pkgName = pkgRoot.getFileName().toString();
-
-        Collection<RPackage> pkgs = new LinkedList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(pkgRoot)) {
-            for (Path p : stream) {
-                if (Files.isDirectory(p)) {
-                    pkgs.add(visitPackageVersion(p, pkgName, sinceDate));
-                }
-            }
-        }
-        return pkgs;
-    }
-
-    private static RPackage visitPackageVersion(Path pkgVersionDir, String pkgName, Date sinceDate) {
-        String pkgVersion = pkgVersionDir.getFileName().toString();
-        RPackage pkg = new RPackage(pkgName, pkgVersion);
-        LOGGER.info("Found package " + pkg);
-
-        Collection<RPackageTestRun> runs = new LinkedList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(pkgVersionDir)) {
-            for (Path p : stream) {
-                if (Files.isDirectory(p)) {
-                    RPackageTestRun testRun = visitTestRun(p, pkg, sinceDate);
-                    if (testRun != null) {
-                        runs.add(testRun);
-                    }
-                }
-            }
-            pkg.setTestRuns(runs);
-        } catch (IOException e) {
-            LOGGER.severe("Error while reading package root of \"" + pkgName + "\"");
-        }
-
-        return pkg;
-    }
-
-    private static RPackageTestRun visitTestRun(Path testRunDir, RPackage pkg, Date sinceDate) {
-        int testRun = Integer.parseInt(testRunDir.getFileName().toString());
-        LOGGER.info("Visiting test run " + testRun + " of package " + pkg);
-        try {
-            RPackageTestRun pkgTestRun = new RPackageTestRun(pkg, testRun);
-            Path logFile = testRunDir.resolve(pkg.getName() + ".log");
-            FileTime lastModifiedTime = Files.getLastModifiedTime(logFile);
-            if (isNewerThan(lastModifiedTime, sinceDate)) {
-                Collection<Problem> problems = parseLogFile(logFile, pkgTestRun);
-                pkgTestRun.setProblems(problems);
-                return pkgTestRun;
-            } else {
-                LOGGER.info(String.format("Skipping package test run %s because it is too old (%s must be newer than %s)", pkgTestRun, lastModifiedTime, sinceDate));
-            }
-        } catch (IOException | LogFileParseException e) {
-            LOGGER.severe(String.format("Error while parsing test run %d of package \"%s-%s\": %s", testRun,
-                            pkg.getName(), pkg.getVersion(), e.getMessage()));
-        }
-        return null;
-    }
-
-    private static boolean isNewerThan(FileTime lastModifiedTime, Date sinceDate) {
-        Date lastModDate = new Date(lastModifiedTime.toMillis());
-        return sinceDate.compareTo(lastModDate) <= 0;
-    }
-
-    private static Collection<Problem> parseLogFile(Path logFile, RPackageTestRun pkgTestRun) throws IOException {
-        LOGGER.info("Parsing log file " + logFile);
-
-        LogFileParser lfParser = new LogFileParser(logFile, pkgTestRun);
-        lfParser.addDetector(LogFileParser.Token.BEGIN_SUGGESTS_INSTALL, InstallationProblemDetector.INSTANCE);
-        lfParser.addDetector(SegfaultDetector.INSTANCE);
-        lfParser.addDetector(RErrorDetector.INSTANCE);
-        lfParser.addDetector(UnsupportedSpecializationDetector.INSTANCE);
-        lfParser.addDetector(RInternalErrorDetector.INSTANCE);
-        lfParser.addTestResultDetector(DiffDetector.INSTANCE);
-
-        LogFile parseLogFile = lfParser.parseLogFile();
-        Collection<Problem> problems = parseLogFile.collectProblems();
-        for (Problem problem : problems) {
-            LOGGER.info(problem.toString());
-        }
-
-        return problems;
-    }
 
     private static void printHelpAndExit() {
         StringBuilder sb = new StringBuilder();

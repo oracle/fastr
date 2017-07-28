@@ -20,18 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.test.packages.analyzer;
+package com.oracle.truffle.r.test.packages.analyzer.model;
 
 import java.util.Collection;
 import java.util.Collections;
 
+import com.oracle.truffle.r.test.packages.analyzer.Problem;
+
+/**
+ * Represents one test run of a package.
+ */
 public class RPackageTestRun {
 
     private final RPackage pkg;
     private final int nr;
     private Collection<Problem> problems;
 
-    protected RPackageTestRun(RPackage pkg, int nr) {
+    /** The overall outcome of the package test run as reported. */
+    private boolean success;
+
+    public RPackageTestRun(RPackage pkg, int nr) {
         this.pkg = pkg;
         this.nr = nr;
     }
@@ -40,7 +48,7 @@ public class RPackageTestRun {
         return pkg;
     }
 
-    public int getNr() {
+    public int getNumber() {
         return nr;
     }
 
@@ -55,9 +63,51 @@ public class RPackageTestRun {
         return Collections.emptyList();
     }
 
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
+
+    public boolean isSuccess() {
+        return success;
+    }
+
     @Override
     public String toString() {
         return pkg + "/" + nr;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + nr;
+        result = prime * result + ((pkg == null) ? 0 : pkg.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        RPackageTestRun other = (RPackageTestRun) obj;
+        if (nr != other.nr) {
+            return false;
+        }
+        if (pkg == null) {
+            if (other.pkg != null) {
+                return false;
+            }
+        } else if (!pkg.equals(other.pkg)) {
+            return false;
+        }
+        return true;
     }
 
 }

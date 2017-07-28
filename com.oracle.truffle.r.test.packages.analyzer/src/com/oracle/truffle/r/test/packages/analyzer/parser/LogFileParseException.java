@@ -22,11 +22,29 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer.parser;
 
+import java.util.Objects;
+
+import com.oracle.truffle.r.test.packages.analyzer.Location;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
+
 @SuppressWarnings("serial")
 public class LogFileParseException extends RuntimeException {
 
-    protected LogFileParseException(String message) {
+    private final RPackageTestRun testRun;
+    private final Location location;
+
+    protected LogFileParseException(String message, RPackageTestRun testRun, Location location) {
         super(message);
+        this.testRun = Objects.requireNonNull(testRun);
+        this.location = Objects.requireNonNull(location);
+    }
+
+    public RPackageTestRun getTestRun() {
+        return testRun;
+    }
+
+    public Location getLocation() {
+        return location;
     }
 
 }

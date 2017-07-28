@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.test.packages.analyzer.dump.html;
+package com.oracle.truffle.r.test.packages.analyzer.dump;
 
 import java.io.PrintWriter;
 import java.util.Arrays;
@@ -74,6 +74,14 @@ public class HTMLBuilder {
         return generic("tr", children);
     }
 
+    public Tag th(String content) {
+        return generic("th", content);
+    }
+
+    public Tag th(Tag... children) {
+        return generic("th", children);
+    }
+
     public Tag td(String content) {
         return generic("td", content);
     }
@@ -98,6 +106,10 @@ public class HTMLBuilder {
 
     public Tag q(String content) {
         return generic("q", content);
+    }
+
+    public Tag p(String content) {
+        return generic("p", content);
     }
 
     public Tag generic(String key, String content, Tag... children) {

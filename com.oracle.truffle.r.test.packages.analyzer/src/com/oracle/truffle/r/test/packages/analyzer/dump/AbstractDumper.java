@@ -23,16 +23,19 @@
 package com.oracle.truffle.r.test.packages.analyzer.dump;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
-import com.oracle.truffle.r.test.packages.analyzer.RPackage;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackage;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
+import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParseException;
 
 public abstract class AbstractDumper {
 
-    public abstract void dump(Collection<Problem> problems);
+    public abstract void dump(Collection<RPackage> problems, Collection<LogFileParseException> collection);
 
     protected Map<Class<? extends Problem>, List<Problem>> groupByType(Collection<Problem> problems) {
         return problems.stream().collect(Collectors.groupingBy(p -> p.getClass()));
@@ -40,6 +43,59 @@ public abstract class AbstractDumper {
 
     protected Map<RPackage, List<Problem>> groupByPkg(Collection<Problem> problems) {
         return problems.stream().collect(Collectors.groupingBy(p -> p.getPackageTestRun().getPackage()));
+    }
+
+    protected Map<RPackageTestRun, List<Problem>> groupByTestRuns(Collection<RPackageTestRun> allTestRuns, Collection<Problem> problems) {
+        Map<RPackageTestRun, List<Problem>> groupedByTestRun = problems.stream().collect(Collectors.groupingBy(p -> p.getPackageTestRun()));
+        // insert test runs don't having any problems
+        for (RPackageTestRun testRun : allTestRuns) {
+            if (!groupedByTestRun.containsKey(testRun)) {
+                groupedByTestRun.put(testRun, Collections.emptyList());
+            }
+        }
+        return groupedByTestRun;
+    }
+
+    protected Map<ProblemContent, List<Problem>> groupByProblemContent(Collection<Problem> problems) {
+        return problems.stream().collect(Collectors.groupingBy(p -> new ProblemContent(p)));
+    }
+
+    protected static class ProblemContent {
+
+        final Problem representitive;
+
+        protected ProblemContent(Problem representitive) {
+            this.representitive = representitive;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((representitive == null) ? 0 : representitive.getClass().hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            ProblemContent other = (ProblemContent) obj;
+            return representitive.isSimilarTo(other.representitive);
+        }
+
+        @Override
+        public String toString() {
+            return representitive.toString();
+        }
+
     }
 
 }

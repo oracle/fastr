@@ -28,7 +28,7 @@ import java.util.List;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
-import com.oracle.truffle.r.test.packages.analyzer.RPackageTestRun;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 
 public class RInternalErrorDetector extends LineDetector {
 
@@ -87,6 +87,19 @@ public class RInternalErrorDetector extends LineDetector {
         @Override
         public String getDetails() {
             return message;
+        }
+
+        @Override
+        public int getSimilarityTo(Problem other) {
+            if (other.getClass() == RInternalErrorProblem.class) {
+                return Problem.computeLevenshteinDistance(getDetails().trim(), other.getDetails().trim());
+            }
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isSimilarTo(Problem other) {
+            return getSimilarityTo(other) < 10;
         }
 
     }

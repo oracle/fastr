@@ -26,10 +26,11 @@ import java.util.Collection;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
-import com.oracle.truffle.r.test.packages.analyzer.RPackageTestRun;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 
 public abstract class Detector<T> {
 
+    /** Semantics: If a child reports an error for a particular location, the parent doesn't. */
     protected Detector<?> parent;
 
     public Detector(Detector<?> parent) {
@@ -43,12 +44,12 @@ public abstract class Detector<T> {
     public abstract String getName();
 
     /**
-     * @param pkg
+     * @param pkgTestRun The package test run any problems should be associated with.
      * @param startLineLocation The location of the first line, i.e., of body[0], or
      *            <code>null</code> if body is empty.
-     * @param body
+     * @param body The content to analyze (e.g. a list of lines in a file).
      * @return A list of detected problems (must not be {@code null}).
      */
-    public abstract Collection<Problem> detect(RPackageTestRun pkg, Location startLineLocation, T body);
+    public abstract Collection<Problem> detect(RPackageTestRun pkgTestRun, Location startLineLocation, T body);
 
 }

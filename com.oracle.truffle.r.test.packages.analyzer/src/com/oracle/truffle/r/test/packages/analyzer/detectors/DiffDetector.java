@@ -29,7 +29,7 @@ import java.util.Objects;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
-import com.oracle.truffle.r.test.packages.analyzer.RPackageTestRun;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 import com.oracle.truffle.r.test.packages.analyzer.parser.DiffParser.ChangeCommand;
 import com.oracle.truffle.r.test.packages.analyzer.parser.DiffParser.DiffChunk;
 
@@ -69,7 +69,7 @@ public class DiffDetector extends Detector<List<DiffChunk>> {
      * TODO In general, one-line changes can be classified as minor differences.
      */
     private static boolean isMinorDifference(DiffChunk diffChunk) {
-        ChangeCommand cmd = diffChunk.getCmd();
+        ChangeCommand cmd = diffChunk.getChangeCommand();
         return cmd.cmd == 'c' && cmd.lFrom == cmd.rFrom && cmd.lTo == -1 && cmd.rTo == -1;
     }
 
@@ -91,12 +91,22 @@ public class DiffDetector extends Detector<List<DiffChunk>> {
 
         @Override
         public String getDetails() {
-            return diffChunk.toString();
+            return diffChunk.getChangeCommand().toString();
         }
 
         @Override
         public String toString() {
             return String.format("%s: %s", diffChunk.getLocation(), summary);
+        }
+
+        @Override
+        public boolean isSimilarTo(Problem other) {
+            return other.getClass() == DiffProblem.class && summary.equals(other.getSummary());
+        }
+
+        @Override
+        public int getSimilarityTo(Problem other) {
+            return isSimilarTo(other) ? 0 : 1;
         }
 
     }
