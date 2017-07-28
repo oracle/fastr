@@ -163,6 +163,32 @@ public class RErrorDetectorTest {
         Assert.assertEquals("invalid value for 'label'", findFirst.orElse(null).getDetails().trim());
     }
 
+    @Test
+    public void testCallstringWithNamesAndValues0() {
+        List<String> lines = Arrays.asList(new String[]{"Error in grep(pattern, all.names, value = TRUE) : ",
+                        "  invalid regular expression '*': Dangling meta character '*' near index 0"});
+
+        Collection<Problem> detect = RErrorDetector.INSTANCE.detect(pkgTestRun, loc(), lines);
+        Assert.assertEquals(1, detect.size());
+
+        Optional<Problem> findFirst = detect.stream().findFirst();
+        Assert.assertEquals("Error in grep(pattern, all.names, value = TRUE)", findFirst.orElse(null).getSummary().trim());
+        Assert.assertEquals("invalid regular expression '*': Dangling meta character '*' near index 0", findFirst.orElse(null).getDetails().trim());
+    }
+
+    @Test
+    public void testCallstringWithNamesAndValues1() {
+        List<String> lines = Arrays.asList(new String[]{"Error in grep(pattern, all.names, value = \":\") : ",
+                        "  invalid regular expression '*': Dangling meta character '*' near index 0"});
+
+        Collection<Problem> detect = RErrorDetector.INSTANCE.detect(pkgTestRun, loc(), lines);
+        Assert.assertEquals(1, detect.size());
+
+        Optional<Problem> findFirst = detect.stream().findFirst();
+        Assert.assertEquals("Error in grep(pattern, all.names, value = \":\")", findFirst.orElse(null).getSummary().trim());
+        Assert.assertEquals("invalid regular expression '*': Dangling meta character '*' near index 0", findFirst.orElse(null).getDetails().trim());
+    }
+
     private static Location loc() {
         return new Location(pkg.getLocation(), 0);
     }

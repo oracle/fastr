@@ -37,7 +37,7 @@ public class RErrorDetector extends LineDetector {
 
     public static final RErrorDetector INSTANCE = new RErrorDetector();
 
-    private static final Pattern PATTERN = Pattern.compile("(.*\\s)?Error( in (?<CALLSTR>\\S*) )?: (?<MSG>.*)");
+    private static final Pattern PATTERN = Pattern.compile("(.*\\s)?Error( in (?<CALLSTR>[^:]*(\\(.*\\))?) )?: (?<MSG>.*)");
 
     protected RErrorDetector() {
     }
