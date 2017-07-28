@@ -1036,7 +1036,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object R_tryEval(Object expr, Object env, boolean silent) {
+    public Object R_tryEval(Object expr, Object env, int silent) {
         Object handlerStack = RErrorHandling.getHandlerStack();
         Object restartStack = RErrorHandling.getRestartStack();
         try {
@@ -1412,10 +1412,10 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public REnvironment R_NewHashedEnv(REnvironment parent, Object initialSize) {
+    public REnvironment R_NewHashedEnv(Object parent, Object initialSize) {
         // We know this is an RIntVector from use site in gramRd.c
         REnvironment env = RDataFactory.createNewEnv(REnvironment.UNNAMED, true, ((RIntVector) initialSize).getDataAt(0));
-        RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
+        RArguments.initializeEnclosingFrame(env.getFrame(), guaranteeInstanceOf(parent, REnvironment.class).getFrame());
         return env;
     }
 

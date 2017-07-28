@@ -36,8 +36,8 @@ public abstract class Foreign2R extends RBaseNode {
     public abstract Object execute(Object obj);
 
     @Specialization
-    public byte doBoolean(Boolean obj) {
-        return RRuntime.asLogical((boolean) obj);
+    public byte doBoolean(boolean obj) {
+        return RRuntime.asLogical(obj);
     }
 
     @Specialization
@@ -66,7 +66,7 @@ public abstract class Foreign2R extends RBaseNode {
     }
 
     @Specialization(guards = "isNull(obj)")
-    public RNull doNull(Object obj) {
+    public RNull doNull(@SuppressWarnings("unused") Object obj) {
         return RNull.instance;
     }
 

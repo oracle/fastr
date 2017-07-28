@@ -28,7 +28,6 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * This class defines methods that match the functionality of the macro/function definitions in the
@@ -96,7 +95,7 @@ public interface StdUpCallsRFFI {
 
     int /* void */ Rf_setAttrib(Object obj, Object name, Object val);
 
-    int Rf_inherits(@RFFICstring Object x, Object clazz);
+    int Rf_inherits(Object x, @RFFICstring Object clazz);
 
     Object Rf_install(@RFFICstring Object name);
 
@@ -204,7 +203,7 @@ public interface StdUpCallsRFFI {
 
     int /* void */ Rf_copyMatrix(Object s, Object t, int byrow);
 
-    Object R_tryEval(Object expr, Object env, boolean silent);
+    Object R_tryEval(Object expr, Object env, int silent);
 
     Object R_ToplevelExec();
 
@@ -258,7 +257,7 @@ public interface StdUpCallsRFFI {
 
     int /* void */ R_CleanUp(int sa, int status, int runlast);
 
-    REnvironment R_NewHashedEnv(REnvironment parent, Object initialSize);
+    Object R_NewHashedEnv(Object parent, Object initialSize);
 
     int PRSEEN(Object x);
 
