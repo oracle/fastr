@@ -63,6 +63,12 @@ import com.oracle.truffle.r.test.packages.analyzer.model.RPackage;
  * </p>
  */
 public class PTAMain {
+
+    // must be before the logger is created to take effect
+    static {
+        System.setProperty("java.util.logging.SimpleFormatter.format", "%4$s: %5$s [%1$tc]%n");
+    }
+
     private static final Logger LOGGER = Logger.getLogger(PTAMain.class.getName());
     private static final String LOG_FILE_NAME = "pta.log";
 
@@ -170,6 +176,7 @@ public class PTAMain {
         }
         rootLogger.setLevel(defaultLogLevel);
 
+        System.setProperty("java.util.logging.SimpleFormatter.format", "%4$s: %5$s [%1$tc]%n");
         if (parser.has("console")) {
             consoleHandler.setLevel(defaultLogLevel);
         } else {
