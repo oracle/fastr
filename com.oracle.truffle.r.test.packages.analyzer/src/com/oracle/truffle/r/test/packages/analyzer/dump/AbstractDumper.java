@@ -24,7 +24,6 @@ package com.oracle.truffle.r.test.packages.analyzer.dump;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,10 +31,11 @@ import java.util.stream.Collectors;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackage;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
+import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParseException;
 
 public abstract class AbstractDumper {
 
-    public abstract void dump(Collection<RPackage> problems);
+    public abstract void dump(Collection<RPackage> problems, Collection<LogFileParseException> collection);
 
     protected Map<Class<? extends Problem>, List<Problem>> groupByType(Collection<Problem> problems) {
         return problems.stream().collect(Collectors.groupingBy(p -> p.getClass()));

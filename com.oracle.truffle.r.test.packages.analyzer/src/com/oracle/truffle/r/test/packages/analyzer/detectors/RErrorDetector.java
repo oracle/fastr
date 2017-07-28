@@ -37,7 +37,7 @@ public class RErrorDetector extends LineDetector {
 
     public static final RErrorDetector INSTANCE = new RErrorDetector();
 
-    private static final Pattern PATTERN = Pattern.compile(".*\\wError(?<CALLSTR>.*)??: (?<MSG>.*)");
+    private static final Pattern PATTERN = Pattern.compile("(.*\\s)?Error( in (?<CALLSTR>\\S*) )?: (?<MSG>.*)");
 
     protected RErrorDetector() {
     }
@@ -63,7 +63,7 @@ public class RErrorDetector extends LineDetector {
             if (matcher.matches()) {
                 String callString = matcher.group("CALLSTR");
                 String message = matcher.group("MSG");
-                if (message.trim().isEmpty()) {
+                if (message.trim().isEmpty() && it.hasNext()) {
                     // message could be in the next line
                     message = it.next();
                     ++i;
@@ -94,9 +94,9 @@ public class RErrorDetector extends LineDetector {
         @Override
         public String getSummary() {
             if (callString != null) {
-                return "RError in '" + callString + "'";
+                return "Error in " + callString + "";
             }
-            return "RError";
+            return "Error";
         }
 
         @Override

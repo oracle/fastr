@@ -48,7 +48,7 @@ public class DiffParser {
      * group("CMD") = command<br>
      * </p>
      */
-    static final Pattern CHANGE_CMD_PATTERN = Pattern.compile("(\\d+)(,(\\d+))?(?<CMD>a|c|d)(\\d+)(,(\\d+))?");
+    public static final Pattern CHANGE_CMD_PATTERN = Pattern.compile("(\\d+)(,(\\d+))?(?<CMD>a|c|d)(\\d+)(,(\\d+))?");
 
     protected DiffParser(LogFileParser parent) {
         this.parent = parent;
@@ -90,7 +90,7 @@ public class DiffParser {
                         break;
                     }
                     default:
-                        throw new LogFileParseException("Unknown diff command: ");
+                        throw parent.parseError("Unknown diff command: ");
                 }
             } else {
                 // no more diff chunks; exit loop
@@ -122,7 +122,7 @@ public class DiffParser {
         if (matcher.matches()) {
             String cmdStr = matcher.group("CMD");
             if (cmdStr.length() != 1) {
-                throw new LogFileParseException("Invalid diff change command: " + cmdStr);
+                throw parent.parseError("Invalid diff change command: " + cmdStr);
             }
 
             char cmd = cmdStr.charAt(0);
@@ -134,7 +134,7 @@ public class DiffParser {
 
             return new ChangeCommand(atoi(lFromStr), atoi(lToStr), cmd, atoi(rFromStr), atoi(rToStr));
         }
-        throw new LogFileParseException("Invalid diff change command: " + parent.getCurLine().text);
+        throw parent.parseError("Invalid diff change command: " + parent.getCurLine().text);
     }
 
     private static int atoi(String rToStr) {
@@ -224,7 +224,7 @@ public class DiffParser {
         public final int rFrom;
         public final int rTo;
 
-        protected ChangeCommand(int lFrom, int lTo, char cmd, int rFrom, int rTo) {
+        public ChangeCommand(int lFrom, int lTo, char cmd, int rFrom, int rTo) {
             this.lFrom = lFrom;
             this.lTo = lTo;
             this.cmd = cmd;

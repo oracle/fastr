@@ -20,13 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.test.packages.analyzer.parser;
+package com.oracle.truffle.r.test.packages.analyzer.test;
 
 import java.util.regex.Matcher;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.oracle.truffle.r.test.packages.analyzer.parser.DiffParser;
 import com.oracle.truffle.r.test.packages.analyzer.parser.DiffParser.ChangeCommand;
 
 public class PatternTest {

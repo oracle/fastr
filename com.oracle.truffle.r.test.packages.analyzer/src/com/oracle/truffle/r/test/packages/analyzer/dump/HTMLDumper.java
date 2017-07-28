@@ -43,6 +43,7 @@ import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.dump.HTMLBuilder.Tag;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackage;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
+import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParseException;
 
 public class HTMLDumper extends AbstractDumper {
 
@@ -65,16 +66,16 @@ public class HTMLDumper extends AbstractDumper {
     }
 
     @Override
-    public void dump(Collection<RPackage> problems) {
+    public void dump(Collection<RPackage> problems, Collection<LogFileParseException> parseErrors) {
         try {
             createAndCheckOutDir();
-            dumpIndexFile(problems);
+            dumpIndexFile(problems, parseErrors);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void dumpIndexFile(Collection<RPackage> problems) {
+    private void dumpIndexFile(Collection<RPackage> problems, Collection<LogFileParseException> parseErrors) {
         Path indexFile = destDir.resolve("index.html");
 
         try (BufferedWriter bw = Files.newBufferedWriter(indexFile, CREATE, TRUNCATE_EXISTING, WRITE)) {
@@ -86,13 +87,14 @@ public class HTMLDumper extends AbstractDumper {
             Tag errorDistributionTable = generateTypeDistributionTable(builder, groupByType(allProblems));
             Tag pkgDistributionTable = generateTestRunDistributionTable(builder, groupByTestRuns(allTestRuns, allProblems));
             Tag distrinctProblemDistributionTable = generateDistinctProblemDistribution(builder, groupByProblemContent(allProblems));
+            Tag parseErrorsList = generateParseErrorsList(builder, parseErrors);
 
             builder.html(builder.head(builder.title(TITLE)), builder.body(
-                            builder.h1(TITLE),
-                            builder.p("Numer of analyzer package test runs: " + allTestRuns.size()),
+                            builder.h1(TITLE), builder.p("Numer of analyzed package test runs: " + allTestRuns.size()),
                             builder.h2("Distribution by Problem Type"), errorDistributionTable,
                             builder.h2("Distribution by Package Test Run"), pkgDistributionTable,
-                            builder.h2("Distinct Problem Distribution"), distrinctProblemDistributionTable));
+                            builder.h2("Distinct Problem Distribution"), distrinctProblemDistributionTable,
+                            builder.h2("Failed Analysis Runs"), parseErrorsList));
             builder.dump();
         } catch (IOException e) {
             e.printStackTrace();
@@ -208,6 +210,22 @@ public class HTMLDumper extends AbstractDumper {
                             builder.td(builder.a(relativeLocation.toString() + "#" + loc.lineNr, loc.toString())),
                             builder.td(builder.escape(p.getSummary())),
                             builder.td(builder.escape(p.getDetails()))));
+        }
+        return table;
+    }
+
+    private static Tag generateParseErrorsList(HTMLBuilder builder, Collection<LogFileParseException> parseErrors) {
+
+        Tag table = builder.table(builder.tr(
+                        builder.th("Package Test Run"),
+                        builder.th("Location"),
+                        builder.th("Message")));
+
+        for (LogFileParseException e : parseErrors) {
+            table.addChild(builder.tr(
+                            builder.td(e.getTestRun().toString()),
+                            builder.td(e.getLocation().toString()),
+                            builder.td(e.getMessage())));
         }
         return table;
     }

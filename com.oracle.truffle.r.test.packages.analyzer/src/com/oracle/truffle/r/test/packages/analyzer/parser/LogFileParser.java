@@ -113,7 +113,7 @@ public class LogFileParser {
     void expectEOF() throws IOException {
         consumeLine();
         if (!isEOF(curLine)) {
-            throw new LogFileParseException("Expected end of file but was " + curLine.text);
+            throw new LogFileParseException("Expected end of file but was " + curLine.text, pkg, getCurrentLocation());
         }
     }
 
@@ -153,14 +153,14 @@ public class LogFileParser {
             }
             checkResults.setSuccess(false);
         } else {
-            throw new LogFileParseException("Unexpected checking message: " + curLine.text);
+            throw parseError("Unexpected checking message: " + curLine.text);
         }
         expect(Token.END_CHECKING);
 
         return checkResults;
     }
 
-    private Location getCurrentLocation() {
+    Location getCurrentLocation() {
         return new Location(logFile.path, curLine.lineNr);
     }
 
@@ -171,7 +171,7 @@ public class LogFileParser {
 
         String mode = trim(curLine.text).substring(Token.BEGIN_INSTALL_TEST.linePrefix.length());
         if (!("FastR".equals(mode) || "GnuR".equals(mode))) {
-            throw new LogFileParseException("Invalid mode: " + mode);
+            throw parseError("Invalid mode: " + mode);
         }
 
         Section installationTask = parseInstallationTask();
@@ -301,13 +301,13 @@ public class LogFileParser {
         return pkg.getPackage().getName();
     }
 
-    private static boolean parseStatus(String substring) {
+    private boolean parseStatus(String substring) {
         if (Token.OK.linePrefix.equals(substring.trim())) {
             return true;
         } else if (Token.FAILED.linePrefix.equals(substring.trim())) {
             return false;
         }
-        throw new LogFileParseException("Unexpected status: " + substring);
+        throw parseError("Unexpected status: " + substring);
     }
 
     private Section parseInstallSuggests() throws IOException {
@@ -409,8 +409,12 @@ public class LogFileParser {
     void expect(String linePrefix) throws IOException {
         consumeLine();
         if (isEOF(curLine) || !trim(curLine.text).startsWith(linePrefix)) {
-            throw new LogFileParseException("Unexpected line " + (curLine.lineNr + 1) + " (expected \"" + linePrefix + "\" but was \"" + (isEOF(curLine) ? "<EOF>" : curLine.text) + "\"");
+            throw parseError("Unexpected line " + (curLine.lineNr + 1) + " (expected \"" + linePrefix + "\" but was \"" + (isEOF(curLine) ? "<EOF>" : curLine.text) + "\"");
         }
+    }
+
+    LogFileParseException parseError(String message) {
+        throw new LogFileParseException(message, pkg, getCurrentLocation());
     }
 
     void consumeLine() throws IOException {
