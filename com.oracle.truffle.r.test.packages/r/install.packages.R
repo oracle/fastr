@@ -124,7 +124,7 @@ usage <- function() {
 					  "[--alpha-daily]",
 					  "[--count-daily count]",
 					  "[--ok-only]",
-                      "[--pkg.pattern package-pattern] \n"))
+                      "[--pkg-pattern package-pattern] \n"))
 	quit(status=100)
 }
 

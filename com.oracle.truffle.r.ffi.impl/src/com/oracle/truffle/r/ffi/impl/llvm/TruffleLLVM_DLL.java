@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -34,8 +33,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
-import javax.naming.NameAlreadyBoundException;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.nodes.Node;

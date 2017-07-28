@@ -14,9 +14,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -27,7 +27,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;

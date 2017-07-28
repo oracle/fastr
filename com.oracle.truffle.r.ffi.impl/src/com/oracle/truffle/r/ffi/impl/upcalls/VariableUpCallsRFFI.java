@@ -27,8 +27,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 /**
  * This exists because {@link TruffleObject} instances may not always be storable in memory, in all
  * implementations, so upcall to get the values.
- *
- *
  */
 public interface VariableUpCallsRFFI {
     // Checkstyle: stop method name check

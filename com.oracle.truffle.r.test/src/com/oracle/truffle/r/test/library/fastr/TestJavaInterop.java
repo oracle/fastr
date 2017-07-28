@@ -941,6 +941,7 @@ public class TestJavaInterop extends TestBase {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class TestOverload {
         public String type;
 
@@ -1081,7 +1082,6 @@ public class TestJavaInterop extends TestBase {
         }
     }
 
-    @SuppressWarnings("unused")
     public static class TestClass {
 
         public static boolean fieldStaticBoolean = true;
