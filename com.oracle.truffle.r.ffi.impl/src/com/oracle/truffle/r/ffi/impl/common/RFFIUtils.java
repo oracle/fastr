@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.ffi.impl.nodes.FFIUpCallRootNode;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -222,24 +221,5 @@ public class RFFIUtils {
             unimplemented("unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of " + clazz.getSimpleName());
         }
         return clazz.cast(x);
-    }
-
-    // Miscellaneous support functions
-
-    public static byte[] wrapChar(char v) {
-        return new byte[]{(byte) v};
-    }
-
-    public static int[] wrapInt(int v) {
-        return new int[]{v};
-    }
-
-    public static double[] wrapDouble(double v) {
-        return new double[]{v};
-    }
-
-    @TruffleBoundary
-    public static IOException ioex(String errMsg) throws IOException {
-        throw new IOException(errMsg);
     }
 }
