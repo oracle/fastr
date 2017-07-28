@@ -22,13 +22,16 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer.dump;
 
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.nio.file.StandardOpenOption.WRITE;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -37,9 +40,9 @@ import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
-import com.oracle.truffle.r.test.packages.analyzer.RPackageTestRun;
-import com.oracle.truffle.r.test.packages.analyzer.dump.html.HTMLBuilder;
-import com.oracle.truffle.r.test.packages.analyzer.dump.html.HTMLBuilder.Tag;
+import com.oracle.truffle.r.test.packages.analyzer.dump.HTMLBuilder.Tag;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackage;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 
 public class HTMLDumper extends AbstractDumper {
 
@@ -62,7 +65,7 @@ public class HTMLDumper extends AbstractDumper {
     }
 
     @Override
-    public void dump(Collection<Problem> problems) {
+    public void dump(Collection<RPackage> problems) {
         try {
             createAndCheckOutDir();
             dumpIndexFile(problems);
@@ -71,23 +74,49 @@ public class HTMLDumper extends AbstractDumper {
         }
     }
 
-    private void dumpIndexFile(Collection<Problem> problems) {
+    private void dumpIndexFile(Collection<RPackage> problems) {
         Path indexFile = destDir.resolve("index.html");
 
-        try (BufferedWriter bw = Files.newBufferedWriter(indexFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+        try (BufferedWriter bw = Files.newBufferedWriter(indexFile, CREATE, TRUNCATE_EXISTING, WRITE)) {
             HTMLBuilder builder = new HTMLBuilder(new PrintWriter(bw));
 
-            Tag errorDistributionTable = generateTypeDistributionTable(builder, groupByType(problems));
-            Tag pkgDistributionTable = generateTestRunDistributionTable(builder, groupByTestRuns(problems));
-            Tag distrinctProblemDistributionTable = generateDistinctProblemDistribution(builder, groupByProblemContent(problems));
+            Collection<Problem> allProblems = collectAllProblems(problems);
+            Collection<RPackageTestRun> allTestRuns = collectTestRuns(problems);
 
-            builder.html(builder.head(builder.title(TITLE)),
-                            builder.body(builder.h1(TITLE), builder.h2("Distribution by Problem Type"), errorDistributionTable, builder.h2("Distribution by Package"), pkgDistributionTable,
-                                            builder.h2("Distribution by Problem Content"), distrinctProblemDistributionTable));
+            Tag errorDistributionTable = generateTypeDistributionTable(builder, groupByType(allProblems));
+            Tag pkgDistributionTable = generateTestRunDistributionTable(builder, groupByTestRuns(allTestRuns, allProblems));
+            Tag distrinctProblemDistributionTable = generateDistinctProblemDistribution(builder, groupByProblemContent(allProblems));
+
+            builder.html(builder.head(builder.title(TITLE)), builder.body(
+                            builder.h1(TITLE),
+                            builder.p("Numer of analyzer package test runs: " + allTestRuns.size()),
+                            builder.h2("Distribution by Problem Type"), errorDistributionTable,
+                            builder.h2("Distribution by Package Test Run"), pkgDistributionTable,
+                            builder.h2("Distinct Problem Distribution"), distrinctProblemDistributionTable));
             builder.dump();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static Collection<RPackageTestRun> collectTestRuns(Collection<RPackage> pkgs) {
+        Collection<RPackageTestRun> problems = new ArrayList<>();
+        for (RPackage pkg : pkgs) {
+            for (RPackageTestRun run : pkg.getTestRuns()) {
+                problems.add(run);
+            }
+        }
+        return problems;
+    }
+
+    private static Collection<Problem> collectAllProblems(Collection<RPackage> pkgs) {
+        Collection<Problem> problems = new ArrayList<>();
+        for (RPackage pkg : pkgs) {
+            for (RPackageTestRun run : pkg.getTestRuns()) {
+                problems.addAll(run.getProblems());
+            }
+        }
+        return problems;
     }
 
     private Tag generateTestRunDistributionTable(HTMLBuilder builder, Map<RPackageTestRun, List<Problem>> groupByPkg) {
@@ -100,11 +129,11 @@ public class HTMLDumper extends AbstractDumper {
                         builder.th("Problem Count")));
 
         for (RPackageTestRun testRun : collect) {
-            String pkgFileName = dumpRPackage(testRun, groupByPkg);
+            String pkgFileName = dumpTableFile(testRun.getPackage().toString() + "_" + testRun.getNumber() + ".html", testRun.toString(), testRun, groupByPkg);
             int n = groupByPkg.get(testRun).size();
             Tag tableRow = builder.tr(
                             builder.td(builder.a(pkgFileName, testRun.getPackage().toString())),
-                            builder.td(Integer.toString(testRun.getNr())),
+                            builder.td(Integer.toString(testRun.getNumber())),
                             builder.td(testRun.isSuccess() ? "OK" : "FAILED"),
                             builder.td(Integer.toString(n)));
             if (testRun.isSuccess() && n > 0) {
@@ -122,10 +151,14 @@ public class HTMLDumper extends AbstractDumper {
                         builder.th("Problem"),
                         builder.th("Problem Count")));
 
+        int i = 0;
         for (ProblemContent problem : collect) {
+            String pkgFileName = dumpTableFile("problem" + i + ".html", problem.toString(), problem, groupByPkg);
+            ++i;
+
             int n = groupByPkg.get(problem).size();
             Tag tableRow = builder.tr(
-                            builder.td(problem.toString()),
+                            builder.td(builder.a(pkgFileName, problem.representitive.getSummary())),
                             builder.td(Integer.toString(n)));
             table.addChild(tableRow);
         }
@@ -136,23 +169,24 @@ public class HTMLDumper extends AbstractDumper {
         List<Class<? extends Problem>> collect = groupByType.keySet().stream().sorted((a, b) -> Integer.compare(groupByType.get(b).size(), groupByType.get(a).size())).collect(Collectors.toList());
 
         Tag table = builder.table();
-        for (Class<? extends Problem> class1 : collect) {
-            String problemClassFileName = dumpProblemClass(class1, groupByType);
-            table.addChild(builder.tr(builder.td(builder.a(problemClassFileName, class1.getSimpleName())), builder.td(Integer.toString(groupByType.get(class1).size()))));
+        for (Class<? extends Problem> type : collect) {
+            String problemClassFileName = dumpTableFile(type.getSimpleName() + ".html", type.getName(), type, groupByType);
+            table.addChild(builder.tr(
+                            builder.td(builder.a(problemClassFileName, type.getSimpleName())),
+                            builder.td(Integer.toString(groupByType.get(type).size()))));
         }
         return table;
     }
 
-    private String dumpRPackage(RPackageTestRun pkg, Map<RPackageTestRun, List<Problem>> groupByPkg) {
+    private <T> String dumpTableFile(String htmlFileName, String title, T key, Map<T, List<Problem>> groupingTable) {
 
-        Path problemClassFile = destDir.resolve(pkg.getPackage().toString() + "_" + pkg.getNr() + ".html");
-        try (BufferedWriter bw = Files.newBufferedWriter(problemClassFile, StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+        Path problemClassFile = destDir.resolve(htmlFileName);
+        try (BufferedWriter bw = Files.newBufferedWriter(problemClassFile, CREATE, TRUNCATE_EXISTING, WRITE)) {
             HTMLBuilder builder = new HTMLBuilder(new PrintWriter(bw));
 
-            Tag table = generateProblemTable(pkg, groupByPkg, builder);
+            Tag table = generateProblemTable(problemClassFile, key, groupingTable, builder);
 
-            builder.html(builder.head(builder.title(pkg.toString())), builder.body(table));
+            builder.html(builder.head(builder.title(title)), builder.body(table));
             builder.dump();
 
             return problemClassFile.getFileName().toString();
@@ -162,31 +196,16 @@ public class HTMLDumper extends AbstractDumper {
         return null;
     }
 
-    private String dumpProblemClass(Class<? extends Problem> type, Map<Class<? extends Problem>, List<Problem>> groupByType) {
-
-        Path problemClassFile = destDir.resolve(type.getSimpleName() + ".html");
-        try (BufferedWriter bw = Files.newBufferedWriter(problemClassFile, StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
-            HTMLBuilder builder = new HTMLBuilder(new PrintWriter(bw));
-
-            Tag table = generateProblemTable(type, groupByType, builder);
-
-            builder.html(builder.head(builder.title(type.getName())), builder.body(table));
-            builder.dump();
-
-            return problemClassFile.getFileName().toString();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    private static <T> Tag generateProblemTable(T key, Map<T, List<Problem>> groupingTable, HTMLBuilder builder) throws MalformedURLException {
+    private static <T> Tag generateProblemTable(Path file, T key, Map<T, List<Problem>> groupingTable, HTMLBuilder builder) {
         Tag table = builder.table();
         table.addAttribute("border", "1");
         for (Problem p : groupingTable.get(key)) {
             Location loc = p.getLocation();
-            table.addChild(builder.tr(builder.td(builder.a(loc.file.toUri().toURL().toString(), loc.toString())),
+            Path relativeLocation = file.relativize(loc.file);
+            // remove nearest path element because relativizing also considers file names
+            relativeLocation = relativeLocation.subpath(1, relativeLocation.getNameCount());
+            table.addChild(builder.tr(
+                            builder.td(builder.a(relativeLocation.toString() + "#" + loc.lineNr, loc.toString())),
                             builder.td(builder.escape(p.getSummary())),
                             builder.td(builder.escape(p.getDetails()))));
         }

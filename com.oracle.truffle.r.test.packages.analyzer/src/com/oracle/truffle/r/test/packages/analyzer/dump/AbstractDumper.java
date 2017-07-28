@@ -23,18 +23,19 @@
 package com.oracle.truffle.r.test.packages.analyzer.dump;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
-import com.oracle.truffle.r.test.packages.analyzer.RPackage;
-import com.oracle.truffle.r.test.packages.analyzer.RPackageTestRun;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackage;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 
 public abstract class AbstractDumper {
 
-    public abstract void dump(Collection<Problem> problems);
+    public abstract void dump(Collection<RPackage> problems);
 
     protected Map<Class<? extends Problem>, List<Problem>> groupByType(Collection<Problem> problems) {
         return problems.stream().collect(Collectors.groupingBy(p -> p.getClass()));
@@ -44,41 +45,34 @@ public abstract class AbstractDumper {
         return problems.stream().collect(Collectors.groupingBy(p -> p.getPackageTestRun().getPackage()));
     }
 
-    protected Map<RPackageTestRun, List<Problem>> groupByTestRuns(Collection<Problem> problems) {
-        return problems.stream().collect(Collectors.groupingBy(p -> p.getPackageTestRun()));
+    protected Map<RPackageTestRun, List<Problem>> groupByTestRuns(Collection<RPackageTestRun> allTestRuns, Collection<Problem> problems) {
+        Map<RPackageTestRun, List<Problem>> groupedByTestRun = problems.stream().collect(Collectors.groupingBy(p -> p.getPackageTestRun()));
+        // insert test runs don't having any problems
+        for (RPackageTestRun testRun : allTestRuns) {
+            if (!groupedByTestRun.containsKey(testRun)) {
+                groupedByTestRun.put(testRun, Collections.emptyList());
+            }
+        }
+        return groupedByTestRun;
     }
 
     protected Map<ProblemContent, List<Problem>> groupByProblemContent(Collection<Problem> problems) {
-        final Map<ProblemContent, ProblemContent> table = new HashMap<>();
-        return problems.stream().collect(Collectors.groupingBy(
-                        p -> getOrAdd(table, new ProblemContent(p.getSummary(), p.getDetails()))));
-    }
-
-    private static <T> T getOrAdd(Map<T, T> cache, T val) {
-        T t = cache.get(val);
-        if (t == null) {
-            cache.put(val, val);
-            t = val;
-        }
-        return t;
+        return problems.stream().collect(Collectors.groupingBy(p -> new ProblemContent(p)));
     }
 
     protected static class ProblemContent {
 
-        final String summary;
-        final String details;
+        final Problem representitive;
 
-        protected ProblemContent(String summary, String details) {
-            this.summary = summary;
-            this.details = details;
+        protected ProblemContent(Problem representitive) {
+            this.representitive = representitive;
         }
 
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + ((details == null) ? 0 : details.hashCode());
-            result = prime * result + ((summary == null) ? 0 : summary.hashCode());
+            result = prime * result + ((representitive == null) ? 0 : representitive.getClass().hashCode());
             return result;
         }
 
@@ -94,27 +88,12 @@ public abstract class AbstractDumper {
                 return false;
             }
             ProblemContent other = (ProblemContent) obj;
-            if (details == null) {
-                if (other.details != null) {
-                    return false;
-                }
-            } else if (!details.equals(other.details)) {
-                return false;
-            }
-            if (summary == null) {
-                if (other.summary != null) {
-                    return false;
-                }
-            } else if (!summary.equals(other.summary)) {
-                return false;
-            }
-            return true;
+            return representitive.isSimilarTo(other.representitive);
         }
 
         @Override
         public String toString() {
-            int indexOf = details.indexOf("\n");
-            return summary + ": " + details.substring(0, Math.max(indexOf, Math.min(details.length(), 150)));
+            return representitive.toString();
         }
 
     }

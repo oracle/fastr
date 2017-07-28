@@ -159,7 +159,7 @@ public class DiffParser {
             this.rightStart = rightStart;
         }
 
-        public DiffParser.ChangeCommand getCmd() {
+        public DiffParser.ChangeCommand getChangeCommand() {
             return cmd;
         }
 

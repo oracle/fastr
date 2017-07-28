@@ -31,13 +31,13 @@ import java.util.regex.Pattern;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
-import com.oracle.truffle.r.test.packages.analyzer.RPackageTestRun;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 
 public class RErrorDetector extends LineDetector {
 
     public static final RErrorDetector INSTANCE = new RErrorDetector();
 
-    private static final Pattern PATTERN = Pattern.compile("\\W*Error(?<CALLSTR>.*)??: (?<MSG>.*)");
+    private static final Pattern PATTERN = Pattern.compile(".*\\wError(?<CALLSTR>.*)??: (?<MSG>.*)");
 
     protected RErrorDetector() {
     }
@@ -102,6 +102,19 @@ public class RErrorDetector extends LineDetector {
         @Override
         public String getDetails() {
             return message;
+        }
+
+        @Override
+        public int getSimilarityTo(Problem other) {
+            if (other.getClass() == RErrorProblem.class) {
+                return Problem.computeLevenshteinDistance(getDetails().trim(), other.getDetails().trim());
+            }
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isSimilarTo(Problem other) {
+            return Problem.computeLevenshteinDistance(getDetails().trim(), other.getDetails().trim()) < 10;
         }
     }
 

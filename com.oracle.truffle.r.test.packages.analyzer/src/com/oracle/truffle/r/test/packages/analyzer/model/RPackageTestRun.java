@@ -20,11 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.test.packages.analyzer;
+package com.oracle.truffle.r.test.packages.analyzer.model;
 
 import java.util.Collection;
 import java.util.Collections;
 
+import com.oracle.truffle.r.test.packages.analyzer.Problem;
+
+/**
+ * Represents one test run of a package.
+ */
 public class RPackageTestRun {
 
     private final RPackage pkg;
@@ -34,7 +39,7 @@ public class RPackageTestRun {
     /** The overall outcome of the package test run as reported. */
     private boolean success;
 
-    protected RPackageTestRun(RPackage pkg, int nr) {
+    public RPackageTestRun(RPackage pkg, int nr) {
         this.pkg = pkg;
         this.nr = nr;
     }
@@ -43,7 +48,7 @@ public class RPackageTestRun {
         return pkg;
     }
 
-    public int getNr() {
+    public int getNumber() {
         return nr;
     }
 
@@ -56,6 +61,14 @@ public class RPackageTestRun {
             return problems;
         }
         return Collections.emptyList();
+    }
+
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
+
+    public boolean isSuccess() {
+        return success;
     }
 
     @Override
@@ -95,14 +108,6 @@ public class RPackageTestRun {
             return false;
         }
         return true;
-    }
-
-    public void setSuccess(boolean success) {
-        this.success = success;
-    }
-
-    public boolean isSuccess() {
-        return success;
     }
 
 }

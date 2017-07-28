@@ -54,6 +54,8 @@ import com.oracle.truffle.r.test.packages.analyzer.detectors.RInternalErrorDetec
 import com.oracle.truffle.r.test.packages.analyzer.detectors.SegfaultDetector;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.UnsupportedSpecializationDetector;
 import com.oracle.truffle.r.test.packages.analyzer.dump.HTMLDumper;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackage;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParseException;
 import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParser;
 import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParser.LogFile;
@@ -198,19 +200,8 @@ public class PTAMain {
                     pkgs.addAll(pkgVersions);
                 }
             }
-            Collection<Problem> allProblems = collectAllProblems(pkgs);
-            htmlDumper.dump(allProblems);
+            htmlDumper.dump(pkgs);
         }
-    }
-
-    private static Collection<Problem> collectAllProblems(Collection<RPackage> pkgs) {
-        Collection<Problem> problems = new LinkedList<>();
-        for (RPackage pkg : pkgs) {
-            for (RPackageTestRun run : pkg.getTestRuns()) {
-                problems.addAll(run.getProblems());
-            }
-        }
-        return problems;
     }
 
     private static Collection<RPackage> visitPackageRoot(Path pkgRoot, Date sinceDate) throws IOException {

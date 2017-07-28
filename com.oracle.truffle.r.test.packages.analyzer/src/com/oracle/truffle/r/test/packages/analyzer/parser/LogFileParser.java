@@ -38,9 +38,9 @@ import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
-import com.oracle.truffle.r.test.packages.analyzer.RPackageTestRun;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.Detector;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.LineDetector;
+import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 import com.oracle.truffle.r.test.packages.analyzer.parser.DiffParser.DiffChunk;
 
 public class LogFileParser {
@@ -221,31 +221,34 @@ public class LogFileParser {
         // SPECIFIC TESTS
         if (laMatches(Token.RUNNING_SPECIFIC_TESTS)) {
             consumeLine();
+
+            boolean success = true;
+
             // e.g.: Running ‘runRUnitTests.R’
             while (laMatches("Running ")) {
                 consumeLine();
-            }
-            // e.g.: comparing ‘test.read.xls.Rout’ to ‘test.read.xls.Rout.save’
-            while (laMatches("comparing ")) {
-                consumeLine();
-
-                // e.g.: files differ in number of lines:
-                if (laMatches("files differ in number of lines:")) {
+                // e.g.: comparing ‘test.read.xls.Rout’ to ‘test.read.xls.Rout.save’
+                if (laMatches("comparing ")) {
                     consumeLine();
-                    List<DiffChunk> diffResult = new DiffParser(this).parseDiff();
-                    testing.problems.addAll(applyTestResultDetectors(diffResult));
-                    diffResult.stream().forEach(chunk -> {
-                        if (!chunk.getLeft().isEmpty()) {
-                            testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getLeftFile(), chunk.getLeftStartLine(), chunk.getLeft()));
-                        }
-                        if (!chunk.getRight().isEmpty()) {
-                            testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getRightFile(), chunk.getRightStartLine(), chunk.getRight()));
-                        }
-                    });
-                }
 
-                consumeLine();
-                parseStatus(trim(curLine.text));
+                    // e.g.: files differ in number of lines:
+                    if (laMatches("files differ in number of lines:")) {
+                        consumeLine();
+                        List<DiffChunk> diffResult = new DiffParser(this).parseDiff();
+                        testing.problems.addAll(applyTestResultDetectors(diffResult));
+                        diffResult.stream().forEach(chunk -> {
+                            if (!chunk.getLeft().isEmpty()) {
+                                testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getLeftFile(), chunk.getLeftStartLine(), chunk.getLeft()));
+                            }
+                            if (!chunk.getRight().isEmpty()) {
+                                testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getRightFile(), chunk.getRightStartLine(), chunk.getRight()));
+                            }
+                        });
+                    }
+
+                    consumeLine();
+                    success = parseStatus(trim(curLine.text)) && success;
+                }
             }
         }
 
@@ -642,6 +645,16 @@ public class LogFileParser {
         @Override
         public String toString() {
             return getSummary() + details;
+        }
+
+        @Override
+        public int getSimilarityTo(Problem other) {
+            return 0;
+        }
+
+        @Override
+        public boolean isSimilarTo(Problem other) {
+            return true;
         }
     }
 
