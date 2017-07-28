@@ -151,7 +151,8 @@ public class HTMLDumper extends AbstractDumper {
 
         Tag table = builder.table(builder.tr(
                         builder.th("Problem"),
-                        builder.th("Problem Count")));
+                        builder.th("Problem Count"),
+                        builder.th("Representitive Message")));
 
         int i = 0;
         for (ProblemContent problem : collect) {
@@ -161,7 +162,8 @@ public class HTMLDumper extends AbstractDumper {
             int n = groupByPkg.get(problem).size();
             Tag tableRow = builder.tr(
                             builder.td(builder.a(pkgFileName, problem.representitive.getSummary())),
-                            builder.td(Integer.toString(n)));
+                            builder.td(Integer.toString(n)),
+                            builder.td(problem.representitive.getDetails()));
             table.addChild(tableRow);
         }
         return table;
