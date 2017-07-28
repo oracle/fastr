@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
 class TruffleLLVM_C implements CRFFI {
-    private static class TruffleLLVM_InvokeCNode extends Node implements InvokeCNode {
+    private static class TruffleLLVM_InvokeCNode extends InvokeCNode {
 
         @Child private Node messageNode;
         private int numArgs;
