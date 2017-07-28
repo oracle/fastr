@@ -54,7 +54,10 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
         Path path = FileSystems.getDefault().getPath(pathName);
         int fileMask = setGroupWrite ? GRPWRITE_FILE_MASK : FILE_MASK;
         int dirMask = setGroupWrite ? GRPWRITE_DIR_MASK : DIR_MASK;
-        assert path.isAbsolute();
+        if (!path.toFile().exists()) {
+            return RNull.instance;
+        }
+        assert path.isAbsolute() : path;
         try (Stream<Path> stream = Files.walk(path, Integer.MAX_VALUE)) {
             Iterator<Path> iter = stream.iterator();
             while (iter.hasNext()) {

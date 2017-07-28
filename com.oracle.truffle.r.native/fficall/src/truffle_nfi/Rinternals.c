@@ -53,11 +53,14 @@ void *ensure_string(const char * x) {
 }
 
 SEXP newObjectHandle(SEXP x) {
-	return newObjectRef(x);
+    TruffleEnv* env = (*truffleContext)->getTruffleEnv(truffleContext);
+	SEXP result = (*env)->newObjectRef(env, x);
+	return result;
 }
 
 void releaseObjectHandle(SEXP x) {
-	releaseObjectRef(x);
+    TruffleEnv* env = (*truffleContext)->getTruffleEnv(truffleContext);
+	(*env)->releaseObjectRef(env, x);
 }
 
 #include "../truffle_common/Rinternals_truffle_common.h"

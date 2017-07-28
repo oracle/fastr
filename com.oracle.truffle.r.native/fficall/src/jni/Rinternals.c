@@ -178,7 +178,7 @@ void init_internals(JNIEnv *env) {
 	Rf_allocArrayMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_allocArray", "(ILjava/lang/Object;)Ljava/lang/Object;", 0);
 	Rf_duplicateMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_duplicate", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 	Rf_any_duplicatedMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_any_duplicated", "(Ljava/lang/Object;I)J", 0);
-	R_NewHashedEnvMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_NewHashedEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;Ljava/lang/Object;)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 0);
+	R_NewHashedEnvMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_NewHashedEnv", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	Rf_classgetsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_classgets", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	RprintfMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rprintf", "(Ljava/lang/Object;)I", 0);
 	R_do_MAKE_CLASS_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_do_MAKE_CLASS", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
@@ -233,7 +233,7 @@ void init_internals(JNIEnv *env) {
 	IS_S4_OBJECTMethodID = checkGetMethodID(env, UpCallsRFFIClass, "IS_S4_OBJECT", "(Ljava/lang/Object;)I", 0);
 	SET_S4_OBJECTMethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_S4_OBJECT", "(Ljava/lang/Object;)I", 0);
 	UNSET_S4_OBJECTMethodID = checkGetMethodID(env, UpCallsRFFIClass, "UNSET_S4_OBJECT", "(Ljava/lang/Object;)I", 0);
-	R_tryEvalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_tryEval", "(Ljava/lang/Object;Ljava/lang/Object;Z)Ljava/lang/Object;", 0);
+	R_tryEvalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_tryEval", "(Ljava/lang/Object;Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 	RDEBUGMethodID = checkGetMethodID(env, UpCallsRFFIClass, "RDEBUG", "(Ljava/lang/Object;)I", 0);
 	SET_RDEBUGMethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_RDEBUG", "(Ljava/lang/Object;I)I", 0);
 	RSTEPMethodID = checkGetMethodID(env, UpCallsRFFIClass, "RSTEP", "(Ljava/lang/Object;)I", 0);
@@ -1390,7 +1390,7 @@ SEXP Rf_asS4(SEXP x, Rboolean b, int i) {
 static SEXP R_tryEvalInternal(SEXP x, SEXP y, int *ErrorOccurred, jboolean silent) {
 	JNIEnv *thisenv = getEnv();
     updateNativeArrays(thisenv);
-	jobject tryResult =  (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_tryEvalMethodID, x, y, silent);
+	jobject tryResult =  (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_tryEvalMethodID, x, y, (int) silent);
 	// If tryResult is NULL, an error occurred
 	if (ErrorOccurred) {
 		*ErrorOccurred = tryResult == NULL;

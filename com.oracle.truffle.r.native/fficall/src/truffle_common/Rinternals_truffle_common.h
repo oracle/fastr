@@ -793,8 +793,7 @@ int TYPEOF(SEXP x) {
 }
 
 SEXP ATTRIB(SEXP x){
-    unimplemented("ATTRIB");
-    return NULL;
+    return ((call_ATTRIB) callbacks[ATTRIB_x])(x);
 }
 
 int OBJECT(SEXP x){

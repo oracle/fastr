@@ -28,7 +28,6 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 
 final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     // Checkstyle: stop method name check
@@ -484,7 +483,7 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object R_tryEval(Object expr, Object env, boolean silent) {
+    public Object R_tryEval(Object expr, Object env, int silent) {
         RFFIUtils.traceUpCall("R_tryEval", expr, env, silent);
         return delegate.R_tryEval(expr, env, silent);
     }
@@ -736,7 +735,7 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public REnvironment R_NewHashedEnv(REnvironment parent, Object initialSize) {
+    public Object R_NewHashedEnv(Object parent, Object initialSize) {
         RFFIUtils.traceUpCall("R_NewHashedEnv", parent, initialSize);
         return delegate.R_NewHashedEnv(parent, initialSize);
     }
