@@ -61,7 +61,6 @@ public abstract class ForeignArray2R extends RBaseNode {
     @Specialization(guards = {"isArray(obj, hasSize)"})
     @TruffleBoundary
     public RAbstractVector doArray(TruffleObject obj,
-                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                     @Cached("GET_SIZE.createNode()") Node getSize) {
         int size;
         try {
@@ -71,12 +70,7 @@ public abstract class ForeignArray2R extends RBaseNode {
             }
 
             CollectedElements ce = getArrayElements(size, obj);
-            RAbstractVector ret = toVector(ce);
-            if (ret != null) {
-                return ret;
-            } else {
-                return RDataFactory.createList(ce.elements);
-            }
+            return asAbstractVector(ce.elements, ce.typeCheck);
         } catch (UnsupportedMessageException | UnknownIdentifierException e) {
             throw error(RError.Message.GENERIC, "error while converting array: " + e.getMessage());
         }
@@ -89,11 +83,7 @@ public abstract class ForeignArray2R extends RBaseNode {
 
         try {
             CollectedElements ce = getIterableElements(obj, execute);
-            RAbstractVector ret = toVector(ce);
-            if (ret != null) {
-                return ret;
-            }
-            return RDataFactory.createList(ce.elements);
+            return asAbstractVector(ce.elements, ce.typeCheck);
         } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException | ArityException e) {
             throw error(RError.Message.GENERIC, "error while casting external object to list: " + e.getMessage());
         }
@@ -166,11 +156,7 @@ public abstract class ForeignArray2R extends RBaseNode {
                 }
             }
         }
-
-        ce.allBoolean &= value instanceof Boolean;
-        ce.allInteger &= value instanceof Byte || value instanceof Integer || value instanceof Short;
-        ce.allDouble &= value instanceof Double || value instanceof Float || value instanceof Long;
-        ce.allString &= value instanceof Character || value instanceof String;
+        ce.typeCheck.check(value);
 
         if (foreign2R == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -179,35 +165,45 @@ public abstract class ForeignArray2R extends RBaseNode {
         return foreign2R.execute(value);
     }
 
-    protected RAbstractVector toVector(CollectedElements ce) {
-        int size = ce.elements.length;
-        if (ce.allBoolean) {
-            byte[] ret = new byte[size];
-            for (int i = 0; i < size; i++) {
-                ret[i] = ((Number) ce.elements[i]).byteValue();
-            }
-            return RDataFactory.createLogicalVector(ret, true);
+    public static RAbstractVector asAbstractVector(Object[] elements, InteropTypeCheck typeCheck) {
+        InteropTypeCheck.RType type = typeCheck.getType();
+        if (type == null) {
+            return RDataFactory.createList(elements);
         }
-        if (ce.allInteger) {
-            int[] ret = new int[size];
-            for (int i = 0; i < size; i++) {
-                ret[i] = ((Number) ce.elements[i]).intValue();
-            }
-            return RDataFactory.createIntVector(ret, true);
-        }
-        if (ce.allDouble) {
-            double[] ret = new double[size];
-            for (int i = 0; i < size; i++) {
-                ret[i] = ((Number) ce.elements[i]).doubleValue();
-            }
-            return RDataFactory.createDoubleVector(ret, true);
-        }
-        if (ce.allString) {
-            String[] ret = new String[size];
-            for (int i = 0; i < size; i++) {
-                ret[i] = String.valueOf(ce.elements[i]);
-            }
-            return RDataFactory.createStringVector(ret, true);
+        int size = elements.length;
+        // TODO how to deal with NAs?
+        boolean complete = true;
+        switch (type) {
+            case BOOLEAN:
+                byte[] bytes = new byte[size];
+                for (int i = 0; i < size; i++) {
+                    bytes[i] = ((Number) elements[i]).byteValue();
+                    complete &= RRuntime.isNA(bytes[i]);
+                }
+                return RDataFactory.createLogicalVector(bytes, complete);
+            case DOUBLE:
+                double[] doubles = new double[size];
+                for (int i = 0; i < size; i++) {
+                    doubles[i] = ((Number) elements[i]).doubleValue();
+                    complete &= RRuntime.isNA(doubles[i]);
+                }
+                return RDataFactory.createDoubleVector(doubles, complete);
+            case INTEGER:
+                int[] ints = new int[size];
+                for (int i = 0; i < size; i++) {
+                    ints[i] = ((Number) elements[i]).intValue();
+                    complete &= RRuntime.isNA(ints[i]);
+                }
+                return RDataFactory.createIntVector(ints, complete);
+            case STRING:
+                String[] strings = new String[size];
+                for (int i = 0; i < size; i++) {
+                    strings[i] = String.valueOf(elements[i]);
+                    complete &= RRuntime.isNA(strings[i]);
+                }
+                return RDataFactory.createStringVector(strings, complete);
+            default:
+                assert false;
         }
         return null;
     }
@@ -220,11 +216,48 @@ public abstract class ForeignArray2R extends RBaseNode {
         return RRuntime.isForeignObject(obj) && JavaInterop.isJavaObject(Iterable.class, obj);
     }
 
+    public static class InteropTypeCheck {
+        public enum RType {
+            BOOLEAN,
+            DOUBLE,
+            INTEGER,
+            STRING;
+        }
+
+        private RType type = null;
+        private boolean sameRType = true;
+
+        public void check(Object value) {
+            if (value instanceof Boolean) {
+                setType(RType.BOOLEAN);
+            } else if (value instanceof Byte || value instanceof Integer || value instanceof Short) {
+                setType(RType.INTEGER);
+            } else if (value instanceof Double || value instanceof Float || value instanceof Long) {
+                setType(RType.DOUBLE);
+            } else if (value instanceof Character || value instanceof String) {
+                setType(RType.STRING);
+            } else {
+                this.type = null;
+                sameRType = false;
+            }
+        }
+
+        private void setType(RType check) {
+            if (sameRType && this.type == null) {
+                this.type = check;
+            } else if (this.type != check) {
+                this.type = null;
+                sameRType = false;
+            }
+        }
+
+        public RType getType() {
+            return sameRType ? type : null;
+        }
+    }
+
     private class CollectedElements {
         Object[] elements;
-        boolean allBoolean = true;
-        boolean allInteger = true;
-        boolean allDouble = true;
-        boolean allString = true;
+        InteropTypeCheck typeCheck = new InteropTypeCheck();
     }
 }
