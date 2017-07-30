@@ -33,6 +33,10 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 @ImportStatic(Message.class)
 public abstract class Foreign2R extends RBaseNode {
 
+    public static Foreign2R createForeign2R() {
+        return Foreign2RNodeGen.create();
+    }
+
     public abstract Object execute(Object obj);
 
     @Specialization

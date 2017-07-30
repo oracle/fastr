@@ -143,7 +143,7 @@ public abstract class CastSymbolNode extends CastBaseNode {
     @Specialization(guards = "isForeignObject(obj)")
     protected RSymbol doForeignObject(TruffleObject obj,
                     @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
-        Object o = foreignArray2R.execute(obj);
+        Object o = foreignArray2R.execute(obj, true);
         if (!RRuntime.isForeignObject(o)) {
             return (RSymbol) castSymbolRecursive(o);
         }

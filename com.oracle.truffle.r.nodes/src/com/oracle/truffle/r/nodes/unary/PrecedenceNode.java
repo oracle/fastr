@@ -25,7 +25,16 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.interop.java.JavaInterop;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -48,10 +57,14 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.isForeignArray;
+import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.isJavaIterable;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @SuppressWarnings("unused")
-@ImportStatic(RRuntime.class)
+@ImportStatic({Message.class, RRuntime.class, ForeignArray2R.class, Foreign2R.class})
 public abstract class PrecedenceNode extends RBaseNode {
 
     public static final int NO_PRECEDENCE = -1;
@@ -212,18 +225,99 @@ public abstract class PrecedenceNode extends RBaseNode {
         return LIST_PRECEDENCE;
     }
 
-    @Specialization(guards = {"isForeignObject(to)"})
-    protected int doForeignObject(TruffleObject to, boolean recursive) {
-        return LIST_PRECEDENCE;
-    }
-
     @Specialization(guards = {"!recursive", "args.getLength() == 1"})
     protected int doArgsValuesAndNames(RArgsValuesAndNames args, boolean recursive,
                     @Cached("createRecursive()") PrecedenceNode precedenceNode) {
         return precedenceNode.executeInteger(args.getArgument(0), recursive);
     }
 
-    protected boolean isForeignObject(TruffleObject to) {
-        return RRuntime.isForeignObject(to);
+    @Specialization(guards = {"isForeignObject(to)", "!isJavaIterable(to)", "!isForeignArray(to, hasSize)"})
+    protected int doForeignObject(TruffleObject to, boolean recursive,
+                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize) {
+        return LIST_PRECEDENCE;
+    }
+
+    @Specialization(guards = {"isJavaIterable(obj)"})
+    protected int doJavaIterable(TruffleObject obj, boolean recursive,
+                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @Cached("READ.createNode()") Node read,
+                    @Cached("createExecute(0).createNode()") Node execute,
+                    @Cached("createRecursive()") PrecedenceNode precedenceNode,
+                    @Cached("createForeign2R()") Foreign2R foreign2R) {
+        int precedence = -1;
+        try {
+            TruffleObject itFunction = (TruffleObject) ForeignAccess.sendRead(read, obj, "iterator");
+            TruffleObject it = (TruffleObject) ForeignAccess.sendExecute(execute, itFunction);
+            TruffleObject hasNextFunction = (TruffleObject) ForeignAccess.sendRead(read, it, "hasNext");
+
+            while ((boolean) ForeignAccess.sendExecute(execute, hasNextFunction)) {
+                TruffleObject nextFunction = (TruffleObject) ForeignAccess.sendRead(read, it, "next");
+                Object element = ForeignAccess.sendExecute(execute, nextFunction);
+                element = foreign2R.execute(element);
+                if (!recursive && (isJavaIterable(element) || isForeignArray(element, hasSize))) {
+                    return LIST_PRECEDENCE;
+                } else {
+                    precedence = Math.max(precedence, precedenceNode.executeInteger(element, recursive));
+                }
+            }
+        } catch (ArityException | UnsupportedTypeException | UnsupportedMessageException | UnknownIdentifierException ex) {
+            throw error(RError.Message.GENERIC, "error while accessing java iterable: " + ex.getMessage());
+        }
+        return precedence;
+    }
+
+    @Specialization(guards = {"isForeignArray(obj, hasSize)"})
+    protected int doForeignArray(TruffleObject obj, boolean recursive,
+                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @Cached("GET_SIZE.createNode()") Node getSize,
+                    @Cached("READ.createNode()") Node read,
+                    @Cached("createRecursive()") PrecedenceNode precedenceNode,
+                    @Cached("createForeign2R()") Foreign2R foreign2R) {
+        int precedence = -1;
+        try {
+            if (JavaInterop.isJavaObject(obj)) {
+                Object o = JavaInterop.asJavaObject(Object.class, obj);
+                Class<?> ct = o.getClass().getComponentType();
+                int prc = getPrecedence(ct, recursive);
+                if (prc != -1) {
+                    return prc;
+                }
+            }
+            int size = (int) ForeignAccess.sendGetSize(getSize, obj);
+            for (int i = 0; i < size; i++) {
+                Object element = ForeignAccess.sendRead(read, obj, i);
+                element = foreign2R.execute(element);
+                if (!recursive && (isForeignArray(element, hasSize) || isJavaIterable(element))) {
+                    return LIST_PRECEDENCE;
+                } else {
+                    precedence = Math.max(precedence, precedenceNode.executeInteger(element, recursive));
+                }
+            }
+        } catch (UnknownIdentifierException | UnsupportedMessageException ex) {
+            throw error(RError.Message.GENERIC, "error while accessing array: " + ex.getMessage());
+        }
+        return precedence;
+    }
+
+    private int getPrecedence(Class<?> ct, boolean recursive) {
+        if (recursive && ct.isArray()) {
+            return getPrecedence(ct.getComponentType(), recursive);
+        }
+        return getPrecedence(ct);
+    }
+
+    private int getPrecedence(Class<?> ct) {
+        if (Integer.TYPE.getName().equals(ct.getName()) || Byte.TYPE.getName().equals(ct.getName()) || Short.TYPE.getName().equals(ct.getName()) ||
+                        Integer.class.getName().equals(ct.getName()) || Byte.class.getName().equals(ct.getName()) || Short.class.getName().equals(ct.getName())) {
+            return INT_PRECEDENCE;
+        } else if (Double.TYPE.getName().equals(ct.getName()) || Float.TYPE.getName().equals(ct.getName()) || Long.TYPE.getName().equals(ct.getName()) ||
+                        Double.class.getName().equals(ct.getName()) || Float.class.getName().equals(ct.getName()) || Long.class.getName().equals(ct.getName())) {
+            return DOUBLE_PRECEDENCE;
+        } else if (String.class.getName().equals(ct.getName()) || Character.TYPE.getName().equals(ct.getName()) || Character.class.getName().equals(ct.getName())) {
+            return STRING_PRECEDENCE;
+        } else if (Boolean.TYPE.getName().equals(ct.getName()) || Boolean.class.getName().equals(ct.getName())) {
+            return LOGICAL_PRECEDENCE;
+        }
+        return NO_PRECEDENCE;
     }
 }

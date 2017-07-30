@@ -196,7 +196,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     @Specialization(guards = "isForeignObject(obj)")
     protected RLogicalVector doForeignObject(TruffleObject obj,
                     @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
-        Object o = foreignArray2R.execute(obj);
+        Object o = foreignArray2R.execute(obj, true);
         if (!RRuntime.isForeignObject(o)) {
             if (o instanceof RLogicalVector) {
                 return (RLogicalVector) o;
