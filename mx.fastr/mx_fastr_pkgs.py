@@ -405,6 +405,7 @@ def _set_test_status(fastr_test_info):
         for gnur_test_output_relpath, gnur_testfile_status in gnur_outputs.iteritems():
             # Can't compare if either GNUR or FastR failed
             if gnur_testfile_status.status == "FAILED":
+                fastr_test_status.status = "INDETERMINATE"
                 break
 
             if not gnur_test_output_relpath in fastr_outputs:
