@@ -112,6 +112,10 @@ public class HTMLBuilder {
         return generic("p", content);
     }
 
+    public Tag p(Tag... children) {
+        return generic("p", children);
+    }
+
     public Tag generic(String key, String content, Tag... children) {
         return new Tag(key, content, Arrays.stream(children).collect(Collectors.toList()));
     }

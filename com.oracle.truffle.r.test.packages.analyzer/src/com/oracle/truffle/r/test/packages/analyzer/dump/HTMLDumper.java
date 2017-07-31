@@ -91,14 +91,14 @@ public class HTMLDumper extends AbstractDumper {
             Tag errorDistributionTable = generateTypeDistributionTable(builder, groupByType(allProblems));
             Tag pkgDistributionTable = generateTestRunDistributionTable(builder, groupByTestRuns(allTestRuns, allProblems));
             Tag distrinctProblemDistributionTable = generateDistinctProblemDistribution(builder, groupByProblemContent(allProblems));
-            Tag parseErrorsList = generateParseErrorsList(builder, parseErrors);
 
             builder.html(builder.head(builder.title(TITLE)), builder.body(
-                            builder.h1(TITLE), builder.p("Numer of analyzed package test runs: " + allTestRuns.size()),
+                            builder.h1(TITLE),
+                            builder.p("Total number of analysis candidates: " + allTestRuns.size()),
+                            builder.p(builder.a(generateParseErrorsList(parseErrors), "Test runs failed to analyze: " + parseErrors.size())),
                             builder.h2("Distribution by Problem Type"), errorDistributionTable,
                             builder.h2("Distribution by Package Test Run"), pkgDistributionTable,
-                            builder.h2("Distinct Problem Distribution"), distrinctProblemDistributionTable,
-                            builder.h2("Failed Analysis Runs"), parseErrorsList));
+                            builder.h2("Distinct Problem Distribution"), distrinctProblemDistributionTable));
             builder.dump();
         } catch (IOException e) {
             e.printStackTrace();
@@ -133,6 +133,7 @@ public class HTMLDumper extends AbstractDumper {
                         builder.th("Test Run"),
                         builder.th("Result"),
                         builder.th("Problem Count")));
+        table.addAttribute("border", "1");
 
         for (RPackageTestRun testRun : collect) {
             String pkgFileName = dumpTableFile(testRun.getPackage().toString() + "_" + testRun.getNumber() + ".html", testRun.toString(), testRun, groupByPkg);
@@ -157,6 +158,7 @@ public class HTMLDumper extends AbstractDumper {
                         builder.th("Problem"),
                         builder.th("Problem Count"),
                         builder.th("Representitive Message")));
+        table.addAttribute("border", "1");
 
         int i = 0;
         for (ProblemContent problem : collect) {
@@ -177,6 +179,7 @@ public class HTMLDumper extends AbstractDumper {
         List<Class<? extends Problem>> collect = groupByType.keySet().stream().sorted((a, b) -> Integer.compare(groupByType.get(b).size(), groupByType.get(a).size())).collect(Collectors.toList());
 
         Tag table = builder.table();
+        table.addAttribute("border", "1");
         for (Class<? extends Problem> type : collect) {
             String problemClassFileName = dumpTableFile(type.getSimpleName() + ".html", type.getName(), type, groupByType);
             table.addChild(builder.tr(
@@ -220,20 +223,26 @@ public class HTMLDumper extends AbstractDumper {
         return table;
     }
 
-    private static Tag generateParseErrorsList(HTMLBuilder builder, Collection<LogFileParseException> parseErrors) {
+    private String generateParseErrorsList(Collection<LogFileParseException> parseErrors) throws IOException {
 
-        Tag table = builder.table(builder.tr(
-                        builder.th("Package Test Run"),
-                        builder.th("Location"),
-                        builder.th("Message")));
-
-        for (LogFileParseException e : parseErrors) {
-            table.addChild(builder.tr(
-                            builder.td(e.getTestRun().toString()),
-                            builder.td(e.getLocation().toString()),
-                            builder.td(e.getMessage())));
+        Path problemClassFile = destDir.resolve("failedToAnalyze.html");
+        try (BufferedWriter bw = Files.newBufferedWriter(problemClassFile, CREATE, TRUNCATE_EXISTING, WRITE)) {
+            HTMLBuilder builder = new HTMLBuilder(new PrintWriter(bw));
+            Tag table = builder.table(builder.tr(
+                            builder.th("Package Test Run"),
+                            builder.th("Location"),
+                            builder.th("Message")));
+            table.addAttribute("border", "1");
+            for (LogFileParseException e : parseErrors) {
+                table.addChild(builder.tr(
+                                builder.td(e.getTestRun().toString()),
+                                builder.td(e.getLocation().toString()),
+                                builder.td(e.getMessage())));
+            }
+            builder.html(builder.head(builder.title("Test Runs Failed to Analyze")), builder.body(table));
+            builder.dump();
         }
-        return table;
+        return problemClassFile.getFileName().toString();
     }
 
 }

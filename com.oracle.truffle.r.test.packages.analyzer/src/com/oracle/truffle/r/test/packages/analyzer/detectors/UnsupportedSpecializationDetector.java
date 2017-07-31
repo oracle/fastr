@@ -83,7 +83,7 @@ public class UnsupportedSpecializationDetector extends LineDetector {
 
         @Override
         public String getSummary() {
-            return "com.oracle.truffle.api.dsl.UnsupportedSpecializationException";
+            return "UnsupportedSpecializationException";
         }
 
         @Override
