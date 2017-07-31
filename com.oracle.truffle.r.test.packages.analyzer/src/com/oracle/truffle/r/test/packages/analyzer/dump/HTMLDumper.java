@@ -62,7 +62,11 @@ public class HTMLDumper extends AbstractDumper {
         if (!Files.exists(destDir)) {
             Files.createDirectories(destDir);
         }
-        return Files.isWritable(destDir);
+        // test creating a file in the output directory
+        Path testFile = destDir.resolve("test.html");
+        Files.createFile(testFile);
+        Files.deleteIfExists(testFile);
+        return true;
     }
 
     @Override
