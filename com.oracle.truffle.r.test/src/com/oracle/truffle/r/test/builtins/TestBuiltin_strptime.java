@@ -69,8 +69,11 @@ public class TestBuiltin_strptime extends TestBase {
 
     @Test
     public void testArgsCasts() {
-        assertEval("{ .Internal(strptime(,'','') }");
-        assertEval("{ .Internal(strptime('',,'') }");
-        assertEval("{ .Internal(strptime('','',) }");
+        assertEval("{ .Internal(strptime('1970-01-01 0:3:22', '%H:%M:%S', 'UTC')); }");
+        // Ingoring error context since changing casts has no effect
+        // due to hitting InternalNode:152 first that throws the resulting RError
+        assertEval(Output.IgnoreErrorContext, "{ .Internal(strptime(,'','')); }");
+        assertEval(Output.IgnoreErrorContext, "{ .Internal(strptime('',,'')); }");
+        assertEval(Output.IgnoreErrorContext, "{ .Internal(strptime('','',)); }");
     }
 }

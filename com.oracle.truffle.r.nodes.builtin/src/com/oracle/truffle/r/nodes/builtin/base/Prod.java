@@ -17,6 +17,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -32,6 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "prod", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE_SUMMARY)
 public abstract class Prod extends RBuiltinNode.Arg2 {
@@ -84,12 +86,18 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
                 double aProdImg;
                 if (aProd instanceof RComplex) {
                     RComplex c = (RComplex) aProd;
+                    if (RRuntime.isNA(c)) {
+                        return c;
+                    }
                     aProdReal = c.getRealPart();
                     aProdImg = c.getImaginaryPart();
                     complex = true;
                 } else {
                     aProdReal = (Double) aProd;
                     aProdImg = 0d;
+                    if (RRuntime.isNA(aProdReal)) {
+                        return aProd;
+                    }
                 }
                 if (complex) {
                     RComplex c = prod.op(prodReal, prodImg, aProdReal, aProdImg);
@@ -105,13 +113,19 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
     }
 
     private final ValueProfile intVecProfile = ValueProfile.createClassProfile();
+    private final NACheck naCheck = NACheck.create();
 
     @Specialization
     protected double prod(RAbstractDoubleVector x) {
         RAbstractDoubleVector profiledVec = intVecProfile.profile(x);
         double product = 1;
+        naCheck.enable(x);
         for (int k = 0; k < profiledVec.getLength(); k++) {
-            product = prod.op(product, profiledVec.getDataAt(k));
+            double value = profiledVec.getDataAt(k);
+            if (naCheck.check(value)) {
+                return RRuntime.DOUBLE_NA;
+            }
+            product = prod.op(product, value);
         }
         return product;
     }
@@ -120,8 +134,13 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
     protected double prod(RAbstractIntVector x) {
         RAbstractIntVector profiledVec = intVecProfile.profile(x);
         double product = 1;
+        naCheck.enable(x);
         for (int k = 0; k < profiledVec.getLength(); k++) {
-            product = prod.op(product, profiledVec.getDataAt(k));
+            int data = profiledVec.getDataAt(k);
+            if (naCheck.check(data)) {
+                return RRuntime.DOUBLE_NA;
+            }
+            product = prod.op(product, data);
         }
         return product;
     }
@@ -130,8 +149,13 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
     protected double prod(RAbstractLogicalVector x) {
         RAbstractLogicalVector profiledVec = intVecProfile.profile(x);
         double product = 1;
+        naCheck.enable(x);
         for (int k = 0; k < profiledVec.getLength(); k++) {
-            product = prod.op(product, profiledVec.getDataAt(k));
+            byte value = profiledVec.getDataAt(k);
+            if (naCheck.check(value)) {
+                return RRuntime.DOUBLE_NA;
+            }
+            product = prod.op(product, value);
         }
         return product;
     }
@@ -140,8 +164,12 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
     protected RComplex prod(RAbstractComplexVector x) {
         RAbstractComplexVector profiledVec = intVecProfile.profile(x);
         RComplex product = RDataFactory.createComplexRealOne();
+        naCheck.enable(x);
         for (int k = 0; k < profiledVec.getLength(); k++) {
             RComplex a = profiledVec.getDataAt(k);
+            if (naCheck.check(a)) {
+                return a;
+            }
             product = prod.op(product.getRealPart(), product.getImaginaryPart(), a.getRealPart(), a.getImaginaryPart());
         }
         return product;
