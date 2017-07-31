@@ -19,18 +19,19 @@ public class TestBuiltin_Syssetlocale extends TestBase {
 
     @Test
     public void testSyssetlocale1() {
-        assertEval("argv <- list(3L, 'C'); .Internal(Sys.setlocale(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(3L, 'C'); Sys.setlocale(argv[[1]], argv[[2]])");
     }
 
     @Test
     public void testSyssetlocale3() {
         assertEval("argv <- structure(list(category = 'LC_TIME', locale = 'C'), .Names = c('category',     'locale'));do.call('Sys.setlocale', argv)");
+        assertEval("{ Sys.setenv(LC_CTYPE=\"en_US.UTF-8\"); Sys.getlocale(\"LC_CTYPE\"); }");
     }
 
     @Test
     public void testSyssetlocaleInvalidArgs() {
-        assertEval(".Internal(Sys.setlocale(4, c('more', 'elements')))");
-        assertEval(".Internal(Sys.setlocale(4, 42))");
-        assertEval(Output.IgnoreErrorMessage, ".Internal(Sys.setlocale('3L', 'C'))");
+        assertEval("Sys.setlocale(4, c('more', 'elements'))");
+        assertEval("Sys.setlocale(4, 42)");
+        assertEval("Sys.setlocale('3L', 'C')");
     }
 }

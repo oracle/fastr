@@ -393,6 +393,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public int Rf_errorcall(Object call, Object msg) {
+        RErrorHandling.errorcallRFFI(call, (String) msg);
+        return 0;
+    }
+
+    @Override
     public Object Rf_allocVector(int mode, long n) {
         SEXPTYPE type = SEXPTYPE.mapInt(mode);
         if (n > Integer.MAX_VALUE) {

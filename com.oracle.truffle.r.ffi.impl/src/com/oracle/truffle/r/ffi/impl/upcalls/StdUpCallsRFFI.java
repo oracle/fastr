@@ -115,6 +115,8 @@ public interface StdUpCallsRFFI {
 
     int /* void */ Rf_warningcall(Object call, @RFFICstring Object msg);
 
+    int /* void */ Rf_errorcall(Object call, @RFFICstring Object msg);
+
     Object Rf_allocVector(int mode, long n);
 
     Object Rf_allocArray(int mode, Object dimsObj);

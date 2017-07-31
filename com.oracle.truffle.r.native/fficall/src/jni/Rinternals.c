@@ -57,6 +57,7 @@ static jmethodID Rf_isNullMethodID;
 static jmethodID Rf_installCharMethodID;
 static jmethodID Rf_installMethodID;
 static jmethodID Rf_warningcallMethodID;
+static jmethodID Rf_errorcallMethodID;
 static jmethodID Rf_warningMethodID;
 static jmethodID Rf_errorMethodID;
 static jmethodID R_NewHashedEnvMethodID;
@@ -172,6 +173,7 @@ void init_internals(JNIEnv *env) {
 	Rf_installCharMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_installChar", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	Rf_warningMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_warning", "(Ljava/lang/Object;)I", 0);
 	Rf_warningcallMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_warningcall", "(Ljava/lang/Object;Ljava/lang/Object;)I", 0);
+	Rf_errorcallMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_errorcall", "(Ljava/lang/Object;Ljava/lang/Object;)I", 0);
 	Rf_errorMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_error", "(Ljava/lang/Object;)I", 0);
 	Rf_allocVectorMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_allocVector", "(IJ)Ljava/lang/Object;", 0);
 	Rf_allocMatrixMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_allocMatrix", "(III)Ljava/lang/Object;", 0);
@@ -604,7 +606,14 @@ void Rf_error(const char *format, ...) {
 }
 
 void Rf_errorcall(SEXP x, const char *format, ...) {
-	unimplemented("Rf_errorcall");
+	char buf[8192];
+	va_list(ap);
+	va_start(ap,format);
+	Rvsnprintf(buf, BUFSIZE - 1, format, ap);
+	va_end(ap);
+	JNIEnv *thisenv = getEnv();
+	jstring string = (*thisenv)->NewStringUTF(thisenv, buf);
+	(*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_errorcallMethodID, x, string);
 }
 
 void Rf_warningcall(SEXP x, const char *format, ...) {

@@ -219,6 +219,12 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public int Rf_errorcall(Object call, Object msg) {
+        RFFIUtils.traceUpCall("Rf_errorcall", call, msg);
+        return delegate.Rf_errorcall(call, msg);
+    }
+
+    @Override
     public Object Rf_allocVector(int mode, long n) {
         RFFIUtils.traceUpCall("Rf_allocateVector", mode, n);
         return delegate.Rf_allocVector(mode, n);

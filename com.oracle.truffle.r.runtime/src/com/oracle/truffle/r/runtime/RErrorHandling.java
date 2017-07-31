@@ -585,7 +585,24 @@ public class RErrorHandling {
         warningCallInvoke(call, RDataFactory.createStringVectorFromScalar(message));
     }
 
+    /**
+     * Entry point for Rf_errorCall from RFFI.
+     */
+    public static void errorcallRFFI(Object call, String message) {
+        errorCallInvoke(call, RDataFactory.createStringVectorFromScalar(message));
+    }
+
+    private static void errorCallInvoke(Object call, RStringVector errorMessage) {
+        errorcallDfltWithCall(null, call, Message.GENERIC, errorMessage, new Object[]{errorMessage});
+    }
+
     static void warningcall(boolean showCall, RBaseNode callObj, Message msg, Object... args) {
+        Object call = showCall ? findCaller(callObj) : RNull.instance;
+        RStringVector warningMessage = RDataFactory.createStringVectorFromScalar(formatMessage(msg, args));
+        warningCallInvoke(call, warningMessage);
+    }
+
+    static void errorcall(boolean showCall, RBaseNode callObj, Message msg, Object... args) {
         Object call = showCall ? findCaller(callObj) : RNull.instance;
         RStringVector warningMessage = RDataFactory.createStringVectorFromScalar(formatMessage(msg, args));
         warningCallInvoke(call, warningMessage);
