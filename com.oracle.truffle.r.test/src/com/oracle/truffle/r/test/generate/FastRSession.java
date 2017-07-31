@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.context.ContextInfo;
+import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -98,9 +98,9 @@ public final class FastRSession implements RSession {
 
     public static final Source GET_CONTEXT = RSource.fromTextInternal("invisible(.fastr.context.get())", RSource.Internal.GET_CONTEXT);
 
-    public ContextInfo checkContext(ContextInfo contextInfoArg) {
+    public ChildContextInfo checkContext(ChildContextInfo contextInfoArg) {
         create();
-        ContextInfo contextInfo;
+        ChildContextInfo contextInfo;
         if (contextInfoArg == null) {
             contextInfo = createContextInfo(ContextKind.SHARE_PARENT_RW);
         } else {
@@ -109,9 +109,9 @@ public final class FastRSession implements RSession {
         return contextInfo;
     }
 
-    public ContextInfo createContextInfo(ContextKind contextKind) {
+    public ChildContextInfo createContextInfo(ContextKind contextKind) {
         RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.R, new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
-        return ContextInfo.create(params, null, contextKind, mainContext, input, output, output, TimeZone.getTimeZone("GMT"));
+        return ChildContextInfo.create(params, null, contextKind, mainContext, input, output, output, TimeZone.getTimeZone("GMT"));
     }
 
     private FastRSession() {
@@ -128,7 +128,7 @@ public final class FastRSession implements RSession {
         }
         try {
             RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.R, new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
-            ContextInfo info = ContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, input, output, output);
+            ChildContextInfo info = ChildContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, input, output, output);
             main = info.createVM();
             mainContext = main.eval(GET_CONTEXT).as(RContext.class);
         } finally {
@@ -181,12 +181,12 @@ public final class FastRSession implements RSession {
     }
 
     @Override
-    public String eval(TestBase testClass, String expression, ContextInfo contextInfo, boolean longTimeout) throws Throwable {
+    public String eval(TestBase testClass, String expression, ChildContextInfo contextInfo, boolean longTimeout) throws Throwable {
         Timer timer = null;
         output.reset();
         input.setContents(expression);
         try {
-            ContextInfo actualContextInfo = checkContext(contextInfo);
+            ChildContextInfo actualContextInfo = checkContext(contextInfo);
             // set up some interop objects used by fastr-specific tests:
             PolyglotEngine.Builder builder = PolyglotEngine.newBuilder();
             if (testClass != null) {

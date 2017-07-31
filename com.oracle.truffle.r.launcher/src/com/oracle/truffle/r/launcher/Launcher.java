@@ -333,9 +333,9 @@ public abstract class Launcher {
             default:
                 Engine engine = getTempEngine();
                 if (engine.getLanguages().containsKey(group)) {
-                    descriptors = engine.getLanguage(group).getOptions();
+                    descriptors = engine.getLanguages().get(group).getOptions();
                 } else if (engine.getInstruments().containsKey(group)) {
-                    descriptors = engine.getInstrument(group).getOptions();
+                    descriptors = engine.getInstruments().get(group).getOptions();
                 }
                 break;
         }
@@ -460,30 +460,18 @@ public abstract class Launcher {
             System.out.println("  Installed Languages:");
             List<Language> languages = new ArrayList<>(engine.getLanguages().size());
             int nameLength = 0;
-            boolean hasHost = false;
             for (Language language : engine.getLanguages().values()) {
                 languages.add(language);
                 nameLength = max(nameLength, language.getName().length());
-                hasHost |= language.isHost();
             }
             languages.sort(Comparator.comparing(Language::getId));
             String langFormat = "    %-" + nameLength + "s%s version %s%n";
             for (Language language : languages) {
-                String host;
-                if (hasHost) {
-                    if (language.isHost()) {
-                        host = " (Host)";
-                    } else {
-                        host = "       ";
-                    }
-                } else {
-                    host = "";
-                }
                 String version = language.getVersion();
                 if (version == null || version.length() == 0) {
                     version = "";
                 }
-                System.out.printf(langFormat, language.getName().isEmpty() ? "Unnamed" : language.getName(), host, version);
+                System.out.printf(langFormat, language.getName().isEmpty() ? "Unnamed" : language.getName(), version);
             }
         }
     }

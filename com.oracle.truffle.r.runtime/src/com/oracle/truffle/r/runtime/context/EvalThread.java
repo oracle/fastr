@@ -28,10 +28,12 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.ExitException;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -46,7 +48,9 @@ import com.oracle.truffle.r.runtime.data.RNull;
 public class EvalThread extends Thread {
 
     private final Source source;
-    private final ContextInfo info;
+    private final ChildContextInfo info;
+    private final TruffleContext truffleContext;
+    private final boolean usePolyglot;
     private RList evalResult;
     private Semaphore init = new Semaphore(0);
 
@@ -58,22 +62,37 @@ public class EvalThread extends Thread {
     /** We use a separate counter for threads since ConcurrentHashMap.size() is not reliable. */
     public static final AtomicInteger threadCnt = new AtomicInteger(0);
 
-    public EvalThread(ContextInfo info, Source source) {
+    public EvalThread(ChildContextInfo info, Source source) {
         this.info = info;
         this.source = source;
         threadCnt.incrementAndGet();
         threads.put(info.getId(), this);
         idToMultiSlotTable.put(info.getId(), info.getMultiSlotInd());
+        truffleContext = info.createTruffleContext();
+        usePolyglot = false;
+    }
+
+    public EvalThread(ChildContextInfo info, Source source, boolean usePolyglot) {
+        this.info = info;
+        this.source = source;
+        threadCnt.incrementAndGet();
+        threads.put(info.getId(), this);
+        idToMultiSlotTable.put(info.getId(), info.getMultiSlotInd());
+        this.usePolyglot = true;
+        truffleContext = null;
     }
 
     @Override
     public void run() {
-        PolyglotEngine vm = info.createVM(PolyglotEngine.newBuilder());
         init.release();
         try {
-            evalResult = run(vm, info, source);
+            if (usePolyglot) {
+                PolyglotEngine vm = info.createVM(PolyglotEngine.newBuilder());
+                evalResult = run(vm, info, source);
+            } else {
+                evalResult = run(truffleContext, info, source);
+            }
         } finally {
-            vm.dispose();
             threads.remove(info.getId());
             threadCnt.decrementAndGet();
         }
@@ -94,11 +113,40 @@ public class EvalThread extends Thread {
     /**
      * Convenience method for {@code .fastr.context.eval} in same thread.
      */
-    public static RList run(PolyglotEngine vm, ContextInfo info, Source source) {
+    public static RList run(TruffleContext truffleContext, ChildContextInfo info, Source source) {
+        RList result = null;
+        Object parent = null;
+        try {
+            parent = truffleContext.enter();
+            // this is the engine for the new child context
+            Engine rEngine = RContext.getEngine();
+            Object evalResult = rEngine.parseAndEval(source, rEngine.getGlobalFrame(), false);
+            result = createEvalResult(evalResult, false);
+        } catch (ParseException e) {
+            e.report(info.getStdout());
+            result = createErrorResult(e.getMessage());
+        } catch (ExitException e) {
+            // termination, treat this as "success"
+            result = RDataFactory.createList(new Object[]{e.getStatus()});
+        } catch (RError e) {
+            // nothing to do
+            result = RDataFactory.createList(new Object[]{RNull.instance});
+        } catch (Throwable t) {
+            // some internal error
+            RInternalError.reportErrorAndConsoleLog(t, info.getId());
+            result = createErrorResult(t.getClass().getSimpleName());
+        } finally {
+            truffleContext.leave(parent);
+            truffleContext.close();
+        }
+        return result;
+    }
+
+    public static RList run(PolyglotEngine vm, ChildContextInfo info, Source source) {
         RList evalResult;
         try {
             PolyglotEngine.Value resultValue = vm.eval(source);
-            evalResult = createEvalResult(resultValue);
+            evalResult = createEvalResult(resultValue, true);
         } catch (ParseException e) {
             e.report(info.getStdout());
             evalResult = createErrorResult(e.getMessage());
@@ -112,6 +160,8 @@ public class EvalThread extends Thread {
             // some internal error
             RInternalError.reportErrorAndConsoleLog(t, info.getId());
             evalResult = createErrorResult(t.getClass().getSimpleName());
+            // } finally {
+            // vm.close();
         }
         return evalResult;
     }
@@ -121,8 +171,7 @@ public class EvalThread extends Thread {
      * resulted in an error.
      */
     @TruffleBoundary
-    private static RList createEvalResult(PolyglotEngine.Value resultValue) {
-        Object result = resultValue.get();
+    private static RList createEvalResult(Object result, boolean usePolyglot) {
         Object listResult = result;
         String error = null;
         if (result == null) {
@@ -130,7 +179,11 @@ public class EvalThread extends Thread {
             listResult = RRuntime.LOGICAL_NA;
             error = "R error";
         } else if (result instanceof TruffleObject) {
-            listResult = resultValue.as(Object.class);
+            if (usePolyglot) {
+                listResult = ((PolyglotEngine.Value) result).as(Object.class);
+            } else {
+                throw RInternalError.unimplemented();
+            }
         } else {
             listResult = result;
         }
@@ -153,7 +206,7 @@ public class EvalThread extends Thread {
         return evalResult;
     }
 
-    public ContextInfo getContextInfo() {
+    public ChildContextInfo getContextInfo() {
         return info;
     }
 }

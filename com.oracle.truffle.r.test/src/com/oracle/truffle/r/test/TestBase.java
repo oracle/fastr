@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.ContextInfo;
+import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.generate.FastRSession;
@@ -630,7 +630,7 @@ public class TestBase {
     private boolean evalAndCompare(String[] inputs, TestTrait... traitsList) {
         WhiteList[] whiteLists = TestTrait.collect(traitsList, WhiteList.class);
         TestTraitsSet traits = new TestTraitsSet(traitsList);
-        ContextInfo contextInfo = traits.context.contains(Context.NonShared) ? fastROutputManager.fastRSession.createContextInfo(ContextKind.SHARE_NOTHING) : null;
+        ChildContextInfo contextInfo = traits.context.contains(Context.NonShared) ? fastROutputManager.fastRSession.createContextInfo(ContextKind.SHARE_NOTHING) : null;
         int index = 1;
         boolean allOk = true;
         boolean skipFastREval = traits.isIgnored || generatingExpected();
@@ -972,7 +972,7 @@ public class TestBase {
      * Evaluate {@code input} in FastR, returning all (virtual) console output that was produced. If
      * {@code nonShared} then this must evaluate in a new, non-shared, {@link RContext}.
      */
-    protected String fastREval(String input, ContextInfo contextInfo, boolean longTimeout) {
+    protected String fastREval(String input, ChildContextInfo contextInfo, boolean longTimeout) {
         microTestInfo.expression = input;
         String result;
         try {
