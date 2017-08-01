@@ -27,12 +27,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RSrcref.SrcrefFields;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -200,8 +202,18 @@ public class RSource {
         if (filename.isAbsolute()) {
             return fromFileName(filename.toString(), false);
         }
-        Path rHomePath = Paths.get(REnvVars.rHome());
-        return fromFileName(rHomePath.resolve(filename).toString(), false);
+        Path resolved = filename;
+        if (!filename.isAbsolute()) {
+            for (String libPath : RContext.getInstance().libraryPaths) {
+                resolved = Paths.get(libPath).resolve(filename);
+                if (Files.exists(resolved)) {
+                    break;
+                }
+            }
+        } else {
+            resolved = filename;
+        }
+        return fromFileName(resolved.toString(), false);
     }
 
     private static String getPath(REnvironment env, String name) {
