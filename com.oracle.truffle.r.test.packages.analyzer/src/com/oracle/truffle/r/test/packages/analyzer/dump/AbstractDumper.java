@@ -81,12 +81,14 @@ public abstract class AbstractDumper {
      * Returns {@code false} if any of the problem detector's children has reported a problem in the
      * same location. Returns {@code true} otherwise.
      */
-    private static boolean isIncluded(Problem p, Map<Detector<?>, Collection<Detector<?>>> hierarchy, Map<Detector<?>, List<Problem>> collect2) {
+    private static boolean isIncluded(Problem p, Map<Detector<?>, Collection<Detector<?>>> hierarchy, Map<Detector<?>, List<Problem>> problemsTable) {
         Collection<Detector<?>> children = hierarchy.get(p.getDetector());
         for (Detector<?> childDetector : children) {
-            for (Problem childProblem : collect2.get(childDetector)) {
-                if (childProblem.getLocation().equals(p.getLocation())) {
-                    return false;
+            if (problemsTable.containsKey(childDetector)) {
+                for (Problem childProblem : problemsTable.get(childDetector)) {
+                    if (childProblem.getLocation().equals(p.getLocation())) {
+                        return false;
+                    }
                 }
             }
         }

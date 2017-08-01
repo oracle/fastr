@@ -25,20 +25,19 @@ package com.oracle.truffle.r.test.packages.analyzer.parser;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
@@ -155,14 +154,27 @@ public class LogFileParser {
                 // report the problem
                 checkResults.problems.add(new OutputMismatchProblem(pkg, DummyDetector.INSTANCE, getCurrentLocation(), fileNameStr));
 
-                if (!Files.isReadable(outputFile)) {
-                    LOGGER.warning("Cannot read output file " + outputFile);
-
-                    // consume any lines to be able to continue
-                    collectBody(Token.END_CHECKING);
-                } else {
+                if (Files.isReadable(outputFile)) {
                     checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, outputFile, 0, Files.readAllLines(outputFile)));
+                } else {
+                    // try to find the file anywhere in the test run directory (there were some
+                    // cases)
+                    Optional<Path> findFirst = null;
+                    try {
+                        findFirst = Files.find(logFile.path.getParent(), 3, (path, attr) -> path.getFileName().equals(outputFile.getFileName())).findFirst();
+                        if (findFirst.isPresent()) {
+                            checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, findFirst.get(), 0, Files.readAllLines(findFirst.get())));
+                        }
+                    } catch (NoSuchFileException e) {
+                    }
+                    if (findFirst == null || !findFirst.isPresent()) {
+                        LOGGER.warning("Cannot read output file " + outputFile);
+
+                        // consume any lines to be able to continue
+                        collectBody(Token.END_CHECKING);
+                    }
                 }
+
                 checkResults.setSuccess(false);
             } else {
                 break;
