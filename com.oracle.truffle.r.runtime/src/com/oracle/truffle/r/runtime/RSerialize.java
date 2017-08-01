@@ -1820,11 +1820,15 @@ public class RSerialize {
                 if (ss != null) {
                     String path = RSource.getPathInternal(ss.getSource());
                     if (path != null) {
-                        Path relPath = Paths.get(REnvVars.rHome()).relativize(Paths.get(path));
-                        REnvironment createSrcfile = RSrcref.createSrcfile(relPath);
-                        Object createLloc = RSrcref.createLloc(ss, createSrcfile);
-                        writePairListEntry(RRuntime.R_SRCREF, createLloc);
-                        writePairListEntry(RRuntime.R_SRCFILE, createSrcfile);
+                        Path sourcePath = Paths.get(path);
+                        // do this only for packages
+                        if (isKnownPackageLibrary(sourcePath)) {
+                            Path relPath = Paths.get(REnvVars.rHome()).relativize(sourcePath);
+                            REnvironment createSrcfile = RSrcref.createSrcfile(relPath);
+                            Object createLloc = RSrcref.createLloc(ss, createSrcfile);
+                            writePairListEntry(RRuntime.R_SRCREF, createLloc);
+                            writePairListEntry(RRuntime.R_SRCFILE, createSrcfile);
+                        }
                     }
                 }
                 DynamicObject attributes = outAttrs.getExplicitAttributes();
@@ -2491,19 +2495,36 @@ public class RSerialize {
         SourceSection ss = getFileSourceSection(syntaxElement);
         if (ss != null && serObj instanceof RAttributable) {
             String pathInternal = RSource.getPathInternal(ss.getSource());
-            Path relPath = Paths.get(REnvVars.rHome()).relativize(Paths.get(pathInternal));
-            RAttributable attributable = (RAttributable) serObj;
-            attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(relPath));
-            RList createBlockSrcrefs = RSrcref.createBlockSrcrefs(syntaxElement);
-            if (createBlockSrcrefs != null) {
-                attributable.setAttr(RRuntime.R_SRCREF, createBlockSrcrefs);
-                attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
-            } else {
-                Object createLloc = RSrcref.createLloc(ss);
-                attributable.setAttr(RRuntime.R_SRCREF, createLloc);
-                attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
+            Path sourcePath = Paths.get(pathInternal);
+
+            // do this only for packages
+            if (isKnownPackageLibrary(sourcePath)) {
+                Path relPath = Paths.get(REnvVars.rHome()).relativize(sourcePath);
+                RAttributable attributable = (RAttributable) serObj;
+                attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(relPath));
+                RList createBlockSrcrefs = RSrcref.createBlockSrcrefs(syntaxElement);
+                if (createBlockSrcrefs != null) {
+                    attributable.setAttr(RRuntime.R_SRCREF, createBlockSrcrefs);
+                    attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
+                } else {
+                    Object createLloc = RSrcref.createLloc(ss);
+                    attributable.setAttr(RRuntime.R_SRCREF, createLloc);
+                    attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
+                }
             }
         }
+    }
+
+    /**
+     * Tests if the given path is a child of any known library path.
+     */
+    private static boolean isKnownPackageLibrary(Path sourcePath) {
+        for (String libPath : RContext.getInstance().libraryPaths) {
+            if (sourcePath.startsWith(libPath)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static SourceSection getFileSourceSection(RSyntaxElement syntaxElement) {

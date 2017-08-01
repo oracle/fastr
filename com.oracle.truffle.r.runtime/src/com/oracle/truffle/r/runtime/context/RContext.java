@@ -39,8 +39,10 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.WeakHashMap;
@@ -350,6 +352,7 @@ public final class RContext implements RTruffleObject {
     public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
     public final WeakHashMap<Path, REnvironment> srcfileEnvironments = new WeakHashMap<>();
+    public final List<String> libraryPaths = new ArrayList<>(1);
 
     private final AllocationReporter allocationReporter;
 
