@@ -54,7 +54,7 @@ public class RInternalErrorDetector extends LineDetector {
             int indexOf = line.indexOf(P);
             if (indexOf != -1) {
                 String message = line.substring(indexOf + P.length());
-                problems.add(new RInternalErrorProblem(pkg, new Location(startLocation.file, lineNr), message));
+                problems.add(new RInternalErrorProblem(pkg, this, new Location(startLocation.file, lineNr), message));
             }
             ++lineNr;
         }
@@ -65,8 +65,8 @@ public class RInternalErrorDetector extends LineDetector {
 
         private final String message;
 
-        protected RInternalErrorProblem(RPackageTestRun pkg, Location location, String message) {
-            super(pkg, location);
+        protected RInternalErrorProblem(RPackageTestRun pkg, RInternalErrorDetector detector, Location location, String message) {
+            super(pkg, detector, location);
             this.message = message;
         }
 

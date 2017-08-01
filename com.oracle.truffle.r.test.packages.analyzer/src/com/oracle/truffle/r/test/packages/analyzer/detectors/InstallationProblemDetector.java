@@ -52,8 +52,7 @@ public class InstallationProblemDetector extends LineDetector {
         for (String line : body) {
             Matcher matcher = pattern.matcher(line);
             if (matcher.matches()) {
-                return Collections.singletonList(
-                                new PackageInstallationProblem(pkg, new Location(startLocation.file, lineNr), line));
+                return Collections.singletonList(new PackageInstallationProblem(pkg, this, new Location(startLocation.file, lineNr), line));
             }
             ++lineNr;
         }
@@ -64,8 +63,8 @@ public class InstallationProblemDetector extends LineDetector {
 
         private final String message;
 
-        public PackageInstallationProblem(RPackageTestRun pkg, Location location, String message) {
-            super(pkg, location);
+        public PackageInstallationProblem(RPackageTestRun pkg, InstallationProblemDetector detector, Location location, String message) {
+            super(pkg, detector, location);
             this.message = message;
         }
 

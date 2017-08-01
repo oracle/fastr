@@ -70,23 +70,25 @@ public class HTMLDumper extends AbstractDumper {
     }
 
     @Override
-    public void dump(Collection<RPackage> problems, Collection<LogFileParseException> parseErrors) {
+    public void dump(Collection<RPackage> packages, Collection<LogFileParseException> parseErrors) {
         try {
             createAndCheckOutDir();
-            dumpIndexFile(problems, parseErrors);
+            dumpIndexFile(packages, parseErrors);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void dumpIndexFile(Collection<RPackage> problems, Collection<LogFileParseException> parseErrors) {
+    private void dumpIndexFile(Collection<RPackage> packages, Collection<LogFileParseException> parseErrors) {
         Path indexFile = destDir.resolve("index.html");
 
         try (BufferedWriter bw = Files.newBufferedWriter(indexFile, CREATE, TRUNCATE_EXISTING, WRITE)) {
             HTMLBuilder builder = new HTMLBuilder(new PrintWriter(bw));
 
-            Collection<Problem> allProblems = collectAllProblems(problems);
-            Collection<RPackageTestRun> allTestRuns = collectTestRuns(problems);
+            Collection<Problem> allProblems = collectAllProblems(packages);
+            Collection<RPackageTestRun> allTestRuns = collectTestRuns(packages);
+
+            allProblems = eliminateRedundantProblems(allProblems);
 
             Tag errorDistributionTable = generateTypeDistributionTable(builder, groupByType(allProblems));
             Tag pkgDistributionTable = generateTestRunDistributionTable(builder, groupByTestRuns(allTestRuns, allProblems));

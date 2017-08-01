@@ -23,43 +23,28 @@
 package com.oracle.truffle.r.test.packages.analyzer.detectors;
 
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.Collections;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 
-public abstract class Detector<T> {
+public final class DummyDetector extends Detector<Void> {
 
-    /** Semantics: If a child reports an error for a particular location, the parent doesn't. */
-    protected Detector<?> parent;
+    public static final DummyDetector INSTANCE = new DummyDetector();
 
-    protected final Collection<Detector<?>> children = new LinkedList<>();
-
-    public Detector(Detector<?> parent) {
-        this.parent = parent;
-        if (parent != null) {
-            parent.children.add(this);
-        }
+    private DummyDetector() {
+        super(null);
     }
 
-    public Detector<?> getParent() {
-        return parent;
+    @Override
+    public String getName() {
+        return "Dummy detector";
     }
 
-    public Collection<Detector<?>> getChildren() {
-        return children;
+    @Override
+    public Collection<Problem> detect(RPackageTestRun pkgTestRun, Location startLineLocation, Void body) {
+        return Collections.emptyList();
     }
-
-    public abstract String getName();
-
-    /**
-     * @param pkgTestRun The package test run any problems should be associated with.
-     * @param startLineLocation The location of the first line, i.e., of body[0], or
-     *            <code>null</code> if body is empty.
-     * @param body The content to analyze (e.g. a list of lines in a file).
-     * @return A list of detected problems (must not be {@code null}).
-     */
-    public abstract Collection<Problem> detect(RPackageTestRun pkgTestRun, Location startLineLocation, T body);
 
 }

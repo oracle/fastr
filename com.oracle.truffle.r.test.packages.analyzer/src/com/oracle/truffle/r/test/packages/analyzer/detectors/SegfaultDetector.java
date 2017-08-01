@@ -63,7 +63,7 @@ public class SegfaultDetector extends LineDetector {
             ++lineNr;
         }
         if (collect) {
-            return Collections.singleton(new SegfaultProblem(pkg, new Location(startLocation.file, lineNr), segfaultMessage.toString()));
+            return Collections.singleton(new SegfaultProblem(pkg, this, new Location(startLocation.file, lineNr), segfaultMessage.toString()));
         }
         return Collections.emptyList();
     }
@@ -72,8 +72,8 @@ public class SegfaultDetector extends LineDetector {
 
         private final String message;
 
-        protected SegfaultProblem(RPackageTestRun pkg, Location location, String message) {
-            super(pkg, location);
+        protected SegfaultProblem(RPackageTestRun pkg, SegfaultDetector detector, Location location, String message) {
+            super(pkg, detector, location);
             this.message = message;
         }
 
