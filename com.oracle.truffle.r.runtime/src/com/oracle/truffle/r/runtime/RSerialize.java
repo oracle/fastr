@@ -1820,10 +1820,9 @@ public class RSerialize {
                 if (ss != null) {
                     String path = RSource.getPathInternal(ss.getSource());
                     if (path != null) {
-                        Path sourcePath = Paths.get(path);
                         // do this only for packages
-                        if (isKnownPackageLibrary(sourcePath)) {
-                            Path relPath = Paths.get(REnvVars.rHome()).relativize(sourcePath);
+                        Path relPath = relativizeLibPath(Paths.get(path));
+                        if (relPath != null) {
                             REnvironment createSrcfile = RSrcref.createSrcfile(relPath);
                             Object createLloc = RSrcref.createLloc(ss, createSrcfile);
                             writePairListEntry(RRuntime.R_SRCREF, createLloc);
@@ -2495,11 +2494,10 @@ public class RSerialize {
         SourceSection ss = getFileSourceSection(syntaxElement);
         if (ss != null && serObj instanceof RAttributable) {
             String pathInternal = RSource.getPathInternal(ss.getSource());
-            Path sourcePath = Paths.get(pathInternal);
 
             // do this only for packages
-            if (isKnownPackageLibrary(sourcePath)) {
-                Path relPath = Paths.get(REnvVars.rHome()).relativize(sourcePath);
+            Path relPath = relativizeLibPath(Paths.get(pathInternal));
+            if (relPath != null) {
                 RAttributable attributable = (RAttributable) serObj;
                 attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(relPath));
                 RList createBlockSrcrefs = RSrcref.createBlockSrcrefs(syntaxElement);
@@ -2516,15 +2514,16 @@ public class RSerialize {
     }
 
     /**
-     * Tests if the given path is a child of any known library path.
+     * Relativizes the given path to its corresponding library path. If the given path is not a
+     * child of any library path, {@code null} will be returned.
      */
-    private static boolean isKnownPackageLibrary(Path sourcePath) {
+    private static Path relativizeLibPath(Path sourcePath) {
         for (String libPath : RContext.getInstance().libraryPaths) {
             if (sourcePath.startsWith(libPath)) {
-                return true;
+                return Paths.get(libPath).relativize(sourcePath);
             }
         }
-        return false;
+        return null;
     }
 
     private static SourceSection getFileSourceSection(RSyntaxElement syntaxElement) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.RVisibility.ON;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 /**
  * Allows to show the actual location of the source section of a provided function.
  */
-@RBuiltin(name = ".fastr.libPaths", visibility = OFF, kind = PRIMITIVE, parameterNames = "new", behavior = RBehavior.MODIFIES_STATE)
+@RBuiltin(name = ".fastr.libPaths", visibility = ON, kind = PRIMITIVE, parameterNames = "new", behavior = RBehavior.MODIFIES_STATE)
 public abstract class FastRLibPaths extends RBuiltinNode.Arg1 {
 
     static {
