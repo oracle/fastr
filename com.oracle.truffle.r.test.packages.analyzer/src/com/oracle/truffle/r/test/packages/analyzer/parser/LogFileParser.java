@@ -24,20 +24,27 @@ package com.oracle.truffle.r.test.packages.analyzer.parser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
@@ -89,14 +96,22 @@ public class LogFileParser {
         try (BufferedReader r = Files.newBufferedReader(logFile.path)) {
             this.reader = r;
             consumeLine();
-            Section installTest = parseInstallTest();
-            logFile.addSection(installTest);
-            if (!installTest.isSuccess()) {
+
+            Section installTest0 = parseInstallTest();
+            logFile.addSection(installTest0);
+            if (!installTest0.isSuccess()) {
                 return logFile;
             }
-            logFile.addSection(parseInstallTest());
-            logFile.addSection(parseCheckResults());
-            logFile.setSuccess(parseOverallStatus());
+            Section installTest1 = parseInstallTest();
+            logFile.addSection(installTest1);
+            if (installTest1.isSuccess()) {
+                logFile.addSection(parseCheckResults());
+            }
+            TestResult overallResult = parseOverallStatus();
+            logFile.setSuccess(overallResult.toBoolean());
+
+            // In the end, a recursive diff is executed which might produce error messages.
+            collectBody();
             expectEOF();
         } finally {
             this.reader = null;
@@ -104,10 +119,10 @@ public class LogFileParser {
         return logFile;
     }
 
-    private boolean parseOverallStatus() throws IOException {
+    private TestResult parseOverallStatus() throws IOException {
         expect(Token.TEST_STATUS);
         consumeLine();
-        return parseStatus(trim(curLine.text).substring((getPkgName() + ": ").length())).toBoolean();
+        return parseStatus(trim(curLine.text).substring((getPkgName() + ": ").length()));
     }
 
     private static boolean isEOF(Line l) {
@@ -127,17 +142,22 @@ public class LogFileParser {
         Section checkResults = new Section(logFile, Token.BEGIN_CHECKING.linePrefix, curLine.lineNr);
         checkResults.problems = new LinkedList<>();
 
-        // TODO depending on the result, parse other files
+        boolean findGnurFailFiles = false;
+        Set<Path> ignoreFiles = new HashSet<>();
+
         for (;;) {
             if (la.text.contains(Token.FAIL_OUTPUT_GNUR.linePrefix)) {
                 consumeLine();
-                // TODO
+                findGnurFailFiles = true;
             } else if (la.text.contains(Token.FAIL_OUTPUT_FASTR.linePrefix)) {
                 consumeLine();
-                // TODO
+                // Ignore this case because we will scan for ".fail" files in FastR's test output
+                // dir anyway.
             } else if (la.text.contains(Token.MISSING_OUTPUT_FILE.linePrefix)) {
                 consumeLine();
-                // TODO
+                int idx = curLine.text.indexOf(Token.MISSING_OUTPUT_FILE.linePrefix);
+                String fileNameStr = curLine.text.substring(idx + Token.MISSING_OUTPUT_FILE.linePrefix.length()).trim();
+                checkResults.problems.add(new MissingOutputFileProblem(pkg, DummyDetector.INSTANCE, getCurrentLocation(), fileNameStr));
             } else if (la.text.contains(Token.CONTENT_MALFORMED.linePrefix)) {
                 consumeLine();
                 int idx = curLine.text.indexOf(Token.CONTENT_MALFORMED.linePrefix);
@@ -155,6 +175,7 @@ public class LogFileParser {
                 checkResults.problems.add(new OutputMismatchProblem(pkg, DummyDetector.INSTANCE, getCurrentLocation(), fileNameStr));
 
                 if (Files.isReadable(outputFile)) {
+                    ignoreFiles.add(outputFile);
                     checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, outputFile, 0, Files.readAllLines(outputFile)));
                 } else {
                     // try to find the file anywhere in the test run directory (there were some
@@ -163,6 +184,7 @@ public class LogFileParser {
                     try {
                         findFirst = Files.find(logFile.path.getParent(), 3, (path, attr) -> path.getFileName().equals(outputFile.getFileName())).findFirst();
                         if (findFirst.isPresent()) {
+                            ignoreFiles.add(findFirst.get());
                             checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, findFirst.get(), 0, Files.readAllLines(findFirst.get())));
                         }
                     } catch (NoSuchFileException e) {
@@ -180,8 +202,19 @@ public class LogFileParser {
                 break;
             }
         }
-        expect(Token.END_CHECKING);
 
+        // Compute a set of files to ignore for analysis because the tests producing the files also
+        // failed in GnuR.
+        if (findGnurFailFiles) {
+            Path gnurTestOutputDir = logFile.path.resolveSibling("testfiles/gnur");
+            Path fastrTestOutputDir = logFile.path.resolveSibling("testfiles/fastr");
+            Stream<Path> failFiles = Files.find(gnurTestOutputDir, 5, (path, attr) -> path.getFileName().toString().endsWith(".fail"));
+            ignoreFiles.addAll(failFiles.map(p -> fastrTestOutputDir.resolve(gnurTestOutputDir.relativize(p))).collect(Collectors.toSet()));
+        }
+
+        scanTestOutputFiles(checkResults, p -> !ignoreFiles.contains(p));
+
+        expect(Token.END_CHECKING);
         return checkResults;
     }
 
@@ -255,22 +288,27 @@ public class LogFileParser {
                 if (laMatches("comparing ")) {
                     consumeLine();
 
-                    // e.g.: files differ in number of lines:
+                    // optional message: "files differ in number of lines:"
                     if (laMatches("files differ in number of lines:")) {
                         consumeLine();
-                        List<DiffChunk> diffResult = new DiffParser(this).parseDiff();
-                        testing.problems.addAll(applyTestResultDetectors(diffResult));
-                        diffResult.stream().forEach(chunk -> {
-                            if (!chunk.getLeft().isEmpty()) {
-                                testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getLeftFile(), chunk.getLeftStartLine(), chunk.getLeft()));
-                            }
-                            if (!chunk.getRight().isEmpty()) {
-                                testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getRightFile(), chunk.getRightStartLine(), chunk.getRight()));
-                            }
-                        });
-                        consumeLine();
-                        parseStatus(trim(curLine.text));
-                    } else {
+                    }
+
+                    // try to parse diff chunks
+                    List<DiffChunk> diffResult = new DiffParser(this).parseDiff();
+
+                    // apply detectors to diff chunks
+                    testing.problems.addAll(applyTestResultDetectors(diffResult));
+                    diffResult.stream().forEach(chunk -> {
+                        if (!chunk.getLeft().isEmpty()) {
+                            testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getLeftFile(), chunk.getLeftStartLine(), chunk.getLeft()));
+                        }
+                        if (!chunk.getRight().isEmpty()) {
+                            testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getRightFile(), chunk.getRightStartLine(), chunk.getRight()));
+                        }
+                    });
+
+                    // only if the output was equal, there will be "... OK"
+                    if (diffResult.isEmpty()) {
                         int dotsIdx = curLine.text.lastIndexOf("...");
                         parseStatus(trim(curLine.text.substring(dotsIdx + "...".length())));
                     }
@@ -334,6 +372,8 @@ public class LogFileParser {
             return TestResult.FAILED;
         } else if (Token.INDETERMINATE.linePrefix.equals(substring.trim())) {
             return TestResult.INDETERMINATE;
+        } else if (Token.UNKNOWN.linePrefix.equals(substring.trim())) {
+            return TestResult.UNKNOWN;
         }
         throw parseError("Unexpected status: " + substring);
     }
@@ -350,6 +390,52 @@ public class LogFileParser {
         expect(Token.END_SUGGESTS_INSTALL);
 
         return section;
+    }
+
+    private void scanTestOutputFiles(Section outputCheck, Predicate<Path> includeCheck) throws IOException {
+        if (outputCheck.problems == null) {
+            outputCheck.problems = new ArrayList<>();
+        }
+
+        Files.walkFileTree(logFile.path.resolveSibling("testfiles"), new FileVisitor<Path>() {
+
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                // do not visit GnuR's test output subdirectory
+                if (dir.endsWith("gnur")) {
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (endsWith(file, ".Rout", ".fail") && includeCheck.test(file)) {
+                    outputCheck.problems.addAll(applyDetectors(Token.BEGIN_CHECKING, file, 0, Files.readAllLines(file)));
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                // ignore
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                return FileVisitResult.CONTINUE;
+            }
+
+            private boolean endsWith(Path p, String... exts) {
+                for (String ext : exts) {
+                    if (p.getFileName().toString().endsWith(ext)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
     }
 
     private Collection<Problem> applyDetectors(Token start, Path file, List<Line> body) {
@@ -526,6 +612,7 @@ public class LogFileParser {
     public enum TestResult {
         OK,
         FAILED,
+        UNKNOWN,
         INDETERMINATE;
 
         boolean toBoolean() {
@@ -566,6 +653,7 @@ public class LogFileParser {
 
         FAILED("FAILED"),
         INDETERMINATE("INDETERMINATE"),
+        UNKNOWN("UNKNOWN"),
         OK("OK");
 
         String linePrefix;
@@ -702,12 +790,47 @@ public class LogFileParser {
 
         @Override
         public int getSimilarityTo(Problem other) {
-            return 0;
+            return isSimilarTo(other) ? 0 : 1;
         }
 
         @Override
         public boolean isSimilarTo(Problem other) {
-            return true;
+            return other.getClass() == OutputMismatchProblem.class;
+        }
+    }
+
+    public static class MissingOutputFileProblem extends Problem {
+
+        private final String details;
+
+        protected MissingOutputFileProblem(RPackageTestRun pkg, Detector<?> detector, Location location, String details) {
+            super(pkg, detector, location);
+            this.details = details;
+        }
+
+        @Override
+        public String getSummary() {
+            return Token.MISSING_OUTPUT_FILE.linePrefix;
+        }
+
+        @Override
+        public String getDetails() {
+            return details;
+        }
+
+        @Override
+        public String toString() {
+            return getSummary() + details;
+        }
+
+        @Override
+        public int getSimilarityTo(Problem other) {
+            return isSimilarTo(other) ? 0 : 1;
+        }
+
+        @Override
+        public boolean isSimilarTo(Problem other) {
+            return other.getClass() == MissingOutputFileProblem.class;
         }
     }
 
@@ -737,12 +860,12 @@ public class LogFileParser {
 
         @Override
         public int getSimilarityTo(Problem other) {
-            return 0;
+            return isSimilarTo(other) ? 0 : 1;
         }
 
         @Override
         public boolean isSimilarTo(Problem other) {
-            return true;
+            return other.getClass() == ContentMalformedProblem.class;
         }
     }
 

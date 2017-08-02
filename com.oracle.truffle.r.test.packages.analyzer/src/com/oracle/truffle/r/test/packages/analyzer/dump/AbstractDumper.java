@@ -25,6 +25,7 @@ package com.oracle.truffle.r.test.packages.analyzer.dump;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +75,9 @@ public abstract class AbstractDumper {
 
         Map<Detector<?>, List<Problem>> collect2 = problems.stream().collect(Collectors.groupingBy(p -> p.getDetector()));
 
-        return problems.stream().filter(p -> isIncluded(p, hierarchy, collect2)).collect(Collectors.toList());
+        List<Problem> cleaned = problems.stream().filter(p -> isIncluded(p, hierarchy, collect2)).collect(Collectors.toList());
+        assert new HashSet<>(cleaned).size() == cleaned.size();
+        return cleaned;
     }
 
     /**
