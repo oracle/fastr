@@ -12,6 +12,8 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.MathContext;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -489,9 +491,9 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
                 str.append((char) ('0' + (log10 / 10)));
                 str.append((char) ('0' + (log10 % 10)));
             } else { /* e == 0 */
-                // round towards next digit instead of truncating
-                x += DECIMAL_VALUES[-d - 1 + DECIMAL_SHIFT][5];
-
+                double intx = Math.floor(x);
+                double pow10 = DECIMAL_WEIGHTS[d + DECIMAL_SHIFT];
+                x = intx + Math.rint((x - intx) * pow10) / pow10;
                 int log10 = x == 0 ? 0 : Math.max((int) Math.log10(x), 0);
                 int blanks = w // target width
                                 - (negated ? 1 : 0) // "-"
@@ -505,13 +507,19 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
                 if (negated) {
                     str.append('-');
                 }
-                for (int i = log10; i >= 0; i--) {
-                    x = appendDigit(x, i, str);
+                String xs = String.format("%." + d + "f", x);
+                for (int i = 0; i <= log10; i++) {
+                    str.append(xs.charAt(i));
                 }
                 if (d > 0) {
                     str.append(cdec);
                     for (int i = 1; i <= d; i++) {
-                        x = appendDigit(x, -i, str);
+                        int j = i + log10 + 1;
+                        if (j < xs.length()) {
+                            str.append(xs.charAt(j));
+                        } else {
+                            str.append('0');
+                        }
                     }
                 }
             }

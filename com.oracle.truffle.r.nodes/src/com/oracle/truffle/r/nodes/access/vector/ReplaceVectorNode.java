@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -187,7 +188,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
 
     protected static CachedReplaceVectorNode createDefaultCached(ReplaceVectorNode node, Object vector, Object[] positions, Object value) {
         return new CachedReplaceVectorNode(node.mode, (RTypedValue) vector, positions, value.getClass(), RRuntime.isForeignObject(value) ? RType.TruffleObject : ((RTypedValue) value).getRType(), true,
-                        node.recursive);
+                        node.recursive, CachedReplaceVectorNode.isValueLengthGreaterThanOne(value));
     }
 
     public ElementAccessMode getMode() {

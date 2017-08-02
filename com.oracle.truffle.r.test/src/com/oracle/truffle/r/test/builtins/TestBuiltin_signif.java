@@ -26,6 +26,8 @@ public class TestBuiltin_signif extends TestBase {
 
     @Test
     public void testSignif() {
+        assertEval("{ signif(8.175, 3) }");
+        assertEval("{ signif(8.125, 3) }");
         assertEval("{ signif(0.555, 2) }");
         assertEval("{ signif(0.5549, 2) }");
         assertEval("{ signif(0.5551, 2) }");

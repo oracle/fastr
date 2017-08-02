@@ -160,9 +160,11 @@ public abstract class FormatC extends RBuiltinNode.Arg7 {
                     } /* if(do_fg) for(i..) */
                 } else {
                     String form = "%" + flag + width + "." + dig + format;
+                    String form2 = "%" + width + "s";
                     for (int i = 0; i < x.getLength(); i++) {
                         String str = String.format(form, x.getDataAtAsObject(i));
-                        result[i] = ("g".equals(format) || "f".equals(format)) ? trimZero(str) : str;
+                        str = ("g".equals(format) || "f".equals(format)) ? trimZero(str) : str;
+                        result[i] = String.format(form2, str);
                     }
                 }
             } else {
@@ -173,13 +175,21 @@ public abstract class FormatC extends RBuiltinNode.Arg7 {
     }
 
     private static String trimZero(String str) {
-        int i = str.length();
+        int e = str.indexOf('e');
+        int i = e < 0 ? str.length() : e;
         while (i > 0 && str.charAt(i - 1) == '0') {
             i--;
         }
         if (i > 0 && str.charAt(i - 1) == '.') {
             i--;
-            return str.substring(0, i);
+            String s = str.substring(0, i);
+            if (e < 0) {
+                return s;
+            } else {
+                StringBuilder sb = new StringBuilder(s);
+                sb.append(str.substring(e));
+                return sb.toString();
+            }
         }
         if (i == str.length()) {
             return str;

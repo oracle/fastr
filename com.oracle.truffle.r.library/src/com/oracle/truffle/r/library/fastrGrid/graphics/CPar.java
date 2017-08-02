@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
 
 public final class CPar extends RExternalBuiltinNode {
     static {
@@ -65,6 +66,10 @@ public final class CPar extends RExternalBuiltinNode {
     }
 
     private static Object getParam(String name, GridDevice device) {
+        if (name == null) {
+            // TODO: a hot-fix to enable package tests (e.g. cluster)
+            return RNull.instance;
+        }
         switch (name) {
             case "din":
                 return RDataFactory.createDoubleVector(new double[]{device.getWidth(), device.getHeight()}, RDataFactory.COMPLETE_VECTOR);

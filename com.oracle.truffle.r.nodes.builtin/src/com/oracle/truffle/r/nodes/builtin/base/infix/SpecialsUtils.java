@@ -30,6 +30,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.r.nodes.attributes.HasAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertIndexNodeGen;
@@ -207,15 +208,17 @@ class SpecialsUtils {
             return value;
         }
 
-        @Specialization(guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null"})
+        @Specialization(guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
         protected static int convertIntVector(RIntVector value,
-                        @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode) {
+                        @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode,
+                        @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode) {
             return value.getDataAt(0);
         }
 
-        @Specialization(guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null"})
+        @Specialization(guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
         protected static double convertDoubleVector(RDoubleVector value,
-                        @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode) {
+                        @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode,
+                        @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode) {
             return value.getDataAt(0);
         }
 

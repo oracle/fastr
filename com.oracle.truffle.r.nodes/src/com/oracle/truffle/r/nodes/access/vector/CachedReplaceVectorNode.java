@@ -93,6 +93,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final RType castType;
     private final boolean updatePositionNames;
 
+    private final boolean isValueGt1;
+
     @Child private WriteIndexedVectorNode writeVectorNode;
     @Child private PositionsCheckNode positionsCheckNode;
     @Child private CastNode castVectorNode;
@@ -100,7 +102,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     @Child private DeleteElementsNode deleteElementsNode;
     @Child private SetNamesAttributeNode setNamesNode;
 
-    CachedReplaceVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, Class<?> valueClass, RType valueType, boolean updatePositionNames, boolean recursive) {
+    CachedReplaceVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, Class<?> valueClass, RType valueType, boolean updatePositionNames, boolean recursive, boolean isValueGt1) {
         super(mode, vector, positions, recursive);
 
         if (numberOfDimensions == 1 && positions[0] instanceof String || positions[0] instanceof RAbstractStringVector) {
@@ -112,6 +114,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         this.vectorClass = vector.getClass();
         this.valueClass = valueClass;
         this.valueType = valueType;
+        this.isValueGt1 = isValueGt1;
         this.castType = resolveCastVectorType();
         verifyCastType(this.castType);
         this.castVectorNode = createCastVectorNode();
@@ -124,9 +127,13 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
     }
 
+    public static boolean isValueLengthGreaterThanOne(Object values) {
+        return (values instanceof RAbstractContainer) && ((RAbstractContainer) values).getLength() > 1;
+    }
+
     public boolean isSupported(Object target, Object[] positions, Object values) {
         if (vectorClass == target.getClass() && values.getClass() == valueClass) {
-            return positionsCheckNode.isSupported(positions);
+            return positionsCheckNode.isSupported(positions) && isValueLengthGreaterThanOne(values) == isValueGt1;
         }
         return false;
     }
@@ -394,7 +401,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             return RType.maxPrecedence(value, vector);
         } else if (vector.isNull() || value.isNull()) {
             if (!value.isNull()) {
-                return (mode == ElementAccessMode.FIELD_SUBSCRIPT) ? RType.List : value;
+                return (mode == ElementAccessMode.FIELD_SUBSCRIPT || (mode == ElementAccessMode.SUBSCRIPT && isValueGt1)) ? RType.List : value;
             }
             if (mode.isSubscript() && numberOfDimensions > 1) {
                 return null;
@@ -562,7 +569,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
         if (copyPositionNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            copyPositionNames = insert(new CachedReplaceVectorNode(mode, names, positions, positionNames.getClass(), positionNames.getRType(), false, recursive));
+            copyPositionNames = insert(new CachedReplaceVectorNode(mode, names, positions, positionNames.getClass(), positionNames.getRType(), false, recursive, positionNames.getLength() > 1));
         }
         assert copyPositionNames.isSupported(names, positions, positionNames);
         RAbstractStringVector newNames = (RAbstractStringVector) copyPositionNames.apply(names, positions, positionNames);

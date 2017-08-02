@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -170,6 +171,10 @@ public class TestUtilities {
         return new NodeHandle<>(Truffle.getRuntime().createCallTarget(new TestRoot<>(node, invoke)));
     }
 
+    public static <T extends Node> NodeHandle<T> createHandle(T node, NodeAdapter<T> invoke, TruffleRLanguage language) {
+        return new NodeHandle<>(Truffle.getRuntime().createCallTarget(new TestRoot<>(node, invoke, language)));
+    }
+
     public interface NodeAdapter<T extends Node> {
 
         Object invoke(T node, Object... args);
@@ -204,7 +209,11 @@ public class TestUtilities {
         @Child private T node;
 
         TestRoot(T node, NodeAdapter<T> invoke) {
-            super(TruffleRLanguageImpl.getCurrentLanguage());
+            this(node, invoke, TruffleRLanguageImpl.getCurrentLanguage());
+        }
+
+        TestRoot(T node, NodeAdapter<T> invoke, TruffleRLanguage language) {
+            super(language);
             this.node = node;
             this.invoke = invoke;
         }

@@ -65,6 +65,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.shouldBe;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.squareMatrix;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -78,6 +79,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.oracle.truffle.api.vm.PolyglotEngine.Language;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.InitialPhaseBuilder;
@@ -92,6 +94,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -106,6 +109,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.NewEnv;
+import com.oracle.truffle.r.test.generate.FastRSession;
 
 /**
  * Tests the cast pipelines and also that the samples generation process matches the intended
@@ -125,7 +129,10 @@ public class CastBuilderTest {
     private CastNode castNode;
     private PreinitialPhaseBuilder arg;
 
+    private static FastRSession fastRSession;
+
     static {
+        fastRSession = FastRSession.create();
         CastNode.testingMode();
     }
 
@@ -887,12 +894,23 @@ public class CastBuilderTest {
         testPipeline();
     }
 
+    @Test
+    public void testIntOrRawPassing() {
+        arg.mustNotBeNull().mustBe(integerValue().or(rawValue()));
+        assertCastPreserves(1);
+        assertCastPreserves(RDataFactory.createIntVector(new int[]{1, 2}, true));
+        assertCastPreserves(RDataFactory.createRaw((byte) 2));
+        assertCastPreserves(RDataFactory.createRawVector(new byte[]{1, 2}));
+        assertCastFail(RNull.instance);
+        assertCastFail("abc");
+    }
+
     /**
      * Casts given object using the configured pipeline in {@link #arg}.
      */
     private Object cast(Object a) {
         CastNode.clearLastWarning();
-        NodeHandle<CastNode> argCastNodeHandle = TestUtilities.createHandle(getCastNode(), (node, args) -> node.doCast(args[0]));
+        NodeHandle<CastNode> argCastNodeHandle = TestUtilities.createHandle(getCastNode(), (node, args) -> node.doCast(args[0]), fastRSession.getContext().getLanguage());
         return argCastNodeHandle.call(a);
     }
 

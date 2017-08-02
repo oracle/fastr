@@ -76,6 +76,8 @@ void invalidateNativeArray(JNIEnv *env, SEXP oldObj);
 // Should be called before up calling to arbitrary code, e.g. Rf_eval,
 // to copy back the arrays into their Java counterparts
 void updateNativeArrays(JNIEnv *env);
+// Copies back the array to the Java counterpart
+void updateNativeArray(JNIEnv *env, SEXP obj);
 
 SEXP addGlobalRef(JNIEnv *env, SEXP obj, int permanent);
 

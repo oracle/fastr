@@ -53,4 +53,10 @@ public class TestBuiltin_vapply extends TestBase {
         assertEval("{ m <- matrix(c(1,2,3,4,5,6),2) ; apply(m,1,sum) }");
         assertEval("{ m <- matrix(c(1,2,3,4,5,6),2) ; apply(m,2,sum) }");
     }
+
+    @Test
+    public void testVapplyNames() {
+        assertEval("{ a <- vapply(list(a=1:20,b=1:20), function (x) x, FUN.VALUE=1:20); attributes(a); a[1:5] }");
+        assertEval("{ b <- list(a=structure(c(1:3), names=c('x','y')),b=structure(c(1:3), names=c('x2','y2','z2'))); a <- vapply(b, function (x) x, FUN.VALUE=1:3); attributes(a); a[1:5] }");
+    }
 }

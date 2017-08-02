@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,6 +53,16 @@ public class TestSimpleSequences extends TestBase {
         assertEval("{ 1:(1:3) }");
         assertEval("{ (1:3):3 }");
         assertEval("{ (1:3):(1:3) }");
+        assertEval("{ 0L:Inf }");
+        assertEval("{ 0L:-Inf }");
+        assertEval("{ -Inf:0L }");
+        assertEval("{ -Inf:Inf }");
+        assertEval("{ 0:Inf }");
+        assertEval("{ 0:-Inf }");
+        assertEval("{ -Inf:0 }");
+        assertEval("{ 1L:(0/0) }");
+        assertEval("{ (0/0):1L }");
+        assertEval("{ (0/0):(0/0) }");
     }
 
     @Test

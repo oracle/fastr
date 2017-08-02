@@ -137,7 +137,7 @@ public abstract class Signif extends RBuiltinNode.Arg2 {
 
     @TruffleBoundary
     private static double bigIntegerSignif(int digits, double val) {
-        BigDecimal bigDecimalVal = new BigDecimal(val, new MathContext(digits, RoundingMode.HALF_UP));
+        BigDecimal bigDecimalVal = new BigDecimal(val, new MathContext(digits, RoundingMode.HALF_EVEN));
         return bigDecimalVal.doubleValue();
     }
 }

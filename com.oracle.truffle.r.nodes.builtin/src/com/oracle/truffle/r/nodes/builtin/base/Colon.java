@@ -25,12 +25,10 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -51,6 +49,7 @@ import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -93,7 +92,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    abstract static class ColonInternal extends Node {
+    abstract static class ColonInternal extends RBaseNode {
 
         private final NACheck leftNA = NACheck.create();
         private final NACheck rightNA = NACheck.create();
@@ -102,8 +101,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
 
         private void naCheck(boolean na) {
             if (na) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.error(this, RError.Message.NA_OR_NAN);
+                error(RError.Message.NA_OR_NAN);
             }
         }
 
@@ -116,6 +114,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
             leftNA.enable(left);
             rightNA.enable(right);
             naCheck(leftNA.check(left) || rightNA.check(right));
+            checkVecLength(left, right);
             return RDataFactory.createAscendingRange(left, right);
         }
 
@@ -124,14 +123,38 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
             leftNA.enable(left);
             rightNA.enable(right);
             naCheck(leftNA.check(left) || rightNA.check(right));
+            checkVecLength(left, right);
             return RDataFactory.createDescendingRange(left, right);
         }
 
-        @Specialization(guards = "asDouble(left) <= right")
+        protected static boolean isNaN(double x) {
+            return Double.isNaN(x);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isNaN(right)")
+        protected RSequence colonRightNaN(int left, double right) {
+            throw error(Message.NA_OR_NAN);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isNaN(left)")
+        protected RSequence colonLeftNaN(double left, int right) {
+            throw error(Message.NA_OR_NAN);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isNaN(left) || isNaN(right)")
+        protected RSequence colonLeftOrRightNaN(double left, double right) {
+            throw error(Message.NA_OR_NAN);
+        }
+
+        @Specialization(guards = {"!isNaN(left)", "asDouble(left) <= right"})
         protected RSequence colonAscending(int left, double right,
                         @Cached("createBinaryProfile()") ConditionProfile isDouble) {
             leftNA.enable(left);
             naCheck(leftNA.check(left) || RRuntime.isNAorNaN(right));
+            checkVecLength(left, right);
             if (isDouble.profile(right > Integer.MAX_VALUE)) {
                 return RDataFactory.createAscendingRange(left, right);
             } else {
@@ -139,11 +162,12 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
             }
         }
 
-        @Specialization(guards = "asDouble(left) > right")
+        @Specialization(guards = {"!isNaN(left)", "asDouble(left) > right"})
         protected RSequence colonDescending(int left, double right,
                         @Cached("createBinaryProfile()") ConditionProfile isDouble) {
             leftNA.enable(left);
             naCheck(leftNA.check(left) || RRuntime.isNAorNaN(right));
+            checkVecLength(left, right);
             if (isDouble.profile(right <= Integer.MIN_VALUE)) {
                 return RDataFactory.createDescendingRange(left, right);
             } else {
@@ -151,30 +175,41 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
             }
         }
 
-        @Specialization(guards = "left <= asDouble(right)")
+        @Specialization(guards = {"!isNaN(left)", "left <= asDouble(right)"})
         protected RDoubleSequence colonAscending(double left, int right) {
             rightNA.enable(right);
             naCheck(RRuntime.isNAorNaN(left) || rightNA.check(right));
+            checkVecLength(left, right);
             return RDataFactory.createAscendingRange(left, right);
         }
 
-        @Specialization(guards = "left > asDouble(right)")
+        @Specialization(guards = {"!isNaN(left)", "left > asDouble(right)"})
         protected RDoubleSequence colonDescending(double left, int right) {
             rightNA.enable(right);
             naCheck(RRuntime.isNAorNaN(left) || rightNA.check(right));
+            checkVecLength(left, right);
             return RDataFactory.createDescendingRange(left, right);
         }
 
-        @Specialization(guards = "left <= right")
+        @Specialization(guards = {"!isNaN(left)", "!isNaN(right)", "left <= right"})
         protected RDoubleSequence colonAscending(double left, double right) {
             naCheck(RRuntime.isNAorNaN(left) || RRuntime.isNAorNaN(right));
+            checkVecLength(left, right);
             return RDataFactory.createAscendingRange(left, right);
         }
 
-        @Specialization(guards = "left > right")
+        @Specialization(guards = {"!isNaN(left)", "!isNaN(right)", "left > right"})
         protected RDoubleSequence colonDescending(double left, double right) {
             naCheck(RRuntime.isNAorNaN(left) || RRuntime.isNAorNaN(right));
+            checkVecLength(left, right);
             return RDataFactory.createDescendingRange(left, right);
+        }
+
+        private void checkVecLength(double from, double to) {
+            double r = Math.abs(to - from);
+            if (r >= Integer.MAX_VALUE) {
+                throw error(RError.Message.TOO_LONG_VECTOR);
+            }
         }
     }
 
