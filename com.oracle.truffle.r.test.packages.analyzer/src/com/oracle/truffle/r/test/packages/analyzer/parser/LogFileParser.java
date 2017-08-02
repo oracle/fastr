@@ -368,7 +368,6 @@ public class LogFileParser {
             assert startLineNr >= 0;
             startLocation = new Location(file, startLineNr);
         }
-// List<Problem> problems = new LinkedList<>();
         Map<LineDetector, Collection<Problem>> problems = new HashMap<>();
         Collection<LineDetector> collection = detectorsTable.get(start.name());
         if (collection != null) {
