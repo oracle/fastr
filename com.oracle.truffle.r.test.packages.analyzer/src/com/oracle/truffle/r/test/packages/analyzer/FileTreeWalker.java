@@ -38,6 +38,7 @@ import com.oracle.truffle.r.test.packages.analyzer.detectors.InstallationProblem
 import com.oracle.truffle.r.test.packages.analyzer.detectors.RErrorDetector;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.RInternalErrorDetector;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.SegfaultDetector;
+import com.oracle.truffle.r.test.packages.analyzer.detectors.SymbolLookupErrorDetector;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.UnsupportedSpecializationDetector;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackage;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
@@ -152,6 +153,7 @@ public class FileTreeWalker {
         lfParser.addDetector(UnsupportedSpecializationDetector.INSTANCE);
         lfParser.addDetector(RInternalErrorDetector.INSTANCE);
         lfParser.addTestResultDetector(DiffDetector.INSTANCE);
+        lfParser.addDetector(SymbolLookupErrorDetector.INSTANCE);
 
         LogFile parseLogFile = lfParser.parseLogFile();
         Collection<Problem> problems = parseLogFile.collectProblems();

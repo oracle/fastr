@@ -60,6 +60,40 @@ public abstract class Problem {
         return detector;
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((location == null) ? 0 : location.hashCode());
+        result = prime * result + ((getSummary() == null) ? 0 : getSummary().hashCode());
+        result = prime * result + ((getDetails() == null) ? 0 : getDetails().hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Problem other = (Problem) obj;
+        if (!Objects.equals(location, other.location)) {
+            return false;
+        }
+        if (!Objects.equals(getSummary(), other.getSummary())) {
+            return false;
+        }
+        if (!Objects.equals(getDetails(), other.getDetails())) {
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Returns a one-line summary of the problem (e.g.
      * <q>RuntimeException occurred</q>).
