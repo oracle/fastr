@@ -91,7 +91,7 @@ public class HTMLDumper extends AbstractDumper {
             allProblems = eliminateRedundantProblems(allProblems);
 
             Tag errorDistributionTable = generateTypeDistributionTable(builder, groupByType(allProblems));
-            Tag pkgDistributionTable = generateTestRunDistributionTable(builder, groupByTestRuns(allTestRuns, allProblems));
+            Tag pkgDistributionTable = generateTestRunDistributionTable(indexFile, builder, groupByTestRuns(allTestRuns, allProblems));
             Tag distrinctProblemDistributionTable = generateDistinctProblemDistribution(builder, groupByProblemContent(allProblems));
 
             builder.html(builder.head(builder.title(TITLE)), builder.body(
@@ -127,8 +127,8 @@ public class HTMLDumper extends AbstractDumper {
         return problems;
     }
 
-    private Tag generateTestRunDistributionTable(HTMLBuilder builder, Map<RPackageTestRun, List<Problem>> groupByPkg) {
-        List<RPackageTestRun> collect = groupByPkg.keySet().stream().sorted((a, b) -> Integer.compare(groupByPkg.get(b).size(), groupByPkg.get(a).size())).collect(Collectors.toList());
+    private Tag generateTestRunDistributionTable(Path indexFile, HTMLBuilder builder, Map<RPackageTestRun, List<Problem>> groupByTestRun) {
+        List<RPackageTestRun> collect = groupByTestRun.keySet().stream().sorted((a, b) -> Integer.compare(groupByTestRun.get(b).size(), groupByTestRun.get(a).size())).collect(Collectors.toList());
 
         Tag table = builder.table(builder.tr(
                         builder.th("Package"),
@@ -138,8 +138,16 @@ public class HTMLDumper extends AbstractDumper {
         table.addAttribute("border", "1");
 
         for (RPackageTestRun testRun : collect) {
-            String pkgFileName = dumpTableFile(testRun.getPackage().toString() + "_" + testRun.getNumber() + ".html", testRun.toString(), testRun, groupByPkg);
-            int n = groupByPkg.get(testRun).size();
+            int n = groupByTestRun.get(testRun).size();
+            String pkgFileName;
+            if (n > 0) {
+                pkgFileName = dumpTableFile(testRun.getPackage().toString() + "_" + testRun.getNumber() + ".html", testRun.toString(), testRun, groupByTestRun);
+            } else {
+                Path relativeLocation = indexFile.relativize(testRun.getLogFile());
+                relativeLocation = relativeLocation.subpath(1, relativeLocation.getNameCount());
+                pkgFileName = relativeLocation.toString();
+            }
+
             Tag tableRow = builder.tr(
                             builder.td(builder.a(pkgFileName, testRun.getPackage().toString())),
                             builder.td(Integer.toString(testRun.getNumber())),

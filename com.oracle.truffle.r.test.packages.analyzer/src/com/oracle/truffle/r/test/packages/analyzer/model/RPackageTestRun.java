@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer.model;
 
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -32,6 +33,7 @@ import com.oracle.truffle.r.test.packages.analyzer.Problem;
  */
 public class RPackageTestRun {
 
+    private Path logFile;
     private final RPackage pkg;
     private final int nr;
     private Collection<Problem> problems;
@@ -108,6 +110,14 @@ public class RPackageTestRun {
             return false;
         }
         return true;
+    }
+
+    public void setLogFile(Path logFile) {
+        this.logFile = logFile;
+    }
+
+    public Path getLogFile() {
+        return logFile;
     }
 
 }

@@ -158,6 +158,7 @@ public class FileTreeWalker {
         LogFile parseLogFile = lfParser.parseLogFile();
         Collection<Problem> problems = parseLogFile.collectProblems();
         pkgTestRun.setSuccess(parseLogFile.isSuccess());
+        pkgTestRun.setLogFile(parseLogFile.getPath());
 
         // log problems
         LOGGER.fine("Overall test result: " + (pkgTestRun.isSuccess() ? "OK" : "FAILED"));
