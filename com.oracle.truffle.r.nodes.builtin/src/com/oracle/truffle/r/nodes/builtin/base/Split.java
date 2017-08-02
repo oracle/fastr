@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * The {@code split} internal. Internal version of 'split' is invoked from 'split.default' function
@@ -58,7 +59,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 public abstract class Split extends RBuiltinNode.Arg2 {
 
     @Child private RFactorNodes.GetLevels getLevelNode = new RFactorNodes.GetLevels();
-    @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     @SuppressWarnings("unused") private final ConditionProfile noStringLevels = ConditionProfile.createBinaryProfile();
     private final ConditionProfile namesProfile = ConditionProfile.createBinaryProfile();
@@ -94,12 +95,12 @@ public abstract class Split extends RBuiltinNode.Arg2 {
             collect[collectResultSize[resultIndex]++] = x.getDataAt(i);
         }
 
-        // assemble result vectors and level names
         Object[] results = new Object[nLevels];
+        RStringVector[] resultNames = getNames(x, factor, nLevels, collectResultSize);
         for (int i = 0; i < nLevels; i++) {
-            results[i] = RDataFactory.createList(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]));
+            results[i] = RDataFactory.createList(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]),
+                            (resultNames != null) ? resultNames[i] : null);
         }
-
         return RDataFactory.createList(results, names);
     }
 
@@ -128,28 +129,11 @@ public abstract class Split extends RBuiltinNode.Arg2 {
         }
 
         Object[] results = new Object[nLevels];
-        RStringVector xNames = getNames.getNames(x);
-        if (namesProfile.profile(xNames != null)) {
-            String[][] resultNames = new String[nLevels][];
-            int[] resultNamesIdxs = new int[nLevels];
-            for (int i = 0; i < nLevels; i++) {
-                resultNames[i] = new String[collectResultSize[i]];
-            }
-            for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factor.length)) {
-                int resultIndex = factor[fi] - 1; // a factor is a 1-based int vector
-                resultNames[resultIndex][resultNamesIdxs[resultIndex]++] = xNames.getDataAt(i);
-            }
-            for (int i = 0; i < nLevels; i++) {
-                results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete(),
-                                RDataFactory.createStringVector(resultNames[i], xNames.isComplete()));
-            }
-        } else {
-            // assemble result vectors and level names
-            for (int i = 0; i < nLevels; i++) {
-                results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete());
-            }
+        RStringVector[] resultNames = getNames(x, factor, nLevels, collectResultSize);
+        for (int i = 0; i < nLevels; i++) {
+            results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete(),
+                            (resultNames != null) ? resultNames[i] : null);
         }
-
         return RDataFactory.createList(results, names);
     }
 
@@ -177,12 +161,12 @@ public abstract class Split extends RBuiltinNode.Arg2 {
             collect[collectResultSize[resultIndex]++] = x.getDataAt(i);
         }
 
-        // assemble result vectors and level names
         Object[] results = new Object[nLevels];
+        RStringVector[] resultNames = getNames(x, factor, nLevels, collectResultSize);
         for (int i = 0; i < nLevels; i++) {
-            results[i] = RDataFactory.createDoubleVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
+            results[i] = RDataFactory.createDoubleVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR,
+                            (resultNames != null) ? resultNames[i] : null);
         }
-
         return RDataFactory.createList(results, names);
     }
 
@@ -210,12 +194,12 @@ public abstract class Split extends RBuiltinNode.Arg2 {
             collect[collectResultSize[resultIndex]++] = x.getDataAt(i);
         }
 
-        // assemble result vectors and level names
         Object[] results = new Object[nLevels];
+        RStringVector[] resultNames = getNames(x, factor, nLevels, collectResultSize);
         for (int i = 0; i < nLevels; i++) {
-            results[i] = RDataFactory.createStringVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
+            results[i] = RDataFactory.createStringVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR,
+                            (resultNames != null) ? resultNames[i] : null);
         }
-
         return RDataFactory.createList(results, names);
     }
 
@@ -243,12 +227,12 @@ public abstract class Split extends RBuiltinNode.Arg2 {
             collect[collectResultSize[resultIndex]++] = x.getDataAt(i);
         }
 
-        // assemble result vectors and level names
         Object[] results = new Object[nLevels];
+        RStringVector[] resultNames = getNames(x, factor, nLevels, collectResultSize);
         for (int i = 0; i < nLevels; i++) {
-            results[i] = RDataFactory.createLogicalVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete());
+            results[i] = RDataFactory.createLogicalVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete(),
+                            (resultNames != null) ? resultNames[i] : null);
         }
-
         return RDataFactory.createList(results, names);
     }
 
@@ -276,13 +260,34 @@ public abstract class Split extends RBuiltinNode.Arg2 {
             collect[collectResultSize[resultIndex]++] = x.getDataAt(i).getValue();
         }
 
-        // assemble result vectors and level names
         Object[] results = new Object[nLevels];
+        RStringVector[] resultNames = getNames(x, factor, nLevels, collectResultSize);
         for (int i = 0; i < nLevels; i++) {
-            results[i] = RDataFactory.createRawVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]));
+            results[i] = RDataFactory.createRawVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]),
+                            (resultNames != null) ? resultNames[i] : null);
         }
-
         return RDataFactory.createList(results, names);
+    }
+
+    private RStringVector[] getNames(RAbstractVector x, int[] factor, int nLevels, int[] collectResultSize) {
+        RStringVector xNames = getNamesNode.getNames(x);
+        if (namesProfile.profile(xNames != null)) {
+            String[][] namesArr = new String[nLevels][];
+            int[] resultNamesIdxs = new int[nLevels];
+            for (int i = 0; i < nLevels; i++) {
+                namesArr[i] = new String[collectResultSize[i]];
+            }
+            for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factor.length)) {
+                int resultIndex = factor[fi] - 1; // a factor is a 1-based int vector
+                namesArr[resultIndex][resultNamesIdxs[resultIndex]++] = xNames.getDataAt(i);
+            }
+            RStringVector[] resultNames = new RStringVector[nLevels];
+            for (int i = 0; i < nLevels; i++) {
+                resultNames[i] = RDataFactory.createStringVector(namesArr[i], xNames.isComplete());
+            }
+            return resultNames;
+        }
+        return null;
     }
 
     private static int getNLevels(RStringVector levels) {
