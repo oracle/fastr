@@ -43,6 +43,7 @@ import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.ExitException;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -91,6 +92,7 @@ public final class FastRSession implements RSession {
 
     public static FastRSession create() {
         if (singleton == null) {
+            FastROptions.setValue("SpawnUsesPolyglot", true);
             singleton = new FastRSession();
         }
         return singleton;

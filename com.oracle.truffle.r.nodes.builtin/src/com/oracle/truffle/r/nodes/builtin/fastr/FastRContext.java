@@ -142,7 +142,7 @@ public class FastRContext {
             int[] multiSlotIndices = new int[length];
             for (int i = 0; i < length; i++) {
                 ChildContextInfo info = createContextInfo(contextKind);
-                if (FastROptions.SpawnUsesPloyglot.getBooleanValue()) {
+                if (FastROptions.SpawnUsesPolyglot.getBooleanValue()) {
                     threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL), true);
                 } else {
                     threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
