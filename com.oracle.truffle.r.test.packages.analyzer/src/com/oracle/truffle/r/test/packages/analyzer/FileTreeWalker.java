@@ -50,10 +50,13 @@ public class FileTreeWalker {
 
     private Collection<LogFileParseException> parseErrors;
 
+    /** List of test run directories that were candidates for analysis. */
+    private Collection<Path> consideredTestRuns;
+
     public Collection<RPackage> ftw(Path root, Date sinceDate, String glob) throws IOException {
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(root, glob)) {
-            parseErrors = new ArrayList<>();
+            reset();
             Collection<RPackage> pkgs = new LinkedList<>();
             for (Path p : stream) {
                 if (Files.isDirectory(p)) {
@@ -61,8 +64,14 @@ public class FileTreeWalker {
                     pkgs.addAll(pkgVersions);
                 }
             }
+            LOGGER.info("Total number of analysis candidates: " + consideredTestRuns.size());
             return pkgs;
         }
+    }
+
+    private void reset() {
+        parseErrors = new ArrayList<>();
+        consideredTestRuns = new ArrayList<>();
     }
 
     protected Collection<RPackage> visitPackageRoot(Path pkgRoot, Date sinceDate) throws IOException {
@@ -111,6 +120,7 @@ public class FileTreeWalker {
             FileTime lastModifiedTime = Files.getLastModifiedTime(logFile);
             if (isNewerThan(lastModifiedTime, sinceDate)) {
                 Collection<Problem> problems = parseLogFile(logFile, pkgTestRun);
+                consideredTestRuns.add(testRunDir);
                 pkgTestRun.setProblems(problems);
                 return pkgTestRun;
             } else {
@@ -158,6 +168,10 @@ public class FileTreeWalker {
 
     public Collection<LogFileParseException> getParseErrors() {
         return parseErrors;
+    }
+
+    public Collection<Path> getConsideredTestRuns() {
+        return consideredTestRuns;
     }
 
 }

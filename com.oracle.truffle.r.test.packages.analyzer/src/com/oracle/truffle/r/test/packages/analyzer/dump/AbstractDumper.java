@@ -24,11 +24,15 @@ package com.oracle.truffle.r.test.packages.analyzer.dump;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
+import com.oracle.truffle.r.test.packages.analyzer.detectors.Detector;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackage;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParseException;
@@ -58,6 +62,44 @@ public abstract class AbstractDumper {
 
     protected Map<ProblemContent, List<Problem>> groupByProblemContent(Collection<Problem> problems) {
         return problems.stream().collect(Collectors.groupingBy(p -> new ProblemContent(p)));
+    }
+
+    protected static Collection<Problem> eliminateRedundantProblems(Collection<Problem> problems) {
+        // build detector hierarchy
+        Set<Detector<?>> collect = problems.stream().map(p -> p.getDetector()).collect(Collectors.toSet());
+        Map<Detector<?>, Collection<Detector<?>>> hierarchy = new HashMap<>();
+        for (Detector<?> detector : collect) {
+            hierarchy.put(detector, collectChildrenRecursive(detector));
+        }
+
+        Map<Detector<?>, List<Problem>> collect2 = problems.stream().collect(Collectors.groupingBy(p -> p.getDetector()));
+
+        return problems.stream().filter(p -> isIncluded(p, hierarchy, collect2)).collect(Collectors.toList());
+    }
+
+    /**
+     * Returns {@code false} if any of the problem detector's children has reported a problem in the
+     * same location. Returns {@code true} otherwise.
+     */
+    private static boolean isIncluded(Problem p, Map<Detector<?>, Collection<Detector<?>>> hierarchy, Map<Detector<?>, List<Problem>> problemsTable) {
+        Collection<Detector<?>> children = hierarchy.get(p.getDetector());
+        for (Detector<?> childDetector : children) {
+            if (problemsTable.containsKey(childDetector)) {
+                for (Problem childProblem : problemsTable.get(childDetector)) {
+                    if (childProblem.getLocation().equals(p.getLocation())) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    private static Collection<Detector<?>> collectChildrenRecursive(Detector<?> detector) {
+        Collection<Detector<?>> all = new LinkedList<>();
+        all.addAll(detector.getChildren());
+        detector.getChildren().stream().forEach(c -> all.addAll(collectChildrenRecursive(c)));
+        return all;
     }
 
     protected static class ProblemContent {

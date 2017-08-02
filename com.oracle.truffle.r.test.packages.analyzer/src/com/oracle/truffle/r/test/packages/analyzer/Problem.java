@@ -25,6 +25,7 @@ package com.oracle.truffle.r.test.packages.analyzer;
 import java.util.Comparator;
 import java.util.Objects;
 
+import com.oracle.truffle.r.test.packages.analyzer.detectors.Detector;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackage;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 
@@ -35,10 +36,12 @@ public abstract class Problem {
 
     private final RPackageTestRun pkgTestRun;
     private final Location location;
+    private final Detector<?> detector;
 
-    protected Problem(RPackageTestRun pkg, Location location) {
+    protected Problem(RPackageTestRun pkg, Detector<?> detector, Location location) {
         this.pkgTestRun = Objects.requireNonNull(pkg);
         this.location = Objects.requireNonNull(location);
+        this.detector = Objects.requireNonNull(detector);
     }
 
     public RPackage getPackage() {
@@ -51,6 +54,10 @@ public abstract class Problem {
 
     public Location getLocation() {
         return location;
+    }
+
+    public Detector<?> getDetector() {
+        return detector;
     }
 
     /**

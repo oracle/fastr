@@ -68,7 +68,7 @@ public class RErrorDetector extends LineDetector {
                     message = it.next();
                     ++i;
                 }
-                problems.add(new RErrorProblem(pkg, new Location(startLocation.file, i + lineOffset), callString, message));
+                problems.add(new RErrorProblem(pkg, this, new Location(startLocation.file, i + lineOffset), callString, message));
             }
         }
 
@@ -80,8 +80,8 @@ public class RErrorDetector extends LineDetector {
         private final String callString;
         private final String message;
 
-        protected RErrorProblem(RPackageTestRun pkg, Location location, String callString, String message) {
-            super(pkg, location);
+        protected RErrorProblem(RPackageTestRun pkg, RErrorDetector detector, Location location, String callString, String message) {
+            super(pkg, detector, location);
             this.callString = callString;
             this.message = message;
         }

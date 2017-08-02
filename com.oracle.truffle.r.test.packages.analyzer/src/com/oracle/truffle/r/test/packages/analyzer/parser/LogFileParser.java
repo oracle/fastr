@@ -25,6 +25,7 @@ package com.oracle.truffle.r.test.packages.analyzer.parser;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -34,12 +35,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.Detector;
+import com.oracle.truffle.r.test.packages.analyzer.detectors.DummyDetector;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.LineDetector;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 import com.oracle.truffle.r.test.packages.analyzer.parser.DiffParser.DiffChunk;
@@ -139,7 +142,7 @@ public class LogFileParser {
                 consumeLine();
                 int idx = curLine.text.indexOf(Token.CONTENT_MALFORMED.linePrefix);
                 String fileNameStr = curLine.text.substring(idx + Token.CONTENT_MALFORMED.linePrefix.length()).trim();
-                checkResults.problems.add(new ContentMalformedProblem(pkg, getCurrentLocation(), fileNameStr));
+                checkResults.problems.add(new ContentMalformedProblem(pkg, DummyDetector.INSTANCE, getCurrentLocation(), fileNameStr));
             } else if (la.text.contains(Token.OUTPUT_MISMATCH_FASTR.linePrefix)) {
                 consumeLine();
                 // extract file name of output file
@@ -149,16 +152,29 @@ public class LogFileParser {
                 Path outputFile = logFile.path.resolveSibling(Paths.get("testfiles", "fastr", fileNameStr));
 
                 // report the problem
-                checkResults.problems.add(new OutputMismatchProblem(pkg, getCurrentLocation(), fileNameStr));
+                checkResults.problems.add(new OutputMismatchProblem(pkg, DummyDetector.INSTANCE, getCurrentLocation(), fileNameStr));
 
-                if (!Files.isReadable(outputFile)) {
-                    LOGGER.warning("Cannot read output file " + outputFile);
-
-                    // consume any lines to be able to continue
-                    collectBody(Token.END_CHECKING);
-                } else {
+                if (Files.isReadable(outputFile)) {
                     checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, outputFile, 0, Files.readAllLines(outputFile)));
+                } else {
+                    // try to find the file anywhere in the test run directory (there were some
+                    // cases)
+                    Optional<Path> findFirst = null;
+                    try {
+                        findFirst = Files.find(logFile.path.getParent(), 3, (path, attr) -> path.getFileName().equals(outputFile.getFileName())).findFirst();
+                        if (findFirst.isPresent()) {
+                            checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, findFirst.get(), 0, Files.readAllLines(findFirst.get())));
+                        }
+                    } catch (NoSuchFileException e) {
+                    }
+                    if (findFirst == null || !findFirst.isPresent()) {
+                        LOGGER.warning("Cannot read output file " + outputFile);
+
+                        // consume any lines to be able to continue
+                        collectBody(Token.END_CHECKING);
+                    }
                 }
+
                 checkResults.setSuccess(false);
             } else {
                 break;
@@ -352,23 +368,24 @@ public class LogFileParser {
             assert startLineNr >= 0;
             startLocation = new Location(file, startLineNr);
         }
-        List<Problem> problems = new LinkedList<>();
+        Map<LineDetector, Collection<Problem>> problems = new HashMap<>();
         Collection<LineDetector> collection = detectorsTable.get(start.name());
         if (collection != null) {
             for (LineDetector detector : collection) {
                 Collection<Problem> detectedProblems = detector.detect(pkg, startLocation, body);
                 if (detectedProblems != null) {
-                    problems.addAll(detectedProblems);
+                    problems.put(detector, detectedProblems);
                 }
             }
         }
         for (LineDetector detector : anyDetectors) {
             Collection<Problem> detectedProblems = detector.detect(pkg, startLocation, body);
             if (detectedProblems != null) {
-                problems.addAll(detectedProblems);
+                problems.put(detector, detectedProblems);
             }
         }
-        return problems;
+
+        return problems.values().stream().flatMap(p -> p.stream()).collect(Collectors.toList());
     }
 
     private Collection<Problem> applyTestResultDetectors(List<DiffChunk> diffChunk) {
@@ -663,8 +680,8 @@ public class LogFileParser {
 
         private final String details;
 
-        protected OutputMismatchProblem(RPackageTestRun pkg, Location location, String details) {
-            super(pkg, location);
+        protected OutputMismatchProblem(RPackageTestRun pkg, Detector<?> detector, Location location, String details) {
+            super(pkg, detector, location);
             this.details = details;
         }
 
@@ -698,8 +715,8 @@ public class LogFileParser {
 
         private final String details;
 
-        protected ContentMalformedProblem(RPackageTestRun pkg, Location location, String details) {
-            super(pkg, location);
+        protected ContentMalformedProblem(RPackageTestRun pkg, Detector<?> detector, Location location, String details) {
+            super(pkg, detector, location);
             this.details = details;
         }
 

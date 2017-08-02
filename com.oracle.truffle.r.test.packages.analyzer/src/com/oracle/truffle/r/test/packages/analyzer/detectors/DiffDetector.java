@@ -60,7 +60,7 @@ public class DiffDetector extends Detector<List<DiffChunk>> {
             } else {
                 summary = "Major difference in test output";
             }
-            problems.add(new DiffProblem(pkg, diffChunk.getLocation(), summary, diffChunk));
+            problems.add(new DiffProblem(pkg, this, diffChunk.getLocation(), summary, diffChunk));
         }
         return problems;
     }
@@ -78,8 +78,8 @@ public class DiffDetector extends Detector<List<DiffChunk>> {
         private final String summary;
         private final DiffChunk diffChunk;
 
-        protected DiffProblem(RPackageTestRun pkg, Location location, String summary, DiffChunk diffChunk) {
-            super(pkg, location);
+        protected DiffProblem(RPackageTestRun pkg, DiffDetector detector, Location location, String summary, DiffChunk diffChunk) {
+            super(pkg, detector, location);
             this.summary = Objects.requireNonNull(summary);
             this.diffChunk = Objects.requireNonNull(diffChunk);
         }

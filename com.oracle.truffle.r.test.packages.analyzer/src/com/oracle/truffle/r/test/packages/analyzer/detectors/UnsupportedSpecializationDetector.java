@@ -60,7 +60,7 @@ public class UnsupportedSpecializationDetector extends LineDetector {
             if (matcher.find()) {
                 message = matcher.group("MSG");
                 problemStartLine = lineNr;
-                problems.add(new UnsupportedSpecializationProblem(pkg, new Location(startLocation.file, problemStartLine), message));
+                problems.add(new UnsupportedSpecializationProblem(pkg, this, new Location(startLocation.file, problemStartLine), message));
             }
             ++lineNr;
         }
@@ -69,8 +69,8 @@ public class UnsupportedSpecializationDetector extends LineDetector {
 
     private static class UnsupportedSpecializationProblem extends Problem {
 
-        protected UnsupportedSpecializationProblem(RPackageTestRun pkg, Location location, String message) {
-            super(pkg, location);
+        protected UnsupportedSpecializationProblem(RPackageTestRun pkg, UnsupportedSpecializationDetector detector, Location location, String message) {
+            super(pkg, detector, location);
             this.message = message;
         }
 
@@ -83,7 +83,7 @@ public class UnsupportedSpecializationDetector extends LineDetector {
 
         @Override
         public String getSummary() {
-            return "com.oracle.truffle.api.dsl.UnsupportedSpecializationException";
+            return "UnsupportedSpecializationException";
         }
 
         @Override

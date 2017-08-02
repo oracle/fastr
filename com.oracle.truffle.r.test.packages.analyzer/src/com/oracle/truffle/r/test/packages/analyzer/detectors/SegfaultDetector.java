@@ -49,21 +49,26 @@ public class SegfaultDetector extends LineDetector {
         boolean collect = false;
         assert body.isEmpty() || startLocation != null;
         int lineNr = startLocation != null ? startLocation.lineNr : 0;
+        boolean takeNextLine = false;
         for (String line : body) {
-            if (SIGSEGV_START.equals(line.trim())) {
+            if (line.contains(SIGSEGV_START)) {
                 collect = true;
             }
             if (collect) {
-                if (!line.isEmpty() && line.charAt(0) == '#') {
-                    segfaultMessage.append(line).append(System.lineSeparator());
-                } else {
+                if (takeNextLine) {
+                    segfaultMessage.append(line);
+                    takeNextLine = false;
+                }
+                if (line.contains("Problematic frame")) {
+                    takeNextLine = true;
+                } else if (!line.contains("#")) {
                     break;
                 }
             }
             ++lineNr;
         }
         if (collect) {
-            return Collections.singleton(new SegfaultProblem(pkg, new Location(startLocation.file, lineNr), segfaultMessage.toString()));
+            return Collections.singleton(new SegfaultProblem(pkg, this, new Location(startLocation.file, lineNr), segfaultMessage.toString()));
         }
         return Collections.emptyList();
     }
@@ -72,8 +77,8 @@ public class SegfaultDetector extends LineDetector {
 
         private final String message;
 
-        protected SegfaultProblem(RPackageTestRun pkg, Location location, String message) {
-            super(pkg, location);
+        protected SegfaultProblem(RPackageTestRun pkg, SegfaultDetector detector, Location location, String message) {
+            super(pkg, detector, location);
             this.message = message;
         }
 
