@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -50,7 +49,7 @@ public interface CRFFI {
 
     public static abstract class InvokeCNode extends RBaseNode {
 
-        enum ArgumentType {
+        public enum ArgumentType {
             VECTOR_DOUBLE,
             VECTOR_INT,
             VECTOR_LOGICAL,
@@ -71,7 +70,7 @@ public interface CRFFI {
         protected abstract void execute(NativeCallInfo nativeCallInfo, Object[] args, boolean hasStrings);
 
         @TruffleBoundary
-        private Object getNativeArgument(int index, ArgumentType type, RAbstractAtomicVector vector) {
+        protected Object getNativeArgument(int index, ArgumentType type, RAbstractAtomicVector vector) {
             CompilerAsserts.neverPartOfCompilation();
             switch (type) {
                 case VECTOR_DOUBLE: {
@@ -121,7 +120,7 @@ public interface CRFFI {
             }
         }
 
-        protected Object[] getNativeArguments(Object[] array, ArgumentType[] argTypes) {
+        private Object[] getNativeArguments(Object[] array, ArgumentType[] argTypes) {
             Object[] nativeArgs = new Object[array.length];
             for (int i = 0; i < array.length; i++) {
                 nativeArgs[i] = getNativeArgument(i, argTypes[i], (RAbstractAtomicVector) array[i]);
@@ -130,7 +129,7 @@ public interface CRFFI {
         }
 
         @TruffleBoundary
-        private static Object postProcessArgument(ArgumentType type, RAbstractAtomicVector vector, Object nativeArgument) {
+        protected Object postProcessArgument(ArgumentType type, RAbstractAtomicVector vector, Object nativeArgument) {
             switch (type) {
                 case VECTOR_STRING:
                     return ((RAbstractStringVector) vector).materialize().copyResetData(decodeStrings((byte[][]) nativeArgument));
@@ -151,7 +150,7 @@ public interface CRFFI {
             }
         }
 
-        protected Object[] postProcessArguments(Object[] array, ArgumentType[] argTypes, Object[] nativeArgs) {
+        private Object[] postProcessArguments(Object[] array, ArgumentType[] argTypes, Object[] nativeArgs) {
             Object[] results = new Object[array.length];
             for (int i = 0; i < array.length; i++) {
                 results[i] = postProcessArgument(argTypes[i], (RAbstractAtomicVector) array[i], nativeArgs[i]);
