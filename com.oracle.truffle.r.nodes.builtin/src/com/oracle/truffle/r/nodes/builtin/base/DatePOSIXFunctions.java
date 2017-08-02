@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import java.time.LocalTime;
 
 // from GnuR datatime.c
 
@@ -427,7 +428,14 @@ public class DatePOSIXFunctions {
                     continue;
                 }
                 try {
-                    LocalDateTime time = LocalDateTime.from(parse);
+                    LocalDateTime time;
+                    try {
+                        time = LocalDateTime.from(parse);
+                    } catch (DateTimeException e) {
+                        // Try just time and use current date
+                        LocalTime tm = LocalTime.from(parse);
+                        time = LocalDateTime.of(LocalDate.now(), tm);
+                    }
                     builder.setEntry(i, time.getSecond(), time.getMinute(), time.getHour(), time.getDayOfMonth(), time.getMonthValue() - 1, time.getYear() - 1900, time.getDayOfWeek().ordinal(),
                                     time.getDayOfYear(), 0);
                     continue;
@@ -455,6 +463,10 @@ public class DatePOSIXFunctions {
 
     private static DateTimeFormatterBuilder createFormatter(String format, boolean forInput) {
         DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder();
+        if (forInput) {
+            // Opposite of STRICT mode; allows to parse single-digit hour and minute like '0:3:22'.
+            builder.parseLenient();
+        }
         boolean escaped = false;
         int i = 0;
         while (i < format.length()) {
@@ -540,9 +552,10 @@ public class DatePOSIXFunctions {
                     case 'H':
                         /*
                          * Hours as decimal number (00–23). As a special exception strings such as
-                         * 24:00:00 are accepted for input, since ISO 8601 allows these.
+                         * 24:00:00 are accepted for input, since ISO 8601 allows these. For output
+                         * 00-23 is required thus using HOUR_OF_DAY.
                          */
-                        builder.appendValue(ChronoField.CLOCK_HOUR_OF_DAY, 2);
+                        builder.appendValue(forInput ? ChronoField.CLOCK_HOUR_OF_DAY : ChronoField.HOUR_OF_DAY, 2);
                         break;
                     case 'I':
                         // Hours as decimal number (01–12).

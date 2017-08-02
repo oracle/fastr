@@ -59,8 +59,7 @@ public class TestBuiltin_prod extends TestBase {
 
     @Test
     public void testprod9() {
-        // FIXME -2147483648 returned instead of NA
-        assertEval(Ignored.ImplementationError, "argv <- list(NA_integer_);prod(argv[[1]]);");
+        assertEval("argv <- list(NA_integer_);prod(argv[[1]]);");
     }
 
     @Test
@@ -101,11 +100,8 @@ public class TestBuiltin_prod extends TestBase {
 
     @Test
     public void testProdNa() {
-        // FIXME NaN returned instead of expected NA
-        assertEval(Ignored.ImplementationError, "{prod(c(2,4,NA))}");
-        // FIXME NaN returned instead of expected NA
-        assertEval(Ignored.ImplementationError, "{prod(c(2,4,3,NA),TRUE)}");
-        // FIXME NaN returned instead of expected NA
-        assertEval(Ignored.ImplementationError, "{prod(c(1,2,3,4,5,NA),FALSE)}");
+        assertEval("{prod(c(2,4,NA))}");
+        assertEval("{prod(c(2,4,3,NA),TRUE)}");
+        assertEval("{prod(c(1,2,3,4,5,NA),FALSE)}");
     }
 }
