@@ -501,6 +501,8 @@ _commands = {
     'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'pkgtest-cmp' : [mx_fastr_pkgs.pkgtest_cmp, ['gnur_path fastr_path']],
     'r-pkgtest-analyze' : [mx_fastr_pkgs.pta, ['options']],
+    'r-findtop100' : [mx_fastr_pkgs.find_top100, ['options']],
+    'r-duppkgs' : [mx_fastr_pkgs.remove_dup_pkgs, ['options']],
     'installpkgs' : [mx_fastr_pkgs.installpkgs, '[options]'],
     'mkgramrd': [mx_fastr_mkgramrd.mkgramrd, '[options]'],
     'rcopylib' : [mx_copylib.copylib, '[]'],

@@ -558,3 +558,20 @@ def pkgtest_cmp(args):
     with open(args[1]) as f:
         fastr_content = f.readlines()
     return _fuzzy_compare(gnur_content, fastr_content)
+
+def find_top100(args):
+    libinstall = join(_fastr_suite_dir(), "top100.tmp")
+    if not os.path.exists(libinstall):
+        os.mkdir(libinstall)
+    os.environ['R_LIBS_USER'] = libinstall
+    _installpkgs(['--find-top100', '--use-installed-pkgs'])
+
+def remove_dup_pkgs(args):
+    pkgs = args[0].split(",")
+    x = dict()
+    for p in pkgs:
+        x[p] = 1
+    result = []
+    for p in x.iterkeys():
+        result += p
+    return result

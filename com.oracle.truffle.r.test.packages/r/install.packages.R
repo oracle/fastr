@@ -114,6 +114,7 @@ usage <- function() {
 					  "[--install-dependents-first]",
 					  "[--run-mode mode]",
 					  "[--pkg-filelist file]",
+					  "[--find-top100]",
 					  "[--run-tests]",
 					  "[--testdir dir]",
 					  "[--print-ok-installs]",
@@ -645,7 +646,7 @@ do.it <- function() {
 		for (pkgname in test.pkgnames) {
 			pkg <- toinstall.pkgs[pkgname, ]
 			# pretend we are accessing CRAN if list.canonical
-			list.contriburl = ifelse(list.canonical, "https://cran.r-project.org/src/contrib", contriburl)
+			list.contriburl = ifelse(list.canonical, "https://cran.r-project.org/src/contrib", pkg["Repository"])
 			cat(pkg["Package"], pkg["Version"], paste0(list.contriburl, "/", pkgname, "_", pkg["Version"], ".tar.gz"), "\n", sep=",")
 		}
 	}
@@ -887,6 +888,8 @@ parse.args <- function() {
 			use.installed.pkgs <<- TRUE
 		} else if (a == "--invert-pkgset") {
 			invert.pkgset <<- TRUE
+		} else if (a == "--find-top100") {
+			find.top100 <<- TRUE
 		} else {
 			if (grepl("^-.*", a)) {
 				usage()
@@ -965,8 +968,27 @@ get.initial.package.blacklist <- function() {
 	}
 }
 
+do.find.top100 <- function() {
+	avail.pkgs <- available.packages(type="source");
+	install.packages('cranlogs')
+	library('cranlogs')
+	top100 <- cran_top_downloads(when = c("last-day", "last-week", "last-month"), count = 100)
+	names <- top100[['package']]
+	l = length(names)
+	for (i in 1:l) {
+		pkgname <- names[[i]]
+		pkg <- avail.pkgs[pkgname, ]
+		list.contriburl = ifelse(list.canonical, "https://cran.r-project.org/src/contrib", pkg["Repository"])
+		cat(pkg["Package"], pkg["Version"], paste0(list.contriburl, "/", pkgname, "_", pkg["Version"], ".tar.gz"), "\n", sep=",")
+		cat(pkgname)
+		if (i != l) {
+			cat(',')
+		}
+	}
+	cat('\n')
+}
+
 run.setup <- function() {
-	parse.args()
 	check.libs()
 	check.pkgfilelist()
 	set.repos()
@@ -977,8 +999,14 @@ run.setup <- function() {
 }
 
 run <- function() {
-	run.setup()
-    do.it()
+	parse.args()
+	if (find.top100) {
+		set.repos()
+		do.find.top100()
+	} else {
+	    run.setup()
+        do.it()
+    }
 }
 
 quiet <- F
@@ -1013,6 +1041,7 @@ gnur <- FALSE
 list.versions <- FALSE
 list.canonical <- FALSE
 invert.pkgset <- F
+find.top100 <- F
 
 if (!interactive()) {
     run()
