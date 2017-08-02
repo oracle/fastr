@@ -89,14 +89,21 @@ public class LogFileParser {
         try (BufferedReader r = Files.newBufferedReader(logFile.path)) {
             this.reader = r;
             consumeLine();
-            Section installTest = parseInstallTest();
-            logFile.addSection(installTest);
-            if (!installTest.isSuccess()) {
+
+            Section installTest0 = parseInstallTest();
+            logFile.addSection(installTest0);
+            if (!installTest0.isSuccess()) {
                 return logFile;
             }
-            logFile.addSection(parseInstallTest());
-            logFile.addSection(parseCheckResults());
+            Section installTest1 = parseInstallTest();
+            logFile.addSection(installTest1);
+            if (installTest1.isSuccess()) {
+                logFile.addSection(parseCheckResults());
+            }
             logFile.setSuccess(parseOverallStatus());
+
+            // In the end, a recursive diff is executed which might produce error messages.
+            collectBody();
             expectEOF();
         } finally {
             this.reader = null;
@@ -255,22 +262,27 @@ public class LogFileParser {
                 if (laMatches("comparing ")) {
                     consumeLine();
 
-                    // e.g.: files differ in number of lines:
+                    // optional message: "files differ in number of lines:"
                     if (laMatches("files differ in number of lines:")) {
                         consumeLine();
-                        List<DiffChunk> diffResult = new DiffParser(this).parseDiff();
-                        testing.problems.addAll(applyTestResultDetectors(diffResult));
-                        diffResult.stream().forEach(chunk -> {
-                            if (!chunk.getLeft().isEmpty()) {
-                                testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getLeftFile(), chunk.getLeftStartLine(), chunk.getLeft()));
-                            }
-                            if (!chunk.getRight().isEmpty()) {
-                                testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getRightFile(), chunk.getRightStartLine(), chunk.getRight()));
-                            }
-                        });
-                        consumeLine();
-                        parseStatus(trim(curLine.text));
-                    } else {
+                    }
+
+                    // try to parse diff chunks
+                    List<DiffChunk> diffResult = new DiffParser(this).parseDiff();
+
+                    // apply detectors to diff chunks
+                    testing.problems.addAll(applyTestResultDetectors(diffResult));
+                    diffResult.stream().forEach(chunk -> {
+                        if (!chunk.getLeft().isEmpty()) {
+                            testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getLeftFile(), chunk.getLeftStartLine(), chunk.getLeft()));
+                        }
+                        if (!chunk.getRight().isEmpty()) {
+                            testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getRightFile(), chunk.getRightStartLine(), chunk.getRight()));
+                        }
+                    });
+
+                    // only if the output was equal, there will be "... OK"
+                    if (diffResult.isEmpty()) {
                         int dotsIdx = curLine.text.lastIndexOf("...");
                         parseStatus(trim(curLine.text.substring(dotsIdx + "...".length())));
                     }
@@ -334,6 +346,8 @@ public class LogFileParser {
             return TestResult.FAILED;
         } else if (Token.INDETERMINATE.linePrefix.equals(substring.trim())) {
             return TestResult.INDETERMINATE;
+        } else if (Token.UNKNOWN.linePrefix.equals(substring.trim())) {
+            return TestResult.UNKNOWN;
         }
         throw parseError("Unexpected status: " + substring);
     }
@@ -526,6 +540,7 @@ public class LogFileParser {
     public enum TestResult {
         OK,
         FAILED,
+        UNKNOWN,
         INDETERMINATE;
 
         boolean toBoolean() {
@@ -566,6 +581,7 @@ public class LogFileParser {
 
         FAILED("FAILED"),
         INDETERMINATE("INDETERMINATE"),
+        UNKNOWN("UNKNOWN"),
         OK("OK");
 
         String linePrefix;
