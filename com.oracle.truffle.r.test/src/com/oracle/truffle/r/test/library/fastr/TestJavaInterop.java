@@ -483,6 +483,24 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
+    public void testLengthArray() {
+        TestArraysClass ta = new TestArraysClass();
+        assertEvalFastR(CREATE_TEST_ARRAYS + " length(ta$objectEmpty)", "" + ta.objectEmpty.length);
+
+        assertEvalFastR(CREATE_TEST_ARRAYS + " length(ta$booleanArray)", "" + ta.booleanArray.length);
+        assertEvalFastR(CREATE_TEST_ARRAYS + " length(ta$booleanArray2)", "" + ta.booleanArray2.length);
+        assertEvalFastR(CREATE_TEST_ARRAYS + " length(ta$booleanArray3)", "" + ta.booleanArray3.length);
+    }
+
+    @Test
+    public void testLengthIterable() {
+        String thisFQN = this.getClass().getName();
+        for (String s : new String[]{"Size", "GetSize", "Length", "GetLength", "NoSizeMethod"}) {
+            String clazz = thisFQN + "$TestIterable" + s;
+            assertEvalFastR("ti <- new('" + clazz + "', 123); length(ti)", "123");
+        }
+    }
+
     public void testMap() {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " m <- to$map; m['one']", "'1'");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " m <- to$map; m['two']", "'2'");
@@ -629,6 +647,187 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$arrayObject); l[[4]]$data", "NULL");
 
         assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + " l<-as.list(to);", "cat('Error in as.list(to) : ', '\n', ' no method for coercing this external object to a list', '\n')");
+    }
+
+    private static final String CREATE_TEST_ARRAYS = "ta <- new('" + TestArraysClass.class.getName() + "');";
+
+    @Test
+    public void testUnlist() throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+
+        assertEvalFastR(CREATE_TEST_ARRAYS + " tal <- unlist(ta); identical(ta, tal)", "TRUE");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " l<-list(ta, ta); ul <- unlist(l); identical(l, ul)", "TRUE");
+
+        // arrays
+        testUnlistByType("string", "'a', 'b', 'c'", "character");
+        testUnlistByType("boolean", "TRUE, FALSE, TRUE", "logical");
+        testUnlistByType("byte", "1, 2, 3", "integer");
+        testUnlistByType("char", "'a', 'b', 'c'", "character");
+        testUnlistByType("double", "1.1, 1.2, 1.3", "numeric");
+        testUnlistByType("float", "1.1, 1.2, 1.3", "numeric");
+        testUnlistByType("integer", "1, 2, 3", "integer");
+        testUnlistByType("long", "1, 2, 3", "numeric");
+        testUnlistByType("short", "1, 2, 3", "integer");
+
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$onlyIntegerObjectArray)", "c(1, 2, 3)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$onlyIntegerObjectArray))", "'integer'");
+
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$onlyLongObjectArray)", "c(1, 2, 3)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$onlyLongObjectArray))", "'numeric'");
+
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$mixedObjectArray)", "c('1', 'a', '1')");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$mixedObjectArray))", "'character'");
+
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$mixedIntegerList)", "c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$mixedIntegerList))", "'integer'");
+
+        testForeingObjectInListUnlist("byte", new String[]{"TRUE", "FALSE", "TRUE"}, "integer");
+        testForeingObjectInListUnlist("byte", new String[]{"1L", "2L", "3L"}, "integer");
+        testForeingObjectInListUnlist("byte", new String[]{"1.1", "2.1", "3.1"}, "numeric");
+        testForeingObjectInListUnlist("byte", new String[]{"'a'", "'aa'", "'aaa'"}, "character");
+
+        testForeingObjectInListUnlist("boolean", new String[]{"TRUE", "FALSE", "TRUE"}, "logical");
+        testForeingObjectInListUnlist("boolean", new String[]{"1L", "2L", "3L"}, "integer");
+        testForeingObjectInListUnlist("boolean", new String[]{"1.1", "1.2", "1.3"}, "numeric");
+        testForeingObjectInListUnlist("boolean", new String[]{"'a'", "'aa'", "'aaa'"}, "character");
+
+        testForeingObjectInListUnlist("double", new String[]{"TRUE", "FALSE", "TRUE"}, "numeric");
+        testForeingObjectInListUnlist("double", new String[]{"1L", "2L", "3L"}, "numeric");
+        testForeingObjectInListUnlist("double", new String[]{"1.1", "2.1", "3.1"}, "numeric");
+        testForeingObjectInListUnlist("double", new String[]{"'a'", "'aa'", "'aaa'"}, "character");
+
+        testForeingObjectInListUnlist("float", new String[]{"TRUE", "FALSE", "TRUE"}, "numeric");
+        testForeingObjectInListUnlist("float", new String[]{"1L", "2L", "3L"}, "numeric");
+        testForeingObjectInListUnlist("float", new String[]{"1.1", "2.1", "3.1"}, "numeric");
+        testForeingObjectInListUnlist("float", new String[]{"'a'", "'aa'", "'aaa'"}, "character");
+
+        testForeingObjectInListUnlist("integer", new String[]{"TRUE", "FALSE", "TRUE"}, "integer");
+        testForeingObjectInListUnlist("integer", new String[]{"1L", "2L", "3L"}, "integer");
+        testForeingObjectInListUnlist("integer", new String[]{"1.1", "1.2", "1.3"}, "numeric");
+        testForeingObjectInListUnlist("integer", new String[]{"'a'", "'aa'", "'aaa'"}, "character");
+
+        testForeingObjectInListUnlist("long", new String[]{"TRUE", "FALSE", "TRUE"}, "numeric");
+        testForeingObjectInListUnlist("long", new String[]{"1L", "2L", "3L"}, "numeric");
+        testForeingObjectInListUnlist("long", new String[]{"1.1", "1.2", "1.3"}, "numeric");
+        testForeingObjectInListUnlist("long", new String[]{"'a'", "'aa'", "'aaa'"}, "character");
+
+        testForeingObjectInListUnlist("short", new String[]{"TRUE", "FALSE", "TRUE"}, "integer");
+        testForeingObjectInListUnlist("short", new String[]{"1L", "2L", "3L"}, "integer");
+        testForeingObjectInListUnlist("short", new String[]{"1.1", "1.2", "1.3"}, "numeric");
+        testForeingObjectInListUnlist("short", new String[]{"'a'", "'aa'", "'aaa'"}, "character");
+
+        testForeingObjectInListUnlist("string", new String[]{"TRUE", "FALSE", "TRUE"}, "character");
+        testForeingObjectInListUnlist("string", new String[]{"1L", "2L", "3L"}, "character");
+        testForeingObjectInListUnlist("string", new String[]{"1.1", "1.2", "1.3"}, "character");
+        testForeingObjectInListUnlist("string", new String[]{"'a'", "'aa'", "'aaa'"}, "character");
+    }
+
+    private void testUnlistByType(String fieldType, String result, String clazz) {
+        testForeingObjectUnlist(fieldType + "Array", result, clazz);
+        if (!fieldType.equals("string")) {
+            testForeingObjectUnlist(fieldType + "ObjectArray", result, clazz);
+        }
+        testForeingObjectUnlist(fieldType + "List", result, clazz);
+    }
+
+    private void testForeingObjectUnlist(String fieldPrefix, String result, String clazz) {
+        String field = fieldPrefix;
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ")", "c(" + result + ")");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$" + field + "))", "'" + clazz + "'");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ", recursive=FALSE)", "c(" + result + ")");
+
+        field = fieldPrefix + "2";
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ")", "c(" + result + ", " + result + ")");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$" + field + "))", "'" + clazz + "'");
+
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ", recursive=FALSE)", "list(" + result + ", " + result + "))");
+
+        field = fieldPrefix + "3";
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ")", "c(" + result + ", " + result + ", " + result + ", " + result + "))");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$" + field + "))", "'" + clazz + "'");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ", recursive=FALSE)",
+                        "cat('[[1]]','\n','[external object]','\n\n','[[2]]','\n','[external object]','\n\n','[[3]]','\n','[external object]','\n\n','[[4]]','\n','[external object]','\n\n', sep='')");
+
+    }
+
+    private void testForeingObjectInListUnlist(String field, String[] toMixWith, String clazz) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+        StringBuilder sbToVector = new StringBuilder();
+        StringBuilder sbVector = new StringBuilder();
+        StringBuilder sbList = new StringBuilder();
+        int i = 0;
+        sbToVector.append("c(");
+        for (String s : toMixWith) {
+            sbVector.append(s);
+            String mwv = toMixWith[i];
+            if (mwv.endsWith("L")) {
+                mwv = mwv.replace("L", "");
+            }
+            mwv = mwv.replace("'", "\"");
+            sbList.append("'[[").append(++i).append("]]','\n','").append("[1] ").append(mwv).append("','\n\n',");
+            sbToVector.append(s);
+            if (i < toMixWith.length) {
+                sbVector.append(", ");
+                sbToVector.append(", ");
+            }
+        }
+        sbToVector.append(")");
+
+        String mixWithVector = sbToVector.toString();
+        String resultInVector = sbVector.toString();
+        String resultInList = sbList.toString();
+        String testFieldArrayResult = getTestFieldValuesAsResult(field + "Array");
+        String testFieldListResult = getTestFieldValuesAsResult(field + "List");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(list(" + mixWithVector + ", ta$" + field + "Array, ta$" + field + "List))",
+                        "c(" + resultInVector + ", " + testFieldArrayResult + ", " + testFieldListResult + ")");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(list(" + mixWithVector + ", ta$" + field + "Array, ta$" + field + "List)))", "'" + clazz + "'");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(list(" + mixWithVector + ", ta$" + field + "Array, ta$" + field + "List), recursive=FALSE)",
+                        "c(" + resultInVector + ", " + testFieldArrayResult + ", " + testFieldListResult + ")");
+
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(list(" + mixWithVector + ", ta$" + field + "Array2, ta$" + field + "List2))",
+                        "c(" + resultInVector + ", " + testFieldArrayResult + ", " + testFieldArrayResult + ", " + testFieldListResult + ", " + testFieldListResult + ")");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(list(" + mixWithVector + ", ta$" + field + "Array2, ta$" + field + "List2)))", "'" + clazz + "'");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(list(" + mixWithVector + ", ta$" + field + "Array2, ta$" + field + "List2), recursive=FALSE)",
+                        "cat(" + resultInList +
+                                        "'[[4]]','\n','[external object]','\n\n','[[5]]','\n','[external object]','\n\n','[[6]]','\n','[external object]','\n\n','[[7]]','\n','[external object]','\n\n', sep='')");
+
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(list(" + mixWithVector + ", ta$" + field + "Array3, ta$" + field + "List3))",
+                        "c(" + resultInVector + ", " + testFieldArrayResult + ", " + testFieldArrayResult + ", " + testFieldArrayResult + ", " + testFieldArrayResult + ", " + testFieldListResult +
+                                        ", " + testFieldListResult + ", " + testFieldListResult + ", " + testFieldListResult + ")");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(list(" + mixWithVector + ", ta$" + field + "Array3, ta$" + field + "List3)))", "'" + clazz + "'");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(list(" + mixWithVector + ", ta$" + field + "Array3, ta$" + field + "List3), recursive=FALSE)",
+                        "cat(" + resultInList +
+                                        "'[[4]]','\n','[external object]','\n\n','[[5]]','\n','[external object]','\n\n','[[6]]','\n','[external object]','\n\n','[[7]]','\n','[external object]','\n\n', sep='')");
+    }
+
+    private String getTestFieldValuesAsResult(String name) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+        TestArraysClass ta = new TestArraysClass();
+        Field f = ta.getClass().getDeclaredField(name);
+        Object value = f.get(ta);
+        if (value instanceof List) {
+            List<?> l = (List) value;
+            value = l.toArray(new Object[l.size()]);
+        }
+        StringBuilder sb = new StringBuilder();
+        int length = Array.getLength(value);
+        for (int i = 0; i < length; i++) {
+            Object object = Array.get(value, i);
+            if (object instanceof String || object instanceof Character) {
+                sb.append("'");
+            }
+            if (object instanceof Boolean) {
+                sb.append(Boolean.toString((boolean) object).toUpperCase());
+            } else if (object instanceof Float) {
+                sb.append((double) ((float) object));
+            } else {
+                sb.append(object);
+            }
+            if (object instanceof String || object instanceof Character) {
+                sb.append("'");
+            }
+            if (i < length - 1) {
+                sb.append(", ");
+            }
+        }
+        return sb.toString();
     }
 
     @Test
@@ -845,6 +1044,10 @@ public class TestJavaInterop extends TestBase {
         }
         Assert.fail(o + " should have been an array");
         return null;
+    }
+
+    private String toRVector(Object[] l, String asXXX) {
+        return toRVector(Arrays.asList(l), asXXX);
     }
 
     private String toRVector(List<?> l, String asXXX) {
@@ -1571,7 +1774,203 @@ public class TestJavaInterop extends TestBase {
         }
     }
 
-    public static class TestArrayClass {
-        public static TestArrayClass[] testArray = new TestArrayClass[]{new TestArrayClass(), new TestArrayClass(), new TestArrayClass()};
+    public static class TestArraysClass {
+        public Object[] objectEmpty = new Object[0];
+
+        public boolean[] booleanArray = {true, false, true};
+        public boolean[][] booleanArray2 = {{true, false, true}, {true, false, true}};
+        public boolean[][][] booleanArray3 = {{{true, false, true}, {true, false, true}}, {{true, false, true}, {true, false, true}}};
+
+        public byte[] byteArray = {1, 2, 3};
+        public byte[][] byteArray2 = {{1, 2, 3}, {1, 2, 3}};
+        public byte[][][] byteArray3 = {{{1, 2, 3}, {1, 2, 3}}, {{1, 2, 3}, {1, 2, 3}}};
+
+        public char[] charArray = {'a', 'b', 'c'};
+        public char[][] charArray2 = {{'a', 'b', 'c'}, {'a', 'b', 'c'}};
+        public char[][][] charArray3 = {{{'a', 'b', 'c'}, {'a', 'b', 'c'}}, {{'a', 'b', 'c'}, {'a', 'b', 'c'}}};
+
+        public double[] doubleArray = {1.1, 1.2, 1.3};
+        public double[][] doubleArray2 = {{1.1, 1.2, 1.3}, {1.1, 1.2, 1.3}};
+        public double[][][] doubleArray3 = {{{1.1, 1.2, 1.3}, {1.1, 1.2, 1.3}}, {{1.1, 1.2, 1.3}, {1.1, 1.2, 1.3}}};
+
+        public float[] floatArray = {1.1f, 1.2f, 1.3f};
+        public float[][] floatArray2 = {{1.1f, 1.2f, 1.3f}, {1.1f, 1.2f, 1.3f}};
+        public float[][][] floatArray3 = {{{1.1f, 1.2f, 1.3f}, {1.1f, 1.2f, 1.3f}}, {{1.1f, 1.2f, 1.3f}, {1.1f, 1.2f, 1.3f}}};
+
+        public int[] integerArray = {1, 2, 3};
+        public int[][] integerArray2 = {{1, 2, 3}, {1, 2, 3}};
+        public int[][][] integerArray3 = {{{1, 2, 3}, {1, 2, 3}}, {{1, 2, 3}, {1, 2, 3}}};
+
+        public long[] longArray = {1L, 2L, 3L};
+        public long[][] longArray2 = {{1L, 2L, 3L}, {1L, 2L, 3L}};
+        public long[][][] longArray3 = {{{1L, 2L, 3L}, {1L, 2L, 3L}}, {{1L, 2L, 3L}, {1L, 2L, 3L}}};
+
+        public short[] shortArray = {1, 2, 3};
+        public short[][] shortArray2 = {{1, 2, 3}, {1, 2, 3}};
+        public short[][][] shortArray3 = {{{1, 2, 3}, {1, 2, 3}}, {{1, 2, 3}, {1, 2, 3}}};
+
+        public Boolean[] booleanObjectArray = {true, false, true};
+        public Boolean[][] booleanObjectArray2 = {{true, false, true}, {true, false, true}};
+        public Boolean[][][] booleanObjectArray3 = {{{true, false, true}, {true, false, true}}, {{true, false, true}, {true, false, true}}};
+
+        public Byte[] byteObjectArray = {1, 2, 3};
+        public Byte[][] byteObjectArray2 = {{1, 2, 3}, {1, 2, 3}};
+        public Byte[][][] byteObjectArray3 = {{{1, 2, 3}, {1, 2, 3}}, {{1, 2, 3}, {1, 2, 3}}};
+
+        public Character[] charObjectArray = {'a', 'b', 'c'};
+        public Character[][] charObjectArray2 = {{'a', 'b', 'c'}, {'a', 'b', 'c'}};
+        public Character[][][] charObjectArray3 = {{{'a', 'b', 'c'}, {'a', 'b', 'c'}}, {{'a', 'b', 'c'}, {'a', 'b', 'c'}}};
+
+        public Double[] doubleObjectArray = {1.1, 1.2, 1.3};
+        public Double[][] doubleObjectArray2 = {{1.1, 1.2, 1.3}, {1.1, 1.2, 1.3}};
+        public Double[][][] doubleObjectArray3 = {{{1.1, 1.2, 1.3}, {1.1, 1.2, 1.3}}, {{1.1, 1.2, 1.3}, {1.1, 1.2, 1.3}}};
+
+        public Float[] floatObjectArray = {1.1f, 1.2f, 1.3f};
+        public Float[][] floatObjectArray2 = {{1.1f, 1.2f, 1.3f}, {1.1f, 1.2f, 1.3f}};
+        public Float[][][] floatObjectArray3 = {{{1.1f, 1.2f, 1.3f}, {1.1f, 1.2f, 1.3f}}, {{1.1f, 1.2f, 1.3f}, {1.1f, 1.2f, 1.3f}}};
+
+        public Integer[] integerObjectArray = {1, 2, 3};
+        public Integer[][] integerObjectArray2 = {{1, 2, 3}, {1, 2, 3}};
+        public Integer[][][] integerObjectArray3 = {{{1, 2, 3}, {1, 2, 3}}, {{1, 2, 3}, {1, 2, 3}}};
+
+        public Long[] longObjectArray = {1L, 2L, 3L};
+        public Long[][] longObjectArray2 = {{1L, 2L, 3L}, {1L, 2L, 3L}};
+        public Long[][][] longObjectArray3 = {{{1L, 2L, 3L}, {1L, 2L, 3L}}, {{1L, 2L, 3L}, {1L, 2L, 3L}}};
+
+        public Short[] shortObjectArray = {1, 2, 3};
+        public Short[][] shortObjectArray2 = {{1, 2, 3}, {1, 2, 3}};
+        public Short[][][] shortObjectArray3 = {{{1, 2, 3}, {1, 2, 3}}, {{1, 2, 3}, {1, 2, 3}}};
+
+        public String[] stringArray = {"a", "b", "c"};
+        public String[][] stringArray2 = {{"a", "b", "c"}, {"a", "b", "c"}};
+        public String[][][] stringArray3 = {{{"a", "b", "c"}, {"a", "b", "c"}}, {{"a", "b", "c"}, {"a", "b", "c"}}};
+
+        public Object[] onlyIntegerObjectArray = {1, 2, 3};
+        public Object[] onlyLongObjectArray = {1L, 2L, 3L};
+        public Object[] numericObjectArray = {1, 1L, 1.1};
+        public Object[] mixedObjectArray = {1, "a", "1"};
+
+        public List<Boolean> booleanList = Arrays.asList(booleanObjectArray);
+        public List<?> booleanList2 = Arrays.asList(new List<?>[]{booleanList, booleanList});
+        public List<?> booleanList3 = Arrays.asList(new List<?>[]{booleanList2, booleanList2});
+
+        public List<Byte> byteList = Arrays.asList(byteObjectArray);
+        public List<?> byteList2 = Arrays.asList(new List<?>[]{byteList, byteList});
+        public List<?> byteList3 = Arrays.asList(new List<?>[]{byteList2, byteList2});
+
+        public List<Character> charList = Arrays.asList(charObjectArray);
+        public List<?> charList2 = Arrays.asList(new List<?>[]{charList, charList});
+        public List<?> charList3 = Arrays.asList(new List<?>[]{charList2, charList2});
+
+        public List<Double> doubleList = Arrays.asList(doubleObjectArray);
+        public List<?> doubleList2 = Arrays.asList(new List<?>[]{doubleList, doubleList});
+        public List<?> doubleList3 = Arrays.asList(new List<?>[]{doubleList2, doubleList2});
+
+        public List<Float> floatList = Arrays.asList(floatObjectArray);
+        public List<?> floatList2 = Arrays.asList(new List<?>[]{floatList, floatList});
+        public List<?> floatList3 = Arrays.asList(new List<?>[]{floatList2, floatList2});
+
+        public List<Integer> integerList = Arrays.asList(integerObjectArray);
+        public List<?> integerList2 = Arrays.asList(new List<?>[]{integerList, integerList});
+        public List<?> integerList3 = Arrays.asList(new List<?>[]{integerList2, integerList2});
+
+        public List<Long> longList = Arrays.asList(longObjectArray);
+        public List<?> longList2 = Arrays.asList(new List<?>[]{longList, longList});
+        public List<?> longList3 = Arrays.asList(new List<?>[]{longList2, longList2});
+
+        public List<Short> shortList = Arrays.asList(shortObjectArray);
+        public List<?> shortList2 = Arrays.asList(new List<?>[]{shortList, shortList});
+        public List<?> shortList3 = Arrays.asList(new List<?>[]{shortList2, shortList2});
+
+        public List<String> stringList = Arrays.asList(stringArray);
+        public List<?> stringList2 = Arrays.asList(new List<?>[]{Arrays.asList(stringArray), Arrays.asList(stringArray)});
+        public List<?> stringList3 = Arrays.asList(new List<?>[]{stringList2, stringList2});
+
+        public List<?> mixedIntegerList = Arrays.asList(new Object[]{new Integer[]{1, 2, 3}, Arrays.asList(new int[]{4, 5, 6}), new int[]{7, 8, 9}, 10, 11, 12});
     }
+
+    public static class TestIterableSize extends AbstractTestIterable {
+        public TestIterableSize(int size) {
+            super(size);
+        }
+
+        public int size() {
+            return size;
+        }
+    }
+
+    public static class TestIterableGetSize extends AbstractTestIterable {
+        public TestIterableGetSize(int size) {
+            super(size);
+        }
+
+        public int getSize() {
+            return size;
+        }
+    }
+
+    public static class TestIterableLength extends AbstractTestIterable {
+        public TestIterableLength(int size) {
+            super(size);
+        }
+
+        public int length() {
+            return size;
+        }
+    }
+
+    public static class TestIterableGetLength extends AbstractTestIterable {
+        public TestIterableGetLength(int size) {
+            super(size);
+        }
+
+        public int getLength() {
+            return size;
+        }
+    }
+
+    public static class TestIterableNoSizeMethod implements Iterable<Integer> {
+        private final int size;
+
+        public TestIterableNoSizeMethod(int size) {
+            this.size = size;
+        }
+
+        private class I implements Iterator<Integer> {
+            private int size;
+
+            I() {
+                this.size = TestIterableNoSizeMethod.this.size;
+            }
+
+            @Override
+            public boolean hasNext() {
+                return size-- > 0;
+            }
+
+            @Override
+            public Integer next() {
+                throw new UnsupportedOperationException("Should not reach here.");
+            };
+        }
+
+        @Override
+        public Iterator<Integer> iterator() {
+            return new I();
+        }
+    }
+
+    private static class AbstractTestIterable implements Iterable<Object> {
+        protected final int size;
+
+        AbstractTestIterable(int size) {
+            this.size = size;
+        }
+
+        @Override
+        public Iterator<Object> iterator() {
+            throw new UnsupportedOperationException("Should not reach here.");
+        }
+    }
+
 }

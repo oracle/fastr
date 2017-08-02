@@ -23,14 +23,20 @@
 package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -40,6 +46,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
@@ -48,6 +55,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * function returns, like in {@code seq_along}.
  */
 @NodeChild("operand")
+@ImportStatic({Message.class, ForeignArray2R.class})
 public abstract class RLengthNode extends RNode {
 
     @Override
@@ -141,7 +149,43 @@ public abstract class RLengthNode extends RNode {
         return RRuntime.isForeignObject(object);
     }
 
-    @Specialization(guards = "isForeignObject(object)")
+    @Specialization(guards = "isJavaIterable(object)")
+    protected int getJavaIterableSize(TruffleObject object,
+                    @Cached("READ.createNode()") Node read,
+                    @Cached("createExecute(0).createNode()") Node execute,
+                    @Cached("createBinaryProfile()") ConditionProfile profile) {
+        try {
+            Number sizeByMethod = null;
+            for (String method : new String[]{"size", "getSize", "length", "getLength"}) {
+                TruffleObject sizeFunction;
+                try {
+                    sizeFunction = (TruffleObject) ForeignAccess.sendRead(read, object, method);
+                } catch (UnknownIdentifierException ex) {
+                    continue;
+                }
+                Object value = ForeignAccess.sendExecute(execute, sizeFunction);
+                if (value instanceof Number) {
+                    sizeByMethod = (Number) value;
+                }
+            }
+            if (profile.profile(sizeByMethod != null)) {
+                return sizeByMethod.intValue();
+            }
+
+            TruffleObject itMethod = (TruffleObject) ForeignAccess.sendRead(read, object, "iterator");
+            TruffleObject it = (TruffleObject) ForeignAccess.sendExecute(execute, itMethod);
+            TruffleObject hasNextMethod = (TruffleObject) ForeignAccess.sendRead(read, it, "hasNext");
+            int size = 0;
+            while ((boolean) ForeignAccess.sendExecute(execute, hasNextMethod)) {
+                ++size;
+            }
+            return size;
+        } catch (ArityException | UnsupportedTypeException | UnknownIdentifierException | UnsupportedMessageException ex) {
+            throw error(RError.Message.GENERIC, "error while accessing java iterable: " + ex.getMessage());
+        }
+    }
+
+    @Specialization(guards = {"isForeignObject(object)", "!isJavaIterable(object)"})
     protected int getForeignSize(TruffleObject object,
                     @Cached("createHasSize()") Node hasSizeNode,
                     @Cached("createGetSize()") Node getSizeNode) {

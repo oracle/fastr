@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R.InteropTypeCheck;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R.CollectedElements;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
@@ -189,8 +189,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
                     @Cached("createForeign2RNode()") Foreign2R foreign2RNode) {
 
         RAbstractVector vec = (RAbstractVector) positions[0];
-        Object[] resultElements = new Object[vec.getLength()];
-        InteropTypeCheck typeCheck = new InteropTypeCheck();
+        CollectedElements ce = new CollectedElements();
 
         try {
             for (int i = 0; i < vec.getLength(); i++) {
@@ -203,10 +202,10 @@ public abstract class ExtractVectorNode extends RBaseNode {
                         res = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) res);
                     }
                 }
-                typeCheck.check(res);
-                resultElements[i] = foreign2RNode.execute(res);
+                ce.getTypeCheck().checkForeign(res);
+                ce.getElements().add(foreign2RNode.execute(res));
             }
-            return ForeignArray2R.asAbstractVector(resultElements, typeCheck);
+            return ForeignArray2R.asAbstractVector(ce);
         } catch (InteropException | NoSuchFieldError e) {
             throw RError.interopError(RError.findParentRBase(this), e, object);
         }

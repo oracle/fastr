@@ -116,7 +116,7 @@ public abstract class CastExpressionNode extends CastBaseNode {
     @Specialization(guards = "isForeignObject(obj)")
     protected RExpression doForeignObject(TruffleObject obj,
                     @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
-        Object o = foreignArray2R.execute(obj);
+        Object o = foreignArray2R.execute(obj, true);
         if (!RRuntime.isForeignObject(o)) {
             return (RExpression) castExpressionRecursive(o);
         }

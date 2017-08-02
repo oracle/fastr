@@ -176,7 +176,7 @@ public abstract class ConvertBooleanNode extends RNode {
     @Specialization(guards = "isForeignObject(obj)")
     protected byte doForeignObject(VirtualFrame frame, TruffleObject obj,
                     @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
-        Object o = foreignArray2R.execute(obj);
+        Object o = foreignArray2R.execute(obj, true);
         if (!RRuntime.isForeignObject(o)) {
             return convertBooleanRecursive(frame, o);
         }
