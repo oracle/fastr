@@ -147,7 +147,7 @@ public class FileTreeWalker {
         LOGGER.info("Parsing log file " + logFile);
 
         LogFileParser lfParser = new LogFileParser(logFile, pkgTestRun);
-        lfParser.addDetector(LogFileParser.Token.BEGIN_SUGGESTS_INSTALL, InstallationProblemDetector.INSTANCE);
+        lfParser.addDetector(InstallationProblemDetector.INSTANCE);
         lfParser.addDetector(SegfaultDetector.INSTANCE);
         lfParser.addDetector(RErrorDetector.INSTANCE);
         lfParser.addDetector(UnsupportedSpecializationDetector.INSTANCE);
