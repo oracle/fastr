@@ -676,7 +676,7 @@ public abstract class REnvironment extends RAttributeStorage {
 
     // END of static methods
 
-    private static final String NAMESPACE_KEY = ".__NAMESPACE__.";
+    public static final String NAMESPACE_KEY = ".__NAMESPACE__.";
 
     /**
      * GnuR creates {@code Namespace} environments in {@code namespace.R} using {@code new.env} and
