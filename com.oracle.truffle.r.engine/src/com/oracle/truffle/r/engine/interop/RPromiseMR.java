@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.engine.interop;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.MessageResolution;
@@ -31,6 +33,9 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.engine.interop.RPromiseMRFactory.RPromiseKeyInfoImplNodeGen;
+import com.oracle.truffle.r.engine.interop.RPromiseMRFactory.RPromiseReadImplNodeGen;
+import com.oracle.truffle.r.engine.interop.RPromiseMRFactory.RPromiseWriteImplNodeGen;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -61,44 +66,20 @@ public class RPromiseMR {
 
     @Resolve(message = "READ")
     public abstract static class RPromiseReadNode extends Node {
+        @Child RPromiseReadImplNode readNode = RPromiseReadImplNodeGen.create();
 
         @TruffleBoundary
         protected Object access(RPromise receiver, String field) {
-            if (PROP_EXPR.equals(field)) {
-                return RDataFactory.createLanguage(receiver.getRep());
-            }
-            if (PROP_IS_EVALUATED.equals(field)) {
-                return RRuntime.asLogical(receiver.isEvaluated());
-            }
-            if (PROP_VALUE.equals(field)) {
-                // only read value if evaluated
-                if (receiver.isEvaluated()) {
-                    return receiver.getValue();
-                }
-                return RNull.instance;
-            }
-            throw UnknownIdentifierException.raise(field);
+            return readNode.execute(receiver, receiver);
         }
     }
 
     @Resolve(message = "WRITE")
     public abstract static class RPromiseWriteNode extends Node {
+        @Child RPromiseWriteImplNode writeNode = RPromiseWriteImplNodeGen.create();
 
         protected Object access(RPromise receiver, String field, Object valueObj) {
-            if (PROP_IS_EVALUATED.equals(field)) {
-                if (!(valueObj instanceof Boolean)) {
-                    throw UnsupportedTypeException.raise(new Object[]{valueObj});
-                }
-
-                boolean newVal = (boolean) valueObj;
-                if (!receiver.isEvaluated() && newVal) {
-                    PromiseHelperNode.evaluateSlowPath(receiver);
-                } else if (receiver.isEvaluated() && !newVal) {
-                    receiver.resetValue();
-                }
-                return RRuntime.asLogical(receiver.isEvaluated());
-            }
-            throw UnknownIdentifierException.raise(field);
+            return writeNode.execute(receiver, valueObj, valueObj);
         }
     }
 
@@ -112,15 +93,10 @@ public class RPromiseMR {
 
     @Resolve(message = "KEY_INFO")
     public abstract static class RPromiseKeyInfoNode extends Node {
+        @Child RPromiseKeyInfoImplNode keyInfoNode = RPromiseKeyInfoImplNodeGen.create();
 
-        protected Object access(@SuppressWarnings("unused") RPromise receiver, String identifier) {
-            if (PROP_EXPR.equals(identifier) || PROP_VALUE.equals(identifier)) {
-                return KeyInfo.newBuilder().setReadable(true).build();
-            } else if (PROP_IS_EVALUATED.equals(identifier)) {
-                return KeyInfo.newBuilder().setReadable(true).setWritable(true).build();
-            } else {
-                return 0;
-            }
+        protected Object access(RPromise receiver, String identifier) {
+            return keyInfoNode.execute(receiver, identifier);
         }
     }
 
@@ -136,6 +112,83 @@ public class RPromiseMR {
 
         protected static boolean test(TruffleObject receiver) {
             return receiver instanceof RPromise;
+        }
+    }
+
+    abstract static class RPromiseWriteImplNode extends Node {
+
+        protected abstract Object execute(RPromise receiver, Object identifier, Object valueObj);
+
+        @Specialization
+        protected Object access(RPromise receiver, String identifier, Object valueObj) {
+            if (PROP_IS_EVALUATED.equals(identifier)) {
+                if (!(valueObj instanceof Boolean)) {
+                    throw UnsupportedTypeException.raise(new Object[]{valueObj});
+                }
+
+                boolean newVal = (boolean) valueObj;
+                if (!receiver.isEvaluated() && newVal) {
+                    PromiseHelperNode.evaluateSlowPath(receiver);
+                } else if (receiver.isEvaluated() && !newVal) {
+                    receiver.resetValue();
+                }
+                return RRuntime.asLogical(receiver.isEvaluated());
+            }
+            throw UnknownIdentifierException.raise(identifier);
+        }
+
+        @Fallback
+        protected Object access(RPromise receiver, Object identifier, Object valueObj) {
+            throw UnknownIdentifierException.raise("" + identifier);
+        }
+    }
+
+    abstract static class RPromiseReadImplNode extends Node {
+
+        protected abstract Object execute(RPromise receiver, Object identifier);
+
+        @Specialization
+        protected Object access(@SuppressWarnings("unused") RPromise receiver, String identifier) {
+            if (PROP_EXPR.equals(identifier)) {
+                return RDataFactory.createLanguage(receiver.getRep());
+            }
+            if (PROP_IS_EVALUATED.equals(identifier)) {
+                return RRuntime.asLogical(receiver.isEvaluated());
+            }
+            if (PROP_VALUE.equals(identifier)) {
+                // only read value if evaluated
+                if (receiver.isEvaluated()) {
+                    return receiver.getValue();
+                }
+                return RNull.instance;
+            }
+            throw UnknownIdentifierException.raise(identifier);
+        }
+
+        @Fallback
+        protected Object access(RPromise receiver, Object identifier) {
+            throw UnknownIdentifierException.raise("" + identifier);
+        }
+    }
+
+    abstract static class RPromiseKeyInfoImplNode extends Node {
+
+        protected abstract Object execute(RPromise receiver, Object identifier);
+
+        @Specialization
+        protected Object access(@SuppressWarnings("unused") RPromise receiver, String identifier) {
+            if (PROP_EXPR.equals(identifier) || PROP_VALUE.equals(identifier)) {
+                return KeyInfo.newBuilder().setReadable(true).build();
+            } else if (PROP_IS_EVALUATED.equals(identifier)) {
+                return KeyInfo.newBuilder().setReadable(true).setWritable(true).build();
+            } else {
+                return 0;
+            }
+        }
+
+        @Fallback
+        protected Object access(RPromise receiver, Object identifier) {
+            return 0;
         }
     }
 }

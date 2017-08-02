@@ -22,21 +22,36 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
-import static com.oracle.truffle.r.engine.interop.Utils.javaToRPrimitive;
-
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.KeyInfo.Builder;
+import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.engine.interop.REnvironmentMRFactory.REnvironmentKeyInfoImplNodeGen;
+import com.oracle.truffle.r.engine.interop.REnvironmentMRFactory.REnvironmentReadImplNodeGen;
+import com.oracle.truffle.r.engine.interop.REnvironmentMRFactory.REnvironmentWriteImplNodeGen;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
+import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
+import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
+import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 
 @MessageResolution(receiverType = REnvironment.class)
 public class REnvironmentMR {
@@ -58,7 +73,7 @@ public class REnvironmentMR {
     @Resolve(message = "HAS_SIZE")
     public abstract static class REnvironmentHasSizeNode extends Node {
         protected Object access(@SuppressWarnings("unused") REnvironment receiver) {
-            return true;
+            return false;
         }
     }
 
@@ -71,20 +86,19 @@ public class REnvironmentMR {
 
     @Resolve(message = "READ")
     public abstract static class REnvironmentReadNode extends Node {
-        @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        @Child private REnvironmentReadImplNode readNode = REnvironmentReadImplNodeGen.create();
 
-        protected Object access(VirtualFrame frame, REnvironment receiver, String field) {
-            return extract.applyAccessField(frame, receiver, field);
+        protected Object access(VirtualFrame frame, REnvironment receiver, Object identifier) {
+            return readNode.execute(frame, receiver, identifier);
         }
     }
 
     @Resolve(message = "WRITE")
     public abstract static class REnvironmentWriteNode extends Node {
-        @Child private ReplaceVectorNode extract = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        @Child private REnvironmentWriteImplNode writeNode = REnvironmentWriteImplNodeGen.create();
 
-        protected Object access(VirtualFrame frame, REnvironment receiver, String field, Object valueObj) {
-            Object value = javaToRPrimitive(valueObj);
-            return extract.apply(frame, receiver, new Object[]{field}, value);
+        protected Object access(VirtualFrame frame, REnvironment receiver, Object field, Object valueObj) {
+            return writeNode.execute(frame, receiver, field, valueObj);
         }
     }
 
@@ -98,8 +112,116 @@ public class REnvironmentMR {
 
     @Resolve(message = "KEY_INFO")
     public abstract static class REnvironmentKeyInfoNode extends Node {
+        @Child private REnvironmentKeyInfoImplNode keyInfoNode = REnvironmentKeyInfoImplNodeGen.create();
 
-        protected Object access(REnvironment receiver, String identifier) {
+        protected Object access(REnvironment receiver, Object obj) {
+            return keyInfoNode.execute(receiver, obj);
+        }
+    }
+
+    @CanResolve
+    public abstract static class REnvironmentCheck extends Node {
+
+        protected static boolean test(TruffleObject receiver) {
+            return receiver instanceof REnvironment;
+        }
+    }
+
+    abstract static class REnvironmentReadImplNode extends Node {
+        @Child private ExtractVectorNode extract;
+        @Child private R2Foreign r2Foreign;
+
+        private final ConditionProfile unknownIdentifier = ConditionProfile.createBinaryProfile();
+
+        protected abstract Object execute(VirtualFrame frame, TruffleObject receiver, Object identifier);
+
+        @Specialization
+        protected Object access(VirtualFrame frame, REnvironment receiver, String identifier,
+                        @Cached("createKeyInfoNode()") REnvironmentKeyInfoImplNode keyInfo) {
+            int info = keyInfo.execute(receiver, identifier);
+            if (unknownIdentifier.profile(!KeyInfo.isExisting(info))) {
+                throw UnknownIdentifierException.raise("" + identifier);
+            }
+
+            initExtractNode();
+            Object value = extract.applyAccessField(frame, receiver, identifier);
+            initR2ForeignNode();
+            return r2Foreign.execute(value);
+        }
+
+        @Fallback
+        protected Object access(VirtualFrame frame, TruffleObject receiver, Object identifier) {
+            throw UnknownIdentifierException.raise("" + identifier);
+        }
+
+        protected REnvironmentKeyInfoImplNode createKeyInfoNode() {
+            return REnvironmentKeyInfoImplNodeGen.create();
+        }
+
+        private void initR2ForeignNode() {
+            if (r2Foreign == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                r2Foreign = insert(R2ForeignNodeGen.create());
+            }
+        }
+
+        private void initExtractNode() {
+            if (extract == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                extract = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
+            }
+        }
+    }
+
+    abstract static class REnvironmentWriteImplNode extends Node {
+        @Child private Foreign2R foreign2R;
+        @Child private ReplaceVectorNode replace;
+
+        private final ConditionProfile roIdentifier = ConditionProfile.createBinaryProfile();
+
+        protected abstract Object execute(VirtualFrame frame, TruffleObject receiver, Object identifier, Object valueObj);
+
+        @Specialization
+        protected Object access(VirtualFrame frame, REnvironment receiver, String identifier, Object valueObj,
+                        @Cached("createKeyInfoNode()") REnvironmentKeyInfoImplNode keyInfo) {
+
+            int info = keyInfo.execute(receiver, identifier);
+            if (KeyInfo.isExisting(info)) {
+                if (roIdentifier.profile(!KeyInfo.isWritable(info))) {
+                    // TODO - this is a bit weird - should be Message.WRITE and identifier
+                    throw UnsupportedMessageException.raise(Message.WRITE);
+                }
+            } else if (receiver.isLocked()) {
+                throw UnsupportedMessageException.raise(Message.WRITE);
+            }
+            if (foreign2R == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                foreign2R = insert(Foreign2RNodeGen.create());
+            }
+            Object value = foreign2R.execute(valueObj);
+            if (replace == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                replace = insert(ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
+            }
+            return replace.apply(frame, receiver, new Object[]{identifier}, value);
+        }
+
+        @Fallback
+        protected Object access(VirtualFrame frame, TruffleObject receiver, Object identifier, Object valueObj) {
+            throw UnknownIdentifierException.raise("" + identifier);
+        }
+
+        protected REnvironmentKeyInfoImplNode createKeyInfoNode() {
+            return REnvironmentKeyInfoImplNodeGen.create();
+        }
+    }
+
+    abstract static class REnvironmentKeyInfoImplNode extends Node {
+
+        protected abstract int execute(REnvironment receiver, Object identifier);
+
+        @Specialization
+        protected int access(REnvironment receiver, String identifier) {
             Object val = receiver.get(identifier);
             if (val == null) {
                 return 0;
@@ -109,15 +231,13 @@ public class REnvironmentMR {
             if (!receiver.isLocked() && !receiver.bindingIsLocked(identifier)) {
                 builder.setWritable(true);
             }
+            builder.setInvocable(val instanceof RFunction);
             return builder.build();
         }
-    }
 
-    @CanResolve
-    public abstract static class REnvironmentCheck extends Node {
-
-        protected static boolean test(TruffleObject receiver) {
-            return receiver instanceof REnvironment;
+        @Fallback
+        protected int access(REnvironment receiver, Object identifier) {
+            return 0;
         }
     }
 }

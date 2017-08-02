@@ -31,36 +31,55 @@ import org.junit.Test;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.data.RInteropScalar;
+import org.junit.Assert;
 
-public class RInteropScalarMRTest {
+public class RInteropScalarMRTest extends AbstractMRTest {
 
     @Test
-    public void testRInteroptScalar() throws UnsupportedMessageException {
-        testRIS("toByte", "" + Byte.MAX_VALUE, Byte.class);
-        testRIS("toChar", "'a'", Character.class);
-        testRIS("toFloat", "" + Float.MAX_VALUE, Float.class);
-        testRIS("toLong", "" + Long.MAX_VALUE, Long.class);
-        testRIS("toShort", "" + Short.MAX_VALUE, Short.class);
+    public void testRInteroptScalar() throws Exception {
+        for (TruffleObject obj : createTruffleObjects()) {
+            RInteropScalar is = (RInteropScalar) obj;
+            testRIS(obj, is.getJavaType());
+        }
     }
 
-    private static void testRIS(String toInteropScalarBuiltin, String value, Class<?> unboxedType) throws UnsupportedMessageException {
-        TruffleObject l = createRInteroptScalarTO(toInteropScalarBuiltin, value);
+    private static void testRIS(TruffleObject obj, Class<?> unboxedType) throws Exception {
+        assertFalse(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), obj));
+        assertFalse(ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), obj));
 
-        assertFalse(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), l));
-        assertFalse(ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), l));
-
-        assertTrue(ForeignAccess.sendIsBoxed(Message.IS_BOXED.createNode(), l));
-        Object ub = ForeignAccess.sendUnbox(Message.UNBOX.createNode(), l);
-        assertEquals(unboxedType, ub.getClass());
+        assertTrue(ForeignAccess.sendIsBoxed(Message.IS_BOXED.createNode(), obj));
+        Object ub = ForeignAccess.sendUnbox(Message.UNBOX.createNode(), obj);
+        assertEquals(unboxedType, ub.getClass().getField("TYPE").get(null));
     }
 
-    private static TruffleObject createRInteroptScalarTO(String toInteropScalarBuiltin, String value) {
-        PolyglotEngine engine = PolyglotEngine.newBuilder().build();
-        Source src = Source.newBuilder(".fastr.interop." + toInteropScalarBuiltin + "(" + value + ")").mimeType("text/x-r").name("test.R").build();
-        PolyglotEngine.Value result = engine.eval(src);
-        return result.as(TruffleObject.class);
+    @Override
+    protected TruffleObject[] createTruffleObjects() throws Exception {
+        return new TruffleObject[]{RInteropScalar.RInteropByte.valueOf(Byte.MAX_VALUE),
+                        RInteropScalar.RInteropChar.valueOf('a'),
+                        RInteropScalar.RInteropFloat.valueOf(Float.MAX_VALUE),
+                        RInteropScalar.RInteropLong.valueOf(Long.MAX_VALUE),
+                        RInteropScalar.RInteropShort.valueOf(Short.MAX_VALUE)};
+    }
+
+    @Override
+    protected boolean isBoxed(TruffleObject arg0) {
+        return true;
+    }
+
+    @Override
+    protected Object getUnboxed(TruffleObject obj) {
+        RInteropScalar is = (RInteropScalar) obj;
+        try {
+            return is.getClass().getDeclaredMethod("getValue").invoke(is);
+        } catch (Exception ex) {
+            Assert.fail("can't read interop scalar value " + ex);
+        }
+        return null;
+    }
+
+    @Override
+    protected TruffleObject createEmptyTruffleObject() throws Exception {
+        return null;
     }
 }

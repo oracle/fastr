@@ -33,6 +33,34 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 @MessageResolution(receiverType = RSymbol.class)
 public class RSymbolMR {
 
+    @Resolve(message = "IS_BOXED")
+    public abstract static class RSymbolIsBoxedNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
+            return false;
+        }
+    }
+
+    @Resolve(message = "HAS_SIZE")
+    public abstract static class RSymbolHasSizeNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
+            return false;
+        }
+    }
+
+    @Resolve(message = "IS_NULL")
+    public abstract static class RSymbolIsNullNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
+            return false;
+        }
+    }
+
+    @Resolve(message = "KEY_INFO")
+    public abstract static class RSymbolKeyInfoNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {
+            return 0;
+        }
+    }
+
     @Resolve(message = "TO_NATIVE")
     public abstract static class RSymbolToNativeNode extends Node {
         protected Object access(RSymbol receiver) {

@@ -41,9 +41,42 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
+import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
+import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 
 @MessageResolution(receiverType = RFunction.class)
 public class RFunctionMR {
+
+    @Resolve(message = "IS_BOXED")
+    public abstract static class RFunctionIsBoxedNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
+            return false;
+        }
+    }
+
+    @Resolve(message = "HAS_SIZE")
+    public abstract static class RFunctionHasSizeNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
+            return false;
+        }
+    }
+
+    @Resolve(message = "IS_NULL")
+    public abstract static class RFunctionIsNullNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
+            return false;
+        }
+    }
+
+    @Resolve(message = "KEY_INFO")
+    public abstract static class RFunctionKeyInfoNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {
+            return 0;
+        }
+    }
+
     @Resolve(message = "IS_EXECUTABLE")
     public abstract static class RFunctionIsExecutabledNode extends Node {
         protected Object access(@SuppressWarnings("unused") RFunction receiver) {
@@ -60,6 +93,9 @@ public class RFunctionMR {
 
     @Resolve(message = "EXECUTE")
     public abstract static class RFunctionExecuteNode extends Node {
+        @Child private Foreign2R foreign2R = Foreign2RNodeGen.create();
+        @Child private R2Foreign r2Foreign = R2ForeignNodeGen.create();
+
         private static final FrameDescriptor emptyFrameDescriptor = FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<interop>", new FrameDescriptor("R interop frame"));
         private static final RFrameSlot argsIdentifier = RFrameSlot.createTemp(false);
         private static final FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(emptyFrameDescriptor, argsIdentifier, FrameSlotKind.Object);
@@ -74,10 +110,15 @@ public class RFunctionMR {
             Object[] dummyFrameArgs = RArguments.createUnitialized();
             VirtualFrame dummyFrame = Truffle.getRuntime().createVirtualFrame(dummyFrameArgs, emptyFrameDescriptor);
 
-            RArgsValuesAndNames actualArgs = new RArgsValuesAndNames(arguments, ArgumentsSignature.empty(arguments.length));
+            Object[] convertedArguments = new Object[arguments.length];
+            for (int i = 0; i < arguments.length; i++) {
+                convertedArguments[i] = foreign2R.execute(arguments[i]);
+            }
+            RArgsValuesAndNames actualArgs = new RArgsValuesAndNames(convertedArguments, ArgumentsSignature.empty(arguments.length));
             try {
                 FrameSlotChangeMonitor.setObject(dummyFrame, slot, actualArgs);
-                return call.execute(dummyFrame, receiver);
+                Object value = call.execute(dummyFrame, receiver);
+                return r2Foreign.execute(value);
             } finally {
                 FrameSlotChangeMonitor.setObject(dummyFrame, slot, null);
             }

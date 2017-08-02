@@ -76,6 +76,13 @@ public class RInteropScalarMR {
         }
     }
 
+    @Resolve(message = "KEY_INFO")
+    public abstract static class RInteropScalarKeyInfoNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {
+            return 0;
+        }
+    }
+
     @CanResolve
     public abstract static class RInteropScalarCheck extends Node {
         protected static boolean test(TruffleObject receiver) {
