@@ -24,8 +24,12 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -41,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
@@ -54,6 +59,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * (e.g. logical). The only situation where semantics of finite is different to na.rm is double
  * values: na.rm removes NA and NaN, but not -/+Inf.
  */
+@ImportStatic({ForeignArray2R.class, Message.class, RRuntime.class})
 @TypeSystemReference(RTypes.class)
 public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
@@ -418,6 +424,27 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     @Specialization
     protected RRaw doString(RRawVector operand, boolean naRm, boolean finite) {
         throw error(RError.Message.INVALID_TYPE_ARGUMENT, "raw");
+    }
+
+    @Specialization(guards = {"isForeignVector(obj, hasSize)"})
+    protected Object doForeignVector(TruffleObject obj, boolean naRm, boolean finite,
+                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
+                    @Cached("createRecursive()") UnaryArithmeticReduceNode recursive) {
+        Object vec = foreignArray2R.execute(obj, true);
+        return recursive.executeReduce(vec, naRm, finite);
+    }
+
+    @Specialization(guards = {"isForeignObject(obj)"})
+    protected Object doForeign(TruffleObject obj, boolean naRm, boolean finite,
+                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
+                    @Cached("createRecursive()") UnaryArithmeticReduceNode recursive) {
+        throw error(RError.Message.INVALID_TYPE_ARGUMENT, "external object");
+    }
+
+    protected UnaryArithmeticReduceNode createRecursive() {
+        return UnaryArithmeticReduceNodeGen.create(semantics, factory);
     }
 
     public static final class ReduceSemantics {

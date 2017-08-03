@@ -177,4 +177,10 @@ public class TestBuiltin_range extends TestBase {
     public void testNaRmAndFiniteWithLogical() {
         assertEval(template("range(c(T, F, NA, NA, T)%0)", OPTIONAL_ARGS));
     }
+
+    @Test
+    public void testRangeCharacter() {
+        assertEval(template("range(c('a', 'b', 'c')%0)", OPTIONAL_ARGS));
+        assertEval(template("range(c('1', '2', '3')%0)", OPTIONAL_ARGS));
+    }
 }

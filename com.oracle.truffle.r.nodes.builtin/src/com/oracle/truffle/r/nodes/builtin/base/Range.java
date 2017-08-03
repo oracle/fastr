@@ -73,8 +73,10 @@ public abstract class Range extends RBuiltinNode.Arg3 {
     private static RVector<?> createResult(Object min, Object max) {
         if (min instanceof Integer) {
             return RDataFactory.createIntVector(new int[]{(Integer) min, (Integer) max}, false);
-        } else {
+        } else if (min instanceof Double) {
             return RDataFactory.createDoubleVector(new double[]{(Double) min, (Double) max}, false);
+        } else {
+            return RDataFactory.createStringVector(new String[]{(String) min, (String) max}, false);
         }
     }
 

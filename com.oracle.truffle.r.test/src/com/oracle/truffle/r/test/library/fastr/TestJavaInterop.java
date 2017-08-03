@@ -993,6 +993,226 @@ public class TestJavaInterop extends TestBase {
                         "cat('Error in if (T) print(\\'OK\\') : ', '\n', '  argument is not interpretable as logical', '\n')");
     }
 
+    @Test
+    public void testForeignVectorArithmeticOp() throws NoSuchFieldException,
+                    IllegalAccessException {
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldBooleanArray", false);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldByteArray", false);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldDoubleArray", false);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldFloatArray", false);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldIntegerArray", false);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldLongArray", false);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldShortArray", false);
+
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listBoolean", false);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listByte", false);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listDouble", false);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listFloat", false);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listInteger", false);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listLong", false);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listShort", false);
+
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldCharArray", true);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldStringArray", true);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listString", true);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listStringInt", true);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listChar", true);
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to + 1", "cat('Error in to + 1 : non-numeric argument to binary operator', '\n')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "1 + to", "cat('Error in 1 + to : non-numeric argument to binary operator', '\n')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to + to", "cat('Error in to + to : non-numeric argument to binary operator', '\n')");
+    }
+
+    private void testForeignVectorArithmeticOp(String vec, boolean fail) throws NoSuchFieldException, IllegalAccessException {
+        TestClass t = new TestClass();
+
+        String expectedOK;
+        String expectedKO;
+
+        expectedOK = toRVector(t, vec) + " + 1";
+        if (vec.equals("fieldStringArray")) {
+            expectedKO = "cat('Error in to$" + vec + " + 1 : ', '\n', ' non-numeric argument to binary operator', '\n')";
+        } else {
+            expectedKO = "cat('Error in to$" + vec + " + 1 : non-numeric argument to binary operator', '\n')";
+        }
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " + 1", fail ? expectedKO : expectedOK);
+
+        expectedOK = toRVector(t, vec) + " + c(1, 2, 3)";
+        if (vec.equals("fieldStringArray") || vec.equals("fieldCharArray") || vec.equals("listString") || vec.equals("listStringInt") || vec.equals("listChar")) {
+            expectedKO = "cat('Error in to$" + vec + " + c(1, 2, 3) : ', '\n', ' non-numeric argument to binary operator', '\n')";
+        } else {
+            expectedKO = "cat('Error in to$" + vec + " + c(1, 2, 3) : non-numeric argument to binary operator', '\n')";
+        }
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " + c(1, 2, 3)", fail ? expectedKO : expectedOK);
+
+        expectedOK = "1 + " + toRVector(t, vec);
+        if (vec.equals("fieldStringArray")) {
+            expectedKO = "cat('Error in 1 + to$" + vec + " : ', '\n', ' non-numeric argument to binary operator', '\n')";
+        } else {
+            expectedKO = "cat('Error in 1 + to$" + vec + " : non-numeric argument to binary operator', '\n')";
+        }
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "1 + to$" + vec, fail ? expectedKO : expectedOK);
+
+        expectedOK = "c(1, 2, 3) + " + toRVector(t, vec);
+        expectedKO = "cat('Error in c(1, 2, 3) + to$" + vec + " : ', '\n', ' non-numeric argument to binary operator', '\n')";
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " c(1, 2, 3) + to$" + vec, fail ? expectedKO : expectedOK);
+
+        expectedOK = toRVector(t, vec) + " + " + toRVector(t, vec);
+        expectedKO = "cat('Error in to$" + vec + " + to$" + vec + " : ', '\n', ' non-numeric argument to binary operator', '\n')";
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " + to$" + vec, fail ? expectedKO : expectedOK);
+
+        expectedOK = "-" + toRVector(t, vec);
+        expectedKO = "cat('Error in -(to$" + vec + ") : invalid argument to unary operator', '\n')";
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "-(to$" + vec + ")", fail ? expectedKO : expectedOK);
+
+        expectedOK = "numeric(0)";
+        if (vec.equals("listString") || vec.equals("listChar")) {
+            expectedKO = "cat('Error in to$" + vec + " + NULL : non-numeric argument to binary operator', '\n')";
+        } else {
+            expectedKO = "cat('Error in to$" + vec + " + NULL : ', '\n', ' non-numeric argument to binary operator', '\n')";
+        }
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " + NULL", fail ? expectedKO : expectedOK);
+
+        expectedOK = "numeric(0)";
+        if (vec.equals("listString") || vec.equals("listChar")) {
+            expectedKO = "cat('Error in NULL + to$" + vec + " : non-numeric argument to binary operator', '\n')";
+        } else {
+            expectedKO = "cat('Error in NULL + to$" + vec + " : ', '\n', ' non-numeric argument to binary operator', '\n')";
+        }
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "NULL + to$" + vec, fail ? expectedKO : expectedOK);
+    }
+
+    @Test
+    public void testForeignVectorBooleanOp() throws NoSuchFieldException,
+                    IllegalAccessException {
+        testForeignVectorBooleanOp("fieldBooleanArray", false);
+        testForeignVectorBooleanOp("fieldByteArray", false);
+        testForeignVectorBooleanOp("fieldDoubleArray", false);
+        testForeignVectorBooleanOp("fieldFloatArray", false);
+        testForeignVectorBooleanOp("fieldIntegerArray", false);
+        testForeignVectorBooleanOp("fieldLongArray", false);
+        testForeignVectorBooleanOp("fieldShortArray", false);
+
+        testForeignVectorBooleanOp("listBoolean", false);
+        testForeignVectorBooleanOp("listByte", false);
+        testForeignVectorBooleanOp("listDouble", false);
+        testForeignVectorBooleanOp("listFloat", false);
+        testForeignVectorBooleanOp("listInteger", false);
+        testForeignVectorBooleanOp("listLong", false);
+        testForeignVectorBooleanOp("listShort", false);
+
+        testForeignVectorBooleanOp("fieldCharArray", true);
+        testForeignVectorBooleanOp("fieldStringArray", true);
+        testForeignVectorBooleanOp("listString", true);
+        testForeignVectorBooleanOp("listStringInt", true);
+        testForeignVectorBooleanOp("listChar", true);
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to & T", "cat('Error in to & T : ', '\n', ' operations are possible only for numeric, logical or complex types', '\n')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "T & to", "cat('Error in T & to : ', '\n', ' operations are possible only for numeric, logical or complex types', '\n')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to & to", "cat('Error in to & to : ', '\n', ' operations are possible only for numeric, logical or complex types', '\n')");
+    }
+
+    private void testForeignVectorBooleanOp(String vec, boolean fail) throws NoSuchFieldException, IllegalAccessException {
+        TestClass t = new TestClass();
+
+        String expectedOK;
+        String expectedKO;
+
+        expectedOK = toRVector(t, vec) + " & T";
+        expectedKO = "cat('Error in to$" + vec + " & T : ', '\n', ' operations are possible only for numeric, logical or complex types', '\n')";
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " & T", fail ? expectedKO : expectedOK);
+
+        expectedOK = toRVector(t, vec) + " & c(T, T, F)";
+        if (vec.equals("fieldCharArray") || vec.equals("fieldStringArray") || vec.equals("listString") || vec.equals("listChar") || vec.equals("listStringInt")) {
+            expectedKO = "cat('Error in to$" + vec + " & c(T, T, F) : ', '\n', ' operations are possible only for numeric, logical or complex types', '\n')";
+        } else {
+            expectedKO = "cat('Error in to$" + vec + " & c(T, T, F) : operations are possible only for numeric, logical or complex types', '\n')";
+        }
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " & c(T, T, F)", fail ? expectedKO : expectedOK);
+
+        expectedOK = "T & " + toRVector(t, vec);
+        if (vec.equals("fieldCharArray") || vec.equals("fieldStringArray") || vec.equals("listString") || vec.equals("listChar") || vec.equals("listStringInt")) {
+            expectedKO = "cat('Error in T & to$" + vec + " : ', '\n', ' operations are possible only for numeric, logical or complex types', '\n')";
+        } else {
+            expectedKO = "cat('Error in T & to$" + vec + " : operations are possible only for numeric, logical or complex types', '\n')";
+        }
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "T & to$" + vec, fail ? expectedKO : expectedOK);
+        expectedOK = "c(T, T, F) & " + toRVector(t, vec);
+        expectedKO = "cat('Error in c(T, T, F) & to$" + vec + " : ', '\n', ' operations are possible only for numeric, logical or complex types', '\n')";
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " c(T, T, F) & to$" + vec, fail ? expectedKO : expectedOK);
+
+        expectedOK = toRVector(t, vec) + " & " + toRVector(t, vec);
+        expectedKO = "cat('Error in to$" + vec + " & to$" + vec + " : ', '\n', ' operations are possible only for numeric, logical or complex types', '\n')";
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " & to$" + vec, fail ? expectedKO : expectedOK);
+
+        expectedOK = "!" + toRVector(t, vec);
+        expectedKO = "cat('Error in !(to$" + vec + ") : invalid argument type', '\n')";
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "!(to$" + vec + ")", fail ? expectedKO : expectedOK);
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " & NULL", "logical(0)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "NULL & to$" + vec, "logical(0)");
+    }
+
+    @Test
+    public void testForeignUnaryArithmeticOp() throws NoSuchFieldException,
+                    IllegalAccessException {
+
+        TestClass t = new TestClass();
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$fieldBooleanArray)", "c(1, 0, 1)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$fieldByteArray)", toRVector(t.fieldByteArray, null));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$fieldDoubleArray)", toRVector(t.fieldDoubleArray, null));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$fieldFloatArray)", toRVector(t.fieldFloatArray, null));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$fieldIntegerArray)", toRVector(t.fieldIntegerArray, null));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$fieldLongArray)", toRVector(t.fieldLongArray, null));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$fieldShortArray)", toRVector(t.fieldShortArray, null));
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$listBoolean)", "c(1, 0, 1)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$listByte)", toRVector(t.listByte, null));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$listDouble)", toRVector(t.listDouble, null));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$listFloat)", toRVector(t.listFloat, null));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$listInteger)", toRVector(t.listInteger, null));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$listLong)", toRVector(t.listLong, null));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$listShort)", toRVector(t.listShort, null));
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$fieldCharArray)", "cat('Error in abs(to$fieldCharArray) : ', '\n', ' non-numeric argument to mathematical function', '\n')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$fieldStringArray)", "cat('Error in abs(to$fieldStringArray) : ', '\n', ' non-numeric argument to mathematical function', '\n')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$listString)", "cat('Error in abs(to$listString) : ', '\n', ' non-numeric argument to mathematical function', '\n')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$listStringInt)", "cat('Error in abs(to$listStringInt) : ', '\n', ' non-numeric argument to mathematical function', '\n')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to$listChar)", "cat('Error in abs(to$listChar) : non-numeric argument to mathematical function', '\n')");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "abs(to)", "cat('Error in abs(to) : non-numeric argument to mathematical function', '\n')");
+    }
+
+    @Test
+    public void testForeignUnaryArithmeticReduceOp() throws NoSuchFieldException,
+                    IllegalAccessException {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$fieldBooleanArray)", "c(0, 1)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$fieldByteArray)", "c(1, 3)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$fieldDoubleArray)", "c(1.1, 3.1)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$fieldFloatArray)", "c(1.1, 3.1)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$fieldIntegerArray)", "c(1, 3)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$fieldLongArray)", "c(1, 3)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$fieldShortArray)", "c(1, 3)");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listBoolean)", "c(0, 1)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listByte)", "c(1, 3)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listDouble)", "c(1.1, 3.1)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listFloat)", "c(1.1, 3.1)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listInteger)", "c(1, 3)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listLong)", "c(1, 3)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listShort)", "c(1, 3)");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$fieldCharArray)", "c('a', 'c')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$fieldStringArray)", "c('a', 'c')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listString)", "c('a', 'c')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listStringInt)", "c('1', '3')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listChar)", "c('a', 'c')");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to)", "cat('Error in min(x, na.rm = na.rm) : ', '\n', ' invalid \\'type\\' (external object) of argument', '\n')");
+    }
+
     private String getRValue(Object value) {
         if (value == null) {
             return "NULL";
@@ -1034,6 +1254,11 @@ public class TestJavaInterop extends TestBase {
         return value.toString();
     }
 
+    private String toRVector(TestClass t, String fieldName) throws NoSuchFieldException, IllegalAccessException {
+        Field fld = t.getClass().getDeclaredField(fieldName);
+        return toRVector(fld.get(t), null);
+    }
+
     private String toRVector(Object o, String asXXX) {
         if (o.getClass().isArray()) {
             List<Object> l = new ArrayList<>();
@@ -1041,8 +1266,10 @@ public class TestJavaInterop extends TestBase {
                 l.add(Array.get(o, i));
             }
             return toRVector(l, asXXX);
+        } else if (o instanceof List) {
+            return toRVector((List<?>) o, asXXX);
         }
-        Assert.fail(o + " should have been an array");
+        Assert.fail(o + " should have been an array or list");
         return null;
     }
 
