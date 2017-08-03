@@ -341,7 +341,7 @@ public class FortranAndCFunctions {
         }
 
         @Fallback
-        public Object handleOthers(@SuppressWarnings("unused") Object result, @SuppressWarnings("unused") RArgsValuesAndNames argNames) {
+        public Object handleOthers(Object result, @SuppressWarnings("unused") RArgsValuesAndNames argNames) {
             // do nothing
             return result;
         }

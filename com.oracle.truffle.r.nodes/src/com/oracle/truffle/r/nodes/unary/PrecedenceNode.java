@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -233,7 +234,7 @@ public abstract class PrecedenceNode extends RBaseNode {
 
     @Specialization(guards = {"isForeignObject(to)", "!isJavaIterable(to)", "!isForeignArray(to, hasSize)"})
     protected int doForeignObject(TruffleObject to, boolean recursive,
-                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize) {
+                    @Cached("HAS_SIZE.createNode()") Node hasSize) {
         return LIST_PRECEDENCE;
     }
 
@@ -268,7 +269,7 @@ public abstract class PrecedenceNode extends RBaseNode {
 
     @Specialization(guards = {"isForeignArray(obj, hasSize)"})
     protected int doForeignArray(TruffleObject obj, boolean recursive,
-                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @Cached("HAS_SIZE.createNode()") Node hasSize,
                     @Cached("GET_SIZE.createNode()") Node getSize,
                     @Cached("READ.createNode()") Node read,
                     @Cached("createRecursive()") PrecedenceNode precedenceNode,
@@ -299,6 +300,7 @@ public abstract class PrecedenceNode extends RBaseNode {
         return precedence;
     }
 
+    @TruffleBoundary
     private int getPrecedence(Class<?> ct, boolean recursive) {
         if (recursive && ct.isArray()) {
             return getPrecedence(ct.getComponentType(), recursive);
@@ -306,16 +308,14 @@ public abstract class PrecedenceNode extends RBaseNode {
         return getPrecedence(ct);
     }
 
-    private int getPrecedence(Class<?> ct) {
-        if (Integer.TYPE.getName().equals(ct.getName()) || Byte.TYPE.getName().equals(ct.getName()) || Short.TYPE.getName().equals(ct.getName()) ||
-                        Integer.class.getName().equals(ct.getName()) || Byte.class.getName().equals(ct.getName()) || Short.class.getName().equals(ct.getName())) {
+    private static int getPrecedence(Class<?> ct) {
+        if (ct == Integer.class || ct == Byte.class || ct == Short.class || ct == int.class || ct == byte.class || ct == short.class) {
             return INT_PRECEDENCE;
-        } else if (Double.TYPE.getName().equals(ct.getName()) || Float.TYPE.getName().equals(ct.getName()) || Long.TYPE.getName().equals(ct.getName()) ||
-                        Double.class.getName().equals(ct.getName()) || Float.class.getName().equals(ct.getName()) || Long.class.getName().equals(ct.getName())) {
+        } else if (ct == Double.class || ct == Float.class || ct == Long.class || ct == double.class || ct == float.class || ct == long.class) {
             return DOUBLE_PRECEDENCE;
-        } else if (String.class.getName().equals(ct.getName()) || Character.TYPE.getName().equals(ct.getName()) || Character.class.getName().equals(ct.getName())) {
+        } else if (ct == String.class || ct == Character.class || ct == char.class) {
             return STRING_PRECEDENCE;
-        } else if (Boolean.TYPE.getName().equals(ct.getName()) || Boolean.class.getName().equals(ct.getName())) {
+        } else if (ct == Boolean.class || ct == boolean.class) {
             return LOGICAL_PRECEDENCE;
         }
         return NO_PRECEDENCE;

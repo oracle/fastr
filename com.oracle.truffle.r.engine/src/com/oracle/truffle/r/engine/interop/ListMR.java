@@ -35,7 +35,6 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.engine.interop.ListMRFactory.ListKeyInfoImplNodeGen;
 import com.oracle.truffle.r.engine.interop.ListMRFactory.ListReadImplNodeGen;
@@ -274,7 +273,7 @@ public class ListMR {
         }
 
         @Fallback
-        protected Object read(VirtualFrame frame, TruffleObject receiver, Object field) {
+        protected Object read(@SuppressWarnings("unused") TruffleObject receiver, Object field) {
             throw UnknownIdentifierException.raise("" + field);
         }
 
@@ -328,7 +327,7 @@ public class ListMR {
         }
 
         @Fallback
-        protected Object write(VirtualFrame frame, TruffleObject receiver, Object field, Object object) {
+        protected Object write(@SuppressWarnings("unused") TruffleObject receiver, Object field, @SuppressWarnings("unused") Object object) {
             throw UnknownIdentifierException.raise("" + field);
         }
     }
@@ -384,7 +383,7 @@ public class ListMR {
             return GetNamesAttributeNode.create();
         }
 
-        private int buildKeys(Object value) {
+        private static int buildKeys(Object value) {
             Builder builder = KeyInfo.newBuilder();
             builder.setReadable(true).setWritable(true).setInvocable(value instanceof RFunction);
             return builder.build();
@@ -398,7 +397,7 @@ public class ListMR {
         }
 
         @Fallback
-        protected int access(VirtualFrame frame, TruffleObject receiver, Object field) {
+        protected int access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object field) {
             return 0;
         }
     }

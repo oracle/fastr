@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.engine;
 
 import java.util.HashMap;
-import java.util.Locale;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;

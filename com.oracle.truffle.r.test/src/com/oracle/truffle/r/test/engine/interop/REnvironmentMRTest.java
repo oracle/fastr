@@ -131,6 +131,7 @@ public class REnvironmentMRTest extends AbstractMRTest {
         assertFalse(KeyInfo.isInternal(info));
     }
 
+    @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
         PolyglotEngine engine = PolyglotEngine.newBuilder().build();
         Source src = Source.newBuilder("e <- new.env(); e$s <- 'aaa'; e$i <- 123L; e$d <- 123.1; e$b <- TRUE; e$fn <- function() {}; e$n <- NULL; e$l <- 666; lockBinding('l', e); e").mimeType(
@@ -143,6 +144,7 @@ public class REnvironmentMRTest extends AbstractMRTest {
         return new String[]{"s", "i", "d", "b", "fn", "n", "l"};
     }
 
+    @Override
     protected TruffleObject createEmptyTruffleObject() throws Exception {
         PolyglotEngine engine = PolyglotEngine.newBuilder().build();
         Source src = Source.newBuilder("new.env()").mimeType("text/x-r").name("test.R").build();

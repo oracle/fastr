@@ -45,7 +45,6 @@ import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
-import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
@@ -150,7 +149,7 @@ public class REnvironmentMR {
         }
 
         @Fallback
-        protected Object access(VirtualFrame frame, TruffleObject receiver, Object identifier) {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver, Object identifier) {
             throw UnknownIdentifierException.raise("" + identifier);
         }
 
@@ -207,7 +206,7 @@ public class REnvironmentMR {
         }
 
         @Fallback
-        protected Object access(VirtualFrame frame, TruffleObject receiver, Object identifier, Object valueObj) {
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver, Object identifier, @SuppressWarnings("unused") Object valueObj) {
             throw UnknownIdentifierException.raise("" + identifier);
         }
 
@@ -236,7 +235,7 @@ public class REnvironmentMR {
         }
 
         @Fallback
-        protected int access(REnvironment receiver, Object identifier) {
+        protected int access(@SuppressWarnings("unused") REnvironment receiver, @SuppressWarnings("unused") Object identifier) {
             return 0;
         }
     }

@@ -40,8 +40,7 @@ abstract class AbstractMRTest {
     /**
      * Create TruffleObject-s to be rudimentary tested for IS_NULL, IS_BOXED/UNBOX, IS_EXECUTABLE,
      * IS_POINTER, HAS_SIZE/GET_SIZE/KEYS behavior.
-     * 
-     * @return
+     *
      * @throws Exception
      */
     protected abstract TruffleObject[] createTruffleObjects() throws Exception;
@@ -55,31 +54,31 @@ abstract class AbstractMRTest {
         return null;
     }
 
-    protected boolean isNull(TruffleObject obj) {
+    protected boolean isNull(@SuppressWarnings("unused") TruffleObject obj) {
         return false;
     }
 
-    protected boolean isExecutable(TruffleObject obj) {
+    protected boolean isExecutable(@SuppressWarnings("unused") TruffleObject obj) {
         return false;
     }
 
-    protected boolean isPointer(TruffleObject obj) {
+    protected boolean isPointer(@SuppressWarnings("unused") TruffleObject obj) {
         return false;
     }
 
-    protected boolean isBoxed(TruffleObject obj) {
+    protected boolean isBoxed(@SuppressWarnings("unused") TruffleObject obj) {
         return false;
     }
 
-    protected boolean hasSize(TruffleObject obj) {
+    protected boolean hasSize(@SuppressWarnings("unused") TruffleObject obj) {
         return false;
     }
 
-    protected int getSize(TruffleObject obj) {
+    protected int getSize(@SuppressWarnings("unused") TruffleObject obj) {
         throw new UnsupportedOperationException("override if hasSize returns true");
     }
 
-    protected Object getUnboxed(TruffleObject obj) {
+    protected Object getUnboxed(@SuppressWarnings("unused") TruffleObject obj) {
         throw new UnsupportedOperationException("override if isBoxed returns true");
     }
 

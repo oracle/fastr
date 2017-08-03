@@ -37,8 +37,6 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
-import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
-import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
 import com.oracle.truffle.r.runtime.RError;
@@ -161,7 +159,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
     @Specialization(replaces = "doNumericVectorCached", guards = {"isForeignVector(left, hasSize)", "isNumericVector(right)"})
     @TruffleBoundary
     protected Object doForeignLeft(TruffleObject left, Object right,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                     @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
                     @Cached("createRecursive()") BinaryArithmeticNode recursive) {
         Object o = foreignArray2R.execute(left, true);
@@ -171,7 +169,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
     @Specialization(replaces = "doNumericVectorCached", guards = {"isNumericVector(left)", "isForeignVector(right, hasSize)"})
     @TruffleBoundary
     protected Object doForeignRight(Object left, TruffleObject right,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                     @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
                     @Cached("createRecursive()") BinaryArithmeticNode recursive) {
         Object o = foreignArray2R.execute(right, true);
@@ -181,7 +179,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
     @Specialization(replaces = "doNumericVectorCached", guards = {"isForeignVector(left, hasSize)", "isForeignVector(right, hasSize)"})
     @TruffleBoundary
     protected Object doForeignVector(TruffleObject left, TruffleObject right,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                     @Cached("createForeignArray2R()") ForeignArray2R leftForeignArray2R,
                     @Cached("createForeignArray2R()") ForeignArray2R rightForeignArray2R,
                     @Cached("createRecursive()") BinaryArithmeticNode recursive) {
@@ -203,8 +201,8 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"isForeignVector(right, hasSize)"})
-    protected Object doForeignLeftNull(@SuppressWarnings("unused") RNull left, TruffleObject right,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+    protected Object doForeignLeftNull(RNull left, TruffleObject right,
+                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                     @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
                     @Cached("createRecursive()") BinaryArithmeticNode recursive) {
         Object oRight = foreignArray2R.execute(right, true);
@@ -213,7 +211,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = {"isForeignVector(left, hasSize)"})
     protected Object doForeignRightNull(TruffleObject left, RNull right,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                     @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
                     @Cached("createRecursive()") BinaryArithmeticNode recursive) {
         Object oLeft = foreignArray2R.execute(left, true);

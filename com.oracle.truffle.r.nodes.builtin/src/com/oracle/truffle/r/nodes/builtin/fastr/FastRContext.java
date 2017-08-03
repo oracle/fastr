@@ -142,11 +142,8 @@ public class FastRContext {
             int[] multiSlotIndices = new int[length];
             for (int i = 0; i < length; i++) {
                 ChildContextInfo info = createContextInfo(contextKind);
-                if (FastROptions.SpawnUsesPolyglot.getBooleanValue()) {
-                    threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL), true);
-                } else {
-                    threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
-                }
+                threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL),
+                                FastROptions.SpawnUsesPolyglot.getBooleanValue());
                 data[i] = info.getId();
                 multiSlotIndices[i] = info.getMultiSlotInd();
             }
@@ -248,7 +245,7 @@ public class FastRContext {
                 int[] multiSlotIndices = new int[length];
                 for (int i = 0; i < length; i++) {
                     ChildContextInfo info = createContextInfo(contextKind);
-                    threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
+                    threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL), false);
                     multiSlotIndices[i] = info.getMultiSlotInd();
                 }
                 if (contextKind == ContextKind.SHARE_ALL) {

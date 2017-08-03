@@ -335,11 +335,13 @@ public abstract class Identical extends RBuiltinNode.Arg7 {
         return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
+    @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdenticalForeignObject(RInteropScalar x, RInteropScalar y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         return RRuntime.asLogical(x == y);
     }
 
+    @SuppressWarnings("unused")
     @Specialization(guards = "areForeignObjects(x, y)")
     protected byte doInternalIdenticalForeignObject(TruffleObject x, TruffleObject y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment) {
         return RRuntime.asLogical(x == y);
@@ -353,7 +355,7 @@ public abstract class Identical extends RBuiltinNode.Arg7 {
     }
 
     protected boolean areForeignObjects(TruffleObject x, TruffleObject y) {
-        return RRuntime.isForeignObject(x) && RRuntime.isForeignObject(x);
+        return RRuntime.isForeignObject(x) && RRuntime.isForeignObject(y);
     }
 
     protected boolean vectorsLists(RAbstractVector x, RAbstractVector y) {

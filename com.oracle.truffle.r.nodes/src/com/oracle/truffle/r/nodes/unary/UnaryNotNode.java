@@ -217,7 +217,7 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
 
     @Specialization(guards = {"isForeignVector(obj, hasSize)"})
     protected Object doForeign(VirtualFrame frame, TruffleObject obj,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                     @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
                     @Cached("createRecursive()") UnaryNotNode recursive) {
         Object vec = foreignArray2R.execute(obj, true);
