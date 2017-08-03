@@ -295,4 +295,12 @@ public interface StdUpCallsRFFI {
 
     int Rf_str2type(@RFFICstring Object name);
 
+    double Rf_dunif(double a, double b, double c, int d);
+
+    double Rf_qunif(double a, double b, double c, int d, int e);
+
+    double Rf_punif(double a, double b, double c, int d, int e);
+
+    double Rf_runif(double a, double b);
+
 }
