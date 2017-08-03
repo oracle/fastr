@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -42,7 +43,7 @@ public abstract class WrapArgumentBaseNode extends RNode {
         this.operand = operand;
     }
 
-    public RNode getOperand() {
+    public final RNode getOperand() {
         return operand;
     }
 
@@ -76,6 +77,11 @@ public abstract class WrapArgumentBaseNode extends RNode {
 
     @Override
     public RSyntaxNode getRSyntaxNode() {
-        return getOperand().asRSyntaxNode();
+        return operand == null ? null : operand.asRSyntaxNode();
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        return operand == null ? null : operand.getSourceSection();
     }
 }

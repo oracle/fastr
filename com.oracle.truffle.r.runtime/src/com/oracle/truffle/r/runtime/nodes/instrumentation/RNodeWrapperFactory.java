@@ -28,6 +28,7 @@ import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -96,6 +97,11 @@ public final class RNodeWrapperFactory implements InstrumentableFactory<RNode> {
         @Override
         public RSyntaxNode getRSyntaxNode() {
             return delegate.asRSyntaxNode();
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            return delegate.getSourceSection();
         }
     }
 
