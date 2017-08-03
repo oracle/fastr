@@ -872,4 +872,10 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
         return delegate.Rf_runif(a, b);
     }
 
+    @Override
+    public Object Rf_namesgets(Object vec, Object val) {
+        RFFIUtils.traceUpCall("Rf_namesgets", vec, val);
+        return delegate.Rf_namesgets(vec, val);
+    }
+
 }

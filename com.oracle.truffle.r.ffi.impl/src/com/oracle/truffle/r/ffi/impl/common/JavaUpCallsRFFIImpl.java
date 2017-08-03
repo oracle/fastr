@@ -110,7 +110,6 @@ import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nmath.distr.Unif;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -1602,6 +1601,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public double Rf_runif(double a, double b) {
         return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_runif).call(a, b);
+    }
+
+    @Override
+    public Object Rf_namesgets(Object x, Object y) {
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_namesgets).call(x, y);
     }
 
 }

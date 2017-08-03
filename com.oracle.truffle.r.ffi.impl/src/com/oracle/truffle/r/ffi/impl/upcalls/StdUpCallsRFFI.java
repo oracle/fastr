@@ -303,4 +303,6 @@ public interface StdUpCallsRFFI {
 
     double Rf_runif(double a, double b);
 
+    Object Rf_namesgets(Object vec, Object val);
+
 }

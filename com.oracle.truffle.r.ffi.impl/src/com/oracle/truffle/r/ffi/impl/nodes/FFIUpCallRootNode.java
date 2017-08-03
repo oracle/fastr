@@ -113,5 +113,6 @@ public final class FFIUpCallRootNode extends RootNode {
         FFIUpCallRootNode.add(RFFIUpCallTable.Rf_dunif, () -> RandFunction3_1NodeGen.create(new Unif.DUnif()));
         FFIUpCallRootNode.add(RFFIUpCallTable.Rf_qunif, () -> RandFunction3_2NodeGen.create(new Unif.QUnif()));
         FFIUpCallRootNode.add(RFFIUpCallTable.Rf_punif, () -> RandFunction3_2NodeGen.create(new Unif.PUnif()));
+        FFIUpCallRootNode.add(RFFIUpCallTable.Rf_namesgets, MiscNodesFactory.NamesGetsNodeGen::create);
     }
 }

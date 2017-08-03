@@ -449,7 +449,7 @@ SEXP R_lsInternal3(SEXP env, Rboolean all, Rboolean sorted) {
 }
 
 SEXP Rf_namesgets(SEXP x, SEXP y) {
-	return unimplemented("Rf_namesgets");
+	return checkRef(((call_Rf_namesgets) callbacks[Rf_namesgets_x])(x, y));
 }
 
 SEXP TAG(SEXP e) {
