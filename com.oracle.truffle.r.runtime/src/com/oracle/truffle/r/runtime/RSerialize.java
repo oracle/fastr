@@ -585,11 +585,16 @@ public class RSerialize {
                                 }
                                 Debug.printClosure(pairList);
                             }
-                            RFunction func = PairlistDeserializer.processFunction(carItem, cdrItem, tagItem, currentFunctionName, packageName);
+                            boolean restore = setupLibPath((REnvironment) tagItem);
+                            RFunction func = PairlistDeserializer.processFunction(carItem, cdrItem, (REnvironment) tagItem, currentFunctionName, packageName);
                             if (attrItem != RNull.instance) {
                                 setAttributes(func, attrItem);
                                 handleFunctionSrcrefAttr(func);
                             }
+                            if (restore) {
+                                RContext.getInstance().libraryPaths.remove(0);
+                            }
+
                             result = func;
                             break;
                         }
@@ -1820,11 +1825,14 @@ public class RSerialize {
                 if (ss != null) {
                     String path = RSource.getPathInternal(ss.getSource());
                     if (path != null) {
-                        Path relPath = Paths.get(REnvVars.rHome()).relativize(Paths.get(path));
-                        REnvironment createSrcfile = RSrcref.createSrcfile(relPath);
-                        Object createLloc = RSrcref.createLloc(ss, createSrcfile);
-                        writePairListEntry(RRuntime.R_SRCREF, createLloc);
-                        writePairListEntry(RRuntime.R_SRCFILE, createSrcfile);
+                        // do this only for packages
+                        Path relPath = relativizeLibPath(Paths.get(path));
+                        if (relPath != null) {
+                            REnvironment createSrcfile = RSrcref.createSrcfile(relPath);
+                            Object createLloc = RSrcref.createLloc(ss, createSrcfile);
+                            writePairListEntry(RRuntime.R_SRCREF, createLloc);
+                            writePairListEntry(RRuntime.R_SRCFILE, createSrcfile);
+                        }
                     }
                 }
                 DynamicObject attributes = outAttrs.getExplicitAttributes();
@@ -2491,19 +2499,36 @@ public class RSerialize {
         SourceSection ss = getFileSourceSection(syntaxElement);
         if (ss != null && serObj instanceof RAttributable) {
             String pathInternal = RSource.getPathInternal(ss.getSource());
-            Path relPath = Paths.get(REnvVars.rHome()).relativize(Paths.get(pathInternal));
-            RAttributable attributable = (RAttributable) serObj;
-            attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(relPath));
-            RList createBlockSrcrefs = RSrcref.createBlockSrcrefs(syntaxElement);
-            if (createBlockSrcrefs != null) {
-                attributable.setAttr(RRuntime.R_SRCREF, createBlockSrcrefs);
-                attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
-            } else {
-                Object createLloc = RSrcref.createLloc(ss);
-                attributable.setAttr(RRuntime.R_SRCREF, createLloc);
-                attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
+
+            // do this only for packages
+            Path relPath = relativizeLibPath(Paths.get(pathInternal));
+            if (relPath != null) {
+                RAttributable attributable = (RAttributable) serObj;
+                attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(relPath));
+                RList createBlockSrcrefs = RSrcref.createBlockSrcrefs(syntaxElement);
+                if (createBlockSrcrefs != null) {
+                    attributable.setAttr(RRuntime.R_SRCREF, createBlockSrcrefs);
+                    attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
+                } else {
+                    Object createLloc = RSrcref.createLloc(ss);
+                    attributable.setAttr(RRuntime.R_SRCREF, createLloc);
+                    attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
+                }
             }
         }
+    }
+
+    /**
+     * Relativizes the given path to its corresponding library path. If the given path is not a
+     * child of any library path, {@code null} will be returned.
+     */
+    private static Path relativizeLibPath(Path sourcePath) {
+        for (String libPath : RContext.getInstance().libraryPaths) {
+            if (sourcePath.startsWith(libPath)) {
+                return Paths.get(libPath).relativize(sourcePath);
+            }
+        }
+        return null;
     }
 
     private static SourceSection getFileSourceSection(RSyntaxElement syntaxElement) {
@@ -2550,14 +2575,12 @@ public class RSerialize {
      */
     private static final class PairlistDeserializer {
 
-        public static RFunction processFunction(Object car, Object cdr, Object tag, String functionName, String packageName) {
+        public static RFunction processFunction(Object car, Object cdr, REnvironment environment, String functionName, String packageName) {
             // car == arguments, cdr == body, tag == PairList(attributes, environment)
 
-            REnvironment environment = (REnvironment) tag;
-
             MaterializedFrame enclosingFrame = environment.getFrame();
-            RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, processArguments(car), processBody(cdr), functionName);
 
+            RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, processArguments(car), processBody(cdr), functionName);
             FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
             RFunction func = RDataFactory.createFunction(functionName, packageName, callTarget, null, enclosingFrame);
 
@@ -2746,5 +2769,36 @@ public class RSerialize {
     private static boolean debugWarning(String message) {
         RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, message);
         return true;
+    }
+
+    /**
+     * Prepends the namespace's library location to the library paths in order to enable resolving
+     * of serialized relative paths.
+     *
+     * If a namespace is loaded, it remembers the path where it was loaded from. However, functions
+     * are loaded lazily and when deserializing them, there is no information about their origin.
+     * This method searches for the enclosing namespace environment (if available) and adds the
+     * origin path to the library paths.
+     *
+     * @param environment The function's environment.
+     * @return {@code true} if a path has been added, {@code false} otherwise.
+     */
+    private static boolean setupLibPath(REnvironment environment) {
+        REnvironment cur = environment;
+        while (cur != REnvironment.emptyEnv() && !cur.isNamespaceEnv()) {
+            cur = cur.getParent();
+        }
+        Object namespaceEnv = cur.get(REnvironment.NAMESPACE_KEY);
+        if (namespaceEnv != null) {
+            assert namespaceEnv instanceof REnvironment;
+            Object pathObj = ((REnvironment) namespaceEnv).get("path");
+            if (pathObj instanceof RAbstractStringVector) {
+                String path = ((RAbstractStringVector) pathObj).getDataAt(0);
+                Path libLoc = Paths.get(path).getParent();
+                RContext.getInstance().libraryPaths.add(0, libLoc.toString());
+                return true;
+            }
+        }
+        return false;
     }
 }

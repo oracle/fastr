@@ -102,6 +102,8 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRInspect;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInspectNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInteropFactory;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRLibPaths;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRLibPathsNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRPkgSource;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRPkgSourceNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRRefCountInfo;
@@ -453,6 +455,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRprofmemShow.class, FastRprofmemShowNodeGen::create);
         add(FastRprofmemSource.class, FastRprofmemSourceNodeGen::create);
         add(FastRprofmemSnapshot.class, FastRprofmemSnapshotNodeGen::create);
+        add(FastRLibPaths.class, FastRLibPathsNodeGen::create);
         add(FileFunctions.BaseName.class, FileFunctionsFactory.BaseNameNodeGen::create);
         add(FileFunctions.DirCreate.class, FileFunctionsFactory.DirCreateNodeGen::create);
         add(FileFunctions.DirExists.class, FileFunctionsFactory.DirExistsNodeGen::create);
