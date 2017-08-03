@@ -27,8 +27,14 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_ARITHMETIC;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -45,9 +51,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
+@ImportStatic({ForeignArray2R.class, Message.class})
 @RBuiltin(name = "!", kind = PRIMITIVE, parameterNames = {""}, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
 public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
 
@@ -205,6 +213,19 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
     @Specialization(guards = {"list.getLength() == 0"})
     protected RLogicalVector doList(@SuppressWarnings("unused") RList list) {
         return RDataFactory.createEmptyLogicalVector();
+    }
+
+    @Specialization(guards = {"isForeignVector(obj, hasSize)"})
+    protected Object doForeign(VirtualFrame frame, TruffleObject obj,
+                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
+                    @Cached("createRecursive()") UnaryNotNode recursive) {
+        Object vec = foreignArray2R.execute(obj, true);
+        return recursive.execute(frame, vec);
+    }
+
+    protected UnaryNotNode createRecursive() {
+        return UnaryNotNodeGen.create();
     }
 
     @Fallback

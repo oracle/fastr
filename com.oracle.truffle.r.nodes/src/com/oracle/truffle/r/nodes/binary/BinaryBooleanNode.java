@@ -26,8 +26,11 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
@@ -54,6 +57,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.And;
@@ -66,6 +70,7 @@ import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
  * operation is implemented by factory object given as a constructor parameter, e.g.
  * {@link com.oracle.truffle.r.runtime.ops.BinaryLogic.And}.
  */
+@ImportStatic({ForeignArray2R.class, com.oracle.truffle.api.interop.Message.class})
 public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
 
     protected static final int CACHE_LIMIT = 5;
@@ -169,7 +174,6 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
     @Specialization(guards = {"isOneList(left, right)"})
     protected Object doList(VirtualFrame frame, RAbstractVector left, RAbstractVector right,
                     @Cached("create()") CastTypeNode cast,
-
                     @Cached("createRecursive()") BinaryBooleanNode recursive) {
         Object recursiveLeft = left;
         if (isRAbstractListVector(left)) {
@@ -238,6 +242,17 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
 
     private static boolean isEmpty(Object value) {
         return (isRAbstractVector(value) && ((RAbstractVector) value).getLength() == 0);
+    }
+
+    @Specialization(guards = {"isForeignVector(left, hasSize) || isForeignVector(right, hasSize)"})
+    protected Object doForeignVector(VirtualFrame frame, TruffleObject left, TruffleObject right,
+                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @Cached("createForeignArray2R()") ForeignArray2R leftForeignArray2R,
+                    @Cached("createForeignArray2R()") ForeignArray2R rightForeignArray2R,
+                    @Cached("createRecursive()") BinaryBooleanNode recursive) {
+        Object oLeft = leftForeignArray2R.execute(left, true);
+        Object oRight = rightForeignArray2R.execute(right, true);
+        return recursive.execute(frame, oLeft, oRight);
     }
 
     @SuppressWarnings("unused")
