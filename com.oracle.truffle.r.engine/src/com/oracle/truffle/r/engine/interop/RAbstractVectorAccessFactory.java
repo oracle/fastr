@@ -131,7 +131,7 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
         }
 
         @Fallback
-        protected Object read(VirtualFrame frame, Object receiver, Object indentifier) {
+        protected Object read(@SuppressWarnings("unused") Object receiver, Object indentifier) {
             throw UnknownIdentifierException.raise("" + indentifier);
         }
 
@@ -179,7 +179,7 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
         }
 
         @Fallback
-        protected Object write(VirtualFrame frame, Object receiver, Object field, Object object) {
+        protected Object write(@SuppressWarnings("unused") Object receiver, Object field, @SuppressWarnings("unused") Object object) {
             throw UnknownIdentifierException.raise("" + field);
         }
     }
@@ -224,7 +224,7 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
         }
 
         @Fallback
-        protected int keyInfo(VirtualFrame frame, Object receiver, Object label) {
+        protected int keyInfo(@SuppressWarnings("unused") Object receiver, @SuppressWarnings("unused") Object label) {
             return 0;
         }
     }

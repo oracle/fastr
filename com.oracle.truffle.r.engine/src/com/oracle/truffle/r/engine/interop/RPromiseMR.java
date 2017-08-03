@@ -70,7 +70,7 @@ public class RPromiseMR {
 
         @TruffleBoundary
         protected Object access(RPromise receiver, String field) {
-            return readNode.execute(receiver, receiver);
+            return readNode.execute(receiver, field);
         }
     }
 
@@ -79,7 +79,7 @@ public class RPromiseMR {
         @Child RPromiseWriteImplNode writeNode = RPromiseWriteImplNodeGen.create();
 
         protected Object access(RPromise receiver, String field, Object valueObj) {
-            return writeNode.execute(receiver, valueObj, valueObj);
+            return writeNode.execute(receiver, field, valueObj);
         }
     }
 
@@ -138,7 +138,7 @@ public class RPromiseMR {
         }
 
         @Fallback
-        protected Object access(RPromise receiver, Object identifier, Object valueObj) {
+        protected Object access(@SuppressWarnings("unused") RPromise receiver, Object identifier, @SuppressWarnings("unused") Object valueObj) {
             throw UnknownIdentifierException.raise("" + identifier);
         }
     }
@@ -148,7 +148,7 @@ public class RPromiseMR {
         protected abstract Object execute(RPromise receiver, Object identifier);
 
         @Specialization
-        protected Object access(@SuppressWarnings("unused") RPromise receiver, String identifier) {
+        protected Object access(RPromise receiver, String identifier) {
             if (PROP_EXPR.equals(identifier)) {
                 return RDataFactory.createLanguage(receiver.getRep());
             }
@@ -166,7 +166,7 @@ public class RPromiseMR {
         }
 
         @Fallback
-        protected Object access(RPromise receiver, Object identifier) {
+        protected Object access(@SuppressWarnings("unused") RPromise receiver, Object identifier) {
             throw UnknownIdentifierException.raise("" + identifier);
         }
     }
@@ -187,7 +187,7 @@ public class RPromiseMR {
         }
 
         @Fallback
-        protected Object access(RPromise receiver, Object identifier) {
+        protected Object access(@SuppressWarnings("unused") RPromise receiver, @SuppressWarnings("unused") Object identifier) {
             return 0;
         }
     }

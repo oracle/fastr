@@ -63,7 +63,7 @@ public class RLanguageMR {
 
     @Resolve(message = "GET_SIZE")
     public abstract static class RLanguageGetSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RLanguage receiver) {
+        protected Object access(RLanguage receiver) {
             return receiver.getLength();
         }
     }
@@ -95,7 +95,7 @@ public class RLanguageMR {
     public abstract static class RLanguageNode extends Node {
         @Node.Child private KeyInfoNode keyInfoNode = RLanguageMRFactory.KeyInfoNodeGen.create();
 
-        protected Object access(VirtualFrame frame, RLanguage receiver, Object obj) {
+        protected Object access(RLanguage receiver, Object obj) {
             return keyInfoNode.execute(receiver, obj);
         }
     }
@@ -142,7 +142,7 @@ public class RLanguageMR {
         }
 
         @Fallback
-        protected Object access(VirtualFrame frame, RLanguage receiver, Object identifier) {
+        protected Object access(@SuppressWarnings("unused") RLanguage receiver, Object identifier) {
             throw UnknownIdentifierException.raise("" + identifier);
         }
 
@@ -169,7 +169,7 @@ public class RLanguageMR {
         }
 
         @Fallback
-        protected int access(RLanguage receiver, Object identifier) {
+        protected int access(@SuppressWarnings("unused") RLanguage receiver, @SuppressWarnings("unused") Object identifier) {
             return 0;
         }
     }

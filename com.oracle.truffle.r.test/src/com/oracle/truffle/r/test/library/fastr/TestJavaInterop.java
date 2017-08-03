@@ -798,12 +798,12 @@ public class TestJavaInterop extends TestBase {
                                         "'[[4]]','\n','[external object]','\n\n','[[5]]','\n','[external object]','\n\n','[[6]]','\n','[external object]','\n\n','[[7]]','\n','[external object]','\n\n', sep='')");
     }
 
-    private String getTestFieldValuesAsResult(String name) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+    private static String getTestFieldValuesAsResult(String name) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
         TestArraysClass ta = new TestArraysClass();
         Field f = ta.getClass().getDeclaredField(name);
         Object value = f.get(ta);
         if (value instanceof List) {
-            List<?> l = (List) value;
+            List<?> l = (List<?>) value;
             value = l.toArray(new Object[l.size()]);
         }
         StringBuilder sb = new StringBuilder();
@@ -831,7 +831,7 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    public void testConvertEmptyList() throws IllegalArgumentException, IllegalAccessException {
+    public void testConvertEmptyList() throws IllegalArgumentException {
         assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + "as.character(to$listEmpty);", "as.character(list())");
     }
 
@@ -1155,8 +1155,7 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    public void testForeignUnaryArithmeticOp() throws NoSuchFieldException,
-                    IllegalAccessException {
+    public void testForeignUnaryArithmeticOp() {
 
         TestClass t = new TestClass();
 
@@ -1186,8 +1185,7 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    public void testForeignUnaryArithmeticReduceOp() throws NoSuchFieldException,
-                    IllegalAccessException {
+    public void testForeignUnaryArithmeticReduceOp() {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$fieldBooleanArray)", "c(0, 1)");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$fieldByteArray)", "c(1, 3)");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$fieldDoubleArray)", "c(1.1, 3.1)");
@@ -1559,6 +1557,7 @@ public class TestJavaInterop extends TestBase {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class TestClass {
 
         public static boolean fieldStaticBoolean = true;
@@ -2178,7 +2177,7 @@ public class TestJavaInterop extends TestBase {
             @Override
             public Integer next() {
                 throw new UnsupportedOperationException("Should not reach here.");
-            };
+            }
         }
 
         @Override
@@ -2199,5 +2198,4 @@ public class TestJavaInterop extends TestBase {
             throw new UnsupportedOperationException("Should not reach here.");
         }
     }
-
 }

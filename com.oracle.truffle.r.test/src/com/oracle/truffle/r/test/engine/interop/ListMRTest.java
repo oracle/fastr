@@ -53,6 +53,7 @@ public class ListMRTest extends AbstractMRTest {
         engine = PolyglotEngine.newBuilder().build();
     }
 
+    @Override
     @Test
     public void testNativePointer() throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
         assertTrue(ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), create("list", testValues)) instanceof NativePointer);

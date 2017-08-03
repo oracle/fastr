@@ -39,7 +39,6 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -122,10 +121,6 @@ class SpecialsUtils {
     abstract static class ListFieldSpecialBase extends RNode {
 
         @Child protected GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
-
-        protected final boolean isSimpleList(RList list) {
-            return true;
-        }
 
         protected static int getIndex(RStringVector names, String field) {
             if (names != null) {

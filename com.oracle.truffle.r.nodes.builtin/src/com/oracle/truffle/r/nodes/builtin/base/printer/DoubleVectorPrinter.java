@@ -12,8 +12,6 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.MathContext;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;

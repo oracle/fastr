@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.KeyInfo.Builder;
@@ -110,7 +109,7 @@ public class RS4ObjectMR {
     public abstract static class RS4ObjectNode extends Node {
         @Node.Child private RS4ObjectKeyInfoImplNode keyInfoNode = RS4ObjectKeyInfoImplNodeGen.create();
 
-        protected Object access(VirtualFrame frame, RS4Object receiver, Object obj) {
+        protected Object access(RS4Object receiver, Object obj) {
             return keyInfoNode.execute(receiver, obj);
         }
     }
@@ -164,7 +163,7 @@ public class RS4ObjectMR {
         }
 
         @Fallback
-        protected Object access(RS4Object receiver, Object identifier) {
+        protected Object access(@SuppressWarnings("unused") RS4Object receiver, Object identifier) {
             throw UnknownIdentifierException.raise("" + identifier);
         }
 
@@ -211,7 +210,7 @@ public class RS4ObjectMR {
         }
 
         @Fallback
-        protected Object access(RS4Object receiver, Object identifier, Object valueObj) {
+        protected Object access(@SuppressWarnings("unused") RS4Object receiver, Object identifier, @SuppressWarnings("unused") Object valueObj) {
             throw UnknownIdentifierException.raise("" + identifier);
         }
 
@@ -250,7 +249,7 @@ public class RS4ObjectMR {
         }
 
         @Fallback
-        protected int access(RS4Object receiver, Object field) {
+        protected int access(@SuppressWarnings("unused") RS4Object receiver, @SuppressWarnings("unused") Object field) {
             return 0;
         }
     }

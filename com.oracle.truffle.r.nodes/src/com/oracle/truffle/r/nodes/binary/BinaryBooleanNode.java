@@ -220,15 +220,13 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
         return BinaryBooleanNode.create(factory);
     }
 
-    @SuppressWarnings("unused")
     @Specialization(guards = {"isRNullOrEmptyAndNotMissing(left, right)"})
-    protected static Object doEmptyOrNull(Object left, Object right) {
+    protected static Object doEmptyOrNull(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") Object right) {
         return RType.Logical.getEmpty();
     }
 
-    @SuppressWarnings("unused")
     @Specialization(guards = {"(isRMissing(left) || isRMissing(right))"})
-    protected Object doOneArg(Object left, Object right) {
+    protected Object doOneArg(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") Object right) {
         throw error(RError.Message.IS_OF_WRONG_ARITY, 1, factory.createOperation().opName(), 2);
     }
 
@@ -246,7 +244,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = {"isForeignVector(left, hasSize) || isForeignVector(right, hasSize)"})
     protected Object doForeignVector(VirtualFrame frame, TruffleObject left, TruffleObject right,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                     @Cached("createForeignArray2R()") ForeignArray2R leftForeignArray2R,
                     @Cached("createForeignArray2R()") ForeignArray2R rightForeignArray2R,
                     @Cached("createRecursive()") BinaryBooleanNode recursive) {
@@ -255,9 +253,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
         return recursive.execute(frame, oLeft, oRight);
     }
 
-    @SuppressWarnings("unused")
     @Fallback
-    protected Object doInvalidType(Object left, Object right) {
+    protected Object doInvalidType(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") Object right) {
         throw error(Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
     }
 

@@ -141,7 +141,7 @@ public class RArgsValuesAndNamesMR {
         }
 
         @Fallback
-        protected Object access(RArgsValuesAndNames receiver, Object identifier) {
+        protected Object access(@SuppressWarnings("unused") RArgsValuesAndNames receiver, Object identifier) {
             throw UnknownIdentifierException.raise("" + identifier);
         }
     }
@@ -152,7 +152,7 @@ public class RArgsValuesAndNamesMR {
         abstract Object execute(VirtualFrame frame, RArgsValuesAndNames receiver, Object idx);
 
         @Specialization
-        protected Object access(VirtualFrame frame, RArgsValuesAndNames receiver, int idx) {
+        protected Object access(RArgsValuesAndNames receiver, int idx) {
             if (unknownIdentifier.profile(idx < 0 || idx >= receiver.getLength())) {
                 return 0;
             }
@@ -160,7 +160,7 @@ public class RArgsValuesAndNamesMR {
         }
 
         @Specialization
-        protected Object access(VirtualFrame frame, RArgsValuesAndNames receiver, String identifier) {
+        protected Object access(RArgsValuesAndNames receiver, String identifier) {
             ArgumentsSignature sig = receiver.getSignature();
             String[] names = sig.getNames();
             int idx = -1;
@@ -177,14 +177,14 @@ public class RArgsValuesAndNamesMR {
             return createKeyInfo(receiver, idx);
         }
 
-        private Object createKeyInfo(RArgsValuesAndNames receiver, int idx) {
+        private static Object createKeyInfo(RArgsValuesAndNames receiver, int idx) {
             KeyInfo.Builder builder = KeyInfo.newBuilder();
             builder.setReadable(true).setInvocable(receiver.getArgument(idx) instanceof RFunction);
             return builder.build();
         }
 
         @Fallback
-        protected Object access(VirtualFrame frame, RArgsValuesAndNames receiver, Object field) {
+        protected Object access(@SuppressWarnings("unused") RArgsValuesAndNames receiver, @SuppressWarnings("unused") Object field) {
             return 0;
         }
     }

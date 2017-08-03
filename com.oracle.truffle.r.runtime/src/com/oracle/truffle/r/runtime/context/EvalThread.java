@@ -33,7 +33,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.ExitException;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -62,24 +61,14 @@ public class EvalThread extends Thread {
     /** We use a separate counter for threads since ConcurrentHashMap.size() is not reliable. */
     public static final AtomicInteger threadCnt = new AtomicInteger(0);
 
-    public EvalThread(ChildContextInfo info, Source source) {
-        this.info = info;
-        this.source = source;
-        threadCnt.incrementAndGet();
-        threads.put(info.getId(), this);
-        idToMultiSlotTable.put(info.getId(), info.getMultiSlotInd());
-        truffleContext = info.createTruffleContext();
-        usePolyglot = false;
-    }
-
     public EvalThread(ChildContextInfo info, Source source, boolean usePolyglot) {
         this.info = info;
         this.source = source;
         threadCnt.incrementAndGet();
         threads.put(info.getId(), this);
         idToMultiSlotTable.put(info.getId(), info.getMultiSlotInd());
-        this.usePolyglot = true;
-        truffleContext = null;
+        this.usePolyglot = usePolyglot;
+        this.truffleContext = usePolyglot ? null : info.createTruffleContext();
     }
 
     @Override

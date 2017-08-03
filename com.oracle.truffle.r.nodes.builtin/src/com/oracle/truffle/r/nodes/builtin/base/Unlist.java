@@ -153,7 +153,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         @Specialization(guards = {"isForeignArray(obj, hasSize)"})
         protected int getForeignArrayLength(VirtualFrame frame, TruffleObject obj,
                         @Cached("READ.createNode()") Node read,
-                        @Cached("HAS_SIZE.createNode()") Node hasSize,
+                        @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                         @Cached("GET_SIZE.createNode()") Node getSize,
                         @Cached("createForeign2R()") Foreign2R foreign2R) {
             int totalSize = 0;
@@ -207,8 +207,8 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         }
 
         @Specialization(guards = {"isForeignObject(obj)", "!isForeignArray(obj, hasSize)", "!isJavaIterable(obj)"})
-        protected int getForeignObject(VirtualFrame frame, TruffleObject obj,
-                        @Cached("HAS_SIZE.createNode()") Node hasSize) {
+        protected int getForeignObject(@SuppressWarnings("unused") TruffleObject obj,
+                        @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize) {
             return 1;
         }
     }
@@ -308,7 +308,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = {"isForeignObject(obj)", "!isForeignVector(obj)"})
-    protected Object unlistForeign(@SuppressWarnings("unused") VirtualFrame frame, TruffleObject obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") boolean useNames) {
+    protected Object unlistForeign(TruffleObject obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") boolean useNames) {
         return obj;
     }
 
@@ -336,10 +336,8 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
 
     /**
      * Converts foreign object to RAbstractVector.
-     * 
+     *
      * @param obj the foreign object. Has to be ensured it is a foreign array or java iterable.
-     * @param recursive
-     * @return
      */
     private RAbstractVector foreignToVector(TruffleObject obj, boolean recursive) {
         assert isForeignVector(obj);

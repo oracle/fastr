@@ -1129,7 +1129,6 @@ public class FileFunctions {
         @TruffleBoundary
         protected int doUnlink(RAbstractStringVector vec, boolean recursive, @SuppressWarnings("unused") boolean force) {
             int result = 1;
-            FileSystem fileSystem = FileSystems.getDefault();
             for (int i = -0; i < vec.getLength(); i++) {
                 String pathPattern = Utils.tildeExpand(vec.getDataAt(i));
                 if (pathPattern.length() == 0 || RRuntime.isNA(pathPattern)) {

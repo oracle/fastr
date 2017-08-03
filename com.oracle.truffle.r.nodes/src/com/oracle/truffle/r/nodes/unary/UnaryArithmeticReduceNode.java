@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
@@ -31,6 +32,7 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -41,8 +43,6 @@ import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
@@ -70,6 +70,8 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     private final BinaryArithmeticFactory factory;
     protected final ReduceSemantics semantics;
+    protected final boolean supportString;
+    protected final boolean supportComplex;
 
     private final NACheck na = NACheck.create();
     private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
@@ -78,6 +80,8 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         this.factory = factory;
         this.semantics = semantics;
         this.arithmetic = factory.createOperation();
+        this.supportString = semantics.supportString;
+        this.supportComplex = semantics.supportComplex;
     }
 
     private String handleString(RStringVector operand, boolean naRm, boolean finite, int offset) {
@@ -164,50 +168,36 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         }
     }
 
-    @Specialization
+    @Specialization(guards = "supportComplex")
     protected RComplex doComplex(RComplex operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
-        if (semantics.supportComplex) {
-            na.enable(operand);
-            if (naRmProfile.profile(naRm)) {
-                if (na.check(operand)) {
-                    emptyWarning();
-                    return RRuntime.double2complex(semantics.getDoubleStart());
-                } else {
-                    return operand;
-                }
+        na.enable(operand);
+        if (naRmProfile.profile(naRm)) {
+            if (na.check(operand)) {
+                emptyWarning();
+                return RRuntime.double2complex(semantics.getDoubleStart());
             } else {
-                return na.check(operand) ? RComplex.createNA() : operand;
+                return operand;
             }
         } else {
-            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "complex");
+            return na.check(operand) ? RComplex.createNA() : operand;
         }
     }
 
-    @Specialization
+    @Specialization(guards = "supportString")
     protected String doString(String operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
-        if (semantics.supportString) {
-            na.enable(operand);
-            if (naRmProfile.profile(naRm)) {
-                if (na.check(operand)) {
-                    if (semantics.getEmptyWarning() != null) {
-                        RError.warning(this, semantics.emptyWarningCharacter);
-                    }
-                    return semantics.getStringStart();
-                } else {
-                    return operand;
+        na.enable(operand);
+        if (naRmProfile.profile(naRm)) {
+            if (na.check(operand)) {
+                if (semantics.getEmptyWarning() != null) {
+                    RError.warning(this, semantics.emptyWarningCharacter);
                 }
+                return semantics.getStringStart();
             } else {
-                return na.check(operand) ? RRuntime.STRING_NA : operand;
+                return operand;
             }
         } else {
-            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            return na.check(operand) ? RRuntime.STRING_NA : operand;
         }
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RRaw doString(RRaw operand, boolean naRm, boolean finite) {
-        throw error(RError.Message.INVALID_TYPE_ARGUMENT, "raw");
     }
 
     @Specialization
@@ -342,105 +332,78 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         return result;
     }
 
-    @Specialization
+    @Specialization(guards = "supportComplex")
     protected RComplex doComplexVector(RComplexVector operand, boolean naRm, boolean finite) {
         RBaseNode.reportWork(this, operand.getLength());
-        if (semantics.supportComplex) {
-            boolean profiledNaRm = naRmProfile.profile(naRm || finite);
-            RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
-            int opCount = 0;
-            na.enable(operand);
-            for (int i = 0; i < operand.getLength(); i++) {
-                RComplex current = operand.getDataAt(i);
-                if (na.check(current)) {
-                    if (profiledNaRm) {
-                        continue;
-                    } else {
-                        return RComplex.createNA();
-                    }
+        boolean profiledNaRm = naRmProfile.profile(naRm || finite);
+        RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
+        int opCount = 0;
+        na.enable(operand);
+        for (int i = 0; i < operand.getLength(); i++) {
+            RComplex current = operand.getDataAt(i);
+            if (na.check(current)) {
+                if (profiledNaRm) {
+                    continue;
                 } else {
-                    result = arithmetic.op(result.getRealPart(), result.getImaginaryPart(), current.getRealPart(), current.getImaginaryPart());
+                    return RComplex.createNA();
                 }
-                opCount++;
+            } else {
+                result = arithmetic.op(result.getRealPart(), result.getImaginaryPart(), current.getRealPart(), current.getImaginaryPart());
             }
-            if (opCount == 0) {
-                emptyWarning();
-            }
-            return result;
-        } else {
-            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "complex");
-
+            opCount++;
         }
+        if (opCount == 0) {
+            emptyWarning();
+        }
+        return result;
     }
 
     // the algorithm that works for other types (reducing a vector starting with the "start value")
     // does not work for String-s as, in particular, we cannot supply the (lexicographically)
     // "largest" String for the implementation of max function
 
-    @SuppressWarnings("unused")
-    private static String doStringVectorEmptyInternal(RStringVector operand, boolean naRm, boolean finite, ReduceSemantics semantics, RBaseNode invokingNode) {
-        if (semantics.supportString) {
-            if (semantics.getEmptyWarning() != null) {
-                RError.warning(invokingNode, semantics.emptyWarningCharacter);
-            }
-            return semantics.getStringStart();
-        } else {
-            throw invokingNode.error(RError.Message.INVALID_TYPE_ARGUMENT, "character");
+    private static String doStringVectorEmptyInternal(ReduceSemantics semantics, RBaseNode invokingNode) {
+        if (semantics.getEmptyWarning() != null) {
+            RError.warning(invokingNode, semantics.emptyWarningCharacter);
         }
+        return semantics.getStringStart();
     }
 
-    @Specialization(guards = "operand.getLength() == 0")
-    protected String doStringVectorEmpty(RStringVector operand, boolean naRm, boolean finite) {
-        return doStringVectorEmptyInternal(operand, naRm, finite, semantics, this);
+    @Specialization(guards = {"supportString", "operand.getLength() == 0"})
+    protected String doStringVectorEmpty(@SuppressWarnings("unused") RStringVector operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
+        return doStringVectorEmptyInternal(semantics, this);
     }
 
-    @Specialization(guards = "operand.getLength() == 1")
+    @Specialization(guards = {"supportString", "operand.getLength() == 1"})
     protected String doStringVectorOneElem(RStringVector operand, boolean naRm, boolean finite) {
-        if (semantics.supportString) {
-            boolean profiledNaRm = naRmProfile.profile(naRm);
-            String result = operand.getDataAt(0);
-            if (profiledNaRm) {
-                na.enable(result);
-                if (na.check(result)) {
-                    return doStringVectorEmpty(operand, naRm, finite);
-                }
+        boolean profiledNaRm = naRmProfile.profile(naRm);
+        String result = operand.getDataAt(0);
+        if (profiledNaRm) {
+            na.enable(result);
+            if (na.check(result)) {
+                return doStringVectorEmpty(operand, naRm, finite);
             }
-            return result;
-        } else {
-            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
+        return result;
     }
 
-    @Specialization(guards = "operand.getLength() > 1")
+    @Specialization(guards = {"supportString", "operand.getLength() > 1"})
     protected String doStringVector(RStringVector operand, boolean naRm, boolean finite) {
-        if (semantics.supportString) {
-            return handleString(operand, naRm, finite, 0);
-        } else {
-            throw error(RError.Message.INVALID_TYPE_ARGUMENT, "character");
-        }
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RRaw doString(RRawVector operand, boolean naRm, boolean finite) {
-        throw error(RError.Message.INVALID_TYPE_ARGUMENT, "raw");
+        return handleString(operand, naRm, finite, 0);
     }
 
     @Specialization(guards = {"isForeignVector(obj, hasSize)"})
     protected Object doForeignVector(TruffleObject obj, boolean naRm, boolean finite,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                     @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
                     @Cached("createRecursive()") UnaryArithmeticReduceNode recursive) {
         Object vec = foreignArray2R.execute(obj, true);
         return recursive.executeReduce(vec, naRm, finite);
     }
 
-    @Specialization(guards = {"isForeignObject(obj)"})
-    protected Object doForeign(TruffleObject obj, boolean naRm, boolean finite,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize,
-                    @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
-                    @Cached("createRecursive()") UnaryArithmeticReduceNode recursive) {
-        throw error(RError.Message.INVALID_TYPE_ARGUMENT, "external object");
+    @Fallback
+    protected Object doFallback(Object obj, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean infinite) {
+        throw error(RError.Message.INVALID_TYPE_ARGUMENT, Predef.typeName().apply(obj));
     }
 
     protected UnaryArithmeticReduceNode createRecursive() {
@@ -538,7 +501,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
                     // the following is meant to eliminate leading NA-s
                     if (offset == operand.getLength() - 1) {
                         // last element - all other are NAs
-                        return doStringVectorEmptyInternal(operand, naRm, finite, semantics, this);
+                        return doStringVectorEmptyInternal(semantics, this);
                     } else {
                         return handleString(operand, naRm, finite, offset + 1);
                     }

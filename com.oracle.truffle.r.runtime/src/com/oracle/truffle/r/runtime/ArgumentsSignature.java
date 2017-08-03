@@ -94,17 +94,17 @@ public final class ArgumentsSignature implements Iterable<String> {
 
     private ArgumentsSignature(String[] names, boolean convertEmpty) {
         this.names = new String[names.length];
-        int nonNullCount = 0;
+        int nonNull = 0;
         for (int i = 0; i < names.length; i++) {
             String s = names[i];
             if (s == null || (s.isEmpty() && convertEmpty)) {
                 this.names[i] = null;
                 continue;
             }
-            nonNullCount++;
+            nonNull++;
             this.names[i] = s == UNMATCHED ? s : s.intern();
         }
-        this.nonNullCount = nonNullCount;
+        this.nonNullCount = nonNull;
 
         int index = NO_VARARG;
         int count = 0;

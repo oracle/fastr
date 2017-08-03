@@ -71,7 +71,7 @@ public class RFunctionMRTest extends AbstractMRTest {
         return new TruffleObject[]{create("function() {}")};
     }
 
-    private RFunction create(String fun) {
+    private static RFunction create(String fun) {
         PolyglotEngine engine = PolyglotEngine.newBuilder().build();
         Source src = Source.newBuilder(fun).mimeType("text/x-r").name("test.R").build();
         PolyglotEngine.Value result = engine.eval(src);

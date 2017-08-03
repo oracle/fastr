@@ -100,7 +100,7 @@ public abstract class ForeignArray2R extends RBaseNode {
     }
 
     @Fallback
-    public Object doObject(Object obj, boolean recursive) {
+    public Object doObject(Object obj, @SuppressWarnings("unused") boolean recursive) {
         return obj;
     }
 
@@ -159,41 +159,39 @@ public abstract class ForeignArray2R extends RBaseNode {
     }
 
     private Object element2R(Object value, CollectedElements ce) throws UnsupportedMessageException {
-        if (value instanceof TruffleObject) {
+        Object unboxedValue = value;
+        if (unboxedValue instanceof TruffleObject) {
             if (isNull == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 isNull = insert(Message.IS_NULL.createNode());
             }
-            if (ForeignAccess.sendIsNull(isNull, (TruffleObject) value)) {
-                value = RNull.instance;
+            if (ForeignAccess.sendIsNull(isNull, (TruffleObject) unboxedValue)) {
+                unboxedValue = RNull.instance;
             } else {
                 if (isBoxed == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     isBoxed = insert(Message.IS_BOXED.createNode());
                 }
-                if (ForeignAccess.sendIsBoxed(isBoxed, (TruffleObject) value)) {
+                if (ForeignAccess.sendIsBoxed(isBoxed, (TruffleObject) unboxedValue)) {
                     if (unbox == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         unbox = insert(Message.UNBOX.createNode());
                     }
-                    value = ForeignAccess.sendUnbox(unbox, (TruffleObject) value);
+                    unboxedValue = ForeignAccess.sendUnbox(unbox, (TruffleObject) unboxedValue);
                 }
             }
         }
-        ce.typeCheck.checkForeign(value);
+        ce.typeCheck.checkForeign(unboxedValue);
 
         if (foreign2R == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             foreign2R = insert(Foreign2RNodeGen.create());
         }
-        return foreign2R.execute(value);
+        return foreign2R.execute(unboxedValue);
     }
 
     /**
      * Coverts the elements collected from a foreign array or java iterable into a vector or list.
-     * 
-     * @param ce
-     * @return
      */
     public static RAbstractVector asAbstractVector(CollectedElements ce) {
         InteropTypeCheck.RType type = ce.typeCheck.getType();

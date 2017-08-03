@@ -103,7 +103,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     @Specialization(guards = {"isForeignVector(obj, hasSize)"})
     protected Object doForeignVector(TruffleObject obj,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                     @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
                     @Cached("createRecursive()") UnaryArithmeticNode recursive) {
         Object vec = foreignArray2R.execute(obj, true);
