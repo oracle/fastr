@@ -970,8 +970,10 @@ get.initial.package.blacklist <- function() {
 
 do.find.top100 <- function() {
 	avail.pkgs <- available.packages(type="source");
-	install.packages('cranlogs')
-	library('cranlogs')
+	if (!require('cranlogs', quietly = T)) {
+		install.packages('cranlogs', quiet = T)
+		library('cranlogs', quietly = T)
+	}
 	top100 <- cran_top_downloads(when = c("last-day", "last-week", "last-month"), count = 100)
 	names <- top100[['package']]
 	l = length(names)
@@ -979,13 +981,8 @@ do.find.top100 <- function() {
 		pkgname <- names[[i]]
 		pkg <- avail.pkgs[pkgname, ]
 		list.contriburl = ifelse(list.canonical, "https://cran.r-project.org/src/contrib", pkg["Repository"])
-		cat(pkg["Package"], pkg["Version"], paste0(list.contriburl, "/", pkgname, "_", pkg["Version"], ".tar.gz"), "\n", sep=",")
-		cat(pkgname)
-		if (i != l) {
-			cat(',')
-		}
+		cat(pkg["Package"], pkg["Version"], paste0(list.contriburl, "/", pkgname, "_", pkg["Version"], ".tar.gz"), "\n", sep = ",")
 	}
-	cat('\n')
 }
 
 run.setup <- function() {
