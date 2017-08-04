@@ -79,7 +79,10 @@ public class JLineConsoleCompleter implements Completer {
 
         if (completionEnv.hasMember("comps")) {
             Value completions = completionEnv.getMember("comps");
-            if (completions.hasArrayElements()) {
+            if (completions.isString()) {
+                candidates.add(completions.asString());
+                return start;
+            } else if (completions.hasArrayElements()) {
                 long length = completions.getArraySize();
                 List<String> result = new ArrayList<>((int) length);
                 for (int i = 0; i < length; i++) {
