@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 // transcribed from /src/library/methods/src/methods_list_dispatch.c (R_loadMethod function)
 abstract class LoadMethod extends RBaseNode {
@@ -119,7 +118,7 @@ abstract class LoadMethod extends RBaseNode {
             REnvironment methodsEnv = (REnvironment) methodsEnvRead.execute(frame, REnvironment.getNamespaceRegistry().getFrame(regFrameAccessProfile));
             if (loadMethodFind == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                loadMethodFind = insert(ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, RRuntime.R_LOAD_METHOD_NAME));
+                loadMethodFind = insert(ReadVariableNode.createFunctionLookup(RRuntime.R_LOAD_METHOD_NAME));
                 currentFunction = (RFunction) loadMethodFind.execute(frame, methodsEnv.getFrame());
                 loadMethodFunction = currentFunction;
                 loadMethodCall = insert(CallRFunctionNode.create(loadMethodFunction.getTarget()));

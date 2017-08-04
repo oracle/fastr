@@ -37,18 +37,19 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.MapplyNodeGen.MapplyInternalNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
+import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -139,7 +140,7 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
                         @SuppressWarnings("unused") @Cached(value = "extractNames(dots)", dimensions = 1) String[] cachedDotsNames,
                         @SuppressWarnings("unused") @Cached(value = "extractNames(moreArgs)", dimensions = 1) String[] cachedMoreArgsNames,
                         @Cached("createElementNodeArray(dotsLength, moreArgsLength, cachedDotsNames, cachedMoreArgsNames)") ElementNode[] cachedElementNodeArray,
-                        @Cached("createCallNode(cachedElementNodeArray)") RCallNode callNode) {
+                        @Cached("createCallNode(cachedElementNodeArray)") RCallBaseNode callNode) {
             int[] lengths = new int[dotsLength];
             int maxLength = getDotsLengths(frame, dots, dotsLength, cachedElementNodeArray, lengths);
             storeAdditionalArguments(frame, moreArgs, dotsLength, moreArgsLength, cachedElementNodeArray);
@@ -234,12 +235,12 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
         /**
          * Creates the {@link RCallNode} for this target.
          */
-        protected RCallNode createCallNode(ElementNode[] elementNodeArray) {
+        protected RCallBaseNode createCallNode(ElementNode[] elementNodeArray) {
             CompilerAsserts.neverPartOfCompilation();
             RSyntaxNode[] syntaxNodes = new RSyntaxNode[elementNodeArray.length];
             String[] names = new String[elementNodeArray.length];
             for (int i = 0; i < syntaxNodes.length; i++) {
-                syntaxNodes[i] = ReadVariableNode.create(elementNodeArray[i].vectorElementName).asRSyntaxNode();
+                syntaxNodes[i] = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, elementNodeArray[i].vectorElementName, false);
                 names[i] = elementNodeArray[i].argName;
             }
             // Errors can be thrown from the modified call so a SourceSection is required

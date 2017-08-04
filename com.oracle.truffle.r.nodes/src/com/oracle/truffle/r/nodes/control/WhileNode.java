@@ -25,8 +25,6 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
@@ -58,10 +56,9 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
         return RNull.instance;
     }
 
-    private static final class WhileRepeatingNode extends Node implements RepeatingNode {
+    private static final class WhileRepeatingNode extends AbstractRepeatingNode {
 
         @Child private ConvertBooleanNode condition;
-        @Child private RNode body;
 
         private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
         private final BranchProfile normalBlock = BranchProfile.create();
@@ -72,9 +69,9 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
         private final WhileNode whileNode;
 
         WhileRepeatingNode(WhileNode whileNode, ConvertBooleanNode condition, RNode body) {
+            super(body);
             this.whileNode = whileNode;
             this.condition = condition;
-            this.body = body;
             // pre-initialize the profile so that loop exits to not deoptimize
             conditionProfile.profile(false);
         }

@@ -22,22 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -49,11 +48,13 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyntaxCall {
 
+    @Child private RNode range;
+    @Child private RLengthNode length;
     @Child private WriteVariableNode writeLengthNode;
     @Child private WriteVariableNode writeIndexNode;
     @Child private WriteVariableNode writeRangeNode;
     @Child private LoopNode loopNode;
-    @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+    @Child private SetVisibilityNode visibility;
 
     private final RSyntaxLookup var;
 
@@ -64,45 +65,62 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         String rangeName = AnonymousFrameVariable.create("FOR_RANGE");
         String lengthName = AnonymousFrameVariable.create("FOR_LENGTH");
 
+        this.range = range;
+        this.length = RLengthNodeGen.create();
         this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, Mode.REGULAR, null);
-        this.writeRangeNode = WriteVariableNode.createAnonymous(rangeName, Mode.REGULAR, range);
-        this.writeLengthNode = WriteVariableNode.createAnonymous(lengthName, Mode.REGULAR, RLengthNodeGen.create(ReadVariableNode.create(rangeName)));
+        this.writeRangeNode = WriteVariableNode.createAnonymous(rangeName, Mode.REGULAR, null);
+        this.writeLengthNode = WriteVariableNode.createAnonymous(lengthName, Mode.REGULAR, null);
         this.loopNode = Truffle.getRuntime().createLoopNode(new ForRepeatingNode(this, var.getIdentifier(), body, indexName, lengthName, rangeName));
     }
 
     @Override
-    public Object execute(VirtualFrame frame) {
+    public void voidExecute(VirtualFrame frame) {
+        Object obj = range.execute(frame);
         writeIndexNode.execute(frame, 1);
-        writeRangeNode.execute(frame);
-        writeLengthNode.execute(frame);
+        writeRangeNode.execute(frame, obj);
+        writeLengthNode.execute(frame, length.executeInteger(frame, obj));
         loopNode.executeLoop(frame);
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        voidExecute(frame);
+        return RNull.instance;
+    }
+
+    @Override
+    public Object visibleExecute(VirtualFrame frame) {
+        voidExecute(frame);
+        if (visibility == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            visibility = insert(SetVisibilityNode.create());
+        }
         visibility.execute(frame, false);
         return RNull.instance;
     }
 
-    private static final class ForRepeatingNode extends Node implements RepeatingNode {
+    private static final class ForRepeatingNode extends AbstractRepeatingNode {
 
         private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
         private final BranchProfile breakBlock = BranchProfile.create();
         private final BranchProfile nextBlock = BranchProfile.create();
 
         @Child private WriteVariableNode writeElementNode;
-        @Child private RNode body;
 
-        @Child private ReadVariableNode readIndexNode;
-        @Child private ReadVariableNode readLengthNode;
+        @Child private LocalReadVariableNode readIndexNode;
+        @Child private LocalReadVariableNode readLengthNode;
         @Child private WriteVariableNode writeIndexNode;
 
         // only used for toString
         private final ForNode forNode;
 
         ForRepeatingNode(ForNode forNode, String var, RNode body, String indexName, String lengthName, String rangeName) {
+            super(body);
             this.forNode = forNode;
             this.writeElementNode = WriteVariableNode.createAnonymous(var, Mode.REGULAR, createIndexedLoad(indexName, rangeName), false);
-            this.body = body;
 
-            this.readIndexNode = ReadVariableNode.create(indexName);
-            this.readLengthNode = ReadVariableNode.create(lengthName);
+            this.readIndexNode = LocalReadVariableNode.create(indexName, true);
+            this.readLengthNode = LocalReadVariableNode.create(lengthName, true);
             this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, Mode.REGULAR, null);
             // pre-initialize the profile so that loop exits to not deoptimize
             conditionProfile.profile(false);
@@ -124,7 +142,7 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
                 length = readLengthNode.executeInteger(frame);
                 index = readIndexNode.executeInteger(frame);
             } catch (UnexpectedResultException e1) {
-                throw new AssertionError("For index must be Integer.");
+                throw RInternalError.shouldNotReachHere("For index must be Integer.");
             }
             try {
                 if (conditionProfile.profile(index <= length)) {
@@ -154,23 +172,11 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
     @Override
     public RSyntaxElement[] getSyntaxArguments() {
         ForRepeatingNode repeatingNode = (ForRepeatingNode) loopNode.getRepeatingNode();
-        return new RSyntaxElement[]{var, writeRangeNode.getRhs().asRSyntaxNode(), repeatingNode.body.asRSyntaxNode()};
+        return new RSyntaxElement[]{var, range.asRSyntaxNode(), repeatingNode.body.asRSyntaxNode()};
     }
 
     @Override
     public ArgumentsSignature getSyntaxSignature() {
         return ArgumentsSignature.empty(3);
-    }
-
-    /**
-     * Tests if the provided node is a loop-body node (also considering wrappers).
-     */
-    public static boolean isLoopBody(Node n) {
-        Node parent = n.getParent();
-        if (parent instanceof WrapperNode) {
-            Node grandparent = parent.getParent();
-            return grandparent instanceof ForRepeatingNode && ((ForRepeatingNode) grandparent).body == parent;
-        }
-        return parent instanceof ForRepeatingNode && ((ForRepeatingNode) parent).body == n;
     }
 }

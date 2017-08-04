@@ -52,7 +52,6 @@ import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.control.BlockNode;
-import com.oracle.truffle.r.nodes.control.ForNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
@@ -278,7 +277,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         if (obj instanceof RLanguage) {
             return (RNode) RASTUtils.unwrap(((RLanguage) obj).getRep());
         } else if (obj instanceof RSymbol) {
-            return ReadVariableNode.create(((RSymbol) obj).getName());
+            return RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) obj).getName(), false).asRNode();
         } else if (obj instanceof RPromise) {
             // Evaluate promise and return the result as constant.
             return ConstantNode.create(forcePromise("unwrapToRNode", objArg));
@@ -538,7 +537,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     // single statement block, variable parent
                     // note: RepeatingNode is not a RSyntaxElement but the body of a loop is
                     // under the repeating node !
-                    return parent instanceof FunctionDefinitionNode || parent instanceof RootWithBody || parent instanceof IfNode || parent instanceof AbstractLoopNode || ForNode.isLoopBody(node);
+                    return parent instanceof FunctionDefinitionNode || parent instanceof RootWithBody || parent instanceof IfNode || AbstractLoopNode.isLoopBody(node);
                 }
             }
 

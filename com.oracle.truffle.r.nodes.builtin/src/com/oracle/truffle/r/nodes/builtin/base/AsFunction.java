@@ -32,9 +32,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
@@ -45,6 +43,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -96,7 +95,7 @@ public abstract class AsFunction extends RBuiltinNode.Arg2 {
                 if (arg == RMissing.instance) {
                     defaultValue = null;
                 } else if (arg == RNull.instance) {
-                    defaultValue = ConstantNode.create(RNull.instance);
+                    defaultValue = RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, RNull.instance).asRNode();
                 } else if (arg instanceof RLanguage) {
                     defaultValue = (RNode) ((RLanguage) arg).getRep();
                 } else if (arg instanceof RSymbol) {
@@ -104,10 +103,10 @@ public abstract class AsFunction extends RBuiltinNode.Arg2 {
                     if (symbol.isMissing()) {
                         defaultValue = null;
                     } else {
-                        defaultValue = ReadVariableNode.create(symbol.getName());
+                        defaultValue = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, symbol.getName(), false).asRNode();
                     }
                 } else if (RRuntime.convertScalarVectors(arg) instanceof RAttributable) {
-                    defaultValue = ConstantNode.create(arg);
+                    defaultValue = RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, arg).asRNode();
                 } else {
                     throw RInternalError.unimplemented();
                 }
@@ -132,10 +131,10 @@ public abstract class AsFunction extends RBuiltinNode.Arg2 {
         if (bodyObject instanceof RLanguage) {
             body = ((RLanguage) x.getDataAtAsObject(x.getLength() - 1)).getRep();
         } else if (bodyObject instanceof RSymbol) {
-            body = ReadVariableNode.create(((RSymbol) bodyObject).getName());
+            body = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) bodyObject).getName(), false).asRNode();
         } else {
             assert bodyObject instanceof Integer || bodyObject instanceof Double || bodyObject instanceof Byte || bodyObject instanceof String;
-            body = ConstantNode.create(bodyObject);
+            body = RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, bodyObject).asRNode();
         }
         if (!RBaseNode.isRSyntaxNode(body)) {
             throw RInternalError.unimplemented();

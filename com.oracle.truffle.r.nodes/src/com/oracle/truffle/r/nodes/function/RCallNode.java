@@ -654,7 +654,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return root.containsDispatch() || root.needsSplitting();
     }
 
-    private static final class GetTempNode extends RNode {
+    public static final class GetTempNode extends RNode {
 
         private final FrameSlot slot;
         private final RSyntaxNode arg;

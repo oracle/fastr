@@ -23,7 +23,6 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
@@ -32,6 +31,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 @RBuiltin(name = "@", kind = PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = 1, behavior = COMPLEX)
 public abstract class Slot extends RBuiltinNode.Arg2 {
@@ -58,8 +58,8 @@ public abstract class Slot extends RBuiltinNode.Arg2 {
                 if (val instanceof RSymbol) {
                     return ((RSymbol) val).getName();
                 }
-            } else if (rep instanceof ReadVariableNode) {
-                return ((ReadVariableNode) rep).getIdentifier();
+            } else if (rep instanceof RSyntaxLookup) {
+                return ((RSyntaxLookup) rep).getIdentifier();
             }
         }
         CompilerDirectives.transferToInterpreter();

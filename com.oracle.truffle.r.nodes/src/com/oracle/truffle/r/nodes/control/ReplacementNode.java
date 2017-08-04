@@ -164,11 +164,16 @@ abstract class ReplacementNode extends OperatorNode {
         return null;
     }
 
+    private static RSyntaxNode createLookup(SourceSection source, String idenifier) {
+        return RContext.getASTBuilder().lookup(source, idenifier, false);
+    }
+
     private static RNode createReplacementTarget(RSyntaxLookup variable, boolean isSuper, boolean localPeek) {
         if (isSuper) {
-            return ReadVariableNode.createSuperLookup(variable.getLazySourceSection(), variable.getIdentifier());
+            return ReadVariableNode.wrap(variable.getLazySourceSection(), ReadVariableNode.createSuperLookup(variable.getIdentifier())).asRNode();
         } else {
-            return localPeek ? new PeekLocalVariableNode(variable.getIdentifier()) : ReadVariableNode.create(variable.getLazySourceSection(), variable.getIdentifier(), true);
+            return localPeek ? new PeekLocalVariableNode(variable.getIdentifier())
+                            : ReadVariableNode.wrap(variable.getLazySourceSection(), ReadVariableNode.create(variable.getIdentifier(), true)).asRNode();
         }
     }
 
@@ -253,7 +258,8 @@ abstract class ReplacementNode extends OperatorNode {
                 extractFunc = createSpecialFunctionQuery(calls.get(i), extractFunc.asRSyntaxNode(), codeBuilderContext);
                 ((RCallSpecialNode) extractFunc).setPropagateFullCallNeededException();
             }
-            this.replaceCall = (RCallSpecialNode) createFunctionUpdate(source, extractFunc.asRSyntaxNode(), ReadVariableNode.create(getRHSTemp(tempNamesStartIndex)), calls.get(0), codeBuilderContext);
+            this.replaceCall = (RCallSpecialNode) createFunctionUpdate(source, extractFunc.asRSyntaxNode(), createLookup(RSyntaxNode.INTERNAL, getRHSTemp(tempNamesStartIndex)), calls.get(0),
+                            codeBuilderContext);
             this.replaceCall.setPropagateFullCallNeededException();
         }
 
@@ -377,7 +383,7 @@ abstract class ReplacementNode extends OperatorNode {
              * replacement, 'x' in our example (the assignment from 'x' is not done in this loop).
              */
             for (int i = calls.size() - 1; i >= 1; i--) {
-                ReadVariableNode newFirstArg = ReadVariableNode.create(getTargetTemp(targetIndex));
+                RSyntaxNode newFirstArg = createLookup(RSyntaxNode.INTERNAL, getTargetTemp(targetIndex));
                 RNode extract = createSpecialFunctionQuery(calls.get(i), newFirstArg, codeBuilderContext);
                 instructions.add(WriteVariableNode.createAnonymous(getTargetTemp(++targetIndex), WriteVariableNode.Mode.INVISIBLE, wrapForSlotUpdate(extract, calls.get(i - 1))));
             }
@@ -387,7 +393,8 @@ abstract class ReplacementNode extends OperatorNode {
              */
             int replacementIndex = tempNamesStartIndex;
             for (int i = 0; i < calls.size(); i++) {
-                RNode update = createFunctionUpdate(source, ReadVariableNode.create(getTargetTemp(targetIndex--)), ReadVariableNode.create(getRHSTemp(replacementIndex)), calls.get(i),
+                RNode update = createFunctionUpdate(source, createLookup(RSyntaxNode.INTERNAL, getTargetTemp(targetIndex--)), createLookup(RSyntaxNode.INTERNAL, getRHSTemp(replacementIndex)),
+                                calls.get(i),
                                 codeBuilderContext);
                 if (i < calls.size() - 1) {
                     instructions.add(WriteVariableNode.createAnonymous(getRHSTemp(++replacementIndex), WriteVariableNode.Mode.INVISIBLE, update));

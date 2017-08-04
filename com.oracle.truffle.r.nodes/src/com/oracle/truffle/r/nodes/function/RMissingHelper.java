@@ -34,6 +34,8 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * This class implements the behavior for {@link RMissing} which is needed inside this module, as it
@@ -113,19 +115,11 @@ public class RMissingHelper {
             return false;
         }
         boolean result = false;
-        Object exprObj = promise.getRep();
-
-        // Unfold WrapArgumentNode
-        if (exprObj instanceof WrapArgumentNode) {
-            exprObj = ((WrapArgumentNode) exprObj).getOperand();
-        }
-        if (exprObj instanceof WrapDefaultArgumentNode) {
-            exprObj = ((WrapDefaultArgumentNode) exprObj).getOperand();
-        }
+        RSyntaxNode syntaxNode = promise.getRep().asRSyntaxNode();
 
         // Check for ReadVariableNode
-        if (exprObj instanceof ReadVariableNode) {
-            ReadVariableNode rvn = (ReadVariableNode) exprObj;
+        if (syntaxNode instanceof RSyntaxLookup) {
+            RSyntaxLookup lookup = (RSyntaxLookup) syntaxNode;
 
             // Check: If there is a cycle, return true. (This is done like in GNU R)
             if (promise.isUnderEvaluation()) {
@@ -150,7 +144,7 @@ public class RMissingHelper {
                     }
                 }
                 // promise.materialize(globalMissingPromiseProfile);
-                result = isMissingArgument(promise.getFrame(), rvn.getIdentifier());
+                result = isMissingArgument(promise.getFrame(), lookup.getIdentifier());
             } finally {
                 promise.resetUnderEvaluation();
             }

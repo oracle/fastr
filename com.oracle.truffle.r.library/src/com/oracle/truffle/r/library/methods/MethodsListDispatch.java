@@ -462,11 +462,11 @@ public class MethodsListDispatch {
 
             }
             RCallNode callNode = (RCallNode) matchedCall.getRep();
-            RNode f = ReadVariableNode.create(RRuntime.R_DOT_NEXT_METHOD);
+            RNode f = RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, RRuntime.R_DOT_NEXT_METHOD, false).asRNode();
             ArgumentsSignature sig = callNode.getSyntaxSignature();
             RSyntaxNode[] args = new RSyntaxNode[sig.getLength()];
             for (int i = 0; i < args.length; i++) {
-                args[i] = ReadVariableNode.create(sig.getName(i));
+                args[i] = RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, sig.getName(i), false);
             }
             RLanguage newCall = RDataFactory.createLanguage(RCallNode.createCall(RSyntaxNode.SOURCE_UNAVAILABLE, f, sig, args));
             Object res = RContext.getEngine().eval(newCall, ev.getFrame());

@@ -25,8 +25,6 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
@@ -55,9 +53,7 @@ public final class RepeatNode extends AbstractLoopNode implements RSyntaxNode, R
         return RNull.instance;
     }
 
-    private static final class RepeatRepeatingNode extends Node implements RepeatingNode {
-
-        @Child private RNode body;
+    private static final class RepeatRepeatingNode extends AbstractRepeatingNode {
 
         private final BranchProfile normalBlock = BranchProfile.create();
         private final BranchProfile breakBlock = BranchProfile.create();
@@ -67,8 +63,8 @@ public final class RepeatNode extends AbstractLoopNode implements RSyntaxNode, R
         private final RepeatNode whileNode;
 
         RepeatRepeatingNode(RepeatNode whileNode, RNode body) {
+            super(body);
             this.whileNode = whileNode;
-            this.body = body;
         }
 
         @Override

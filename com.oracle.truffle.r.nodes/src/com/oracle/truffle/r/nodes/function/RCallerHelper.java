@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,7 +102,7 @@ public final class RCallerHelper {
                             index++;
                         }
                     }
-                    Object replacedFunction = function instanceof String ? ReadVariableNode.createFunctionLookup(RSyntaxNode.LAZY_DEPARSE, (String) function) : function;
+                    Object replacedFunction = function instanceof String ? ReadVariableNode.wrap(RSyntaxNode.LAZY_DEPARSE, ReadVariableNode.createFunctionLookup((String) function)) : function;
                     syntaxNode = RASTUtils.createCall(replacedFunction, true, ArgumentsSignature.get(signature), syntaxArguments);
                 }
                 return syntaxNode;

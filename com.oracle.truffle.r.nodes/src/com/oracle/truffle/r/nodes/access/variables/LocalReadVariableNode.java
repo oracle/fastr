@@ -31,12 +31,14 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RTypesGen;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
@@ -135,5 +137,17 @@ public final class LocalReadVariableNode extends Node {
             }
         }
         return result;
+    }
+
+    public int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
+        return RTypesGen.expectInteger(execute(frame));
+    }
+
+    public double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
+        return RTypesGen.expectDouble(execute(frame));
+    }
+
+    public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
+        return RTypesGen.expectByte(execute(frame));
     }
 }

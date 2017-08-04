@@ -44,7 +44,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.DoCallNodeGen.DoCallInternalNodeGen;
@@ -235,7 +234,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
                     if (symbol.isMissing()) {
                         argsConstants[i] = ConstantNode.create(REmpty.instance);
                     } else {
-                        argsConstants[i] = ReadVariableNode.create(((RSymbol) argValues[i]).getName());
+                        argsConstants[i] = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) argValues[i]).getName(), false);
                     }
                 } else {
                     argsConstants[i] = ConstantNode.create(argValues[i]);

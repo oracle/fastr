@@ -54,6 +54,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -115,9 +116,9 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                         boolean switchArgs = "->".equals(symbol) || "->>".equals(symbol);
                         // fix the operators while keeping the correct source sections
                         if ("->>".equals(symbol)) {
-                            lhsLookup = ReadVariableNode.createForcedFunctionLookup(lhs.getLazySourceSection(), "<<-");
+                            lhsLookup = (RSyntaxLookup) ReadVariableNode.wrap(lhs.getLazySourceSection(), ReadVariableNode.createForcedFunctionLookup("<<-"));
                         } else if ("->".equals(symbol)) {
-                            lhsLookup = ReadVariableNode.createForcedFunctionLookup(lhs.getLazySourceSection(), "<-");
+                            lhsLookup = (RSyntaxLookup) ReadVariableNode.wrap(lhs.getLazySourceSection(), ReadVariableNode.createForcedFunctionLookup("<-"));
                         }
                         // switch the args if needed
                         RSyntaxNode lhsArg = args.get(switchArgs ? 1 : 0).value;
@@ -289,6 +290,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 return new ReadVariadicComponentNode(source, index > 0 ? index - 1 : index);
             }
         }
-        return functionLookup ? ReadVariableNode.createForcedFunctionLookup(source, symbol) : ReadVariableNode.create(source, symbol, false);
+        return ReadVariableNode.wrap(source, functionLookup ? ReadVariableNode.createForcedFunctionLookup(symbol) : ReadVariableNode.create(symbol));
     }
 }
