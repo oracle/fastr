@@ -57,7 +57,7 @@ public abstract class AbstractLoopNode extends OperatorNode {
         return String.format("%s-<%s:%d>", name, function, startLine);
     }
 
-    protected static abstract class AbstractRepeatingNode extends Node implements RepeatingNode {
+    protected abstract static class AbstractRepeatingNode extends Node implements RepeatingNode {
 
         @Child protected RNode body;
 
