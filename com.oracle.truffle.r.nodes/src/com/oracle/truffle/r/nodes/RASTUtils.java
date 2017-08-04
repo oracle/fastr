@@ -38,7 +38,6 @@ import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentBaseNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -222,23 +221,5 @@ public final class RASTUtils {
         }
         SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : RSyntaxNode.LAZY_DEPARSE;
         return RCallSpecialNode.createCall(sourceSection, fnNode, signature, arguments);
-    }
-
-    @TruffleBoundary
-    public static String expectName(RNode node) {
-        if (node instanceof ConstantNode) {
-            Object c = ((ConstantNode) node).getValue();
-            if (c instanceof String) {
-                return (String) c;
-            } else if (c instanceof Double) {
-                return ((Double) c).toString();
-            } else {
-                throw RInternalError.unimplemented();
-            }
-        } else if (node instanceof ReadVariableNode) {
-            return ((ReadVariableNode) node).getIdentifier();
-        } else {
-            throw RInternalError.unimplemented();
-        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,39 +30,38 @@ import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class OptVariablePromiseBaseNode extends PromiseNode implements EagerFeedback {
     private final BranchProfile promiseCallerProfile = BranchProfile.create();
-    private final ReadVariableNode originalRvn;
+    private final RSyntaxLookup originalRvn;
     @Child private FrameSlotNode frameSlotNode;
     @Child private RNode fallback = null;
     @Child private LocalReadVariableNode readNode;
     private final int wrapIndex;
 
-    public OptVariablePromiseBaseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
+    public OptVariablePromiseBaseNode(RPromiseFactory factory, RSyntaxLookup lookup, int wrapIndex) {
         super(factory);
         // Should be caught by optimization check
-        assert !rvn.isForceForTypeCheck() && rvn.getMode() == RType.Any;
-        this.originalRvn = rvn;
-        this.frameSlotNode = FrameSlotNode.create(rvn.getIdentifier(), false);
-        this.readNode = LocalReadVariableNode.create(rvn.getIdentifier(), false);
+        assert !lookup.isFunctionLookup();
+        this.originalRvn = lookup;
+        this.frameSlotNode = FrameSlotNode.create(lookup.getIdentifier(), false);
+        this.readNode = LocalReadVariableNode.create(lookup.getIdentifier(), false);
         this.wrapIndex = wrapIndex;
     }
 
     @Override
     public RSyntaxNode getPromiseExpr() {
-        return originalRvn;
+        return (RSyntaxNode) originalRvn;
     }
 
     @Override
@@ -133,6 +132,6 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
 
     @Override
     public RSyntaxNode getRSyntaxNode() {
-        return originalRvn;
+        return (RSyntaxNode) originalRvn;
     }
 }

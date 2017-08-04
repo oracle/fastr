@@ -104,7 +104,7 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
         }
 
         protected static ReadVariableNode createLookup(String name, boolean descend) {
-            return descend ? ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, name) : ReadVariableNode.create(RSyntaxNode.INTERNAL, name, false);
+            return descend ? ReadVariableNode.createFunctionLookup(name) : ReadVariableNode.create(name);
         }
 
         protected static String firstString(RAbstractStringVector vec) {

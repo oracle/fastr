@@ -36,6 +36,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNames
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
+import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
@@ -44,12 +45,14 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -152,8 +155,8 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
                         @Cached("createVectorSlot(frame)") FrameSlot vectorSlot,
                         @Cached("create()") RLengthNode lengthNode,
                         @Cached("createCountingProfile()") LoopConditionProfile loop,
-                        @Cached("createCallNode(vectorSlot, indexSlot)") RCallNode firstCallNode,
-                        @Cached("createCallNode(vectorSlot, indexSlot)") RCallNode callNode) {
+                        @Cached("createCallNode(vectorSlot, indexSlot)") RCallBaseNode firstCallNode,
+                        @Cached("createCallNode(vectorSlot, indexSlot)") RCallBaseNode callNode) {
             // TODO: R switches to double if x.getLength() is greater than 2^31-1
             FrameSlotChangeMonitor.setObject(frame, vectorSlot, vector);
             int length = lengthNode.executeInteger(frame, vector);
@@ -174,13 +177,14 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
         /**
          * Creates the {@link RCallNode} for this target and {@code varArgs}.
          */
-        protected RCallNode createCallNode(FrameSlot vectorSlot, FrameSlot indexSlot) {
+        protected RCallBaseNode createCallNode(FrameSlot vectorSlot, FrameSlot indexSlot) {
             CompilerAsserts.neverPartOfCompilation();
 
             ExtractElementInternal element = new ExtractElementInternal(vectorSlot, indexSlot);
-            ReadVariableNode readArgs = ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any);
+            RSyntaxNode readArgs = ReadVariableNode.wrap(RSyntaxNode.LAZY_DEPARSE, ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any));
+            RNode function = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, "FUN", false).asRNode();
 
-            return RCallNode.createCall(createCallSourceSection(), ReadVariableNode.create("FUN"), ArgumentsSignature.get(null, "..."), element, readArgs);
+            return RCallNode.createCall(createCallSourceSection(), function, ArgumentsSignature.get(null, "..."), element, readArgs);
         }
     }
 

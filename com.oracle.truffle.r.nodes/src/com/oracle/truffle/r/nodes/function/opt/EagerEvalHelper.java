@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
+import com.oracle.truffle.r.nodes.function.RCallNode.GetTempNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -34,6 +35,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Provides small helper function for eager evaluation of arguments for the use in
@@ -81,8 +83,9 @@ public class EagerEvalHelper {
         if (!optConsts()) {
             return null;
         }
-        if (expr instanceof RSyntaxCall) {
-            RSyntaxCall call = (RSyntaxCall) expr;
+        RSyntaxNode syntax = expr.asRSyntaxNode();
+        if (syntax instanceof RSyntaxCall) {
+            RSyntaxCall call = (RSyntaxCall) syntax;
             if (call.getSyntaxLHS() instanceof RSyntaxLookup) {
                 String functionName = ((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier();
                 switch (functionName) {
@@ -99,8 +102,8 @@ public class EagerEvalHelper {
                         break;
                 }
             }
-        } else if (expr instanceof RSyntaxConstant) {
-            return ((RSyntaxConstant) expr).getValue();
+        } else if (syntax instanceof RSyntaxConstant) {
+            return ((RSyntaxConstant) syntax).getValue();
         }
         return null;
     }
@@ -124,7 +127,7 @@ public class EagerEvalHelper {
     private static boolean isVariableArgument(RBaseNode expr) {
         // Do NOT try to optimize anything that might force a Promise, as this might be arbitrary
         // complex (time and space)!
-        return expr instanceof ReadVariableNode && !((ReadVariableNode) expr).isForceForTypeCheck();
+        return !(expr instanceof GetTempNode) && expr.asRSyntaxNode() instanceof RSyntaxLookup && !((RSyntaxLookup) expr.asRSyntaxNode()).isFunctionLookup();
     }
 
     private static boolean isCheapExpressionArgument(@SuppressWarnings("unused") RNode expr) {

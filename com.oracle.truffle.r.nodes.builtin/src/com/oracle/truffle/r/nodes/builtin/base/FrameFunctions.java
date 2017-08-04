@@ -44,7 +44,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.FrameFunctionsFactory.SysFrameNodeGen;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher;
@@ -351,7 +350,7 @@ public class FrameFunctions {
                 Object argument = varArgParameter.getArgument(((VarArgNode) arg).getIndex());
                 if (argument instanceof RPromise) {
                     RNode unwrapped = (RNode) RASTUtils.unwrap(((RPromise) argument).getRep());
-                    return unwrapped instanceof ConstantNode ? unwrapped : ReadVariableNode.create(createVarArgName((VarArgNode) arg));
+                    return unwrapped instanceof ConstantNode ? unwrapped : RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, createVarArgName((VarArgNode) arg), false).asRNode();
                 } else {
                     return ConstantNode.create(argument);
                 }

@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
@@ -64,6 +65,8 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * <p>
@@ -473,12 +476,13 @@ public class ArgumentMatcher {
             return node;
         }
         WrapArgumentNode wrapper = (WrapArgumentNode) node;
-        if (!(wrapper.getOperand() instanceof ReadVariableNode)) {
+        RSyntaxNode syntaxNode = wrapper.getOperand().asRSyntaxNode();
+        if (!(syntaxNode instanceof RSyntaxLookup)) {
             return node;
         }
-        ReadVariableNode rvn = (ReadVariableNode) wrapper.getOperand();
-        ReadVariableNode newRvn = ReadVariableNode.createSilentMissing(rvn.getIdentifier(), rvn.getMode());
-        return WrapArgumentNode.create(newRvn, wrapper.getIndex());
+        RSyntaxLookup lookup = (RSyntaxLookup) syntaxNode;
+        ReadVariableNode newRvn = ReadVariableNode.createSilentMissing(lookup.getIdentifier(), lookup.isFunctionLookup() ? RType.Function : RType.Any);
+        return WrapArgumentNode.create(ReadVariableNode.wrap(lookup.getLazySourceSection(), newRvn).asRNode(), wrapper.getIndex());
     }
 
     private static RNode wrapUnmatched(FormalArguments formals, RBuiltinDescriptor builtin, int formalIndex, boolean noOpt) {

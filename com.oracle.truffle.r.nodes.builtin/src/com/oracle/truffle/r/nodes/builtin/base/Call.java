@@ -81,7 +81,7 @@ public abstract class Call extends RBuiltinNode.Arg2 {
 
         @TruffleBoundary
         private RLanguage makeCall(String name, RArgsValuesAndNames args) {
-            return "function".equals(name) ? makeFunction(args) : makeCall0(ReadVariableNode.createFunctionLookup(RSyntaxNode.LAZY_DEPARSE, name), false, args);
+            return "function".equals(name) ? makeFunction(args) : makeCall0(ReadVariableNode.wrap(RSyntaxNode.LAZY_DEPARSE, ReadVariableNode.createFunctionLookup(name)), false, args);
         }
 
         private RLanguage makeFunction(RArgsValuesAndNames args) {
@@ -108,7 +108,7 @@ public abstract class Call extends RBuiltinNode.Arg2 {
 
         @TruffleBoundary
         protected RLanguage makeCallSourceUnavailable(String name, RArgsValuesAndNames args) {
-            return "function".equals(name) ? makeFunction(args) : makeCall0(ReadVariableNode.createFunctionLookup(RSyntaxNode.LAZY_DEPARSE, name), true, args);
+            return "function".equals(name) ? makeFunction(args) : makeCall0(ReadVariableNode.wrap(RSyntaxNode.LAZY_DEPARSE, ReadVariableNode.createFunctionLookup(name)), true, args);
         }
 
         @TruffleBoundary

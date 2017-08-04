@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = "@<-", kind = PRIMITIVE, parameterNames = {"", "", "value"}, nonEvalArgs = 1, behavior = COMPLEX)
 public abstract class UpdateSlot extends RBuiltinNode.Arg3 {
@@ -79,7 +78,7 @@ public abstract class UpdateSlot extends RBuiltinNode.Arg3 {
         @CompilationFinal private RFunction checkSlotAssignFunction;
         @Child private ClassHierarchyNode objClassHierarchy;
         @Child private ClassHierarchyNode valClassHierarchy;
-        @Child private ReadVariableNode checkAtAssignmentFind = ReadVariableNode.createFunctionLookup(RSyntaxNode.INTERNAL, "checkAtAssignment");
+        @Child private ReadVariableNode checkAtAssignmentFind = ReadVariableNode.createFunctionLookup("checkAtAssignment");
         @Child private CallRFunctionNode checkAtAssignmentCall;
 
         private final ConditionProfile cached = ConditionProfile.createBinaryProfile();

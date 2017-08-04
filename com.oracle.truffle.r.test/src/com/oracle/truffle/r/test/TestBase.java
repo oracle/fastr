@@ -68,6 +68,13 @@ import com.oracle.truffle.r.test.generate.TestOutputManager;
 public class TestBase {
 
     public static final boolean ProcessFailedTests = Boolean.getBoolean("ProcessFailedTests");
+
+    static {
+        if (ProcessFailedTests) {
+            System.out.println("Re-trying failed unit tests (ProcessFailedTests=true)");
+        }
+    }
+
     /**
      * When {@link #ProcessFailedTests} is set to true this flag further limits the tests executed
      * to those with {@link Ignored#Unknown} flag.

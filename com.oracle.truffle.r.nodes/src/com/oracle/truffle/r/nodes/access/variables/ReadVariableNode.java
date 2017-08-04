@@ -80,12 +80,53 @@ import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
+final class LookupNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup {
+
+    @Child private ReadVariableNode read;
+    @Child private SetVisibilityNode visibility;
+
+    LookupNode(SourceSection sourceSection, ReadVariableNode read) {
+        super(sourceSection);
+        this.read = read;
+    }
+
+    @Override
+    public void voidExecute(VirtualFrame frame) {
+        read.executeInternal(frame, frame);
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        return read.executeInternal(frame, frame);
+    }
+
+    @Override
+    public Object visibleExecute(VirtualFrame frame) {
+        if (visibility == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            visibility = insert(SetVisibilityNode.create());
+        }
+        visibility.execute(frame, true);
+        return read.executeInternal(frame, frame);
+    }
+
+    @Override
+    public String getIdentifier() {
+        return read.getIdentifier();
+    }
+
+    @Override
+    public boolean isFunctionLookup() {
+        return read.isFunctionLookup();
+    }
+}
+
 /**
  * This node is used to read a variable from the local or enclosing environments. It specializes to
  * a particular layout of frame descriptors and enclosing environments, and re-specializes in case
  * the layout changes.
  */
-public final class ReadVariableNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup {
+public final class ReadVariableNode extends RBaseNode {
 
     private static final int MAX_INVALIDATION_COUNT = 8;
 
@@ -105,36 +146,39 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
     }
 
     public static ReadVariableNode create(String name) {
-        return new ReadVariableNode(RSyntaxNode.SOURCE_UNAVAILABLE, name, RType.Any, ReadKind.Normal);
+        return new ReadVariableNode(name, RType.Any, ReadKind.Normal);
     }
 
-    public static ReadVariableNode create(SourceSection src, String name, boolean shouldCopyValue) {
-        return new ReadVariableNode(src, name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
+    public static ReadVariableNode create(String name, boolean shouldCopyValue) {
+        return new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
     }
 
     public static ReadVariableNode createSilent(String name, RType mode) {
-        return new ReadVariableNode(RSyntaxNode.SOURCE_UNAVAILABLE, name, mode, ReadKind.Silent);
+        return new ReadVariableNode(name, mode, ReadKind.Silent);
     }
 
     public static ReadVariableNode createSilentMissing(String name, RType mode) {
-        return new ReadVariableNode(RSyntaxNode.SOURCE_UNAVAILABLE, name, mode, ReadKind.SilentMissing);
+        return new ReadVariableNode(name, mode, ReadKind.SilentMissing);
     }
 
-    public static ReadVariableNode createSuperLookup(SourceSection src, String name) {
-        return new ReadVariableNode(src, name, RType.Any, ReadKind.Super);
+    public static ReadVariableNode createSuperLookup(String name) {
+        return new ReadVariableNode(name, RType.Any, ReadKind.Super);
     }
 
-    public static ReadVariableNode createFunctionLookup(SourceSection src, String identifier) {
-        return new ReadVariableNode(src, identifier, RType.Function, ReadKind.Normal);
+    public static ReadVariableNode createFunctionLookup(String identifier) {
+        return new ReadVariableNode(identifier, RType.Function, ReadKind.Normal);
     }
 
-    public static ReadVariableNode createForcedFunctionLookup(SourceSection src, String name) {
-        return new ReadVariableNode(src, name, RType.Function, ReadKind.ForcedTypeCheck);
+    public static ReadVariableNode createForcedFunctionLookup(String name) {
+        return new ReadVariableNode(name, RType.Function, ReadKind.ForcedTypeCheck);
+    }
+
+    public static RSyntaxNode wrap(SourceSection sourceSection, ReadVariableNode read) {
+        return new LookupNode(sourceSection, read);
     }
 
     @Child private PromiseHelperNode promiseHelper;
     @Child private CheckTypeNode checkTypeNode;
-    @Child private SetVisibilityNode visibility;
 
     @CompilationFinal private FrameLevel read;
     @CompilationFinal private boolean needsCopying;
@@ -153,8 +197,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
 
     @CompilationFinal(dimensions = 1) private final boolean[] seenValueKinds = new boolean[FrameSlotKind.values().length];
 
-    private ReadVariableNode(SourceSection sourceSection, Object identifier, RType mode, ReadKind kind) {
-        super(sourceSection);
+    private ReadVariableNode(Object identifier, RType mode, ReadKind kind) {
         this.identifier = identifier;
         this.identifierAsString = identifier.toString().intern();
         this.mode = mode;
@@ -163,7 +206,6 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         this.copyProfile = kind != ReadKind.Copying ? null : ConditionProfile.createBinaryProfile();
     }
 
-    @Override
     public String getIdentifier() {
         return identifierAsString;
     }
@@ -172,29 +214,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         return mode;
     }
 
-    @Override
-    public boolean isSyntax() {
-        return identifier instanceof String;
-    }
-
-    @Override
-    public void voidExecute(VirtualFrame frame) {
-        executeInternal(frame, frame);
-    }
-
-    @Override
     public Object execute(VirtualFrame frame) {
-        return executeInternal(frame, frame);
-    }
-
-    @Override
-    public Object visibleExecute(VirtualFrame frame) {
-        assert kind != ReadKind.Silent;
-        if (visibility == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            visibility = insert(SetVisibilityNode.create());
-        }
-        visibility.execute(frame, true);
         return executeInternal(frame, frame);
     }
 
@@ -203,7 +223,7 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         return executeInternal(frame, variableFrame);
     }
 
-    private Object executeInternal(VirtualFrame frame, Frame initialFrame) {
+    Object executeInternal(VirtualFrame frame, Frame initialFrame) {
         Frame variableFrame = kind == ReadKind.Super ? superEnclosingFrameProfile.profile(RArguments.getEnclosingFrame(initialFrame)) : initialFrame;
 
         Object result;
@@ -943,7 +963,6 @@ public final class ReadVariableNode extends RSourceSectionNode implements RSynta
         return kind == ReadKind.ForcedTypeCheck;
     }
 
-    @Override
     public boolean isFunctionLookup() {
         return mode == RType.Function;
     }

@@ -22,9 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
+import com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
@@ -51,5 +55,26 @@ public abstract class AbstractLoopNode extends OperatorNode {
         RSyntaxElement call = ((RSyntaxCall) this).getSyntaxLHS();
         String name = ((RSyntaxLookup) call).getIdentifier();
         return String.format("%s-<%s:%d>", name, function, startLine);
+    }
+
+    protected abstract static class AbstractRepeatingNode extends Node implements RepeatingNode {
+
+        @Child protected RNode body;
+
+        public AbstractRepeatingNode(RNode body) {
+            this.body = body;
+        }
+    }
+
+    /**
+     * Tests if the provided node is a loop-body node (also considering wrappers).
+     */
+    public static boolean isLoopBody(Node n) {
+        Node parent = n.getParent();
+        if (parent instanceof WrapperNode) {
+            Node grandparent = parent.getParent();
+            return grandparent instanceof AbstractRepeatingNode && ((AbstractRepeatingNode) grandparent).body == parent;
+        }
+        return parent instanceof AbstractRepeatingNode && ((AbstractRepeatingNode) parent).body == n;
     }
 }

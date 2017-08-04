@@ -32,7 +32,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.function.ArgumentStatePush;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
@@ -49,6 +48,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 /**
  * This {@link RNode} returns a function's argument specified by its formal index. It is used to
@@ -156,7 +156,7 @@ public final class AccessArgumentNode extends RNode {
 
             // TODO: all tests pass without it but perhaps we should "re-wrap" promises here?
             if (isOptimizableDefault(arg)) {
-                optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) RASTUtils.cloneNode(arg), ArgumentStatePush.INVALID_INDEX);
+                optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (RSyntaxLookup) arg.asRSyntaxNode(), ArgumentStatePush.INVALID_INDEX);
             } else {
                 Object optimizableConstant = getOptimizableConstant(arg);
                 if (optimizableConstant != null) {
@@ -174,8 +174,8 @@ public final class AccessArgumentNode extends RNode {
 
     private final class OptVariableDefaultPromiseNode extends OptVariablePromiseBaseNode {
 
-        OptVariableDefaultPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
-            super(factory, rvn, wrapIndex);
+        OptVariableDefaultPromiseNode(RPromiseFactory factory, RSyntaxLookup lookup, int wrapIndex) {
+            super(factory, lookup, wrapIndex);
         }
 
         @Override

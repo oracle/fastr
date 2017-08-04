@@ -120,7 +120,7 @@ public abstract class PromiseNode extends RNode {
                 if (isVararg(expr)) {
                     return expr;
                 } else if (!noOpt && isOptimizableVariable(expr)) {
-                    return new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr, wrapIndex);
+                    return new OptVariableSuppliedPromiseNode(factory, (RSyntaxLookup) expr, wrapIndex);
                 }
             }
             return new PromisedNode(factory);
@@ -175,8 +175,8 @@ public abstract class PromiseNode extends RNode {
      */
     private static final class OptVariableSuppliedPromiseNode extends OptVariablePromiseBaseNode {
 
-        OptVariableSuppliedPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
-            super(factory, rvn, wrapIndex);
+        OptVariableSuppliedPromiseNode(RPromiseFactory factory, RSyntaxLookup lookup, int wrapIndex) {
+            super(factory, lookup, wrapIndex);
         }
 
         @Override
