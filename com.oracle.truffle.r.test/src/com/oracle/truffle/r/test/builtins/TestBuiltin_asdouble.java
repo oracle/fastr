@@ -29,8 +29,7 @@ public class TestBuiltin_asdouble extends TestBase {
 
     @Test
     public void testasdouble3() {
-        // FIXME FastR outputs 4 (does not handle specially difftime class)
-        assertEval(Ignored.ImplementationError, "argv <- list(structure(4, tzone = 'GMT', units = 'days', class = 'difftime'), units = 'secs');as.double(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(4, tzone = 'GMT', units = 'days', class = 'difftime'), units = 'secs');as.double(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -95,8 +94,7 @@ public class TestBuiltin_asdouble extends TestBase {
 
     @Test
     public void testasdouble16() {
-        // FIXME FastR outputs 28 i.e. does not handle specially difftime class
-        assertEval(Ignored.ImplementationError, "argv <- list(structure(28, units = 'days', class = 'difftime'), units = 'secs');as.double(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(28, units = 'days', class = 'difftime'), units = 'secs');as.double(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -111,8 +109,7 @@ public class TestBuiltin_asdouble extends TestBase {
 
     @Test
     public void testasdouble19() {
-        // FIXME FastR outputs 180.9583 (does not handle specially difftime class)
-        assertEval(Ignored.ImplementationError, "argv <- list(structure(180.958333333333, units = 'days', class = 'difftime'), units = 'secs');as.double(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(180.958333333333, units = 'days', class = 'difftime'), units = 'secs');as.double(argv[[1]],argv[[2]]);");
     }
 
     @Test
