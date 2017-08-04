@@ -2186,7 +2186,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.IgnoreErrorMessage, "{ x <- NULL; x[[c(1,0)]] <- c(1,5); x; }");
         assertEval(Output.IgnoreErrorMessage, "{ x <- NULL; x[[c(1,2)]] <- c(1,5); x; }");
 
-        assertEval(Ignored.Unimplemented, "{ x <- NULL; x[[1]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[[1]] <- c(1,5); x; }");
     }
 
     @Test

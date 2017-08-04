@@ -29,8 +29,7 @@ public class TestBuiltin_gamma extends TestBase {
 
     @Test
     public void testgamma3() {
-        // FIXME RInternalError: not implemented: .Internal beta
-        assertEval(Ignored.Unimplemented, "argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));gamma(argv[[1]]);");
+        assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));gamma(argv[[1]]);");
     }
 
     @Test

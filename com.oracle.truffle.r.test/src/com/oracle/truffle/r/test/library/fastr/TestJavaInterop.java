@@ -193,7 +193,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("tc <- new.java.class('" + TEST_CLASS + "'); to <- new.external(tc); a <- as.java.array(c(to, to)); java.class(a);",
                         "[Lcom.oracle.truffle.r.test.library.fastr.TestJavaInterop$TestClass;");
 
-        assertEvalFastR(Ignored.Unimplemented, "a <- as.java.array(1L,,F); a;", getRValue(new int[]{1}));
+        assertEvalFastR("a <- as.java.array(1L,,F); a;", getRValue(new int[]{1}));
     }
 
     @Test
@@ -348,8 +348,8 @@ public class TestJavaInterop extends TestBase {
         TestClass t = new TestClass();
         assertEvalFastR(Ignored.Unimplemented, CREATE_TRUFFLE_OBJECT + " c(to$fieldStringArray)", toRVector(t.fieldStringArray, null));
         assertEvalFastR(Ignored.Unimplemented, CREATE_TRUFFLE_OBJECT + " c(to$listString)", toRVector(t.listString, null));
-        assertEvalFastR(Ignored.Unimplemented, CREATE_TRUFFLE_OBJECT + " c(to$fieldStringArray, to$fieldStringArray)", "c('a', 'b', 'c', 'a', 'b', 'c')");
-        assertEvalFastR(Ignored.Unimplemented, CREATE_TRUFFLE_OBJECT + " c(to$listString, to$listString)", "c('a', 'b', 'c', 'a', 'b', 'c')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " c(to$fieldStringArray, to$fieldStringArray)", "c('a', 'b', 'c', 'a', 'b', 'c')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " c(to$listString, to$listString)", "c('a', 'b', 'c', 'a', 'b', 'c')");
     }
 
     @Test
@@ -522,8 +522,8 @@ public class TestJavaInterop extends TestBase {
         // Note: The following two tests fails on Solaris. It seems that the Java interop on
         // Solaris treats the two inner classes SimpleImmutableEntry and SimpleEntry of
         // java.util.AbstractMap as if they were members.
-        assertEvalFastR(Ignored.ImplementationError, "cl <- new.java.class('java.util.Collections'); em<-cl$EMPTY_MAP; names(em)", "NULL");
-        assertEvalFastR(Ignored.ImplementationError, "tc <- new.java.class('" + TestNamesClassMap.class.getName() + "'); to <- new.external(tc); sort(names(to$m()))", "c('one', 'two')");
+        assertEvalFastR(Ignored.Unstable, "cl <- new.java.class('java.util.Collections'); em<-cl$EMPTY_MAP; names(em)", "NULL");
+        assertEvalFastR(Ignored.Unstable, "tc <- new.java.class('" + TestNamesClassMap.class.getName() + "'); to <- new.external(tc); sort(names(to$m()))", "c('one', 'two')");
     }
 
     @Test
@@ -832,7 +832,7 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testConvertEmptyList() throws IllegalArgumentException {
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + "as.character(to$listEmpty);", "as.character(list())");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "as.character(to$listEmpty);", "as.character(list())");
     }
 
     @Test

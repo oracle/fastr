@@ -19,9 +19,7 @@ public class TestBuiltin_formatC extends TestBase {
 
     @Test
     public void testformatC1() {
-        // FIXME FastR: the third arg "1" is output into 6 characters instead of 10
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(c(3.14159265358979, 3.1415926535898, 1), 'double', 10, 4L, 'g', '', c(12L, 12L, 12L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(c(3.14159265358979, 3.1415926535898, 1), 'double', 10, 4L, 'g', '', c(12L, 12L, 12L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -32,16 +30,12 @@ public class TestBuiltin_formatC extends TestBase {
 
     @Test
     public void testformatC3() {
-        // FIXME Similar problem to testformatC1
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(structure(c(1.5, 13.3414265412268, 1e-15, 8, 1, 500, 28), .Dim = c(7L, 1L), .Dimnames = list(c('m.ship.expon.', 'objective', 'tolerance', 'iterations', 'converged', 'maxit', 'n'), ' ')), 'double', 8L, 7L, 'g', '', c(15L, 15L, 15L, 15L, 15L, 15L, 15L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(structure(c(1.5, 13.3414265412268, 1e-15, 8, 1, 500, 28), .Dim = c(7L, 1L), .Dimnames = list(c('m.ship.expon.', 'objective', 'tolerance', 'iterations', 'converged', 'maxit', 'n'), ' ')), 'double', 8L, 7L, 'g', '', c(15L, 15L, 15L, 15L, 15L, 15L, 15L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
     public void testformatC4() {
-        // FIXME Similar problem to testformatC2
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(c(1000, 1e+07, 1), 'double', 5, 4L, 'g', '', c(12L, 12L, 12L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(c(1000, 1e+07, 1), 'double', 5, 4L, 'g', '', c(12L, 12L, 12L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
