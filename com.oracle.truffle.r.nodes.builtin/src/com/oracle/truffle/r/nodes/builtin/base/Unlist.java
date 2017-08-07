@@ -35,6 +35,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.UnlistNodeGen.RecursiveLengthNodeGen;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.runtime.RDispatch;
@@ -74,7 +75,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     }
 
     @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
-    @Child private Length lengthNode;
+    @Child private RLengthNode lengthNode;
     @Child private RecursiveLength recursiveLengthNode;
     @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
     @Child private Node hasSizeNode;
@@ -84,13 +85,13 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     @TypeSystemReference(RTypes.class)
     protected abstract static class RecursiveLength extends Node {
 
-        public abstract int executeInt(VirtualFrame frame, Object vector);
+        public abstract int execute(Object vector);
 
         @Child private RecursiveLength recursiveLengthNode;
 
-        private int getRecursiveLength(VirtualFrame frame, Object operand) {
+        private int getRecursiveLength(Object operand) {
             initRecursiveLengthNode();
-            return recursiveLengthNode.executeInt(frame, operand);
+            return recursiveLengthNode.execute(operand);
         }
 
         private void initRecursiveLengthNode() {
@@ -128,11 +129,11 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         }
 
         @Specialization(guards = "isVectorList(vector)")
-        protected int getLengthList(VirtualFrame frame, RAbstractVector vector) {
+        protected int getLengthList(RAbstractVector vector) {
             int totalSize = 0;
             for (int i = 0; i < vector.getLength(); i++) {
                 Object data = vector.getDataAtAsObject(i);
-                totalSize += getRecursiveLength(frame, data);
+                totalSize += getRecursiveLength(data);
             }
             return totalSize;
         }
@@ -142,16 +143,16 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         }
 
         @Specialization
-        protected int getLengthPairList(VirtualFrame frame, RPairList list) {
+        protected int getLengthPairList(RPairList list) {
             int totalSize = 0;
             for (RPairList item : list) {
-                totalSize += getRecursiveLength(frame, item.car());
+                totalSize += getRecursiveLength(item.car());
             }
             return totalSize;
         }
 
         @Specialization(guards = {"isForeignArray(obj, hasSize)"})
-        protected int getForeignArrayLength(VirtualFrame frame, TruffleObject obj,
+        protected int getForeignArrayLength(TruffleObject obj,
                         @Cached("READ.createNode()") Node read,
                         @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                         @Cached("GET_SIZE.createNode()") Node getSize,
@@ -175,7 +176,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
                 for (int i = 0; i < size; i++) {
                     Object element = ForeignAccess.sendRead(read, obj, i);
                     element = foreign2R.execute(element);
-                    totalSize += getRecursiveLength(frame, element);
+                    totalSize += getRecursiveLength(element);
                 }
             } catch (UnknownIdentifierException | UnsupportedMessageException ex) {
                 throw RError.interopError(RError.findParentRBase(this), ex, obj);
@@ -184,7 +185,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         }
 
         @Specialization(guards = {"isJavaIterable(obj)"})
-        protected int getJavaIterableLength(VirtualFrame frame, TruffleObject obj,
+        protected int getJavaIterableLength(TruffleObject obj,
                         @Cached("READ.createNode()") Node read,
                         @Cached("createExecute(0).createNode()") Node execute,
                         @Cached("createForeign2R()") Foreign2R foreign2R) {
@@ -198,7 +199,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
                     TruffleObject nextFunction = (TruffleObject) ForeignAccess.sendRead(read, it, "next");
                     Object element = ForeignAccess.sendExecute(execute, nextFunction);
                     element = foreign2R.execute(element);
-                    totalSize += getRecursiveLength(frame, element);
+                    totalSize += getRecursiveLength(element);
                 }
             } catch (ArityException | UnsupportedTypeException | UnsupportedMessageException | UnknownIdentifierException ex) {
                 throw RError.interopError(RError.findParentRBase(this), ex, obj);
@@ -213,21 +214,21 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         }
     }
 
-    private int getLength(VirtualFrame frame, Object operand) {
+    private int getLength(Object operand) {
         initLengthNode();
-        return lengthNode.executeInt(frame, operand);
+        return lengthNode.executeInteger(operand);
     }
 
     private void initLengthNode() {
         if (lengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            lengthNode = insert(LengthNodeGen.create());
+            lengthNode = insert(RLengthNode.create());
         }
     }
 
-    private int getRecursiveLength(VirtualFrame frame, Object operand) {
+    private int getRecursiveLength(Object operand) {
         initRecursiveLengthNode();
-        return recursiveLengthNode.executeInt(frame, operand);
+        return recursiveLengthNode.execute(operand);
     }
 
     private void initRecursiveLengthNode() {
@@ -258,16 +259,16 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     // TODO: initially unlist was on the slow path - hence initial recursive implementation is on
     // the slow path as well; ultimately we may consider (non-recursive) optimization
     @Specialization(guards = "!isEmpty(list)")
-    protected Object unlistList(VirtualFrame frame, RList list, boolean recursive, boolean useNames) {
+    protected Object unlistList(RList list, boolean recursive, boolean useNames) {
         int precedence = PrecedenceNode.NO_PRECEDENCE;
         int totalSize = 0;
         for (int i = 0; i < list.getLength(); i++) {
             Object data = list.getDataAt(i);
             precedence = Math.max(precedence, precedenceNode.executeInteger(data, recursive));
             if (recursive) {
-                totalSize += getRecursiveLength(frame, data);
+                totalSize += getRecursiveLength(data);
             } else {
-                totalSize += getLength(frame, data);
+                totalSize += getLength(data);
             }
         }
         // If the precedence is still NO_PRECEDENCE the result is RNull.instance
@@ -279,11 +280,11 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = "!isEmpty(list)")
-    protected Object unlistPairList(VirtualFrame frame, RPairList list, boolean recursive, boolean useNames) {
+    protected Object unlistPairList(RPairList list, boolean recursive, boolean useNames) {
         // TODO: unlist((pairlist(pairlist(1)), recursive=FALSE), see unit tests
         // Note: currently, we convert to list any pair-list that we encounter along the way, this
         // is sub-optimal, but the assumption is that pair-lists do not show up a lot
-        return unlistList(frame, list.toRList(), recursive, useNames);
+        return unlistList(list.toRList(), recursive, useNames);
     }
 
     @Specialization(guards = {"isForeignArray(obj)"})

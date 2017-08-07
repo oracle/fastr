@@ -135,7 +135,7 @@ public class REnvironmentMR {
         protected abstract Object execute(VirtualFrame frame, TruffleObject receiver, Object identifier);
 
         @Specialization
-        protected Object access(VirtualFrame frame, REnvironment receiver, String identifier,
+        protected Object access(REnvironment receiver, String identifier,
                         @Cached("createKeyInfoNode()") REnvironmentKeyInfoImplNode keyInfo) {
             int info = keyInfo.execute(receiver, identifier);
             if (unknownIdentifier.profile(!KeyInfo.isExisting(info))) {

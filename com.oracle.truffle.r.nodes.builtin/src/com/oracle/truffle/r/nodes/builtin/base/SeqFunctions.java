@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.AsRealNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AsRealNodeGen;
@@ -401,12 +400,11 @@ public final class SeqFunctions {
      *
      * N.B. javac gives error "cannot find symbol" on plain "@RBuiltin".
      */
-    @SuppressWarnings("unused")
     @ImportStatic({AsRealNodeGen.class, SeqFunctions.class})
+    @SuppressWarnings("unused")
     @com.oracle.truffle.r.runtime.builtins.RBuiltin(name = "seq.int", kind = PRIMITIVE, parameterNames = {"from", "to", "by", "length.out", "along.with",
                     "..."}, dispatch = INTERNAL_GENERIC, genericName = "seq", behavior = PURE)
     public abstract static class SeqInt extends RBuiltinNode.Arg6 {
-        private final BranchProfile error = BranchProfile.create();
         private final boolean seqFastPath;
 
         /**
@@ -529,8 +527,7 @@ public final class SeqFunctions {
          */
 
         @Specialization(guards = "validDoubleParams(fromVec, toVec)")
-        protected RAbstractVector seqLengthByMissingDouble(RAbstractDoubleVector fromVec, RAbstractDoubleVector toVec, RMissing by, RMissing lengthOut, RMissing alongWith,
-                        Object dotdotdot,
+        protected RAbstractVector seqLengthByMissingDouble(RAbstractDoubleVector fromVec, RAbstractDoubleVector toVec, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
                         @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
             double from = fromVec.getDataAt(0);
             double to = toVec.getDataAt(0);
@@ -570,8 +567,7 @@ public final class SeqFunctions {
             validateLength(toObj, "to");
             double to = asRealTo.execute(toObj);
             validateDoubleParam(to, toObj, "to");
-            RAbstractVector result = createRSequence(from, to, directionProfile);
-            return result;
+            return createRSequence(from, to, directionProfile);
         }
 
         /*
@@ -589,8 +585,7 @@ public final class SeqFunctions {
         }
 
         @Specialization(guards = {"validIntParams(fromVec, toVec)", "validIntParam(byVec)", "byVec.getDataAt(0) != 0"})
-        protected RAbstractVector seqLengthMissing(RAbstractIntVector fromVec, RAbstractIntVector toVec, RAbstractIntVector byVec, RMissing lengthOut, RMissing alongWith,
-                        Object dotdotdot,
+        protected RAbstractVector seqLengthMissing(RAbstractIntVector fromVec, RAbstractIntVector toVec, RAbstractIntVector byVec, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
                         @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
             int by = byVec.getDataAt(0);
             int from = fromVec.getDataAt(0);
@@ -598,7 +593,6 @@ public final class SeqFunctions {
             RIntSequence result;
             if (directionProfile.profile(from < to)) {
                 if (by < 0) {
-                    error.enter();
                     throw error(RError.Message.WRONG_SIGN_IN_BY);
                 }
                 result = RDataFactory.createIntSequence(from, by, (to - from) / by + 1);
@@ -607,7 +601,6 @@ public final class SeqFunctions {
                     return RDataFactory.createIntVectorFromScalar(from);
                 }
                 if (by > 0) {
-                    error.enter();
                     throw error(RError.Message.WRONG_SIGN_IN_BY);
                 }
                 result = RDataFactory.createIntSequence(from, by, (from - to) / (-by) + 1);
@@ -640,7 +633,7 @@ public final class SeqFunctions {
                 allInt = false;
             } else {
                 validateLength(toObj, "to");
-                to = asRealFrom.execute(toObj);
+                to = asRealTo.execute(toObj);
                 validateDoubleParam(to, toObj, "to");
                 allInt &= isInt(toObj);
             }
@@ -663,7 +656,6 @@ public final class SeqFunctions {
                     // N.B. GNU R returns the original "from" argument (which might be missing)
                     return RDataFactory.createDoubleVectorFromScalar(from);
                 } else {
-                    error.enter();
                     // This should go away in an upcoming GNU R release
                     throw error(seqFastPath ? RError.Message.INVALID_TFB_SD : RError.Message.INVALID_TFB);
                 }
@@ -674,11 +666,9 @@ public final class SeqFunctions {
                 return RDataFactory.createDoubleVectorFromScalar(from);
             }
             if (n > Integer.MAX_VALUE) {
-                error.enter();
                 throw error(RError.Message.BY_TOO_SMALL);
             }
             if (n < -FEPS) {
-                error.enter();
                 throw error(RError.Message.WRONG_SIGN_IN_BY);
             }
             RAbstractVector result;
@@ -761,7 +751,7 @@ public final class SeqFunctions {
             }
 
             @Specialization
-            protected boolean isIntegralNumericNode(Integer obj) {
+            protected boolean isIntegralNumericNode(int obj) {
                 if (checkLength) {
                     return obj >= 0;
                 } else {
@@ -775,7 +765,7 @@ public final class SeqFunctions {
             }
 
             @Specialization
-            protected boolean isIntegralNumericNode(Double obj) {
+            protected boolean isIntegralNumericNode(double obj) {
                 double d = obj;
                 return d == (int) d && (checkLength ? d >= 0 : true);
             }
@@ -824,7 +814,7 @@ public final class SeqFunctions {
             boolean fromMissing = isMissing(fromObj);
             boolean toMissing = isMissing(toObj);
             double from = asRealFrom.execute(fromObj);
-            double to = asRealFrom.execute(toObj);
+            double to = asRealTo.execute(toObj);
             if (toMissing) {
                 to = from + lout - 1;
             }
@@ -916,7 +906,6 @@ public final class SeqFunctions {
 
         @Fallback
         protected RAbstractVector seqFallback(Object fromObj, Object toObj, Object byObj, Object lengthOut, Object alongWith, Object dotdotdot) {
-            error.enter();
             throw error(RError.Message.TOO_MANY_ARGS);
         }
 
@@ -967,7 +956,6 @@ public final class SeqFunctions {
 
         private int validateIntParam(int v, String vName) {
             if (RRuntime.isNA(v)) {
-                error.enter();
                 throw error(RError.Message.CANNOT_BE_INVALID, vName);
             }
             return v;
@@ -980,7 +968,6 @@ public final class SeqFunctions {
         private double validateDoubleParam(double v, Object vObj, String vName) {
             if (vObj != RMissing.instance) {
                 if (!isFinite(v)) {
-                    error.enter();
                     throw error(RError.Message.CANNOT_BE_INVALID, vName);
                 }
             }
@@ -993,7 +980,6 @@ public final class SeqFunctions {
         private void validateLength(Object obj, String vName) {
             if (obj != RMissing.instance) {
                 if (getLength(obj) != 1) {
-                    error.enter();
                     throw error(RError.Message.MUST_BE_SCALAR, vName);
                 }
             }
@@ -1002,7 +988,6 @@ public final class SeqFunctions {
         private int checkLength(Object lengthOut, AsRealNode asRealLen) {
             double len = asRealLen.execute(lengthOut);
             if (RRuntime.isNAorNaN(len) || len <= -0.5) {
-                error.enter();
                 throw error(seqFastPath ? RError.Message.MUST_BE_POSITIVE_SD : RError.Message.MUST_BE_POSITIVE, seqFastPath ? "length" : "length.out");
             }
             if (getLength(lengthOut) != 1) {
@@ -1037,7 +1022,6 @@ public final class SeqFunctions {
         private int checkVecLength(double from, double to) {
             double r = Math.abs(to - from);
             if (r > Integer.MAX_VALUE) {
-                error.enter();
                 throw error(RError.Message.TOO_LONG_VECTOR);
             }
             int length = (int) (r + 1 + FLT_EPSILON);

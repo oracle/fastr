@@ -31,7 +31,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
@@ -100,7 +99,7 @@ public abstract class AccessField extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected Object access(VirtualFrame frame, Object container, String field) {
+    protected Object access(Object container, String field) {
         if (!invalidAtomicVector.profile(container instanceof RAbstractListVector) && container instanceof RAbstractVector) {
             error.enter();
             throw error(RError.Message.DOLLAR_ATOMIC_VECTORS);

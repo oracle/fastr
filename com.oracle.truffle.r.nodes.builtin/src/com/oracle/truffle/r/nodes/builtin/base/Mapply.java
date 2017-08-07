@@ -79,7 +79,7 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
     }
 
     protected static final class ElementNode extends Node {
-        @Child private Length lengthNode;
+        @Child private RLengthNode lengthNode;
         @Child private ExtractVectorNode extractNode;
         @Child private WriteVariableNode writeVectorElementNode;
         private final String vectorElementName;
@@ -88,7 +88,7 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
         private ElementNode(String vectorElementName, String argName) {
             // the name is a hack to treat ReadVariableNode-s as syntax nodes
             this.vectorElementName = "*" + AnonymousFrameVariable.create(vectorElementName);
-            this.lengthNode = insert(LengthNodeGen.create());
+            this.lengthNode = insert(RLengthNode.create());
             this.extractNode = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, false));
             this.writeVectorElementNode = insert(WriteVariableNode.createAnonymous(this.vectorElementName, Mode.REGULAR, null));
             this.argName = argName;
@@ -142,7 +142,7 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
                         @Cached("createElementNodeArray(dotsLength, moreArgsLength, cachedDotsNames, cachedMoreArgsNames)") ElementNode[] cachedElementNodeArray,
                         @Cached("createCallNode(cachedElementNodeArray)") RCallBaseNode callNode) {
             int[] lengths = new int[dotsLength];
-            int maxLength = getDotsLengths(frame, dots, dotsLength, cachedElementNodeArray, lengths);
+            int maxLength = getDotsLengths(dots, dotsLength, cachedElementNodeArray, lengths);
             storeAdditionalArguments(frame, moreArgs, dotsLength, moreArgsLength, cachedElementNodeArray);
             Object[] result = new Object[maxLength];
             for (int i = 0; i < maxLength; i++) {
@@ -171,10 +171,10 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
         }
 
         @ExplodeLoop
-        private static int getDotsLengths(VirtualFrame frame, RAbstractListVector dots, int dotsLength, ElementNode[] cachedElementNodeArray, int[] lengths) {
+        private static int getDotsLengths(RAbstractListVector dots, int dotsLength, ElementNode[] cachedElementNodeArray, int[] lengths) {
             int maxLength = -1;
             for (int i = 0; i < dotsLength; i++) {
-                int length = cachedElementNodeArray[i].lengthNode.executeInt(frame, dots.getDataAt(i));
+                int length = cachedElementNodeArray[i].lengthNode.executeInteger(dots.getDataAt(i));
                 if (length > maxLength) {
                     maxLength = length;
                 }
