@@ -341,7 +341,7 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
     public abstract static class PMax extends PMinMax {
 
         public PMax() {
-            super(new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX, RError.Message.NO_NONMISSING_MAX_NA, false, true),
+            super(new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX, RError.Message.NO_NONMISSING_MAX_NA, null, false, true, true),
                             BinaryArithmetic.MAX);
         }
 
@@ -354,7 +354,7 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
     public abstract static class PMin extends PMinMax {
 
         public PMin() {
-            super(new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.Message.NO_NONMISSING_MIN, RError.Message.NO_NONMISSING_MIN_NA, false, true),
+            super(new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.Message.NO_NONMISSING_MIN, RError.Message.NO_NONMISSING_MIN_NA, null, false, true, true),
                             BinaryArithmetic.MIN);
         }
 

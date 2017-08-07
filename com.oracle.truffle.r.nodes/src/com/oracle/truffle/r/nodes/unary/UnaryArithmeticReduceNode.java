@@ -72,6 +72,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     protected final ReduceSemantics semantics;
     protected final boolean supportString;
     protected final boolean supportComplex;
+    protected final boolean useDoubleStartForEmptyVector;
 
     private final NACheck na = NACheck.create();
     private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
@@ -82,6 +83,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         this.arithmetic = factory.createOperation();
         this.supportString = semantics.supportString;
         this.supportComplex = semantics.supportComplex;
+        this.useDoubleStartForEmptyVector = semantics.useDoubleStartForEmptyVector;
     }
 
     private String handleString(RStringVector operand, boolean naRm, boolean finite, int offset) {
@@ -200,6 +202,14 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         }
     }
 
+    @Specialization(guards = {"useDoubleStartForEmptyVector", "operand.getLength() == 0"})
+    protected double doIntVectorEmpty(@SuppressWarnings("unused") RIntVector operand,
+                    @SuppressWarnings("unused") boolean naRm,
+                    @SuppressWarnings("unused") boolean finite) {
+        emptyWarning();
+        return semantics.getDoubleStart();
+    }
+
     @Specialization
     protected int doIntVector(RIntVector operand, boolean naRm, boolean finite) {
         RBaseNode.reportWork(this, operand.getLength());
@@ -267,6 +277,14 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         return result;
     }
 
+    @Specialization(guards = {"useDoubleStartForEmptyVector", "operand.getLength() == 0"})
+    protected double doLogicalVectorEmpty(@SuppressWarnings("unused") RLogicalVector operand,
+                    @SuppressWarnings("unused") boolean naRm,
+                    @SuppressWarnings("unused") boolean finite) {
+        emptyWarning();
+        return semantics.getDoubleStart();
+    }
+
     @Specialization
     protected int doLogicalVector(RLogicalVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
         RBaseNode.reportWork(this, operand.getLength());
@@ -296,6 +314,14 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
             emptyWarning();
         }
         return result;
+    }
+
+    @Specialization(guards = {"useDoubleStartForEmptyVector", "operand.getLength() == 0"})
+    protected double doIntSequenceEmpty(@SuppressWarnings("unused") RIntSequence operand,
+                    @SuppressWarnings("unused") boolean naRm,
+                    @SuppressWarnings("unused") boolean finite) {
+        emptyWarning();
+        return semantics.getDoubleStart();
     }
 
     @Specialization
@@ -421,9 +447,10 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         private final RError.Message naResultWarning;
         private final boolean supportComplex;
         private final boolean supportString;
+        private final boolean useDoubleStartForEmptyVector;
 
         public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning, RError.Message emptyWarningCharacter, RError.Message naResultWarning,
-                        boolean supportComplex, boolean supportString) {
+                        boolean supportComplex, boolean supportString, boolean useDoubleStartForEmptyVector) {
             this.intStart = intStart;
             this.doubleStart = doubleStart;
             this.nullInt = nullInt;
@@ -432,10 +459,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
             this.naResultWarning = naResultWarning;
             this.supportComplex = supportComplex;
             this.supportString = supportString;
-        }
-
-        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning, RError.Message emptyWarningCharacter, boolean supportComplex, boolean supportString) {
-            this(intStart, doubleStart, nullInt, emptyWarning, emptyWarningCharacter, null, supportComplex, supportString);
+            this.useDoubleStartForEmptyVector = useDoubleStartForEmptyVector;
         }
 
         public int getIntStart() {
@@ -464,6 +488,10 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
         public RError.Message getNAResultWarning() {
             return naResultWarning;
+        }
+
+        public boolean isUseDoubleStartForEmptyVector() {
+            return useDoubleStartForEmptyVector;
         }
     }
 

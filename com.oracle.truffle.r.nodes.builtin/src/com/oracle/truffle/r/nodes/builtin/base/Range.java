@@ -45,9 +45,9 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 public abstract class Range extends RBuiltinNode.Arg3 {
 
     private static final ReduceSemantics minSemantics = new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.Message.NO_NONMISSING_MIN,
-                    RError.Message.NO_NONMISSING_MIN_NA, false, true);
+                    RError.Message.NO_NONMISSING_MIN_NA, null, false, true, true);
     private static final ReduceSemantics maxSemantics = new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX,
-                    RError.Message.NO_NONMISSING_MAX_NA, false, true);
+                    RError.Message.NO_NONMISSING_MAX_NA, null, false, true, true);
 
     @Child private UnaryArithmeticReduceNode minReduce = UnaryArithmeticReduceNodeGen.create(minSemantics, BinaryArithmetic.MIN);
     @Child private UnaryArithmeticReduceNode maxReduce = UnaryArithmeticReduceNodeGen.create(maxSemantics, BinaryArithmetic.MAX);
