@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -157,8 +158,8 @@ public abstract class ToStringNode extends RBaseNode {
         String apply(int index, boolean quotes, String separator);
     }
 
-    @TruffleBoundary
     private static String createResultForVector(RAbstractVector vector, boolean quotes, String separator, String empty, ElementFunction elementFunction) {
+        CompilerAsserts.neverPartOfCompilation();
         int length = vector.getLength();
         if (length == 0) {
             return empty;
@@ -174,40 +175,43 @@ public abstract class ToStringNode extends RBaseNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected String toString(RAbstractIntVector vector, boolean quotes, String separator) {
         return createResultForVector(vector, quotes, separator, "integer(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @Specialization
     @TruffleBoundary
-    // boundary because of complex numerical string formatting
     protected String toString(RAbstractDoubleVector vector, boolean quotes, String separator) {
         return createResultForVector(vector, quotes, separator, "numeric(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @Specialization
     @TruffleBoundary
-    // boundary because of string quoting
     protected String toString(RAbstractStringVector vector, boolean quotes, String separator) {
         return createResultForVector(vector, quotes, separator, "character(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @Specialization
+    @TruffleBoundary
     protected String toString(RAbstractLogicalVector vector, boolean quotes, String separator) {
         return createResultForVector(vector, quotes, separator, "logical(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @Specialization
+    @TruffleBoundary
     protected String toString(RAbstractRawVector vector, boolean quotes, String separator) {
         return createResultForVector(vector, quotes, separator, "raw(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @Specialization
+    @TruffleBoundary
     protected String toString(RAbstractComplexVector vector, boolean quotes, String separator) {
         return createResultForVector(vector, quotes, separator, "complex(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @Specialization
+    @TruffleBoundary
     protected String toString(RList vector, boolean quotes, String separator) {
         return createResultForVector(vector, quotes, separator, "list()", (index, q, s) -> {
             Object value = vector.getDataAt(index);
