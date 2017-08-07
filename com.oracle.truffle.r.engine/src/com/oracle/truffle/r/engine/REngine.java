@@ -553,6 +553,11 @@ final class REngine implements Engine, Engine.Timings {
             return body.getSourceSection();
         }
 
+        @Override
+        public boolean isInternal() {
+            return RSyntaxNode.isInternal(body.asRSyntaxNode().getLazySourceSection());
+        }
+
         private VirtualFrame prepareFrame(VirtualFrame frame) {
             VirtualFrame vf;
             MaterializedFrame originalFrame = (MaterializedFrame) frameTypeProfile.profile(frame.getArguments()[0]);
