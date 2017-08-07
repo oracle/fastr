@@ -159,6 +159,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     @Override
+    public boolean isInternal() {
+        return RSyntaxNode.isInternal(sourceSectionR);
+    }
+
+    @Override
     public FormalArguments getFormalArguments() {
         return formalArguments;
     }

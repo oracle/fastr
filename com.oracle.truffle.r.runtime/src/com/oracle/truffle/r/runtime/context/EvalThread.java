@@ -149,8 +149,8 @@ public class EvalThread extends Thread {
             // some internal error
             RInternalError.reportErrorAndConsoleLog(t, info.getId());
             evalResult = createErrorResult(t.getClass().getSimpleName());
-            // } finally {
-            // vm.close();
+        } finally {
+            vm.dispose();
         }
         return evalResult;
     }
@@ -161,26 +161,14 @@ public class EvalThread extends Thread {
      */
     @TruffleBoundary
     private static RList createEvalResult(Object result, boolean usePolyglot) {
+        assert result != null;
         Object listResult = result;
-        String error = null;
-        if (result == null) {
-            // this means an error occurred and there is no result
-            listResult = RRuntime.LOGICAL_NA;
-            error = "R error";
-        } else if (result instanceof TruffleObject) {
-            if (usePolyglot) {
-                listResult = ((PolyglotEngine.Value) result).as(Object.class);
-            } else {
-                throw RInternalError.unimplemented();
-            }
+        if (usePolyglot && result instanceof TruffleObject) {
+            listResult = ((PolyglotEngine.Value) result).as(Object.class);
         } else {
             listResult = result;
         }
-        RList list = RDataFactory.createList(new Object[]{listResult});
-        if (error != null) {
-            list.setAttr("error", error);
-        }
-        return list;
+        return RDataFactory.createList(new Object[]{listResult});
     }
 
     @TruffleBoundary
