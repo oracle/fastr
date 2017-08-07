@@ -105,7 +105,8 @@ public abstract class ReplaceVectorNode extends RBaseNode {
     protected Object accessField(TruffleObject object, Object[] positions, Object value,
                     @Cached("WRITE.createNode()") Node foreignWrite,
                     @Cached("READ.createNode()") Node foreignRead,
-                    @Cached("KEY_INFO.createNode()") Node keyInfo,
+                    @Cached("KEY_INFO.createNode()") Node keyInfoNode,
+                    @Cached("HAS_SIZE.createNode()") Node hasSizeNode,
                     @SuppressWarnings("unused") @Cached("positions.length") int cachedLength,
                     @Cached("create()") CastStringNode castNode,
                     @Cached("createFirstString()") FirstStringNode firstString,
@@ -114,16 +115,17 @@ public abstract class ReplaceVectorNode extends RBaseNode {
         try {
             TruffleObject result = object;
             for (int i = 0; i < positions.length - 1; i++) {
-                result = (TruffleObject) ExtractVectorNode.read(this, positions[i], foreignRead, keyInfo, result, firstString, castNode);
+                result = (TruffleObject) ExtractVectorNode.read(this, positions[i], foreignRead, keyInfoNode, hasSizeNode, result, firstString, castNode);
             }
-            write(positions[positions.length - 1], foreignWrite, keyInfo, result, writtenValue, firstString, castNode, r2Foreign);
+            write(positions[positions.length - 1], foreignWrite, keyInfoNode, hasSizeNode, result, writtenValue, firstString, castNode, r2Foreign);
             return object;
         } catch (InteropException e) {
             throw RError.interopError(RError.findParentRBase(this), e, object);
         }
     }
 
-    private void write(Object position, Node foreignWrite, Node keyInfoNode, TruffleObject object, Object writtenValue, FirstStringNode firstString, CastStringNode castNode, R2Foreign r2Foreign)
+    private void write(Object position, Node foreignWrite, Node keyInfoNode, Node hasSizeNode, TruffleObject object, Object writtenValue, FirstStringNode firstString, CastStringNode castNode,
+                    R2Foreign r2Foreign)
                     throws InteropException, RError {
         Object pos = position;
         if (pos instanceof Integer) {
@@ -142,7 +144,8 @@ public abstract class ReplaceVectorNode extends RBaseNode {
         }
 
         int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, pos);
-        if (KeyInfo.isWritable(info)) {
+        if (KeyInfo.isWritable(info) || ForeignAccess.sendHasSize(hasSizeNode, object) ||
+                        (pos instanceof String && !JavaInterop.isJavaObject(Object.class, object))) {
             ForeignAccess.sendWrite(foreignWrite, object, pos, r2Foreign.execute(writtenValue));
             return;
         } else if (pos instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {

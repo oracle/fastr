@@ -181,6 +181,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
     protected Object accessFieldByVectorPositions(TruffleObject object, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
                     @Cached("READ.createNode()") Node foreignRead,
                     @Cached("KEY_INFO.createNode()") Node keyInfoNode,
+                    @Cached("HAS_SIZE.createNode()") Node hasSizeNode,
                     @Cached("create()") CastStringNode castNode,
                     @Cached("createFirstString()") FirstStringNode firstString,
                     @Cached("IS_NULL.createNode()") Node isNullNode,
@@ -193,7 +194,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
 
         try {
             for (int i = 0; i < vec.getLength(); i++) {
-                Object res = read(this, vec.getDataAtAsObject(i), foreignRead, keyInfoNode, object, firstString, castNode);
+                Object res = read(this, vec.getDataAtAsObject(i), foreignRead, keyInfoNode, hasSizeNode, object, firstString, castNode);
                 if (RRuntime.isForeignObject(res)) {
                     if (ForeignAccess.sendIsNull(isNullNode, (TruffleObject) res)) {
                         res = RNull.instance;
@@ -215,6 +216,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
     protected Object accessField(TruffleObject object, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
                     @Cached("READ.createNode()") Node foreignRead,
                     @Cached("KEY_INFO.createNode()") Node keyInfoNode,
+                    @Cached("HAS_SIZE.createNode()") Node hasSizeNode,
                     @Cached("positions.length") @SuppressWarnings("unused") int cachedLength,
                     @Cached("create()") CastStringNode castNode,
                     @Cached("createFirstString()") FirstStringNode firstString,
@@ -231,7 +233,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
             // TODO implicite unboxing ok? method calls seem to behave this way
             Object result = object;
             for (int i = 0; i < pos.length; i++) {
-                result = read(this, pos[i], foreignRead, keyInfoNode, (TruffleObject) result, firstString, castNode);
+                result = read(this, pos[i], foreignRead, keyInfoNode, hasSizeNode, (TruffleObject) result, firstString, castNode);
                 if (pos.length > 1 && i < pos.length - 1) {
                     assert result instanceof TruffleObject;
                 }
@@ -254,7 +256,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
         return foreign2RNode.execute(obj);
     }
 
-    public static Object read(RBaseNode caller, Object positions, Node foreignRead, Node keyInfoNode, TruffleObject object, FirstStringNode firstString, CastStringNode castNode)
+    public static Object read(RBaseNode caller, Object positions, Node foreignRead, Node keyInfoNode, Node hasSizeNode, TruffleObject object, FirstStringNode firstString, CastStringNode castNode)
                     throws RError, InteropException {
         Object pos = positions;
         if (pos instanceof Integer) {
@@ -272,7 +274,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
         }
 
         int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, pos);
-        if (KeyInfo.isReadable(info)) {
+        if (KeyInfo.isReadable(info) || ForeignAccess.sendHasSize(hasSizeNode, object)) {
             return ForeignAccess.sendRead(foreignRead, object, pos);
         } else if (pos instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
             TruffleObject clazz = toJavaClass(object);
