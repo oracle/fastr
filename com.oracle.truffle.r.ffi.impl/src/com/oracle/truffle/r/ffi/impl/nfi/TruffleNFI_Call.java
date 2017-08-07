@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCall;
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCallReturn;
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceEnabled;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -34,10 +35,12 @@ import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_CallFactory.TruffleNFI_InvokeCallNodeGen;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
+import com.oracle.truffle.r.ffi.impl.upcalls.FFIWrapNode;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -231,7 +234,18 @@ public class TruffleNFI_Call implements CallRFFI {
         }
     }
 
-    public abstract static class TruffleNFI_InvokeCallNode extends Node implements InvokeCallNode {
+    public abstract static class TruffleNFI_InvokeCallBaseNode extends Node {
+
+        protected static FFIWrapNode[] createWrapArgumentNodes(int count) {
+            FFIWrapNode[] result = new FFIWrapNode[count];
+            for (int i = 0; i < count; i++) {
+                result[i] = FFIWrapNode.create();
+            }
+            return result;
+        }
+    }
+
+    public abstract static class TruffleNFI_InvokeCallNode extends TruffleNFI_InvokeCallBaseNode implements InvokeCallNode {
         private static final String[] SIGNATURES = new String[32];
 
         @Child private Node bindNode = Message.createInvoke(1).createNode();
@@ -263,12 +277,13 @@ public class TruffleNFI_Call implements CallRFFI {
         @Specialization(guards = {"args.length == cachedArgsLength", "nativeCallInfo.address.asTruffleObject() == cachedAddress"})
         protected Object invokeCallCached(NativeCallInfo nativeCallInfo, Object[] args,
                         @SuppressWarnings("unused") @Cached("args.length") int cachedArgsLength,
+                        @Cached("createWrapArgumentNodes(cachedArgsLength)") FFIWrapNode[] ffiWrapNodes,
                         @Cached("createExecute(cachedArgsLength)") Node executeNode,
                         @SuppressWarnings("unused") @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject cachedAddress,
                         @Cached("getFunction(cachedAddress, cachedArgsLength)") TruffleObject cachedFunction) {
             synchronized (TruffleNFI_Call.class) {
                 Object result = null;
-                boolean isNullSetting = prepareCall(nativeCallInfo.name, args);
+                boolean isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes);
                 try {
                     result = ForeignAccess.sendExecute(executeNode, cachedFunction, args);
                     return result;
@@ -283,10 +298,11 @@ public class TruffleNFI_Call implements CallRFFI {
         @Specialization(limit = "99", guards = "args.length == cachedArgsLength")
         protected Object invokeCallCachedLength(NativeCallInfo nativeCallInfo, Object[] args,
                         @Cached("args.length") int cachedArgsLength,
+                        @Cached("createWrapArgumentNodes(cachedArgsLength)") FFIWrapNode[] ffiWrapNodes,
                         @Cached("createExecute(cachedArgsLength)") Node executeNode) {
             synchronized (TruffleNFI_Call.class) {
                 Object result = null;
-                boolean isNullSetting = prepareCall(nativeCallInfo.name, args);
+                boolean isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes);
                 try {
                     result = ForeignAccess.sendExecute(executeNode, getFunction(nativeCallInfo.address.asTruffleObject(), cachedArgsLength), args);
                     return result;
@@ -303,29 +319,33 @@ public class TruffleNFI_Call implements CallRFFI {
         }
     }
 
-    private static class TruffleNFI_InvokeVoidCallNode extends Node implements InvokeVoidCallNode {
+    private static class TruffleNFI_InvokeVoidCallNode extends TruffleNFI_InvokeCallBaseNode implements InvokeVoidCallNode {
         private static final String CallVoid1Sig = "(object): void";
         private static final String CallVoid0Sig = "(): void";
         @Child private Node bindNode = Message.createInvoke(1).createNode();
         @Child private Node execute0Node = Message.createExecute(0).createNode();
         @Child private Node execute1Node = Message.createExecute(1).createNode();
+        @Children private final FFIWrapNode[] ffiWrapNodes0 = createWrapArgumentNodes(0);
+        @Children private final FFIWrapNode[] ffiWrapNodes1 = createWrapArgumentNodes(1);
 
         @Override
         public void execute(NativeCallInfo nativeCallInfo, Object[] args) {
             synchronized (TruffleNFI_Call.class) {
-                boolean isNullSetting = prepareCall(nativeCallInfo.name, args);
+                boolean isNullSetting = true;
                 try {
                     switch (args.length) {
                         case 0:
-                            TruffleObject callVoid0Function = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
-                                            nativeCallInfo.address.asTruffleObject(), "bind", CallVoid0Sig);
+                            isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes0);
+                            TruffleObject callVoid0Function = (TruffleObject) ForeignAccess.sendInvoke(bindNode, nativeCallInfo.address.asTruffleObject(), "bind", CallVoid0Sig);
                             ForeignAccess.sendExecute(execute0Node, callVoid0Function);
                             break;
                         case 1:
-                            TruffleObject callVoid1Function = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
-                                            nativeCallInfo.address.asTruffleObject(), "bind", CallVoid1Sig);
+                            isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes1);
+                            TruffleObject callVoid1Function = (TruffleObject) ForeignAccess.sendInvoke(bindNode, nativeCallInfo.address.asTruffleObject(), "bind", CallVoid1Sig);
                             ForeignAccess.sendExecute(execute1Node, callVoid1Function, args[0]);
                             break;
+                        default:
+                            throw RInternalError.shouldNotReachHere();
                     }
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
@@ -336,9 +356,14 @@ public class TruffleNFI_Call implements CallRFFI {
         }
     }
 
-    private static boolean prepareCall(String name, Object[] args) {
+    @ExplodeLoop
+    private static boolean prepareCall(String name, Object[] args, FFIWrapNode[] ffiWrapNodes) {
+        CompilerAsserts.compilationConstant(ffiWrapNodes.length);
         if (traceEnabled()) {
             traceDownCall(name, args);
+        }
+        for (int i = 0; i < ffiWrapNodes.length; i++) {
+            args[i] = ffiWrapNodes[i].execute(args[i]);
         }
         boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
         TruffleNFI_NativeArray.callEnter(callDepth);
