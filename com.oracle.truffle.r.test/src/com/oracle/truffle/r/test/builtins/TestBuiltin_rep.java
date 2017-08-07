@@ -234,5 +234,7 @@ public class TestBuiltin_rep extends TestBase {
         assertEval("v <- 1; names(v) <- 'asdf'; rep(v, 2)");
         assertEval("v <- 1; class(v) <- 'asdf'; rep(v, 1)");
         assertEval("v <- 1; class(v) <- 'asdf'; rep(v, 2)");
+
+        assertEval("{ rep.cls <- function(x) 42; rep(structure(c(1,2), class='cls')); }");
     }
 }

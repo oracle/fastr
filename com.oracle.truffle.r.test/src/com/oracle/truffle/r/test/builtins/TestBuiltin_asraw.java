@@ -58,6 +58,7 @@ public class TestBuiltin_asraw extends TestBase {
         assertEval("{ as.raw(c(1L, 2L, 3L)) }");
         assertEval("{ as.raw(list(1,2,3)) }");
         assertEval("{ as.raw(list(\"1\", 2L, 3.4)) }");
+        assertEval("{ as.raw.cls <- function(x) 42; as.raw(structure(c(1,2), class='cls')); }");
 
         assertEval(Output.IgnoreWarningContext, "{ as.raw(1+1i) }");
         assertEval(Output.IgnoreWarningContext, "{ as.raw(-1) }");

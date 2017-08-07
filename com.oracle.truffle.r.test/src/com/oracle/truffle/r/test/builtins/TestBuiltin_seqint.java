@@ -156,4 +156,9 @@ public class TestBuiltin_seqint extends TestBase {
     public void testseqint29() {
         assertEval(Output.IgnoreErrorContext, "argv <- list(NaN);do.call('seq.int', argv)");
     }
+
+    @Test
+    public void testseqintGenericDispatch() {
+        assertEval("{ seq.int.cls <- function(x) 42; seq.int(structure(c(1,2), class='cls')); }");
+    }
 }

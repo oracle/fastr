@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -228,7 +229,7 @@ public class IsFiniteFunctions {
         }
     }
 
-    @RBuiltin(name = "is.nan", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
+    @RBuiltin(name = "is.nan", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
     public abstract static class IsNaN extends Adapter {
 
         static {

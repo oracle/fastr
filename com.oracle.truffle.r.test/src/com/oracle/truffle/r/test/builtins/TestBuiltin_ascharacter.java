@@ -267,5 +267,6 @@ public class TestBuiltin_ascharacter extends TestBase {
 
         assertEval("{ f1<-function() 7; f2<-function(x) { sys.call() }; as.character(f2(f1())) }");
         assertEval("{ f1<-function(x) 7; f2<-function(y) { sys.call() }; as.character(f2(f1(42))) }");
+        assertEval("{ as.character.cls <- function(x) 42; as.character(structure(c(1,2), class='cls')); }");
     }
 }

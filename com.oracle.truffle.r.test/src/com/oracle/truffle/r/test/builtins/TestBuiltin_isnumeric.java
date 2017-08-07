@@ -24,9 +24,7 @@ public class TestBuiltin_isnumeric extends TestBase {
 
     @Test
     public void testisnumeric2() {
-        // FIXME according to ?is.numeric the 'Date' class should return FALSE from is.numeric()
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(structure(c(12784, 12874, 12965, 13057, 13149, 13239, 13330, 13422, 13514, 13604, 13695, 13787, 13879, 13970, 14061, 14153, 14245, 14335), class = 'Date'));is.numeric(argv[[1]]);");
+        assertEval("argv <- list(structure(c(12784, 12874, 12965, 13057, 13149, 13239, 13330, 13422, 13514, 13604, 13695, 13787, 13879, 13970, 14061, 14153, 14245, 14335), class = 'Date'));is.numeric(argv[[1]]);");
     }
 
     @Test
@@ -86,10 +84,8 @@ public class TestBuiltin_isnumeric extends TestBase {
 
     @Test
     public void testisnumeric14() {
-        // FIXME according to ?is.numeric the 'POSIXt' class should return FALSE from is.numeric()
-        assertEval(Ignored.ImplementationError, "is.numeric(structure(1L, class = c('POSIXct', 'POSIXt')))");
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(structure(c(1386439154.20645, 1386469154.20645, 1386499154.20645, 1386529154.20645, 1386559154.20645, 1386589154.20645, 1386619154.20645, 1386649154.20645, 1386679154.20645, 1386709154.20645, 1386739154.20645, 1386769154.20645, 1386799154.20645, 1386829154.20645, 1386859154.20645, 1386889154.20645, 1386919154.20645, 1386949154.20645, 1386979154.20645, 1387009154.20645, 1387039154.20645, 1387069154.20645, 1387099154.20645, 1387129154.20645, 1387159154.20645, 1387189154.20645, 1387219154.20645, 1387249154.20645, 1387279154.20645, 1387309154.20645, 1387339154.20645, 1387369154.20645, 1387399154.20645, 1387429154.20645), class = c('POSIXct', 'POSIXt')));is.numeric(argv[[1]]);");
+        assertEval("is.numeric(structure(1L, class = c('POSIXct', 'POSIXt')))");
+        assertEval("argv <- list(structure(c(1386439154.20645, 1386469154.20645, 1386499154.20645, 1386529154.20645, 1386559154.20645, 1386589154.20645, 1386619154.20645, 1386649154.20645, 1386679154.20645, 1386709154.20645, 1386739154.20645, 1386769154.20645, 1386799154.20645, 1386829154.20645, 1386859154.20645, 1386889154.20645, 1386919154.20645, 1386949154.20645, 1386979154.20645, 1387009154.20645, 1387039154.20645, 1387069154.20645, 1387099154.20645, 1387129154.20645, 1387159154.20645, 1387189154.20645, 1387219154.20645, 1387249154.20645, 1387279154.20645, 1387309154.20645, 1387339154.20645, 1387369154.20645, 1387399154.20645, 1387429154.20645), class = c('POSIXct', 'POSIXt')));is.numeric(argv[[1]]);");
     }
 
     @Test
@@ -124,8 +120,7 @@ public class TestBuiltin_isnumeric extends TestBase {
 
     @Test
     public void testisnumeric21() {
-        // FIXME according to ?is.numeric the 'Date' class should return FALSE from is.numeric()
-        assertEval(Ignored.ImplementationError, "argv <- list(structure(16146, class = 'Date'));is.numeric(argv[[1]]);");
+        assertEval("argv <- list(structure(16146, class = 'Date'));is.numeric(argv[[1]]);");
     }
 
     @Test
@@ -135,7 +130,12 @@ public class TestBuiltin_isnumeric extends TestBase {
 
     @Test
     public void testisnumeric24() {
-        // FIXME according to ?is.numeric the 'Date' class should return FALSE from is.numeric()
-        assertEval(Ignored.ImplementationError, "argv <- list(structure(16352, class = 'Date'));do.call('is.numeric', argv)");
+        assertEval("argv <- list(structure(16352, class = 'Date'));do.call('is.numeric', argv)");
     }
+
+    @Test
+    public void testisnumericGenericDispatch() {
+        assertEval("{ is.numeric.cls <- function(x) 42; is.numeric(structure(c(1,2), class='cls')); }");
+    }
+
 }

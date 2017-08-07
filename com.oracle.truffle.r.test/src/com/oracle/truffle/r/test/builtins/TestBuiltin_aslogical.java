@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -99,5 +99,6 @@ public class TestBuiltin_aslogical extends TestBase {
         assertEval("{ as.logical(10+2i) }");
         assertEval("{ as.logical(c(3+3i, 4+4i)) }");
         assertEval("{ as.logical(NULL) }");
+        assertEval("{ as.logical.cls <- function(x) 42; as.logical(structure(c(1,2), class='cls')); }");
     }
 }
