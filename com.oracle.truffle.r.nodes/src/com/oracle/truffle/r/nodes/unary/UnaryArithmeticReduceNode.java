@@ -72,7 +72,6 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     protected final ReduceSemantics semantics;
     protected final boolean supportString;
     protected final boolean supportComplex;
-    protected final boolean useDoubleStartForEmptyVector;
 
     private final NACheck na = NACheck.create();
     private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
@@ -83,7 +82,6 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         this.arithmetic = factory.createOperation();
         this.supportString = semantics.supportString;
         this.supportComplex = semantics.supportComplex;
-        this.useDoubleStartForEmptyVector = semantics.useDoubleStartForEmptyVector;
     }
 
     private String handleString(RStringVector operand, boolean naRm, boolean finite, int offset) {
@@ -202,16 +200,8 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         }
     }
 
-    @Specialization(guards = {"useDoubleStartForEmptyVector", "operand.getLength() == 0"})
-    protected double doIntVectorEmpty(@SuppressWarnings("unused") RIntVector operand,
-                    @SuppressWarnings("unused") boolean naRm,
-                    @SuppressWarnings("unused") boolean finite) {
-        emptyWarning();
-        return semantics.getDoubleStart();
-    }
-
     @Specialization
-    protected int doIntVector(RIntVector operand, boolean naRm, boolean finite) {
+    protected Object doIntVector(RIntVector operand, boolean naRm, boolean finite) {
         RBaseNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm || finite);
         int result = semantics.getIntStart();
@@ -237,6 +227,9 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         }
         if (opCount == 0) {
             emptyWarning();
+            if (semantics.isUseDoubleStartForEmptyVector()) {
+                return semantics.getDoubleStart();
+            }
         }
         return result;
     }
@@ -277,16 +270,8 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         return result;
     }
 
-    @Specialization(guards = {"useDoubleStartForEmptyVector", "operand.getLength() == 0"})
-    protected double doLogicalVectorEmpty(@SuppressWarnings("unused") RLogicalVector operand,
-                    @SuppressWarnings("unused") boolean naRm,
-                    @SuppressWarnings("unused") boolean finite) {
-        emptyWarning();
-        return semantics.getDoubleStart();
-    }
-
     @Specialization
-    protected int doLogicalVector(RLogicalVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected Object doLogicalVector(RLogicalVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
         RBaseNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm);
         int result = semantics.getIntStart();
@@ -312,20 +297,15 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         }
         if (opCount == 0) {
             emptyWarning();
+            if (semantics.isUseDoubleStartForEmptyVector()) {
+                return semantics.getDoubleStart();
+            }
         }
         return result;
     }
 
-    @Specialization(guards = {"useDoubleStartForEmptyVector", "operand.getLength() == 0"})
-    protected double doIntSequenceEmpty(@SuppressWarnings("unused") RIntSequence operand,
-                    @SuppressWarnings("unused") boolean naRm,
-                    @SuppressWarnings("unused") boolean finite) {
-        emptyWarning();
-        return semantics.getDoubleStart();
-    }
-
     @Specialization
-    protected int doIntSequence(RIntSequence operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected Object doIntSequence(RIntSequence operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
         RBaseNode.reportWork(this, operand.getLength());
         int result = semantics.getIntStart();
         int current = operand.getStart();
@@ -339,6 +319,9 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         }
         if (operand.getLength() == 0) {
             emptyWarning();
+            if (semantics.isUseDoubleStartForEmptyVector()) {
+                return semantics.getDoubleStart();
+            }
         }
         return result;
     }
