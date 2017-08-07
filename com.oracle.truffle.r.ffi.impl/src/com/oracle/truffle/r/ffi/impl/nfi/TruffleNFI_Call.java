@@ -85,8 +85,8 @@ public class TruffleNFI_Call implements CallRFFI {
             SymbolHandle symbolHandle = DLL.findSymbol(initVarFun.funName, null); // libR
             try {
                 initVarFun.initFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, symbolHandle.asTruffleObject(), "bind", initVarFun.signature);
-            } catch (Throwable t) {
-                throw RInternalError.shouldNotReachHere(t);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
         Node executeNode = Message.createExecute(2).createNode();
@@ -109,8 +109,8 @@ public class TruffleNFI_Call implements CallRFFI {
                     } else {
                         ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.OBJ.initFunction, i, value);
                     }
-                } catch (Throwable t) {
-                    throw RInternalError.shouldNotReachHere(t);
+                } catch (InteropException ex) {
+                    throw RInternalError.shouldNotReachHere(ex);
                 }
             }
         } finally {
@@ -130,8 +130,8 @@ public class TruffleNFI_Call implements CallRFFI {
                 TruffleObject addCallbackFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, symbolHandle.asTruffleObject(), "bind", addCallbackSignature);
                 ForeignAccess.sendExecute(executeNode, addCallbackFunction, callback.ordinal(), callback.call);
             }
-        } catch (Throwable t) {
-            throw RInternalError.shouldNotReachHere(t);
+        } catch (InteropException ex) {
+            throw RInternalError.shouldNotReachHere(ex);
         }
     }
 
@@ -162,8 +162,8 @@ public class TruffleNFI_Call implements CallRFFI {
             SymbolHandle symbolHandle = DLL.findSymbol(returnArrayFun.funName, null); // libR
             try {
                 returnArrayFun.function = (TruffleObject) ForeignAccess.sendInvoke(bind, symbolHandle.asTruffleObject(), "bind", returnArrayFun.signature);
-            } catch (InteropException t) {
-                throw RInternalError.shouldNotReachHere(t);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
     }
@@ -181,8 +181,8 @@ public class TruffleNFI_Call implements CallRFFI {
             } else {
                 throw RInternalError.shouldNotReachHere();
             }
-        } catch (InteropException t) {
-            throw RInternalError.shouldNotReachHere(t);
+        } catch (InteropException ex) {
+            throw RInternalError.shouldNotReachHere(ex);
         }
     }
 
@@ -204,8 +204,8 @@ public class TruffleNFI_Call implements CallRFFI {
                     throw RInternalError.shouldNotReachHere();
 
             }
-        } catch (InteropException t) {
-            throw RInternalError.shouldNotReachHere(t);
+        } catch (InteropException ex) {
+            throw RInternalError.shouldNotReachHere(ex);
         }
     }
 
@@ -213,8 +213,8 @@ public class TruffleNFI_Call implements CallRFFI {
         Node executeNode = Message.createExecute(1).createNode();
         try {
             ForeignAccess.sendExecute(executeNode, ReturnArray.FREE.function, address);
-        } catch (InteropException t) {
-            throw RInternalError.shouldNotReachHere(t);
+        } catch (InteropException ex) {
+            throw RInternalError.shouldNotReachHere(ex);
         }
     }
 

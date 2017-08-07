@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
@@ -48,8 +49,8 @@ public class TruffleLLVM_Tools implements ToolsRFFI {
             try {
                 ForeignAccess.sendExecute(executeNode, callbackSymbol, new RConnGetCCall());
                 addCallbackDone = true;
-            } catch (Throwable t) {
-                throw RInternalError.shouldNotReachHere(t);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
     }

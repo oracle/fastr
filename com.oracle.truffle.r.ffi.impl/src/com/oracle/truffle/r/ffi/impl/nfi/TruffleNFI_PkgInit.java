@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.nfi;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
@@ -84,8 +85,8 @@ public final class TruffleNFI_PkgInit extends Generic_PkgInit {
             }
             symbolHandle = DLL.findSymbol("Rdynload_setSymbol", null);
             setSymbolFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, symbolHandle.asTruffleObject(), "bind", SETSYMBOL_SIGNATURE);
-        } catch (Throwable t) {
-            throw RInternalError.shouldNotReachHere(t);
+        } catch (InteropException ex) {
+            throw RInternalError.shouldNotReachHere(ex);
         }
     }
 
@@ -100,13 +101,12 @@ public final class TruffleNFI_PkgInit extends Generic_PkgInit {
     }
 
     @Override
-    protected Object setSymbol(DLLInfo dllInfo, int nstOrd, long routines, int index) {
+    protected DotSymbol setSymbol(DLLInfo dllInfo, int nstOrd, long routines, int index) {
         Node executeNode = Message.createExecute(4).createNode();
         try {
-            DotSymbol result = (DotSymbol) ForeignAccess.sendExecute(executeNode, setSymbolFunction, dllInfo, nstOrd, routines, index);
-            return result;
-        } catch (Throwable t) {
-            throw RInternalError.shouldNotReachHere(t);
+            return (DotSymbol) ForeignAccess.sendExecute(executeNode, setSymbolFunction, dllInfo, nstOrd, routines, index);
+        } catch (InteropException ex) {
+            throw RInternalError.shouldNotReachHere(ex);
         }
     }
 }

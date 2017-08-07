@@ -67,8 +67,8 @@ public class TruffleNFI_Tools implements ToolsRFFI {
             try {
                 TruffleObject function = (TruffleObject) ForeignAccess.sendInvoke(bind, symbolHandle.asTruffleObject(), "bind", "(env, (object): sint32): void");
                 ForeignAccess.sendExecute(executeNode, function, new RConnGetCCall());
-            } catch (InteropException t) {
-                throw RInternalError.shouldNotReachHere(t);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
     }

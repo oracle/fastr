@@ -115,8 +115,8 @@ final class TruffleLLVM_Call implements CallRFFI {
                     } else if (value instanceof TruffleObject) {
                         ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, value);
                     }
-                } catch (Throwable t) {
-                    throw RInternalError.shouldNotReachHere(t);
+                } catch (InteropException ex) {
+                    throw RInternalError.shouldNotReachHere(ex);
                 }
             }
         } finally {
@@ -138,8 +138,8 @@ final class TruffleLLVM_Call implements CallRFFI {
             // llvm specific callbacks
             ForeignAccess.sendExecute(executeNode, symbolHandle.asTruffleObject(), callbacks.length, new BytesToNativeCharArrayCall(upCallsRFFIImpl));
             ForeignAccess.sendExecute(executeNode, symbolHandle.asTruffleObject(), callbacks.length + 1, new CharSXPToNativeArrayCall(upCallsRFFIImpl));
-        } catch (Throwable t) {
-            throw RInternalError.shouldNotReachHere(t);
+        } catch (InteropException ex) {
+            throw RInternalError.shouldNotReachHere(ex);
         }
     }
 
@@ -231,8 +231,8 @@ final class TruffleLLVM_Call implements CallRFFI {
                     result = unwrap.execute(result);
                 }
                 return result;
-            } catch (InteropException t) {
-                throw RInternalError.shouldNotReachHere(t);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             } finally {
                 RContext.getRForeignAccessFactory().setIsNull(isNullSetting);
             }

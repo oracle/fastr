@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.interop.NativeDoubleArray;
@@ -51,8 +52,8 @@ class TruffleLLVM_C implements CRFFI {
                 }
                 assert numArgs == args.length;
                 ForeignAccess.sendExecute(messageNode, nativeCallInfo.address.asTruffleObject(), wargs);
-            } catch (Throwable t) {
-                throw RInternalError.shouldNotReachHere(t);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
 

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
@@ -70,8 +71,8 @@ final class TruffleLLVM_PkgInit extends Generic_PkgInit {
             ForeignAccess.sendExecute(executeNode, callbackSymbol, PkgInitUpCalls.Index.forceSymbols.ordinal(), new ForceSymbolsCall(trufflePkgInit));
             ForeignAccess.sendExecute(executeNode, callbackSymbol, PkgInitUpCalls.Index.registerCCallable.ordinal(), new RegisterCCallableCall(trufflePkgInit));
             ForeignAccess.sendExecute(executeNode, callbackSymbol, PkgInitUpCalls.Index.getCCallable.ordinal(), new GetCCallableCall(trufflePkgInit));
-        } catch (Throwable t) {
-            throw RInternalError.shouldNotReachHere(t);
+        } catch (InteropException ex) {
+            throw RInternalError.shouldNotReachHere(ex);
         }
     }
 
@@ -89,10 +90,9 @@ final class TruffleLLVM_PkgInit extends Generic_PkgInit {
     protected Object setSymbol(DLLInfo dllInfo, int nstOrd, long routines, int index) {
         Node executeNode = Message.createExecute(4).createNode();
         try {
-            Object result = ForeignAccess.sendExecute(executeNode, setSymbolHandle, dllInfo, nstOrd, routines, index);
-            return result;
-        } catch (Throwable t) {
-            throw RInternalError.shouldNotReachHere();
+            return ForeignAccess.sendExecute(executeNode, setSymbolHandle, dllInfo, nstOrd, routines, index);
+        } catch (InteropException ex) {
+            throw RInternalError.shouldNotReachHere(ex);
         }
     }
 }
