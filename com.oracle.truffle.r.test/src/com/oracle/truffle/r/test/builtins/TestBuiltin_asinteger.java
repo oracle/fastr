@@ -146,5 +146,6 @@ public class TestBuiltin_asinteger extends TestBase {
         assertEval("{ as.integer(\"\") }");
         assertEval("{ as.integer(as.character(NA)) }");
         assertEval("{ as.integer(\"1\", as.character(NA)) }");
+        assertEval("{ as.integer.cls <- function(x) 42; as.integer(structure(c(1,2), class='cls')); }");
     }
 }

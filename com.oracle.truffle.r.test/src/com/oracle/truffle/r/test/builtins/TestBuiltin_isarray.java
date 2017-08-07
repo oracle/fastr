@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -130,5 +130,10 @@ public class TestBuiltin_isarray extends TestBase {
     @Test
     public void testisarray23() {
         assertEval("argv <- list(c(0.568, 1.432, -1.08, 1.08));is.array(argv[[1]]);");
+    }
+
+    @Test
+    public void testisarrayGenericDispatch() {
+        assertEval("{ is.array.cls <- function(x) 42; is.array(structure(c(1,2), class='cls')); }");
     }
 }

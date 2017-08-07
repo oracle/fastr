@@ -61,4 +61,9 @@ public class TestBuiltin_isnan extends TestBase {
     public void testisnan10() {
         assertEval("argv <- list(structure(c(1, 1, 1, 1, 1, 1), .Dim = 1:3));is.nan(argv[[1]]);");
     }
+
+    @Test
+    public void testisnanGenericDispatch() {
+        assertEval("{ is.nan.cls <- function(x) 42; is.nan(structure(c(1,2), class='cls')); }");
+    }
 }

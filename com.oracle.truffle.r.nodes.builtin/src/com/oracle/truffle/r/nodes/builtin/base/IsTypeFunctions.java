@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -79,7 +80,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.array", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
+    @RBuiltin(name = "is.array", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
     public abstract static class IsArray extends MissingAdapter {
 
         static {
@@ -391,7 +392,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.matrix", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
+    @RBuiltin(name = "is.matrix", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
     public abstract static class IsMatrix extends MissingAdapter {
 
         private final ConditionProfile isMatrixProfile = ConditionProfile.createBinaryProfile();
@@ -430,7 +431,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @RBuiltin(name = "is.numeric", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
+    @RBuiltin(name = "is.numeric", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
     public abstract static class IsNumeric extends MissingAdapter {
 
         static {

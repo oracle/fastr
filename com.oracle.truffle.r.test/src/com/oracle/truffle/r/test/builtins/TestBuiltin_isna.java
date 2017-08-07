@@ -253,6 +253,7 @@ public class TestBuiltin_isna extends TestBase {
         assertEval("is.na(data.frame(col1=1:5, col2=c(NA, 1, NA, 2, NA)))");
 
         assertEval("v <- c(a=1,b=1234,c='ff',d='gg'); dim(v) <- c(foo=2,bar=2); dimnames(v) <- list(a=c('foo', 'bar'), n=c('f','g')); is.na(v)");
+        assertEval("{ is.na.cls <- function(x) 42; is.na(structure(c(1,2), class='cls')); }");
 
     }
 }

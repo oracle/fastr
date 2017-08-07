@@ -443,6 +443,7 @@ public class TestBuiltin_asvector extends TestBase {
         assertEval(Output.ImprovedErrorContext, "{ as.vector(42, character())  }");
 
         assertEval("as.vector(NULL, mode='pairlist')");
+        assertEval("{ as.vector.cls <- function(x, mode) 42; as.vector(structure(c(1,2), class='cls')); }");
     }
 
     @Test
