@@ -66,4 +66,12 @@ public abstract class FFIWrapNode extends Node {
     public static FFIWrapNode create() {
         return FFIWrapNodeGen.create();
     }
+
+    public static FFIWrapNode[] create(int count) {
+        FFIWrapNode[] result = new FFIWrapNode[count];
+        for (int i = 0; i < count; i++) {
+            result[i] = FFIWrapNode.create();
+        }
+        return result;
+    }
 }
