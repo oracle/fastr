@@ -22,6 +22,11 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropException;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
 import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
 import com.oracle.truffle.r.ffi.impl.interop.NativeCharArray;
@@ -31,19 +36,31 @@ import com.oracle.truffle.r.ffi.impl.interop.NativeLogicalArray;
 import com.oracle.truffle.r.ffi.impl.interop.NativeRawArray;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 /**
  * (Incomplete) Variant of {@link JavaUpCallsRFFIImpl} for Truffle LLVM.
  *
  */
 public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
+
+    private static TruffleObject setSymbolHandle;
+
+    public TruffleLLVM_UpCallsRFFIImpl() {
+        setSymbolHandle = new SymbolHandle(RContext.getInstance().getEnv().importSymbol("@" + "Rdynload_setSymbol")).asTruffleObject();
+    }
 
     public Object charSXPToNativeCharArray(Object x) {
         CharSXPWrapper chars = RFFIUtils.guaranteeInstanceOf(x, CharSXPWrapper.class);
@@ -135,5 +152,25 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     public Object getCallback(int index) {
         return Callbacks.values()[index].call;
+    }
+
+    @Override
+    public Object getCCallable(String pkgName, String functionName) {
+        DLLInfo lib = DLL.safeFindLibrary(pkgName);
+        CEntry result = lib.lookupCEntry(functionName);
+        if (result == null) {
+            throw RError.error(RError.NO_CALLER, RError.Message.UNKNOWN_OBJECT, functionName);
+        }
+        return result.address.asTruffleObject();
+    }
+
+    @Override
+    protected Object setSymbol(DLLInfo dllInfo, int nstOrd, long routines, int index) {
+        Node executeNode = Message.createExecute(4).createNode();
+        try {
+            return ForeignAccess.sendExecute(executeNode, setSymbolHandle, dllInfo, nstOrd, routines, index);
+        } catch (InteropException ex) {
+            throw RInternalError.shouldNotReachHere(ex);
+        }
     }
 }

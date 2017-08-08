@@ -25,8 +25,14 @@ package com.oracle.truffle.r.ffi.impl.upcalls;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RObject;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RScalarList;
 
 public abstract class FFIWrapNode extends Node {
 
@@ -50,6 +56,36 @@ public abstract class FFIWrapNode extends Node {
     @Specialization
     protected static Object wrap(String value) {
         return wrap(RDataFactory.createStringVectorFromScalar(value));
+    }
+
+    @Specialization
+    protected static Object wrap(RInteger value) {
+        return wrap(RDataFactory.createIntVectorFromScalar(value.getValue()));
+    }
+
+    @Specialization
+    protected static Object wrap(RDouble value) {
+        return wrap(RDataFactory.createDoubleVectorFromScalar(value.getValue()));
+    }
+
+    @Specialization
+    protected static Object wrap(RLogical value) {
+        return wrap(RDataFactory.createLogicalVectorFromScalar(value.getValue()));
+    }
+
+    @Specialization
+    protected static Object wrap(RRaw value) {
+        return wrap(RDataFactory.createRawVectorFromScalar(value));
+    }
+
+    @Specialization
+    protected static Object wrap(RScalarList value) {
+        return wrap(RDataFactory.createList(new Object[]{value.getValue()}));
+    }
+
+    @Specialization
+    protected static Object wrap(RComplex value) {
+        return wrap(RDataFactory.createComplexVectorFromScalar(value));
     }
 
     @Specialization

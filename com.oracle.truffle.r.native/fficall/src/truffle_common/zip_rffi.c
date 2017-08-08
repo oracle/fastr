@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,9 @@ extern int compress(char *dest, long *destlen, char *source, long sourcelen);
 extern int uncompress(char *dest, long *destlen, char *source, long sourcelen);
 
 int call_zip_compress(char *dest, long destlen, char *source, long sourcelen) {
-	return compress(dest, &destlen, source, sourcelen);
+    return compress(dest, &destlen, source, sourcelen);
 }
 
 int call_zip_uncompress(char *dest, long destlen, char *source, long sourcelen) {
-	return uncompress(dest, &destlen, source, sourcelen);
+    return uncompress(dest, &destlen, source, sourcelen);
 }

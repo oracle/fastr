@@ -98,7 +98,7 @@ public class DLL {
         }
 
         @Override
-        public void beforeDestroy(RContext contextArg) {
+        public void beforeDispose(RContext contextArg) {
             if (!isShareDLLKind(context.getKind())) {
                 for (int i = 1; i < list.size(); i++) {
                     DLLInfo dllInfo = list.get(i);

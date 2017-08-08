@@ -29,6 +29,39 @@
 #include <sys/utsname.h>
 #include <errno.h>
 
+int call_base_getpid() {
+    return getpid();
+}
+
+int call_base_getcwd(char *buf, int len) {
+    char *r = getcwd(buf, len);
+    if (r == NULL) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+int call_base_chdir(char *dir) {
+    return chdir(dir);
+}
+
+int call_base_mkdir(char *dir, int mode) {
+    return mkdir(dir, mode);
+}
+
+int call_base_mkdtemp(char *template) {
+    char *r = mkdtemp(template);
+    if (r == NULL) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+int call_base_chmod(char *path, int mode) {
+    return chmod(path, mode);
+}
 
 void call_base_uname(void (*call_uname_setfields)(char *sysname, char *release, char *version, char *machine, char *nodename)) {
 	struct utsname name;

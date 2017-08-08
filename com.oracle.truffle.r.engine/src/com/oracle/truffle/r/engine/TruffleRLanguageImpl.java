@@ -123,7 +123,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage implements Scop
 
     @Override
     protected void disposeContext(RContext context) {
-        context.destroy();
+        context.dispose();
     }
 
     @Override

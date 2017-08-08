@@ -65,7 +65,6 @@ public final class TruffleNFI_PkgInit extends Generic_PkgInit {
                     case setDotSymbolValues:
                         callbackObject = new SetDotSymbolValuesCall(trufflePkgInit);
                         break;
-
                     case useDynamicSymbols:
                         callbackObject = new UseDynamicSymbolsCall(trufflePkgInit);
                         break;

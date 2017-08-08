@@ -28,8 +28,8 @@ public class TruffleNFI_RAppl implements RApplRFFI {
 
     private static class TruffleNFI_Dqrdc2Node extends TruffleNFI_DownCallNode implements Dqrdc2Node {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dqrdc2;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dqrdc2;
         }
 
         @Override
@@ -40,8 +40,8 @@ public class TruffleNFI_RAppl implements RApplRFFI {
 
     private static class TruffleNFI_DqrcfNode extends TruffleNFI_DownCallNode implements DqrcfNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dqrcf;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dqrcf;
         }
 
         @Override
@@ -52,8 +52,8 @@ public class TruffleNFI_RAppl implements RApplRFFI {
 
     private static class TruffleNFI_DqrlsNode extends TruffleNFI_DownCallNode implements DqrlsNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dqrls;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dqrls;
         }
 
         @Override
@@ -64,8 +64,8 @@ public class TruffleNFI_RAppl implements RApplRFFI {
 
     private static class TruffleNFI_DqrqtyNode extends TruffleNFI_DownCallNode implements DqrqtyNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dqrqty;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dqrqty;
         }
 
         @Override
@@ -76,8 +76,8 @@ public class TruffleNFI_RAppl implements RApplRFFI {
 
     private static class TruffleNFI_DqrqyNode extends TruffleNFI_DownCallNode implements DqrqyNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dqrqy;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dqrqy;
         }
 
         @Override
@@ -88,8 +88,8 @@ public class TruffleNFI_RAppl implements RApplRFFI {
 
     private static class TruffleNFI_DqrrsdNode extends TruffleNFI_DownCallNode implements DqrrsdNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dqrrsd;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dqrrsd;
         }
 
         @Override
@@ -100,8 +100,8 @@ public class TruffleNFI_RAppl implements RApplRFFI {
 
     private static class TruffleNFI_DqrxbNode extends TruffleNFI_DownCallNode implements DqrxbNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dqrxb;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dqrxb;
         }
 
         @Override

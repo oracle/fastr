@@ -192,10 +192,10 @@ public final class RContext implements RTruffleObject {
          */
         ACTIVE,
         /**
-         * The {@link RContext} object has been destroyed by the {@link #destroy} method. All
+         * The {@link RContext} object has been destroyed by the {@link #dispose} method. All
          * subsequent operations ideally should throw {@link IllegalStateException}.
          */
-        DESTROYED
+        DISPOSED
     }
 
     /**
@@ -214,11 +214,11 @@ public final class RContext implements RTruffleObject {
         }
 
         /**
-         * Called in response to the {@link RContext#destroy} method. Provides a hook for finalizing
+         * Called in response to the {@link RContext#dispose} method. Provides a hook for finalizing
          * any state before the context is destroyed.
          */
         @SuppressWarnings("unused")
-        default void beforeDestroy(RContext context) {
+        default void beforeDispose(RContext context) {
             // default empty implementation
         }
     }
@@ -563,17 +563,17 @@ public final class RContext implements RTruffleObject {
     /**
      * Destroy this context.
      */
-    public synchronized void destroy() {
-        if (!state.contains(State.DESTROYED)) {
+    public synchronized void dispose() {
+        if (!state.contains(State.DISPOSED)) {
             if (state.contains(State.INITIALIZED)) {
                 for (ContextState contextState : contextStates()) {
-                    contextState.beforeDestroy(this);
+                    contextState.beforeDispose(this);
                 }
             }
             if (contextKind == ContextKind.SHARE_PARENT_RW) {
                 parentContext.sharedChild = null;
             }
-            state = EnumSet.of(State.DESTROYED);
+            state = EnumSet.of(State.DISPOSED);
 
             this.allocationReporter.removePropertyChangeListener(ALLOCATION_ACTIVATION_LISTENER);
         }

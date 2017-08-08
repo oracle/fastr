@@ -28,15 +28,16 @@ import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.ffi.impl.nfi.NativeFunction;
 import com.oracle.truffle.r.runtime.RInternalError;
 
-public abstract class DownCallNode<T extends NativeFunction> extends Node {
+public abstract class DownCallNode extends Node {
 
     @Child private Node message;
 
     protected abstract TruffleObject getTarget();
 
-    protected abstract T getFunction();
+    protected abstract NativeFunction getFunction();
 
     protected final Object call(Object... args) {
         try {

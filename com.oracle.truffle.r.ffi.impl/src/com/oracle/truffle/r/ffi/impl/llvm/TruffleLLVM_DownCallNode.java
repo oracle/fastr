@@ -30,8 +30,9 @@ import com.oracle.truffle.r.ffi.impl.common.DownCallNode;
 import com.oracle.truffle.r.ffi.impl.interop.NativeDoubleArray;
 import com.oracle.truffle.r.ffi.impl.interop.NativeIntegerArray;
 import com.oracle.truffle.r.ffi.impl.interop.NativeNACheck;
+import com.oracle.truffle.r.runtime.ffi.DLL;
 
-public abstract class TruffleLLVM_DownCallNode extends DownCallNode<LLVMFunction> {
+public abstract class TruffleLLVM_DownCallNode extends DownCallNode {
 
     @CompilationFinal private TruffleObject target;
 
@@ -39,7 +40,7 @@ public abstract class TruffleLLVM_DownCallNode extends DownCallNode<LLVMFunction
     protected final TruffleObject getTarget() {
         if (target == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            target = getFunction().createSymbol().asTruffleObject();
+            target = DLL.findSymbol(getFunction().getCallName(), null).asTruffleObject();
         }
         return target;
     }

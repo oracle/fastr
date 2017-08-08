@@ -28,8 +28,8 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
     private static class TruffleNFI_IlaverNode extends TruffleNFI_DownCallNode implements IlaverNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.ilaver;
+        protected NativeFunction getFunction() {
+            return NativeFunction.ilaver;
         }
 
         @Override
@@ -40,8 +40,8 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
     private static class TruffleNFI_DgeevNode extends TruffleNFI_DownCallNode implements DgeevNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dgeev;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dgeev;
         }
 
         @Override
@@ -52,8 +52,8 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
     private static class TruffleNFI_Dgeqp3Node extends TruffleNFI_DownCallNode implements Dgeqp3Node {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dgeqp3;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dgeqp3;
         }
 
         @Override
@@ -64,8 +64,8 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
     private static class TruffleNFI_DormqrNode extends TruffleNFI_DownCallNode implements DormqrNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dormq;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dormq;
         }
 
         @Override
@@ -76,8 +76,8 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
     private static class TruffleNFI_DtrtrsNode extends TruffleNFI_DownCallNode implements DtrtrsNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dtrtrs;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dtrtrs;
         }
 
         @Override
@@ -88,8 +88,8 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
     private static class TruffleNFI_DgetrfNode extends TruffleNFI_DownCallNode implements DgetrfNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dgetrf;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dgetrf;
         }
 
         @Override
@@ -100,8 +100,8 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
     private static class TruffleNFI_DpotrfNode extends TruffleNFI_DownCallNode implements DpotrfNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dpotrf;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dpotrf;
         }
 
         @Override
@@ -112,8 +112,8 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
     private static class TruffleNFI_DpotriNode extends TruffleNFI_DownCallNode implements DpotriNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dpotri;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dpotri;
         }
 
         @Override
@@ -124,8 +124,8 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
     private static class TruffleNFI_DpstrfNode extends TruffleNFI_DownCallNode implements DpstrfNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dpstrf;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dpstrf;
         }
 
         @Override
@@ -136,8 +136,8 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
     private static class TruffleNFI_DgesvNode extends TruffleNFI_DownCallNode implements DgesvNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dgesv;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dgesv;
         }
 
         @Override
@@ -148,8 +148,8 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
     private static class TruffleNFI_DlangeNode extends TruffleNFI_DownCallNode implements DlangeNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dlange;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dlange;
         }
 
         @Override
@@ -160,8 +160,8 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
     private static class TruffleNFI_DgeconNode extends TruffleNFI_DownCallNode implements DgeconNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dgecon;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dgecon;
         }
 
         @Override
@@ -172,8 +172,8 @@ public class TruffleNFI_Lapack implements LapackRFFI {
 
     private static class TruffleNFI_DsyevrNode extends TruffleNFI_DownCallNode implements DsyevrNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.dsyevr;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dsyevr;
         }
 
         @Override

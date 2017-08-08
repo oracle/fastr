@@ -29,6 +29,7 @@ import com.oracle.truffle.r.ffi.impl.interop.NativeCharArray;
 import com.oracle.truffle.r.ffi.impl.interop.pcre.CaptureNamesResult;
 import com.oracle.truffle.r.ffi.impl.interop.pcre.CompileResult;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_Utils.AsPointerNode;
+import com.oracle.truffle.r.ffi.impl.nfi.NativeFunction;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
@@ -46,8 +47,8 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
         @Child private AsPointerNode asPointer = new AsPointerNode();
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.maketables;
+        protected NativeFunction getFunction() {
+            return NativeFunction.maketables;
         }
 
         @Override
@@ -58,8 +59,8 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
 
     private static class TruffleLLVM_GetCaptureCountNode extends TruffleLLVM_DownCallNode implements GetCaptureCountNode {
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.getcapturecount;
+        protected NativeFunction getFunction() {
+            return NativeFunction.getcapturecount;
         }
 
         @Override
@@ -70,8 +71,8 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
 
     private static class TruffleLLVM_GetCaptureNamesNode extends TruffleLLVM_DownCallNode implements GetCaptureNamesNode {
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.getcapturenames;
+        protected NativeFunction getFunction() {
+            return NativeFunction.getcapturenames;
         }
 
         @Override
@@ -89,8 +90,8 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
 
     private static class TruffleLLVM_CompileNode extends TruffleLLVM_DownCallNode implements CompileNode {
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.compile;
+        protected NativeFunction getFunction() {
+            return NativeFunction.compile;
         }
 
         @Override
@@ -104,8 +105,8 @@ public class TruffleLLVM_PCRE implements PCRERFFI {
 
     private static class TruffleLLVM_ExecNode extends TruffleLLVM_DownCallNode implements ExecNode {
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.exec;
+        protected NativeFunction getFunction() {
+            return NativeFunction.exec;
         }
 
         @Override

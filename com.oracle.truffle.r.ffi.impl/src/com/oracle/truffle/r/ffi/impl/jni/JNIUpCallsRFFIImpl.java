@@ -29,6 +29,7 @@ import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 
 /**
  * Some additional methods to support the native JNI side.
@@ -66,6 +67,16 @@ public class JNIUpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     public Object R_CHAR(Object x) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public Object getCCallable(String pkgName, String functionName) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    protected Object setSymbol(DLLInfo dllInfo, int nstOrd, long routines, int index) {
         throw RInternalError.shouldNotReachHere();
     }
 }

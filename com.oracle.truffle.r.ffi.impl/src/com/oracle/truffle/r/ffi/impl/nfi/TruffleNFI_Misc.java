@@ -28,8 +28,8 @@ public class TruffleNFI_Misc implements MiscRFFI {
 
     private static final class TruffleNFI_ExactSumNode extends TruffleNFI_DownCallNode implements ExactSumNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.exactSumFunc;
+        protected NativeFunction getFunction() {
+            return NativeFunction.exactSumFunc;
         }
 
         @Override

@@ -249,9 +249,10 @@ public class TruffleNFI_Call implements CallRFFI {
             if (arity >= SIGNATURES.length || SIGNATURES[arity] == null) {
                 StringBuilder str = new StringBuilder().append('(');
                 for (int i = 0; i < arity; i++) {
-                    str.append(i > 0 ? ", object" : "object");
+                    str.append(i > 0 ? ", " : "");
+                    str.append("pointer");
                 }
-                str.append("): object");
+                str.append("): pointer");
                 signature = str.toString();
                 if (arity < SIGNATURES.length) {
                     SIGNATURES[arity] = signature;

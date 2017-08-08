@@ -104,6 +104,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -681,7 +685,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object TAG(Object e) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.TAG).call(e);
+        throw implementedAsNode();
     }
 
     @Override
@@ -1568,44 +1572,79 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public double Rf_dunif(double a, double b, double c, int d) {
-        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_dunif).call(a, b, c, d);
-    }
-
-    @Override
-    public double Rf_qunif(double a, double b, double c, int d, int e) {
-        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_qunif).call(a, b, c, d, e);
-    }
-
-    @Override
-    public double Rf_punif(double a, double b, double c, int d, int e) {
-        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_punif).call(a, b, c, d, e);
-    }
-
-    @Override
-    public double Rf_runif(double a, double b) {
-        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_runif).call(a, b);
-    }
-
-    @Override
-    public Object Rf_namesgets(Object x, Object y) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_namesgets).call(x, y);
-    }
-
-    @Override
-    public int Rf_copyMostAttrib(Object x, Object y) {
-        FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_copyMostAttrib).call(x, y);
+    public int registerRoutines(DLLInfo dllInfo, int nstOrd, int num, long routines) {
+        DotSymbol[] array = new DotSymbol[num];
+        for (int i = 0; i < num; i++) {
+            Object sym = setSymbol(dllInfo, nstOrd, routines, i);
+            array[i] = (DotSymbol) sym;
+        }
+        dllInfo.setNativeSymbols(nstOrd, array);
         return 0;
     }
 
     @Override
+    public int registerCCallable(String pkgName, String functionName, Object address) {
+        DLLInfo lib = DLL.safeFindLibrary(pkgName);
+        lib.registerCEntry(new CEntry(functionName, new SymbolHandle(address)));
+        return 0;
+    }
+
+    @Override
+    public int useDynamicSymbols(DLLInfo dllInfo, int value) {
+        return DLL.useDynamicSymbols(dllInfo, value);
+    }
+
+    @Override
+    public int forceSymbols(DLLInfo dllInfo, int value) {
+        return DLL.forceSymbols(dllInfo, value);
+    }
+
+    @Override
+    public DotSymbol setDotSymbolValues(DLLInfo dllInfo, String name, Object fun, int numArgs) {
+        DotSymbol result = new DotSymbol(name, new SymbolHandle(fun), numArgs);
+        return result;
+    }
+
+    protected abstract Object setSymbol(DLLInfo dllInfo, int nstOrd, long routines, int index);
+
+    @Override
+    public double Rf_dunif(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qunif(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_punif(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_runif(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object Rf_namesgets(Object x, Object y) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public int Rf_copyMostAttrib(Object x, Object y) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public Object Rf_VectorToPairList(Object x) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_VectorToPairList).call(x);
+        throw implementedAsNode();
     }
 
     @Override
     public Object Rf_asCharacterFactor(Object x) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_asCharacterFactor).call(x);
+        throw implementedAsNode();
     }
 
 }

@@ -52,7 +52,14 @@ import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RObject;
+import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
@@ -332,17 +339,12 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
 
     @Override
     public CallTarget accessIsPointer() {
-        return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
-            @Override
-            public Object execute(VirtualFrame frame) {
-                return false;
-            }
-        });
+        return NativeDataAccess.createIsPointer();
     }
 
     @Override
     public CallTarget accessAsPointer() {
-        return null;
+        return NativeDataAccess.createAsPointer();
     }
 
     @Override

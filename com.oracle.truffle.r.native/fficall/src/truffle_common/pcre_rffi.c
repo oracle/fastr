@@ -30,8 +30,12 @@
 extern char *pcre_maketables();
 extern void *pcre_compile(char *pattern, int options, char **errorMessage, int *errOffset, char *tables);
 extern int  pcre_exec(void *code, void *extra, char* subject, int subjectLength, int startOffset, int options, int *ovector, int ovecSize);
-int pcre_fullinfo(void *code, void *extra, int what, void *where);
+extern int pcre_fullinfo(void *code, void *extra, int what, void *where);
 extern void pcre_free(void *code);
+
+char *call_pcre_maketables() {
+    return pcre_maketables();
+}
 
 void call_pcre_compile(void (*makeresult)(long result, char *errMsg, int errOffset), char *pattern, int options, long tables) {
 	char *errorMessage;
@@ -41,6 +45,10 @@ void call_pcre_compile(void (*makeresult)(long result, char *errMsg, int errOffs
 	if (pcre_result == NULL) {
 		msg = ensure_string(errorMessage);
 	}	makeresult((long) pcre_result, msg, errOffset);
+}
+
+int call_pcre_exec(long code, long extra, char *subject, int subjectLength, int startOffset, int options, int *ovectorElems, int ovectorLen) {
+    return pcre_exec((void *) code, (void *) extra, (char *) subject, subjectLength, startOffset, options, ovectorElems, ovectorLen);
 }
 
 int call_pcre_getcapturecount(long code, long extra) {

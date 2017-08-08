@@ -164,7 +164,7 @@ class FastRNativeRecommendedProject(mx.NativeProject):
     This finesses an ordering problem on installing the recommended R packages.
     These must be installed by FastR using bin/R CMD INSTALL. That will invoke a
     nested 'mx R' invocation which requires the FASTR distribution to be available.
-    However, this dependency cannt be specified in the suite.py file so we achieve
+    However, this dependency cannot be specified in the suite.py file so we achieve
     it here by ensuring that it is built prior to the native.recommended project.
     '''
     def __init__(self, suite, name, deps, workingSets, theLicense, **args):

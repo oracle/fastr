@@ -28,6 +28,6 @@ import com.oracle.truffle.r.ffi.processor.RFFIUpCallRoot;
  * Aggregation of all the FFI upcall interfaces.
  */
 @RFFIUpCallRoot
-public interface UpCallsRFFI extends StdUpCallsRFFI, IDEUpCallsRFFI, VariableUpCallsRFFI {
+public interface UpCallsRFFI extends StdUpCallsRFFI, IDEUpCallsRFFI, VariableUpCallsRFFI, DLLUpCallsRFFI {
 
 }

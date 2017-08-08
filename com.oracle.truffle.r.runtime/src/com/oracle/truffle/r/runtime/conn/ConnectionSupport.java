@@ -152,7 +152,7 @@ public class ConnectionSupport {
         }
 
         @Override
-        public void beforeDestroy(RContext context) {
+        public void beforeDispose(RContext context) {
             // close all open connections
             for (int i = 3; i <= hwm; i++) {
                 WeakReference<BaseRConnection> ref = allConnections.get(i);

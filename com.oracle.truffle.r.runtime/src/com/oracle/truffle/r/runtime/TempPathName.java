@@ -75,7 +75,7 @@ public class TempPathName implements RContext.ContextState {
 
     @Override
     @TruffleBoundary
-    public void beforeDestroy(RContext context) {
+    public void beforeDispose(RContext context) {
         if (context.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
             return;
         }

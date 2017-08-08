@@ -22,12 +22,15 @@
  */
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
-import com.oracle.truffle.r.ffi.impl.nodes.ATTRIB;
 import com.oracle.truffle.r.ffi.impl.nodes.AsCharNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AsIntegerNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AsLogicalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AsRealNode;
-import com.oracle.truffle.r.ffi.impl.nodes.CoerceVectorNode;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.ATTRIB;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.CopyMostAttrib;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.TAG;
+import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
+import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CARNode;
@@ -175,6 +178,7 @@ public interface StdUpCallsRFFI {
 
     Object PRINTNAME(Object x);
 
+    @RFFIUpCallNode(TAG.class)
     Object TAG(Object e);
 
     @RFFIUpCallNode(CARNode.class)
@@ -323,9 +327,12 @@ public interface StdUpCallsRFFI {
 
     Object Rf_namesgets(Object vec, Object val);
 
+    @RFFIUpCallNode(CopyMostAttrib.class)
     int Rf_copyMostAttrib(Object x, Object y);
 
+    @RFFIUpCallNode(VectorToPairListNode.class)
     Object Rf_VectorToPairList(Object x);
 
+    @RFFIUpCallNode(CADDRNode.class)
     Object Rf_asCharacterFactor(Object x);
 }

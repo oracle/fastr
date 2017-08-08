@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
+import com.oracle.truffle.r.ffi.impl.nfi.NativeFunction;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 
@@ -33,8 +34,8 @@ public class TruffleLLVM_RAppl implements RApplRFFI {
     private static final class TruffleLLVM_Dqrdc2Node extends TruffleLLVM_DownCallNode implements Dqrdc2Node {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dqrdc2;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dqrdc2;
         }
 
         @Override
@@ -46,8 +47,8 @@ public class TruffleLLVM_RAppl implements RApplRFFI {
     private static final class TruffleLLVM_DqrcfNode extends TruffleLLVM_DownCallNode implements DqrcfNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dqrcf;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dqrcf;
         }
 
         @Override
@@ -59,8 +60,8 @@ public class TruffleLLVM_RAppl implements RApplRFFI {
     private static final class TruffleLLVM_DqrlsNode extends TruffleLLVM_DownCallNode implements DqrlsNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dqrls;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dqrls;
         }
 
         @Override

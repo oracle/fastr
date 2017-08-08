@@ -374,7 +374,7 @@ public final class FFIProcessor extends AbstractProcessor {
         switch (paramTypeName) {
             case "java.lang.Object":
                 if (rffiCstring == null) {
-                    return "object";
+                    return "pointer";
                 } else {
                     return rffiCstring.convert() ? "string" : "pointer";
                 }
@@ -405,7 +405,7 @@ public final class FFIProcessor extends AbstractProcessor {
                 } else {
                     processingEnv.getMessager().printMessage(Kind.ERROR, "Invalid parameter type " + paramTypeName, m);
                 }
-                return "object";
+                return "pointer";
         }
     }
 

@@ -63,9 +63,9 @@ class TruffleLLVM_RFFIContextState implements ContextState {
     }
 
     @Override
-    public void beforeDestroy(RContext context) {
-        dllState.beforeDestroy(context);
-        pkgInitState.beforeDestroy(context);
-        callState.beforeDestroy(context);
+    public void beforeDispose(RContext context) {
+        dllState.beforeDispose(context);
+        pkgInitState.beforeDispose(context);
+        callState.beforeDispose(context);
     }
 }

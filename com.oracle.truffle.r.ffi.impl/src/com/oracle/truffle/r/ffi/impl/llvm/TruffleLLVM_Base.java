@@ -30,14 +30,15 @@ import com.oracle.truffle.r.ffi.impl.interop.base.GlobResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.ReadlinkResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.StrtolResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.UnameResult;
+import com.oracle.truffle.r.ffi.impl.nfi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 public class TruffleLLVM_Base implements BaseRFFI {
     private static final class TruffleLLVM_GetpidNode extends TruffleLLVM_DownCallNode implements GetpidNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.getpid;
+        protected NativeFunction getFunction() {
+            return NativeFunction.getpid;
         }
 
         @Override
@@ -49,8 +50,8 @@ public class TruffleLLVM_Base implements BaseRFFI {
     private static class TruffleLLVM_GetwdNode extends TruffleLLVM_DownCallNode implements GetwdNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.getwd;
+        protected NativeFunction getFunction() {
+            return NativeFunction.getcwd;
         }
 
         @Override
@@ -74,8 +75,8 @@ public class TruffleLLVM_Base implements BaseRFFI {
     private static class TruffleLLVM_SetwdNode extends TruffleLLVM_DownCallNode implements SetwdNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.setwd;
+        protected NativeFunction getFunction() {
+            return NativeFunction.chdir;
         }
 
         @Override
@@ -88,8 +89,8 @@ public class TruffleLLVM_Base implements BaseRFFI {
     private static class TruffleLLVM_MkdirNode extends TruffleLLVM_DownCallNode implements MkdirNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.mkdir;
+        protected NativeFunction getFunction() {
+            return NativeFunction.mkdir;
         }
 
         @Override
@@ -105,8 +106,8 @@ public class TruffleLLVM_Base implements BaseRFFI {
     private static class TruffleLLVM_ReadlinkNode extends TruffleLLVM_DownCallNode implements ReadlinkNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.readlink;
+        protected NativeFunction getFunction() {
+            return NativeFunction.readlink;
         }
 
         private static final int EINVAL = 22;
@@ -132,8 +133,8 @@ public class TruffleLLVM_Base implements BaseRFFI {
     private static class TruffleLLVM_MkdtempNode extends TruffleLLVM_DownCallNode implements MkdtempNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.mkdtemp;
+        protected NativeFunction getFunction() {
+            return NativeFunction.mkdtemp;
         }
 
         @Override
@@ -160,8 +161,8 @@ public class TruffleLLVM_Base implements BaseRFFI {
     private static class TruffleLLVM_ChmodNode extends TruffleLLVM_DownCallNode implements ChmodNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.chmod;
+        protected NativeFunction getFunction() {
+            return NativeFunction.chmod;
         }
 
         @Override
@@ -174,8 +175,8 @@ public class TruffleLLVM_Base implements BaseRFFI {
     private static class TruffleLLVM_StrolNode extends TruffleLLVM_DownCallNode implements StrolNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.strtol;
+        protected NativeFunction getFunction() {
+            return NativeFunction.strtol;
         }
 
         @Override
@@ -194,8 +195,8 @@ public class TruffleLLVM_Base implements BaseRFFI {
     private static class TruffleLLVM_UnameNode extends TruffleLLVM_DownCallNode implements UnameNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.uname;
+        protected NativeFunction getFunction() {
+            return NativeFunction.uname;
         }
 
         @Override
@@ -209,8 +210,8 @@ public class TruffleLLVM_Base implements BaseRFFI {
     private static class TruffleLLVM_GlobNode extends TruffleLLVM_DownCallNode implements GlobNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.glob;
+        protected NativeFunction getFunction() {
+            return NativeFunction.glob;
         }
 
         @Override

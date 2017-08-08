@@ -28,7 +28,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.ffi.impl.common.DownCallNode;
 import com.oracle.truffle.r.ffi.impl.interop.NativeNACheck;
 
-public abstract class TruffleNFI_DownCallNode extends DownCallNode<NFIFunction> {
+public abstract class TruffleNFI_DownCallNode extends DownCallNode {
 
     @Override
     protected final TruffleObject getTarget() {

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
+import com.oracle.truffle.r.ffi.impl.nfi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 
 public class TruffleLLVM_Misc implements MiscRFFI {
@@ -29,8 +30,8 @@ public class TruffleLLVM_Misc implements MiscRFFI {
     private static class TruffleLLVM_ExactSumNode extends TruffleLLVM_DownCallNode implements ExactSumNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.exactSumFunc;
+        protected NativeFunction getFunction() {
+            return NativeFunction.exactSumFunc;
         }
 
         @Override

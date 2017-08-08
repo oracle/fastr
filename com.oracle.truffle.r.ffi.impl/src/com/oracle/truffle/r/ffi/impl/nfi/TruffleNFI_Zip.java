@@ -29,29 +29,25 @@ public class TruffleNFI_Zip implements ZipRFFI {
 
     private static class TruffleNFI_CompressNode extends TruffleNFI_DownCallNode implements ZipRFFI.CompressNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.compress;
+        protected NativeFunction getFunction() {
+            return NativeFunction.compress;
         }
 
         @Override
         public int execute(byte[] dest, byte[] source) {
-            long[] destlen = new long[]{dest.length};
-            int result = (int) call(JavaInterop.asTruffleObject(dest), JavaInterop.asTruffleObject(destlen), JavaInterop.asTruffleObject(source), source.length);
-            return result;
+            return (int) call(JavaInterop.asTruffleObject(dest), (long) dest.length, JavaInterop.asTruffleObject(source), source.length);
         }
     }
 
     private static class TruffleNFI_UncompressNode extends TruffleNFI_DownCallNode implements ZipRFFI.UncompressNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.uncompress;
+        protected NativeFunction getFunction() {
+            return NativeFunction.uncompress;
         }
 
         @Override
         public int execute(byte[] dest, byte[] source) {
-            long[] destlen = new long[]{dest.length};
-            int result = (int) call(JavaInterop.asTruffleObject(dest), JavaInterop.asTruffleObject(destlen), JavaInterop.asTruffleObject(source), source.length);
-            return result;
+            return (int) call(JavaInterop.asTruffleObject(dest), (long) dest.length, JavaInterop.asTruffleObject(source), source.length);
         }
     }
 

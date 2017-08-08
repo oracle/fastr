@@ -23,7 +23,7 @@
 
 #include <rffiutils.h>
 
-double exactSumFunc(double* contents, int length, int hasNa, int naRm) {
+double call_misc_exactSumFunc(double* contents, int length, int hasNa, int naRm) {
 
 	long double sum = 0;
 	int i = 0;

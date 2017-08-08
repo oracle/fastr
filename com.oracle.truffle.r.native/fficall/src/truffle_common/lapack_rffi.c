@@ -62,7 +62,6 @@ int call_lapack_dormqr(char side, char trans, int m, int n, int k, double *a, in
 
 extern int dtrtrs_(char *uplo, char *trans, char *diag, int *n, int *nrhs, double *a, int *lda, double *b, int *ldb, int *info);
 
-
 int call_lapack_dtrtrs(char uplo, char trans, char diag, int n, int nrhs, double *a, int lda, double *b, int ldb) {
     int info;
     dtrtrs_(&uplo, &trans, &diag, &n, &nrhs, a, &lda, b, &ldb, &info);
