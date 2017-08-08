@@ -47,7 +47,6 @@ import com.oracle.truffle.r.ffi.impl.nodes.FFIUpCallRootNode;
 import com.oracle.truffle.r.ffi.impl.upcalls.RFFIUpCallTable;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -839,8 +838,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                                 argsList.getDataNonShared());
             }
         } else if (expr instanceof RSymbol) {
-            ReadVariableNode rvn = ReadVariableNode.create(((RSymbol) expr).getName());
-            result = RContext.getEngine().eval(RDataFactory.createLanguage(rvn), (REnvironment) env, RCaller.topLevel);
+            RSyntaxNode lookup = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) expr).getName(), false);
+            result = RContext.getEngine().eval(RDataFactory.createLanguage(lookup.asRNode()), (REnvironment) env, RCaller.topLevel);
         } else {
             // just return value
             result = expr;
