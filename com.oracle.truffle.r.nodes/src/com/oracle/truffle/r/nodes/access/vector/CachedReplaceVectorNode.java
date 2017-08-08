@@ -98,7 +98,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     @Child private WriteIndexedVectorNode writeVectorNode;
     @Child private PositionsCheckNode positionsCheckNode;
     @Child private CastNode castVectorNode;
-    @Child private CachedReplaceVectorNode copyPositionNames;
+    @Child private ReplaceVectorNode copyPositionNames;
     @Child private DeleteElementsNode deleteElementsNode;
     @Child private SetNamesAttributeNode setNamesNode;
 
@@ -569,9 +569,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
         if (copyPositionNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            copyPositionNames = insert(new CachedReplaceVectorNode(mode, names, positions, positionNames.getClass(), positionNames.getRType(), false, recursive, positionNames.getLength() > 1));
+            copyPositionNames = insert(ReplaceVectorNode.create(ElementAccessMode.SUBSET, true));
         }
-        assert copyPositionNames.isSupported(names, positions, positionNames);
         RAbstractStringVector newNames = (RAbstractStringVector) copyPositionNames.apply(names, positions, positionNames);
         if (updateNamesProfile.profile(newNames != originalNames)) {
             if (setNamesNode == null) {

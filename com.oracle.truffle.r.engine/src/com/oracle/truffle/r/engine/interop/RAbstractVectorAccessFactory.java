@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
+import java.util.List;
+
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
@@ -56,7 +58,6 @@ import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import java.util.List;
 
 abstract class InteropRootNode extends RootNode {
     InteropRootNode() {
@@ -77,7 +78,7 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return lengthNode.executeInteger(frame, ForeignAccess.getReceiver(frame));
+            return lengthNode.executeInteger(ForeignAccess.getReceiver(frame));
         }
     }
 
@@ -104,7 +105,7 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
             if (unknownIdentifier.profile(!KeyInfo.isExisting(info))) {
                 throw UnknownIdentifierException.raise("" + idx);
             }
-            return read(frame, receiver, new Object[]{idx + 1});
+            return read(receiver, new Object[]{idx + 1});
         }
 
         @Specialization
@@ -114,15 +115,15 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
             if (unknownIdentifier.profile(!KeyInfo.isExisting(info))) {
                 throw UnknownIdentifierException.raise("" + idx);
             }
-            return read(frame, receiver, new Object[]{idx + 1});
+            return read(receiver, new Object[]{idx + 1});
         }
 
-        private Object read(VirtualFrame frame, Object receiver, Object[] positions) {
+        private Object read(Object receiver, Object[] positions) {
             if (extract == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 extract = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
             }
-            Object value = extract.apply(frame, receiver, positions, RLogical.TRUE, RLogical.TRUE);
+            Object value = extract.apply(receiver, positions, RLogical.TRUE, RLogical.TRUE);
             if (r2Foreign == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 r2Foreign = insert(R2ForeignNodeGen.create());
@@ -156,16 +157,16 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
         @Specialization
         protected Object write(VirtualFrame frame, TruffleObject receiver, int idx, Object valueObj) {
             // idx + 1 R is indexing from 1
-            return write(frame, receiver, new Object[]{idx + 1}, valueObj);
+            return write(receiver, new Object[]{idx + 1}, valueObj);
         }
 
         @Specialization
         protected Object write(VirtualFrame frame, TruffleObject receiver, long idx, Object valueObj) {
             // idx + 1 R is indexing from 1
-            return write(frame, receiver, new Object[]{idx + 1}, valueObj);
+            return write(receiver, new Object[]{idx + 1}, valueObj);
         }
 
-        private Object write(VirtualFrame frame, TruffleObject receiver, Object[] positions, Object valueObj) {
+        private Object write(TruffleObject receiver, Object[] positions, Object valueObj) {
             if (foreign2R == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 foreign2R = insert(Foreign2RNodeGen.create());
@@ -175,7 +176,7 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace = insert(ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
             }
-            return replace.apply(frame, receiver, positions, value);
+            return replace.apply(receiver, positions, value);
         }
 
         @Fallback
@@ -209,13 +210,13 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
         protected abstract int execute(VirtualFrame frame, Object reciever, Object indentifier);
 
         @Specialization
-        protected int keyInfo(VirtualFrame frame, Object receiver, int idx) {
-            return keyInfo(frame, receiver, (long) idx);
+        protected int keyInfo(Object receiver, int idx) {
+            return keyInfo(receiver, (long) idx);
         }
 
         @Specialization
-        protected int keyInfo(VirtualFrame frame, Object receiver, long idx) {
-            if (unknownIdentifier.profile(idx < 0 || idx >= lengthNode.executeInteger(frame, receiver))) {
+        protected int keyInfo(Object receiver, long idx) {
+            if (unknownIdentifier.profile(idx < 0 || idx >= lengthNode.executeInteger(receiver))) {
                 return 0;
             }
             KeyInfo.Builder builder = KeyInfo.newBuilder();

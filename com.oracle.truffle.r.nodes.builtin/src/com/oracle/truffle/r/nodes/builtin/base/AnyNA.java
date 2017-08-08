@@ -164,7 +164,7 @@ public abstract class AnyNA extends RBuiltinNode.Arg2 {
 
         for (int i = 0; i < list.getLength(); i++) {
             Object value = elementProfile.profile(list.getDataAt(i));
-            if (length.executeInteger(frame, value) > 0) {
+            if (length.executeInteger(value) > 0) {
                 byte result = recursiveNode.execute(frame, value, recursive);
                 if (result == RRuntime.LOGICAL_TRUE) {
                     return RRuntime.LOGICAL_TRUE;

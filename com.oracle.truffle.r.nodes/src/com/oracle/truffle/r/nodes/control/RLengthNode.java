@@ -61,7 +61,7 @@ public abstract class RLengthNode extends RNode {
     @Override
     public abstract int executeInteger(VirtualFrame frame);
 
-    public abstract int executeInteger(VirtualFrame frame, Object value);
+    public abstract int executeInteger(Object value);
 
     public static RLengthNode create() {
         return RLengthNodeGen.create(null);

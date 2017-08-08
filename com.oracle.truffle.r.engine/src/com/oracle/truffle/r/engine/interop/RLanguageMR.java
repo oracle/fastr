@@ -117,7 +117,7 @@ public class RLanguageMR {
         abstract Object execute(VirtualFrame frame, RLanguage receiver, Object identifier);
 
         @Specialization
-        protected Object access(VirtualFrame frame, RLanguage receiver, int idx,
+        protected Object access(RLanguage receiver, int idx,
                         @Cached("createKeyInfoNode()") KeyInfoNode keyInfo) {
 
             int info = keyInfo.execute(receiver, idx);
@@ -129,7 +129,7 @@ public class RLanguageMR {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 extract = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
             }
-            Object value = extract.apply(frame, receiver, new Object[]{idx + 1}, RLogical.TRUE, RLogical.TRUE);
+            Object value = extract.apply(receiver, new Object[]{idx + 1}, RLogical.TRUE, RLogical.TRUE);
             if (value == null) {
                 return RNull.instance;
             }

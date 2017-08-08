@@ -148,7 +148,7 @@ abstract class SubscriptSpecial extends SubscriptSpecialBase {
     @Specialization(guards = {"simpleVector(vector)", "!inReplacement"})
     protected static Object access(VirtualFrame frame, RAbstractVector vector, Object index,
                     @Cached("createAccess()") ExtractVectorNode extract) {
-        return extract.apply(frame, vector, new Object[]{index}, RRuntime.LOGICAL_TRUE, RLogical.TRUE);
+        return extract.apply(vector, new Object[]{index}, RRuntime.LOGICAL_TRUE, RLogical.TRUE);
     }
 
     public static RNode create(boolean inReplacement, RNode profiledVector, ConvertIndex index) {
@@ -223,11 +223,11 @@ public abstract class Subscript extends RBuiltinNode.Arg4 {
     }
 
     @Specialization(guards = "!indexes.isEmpty()")
-    protected Object get(VirtualFrame frame, Object x, RArgsValuesAndNames indexes, RAbstractLogicalVector exact, @SuppressWarnings("unused") Object drop) {
+    protected Object get(Object x, RArgsValuesAndNames indexes, RAbstractLogicalVector exact, @SuppressWarnings("unused") Object drop) {
         /*
          * "drop" is not actually used by this builtin, but it needs to be in the argument list
          * (because the "drop" argument needs to be skipped).
          */
-        return extractNode.apply(frame, x, indexes.getArguments(), exact, RLogical.TRUE);
+        return extractNode.apply(x, indexes.getArguments(), exact, RLogical.TRUE);
     }
 }

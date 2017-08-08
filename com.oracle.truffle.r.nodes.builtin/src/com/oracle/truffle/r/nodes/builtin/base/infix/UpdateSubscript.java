@@ -174,7 +174,7 @@ public abstract class UpdateSubscript extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "!args.isEmpty()")
-    protected Object update(VirtualFrame frame, Object x, RArgsValuesAndNames args) {
+    protected Object update(Object x, RArgsValuesAndNames args) {
         Object value = args.getArgument(args.getLength() - 1);
         Object[] pos;
         if (argsLengthLargerThanOneProfile.profile(args.getLength() > 1)) {
@@ -182,7 +182,7 @@ public abstract class UpdateSubscript extends RBuiltinNode.Arg2 {
         } else {
             pos = new Object[]{RMissing.instance};
         }
-        return replaceNode.apply(frame, x, pos, value);
+        return replaceNode.apply(x, pos, value);
     }
 
     @Specialization(guards = "args.isEmpty()")

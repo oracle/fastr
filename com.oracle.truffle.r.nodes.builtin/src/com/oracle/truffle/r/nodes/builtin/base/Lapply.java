@@ -111,7 +111,7 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
         @Override
         public Object execute(VirtualFrame frame) {
             try {
-                return extractElementNode.apply(frame, FrameSlotChangeMonitor.getObject(vectorSlot, frame), new Object[]{frame.getInt(indexSlot)}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
+                return extractElementNode.apply(FrameSlotChangeMonitor.getObject(vectorSlot, frame), new Object[]{frame.getInt(indexSlot)}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
             } catch (FrameSlotTypeException e) {
                 CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere("frame type mismatch in lapply");
@@ -159,7 +159,7 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
                         @Cached("createCallNode(vectorSlot, indexSlot)") RCallBaseNode callNode) {
             // TODO: R switches to double if x.getLength() is greater than 2^31-1
             FrameSlotChangeMonitor.setObject(frame, vectorSlot, vector);
-            int length = lengthNode.executeInteger(frame, vector);
+            int length = lengthNode.executeInteger(vector);
             Object[] result = new Object[length];
             if (length > 0) {
                 reportWork(this, length);

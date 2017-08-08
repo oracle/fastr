@@ -81,7 +81,7 @@ public class ListMR {
             @Child private RLengthNode lengthNode = RLengthNode.create();
 
             protected Object access(VirtualFrame frame, RList receiver) {
-                return getSize(frame, receiver, lengthNode);
+                return getSize(receiver, lengthNode);
             }
         }
 
@@ -106,7 +106,7 @@ public class ListMR {
             @Child private ListWriteImplNode writeNode = ListWriteImplNodeGen.create();
 
             protected Object access(VirtualFrame frame, RList receiver, Object identifier, Object valueObj) {
-                return writeNode.execute(frame, receiver, identifier, valueObj);
+                return writeNode.execute(receiver, identifier, valueObj);
             }
         }
 
@@ -124,7 +124,7 @@ public class ListMR {
             @Child private ListKeyInfoImplNode keyInfoNode = ListKeyInfoImplNodeGen.create();
 
             protected Object access(VirtualFrame frame, TruffleObject receiver, Object idx) {
-                return keyInfoNode.execute(frame, receiver, idx);
+                return keyInfoNode.execute(receiver, idx);
             }
         }
 
@@ -165,7 +165,7 @@ public class ListMR {
             @Child private RLengthNode lengthNode = RLengthNode.create();
 
             protected Object access(VirtualFrame frame, RPairList receiver) {
-                return getSize(frame, receiver, lengthNode);
+                return getSize(receiver, lengthNode);
             }
         }
 
@@ -197,7 +197,7 @@ public class ListMR {
             @Child private ListWriteImplNode writeNode = ListWriteImplNodeGen.create();
 
             protected Object access(VirtualFrame frame, RPairList receiver, Object identifier, Object valueObj) {
-                return writeNode.execute(frame, receiver, identifier, valueObj);
+                return writeNode.execute(receiver, identifier, valueObj);
             }
         }
 
@@ -215,7 +215,7 @@ public class ListMR {
             @Child private ListKeyInfoImplNode keyInfoNode = ListKeyInfoImplNodeGen.create();
 
             protected Object access(VirtualFrame frame, TruffleObject receiver, Object idx) {
-                return keyInfoNode.execute(frame, receiver, idx);
+                return keyInfoNode.execute(receiver, idx);
             }
         }
 
@@ -245,13 +245,13 @@ public class ListMR {
         @Specialization
         protected Object read(VirtualFrame frame, TruffleObject receiver, int idx,
                         @Cached("createKeyInfoNode()") ListKeyInfoImplNode keyInfo) {
-            int info = keyInfo.execute(frame, receiver, idx);
+            int info = keyInfo.execute(receiver, idx);
             if (unknownIdentifier.profile(!KeyInfo.isExisting(info))) {
                 throw UnknownIdentifierException.raise("" + idx);
             }
             initExtractNode();
             // idx + 1 R is indexing from 1
-            Object value = extract.apply(frame, receiver, new Object[]{idx + 1}, RLogical.valueOf(false), RMissing.instance);
+            Object value = extract.apply(receiver, new Object[]{idx + 1}, RLogical.valueOf(false), RMissing.instance);
             initR2ForeignNode();
             return r2Foreign.execute(value);
         }
@@ -262,12 +262,12 @@ public class ListMR {
             // reading by an unknown name returns null,
             // reading by an unknown index returns subscript out of bounds;
             // let's be consistent at this place, the name should be known to the caller anyway
-            int info = keyInfo.execute(frame, receiver, field);
+            int info = keyInfo.execute(receiver, field);
             if (unknownIdentifier.profile(!KeyInfo.isExisting(info))) {
                 throw UnknownIdentifierException.raise("" + field);
             }
             initExtractNode();
-            Object value = extract.applyAccessField(frame, receiver, field);
+            Object value = extract.applyAccessField(receiver, field);
             initR2ForeignNode();
             return r2Foreign.execute(value);
         }
@@ -300,20 +300,20 @@ public class ListMR {
         @Child private ReplaceVectorNode replace;
         @Child private Foreign2R foreign2R;
 
-        protected abstract Object execute(VirtualFrame frame, TruffleObject receiver, Object identifier, Object valueObj);
+        protected abstract Object execute(TruffleObject receiver, Object identifier, Object valueObj);
 
         @Specialization
-        protected Object write(VirtualFrame frame, TruffleObject receiver, int idx, Object valueObj) {
+        protected Object write(TruffleObject receiver, int idx, Object valueObj) {
             // idx + 1 R is indexing from 1
-            return write(frame, receiver, new Object[]{idx + 1}, valueObj);
+            return write(receiver, new Object[]{idx + 1}, valueObj);
         }
 
         @Specialization
-        protected Object write(VirtualFrame frame, TruffleObject receiver, String field, Object valueObj) {
-            return write(frame, receiver, new Object[]{field}, valueObj);
+        protected Object write(TruffleObject receiver, String field, Object valueObj) {
+            return write(receiver, new Object[]{field}, valueObj);
         }
 
-        private Object write(VirtualFrame frame, TruffleObject receiver, Object[] positions, Object valueObj) {
+        private Object write(TruffleObject receiver, Object[] positions, Object valueObj) {
             if (foreign2R == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 foreign2R = insert(Foreign2RNodeGen.create());
@@ -323,7 +323,7 @@ public class ListMR {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace = insert(ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
             }
-            return replace.apply(frame, receiver, positions, value);
+            return replace.apply(receiver, positions, value);
         }
 
         @Fallback
@@ -337,28 +337,28 @@ public class ListMR {
 
         private final ConditionProfile unknownIdentifier = ConditionProfile.createBinaryProfile();
 
-        abstract int execute(VirtualFrame frame, TruffleObject receiver, Object idx);
+        abstract int execute(TruffleObject receiver, Object idx);
 
         @Specialization
-        protected int keyInfo(VirtualFrame frame, TruffleObject receiver, int idx,
+        protected int keyInfo(TruffleObject receiver, int idx,
                         @Cached("createLengthNode()") RLengthNode lenghtNode) {
-            return keyInfo(frame, receiver, (double) idx, lenghtNode);
+            return keyInfo(receiver, (double) idx, lenghtNode);
         }
 
         @Specialization
-        protected int keyInfo(VirtualFrame frame, TruffleObject receiver, double idx,
+        protected int keyInfo(TruffleObject receiver, double idx,
                         @Cached("createLengthNode()") RLengthNode lengthNode) {
 
-            int length = lengthNode.executeInteger(frame, receiver);
+            int length = lengthNode.executeInteger(receiver);
             if (unknownIdentifier.profile(idx < 0 || idx >= length)) {
                 return 0;
             }
             initExtractNode();
-            return buildKeys(extractNode.apply(frame, receiver, new Object[]{idx + 1}, RLogical.valueOf(false), RMissing.instance));
+            return buildKeys(extractNode.apply(receiver, new Object[]{idx + 1}, RLogical.valueOf(false), RMissing.instance));
         }
 
         @Specialization
-        protected int keyInfo(VirtualFrame frame, TruffleObject receiver, String identifier,
+        protected int keyInfo(TruffleObject receiver, String identifier,
                         @Cached("createNamesNode()") GetNamesAttributeNode namesNode) {
             RStringVector names = namesNode.getNames(receiver);
             boolean exists = false;
@@ -372,7 +372,7 @@ public class ListMR {
                 return 0;
             }
             initExtractNode();
-            return buildKeys(extractNode.applyAccessField(frame, receiver, identifier));
+            return buildKeys(extractNode.applyAccessField(receiver, identifier));
         }
 
         protected RLengthNode createLengthNode() {
@@ -414,8 +414,8 @@ public class ListMR {
         return true;
     }
 
-    private static Object getSize(VirtualFrame frame, TruffleObject receiver, RLengthNode lengthNode) {
-        return lengthNode.executeInteger(frame, receiver);
+    private static Object getSize(TruffleObject receiver, RLengthNode lengthNode) {
+        return lengthNode.executeInteger(receiver);
     }
 
     private static Object listKeys(TruffleObject receiver, GetNamesAttributeNode getNamesNode) {

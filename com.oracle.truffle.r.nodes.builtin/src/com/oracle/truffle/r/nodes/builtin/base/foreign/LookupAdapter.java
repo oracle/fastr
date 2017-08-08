@@ -162,11 +162,11 @@ abstract class LookupAdapter extends RBuiltinNode.Arg3 implements Lookup {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 packageExtract = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
             }
-            String name = RRuntime.asString(nameExtract.applyAccessField(frame, symbol, "name"));
-            SymbolHandle address = ((RExternalPtr) addressExtract.applyAccessField(frame, symbol, "address")).getAddr();
+            String name = RRuntime.asString(nameExtract.applyAccessField(symbol, "name"));
+            SymbolHandle address = ((RExternalPtr) addressExtract.applyAccessField(symbol, "address")).getAddr();
             // field name may be "package" or "dll", but always at (R) index 3
-            RList packageList = (RList) packageExtract.apply(frame, symbol, new Object[]{3}, RLogical.valueOf(false), RMissing.instance);
-            DLLInfo dllInfo = (DLLInfo) ((RExternalPtr) addressExtract.applyAccessField(frame, packageList, "info")).getExternalObject();
+            RList packageList = (RList) packageExtract.apply(symbol, new Object[]{3}, RLogical.valueOf(false), RMissing.instance);
+            DLLInfo dllInfo = (DLLInfo) ((RExternalPtr) addressExtract.applyAccessField(packageList, "info")).getExternalObject();
             return new NativeCallInfo(name, address, dllInfo);
 
         }

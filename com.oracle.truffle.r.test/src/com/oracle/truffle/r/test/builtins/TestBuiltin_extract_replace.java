@@ -48,4 +48,9 @@ public class TestBuiltin_extract_replace extends TestBase {
         assertEval("e1 <- expression(x^2); l1 <- quote(y^2); l1[1] <- e1; l1[[1]]==e1[[1]]");
         assertEval(Ignored.OutputFormatting, "e1 <- expression(x^2); l1 <- quote(y^2); l1[1] <- e1; l1");
     }
+
+    @Test
+    public void replaceWithPositionNames() {
+        assertEval("{ foo <- function(x, idx) { x[idx] <- F; x }; foo(c(T,T,T,T), structure(c('a'), .Names = c('a'))); r <- foo(c(T,T,T,T), structure(c('a', 'b'), .Names = c('a', 'b'))); r }");
+    }
 }

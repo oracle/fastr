@@ -35,7 +35,6 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -64,12 +63,12 @@ public abstract class Lengths extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RIntVector doList(VirtualFrame frame, RList list, boolean useNames) {
+    protected RIntVector doList(RList list, boolean useNames) {
         initLengthNode();
         int[] data = new int[list.getLength()];
         for (int i = 0; i < data.length; i++) {
             Object elem = list.getDataAt(i);
-            data[i] = lengthNode.executeInteger(frame, elem);
+            data[i] = lengthNode.executeInteger(elem);
         }
         return createResult(list, data, useNames);
     }

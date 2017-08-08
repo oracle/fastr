@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base.fastpaths;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -38,19 +37,19 @@ public abstract class SubsetDataFrameFastPath extends RFastPathNode {
     @Child private ExtractVectorNode extractNode = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, false);
 
     @Specialization(guards = {"positions.getLength() == 2", "positions.getSignature().getNonNullCount() == 0"})
-    protected Object subscript2(VirtualFrame frame, RAbstractListVector df, RArgsValuesAndNames positions, Object exact,
+    protected Object subscript2(RAbstractListVector df, RArgsValuesAndNames positions, Object exact,
                     @Cached("create()") AsScalarNode asScalar1,
                     @Cached("create()") AsScalarNode asScalar2) {
         Object pos2 = asScalar2.execute(positions.getArgument(1));
         if (pos2 == null) {
             return null;
         }
-        Object extracted = extractNode.apply(frame, df, new Object[]{pos2}, exact, RRuntime.LOGICAL_TRUE);
+        Object extracted = extractNode.apply(df, new Object[]{pos2}, exact, RRuntime.LOGICAL_TRUE);
         Object pos1 = asScalar1.execute(positions.getArgument(0));
         if (pos1 == null) {
             return null;
         }
-        return extractNode.apply(frame, extracted, new Object[]{pos1}, exact, RRuntime.LOGICAL_TRUE);
+        return extractNode.apply(extracted, new Object[]{pos1}, exact, RRuntime.LOGICAL_TRUE);
     }
 
     @Fallback
