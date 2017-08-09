@@ -81,6 +81,8 @@ public final class FastRGridExternalLookup {
                 return CPalette.create();
             case "palette2":
                 return CPalette2.create();
+            case "devAskNewPage":
+                return new IgnoredGridExternal(RRuntime.LOGICAL_FALSE);
             default:
                 return null;
         }
