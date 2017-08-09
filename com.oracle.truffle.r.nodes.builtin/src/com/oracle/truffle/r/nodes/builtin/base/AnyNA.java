@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
@@ -54,7 +53,7 @@ public abstract class AnyNA extends RBuiltinNode.Arg2 {
 
     private final NACheck naCheck = NACheck.create();
 
-    public abstract byte execute(VirtualFrame frame, Object value, boolean recursive);
+    public abstract byte execute(Object value, boolean recursive);
 
     static {
         Casts casts = new Casts(AnyNA.class);
@@ -157,7 +156,7 @@ public abstract class AnyNA extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "recursive")
-    protected byte isNA(VirtualFrame frame, RList list, boolean recursive,
+    protected byte isNA(RList list, boolean recursive,
                     @Cached("createRecursive()") AnyNA recursiveNode,
                     @Cached("createClassProfile()") ValueProfile elementProfile,
                     @Cached("create()") RLengthNode length) {
@@ -165,7 +164,7 @@ public abstract class AnyNA extends RBuiltinNode.Arg2 {
         for (int i = 0; i < list.getLength(); i++) {
             Object value = elementProfile.profile(list.getDataAt(i));
             if (length.executeInteger(value) > 0) {
-                byte result = recursiveNode.execute(frame, value, recursive);
+                byte result = recursiveNode.execute(value, recursive);
                 if (result == RRuntime.LOGICAL_TRUE) {
                     return RRuntime.LOGICAL_TRUE;
                 }
@@ -176,7 +175,7 @@ public abstract class AnyNA extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "!recursive")
     @SuppressWarnings("unused")
-    protected byte isNA(VirtualFrame frame, RList list, boolean recursive) {
+    protected byte isNA(RList list, boolean recursive) {
         return RRuntime.LOGICAL_FALSE;
     }
 }

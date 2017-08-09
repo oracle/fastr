@@ -24,9 +24,7 @@ package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
-import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
@@ -47,24 +45,20 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Gets length of given container. Does not actually dispatch to the 'length' function, which may be
  * overridden for some S3/S4 classes. Check if you need to get actual length, or what the 'length'
  * function returns, like in {@code seq_along}.
  */
-@NodeChild("operand")
 @ImportStatic({Message.class, ForeignArray2R.class})
-public abstract class RLengthNode extends RNode {
-
-    @Override
-    public abstract int executeInteger(VirtualFrame frame);
+public abstract class RLengthNode extends RBaseNode {
 
     public abstract int executeInteger(Object value);
 
     public static RLengthNode create() {
-        return RLengthNodeGen.create(null);
+        return RLengthNodeGen.create();
     }
 
     @Specialization

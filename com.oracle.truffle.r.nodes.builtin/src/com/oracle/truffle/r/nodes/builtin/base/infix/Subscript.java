@@ -146,7 +146,7 @@ abstract class SubscriptSpecial extends SubscriptSpecialBase {
     }
 
     @Specialization(guards = {"simpleVector(vector)", "!inReplacement"})
-    protected static Object access(VirtualFrame frame, RAbstractVector vector, Object index,
+    protected static Object access(RAbstractVector vector, Object index,
                     @Cached("createAccess()") ExtractVectorNode extract) {
         return extract.apply(vector, new Object[]{index}, RRuntime.LOGICAL_TRUE, RLogical.TRUE);
     }

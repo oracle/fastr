@@ -26,7 +26,7 @@
 #include "testrffi.h"
 
 static const R_CMethodDef CEntries[]  = {
-    {"dotCModifiedArguments", (DL_FUNC) &dotCModifiedArguments, 4},
+    {"dotCModifiedArguments", (DL_FUNC) &dotCModifiedArguments, 5},
     {NULL, NULL, 0}
 };
 

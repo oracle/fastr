@@ -2,7 +2,7 @@
 	library.dynam.unload("testrffi", libpath)
 
 rffi.dotCModifiedArguments <- function(data) {
-	.C("dotCModifiedArguments", length(data), as.integer(data), as.double(data), as.logical(data))
+	.C("dotCModifiedArguments", length(data), as.integer(data), as.double(data), as.logical(data), as.character(data))
 }
 
 rffi.addInt <- function(a, b) {

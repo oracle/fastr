@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-extern void dotCModifiedArguments(int* len, int* idata, double* rdata, int* ldata);
+extern void dotCModifiedArguments(int* len, int* idata, double* rdata, int* ldata, char** cdata);
 
 extern SEXP addInt(SEXP a, SEXP b);
 

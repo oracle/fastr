@@ -30,7 +30,7 @@
 #include <Rinterface.h>
 #include "testrffi.h"
 
-void dotCModifiedArguments(int* len, int* idata, double* rdata, int* ldata) {
+void dotCModifiedArguments(int* len, int* idata, double* rdata, int* ldata, char** cdata) {
     for (int i = 0; i < len[0]; i++) {
 	idata[i] ++;
     }
@@ -38,7 +38,13 @@ void dotCModifiedArguments(int* len, int* idata, double* rdata, int* ldata) {
 	rdata[i] *= 0.2;
     }
     for (int i = 0; i < len[0]; i++) {
-	ldata[i] = ldata[i] == 0 ? 1 : 0;
+    ldata[i] = ldata[i] == 0 ? 1 : 0;
+    }
+    for (int i = 0; i < len[0]; i++) {
+        for (int j = 0; cdata[i][j] != 0; j++) {
+            char c = cdata[i][j];
+            cdata[i][j] = (c >= '0' && c <= '9') ? c - '0' + 'a' : 'r';
+        }
     }
 }
 

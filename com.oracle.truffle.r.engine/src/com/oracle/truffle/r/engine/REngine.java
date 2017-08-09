@@ -270,7 +270,6 @@ final class REngine implements Engine, Engine.Timings {
             throw e;
         } catch (RError e) {
             // RError prints the correct result on the console during construction
-            RInternalError.reportError(e);
             return null;
         } catch (UnsupportedSpecializationException use) {
             String message = "FastR internal error: Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +

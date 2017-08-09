@@ -15,6 +15,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -70,7 +71,7 @@ public class FortranAndCFunctions {
         private static final int VECTOR_LOGICAL = 12;
         private static final int VECTOR_STRING = 13;
 
-        private static final Charset charset = Charset.forName("US-ASCII");
+        private static final Charset charset = StandardCharsets.US_ASCII;
 
         @Child protected ExtractNativeCallInfoNode extractSymbolInfo = ExtractNativeCallInfoNodeGen.create();
         @Child private CRFFI.InvokeCNode invokeCNode = RFFIFactory.getCRFFI().createInvokeCNode();
@@ -239,7 +240,11 @@ public class FortranAndCFunctions {
         private static String[] decodeStrings(byte[][] bytes) {
             String[] result = new String[bytes.length];
             for (int i = 0; i < bytes.length; i++) {
-                result[i] = new String(bytes[i], charset);
+                int length = 0;
+                while (length < bytes[i].length && bytes[i][length] != 0) {
+                    length++;
+                }
+                result[i] = new String(bytes[i], 0, length, charset);
             }
             return result;
         }

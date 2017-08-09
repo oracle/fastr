@@ -149,7 +149,7 @@ abstract class LookupAdapter extends RBuiltinNode.Arg3 implements Lookup {
         protected abstract NativeCallInfo execute(VirtualFrame frame, RList symbol);
 
         @Specialization
-        protected NativeCallInfo extractNativeCallInfo(VirtualFrame frame, RList symbol) {
+        protected NativeCallInfo extractNativeCallInfo(RList symbol) {
             if (nameExtract == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 nameExtract = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));

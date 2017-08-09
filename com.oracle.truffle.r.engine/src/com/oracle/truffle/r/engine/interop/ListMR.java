@@ -80,7 +80,7 @@ public class ListMR {
         public abstract static class RListGetSizeNode extends Node {
             @Child private RLengthNode lengthNode = RLengthNode.create();
 
-            protected Object access(VirtualFrame frame, RList receiver) {
+            protected Object access(RList receiver) {
                 return getSize(receiver, lengthNode);
             }
         }
@@ -105,7 +105,7 @@ public class ListMR {
         public abstract static class RListWriteNode extends Node {
             @Child private ListWriteImplNode writeNode = ListWriteImplNodeGen.create();
 
-            protected Object access(VirtualFrame frame, RList receiver, Object identifier, Object valueObj) {
+            protected Object access(RList receiver, Object identifier, Object valueObj) {
                 return writeNode.execute(receiver, identifier, valueObj);
             }
         }
@@ -123,7 +123,7 @@ public class ListMR {
         public abstract static class RListKeyInfoNode extends Node {
             @Child private ListKeyInfoImplNode keyInfoNode = ListKeyInfoImplNodeGen.create();
 
-            protected Object access(VirtualFrame frame, TruffleObject receiver, Object idx) {
+            protected Object access(TruffleObject receiver, Object idx) {
                 return keyInfoNode.execute(receiver, idx);
             }
         }
@@ -164,7 +164,7 @@ public class ListMR {
         public abstract static class RPairListGetSizeNode extends Node {
             @Child private RLengthNode lengthNode = RLengthNode.create();
 
-            protected Object access(VirtualFrame frame, RPairList receiver) {
+            protected Object access(RPairList receiver) {
                 return getSize(receiver, lengthNode);
             }
         }
@@ -196,7 +196,7 @@ public class ListMR {
         public abstract static class RPairListWriteNode extends Node {
             @Child private ListWriteImplNode writeNode = ListWriteImplNodeGen.create();
 
-            protected Object access(VirtualFrame frame, RPairList receiver, Object identifier, Object valueObj) {
+            protected Object access(RPairList receiver, Object identifier, Object valueObj) {
                 return writeNode.execute(receiver, identifier, valueObj);
             }
         }
@@ -214,7 +214,7 @@ public class ListMR {
         public abstract static class RPairListKeyInfoNode extends Node {
             @Child private ListKeyInfoImplNode keyInfoNode = ListKeyInfoImplNodeGen.create();
 
-            protected Object access(VirtualFrame frame, TruffleObject receiver, Object idx) {
+            protected Object access(TruffleObject receiver, Object idx) {
                 return keyInfoNode.execute(receiver, idx);
             }
         }
@@ -243,19 +243,19 @@ public class ListMR {
         protected abstract Object execute(VirtualFrame frame, TruffleObject receiver, Object idx);
 
         @Specialization
-        protected Object read(VirtualFrame frame, TruffleObject receiver, double idx,
+        protected Object read(TruffleObject receiver, double idx,
                         @Cached("createKeyInfoNode()") ListKeyInfoImplNode keyInfo) {
-            return read(frame, receiver, (int) idx, keyInfo);
+            return read(receiver, (int) idx, keyInfo);
         }
 
         @Specialization
-        protected Object read(VirtualFrame frame, TruffleObject receiver, long idx,
+        protected Object read(TruffleObject receiver, long idx,
                         @Cached("createKeyInfoNode()") ListKeyInfoImplNode keyInfo) {
-            return read(frame, receiver, (int) idx, keyInfo);
+            return read(receiver, (int) idx, keyInfo);
         }
 
         @Specialization
-        protected Object read(VirtualFrame frame, TruffleObject receiver, int idx,
+        protected Object read(TruffleObject receiver, int idx,
                         @Cached("createKeyInfoNode()") ListKeyInfoImplNode keyInfo) {
             int info = keyInfo.execute(receiver, idx);
             if (unknownIdentifier.profile(!KeyInfo.isExisting(info))) {
@@ -269,7 +269,7 @@ public class ListMR {
         }
 
         @Specialization
-        protected Object read(VirtualFrame frame, TruffleObject receiver, String field,
+        protected Object read(TruffleObject receiver, String field,
                         @Cached("createKeyInfoNode()") ListKeyInfoImplNode keyInfo) {
             // reading by an unknown name returns null,
             // reading by an unknown index returns subscript out of bounds;

@@ -72,16 +72,6 @@ abstract class InteropRootNode extends RootNode {
 
 public final class RAbstractVectorAccessFactory implements Factory26 {
 
-    static class VectorSizeNode extends InteropRootNode {
-
-        @Child private RLengthNode lengthNode = RLengthNode.create();
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            return lengthNode.executeInteger(ForeignAccess.getReceiver(frame));
-        }
-    }
-
     abstract static class VectorReadImplNode extends InteropRootNode {
 
         @Child private ExtractVectorNode extract;
@@ -155,13 +145,13 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
         protected abstract Object execute(VirtualFrame frame, Object receiver, Object identifier, Object valueObj);
 
         @Specialization
-        protected Object write(VirtualFrame frame, TruffleObject receiver, int idx, Object valueObj) {
+        protected Object write(TruffleObject receiver, int idx, Object valueObj) {
             // idx + 1 R is indexing from 1
             return write(receiver, new Object[]{idx + 1}, valueObj);
         }
 
         @Specialization
-        protected Object write(VirtualFrame frame, TruffleObject receiver, long idx, Object valueObj) {
+        protected Object write(TruffleObject receiver, long idx, Object valueObj) {
             // idx + 1 R is indexing from 1
             return write(receiver, new Object[]{idx + 1}, valueObj);
         }
@@ -273,7 +263,15 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
 
     @Override
     public CallTarget accessGetSize() {
-        return Truffle.getRuntime().createCallTarget(new VectorSizeNode());
+        return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+
+            @Child private RLengthNode lengthNode = RLengthNode.create();
+
+            @Override
+            public Object execute(VirtualFrame frame) {
+                return lengthNode.executeInteger(ForeignAccess.getReceiver(frame));
+            }
+        });
     }
 
     @Override
