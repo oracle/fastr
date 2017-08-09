@@ -25,9 +25,11 @@
 # prints a warning message instructing the user to use grid/lattice/ggplot2 instead
 
 eval(expression({
-    graphicsWarning <- function(...) {
-        warning("FastR does not support graphics package and most of its functions. Please use grid package or grid based packages like lattice or ggplot2 instead.")
-        NULL
+    graphicsWarning <- function(name) {
+        function(...) {
+            warning(paste0(name, " not supported.", " Note: FastR does not support graphics package and most of its functions. Please use grid package or grid based packages like lattice instead."))
+            NULL
+        }
     }
 
     plot.default <- function (x, y = NULL, type = "p", xlim = NULL, ylim = NULL,
@@ -78,87 +80,81 @@ eval(expression({
     }
 
     # Note: explicitly supported functions: din
+    # Note: harmless functions that we do not override: co.intervals, hist.default
+    # Note: S3 dispatch functions that may dispatch to lattice/ggplot2/etc. implementation: hist, contour, lines, pairs, points, text
 
-    abline <- graphicsWarning;
-    arrows <- graphicsWarning;
-    assocplot <- graphicsWarning;
-    axis <- graphicsWarning;
-    Axis <- graphicsWarning;
-    axis.Date <- graphicsWarning;
-    axis.POSIXct <- graphicsWarning;
-    axTicks <- graphicsWarning;
-    barplot.default <- graphicsWarning;
-    box <- graphicsWarning;
-    boxplot.default <- graphicsWarning;
-    boxplot.matrix <- graphicsWarning;
-    bxp <- graphicsWarning;
-    cdplot <- graphicsWarning;
-    clip <- graphicsWarning;
-    close.screen <- graphicsWarning;
-    co.intervals <- graphicsWarning;
-    contour <- graphicsWarning;
-    contour.default <- graphicsWarning;
-    coplot <- graphicsWarning;
-    curve <- graphicsWarning;
-    dotchart <- graphicsWarning;
-    erase.screen <- graphicsWarning;
-    filled.contour <- graphicsWarning;
-    fourfoldplot <- graphicsWarning;
-    frame <- graphicsWarning;
-    grconvertX <- graphicsWarning;
-    grconvertY <- graphicsWarning;
-    grid <- graphicsWarning;
-    hist <- graphicsWarning;
-    hist.default <- graphicsWarning;
-    identify <- graphicsWarning;
-    image <- graphicsWarning;
-    image.default <- graphicsWarning;
-    layout <- graphicsWarning;
-    layout.show <- graphicsWarning;
-    lcm <- graphicsWarning;
-    legend <- graphicsWarning;
-    lines <- graphicsWarning;
-    lines.default <- graphicsWarning;
-    locator <- graphicsWarning;
-    matlines <- graphicsWarning;
-    matplot <- graphicsWarning;
-    matpoints <- graphicsWarning;
-    mosaicplot <- graphicsWarning;
-    mtext <- graphicsWarning;
-    pairs <- graphicsWarning;
-    pairs.default <- graphicsWarning;
-    panel.smooth <- graphicsWarning;
-    persp <- graphicsWarning;
-    pie <- graphicsWarning;
-    plot.design <- graphicsWarning;
-    plot.function <- graphicsWarning;
-    plot.new <- graphicsWarning;
-    plot.window <- graphicsWarning;
-    plot.xy <- graphicsWarning;
-    points <- graphicsWarning;
-    points.default <- graphicsWarning;
-    polygon <- graphicsWarning;
-    polypath <- graphicsWarning;
-    rasterImage <- graphicsWarning;
-    rect <- graphicsWarning;
-    rug <- graphicsWarning;
-    screen <- graphicsWarning;
-    segments <- graphicsWarning;
-    smoothScatter <- graphicsWarning;
-    spineplot <- graphicsWarning;
-    split.screen <- graphicsWarning;
-    stars <- graphicsWarning;
-    stem <- graphicsWarning;
-    strheight <- graphicsWarning;
-    stripchart <- graphicsWarning;
-    strwidth <- graphicsWarning;
-    sunflowerplot <- graphicsWarning;
-    symbols <- graphicsWarning;
-    text <- graphicsWarning;
-    text.default <- graphicsWarning;
-    title <- graphicsWarning;
-    xinch <- graphicsWarning;
-    xspline <- graphicsWarning;
-    xyinch <- graphicsWarning;
-    yinch <- graphicsWarning;
+    abline <- graphicsWarning("abline");
+    arrows <- graphicsWarning("arrows");
+    assocplot <- graphicsWarning("assocplot");
+    axis <- graphicsWarning("axis");
+    Axis <- graphicsWarning("Axis");
+    axis.Date <- graphicsWarning("axis.Date");
+    axis.POSIXct <- graphicsWarning("axis.POSIXct");
+    axTicks <- graphicsWarning("axTicks");
+    barplot.default <- graphicsWarning("barplot.default");
+    box <- graphicsWarning("box");
+    boxplot.default <- graphicsWarning("boxplot.default");
+    boxplot.matrix <- graphicsWarning("boxplot.matrix");
+    bxp <- graphicsWarning("bxp");
+    cdplot <- graphicsWarning("cdplot");
+    clip <- graphicsWarning("clip");
+    close.screen <- graphicsWarning("close.screen");
+    contour.default <- graphicsWarning("contour.default");
+    coplot <- graphicsWarning("coplot");
+    curve <- graphicsWarning("curve");
+    dotchart <- graphicsWarning("dotchart");
+    erase.screen <- graphicsWarning("erase.screen");
+    filled.contour <- graphicsWarning("filled.contour");
+    fourfoldplot <- graphicsWarning("fourfoldplot");
+    frame <- graphicsWarning("frame");
+    grconvertX <- graphicsWarning("grconvertX");
+    grconvertY <- graphicsWarning("grconvertY");
+    grid <- graphicsWarning("grid");
+    identify <- graphicsWarning("identify");
+    image <- graphicsWarning("image");
+    image.default <- graphicsWarning("image.default");
+    layout <- graphicsWarning("layout");
+    layout.show <- graphicsWarning("layout.show");
+    lcm <- graphicsWarning("lcm");
+    legend <- graphicsWarning("legend");
+    lines.default <- graphicsWarning("lines.default");
+    locator <- graphicsWarning("locator");
+    matlines <- graphicsWarning("matlines");
+    matplot <- graphicsWarning("matplot");
+    matpoints <- graphicsWarning("matpoints");
+    mosaicplot <- graphicsWarning("mosaicplot");
+    mtext <- graphicsWarning("mtext");
+    pairs.default <- graphicsWarning("pairs.default");
+    panel.smooth <- graphicsWarning("panel.smooth");
+    persp <- graphicsWarning("persp");
+    pie <- graphicsWarning("pie");
+    plot.design <- graphicsWarning("plot.design");
+    plot.function <- graphicsWarning("plot.function");
+    plot.new <- graphicsWarning("plot.new");
+    plot.window <- graphicsWarning("plot.window");
+    plot.xy <- graphicsWarning("plot.xy");
+    points.default <- graphicsWarning("points.default");
+    polygon <- graphicsWarning("polygon");
+    polypath <- graphicsWarning("polypath");
+    rasterImage <- graphicsWarning("rasterImage");
+    rect <- graphicsWarning("rect");
+    rug <- graphicsWarning("rug");
+    screen <- graphicsWarning("screen");
+    segments <- graphicsWarning("segments");
+    smoothScatter <- graphicsWarning("smoothScatter");
+    spineplot <- graphicsWarning("spineplot");
+    split.screen <- graphicsWarning("split.screen");
+    stars <- graphicsWarning("stars");
+    stem <- graphicsWarning("stem");
+    strheight <- graphicsWarning("strheight");
+    stripchart <- graphicsWarning("stripchart");
+    strwidth <- graphicsWarning("strwidth");
+    sunflowerplot <- graphicsWarning("sunflowerplot");
+    symbols <- graphicsWarning("symbols");
+    text.default <- graphicsWarning("text.default");
+    title <- graphicsWarning("title");
+    xinch <- graphicsWarning("xinch");
+    xspline <- graphicsWarning("xspline");
+    xyinch <- graphicsWarning("xyinch");
+    yinch <- graphicsWarning("yinch");
 }), asNamespace("graphics"))
