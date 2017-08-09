@@ -115,7 +115,6 @@ public enum NativeFunction {
         if (function == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             function = lookup.apply(callName, signature);
-            System.out.println("lookup " + callName);
         }
         return function;
     }

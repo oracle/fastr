@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
@@ -141,7 +142,7 @@ public class DLL {
      * Denotes info in registered native routines. GnuR has "subclasses" for C/Fortran, which is TBD
      * for FastR.
      */
-    public static class DotSymbol implements RTruffleObject {
+    public static class DotSymbol extends RObject implements RTruffleObject {
         public final String name;
         public final SymbolHandle fun;
         public final int numArgs;
@@ -151,6 +152,7 @@ public class DLL {
             this.fun = fun;
             this.numArgs = numArgs;
         }
+
     }
 
     public static class RegisteredNativeSymbol {
@@ -173,7 +175,7 @@ public class DLL {
         }
     }
 
-    public static final class DLLInfo implements RTruffleObject {
+    public static final class DLLInfo extends RObject implements RTruffleObject {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"name", "path", "dynamicLookup", "handle", "info"}, RDataFactory.COMPLETE_VECTOR);
         public static final String DLL_INFO_REFERENCE = "DLLInfoReference";
         private static final RStringVector INFO_REFERENCE_CLASS = RDataFactory.createStringVectorFromScalar(DLL_INFO_REFERENCE);

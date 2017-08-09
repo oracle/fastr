@@ -24,12 +24,29 @@ package com.oracle.truffle.r.ffi.impl.interop;
 
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 
 @MessageResolution(receiverType = CharSXPWrapper.class)
 public class CharSXPWrapperMR {
+
+    @Resolve(message = "IS_POINTER")
+    public abstract static class IsPointerNode extends Node {
+        protected boolean access(Object receiver) {
+            return NativeDataAccess.isPointer(receiver);
+        }
+    }
+
+    @Resolve(message = "AS_POINTER")
+    public abstract static class AsPointerNode extends Node {
+        protected long access(Object receiver) {
+            return NativeDataAccess.asPointer(receiver);
+        }
+    }
+
     @CanResolve
     public abstract static class CharSXPWrapperCheck extends Node {
 

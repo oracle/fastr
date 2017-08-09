@@ -88,6 +88,7 @@ public final class NativeDataAccess {
         protected void finalize() throws Throwable {
             super.finalize();
             nativeMirrors.remove(id);
+            // System.out.println(String.format("gc'ing %16x", id));
             if (dataAddress != 0) {
                 UnsafeAdapter.UNSAFE.freeMemory(dataAddress);
                 assert (dataAddress = 0xbadbad) != 0;
@@ -102,31 +103,45 @@ public final class NativeDataAccess {
         return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
             @Override
             public Object execute(VirtualFrame frame) {
-                return ForeignAccess.getReceiver(frame) instanceof RObject;
+                return isPointer(ForeignAccess.getReceiver(frame));
             }
         });
+    }
+
+    public static boolean isPointer(Object obj) {
+        return obj instanceof RObject;
     }
 
     public static CallTarget createAsPointer() {
         return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
             @Override
             public Object execute(VirtualFrame frame) {
-                Object arg = ForeignAccess.getReceiver(frame);
-                if (arg instanceof RObject) {
-                    RObject obj = (RObject) arg;
-                    NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
-                    if (mirror == null) {
-                        obj.setNativeMirror(mirror = new NativeMirror());
-                    }
-                    return mirror.id;
-                }
-                throw UnsupportedMessageException.raise(Message.AS_POINTER);
+                return asPointer(ForeignAccess.getReceiver(frame));
             }
         });
     }
 
+    public static long asPointer(Object arg) {
+        if (arg instanceof RObject) {
+            RObject obj = (RObject) arg;
+            NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
+            if (mirror == null) {
+                obj.setNativeMirror(mirror = new NativeMirror());
+                // System.out.println(String.format("adding %16x = %s", mirror.id, obj));
+                nativeMirrors.put(mirror.id, new WeakReference<>(obj));
+            }
+            return mirror.id;
+        }
+        throw UnsupportedMessageException.raise(Message.AS_POINTER);
+    }
+
     public static Object lookup(long address) {
-        Object result = nativeMirrors.get(address);
+        WeakReference<RObject> reference = nativeMirrors.get(address);
+        if (reference == null) {
+            CompilerDirectives.transferToInterpreter();
+            throw RInternalError.shouldNotReachHere("unknown/stale native reference");
+        }
+        RObject result = reference.get();
         if (result == null) {
             CompilerDirectives.transferToInterpreter();
             throw RInternalError.shouldNotReachHere("unknown/stale native reference");

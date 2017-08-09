@@ -36,6 +36,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.engine.interop.RArgsValuesAndNamesMRFactory.RArgsValuesAndNamesKeyInfoImplNodeGen;
 import com.oracle.truffle.r.engine.interop.RArgsValuesAndNamesMRFactory.RArgsValuesAndNamesReadImplNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -86,6 +87,20 @@ public class RArgsValuesAndNamesMR {
 
         protected Object access(VirtualFrame frame, RArgsValuesAndNames receiver, Object obj) {
             return keyInfoNode.execute(frame, receiver, obj);
+        }
+    }
+
+    @Resolve(message = "IS_POINTER")
+    public abstract static class IsPointerNode extends Node {
+        protected boolean access(Object receiver) {
+            return NativeDataAccess.isPointer(receiver);
+        }
+    }
+
+    @Resolve(message = "AS_POINTER")
+    public abstract static class AsPointerNode extends Node {
+        protected long access(Object receiver) {
+            return NativeDataAccess.asPointer(receiver);
         }
     }
 
