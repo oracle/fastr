@@ -37,6 +37,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -79,9 +80,17 @@ public final class NativeDataAccess {
     private static final class NativeMirror {
         private final long id;
         private long dataAddress;
+        private long length;
 
         NativeMirror() {
             this.id = counter.incrementAndGet();
+        }
+
+        void allocateNative(Object source, long sourceLength, int len, int elementBase, int elementSize) {
+            assert dataAddress == 0;
+            dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(sourceLength * elementSize);
+            UnsafeAdapter.UNSAFE.copyMemory(source, elementBase, null, dataAddress, sourceLength * elementSize);
+            this.length = len;
         }
 
         @Override
@@ -147,5 +156,73 @@ public final class NativeDataAccess {
             throw RInternalError.shouldNotReachHere("unknown/stale native reference");
         }
         return result;
+    }
+
+    static long getDataLength(RVector<?> vector) {
+        return ((NativeMirror) vector.getNativeMirror()).length;
+    }
+
+    static int getIntData(RVector<?> vector, int index) {
+        long address = ((NativeMirror) vector.getNativeMirror()).dataAddress;
+        assert address != 0;
+        return UnsafeAdapter.UNSAFE.getInt(address + index * Unsafe.ARRAY_INT_INDEX_SCALE);
+    }
+
+    static void setIntData(RVector<?> vector, int index, int value) {
+        long address = ((NativeMirror) vector.getNativeMirror()).dataAddress;
+        assert address != 0;
+        UnsafeAdapter.UNSAFE.putInt(address + index * Unsafe.ARRAY_INT_INDEX_SCALE, value);
+    }
+
+    static double getDoubleData(RVector<?> vector, int index) {
+        long address = ((NativeMirror) vector.getNativeMirror()).dataAddress;
+        assert address != 0;
+        return UnsafeAdapter.UNSAFE.getDouble(address + index * Unsafe.ARRAY_INT_INDEX_SCALE);
+    }
+
+    static void setDoubleData(RVector<?> vector, int index, double value) {
+        long address = ((NativeMirror) vector.getNativeMirror()).dataAddress;
+        assert address != 0;
+        UnsafeAdapter.UNSAFE.putDouble(address + index * Unsafe.ARRAY_INT_INDEX_SCALE, value);
+    }
+
+    static long allocateNativeContents(RLogicalVector vector, byte[] data, int length) {
+        NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
+        assert mirror != null;
+        assert mirror.dataAddress == 0 ^ data == null;
+        if (mirror.dataAddress == 0) {
+            // System.out.println(String.format("allocating native for logical vector %16x",
+            // mirror.id));
+            int[] intArray = new int[data.length];
+            for (int i = 0; i < data.length; i++) {
+                intArray[i] = RRuntime.logical2int(data[i]);
+            }
+            ((NativeMirror) vector.getNativeMirror()).allocateNative(intArray, data.length, length, Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
+        }
+        return mirror.dataAddress;
+    }
+
+    static long allocateNativeContents(RIntVector vector, int[] data, int length) {
+        NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
+        assert mirror != null;
+        assert mirror.dataAddress == 0 ^ data == null;
+        if (mirror.dataAddress == 0) {
+            // System.out.println(String.format("allocating native for int vector %16x",
+            // mirror.id));
+            ((NativeMirror) vector.getNativeMirror()).allocateNative(data, data.length, length, Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
+        }
+        return mirror.dataAddress;
+    }
+
+    static long allocateNativeContents(RDoubleVector vector, double[] data, int length) {
+        NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
+        assert mirror != null;
+        assert mirror.dataAddress == 0 ^ data == null;
+        if (mirror.dataAddress == 0) {
+            // System.out.println(String.format("allocating native for double vector %16x",
+            // mirror.id));
+            ((NativeMirror) vector.getNativeMirror()).allocateNative(data, data.length, length, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+        }
+        return mirror.dataAddress;
     }
 }

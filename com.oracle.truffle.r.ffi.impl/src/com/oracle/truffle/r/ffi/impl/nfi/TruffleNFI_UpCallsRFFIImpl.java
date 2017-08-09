@@ -22,17 +22,33 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guaranteeInstanceOf;
+
+import java.nio.charset.StandardCharsets;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
+import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
+import com.oracle.truffle.r.ffi.impl.interop.UnsafeAdapter;
+import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_C.StringWrapper;
 import com.oracle.truffle.r.ffi.impl.upcalls.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
@@ -40,6 +56,8 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+
+import sun.misc.Unsafe;
 
 public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
@@ -71,35 +89,69 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         return CharSXPWrapper.create(TruffleNFI_Utils.getString(address, len));
     }
 
+    @MessageResolution(receiverType = VectorWrapper.class)
+    public static class VectorWrapperMR {
+
+        @Resolve(message = "IS_POINTER")
+        public abstract static class IntVectorWrapperNativeIsPointerNode extends Node {
+            protected Object access(@SuppressWarnings("unused") VectorWrapper receiver) {
+                return true;
+            }
+        }
+
+        @Resolve(message = "AS_POINTER")
+        public abstract static class IntVectorWrapperNativeAsPointerNode extends Node {
+            protected long access(VectorWrapper receiver) {
+                RVector<?> v = receiver.vector;
+                if (v instanceof RIntVector) {
+                    return ((RIntVector) v).allocateNativeContents();
+                } else if (v instanceof RLogicalVector) {
+                    return ((RLogicalVector) v).allocateNativeContents();
+                } else {
+                    throw RInternalError.shouldNotReachHere();
+                }
+            }
+        }
+
+        @CanResolve
+        public abstract static class VectorWrapperCheck extends Node {
+            protected static boolean test(TruffleObject receiver) {
+                return receiver instanceof VectorWrapper;
+            }
+        }
+    }
+
+    public static final class VectorWrapper implements TruffleObject {
+
+        private final RVector<?> vector;
+
+        public VectorWrapper(RVector<?> vector) {
+            this.vector = vector;
+        }
+
+        @Override
+        public ForeignAccess getForeignAccess() {
+            return VectorWrapperMRForeign.ACCESS;
+        }
+    }
+
     @Override
     public Object INTEGER(Object x) {
-        long arrayAddress = TruffleNFI_NativeArray.findArray(x);
-        if (arrayAddress == 0) {
-            Object array = super.INTEGER(x);
-            arrayAddress = TruffleNFI_NativeArray.recordArray(x, array, SEXPTYPE.INTSXP);
-        } else {
-            TruffleNFI_Call.returnArrayExisting(SEXPTYPE.INTSXP, arrayAddress);
-        }
-        return x;
+        // also handles LOGICAL
+        assert x instanceof RIntVector || x instanceof RLogicalVector;
+        return new VectorWrapper(guaranteeInstanceOf(x, RVector.class));
     }
 
     @Override
     public Object LOGICAL(Object x) {
-        long arrayAddress = TruffleNFI_NativeArray.findArray(x);
-        if (arrayAddress == 0) {
-            Object array = super.LOGICAL(x);
-            arrayAddress = TruffleNFI_NativeArray.recordArray(x, array, SEXPTYPE.LGLSXP);
-        } else {
-            TruffleNFI_Call.returnArrayExisting(SEXPTYPE.LGLSXP, arrayAddress);
-        }
-        return x;
-
+        return new VectorWrapper(guaranteeInstanceOf(x, RLogicalVector.class));
     }
 
     @Override
     public Object REAL(Object x) {
         long arrayAddress = TruffleNFI_NativeArray.findArray(x);
         if (arrayAddress == 0) {
+            System.out.println("getting REAL contents");
             Object array = super.REAL(x);
             arrayAddress = TruffleNFI_NativeArray.recordArray(x, array, SEXPTYPE.REALSXP);
         } else {
@@ -113,6 +165,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     public Object RAW(Object x) {
         long arrayAddress = TruffleNFI_NativeArray.findArray(x);
         if (arrayAddress == 0) {
+            System.out.println("getting RAW contents");
             Object array = super.RAW(x);
             arrayAddress = TruffleNFI_NativeArray.recordArray(x, array, SEXPTYPE.RAWSXP);
         } else {
@@ -125,6 +178,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     public Object R_CHAR(Object x) {
         long arrayAddress = TruffleNFI_NativeArray.findArray(x);
         if (arrayAddress == 0) {
+            System.out.println("getting R_CHAR contents");
             CharSXPWrapper charSXP = (CharSXPWrapper) x;
             Object array = charSXP.getContents().getBytes();
             arrayAddress = TruffleNFI_NativeArray.recordArray(x, array, SEXPTYPE.CHARSXP);

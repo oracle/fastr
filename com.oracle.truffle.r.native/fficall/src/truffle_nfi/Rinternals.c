@@ -98,13 +98,11 @@ void return_FREE(void *address) {
 }
 
 int *INTEGER(SEXP x) {
-	((call_INTEGER) callbacks[INTEGER_x])(x);
-	return return_int;
+	return ((call_INTEGER) callbacks[INTEGER_x])(x);
 }
 
 int *LOGICAL(SEXP x){
-	((call_LOGICAL) callbacks[LOGICAL_x])(x);
-	return return_int;
+	return ((call_LOGICAL) callbacks[LOGICAL_x])(x);
 }
 
 double *REAL(SEXP x){

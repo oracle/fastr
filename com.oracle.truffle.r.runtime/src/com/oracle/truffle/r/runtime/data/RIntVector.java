@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RIntVector extends RVector<int[]> implements RAbstractIntVector {
 
-    private final int[] data;
+    private int[] data;
 
     RIntVector(int[] data, boolean complete) {
         super(complete);
@@ -68,24 +68,29 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public int[] getInternalStore() {
+        assert data != null;
         return data;
     }
 
     @Override
     public int getDataAt(int index) {
-        return data[index];
+        return data == null ? NativeDataAccess.getIntData(this, index) : data[index];
     }
 
     @Override
     public int getDataAt(Object store, int index) {
         assert data == store;
-        return ((int[]) store)[index];
+        return store == null ? NativeDataAccess.getIntData(this, index) : ((int[]) store)[index];
     }
 
     @Override
     public void setDataAt(Object store, int index, int value) {
         assert data == store;
-        ((int[]) store)[index] = value;
+        if (store == null) {
+            NativeDataAccess.setIntData(this, index, value);
+        } else {
+            ((int[]) store)[index] = value;
+        }
     }
 
     @Override
@@ -108,7 +113,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public int getLength() {
-        return data.length;
+        return data == null ? (int) NativeDataAccess.getDataLength(this) : data.length;
     }
 
     @Override
@@ -119,8 +124,8 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     @Override
     public boolean verify() {
         if (isComplete()) {
-            for (int x : data) {
-                if (x == RRuntime.INT_NA) {
+            for (int i = 0; i < getLength(); i++) {
+                if (getDataAt(i) == RRuntime.INT_NA) {
                     return false;
                 }
             }
@@ -130,6 +135,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public int[] getDataCopy() {
+        assert data != null;
         return Arrays.copyOf(data, data.length);
     }
 
@@ -139,6 +145,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
      */
     @Override
     public int[] getDataWithoutCopying() {
+        assert data != null;
         return data;
     }
 
@@ -147,13 +154,17 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
         return RDataFactory.createIntVector(data, isComplete(), newDimensions);
     }
 
-    public RIntVector updateDataAt(int i, int right, NACheck valueNACheck) {
+    public RIntVector updateDataAt(int index, int value, NACheck valueNACheck) {
         assert !this.isShared();
-        data[i] = right;
-        if (valueNACheck.check(right)) {
+        if (data == null) {
+            NativeDataAccess.setIntData(this, index, value);
+        } else {
+            data[index] = value;
+        }
+        if (valueNACheck.check(value)) {
             setComplete(false);
         }
-        assert !isComplete() || !RRuntime.isNA(right);
+        assert !isComplete() || !RRuntime.isNA(value);
         return this;
     }
 
@@ -178,12 +189,14 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     }
 
     private int[] copyResizedData(int size, boolean fillNA) {
+        assert data != null;
         int[] newData = Arrays.copyOf(data, size);
         return resizeData(newData, this.data, this.getLength(), fillNA);
     }
 
     @Override
     protected RIntVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        assert data != null;
         boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createIntVector(copyResizedData(size, fillNA), isComplete, dimensions);
     }
@@ -201,6 +214,11 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RAbstractIntVector other = (RAbstractIntVector) fromVector;
+        if (data == null) {
+            NativeDataAccess.setIntData(this, toIndex, other.getDataAt(fromIndex));
+        } else {
+            data[toIndex] = other.getDataAt(fromIndex);
+        }
         data[toIndex] = other.getDataAt(fromIndex);
     }
 
@@ -210,7 +228,19 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     }
 
     @Override
-    public void setElement(int i, Object value) {
-        data[i] = (int) value;
+    public void setElement(int index, Object value) {
+        if (data == null) {
+            NativeDataAccess.setIntData(this, index, (int) value);
+        } else {
+            data[index] = (int) value;
+        }
+    }
+
+    public long allocateNativeContents() {
+        try {
+            return NativeDataAccess.allocateNativeContents(this, data, getLength());
+        } finally {
+            data = null;
+        }
     }
 }
