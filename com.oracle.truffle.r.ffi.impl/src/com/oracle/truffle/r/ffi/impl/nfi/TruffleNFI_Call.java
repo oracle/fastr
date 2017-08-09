@@ -56,7 +56,7 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 public class TruffleNFI_Call implements CallRFFI {
 
     private enum INIT_VAR_FUN {
-        OBJ("(env, sint32, object) : void"),
+        OBJ("(env, sint32, pointer) : void"),
         DOUBLE("(sint32, double): void"),
         STRING("(sint32, string): void"),
         INT("(sint32, sint32) : void");
@@ -78,7 +78,6 @@ public class TruffleNFI_Call implements CallRFFI {
 
     public TruffleNFI_Call() {
         initialize();
-        TruffleNFI_PkgInit.initialize();
     }
 
     private static void initVariables() {
@@ -315,7 +314,7 @@ public class TruffleNFI_Call implements CallRFFI {
     }
 
     private static class TruffleNFI_InvokeVoidCallNode extends Node implements InvokeVoidCallNode {
-        private static final String CallVoid1Sig = "(object): void";
+        private static final String CallVoid1Sig = "(pointer): void";
         private static final String CallVoid0Sig = "(): void";
         @Child private Node bindNode = Message.createInvoke(1).createNode();
         @Child private Node execute0Node = Message.createExecute(0).createNode();

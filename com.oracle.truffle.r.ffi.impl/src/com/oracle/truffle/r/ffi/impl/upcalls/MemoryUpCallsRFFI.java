@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,26 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.interop.pkginit;
+package com.oracle.truffle.r.ffi.impl.upcalls;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.ffi.impl.common.PkgInitUpCalls;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
+public interface MemoryUpCallsRFFI {
+    // Checkstyle: stop method name check
 
-public class UseDynamicSymbolsCall implements RTruffleObject {
-    public final PkgInitUpCalls pkgInitUpCalls;
+    int R_PreserveObject(Object obj);
 
-    public UseDynamicSymbolsCall(PkgInitUpCalls pkgInitUpCalls) {
-        this.pkgInitUpCalls = pkgInitUpCalls;
-    }
+    int R_ReleaseObject(Object obj);
 
-    public static boolean isInstance(TruffleObject value) {
-        return value instanceof UseDynamicSymbolsCall;
-    }
+    Object Rf_protect(Object x);
 
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return UseDynamicSymbolsCallMRForeign.ACCESS;
-    }
+    void Rf_unprotect(int x);
+
+    int R_ProtectWithIndex(Object x);
+
+    void R_Reprotect(Object x, int y);
+
+    void Rf_unprotect_ptr(Object x);
+
 }

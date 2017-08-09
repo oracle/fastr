@@ -47,10 +47,6 @@ void Rinternals_addCallback(int index, void *callback) {
 	callbacks[index] = callback;
 }
 
-SEXP checkRef(SEXP x) {
-	return x;
-}
-
 static char *ensure_truffle_chararray_n(const char *x, int n) {
 	if (truffle_is_truffle_object(x)) {
 		return x;
@@ -69,13 +65,6 @@ char *ensure_truffle_chararray(const char *x) {
 
 void *ensure_string(const char *x) {
 	return truffle_read_string(x);
-}
-
-static SEXP newObjectHandle(SEXP x) {
-	return x;
-}
-
-static void releaseObjectHandle(SEXP x) {
 }
 
 char *FASTR_R_Home() {

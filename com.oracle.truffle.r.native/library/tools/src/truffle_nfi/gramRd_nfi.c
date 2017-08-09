@@ -20,16 +20,5 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include "../gramRd_fastr.h"
-#include <trufflenfi.h>
 
-static int (*call_RConnGetC)(void *conn);
 
-void gramRd_nfi_init(TruffleEnv* env, void *closure) {
-	(*env)->newClosureRef(env, closure);
-	call_RConnGetC = closure;
-}
-
-int callGetCMethod(void *conn) {
-	return call_RConnGetC(conn);
-}

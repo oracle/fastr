@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
@@ -110,5 +111,12 @@ public final class FFIUnwrapNode extends Node {
 
     public static FFIUnwrapNode create() {
         return new FFIUnwrapNode();
+    }
+
+    private static final FFIUnwrapNode unwrap = new FFIUnwrapNode();
+
+    public static Object unwrap(Object value) {
+        CompilerAsserts.neverPartOfCompilation();
+        return unwrap.execute(value);
     }
 }

@@ -22,38 +22,14 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.Generic_Tools;
-import com.oracle.truffle.r.ffi.impl.interop.tools.RConnGetCCall;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 
 public class TruffleLLVM_Tools implements ToolsRFFI {
-
-    private static boolean addCallbackDone;
-
-    private static void addCallback() {
-        if (!addCallbackDone) {
-            Node executeNode = Message.createExecute(2).createNode();
-            TruffleObject callbackSymbol = new SymbolHandle(RContext.getInstance().getEnv().importSymbol("@" + "gramRd_addCallback")).asTruffleObject();
-            try {
-                ForeignAccess.sendExecute(executeNode, callbackSymbol, new RConnGetCCall());
-                addCallbackDone = true;
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
-        }
-    }
 
     private static class TruffleLLVM_ToolsRFFINode extends Generic_Tools.Generic_ToolsRFFINode {
         /**
@@ -62,7 +38,6 @@ public class TruffleLLVM_Tools implements ToolsRFFI {
         @Override
         public synchronized Object execute(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
                         RLogicalVector warndups) {
-            addCallback();
             return super.execute(con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups);
         }
     }

@@ -23,93 +23,15 @@
 #include <rffiutils.h>
 #include <trufflenfi.h>
 
-void* unimplemented(char *f) {
+void* unimplemented(const char *f) {
 	printf("unimplemented %s\n", f);
 	exit(1);
 }
 
-typedef struct globalRefTable_struct {
-    int permanent;
-    SEXP gref;         // The jobject (SEXP) global ref
-} GlobalRefElem;
-
-#define CACHED_GLOBALREFS_INITIAL_SIZE 64
-
-static GlobalRefElem *cachedGlobalRefs = NULL;
-static int cachedGlobalRefsHwm;
-static int cachedGlobalRefsLength;
-static TruffleContext* truffleContext;
+static TruffleContext* truffleContext = NULL;
 
 void init_utils(TruffleEnv* env) {
-	if (cachedGlobalRefs == NULL) {
+	if (truffleContext == NULL) {
 	    truffleContext = (*env)->getTruffleContext(env);
-		cachedGlobalRefs = calloc(CACHED_GLOBALREFS_INITIAL_SIZE, sizeof(GlobalRefElem));
-		cachedGlobalRefsLength = CACHED_GLOBALREFS_INITIAL_SIZE;
-		cachedGlobalRefsHwm = 0;
 	}
-}
-static SEXP findCachedGlobalRef(SEXP obj) {
-    TruffleEnv* env = (*truffleContext)->getTruffleEnv(truffleContext);
-    for (int i = 0; i < cachedGlobalRefsHwm; i++) {
-        GlobalRefElem elem = cachedGlobalRefs[i];
-        if (elem.gref == NULL) {
-            continue;
-        }
-        if ((*env)->isSameObject(env, elem.gref, obj)) {
-            return elem.gref;
-        }
-    }
-    return NULL;
-}
-
-SEXP addGlobalRef(SEXP obj, int permanent) {
-    SEXP gref;
-    if (cachedGlobalRefsHwm >= cachedGlobalRefsLength) {
-        int newLength = cachedGlobalRefsLength * 2;
-        SEXP newCachedGlobalRefs = calloc(newLength, sizeof(GlobalRefElem));
-        if (newCachedGlobalRefs == NULL) {
-            fatalError("FFI global refs table expansion failure");
-        }
-        memcpy(newCachedGlobalRefs, cachedGlobalRefs, cachedGlobalRefsLength * sizeof(GlobalRefElem));
-        free(cachedGlobalRefs);
-        cachedGlobalRefs = newCachedGlobalRefs;
-        cachedGlobalRefsLength = newLength;
-    }
-    TruffleEnv* env = (*truffleContext)->getTruffleEnv(truffleContext);
-    gref = (*env)->newObjectRef(env, obj);
-    cachedGlobalRefs[cachedGlobalRefsHwm].gref = gref;
-    cachedGlobalRefs[cachedGlobalRefsHwm].permanent = permanent;
-    cachedGlobalRefsHwm++;
-    return gref;
-}
-
-SEXP checkRef(SEXP obj) {
-    SEXP gref = findCachedGlobalRef(obj);
-    if (gref == NULL) {
-        return obj;
-    } else {
-        return gref;
-    }
-}
-
-SEXP createGlobalRef(SEXP obj, int permanent) {
-    SEXP gref = findCachedGlobalRef(obj);
-    if (gref == NULL) {
-        gref = addGlobalRef(obj, permanent);
-    }
-    return gref;
-}
-
-void releaseGlobalRef(SEXP obj) {
-    TruffleEnv* env = (*truffleContext)->getTruffleEnv(truffleContext);
-    for (int i = 0; i < cachedGlobalRefsHwm; i++) {
-        GlobalRefElem elem = cachedGlobalRefs[i];
-        if (elem.gref == NULL || elem.permanent) {
-            continue;
-        }
-        if ((*env)->isSameObject(env, elem.gref, obj)) {
-        	(*env)->releaseObjectRef(env, elem.gref);
-            cachedGlobalRefs[i].gref = NULL;
-        }
-    }
 }

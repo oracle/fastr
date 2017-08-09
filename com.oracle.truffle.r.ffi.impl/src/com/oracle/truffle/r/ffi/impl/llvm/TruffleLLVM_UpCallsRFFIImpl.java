@@ -35,6 +35,7 @@ import com.oracle.truffle.r.ffi.impl.interop.NativeIntegerArray;
 import com.oracle.truffle.r.ffi.impl.interop.NativeLogicalArray;
 import com.oracle.truffle.r.ffi.impl.interop.NativeRawArray;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
+import com.oracle.truffle.r.ffi.impl.upcalls.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -165,10 +166,10 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     }
 
     @Override
-    protected Object setSymbol(DLLInfo dllInfo, int nstOrd, long routines, int index) {
+    protected Object setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
         Node executeNode = Message.createExecute(4).createNode();
         try {
-            return ForeignAccess.sendExecute(executeNode, setSymbolHandle, dllInfo, nstOrd, routines, index);
+            return FFIUnwrapNode.unwrap(ForeignAccess.sendExecute(executeNode, setSymbolHandle, dllInfo, nstOrd, routines, index));
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }

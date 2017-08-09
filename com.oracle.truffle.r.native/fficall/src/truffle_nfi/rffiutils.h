@@ -34,20 +34,10 @@ extern void init_utils(TruffleEnv* env);
 
 char *ensure_truffle_chararray(const char *x);
 void *ensure_string(const char *x);
-void *ensure_fun(void *fun);
 
 // use for an unimplemented API function
-void *unimplemented(char *msg) __attribute__((noreturn));
+void *unimplemented(const char *msg) __attribute__((noreturn));
 // use for any fatal error
-void fatalError(char *msg) __attribute__((noreturn));
-
-// checks x against the list of global refs, returning the global version if x matches (IsSameObject)
-SEXP checkRef(SEXP x);
-// creates a global JNI global ref from x. If permanent is non-zero, calls to
-// releaseGlobalRef are ignored and the global ref persists for the entire execution
-// (used for the R global variables such as R_NilValue).
-SEXP createGlobalRef(SEXP x, int permanent);
-// release a previously created global ref
-void releaseGlobalRef(SEXP x);
+void fatalError(const char *msg) __attribute__((noreturn));
 
 #endif

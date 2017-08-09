@@ -23,7 +23,8 @@
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.ffi.processor.RFFICpointer;
+import com.oracle.truffle.r.ffi.processor.RFFICstring;
 
 public interface DLLUpCallsRFFI {
 
@@ -36,7 +37,7 @@ public interface DLLUpCallsRFFI {
      * @param num the number of functions being registered
      * @param routines the C address of the function table (not interpreted).
      */
-    int registerRoutines(DLLInfo dllInfo, int nstOrd, int num, long routines);
+    int registerRoutines(Object dllInfo, int nstOrd, int num, @RFFICpointer Object routines);
 
     /**
      * Internal upcall used by {@code Rdynload_setSymbol}. The {@code fun} value must be converted
@@ -47,26 +48,27 @@ public interface DLLUpCallsRFFI {
      * @param fun a representation of the the C address of the function (in the table)
      * @param numArgs the number of arguments the function takes.
      */
-    Object setDotSymbolValues(DLLInfo dllInfo, String name, Object fun, int numArgs);
+    Object setDotSymbolValues(Object dllInfo, @RFFICstring String name, @RFFICpointer Object fun, int numArgs);
 
     /**
      * Directly implements {@code R_useDynamicSymbols}.
      */
-    int useDynamicSymbols(DLLInfo dllInfo, int value);
+    int useDynamicSymbols(Object dllInfo, int value);
 
     /**
      * Directly implements {@code R_forceSymbols}.
      */
-    int forceSymbols(DLLInfo dllInfo, int value);
+    int forceSymbols(Object dllInfo, int value);
 
     /**
      * Directly implements {@code R_RegisterCCallable}.
      */
-    int registerCCallable(String pkgName, String functionName, Object fun);
+    int registerCCallable(@RFFICstring String pkgName, @RFFICstring String functionName, @RFFICpointer Object fun);
 
     /**
      * Directly implements {@code R_GetCCallable}.
      */
-    Object getCCallable(String pkgName, String functionName);
+    @RFFICpointer
+    Object getCCallable(@RFFICstring String pkgName, @RFFICstring String functionName);
 
 }

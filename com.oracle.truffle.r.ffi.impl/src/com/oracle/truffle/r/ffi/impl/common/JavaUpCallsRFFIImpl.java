@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.unimplemented;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -80,6 +81,7 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
@@ -214,7 +216,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object R_do_MAKE_CLASS(Object clazz) {
+    public Object R_do_MAKE_CLASS(String clazz) {
         String name = "getClass";
         RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, REnvironment.getRegisteredNamespace("methods").get(name));
         return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), true, null, clazz);
@@ -323,7 +325,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int Rf_inherits(Object x, Object clazz) {
+    public int Rf_inherits(Object x, String clazz) {
         int result = 0;
         RStringVector hierarchy = getClassHr(x);
         for (int i = 0; i < hierarchy.getLength(); i++) {
@@ -335,12 +337,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_install(Object name) {
-        String nameStr = (String) name;
-        Object ret = nameSymbolCache.get(nameStr);
+    public Object Rf_install(String name) {
+        Object ret = nameSymbolCache.get(name);
         if (ret == null) {
-            ret = RDataFactory.createSymbolInterned(nameStr);
-            nameSymbolCache.put(nameStr, ret);
+            ret = RDataFactory.createSymbolInterned(name);
+            nameSymbolCache.put(name, ret);
         }
         return ret;
     }
@@ -377,25 +378,25 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int Rf_error(Object msg) {
+    public int Rf_error(String msg) {
         throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, msg);
     }
 
     @Override
-    public int Rf_warning(Object msg) {
+    public int Rf_warning(String msg) {
         RError.warning(RError.SHOW_CALLER2, RError.Message.GENERIC, msg);
         return 0;
     }
 
     @Override
-    public int Rf_warningcall(Object call, Object msg) {
-        RErrorHandling.warningcallRFFI(call, (String) msg);
+    public int Rf_warningcall(Object call, String msg) {
+        RErrorHandling.warningcallRFFI(call, msg);
         return 0;
     }
 
     @Override
-    public int Rf_errorcall(Object call, Object msg) {
-        RErrorHandling.errorcallRFFI(call, (String) msg);
+    public int Rf_errorcall(Object call, String msg) {
+        RErrorHandling.errorcallRFFI(call, msg);
         return 0;
     }
 
@@ -1206,8 +1207,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int Rprintf(Object message) {
-        RContext.getInstance().getConsole().print((String) message);
+    public int Rprintf(String message) {
+        RContext.getInstance().getConsole().print(message);
         return 0;
     }
 
@@ -1444,14 +1445,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object R_new_custom_connection(Object description, Object mode, Object className, Object connAddrObj) {
+    public Object R_new_custom_connection(String description, String mode, String className, Object connAddrObj) {
         // TODO handle encoding properly !
-        String strDescription = (String) description;
-        String strMode = (String) mode;
-        String strClassName = (String) className;
         RExternalPtr connAddr = guaranteeInstanceOf(connAddrObj, RExternalPtr.class);
         try {
-            return new NativeRConnection(strDescription, strMode, strClassName, connAddr).asVector();
+            return new NativeRConnection(description, mode, className, connAddr).asVector();
         } catch (IOException e) {
             return InvalidConnection.instance.asVector();
         }
@@ -1525,11 +1523,65 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return REnvironment.getRegisteredNamespace("methods");
     }
 
+    @Override
+    public int R_PreserveObject(Object obj) {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public int R_ReleaseObject(Object obj) {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public Object Rf_protect(Object x) {
+        RContext.getInstance().protectStack.add(guaranteeInstanceOf(x, RObject.class));
+        return x;
+    }
+
+    @Override
+    public void Rf_unprotect(int x) {
+        ArrayList<RObject> stack = RContext.getInstance().protectStack;
+        for (int i = 0; i < x; i++) {
+            stack.remove(stack.size() - 1);
+        }
+    }
+
+    @Override
+    public int R_ProtectWithIndex(Object x) {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public void R_Reprotect(Object x, int y) {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public void Rf_unprotect_ptr(Object x) {
+        ArrayList<RObject> stack = RContext.getInstance().protectStack;
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            if (stack.get(i) == x) {
+                stack.remove(i);
+                return;
+            }
+        }
+    }
+
+    @Override
+    public int FASTR_getConnectionChar(Object obj) {
+        try {
+            return guaranteeInstanceOf(obj, RConnection.class).getc();
+        } catch (IOException e) {
+            return -1;
+        }
+    }
+
     private HashMap<String, Integer> name2typeTable;
 
     @Override
     @TruffleBoundary
-    public int Rf_str2type(Object name) {
+    public int Rf_str2type(String name) {
         if (name == null) {
             return -1;
         }
@@ -1572,7 +1624,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int registerRoutines(DLLInfo dllInfo, int nstOrd, int num, long routines) {
+    public int registerRoutines(Object dllInfoObj, int nstOrd, int num, Object routines) {
+        DLLInfo dllInfo = guaranteeInstanceOf(dllInfoObj, DLLInfo.class);
         DotSymbol[] array = new DotSymbol[num];
         for (int i = 0; i < num; i++) {
             Object sym = setSymbol(dllInfo, nstOrd, routines, i);
@@ -1590,22 +1643,25 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int useDynamicSymbols(DLLInfo dllInfo, int value) {
+    public int useDynamicSymbols(Object dllInfoObj, int value) {
+        DLLInfo dllInfo = guaranteeInstanceOf(dllInfoObj, DLLInfo.class);
         return DLL.useDynamicSymbols(dllInfo, value);
     }
 
     @Override
-    public int forceSymbols(DLLInfo dllInfo, int value) {
+    public int forceSymbols(Object dllInfoObj, int value) {
+        DLLInfo dllInfo = guaranteeInstanceOf(dllInfoObj, DLLInfo.class);
         return DLL.forceSymbols(dllInfo, value);
     }
 
     @Override
-    public DotSymbol setDotSymbolValues(DLLInfo dllInfo, String name, Object fun, int numArgs) {
-        DotSymbol result = new DotSymbol(name, new SymbolHandle(fun), numArgs);
-        return result;
+    public DotSymbol setDotSymbolValues(Object dllInfoObj, String name, Object fun, int numArgs) {
+        @SuppressWarnings("unused")
+        DLLInfo dllInfo = guaranteeInstanceOf(dllInfoObj, DLLInfo.class);
+        return new DotSymbol(name, new SymbolHandle(fun), numArgs);
     }
 
-    protected abstract Object setSymbol(DLLInfo dllInfo, int nstOrd, long routines, int index);
+    protected abstract Object setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index);
 
     @Override
     public double Rf_dunif(double a, double b, double c, int d) {

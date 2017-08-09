@@ -24,6 +24,7 @@
 #define CALLBACKS_H
 
 #include "rffi_upcallsindex.h"
+#include <Rdynload.h>
 
 extern void* *callbacks;
 
@@ -84,11 +85,6 @@ typedef const char * (*call_Rf_reEnc)(const char *x, cetype_t ce_in, cetype_t ce
 typedef SEXP (*call_Rf_mkString)(const char *s);
 typedef int (*call_Rf_ncols)(SEXP x);
 typedef int (*call_Rf_nrows)(SEXP x);
-typedef SEXP (*call_Rf_protect)(SEXP x);
-typedef void (*call_Rf_unprotect)(int x);
-typedef void (*call_R_ProtectWithIndex)(SEXP x, PROTECT_INDEX *y);
-typedef void (*call_R_Reprotect)(SEXP x, PROTECT_INDEX y);
-typedef void (*call_Rf_unprotect_ptr)(SEXP x);
 typedef void (*call_Rf_error)(const char *format, ...);
 typedef void (*call_Rf_errorcall)(SEXP x, const char *format, ...);
 typedef void (*call_Rf_warningcall)(SEXP x, const char *format, ...);
@@ -257,8 +253,6 @@ typedef SEXP (*call_R_getClassDef )(const char *what);
 typedef SEXP (*call_R_do_new_object)(SEXP class_def);
 typedef int (*call_R_check_class_and_super)(SEXP x, const char **valid, SEXP rho);
 typedef int (*call_R_check_class_etc )(SEXP x, const char **valid);
-typedef SEXP (*call_R_PreserveObject)(SEXP x);
-typedef void (*call_R_ReleaseObject)(SEXP x);
 typedef void (*call_R_dot_Last)(void);
 typedef Rboolean (*call_R_compute_identical)(SEXP x, SEXP y, int flags);
 typedef void (*call_Rf_copyListMatrix)(SEXP s, SEXP t, Rboolean byrow);
@@ -283,6 +277,26 @@ typedef double (*call_Rf_punif)(double a, double b, double c, int d, int e);
 typedef double (*call_Rf_runif)(double x, double y);
 
 typedef SEXP (*call_getvar)();
+
+typedef int (*call_FASTR_getConnectionChar)(SEXP connection);
+
+
+typedef void (*call_registerRoutines)(DllInfo *dllInfo, int nstOrd, int num, const void* routines);
+typedef int (*call_useDynamicSymbols)(DllInfo *dllInfo, Rboolean value);
+typedef void * (*call_setDotSymbolValues)(DllInfo *dllInfo, char *name, void *fun, int numArgs);
+typedef int (*call_forceSymbols)(DllInfo *dllInfo, Rboolean value);
+typedef int (*call_registerCCallable)(const char *pkgname, const char *name, void *fun);
+typedef void* (*call_getCCallable)(const char *pkgname, const char *name);
+
+// memory
+
+typedef SEXP (*call_Rf_protect)(SEXP x);
+typedef void (*call_Rf_unprotect)(int x);
+typedef int (*call_R_ProtectWithIndex)(SEXP x);
+typedef void (*call_R_Reprotect)(SEXP x, int y);
+typedef void (*call_Rf_unprotect_ptr)(SEXP x);
+typedef SEXP (*call_R_PreserveObject)(SEXP x);
+typedef void (*call_R_ReleaseObject)(SEXP x);
 
 #endif
 

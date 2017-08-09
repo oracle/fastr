@@ -83,11 +83,6 @@ use_internals_end = '''#endif
 #ifdef USE_RINTERNALS
 
 '''
-preserveObject = '''#ifdef FASTR
-SEXP R_PreserveObject_FASTR(SEXP);
-#define R_PreserveObject(var) ((var) = R_PreserveObject_FASTR((var)))
-#else
-'''
 
 def ed_r_internals(gnu_dir):
     r_internals_h = join(gnu_dir, 'Rinternals.h')
@@ -114,10 +109,6 @@ def ed_r_internals(gnu_dir):
             elif 'macro version of R_CheckStack' in line:
                 f.write(use_internals_end)
                 f.write(line)
-            elif 'R_PreserveObject' in line:
-                f.write(preserveObject)
-                f.write(line)
-                f.write('#endif\n')
             elif 'LibExtern' in line:
                 var = is_internal_var(line)
                 if var:

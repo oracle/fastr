@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,26 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.interop.pkginit;
+package com.oracle.truffle.r.ffi.processor;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.ffi.impl.common.PkgInitUpCalls;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class RegisterRoutinesCall implements RTruffleObject {
-    public final PkgInitUpCalls pkgInitUpCalls;
-
-    public RegisterRoutinesCall(PkgInitUpCalls pkgInitUpCalls) {
-        this.pkgInitUpCalls = pkgInitUpCalls;
-    }
-
-    public static boolean isInstance(TruffleObject value) {
-        return value instanceof RegisterRoutinesCall;
-    }
-
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return RegisterRoutinesCallMRForeign.ACCESS;
-    }
+/**
+ * Tags an upcall argument or return value as being (on the native side) a C pointer, which should
+ * not be processed in any way before being passed to the Java side.
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.PARAMETER, ElementType.METHOD})
+public @interface RFFICpointer {
 }

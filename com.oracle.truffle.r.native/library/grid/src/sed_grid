@@ -7,4 +7,4 @@
 # adding them to that environment. See ed_state where we fix code doing this to 
 # also call R_PreserveObject and R_ReleaseObject.
 # 
-s/R_gridEvalEnv = \([[:alnum:]]*\);/R_gridEvalEnv = R_PreserveObject(\1);/g
+#s/R_gridEvalEnv = \([[:alnum:]]*\);/R_gridEvalEnv = R_PreserveObject(\1);/g

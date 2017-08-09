@@ -91,7 +91,7 @@ public interface StdUpCallsRFFI {
 
     int /* void */ Rf_defineVar(Object symbolArg, Object value, Object envArg);
 
-    Object R_do_MAKE_CLASS(@RFFICstring Object clazz);
+    Object R_do_MAKE_CLASS(@RFFICstring String clazz);
 
     Object R_do_new_object(Object classDef);
 
@@ -111,9 +111,9 @@ public interface StdUpCallsRFFI {
 
     int /* void */ Rf_setAttrib(Object obj, Object name, Object val);
 
-    int Rf_inherits(Object x, @RFFICstring Object clazz);
+    int Rf_inherits(Object x, @RFFICstring String clazz);
 
-    Object Rf_install(@RFFICstring Object name);
+    Object Rf_install(@RFFICstring String name);
 
     Object Rf_installChar(Object name);
 
@@ -125,13 +125,13 @@ public interface StdUpCallsRFFI {
 
     Object Rf_PairToVectorList(Object x);
 
-    int /* void */ Rf_error(@RFFICstring Object msg);
+    int /* void */ Rf_error(@RFFICstring String msg);
 
-    int /* void */ Rf_warning(@RFFICstring Object msg);
+    int /* void */ Rf_warning(@RFFICstring String msg);
 
-    int /* void */ Rf_warningcall(Object call, @RFFICstring Object msg);
+    int /* void */ Rf_warningcall(Object call, @RFFICstring String msg);
 
-    int /* void */ Rf_errorcall(Object call, @RFFICstring Object msg);
+    int /* void */ Rf_errorcall(Object call, @RFFICstring String msg);
 
     Object Rf_allocVector(int mode, long n);
 
@@ -255,7 +255,7 @@ public interface StdUpCallsRFFI {
 
     int /* void */ UNSET_S4_OBJECT(Object x);
 
-    int /* void */ Rprintf(@RFFICstring Object message);
+    int /* void */ Rprintf(@RFFICstring String message);
 
     int /* void */ GetRNGstate();
 
@@ -293,7 +293,7 @@ public interface StdUpCallsRFFI {
 
     Object R_CHAR(Object x);
 
-    Object R_new_custom_connection(@RFFICstring Object description, @RFFICstring Object mode, @RFFICstring Object className, Object readAddr);
+    Object R_new_custom_connection(@RFFICstring String description, @RFFICstring String mode, @RFFICstring String className, Object readAddr);
 
     int R_ReadConnection(int fd, Object bufObj);
 
@@ -315,7 +315,9 @@ public interface StdUpCallsRFFI {
 
     Object R_MethodsNamespace();
 
-    int Rf_str2type(@RFFICstring Object name);
+    int Rf_str2type(@RFFICstring String name);
+
+    int FASTR_getConnectionChar(Object obj);
 
     double Rf_dunif(double a, double b, double c, int d);
 

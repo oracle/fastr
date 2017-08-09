@@ -182,25 +182,34 @@ public final class FFIProcessor extends AbstractProcessor {
                 arguments.append(", ");
             }
             TypeMirror paramType = params.get(i).asType();
+
+            RFFICpointer[] pointerAnnotations = params.get(i).getAnnotationsByType(RFFICpointer.class);
+            RFFICstring[] stringAnnotations = params.get(i).getAnnotationsByType(RFFICstring.class);
+
             String paramName = params.get(i).getSimpleName().toString();
             String paramTypeName = getTypeName(paramType);
-            boolean isScalar = paramType.getKind().isPrimitive();
+            boolean needsUnwrap = !paramType.getKind().isPrimitive() &&
+                            !paramTypeName.equals("java.lang.String") &&
+                            pointerAnnotations.length == 0 &&
+                            (stringAnnotations.length == 0 || stringAnnotations[0].convert());
             boolean needCast = !paramTypeName.equals("java.lang.Object");
             if (needCast) {
                 arguments.append('(').append(paramTypeName).append(") ");
             }
-            if (!isScalar) {
+            if (needsUnwrap) {
                 arguments.append(paramName).append("Unwrap").append(".execute(");
                 unwrapNodes.append("                @Child private FFIUnwrapNode ").append(paramName).append("Unwrap").append(" = FFIUnwrapNode.create();\n");
             }
             arguments.append("arguments.get(").append(i).append(")");
-            if (!isScalar) {
+            if (needsUnwrap) {
                 arguments.append(')');
             }
         }
 
         TypeKind returnKind = m.getReturnType().getKind();
-        boolean needsReturnWrap = returnKind != TypeKind.VOID && !returnKind.isPrimitive() && !"java.lang.String".equals(getTypeName(m.getReturnType()));
+        boolean needsReturnWrap = returnKind != TypeKind.VOID && !returnKind.isPrimitive() &&
+                        !"java.lang.String".equals(getTypeName(m.getReturnType())) &&
+                        m.getAnnotationsByType(RFFICpointer.class).length == 0;
         if (needsReturnWrap) {
             unwrapNodes.append("                @Child private FFIWrapNode returnWrap").append(" = FFIWrapNode.create();\n");
         }
@@ -279,7 +288,11 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("                    if (RFFIUtils.traceEnabled) {\n");
         w.append("                        RFFIUtils.traceUpCall(\"" + name + "\", arguments);\n");
         w.append("                    }\n");
-        w.append("                    return ");
+        if (returnKind == TypeKind.VOID) {
+            w.append("                    ");
+        } else {
+            w.append("                    return ");
+        }
         if (needsReturnWrap) {
             w.append("returnWrap.execute(");
         }
@@ -293,6 +306,9 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append(");\n");
         } else {
             w.append(";\n");
+        }
+        if (returnKind == TypeKind.VOID) {
+            w.append("                    return 0; // void return type\n");
         }
         w.append("                }\n");
         w.append("            });\n");
@@ -397,10 +413,17 @@ public final class FFIProcessor extends AbstractProcessor {
             case "byte[]":
                 return "[uint8]";
             default:
-                if (isReturn) {
-                    if ("java.lang.String".equals(paramTypeName)) {
+                if ("java.lang.String".equals(paramTypeName)) {
+                    if (isReturn) {
+                        return "string";
+                    } else if (rffiCstring != null) {
+                        if (!rffiCstring.convert()) {
+                            processingEnv.getMessager().printMessage(Kind.ERROR, "Invalid parameter type (without conversion) " + paramTypeName, m);
+                        }
                         return "string";
                     }
+                }
+                if (isReturn) {
                     processingEnv.getMessager().printMessage(Kind.ERROR, "Invalid return type " + paramTypeName, m);
                 } else {
                     processingEnv.getMessager().printMessage(Kind.ERROR, "Invalid parameter type " + paramTypeName, m);
@@ -413,7 +436,7 @@ public final class FFIProcessor extends AbstractProcessor {
         Types types = processingEnv.getTypeUtils();
         TypeKind kind = type.getKind();
         String returnType;
-        if (kind.isPrimitive()) {
+        if (kind.isPrimitive() || kind == TypeKind.VOID) {
             returnType = kind.name().toLowerCase();
         } else {
             Element rt = types.asElement(type);

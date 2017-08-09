@@ -76,7 +76,7 @@ public class JNIUpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     }
 
     @Override
-    protected Object setSymbol(DLLInfo dllInfo, int nstOrd, long routines, int index) {
+    protected Object setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
         throw RInternalError.shouldNotReachHere();
     }
 }

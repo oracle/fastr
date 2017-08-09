@@ -516,6 +516,14 @@ public class ListMR {
         }
     }
 
+    private static boolean isBoxed(@SuppressWarnings("unused") TruffleObject receiver) {
+        return false;
+    }
+
+    private static boolean isNull(@SuppressWarnings("unused") TruffleObject receiver) {
+        return false;
+    }
+
     private static boolean hasSize(@SuppressWarnings("unused") TruffleObject receiver) {
         return true;
     }

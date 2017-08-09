@@ -39,6 +39,7 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -93,6 +94,7 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -355,6 +357,7 @@ public final class RContext implements RTruffleObject {
     public final WeakHashMap<Path, REnvironment> srcfileEnvironments = new WeakHashMap<>();
     public final List<String> libraryPaths = new ArrayList<>(1);
     public final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
+    public final ArrayList<RObject> protectStack = new ArrayList<>();
 
     private final AllocationReporter allocationReporter;
 

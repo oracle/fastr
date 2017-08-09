@@ -33,12 +33,10 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
  */
 class TruffleLLVM_RFFIContextState implements ContextState {
     TruffleLLVM_DLL.ContextStateImpl dllState;
-    TruffleLLVM_PkgInit.ContextStateImpl pkgInitState;
     TruffleLLVM_Call.ContextStateImpl callState;
 
     TruffleLLVM_RFFIContextState() {
         dllState = new TruffleLLVM_DLL.ContextStateImpl();
-        pkgInitState = new TruffleLLVM_PkgInit.ContextStateImpl();
         callState = new TruffleLLVM_Call.ContextStateImpl();
     }
 
@@ -57,7 +55,6 @@ class TruffleLLVM_RFFIContextState implements ContextState {
             DLL.loadLibR(librffiPath);
         }
         dllState.initialize(context);
-        pkgInitState.initialize(context);
         callState.initialize(context);
         return this;
     }
@@ -65,7 +62,6 @@ class TruffleLLVM_RFFIContextState implements ContextState {
     @Override
     public void beforeDispose(RContext context) {
         dllState.beforeDispose(context);
-        pkgInitState.beforeDispose(context);
         callState.beforeDispose(context);
     }
 }

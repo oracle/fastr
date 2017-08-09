@@ -27,15 +27,10 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
-import com.oracle.truffle.r.ffi.impl.common.PkgInitUpCalls;
-import com.oracle.truffle.r.ffi.impl.interop.pkginit.ForceSymbolsCall;
-import com.oracle.truffle.r.ffi.impl.interop.pkginit.GetCCallableCall;
-import com.oracle.truffle.r.ffi.impl.interop.pkginit.RegisterCCallableCall;
-import com.oracle.truffle.r.ffi.impl.interop.pkginit.RegisterRoutinesCall;
-import com.oracle.truffle.r.ffi.impl.interop.pkginit.SetDotSymbolValuesCall;
-import com.oracle.truffle.r.ffi.impl.interop.pkginit.UseDynamicSymbolsCall;
+import com.oracle.truffle.r.ffi.impl.upcalls.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
@@ -48,7 +43,7 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
-    private static final String SETSYMBOL_SIGNATURE = "(object, sint32, uint64, sint32): object";
+    private static final String SETSYMBOL_SIGNATURE = "(pointer, sint32, pointer, sint32): pointer";
     private static TruffleObject setSymbolFunction;
 
     public TruffleNFI_UpCallsRFFIImpl() {
@@ -61,11 +56,19 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         }
     }
 
+    private static Node asPointer = Message.AS_POINTER.createNode();
+
     @Override
     public Object Rf_mkCharLenCE(Object bytes, int len, int encoding) {
         // "bytes" is actually a Long unboxed from a NativePointer
         // TODO: handle encoding properly
-        return CharSXPWrapper.create(TruffleNFI_Utils.convertCstring(bytes, len));
+        long address;
+        try {
+            address = ForeignAccess.sendAsPointer(asPointer, (TruffleObject) bytes);
+        } catch (UnsupportedMessageException ex) {
+            throw RInternalError.shouldNotReachHere(ex);
+        }
+        return CharSXPWrapper.create(TruffleNFI_Utils.getString(address, len));
     }
 
     @Override
@@ -143,10 +146,10 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     }
 
     @Override
-    protected DotSymbol setSymbol(DLLInfo dllInfo, int nstOrd, long routines, int index) {
+    protected DotSymbol setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
         Node executeNode = Message.createExecute(4).createNode();
         try {
-            return (DotSymbol) ForeignAccess.sendExecute(executeNode, setSymbolFunction, dllInfo, nstOrd, routines, index);
+            return (DotSymbol) FFIUnwrapNode.unwrap(ForeignAccess.sendExecute(executeNode, setSymbolFunction, dllInfo, nstOrd, routines, index));
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
