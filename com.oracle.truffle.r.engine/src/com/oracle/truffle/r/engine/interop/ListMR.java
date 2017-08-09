@@ -243,6 +243,18 @@ public class ListMR {
         protected abstract Object execute(VirtualFrame frame, TruffleObject receiver, Object idx);
 
         @Specialization
+        protected Object read(VirtualFrame frame, TruffleObject receiver, double idx,
+                        @Cached("createKeyInfoNode()") ListKeyInfoImplNode keyInfo) {
+            return read(frame, receiver, (int) idx, keyInfo);
+        }
+
+        @Specialization
+        protected Object read(VirtualFrame frame, TruffleObject receiver, long idx,
+                        @Cached("createKeyInfoNode()") ListKeyInfoImplNode keyInfo) {
+            return read(frame, receiver, (int) idx, keyInfo);
+        }
+
+        @Specialization
         protected Object read(VirtualFrame frame, TruffleObject receiver, int idx,
                         @Cached("createKeyInfoNode()") ListKeyInfoImplNode keyInfo) {
             int info = keyInfo.execute(receiver, idx);

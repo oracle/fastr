@@ -77,12 +77,12 @@ public class ListMRTest extends AbstractMRTest {
 
         assertEquals(1, ForeignAccess.sendRead(Message.READ.createNode(), l, 0));
         assertEquals(2.1, ForeignAccess.sendRead(Message.READ.createNode(), l, 1));
+        assertEquals(4d, ForeignAccess.sendRead(Message.READ.createNode(), l, 5d));
         assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), l, 2));
         assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), l, 4) instanceof RNull);
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, -1), UnknownIdentifierException.class);
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, 0f), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, 4d), UnknownIdentifierException.class);
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, "nnnoooonnne"), UnknownIdentifierException.class);
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, 100), UnknownIdentifierException.class);
