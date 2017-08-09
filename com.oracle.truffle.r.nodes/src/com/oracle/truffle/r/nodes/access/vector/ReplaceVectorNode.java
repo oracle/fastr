@@ -27,7 +27,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.KeyInfo;
@@ -72,11 +71,11 @@ public abstract class ReplaceVectorNode extends RBaseNode {
         this.ignoreRecursive = ignoreRecursive;
     }
 
-    public final Object apply(VirtualFrame frame, Object vector, Object[] positions, Object value) {
-        return execute(frame, boxVector.execute(vector), positions, boxValue.execute(value));
+    public final Object apply(Object vector, Object[] positions, Object value) {
+        return execute(boxVector.execute(vector), positions, boxValue.execute(value));
     }
 
-    protected abstract Object execute(VirtualFrame frame, Object vector, Object[] positions, Object value);
+    protected abstract Object execute(Object vector, Object[] positions, Object value);
 
     public static ReplaceVectorNode create(ElementAccessMode mode, boolean ignoreRecursive) {
         return ReplaceVectorNodeGen.create(mode, false, ignoreRecursive);
@@ -162,9 +161,9 @@ public abstract class ReplaceVectorNode extends RBaseNode {
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(vector, positions)"})
-    protected Object doRecursive(VirtualFrame frame, RAbstractListVector vector, Object[] positions, Object value,  //
+    protected Object doRecursive(RAbstractListVector vector, Object[] positions, Object value,  //
                     @Cached("createRecursiveCache(vector, positions)") RecursiveReplaceSubscriptNode cached) {
-        return cached.apply(frame, vector, positions, value);
+        return cached.apply(vector, positions, value);
     }
 
     protected RecursiveReplaceSubscriptNode createRecursiveCache(Object vector, Object[] positions) {

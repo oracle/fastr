@@ -31,7 +31,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
@@ -67,7 +66,7 @@ public abstract class UpdateSubset extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(guards = "args.getLength() >= 2")
-    protected Object update(VirtualFrame frame, RArgsValuesAndNames args) {
+    protected Object update(RArgsValuesAndNames args) {
         // first argument: object to assign to
         Object x = args.getArgument(0);
 
@@ -81,7 +80,7 @@ public abstract class UpdateSubset extends RBuiltinNode.Arg1 {
         } else {
             pos = new Object[]{RMissing.instance};
         }
-        return replaceNode.apply(frame, x, pos, value);
+        return replaceNode.apply(x, pos, value);
     }
 
     @Specialization(guards = "args.getLength() < 2")

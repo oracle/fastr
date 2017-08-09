@@ -27,7 +27,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.KeyInfo;
@@ -40,7 +39,6 @@ import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.FirstStringNode;
-import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -52,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R.CollectedElements;
@@ -80,12 +79,12 @@ public abstract class ExtractVectorNode extends RBaseNode {
         return mode;
     }
 
-    public final Object applyAccessField(VirtualFrame frame, Object vector, String singlePosition) {
-        return apply(frame, vector, new Object[]{singlePosition}, RLogical.valueOf(false), RMissing.instance);
+    public final Object applyAccessField(Object vector, String singlePosition) {
+        return apply(vector, new Object[]{singlePosition}, RLogical.valueOf(false), RMissing.instance);
     }
 
-    public final Object apply(VirtualFrame frame, Object vector, Object[] positions, Object exact, Object dropDimensions) {
-        return execute(frame, boxVector.execute(vector), positions, boxExact.execute(exact), boxDropdimensions.execute(dropDimensions));
+    public final Object apply(Object vector, Object[] positions, Object exact, Object dropDimensions) {
+        return execute(boxVector.execute(vector), positions, boxExact.execute(exact), boxDropdimensions.execute(dropDimensions));
     }
 
     public static ExtractVectorNode create(ElementAccessMode accessMode, boolean ignoreRecursive) {
@@ -96,18 +95,18 @@ public abstract class ExtractVectorNode extends RBaseNode {
         return ExtractVectorNodeGen.create(accessMode, true, false);
     }
 
-    protected abstract Object execute(VirtualFrame frame, Object vector, Object[] positions, Object exact, Object dropDimensions);
+    protected abstract Object execute(Object vector, Object[] positions, Object exact, Object dropDimensions);
 
     @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})
-    protected Object doExtractSameDimensions(VirtualFrame frame, RAbstractVector vector, Object[] positions, Object exact, Object dropDimensions,  //
+    protected Object doExtractSameDimensions(RAbstractVector vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
-        return cached.apply(frame, vector, positions, exact, dropDimensions);
+        return cached.apply(vector, positions, exact, dropDimensions);
     }
 
     @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})
-    protected Object doExtractRecursive(VirtualFrame frame, RAbstractListVector vector, Object[] positions, Object exact, Object dropDimensions,  //
+    protected Object doExtractRecursive(RAbstractListVector vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
-        return cached.apply(frame, vector, positions, exact, dropDimensions);
+        return cached.apply(vector, positions, exact, dropDimensions);
     }
 
     protected RecursiveExtractSubscriptNode createRecursiveCache(Object vector, Object[] positions) {

@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
@@ -78,9 +77,9 @@ abstract class SubsetSpecial extends SubscriptSpecialBase {
     }
 
     @Specialization(guards = {"simpleVector(vector)", "!inReplacement"})
-    protected Object access(VirtualFrame frame, RAbstractVector vector, Object index,
+    protected Object access(RAbstractVector vector, Object index,
                     @Cached("createAccess()") ExtractVectorNode extract) {
-        return extract.apply(frame, vector, new Object[]{index}, RRuntime.LOGICAL_TRUE, RLogical.TRUE);
+        return extract.apply(vector, new Object[]{index}, RRuntime.LOGICAL_TRUE, RLogical.TRUE);
     }
 
     public static RNode create(boolean inReplacement, RNode vectorNode, ConvertIndex index) {
@@ -162,7 +161,7 @@ public abstract class Subset extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = "!indexes.isEmpty()")
-    protected Object get(VirtualFrame frame, Object x, RArgsValuesAndNames indexes, Object drop) {
-        return extractNode.apply(frame, x, indexes.getArguments(), RLogical.TRUE, drop);
+    protected Object get(Object x, RArgsValuesAndNames indexes, Object drop) {
+        return extractNode.apply(x, indexes.getArguments(), RLogical.TRUE, drop);
     }
 }

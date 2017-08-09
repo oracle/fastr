@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -45,18 +44,18 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
         return RecursiveReplaceSubscriptNodeGen.create(vector, position);
     }
 
-    public final Object apply(VirtualFrame frame, Object vector, Object[] positions, Object value) {
+    public final Object apply(Object vector, Object[] positions, Object value) {
         assert isSupported(vector, positions);
         Object firstPosition = positionClass.cast(positions[0]);
-        int length = positionLengthNode.executeInteger(frame, firstPosition);
-        return execute(frame, vectorClass.cast(vector), positions, firstPosition, length, value);
+        int length = positionLengthNode.executeInteger(firstPosition);
+        return execute(vectorClass.cast(vector), positions, firstPosition, length, value);
     }
 
-    protected abstract Object execute(VirtualFrame frame, Object vector, Object[] positions, Object firstPosition, int positionLength, Object value);
+    protected abstract Object execute(Object vector, Object[] positions, Object firstPosition, int positionLength, Object value);
 
     @Specialization(guards = "positionLength <= 1")
-    protected Object doDefault(VirtualFrame frame, Object vector, Object[] positions, @SuppressWarnings("unused") Object firstPosition, @SuppressWarnings("unused") int positionLength, Object value) {
-        return subscriptReplace.apply(frame, vector, positions, value);
+    protected Object doDefault(Object vector, Object[] positions, @SuppressWarnings("unused") Object firstPosition, @SuppressWarnings("unused") int positionLength, Object value) {
+        return subscriptReplace.apply(vector, positions, value);
     }
 
     /**
@@ -82,7 +81,7 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
      * </code>
      */
     @Specialization(replaces = "doDefault")
-    protected Object doRecursive(VirtualFrame frame, Object vector, @SuppressWarnings("unused") Object[] positions, Object originalFirstPosition, int positionLength, Object value,
+    protected Object doRecursive(Object vector, @SuppressWarnings("unused") Object[] positions, Object originalFirstPosition, int positionLength, Object value,
                     @Cached("createPositionCast()") PositionCastNode positionCast) {
         Object firstPosition = positionCast.execute(originalFirstPosition);
         Object[] positionStack = new Object[positionLength];
@@ -90,13 +89,13 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
         valueStack[0] = vector;
         Object currentVector = vector;
         for (int i = 1; i < positionLength; i++) {
-            Object parentPosition = getPositionValue(frame, firstPosition, i - 1);
+            Object parentPosition = getPositionValue(firstPosition, i - 1);
             positionStack[i - 1] = parentPosition;
             try {
                 if (!(currentVector instanceof RAbstractListVector)) {
                     throw indexingFailed(i);
                 }
-                currentVector = recursiveSubscriptExtract.apply(frame, currentVector, new Object[]{parentPosition}, RLogical.TRUE, RLogical.TRUE);
+                currentVector = recursiveSubscriptExtract.apply(currentVector, new Object[]{parentPosition}, RLogical.TRUE, RLogical.TRUE);
                 if (currentVector == RNull.instance) {
                     throw noSuchIndex(i);
                 }
@@ -106,12 +105,12 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
             }
         }
         Object recursiveValue = value;
-        positionStack[positionLength - 1] = getPositionValue(frame, firstPosition, positionLength - 1);
+        positionStack[positionLength - 1] = getPositionValue(firstPosition, positionLength - 1);
         for (int i = positionLength - 1; i >= 1; i--) {
-            recursiveValue = recursiveSubscriptReplace.apply(frame, valueStack[i], new Object[]{positionStack[i]}, recursiveValue);
+            recursiveValue = recursiveSubscriptReplace.apply(valueStack[i], new Object[]{positionStack[i]}, recursiveValue);
         }
         // the last recursive replace need to have recursive set to false
-        recursiveValue = subscriptReplace.apply(frame, valueStack[0], new Object[]{positionStack[0]}, recursiveValue);
+        recursiveValue = subscriptReplace.apply(valueStack[0], new Object[]{positionStack[0]}, recursiveValue);
 
         return recursiveValue;
     }
@@ -120,7 +119,7 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
         return PositionCastNode.create(ElementAccessMode.SUBSCRIPT, false);
     }
 
-    private Object getPositionValue(VirtualFrame frame, Object firstPosition, int i) {
-        return getPositionExtract.apply(frame, firstPosition, new Object[]{RInteger.valueOf(i + 1)}, RLogical.TRUE, RLogical.TRUE);
+    private Object getPositionValue(Object firstPosition, int i) {
+        return getPositionExtract.apply(firstPosition, new Object[]{RInteger.valueOf(i + 1)}, RLogical.TRUE, RLogical.TRUE);
     }
 }

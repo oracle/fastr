@@ -78,7 +78,7 @@ public final class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyn
         Object obj = range.execute(frame);
         writeIndexNode.execute(frame, 1);
         writeRangeNode.execute(frame, obj);
-        writeLengthNode.execute(frame, length.executeInteger(frame, obj));
+        writeLengthNode.execute(frame, length.executeInteger(obj));
         loopNode.executeLoop(frame);
     }
 

@@ -143,7 +143,7 @@ public class REnvironmentMR {
             }
 
             initExtractNode();
-            Object value = extract.applyAccessField(frame, receiver, identifier);
+            Object value = extract.applyAccessField(receiver, identifier);
             initR2ForeignNode();
             return r2Foreign.execute(value);
         }
@@ -181,7 +181,7 @@ public class REnvironmentMR {
         protected abstract Object execute(VirtualFrame frame, TruffleObject receiver, Object identifier, Object valueObj);
 
         @Specialization
-        protected Object access(VirtualFrame frame, REnvironment receiver, String identifier, Object valueObj,
+        protected Object access(REnvironment receiver, String identifier, Object valueObj,
                         @Cached("createKeyInfoNode()") REnvironmentKeyInfoImplNode keyInfo) {
 
             int info = keyInfo.execute(receiver, identifier);
@@ -202,7 +202,7 @@ public class REnvironmentMR {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace = insert(ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
             }
-            return replace.apply(frame, receiver, new Object[]{identifier}, value);
+            return replace.apply(receiver, new Object[]{identifier}, value);
         }
 
         @Fallback

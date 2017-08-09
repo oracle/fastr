@@ -128,8 +128,8 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
 
         public abstract Object[] execute(VirtualFrame frame, RAbstractListVector dots, RFunction function, RAbstractListVector additionalArguments);
 
-        private static Object getVecElement(VirtualFrame frame, RAbstractListVector dots, int i, int listIndex, int[] lengths, ExtractVectorNode extractNode) {
-            return extractNode.apply(frame, dots.getDataAt(listIndex), new Object[]{i % lengths[listIndex] + 1}, RLogical.TRUE, RLogical.TRUE);
+        private static Object getVecElement(RAbstractListVector dots, int i, int listIndex, int[] lengths, ExtractVectorNode extractNode) {
+            return extractNode.apply(dots.getDataAt(listIndex), new Object[]{i % lengths[listIndex] + 1}, RLogical.TRUE, RLogical.TRUE);
         }
 
         @Specialization(limit = "5", guards = {"dots.getLength() == dotsLength", "moreArgs.getLength() == moreArgsLength",
@@ -157,7 +157,7 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
         @ExplodeLoop
         private static void prepareElements(VirtualFrame frame, RAbstractListVector dots, int dotsLength, ElementNode[] cachedElementNodeArray, int[] lengths, int i) {
             for (int listIndex = 0; listIndex < dotsLength; listIndex++) {
-                Object vecElement = getVecElement(frame, dots, i, listIndex, lengths, cachedElementNodeArray[listIndex].extractNode);
+                Object vecElement = getVecElement(dots, i, listIndex, lengths, cachedElementNodeArray[listIndex].extractNode);
                 cachedElementNodeArray[listIndex].writeVectorElementNode.execute(frame, vecElement);
             }
         }
@@ -199,7 +199,7 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
             int[] lengths = new int[dotsLength];
             int maxLength = -1;
             for (int i = 0; i < dotsLength; i++) {
-                int length = lengthNode.executeInteger(frame, dots.getDataAt(i));
+                int length = lengthNode.executeInteger(dots.getDataAt(i));
                 if (length > maxLength) {
                     maxLength = length;
                 }
@@ -223,7 +223,7 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
             for (int i = 0; i < maxLength; i++) {
                 /* Evaluate and store the arguments */
                 for (int listIndex = 0; listIndex < dotsLength; listIndex++) {
-                    Object vecElement = getVecElement(frame, dots, i, listIndex, lengths, extractNode);
+                    Object vecElement = getVecElement(dots, i, listIndex, lengths, extractNode);
                     values[listIndex] = vecElement;
                 }
                 /* Now call the function */

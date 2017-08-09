@@ -32,7 +32,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
@@ -131,9 +130,9 @@ public abstract class UpdateField extends RBuiltinNode.Arg3 {
     }
 
     @Specialization
-    protected Object update(VirtualFrame frame, Object container, String field, Object value) {
+    protected Object update(Object container, String field, Object value) {
         Object list = coerceList.profile(container instanceof RAbstractListVector) ? container : coerceList(container);
-        return update.apply(frame, list, new Object[]{field}, value);
+        return update.apply(list, new Object[]{field}, value);
     }
 
     private Object coerceList(Object vector) {

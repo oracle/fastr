@@ -105,6 +105,6 @@ public abstract class AccessField extends RBuiltinNode.Arg2 {
             error.enter();
             throw error(RError.Message.DOLLAR_ATOMIC_VECTORS);
         }
-        return extract.applyAccessField(frame, container, field);
+        return extract.applyAccessField(container, field);
     }
 }
