@@ -383,6 +383,10 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
 
     private static final int DECIMAL_SHIFT = 350;
     private static final double[][] DECIMAL_VALUES = new double[700][10];
+    /**
+     * This array contains the halves minus the unit of least precision, e.g. 0.499999...
+     */
+    private static final double[] HALVES_MINUS_ULP = new double[700];
     private static final double[] DECIMAL_WEIGHTS = new double[700];
 
     static {
@@ -393,6 +397,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
             for (int i2 = 0; i2 < 10; i2++) {
                 DECIMAL_VALUES[i][i2] = Math.pow(10, i - DECIMAL_SHIFT) * i2;
             }
+            HALVES_MINUS_ULP[i] = Double.longBitsToDouble(Double.doubleToLongBits(DECIMAL_VALUES[i][5]) - 1);
         }
     }
 
@@ -453,8 +458,18 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
                 for (int i = 0; i < blanks; i++) {
                     str.append(' ');
                 }
+
+                double pow10 = DECIMAL_WEIGHTS[-log10 + d + DECIMAL_SHIFT];
+                long mantissa = (long) (x * pow10);
                 // round towards next digit instead of truncating
-                double rounded = x + DECIMAL_VALUES[log10 - d - 1 + DECIMAL_SHIFT][5];
+                double rounded;
+                if ((mantissa & 1L) == 0) {
+                    // even
+                    rounded = x + HALVES_MINUS_ULP[log10 - d - 1 + DECIMAL_SHIFT];
+                } else {
+                    rounded = x + DECIMAL_VALUES[log10 - d - 1 + DECIMAL_SHIFT][5];
+                }
+
                 if (Double.isFinite(rounded)) {
                     x = rounded;
                     // the rounding might have modified the exponent
@@ -489,9 +504,16 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
                 str.append((char) ('0' + (log10 / 10)));
                 str.append((char) ('0' + (log10 % 10)));
             } else { /* e == 0 */
-                double intx = Math.floor(x);
                 double pow10 = DECIMAL_WEIGHTS[d + DECIMAL_SHIFT];
-                x = intx + Math.rint((x - intx) * pow10) / pow10;
+                long mantissa = (long) (x * pow10);
+                // round towards next digit instead of truncating
+                if ((mantissa & 1L) == 0) {
+                    // even
+                    x += HALVES_MINUS_ULP[-d - 1 + DECIMAL_SHIFT];
+                } else {
+                    x += DECIMAL_VALUES[-d - 1 + DECIMAL_SHIFT][5];
+                }
+
                 int log10 = x == 0 ? 0 : Math.max((int) Math.log10(x), 0);
                 int blanks = w // target width
                                 - (negated ? 1 : 0) // "-"
@@ -505,19 +527,13 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
                 if (negated) {
                     str.append('-');
                 }
-                String xs = String.format("%." + d + "f", x);
-                for (int i = 0; i <= log10; i++) {
-                    str.append(xs.charAt(i));
+                for (int i = log10; i >= 0; i--) {
+                    x = appendDigit(x, i, str);
                 }
                 if (d > 0) {
                     str.append(cdec);
                     for (int i = 1; i <= d; i++) {
-                        int j = i + log10 + 1;
-                        if (j < xs.length()) {
-                            str.append(xs.charAt(j));
-                        } else {
-                            str.append('0');
-                        }
+                        x = appendDigit(x, -i, str);
                     }
                 }
             }
