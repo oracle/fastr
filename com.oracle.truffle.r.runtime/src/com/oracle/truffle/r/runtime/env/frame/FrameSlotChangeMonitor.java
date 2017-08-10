@@ -374,14 +374,15 @@ public final class FrameSlotChangeMonitor {
         invalidateAllNames(target);
 
         FrameDescriptor oldEnclosingDescriptor = target.getEnclosingFrameDescriptor();
-        assert (oldEnclosingDescriptor == null) == (oldEnclosingFrame == null) : "mismatch " + oldEnclosingDescriptor + " / " + oldEnclosingFrame;
+        FrameDescriptor newEnclosingDescriptor = handleBaseNamespaceEnv(newEnclosingFrame);
+        assert newEnclosingDescriptor == oldEnclosingDescriptor || (oldEnclosingDescriptor == null) == (oldEnclosingFrame == null) : "mismatch " + oldEnclosingDescriptor + " / " + oldEnclosingFrame;
 
         if (oldEnclosingDescriptor != null) {
-            assert oldEnclosingDescriptor == oldEnclosingFrame.getFrameDescriptor() : "mismatch " + oldEnclosingDescriptor + " / " + oldEnclosingFrame.getFrameDescriptor();
+            assert newEnclosingDescriptor == oldEnclosingDescriptor || oldEnclosingDescriptor == oldEnclosingFrame.getFrameDescriptor() : "mismatch " + oldEnclosingDescriptor + " / " +
+                            oldEnclosingFrame.getFrameDescriptor();
             FrameDescriptorMetaData oldEnclosing = getMetaData(oldEnclosingDescriptor);
             oldEnclosing.subDescriptors.remove(descriptor);
         }
-        FrameDescriptor newEnclosingDescriptor = handleBaseNamespaceEnv(newEnclosingFrame);
         target.updateEnclosingFrameDescriptor(newEnclosingDescriptor);
 
         if (newEnclosingDescriptor != null) {
