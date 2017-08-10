@@ -22,122 +22,39 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import java.nio.charset.StandardCharsets;
-
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.MessageResolution;
-import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.interop.UnsafeAdapter;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_CFactory.TruffleNFI_InvokeCNodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
-import sun.misc.Unsafe;
-
 public class TruffleNFI_C implements CRFFI {
 
-    @MessageResolution(receiverType = StringWrapper.class)
-    public static class StringWrapperMR {
+    private static final String[] SIGNATURES = new String[32];
 
-        @Resolve(message = "IS_POINTER")
-        public abstract static class StringWrapperNativeIsPointerNode extends Node {
-            protected Object access(@SuppressWarnings("unused") StringWrapper receiver) {
-                return true;
+    private static String getSignatureForArity(int arity) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (arity >= SIGNATURES.length || SIGNATURES[arity] == null) {
+            StringBuilder str = new StringBuilder().append('(');
+            for (int i = 0; i < arity; i++) {
+                str.append(i > 0 ? ", " : "");
+                str.append("pointer");
             }
-        }
-
-        @Resolve(message = "AS_POINTER")
-        public abstract static class StringWrapperNativeAsPointerNode extends Node {
-            protected Object access(StringWrapper receiver) {
-                return receiver.asPointer();
+            String signature = str.append("): void").toString();
+            if (arity < SIGNATURES.length) {
+                SIGNATURES[arity] = signature;
             }
-        }
-
-        @CanResolve
-        public abstract static class StringWrapperCheck extends Node {
-
-            protected static boolean test(TruffleObject receiver) {
-                return receiver instanceof StringWrapper;
-            }
-        }
-    }
-
-    public static final class StringWrapper implements TruffleObject {
-
-        private final RAbstractStringVector vector;
-        private long address;
-
-        public StringWrapper(RAbstractStringVector vector) {
-            this.vector = vector;
-        }
-
-        @Override
-        public ForeignAccess getForeignAccess() {
-            return StringWrapperMRForeign.ACCESS;
-        }
-
-        public long asPointer() {
-            if (address == 0) {
-                address = allocate();
-            }
-            return address;
-        }
-
-        @TruffleBoundary
-        private long allocate() {
-            int length = vector.getLength();
-            int size = length * 8;
-            byte[][] bytes = new byte[length][];
-            for (int i = 0; i < length; i++) {
-                String element = vector.getDataAt(i);
-                bytes[i] = element.getBytes(StandardCharsets.US_ASCII);
-                size += bytes[i].length + 1;
-            }
-            long memory = UnsafeAdapter.UNSAFE.allocateMemory(size);
-            long ptr = memory + length * 8; // start of the actual character data
-            for (int i = 0; i < length; i++) {
-                UnsafeAdapter.UNSAFE.putLong(memory + i * 8, ptr);
-                UnsafeAdapter.UNSAFE.copyMemory(bytes[i], Unsafe.ARRAY_BYTE_BASE_OFFSET, null, ptr, bytes[i].length);
-                ptr += bytes[i].length;
-                UnsafeAdapter.UNSAFE.putByte(ptr++, (byte) 0);
-            }
-            assert ptr == memory + size : "should have filled everything";
-            return memory;
-        }
-
-        public RAbstractStringVector copyBack(RAbstractStringVector original) {
-            if (address == 0) {
-                return original;
-            } else {
-                RStringVector result = original.materialize();
-                String[] data = result.isTemporary() ? result.getDataWithoutCopying() : result.getDataCopy();
-                for (int i = 0; i < data.length; i++) {
-                    long ptr = UnsafeAdapter.UNSAFE.getLong(address + i * 8);
-                    int length = 0;
-                    while (UnsafeAdapter.UNSAFE.getByte(ptr + length) != 0) {
-                        length++;
-                    }
-                    byte[] bytes = new byte[length];
-                    UnsafeAdapter.UNSAFE.copyMemory(null, ptr, bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, length);
-                    data[i] = new String(bytes, StandardCharsets.US_ASCII);
-                }
-                UnsafeAdapter.UNSAFE.freeMemory(address);
-                return RDataFactory.createStringVector(data, true);
-            }
+            return signature;
+        } else {
+            return SIGNATURES[arity];
         }
     }
 
@@ -145,31 +62,25 @@ public class TruffleNFI_C implements CRFFI {
 
         @Child private Node bindNode = Message.createInvoke(1).createNode();
 
-        @Override
-        protected Object getNativeArgument(int index, ArgumentType type, RAbstractAtomicVector vector) {
-            if (type == ArgumentType.VECTOR_STRING) {
-                return new StringWrapper((RAbstractStringVector) vector);
-            } else {
-                return super.getNativeArgument(index, type, vector);
+        @TruffleBoundary
+        protected TruffleObject getFunction(TruffleObject address, int arity) {
+            // cache signatures
+            try {
+                return (TruffleObject) ForeignAccess.sendInvoke(bindNode, address, "bind", getSignatureForArity(arity));
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
 
-        @Override
-        protected Object postProcessArgument(ArgumentType type, RAbstractAtomicVector vector, Object nativeArgument) {
-            if (type == ArgumentType.VECTOR_STRING) {
-                return ((StringWrapper) nativeArgument).copyBack((RAbstractStringVector) vector);
-            } else {
-                return super.postProcessArgument(type, vector, nativeArgument);
-            }
-        }
-
-        @Specialization(guards = "args.length == 0")
-        protected void invokeCall0(NativeCallInfo nativeCallInfo, @SuppressWarnings("unused") Object[] args, @SuppressWarnings("unused") boolean hasStrings,
-                        @Cached("createExecute(args.length)") Node executeNode) {
+        @Specialization(guards = {"args.length == cachedArgsLength", "nativeCallInfo.address.asTruffleObject() == cachedAddress"})
+        protected void invokeCallCached(@SuppressWarnings("unused") NativeCallInfo nativeCallInfo, Object[] args,
+                        @SuppressWarnings("unused") @Cached("args.length") int cachedArgsLength,
+                        @Cached("createExecute(cachedArgsLength)") Node executeNode,
+                        @SuppressWarnings("unused") @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject cachedAddress,
+                        @Cached("getFunction(cachedAddress, cachedArgsLength)") TruffleObject cachedFunction) {
             synchronized (TruffleNFI_Call.class) {
                 try {
-                    TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode, nativeCallInfo.address.asTruffleObject(), "bind", "(): void");
-                    ForeignAccess.sendExecute(executeNode, callFunction);
+                    ForeignAccess.sendExecute(executeNode, cachedFunction, args);
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
                 }
@@ -177,14 +88,12 @@ public class TruffleNFI_C implements CRFFI {
         }
 
         @Specialization(limit = "99", guards = "args.length == cachedArgsLength")
-        protected void invokeCall1(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean hasStrings,
+        protected void invokeCallCachedLength(NativeCallInfo nativeCallInfo, Object[] args,
                         @Cached("args.length") int cachedArgsLength,
                         @Cached("createExecute(cachedArgsLength)") Node executeNode) {
             synchronized (TruffleNFI_Call.class) {
                 try {
-                    Object[] nargs = new Object[cachedArgsLength];
-                    TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode, nativeCallInfo.address.asTruffleObject(), "bind", getSignature(args, nargs));
-                    ForeignAccess.sendExecute(executeNode, callFunction, nargs);
+                    ForeignAccess.sendExecute(executeNode, getFunction(nativeCallInfo.address.asTruffleObject(), cachedArgsLength), args);
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
                 }
@@ -194,30 +103,6 @@ public class TruffleNFI_C implements CRFFI {
         public static Node createExecute(int n) {
             return Message.createExecute(n).createNode();
         }
-    }
-
-    @TruffleBoundary
-    private static String getSignature(Object[] args, Object[] nargs) {
-        StringBuilder sb = new StringBuilder();
-        sb.append('(');
-        for (int i = 0; i < args.length; i++) {
-            Object arg = args[i];
-            if (arg instanceof int[]) {
-                sb.append("[sint32]");
-            } else if (arg instanceof double[]) {
-                sb.append("[double]");
-            } else if (arg instanceof StringWrapper) {
-                sb.append("pointer");
-            } else {
-                throw RInternalError.unimplemented(".C type: " + arg.getClass().getSimpleName());
-            }
-            nargs[i] = JavaInterop.asTruffleObject(arg);
-            if (i < args.length - 1) {
-                sb.append(", ");
-            }
-        }
-        sb.append("): void");
-        return sb.toString();
     }
 
     @Override

@@ -27,7 +27,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.FortranAndCFunctionsFactory.FortranResultNamesSetterNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.LookupAdapter.ExtractNativeCallInfoNode;
-import com.oracle.truffle.r.nodes.builtin.base.foreign.LookupAdapterFactory.ExtractNativeCallInfoNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -56,7 +55,6 @@ public class FortranAndCFunctions {
 
     protected abstract static class CRFFIAdapter extends RBuiltinNode.Arg6 {
 
-        @Child protected ExtractNativeCallInfoNode extractSymbolInfo = ExtractNativeCallInfoNodeGen.create();
         @Child protected CRFFI.InvokeCNode invokeCNode = RFFIFactory.getCRFFI().createInvokeCNode();
 
         @Override
@@ -101,16 +99,15 @@ public class FortranAndCFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
-        protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding,
-                        @Cached("symbol") RList cached,
+        protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, @Cached("symbol") RList cached,
                         @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
             return resNamesSetter.execute(builtin.call(frame, args), args);
         }
 
         @Specialization(guards = "lookupBuiltin(symbol) == null")
-        protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage,
-                        @SuppressWarnings("unused") RMissing encoding) {
-            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(frame, symbol);
+        protected RList c(RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage, @SuppressWarnings("unused") RMissing encoding,
+                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
+            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
             return invokeCNode.dispatch(nativeCallInfo, naok, dup, args);
         }
 
@@ -179,8 +176,9 @@ public class FortranAndCFunctions {
         }
 
         @Specialization
-        protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage, @SuppressWarnings("unused") RMissing encoding) {
-            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(frame, symbol);
+        protected RList c(RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage, @SuppressWarnings("unused") RMissing encoding,
+                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
+            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
             return invokeCNode.dispatch(nativeCallInfo, naok, dup, args);
         }
 

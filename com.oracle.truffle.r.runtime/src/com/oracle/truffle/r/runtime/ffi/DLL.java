@@ -13,6 +13,7 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -190,6 +191,7 @@ public class DLL {
         private boolean forceSymbols;
         private final DotSymbol[][] nativeSymbols = new DotSymbol[NativeSymbolType.values().length][];
         private ArrayList<CEntry> cEntryTable = null;
+        private final HashSet<String> unsuccessfulLookups = new HashSet<>();
 
         private DLLInfo(String name, String path, boolean dynamicLookup, Object handle) {
             this.id = ID.getAndIncrement();
@@ -581,7 +583,7 @@ public class DLL {
     }
 
     public static final class RFindSymbolNode extends Node {
-        @Child RdlsymNode rdlsymNode = new RdlsymNode();
+        @Child private RdlsymNode rdlsymNode = new RdlsymNode();
 
         /**
          * Directly analogous to the GnuR function {@code R_FindSymbol}.
@@ -681,9 +683,13 @@ public class DLL {
                 mName = name + "_";
             }
             try {
+                if (dllInfo.unsuccessfulLookups.contains(mName)) {
+                    return SYMBOL_NOT_FOUND;
+                }
                 SymbolHandle symValue = dlSymNode.execute(dllInfo.handle, mName);
                 return symValue;
             } catch (UnsatisfiedLinkError ex) {
+                dllInfo.unsuccessfulLookups.add(mName);
                 return SYMBOL_NOT_FOUND;
             }
         }

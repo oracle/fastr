@@ -70,6 +70,7 @@ import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
 import com.oracle.truffle.r.library.utils.UnzipNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.foreign.LookupAdapter.ExtractNativeCallInfoNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -653,10 +654,11 @@ public class CallAndExternalFunctions {
          */
         @SuppressWarnings("unused")
         @Specialization(limit = "2", guards = {"cached == symbol", "builtin == null"})
-        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
+        protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
                         @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
-                        @Cached("extractSymbolInfo.execute(frame, symbol)") NativeCallInfo nativeCallInfo) {
+                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
+                        @Cached("extractSymbolInfo.execute(symbol)") NativeCallInfo nativeCallInfo) {
             return callRFFINode.execute(nativeCallInfo, args.getArguments());
         }
 
@@ -666,12 +668,13 @@ public class CallAndExternalFunctions {
          */
         @SuppressWarnings("unused")
         @Specialization(replaces = {"callNamedFunction", "doExternal"})
-        protected Object callNamedFunctionGeneric(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName) {
+        protected Object callNamedFunctionGeneric(RList symbol, RArgsValuesAndNames args, Object packageName,
+                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
             RExternalBuiltinNode builtin = lookupBuiltin(symbol);
             if (builtin != null) {
                 throw RInternalError.shouldNotReachHere("Cache for .Calls with FastR reimplementation (lookupBuiltin(...) != null) exceeded the limit");
             }
-            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(frame, symbol);
+            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
             return callRFFINode.execute(nativeCallInfo, args.getArguments());
         }
 
@@ -786,9 +789,10 @@ public class CallAndExternalFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached == symbol"})
-        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
+        protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
-                        @Cached("extractSymbolInfo.execute(frame, symbol)") NativeCallInfo nativeCallInfo) {
+                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
+                        @Cached("extractSymbolInfo.execute(symbol)") NativeCallInfo nativeCallInfo) {
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
             return callRFFINode.execute(nativeCallInfo, new Object[]{list});
         }
@@ -882,9 +886,10 @@ public class CallAndExternalFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached == symbol"})
-        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
+        protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
-                        @Cached("extractSymbolInfo.execute(frame, symbol)") NativeCallInfo nativeCallInfo) {
+                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
+                        @Cached("extractSymbolInfo.execute(symbol)") NativeCallInfo nativeCallInfo) {
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
             return callRFFINode.execute(nativeCallInfo, new Object[]{CALL, getOp(), list, RHO});
         }
@@ -938,8 +943,9 @@ public class CallAndExternalFunctions {
         }
 
         @Specialization
-        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(frame, symbol);
+        protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
+                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
+            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
             return callRFFINode.execute(nativeCallInfo, new Object[]{list});
         }
@@ -1000,8 +1006,9 @@ public class CallAndExternalFunctions {
         }
 
         @Specialization
-        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName) {
-            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(frame, symbol);
+        protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
+                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
+            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
             return callRFFINode.execute(nativeCallInfo, args.getArguments());
         }
 

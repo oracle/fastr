@@ -24,8 +24,6 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guaranteeInstanceOf;
 
-import java.nio.charset.StandardCharsets;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -37,18 +35,12 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
-import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
-import com.oracle.truffle.r.ffi.impl.interop.UnsafeAdapter;
-import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_C.StringWrapper;
 import com.oracle.truffle.r.ffi.impl.upcalls.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
@@ -56,8 +48,6 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-
-import sun.misc.Unsafe;
 
 public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 

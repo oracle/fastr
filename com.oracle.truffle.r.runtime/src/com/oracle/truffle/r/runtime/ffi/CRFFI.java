@@ -22,25 +22,330 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.CanResolve;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.Resolve;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+
+import sun.misc.Unsafe;
+
+@MessageResolution(receiverType = TemporaryWrapper.class)
+class TemporaryWrapperMR {
+
+    @Resolve(message = "IS_POINTER")
+    public abstract static class TemporaryWrapperIsPointerNode extends Node {
+        protected Object access(@SuppressWarnings("unused") TemporaryWrapper receiver) {
+            return true;
+        }
+    }
+
+    @Resolve(message = "AS_POINTER")
+    public abstract static class TemporaryWrapperAsPointerNode extends Node {
+        private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
+        protected Object access(TemporaryWrapper receiver) {
+            long address = receiver.address;
+            if (profile.profile(address == 0)) {
+                receiver.address = address = receiver.allocate();
+            }
+            return address;
+        }
+    }
+
+    @Resolve(message = "READ")
+    public abstract static class TemporaryWrapperReadNode extends Node {
+        protected Object access(TemporaryWrapper receiver, long index) {
+            return receiver.read(index);
+        }
+
+        protected Object access(TemporaryWrapper receiver, int index) {
+            return receiver.read(index);
+        }
+    }
+
+    @Resolve(message = "WRITE")
+    public abstract static class TemporaryWrapperWriteNode extends Node {
+        protected Object access(TemporaryWrapper receiver, long index, Object value) {
+            receiver.write(index, value);
+            return value;
+        }
+
+        protected Object access(TemporaryWrapper receiver, int index, Object value) {
+            receiver.write(index, value);
+            return value;
+        }
+    }
+
+    @CanResolve
+    public abstract static class TemporaryWrapperCheck extends Node {
+        protected static boolean test(TruffleObject receiver) {
+            return receiver instanceof TemporaryWrapper;
+        }
+    }
+}
+
+abstract class TemporaryWrapper implements TruffleObject {
+
+    protected long address;
+    protected RAbstractAtomicVector vector;
+
+    public TemporaryWrapper(RAbstractAtomicVector vector) {
+        this.vector = vector;
+    }
+
+    public abstract long allocate();
+
+    public Object read(long index) {
+        throw RInternalError.unimplemented("read at " + index);
+    }
+
+    public void write(long index, Object value) {
+        throw RInternalError.unimplemented("write of value " + value + " at index " + index);
+    }
+
+    @Override
+    public final ForeignAccess getForeignAccess() {
+        return TemporaryWrapperMRForeign.ACCESS;
+    }
+
+    public final RAbstractAtomicVector cleanup() {
+        if (address == 0) {
+            return vector;
+        } else {
+            return copyBack();
+        }
+    }
+
+    protected abstract RAbstractAtomicVector copyBack();
+}
+
+final class StringWrapper extends TemporaryWrapper {
+
+    public StringWrapper(RAbstractStringVector vector) {
+        super(vector);
+    }
+
+    @Override
+    @TruffleBoundary
+    public long allocate() {
+        RAbstractStringVector v = (RAbstractStringVector) vector;
+        int length = v.getLength();
+        int size = length * 8;
+        byte[][] bytes = new byte[length][];
+        for (int i = 0; i < length; i++) {
+            String element = v.getDataAt(i);
+            bytes[i] = element.getBytes(StandardCharsets.US_ASCII);
+            size += bytes[i].length + 1;
+        }
+        long memory = UnsafeAdapter.UNSAFE.allocateMemory(size);
+        long ptr = memory + length * 8; // start of the actual character data
+        for (int i = 0; i < length; i++) {
+            UnsafeAdapter.UNSAFE.putLong(memory + i * 8, ptr);
+            UnsafeAdapter.UNSAFE.copyMemory(bytes[i], Unsafe.ARRAY_BYTE_BASE_OFFSET, null, ptr, bytes[i].length);
+            ptr += bytes[i].length;
+            UnsafeAdapter.UNSAFE.putByte(ptr++, (byte) 0);
+        }
+        assert ptr == memory + size : "should have filled everything";
+        return memory;
+    }
+
+    @Override
+    @TruffleBoundary
+    protected RStringVector copyBack() {
+        RStringVector result = ((RAbstractStringVector) vector).materialize();
+        String[] data = result.isTemporary() ? result.getDataWithoutCopying() : result.getDataCopy();
+        for (int i = 0; i < data.length; i++) {
+            long ptr = UnsafeAdapter.UNSAFE.getLong(address + i * 8);
+            int length = 0;
+            while (UnsafeAdapter.UNSAFE.getByte(ptr + length) != 0) {
+                length++;
+            }
+            byte[] bytes = new byte[length];
+            UnsafeAdapter.UNSAFE.copyMemory(null, ptr, bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, length);
+            data[i] = new String(bytes, StandardCharsets.US_ASCII);
+        }
+        UnsafeAdapter.UNSAFE.freeMemory(address);
+        return RDataFactory.createStringVector(data, true);
+    }
+}
+
+final class IntWrapper extends TemporaryWrapper {
+
+    public IntWrapper(RAbstractIntVector vector) {
+        super(vector);
+    }
+
+    @Override
+    @TruffleBoundary
+    public long allocate() {
+        RAbstractIntVector v = (RAbstractIntVector) vector;
+        int length = v.getLength();
+        long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_INT_INDEX_SCALE);
+        for (int i = 0; i < length; i++) {
+            UnsafeAdapter.UNSAFE.putInt(memory + (i * Unsafe.ARRAY_INT_INDEX_SCALE), v.getDataAt(i));
+        }
+        return memory;
+    }
+
+    @Override
+    @TruffleBoundary
+    protected RIntVector copyBack() {
+        RIntVector result = ((RAbstractIntVector) vector).materialize();
+        int[] data = result.isTemporary() ? result.getDataWithoutCopying() : result.getDataCopy();
+        UnsafeAdapter.UNSAFE.copyMemory(null, address, data, Unsafe.ARRAY_INT_BASE_OFFSET, vector.getLength() * Unsafe.ARRAY_INT_INDEX_SCALE);
+        UnsafeAdapter.UNSAFE.freeMemory(address);
+        return RDataFactory.createIntVector(data, false);
+    }
+}
+
+final class LogicalWrapper extends TemporaryWrapper {
+
+    public LogicalWrapper(RAbstractLogicalVector vector) {
+        super(vector);
+    }
+
+    @Override
+    @TruffleBoundary
+    public long allocate() {
+        RAbstractLogicalVector v = (RAbstractLogicalVector) vector;
+        int length = v.getLength();
+        long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_INT_INDEX_SCALE);
+        for (int i = 0; i < length; i++) {
+            UnsafeAdapter.UNSAFE.putInt(memory + (i * Unsafe.ARRAY_INT_INDEX_SCALE), RRuntime.logical2int(v.getDataAt(i)));
+        }
+        return memory;
+    }
+
+    @Override
+    @TruffleBoundary
+    protected RLogicalVector copyBack() {
+        RLogicalVector result = ((RAbstractLogicalVector) vector).materialize();
+        byte[] data = result.isTemporary() ? result.getDataWithoutCopying() : result.getDataCopy();
+        int length = vector.getLength();
+        for (int i = 0; i < length; i++) {
+            data[i] = RRuntime.int2logical(UnsafeAdapter.UNSAFE.getInt(address + (i * Unsafe.ARRAY_INT_INDEX_SCALE)));
+        }
+        UnsafeAdapter.UNSAFE.freeMemory(address);
+        return RDataFactory.createLogicalVector(data, false);
+    }
+}
+
+final class DoubleWrapper extends TemporaryWrapper {
+
+    public DoubleWrapper(RAbstractDoubleVector vector) {
+        super(vector);
+    }
+
+    @Override
+    @TruffleBoundary
+    public long allocate() {
+        RAbstractDoubleVector v = (RAbstractDoubleVector) vector;
+        int length = v.getLength();
+        long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+        for (int i = 0; i < length; i++) {
+            UnsafeAdapter.UNSAFE.putDouble(memory + (i * Unsafe.ARRAY_DOUBLE_INDEX_SCALE), v.getDataAt(i));
+        }
+        return memory;
+    }
+
+    @Override
+    @TruffleBoundary
+    protected RDoubleVector copyBack() {
+        RDoubleVector result = ((RAbstractDoubleVector) vector).materialize();
+        double[] data = result.isTemporary() ? result.getDataWithoutCopying() : result.getDataCopy();
+        UnsafeAdapter.UNSAFE.copyMemory(null, address, data, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vector.getLength() * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+        UnsafeAdapter.UNSAFE.freeMemory(address);
+        return RDataFactory.createDoubleVector(data, false);
+    }
+}
+
+final class ComplexWrapper extends TemporaryWrapper {
+
+    public ComplexWrapper(RAbstractComplexVector vector) {
+        super(vector);
+    }
+
+    @Override
+    @TruffleBoundary
+    public long allocate() {
+        RAbstractComplexVector v = (RAbstractComplexVector) vector;
+        int length = v.getLength();
+        long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE * 2);
+        for (int i = 0; i < length; i++) {
+            RComplex element = v.getDataAt(i);
+            UnsafeAdapter.UNSAFE.putDouble(memory + (i * Unsafe.ARRAY_DOUBLE_INDEX_SCALE * 2), element.getRealPart());
+            UnsafeAdapter.UNSAFE.putDouble(memory + (i * Unsafe.ARRAY_DOUBLE_INDEX_SCALE * 2) + 8, element.getImaginaryPart());
+        }
+        return memory;
+    }
+
+    @Override
+    @TruffleBoundary
+    protected RComplexVector copyBack() {
+        RComplexVector result = ((RAbstractComplexVector) vector).materialize();
+        double[] data = result.isTemporary() ? result.getDataWithoutCopying() : result.getDataCopy();
+        UnsafeAdapter.UNSAFE.copyMemory(null, address, data, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vector.getLength() * 2 * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+        UnsafeAdapter.UNSAFE.freeMemory(address);
+        return RDataFactory.createComplexVector(data, false);
+    }
+}
+
+final class RawWrapper extends TemporaryWrapper {
+
+    public RawWrapper(RAbstractRawVector vector) {
+        super(vector);
+    }
+
+    @Override
+    @TruffleBoundary
+    public long allocate() {
+        RAbstractRawVector v = (RAbstractRawVector) vector;
+        int length = v.getLength();
+        long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_BYTE_INDEX_SCALE);
+        for (int i = 0; i < length; i++) {
+            UnsafeAdapter.UNSAFE.putByte(memory + (i * Unsafe.ARRAY_BYTE_INDEX_SCALE), v.getRawDataAt(i));
+        }
+        return memory;
+    }
+
+    @Override
+    @TruffleBoundary
+    protected RRawVector copyBack() {
+        RRawVector result = ((RAbstractRawVector) vector).materialize();
+        byte[] data = result.isTemporary() ? result.getDataWithoutCopying() : result.getDataCopy();
+        UnsafeAdapter.UNSAFE.copyMemory(null, address, data, Unsafe.ARRAY_BYTE_BASE_OFFSET, vector.getLength() * Unsafe.ARRAY_BYTE_INDEX_SCALE);
+        UnsafeAdapter.UNSAFE.freeMemory(address);
+        return RDataFactory.createRawVector(data);
+    }
+}
 
 /**
  * Support for the {.C} and {.Fortran} calls.
@@ -49,113 +354,38 @@ public interface CRFFI {
 
     public static abstract class InvokeCNode extends RBaseNode {
 
-        public enum ArgumentType {
-            VECTOR_DOUBLE,
-            VECTOR_INT,
-            VECTOR_LOGICAL,
-            VECTOR_STRING;
-        }
-
-        private static final Charset charset = StandardCharsets.US_ASCII;
-
         /**
          * Invoke the native method identified by {@code symbolInfo} passing it the arguments in
-         * {@code args}. The values in {@code args} should be native types,e.g., {@code double[]}
-         * not {@code RDoubleVector}. Strings are already converted to 2-dimensional byte arrays.
-         *
-         * @param hasStrings if {@code true}, then the {@code args} array may contain one or more
-         *            values of type {@code byte[][]}, which represent arrays of strings in ASCII
-         *            encoding.
+         * {@code args}. The values in {@code args} should be support the IS_POINTER/AS_POINTER
+         * messages.
          */
-        protected abstract void execute(NativeCallInfo nativeCallInfo, Object[] args, boolean hasStrings);
+        protected abstract void execute(NativeCallInfo nativeCallInfo, Object[] args);
 
         @TruffleBoundary
-        protected Object getNativeArgument(int index, ArgumentType type, RAbstractAtomicVector vector) {
-            CompilerAsserts.neverPartOfCompilation();
-            switch (type) {
-                case VECTOR_DOUBLE: {
-                    double[] data = ((RAbstractDoubleVector) vector).materialize().getDataCopy();
-                    for (int i = 0; i < data.length; i++) {
-                        if (!RRuntime.isFinite(data[i])) {
-                            throw error(RError.Message.NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL, index + 1);
-                        }
-                    }
-                    return data;
-                }
-                case VECTOR_INT: {
-                    int[] data = ((RAbstractIntVector) vector).materialize().getDataCopy();
-                    for (int i = 0; i < data.length; i++) {
-                        if (RRuntime.isNA(data[i])) {
-                            throw error(RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, index + 1);
-                        }
-                    }
-                    return data;
-                }
-                case VECTOR_LOGICAL: {
-                    // passed as int[]
-                    byte[] data = ((RAbstractLogicalVector) vector).materialize().getDataWithoutCopying();
-                    int[] dataAsInt = new int[data.length];
-                    for (int j = 0; j < data.length; j++) {
-                        // An NA is an error but the error handling happens in checkNAs
-                        dataAsInt[j] = RRuntime.isNA(data[j]) ? RRuntime.INT_NA : data[j];
-                    }
-                    for (int i = 0; i < dataAsInt.length; i++) {
-                        if (RRuntime.isNA(dataAsInt[i])) {
-                            throw error(RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, index + 1);
-                        }
-                    }
-                    return dataAsInt;
-                }
-                case VECTOR_STRING: {
-                    RAbstractStringVector data = (RAbstractStringVector) vector;
-                    for (int i = 0; i < data.getLength(); i++) {
-                        if (RRuntime.isNA(data.getDataAt(i))) {
-                            throw error(RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, index + 1);
-                        }
-                    }
-                    return encodeStrings((RAbstractStringVector) vector);
-                }
-                default:
-                    throw RInternalError.shouldNotReachHere();
+        protected TemporaryWrapper getNativeArgument(int index, Object vector) {
+            if (vector instanceof RAbstractDoubleVector) {
+                return new DoubleWrapper((RAbstractDoubleVector) vector);
+            } else if (vector instanceof RAbstractIntVector) {
+                return new IntWrapper((RAbstractIntVector) vector);
+            } else if (vector instanceof RAbstractLogicalVector) {
+                return new LogicalWrapper((RAbstractLogicalVector) vector);
+            } else if (vector instanceof RAbstractComplexVector) {
+                return new ComplexWrapper((RAbstractComplexVector) vector);
+            } else if (vector instanceof RAbstractStringVector) {
+                return new StringWrapper((RAbstractStringVector) vector);
+            } else if (vector instanceof RAbstractRawVector) {
+                return new RawWrapper((RAbstractRawVector) vector);
+            } else if (vector instanceof String) {
+                return new StringWrapper(RDataFactory.createStringVectorFromScalar((String) vector));
+            } else if (vector instanceof Double) {
+                return new DoubleWrapper(RDataFactory.createDoubleVectorFromScalar((double) vector));
+            } else if (vector instanceof Integer) {
+                return new IntWrapper(RDataFactory.createIntVectorFromScalar((int) vector));
+            } else if (vector instanceof Byte) {
+                return new LogicalWrapper(RDataFactory.createLogicalVectorFromScalar((byte) vector));
+            } else {
+                throw error(RError.Message.UNIMPLEMENTED_ARG_TYPE, index + 1);
             }
-        }
-
-        private Object[] getNativeArguments(Object[] array, ArgumentType[] argTypes) {
-            Object[] nativeArgs = new Object[array.length];
-            for (int i = 0; i < array.length; i++) {
-                nativeArgs[i] = getNativeArgument(i, argTypes[i], (RAbstractAtomicVector) array[i]);
-            }
-            return nativeArgs;
-        }
-
-        @TruffleBoundary
-        protected Object postProcessArgument(ArgumentType type, RAbstractAtomicVector vector, Object nativeArgument) {
-            switch (type) {
-                case VECTOR_STRING:
-                    return ((RAbstractStringVector) vector).materialize().copyResetData(decodeStrings((byte[][]) nativeArgument));
-                case VECTOR_DOUBLE:
-                    return ((RAbstractDoubleVector) vector).materialize().copyResetData((double[]) nativeArgument);
-                case VECTOR_INT:
-                    return ((RAbstractIntVector) vector).materialize().copyResetData((int[]) nativeArgument);
-                case VECTOR_LOGICAL: {
-                    int[] intData = (int[]) nativeArgument;
-                    byte[] byteData = new byte[intData.length];
-                    for (int j = 0; j < intData.length; j++) {
-                        byteData[j] = RRuntime.isNA(intData[j]) ? RRuntime.LOGICAL_NA : RRuntime.asLogical(intData[j] != 0);
-                    }
-                    return ((RAbstractLogicalVector) vector).materialize().copyResetData(byteData);
-                }
-                default:
-                    throw RInternalError.shouldNotReachHere();
-            }
-        }
-
-        private Object[] postProcessArguments(Object[] array, ArgumentType[] argTypes, Object[] nativeArgs) {
-            Object[] results = new Object[array.length];
-            for (int i = 0; i < array.length; i++) {
-                results[i] = postProcessArgument(argTypes[i], (RAbstractAtomicVector) array[i], nativeArgs[i]);
-            }
-            return results;
         }
 
         @TruffleBoundary
@@ -164,52 +394,22 @@ public interface CRFFI {
             boolean dupArgs = RRuntime.fromLogical(dup);
             @SuppressWarnings("unused")
             boolean checkNA = RRuntime.fromLogical(naok);
+
             // Analyze the args, making copies (ignoring dup for now)
             Object[] array = new Object[args.getLength()];
-            ArgumentType[] argTypes = new ArgumentType[array.length];
-            boolean hasStrings = false;
             for (int i = 0; i < array.length; i++) {
-                Object arg = args.getArgument(i);
-                ArgumentType type;
-                RAbstractAtomicVector vector;
-                if (arg instanceof RAbstractDoubleVector) {
-                    vector = (RAbstractDoubleVector) arg;
-                    type = ArgumentType.VECTOR_DOUBLE;
-                } else if (arg instanceof RAbstractIntVector) {
-                    vector = (RAbstractIntVector) arg;
-                    type = ArgumentType.VECTOR_INT;
-                } else if (arg instanceof RAbstractLogicalVector) {
-                    vector = (RAbstractLogicalVector) arg;
-                    type = ArgumentType.VECTOR_LOGICAL;
-                } else if (arg instanceof RAbstractStringVector) {
-                    hasStrings = true;
-                    vector = (RAbstractStringVector) arg;
-                    type = ArgumentType.VECTOR_STRING;
-                } else if (arg instanceof String) {
-                    hasStrings = true;
-                    vector = RDataFactory.createStringVectorFromScalar((String) arg);
-                    type = ArgumentType.VECTOR_STRING;
-                } else if (arg instanceof Double) {
-                    vector = RDataFactory.createDoubleVectorFromScalar((double) arg);
-                    type = ArgumentType.VECTOR_DOUBLE;
-                } else if (arg instanceof Integer) {
-                    vector = RDataFactory.createIntVectorFromScalar((int) arg);
-                    type = ArgumentType.VECTOR_INT;
-                } else if (arg instanceof Byte) {
-                    vector = RDataFactory.createLogicalVectorFromScalar((byte) arg);
-                    type = ArgumentType.VECTOR_LOGICAL;
-                } else {
-                    throw error(RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
-                }
-                argTypes[i] = type;
-                array[i] = vector;
+                array[i] = getNativeArgument(i, args.getArgument(i));
             }
-            Object[] nativeArgs = getNativeArguments(array, argTypes);
-            execute(nativeCallInfo, nativeArgs, hasStrings);
+
+            execute(nativeCallInfo, array);
+
             // we have to assume that the native method updated everything
-            RStringVector listNames = validateArgNames(array.length, args.getSignature());
-            Object[] results = postProcessArguments(array, argTypes, nativeArgs);
-            return RDataFactory.createList(results, listNames);
+            Object[] results = new Object[array.length];
+            for (int i = 0; i < array.length; i++) {
+                results[i] = ((TemporaryWrapper) array[i]).cleanup();
+            }
+
+            return RDataFactory.createList(results, validateArgNames(array.length, args.getSignature()));
         }
 
         private static RStringVector validateArgNames(int argsLength, ArgumentsSignature signature) {
@@ -223,34 +423,6 @@ public interface CRFFI {
             }
             return RDataFactory.createStringVector(listArgNames, RDataFactory.COMPLETE_VECTOR);
         }
-
-        private static Object encodeStrings(RAbstractStringVector vector) {
-            byte[][] result = new byte[vector.getLength()][];
-            for (int i = 0; i < vector.getLength(); i++) {
-                result[i] = encodeString(vector.getDataAt(i));
-            }
-            return result;
-        }
-
-        private static byte[] encodeString(String str) {
-            byte[] bytes = str.getBytes(charset);
-            byte[] result = new byte[bytes.length + 1];
-            System.arraycopy(bytes, 0, result, 0, bytes.length);
-            return result;
-        }
-
-        private static String[] decodeStrings(byte[][] bytes) {
-            String[] result = new String[bytes.length];
-            for (int i = 0; i < bytes.length; i++) {
-                int length = 0;
-                while (length < bytes[i].length && bytes[i][length] != 0) {
-                    length++;
-                }
-                result[i] = new String(bytes[i], 0, length, charset);
-            }
-            return result;
-        }
-
     }
 
     InvokeCNode createInvokeCNode();

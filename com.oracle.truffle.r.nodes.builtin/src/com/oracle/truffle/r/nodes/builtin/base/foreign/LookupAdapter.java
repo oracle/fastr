@@ -23,10 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodes;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
@@ -34,7 +31,6 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.foreign.LookupAdapterFactory.ExtractNativeCallInfoNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -72,7 +68,6 @@ interface Lookup {
  * still implemented by native code.
  */
 abstract class LookupAdapter extends RBuiltinNode.Arg3 implements Lookup {
-    @Child protected ExtractNativeCallInfoNode extractSymbolInfo = ExtractNativeCallInfoNodeGen.create();
 
     protected static class UnimplementedExternal extends RExternalBuiltinNode {
         private final String name;
@@ -139,35 +134,19 @@ abstract class LookupAdapter extends RBuiltinNode.Arg3 implements Lookup {
      * Extracts the salient information needed for a native call from the {@link RList} value
      * provided from R.
      */
-    public abstract static class ExtractNativeCallInfoNode extends Node {
+    public static final class ExtractNativeCallInfoNode extends Node {
         @Child private ExtractVectorNode nameExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
         @Child private ExtractVectorNode addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
         @Child private ExtractVectorNode packageExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
         @Child private ExtractVectorNode infoExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
 
-        protected abstract NativeCallInfo execute(VirtualFrame frame, RList symbol);
-
-        @Specialization
-        protected NativeCallInfo extractNativeCallInfo(RList symbol) {
-            if (nameExtract == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                nameExtract = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
-            }
-            if (addressExtract == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                addressExtract = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
-            }
-            if (packageExtract == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                packageExtract = insert(ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
-            }
+        protected NativeCallInfo execute(RList symbol) {
             String name = RRuntime.asString(nameExtract.applyAccessField(symbol, "name"));
             SymbolHandle address = ((RExternalPtr) addressExtract.applyAccessField(symbol, "address")).getAddr();
             // field name may be "package" or "dll", but always at (R) index 3
             RList packageList = (RList) packageExtract.apply(symbol, new Object[]{3}, RLogical.valueOf(false), RMissing.instance);
-            DLLInfo dllInfo = (DLLInfo) ((RExternalPtr) addressExtract.applyAccessField(packageList, "info")).getExternalObject();
+            DLLInfo dllInfo = (DLLInfo) ((RExternalPtr) infoExtract.applyAccessField(packageList, "info")).getExternalObject();
             return new NativeCallInfo(name, address, dllInfo);
-
         }
     }
 

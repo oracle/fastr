@@ -235,32 +235,36 @@ public class TruffleNFI_Call implements CallRFFI {
         }
     }
 
+    private static final String[] SIGNATURES = new String[32];
+
+    private static String getSignatureForArity(int arity) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (arity >= SIGNATURES.length || SIGNATURES[arity] == null) {
+            StringBuilder str = new StringBuilder().append('(');
+            for (int i = 0; i < arity; i++) {
+                str.append(i > 0 ? ", " : "");
+                str.append("pointer");
+            }
+            String signature = str.append("): pointer").toString();
+            if (arity < SIGNATURES.length) {
+                SIGNATURES[arity] = signature;
+            }
+            return signature;
+        } else {
+            return SIGNATURES[arity];
+        }
+    }
+
     @ImportStatic(FFIWrapNode.class)
     public abstract static class TruffleNFI_InvokeCallNode extends Node implements InvokeCallNode {
-        private static final String[] SIGNATURES = new String[32];
 
         @Child private Node bindNode = Message.createInvoke(1).createNode();
 
         @TruffleBoundary
         protected TruffleObject getFunction(TruffleObject address, int arity) {
             // cache signatures
-            String signature;
-            if (arity >= SIGNATURES.length || SIGNATURES[arity] == null) {
-                StringBuilder str = new StringBuilder().append('(');
-                for (int i = 0; i < arity; i++) {
-                    str.append(i > 0 ? ", " : "");
-                    str.append("pointer");
-                }
-                str.append("): pointer");
-                signature = str.toString();
-                if (arity < SIGNATURES.length) {
-                    SIGNATURES[arity] = signature;
-                }
-            } else {
-                signature = SIGNATURES[arity];
-            }
             try {
-                return (TruffleObject) ForeignAccess.sendInvoke(bindNode, address, "bind", signature);
+                return (TruffleObject) ForeignAccess.sendInvoke(bindNode, address, "bind", getSignatureForArity(arity));
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             }
