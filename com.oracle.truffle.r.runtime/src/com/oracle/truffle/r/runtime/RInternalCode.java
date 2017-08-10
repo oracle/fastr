@@ -44,7 +44,7 @@ public final class RInternalCode {
     private final String basePackage;
     private final Source source;
 
-    private REnvironment evaluatedEnvironment;
+    private volatile REnvironment evaluatedEnvironment;
 
     private RInternalCode(RContext context, String basePackage, Source source) {
         this.context = context;
@@ -57,7 +57,7 @@ public final class RInternalCode {
         return Utils.getResourceAsSource(clazz, fileName);
     }
 
-    private REnvironment evaluate() {
+    private synchronized REnvironment evaluate() {
         try {
             RExpression parsedCode = context.getThisEngine().parse(source);
             REnvironment statsPackage = REnvironment.getRegisteredNamespace(context, basePackage);
@@ -72,13 +72,15 @@ public final class RInternalCode {
         }
     }
 
-    public RFunction lookupFunction(String name) {
+    public synchronized RFunction lookupFunction(String name) {
         REnvironment env = this.evaluatedEnvironment;
         if (env == null) {
             env = evaluate();
             this.evaluatedEnvironment = env;
         }
-        return (RFunction) env.get(name);
+        RFunction fun = (RFunction) env.get(name);
+        assert fun != null;
+        return fun;
     }
 
     public static RInternalCode lookup(RContext context, String basePackage, Source source) {
