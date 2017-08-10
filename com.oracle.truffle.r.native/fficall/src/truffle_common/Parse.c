@@ -21,24 +21,29 @@
  * questions.
  */
 
+
+#if FALSE
+
 #include <rffiutils.h>
+#include <R_ext/Parse.h>
 
-void R_CheckStack(void) {
-    // TODO: check for stack overflow
-    // ignored
+static jmethodID parseMethodID;
+static jclass parseResultClass;
+static jfieldID parseStatusFieldID;
+static jfieldID parseExprFieldID;
+
+
+void init_parse(JNIEnv *env) {
+	parseMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ParseVector", "(Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;", 0);
+	parseResultClass = checkFindClass(env, "com/oracle/truffle/r/ffi/impl/common/ParseResult");
+	parseStatusFieldID = checkGetFieldID(env, parseResultClass, "parseStatus", "I", 0);
+	parseExprFieldID = checkGetFieldID(env, parseResultClass, "expr", "Ljava/lang/Object;", 0);
 }
 
-void R_CheckStack2(size_t extra) {
-    // TODO: check for stack overflow
-    // ignored
+SEXP R_ParseVector(SEXP text, int n, ParseStatus *z, SEXP srcfile) {
+	JNIEnv *env = getEnv();
+	jobject result = (*env)->CallObjectMethod(env, UpCallsRFFIObject, parseMethodID, text, n, srcfile);
+	*z = (*env)->GetIntField(env, result, parseStatusFieldID);
+    return (*env)->GetObjectField(env, result, parseExprFieldID);
 }
-
-void R_CheckUserInterrupt(void) {
-    // ignored
-}
-
-void Rf_onintr()
-{
-    // TODO: implement interrupt handling, signal errors
-    // ignored
-}
+#endif

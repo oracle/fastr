@@ -37,8 +37,6 @@ C_LIBNAME := libR$(DYLIB_EXT)
 C_LIB := $(FASTR_LIB_DIR)/$(C_LIBNAME)
 R_LIBNAME := libR$(DYLIB_EXT)
 R_LIB := $(FASTR_LIB_DIR)/$(R_LIBNAME)
-JNIBOOT_LIBNAME := libjniboot$(DYLIB_EXT)
-JNIBOOT_LIB := $(FASTR_LIB_DIR)/$(JNIBOOT_LIBNAME)
 
 ifeq ($(OS_NAME), Darwin)
 VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
@@ -86,25 +84,7 @@ fficall.done: common.done
 	$(MAKE) -C src/truffle_llvm all
 	touch fficall.done
 else
-ifeq ($(FASTR_RFFI),jni)
-fficall.done: common.done $(JNIBOOT_LIB)
-	$(MAKE) -C src/jni all
-	touch fficall.done
-
-jniboot.done:
-	$(MAKE) -C src/jniboot all
-	touch jniboot.done
-
-$(JNIBOOT_LIB): jniboot.done
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(JNIBOOT_LIB) src/jniboot/jniboot.o $(VERSION_FLAGS)
-ifeq ($(OS_NAME),Darwin)
-ifneq ($(FASTR_RFFI),llvm)	
-	install_name_tool -id @rpath/libjniboot.dylib $(JNIBOOT_LIB)
-endif
-endif
-else
 	$(error unknown value for FASTR_RFFI)
-endif #jni
 endif #llvm
 endif #nfi
 endif #managed
@@ -121,10 +101,9 @@ else
 ifeq ($(FASTR_RFFI),llvm)
 	$(MAKE) -C src/truffle_llvm clean
 else
-	$(MAKE) -C src/jni clean
+	$(error unknown value for FASTR_RFFI)
 endif
 endif
 	rm -rf $(R_LIB)
-	rm -rf $(JNIBOOT_LIB)
 	rm -rf fficall.done
 

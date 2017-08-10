@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import com.oracle.truffle.r.ffi.impl.jni.JNI_DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG;
@@ -30,10 +29,6 @@ import com.oracle.truffle.r.runtime.rng.user.UserRNG;
 /**
  * Access to some primitive C operations. This is required by the {@link UserRNG} API which works
  * with {@code double *}.
- *
- * N.B. When {@code libR} is not completely in LLVM mode (as now), we have to look up the symbols
- * using an explicitly created {@link TruffleLLVM_DLL.LLVM_Handle} and not go via generic lookup in
- * {@link DLL} as that would use a {@link JNI_DLL} handle.
  */
 public class TruffleLLVM_CAccess {
     private static final TruffleLLVM_DLL.LLVM_Handle handle = new TruffleLLVM_DLL.LLVM_Handle("libR", null);

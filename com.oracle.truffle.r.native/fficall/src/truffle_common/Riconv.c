@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,23 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include "../gramRd_fastr.h"
-#include <jni.h>
+#include <rffiutils.h>
+#include <Riconv.h>
 
-extern JNIEnv *getEnv();
-
-static jmethodID getcMethodID = NULL;
-
-static void findGetCMethod(JNIEnv *env) {
-    jclass klass = (*env)->FindClass(env, "com/oracle/truffle/r/runtime/conn/RConnection");
-    getcMethodID = (*env)->GetMethodID(env, klass, "getc", "()I");
+void * Riconv_open (const char* tocode, const char* fromcode) {
+	return unimplemented("Riconv_open");
 }
 
-int callGetCMethod(void *conn) {
-    JNIEnv *env = getEnv();
-	if (getcMethodID == NULL) {
-		findGetCMethod(env);
-	}
-    int c = (*env)->CallIntMethod(env, conn, getcMethodID, conn);
-    return c;
+size_t Riconv (void * cd, const char **inbuf, size_t *inbytesleft,
+	       char  **outbuf, size_t *outbytesleft) {
+    unimplemented("Riconv");
+    return 0;
+}
+
+int Riconv_close (void * cd) {
+	unimplemented("Riconv_close");
+	return 0;
 }

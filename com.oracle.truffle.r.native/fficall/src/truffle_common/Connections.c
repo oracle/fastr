@@ -21,6 +21,8 @@
  * questions.
  */
 
+
+#if FALSE
 #include <assert.h>
 #include <rffiutils.h>
 #include <R_ext/Connections.h>
@@ -427,3 +429,4 @@ Rconnection R_GetConnection(SEXP sConn) {
 	return new;
 }
 
+#endif

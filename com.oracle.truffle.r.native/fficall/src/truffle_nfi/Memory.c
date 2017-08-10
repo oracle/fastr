@@ -30,6 +30,8 @@ void *R_chk_calloc(size_t nelem, size_t elsize);
 
 // Memory that is auto-reclaimed across FFI calls
 char *R_alloc(size_t n, int size) {
+    unimplemented("R_alloc should be implementd as UpCall functions to be thread safe");
+
     void *p = R_chk_calloc(n, size);
     if (tMemTableIndex >= tMemTableLength) {
 	int newLength = 2 * tMemTableLength;

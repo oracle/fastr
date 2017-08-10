@@ -22,8 +22,7 @@
  */
 /**
  * A collection of types and {@link com.oracle.truffle.api.interop.MessageResolution} classes that
- * support the implementations. Not all are used in every implementation, particularly JNI since
- * that does not use Truffle interop.
+ * support the implementations.
  *
  * See {@link com.oracle.truffle.r.ffi.impl.interop.base} and
  * {@link com.oracle.truffle.r.ffi.impl.interop.pcre} for similar classes specific to the

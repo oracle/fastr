@@ -76,10 +76,6 @@ com.oracle.truffle.r.native/fficall/src/include/nmath.h,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/include/Print.h,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/include/Rgraphics.h,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/include/rlocale.h,gnu_r_gentleman_ihaka.copyright
-com.oracle.truffle.r.native/fficall/src/jni/Memory.c,gnu_r.copyright
-com.oracle.truffle.r.native/fficall/src/jni/pcre_rffi.c,gnu_r_gentleman_ihaka2.copyright
-com.oracle.truffle.r.native/fficall/src/jni/Rdynload_fastr.c,gnu_r.copyright
-com.oracle.truffle.r.native/fficall/src/jni/Rembedded.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/truffle_llvm/Memory.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/truffle_nfi/Memory.c,gnu_r.copyright
 com.oracle.truffle.r.native/library/base/src/registration.c,no.copyright

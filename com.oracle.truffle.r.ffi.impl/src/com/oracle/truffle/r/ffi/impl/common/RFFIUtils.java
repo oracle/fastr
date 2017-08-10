@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.common;
 
-import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -86,25 +85,6 @@ public class RFFIUtils {
         } catch (IOException ex) {
             System.err.println(ex.getMessage());
             System.exit(1);
-        }
-    }
-
-    /**
-     * Upcalled from native when tracing to get FD of the {@link #traceStream}. Allows the same fd
-     * to be used on both sides of the JNI boundary.
-     */
-    @SuppressWarnings("unused")
-    private static FileDescriptor getTraceFileDescriptor() {
-        try {
-            if (traceStream == null) {
-                // Happens if native has tracing enabled and Java does not
-                initTraceStream();
-            }
-            return traceStream.getFD();
-        } catch (IOException ex) {
-            System.err.println(ex.getMessage());
-            System.exit(1);
-            return null;
         }
     }
 
