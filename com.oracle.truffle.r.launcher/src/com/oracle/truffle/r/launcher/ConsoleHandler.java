@@ -57,7 +57,11 @@ public abstract class ConsoleHandler {
             public int read() throws IOException {
                 if (buffer == null) {
                     pos = 0;
-                    buffer = readLine().getBytes(StandardCharsets.UTF_8);
+                    String line = readLine();
+                    if (line == null) {
+                        return -1;
+                    }
+                    buffer = line.getBytes(StandardCharsets.UTF_8);
                 }
                 if (pos == buffer.length) {
                     buffer = null;
