@@ -1585,17 +1585,17 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public double Rf_dunif(double a, double b, double c, int d) {
-        return new Unif.DUnif().evaluate(a, b, c, RRuntime.fromLogical((byte) d));
+        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_dunif).call(a, b, c, d);
     }
 
     @Override
     public double Rf_qunif(double a, double b, double c, int d, int e) {
-        return new Unif.QUnif().evaluate(a, b, c, RRuntime.fromLogical((byte) d), RRuntime.fromLogical((byte) e));
+        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_qunif).call(a, b, c, d, e);
     }
 
     @Override
     public double Rf_punif(double a, double b, double c, int d, int e) {
-        return new Unif.PUnif().evaluate(a, b, c, RRuntime.fromLogical((byte) d), RRuntime.fromLogical((byte) e));
+        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_punif).call(a, b, c, d, e);
     }
 
     @Override

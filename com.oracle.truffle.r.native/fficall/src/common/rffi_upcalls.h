@@ -277,6 +277,10 @@ typedef char *(*call_R_HomeDir)();
 typedef void (*call_R_CleanUp)(int sa, int status, int runlast);
 typedef void (*call_Rf_gsetVar)(SEXP symbol, SEXP value, SEXP rho);
 typedef double (*call_unif_rand)();
+typedef double (*call_Rf_qunif)(double a, double b, double c, int d, int e);
+typedef double (*call_Rf_dunif)(double a, double b, double c, int d);
+typedef double (*call_Rf_punif)(double a, double b, double c, int d, int e);
+typedef double (*call_Rf_runif)(double x, double y);
 
 typedef SEXP (*call_getvar)();
 
