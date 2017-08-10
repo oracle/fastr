@@ -70,7 +70,6 @@ import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
 import com.oracle.truffle.r.library.utils.UnzipNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.foreign.LookupAdapter.ExtractNativeCallInfoNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -788,7 +787,7 @@ public class CallAndExternalFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached == symbol"})
+        @Specialization(limit = "2", guards = {"cached == symbol"})// limit="2" because of DSL bug
         protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
@@ -885,7 +884,7 @@ public class CallAndExternalFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached == symbol"})
+        @Specialization(limit = "2", guards = {"cached == symbol"}) // limit="2" because of DSL bug
         protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
