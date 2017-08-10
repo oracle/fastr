@@ -136,7 +136,7 @@ public class OptionsFunctions {
                         if (nn instanceof RStringVector) {
                             thisListnames = (RStringVector) nn;
                         } else {
-                            throw RInternalError.shouldNotReachHere();
+                            throw RError.error(RError.SHOW_CALLER, Message.LIST_NO_VALID_NAMES);
                         }
                         Object[] listData = new Object[list.getLength()];
                         String[] listNames = new String[listData.length];

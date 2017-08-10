@@ -446,7 +446,9 @@ public final class SpecialAttributesFunctions {
                 RList dimNames = getDimNames.getDimNames(x);
                 if (dimNames != null && dimNames.getLength() == 1) {
                     dimNamesAvlProfile.enter();
-                    return dimNames.getDataAt(0);
+                    Object dimName = dimNames.getDataAt(0);
+                    return (dimName != RNull.instance) ? dimName : null; // For
+                                                                         // ".Dimnames=list(NULL)"
                 }
                 return null;
             }
