@@ -32,8 +32,6 @@ package com.oracle.truffle.r.runtime.ffi;
  * {@code Lapack} functions.</li>
  * <li>{@link StatsRFFI}: native functions in the {@code stats} package.</li>
  * <li>{@link ToolsRFFI}: native functions in the {@code tools} package.</li>
- * <li>{@link RApplRFFI}: the specific, typed, foreign functions required by the built-in
- * {@code Linpack} functions.</li>
  * <li>{@link CRFFI}: {@code .C} and {@code .Fortran} call interface.</li>
  * <li>{@link CallRFFI}: {@code .Call} and {@code .External} call interface.</li>
  * <li>{@link UserRngRFFI}: specific interface to user-supplied random number generator.</li>
@@ -53,8 +51,6 @@ public interface RFFI {
     BaseRFFI getBaseRFFI();
 
     LapackRFFI getLapackRFFI();
-
-    RApplRFFI getRApplRFFI();
 
     StatsRFFI getStatsRFFI();
 

@@ -121,10 +121,6 @@ public abstract class RFFIFactory {
         return getRFFI().getLapackRFFI();
     }
 
-    public static RApplRFFI getRApplRFFI() {
-        return getRFFI().getRApplRFFI();
-    }
-
     public static StatsRFFI getStatsRFFI() {
         return getRFFI().getStatsRFFI();
     }

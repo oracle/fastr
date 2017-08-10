@@ -79,22 +79,7 @@ public class FortranAndCFunctions {
         @Override
         @TruffleBoundary
         public RExternalBuiltinNode lookupBuiltin(RList symbol) {
-            switch (LookupAdapter.lookupName(symbol)) {
-                case "dqrdc2":
-                    return Dqrdc2.create();
-                case "dqrcf":
-                    return DqrcfNodeGen.create();
-                case "dqrqty":
-                    return DqrqtyNodeGen.create();
-                case "dqrqy":
-                    return DqrqyNodeGen.create();
-                case "dqrrsd":
-                    return DqrrsdNodeGen.create();
-                case "dqrxb":
-                    return DqrxbNodeGen.create();
-                default:
-                    return null;
-            }
+            return null;
         }
 
         @SuppressWarnings("unused")

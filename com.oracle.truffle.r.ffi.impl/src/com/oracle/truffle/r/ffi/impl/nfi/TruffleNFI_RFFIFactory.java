@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
-import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -157,17 +156,6 @@ public class TruffleNFI_RFFIFactory extends RFFIFactory {
                     lapackRFFI = new TruffleNFI_Lapack();
                 }
                 return lapackRFFI;
-            }
-
-            @CompilationFinal private RApplRFFI rApplRFFI;
-
-            @Override
-            public RApplRFFI getRApplRFFI() {
-                CompilerAsserts.neverPartOfCompilation();
-                if (rApplRFFI == null) {
-                    rApplRFFI = new TruffleNFI_RAppl();
-                }
-                return rApplRFFI;
             }
 
             @CompilationFinal private StatsRFFI statsRFFI;

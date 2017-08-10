@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
@@ -36,7 +35,6 @@ import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
-import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -65,47 +63,6 @@ public class Managed_RFFIFactory extends RFFIFactory {
             public LapackRFFI getLapackRFFI() {
                 CompilerAsserts.neverPartOfCompilation();
                 return new Managed_LapackRFFI();
-            }
-
-            @Override
-            public RApplRFFI getRApplRFFI() {
-                CompilerAsserts.neverPartOfCompilation();
-                return new RApplRFFI() {
-                    @Override
-                    public Dqrdc2Node createDqrdc2Node() {
-                        throw unsupported("dqrdc");
-                    }
-
-                    @Override
-                    public DqrcfNode createDqrcfNode() {
-                        throw unsupported("dqrcf");
-                    }
-
-                    @Override
-                    public DqrlsNode createDqrlsNode() {
-                        throw unsupported("dqrls");
-                    }
-
-                    @Override
-                    public DqrqtyNode createDqrqtyNode() {
-                        throw RInternalError.unimplemented();
-                    }
-
-                    @Override
-                    public DqrqyNode createDqrqyNode() {
-                        throw RInternalError.unimplemented();
-                    }
-
-                    @Override
-                    public DqrrsdNode createDqrrsdNode() {
-                        throw RInternalError.unimplemented();
-                    }
-
-                    @Override
-                    public DqrxbNode createDqrxbNode() {
-                        throw RInternalError.unimplemented();
-                    }
-                };
             }
 
             @Override
@@ -244,6 +201,11 @@ public class Managed_RFFIFactory extends RFFIFactory {
                     @Override
                     public ExactSumNode createExactSumNode() {
                         throw unsupported("exactsum");
+                    }
+
+                    @Override
+                    public DqrlsNode createDqrlsNode() {
+                        throw unsupported("dqrls");
                     }
                 };
             }

@@ -54,14 +54,6 @@ public enum NativeFunction {
     getcapturenames("((sint32, string): void, uint64, uint64): sint32", "call_pcre_"),
     study("(uint64, sint32): void", "call_pcre_"),
     exec("(uint64, uint64, [uint8], sint32, sint32, sint32, [sint32], sint32): sint32", "call_pcre_"),
-    // RAppl
-    dqrdc2("([double], sint32, sint32, sint32, double, [sint32], [double], [sint32], [double]): void", "call_appl_"),
-    dqrcf("([double], sint32, sint32, [double], [double], sint32, [double], [sint32]): void", "call_appl_"),
-    dqrls("([double], sint32, sint32, [double], sint32, double, [double], [double], [double], [sint32], [sint32], [double], [double]): void", "call_appl_"),
-    dqrqty("([double], sint32, sint32, [double], [double], sint32, [double]): void", "call_appl_"),
-    dqrqy("([double], sint32, sint32, [double], [double], sint32, [double]): void", "call_appl_"),
-    dqrrsd("([double], sint32, sint32, [double], [double], sint32, [double]): void", "call_appl_"),
-    dqrxb("([double], sint32, sint32, [double], [double], sint32, [double]): void", "call_appl_"),
     // zip
     compress("([uint8], uint64, [uint8], uint64): sint32", "call_zip_"),
     uncompress("([uint8], uint64, [uint8], uint64): sint32", "call_zip_"),
@@ -83,6 +75,7 @@ public enum NativeFunction {
                     "call_lapack_"),
     // misc
     exactSumFunc("([double], sint32, sint32, sint32): double", "call_misc_"),
+    dqrls("([double], sint32, sint32, [double], sint32, double, [double], [double], [double], [sint32], [sint32], [double], [double]): void", "call_appl_"),
     // stats
     fft_factor("(sint32, [sint32], [sint32]): void", TruffleNFI_Utils::lookupAndBindStats),
     fft_work("([double], sint32, sint32, sint32, sint32, [double], [sint32]): sint32", TruffleNFI_Utils::lookupAndBindStats);

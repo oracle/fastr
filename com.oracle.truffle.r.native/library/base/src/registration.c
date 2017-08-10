@@ -58,12 +58,16 @@
 #include <R_ext/Callbacks.h>
 //#include <Rdynpriv.h>
 
-//#include "basedecl.h"
+extern void dqrdc2_(double *x, int *ldx, int *n, int *p, double *tol, int *rank, double *qraux, int* pivot, double *work);
+extern void dqrcf_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *b, int* info);
+extern void dqrls_(double *x, int *n, int *p, double *y, int *ny, double *tol, double *b, double *rsd, double *qty, int *k, int *jpvt, double *qraux, double *work);
+extern void dqrqty_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *qty);
+extern void dqrqy_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *qy);
+extern void dqrrsd_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *rsd);
+extern void dqrxb_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *xb);
 
 
-//#define FDEF(name, n)  {#name, (DL_FUNC) &F77_SYMBOL(name), n, NULL}
-// We don't care what the values of these symbols are at this point
-#define FDEF(name, n)  {#name, (DL_FUNC) NULL, n, NULL}
+#define FDEF(name, n)  {#name, (DL_FUNC) &(name##_), n, NULL}
 static R_FortranMethodDef fortranMethods[] = {
     /* LINPACK */
     FDEF(dqrcf, 8), // qr and auxiliaries
