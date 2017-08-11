@@ -26,7 +26,6 @@
 #include <errno.h>
 #include <assert.h>
 
-
 /*
  * All calls pass through one of the call(N) methods in rfficall.c, which carry the JNIEnv value,
  * that needs to be saved for reuse in the many R functions such as Rf_allocVector.
@@ -73,6 +72,8 @@ static int nativeArrayTableHwm;
 static int nativeArrayTableLastIndex;
 static int nativeArrayTableLength;
 static void releaseNativeArray(JNIEnv *env, int index);
+static NativeArrayElem *findNativeArray(JNIEnv *env, SEXP x);
+static void updateNativeArray(JNIEnv *env, int index);
 
 static jfieldID CharSXPWrapperContentsFieldID;
 extern jmethodID logNotCharSXPWrapperMethodID;
@@ -215,7 +216,6 @@ void invalidateNativeArray(JNIEnv *env, SEXP oldObj) {
             fprintf(traceFile, "invalidateNativeArray(%p): found\n", oldObj);
 #endif
             releaseNativeArray(env, i);
-            nativeArrayTable[i].obj = NULL;
         }
     }
 #if TRACE_NATIVE_ARRAYS
@@ -223,15 +223,52 @@ void invalidateNativeArray(JNIEnv *env, SEXP oldObj) {
 #endif
 }
 
-void updateNativeArrays(JNIEnv *env) {
-    // We just release the arrays, the up call may change their contents in the R world,
-    // so we cannot re-use the native buffers which may be out of sync
+void updateJObjects(JNIEnv *env) {
     int oldHwm = nativeArrayTableHwmStack[callDepth - 1];
     for (int i = oldHwm; i < nativeArrayTableHwm; i++) {
-        releaseNativeArray(env, i);
+        NativeArrayElem cv = nativeArrayTable[i];
+        if (cv.obj != NULL) {
+            updateJObject(env, cv.obj);
+        }
     }
 }
 
+// Updates the data on the Java side from the data on the native side
+void updateJObject(JNIEnv *env, SEXP x) {
+#if TRACE_NATIVE_ARRAYS
+    fprintf(traceFile, "updateJObject(%p)\n", x);
+#endif
+	NativeArrayElem *cv = findNativeArray(env, x);
+	if (cv != NULL && cv->data != NULL && cv->type != CHARSXP) {
+#if TRACE_NATIVE_ARRAYS
+        fprintf(traceFile, "updateJObject(%p): updating\n", x);
+#endif
+        int len = (*env)->GetArrayLength(env, cv->jArray);
+        switch (cv->type) {
+            case INTSXP:
+                (*env)->SetIntArrayRegion(env, cv->jArray, 0, len, cv->data);
+                break;
+            case REALSXP:
+                (*env)->SetDoubleArrayRegion(env, cv->jArray, 0, len, cv->data);
+                break;
+            case RAWSXP:
+                (*env)->SetByteArrayRegion(env, cv->jArray, 0, len, cv->data);
+                break;
+            case LGLSXP: {
+                int *data = (int*) cv->data;
+                jbyte *byteData = malloc(len * sizeof(jbyte));
+                for (int i = 0; i < len; ++i) {
+                    byteData[i] = data[i];
+                }
+                (*env)->SetByteArrayRegion(env, cv->jArray, 0, len, byteData);
+                free(byteData);
+                break;
+            }
+            default:
+                fatalError("updateJObject: unexpected type");
+        }
+    }
+}
 
 static NativeArrayElem *findNativeArray(JNIEnv *env, SEXP x) {
     if (nativeArrayTableLastIndex < nativeArrayTableHwm) {
@@ -266,22 +303,10 @@ static NativeArrayElem *findNativeArray(JNIEnv *env, SEXP x) {
     return NULL;
 }
 
-void updateNativeArray(JNIEnv *env, SEXP x) {
-	NativeArrayElem *cv = findNativeArray(env, x);
-	void *data = NULL;
-	if (cv != NULL) {
-		data = cv->data;
-	}
-
-	if (data != NULL) {
-		int len = (*env)->GetArrayLength(env, cv->jArray);
-		(*env)->SetByteArrayRegion(env, cv->jArray, 0, len, data);
-	}
-}
 
 static void addNativeArray(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, void *data) {
 #if TRACE_NATIVE_ARRAYS
-    fprintf(traceFile, "addNativeArray(x=%p, t=%p, ix=%d)\n", x, data, nativeArrayTableHwm);
+    fprintf(traceFile, "addNativeArray(x=%p, t=%p, ix=%d, type=%d)\n", x, data, nativeArrayTableHwm, type);
 #endif
     // check for overflow
     if (nativeArrayTableHwm >= nativeArrayTableLength) {
@@ -302,44 +327,22 @@ static void addNativeArray(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, voi
     nativeArrayTableHwm++;
 }
 
-void *getNativeArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
-	NativeArrayElem *cv = findNativeArray(thisenv, x);
-	void *data = NULL;
-	if (cv != NULL) {
-		data = cv->data;
-	}
-    if (data == NULL) {
-        jarray jArray;
-	    jboolean isCopy;
-        switch (type) {
-        case INTSXP: {
-            jintArray intArray = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, INTEGER_MethodID, x);
-            int len = (*thisenv)->GetArrayLength(thisenv, intArray);
-            data = (*thisenv)->GetIntArrayElements(thisenv, intArray, &isCopy);
-            jArray = intArray;
-            break;
-        }
+static void* extractVectorNativeArray(JNIEnv *thisenv, jarray jArray, SEXPTYPE type) {
+    jboolean isCopy;
+    int len = (*thisenv)->GetArrayLength(thisenv, jArray);
+    switch (type) {
+        case INTSXP:
+            return (*thisenv)->GetIntArrayElements(thisenv, (jintArray) jArray, &isCopy);
 
-        case REALSXP: {
-            jdoubleArray doubleArray = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, REAL_MethodID, x);
-            int len = (*thisenv)->GetArrayLength(thisenv, doubleArray);
-            data = (*thisenv)->GetDoubleArrayElements(thisenv, doubleArray, &isCopy);
-            jArray = doubleArray;
-            break;
-        }
+        case REALSXP:
+            return (*thisenv)->GetDoubleArrayElements(thisenv, (jdoubleArray) jArray, &isCopy);
 
-        case RAWSXP: {
-            jbyteArray byteArray = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, RAW_MethodID, x);
-            int len = (*thisenv)->GetArrayLength(thisenv, byteArray);
-            data = (*thisenv)->GetByteArrayElements(thisenv, byteArray, &isCopy);
-            jArray = byteArray;
-            break;
-        }
+        case RAWSXP:
+            return (*thisenv)->GetByteArrayElements(thisenv, (jbyteArray) jArray, &isCopy);
 
         case LGLSXP: {
             // Special treatment because R FFI wants int* and FastR represents using byte[]
-            jbyteArray byteArray = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, LOGICAL_MethodID, x);
-            int len = (*thisenv)->GetArrayLength(thisenv, byteArray);
+            jbyteArray byteArray = (jbyteArray) jArray;
             jbyte* internalData = (*thisenv)->GetByteArrayElements(thisenv, byteArray, &isCopy);
             int* idata = malloc(len * sizeof(int));
             for (int i = 0; i < len; i++) {
@@ -347,31 +350,133 @@ void *getNativeArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
                 idata[i] = value == 0 ? FALSE : value == 1 ? TRUE : NA_INTEGER;
             }
             (*thisenv)->ReleaseByteArrayElements(thisenv, byteArray, internalData, JNI_ABORT);
-            jArray = byteArray;
-            data = idata;
-            break;
+            return idata;
         }
+    }
+}
 
-        case CHARSXP: {
-        	jstring string = stringFromCharSXP(thisenv, x);
-        	data = (void *) stringToChars(thisenv, string);
-            jArray = string;
-            break;
-        }
+static jarray getJArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
+   switch (type) {
+       case INTSXP:
+          return (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, INTEGER_MethodID, x);
+       case REALSXP:
+          return (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, REAL_MethodID, x);
+       case RAWSXP:
+          return (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, RAW_MethodID, x);
+       case LGLSXP:
+          return (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, LOGICAL_MethodID, x);
+       default:
+          fatalError("getNativeArray: unexpected type");
+   }
+}
 
-        default:
-            fatalError("getNativeArray: unexpected type");
-
+void *getNativeArray(JNIEnv *thisenv, SEXP x, SEXPTYPE type) {
+#if TRACE_NATIVE_ARRAYS
+    fprintf(traceFile, "getNativeArray(%p)\n", x);
+#endif
+    NativeArrayElem *cv = findNativeArray(thisenv, x);
+    void *data = NULL;
+    if (cv != NULL) {
+        data = cv->data;
+    }
+    if (data == NULL) {
+        jarray jArray;
+        switch (type) {
+            case INTSXP:
+            case REALSXP:
+            case RAWSXP:
+            case LGLSXP: {
+                jArray = getJArray(thisenv, x, type);
+                data = extractVectorNativeArray(thisenv, jArray, type);
+                break;
+            }
+            case CHARSXP: {
+                jstring string = stringFromCharSXP(thisenv, x);
+                data = (void *) stringToChars(thisenv, string);
+                jArray = string;
+                break;
+            }
+            default:
+                fatalError("getNativeArray: unexpected type");
         }
         addNativeArray(thisenv, x, type, jArray, data);
     }
     return data;
 }
 
+void updateNativeArrays(JNIEnv *env) {
+    int oldHwm = nativeArrayTableHwmStack[callDepth - 1];
+    for (int i = oldHwm; i < nativeArrayTableHwm; i++) {
+        updateNativeArray(env, i);
+    }
+}
+
+int getTypeSize(SEXPTYPE type) {
+   switch (type) {
+        case INTSXP:
+        case LGLSXP:
+            return sizeof(jint);
+        case RAWSXP:
+            return sizeof(jbyte);
+        case REALSXP:
+           return sizeof(jdouble);
+        default:
+           fatalError("getNativeArray: unexpected type");
+   }
+}
+
+static void updateNativeArray(JNIEnv *env, int i) {
+    NativeArrayElem cv = nativeArrayTable[i];
+    if (cv.obj != NULL && cv.type != CHARSXP) {
+        jarray current = getJArray(env, cv.obj, cv.type);
+        if (fast_IsSameObject(current, cv.jArray)) {
+#if TRACE_NATIVE_ARRAYS
+            fprintf(traceFile, "updateNativeArray(x=%p, t=%p, ix=%d, type=%d): copying data from Java\n", cv.obj, cv.data, i, cv.type);
+#endif
+            // same array, copy back the contents
+            int len = (*env)->GetArrayLength(env, cv.jArray);
+            switch (cv.type) {
+                case INTSXP:
+                    (*env)->GetIntArrayRegion(env, cv.jArray, 0, len, cv.data);
+                    break;
+                case REALSXP:
+                    (*env)->GetDoubleArrayRegion(env, cv.jArray, 0, len, cv.data);
+                    break;
+                case RAWSXP:
+                    (*env)->GetByteArrayRegion(env, cv.jArray, 0, len, cv.data);
+                    break;
+                case LGLSXP: {
+                    jbyte *byteData = malloc(len * sizeof(jbyte));
+                    (*env)->GetByteArrayRegion(env, cv.jArray, 0, len, byteData);
+                    for (int i = 0; i < len; ++i) {
+                        ((int*) cv.data)[i] = byteData[i];
+                    }
+                    free(byteData);
+                    break;
+                }
+                default:
+                    fatalError("updateJObject: unexpected type");
+            }
+        } else {
+            // not the same array: this could happen if temporary vector got re-used for re-allocated copy.
+            // If the user now attempts at accessing a previously acquired data pointer, it's an error anyway,
+            // We invalidate the native "mirror", it's not reflecting the same jobject, anymore and if user now
+            // attempts to get the data pointer, she should get the right one -- for the new array, not the old one.
+#if TRACE_NATIVE_ARRAYS
+            fprintf(traceFile, "updateNativeArray(x=%p, t=%p, ix=%d, type=%d): data in Java have changed, invalidating the cached pointer.\n", cv.obj, cv.data, index, cv.type);
+#endif
+            nativeArrayTable[i].obj = NULL;
+        }
+    }
+}
+
+// Updates the Java counterpart object with the contents of the native array and
+// releases the native array. Use updateJObject to only update the java counterpart,
+// but do not release.
 static void releaseNativeArray(JNIEnv *env, int i) {
     NativeArrayElem cv = nativeArrayTable[i];
 #if TRACE_NATIVE_ARRAYS
-               fprintf(traceFile, "releaseNativeArray(x=%p, ix=%d)\n", cv.obj, i);
+    fprintf(traceFile, "releaseNativeArray(x=%p, ix=%d, type=%d)\n", cv.obj, i, cv.type);
 #endif
     if (cv.obj != NULL) {
         assert(isValidJNIRef(env, cv.obj));
@@ -400,8 +505,9 @@ static void releaseNativeArray(JNIEnv *env, int i) {
                 }
 
             }
+            // note: internalData is used only as temp array here, no need to honor "mode"
             (*env)->ReleaseByteArrayElements(env, byteArray, internalData, 0);
-                    free(data); // was malloc'ed in addNativeArray
+            free(data); // was malloc'ed in addNativeArray
             break;
         }
 
@@ -426,14 +532,16 @@ static void releaseNativeArray(JNIEnv *env, int i) {
 
         }
         default:
-            fatalError("releaseNativeArray type");
+            fatalError("updateManagedVector type");
         }
         // update complete status
         (*env)->CallStaticVoidMethod(env, JNIUpCallsRFFIImplClass, setCompleteMethodID, cv.obj, complete);
 
-        // free up the slot
         nativeArrayTable[i].obj = NULL;
     }
+#if TRACE_NATIVE_ARRAYS
+    fprintf(traceFile, "updateManagedVector(x=%p, ix=%d): DONE\n", cv.obj, i);
+#endif
 }
 
 static SEXP findCachedGlobalRef(JNIEnv *env, SEXP obj) {
@@ -541,6 +649,7 @@ void *unimplemented(char *msg) {
     strcpy(buf, "unimplemented ");
     strcat(buf, msg);
     (*thisenv)->FatalError(thisenv, buf);
+    return NULL;
 }
 
 void fatalError(char *msg) {

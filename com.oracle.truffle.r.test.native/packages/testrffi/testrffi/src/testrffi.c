@@ -364,3 +364,70 @@ SEXP test_captureDotsWithSingleElement(SEXP env) {
     UNPROTECT(1);
     return info;
 }
+
+SEXP test_evalAndNativeArrays(SEXP vec, SEXP expr, SEXP env) {
+    SEXP symbolValue;
+    int *idata;
+    double *ddata;
+    unsigned char *bdata;
+    // note: we want to evaluate PROTECT(symbolValue = Rf_eval(expr, env)); after we take the pointer to data...
+    switch (TYPEOF(vec)) {
+        case INTSXP:
+            idata = INTEGER(vec);
+            PROTECT(symbolValue = Rf_eval(expr, env));
+            idata[0] = 42;
+            idata[1] = Rf_asInteger(symbolValue);
+            break;
+        case REALSXP:
+            ddata = REAL(vec);
+            PROTECT(symbolValue = Rf_eval(expr, env));
+            ddata[0] = 42;
+            ddata[1] = Rf_asReal(symbolValue);
+            break;
+        case RAWSXP:
+            bdata = RAW(vec);
+            PROTECT(symbolValue = Rf_eval(expr, env));
+            bdata[0] = 42;
+            bdata[1] = Rf_asInteger(symbolValue);  // there is no asRaw, we expect to get symbol with integer value
+            break;
+        case LGLSXP:
+            idata = LOGICAL(vec);
+            PROTECT(symbolValue = Rf_eval(expr, env));
+            idata[0] = 1;
+            idata[1] = Rf_asLogical(symbolValue);
+            break;
+        default:
+            printf("Error: unexpected type");
+    }
+
+    // max of the vector could now be 42/TRUE or symbolValue
+    SEXP maxSymbol, call, maxVec;
+    int uprotectCount = 1;
+    if (TYPEOF(vec) != RAWSXP) {
+        // note: max does not support raws
+        PROTECT(maxSymbol = install("max"));
+        PROTECT(call = lang2(maxSymbol, vec));
+        PROTECT(maxVec = eval(call, R_GlobalEnv));
+        uprotectCount = 4;
+    }
+
+    switch (TYPEOF(vec)) {
+        case INTSXP:
+            idata[length(vec) - 1] = Rf_asInteger(maxVec);
+            break;
+        case REALSXP:
+            ddata[length(vec) - 1] = Rf_asReal(maxVec);
+            break;
+        case RAWSXP:
+            bdata[length(vec) - 1] = 42;
+            break;
+        case LGLSXP:
+            idata[length(vec) - 1] = Rf_asLogical(maxVec);
+            break;
+        default:
+            printf("Error: unexpected type");
+    }
+
+    UNPROTECT(uprotectCount);
+    return vec;
+}

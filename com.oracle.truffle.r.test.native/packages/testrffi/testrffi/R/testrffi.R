@@ -172,3 +172,7 @@ rffi.getStringNA <- function() {
 rffi.captureDotsWithSingleElement <- function(env) {
     .Call('test_captureDotsWithSingleElement', env)
 }
+
+rffi.evalAndNativeArrays <- function(vec, expr, env) {
+    .Call('test_evalAndNativeArrays', vec, expr, env)
+}

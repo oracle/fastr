@@ -71,13 +71,20 @@ jmp_buf *getErrorJmpBuf();
 // the data as a C array
 void *getNativeArray(JNIEnv *env, SEXP x, SEXPTYPE type);
 // Rare case where an operation changes the internal
-// data and thus the old C array should be invalidated
+// data and thus the old C array should be invalidated,
+// unlike updateJObjects this really frees the native array.
 void invalidateNativeArray(JNIEnv *env, SEXP oldObj);
 // Should be called before up calling to arbitrary code, e.g. Rf_eval,
-// to copy back the arrays into their Java counterparts
+// to copy back the arrays into their Java counterparts. The native arrays
+// are not freed and stay around.
+void updateJObjects(JNIEnv *env);
+// Should be called after up calling to arbitrary code, e.g. Rf_eval,
+// to copy back the java side arrays into their native counterparts.
 void updateNativeArrays(JNIEnv *env);
+
+
 // Copies back the array to the Java counterpart
-void updateNativeArray(JNIEnv *env, SEXP obj);
+void updateJObject(JNIEnv *env, SEXP obj);
 
 SEXP addGlobalRef(JNIEnv *env, SEXP obj, int permanent);
 
