@@ -26,10 +26,23 @@
 
 eval(expression({
     graphicsWarning <- function(name) {
-        function(...) {
+    	# lookup original function and fetch signature
+    	fun <- tryCatch(get(name, environment()), error=function(x) NULL)
+    	if(!is.null(fun)) {
+    	    sig <- formals(fun)
+    	} else {
+    	    sig <- NULL
+    	}
+    	
+        replacementFun <- function(...) {
             warning(paste0(name, " not supported.", " Note: FastR does not support graphics package and most of its functions. Please use grid package or grid based packages like lattice instead."))
             NULL
         }
+
+		if(!is.null(sig)) {
+        	formals(replacementFun) <- sig
+        }
+        return(replacementFun)
     }
 
     plot.default <- function (x, y = NULL, type = "p", xlim = NULL, ylim = NULL,

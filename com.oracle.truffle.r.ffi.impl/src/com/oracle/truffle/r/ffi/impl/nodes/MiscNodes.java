@@ -30,6 +30,8 @@ import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.SetNamesAttributeNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObject;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.RError;
@@ -154,6 +156,22 @@ public final class MiscNodes {
         @Specialization
         Object doNewObject(Object classDef) {
             return newObjectNode.execute(classDef);
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    abstract static class NamesGetsNode extends FFIUpCallNode.Arg2 {
+
+        @Child private SetNamesAttributeNode setNamesNode;
+
+        NamesGetsNode() {
+            setNamesNode = SetNamesAttributeNodeGen.create();
+        }
+
+        @Specialization
+        Object doNewObject(Object vec, Object val) {
+            setNamesNode.execute(vec, val);
+            return vec;
         }
     }
 

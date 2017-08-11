@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -84,7 +85,7 @@ public class DLL {
         @Override
         public ContextState initialize(RContext contextArg) {
             this.context = contextArg;
-            if (context.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
+            if (isShareDLLKind(context.getKind())) {
                 list = context.getParent().stateDLL.list;
             } else {
                 list = new ArrayList<>();
@@ -98,13 +99,17 @@ public class DLL {
 
         @Override
         public void beforeDestroy(RContext contextArg) {
-            if (context.getKind() != RContext.ContextKind.SHARE_PARENT_RW) {
+            if (!isShareDLLKind(context.getKind())) {
                 for (int i = 1; i < list.size(); i++) {
                     DLLInfo dllInfo = list.get(i);
                     DLLRFFI.DLCloseRootNode.create().getCallTarget().call(dllInfo.handle);
                 }
             }
             list = null;
+        }
+
+        private static boolean isShareDLLKind(RContext.ContextKind kind) {
+            return kind == ContextKind.SHARE_PARENT_RW || kind == ContextKind.SHARE_ALL;
         }
 
         private void addLibR(DLLInfo dllInfo) {

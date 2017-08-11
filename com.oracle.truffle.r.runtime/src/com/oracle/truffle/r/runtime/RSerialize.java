@@ -2744,18 +2744,20 @@ public class RSerialize {
                 assert srcfile instanceof REnvironment;
                 Source source = RSource.fromSrcfile((REnvironment) srcfile);
 
-                RList l = (RList) srcref;
+                RList blockSrcref = (RList) srcref;
                 RSyntaxElement[] syntaxArguments = elem.getSyntaxArguments();
-                assert syntaxArguments.length == l.getLength() - 1;
+                assert syntaxArguments.length == blockSrcref.getLength() - 1;
 
-                for (int i = 0; i < l.getLength(); i++) {
-                    Object dataAt = l.getDataAt(i);
-                    assert dataAt instanceof RAbstractIntVector;
-                    SourceSection ss = RSrcref.createSourceSection((RAbstractIntVector) dataAt, source);
-                    if (i == 0) {
-                        elem.setSourceSection(ss);
-                    } else {
-                        syntaxArguments[i - 1].setSourceSection(ss);
+                for (int i = 0; i < blockSrcref.getLength(); i++) {
+                    Object singleSrcref = blockSrcref.getDataAt(i);
+                    // could also be NULL
+                    if (singleSrcref instanceof RAbstractIntVector) {
+                        SourceSection ss = RSrcref.createSourceSection((RAbstractIntVector) singleSrcref, source);
+                        if (i == 0) {
+                            elem.setSourceSection(ss);
+                        } else {
+                            syntaxArguments[i - 1].setSourceSection(ss);
+                        }
                     }
                 }
             } catch (NoSuchFileException e) {

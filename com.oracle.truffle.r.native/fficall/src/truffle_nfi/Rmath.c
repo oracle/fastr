@@ -21,6 +21,7 @@
  * questions.
  */
 #include <rffiutils.h>
+#include "../common/rffi_upcalls.h"
 
 double Rf_dnorm(double a, double b, double c, int d) {
     unimplemented("Rf_dnorm");
@@ -59,23 +60,19 @@ void Rf_pnorm_both(double a, double * b, double * c, int d, int e) {
 }
 
 double Rf_dunif(double a, double b, double c, int d) {
-    unimplemented("Rf_dunif");
-    return 0;
+	return ((call_Rf_dunif) callbacks[Rf_dunif_x])(a, b, c, d);
 }
 
 double Rf_punif(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_punif");
-    return 0;
+	return ((call_Rf_punif) callbacks[Rf_punif_x])(a, b, c, d, e);
 }
 
 double Rf_qunif(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qunif");
-    return 0;
+	return ((call_Rf_qunif) callbacks[Rf_qunif_x])(a, b, c, d, e);
 }
 
 double Rf_runif(double a, double b) {
-    unimplemented("Rf_runif");
-    return 0;
+	return ((call_Rf_runif) callbacks[Rf_runif_x])(a, b);
 }
 
 double Rf_dgamma(double a, double b, double c, int d) {

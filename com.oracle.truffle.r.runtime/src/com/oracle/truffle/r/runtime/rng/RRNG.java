@@ -410,7 +410,7 @@ public class RRNG {
     public static void putRNGState() {
         int[] seeds = currentGenerator().getSeeds();
         seeds[0] = currentKind().ordinal() + 100 * currentNormKind().ordinal();
-        RIntVector vector = RDataFactory.createIntVector(seeds, RDataFactory.COMPLETE_VECTOR);
+        RIntVector vector = RDataFactory.createIntVector(seeds, RDataFactory.INCOMPLETE_VECTOR);
         REnvironment.globalEnv().safePut(RANDOM_SEED, vector.makeSharedPermanent());
     }
 }

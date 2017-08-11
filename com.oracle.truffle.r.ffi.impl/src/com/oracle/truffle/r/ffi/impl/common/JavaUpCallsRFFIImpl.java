@@ -110,6 +110,7 @@ import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nmath.distr.Unif;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -1581,4 +1582,30 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         name2typeTable.put("numeric", SEXPTYPE.REALSXP.code);
         name2typeTable.put("name", SEXPTYPE.SYMSXP.code);
     }
+
+    @Override
+    public double Rf_dunif(double a, double b, double c, int d) {
+        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_dunif).call(a, b, c, d);
+    }
+
+    @Override
+    public double Rf_qunif(double a, double b, double c, int d, int e) {
+        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_qunif).call(a, b, c, d, e);
+    }
+
+    @Override
+    public double Rf_punif(double a, double b, double c, int d, int e) {
+        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_punif).call(a, b, c, d, e);
+    }
+
+    @Override
+    public double Rf_runif(double a, double b) {
+        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_runif).call(a, b);
+    }
+
+    @Override
+    public Object Rf_namesgets(Object x, Object y) {
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_namesgets).call(x, y);
+    }
+
 }

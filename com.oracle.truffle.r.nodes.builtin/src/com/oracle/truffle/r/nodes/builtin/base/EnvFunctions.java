@@ -70,6 +70,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -751,6 +752,11 @@ public class EnvFunctions {
         @Specialization
         RSymbol copy(RSymbol s) {
             return s;
+        }
+
+        @Specialization
+        RExternalPtr copy(RExternalPtr ptr) {
+            return ptr.copy();
         }
 
         @Specialization

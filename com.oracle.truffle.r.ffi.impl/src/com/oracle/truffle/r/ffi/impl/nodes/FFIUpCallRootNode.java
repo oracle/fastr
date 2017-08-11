@@ -38,9 +38,13 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.LENGTHNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoNewObjectNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotAssignNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodesFactory.RandFunction2NodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodesFactory.RandFunction3_1NodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodesFactory.RandFunction3_2NodeGen;
 import com.oracle.truffle.r.ffi.impl.upcalls.RFFIUpCallTable;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.nmath.distr.Unif;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class FFIUpCallRootNode extends RootNode {
@@ -105,5 +109,10 @@ public final class FFIUpCallRootNode extends RootNode {
         FFIUpCallRootNode.add(RFFIUpCallTable.R_do_new_object, RDoNewObjectNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallTable.R_do_slot, RDoSlotNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallTable.R_do_slot_assign, RDoSlotAssignNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallTable.Rf_runif, () -> RandFunction2NodeGen.create(new Unif.Runif()));
+        FFIUpCallRootNode.add(RFFIUpCallTable.Rf_dunif, () -> RandFunction3_1NodeGen.create(new Unif.DUnif()));
+        FFIUpCallRootNode.add(RFFIUpCallTable.Rf_qunif, () -> RandFunction3_2NodeGen.create(new Unif.QUnif()));
+        FFIUpCallRootNode.add(RFFIUpCallTable.Rf_punif, () -> RandFunction3_2NodeGen.create(new Unif.PUnif()));
+        FFIUpCallRootNode.add(RFFIUpCallTable.Rf_namesgets, MiscNodesFactory.NamesGetsNodeGen::create);
     }
 }

@@ -847,4 +847,35 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
         RFFIUtils.traceUpCall("Rf_str2type");
         return delegate.Rf_str2type(name);
     }
+
+    @Override
+    public double Rf_dunif(double a, double b, double c, int d) {
+        RFFIUtils.traceUpCall("Rf_dunif", a, b, c, d);
+        return delegate.Rf_dunif(a, b, c, d);
+    }
+
+    @Override
+    public double Rf_qunif(double a, double b, double c, int d, int e) {
+        RFFIUtils.traceUpCall("Rf_qunif", a, b, c, d, e);
+        return delegate.Rf_qunif(a, b, c, d, e);
+    }
+
+    @Override
+    public double Rf_punif(double a, double b, double c, int d, int e) {
+        RFFIUtils.traceUpCall("Rf_punif", a, b, c, d, e);
+        return delegate.Rf_punif(a, b, c, d, e);
+    }
+
+    @Override
+    public double Rf_runif(double a, double b) {
+        RFFIUtils.traceUpCall("Rf_runif", a, b);
+        return delegate.Rf_runif(a, b);
+    }
+
+    @Override
+    public Object Rf_namesgets(Object vec, Object val) {
+        RFFIUtils.traceUpCall("Rf_namesgets", vec, val);
+        return delegate.Rf_namesgets(vec, val);
+    }
+
 }
