@@ -27,7 +27,6 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 
@@ -44,7 +43,7 @@ public class RSymbolMR {
     @Resolve(message = "TO_NATIVE")
     public abstract static class RSymbolToNativeNode extends Node {
         protected Object access(RSymbol receiver) {
-            return new NativePointer(receiver);
+            return NativeDataAccess.toNative(receiver);
         }
     }
 

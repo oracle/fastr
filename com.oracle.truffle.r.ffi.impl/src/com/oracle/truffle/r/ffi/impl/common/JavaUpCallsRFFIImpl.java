@@ -67,15 +67,14 @@ import com.oracle.truffle.r.runtime.conn.NativeConnections.NativeRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -85,8 +84,6 @@ import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
-import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -105,7 +102,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
-import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -512,61 +508,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         RList list = guaranteeInstanceOf(x, RList.class);
         list.setElement((int) i, v);
         return 0;
-    }
-
-    @Override
-    public Object RAW(Object x) {
-        if (x instanceof RRawVector) {
-            return ((RRawVector) x).getDataWithoutCopying();
-        } else if (x instanceof RRaw) {
-            return new byte[]{((RRaw) x).getValue()};
-        } else {
-            throw unimplemented();
-        }
-    }
-
-    @Override
-    public Object LOGICAL(Object x) {
-        if (x instanceof RLogicalVector) {
-            return ((RLogicalVector) x).getDataWithoutCopying();
-        } else if (x instanceof Byte) {
-            return new byte[]{(Byte) x};
-        } else {
-            throw unimplemented();
-        }
-    }
-
-    @Override
-    public Object INTEGER(Object x) {
-        if (x instanceof RIntVector) {
-            return ((RIntVector) x).getDataWithoutCopying();
-        } else if (x instanceof RIntSequence) {
-            return ((RIntSequence) x).materialize().getDataWithoutCopying();
-        } else if (x instanceof Integer) {
-            return new int[]{(Integer) x};
-        } else if (x instanceof RLogicalVector) {
-            RLogicalVector vec = (RLogicalVector) x;
-            int[] result = new int[vec.getLength()];
-            for (int i = 0; i < result.length; i++) {
-                result[i] = vec.getDataAt(i);
-            }
-            return result;
-        } else {
-            guaranteeInstanceOf(x, Byte.class);
-            return new int[]{(Byte) x};
-        }
-    }
-
-    @Override
-    public Object REAL(Object x) {
-        if (x instanceof RDoubleVector) {
-            return ((RDoubleVector) x).getDataWithoutCopying();
-        } else if (x instanceof RDoubleSequence) {
-            return ((RDoubleSequence) x).materialize().getDataWithoutCopying();
-        } else {
-            guaranteeInstanceOf(x, Double.class);
-            return new double[]{(Double) x};
-        }
     }
 
     @Override

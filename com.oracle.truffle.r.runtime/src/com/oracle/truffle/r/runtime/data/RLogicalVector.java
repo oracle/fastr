@@ -77,17 +77,13 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
     @Override
     public void setDataAt(Object store, int index, byte value) {
         assert data == store;
-        if (store == null) {
-            NativeDataAccess.setIntData(this, index, RRuntime.logical2int(value));
-        } else {
-            ((byte[]) store)[index] = value;
-        }
+        NativeDataAccess.setData(this, (byte[]) store, index, value);
     }
 
     @Override
     public byte getDataAt(Object store, int index) {
         assert data == store;
-        return data == null ? (byte) NativeDataAccess.getIntData(this, index) : data[index];
+        return NativeDataAccess.getData(this, (byte[]) store, index);
     }
 
     @Override
@@ -111,7 +107,7 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
 
     @Override
     public int getLength() {
-        return data == null ? (int) NativeDataAccess.getDataLength(this) : data.length;
+        return NativeDataAccess.getDataLength(this, data);
     }
 
     @Override
@@ -123,7 +119,7 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
     public boolean verify() {
         if (isComplete()) {
             for (int i = 0; i < getLength(); i++) {
-                if (getDataAt(i) == RRuntime.LOGICAL_NA) {
+                if (RRuntime.isNA(getDataAt(i))) {
                     return false;
                 }
             }
@@ -133,16 +129,12 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
 
     @Override
     public byte getDataAt(int index) {
-        return data == null ? (byte) NativeDataAccess.getIntData(this, index) : data[index];
+        return NativeDataAccess.getData(this, data, index);
     }
 
     private RLogicalVector updateDataAt(int index, byte value, NACheck valueNACheck) {
         assert !this.isShared();
-        if (data == null) {
-            NativeDataAccess.setIntData(this, index, RRuntime.logical2int(value));
-        } else {
-            data[index] = value;
-        }
+        NativeDataAccess.setData(this, data, index, value);
         if (valueNACheck.check(value)) {
             setComplete(false);
         }
@@ -186,12 +178,7 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        RAbstractLogicalVector other = (RAbstractLogicalVector) fromVector;
-        if (data == null) {
-            NativeDataAccess.setIntData(this, toIndex, RRuntime.logical2int(other.getDataAt(fromIndex)));
-        } else {
-            data[toIndex] = other.getDataAt(fromIndex);
-        }
+        NativeDataAccess.setData(this, data, toIndex, ((RAbstractLogicalVector) fromVector).getDataAt(fromIndex));
     }
 
     @Override
@@ -231,6 +218,7 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
             return NativeDataAccess.allocateNativeContents(this, data, getLength());
         } finally {
             data = null;
+            complete = false;
         }
     }
 }

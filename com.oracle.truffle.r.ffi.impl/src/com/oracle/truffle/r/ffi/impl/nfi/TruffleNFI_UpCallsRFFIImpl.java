@@ -25,6 +25,8 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guaranteeInstanceOf;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
@@ -35,19 +37,22 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
+import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_UpCallsRFFIImplFactory.VectorWrapperMRFactory.DispatchAllocateNodeGen;
 import com.oracle.truffle.r.ffi.impl.upcalls.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RVector;
-import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
@@ -89,17 +94,54 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
             }
         }
 
+        public abstract static class DispatchAllocate extends Node {
+            public abstract long execute(Object vector);
+
+            @Specialization
+            protected static long get(RIntVector vector) {
+                return vector.allocateNativeContents();
+            }
+
+            @Specialization
+            protected static long get(RLogicalVector vector) {
+                return vector.allocateNativeContents();
+            }
+
+            @Specialization
+            protected static long get(RRawVector vector) {
+                return vector.allocateNativeContents();
+            }
+
+            @Specialization
+            protected static long get(RDoubleVector vector) {
+                return vector.allocateNativeContents();
+            }
+
+            @Specialization
+            protected static long get(RComplexVector vector) {
+                return vector.allocateNativeContents();
+            }
+
+            @Specialization
+            protected static long get(CharSXPWrapper vector) {
+                return vector.allocateNativeContents();
+            }
+
+            @Fallback
+            protected static long get(Object vector) {
+                throw RInternalError.shouldNotReachHere("invalid wrapped object " + vector.getClass().getSimpleName());
+            }
+        }
+
         @Resolve(message = "AS_POINTER")
         public abstract static class IntVectorWrapperNativeAsPointerNode extends Node {
+            @Child private DispatchAllocate dispatch = DispatchAllocateNodeGen.create();
+
             protected long access(VectorWrapper receiver) {
-                RVector<?> v = receiver.vector;
-                if (v instanceof RIntVector) {
-                    return ((RIntVector) v).allocateNativeContents();
-                } else if (v instanceof RLogicalVector) {
-                    return ((RLogicalVector) v).allocateNativeContents();
-                } else {
-                    throw RInternalError.shouldNotReachHere();
-                }
+                long address = dispatch.execute(receiver.vector);
+                // System.out.println(String.format("allocating native buffer for %s at %16x",
+                // receiver.vector.getClass().getSimpleName(), address));
+                return address;
             }
         }
 
@@ -113,9 +155,9 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     public static final class VectorWrapper implements TruffleObject {
 
-        private final RVector<?> vector;
+        private final Object vector;
 
-        public VectorWrapper(RVector<?> vector) {
+        public VectorWrapper(Object vector) {
             this.vector = vector;
         }
 
@@ -139,43 +181,22 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     public Object REAL(Object x) {
-        long arrayAddress = TruffleNFI_NativeArray.findArray(x);
-        if (arrayAddress == 0) {
-            System.out.println("getting REAL contents");
-            Object array = super.REAL(x);
-            arrayAddress = TruffleNFI_NativeArray.recordArray(x, array, SEXPTYPE.REALSXP);
-        } else {
-            TruffleNFI_Call.returnArrayExisting(SEXPTYPE.REALSXP, arrayAddress);
-        }
-        return x;
-
+        return new VectorWrapper(guaranteeInstanceOf(x, RDoubleVector.class));
     }
 
     @Override
     public Object RAW(Object x) {
-        long arrayAddress = TruffleNFI_NativeArray.findArray(x);
-        if (arrayAddress == 0) {
-            System.out.println("getting RAW contents");
-            Object array = super.RAW(x);
-            arrayAddress = TruffleNFI_NativeArray.recordArray(x, array, SEXPTYPE.RAWSXP);
-        } else {
-            TruffleNFI_Call.returnArrayExisting(SEXPTYPE.RAWSXP, arrayAddress);
-        }
-        return x;
+        return new VectorWrapper(guaranteeInstanceOf(x, RRawVector.class));
+    }
+
+    @Override
+    public Object COMPLEX(Object x) {
+        return new VectorWrapper(guaranteeInstanceOf(x, RComplexVector.class));
     }
 
     @Override
     public Object R_CHAR(Object x) {
-        long arrayAddress = TruffleNFI_NativeArray.findArray(x);
-        if (arrayAddress == 0) {
-            System.out.println("getting R_CHAR contents");
-            CharSXPWrapper charSXP = (CharSXPWrapper) x;
-            Object array = charSXP.getContents().getBytes();
-            arrayAddress = TruffleNFI_NativeArray.recordArray(x, array, SEXPTYPE.CHARSXP);
-        } else {
-            TruffleNFI_Call.returnArrayExisting(SEXPTYPE.CHARSXP, arrayAddress);
-        }
-        return x;
+        return new VectorWrapper(guaranteeInstanceOf(x, CharSXPWrapper.class));
     }
 
     @Override

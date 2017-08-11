@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RComplexVector extends RVector<double[]> implements RAbstractComplexVector {
 
-    private final double[] data;
+    private double[] data;
 
     RComplexVector(double[] data, boolean complete) {
         super(complete);
@@ -51,6 +51,7 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
 
     @Override
     protected RComplexVector internalCopy() {
+        assert data != null;
         return new RComplexVector(Arrays.copyOf(data, data.length), this.isComplete());
     }
 
@@ -61,7 +62,7 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
 
     @Override
     public int getLength() {
-        return data.length >> 1;
+        return NativeDataAccess.getDataLength(this, data);
     }
 
     @Override
@@ -81,22 +82,18 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
     @Override
     public void setDataAt(Object store, int index, RComplex value) {
         assert data == store;
-        double[] array = (double[]) store;
-        array[index << 1] = value.getRealPart();
-        array[(index << 1) + 1] = value.getImaginaryPart();
+        NativeDataAccess.setData(this, (double[]) store, index, value.getRealPart(), value.getImaginaryPart());
     }
 
     @Override
-    public RComplex getDataAt(Object store, int i) {
+    public RComplex getDataAt(Object store, int index) {
         assert data == store;
-        double[] doubleStore = (double[]) store;
-        int index = i << 1;
-        return RDataFactory.createComplex(doubleStore[index], doubleStore[index + 1]);
+        return NativeDataAccess.getData(this, (double[]) store, index);
     }
 
     @Override
-    public RComplex getDataAt(int i) {
-        return getDataAt(data, i);
+    public RComplex getDataAt(int index) {
+        return NativeDataAccess.getData(this, data, index);
     }
 
     @Override
@@ -107,8 +104,8 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
     @Override
     public boolean verify() {
         if (isComplete()) {
-            for (double d : data) {
-                if (d == RRuntime.DOUBLE_NA) {
+            for (int i = 0; i < getLength(); i++) {
+                if (getDataAt(i).isNA()) {
                     return false;
                 }
             }
@@ -118,6 +115,7 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
 
     @Override
     public double[] getDataCopy() {
+        assert data != null;
         return Arrays.copyOf(data, data.length);
     }
 
@@ -127,23 +125,23 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
      */
     @Override
     public double[] getDataWithoutCopying() {
+        assert data != null;
         return data;
     }
 
     @Override
     public RComplexVector copyWithNewDimensions(int[] newDimensions) {
+        assert data != null;
         return RDataFactory.createComplexVector(data, isComplete(), newDimensions);
     }
 
-    private RComplexVector updateDataAt(int i, RComplex right, NACheck rightNACheck) {
+    private RComplexVector updateDataAt(int index, RComplex value, NACheck rightNACheck) {
         assert !this.isShared();
-        int index = i << 1;
-        data[index] = right.getRealPart();
-        data[index + 1] = right.getImaginaryPart();
-        if (rightNACheck.check(right)) {
+        NativeDataAccess.setData(this, data, index, value.getRealPart(), value.getImaginaryPart());
+        if (rightNACheck.check(value)) {
             setComplete(false);
         }
-        assert !isComplete() || !RRuntime.isNA(right);
+        assert !isComplete() || !RRuntime.isNA(value);
         return this;
     }
 
@@ -153,6 +151,7 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
     }
 
     private double[] copyResizedData(int size, boolean fillNA) {
+        assert data != null;
         int csize = size << 1;
         double[] newData = Arrays.copyOf(data, csize);
         if (csize > this.getLength()) {
@@ -172,6 +171,7 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
 
     @Override
     protected RComplexVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        assert data != null;
         boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createComplexVector(copyResizedData(size, fillNA), isComplete, dimensions);
     }
@@ -189,9 +189,16 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RAbstractComplexVector other = (RAbstractComplexVector) fromVector;
-        int toIndex2 = toIndex << 1;
         RComplex value = other.getDataAt(fromIndex);
-        data[toIndex2] = value.getRealPart();
-        data[toIndex2 + 1] = value.getImaginaryPart();
+        NativeDataAccess.setData(this, data, toIndex, value.getRealPart(), value.getImaginaryPart());
+    }
+
+    public long allocateNativeContents() {
+        try {
+            return NativeDataAccess.allocateNativeContents(this, data, getLength());
+        } finally {
+            data = null;
+            complete = false;
+        }
     }
 }

@@ -20,10 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi;
-
-import com.oracle.truffle.r.runtime.data.RObject;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
+package com.oracle.truffle.r.runtime.data;
 
 /**
  * Internally GNU R distinguishes "strings" and "vectors of strings" using the {@code CHARSXP} and
@@ -35,22 +32,30 @@ import com.oracle.truffle.r.runtime.data.RTruffleObject;
  * N.B. Use limited to RFFI implementations.
  */
 public final class CharSXPWrapper extends RObject implements RTruffleObject {
-    private final String contents;
+    private String contents;
 
     private CharSXPWrapper(String contents) {
         this.contents = contents;
     }
 
     public String getContents() {
-        return contents;
+        return NativeDataAccess.getData(this, contents);
     }
 
     @Override
     public String toString() {
-        return "CHARSXP(" + contents + ")";
+        return "CHARSXP(" + getContents() + ")";
     }
 
     public static CharSXPWrapper create(String contents) {
         return new CharSXPWrapper(contents);
+    }
+
+    public long allocateNativeContents() {
+        try {
+            return NativeDataAccess.allocateNativeContents(this, contents);
+        } finally {
+            contents = null;
+        }
     }
 }

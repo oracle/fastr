@@ -74,27 +74,24 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public int getDataAt(int index) {
-        return data == null ? NativeDataAccess.getIntData(this, index) : data[index];
+        return NativeDataAccess.getData(this, data, index);
     }
 
     @Override
     public int getDataAt(Object store, int index) {
         assert data == store;
-        return store == null ? NativeDataAccess.getIntData(this, index) : ((int[]) store)[index];
+        return NativeDataAccess.getData(this, (int[]) store, index);
     }
 
     @Override
     public void setDataAt(Object store, int index, int value) {
         assert data == store;
-        if (store == null) {
-            NativeDataAccess.setIntData(this, index, value);
-        } else {
-            ((int[]) store)[index] = value;
-        }
+        NativeDataAccess.setData(this, (int[]) store, index, value);
     }
 
     @Override
     protected RIntVector internalCopy() {
+        assert data != null;
         return new RIntVector(Arrays.copyOf(data, data.length), isComplete());
     }
 
@@ -113,7 +110,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public int getLength() {
-        return data == null ? (int) NativeDataAccess.getDataLength(this) : data.length;
+        return NativeDataAccess.getDataLength(this, data);
     }
 
     @Override
@@ -125,7 +122,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     public boolean verify() {
         if (isComplete()) {
             for (int i = 0; i < getLength(); i++) {
-                if (getDataAt(i) == RRuntime.INT_NA) {
+                if (RRuntime.isNA(getDataAt(i))) {
                     return false;
                 }
             }
@@ -151,16 +148,14 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public RIntVector copyWithNewDimensions(int[] newDimensions) {
+        assert data != null;
         return RDataFactory.createIntVector(data, isComplete(), newDimensions);
     }
 
     public RIntVector updateDataAt(int index, int value, NACheck valueNACheck) {
         assert !this.isShared();
-        if (data == null) {
-            NativeDataAccess.setIntData(this, index, value);
-        } else {
-            data[index] = value;
-        }
+
+        NativeDataAccess.setData(this, data, index, value);
         if (valueNACheck.check(value)) {
             setComplete(false);
         }
@@ -213,13 +208,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        RAbstractIntVector other = (RAbstractIntVector) fromVector;
-        if (data == null) {
-            NativeDataAccess.setIntData(this, toIndex, other.getDataAt(fromIndex));
-        } else {
-            data[toIndex] = other.getDataAt(fromIndex);
-        }
-        data[toIndex] = other.getDataAt(fromIndex);
+        NativeDataAccess.setData(this, data, toIndex, ((RAbstractIntVector) fromVector).getDataAt(fromIndex));
     }
 
     @Override
@@ -229,11 +218,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public void setElement(int index, Object value) {
-        if (data == null) {
-            NativeDataAccess.setIntData(this, index, (int) value);
-        } else {
-            data[index] = (int) value;
-        }
+        NativeDataAccess.setData(this, data, index, (int) value);
     }
 
     public long allocateNativeContents() {
@@ -241,6 +226,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
             return NativeDataAccess.allocateNativeContents(this, data, getLength());
         } finally {
             data = null;
+            complete = false;
         }
     }
 }

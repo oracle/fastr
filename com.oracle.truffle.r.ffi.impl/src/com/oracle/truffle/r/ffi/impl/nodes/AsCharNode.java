@@ -29,11 +29,11 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 
 @TypeSystemReference(RTypes.class)
 public abstract class AsCharNode extends FFIUpCallNode.Arg1 {

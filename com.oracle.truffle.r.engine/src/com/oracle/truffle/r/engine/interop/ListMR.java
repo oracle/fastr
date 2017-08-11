@@ -39,7 +39,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.engine.interop.ListMRFactory.ListKeyInfoImplNodeGen;
 import com.oracle.truffle.r.engine.interop.ListMRFactory.ListReadImplNodeGen;
 import com.oracle.truffle.r.engine.interop.ListMRFactory.ListWriteImplNodeGen;
-import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
@@ -120,7 +119,7 @@ public class ListMR {
         @Resolve(message = "TO_NATIVE")
         public abstract static class RListToNativeNode extends Node {
             protected Object access(RTruffleObject receiver) {
-                return toNativePointer(receiver);
+                return NativeDataAccess.toNative(receiver);
             }
         }
 
@@ -218,7 +217,7 @@ public class ListMR {
         @Resolve(message = "TO_NATIVE")
         public abstract static class RExpressionToNativeNode extends Node {
             protected Object access(RTruffleObject receiver) {
-                return toNativePointer(receiver);
+                return NativeDataAccess.toNative(receiver);
             }
         }
 
@@ -310,7 +309,7 @@ public class ListMR {
         @Resolve(message = "TO_NATIVE")
         public abstract static class RPairListToNativeNode extends Node {
             protected Object access(RPairList receiver) {
-                return toNativePointer(receiver);
+                return NativeDataAccess.toNative(receiver);
             }
         }
 
@@ -535,9 +534,5 @@ public class ListMR {
     private static Object listKeys(TruffleObject receiver, GetNamesAttributeNode getNamesNode) {
         RStringVector names = getNamesNode.getNames(receiver);
         return names != null ? names : RNull.instance;
-    }
-
-    private static Object toNativePointer(RTruffleObject receiver) {
-        return new NativePointer(receiver);
     }
 }

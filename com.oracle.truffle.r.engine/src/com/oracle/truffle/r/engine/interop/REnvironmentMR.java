@@ -41,7 +41,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.engine.interop.REnvironmentMRFactory.REnvironmentKeyInfoImplNodeGen;
 import com.oracle.truffle.r.engine.interop.REnvironmentMRFactory.REnvironmentReadImplNodeGen;
 import com.oracle.truffle.r.engine.interop.REnvironmentMRFactory.REnvironmentWriteImplNodeGen;
-import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
@@ -59,7 +58,7 @@ public class REnvironmentMR {
     @Resolve(message = "TO_NATIVE")
     public abstract static class REnvironmentToNativeNode extends Node {
         protected Object access(REnvironment receiver) {
-            return new NativePointer(receiver);
+            return NativeDataAccess.toNative(receiver);
         }
     }
 

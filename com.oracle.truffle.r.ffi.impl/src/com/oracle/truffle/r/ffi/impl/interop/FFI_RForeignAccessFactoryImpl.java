@@ -23,8 +23,8 @@
 package com.oracle.truffle.r.ffi.impl.interop;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
-import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 
 public class FFI_RForeignAccessFactoryImpl {

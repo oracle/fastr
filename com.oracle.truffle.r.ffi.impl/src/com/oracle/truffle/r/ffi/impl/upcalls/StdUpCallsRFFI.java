@@ -158,6 +158,8 @@ public interface StdUpCallsRFFI {
 
     Object REAL(Object x);
 
+    Object COMPLEX(Object x);
+
     Object STRING_ELT(Object x, long i);
 
     Object VECTOR_ELT(Object x, long i);

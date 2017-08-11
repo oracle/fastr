@@ -34,6 +34,10 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
+/**
+ * Unwraps a value that is arriving from the native side. This unwrapping should only happen for
+ * arguments and return values that represent R data structures, not for primitive values.
+ */
 public final class FFIUnwrapNode extends Node {
 
     @Child private Node isPointer;
@@ -45,20 +49,6 @@ public final class FFIUnwrapNode extends Node {
     private final BranchProfile isRTruffleObject = BranchProfile.create();
     private final BranchProfile isNonBoxed = BranchProfile.create();
 
-    /**
-     * There are three possibilities as enumerated below.
-     * <ul>
-     * <li>For an {@link RTruffleObject} there is nothing to do, and indeed, calling {@code unbox}
-     * would be disastrous, as that means, e.g., for a RVector, extract the first element!</li>
-     * <li>Or we could get a {@code TruffleObject} from another language domain, e.g a
-     * {@code JavaObject} that wraps, e.g., an {@code Integer}. Such a value has to be unboxed.
-     * Similarly a {@code NativePointer} encoding, e.g., a C char array. One special case in the
-     * LLVM implementation is {@code NativePointer} that represents an object stored to memory,
-     * which requires a lookup (and not an {@code UNBOX}).</li>
-     * <li>We could also get a plain {@link Integer} or similar type in which case there is nothing
-     * to do.</li>
-     * </ul>
-     */
     public Object execute(Object x) {
         if (x instanceof RTruffleObject) {
             isRTruffleObject.enter();

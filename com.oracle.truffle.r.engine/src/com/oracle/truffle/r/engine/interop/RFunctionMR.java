@@ -32,7 +32,6 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -67,7 +66,7 @@ public class RFunctionMR {
     @Resolve(message = "TO_NATIVE")
     public abstract static class RFunctionToNativeNode extends Node {
         protected Object access(RFunction receiver) {
-            return new NativePointer(receiver);
+            return NativeDataAccess.toNative(receiver);
         }
     }
 

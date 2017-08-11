@@ -30,22 +30,18 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
 import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
 import com.oracle.truffle.r.ffi.impl.interop.NativeCharArray;
-import com.oracle.truffle.r.ffi.impl.interop.NativeDoubleArray;
-import com.oracle.truffle.r.ffi.impl.interop.NativeIntegerArray;
-import com.oracle.truffle.r.ffi.impl.interop.NativeLogicalArray;
-import com.oracle.truffle.r.ffi.impl.interop.NativeRawArray;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.ffi.impl.upcalls.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -87,35 +83,27 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     public Object RAW(Object x) {
-        byte[] value = (byte[]) super.RAW(x);
-
-        // TODO: this will leak memory if the pointer escapes
-        return new NativeRawArray(value);
+        throw RInternalError.unimplemented();
     }
 
     @Override
     public Object LOGICAL(Object x) {
-        byte[] value = (byte[]) super.LOGICAL(x);
-
-        // TODO: this will leak memory if the pointer escapes
-        return new NativeLogicalArray(x, value);
+        throw RInternalError.unimplemented();
     }
 
     @Override
     public Object INTEGER(Object x) {
-        int[] value = (int[]) super.INTEGER(x);
-
-        // TODO: this will leak memory if the pointer escapes
-        return new NativeIntegerArray(x, value);
+        throw RInternalError.unimplemented();
     }
 
     @Override
     public Object REAL(Object x) {
-        // Special handling in Truffle variant
-        double[] value = (double[]) super.REAL(x);
+        throw RInternalError.unimplemented();
+    }
 
-        // TODO: this will leak memory if the pointer escapes
-        return new NativeDoubleArray(x, value);
+    @Override
+    public Object COMPLEX(Object x) {
+        throw RInternalError.unimplemented();
     }
 
     @Override

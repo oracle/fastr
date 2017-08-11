@@ -96,27 +96,3 @@ void return_BYTE_EXISTING(long address) {
 void return_FREE(void *address) {
 //	free(address);
 }
-
-int *INTEGER(SEXP x) {
-	return ((call_INTEGER) callbacks[INTEGER_x])(x);
-}
-
-int *LOGICAL(SEXP x){
-	return ((call_LOGICAL) callbacks[LOGICAL_x])(x);
-}
-
-double *REAL(SEXP x){
-	((call_REAL) callbacks[REAL_x])(x);
-	return return_double;
-}
-
-Rbyte *RAW(SEXP x) {
-	((call_RAW) callbacks[RAW_x])(x);
-		return (Rbyte *) return_byte;
-}
-
-const char * R_CHAR(SEXP x) {
-	((call_R_CHAR) callbacks[R_CHAR_x])(x);
-	return return_byte;
-}
-

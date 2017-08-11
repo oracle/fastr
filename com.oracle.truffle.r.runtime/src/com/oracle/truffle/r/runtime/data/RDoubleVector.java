@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RDoubleVector extends RVector<double[]> implements RAbstractDoubleVector {
 
-    private final double[] data;
+    private double[] data;
 
     RDoubleVector(double[] data, boolean complete) {
         super(complete);
@@ -68,6 +68,7 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
 
     @Override
     protected RDoubleVector internalCopy() {
+        assert data != null;
         return new RDoubleVector(Arrays.copyOf(data, data.length), this.isComplete());
     }
 
@@ -79,13 +80,13 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     @Override
     public void setDataAt(Object store, int index, double value) {
         assert data == store;
-        ((double[]) store)[index] = value;
+        NativeDataAccess.setData(this, (double[]) store, index, value);
     }
 
     @Override
     public double getDataAt(Object store, int index) {
         assert data == store;
-        return ((double[]) store)[index];
+        return NativeDataAccess.getData(this, (double[]) store, index);
     }
 
     public RDoubleVector copyResetData(double[] newData) {
@@ -103,7 +104,7 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
 
     @Override
     public int getLength() {
-        return data.length;
+        return NativeDataAccess.getDataLength(this, data);
     }
 
     @Override
@@ -114,8 +115,8 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     @Override
     public boolean verify() {
         if (isComplete()) {
-            for (double d : data) {
-                if (d == RRuntime.DOUBLE_NA) {
+            for (int i = 0; i < getLength(); i++) {
+                if (RRuntime.isNA(getDataAt(i))) {
                     return false;
                 }
             }
@@ -124,12 +125,13 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     }
 
     @Override
-    public double getDataAt(int i) {
-        return data[i];
+    public double getDataAt(int index) {
+        return NativeDataAccess.getData(this, data, index);
     }
 
     @Override
     public double[] getDataCopy() {
+        assert data != null;
         return Arrays.copyOf(data, data.length);
     }
 
@@ -139,21 +141,23 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
      */
     @Override
     public double[] getDataWithoutCopying() {
+        assert data != null;
         return data;
     }
 
     @Override
     public RDoubleVector copyWithNewDimensions(int[] newDimensions) {
+        assert data != null;
         return RDataFactory.createDoubleVector(data, isComplete(), newDimensions);
     }
 
-    public RDoubleVector updateDataAt(int i, double right, NACheck valueNACheck) {
+    public RDoubleVector updateDataAt(int index, double value, NACheck valueNACheck) {
         assert !this.isShared();
-        data[i] = right;
-        if (valueNACheck.check(right)) {
+        NativeDataAccess.setData(this, data, index, value);
+        if (valueNACheck.check(value)) {
             complete = false;
         }
-        assert !isComplete() || !RRuntime.isNA(right);
+        assert !isComplete() || !RRuntime.isNA(value);
         return this;
     }
 
@@ -179,12 +183,14 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     }
 
     private double[] copyResizedData(int size, boolean fillNA) {
+        assert data != null;
         double[] newData = Arrays.copyOf(data, size);
         return resizeData(newData, this.data, this.getLength(), fillNA);
     }
 
     @Override
     protected RDoubleVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        assert data != null;
         boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createDoubleVector(copyResizedData(size, fillNA), isComplete, dimensions);
     }
@@ -201,12 +207,20 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        RAbstractDoubleVector other = (RAbstractDoubleVector) fromVector;
-        data[toIndex] = other.getDataAt(fromIndex);
+        NativeDataAccess.setData(this, data, toIndex, ((RAbstractDoubleVector) fromVector).getDataAt(fromIndex));
     }
 
     @Override
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
+    }
+
+    public long allocateNativeContents() {
+        try {
+            return NativeDataAccess.allocateNativeContents(this, data, getLength());
+        } finally {
+            data = null;
+            complete = false;
+        }
     }
 }
