@@ -92,6 +92,11 @@ public abstract class UpdateOldClass extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
+    protected Object setOldClass(@SuppressWarnings("unused") RNull arg, @SuppressWarnings("unused") RNull className) {
+        return RNull.instance;
+    }
+
+    @Specialization
     protected Object setOldClass(@SuppressWarnings("unused") RNull arg, @SuppressWarnings("unused") Object className) {
         throw error(Message.INVALID_NULL_LHS);
     }

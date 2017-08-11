@@ -39,8 +39,7 @@ public class TestBuiltin_options extends TestBase {
 
     @Test
     public void testoptions5() {
-        // FIXME RInternalError: should not reach here
-        assertEval(Ignored.Unimplemented, "options(list(NULL));");
+        assertEval("options(list(NULL));");
         assertEval("options(NA);");
         // IMHO ReferenceError since NULL makes little sense as parameter value
         // here just like NA which outputs 'invalid argument' both in GnuR and FastR.

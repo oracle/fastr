@@ -23,9 +23,7 @@ public class TestBuiltin_oldClassassign extends TestBase {
 
     @Test
     public void testoldClassassign2() {
-        // FIXME UnsupportedSpecializationException: Unexpected values provided for oldClass<-: [],
-        // []
-        assertEval(Ignored.ImplementationError, "argv <- list(NULL, NULL);`oldClass<-`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(NULL, NULL);`oldClass<-`(argv[[1]],argv[[2]]);");
     }
 
     @Test
