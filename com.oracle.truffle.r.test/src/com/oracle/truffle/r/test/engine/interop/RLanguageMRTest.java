@@ -22,20 +22,21 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Assert;
+import org.junit.Test;
+
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.data.RLanguage;
-import org.junit.Assert;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
 
 public class RLanguageMRTest extends AbstractMRTest {
 
@@ -92,7 +93,6 @@ public class RLanguageMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() {
-        PolyglotEngine engine = PolyglotEngine.newBuilder().build();
         // TODO any simpler way to create a RLanguage ?
         String srcTxt = "ne <- new.env(); delayedAssign('x', 1 + 2, assign.env = ne); substitute(x, ne)";
         Source src = Source.newBuilder(srcTxt).mimeType("text/x-r").name("test.R").build();
@@ -114,5 +114,4 @@ public class RLanguageMRTest extends AbstractMRTest {
     protected int getSize(TruffleObject obj) {
         return ((RLanguage) obj).getLength();
     }
-
 }

@@ -22,6 +22,12 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
+
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
@@ -30,9 +36,6 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
-
-import org.junit.Test;
-
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
@@ -40,18 +43,10 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class ListMRTest extends AbstractMRTest {
 
     private String testValues = "i=1L, d=2.1, b=TRUE, fn=function() {}, n=NULL, 4";
-    private final PolyglotEngine engine;
-
-    public ListMRTest() {
-        engine = PolyglotEngine.newBuilder().build();
-    }
 
     @Override
     @Test
@@ -157,7 +152,7 @@ public class ListMRTest extends AbstractMRTest {
         assertFalse(KeyInfo.isInternal(info));
     }
 
-    private RAbstractContainer create(String createFun, String values) {
+    private static RAbstractContainer create(String createFun, String values) {
         Source src = Source.newBuilder(createFun + "(" + values + ")").mimeType("text/x-r").name("test.R").build();
         PolyglotEngine.Value result = engine.eval(src);
         return result.as(RAbstractContainer.class);
@@ -188,5 +183,4 @@ public class ListMRTest extends AbstractMRTest {
     protected int getSize(TruffleObject obj) {
         return obj instanceof RList ? ((RList) obj).getLength() : ((RPairList) obj).getLength();
     }
-
 }

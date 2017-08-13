@@ -22,25 +22,23 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
+
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.data.RS4Object;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
 
 public class RS4ObjectMRTest extends AbstractMRTest {
-
-    public RS4ObjectMRTest() {
-    }
 
     @Test
     public void testKeysInfo() throws Exception {
@@ -118,7 +116,6 @@ public class RS4ObjectMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() {
-        PolyglotEngine engine = PolyglotEngine.newBuilder().build();
         String srcTxt = "setClass('test', representation(s = 'character', d = 'numeric', i = 'integer', b = 'logical', fn = 'function'));" +
                         "new('test', s = 'aaa', d = 1.1, i=123L, b = TRUE, fn = function() {})";
         Source src = Source.newBuilder(srcTxt).mimeType("text/x-r").name("test.R").build();

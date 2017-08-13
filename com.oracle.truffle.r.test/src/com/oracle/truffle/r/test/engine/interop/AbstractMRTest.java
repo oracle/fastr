@@ -27,15 +27,32 @@ import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public abstract class AbstractMRTest {
+
+    protected static PolyglotEngine engine;
+
+    @BeforeClass
+    public static void before() {
+        engine = PolyglotEngine.newBuilder().build();
+    }
+
+    @AfterClass
+    public static void after() {
+        engine.dispose();
+    }
 
     /**
      * Create TruffleObject-s to be rudimentary tested for IS_NULL, IS_BOXED/UNBOX, IS_EXECUTABLE,
