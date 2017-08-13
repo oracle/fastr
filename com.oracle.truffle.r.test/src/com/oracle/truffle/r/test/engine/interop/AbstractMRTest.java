@@ -81,7 +81,7 @@ public abstract class AbstractMRTest {
     }
 
     protected boolean isPointer(@SuppressWarnings("unused") TruffleObject obj) {
-        return false;
+        return true;
     }
 
     protected boolean isBoxed(@SuppressWarnings("unused") TruffleObject obj) {
