@@ -75,7 +75,7 @@ public enum NativeFunction {
                     "call_lapack_"),
     // misc
     exactSumFunc("([double], sint32, sint32, sint32): double", "call_misc_"),
-    dqrls("([double], sint32, sint32, [double], sint32, double, [double], [double], [double], [sint32], [sint32], [double], [double]): void", "call_appl_"),
+    dqrls("([double], sint32, sint32, [double], sint32, double, [double], [double], [double], [sint32], [sint32], [double], [double]): void", "call_misc_"),
     // stats
     fft_factor("(sint32, [sint32], [sint32]): void", TruffleNFI_Utils::lookupAndBindStats),
     fft_work("([double], sint32, sint32, sint32, sint32, [double], [sint32]): sint32", TruffleNFI_Utils::lookupAndBindStats);
