@@ -12,15 +12,34 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asLogicalVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.returnIf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.map;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mapIf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.object.Shape.Pred;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
@@ -74,7 +93,23 @@ public abstract class Format extends RBuiltinNode.Arg9 {
         casts.arg("width").asIntegerVector().findFirst(0).mustNotBeNA();
         casts.arg("justify").asIntegerVector().findFirst(RRuntime.INT_NA).mustBe(intNA().or(gte(JUSTIFY_LEFT).and(lte(JUSTIFY_NONE))));
         casts.arg("na.encode").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).mustNotBeNA().map(toBoolean());
-        casts.arg("scientific").asIntegerVector().findFirst();
+        //@formatter:off
+        casts.arg("scientific").mapIf(logicalValue(),
+                        chain(asLogicalVector()).
+                            with(mustBe(singleElement())).
+                            with(findFirst().logicalElement()).
+                            with(returnIf(logicalNA(), map(constant(RRuntime.INT_NA)))).
+                            with(asInteger()).
+                            with(mapIf(gt(0),
+                                            map(constant(-100)),
+                                            map(constant(100)))).
+                            end(),
+                        chain(mustBe(numericValue())).
+                            with(asIntegerVector()).
+                            with(mustBe(singleElement())).
+                            with(findFirst().integerElement()).
+                            end());
+        //@formatter:on
         casts.arg("decimal.mark").asStringVector().findFirst();
     }
 
