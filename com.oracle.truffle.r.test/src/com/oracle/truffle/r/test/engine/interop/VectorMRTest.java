@@ -22,6 +22,12 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
+
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
@@ -29,25 +35,12 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
-
-import org.junit.Test;
-
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class VectorMRTest extends AbstractMRTest {
-
-    private final PolyglotEngine engine;
-
-    public VectorMRTest() {
-        engine = PolyglotEngine.newBuilder().build();
-    }
 
     @Test
     public void testReadWrite() throws Exception {
@@ -79,7 +72,6 @@ public class VectorMRTest extends AbstractMRTest {
         RAbstractVector vec = JavaInterop.asJavaObject(RAbstractVector.class, nvi);
         assertTrue(vec instanceof RAbstractStringVector);
         assertEquals("abc", ForeignAccess.sendRead(Message.READ.createNode(), nvi, 0));
-
     }
 
     @Test
@@ -123,9 +115,8 @@ public class VectorMRTest extends AbstractMRTest {
         return ((RAbstractVector) obj).getLength();
     }
 
-    private TruffleObject create(String createTxt) throws Exception {
+    private static TruffleObject create(String createTxt) throws Exception {
         Source src = Source.newBuilder(createTxt).mimeType("text/x-r").name("test.R").build();
         return engine.eval(src).as(RAbstractVector.class);
     }
-
 }

@@ -22,19 +22,20 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
+
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
 
 public class RFunctionMRTest extends AbstractMRTest {
 
@@ -72,7 +73,6 @@ public class RFunctionMRTest extends AbstractMRTest {
     }
 
     private static RFunction create(String fun) {
-        PolyglotEngine engine = PolyglotEngine.newBuilder().build();
         Source src = Source.newBuilder(fun).mimeType("text/x-r").name("test.R").build();
         PolyglotEngine.Value result = engine.eval(src);
         return result.as(RFunction.class);

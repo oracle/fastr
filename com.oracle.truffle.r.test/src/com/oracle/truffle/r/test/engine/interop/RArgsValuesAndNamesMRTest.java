@@ -132,7 +132,6 @@ public class RArgsValuesAndNamesMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        PolyglotEngine engine = PolyglotEngine.newBuilder().build();
         Source src = Source.newBuilder("f=function() {}").mimeType("text/x-r").name("test.R").build();
         PolyglotEngine.Value result = engine.eval(src);
         RFunction fn = result.as(RFunction.class);
@@ -159,5 +158,4 @@ public class RArgsValuesAndNamesMRTest extends AbstractMRTest {
     protected int getSize(TruffleObject obj) {
         return ((RArgsValuesAndNames) obj).getLength();
     }
-
 }

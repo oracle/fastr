@@ -22,6 +22,12 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
+
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
@@ -29,15 +35,8 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
-
-import org.junit.Test;
-
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class REnvironmentMRTest extends AbstractMRTest {
 
@@ -133,7 +132,6 @@ public class REnvironmentMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        PolyglotEngine engine = PolyglotEngine.newBuilder().build();
         Source src = Source.newBuilder("e <- new.env(); e$s <- 'aaa'; e$i <- 123L; e$d <- 123.1; e$b <- TRUE; e$fn <- function() {}; e$n <- NULL; e$l <- 666; lockBinding('l', e); e").mimeType(
                         "text/x-r").name("test.R").build();
         return new TruffleObject[]{engine.eval(src).as(REnvironment.class)};
@@ -146,9 +144,7 @@ public class REnvironmentMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject createEmptyTruffleObject() throws Exception {
-        PolyglotEngine engine = PolyglotEngine.newBuilder().build();
         Source src = Source.newBuilder("new.env()").mimeType("text/x-r").name("test.R").build();
         return engine.eval(src).as(REnvironment.class);
     }
-
 }
