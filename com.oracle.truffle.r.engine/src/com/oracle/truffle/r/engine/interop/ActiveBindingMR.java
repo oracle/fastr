@@ -38,20 +38,6 @@ public class ActiveBindingMR {
         }
     }
 
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class ActiveBindingHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") ActiveBinding receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class ActiveBindingIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") ActiveBinding receiver) {
-            return false;
-        }
-    }
-
     @Resolve(message = "UNBOX")
     public abstract static class ActiveBindingUnboxNode extends Node {
 

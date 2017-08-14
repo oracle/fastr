@@ -31,26 +31,6 @@ import com.oracle.truffle.r.runtime.data.RUnboundValue;
 
 @MessageResolution(receiverType = RUnboundValue.class)
 public class RUnboundValueMR {
-    @Resolve(message = "IS_BOXED")
-    public abstract static class RUnboundValueIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RUnboundValue receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class RUnboundValueHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RUnboundValue receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class RUnboundValueIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RUnboundValue receiver) {
-            return false;
-        }
-    }
 
     @Resolve(message = "KEY_INFO")
     public abstract static class RUnboundValueKeyInfoNode extends Node {

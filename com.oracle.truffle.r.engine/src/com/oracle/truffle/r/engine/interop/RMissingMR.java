@@ -32,27 +32,6 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 @MessageResolution(receiverType = RMissing.class)
 public class RMissingMR {
 
-    @Resolve(message = "IS_BOXED")
-    public abstract static class RMissingIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RMissing receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class RMissingHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RMissing receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class RMissingIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RMissing receiver) {
-            return false;
-        }
-    }
-
     @Resolve(message = "KEY_INFO")
     public abstract static class RMissingKeyInfoNode extends Node {
         protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {

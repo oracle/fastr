@@ -62,12 +62,6 @@ public class ListMR {
 
     @MessageResolution(receiverType = RList.class)
     public static class RListMR extends ListMR {
-        @Resolve(message = "IS_BOXED")
-        public abstract static class RListIsBoxedNode extends Node {
-            protected Object access(RList receiver) {
-                return isBoxed(receiver);
-            }
-        }
 
         @Resolve(message = "HAS_SIZE")
         public abstract static class RListHasSizeNode extends Node {
@@ -82,13 +76,6 @@ public class ListMR {
 
             protected Object access(RList receiver) {
                 return getSize(receiver, lengthNode);
-            }
-        }
-
-        @Resolve(message = "IS_NULL")
-        public abstract static class RListIsNullNode extends Node {
-            protected Object access(RList receiver) {
-                return isNull(receiver);
             }
         }
 
@@ -146,12 +133,6 @@ public class ListMR {
 
     @MessageResolution(receiverType = RPairList.class)
     public static class RPairListMR {
-        @Resolve(message = "IS_BOXED")
-        public abstract static class RPairListIsBoxedNode extends Node {
-            protected Object access(RPairList receiver) {
-                return isBoxed(receiver);
-            }
-        }
 
         @Resolve(message = "HAS_SIZE")
         public abstract static class RPairListHasSizeNode extends Node {
@@ -166,13 +147,6 @@ public class ListMR {
 
             protected Object access(RPairList receiver) {
                 return getSize(receiver, lengthNode);
-            }
-        }
-
-        @Resolve(message = "IS_NULL")
-        public abstract static class RPairListIsNullNode extends Node {
-            protected Object access(RPairList receiver) {
-                return isNull(receiver);
             }
         }
 
@@ -412,14 +386,6 @@ public class ListMR {
         protected int access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object field) {
             return 0;
         }
-    }
-
-    private static boolean isBoxed(@SuppressWarnings("unused") TruffleObject receiver) {
-        return false;
-    }
-
-    private static boolean isNull(@SuppressWarnings("unused") TruffleObject receiver) {
-        return false;
     }
 
     private static boolean hasSize(@SuppressWarnings("unused") TruffleObject receiver) {

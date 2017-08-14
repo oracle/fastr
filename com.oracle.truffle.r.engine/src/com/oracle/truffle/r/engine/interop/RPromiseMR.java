@@ -50,20 +50,6 @@ public class RPromiseMR {
     private static final String PROP_IS_EVALUATED = "isEvaluated";
     private static final String PROP_EXPR = "expression";
 
-    @Resolve(message = "IS_BOXED")
-    public abstract static class RPromiseIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RPromise receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class RPromiseIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RPromise receiver) {
-            return false;
-        }
-    }
-
     @Resolve(message = "READ")
     public abstract static class RPromiseReadNode extends Node {
         @Child RPromiseReadImplNode readNode = RPromiseReadImplNodeGen.create();

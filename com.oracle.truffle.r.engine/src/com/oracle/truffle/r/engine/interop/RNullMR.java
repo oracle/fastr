@@ -37,20 +37,6 @@ public class RNullMR {
      */
     private static boolean isNull = true;
 
-    @Resolve(message = "IS_BOXED")
-    public abstract static class RNullIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RNull receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class RNullHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RNull receiver) {
-            return false;
-        }
-    }
-
     @Resolve(message = "IS_NULL")
     public abstract static class RNullIsNullNode extends Node {
         protected Object access(@SuppressWarnings("unused") RNull receiver) {

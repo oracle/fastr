@@ -62,20 +62,6 @@ public class RInteropScalarMR {
         }
     }
 
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class RInteropScalarHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RInteropScalar receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class RInteropScalarIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RInteropScalar receiver) {
-            return false;
-        }
-    }
-
     @Resolve(message = "KEY_INFO")
     public abstract static class RInteropScalarKeyInfoNode extends Node {
         protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {

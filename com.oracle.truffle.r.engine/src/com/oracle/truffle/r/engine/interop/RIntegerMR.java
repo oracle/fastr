@@ -38,20 +38,6 @@ public class RIntegerMR {
         }
     }
 
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class RIntegerHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RInteger receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class RIntegerIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RInteger receiver) {
-            return false;
-        }
-    }
-
     @Resolve(message = "KEY_INFO")
     public abstract static class RIntegerKeyInfoNode extends Node {
         protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {
