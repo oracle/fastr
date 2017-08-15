@@ -68,9 +68,9 @@ public class TruffleNFI_DLL implements DLLRFFI {
         sb.append(local ? "RTLD_LOCAL" : "RTLD_GLOBAL");
         sb.append('|');
         sb.append(now ? "RTLD_NOW" : "RTLD_LAZY");
-        sb.append(")");
-        sb.append(' ');
+        sb.append(") \"");
         sb.append(path);
+        sb.append('"');
         return sb.toString();
     }
 

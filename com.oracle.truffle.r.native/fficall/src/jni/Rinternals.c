@@ -366,8 +366,9 @@ SEXP Rf_dimnamesgets(SEXP x, SEXP y) {
 SEXP Rf_eval(SEXP expr, SEXP env) {
 	TRACE(TARGpp, expr, env);
     JNIEnv *thisenv = getEnv();
-    updateNativeArrays(thisenv);
+    updateJObjects(thisenv);
     SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_evalMethodID, expr, env);
+    updateNativeArrays(thisenv);
     return checkRef(thisenv, result);
 }
 
@@ -409,7 +410,7 @@ SEXP Rf_getAttrib(SEXP vec, SEXP name) {
 SEXP Rf_setAttrib(SEXP vec, SEXP name, SEXP val) {
 	TRACE(TARGppp, vec,name, val);
 	JNIEnv *thisenv = getEnv();
-	updateNativeArray(thisenv, val);
+	updateJObject(thisenv, val);
 	(*thisenv)->CallVoidMethod(thisenv, UpCallsRFFIObject, Rf_setAttribMethodID, vec, name, val);
 	return val;
 }
@@ -1402,12 +1403,13 @@ SEXP Rf_asS4(SEXP x, Rboolean b, int i) {
 
 static SEXP R_tryEvalInternal(SEXP x, SEXP y, int *ErrorOccurred, jboolean silent) {
 	JNIEnv *thisenv = getEnv();
-    updateNativeArrays(thisenv);
+    updateJObjects(thisenv);
 	jobject tryResult =  (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, R_tryEvalMethodID, x, y, (int) silent);
 	// If tryResult is NULL, an error occurred
 	if (ErrorOccurred) {
 		*ErrorOccurred = tryResult == NULL;
 	}
+    updateNativeArrays(thisenv);
 	return checkRef(thisenv, tryResult);
 }
 

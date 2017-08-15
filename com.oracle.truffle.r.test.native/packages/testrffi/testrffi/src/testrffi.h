@@ -95,3 +95,5 @@ extern SEXP test_ATTRIB(SEXP);
 extern SEXP test_stringNA(void);
 
 extern SEXP test_captureDotsWithSingleElement(SEXP env);
+
+extern SEXP test_evalAndNativeArrays(SEXP vec, SEXP expr, SEXP env);
