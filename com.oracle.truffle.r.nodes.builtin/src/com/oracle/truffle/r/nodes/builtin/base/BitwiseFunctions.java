@@ -91,14 +91,14 @@ public class BitwiseFunctions {
                             v = aVal ^ bVal;
                             break;
                         case SHIFTR:
-                            if (bVal > 31) {
+                            if (bVal > 31 || bVal < 0) {
                                 v = RRuntime.INT_NA;
                             } else {
                                 v = aVal >>> bVal;
                             }
                             break;
                         case SHIFTL:
-                            if (bVal > 31) {
+                            if (bVal > 31 || bVal < 0) {
                                 v = RRuntime.INT_NA;
                             } else {
                                 v = aVal << bVal;

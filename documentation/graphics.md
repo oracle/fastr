@@ -94,3 +94,4 @@ FastR's grid implementation does not yet support:
 
 FastR does not plan to implement the R graphics engine display list
 and related functions. However, the grid display list is implemented.
+
