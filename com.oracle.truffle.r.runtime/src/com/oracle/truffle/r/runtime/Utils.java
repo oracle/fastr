@@ -39,7 +39,6 @@ import java.util.function.Function;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleRuntime;
 import com.oracle.truffle.api.frame.Frame;
@@ -48,7 +47,6 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.nodes.GraphPrintVisitor;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -56,7 +54,6 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -110,16 +107,6 @@ public final class Utils {
             return 0;
         }
         return result;
-    }
-
-    public static void dumpFunction(String groupName, RFunction function) {
-        GraphPrintVisitor graphPrinter = new GraphPrintVisitor();
-        RootCallTarget callTarget = function.getTarget();
-        if (callTarget != null) {
-            graphPrinter.beginGroup(groupName);
-            graphPrinter.beginGraph(RRuntime.toString(function)).visit(callTarget.getRootNode());
-        }
-        graphPrinter.printToNetwork(true);
     }
 
     /**
