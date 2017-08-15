@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -31,8 +30,9 @@ import java.util.Arrays;
 import java.util.function.DoublePredicate;
 import java.util.function.IntPredicate;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -112,7 +112,7 @@ public class IsFiniteFunctions {
         protected RLogicalVector doFunConstant(RAbstractVector x, byte value) {
             byte[] b = new byte[x.getLength()];
             Arrays.fill(b, value);
-            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x));
+            return transferDimNames(RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR, getDims.getDimensions(x), getNames.getNames(x)), x);
         }
 
         protected RLogicalVector doFunDouble(RAbstractDoubleVector x, DoublePredicate fun) {
