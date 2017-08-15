@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.ExactMath;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -127,7 +126,7 @@ public abstract class Strtoi extends RBuiltinNode.Arg2 {
                             }
                         }
                         try {
-                            dataValue = ExactMath.addExact(ExactMath.multiplyExact(dataValue, base), digit);
+                            dataValue = Math.addExact(Math.multiplyExact(dataValue, base), digit);
                         } catch (ArithmeticException e) {
                             dataValue = RRuntime.INT_NA;
                             break;

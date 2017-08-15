@@ -32,27 +32,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 @MessageResolution(receiverType = RContext.class)
 public class RContextMR {
 
-    @Resolve(message = "IS_BOXED")
-    public abstract static class RContextIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class RContextHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class RContextIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
-            return false;
-        }
-    }
-
     @Resolve(message = "KEY_INFO")
     public abstract static class RContextKeyInfoNode extends Node {
         protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {

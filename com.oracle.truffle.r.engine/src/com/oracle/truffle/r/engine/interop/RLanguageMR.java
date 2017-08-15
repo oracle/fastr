@@ -47,13 +47,6 @@ import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 @MessageResolution(receiverType = RLanguage.class)
 public class RLanguageMR {
 
-    @Resolve(message = "IS_BOXED")
-    public abstract static class RLanguageIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RLanguage receiver) {
-            return false;
-        }
-    }
-
     @Resolve(message = "HAS_SIZE")
     public abstract static class RLanguageHasSizeNode extends Node {
         protected Object access(@SuppressWarnings("unused") RLanguage receiver) {
@@ -65,13 +58,6 @@ public class RLanguageMR {
     public abstract static class RLanguageGetSizeNode extends Node {
         protected Object access(RLanguage receiver) {
             return receiver.getLength();
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class RLanguageIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RLanguage receiver) {
-            return false;
         }
     }
 

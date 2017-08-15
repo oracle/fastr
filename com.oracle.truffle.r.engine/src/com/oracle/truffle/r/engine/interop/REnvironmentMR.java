@@ -55,31 +55,10 @@ import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 @MessageResolution(receiverType = REnvironment.class)
 public class REnvironmentMR {
 
-    @Resolve(message = "IS_BOXED")
-    public abstract static class REnvironmentIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") REnvironment receiver) {
-            return false;
-        }
-    }
-
     @Resolve(message = "TO_NATIVE")
     public abstract static class REnvironmentToNativeNode extends Node {
         protected Object access(REnvironment receiver) {
             return new NativePointer(receiver);
-        }
-    }
-
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class REnvironmentHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") REnvironment receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class REnvironmentIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") REnvironment receiver) {
-            return false;
         }
     }
 

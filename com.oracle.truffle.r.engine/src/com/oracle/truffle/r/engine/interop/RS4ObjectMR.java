@@ -57,27 +57,6 @@ import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 @MessageResolution(receiverType = RS4Object.class)
 public class RS4ObjectMR {
 
-    @Resolve(message = "IS_BOXED")
-    public abstract static class RS4ObjectIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RS4Object receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class RS4ObjectHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RS4Object receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class RS4ObjectIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RS4Object receiver) {
-            return false;
-        }
-    }
-
     @Resolve(message = "READ")
     public abstract static class RS4ObjectReadNode extends Node {
         @Child private RS4ObjectReadImplNode readNode = RS4ObjectReadImplNodeGen.create();

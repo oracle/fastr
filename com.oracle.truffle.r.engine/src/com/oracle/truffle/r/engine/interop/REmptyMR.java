@@ -32,27 +32,6 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 @MessageResolution(receiverType = REmpty.class)
 public class REmptyMR {
 
-    @Resolve(message = "IS_BOXED")
-    public abstract static class REmptyIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") REmpty receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class REmptyHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") REmpty receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class REmptyIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") REmpty receiver) {
-            return false;
-        }
-    }
-
     @Resolve(message = "KEY_INFO")
     public abstract static class REmptyKeyInfoNode extends Node {
         protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {

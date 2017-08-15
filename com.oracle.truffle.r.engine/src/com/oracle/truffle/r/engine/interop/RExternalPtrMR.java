@@ -31,26 +31,6 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 
 @MessageResolution(receiverType = RExternalPtr.class)
 public class RExternalPtrMR {
-    @Resolve(message = "IS_BOXED")
-    public abstract static class RExternalPtrIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class RExternalPtrHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class RExternalPtrIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
-            return false;
-        }
-    }
 
     @Resolve(message = "KEY_INFO")
     public abstract static class RExternalPtrKeyInfoNode extends Node {

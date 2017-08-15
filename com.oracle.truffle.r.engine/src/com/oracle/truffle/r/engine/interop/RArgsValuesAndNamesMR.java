@@ -44,12 +44,6 @@ import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 
 @MessageResolution(receiverType = RArgsValuesAndNames.class)
 public class RArgsValuesAndNamesMR {
-    @Resolve(message = "IS_BOXED")
-    public abstract static class RArgsValuesAndNamesIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RArgsValuesAndNames receiver) {
-            return false;
-        }
-    }
 
     @Resolve(message = "HAS_SIZE")
     public abstract static class RArgsValuesAndNamesHasSizeNode extends Node {
@@ -62,13 +56,6 @@ public class RArgsValuesAndNamesMR {
     public abstract static class RArgsValuesAndNamesGetSizeNode extends Node {
         protected Object access(RArgsValuesAndNames receiver) {
             return receiver.getLength();
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class RArgsValuesAndNamesIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RArgsValuesAndNames receiver) {
-            return false;
         }
     }
 

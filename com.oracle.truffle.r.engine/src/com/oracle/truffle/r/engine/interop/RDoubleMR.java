@@ -38,20 +38,6 @@ public class RDoubleMR {
         }
     }
 
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class RDoubleHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RDouble receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class RDoubleIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RDouble receiver) {
-            return false;
-        }
-    }
-
     @Resolve(message = "UNBOX")
     public abstract static class RDoubleUnboxNode extends Node {
         protected double access(RDouble receiver) {

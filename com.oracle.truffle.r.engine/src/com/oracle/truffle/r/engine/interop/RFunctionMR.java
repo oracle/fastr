@@ -49,27 +49,6 @@ import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 @MessageResolution(receiverType = RFunction.class)
 public class RFunctionMR {
 
-    @Resolve(message = "IS_BOXED")
-    public abstract static class RFunctionIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class RFunctionHasSizeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
-            return false;
-        }
-    }
-
-    @Resolve(message = "IS_NULL")
-    public abstract static class RFunctionIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") TruffleObject receiver) {
-            return false;
-        }
-    }
-
     @Resolve(message = "KEY_INFO")
     public abstract static class RFunctionKeyInfoNode extends Node {
         protected Object access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object identifier) {
