@@ -294,5 +294,10 @@ public class TestBuiltin_format extends TestBase {
         assertEval("{ format(c(7.42,42.7)) }");
         assertEval("{ format(c(7.42,42.7,NA)) }");
         assertEval("{ .Internal(format(.GlobalEnv,FALSE,NA,0,0,3,TRUE,NA,'.')) }");
+        assertEval("{ format(1.1, scientific=TRUE) }");
+        assertEval("{ format(1.1, scientific=FALSE) }");
+        assertEval("{ format(1.1, scientific=c(TRUE, FALSE)) }");
+        assertEval("{ format(1.1, scientific=-10) }");
+        assertEval("{ format(1.1, scientific=c(-10, 1)) }");
     }
 }
