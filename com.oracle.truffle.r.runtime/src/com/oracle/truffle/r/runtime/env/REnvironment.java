@@ -50,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.NSBaseMaterializedFrame;
 import com.oracle.truffle.r.runtime.env.frame.REnvEmptyFrameAccess;
@@ -666,7 +667,7 @@ public abstract class REnvironment extends RAttributeStorage {
         RStringVector names = list.getNames();
         for (int i = 0; i < list.getLength(); i++) {
             try {
-                result.put(names.getDataAt(i), list.getDataAt(i));
+                result.put(names.getDataAt(i), UpdateShareableChildValue.update(list, list.getDataAt(i)));
             } catch (PutException ex) {
                 throw RError.error(RError.SHOW_CALLER2, ex);
             }

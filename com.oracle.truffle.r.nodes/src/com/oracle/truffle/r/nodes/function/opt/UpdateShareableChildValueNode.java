@@ -29,6 +29,9 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+/**
+ * Implements a fast-path version of {@code UpdateShareableChildValue}.
+ */
 public abstract class UpdateShareableChildValueNode extends RBaseNode {
 
     public abstract void execute(Object owner, Object attrValue);

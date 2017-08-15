@@ -59,6 +59,9 @@ public class TestBuiltin_eval extends TestBase {
         assertEval("a <- 1; lang <- quote(list(a)); eval(lang, NULL, NULL)");
         assertEval("a <- 1; lang <- quote(list(a)); eval(lang, new.env(), new.env())");
         assertEval(Output.IgnoreErrorMessage, "y <- 2; x <- 2 ; eval(quote(x+y), c(-1, -2))");
+
+        // note: 'with' is a oneliner builtin calling into eval
+        assertEval("{ df <- list(a=c(1,2,3), b=c(3,4,5)); df$c <- with(df, a^2); df; }");
     }
 
     @Test
