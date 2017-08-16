@@ -27,3 +27,5 @@ eval(expression({
     }
 })
 }), asNamespace("base"))
+
+makeActiveBinding(".Random.seed", .fastr.set.seed, .GlobalEnv)

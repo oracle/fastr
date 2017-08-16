@@ -17,6 +17,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -25,6 +26,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.rng.mm.MarsagliaMulticarry;
 import com.oracle.truffle.r.runtime.rng.mt.MersenneTwister;
@@ -107,6 +109,7 @@ public class RRNG {
         private RandomNumberGenerator currentGenerator;
         private final RandomNumberGenerator[] allGenerators;
         private NormKind currentNormKind;
+        public int[] currentSeeds;
 
         private ContextStateImpl() {
             this.currentNormKind = DEFAULT_NORM_KIND;
@@ -282,11 +285,7 @@ public class RRNG {
 
     @TruffleBoundary
     private static Object getDotRandomSeed() {
-        Object seed = REnvironment.globalEnv().get(RANDOM_SEED);
-        if (seed instanceof RPromise) {
-            seed = RContext.getRRuntimeASTAccess().forcePromise(RANDOM_SEED, seed);
-        }
-        return seed;
+        return RContext.getInstance().stateRNG.currentSeeds;
     }
 
     /**
@@ -327,6 +326,9 @@ public class RRNG {
         } else if (seeds instanceof RIntVector) {
             RIntVector seedsVec = (RIntVector) seeds;
             tmp = seedsVec.getLength() == 0 ? RRuntime.INT_NA : seedsVec.getDataAt(0);
+        } else if (seeds instanceof int[]) {
+            int[] seedsArr = (int[]) seeds;
+            tmp = seedsArr.length == 0 ? RRuntime.INT_NA : seedsArr[0];
         } else {
             assert seeds != RMissing.instance;
             assert seeds instanceof RTypedValue;
@@ -410,7 +412,8 @@ public class RRNG {
     public static void putRNGState() {
         int[] seeds = currentGenerator().getSeeds();
         seeds[0] = currentKind().ordinal() + 100 * currentNormKind().ordinal();
-        RIntVector vector = RDataFactory.createIntVector(seeds, RDataFactory.INCOMPLETE_VECTOR);
-        REnvironment.globalEnv().safePut(RANDOM_SEED, vector.makeSharedPermanent());
+        RContext.getInstance().stateRNG.currentSeeds = seeds;
+// RIntVector vector = RDataFactory.createIntVector(seeds, RDataFactory.INCOMPLETE_VECTOR);
+// REnvironment.globalEnv().safePut(RANDOM_SEED, vector.makeSharedPermanent());
     }
 }

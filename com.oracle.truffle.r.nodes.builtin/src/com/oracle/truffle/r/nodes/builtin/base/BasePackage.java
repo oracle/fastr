@@ -629,6 +629,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Rank.class, RankNodeGen::create);
         add(RNGFunctions.RNGkind.class, RNGFunctionsFactory.RNGkindNodeGen::create);
         add(RNGFunctions.SetSeed.class, RNGFunctionsFactory.SetSeedNodeGen::create);
+        add(RNGFunctions.FastRSetSeed.class, RNGFunctionsFactory.FastRSetSeedNodeGen::create);
         add(RVersion.class, RVersionNodeGen::create);
         add(RawFunctions.CharToRaw.class, RawFunctionsFactory.CharToRawNodeGen::create);
         add(RawFunctions.RawToChar.class, RawFunctionsFactory.RawToCharNodeGen::create);
