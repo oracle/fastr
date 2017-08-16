@@ -24,13 +24,9 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -41,14 +37,10 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 
-@ImportStatic(RRuntime.class)
 public abstract class CastSymbolNode extends CastBaseNode {
 
     @Child private ToStringNode toString = ToStringNodeGen.create();
-    @Child private CastSymbolNode recursiveCastSymbol;
 
     protected CastSymbolNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         this(preserveNames, preserveDimensions, preserveAttributes, false);
@@ -140,16 +132,6 @@ public abstract class CastSymbolNode extends CastBaseNode {
         return RDataFactory.createSymbolInterned(s);
     }
 
-    @Specialization(guards = "isForeignObject(obj)")
-    protected RSymbol doForeignObject(TruffleObject obj,
-                    @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
-        Object o = foreignArray2R.execute(obj, true);
-        if (!RRuntime.isForeignObject(o)) {
-            return (RSymbol) castSymbolRecursive(o);
-        }
-        throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
-    }
-
     @Override
     protected Object doOtherRFFI(Object mappedValue) {
         if (mappedValue instanceof RList) {
@@ -165,17 +147,5 @@ public abstract class CastSymbolNode extends CastBaseNode {
 
     public static CastSymbolNode createNonPreserving() {
         return CastSymbolNodeGen.create(false, false, false);
-    }
-
-    protected ForeignArray2R createForeignArray2RNode() {
-        return ForeignArray2RNodeGen.create();
-    }
-
-    private Object castSymbolRecursive(Object o) {
-        if (recursiveCastSymbol == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastSymbol = insert(CastSymbolNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
-        }
-        return recursiveCastSymbol.executeSymbol(o);
     }
 }

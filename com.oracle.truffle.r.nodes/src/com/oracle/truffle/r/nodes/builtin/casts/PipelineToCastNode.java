@@ -116,7 +116,9 @@ public final class PipelineToCastNode {
         boolean singleMapStep = firstStepIn.getNext() == null && firstStepIn instanceof MapIfStep;
         PipelineStep<?, ?> firstStep = singleMapStep ? ((MapIfStep<?, ?>) firstStepIn).withoutReturns() : firstStepIn;
 
-        Supplier<CastNode> originalPipelineFactory = () -> convert(firstStep, new CastNodeFactory(config.getDefaultError(), config.getDefaultWarning(), config.getDefaultDefaultMessage()));
+        CastNode firstCastNode = config.getCastForeign() ? CastForeignNodeGen.create() : null;
+        Supplier<CastNode> originalPipelineFactory = () -> convert(firstCastNode, firstStep,
+                        new CastNodeFactory(config.getDefaultError(), config.getDefaultWarning(), config.getDefaultDefaultMessage()));
 
         if (!config.getValueForwarding()) {
             return originalPipelineFactory.get();
@@ -132,12 +134,12 @@ public final class PipelineToCastNode {
     /**
      * Converts chain of pipeline steps to cast nodes.
      */
-    private static CastNode convert(PipelineStep<?, ?> firstStep, PipelineStepVisitor<CastNode> nodeFactory) {
+    private static CastNode convert(CastNode firstCastNode, PipelineStep<?, ?> firstStep, PipelineStepVisitor<CastNode> nodeFactory) {
         if (firstStep == null) {
             return null;
         }
 
-        CastNode prevCastNode = null;
+        CastNode prevCastNode = firstCastNode;
         PipelineStep<?, ?> currCastStep = firstStep;
         while (currCastStep != null) {
             CastNode node = currCastStep.accept(nodeFactory, prevCastNode);
@@ -145,8 +147,7 @@ public final class PipelineToCastNode {
                 if (prevCastNode == null) {
                     prevCastNode = node;
                 } else {
-                    CastNode finalPrevCastNode = prevCastNode;
-                    prevCastNode = new ChainedCastNode(finalPrevCastNode, node, currCastStep.getNext() == null);
+                    prevCastNode = new ChainedCastNode(prevCastNode, node, currCastStep.getNext() == null);
                 }
             }
 
@@ -261,8 +262,8 @@ public final class PipelineToCastNode {
         public CastNode visit(MapIfStep<?, ?> step, CastNode previous) {
             @SuppressWarnings("unchecked")
             ArgumentFilter<Object, Object> condition = (ArgumentFilter<Object, Object>) ArgumentFilterFactoryImpl.INSTANCE.createFilter(step.getFilter());
-            CastNode trueCastNode = PipelineToCastNode.convert(step.getTrueBranch(), this);
-            CastNode falseCastNode = PipelineToCastNode.convert(step.getFalseBranch(), this);
+            CastNode trueCastNode = PipelineToCastNode.convert(null, step.getTrueBranch(), this);
+            CastNode falseCastNode = PipelineToCastNode.convert(null, step.getFalseBranch(), this);
             return ConditionalMapNode.create(condition, trueCastNode, falseCastNode, ResultForArg.TRUE.equals(step.getFilter().resultForNull()),
                             ResultForArg.TRUE.equals(step.getFilter().resultForMissing()), step.isReturns());
         }

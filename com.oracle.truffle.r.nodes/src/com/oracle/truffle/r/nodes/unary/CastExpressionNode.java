@@ -22,14 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -38,13 +34,8 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 
-@ImportStatic(RRuntime.class)
 public abstract class CastExpressionNode extends CastBaseNode {
-
-    @Child private CastExpressionNode recursiveCastExpression;
 
     public abstract Object executeExpression(Object o);
 
@@ -113,16 +104,6 @@ public abstract class CastExpressionNode extends CastBaseNode {
         }
     }
 
-    @Specialization(guards = "isForeignObject(obj)")
-    protected RExpression doForeignObject(TruffleObject obj,
-                    @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
-        Object o = foreignArray2R.execute(obj, true);
-        if (!RRuntime.isForeignObject(o)) {
-            return (RExpression) castExpressionRecursive(o);
-        }
-        throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
-    }
-
     private static RExpression create(Object obj) {
         return RDataFactory.createExpression(new Object[]{obj});
     }
@@ -136,17 +117,5 @@ public abstract class CastExpressionNode extends CastBaseNode {
 
     public static CastExpressionNode createNonPreserving() {
         return CastExpressionNodeGen.create(false, false, false);
-    }
-
-    protected ForeignArray2R createForeignArray2RNode() {
-        return ForeignArray2RNodeGen.create();
-    }
-
-    private Object castExpressionRecursive(Object o) {
-        if (recursiveCastExpression == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastExpression = insert(CastExpressionNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
-        }
-        return recursiveCastExpression.executeExpression(o);
     }
 }

@@ -26,11 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.primitive.UnaryMapNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -41,12 +37,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
-@ImportStatic({ForeignArray2R.class, Message.class})
 public abstract class UnaryArithmeticNode extends UnaryNode {
 
     protected final UnaryArithmeticFactory unary;
@@ -99,19 +93,6 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     @Override
     public RBaseNode getErrorContext() {
         return this;
-    }
-
-    @Specialization(guards = {"isForeignVector(obj, hasSize)"})
-    protected Object doForeignVector(TruffleObject obj,
-                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
-                    @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
-                    @Cached("createRecursive()") UnaryArithmeticNode recursive) {
-        Object vec = foreignArray2R.execute(obj, true);
-        return recursive.execute(vec);
-    }
-
-    protected UnaryArithmeticNode createRecursive() {
-        return UnaryArithmeticNodeGen.create(unary);
     }
 
     @Fallback

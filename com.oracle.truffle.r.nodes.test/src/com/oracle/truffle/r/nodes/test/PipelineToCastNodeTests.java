@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
+import com.oracle.truffle.r.nodes.builtin.casts.CastForeignNode;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
@@ -52,27 +53,59 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public class PipelineToCastNodeTests {
     @Test
     public void asLogicalVector() {
-        assertTrue(createPipeline(new CoercionStep<>(RType.Logical, false)) instanceof CastLogicalBaseNode);
+        // without first cast of foreign objects
+        CastNode pipeline = createPipeline(new CoercionStep<>(RType.Logical, false), false);
+        assertTrue(pipeline instanceof CastLogicalBaseNode);
+
+        // with first cast of foreign objects
+        pipeline = createPipeline(new CoercionStep<>(RType.Logical, false), true);
+        assertChainedCast(pipeline, CastForeignNode.class, CastLogicalBaseNode.class);
     }
 
     @Test
     public void asStringVectorFindFirst() {
-        assertChainedCast(createPipeline(new CoercionStep<>(RType.Character, false).setNext(new FindFirstStep<>("hello", String.class, null))), CastStringBaseNode.class, FindFirstNode.class);
-        FindFirstNode findFirst = (FindFirstNode) ((ChainedCastNode) createPipeline(
-                        new CoercionStep<>(RType.Character, false).setNext(new FindFirstStep<>("hello", String.class, null)))).getSecondCast();
+        PipelineStep<?, ?> steps = new CoercionStep<>(RType.Character, false).setNext(new FindFirstStep<>("hello", String.class, null));
+
+        // without first cast of foreign objects
+        CastNode pipeline = createPipeline(steps, false);
+        assertChainedCast(pipeline, CastStringBaseNode.class, FindFirstNode.class);
+
+        FindFirstNode findFirst = (FindFirstNode) ((ChainedCastNode) pipeline).getSecondCast();
         assertEquals("hello", findFirst.getDefaultValue());
+
+        // with first cast of foreign objects
+        pipeline = createPipeline(steps, true);
+        assertChainedCast(pipeline, ChainedCastNode.class, FindFirstNode.class);
+
+        CastNode next = ((ChainedCastNode) pipeline).getFirstCast();
+        assertChainedCast(next, CastForeignNode.class, CastStringBaseNode.class);
     }
 
     @Test
     public void mustBeREnvironmentAsIntegerVectorFindFirst() {
-        assertChainedCast(createPipeline(new FilterStep<>(new TypeFilter<>(REnvironment.class), null, false).setNext(
-                        new CoercionStep<>(RType.Integer, false).setNext(new FindFirstStep<>("hello", String.class, null)))), ChainedCastNode.class, FindFirstNode.class);
-        CastNode next = ((ChainedCastNode) createPipeline(new FilterStep<>(new TypeFilter<>(REnvironment.class), null, false).setNext(
-                        new CoercionStep<>(RType.Integer, false).setNext(new FindFirstStep<>("hello", String.class, null))))).getFirstCast();
+        PipelineStep<?, ?> steps = new FilterStep<>(new TypeFilter<>(REnvironment.class), null, false).setNext(
+                        new CoercionStep<>(RType.Integer, false).setNext(new FindFirstStep<>("hello", String.class, null)));
+
+        // without first cast of foreign objects
+        CastNode pipeline = createPipeline(steps, false);
+
+        assertChainedCast(pipeline, ChainedCastNode.class, FindFirstNode.class);
+        CastNode next = ((ChainedCastNode) pipeline).getFirstCast();
         assertChainedCast(next, FilterNode.class, CastIntegerBaseNode.class);
-        FindFirstNode findFirst = (FindFirstNode) ((ChainedCastNode) createPipeline(new FilterStep<>(new TypeFilter<>(REnvironment.class), null, false).setNext(
-                        new CoercionStep<>(RType.Integer, false).setNext(new FindFirstStep<>("hello", String.class, null))))).getSecondCast();
+
+        FindFirstNode findFirst = (FindFirstNode) ((ChainedCastNode) pipeline).getSecondCast();
         assertEquals("hello", findFirst.getDefaultValue());
+
+        // with first cast of foreign objects
+        pipeline = createPipeline(steps, true);
+        assertChainedCast(pipeline, ChainedCastNode.class, FindFirstNode.class);
+
+        next = ((ChainedCastNode) pipeline).getFirstCast();
+        assertChainedCast(next, ChainedCastNode.class, CastIntegerBaseNode.class);
+
+        next = ((ChainedCastNode) next).getFirstCast();
+        assertChainedCast(next, CastForeignNode.class, FilterNode.class);
+
     }
 
     private static void assertChainedCast(CastNode node, Class<?> expectedFirst, Class<?> expectedSecond) {
@@ -81,9 +114,10 @@ public class PipelineToCastNodeTests {
         assertTrue(expectedSecond.isInstance(((ChainedCastNode) node).getSecondCast()));
     }
 
-    private static CastNode createPipeline(PipelineStep<?, ?> lastStep) {
+    private static CastNode createPipeline(PipelineStep<?, ?> lastStep, boolean castForeign) {
         PipelineConfigBuilder configBuilder = new PipelineConfigBuilder("x");
         configBuilder.setValueForwarding(false);
+        configBuilder.setCastForeignObjects(castForeign);
         return PipelineToCastNode.convert(configBuilder.build(), lastStep, ForwardingAnalysisResult.INVALID);
     }
 }

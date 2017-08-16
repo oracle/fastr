@@ -26,9 +26,7 @@ import java.util.function.IntFunction;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -48,12 +46,9 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
-@ImportStatic(RRuntime.class)
 public abstract class CastComplexNode extends CastBaseNode {
 
     private final NACheck naCheck = NACheck.create();
@@ -269,22 +264,6 @@ public abstract class CastComplexNode extends CastBaseNode {
         return ret;
     }
 
-    @Specialization(guards = "isForeignObject(obj)")
-    protected RComplexVector doForeignObject(TruffleObject obj,
-                    @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
-        Object o = foreignArray2R.execute(obj, true);
-        if (!RRuntime.isForeignObject(o)) {
-            if (o instanceof RComplexVector) {
-                return (RComplexVector) o;
-            }
-            o = castComplexRecursive(o);
-            if (o instanceof RComplexVector) {
-                return (RComplexVector) o;
-            }
-        }
-        throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
-    }
-
     public static CastComplexNode create() {
         return CastComplexNodeGen.create(true, true, true);
     }
@@ -295,9 +274,5 @@ public abstract class CastComplexNode extends CastBaseNode {
 
     public static CastComplexNode createNonPreserving() {
         return CastComplexNodeGen.create(false, false, false);
-    }
-
-    protected ForeignArray2R createForeignArray2RNode() {
-        return ForeignArray2RNodeGen.create();
     }
 }

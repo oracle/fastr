@@ -35,12 +35,14 @@ public class PipelineConfig {
     private final String argumentName;
     private final MessageData defaultError;
     private final MessageData defaultWarning;
-    private boolean valueForwarding;
+    private final boolean valueForwarding;
+    private final boolean castForeign;
 
-    public PipelineConfig(String argumentName, MessageData defaultError, MessageData defaultWarning, boolean valueForwarding) {
+    public PipelineConfig(String argumentName, MessageData defaultError, MessageData defaultWarning, boolean valueForwarding, boolean castForeign) {
         this.defaultError = defaultError;
         this.defaultWarning = defaultWarning;
         this.valueForwarding = valueForwarding;
+        this.castForeign = castForeign;
         this.argumentName = argumentName;
     }
 
@@ -62,5 +64,9 @@ public class PipelineConfig {
 
     public boolean getValueForwarding() {
         return valueForwarding;
+    }
+
+    public boolean getCastForeign() {
+        return castForeign;
     }
 }
