@@ -41,6 +41,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
@@ -78,6 +79,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+@ImportStatic(RRuntime.class)
 @RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"...", "recursive"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Combine extends RBuiltinNode.Arg2 {
 
@@ -110,7 +112,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
     public abstract Object executeCombine(Object value, Object recursive);
 
     protected boolean isSimpleArguments(RArgsValuesAndNames args) {
-        return !signatureHasNames(args.getSignature()) && args.getLength() == 1 && !(args.getArgument(0) instanceof RAbstractVector);
+        return !signatureHasNames(args.getSignature()) && args.getLength() == 1 && !(args.getArgument(0) instanceof RAbstractVector) && !RRuntime.isForeignObject(args.getArgument(0));
     }
 
     @Specialization(guards = {"isSimpleArguments(args)", "!recursive"})
