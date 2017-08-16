@@ -33,6 +33,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
@@ -115,6 +116,11 @@ public final class RBuiltinPackages implements RBuiltinLookup {
                 RContext.getEngine().parseAndEval(baseSource, baseFrame, false);
             } catch (ParseException e) {
                 throw new RInternalError(e, "error while parsing base source from %s", baseSource.getName());
+            }
+            // forcibly clear last.warnings during startup:
+            FrameSlot slot = baseFrame.getFrameDescriptor().findFrameSlot("last.warning");
+            if (slot != null) {
+                FrameSlotChangeMonitor.setObject(baseFrame, slot, null);
             }
         } finally {
             RContext.getInstance().setLoadingBase(false);
