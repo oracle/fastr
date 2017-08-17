@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /** Marker class for loops. */
 public abstract class AbstractLoopNode extends OperatorNode {
@@ -47,9 +48,9 @@ public abstract class AbstractLoopNode extends OperatorNode {
         if (rootNode instanceof RRootNode) {
             function = rootNode.toString();
         }
-        SourceSection sourceSection = getSourceSection();
+        SourceSection sourceSection = getLazySourceSection();
         int startLine = -1;
-        if (sourceSection != null) {
+        if (sourceSection != null && sourceSection != RSyntaxNode.LAZY_DEPARSE && sourceSection != RSyntaxNode.INTERNAL && sourceSection != RSyntaxNode.SOURCE_UNAVAILABLE) {
             startLine = sourceSection.getStartLine();
         }
         RSyntaxElement call = ((RSyntaxCall) this).getSyntaxLHS();
