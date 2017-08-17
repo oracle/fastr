@@ -17,16 +17,11 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.rng.mm.MarsagliaMulticarry;
 import com.oracle.truffle.r.runtime.rng.mt.MersenneTwister;
@@ -102,14 +97,14 @@ public class RRNG {
     public static final Integer SAME_SEED = null;
     private static final Kind DEFAULT_KIND = Kind.MERSENNE_TWISTER;
     private static final NormKind DEFAULT_NORM_KIND = NormKind.INVERSION;
-    private static final String RANDOM_SEED = ".Random.seed";
+    public static final String RANDOM_SEED = ".Random.seed";
     private static final double UINT_MAX = (double) Integer.MAX_VALUE * 2;
 
     public static final class ContextStateImpl implements RContext.ContextState {
         private RandomNumberGenerator currentGenerator;
         private final RandomNumberGenerator[] allGenerators;
         private NormKind currentNormKind;
-        public int[] currentSeeds;
+        public Object currentSeeds;
 
         private ContextStateImpl() {
             this.currentNormKind = DEFAULT_NORM_KIND;

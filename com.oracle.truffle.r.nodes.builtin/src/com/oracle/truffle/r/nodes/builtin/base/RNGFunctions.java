@@ -39,10 +39,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -129,15 +127,26 @@ public class RNGFunctions {
             return RNull.instance;
         }
 
+        protected boolean isSetOperation(Object param) {
+            return !(param instanceof RMissing);
+        }
+
+        @Specialization(guards = {"isSetOperation(data)"})
+        @TruffleBoundary
+        protected RNull setSeed(Object data) {
+            RContext.getInstance().stateRNG.currentSeeds = data;
+            return RNull.instance;
+        }
+
         @Specialization
         @TruffleBoundary
         protected Object getSeed(@SuppressWarnings("unused") RMissing data) {
-            int[] seeds = RContext.getInstance().stateRNG.currentSeeds;
-            if (seeds != null) {
-                return RDataFactory.createIntVector(seeds, RDataFactory.INCOMPLETE_VECTOR);
+            Object seeds = RContext.getInstance().stateRNG.currentSeeds;
+            if (seeds instanceof int[]) {
+                int[] seedsArr = (int[]) seeds;
+                return RDataFactory.createIntVector(seedsArr, RDataFactory.INCOMPLETE_VECTOR);
             }
-// throw error(RError.Message.UNKNOWN_OBJECT, ".Random.seed");
-            return RNull.instance;
+            return seeds;
         }
     }
 
