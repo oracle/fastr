@@ -26,8 +26,12 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanScalarNodeGen.LogicalScalarCastNodeGen;
@@ -39,6 +43,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BooleanOperation;
 import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
@@ -85,6 +90,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
         return left;
     }
 
+    @ImportStatic({ForeignArray2R.class, Message.class})
     protected abstract static class LogicalScalarCastNode extends RBaseNode {
 
         protected static final int CACHE_LIMIT = 3;
@@ -145,6 +151,19 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
                 }
             }
             return null;
+        }
+
+        @Specialization(guards = {"isForeignVector(operand, hasSize)"})
+        protected byte doForeignVector(TruffleObject operand,
+                        @Cached("HAS_SIZE.createNode()") Node hasSize,
+                        @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
+                        @Cached("createRecursive()") LogicalScalarCastNode recursive) {
+            Object o = foreignArray2R.execute(operand, true);
+            return recursive.executeCast(o);
+        }
+
+        protected LogicalScalarCastNode createRecursive() {
+            return LogicalScalarCastNodeGen.create(opName, argumentName, check);
         }
 
         @Fallback
