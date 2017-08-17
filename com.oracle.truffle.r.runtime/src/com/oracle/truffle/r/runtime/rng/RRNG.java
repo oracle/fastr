@@ -383,6 +383,12 @@ public class RRNG {
                     // no change of the .Random.seed variable
                     return;
                 }
+            } else if (seedsObj instanceof int[]) {
+                seeds = (int[]) seedsObj;
+                if (seeds == currentGenerator().getSeeds()) {
+                    // no change of the .Random.seed variable
+                    return;
+                }
             } else {
                 // seedsObj is not valid, which should have been reported and fixed in getRNGKind
                 return;
@@ -408,7 +414,5 @@ public class RRNG {
         int[] seeds = currentGenerator().getSeeds();
         seeds[0] = currentKind().ordinal() + 100 * currentNormKind().ordinal();
         RContext.getInstance().stateRNG.currentSeeds = seeds;
-// RIntVector vector = RDataFactory.createIntVector(seeds, RDataFactory.INCOMPLETE_VECTOR);
-// REnvironment.globalEnv().safePut(RANDOM_SEED, vector.makeSharedPermanent());
     }
 }
