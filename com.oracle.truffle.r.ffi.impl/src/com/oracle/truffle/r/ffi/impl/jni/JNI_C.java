@@ -41,12 +41,10 @@ public class JNI_C implements CRFFI {
         @Override
         @TruffleBoundary
         public void execute(NativeCallInfo nativeCallInfo, Object[] args, boolean hasStrings) {
-            synchronized (JNI_C.class) {
-                if (traceEnabled()) {
-                    traceDownCall(nativeCallInfo.name, args);
-                }
-                c(nativeCallInfo.address.asAddress(), args, hasStrings);
+            if (traceEnabled()) {
+                traceDownCall(nativeCallInfo.name, args);
             }
+            c(nativeCallInfo.address.asAddress(), args, hasStrings);
         }
     }
 
