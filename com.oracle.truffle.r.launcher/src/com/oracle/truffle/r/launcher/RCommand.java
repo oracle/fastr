@@ -104,9 +104,13 @@ public class RCommand {
     }
 
     public static void main(String[] args) {
-        System.exit(doMain(prependCommand(args), null, System.in, System.out, System.err));
-        // never returns
-        throw fatal("main should never return");
+        try {
+            System.exit(doMain(prependCommand(args), null, System.in, System.out, System.err));
+            // never returns
+            throw fatal("main should never return");
+        } catch (Throwable t) {
+            throw fatal(t, "error during REPL execution");
+        }
     }
 
     static String[] prependCommand(String[] args) {
