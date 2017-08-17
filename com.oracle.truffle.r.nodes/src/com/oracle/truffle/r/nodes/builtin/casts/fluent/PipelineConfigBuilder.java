@@ -39,6 +39,7 @@ public final class PipelineConfigBuilder {
     private MessageData defaultWarning;
 
     private boolean valueForwarding = true;
+    private boolean castForeign = true;
 
     public PipelineConfigBuilder(String argumentName) {
         this.argumentName = argumentName;
@@ -47,7 +48,7 @@ public final class PipelineConfigBuilder {
     }
 
     public PipelineConfig build() {
-        return new PipelineConfig(argumentName, defaultError, defaultWarning, valueForwarding);
+        return new PipelineConfig(argumentName, defaultError, defaultWarning, valueForwarding, castForeign);
     }
 
     void setDefaultError(MessageData defaultError) {
@@ -60,6 +61,11 @@ public final class PipelineConfigBuilder {
 
     public PipelineConfigBuilder setValueForwarding(boolean flag) {
         this.valueForwarding = flag;
+        return this;
+    }
+
+    public PipelineConfigBuilder setCastForeignObjects(boolean flag) {
+        this.castForeign = flag;
         return this;
     }
 }

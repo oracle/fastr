@@ -96,6 +96,18 @@ public final class PreinitialPhaseBuilder extends InitialPhaseBuilder<Object> {
         return this;
     }
 
+    /**
+     * Determines whether foreign arrays are implicitly casted to a R vector/list or not. <br>
+     * The default setting is <code>true</code>.
+     * 
+     * @param flag
+     * @return
+     */
+    public PreinitialPhaseBuilder castForeignObjects(boolean flag) {
+        pipelineBuilder().getPipelineConfig().setCastForeignObjects(flag);
+        return this;
+    }
+
     public PreinitialPhaseBuilder defaultWarning(Message message, Object... args) {
         pipelineBuilder().getPipelineConfig().setDefaultWarning(new MessageData(message, args));
         return this;

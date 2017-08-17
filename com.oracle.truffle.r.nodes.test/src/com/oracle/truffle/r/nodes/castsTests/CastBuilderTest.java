@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.castsTests;
 
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.anyValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asBoolean;
@@ -102,12 +104,15 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.NewEnv;
 import com.oracle.truffle.r.test.generate.FastRSession;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Tests the cast pipelines and also that the samples generation process matches the intended
@@ -901,6 +906,30 @@ public class CastBuilderTest {
         assertCastPreserves(RDataFactory.createRawVector(new byte[]{1, 2}));
         assertCastFail(RNull.instance);
         assertCastFail("abc");
+    }
+
+    @Test
+    public void testCastForeignArray() {
+        arg.mustBe(integerValue());
+        int[] array = new int[]{1, 2, 3};
+        Object value = cast(JavaInterop.asTruffleObject(array));
+        assertTrue(value instanceof RAbstractIntVector);
+    }
+
+    @Test
+    public void testCastJavaIterable() {
+        arg.mustBe(integerValue());
+        List<Integer> list = Arrays.asList(1, 2, 3);
+        Object value = cast(JavaInterop.asTruffleObject(list));
+        assertTrue(value instanceof RAbstractIntVector);
+    }
+
+    @Test
+    public void testCastForeignObjectDisabled() {
+        arg.castForeignObjects(false).mustBe(missingValue().not());
+        TruffleObject obj = JavaInterop.asTruffleObject(new int[]{1, 2, 3});
+        Object value = cast(obj);
+        assertTrue(value == obj);
     }
 
     /**

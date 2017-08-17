@@ -339,17 +339,45 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("class(c(as.external.byte(123), as.external.byte(234)))", "'list'");
         assertEvalFastR("class(c(as.external.byte(123), 1))", "'list'");
         assertEvalFastR("class(c(1, as.external.byte(123)))", "'list'");
+    }
 
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " class(c(to))", "'truffle.object'");
+    @Test
+    public void testCombineForeignObjects() throws IllegalAccessException, IllegalArgumentException {
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " class(c(to))", "'list'");
         assertEvalFastR("tc <- new.java.class('" + TEST_CLASS + "'); t <- new.external(tc); t1 <- new.external(tc); class(c(t, t1))", "'list'");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " class(c(1, t))", "'list'");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " class(c(t, 1))", "'list'");
 
         TestClass t = new TestClass();
-        assertEvalFastR(Ignored.Unimplemented, CREATE_TRUFFLE_OBJECT + " c(to$fieldStringArray)", toRVector(t.fieldStringArray, null));
-        assertEvalFastR(Ignored.Unimplemented, CREATE_TRUFFLE_OBJECT + " c(to$listString)", toRVector(t.listString, null));
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " c(to$fieldStringArray, to$fieldStringArray)", "c('a', 'b', 'c', 'a', 'b', 'c')");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " c(to$listString, to$listString)", "c('a', 'b', 'c', 'a', 'b', 'c')");
+
+        testCombineForeignObjects("fieldBooleanArray", t.fieldBooleanArray);
+        testCombineForeignObjects("fieldByteArray", t.fieldByteArray);
+        testCombineForeignObjects("fieldCharArray", t.fieldCharArray);
+        testCombineForeignObjects("fieldDoubleArray", t.fieldDoubleArray);
+        testCombineForeignObjects("fieldFloatArray", t.fieldFloatArray);
+        testCombineForeignObjects("fieldIntegerArray", t.fieldIntegerArray);
+        testCombineForeignObjects("fieldLongArray", t.fieldLongArray);
+        testCombineForeignObjects("fieldShortArray", t.fieldShortArray);
+        testCombineForeignObjects("fieldStringArray", t.fieldStringArray);
+
+        testCombineForeignObjects("listBoolean", t.listBoolean);
+        testCombineForeignObjects("listByte", t.listByte);
+        testCombineForeignObjects("listChar", t.listChar);
+        testCombineForeignObjects("listDouble", t.listDouble);
+        testCombineForeignObjects("listFloat", t.listFloat);
+        testCombineForeignObjects("listInteger", t.listInteger);
+        testCombineForeignObjects("listLong", t.listLong);
+        testCombineForeignObjects("listShort", t.listShort);
+        testCombineForeignObjects("listString", t.listString);
+        testCombineForeignObjects("listStringInt", t.listStringInt);
+        testCombineForeignObjects("listStringBoolean", t.listStringBoolean);
+        testCombineForeignObjects("listEmpty", t.listEmpty);
+    }
+
+    private void testCombineForeignObjects(String field, Object fieldObject) {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " c(to$" + field + ")", toRVector(fieldObject, null));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " c(to$" + field + ", to$" + field + ")", c(fieldObject, fieldObject));
     }
 
     @Test
@@ -837,19 +865,19 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testAsXXX() throws IllegalArgumentException, IllegalAccessException {
-        testAsXXX("as.character");
-        testAsXXX("as.complex");
-        testAsXXX("as.double");
-        testAsXXX("as.expression");
-        testAsXXX("as.integer");
-        testAsXXX("as.logical");
-        testAsXXX("as.raw");
-        testAsXXX("as.symbol");
-        testAsXXX("as.vector");
+        testAsXXX("as.character", "character");
+        testAsXXX("as.complex", "complex");
+        testAsXXX("as.double", "double");
+        testAsXXX("as.expression", "expression");
+        testAsXXX("as.integer", "integer");
+        testAsXXX("as.logical", "logical");
+        testAsXXX("as.raw", "raw");
+        testAsXXX("as.symbol", "symbol");
+        testAsXXX("as.vector", null);
         // TODO more tests
     }
 
-    public void testAsXXX(String asXXX) throws IllegalArgumentException, IllegalAccessException {
+    public void testAsXXX(String asXXX, String type) throws IllegalArgumentException, IllegalAccessException {
         TestClass t = new TestClass();
 
         Field[] fields = t.getClass().getDeclaredFields();
@@ -938,9 +966,11 @@ public class TestJavaInterop extends TestBase {
         }
 
         if (asXXX.equals("as.expression")) {
-            assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn("" + asXXX + "(to)", "no method for coercing this external object to a vector"));
+            assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn(asXXX + "(to)", "no method for coercing this external object to a vector"));
+        } else if (asXXX.equals("as.raw") || asXXX.equals("as.complex")) {
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn(asXXX + "(to)", "cannot coerce type 'truffleobject' to vector of type '" + type + "'"));
         } else {
-            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn("" + asXXX + "(to)", "no method for coercing this external object to a vector"));
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn(asXXX + "(to)", "no method for coercing this external object to a vector"));
         }
     }
 
@@ -1251,7 +1281,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listStringInt)", "c('1', '3')");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listChar)", "c('a', 'c')");
 
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to)", errorIn("min(x, na.rm = na.rm)", "invalid 'type' (external object) of argument"));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to)", errorIn("min(x, na.rm = na.rm)", "invalid 'type' (list) of argument"));
     }
 
     private String getRValue(Object value) {
@@ -1301,21 +1331,34 @@ public class TestJavaInterop extends TestBase {
     }
 
     private String toRVector(Object o, String asXXX) {
+        return toRVector(list(o), asXXX);
+    }
+
+    private String toRVector(Object[] l, String asXXX) {
+        return toRVector(Arrays.asList(l), asXXX);
+    }
+
+    private String c(Object a1, Object a2) {
+        List<Object> l = new ArrayList<>();
+        List<?> l1 = list(a1);
+        List<?> l2 = list(a2);
+        l.addAll(l1);
+        l.addAll(l2);
+        return toRVector(l, null);
+    }
+
+    private List<?> list(Object o) {
         if (o.getClass().isArray()) {
             List<Object> l = new ArrayList<>();
             for (int i = 0; i < Array.getLength(o); i++) {
                 l.add(Array.get(o, i));
             }
-            return toRVector(l, asXXX);
+            return l;
         } else if (o instanceof List) {
-            return toRVector((List<?>) o, asXXX);
+            return (List<?>) o;
         }
         Assert.fail(o + " should have been an array or list");
         return null;
-    }
-
-    private String toRVector(Object[] l, String asXXX) {
-        return toRVector(Arrays.asList(l), asXXX);
     }
 
     private String toRVector(List<?> l, String asXXX) {

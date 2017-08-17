@@ -24,9 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -45,12 +43,9 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
-@ImportStatic(RRuntime.class)
 public abstract class CastRawNode extends CastBaseNode {
 
     private final NACheck naCheck = NACheck.create();
@@ -317,31 +312,11 @@ public abstract class CastRawNode extends CastBaseNode {
         return result;
     }
 
-    @Specialization(guards = "isForeignObject(obj)")
-    protected RRawVector doForeignObject(TruffleObject obj,
-                    @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
-        Object o = foreignArray2R.execute(obj, true);
-        if (!RRuntime.isForeignObject(o)) {
-            if (o instanceof RRawVector) {
-                return (RRawVector) o;
-            }
-            o = castRawRecursive(o);
-            if (o instanceof RRawVector) {
-                return (RRawVector) o;
-            }
-        }
-        throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
-    }
-
     public static CastRawNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         return CastRawNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true);
     }
 
     public static CastRawNode createNonPreserving() {
         return CastRawNodeGen.create(false, false, false);
-    }
-
-    protected ForeignArray2R createForeignArray2RNode() {
-        return ForeignArray2RNodeGen.create();
     }
 }

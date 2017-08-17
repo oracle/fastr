@@ -765,7 +765,7 @@ public class FastRInterop {
 
         static {
             Casts casts = new Casts(FromForeignArray.class);
-            casts.arg("array").mustNotBeMissing();
+            casts.arg("array").castForeignObjects(false).mustNotBeMissing();
         }
 
         private final ConditionProfile isArrayProfile = ConditionProfile.createBinaryProfile();
