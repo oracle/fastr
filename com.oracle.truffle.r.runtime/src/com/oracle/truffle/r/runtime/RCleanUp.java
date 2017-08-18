@@ -101,6 +101,16 @@ public class RCleanUp {
             }
         }
         // TODO run exit finalizers (FFI) (this should happen in the FFI context beforeDestroy)
+
+        // force sub-context threads to stop
+        for (Thread thread : new ArrayList<>(RContext.getInstance().threads.values())) {
+            thread.interrupt();
+            try {
+                thread.join(10);
+            } catch (InterruptedException e) {
+                // nothing to be done
+            }
+        }
         throw new ExitException(status, false);
     }
 

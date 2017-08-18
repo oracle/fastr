@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -353,6 +354,7 @@ public final class RContext implements RTruffleObject {
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
     public final WeakHashMap<Path, REnvironment> srcfileEnvironments = new WeakHashMap<>();
     public final List<String> libraryPaths = new ArrayList<>(1);
+    public final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
 
     private final AllocationReporter allocationReporter;
 

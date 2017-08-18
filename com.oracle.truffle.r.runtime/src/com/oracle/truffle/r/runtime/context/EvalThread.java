@@ -53,7 +53,7 @@ public class EvalThread extends Thread {
     private RList evalResult;
     private Semaphore init = new Semaphore(0);
 
-    public static final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
+    private final Map<Integer, Thread> threadMap;
 
     /** This table is required to create several bunches of child contexts. */
     public static final Map<Integer, Integer> idToMultiSlotTable = new ConcurrentHashMap<>();
@@ -61,11 +61,12 @@ public class EvalThread extends Thread {
     /** We use a separate counter for threads since ConcurrentHashMap.size() is not reliable. */
     public static final AtomicInteger threadCnt = new AtomicInteger(0);
 
-    public EvalThread(ChildContextInfo info, Source source, boolean usePolyglot) {
+    public EvalThread(Map<Integer, Thread> threadMap, ChildContextInfo info, Source source, boolean usePolyglot) {
+        this.threadMap = threadMap;
         this.info = info;
         this.source = source;
         threadCnt.incrementAndGet();
-        threads.put(info.getId(), this);
+        threadMap.put(info.getId(), this);
         idToMultiSlotTable.put(info.getId(), info.getMultiSlotInd());
         this.usePolyglot = usePolyglot;
         this.truffleContext = usePolyglot ? null : info.createTruffleContext();
@@ -82,7 +83,7 @@ public class EvalThread extends Thread {
                 evalResult = run(truffleContext, info, source);
             }
         } finally {
-            threads.remove(info.getId());
+            threadMap.remove(info.getId());
             threadCnt.decrementAndGet();
         }
     }
@@ -109,8 +110,9 @@ public class EvalThread extends Thread {
             parent = truffleContext.enter();
             // this is the engine for the new child context
             Engine rEngine = RContext.getEngine();
+            // Object eval = rEngine.eval(rEngine.parse(source), rEngine.getGlobalFrame());
             Object evalResult = rEngine.parseAndEval(source, rEngine.getGlobalFrame(), false);
-            result = createEvalResult(evalResult, false);
+            result = createEvalResult(evalResult == null ? RNull.instance : evalResult, false);
         } catch (ParseException e) {
             e.report(info.getStdout());
             result = createErrorResult(e.getMessage());
