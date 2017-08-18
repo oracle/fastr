@@ -25,9 +25,11 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.ops.BinaryCompare;
 import com.oracle.truffle.r.runtime.ops.BooleanOperation;
 import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
 
@@ -40,6 +42,8 @@ import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
 public abstract class BinaryBooleanSpecial extends RNode {
     @Child private BooleanOperation operation;
 
+    private final BranchProfile naProfile = BranchProfile.create();
+
     protected BinaryBooleanSpecial(BooleanOperation operation) {
         this.operation = operation;
     }
@@ -51,33 +55,46 @@ public abstract class BinaryBooleanSpecial extends RNode {
     @Specialization
     public byte doInts(int left, int right) {
         if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
-            throw RSpecialFactory.throwFullCallNeeded();
+            naProfile.enter();
+            return RRuntime.LOGICAL_NA;
         }
         return RRuntime.asLogical(operation.op(left, right));
     }
 
     @Specialization
     public byte doDoubles(double left, double right) {
-        if (!RRuntime.isFinite(left) || !RRuntime.isFinite(right)) {
-            throw RSpecialFactory.throwFullCallNeeded();
+        if (Double.isNaN(left) || Double.isNaN(right)) {
+            naProfile.enter();
+            return RRuntime.LOGICAL_NA;
         }
         return RRuntime.asLogical(operation.op(left, right));
     }
 
     @Specialization
     public byte doIntDouble(int left, double right) {
-        if (RRuntime.isNA(left) || !RRuntime.isFinite(right)) {
-            throw RSpecialFactory.throwFullCallNeeded();
+        if (RRuntime.isNA(left) || Double.isNaN(right)) {
+            naProfile.enter();
+            return RRuntime.LOGICAL_NA;
         }
         return RRuntime.asLogical(operation.op(left, right));
     }
 
     @Specialization
     public byte doDoubleInt(double left, int right) {
-        if (!RRuntime.isFinite(left) || RRuntime.isNA(right)) {
-            throw RSpecialFactory.throwFullCallNeeded();
+        if (Double.isNaN(left) || RRuntime.isNA(right)) {
+            naProfile.enter();
+            return RRuntime.LOGICAL_NA;
         }
         return RRuntime.asLogical(operation.op(left, right));
+    }
+
+    @Specialization
+    public byte doLogical(byte left, byte right) {
+        if (RRuntime.isNA(left) || RRuntime.isNA(right)) {
+            naProfile.enter();
+            return RRuntime.LOGICAL_NA;
+        }
+        return RRuntime.asLogical(operation.opLogical(left, right));
     }
 
     @Fallback
