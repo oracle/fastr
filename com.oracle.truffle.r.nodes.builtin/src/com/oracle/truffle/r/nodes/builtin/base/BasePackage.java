@@ -49,6 +49,7 @@ import com.oracle.truffle.r.nodes.builtin.base.fastpaths.MatrixFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SetDiffFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SubscriptDataFrameFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SubsetDataFrameFastPathNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.fastpaths.VectorFastPathsFactory.ComplexFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.VectorFastPathsFactory.DoubleFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.VectorFastPathsFactory.IntegerFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.CallAndExternalFunctions;
@@ -822,6 +823,7 @@ public class BasePackage extends RBuiltinPackage {
         addFastPath(baseFrame, "integer", IntegerFastPathNodeGen::create, RVisibility.ON);
         addFastPath(baseFrame, "numeric", DoubleFastPathNodeGen::create, RVisibility.ON);
         addFastPath(baseFrame, "double", DoubleFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "complex", ComplexFastPathNodeGen::create, RVisibility.ON);
         addFastPath(baseFrame, "intersect", IntersectFastPathNodeGen::create, RVisibility.ON);
         addFastPath(baseFrame, "pmax", FastPathFactory.EVALUATE_ARGS);
         addFastPath(baseFrame, "pmin", FastPathFactory.EVALUATE_ARGS);
