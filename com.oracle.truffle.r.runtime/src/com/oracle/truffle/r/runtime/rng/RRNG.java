@@ -104,7 +104,13 @@ public class RRNG {
         private RandomNumberGenerator currentGenerator;
         private final RandomNumberGenerator[] allGenerators;
         private NormKind currentNormKind;
-        public Object currentSeeds;
+
+        /**
+         * Stores the current RNG seed. The type is Object because the user may assign an arbitrary
+         * value to variable {@value RRNG#RANDOM_SEED}. Allowed types are therefore any R value or
+         * an {@code int[]}.
+         */
+        public Object currentSeeds = RMissing.instance;
 
         private ContextStateImpl() {
             this.currentNormKind = DEFAULT_NORM_KIND;
@@ -325,13 +331,16 @@ public class RRNG {
             int[] seedsArr = (int[]) seeds;
             tmp = seedsArr.length == 0 ? RRuntime.INT_NA : seedsArr[0];
         } else {
-            assert seeds != RMissing.instance;
             assert seeds instanceof RTypedValue;
-            RError.warning(RError.NO_CALLER, RError.Message.SEED_TYPE, ((RTypedValue) seeds).getRType().getName());
+            // allow RMissing to indicate that ".Random.seed" has not been initialized yet
+            if (seeds != RMissing.instance) {
+                RError.warning(RError.NO_CALLER, RError.Message.SEED_TYPE, ((RTypedValue) seeds).getRType().getName());
+            }
             handleInvalidSeed();
             return;
         }
         if (tmp == RRuntime.INT_NA || tmp < 0 || tmp > 1000) {
+            assert seeds != RMissing.instance;
             String type = seeds instanceof RTypedValue ? ((RTypedValue) seeds).getRType().getName() : "unknown";
             RError.warning(RError.NO_CALLER, RError.Message.SEED_TYPE, type);
             handleInvalidSeed();

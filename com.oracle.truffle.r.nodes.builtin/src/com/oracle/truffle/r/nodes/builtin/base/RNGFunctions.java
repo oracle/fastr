@@ -111,13 +111,6 @@ public class RNGFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RNull setSeed(int[] data) {
-            RContext.getInstance().stateRNG.currentSeeds = data;
-            return RNull.instance;
-        }
-
-        @Specialization
-        @TruffleBoundary
         protected RNull setSeed(RAbstractIntVector data) {
             int[] arr = new int[data.getLength()];
             for (int i = 0; i < arr.length; i++) {
@@ -146,6 +139,7 @@ public class RNGFunctions {
                 int[] seedsArr = (int[]) seeds;
                 return RDataFactory.createIntVector(seedsArr, RDataFactory.INCOMPLETE_VECTOR);
             }
+            assert seeds != null;
             return seeds;
         }
     }
