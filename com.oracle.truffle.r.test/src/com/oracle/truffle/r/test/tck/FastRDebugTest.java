@@ -488,7 +488,7 @@ public class FastRDebugTest {
                 assertEquals(line, currentLine);
                 final String currentCode = suspendedEvent.getSourceSection().getCode().trim();
                 assertEquals(code, currentCode);
-                compareScope(line, code, false, true, expectedFrame);
+                compareScope(line, code, false, false, expectedFrame);
             } catch (RuntimeException | Error e) {
 
                 final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
