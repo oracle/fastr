@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RDispatch.MATH_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -39,6 +40,7 @@ public class NumericalFunctions {
 
     @RBuiltin(name = "abs", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
     public static final class Abs extends UnaryArithmetic {
+        private final ConditionProfile infinityProfile = ConditionProfile.createBinaryProfile();
 
         @Override
         public RType calculateResultType(RType argumentType) {
@@ -67,7 +69,14 @@ public class NumericalFunctions {
 
         @Override
         public double opd(double re, double im) {
-            return RComplex.abs(re, im);
+            // NAs in the incoming arguments have already been rejected
+            double re2 = re * re;
+            double im2 = im * im;
+            if (infinityProfile.profile(re2 == Double.POSITIVE_INFINITY || im2 == Double.POSITIVE_INFINITY)) {
+                return Double.POSITIVE_INFINITY;
+            } else {
+                return Math.sqrt(re2 + im2);
+            }
         }
     }
 
@@ -170,6 +179,7 @@ public class NumericalFunctions {
 
     @RBuiltin(name = "Mod", kind = PRIMITIVE, parameterNames = {"z"}, dispatch = COMPLEX_GROUP_GENERIC, behavior = PURE)
     public static final class Mod extends UnaryArithmetic {
+        private final ConditionProfile infinityProfile = ConditionProfile.createBinaryProfile();
 
         @Override
         public RType calculateResultType(RType argumentType) {
@@ -198,7 +208,14 @@ public class NumericalFunctions {
 
         @Override
         public double opd(double re, double im) {
-            return RComplex.abs(re, im);
+            // NAs in the incoming arguments have already been rejected
+            double re2 = re * re;
+            double im2 = im * im;
+            if (infinityProfile.profile(re2 == Double.POSITIVE_INFINITY || im2 == Double.POSITIVE_INFINITY)) {
+                return Double.POSITIVE_INFINITY;
+            } else {
+                return Math.sqrt(re2 + im2);
+            }
         }
     }
 
