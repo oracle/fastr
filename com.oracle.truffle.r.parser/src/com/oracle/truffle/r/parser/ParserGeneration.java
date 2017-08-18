@@ -93,6 +93,7 @@ public class ParserGeneration {
         "support for file delimiter",
         "pass along TruffleRLanguage",
         "convert line endings",
-        "handle four and more dots as identifier"
+        "handle four and more dots as identifier",
+        "allow greek characters in identifiers"
     };
 }
