@@ -853,6 +853,10 @@ public final class FrameSlotChangeMonitor {
 
     public static void setObjectAndInvalidate(Frame frame, FrameSlot frameSlot, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         assert !ActiveBinding.isActiveBinding(newValue);
+        setAndInvalidate(frame, frameSlot, newValue, isNonLocal, invalidateProfile);
+    }
+
+    private static void setAndInvalidate(Frame frame, FrameSlot frameSlot, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
         if (FastROptions.SharedContexts.getBooleanValue() && info.possibleMultiSlot() && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
@@ -877,12 +881,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static void setActiveBinding(Frame frame, FrameSlot frameSlot, ActiveBinding newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
-        frame.setObject(frameSlot, newValue);
-        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (info.needsInvalidation()) {
-            info.setValue(newValue, frameSlot);
-        }
-        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
+        setAndInvalidate(frame, frameSlot, newValue, isNonLocal, invalidateProfile);
         getContainsNoActiveBindingAssumption(frame.getFrameDescriptor()).invalidate();
     }
 

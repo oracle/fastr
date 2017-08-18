@@ -49,8 +49,8 @@ public class TestR5 extends TestBase {
         assertEval("{ DummyClass2 <- setRefClass('DummyClass2'); obj <- DummyClass2$new(); is(obj, 'refObject') }");
         assertEval("{ fooClass <- setRefClass('Foo6R5', fields = list( a = 'numeric')); fooClass$new(a = 1) }");
         assertEval("{ fooClass <- setRefClass('Foo7R5', fields = list( a = 'numeric')); fooClass$new(1) }");
-        assertEval("{ setRefClass('Foo16R5'); ls(topenv(parent.frame()), all.names = T) }");
-        assertEval("env0 <- new.env(); setRefClass('Foo17R5', where = env0); ls(topenv(parent.frame()), all.names = T); ls(env0, all.names = T)");
+        assertEval("{ setRefClass('Foo16R5'); grep('Foo16R5', ls(topenv(parent.frame()), all.names = T), value = TRUE) }");
+        assertEval("env0 <- new.env(); setRefClass('Foo17R5', where = env0); grep('Foo17R5', ls(topenv(parent.frame()), all.names = T), value = TRUE); ls(env0, all.names = T)");
     }
 
     @Test

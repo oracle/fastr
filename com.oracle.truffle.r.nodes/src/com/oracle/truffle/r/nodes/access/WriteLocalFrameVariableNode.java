@@ -97,12 +97,12 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
             CompilerDirectives.transferToInterpreterAndInvalidate();
             containsNoActiveBinding = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(frame.getFrameDescriptor());
         }
-        Object newValue = shareObjectValue(frame, frameSlot, storedObjectProfile.profile(value), mode, false);
         if (containsNoActiveBinding.isValid()) {
+            Object newValue = shareObjectValue(frame, frameSlot, storedObjectProfile.profile(value), mode, false);
             FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameSlot, newValue, false, invalidateProfile);
         } else {
             // it's a local variable lookup; so use 'frame' for both, executing and looking up
-            return handleActiveBinding(frame, frame, newValue, frameSlot, invalidateProfile, isActiveBindingProfile);
+            return handleActiveBinding(frame, frame, value, frameSlot, invalidateProfile, isActiveBindingProfile, storedObjectProfile, mode);
         }
         return value;
     }
