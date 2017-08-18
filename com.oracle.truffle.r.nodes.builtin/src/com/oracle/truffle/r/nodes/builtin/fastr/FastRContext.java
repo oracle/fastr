@@ -142,7 +142,7 @@ public class FastRContext {
             int[] multiSlotIndices = new int[length];
             for (int i = 0; i < length; i++) {
                 ChildContextInfo info = createContextInfo(contextKind);
-                threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL),
+                threads[i] = new EvalThread(RContext.getInstance().threads, info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL),
                                 FastROptions.SpawnUsesPolyglot.getBooleanValue());
                 data[i] = info.getId();
                 multiSlotIndices[i] = info.getMultiSlotInd();
@@ -175,7 +175,7 @@ public class FastRContext {
                 int[] multiSlotIndices = new int[handle.getLength()];
                 for (int i = 0; i < handle.getLength(); i++) {
                     int id = handle.getDataAt(i);
-                    Thread thread = EvalThread.threads.get(id);
+                    Thread thread = RContext.getInstance().threads.get(id);
                     if (EvalThread.idToMultiSlotTable.containsKey(id)) {
                         multiSlotIndices[i] = EvalThread.idToMultiSlotTable.remove(id);
                     }
@@ -245,7 +245,7 @@ public class FastRContext {
                 int[] multiSlotIndices = new int[length];
                 for (int i = 0; i < length; i++) {
                     ChildContextInfo info = createContextInfo(contextKind);
-                    threads[i] = new EvalThread(info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL), false);
+                    threads[i] = new EvalThread(RContext.getInstance().threads, info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL), false);
                     multiSlotIndices[i] = info.getMultiSlotInd();
                 }
                 if (contextKind == ContextKind.SHARE_ALL) {
