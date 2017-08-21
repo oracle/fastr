@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 public abstract class Max extends RBuiltinNode.Arg2 {
 
     private static final ReduceSemantics semantics = new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX,
-                    RError.Message.NO_NONMISSING_MAX_NA, false, true);
+                    RError.Message.NO_NONMISSING_MAX_NA, null, false, true, true);
 
     @Child private UnaryArithmeticReduceNode reduce = UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.MAX);
 

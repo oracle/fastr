@@ -173,17 +173,11 @@ public class TestBuiltin_min extends TestBase {
         assertEval("{ min(\"42\", as.character(NA), \"7\", na.rm=TRUE) }");
         assertEval("{ min(\"42\", as.character(NA), \"7\", na.rm=FALSE) }");
 
-        // FIXME
-        // Expected output: [1] Inf
-        // FastR output: [1] 2147483647
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ min(integer(0)) }");
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ min(integer()) }");
+        assertEval("{ min(integer(0)) }");
+        assertEval("{ min(integer()) }");
         assertEval("{ min(as.double(NA), na.rm=TRUE) }");
-        // FIXME
-        // Expected output: [1] Inf
-        // FastR output: [1] 2147483647
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ min(as.integer(NA), na.rm=TRUE) }");
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ min(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ min(as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ min(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
 
         assertEval("min(c(1,NA,2), na.rm=NA)");
     }

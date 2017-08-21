@@ -54,7 +54,7 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
 
     protected static final boolean FULL_PRECISION = FastROptions.FullPrecisionSum.getBooleanValue();
 
-    private static final ReduceSemantics semantics = new ReduceSemantics(0, 0.0, true, null, null, Message.INTEGER_OVERFLOW_USE_SUM_NUMERIC, true, false);
+    private static final ReduceSemantics semantics = new ReduceSemantics(0, 0.0, true, null, null, Message.INTEGER_OVERFLOW_USE_SUM_NUMERIC, true, false, false);
 
     @Child private UnaryArithmeticReduceNode reduce = UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.ADD);
 

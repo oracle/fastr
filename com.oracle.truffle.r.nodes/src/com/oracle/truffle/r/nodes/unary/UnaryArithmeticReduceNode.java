@@ -201,7 +201,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected int doIntVector(RIntVector operand, boolean naRm, boolean finite) {
+    protected Object doIntVector(RIntVector operand, boolean naRm, boolean finite) {
         RBaseNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm || finite);
         int result = semantics.getIntStart();
@@ -227,6 +227,9 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         }
         if (opCount == 0) {
             emptyWarning();
+            if (semantics.isUseDoubleStartForEmptyVector()) {
+                return semantics.getDoubleStart();
+            }
         }
         return result;
     }
@@ -268,7 +271,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected int doLogicalVector(RLogicalVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected Object doLogicalVector(RLogicalVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
         RBaseNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm);
         int result = semantics.getIntStart();
@@ -294,12 +297,15 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         }
         if (opCount == 0) {
             emptyWarning();
+            if (semantics.isUseDoubleStartForEmptyVector()) {
+                return semantics.getDoubleStart();
+            }
         }
         return result;
     }
 
     @Specialization
-    protected int doIntSequence(RIntSequence operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected Object doIntSequence(RIntSequence operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
         RBaseNode.reportWork(this, operand.getLength());
         int result = semantics.getIntStart();
         int current = operand.getStart();
@@ -313,6 +319,9 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         }
         if (operand.getLength() == 0) {
             emptyWarning();
+            if (semantics.isUseDoubleStartForEmptyVector()) {
+                return semantics.getDoubleStart();
+            }
         }
         return result;
     }
@@ -421,9 +430,10 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         private final RError.Message naResultWarning;
         private final boolean supportComplex;
         private final boolean supportString;
+        private final boolean useDoubleStartForEmptyVector;
 
         public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning, RError.Message emptyWarningCharacter, RError.Message naResultWarning,
-                        boolean supportComplex, boolean supportString) {
+                        boolean supportComplex, boolean supportString, boolean useDoubleStartForEmptyVector) {
             this.intStart = intStart;
             this.doubleStart = doubleStart;
             this.nullInt = nullInt;
@@ -432,10 +442,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
             this.naResultWarning = naResultWarning;
             this.supportComplex = supportComplex;
             this.supportString = supportString;
-        }
-
-        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning, RError.Message emptyWarningCharacter, boolean supportComplex, boolean supportString) {
-            this(intStart, doubleStart, nullInt, emptyWarning, emptyWarningCharacter, null, supportComplex, supportString);
+            this.useDoubleStartForEmptyVector = useDoubleStartForEmptyVector;
         }
 
         public int getIntStart() {
@@ -464,6 +471,10 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
         public RError.Message getNAResultWarning() {
             return naResultWarning;
+        }
+
+        public boolean isUseDoubleStartForEmptyVector() {
+            return useDoubleStartForEmptyVector;
         }
     }
 
