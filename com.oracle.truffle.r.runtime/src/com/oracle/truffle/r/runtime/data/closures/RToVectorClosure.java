@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -122,22 +121,22 @@ abstract class RToVectorClosure implements RAbstractVector {
 
     @Override
     public final RAbstractVector copy() {
-        throw RInternalError.shouldNotReachHere();
+        return materialize().copy();
     }
 
     @Override
     public final RVector<?> copyResized(int size, boolean fillNA) {
-        throw RInternalError.shouldNotReachHere();
+        return materialize().copyResized(size, fillNA);
     }
 
     @Override
     public final RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        throw RInternalError.shouldNotReachHere();
+        return materialize().copyResizedWithDimensions(newDimensions, fillNA);
     }
 
     @Override
     public final RAbstractVector copyDropAttributes() {
-        throw RInternalError.shouldNotReachHere();
+        return materialize().copyDropAttributes();
     }
 
     @Override

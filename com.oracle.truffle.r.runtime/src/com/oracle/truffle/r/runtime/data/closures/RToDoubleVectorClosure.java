@@ -47,7 +47,7 @@ abstract class RToDoubleVectorClosure extends RToVectorClosure implements RAbstr
             double data = getDataAt(i);
             result[i] = data;
         }
-        return RDataFactory.createDoubleVector(result, getVector().isComplete());
+        return RDataFactory.createDoubleVector(result, getVector().isComplete(), getVector().getDimensions(), getVector().getNames());
     }
 
     @Override

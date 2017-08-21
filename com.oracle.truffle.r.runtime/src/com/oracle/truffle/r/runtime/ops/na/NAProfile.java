@@ -58,6 +58,10 @@ public final class NAProfile {
         return profile.profile(RRuntime.isNA(value));
     }
 
+    public ConditionProfile getConditionProfile() {
+        return profile;
+    }
+
     public void ifNa(double value, Runnable runnable) {
         if (isNA(value)) {
             runnable.run();
