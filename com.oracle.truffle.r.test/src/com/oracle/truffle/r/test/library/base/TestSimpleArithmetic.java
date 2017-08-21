@@ -716,18 +716,18 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval(Output.MissingWarning, "{ x <- 2147483647L ; x * x }");
         assertEval(Output.MissingWarning, "{ x <- -2147483647L ; x - 2L }");
         assertEval(Output.MissingWarning, "{ x <- -2147483647L ; x - 1L }");
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ 2147483647L + 1:3 }");
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ 2147483647L + c(1L,2L,3L) }");
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ 1:3 + 2147483647L }");
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ c(1L,2L,3L) + 2147483647L }");
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ 1:3 + c(2147483647L,2147483647L,2147483647L) }");
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ c(2147483647L,2147483647L,2147483647L) + 1:3 }");
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ c(1L,2L,3L) + c(2147483647L,2147483647L,2147483647L) }");
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ c(2147483647L,2147483647L,2147483647L) + c(1L,2L,3L) }");
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ 1:4 + c(2147483647L,2147483647L) }");
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ c(2147483647L,2147483647L) + 1:4 }");
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ c(1L,2L,3L,4L) + c(2147483647L,2147483647L) }");
-        assertEval(Ignored.ImplementationError, Output.IgnoreWarningContext, "{ c(2147483647L,2147483647L) + c(1L,2L,3L,4L) }");
+        assertEval(Output.MissingWarning, "{ 2147483647L + 1:3 }");
+        assertEval(Output.MissingWarning, "{ 2147483647L + c(1L,2L,3L) }");
+        assertEval(Output.MissingWarning, "{ 1:3 + 2147483647L }");
+        assertEval(Output.MissingWarning, "{ c(1L,2L,3L) + 2147483647L }");
+        assertEval(Output.MissingWarning, "{ 1:3 + c(2147483647L,2147483647L,2147483647L) }");
+        assertEval(Output.MissingWarning, "{ c(2147483647L,2147483647L,2147483647L) + 1:3 }");
+        assertEval(Output.MissingWarning, "{ c(1L,2L,3L) + c(2147483647L,2147483647L,2147483647L) }");
+        assertEval(Output.MissingWarning, "{ c(2147483647L,2147483647L,2147483647L) + c(1L,2L,3L) }");
+        assertEval(Output.MissingWarning, "{ 1:4 + c(2147483647L,2147483647L) }");
+        assertEval(Output.MissingWarning, "{ c(2147483647L,2147483647L) + 1:4 }");
+        assertEval(Output.MissingWarning, "{ c(1L,2L,3L,4L) + c(2147483647L,2147483647L) }");
+        assertEval(Output.MissingWarning, "{ c(2147483647L,2147483647L) + c(1L,2L,3L,4L) }");
     }
 
     @Test

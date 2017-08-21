@@ -29,7 +29,6 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.ops.BinaryCompare;
 import com.oracle.truffle.r.runtime.ops.BooleanOperation;
 import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
 
