@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -33,6 +34,10 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 abstract class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDoubleVector {
+
+    protected RToDoubleVectorClosure(boolean keepAttributes) {
+        super(keepAttributes);
+    }
 
     @Override
     public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
@@ -47,12 +52,24 @@ abstract class RToDoubleVectorClosure extends RToVectorClosure implements RAbstr
             double data = getDataAt(i);
             result[i] = data;
         }
-        return RDataFactory.createDoubleVector(result, getVector().isComplete(), getVector().getDimensions(), getVector().getNames());
+        RDoubleVector materialized = RDataFactory.createDoubleVector(result, getVector().isComplete());
+        copyAttributes(materialized);
+        return materialized;
+    }
+
+    @TruffleBoundary
+    private void copyAttributes(RDoubleVector materialized) {
+        if (keepAttributes) {
+            materialized.initAttributes(getVector().getAttributes());
+        }
     }
 
     @Override
-    public final RDoubleVector copyWithNewDimensions(int[] newDimensions) {
-        return materialize().copyWithNewDimensions(newDimensions);
+    public final RAbstractDoubleVector copyWithNewDimensions(int[] newDimensions) {
+        if (!keepAttributes) {
+            return materialize().copyWithNewDimensions(newDimensions);
+        }
+        return this;
     }
 }
 
@@ -60,7 +77,8 @@ final class RLogicalToDoubleVectorClosure extends RToDoubleVectorClosure impleme
 
     private final RLogicalVector vector;
 
-    RLogicalToDoubleVectorClosure(RLogicalVector vector) {
+    RLogicalToDoubleVectorClosure(RLogicalVector vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -83,7 +101,8 @@ final class RIntToDoubleVectorClosure extends RToDoubleVectorClosure implements 
 
     private final RIntVector vector;
 
-    RIntToDoubleVectorClosure(RIntVector vector) {
+    RIntToDoubleVectorClosure(RIntVector vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -106,7 +125,8 @@ final class RIntSequenceToDoubleVectorClosure extends RToDoubleVectorClosure imp
 
     private final RIntSequence vector;
 
-    RIntSequenceToDoubleVectorClosure(RIntSequence vector) {
+    RIntSequenceToDoubleVectorClosure(RIntSequence vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -129,7 +149,8 @@ final class RRawToDoubleVectorClosure extends RToDoubleVectorClosure implements 
 
     private final RRawVector vector;
 
-    RRawToDoubleVectorClosure(RRawVector vector) {
+    RRawToDoubleVectorClosure(RRawVector vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 

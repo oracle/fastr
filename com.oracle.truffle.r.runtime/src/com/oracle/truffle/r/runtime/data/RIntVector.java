@@ -48,18 +48,18 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     }
 
     @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case Integer:
                 return this;
             case Double:
-                return RClosures.createToDoubleVector(this);
+                return RClosures.createToDoubleVector(this, keepAttributes);
             case Complex:
-                return RClosures.createToComplexVector(this);
+                return RClosures.createToComplexVector(this, keepAttributes);
             case Character:
-                return RClosures.createToStringVector(this);
+                return RClosures.createToStringVector(this, keepAttributes);
             case List:
-                return RClosures.createToListVector(this);
+                return RClosures.createToListVector(this, keepAttributes);
             default:
                 return null;
         }

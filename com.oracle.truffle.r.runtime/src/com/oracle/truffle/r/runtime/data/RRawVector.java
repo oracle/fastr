@@ -48,18 +48,18 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case Raw:
                 return this;
             case Integer:
-                return RClosures.createToIntVector(this);
+                return RClosures.createToIntVector(this, keepAttributes);
             case Double:
-                return RClosures.createToDoubleVector(this);
+                return RClosures.createToDoubleVector(this, keepAttributes);
             case Complex:
-                return RClosures.createToComplexVector(this);
+                return RClosures.createToComplexVector(this, keepAttributes);
             case Character:
-                return RClosures.createToStringVector(this);
+                return RClosures.createToStringVector(this, keepAttributes);
             default:
                 return null;
         }

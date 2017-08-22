@@ -52,7 +52,7 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
     }
 
     @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case Complex:
                 return this;

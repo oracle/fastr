@@ -69,7 +69,7 @@ public abstract class CastRawNode extends CastBaseNode {
     protected Object castRawRecursive(Object o) {
         if (recursiveCastRaw == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastRaw = insert(CastRawNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
+            recursiveCastRaw = insert(CastRawNodeGen.create(preserveNames(), preserveDimensions(), preserveRegAttributes()));
         }
         return recursiveCastRaw.executeRaw(o);
     }
@@ -157,7 +157,7 @@ public abstract class CastRawNode extends CastBaseNode {
     private RRawVector vectorCopy(RAbstractVector operand, byte[] bdata) {
         RRawVector ret = RDataFactory.createRawVector(bdata, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -306,7 +306,7 @@ public abstract class CastRawNode extends CastBaseNode {
             data[i] = ((RRaw) castRawRecursive(value.getDataAt(i))).getValue();
         }
         RRawVector result = RDataFactory.createRawVector(data, getPreservedDimensions(value), getPreservedNames(value));
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             result.copyRegAttributesFrom(value);
         }
         return result;

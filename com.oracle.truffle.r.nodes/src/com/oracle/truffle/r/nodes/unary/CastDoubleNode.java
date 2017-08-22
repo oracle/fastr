@@ -67,7 +67,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     private Object castDoubleRecursive(Object o) {
         if (recursiveCastDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastDouble = insert(CastDoubleNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
+            recursiveCastDouble = insert(CastDoubleNodeGen.create(preserveNames(), preserveDimensions(), preserveRegAttributes()));
         }
         return recursiveCastDouble.executeDouble(o);
     }
@@ -75,7 +75,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     private RDoubleVector vectorCopy(RAbstractContainer operand, double[] data, boolean isComplete) {
         RDoubleVector ret = RDataFactory.createDoubleVector(data, isComplete, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -95,18 +95,12 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
     @Specialization
     protected RAbstractDoubleVector doIntVector(RAbstractIntVector operand) {
-        if (reuseNonShared.execute(operand)) {
-            return (RAbstractDoubleVector) operand.castSafe(RType.Double, naProfile.getConditionProfile());
-        }
-        return createResultVector(operand, index -> naCheck.convertIntToDouble(operand.getDataAt(index)));
+        return castWithReuse(operand, index -> naCheck.convertIntToDouble(operand.getDataAt(index)));
     }
 
     @Specialization
     protected RAbstractDoubleVector doLogicalVectorDims(RAbstractLogicalVector operand) {
-        if (reuseNonShared.execute(operand)) {
-            return (RAbstractDoubleVector) operand.castSafe(RType.Double, naProfile.getConditionProfile());
-        }
-        return createResultVector(operand, index -> naCheck.convertLogicalToDouble(operand.getDataAt(index)));
+        return castWithReuse(operand, index -> naCheck.convertLogicalToDouble(operand.getDataAt(index)));
     }
 
     @Specialization
@@ -140,7 +134,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -166,10 +160,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
     @Specialization
     protected RAbstractDoubleVector doRawVector(RRawVector operand) {
-        if (reuseNonShared.execute(operand)) {
-            return (RAbstractDoubleVector) operand.castSafe(RType.Double, naProfile.getConditionProfile());
-        }
-        return createResultVector(operand, index -> RRuntime.raw2double(operand.getDataAt(index)));
+        return castWithReuse(operand, index -> RRuntime.raw2double(operand.getDataAt(index)));
     }
 
     @Specialization
@@ -217,7 +208,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
             }
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list));
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(list);
         }
         return ret;
@@ -237,6 +228,13 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
             }
         }
         throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
+    }
+
+    private RAbstractDoubleVector castWithReuse(RAbstractVector v, IntToDoubleFunction elementFunction) {
+        if (isReusable(v)) {
+            return (RAbstractDoubleVector) v.castSafe(RType.Double, naProfile.getConditionProfile(), preserveAttributes());
+        }
+        return createResultVector(v, elementFunction);
     }
 
     public static CastDoubleNode create() {

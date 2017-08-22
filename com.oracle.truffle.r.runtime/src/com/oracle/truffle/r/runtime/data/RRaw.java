@@ -45,7 +45,7 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
     }
 
     @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case Raw:
                 return this;

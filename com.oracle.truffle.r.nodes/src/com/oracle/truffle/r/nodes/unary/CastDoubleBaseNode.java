@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.function.opt.IsNonSharedNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -40,8 +39,6 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
 
     protected final NACheck naCheck = NACheck.create();
     protected final NAProfile naProfile = NAProfile.create();
-
-    @Child protected IsNonSharedNode reuseNonShared = IsNonSharedNode.create();
 
     protected CastDoubleBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         super(preserveNames, preserveDimensions, preserveAttributes);

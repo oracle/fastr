@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -40,6 +41,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 abstract class RToListVectorClosure extends RToVectorClosure implements RAbstractListVector {
 
+    protected RToListVectorClosure(boolean keepAttributes) {
+        super(keepAttributes);
+    }
+
     @Override
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
@@ -53,12 +58,24 @@ abstract class RToListVectorClosure extends RToVectorClosure implements RAbstrac
             Object data = getDataAt(i);
             result[i] = data;
         }
-        return RDataFactory.createList(result);
+        RList materialized = RDataFactory.createList(result);
+        copyAttributes(materialized);
+        return materialized;
+    }
+
+    @TruffleBoundary
+    private void copyAttributes(RList materialized) {
+        if (keepAttributes) {
+            materialized.copyAttributesFrom(getVector());
+        }
     }
 
     @Override
     public RAbstractVector copyWithNewDimensions(int[] newDimensions) {
-        return materialize().copyWithNewDimensions(newDimensions);
+        if (!keepAttributes) {
+            return materialize().copyWithNewDimensions(newDimensions);
+        }
+        return this;
     }
 
     @Override
@@ -71,7 +88,8 @@ final class RLogicalToListVectorClosure extends RToListVectorClosure {
 
     private final RLogicalVector vector;
 
-    RLogicalToListVectorClosure(RLogicalVector vector) {
+    RLogicalToListVectorClosure(RLogicalVector vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -90,7 +108,8 @@ final class RIntToListVectorClosure extends RToListVectorClosure {
 
     private final RIntVector vector;
 
-    RIntToListVectorClosure(RIntVector vector) {
+    RIntToListVectorClosure(RIntVector vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -109,7 +128,8 @@ final class RIntSequenceToListVectorClosure extends RToListVectorClosure {
 
     private final RIntSequence vector;
 
-    RIntSequenceToListVectorClosure(RIntSequence vector) {
+    RIntSequenceToListVectorClosure(RIntSequence vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -128,7 +148,8 @@ final class RDoubleToListVectorClosure extends RToListVectorClosure {
 
     private final RDoubleVector vector;
 
-    RDoubleToListVectorClosure(RDoubleVector vector) {
+    RDoubleToListVectorClosure(RDoubleVector vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -147,7 +168,8 @@ final class RDoubleSequenceToListVectorClosure extends RToListVectorClosure {
 
     private final RDoubleSequence vector;
 
-    RDoubleSequenceToListVectorClosure(RDoubleSequence vector) {
+    RDoubleSequenceToListVectorClosure(RDoubleSequence vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -166,7 +188,8 @@ final class RComplexToListVectorClosure extends RToListVectorClosure {
 
     private final RComplexVector vector;
 
-    RComplexToListVectorClosure(RComplexVector vector) {
+    RComplexToListVectorClosure(RComplexVector vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -185,7 +208,8 @@ final class RStringToListVectorClosure extends RToListVectorClosure {
 
     private final RStringVector vector;
 
-    RStringToListVectorClosure(RStringVector vector) {
+    RStringToListVectorClosure(RStringVector vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -204,7 +228,8 @@ final class RRawToListVectorClosure extends RToListVectorClosure {
 
     private final RRawVector vector;
 
-    RRawToListVectorClosure(RRawVector vector) {
+    RRawToListVectorClosure(RRawVector vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 

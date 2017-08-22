@@ -64,7 +64,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     private RStringVector vectorCopy(RAbstractContainer operand, String[] data) {
         RStringVector ret = RDataFactory.createStringVector(data, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -133,7 +133,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     private Object castStringRecursive(Object o) {
         if (recursiveCastString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastString = insert(CastStringNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
+            recursiveCastString = insert(CastStringNodeGen.create(preserveNames(), preserveDimensions(), preserveRegAttributes()));
         }
         return recursiveCastString.executeString(o);
     }

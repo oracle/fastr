@@ -57,7 +57,7 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
     protected Object castIntegerRecursive(Object o) {
         if (recursiveCastInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastInteger = insert(CastIntegerNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
+            recursiveCastInteger = insert(CastIntegerNodeGen.create(preserveNames(), preserveDimensions(), preserveRegAttributes()));
         }
         return recursiveCastInteger.executeInt(o);
     }

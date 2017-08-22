@@ -55,7 +55,7 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
     }
 
     @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case Logical:
                 return this;

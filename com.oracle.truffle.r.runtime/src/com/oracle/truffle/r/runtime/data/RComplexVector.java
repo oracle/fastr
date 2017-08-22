@@ -64,14 +64,14 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
     }
 
     @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case Complex:
                 return this;
             case Character:
-                return RClosures.createToStringVector(this);
+                return RClosures.createToStringVector(this, keepAttributes);
             case List:
-                return RClosures.createToListVector(this);
+                return RClosures.createToListVector(this, keepAttributes);
             default:
                 return null;
         }

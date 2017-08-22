@@ -30,6 +30,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -86,7 +87,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     private RIntVector vectorCopy(RAbstractVector operand, int[] idata, boolean isComplete) {
         RIntVector ret = RDataFactory.createIntVector(idata, isComplete, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -160,8 +161,8 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     @Specialization
-    public RIntVector doLogicalVector(RAbstractLogicalVector operand) {
-        return createResultVector(operand, index -> naCheck.convertLogicalToInt(operand.getDataAt(index)));
+    public RAbstractIntVector doLogicalVector(RAbstractLogicalVector operand) {
+        return castWithReuse(operand, index -> naCheck.convertLogicalToInt(operand.getDataAt(index)));
     }
 
     @Specialization
@@ -209,7 +210,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
             }
         }
         RIntVector ret = RDataFactory.createIntVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list));
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(list);
         }
         return ret;
@@ -239,6 +240,13 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     protected static boolean isIntVector(Object arg) {
         return arg instanceof RIntVector;
+    }
+
+    private RAbstractIntVector castWithReuse(RAbstractVector v, IntToIntFunction elementFunction) {
+        if (isReusable(v)) {
+            return (RAbstractIntVector) v.castSafe(RType.Integer, naProfile.getConditionProfile(), preserveAttributes());
+        }
+        return createResultVector(v, elementFunction);
     }
 
     public static CastIntegerNode create() {

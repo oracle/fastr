@@ -48,20 +48,20 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
     }
 
     @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case Logical:
                 return this;
             case Integer:
-                return RClosures.createToIntVector(this);
+                return RClosures.createToIntVector(this, keepAttributes);
             case Double:
-                return RClosures.createToDoubleVector(this);
+                return RClosures.createToDoubleVector(this, keepAttributes);
             case Complex:
-                return RClosures.createToComplexVector(this);
+                return RClosures.createToComplexVector(this, keepAttributes);
             case Character:
-                return RClosures.createToStringVector(this);
+                return RClosures.createToStringVector(this, keepAttributes);
             case List:
-                return RClosures.createToListVector(this);
+                return RClosures.createToListVector(this, keepAttributes);
             default:
                 return null;
         }

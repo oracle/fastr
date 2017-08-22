@@ -40,13 +40,22 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public abstract class CastBaseNode extends CastNode {
+
+    protected static boolean isReusable(RAbstractVector v) {
+        if (v instanceof RSharingAttributeStorage) {
+            return !((RSharingAttributeStorage) v).isShared();
+        }
+        return false;
+    }
 
     private final BranchProfile listCoercionErrorBranch = BranchProfile.create();
     private final ConditionProfile hasDimNamesProfile = ConditionProfile.createBinaryProfile();
@@ -90,8 +99,12 @@ public abstract class CastBaseNode extends CastNode {
         return preserveDimensions;
     }
 
-    public final boolean preserveAttributes() {
+    public final boolean preserveRegAttributes() {
         return preserveAttributes;
+    }
+
+    public final boolean preserveAttributes() {
+        return preserveAttributes || preserveNames || preserveDimensions;
     }
 
     protected abstract RType getTargetType();

@@ -62,7 +62,7 @@ public final class RInteger extends RScalarVector implements RAbstractIntVector 
     }
 
     @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case Integer:
                 return this;

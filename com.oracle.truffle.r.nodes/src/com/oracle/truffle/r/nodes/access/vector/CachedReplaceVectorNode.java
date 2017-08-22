@@ -243,7 +243,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
 
         if (!isList() && value instanceof RAbstractVector) {
-            value = ((RAbstractVector) value).castSafe(castType, valueIsNA);
+            value = ((RAbstractVector) value).castSafe(castType, valueIsNA, false);
         }
 
         vector = share(vector, value);

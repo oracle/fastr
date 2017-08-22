@@ -76,7 +76,7 @@ public abstract class CastComplexNode extends CastBaseNode {
     private Object castComplexRecursive(Object o) {
         if (recursiveCastComplex == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastComplex = insert(CastComplexNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
+            recursiveCastComplex = insert(CastComplexNodeGen.create(preserveNames(), preserveDimensions(), preserveRegAttributes()));
         }
         return recursiveCastComplex.executeComplex(o);
     }
@@ -151,7 +151,7 @@ public abstract class CastComplexNode extends CastBaseNode {
         }
         RComplexVector ret = RDataFactory.createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -204,7 +204,7 @@ public abstract class CastComplexNode extends CastBaseNode {
         }
         RComplexVector ret = RDataFactory.createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -258,7 +258,7 @@ public abstract class CastComplexNode extends CastBaseNode {
             }
         }
         RComplexVector ret = RDataFactory.createComplexVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list));
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(list);
         }
         return ret;
