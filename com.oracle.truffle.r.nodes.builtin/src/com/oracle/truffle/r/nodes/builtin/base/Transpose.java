@@ -37,8 +37,14 @@ import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -135,6 +141,34 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
         return vector;
     }
 
+    protected RDoubleVector transposeInPlace(RDoubleVector v) {
+        int[] dimensions = getDimensions(v);
+        int w = dimensions[0];
+        int h = dimensions[1];
+
+        for (int start = 0; start <= w * h - 1; ++start) {
+            int next = start;
+            int i = 0;
+            do {
+                ++i;
+                next = (next % h) * w + next / h;
+            } while (next > start);
+
+            if (next >= start && i != 1) {
+                double tmp = v.getDataAt(start);
+                next = start;
+                do {
+                    i = (next % h) * w + next / h;
+                    v.setElement(next, (i == start) ? tmp : v.getDataAt(i));
+                    next = i;
+                } while (next > start);
+            }
+        }
+        int[] newDim = new int[]{h, w};
+        putNewDimensions(v, v, newDim);
+        return v;
+    }
+
     private int[] getDimensions(RAbstractVector vector) {
         assert vector.isMatrix();
         if (getDimNode == null) {
@@ -155,12 +189,71 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
 
     @Specialization(guards = "isSquare(x)")
     protected RVector<?> transposeSquare(RAbstractIntVector x) {
-        RVector<?> execute = reuseNonShared.execute(x);
-        int[] internalStore = (int[]) execute.getInternalStore();
+        RIntVector execute = (RIntVector) reuseNonShared.execute(x).materialize();
         return transposeSquareMatrixInPlace(execute, (i, j) -> {
-            int tmp = internalStore[i];
-            internalStore[i] = internalStore[j];
-            internalStore[j] = tmp;
+            int tmp = execute.getDataAt(i);
+            execute.setElement(i, execute.getDataAt(j));
+            execute.setElement(j, tmp);
+        });
+    }
+
+    @Specialization(guards = "isSquare(x)")
+    protected RVector<?> transposeSquare(RAbstractLogicalVector x) {
+        RLogicalVector execute = (RLogicalVector) reuseNonShared.execute(x).materialize();
+        return transposeSquareMatrixInPlace(execute, (i, j) -> {
+            byte tmp = execute.getDataAt(i);
+            execute.setElement(i, execute.getDataAt(j));
+            execute.setElement(j, tmp);
+        });
+    }
+
+    @Specialization(guards = "isSquare(x)")
+    protected RVector<?> transposeSquare(RAbstractDoubleVector x) {
+        RDoubleVector execute = (RDoubleVector) reuseNonShared.execute(x).materialize();
+        return transposeSquareMatrixInPlace(execute, (i, j) -> {
+            double tmp = execute.getDataAt(i);
+            execute.setElement(i, execute.getDataAt(j));
+            execute.setElement(j, tmp);
+        });
+    }
+
+    @Specialization(guards = "isSquare(x)")
+    protected RVector<?> transposeSquare(RAbstractComplexVector x) {
+        RComplexVector execute = (RComplexVector) reuseNonShared.execute(x).materialize();
+        return transposeSquareMatrixInPlace(execute, (i, j) -> {
+            RComplex tmp = execute.getDataAt(i);
+            execute.setElement(i, execute.getDataAt(j));
+            execute.setElement(j, tmp);
+        });
+    }
+
+    @Specialization(guards = "isSquare(x)")
+    protected RVector<?> transposeSquare(RAbstractStringVector x) {
+        RStringVector execute = (RStringVector) reuseNonShared.execute(x).materialize();
+        return transposeSquareMatrixInPlace(execute, (i, j) -> {
+            String tmp = execute.getDataAt(i);
+            execute.setElement(i, execute.getDataAt(j));
+            execute.setElement(j, tmp);
+        });
+    }
+
+    @Specialization(guards = "isSquare(x)")
+    protected RVector<?> transposeSquare(RAbstractListVector x) {
+        RList execute = (RList) reuseNonShared.execute(x).materialize();
+        return transposeSquareMatrixInPlace(execute, (i, j) -> {
+            Object tmp = execute.getDataAt(i);
+            execute.setElement(i, execute.getDataAt(j));
+            execute.setElement(j, tmp);
+        });
+    }
+
+    @Specialization(guards = "isSquare(x)")
+    protected RVector<?> transposeSquare(RAbstractRawVector x) {
+        RRawVector execute = (RRawVector) reuseNonShared.execute(x).materialize();
+        return transposeSquareMatrixInPlace(execute, (i, j) -> {
+            RRaw tmp = execute.getDataAt(i);
+            execute.setElement(i, execute.getDataAt(j));
+            execute.setElement(j, tmp);
         });
     }
 
@@ -176,7 +269,10 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
 
     @Specialization(guards = "x.isMatrix()")
     protected RVector<?> transpose(RAbstractDoubleVector x) {
-        return transposeInternal(x, l -> new double[l], (a, v, i, j) -> a[i] = v.getDataAt(j), RDataFactory::createDoubleVector);
+// RDoubleVector v = (RDoubleVector) reuseNonShared.execute(x).materialize();
+// return transposeInPlace(v);
+        return transposeInternal(x, l -> new double[l], (a, v, i, j) -> a[i] = v.getDataAt(j),
+                        RDataFactory::createDoubleVector);
     }
 
     @Specialization(guards = "x.isMatrix()")
