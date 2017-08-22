@@ -67,7 +67,8 @@ public class JLineConsoleHandler extends ConsoleHandler {
             console.getTerminal().init();
             return console.readLine();
         } catch (UserInterruptException e) {
-            throw e;
+            // interrupted by ctrl-c
+            return "";
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
