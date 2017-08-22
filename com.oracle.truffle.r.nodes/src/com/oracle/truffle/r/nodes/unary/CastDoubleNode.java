@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RRawVector;
@@ -164,13 +163,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     @Specialization
-    protected RDoubleVector doDoubleVector(RDoubleVector operand) {
-        return operand;
-    }
-
-    @Specialization
-    protected RDoubleSequence doDoubleVector(RDoubleSequence operand) {
-        // sequence does not have attributes - nothing to copy or drop
+    protected RAbstractDoubleVector doDoubleVector(RAbstractDoubleVector operand) {
         return operand;
     }
 
