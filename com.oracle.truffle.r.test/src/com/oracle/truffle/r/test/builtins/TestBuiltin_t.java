@@ -48,4 +48,15 @@ public class TestBuiltin_t extends TestBase {
         assertEval("t(as.raw(c(1,2,3,4)))");
         assertEval("t(matrix(1:6, 3, 2, dimnames=list(x=c(\"x1\",\"x2\",\"x3\"),y=c(\"y1\",\"y2\"))))");
     }
+
+    @Test
+    public void testTransposeSquare() {
+        // test square matrices
+        assertEval("{ m <- matrix(1:64, 8, 8) ; sum(m * t(m)) }");
+        assertEval("{ m <- matrix(seq(0.01,0.64,0.01), 8, 8) ; sum(m * t(m)) }");
+        assertEval("{ m <- matrix(c(T, T, F, F), 2, 2); t(m) }");
+        assertEval("{ m <- matrix(c('1', '2', '3', '4'), 2, 2); t(m) }");
+        assertEval("{ m <- matrix(as.raw(c(1,2,3,4)), 2, 2); t(m) }");
+        assertEval("{ m <- matrix(list(a=1,b=2,c=3,d=4), 2, 2); t(m) }");
+    }
 }
