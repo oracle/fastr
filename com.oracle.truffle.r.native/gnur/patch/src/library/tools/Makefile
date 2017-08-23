@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,31 +21,28 @@
 # questions.
 #
 
-# Extracts relevant parts of the generated GnuR Makeconf file into FastR's platform.mk
-# and into the Makeconf that will be copied to etc for install_packages.
+OBJ = lib
+SRC = src
 
-.PHONY: all clean
-
-OS_NAME := $(shell uname)
-OS_DIR := $(shell echo $(OS_NAME) | tr '[:upper:]' '[:lower:]' )
-
-all: $(TOPDIR)/platform.mk
-
-# need to get BLAS and LAPACK defns from etc/Makeconf
-
-$(TOPDIR)/platform.mk: sedMakeconf $(GNUR_HOME)/Makeconf Makefile
-	sed -f sedMakeconf $(GNUR_HOME)/Makeconf > /dev/null 2>&1
-	ed platform.mk.temp < edAddFASTR
-ifeq ($(FASTR_RFFI),llvm)
-	ed platform.mk.temp <edLLVM
-endif
-	echo OS_NAME = $(OS_NAME) >> platform.mk.temp
-ifeq ($(OS_NAME),SunOS)
-	echo JDK_OS_DIR = solaris >> platform.mk.temp
+ifeq ($(FASTR_RFFI),nfi)
+XTRA_C_SOURCES += $(SRC)/truffle_nfi/gramRd_nfi.c
+XTRA_C_OBJECTS += $(OBJ)/gramRd_nfi.o
 else
-	echo JDK_OS_DIR = $(OS_DIR) >> platform.mk.temp
-endif
-	mv platform.mk.temp $(TOPDIR)/platform.mk
+ifeq ($(FASTR_RFFI),llvm)
+XTRA_C_SOURCES += $(SRC)/truffle_llvm/gramRd_llvm.c
+XTRA_C_OBJECTS += $(OBJ)/gramRd_llvm.o
+SULONG_DIR = $(abspath $(FASTR_R_HOME)/../sulong)
 
-clean:
-	rm -f $(TOPDIR)/platform.mk
+SULONG_INCLUDES = -I$(SULONG_DIR)/include
+endif
+endif
+
+include ../lib.mk
+
+$(C_OBJECTS): | $(OBJ)
+
+$(OBJ)/gramRd_nfi.o: $(SRC)/truffle_nfi/gramRd_nfi.c
+	$(CC) $(CFLAGS) $(FFI_INCLUDES) $(NFI_INCLUDES) -c $< -o $@
+
+$(OBJ)/gramRd_llvm.o: $(SRC)/truffle_llvm/gramRd_llvm.c
+	$(CC) $(CFLAGS) $(FFI_INCLUDES) $(SULONG_INCLUDES) -c $< -o $@

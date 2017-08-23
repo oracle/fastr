@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,31 +21,20 @@
 # questions.
 #
 
-# Extracts relevant parts of the generated GnuR Makeconf file into FastR's platform.mk
-# and into the Makeconf that will be copied to etc for install_packages.
+OBJ = lib
 
-.PHONY: all clean
+include $(TOPDIR)/fficall/src/include/gnurheaders.mk
 
-OS_NAME := $(shell uname)
-OS_DIR := $(shell echo $(OS_NAME) | tr '[:upper:]' '[:lower:]' )
+C_SOURCES_EXCLUDED := src/par-common.c
 
-all: $(TOPDIR)/platform.mk
+GNUR_INCLUDES := -I$(TOPDIR)/fficall/src/include
+GRAPHICS_INCLUDES := -I$(GNUR_HOME)/src/library/graphics
+PKG_INCLUDES := $(GNUR_INCLUDES) $(GNUR_HEADER_DEFS) $(GRAPHICS_INCLUDES)
+# Suppress warnings
+XTRA_C_OPTS := -Wno-int-conversion -Wno-implicit-function-declaration
 
-# need to get BLAS and LAPACK defns from etc/Makeconf
+include ../lib.mk
 
-$(TOPDIR)/platform.mk: sedMakeconf $(GNUR_HOME)/Makeconf Makefile
-	sed -f sedMakeconf $(GNUR_HOME)/Makeconf > /dev/null 2>&1
-	ed platform.mk.temp < edAddFASTR
-ifeq ($(FASTR_RFFI),llvm)
-	ed platform.mk.temp <edLLVM
-endif
-	echo OS_NAME = $(OS_NAME) >> platform.mk.temp
-ifeq ($(OS_NAME),SunOS)
-	echo JDK_OS_DIR = solaris >> platform.mk.temp
-else
-	echo JDK_OS_DIR = $(OS_DIR) >> platform.mk.temp
-endif
-	mv platform.mk.temp $(TOPDIR)/platform.mk
-
-clean:
-	rm -f $(TOPDIR)/platform.mk
+# plot.c needs to include the GNUR internal Print.h
+$(OBJ)/plot.o: src/plot.c
+	$(CC) $(CFLAGS) $(GNUR_INCLUDES) $(INCLUDES) $(GNUR_HEADER_DEFS) $(GRAPHICS_INCLUDES) $(SUPPRESS_WARNINGS) -c $< -o $@

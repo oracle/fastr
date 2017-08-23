@@ -76,8 +76,7 @@ public class GnuROneShotRSession implements RSession {
         }
         String testGenGnuR = System.getenv(FASTR_TESTGEN_GNUR);
         if (testGenGnuR == null || testGenGnuR.equals("internal")) {
-            Path gnuRPath = FileSystems.getDefault().getPath(REnvVars.rHome(), NATIVE_PROJECT, "gnur", RVersionNumber.R_HYPHEN_FULL, "bin", "R");
-            GNUR_COMMANDLINE[0] = gnuRPath.toString();
+            GNUR_COMMANDLINE[0] = FileSystems.getDefault().getPath(REnvVars.gnurHome(), "bin", "R").toString();
         } else {
             GNUR_COMMANDLINE[0] = FileSystems.getDefault().getPath(testGenGnuR, "bin", "R").toString();
         }

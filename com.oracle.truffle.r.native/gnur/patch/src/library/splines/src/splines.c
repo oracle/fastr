@@ -2,7 +2,6 @@
  *  S or S-PLUS or R.
  *
  *     Copyright (C) 1998 Douglas M. Bates and William N. Venables.
- *     Copyright (C) 1999-2017 The R Core Team.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  https://www.R-project.org/Licenses/
+ *  http://www.r-project.org/Licenses/
  *
  * The routines are loosely based on the pseudo-code in Schumacher (Wiley,
  * 1981) and the CMLIB library DBSPLINES.
@@ -24,7 +23,6 @@
 
 #include <R.h>
 #include <Rinternals.h>
-#include <string.h> // for memcpy
 
 #ifdef ENABLE_NLS
 #include <libintl.h>
@@ -90,21 +88,17 @@ diff_table(splPTR sp, double x, int ndiff)
 static void
 basis_funcs(splPTR sp, double x, double *b)
 {
+    int j, r;
+    double saved, term;
+
     diff_table(sp, x, sp->ordm1);
     b[0] = 1.;
-    for (int j = 1; j <= sp->ordm1; j++) {
-	double saved = 0.;
-	for (int r = 0; r < j; r++) { // do not divide by zero
-	    double den = sp->rdel[r] + sp->ldel[j - 1 - r];
-	    if(den != 0) {
-		double term = b[r]/den;
-		b[r] = saved + sp->rdel[r] * term;
-		saved = sp->ldel[j - 1 - r] * term;
-	    } else {
-		if(r != 0 || sp->rdel[r] != 0.)
-		    b[r] = saved;
-		saved = 0.;
-	    }
+    for (j = 1; j <= sp->ordm1; j++) {
+	saved = 0.;
+	for (r = 0; r < j; r++) { // FIXME: divides by zero
+	    term = b[r]/(sp->rdel[r] + sp->ldel[j - 1 - r]);
+	    b[r] = saved + sp->rdel[r] * term;
+	    saved = sp->ldel[j - 1 - r] * term;
 	}
 	b[j] = saved;
     }
@@ -141,41 +135,41 @@ spline_value(SEXP knots, SEXP coeff, SEXP order, SEXP x, SEXP deriv)
     SEXP val;
     splPTR sp;
     double *xx, *kk;
-    int n, nk;
+    int der, i, n, nk;
 
     PROTECT(knots = coerceVector(knots, REALSXP));
     kk = REAL(knots); nk = length(knots);
     PROTECT(coeff = coerceVector(coeff, REALSXP));
     PROTECT(x = coerceVector(x, REALSXP));
-    xx = REAL(x); n = length(x);
-    int ord = asInteger(order);
-    int der = asInteger(deriv);
-    if (ord == NA_INTEGER || ord <= 0)
-	error(_("'ord' must be a positive integer"));
+    n = length(x);
+    xx = REAL(x);
+    PROTECT(order = coerceVector(order, INTSXP));
+    PROTECT(deriv = coerceVector(deriv, INTSXP));
+    der = INTEGER(deriv)[0];
+    PROTECT(val = allocVector(REALSXP, n));
 
     /* populate the spl_struct */
+
     sp = (struct spl_struct *) R_alloc(1, sizeof(struct spl_struct));
-    sp->order = ord;
-    sp->ordm1 = ord - 1;
+    sp->order = INTEGER(order)[0];
+    if (sp->order <= 0) { error(_("'ord' must be a positive integer")); }
+    sp->ordm1 = sp->order - 1;
     sp->ldel = (double *) R_alloc(sp->ordm1, sizeof(double));
     sp->rdel = (double *) R_alloc(sp->ordm1, sizeof(double));
     sp->knots = kk; sp->nknots = nk;
     sp->coeff = REAL(coeff);
     sp->a = (double *) R_alloc(sp->order, sizeof(double));
 
-    PROTECT(val = allocVector(REALSXP, n));
-    double *rval = REAL(val);
-
-    for (int i = 0; i < n; i++) {
+    for (i = 0; i < n; i++) {
 	set_cursor(sp, xx[i]);
 	if (sp->curs < sp->order || sp->curs > (nk - sp->order)) {
-	    rval[i] = R_NaN;
+	    REAL(val)[i] = R_NaN;
 	} else {
-	    Memcpy(sp->a, sp->coeff + sp->curs - sp->order, sp->order);
-	    rval[i] = evaluate(sp, xx[i], der);
+	    Memcpy(sp->a, REAL(coeff) + sp->curs - sp->order, sp->order);
+	    REAL(val)[i] = evaluate(sp, xx[i], der);
 	}
     }
-    UNPROTECT(4);
+    UNPROTECT(6);
     return val;
 }
 
@@ -185,69 +179,68 @@ spline_basis(SEXP knots, SEXP order, SEXP xvals, SEXP derivs)
 {
 /* evaluate the non-zero B-spline basis functions (or their derivatives)
  * at xvals.  */
+    int nd, nk, nx, i, j, *ders;
+    double *kk, *xx;
+    SEXP val, offsets;
+    splPTR sp = (struct spl_struct *) R_alloc(1, sizeof(struct spl_struct));
 
     PROTECT(knots = coerceVector(knots, REALSXP));
-    double *kk = REAL(knots); int nk = length(knots);
-    int ord = asInteger(order);
+    kk = REAL(knots); nk = length(knots);
+    PROTECT(order = coerceVector(order, INTSXP));
     PROTECT(xvals = coerceVector(xvals, REALSXP));
-    double *xx = REAL(xvals); int nx = length(xvals);
+    xx = REAL(xvals); nx = length(xvals);
     PROTECT(derivs = coerceVector(derivs, INTSXP));
-    int *ders = INTEGER(derivs), nd = length(derivs);
+    ders = INTEGER(derivs); nd = length(derivs);
 
-    splPTR sp = (struct spl_struct *) R_alloc(1, sizeof(struct spl_struct));
     /* fill sp : */
-    sp->order = ord;
-    sp->ordm1 = ord - 1;
+    sp->order = INTEGER(order)[0];
+    sp->ordm1 = sp->order - 1;
     sp->rdel = (double *) R_alloc(sp->ordm1, sizeof(double));
     sp->ldel = (double *) R_alloc(sp->ordm1, sizeof(double));
     sp->knots = kk; sp->nknots = nk;
     sp->a = (double *) R_alloc(sp->order, sizeof(double));
-    SEXP val = PROTECT(allocMatrix(REALSXP, sp->order, nx)),
-	offsets = PROTECT(allocVector(INTSXP, nx));
-    double *valM = REAL(val);
-    int *ioff = INTEGER(offsets);
+    PROTECT(val = allocMatrix(REALSXP, sp->order, nx));
+    PROTECT(offsets = allocVector(INTSXP, nx));
 
-    for(int i = 0; i < nx; i++) {
+    for(i = 0; i < nx; i++) {
 	set_cursor(sp, xx[i]);
-	int io = ioff[i] = sp->curs - sp->order;
-	if (io < 0 || io > nk) {
-	    for (int j = 0; j < sp->order; j++) {
-		valM[i * sp->order + j] = R_NaN;
+	INTEGER(offsets)[i] = j = sp->curs - sp->order;
+	if (j < 0 || j > nk) {
+	    for (j = 0; j < sp->order; j++) {
+		REAL(val)[i * sp->order + j] = R_NaN;
 	    }
-	} else if (ders[i % nd] > 0) { /* slow method for derivatives */
-	    for(int ii = 0; ii < sp->order; ii++) {
-		for(int j = 0; j < sp->order; j++) sp->a[j] = 0;
-		sp->a[ii] = 1;
-		valM[i * sp->order + ii] =
-		    evaluate(sp, xx[i], ders[i % nd]);
+	} else {
+	    if (ders[i % nd] > 0) { /* slow method for derivatives */
+		int ii;
+		for(ii = 0; ii < sp->order; ii++) {
+		    for(j = 0; j < sp->order; j++) sp->a[j] = 0;
+		    sp->a[ii] = 1;
+		    REAL(val)[i * sp->order + ii] =
+			evaluate(sp, xx[i], ders[i % nd]);
+		}
+	    } else {		/* fast method for value */
+		basis_funcs(sp, xx[i], REAL(val) + i * sp->order);
 	    }
-	} else {		/* fast method for value */
-	    basis_funcs(sp, xx[i], valM + i * sp->order);
 	}
     }
     setAttrib(val, install("Offsets"), offsets);
-    UNPROTECT(5);
+    UNPROTECT(6);
     return val;
 }
 
 #include <R_ext/Rdynload.h>
 
-#define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
-
-static const R_CallMethodDef R_CallDef[] = {
-    CALLDEF(spline_basis, 4),
-    CALLDEF(spline_value, 5),
-    {NULL, NULL, 0}
+const static R_CallMethodDef R_CallDef[] = {
+   {"spline_basis", (DL_FUNC)&spline_basis, 4},
+   {"spline_value", (DL_FUNC)&spline_value, 5},
+   {NULL, NULL, 0}
 };
 
 
 void
-#ifdef HAVE_VISIBILITY_ATTRIBUTE
-__attribute__ ((visibility ("default")))
-#endif
 R_init_splines(DllInfo *dll)
 {
     R_registerRoutines(dll, NULL, R_CallDef, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
-    R_forceSymbols(dll, TRUE);
+//    R_forceSymbols(dll, TRUE); // too few to worry about, used in cobs*
 }

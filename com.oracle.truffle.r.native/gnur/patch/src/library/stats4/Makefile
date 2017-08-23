@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,31 +21,6 @@
 # questions.
 #
 
-# Extracts relevant parts of the generated GnuR Makeconf file into FastR's platform.mk
-# and into the Makeconf that will be copied to etc for install_packages.
+NO_LIBRARY := 1
 
-.PHONY: all clean
-
-OS_NAME := $(shell uname)
-OS_DIR := $(shell echo $(OS_NAME) | tr '[:upper:]' '[:lower:]' )
-
-all: $(TOPDIR)/platform.mk
-
-# need to get BLAS and LAPACK defns from etc/Makeconf
-
-$(TOPDIR)/platform.mk: sedMakeconf $(GNUR_HOME)/Makeconf Makefile
-	sed -f sedMakeconf $(GNUR_HOME)/Makeconf > /dev/null 2>&1
-	ed platform.mk.temp < edAddFASTR
-ifeq ($(FASTR_RFFI),llvm)
-	ed platform.mk.temp <edLLVM
-endif
-	echo OS_NAME = $(OS_NAME) >> platform.mk.temp
-ifeq ($(OS_NAME),SunOS)
-	echo JDK_OS_DIR = solaris >> platform.mk.temp
-else
-	echo JDK_OS_DIR = $(OS_DIR) >> platform.mk.temp
-endif
-	mv platform.mk.temp $(TOPDIR)/platform.mk
-
-clean:
-	rm -f $(TOPDIR)/platform.mk
+include ../lib.mk

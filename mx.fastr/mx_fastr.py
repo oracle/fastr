@@ -29,7 +29,6 @@ import mx_fastr_pkgs
 import mx_fastr_dists
 from mx_fastr_dists import FastRReleaseProject, FastRNativeRecommendedProject #pylint: disable=unused-import
 import mx_copylib
-import mx_fastr_mkgramrd
 import mx_fastr_edinclude
 import mx_unittest
 
@@ -440,8 +439,8 @@ def rbdiag(args):
     mx.run_java(vmArgs + args)
 
 def _gnur_path():
-    np = mx.project('com.oracle.truffle.r.native')
-    return join(np.dir, 'gnur', r_version(), 'bin')
+    gnurHome = os.environ.get('GNUR_HOME_BINARY', 'libdownloads')
+    return join(gnurHome, r_version(), 'bin')
 
 def gnu_r(args):
     '''
@@ -553,7 +552,6 @@ _commands = {
     'r-findtop100' : [mx_fastr_pkgs.find_top100, ['options']],
     'r-duppkgs' : [mx_fastr_pkgs.remove_dup_pkgs, ['options']],
     'installpkgs' : [mx_fastr_pkgs.installpkgs, '[options]'],
-    'mkgramrd': [mx_fastr_mkgramrd.mkgramrd, '[options]'],
     'rcopylib' : [mx_copylib.copylib, '[]'],
     'rupdatelib' : [mx_copylib.updatelib, '[]'],
     'edinclude' : [mx_fastr_edinclude.edinclude, '[]'],

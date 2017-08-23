@@ -89,12 +89,14 @@
 #endif
 
 #define R_USE_SIGNALS 1
-#include <Defn.h>
-#include <Parse.h>
+//#include <Defn.h>
+#include <Rinternals.h>
+#include <R_ext/Parse.h>
 #define STRICT_R_HEADERS
 #include <R_ext/RS.h>           /* for R_chk_* allocation */
 #include <ctype.h>
-#include <Rmath.h> /* for imax2(.),..*/
+//#include <Rmath.h> /* for imax2(.),..*/
+#include "gramRd_fastr.h"
 #undef _
 #ifdef ENABLE_NLS
 #include <libintl.h>
@@ -103,6 +105,32 @@
 #define _(String) (String)
 #endif
 
+
+extern SEXP FASTR_R_SrcrefSymbol();
+#define R_SrcrefSymbol FASTR_R_SrcrefSymbol()
+extern SEXP FASTR_R_SrcfileSymbol();
+#define R_SrcfileSymbol FASTR_R_SrcfileSymbol()
+extern int R_ParseContextLast;
+#define R_EOF -1
+#define PARSE_ERROR_SIZE 256
+#define PARSE_CONTEXT_SIZE 256
+static char    R_ParseErrorMsg[PARSE_ERROR_SIZE];
+static char    R_ParseContext[PARSE_CONTEXT_SIZE];
+int    R_ParseContextLast;
+int    R_ParseContextLine;
+int R_ParseError;
+extern SEXP FASTR_R_EmptyEnv();
+#define R_EmptyEnv FASTR_R_EmptyEnv()
+extern SEXP R_NewHashedEnv(SEXP a, SEXP b);
+
+char *dgettext(const char *p, const char *msgid) {
+return (char *)msgid;
+}
+
+int imax2(int x, int y)
+{
+    return (x < y) ? y : x;
+}
 /* bison creates a non-static symbol yylloc in both gramLatex.o and gramRd.o,
    so remap */
 
@@ -3145,7 +3173,7 @@ static SEXP xxnewcommand(SEXP cmd, SEXP name, SEXP defn, YYLTYPE *lloc)
     else
     	PROTECT(thedefn = mkString(""));
     if (warnDups) {
-	prev = findVar(installTrChar(STRING_ELT(thename, 0)), parseState.xxMacroList);
+	prev = findVar(install(CHAR(STRING_ELT(thename, 0))), parseState.xxMacroList);
     	if (prev != R_UnboundValue && strcmp(CHAR(STRING_ELT(cmd,0)), "\\renewcommand")) {
 	    snprintf(buffer, sizeof(buffer), _("Macro '%s' previously defined."), 
                  CHAR(STRING_ELT(thename, 0)));
@@ -3164,7 +3192,7 @@ static SEXP xxnewcommand(SEXP cmd, SEXP name, SEXP defn, YYLTYPE *lloc)
     setAttrib(ans, install("Rd_tag"), cmd);
     setAttrib(ans, install("definition"), thedefn);
     setAttrib(ans, R_SrcrefSymbol, makeSrcref(lloc, SrcFile));
-    defineVar(installTrChar(STRING_ELT(thename, 0)), ans, parseState.xxMacroList);
+    defineVar(install(CHAR(STRING_ELT(thename, 0))), ans, parseState.xxMacroList);
 
     UNPROTECT_PTR(thedefn);
     UNPROTECT_PTR(cmd);
@@ -3575,7 +3603,13 @@ static SEXP ParseRd(ParseStatus *status, SEXP srcfile, Rboolean fragment, SEXP m
     return parseState.Value;
 }
 
-#include "Rconnections.h"
+//#include "Rconnections.h"
+
+typedef SEXP Rconnection;
+static int Rconn_fgetc(Rconnection con) {
+    return -1;
+}
+
 static Rconnection con_parse;
 
 /* need to handle incomplete last line */
@@ -3584,7 +3618,7 @@ static int con_getc(void)
     int c;
     static int last=-1000;
     
-    c = Rconn_fgetc(con_parse);
+    c = callGetCMethod(con_parse);
     if (c == EOF && last != '\n') c = '\n';
     return (last = c);
 }
@@ -4321,12 +4355,6 @@ static int yylex(void)
     return tok;
 }
 
-static void con_cleanup(void *data)
-{
-    Rconnection con = data;
-    if(con->isopen) con->close(con);
-}
-
 static void PutState(ParseState *state) {
     state->xxinRString = parseState.xxinRString;
     state->xxQuoteLine = parseState.xxQuoteLine;
@@ -4389,19 +4417,24 @@ static void PopState() {
 /* "do_parseRd" 
 
  .External2(C_parseRd,file, srcfile, encoding, verbose, basename, warningCalls, macros, warndups)
- If there is text then that is read and the other arguments are ignored.
-*/
 
-SEXP parseRd(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    args = CDR(args);
+ If there is text then that is read and the other arguments are ignored.
+
+  This is derived fron the function of the same name in the GnuR version.
+  Argument checking has already been performed, however, the types of the
+  arguments are as per the GnuR version, just passed explicitly (.Call style)
+  rather then as a list.
+*/
+SEXP parseRd(SEXP call, SEXP op, SEXP args, SEXP env) {
+    args = CDR(args);   // arg 0 skipped
 
     SEXP s = R_NilValue, source;
     Rconnection con;
-    Rboolean wasopen, fragment;
-    int ifile, wcall;
+    SEXP conArg;
+    Rboolean fragment;
+    int ifile; 
+    int wcall;
     ParseStatus status;
-    RCNTXT cntxt;
     SEXP macros;
 
 #if DEBUGMODE
@@ -4413,147 +4446,39 @@ SEXP parseRd(SEXP call, SEXP op, SEXP args, SEXP env)
     
     PushState();
 
-    ifile = asInteger(CAR(args));                       args = CDR(args);
+    conArg = CAR(args);  // arg 1
+    ifile = asInteger(conArg);
+    
+	con = R_GetFastRConnection(conArg);
 
-    con = getConnection(ifile);
-    wasopen = con->isopen;
-    source = CAR(args);					args = CDR(args);
+    args = CDR(args);
+
+    source = CAR(args);	  // arg 2
+    args = CDR(args);
     /* encoding is unused */
     args = CDR(args);
-    if(!isLogical(CAR(args)) || LENGTH(CAR(args)) != 1)
+    if(!isLogical(CAR(args)) || LENGTH(CAR(args)) != 1)   // arg 4
     	error(_("invalid '%s' value"), "verbose");
-    parseState.xxDebugTokens = asInteger(CAR(args));		args = CDR(args);
-    parseState.xxBasename = CHAR(STRING_ELT(CAR(args), 0));	args = CDR(args);
-    fragment = asLogical(CAR(args));				args = CDR(args);
-    wcall = asLogical(CAR(args));				args = CDR(args);
+    parseState.xxDebugTokens = asInteger(CAR(args));	  // arg 4
+    args = CDR(args);
+    parseState.xxBasename = CHAR(STRING_ELT(CAR(args), 0));	  // arg 5
+    args = CDR(args);
+    fragment = asLogical(CAR(args));				  // arg 6
+    args = CDR(args);
+    wcall = asLogical(CAR(args));   // arg 7
+    args = CDR(args);
     if (wcall == NA_LOGICAL)
     	error(_("invalid '%s' value"), "warningCalls");
     wCalls = wcall;
-    macros = CAR(args);						args = CDR(args);
-    warnDups = asLogical(CAR(args));
+    macros = CAR(args);						  // arg 8
+    args = CDR(args);
+    warnDups = asLogical(CAR(args));	  // arg 9
 
     if (ifile >= 3) {/* file != "" */
-	if(!wasopen) {
-	    if(!con->open(con)) error(_("cannot open the connection"));
-	    /* Set up a context which will close the connection on error */
-	    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
-			 R_NilValue, R_NilValue);
-	    cntxt.cend = &con_cleanup;
-	    cntxt.cenddata = con;
-	}
-	if(!con->canread) error(_("cannot read from this connection"));
 	s = R_ParseRd(con, &status, source, fragment, macros);
-	if(!wasopen) endcontext(&cntxt);
 	PopState();
-	if (status != PARSE_OK) parseError(call, R_ParseError);
-    }
-    else {
-      PopState();
-      error(_("invalid Rd file"));
     }
     return s;
 }
 
-/* "do_deparseRd" 
-
- .External2(C_deparseRd, element, state)
-*/
-
-SEXP deparseRd(SEXP e, SEXP state)
-{
-    SEXP result;
-    int  outlen, *statevals, quoteBraces, inRComment;
-    const char *c;
-    char *outbuf, *out, lookahead;
-    Rboolean escape;
-
-    if(!isString(e) || LENGTH(e) != 1) 
-    	error(_("'deparseRd' only supports deparsing character elements"));
-    e = STRING_ELT(e, 0);
-    
-    if(!isInteger(state) || LENGTH(state) != 5) error(_("bad state"));
-    
-    PushState();
-    
-    parseState.xxbraceDepth = INTEGER(state)[0];
-    parseState.xxinRString = INTEGER(state)[1];
-    parseState.xxmode = INTEGER(state)[2];
-    parseState.xxinEqn = INTEGER(state)[3];
-    quoteBraces = INTEGER(state)[4];
-    
-    if (parseState.xxmode != LATEXLIKE && parseState.xxmode != RLIKE && parseState.xxmode != VERBATIM && parseState.xxmode != COMMENTMODE 
-     && parseState.xxmode != INOPTION  && parseState.xxmode != UNKNOWNMODE) {
-        PopState();
-    	error(_("bad text mode %d in 'deparseRd'"), parseState.xxmode);
-    }
-    
-    for (c = CHAR(e), outlen=0; *c; c++) {
-    	outlen++;
-    	/* any special char might be escaped */
-    	if (*c == '{' || *c == '}' || *c == '%' || *c == '\\') outlen++;
-    }
-    out = outbuf = R_chk_calloc(outlen+1, sizeof(char));
-    inRComment = FALSE;
-    for (c = CHAR(e); *c; c++) {
-    	escape = FALSE;
-    	if (parseState.xxmode != UNKNOWNMODE) {
-	    switch (*c) {
-	    case '\\':
-		if (parseState.xxmode == RLIKE && parseState.xxinRString) {
-		    lookahead = *(c+1);
-		    if (lookahead == '\\' || lookahead == parseState.xxinRString || lookahead == 'l') 
-		    	escape = TRUE;
-		    break;
-		}          /* fall through to % case for non-strings... */    
-	    case '%':
-		if (parseState.xxmode != COMMENTMODE && !parseState.xxinEqn)
-		    escape = TRUE;
-		break;
-	    case LBRACE:
-	    case RBRACE:
-		if (quoteBraces)
-		    escape = TRUE;
-		else if (!parseState.xxinRString && !parseState.xxinEqn && (parseState.xxmode == RLIKE || parseState.xxmode == VERBATIM)) {
-		    if (*c == LBRACE) parseState.xxbraceDepth++;
-		    else if (parseState.xxbraceDepth <= 0) escape = TRUE;
-		    else parseState.xxbraceDepth--;
-		}
-		break;
-	    case '\'':
-	    case '"':
-	    case '`':
-	    	if (parseState.xxmode == RLIKE) {
-		    if (parseState.xxinRString) {
-			if (parseState.xxinRString == *c) parseState.xxinRString = 0;
-		    } else if (!inRComment) parseState.xxinRString = *c;
-		}
-		break;
-	    case '#':
-	    	if (parseState.xxmode == RLIKE && !parseState.xxinRString) 
-	    	    inRComment = TRUE;
-	    	break;
-	    case '\n':
-	    	inRComment = FALSE;
-	    	break;
-	    }
-	}
-    	if (escape)
-    	    *out++ = '\\';
-    	*out++ = *c;
-    }
-    *out = '\0';
-    PROTECT(result = allocVector(VECSXP, 2));
-    SET_VECTOR_ELT(result, 0, ScalarString(mkChar(outbuf)));
-    SET_VECTOR_ELT(result, 1, duplicate(state));
-    R_chk_free(outbuf);
-
-    statevals = INTEGER( VECTOR_ELT(result, 1) );
-    statevals[0] = parseState.xxbraceDepth;
-    statevals[1] = parseState.xxinRString;
-    
-    PopState();
-    
-    UNPROTECT(1);
-    return result;
-}
-
+// TODO deparseRd

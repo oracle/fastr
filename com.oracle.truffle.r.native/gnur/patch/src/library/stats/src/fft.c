@@ -18,16 +18,22 @@
  *  https://www.R-project.org/Licenses/
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+//#ifdef HAVE_CONFIG_H
+//#include <config.h>
+//#endif
 
 #include <limits.h> /* for INT_MAX */
 #include <stddef.h> /* for size_t */
 #include <stdlib.h> /* for abs */
 #include <math.h>
-#include <Rmath.h> /* for imax2(.),..*/
-#include <R_ext/Applic.h>
+//#include <Rmath.h> /* for imax2(.),..*/
+//#include <R_ext/Applic.h>
+#define imax2(_x,_y) ((_x<_y) ? _y : _x)
+#define imin2(_x,_y) ((_x<_y) ? _x : _y)
+#define Rboolean int
+#define FALSE 0
+#define TRUE 1
+#define M_SQRT_3	1.732050807568877293527446341506
 
 /*  Fast Fourier Transform
  *
@@ -845,9 +851,13 @@ void fft_factor(int n, int *pmaxf, int *pmaxp)
 }
 
 
-Rboolean fft_work(double *a, double *b, int nseg, int n, int nspn, int isn,
+// signature modification:
+// we need to do pointer shift for imaginary parts on the callee side (below)
+// rather than on the caller side as in GNU R
+Rboolean fft_work(double *a, int nseg, int n, int nspn, int isn,
 		  double *work, int *iwork)
 {
+    double *b=&(a[1]);
     int nf, nspan, ntot;
 
 	/* check that factorization was successful */

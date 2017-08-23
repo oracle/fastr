@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1997-2007   The R Core Team.
+ *  Copyright (C) 1995-2014  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,13 +14,5 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
-
-#include <Rinternals.h>
-#include "nls.h"
-
-SEXP nls_iter(SEXP m, SEXP control, SEXP doTraceArg) { return NULL; }
-SEXP numeric_deriv(SEXP expr, SEXP theta, SEXP rho, SEXP dir) { return NULL; }
-
-

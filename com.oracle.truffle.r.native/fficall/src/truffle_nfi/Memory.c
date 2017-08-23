@@ -9,6 +9,7 @@
  *
  * All rights reserved.
  */
+#include <Defn.h>
 #include "rffiutils.h"
 #include <stdlib.h>
 #include <string.h>

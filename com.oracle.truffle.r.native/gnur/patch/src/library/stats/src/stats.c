@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2005   The R Core Team.
+ *  Copyright (C) 2005-12   The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,23 +17,7 @@
  *  http://www.r-project.org/Licenses/
  */
 
-#include "port.h"
+#include "stats.h"
 
-SEXP port_ivset(SEXP kind, SEXP iv, SEXP v) { return NULL; }
-
-SEXP port_nlminb(SEXP fn, SEXP gr, SEXP hs, SEXP rho,
-		 SEXP lowerb, SEXP upperb, SEXP d, SEXP iv, SEXP v) { return NULL; }
-
-SEXP port_nlsb(SEXP m, SEXP d, SEXP gg, SEXP iv, SEXP v,
-	       SEXP lowerb, SEXP upperb) { return NULL; }
-
-void Rf_divset(int alg, int iv[], int liv, int lv, double v[]) {  }
-
-void
-nlminb_iterate(double b[], double d[], double fx, double g[], double h[],
-	       int iv[], int liv, int lv, int n, double v[], double x[]) {  }
-
-void
-nlsb_iterate(double b[], double d[], double dr[], int iv[], int liv,
-	     int lv, int n, int nd, int p, double r[], double rd[],
-	     double v[], double x[]) {  }
+void rcont2(int *nrow, int *ncol, int *nrowt, int *ncolt, int *ntotal,
+	    double *fact, int *jwork, int *matrix) { }

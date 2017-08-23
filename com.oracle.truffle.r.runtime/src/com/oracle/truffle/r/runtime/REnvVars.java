@@ -40,6 +40,7 @@ import java.util.TimeZone;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.launcher.RCmdOptions;
+import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
@@ -140,11 +141,17 @@ public final class REnvVars implements RContext.ContextState {
     }
 
     private static final String R_HOME = "R_HOME";
+    private static final String GNUR_R_HOME = "GNUR_HOME_BINARY";
 
     /**
      * Cached value of {@code R_HOME}.
      */
     private static String rHome;
+
+    /**
+     * Cached value of {@code GNUR_HOME}.
+     */
+    private static String gnurHome;
 
     /**
      * Returns a file that serves to distinguish a FastR {@code R_HOME}.
@@ -174,6 +181,20 @@ public final class REnvVars implements RContext.ContextState {
             rHome = rHomePath.toString();
         }
         return rHome;
+    }
+
+    /**
+     * @return the original GNUR home directory. This directory is needed for building FastR and
+     *         testing.
+     */
+    public static String gnurHome() {
+        if (gnurHome == null) {
+            gnurHome = System.getenv(GNUR_R_HOME);
+            if (gnurHome == null) {
+                gnurHome = FileSystems.getDefault().getPath(REnvVars.rHome(), "libdownloads", RVersionNumber.R_HYPHEN_FULL).toString();
+            }
+        }
+        return gnurHome;
     }
 
     private static final CodeSource codeSource = REnvVars.class.getProtectionDomain().getCodeSource();

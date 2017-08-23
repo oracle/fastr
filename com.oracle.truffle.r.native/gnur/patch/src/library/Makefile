@@ -21,43 +21,24 @@
 # questions.
 #
 
-.PHONY: all clean make_subdirs clean_subdirs clean_recommended
+.PHONY: all clean libdir make_subdirs clean_subdirs
 
-SUBDIRS = testrffi vanilla tests4
-NATIVE_RECOMMENDED_PROJECT = $(subst test.native,native.recommended,$(TOPDIR))
-ifndef GNUR_HOME_BINARY
-FASTR_R_HOME = $(abspath $(TOPDIR)/..)
-R_VERSION = $(subst R-,,$(notdir $(basename $(basename $(wildcard $(FASTR_R_HOME)/libdownloads/R-*.gz)))))
-export GNUR_HOME_BINARY = $(FASTR_R_HOME)/libdownloads/R-$(R_VERSION)
-$(info GNUR_HOME_BINARY not set. Assuming the default location at $(GNUR_HOME_BINARY))
-endif
-GNUR_RECOMMENDED := $(wildcard $(GNUR_HOME_BINARY)/src/library/Recommended/*.tgz)
+SUBDIRS = base compiler datasets utils grDevices graphics grid parallel splines stats stats4 methods tools
+export FASTR_LIBRARY_DIR = $(abspath $(TOPDIR)/../library)
 
-# We have to copy the GNU R recommended packages into this project
-# to keep the mx archiver happy, which asserts that every path
-# is inside the project.
-
-# WARNING: If you add/delete anything in this project you must update mx_fastr_dists.py
-# to reflect the changes, e.g., adding a new SUBDIR
-
-all: make_subdirs copy_recommended
+all: libdir make_subdirs
 
 make_subdirs:
 	for dir in $(SUBDIRS); do \
 		$(MAKE) PACKAGE=$$dir -C $$dir || exit 1; \
 	done
 
-copy_recommended:
-	mkdir -p recommended
-	cp $(GNUR_RECOMMENDED) recommended
-	touch copy_recommended
-
-clean: clean_subdirs clean_recommended
+clean: clean_subdirs
 
 clean_subdirs:
 	for dir in $(SUBDIRS); do \
 		$(MAKE) PACKAGE=$$dir -C $$dir clean || exit 1; \
 	done
 	
-clean_recommended:
-	rm -rf recommended copy_recommended
+libdir:
+	mkdir -p $(FASTR_LIBRARY_DIR)

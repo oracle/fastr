@@ -146,7 +146,9 @@ extern int R_isEqual(void*, void*);
 #else
 '''
 
-interactive_rewrite = '''#ifdef FASTR
+interactive_rewrite = '''
+#include <R_ext/RStartup.h>
+#ifdef FASTR
 extern Rboolean FASTR_R_Interactive();
 #define R_Interactive FASTR_R_Interactive()
 #else
