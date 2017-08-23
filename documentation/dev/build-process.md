@@ -8,7 +8,7 @@ See also [building](building.md), [release](../../com.oracle.truffle.r.release/R
 
 ## `mx build`
 
- * locates the module definition in `fastr/mx.fastr`
+ * locates the module definition in `$(FASTR_R_HOME)/mx.fastr`
  * possibly loads the `env` file from `mx.fastr` (there is none, by default)
  * sets up binary suites, if any
  * discovers suites (fastr as primary, truffle)
@@ -28,7 +28,7 @@ See also [building](building.md), [release](../../com.oracle.truffle.r.release/R
 	* building native projects: an instance of `mx.NativeProject` creates an instance `mx.NativeBuildTask`, 
 		* method `_build_run_args` creates the command line for `make`, such as:
 			* `['make', '-f', '/Users/zslajchrt/work/tests/graal/truffle/src/com.oracle.truffle.nfi.native/Makefile', '-j', '8']`
-			* `['make']` for the patched GNUR in `fastr/com.oracle.truffle.r.native`
+			* `['make']` for the patched GNUR in `$(FASTR_R_HOME)/com.oracle.truffle.r.native`
 		
 ## Integrating GNUR
 
@@ -60,9 +60,8 @@ See also [building](building.md), [release](../../com.oracle.truffle.r.release/R
 
 _Patched files_:
 
- * `$(GNUR_HOME)/Makeconf` using `edMakeconf`
-		
-		
+ * The generated `$(GNUR_HOME)/Makeconf` using `edMakeconf`
+ 
 #### `Makefile.platform`
 
 It extracts relevant parts of the generated GnuR `Makeconf` file into FastR's `platform.mk`.
@@ -104,12 +103,15 @@ and other header files, symbolic links are created pointing to their originals i
 
 The file `linked` is just a sentinel file indicating that the links have been made.
 
-The contents of the patched `include` directory is copied later by `run/Makefile` to `fastr/include`.
+The contents of the patched `include` directory is copied later by `run/Makefile` to `$(FASTR_R_HOME)/include`.
 
 _Patched files_:
 
- * `Rinternals.h`, `Rinterface.h`, `Rconfig.h` and `R_ext/GraphicsEngine.h` using `mx.fastr/mx_fastr_edinclude.py`
+ * `Rinternals.h`, `Rinterface.h`, `Rconfig.h` (generated) and `R_ext/GraphicsEngine.h` using `mx.fastr/mx_fastr_edinclude.py`
 
+_Other required sources_:
+
+ * `$(GNUR_HOME)/include/*.h`, `$(GNUR_HOME)/include/R_ext/*.h`
 		
 ### Building `fficall`
 
@@ -128,7 +130,7 @@ The `FASTR_RFFI` variable controls which version of FFI is build: `managed` (i.e
 The `common` part is built (see `common/Makefile`) prior to handing over the control 
 to the corresponding FFI subdirectory (except the `managed` FFI).
 
-Then the dynamic library `libR` is built from the artifacts created in the previous steps.
+Then the dynamic library `libR` is built from the object files made in the previous step, which are stored into `lib`.
 
 The `libjniboot` is built only when `FASTR_RFFI` is `jni` by invoking `jniboot/Makefile`.
 
@@ -137,7 +139,7 @@ using `install_name_tool`. Also the paths of `libpcre` and `libz` are updated us
 
 #### Building `common` FFI
 
-This builds selected GNUR files and local overrides (*.c and *.f):
+This builds selected GNUR files and local overrides (`*.c` and `*.f`):
 
 * compiles the selected `main` and `appl` C sources in `$(GNUR_HOME)/src/main` and `$(GNUR_HOME)/src/appl`
 	* main: `colors.c devices.c engine.c format.c graphics.c plot.c plot3d.c plotmath.c rlocale.c sort.c`
@@ -149,6 +151,11 @@ just copied from GNUR. The subset is selected using the pattern `$(GNUR_APPL_SRC
 * compiles the local overrides (`*.c, *.f`)
 * `../include/gnurheaders.mk` is included to define `GNUR_HEADER_DEFS` consisting of headers that we refer to indirectly
 * all objects are compiled into `../../lib` (i.e. `fficall/lib`)
+
+_Other required sources_:
+
+ * From `$(GNUR_HOME)/src/main`: `colors.c, devices.c, engine.c, format.c, graphics.c, plot.c, plot3d.c, plotmath.c, rlocale.c, sort.c`
+ * From `$(GNUR_HOME)/src/appl`: `pretty.c, interv.c, d*.f` (currently not built, just copied the corresponding object files)
 
 #### Building `llvm` FFI
 
@@ -176,7 +183,7 @@ Analogous to the `llvm` and `nfi` builds, except it:
 The functions in `jniboot` sources, while defined in `JNI_Base` are stored in a seperate library, `jniboot`,
 in order to be able to bootstrap the system as `libR` has to be loaded using these functions.
 
-* `dlopen, dlsym, dlclose`
+* Exported functions: `dlopen, dlsym, dlclose`
 
 ### Building `library`
 
@@ -186,15 +193,44 @@ The `Makefile` just delegates the process to the individual subdirectories.
 
 The `lib.mk` file is included into the package makefiles. It contains the common logic for
 all subordinate package builds. This common logic consists of copying the original 
-GNUR library files to the FastR library directory. It also defines a couple of extension targets
+GNUR library (binary) files to the FastR library directory. It also defines a couple of extension targets
  `LIB_PKG_PRE`, `LIB_PKG` and `LIB_PKG_POST`, `CLEAN_PKG` that are overridden by the package makefiles.
+Individual packages may define their own source files in the package home directory as well as select some sources from the original
+GNUR package (via `GNUR_C_OBJECTS` and `GNUR_C_OBJECTS` variables). Those sources are then compiled and linked into the corresponding dynamic library (`<package>.so`).
+Finally and optionally (Darwin, non-LLVM), the library is installed using the system tools.
 
 #### Package `base`
+
+In the pre-build stage, it changes GnuR's build script `makebasedb.R` so that it does not
+compress the lazy load database, then it (re)builds GnuR. The original `makebasedb.R` is
+saved to `makebasedb.R.tmp`, which is reused in the post-build stage.
+
+In the post-build stage, the R script `$(FASTR_R_HOME)R/base` is patched and `makebasedb.R`
+is restored from the copy (`$(GNUR_HOME)/src/library/base/makebasedb.R`). Then, the GNUR
+is rebuilt to undo the changes made by the auxiliary GNUR build in the pre-build stage.
 
 _Patched files_:
 
  * `$(GNUR_HOME)/src/library/base/makebasedb.R` using `sed 's|compress = TRUE|compress = FALSE|g'`
  * the generated file `R/base.R`
+
+#### Package `graphics`
+
+_Other required sources_:
+
+ * The headers reachable from `$(GNUR_HOME)/src/library/graphics`
+ * C sources from `$(GNUR_HOME)/src/library/graphics/src`: `base.c, graphics.c, init.c, par.c, plot.c, plot3d.c, stem.c`
+ * The headers defined in `fficall/src/include/gnurheaders.mk`
+
+#### Package `grDevices`
+
+_Other required sources_:
+
+ * The header files reachable from `$(GNUR_HOME)/src/library/grDevices`
+ * `$(GNUR_HOME)/src/main/gzio.h`
+ * All Cairo C sources: `$(GNUR_HOME)/src/library/grDevices/src/cairo/*.c`
+ * Other C sources from `$(GNUR_HOME)/src/library/grDevices/src`: `axis_scales.c, chull.c, colors.c, devCairo.c, devPS.c, devPicTeX.c, devQuartz.c, devices.c, init.c, stubs.c`
+ * The headers defined in `fficall/src/include/gnurheaders.mk`
 
 #### Package `grid`
 
@@ -202,11 +238,28 @@ _Patched files_:
 
  * `grid.c`, `state.c` using sed (`sed_grid`, `sed_state`)
 
+_Other required sources_:
+
+ * `grid.h`
+ * `gpar.c, just.c, layout.c, matrix.c, register.c, unit.c, util.c, viewport.c`
+
+#### Package `methods`
+
+_Other required sources_:
+
+ * `init.c`
+ * `methods.h`
+
 #### Package `parallel`
 
 _Patched files_:
 
  * `glpi.h`, `rngstream.c` maintained in git
+
+_Other required sources_:
+
+ * `init.c`
+ * `parallel.h`
 
 #### Package `splines`
 
@@ -214,18 +267,36 @@ _Patched files_:
 
  * `splines.c` maintained in git
 
-#### Building `stats`
+#### Package `stats`
 
 _Patched files_:
 
  * `fft.c` using `ed_fft`
  * `modreg.h`, `nls.h`, `port.h`, `stats.h`, `ts.h` maintained in git
 
-#### Building `tools`
+_Other required sources_:
+
+ * Fortan sources: `bsplvd.f, bvalue.f, bvalus.f, eureka.f, hclust.f, kmns.f, lminfl.f, loessf.f, ppr.f, qsbart.f, sgram.f, sinerp.f, sslvrg.f, stl.f, stxwx.f`
+ * C sources: `init.c, isoreg.c, kmeans.c, loessc.c, monoSpl.c, sbart.c` 
+ * All headers
+
+#### Package `tools`
 
 _Patched files_:
 
  * `gramRd.c` using `mx.fastr/mx_fastr_mkgramrd.py`
+
+_Other required sources_:
+
+ * `init.c`
+ * `tools.h`
+
+#### Package `utils`
+
+_Other required sources_:
+
+ * `init.c`
+ * `utils.h`
 
 ### Building `run`
 
@@ -242,15 +313,26 @@ See `run/Makefile` for more info.
 
 _Patched files_:
 
- * `$(GNUR_HOME)/bin/R`, `$(GNUR_HOME)/etc/Renviron`, `$(GNUR_HOME)/etc/Makeconf`
+ * `$(GNUR_HOME)/bin/R`, `$(GNUR_HOME)/etc/Renviron`, `$(GNUR_HOME)/etc/Makeconf` (all generated)
 
-## Building recommended packages		
+_Other required sources_:
+ 
+ * `$(GNUR_HOME)/etc/Makeconf` (generated by `configure`)  (becomes local `Makeconf.etc`)
+ * `$(GNUR_HOME)/etc/javaconf` (generated by `configure`)
+ * `$(GNUR_HOME)/etc/repositories` (generated by `configure`)
+ * `$(GNUR_HOME)/etc/ldpaths` (generated by `configure`)
+ * `$(GNUR_HOME)/doc/*` (processed by `configure`)
+ * From `$(GNUR_HOME)/share/`: directories `R, Rd, make, java, encodings`
+
+## Installing recommended packages		
 
 Note: This build resides in a separate project: `com.oracle.truffle.r.native.recommended`.
 
-It builds the `recommended` packages that are bundled with GNU R. It has to be built separately 
+It installs the `recommended` packages that are bundled with GNU R. It has to be built separately 
 from the native project that contains the packages because that is built first and before
 FastR is completely built.
+
+The command used to install a package: `$(FASTR_R_HOME)/bin/R CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar;`
 
 As this takes quite a while the building is conditional on the `FASTR_RELEASE` environment variable.
 
@@ -260,6 +342,24 @@ N.B. this flag is not set for "normal" FastR gate builds defined in `ci.hocon`. 
 * If `FASTR_RELEASE` is `true`, the following packages are installed: `MASS boot class cluster lattice nnet spatial Matrix survival KernSmooth foreign nlme rpart`
 * `$(NATIVE_PROJECT_DIR)/platform.mk` is included
 * Weak symbol refs used (i.e. `-undefined dynamic_lookup`) so that `libR.dylib` (which loads the package libraries) does not have to be specified when building the package
+
+## Refactoring of the build process
+
+The pre-generated `configure` script must be patched to include only the following targets: 
+
+ * `ac_config_files="Makeconf doc/Makefile doc/html/Makefile doc/manual/Makefile etc/Makefile etc/Makeconf etc/Renviron etc/javaconf etc/ldpaths src/include/Makefile src/include/Rmath.h0 src/include/R_ext/Makefile src/scripts/mkinstalldirs share/Makefile"`
+
+#### Making the R includes: 
+ * Run `configure`
+ * Run `make -C src/include`
+
+TODO:
+
+_Other required sources_:
+
+ * The pre-generated `$(GNUR_HOME)/configure`
+ * `$(GNUR_HOME)/src/include`, `$(GNUR_HOME)/tools`, `$(GNUR_HOME)/etc`, `$(GNUR_HOME)/tools`, `$(GNUR_HOME)/doc`, `$(GNUR_HOME)/share`
+ * `$(GNUR_HOME)/VERSION`, `$(GNUR_HOME)/SVN-VERSION`, `$(GNUR_HOME)/VERSION-NICK`
 
 ## Notes on building GNUR on Darwin:
  * export `PKG_LDFLAGS_OVERRIDE="-L/usr/local/lib -L/usr/local/opt/zlib/lib"`
