@@ -107,12 +107,12 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
     }
 
-    @Specialization
+    @Specialization(guards = "!isReusable(operand)")
     protected RDoubleVector doIntVector(RAbstractIntVector operand) {
         return createResultVector(operand, index -> naCheck.convertIntToDouble(operand.getDataAt(index)));
     }
 
-    @Specialization
+    @Specialization(guards = "!isReusable(operand)")
     protected RDoubleVector doLogicalVectorDims(RAbstractLogicalVector operand) {
         return createResultVector(operand, index -> naCheck.convertLogicalToDouble(operand.getDataAt(index)));
     }
@@ -172,7 +172,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return vectorCopy(operand, ddata, naCheck.neverSeenNA());
     }
 
-    @Specialization
+    @Specialization(guards = "!isReusable(operand)")
     protected RDoubleVector doRawVector(RRawVector operand) {
         return createResultVector(operand, index -> RRuntime.raw2double(operand.getDataAt(index)));
     }
