@@ -63,7 +63,12 @@ public abstract class CastTypeNode extends RBaseNode {
 
     @TruffleBoundary
     public static CastNode createCast(RType type) {
-        return createCast(type, false, false, false);
+        return createCast(type, false, false, false, false);
+    }
+
+    @TruffleBoundary
+    public static CastNode createCast(RType type, boolean reuseNonShared) {
+        return createCast(type, false, false, false, reuseNonShared);
     }
 
     public static CastTypeNode create() {
@@ -71,16 +76,16 @@ public abstract class CastTypeNode extends RBaseNode {
     }
 
     @TruffleBoundary
-    public static CastNode createCast(RType type, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+    public static CastNode createCast(RType type, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean reuseNonShared) {
         switch (type) {
             case Character:
                 return CastStringNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             case Complex:
                 return CastComplexNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             case Double:
-                return CastDoubleNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
+                return CastDoubleNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, false, reuseNonShared);
             case Integer:
-                return CastIntegerNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
+                return CastIntegerNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, false, reuseNonShared);
             case Logical:
                 return CastLogicalNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             case Raw:

@@ -175,17 +175,17 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
     }
 
-    @Specialization
+    @Specialization(guards = "!isReusable(operand)")
     public RIntVector doLogicalVector(RAbstractLogicalVector operand) {
         return createResultVector(operand, index -> naCheck.convertLogicalToInt(operand.getDataAt(index)));
     }
 
-    @Specialization
+    @Specialization(guards = "!isReusable(operand)")
     protected RIntVector doDoubleVector(RAbstractDoubleVector operand) {
         return createResultVector(operand, index -> naCheck.convertDoubleToInt(operand.getDataAt(index)));
     }
 
-    @Specialization
+    @Specialization(guards = "!isReusable(operand)")
     protected RIntVector doRawVector(RAbstractRawVector operand) {
         return createResultVector(operand, index -> RRuntime.raw2int(operand.getDataAt(index)));
     }
