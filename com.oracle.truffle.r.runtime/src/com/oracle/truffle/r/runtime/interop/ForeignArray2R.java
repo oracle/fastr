@@ -192,9 +192,6 @@ public abstract class ForeignArray2R extends RBaseNode {
 
     /**
      * Converts the elements collected from a foreign array or java iterable into a vector or list.
-     * 
-     * @param ce
-     * @return
      */
     public static RAbstractVector asAbstractVector(CollectedElements ce) {
         InteropTypeCheck.RType type = ce.typeCheck.getType();
