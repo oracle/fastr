@@ -57,12 +57,12 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     private final BranchProfile warningBranch = BranchProfile.create();
 
-    protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
-        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
+    protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean withReuse) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, withReuse);
     }
 
     protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes);
+        super(preserveNames, preserveDimensions, preserveAttributes, false, false);
     }
 
     public abstract Object executeInt(int o);
@@ -160,19 +160,34 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return vectorCopy(operand, idata, !seenNA);
     }
 
-    @Specialization
-    public RAbstractIntVector doLogicalVector(RAbstractLogicalVector operand) {
-        return castWithReuse(operand, index -> naCheck.convertLogicalToInt(operand.getDataAt(index)));
+    @Specialization(guards = "isReusable(operand)")
+    public RAbstractIntVector doLogicalVectorReuse(RAbstractLogicalVector operand) {
+        return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
+    }
+
+    @Specialization(guards = "isReusable(operand)")
+    protected RAbstractIntVector doDoubleVectorReuse(RAbstractDoubleVector operand) {
+        return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
+    }
+
+    @Specialization(guards = "isReusable(operand)")
+    protected RAbstractIntVector doRawVectorReuse(RAbstractRawVector operand) {
+        return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
     }
 
     @Specialization
-    protected RAbstractIntVector doDoubleVector(RAbstractDoubleVector operand) {
-        return castWithReuse(operand, index -> naCheck.convertDoubleToInt(operand.getDataAt(index)));
+    public RIntVector doLogicalVector(RAbstractLogicalVector operand) {
+        return createResultVector(operand, index -> naCheck.convertLogicalToInt(operand.getDataAt(index)));
     }
 
     @Specialization
-    protected RAbstractIntVector doRawVector(RAbstractRawVector operand) {
-        return castWithReuse(operand, index -> RRuntime.raw2int(operand.getDataAt(index)));
+    protected RIntVector doDoubleVector(RAbstractDoubleVector operand) {
+        return createResultVector(operand, index -> naCheck.convertDoubleToInt(operand.getDataAt(index)));
+    }
+
+    @Specialization
+    protected RIntVector doRawVector(RAbstractRawVector operand) {
+        return createResultVector(operand, index -> RRuntime.raw2int(operand.getDataAt(index)));
     }
 
     @Specialization
@@ -241,23 +256,20 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return arg instanceof RIntVector;
     }
 
-    private RAbstractIntVector castWithReuse(RAbstractVector v, IntToIntFunction elementFunction) {
-        if (isReusable(v)) {
-            return (RAbstractIntVector) v.castSafe(RType.Integer, naProfile.getConditionProfile(), preserveAttributes());
-        }
-        return createResultVector(v, elementFunction);
+    public static CastIntegerNode create() {
+        return CastIntegerNodeGen.create(true, true, true, false, false);
     }
 
-    public static CastIntegerNode create() {
-        return CastIntegerNodeGen.create(true, true, true);
+    public static CastIntegerNode createWithReuse() {
+        return CastIntegerNodeGen.create(true, true, true, false, true);
     }
 
     public static CastIntegerNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        return CastIntegerNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true);
+        return CastIntegerNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true, false);
     }
 
     public static CastIntegerNode createNonPreserving() {
-        return CastIntegerNodeGen.create(false, false, false);
+        return CastIntegerNodeGen.create(false, false, false, false, false);
     }
 
     protected ForeignArray2R createForeignArray2RNode() {

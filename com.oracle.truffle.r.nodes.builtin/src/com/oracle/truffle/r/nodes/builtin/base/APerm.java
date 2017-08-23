@@ -55,7 +55,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
     static {
         Casts casts = new Casts(APerm.class);
         casts.arg("a").mustNotBeNull(RError.Message.FIRST_ARG_MUST_BE_ARRAY);
-        casts.arg("perm").allowNull().mustBe(numericValue().or(stringValue()).or(complexValue())).mapIf(numericValue().or(complexValue()), asIntegerVector());
+        casts.arg("perm").allowNull().mustBe(numericValue().or(stringValue()).or(complexValue())).mapIf(numericValue().or(complexValue()), asIntegerVector(true));
         casts.arg("resize").mustBe(numericValue().or(logicalValue()), Message.INVALID_LOGICAL, "resize").asLogicalVector().findFirst();
     }
 

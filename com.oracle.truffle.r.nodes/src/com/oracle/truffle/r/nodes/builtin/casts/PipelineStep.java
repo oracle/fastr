@@ -176,21 +176,27 @@ public abstract class PipelineStep<T, R> {
          */
         public final boolean vectorCoercion;
 
+        /**
+         * Whether the cast should reuse a non-shared vector.
+         */
+        public final boolean reuseNonShared;
+
         public CoercionStep(RType type, boolean vectorCoercion) {
-            this(type, vectorCoercion, false, false, false, true);
+            this(type, vectorCoercion, false, false, false, true, false);
         }
 
         public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            this(type, vectorCoercion, preserveNames, preserveDimensions, preserveAttributes, true);
+            this(type, vectorCoercion, preserveNames, preserveDimensions, preserveAttributes, true, false);
         }
 
-        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector) {
+        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector, boolean reuseNonShared) {
             this.type = type;
             this.vectorCoercion = vectorCoercion;
             this.preserveNames = preserveNames;
             this.preserveAttributes = preserveAttributes;
             this.preserveDimensions = preserveDimensions;
             this.preserveNonVector = preserveNonVector;
+            this.reuseNonShared = reuseNonShared;
         }
 
         public RType getType() {

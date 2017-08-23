@@ -53,12 +53,12 @@ import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 @ImportStatic(RRuntime.class)
 public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
-    protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
-        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
+    protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean withReuse) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, withReuse);
     }
 
     protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes);
+        super(preserveNames, preserveDimensions, preserveAttributes, false, false);
     }
 
     @Child private CastDoubleNode recursiveCastDouble;
@@ -66,7 +66,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     private Object castDoubleRecursive(Object o) {
         if (recursiveCastDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastDouble = insert(CastDoubleNodeGen.create(preserveNames(), preserveDimensions(), preserveRegAttributes()));
+            recursiveCastDouble = insert(CastDoubleNodeGen.create(preserveNames(), preserveDimensions(), preserveRegAttributes(), false, reuseNonShared()));
         }
         return recursiveCastDouble.executeDouble(o);
     }
@@ -92,14 +92,29 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return vectorCopy(operand, ddata, !seenNA);
     }
 
-    @Specialization
-    protected RAbstractDoubleVector doIntVector(RAbstractIntVector operand) {
-        return castWithReuse(operand, index -> naCheck.convertIntToDouble(operand.getDataAt(index)));
+    @Specialization(guards = "isReusable(operand)")
+    protected RAbstractDoubleVector doIntVectorReuse(RAbstractIntVector operand) {
+        return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
+    }
+
+    @Specialization(guards = "isReusable(operand)")
+    protected RAbstractDoubleVector doLogicalVectorDimsReuse(RAbstractLogicalVector operand) {
+        return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
+    }
+
+    @Specialization(guards = "isReusable(operand)")
+    protected RAbstractDoubleVector doRawVectorReuse(RRawVector operand) {
+        return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
     }
 
     @Specialization
-    protected RAbstractDoubleVector doLogicalVectorDims(RAbstractLogicalVector operand) {
-        return castWithReuse(operand, index -> naCheck.convertLogicalToDouble(operand.getDataAt(index)));
+    protected RDoubleVector doIntVector(RAbstractIntVector operand) {
+        return createResultVector(operand, index -> naCheck.convertIntToDouble(operand.getDataAt(index)));
+    }
+
+    @Specialization
+    protected RDoubleVector doLogicalVectorDims(RAbstractLogicalVector operand) {
+        return createResultVector(operand, index -> naCheck.convertLogicalToDouble(operand.getDataAt(index)));
     }
 
     @Specialization
@@ -158,8 +173,8 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     @Specialization
-    protected RAbstractDoubleVector doRawVector(RRawVector operand) {
-        return castWithReuse(operand, index -> RRuntime.raw2double(operand.getDataAt(index)));
+    protected RDoubleVector doRawVector(RRawVector operand) {
+        return createResultVector(operand, index -> RRuntime.raw2double(operand.getDataAt(index)));
     }
 
     @Specialization
@@ -223,23 +238,20 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
     }
 
-    private RAbstractDoubleVector castWithReuse(RAbstractVector v, IntToDoubleFunction elementFunction) {
-        if (isReusable(v)) {
-            return (RAbstractDoubleVector) v.castSafe(RType.Double, naProfile.getConditionProfile(), preserveAttributes());
-        }
-        return createResultVector(v, elementFunction);
+    public static CastDoubleNode create() {
+        return CastDoubleNodeGen.create(true, true, true, false, false);
     }
 
-    public static CastDoubleNode create() {
-        return CastDoubleNodeGen.create(true, true, true);
+    public static CastDoubleNode createWithReuse() {
+        return CastDoubleNodeGen.create(true, true, true, false, true);
     }
 
     public static CastDoubleNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        return CastDoubleNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true);
+        return CastDoubleNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true, false);
     }
 
     public static CastDoubleNode createNonPreserving() {
-        return CastDoubleNodeGen.create(false, false, false);
+        return CastDoubleNodeGen.create(false, false, false, false, false);
     }
 
     protected ForeignArray2R createForeignArray2RNode() {

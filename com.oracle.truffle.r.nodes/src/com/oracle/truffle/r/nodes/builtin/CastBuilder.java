@@ -332,8 +332,16 @@ public final class CastBuilder {
             return new CoercionStep<>(RType.Integer, true);
         }
 
+        public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector(boolean reuseNonShared) {
+            return new CoercionStep<>(RType.Integer, true, false, false, false, true, reuseNonShared);
+        }
+
         public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return new CoercionStep<>(RType.Integer, true, preserveNames, preserveDimensions, preserveAttributes, true);
+            return new CoercionStep<>(RType.Integer, true, preserveNames, preserveDimensions, preserveAttributes, true, false);
+        }
+
+        public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean reuseNonShared) {
+            return new CoercionStep<>(RType.Integer, true, preserveNames, preserveDimensions, preserveAttributes, true, reuseNonShared);
         }
 
         public static <T> PipelineStep<T, Double> asDouble() {
@@ -377,7 +385,7 @@ public final class CastBuilder {
         }
 
         public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-            return new CoercionStep<>(RType.Logical, true, preserveNames, preserveDimensions, preserveAttributes, false);
+            return new CoercionStep<>(RType.Logical, true, preserveNames, preserveDimensions, preserveAttributes, false, false);
         }
 
         public static PipelineStep<Byte, Boolean> asBoolean() {
@@ -389,7 +397,7 @@ public final class CastBuilder {
         }
 
         public static <T> PipelineStep<T, RAbstractVector> asVector(boolean preserveNonVector) {
-            return new CoercionStep<>(RType.Any, true, false, false, false, preserveNonVector);
+            return new CoercionStep<>(RType.Any, true, false, false, false, preserveNonVector, false);
         }
 
         /**
