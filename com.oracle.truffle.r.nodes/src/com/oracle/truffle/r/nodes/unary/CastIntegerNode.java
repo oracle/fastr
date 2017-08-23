@@ -182,7 +182,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     @Specialization(guards = "!isReusable(operand)")
     protected RIntVector doDoubleVector(RAbstractDoubleVector operand) {
-        return createResultVector(operand, index -> naCheck.convertDoubleToInt(operand.getDataAt(index)));
+        return vectorCopy(operand, naCheck.convertDoubleVectorToIntData(operand), operand.isComplete());
     }
 
     @Specialization(guards = "!isReusable(operand)")
