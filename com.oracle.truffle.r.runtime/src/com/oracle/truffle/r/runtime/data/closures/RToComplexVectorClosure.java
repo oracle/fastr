@@ -71,7 +71,7 @@ abstract class RToComplexVectorClosure extends RToVectorClosure implements RAbst
 
     @Override
     public final RAbstractComplexVector copyWithNewDimensions(int[] newDimensions) {
-        if (!keepAttributes) {
+        if (keepAttributes) {
             return materialize().copyWithNewDimensions(newDimensions);
         }
         return this;

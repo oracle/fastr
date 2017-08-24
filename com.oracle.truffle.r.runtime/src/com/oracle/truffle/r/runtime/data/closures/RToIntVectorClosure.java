@@ -69,7 +69,7 @@ abstract class RToIntVectorClosure extends RToVectorClosure implements RAbstract
 
     @Override
     public final RAbstractIntVector copyWithNewDimensions(int[] newDimensions) {
-        if (!keepAttributes) {
+        if (keepAttributes) {
             return materialize().copyWithNewDimensions(newDimensions);
         }
         return this;
@@ -103,6 +103,7 @@ final class RLogicalToIntVectorClosure extends RToIntVectorClosure implements RA
 final class RDoubleToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
 
     private final RDoubleVector vector;
+    private boolean naReported;
 
     RDoubleToIntVectorClosure(RDoubleVector vector, boolean keepAttributes) {
         super(keepAttributes);
@@ -122,7 +123,10 @@ final class RDoubleToIntVectorClosure extends RToIntVectorClosure implements RAb
         }
         int result = (int) value;
         if (result == Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-            RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION);
+            if (!naReported) {
+                RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION);
+                naReported = true;
+            }
             return RRuntime.INT_NA;
         }
         return result;
@@ -132,6 +136,7 @@ final class RDoubleToIntVectorClosure extends RToIntVectorClosure implements RAb
 final class RDoubleSequenceToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
 
     private final RDoubleSequence vector;
+    private boolean naReported;
 
     RDoubleSequenceToIntVectorClosure(RDoubleSequence vector, boolean keepAttributes) {
         super(keepAttributes);
@@ -151,7 +156,10 @@ final class RDoubleSequenceToIntVectorClosure extends RToIntVectorClosure implem
         }
         int result = (int) value;
         if (result == Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-            RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION);
+            if (!naReported) {
+                RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION);
+                naReported = true;
+            }
             return RRuntime.INT_NA;
         }
         return result;

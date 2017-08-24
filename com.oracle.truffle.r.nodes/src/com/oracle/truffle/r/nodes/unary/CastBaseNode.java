@@ -184,11 +184,7 @@ public abstract class CastBaseNode extends CastNode {
     }
 
     protected boolean isReusable(RAbstractVector v) {
-        // Reusing only of complete vectors otherwise we will produce different warning output
-        if (reuseNonShared && v.isComplete() && v instanceof RSharingAttributeStorage) {
-            return !((RSharingAttributeStorage) v).isShared();
-        }
-        return false;
+        return reuseNonShared;
     }
 
     protected RAbstractVector castWithReuse(RType targetType, RAbstractVector v, ConditionProfile naProfile) {
