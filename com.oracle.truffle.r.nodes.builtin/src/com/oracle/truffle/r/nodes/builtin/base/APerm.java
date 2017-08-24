@@ -109,6 +109,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
 
     @Specialization
     protected RAbstractVector aPerm(RAbstractVector vector, RAbstractIntVector permVector, byte resize,
+                    @Cached("createBinaryProfile()") ConditionProfile isIdentityProfile,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") SetDimAttributeNode setDimsNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
@@ -116,6 +117,9 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         int[] dim = getDimsNode.getDimensions(vector);
         checkErrorConditions(dim);
         int[] perm = getPermute(dim, permVector);
+        if (isIdentityProfile.profile(isIdentityPermutation(dim.length, perm))) {
+            return vector;
+        }
 
         int[] posV = new int[dim.length];
         int[] pDim = applyPermute(dim, perm, false);
@@ -153,8 +157,18 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         return result;
     }
 
+    private static boolean isIdentityPermutation(int dimLength, int[] perm) {
+        for (int i = 0; i < dimLength; i++) {
+            if (i != perm[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Specialization
     protected RAbstractVector aPerm(RAbstractVector vector, RAbstractStringVector permVector, byte resize,
+                    @Cached("createBinaryProfile()") ConditionProfile isIdentityProfile,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") SetDimAttributeNode setDimsNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
@@ -176,7 +190,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         }
 
         // Note: if this turns out to be slow, we can cache the permutation
-        return aPerm(vector, RDataFactory.createIntVector(perm, true), resize, getDimsNode, setDimsNode, getDimNamesNode);
+        return aPerm(vector, RDataFactory.createIntVector(perm, true), resize, isIdentityProfile, getDimsNode, setDimsNode, getDimNamesNode);
     }
 
     private static int[] getReverse(int[] dim) {
