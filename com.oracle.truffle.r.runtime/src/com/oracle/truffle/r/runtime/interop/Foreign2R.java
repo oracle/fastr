@@ -22,16 +22,26 @@
  */
 package com.oracle.truffle.r.runtime.interop;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@ImportStatic(Message.class)
+@ImportStatic({RRuntime.class})
 public abstract class Foreign2R extends RBaseNode {
+
+    @Child private Foreign2R recursive;
+    @Child private Node isBoxed;
+    @Child private Node unbox;
 
     public static Foreign2R createForeign2R() {
         return Foreign2RNodeGen.create();
@@ -72,6 +82,37 @@ public abstract class Foreign2R extends RBaseNode {
     @Specialization(guards = "isNull(obj)")
     public RNull doNull(@SuppressWarnings("unused") Object obj) {
         return RNull.instance;
+    }
+
+    @Specialization(guards = "isForeignObject(obj)")
+    public Object doUnbox(TruffleObject obj) {
+        /*
+         * For the time being, we have to ask "IS_BOXED" all the time (instead of simply trying
+         * UNBOX first), because some TruffleObjects return bogus values from UNBOX when IS_BOXED is
+         * false.
+         */
+        if (isBoxed == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            isBoxed = insert(Message.IS_BOXED.createNode());
+        }
+        if (ForeignAccess.sendIsBoxed(isBoxed, obj)) {
+            if (unbox == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                unbox = insert(Message.UNBOX.createNode());
+            }
+            try {
+                Object unboxed = ForeignAccess.sendUnbox(unbox, obj);
+                if (recursive == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    recursive = insert(Foreign2RNodeGen.create());
+                }
+                return recursive.execute(unboxed);
+            } catch (UnsupportedMessageException e) {
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(e, "object does not support UNBOX message even though IS_BOXED == true: " + obj.getClass().getSimpleName());
+            }
+        }
+        return obj;
     }
 
     @Fallback
