@@ -68,7 +68,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSrcref;
-import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
@@ -369,9 +368,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         boolean gd = RContext.getInstance().stateInstrumentation.setDebugGloballyDisabled(true);
         try {
             return RContext.getEngine().evalFunction(f, null, null, true, null, args);
-        } catch (ReturnException ex) {
-            // cannot throw return exceptions further up.
-            return ex.getResult();
         } finally {
             RContext.getInstance().stateInstrumentation.setDebugGloballyDisabled(gd);
         }
