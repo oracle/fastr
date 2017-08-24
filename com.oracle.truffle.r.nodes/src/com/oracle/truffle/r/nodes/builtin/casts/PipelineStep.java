@@ -177,7 +177,9 @@ public abstract class PipelineStep<T, R> {
         public final boolean vectorCoercion;
 
         /**
-         * Whether the cast should reuse a non-shared vector.
+         * Allows the cast node to create and use wrappers for non-shared vectors. Only use if you
+         * know the vector to be casted won't escape and preferably if the vector is just used
+         * read-only.
          */
         public final boolean reuseNonShared;
 

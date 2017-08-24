@@ -61,7 +61,7 @@ public class TestBuiltin_t extends TestBase {
     }
 
     @Test
-    public void testTransposeNotSquare() {
+    public void testTransposeNonSquare() {
         // test square matrices
         assertEval("{ m <- matrix(1:8, 2, 4) ; t(m) }");
         assertEval("{ m <- matrix(seq(0.1,0.8,0.1), 2, 4) ; t(m) }");

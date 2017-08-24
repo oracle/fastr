@@ -66,7 +66,7 @@ abstract class RToDoubleVectorClosure extends RToVectorClosure implements RAbstr
 
     @Override
     public final RAbstractDoubleVector copyWithNewDimensions(int[] newDimensions) {
-        if (!keepAttributes) {
+        if (keepAttributes) {
             return materialize().copyWithNewDimensions(newDimensions);
         }
         return this;

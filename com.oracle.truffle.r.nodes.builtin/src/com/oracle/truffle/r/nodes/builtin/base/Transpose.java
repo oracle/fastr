@@ -235,22 +235,22 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
         });
     }
 
-    @Specialization(guards = "x.isMatrix()")
+    @Specialization(guards = {"x.isMatrix()", "!isSquare(x)"})
     protected RVector<?> transpose(RAbstractIntVector x) {
         return transposeInternal(x, l -> new int[l], (a, v, i, j) -> a[i] = v.getDataAt(j), RDataFactory::createIntVector);
     }
 
-    @Specialization(guards = "x.isMatrix()")
+    @Specialization(guards = {"x.isMatrix()", "!isSquare(x)"})
     protected RVector<?> transpose(RAbstractLogicalVector x) {
         return transposeInternal(x, l -> new byte[l], (a, v, i, j) -> a[i] = v.getDataAt(j), RDataFactory::createLogicalVector);
     }
 
-    @Specialization(guards = "x.isMatrix()")
+    @Specialization(guards = {"x.isMatrix()", "!isSquare(x)"})
     protected RVector<?> transpose(RAbstractDoubleVector x) {
         return transposeInternal(x, l -> new double[l], (a, v, i, j) -> a[i] = v.getDataAt(j), RDataFactory::createDoubleVector);
     }
 
-    @Specialization(guards = "x.isMatrix()")
+    @Specialization(guards = {"x.isMatrix()", "!isSquare(x)"})
     protected RVector<?> transpose(RAbstractComplexVector x) {
         return transposeInternal(x, l -> new double[l * 2], (a, v, i, j) -> {
             RComplex d = v.getDataAt(j);
@@ -259,17 +259,17 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
         }, RDataFactory::createComplexVector);
     }
 
-    @Specialization(guards = "x.isMatrix()")
+    @Specialization(guards = {"x.isMatrix()", "!isSquare(x)"})
     protected RVector<?> transpose(RAbstractStringVector x) {
         return transposeInternal(x, l -> new String[l], (a, v, i, j) -> a[i] = v.getDataAt(j), RDataFactory::createStringVector);
     }
 
-    @Specialization(guards = "x.isMatrix()")
+    @Specialization(guards = {"x.isMatrix()", "!isSquare(x)"})
     protected RVector<?> transpose(RAbstractListVector x) {
         return transposeInternal(x, l -> new Object[l], (a, v, i, j) -> a[i] = v.getDataAt(j), (a, c) -> RDataFactory.createList(a));
     }
 
-    @Specialization(guards = "x.isMatrix()")
+    @Specialization(guards = {"x.isMatrix()", "!isSquare(x)"})
     protected RVector<?> transpose(RAbstractRawVector x) {
         return transposeInternal(x, l -> new byte[l], (a, v, i, j) -> a[i] = v.getRawDataAt(j), (a, c) -> RDataFactory.createRawVector(a));
     }
