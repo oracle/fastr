@@ -84,9 +84,9 @@ public final class PipelineBuilder {
         append(new CoercionStep<>(type, true, preserveNames, preserveDimensions, preserveAttributes, true, false));
     }
 
-    public void appendAsVector(RType type, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean reuseNonShared) {
+    public void appendAsVectorClosure(RType type, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         assert type == RType.Integer || type == RType.Double || type == RType.Complex || type == RType.Character || type == RType.Logical || type == RType.Raw;
-        append(new CoercionStep<>(type, true, preserveNames, preserveDimensions, preserveAttributes, true, reuseNonShared));
+        append(new CoercionStep<>(type, true, preserveNames, preserveDimensions, preserveAttributes, true, true));
     }
 
     public void appendNotNA(Object naReplacement, Message message, Object[] messageArgs) {

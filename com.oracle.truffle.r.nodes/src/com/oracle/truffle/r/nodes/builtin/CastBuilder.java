@@ -332,16 +332,16 @@ public final class CastBuilder {
             return new CoercionStep<>(RType.Integer, true);
         }
 
-        public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector(boolean reuseNonShared) {
-            return new CoercionStep<>(RType.Integer, true, false, false, false, true, reuseNonShared);
+        public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVectorClosure() {
+            return new CoercionStep<>(RType.Integer, true, false, false, false, true, true);
         }
 
         public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
             return new CoercionStep<>(RType.Integer, true, preserveNames, preserveDimensions, preserveAttributes, true, false);
         }
 
-        public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean reuseNonShared) {
-            return new CoercionStep<>(RType.Integer, true, preserveNames, preserveDimensions, preserveAttributes, true, reuseNonShared);
+        public static <T> PipelineStep<T, RAbstractIntVector> asIntegerVectorClosure(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+            return new CoercionStep<>(RType.Integer, true, preserveNames, preserveDimensions, preserveAttributes, true, true);
         }
 
         public static <T> PipelineStep<T, Double> asDouble() {
@@ -352,8 +352,16 @@ public final class CastBuilder {
             return new CoercionStep<>(RType.Double, true);
         }
 
+        public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVectorClosure() {
+            return new CoercionStep<>(RType.Double, true, false, false, false, true, true);
+        }
+
         public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
             return new CoercionStep<>(RType.Double, true, preserveNames, preserveDimensions, preserveAttributes);
+        }
+
+        public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVectorClosure(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+            return new CoercionStep<>(RType.Double, true, preserveNames, preserveDimensions, preserveAttributes, true, true);
         }
 
         public static <T> PipelineStep<T, String> asString() {

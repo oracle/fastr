@@ -41,8 +41,8 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
 
     @Child private CastIntegerNode recursiveCastInteger;
 
-    protected CastIntegerBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean withReuse) {
-        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, withReuse);
+    protected CastIntegerBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, useClosure);
     }
 
     protected CastIntegerBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {

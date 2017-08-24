@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -65,8 +64,8 @@ public abstract class CastBaseNode extends CastNode {
     private final boolean preserveDimensions;
     private final boolean preserveAttributes;
 
-    /** {@code true} if a cast should try to reuse a non-shared vector. */
-    private final boolean reuseNonShared;
+    /** {@code true} if a cast should wrap the input in a closure. */
+    private final boolean useClosure;
 
     /**
      * GnuR provides several, sometimes incompatible, ways to coerce given value to given type. This
@@ -83,7 +82,7 @@ public abstract class CastBaseNode extends CastNode {
         this(preserveNames, preserveDimensions, preserveAttributes, forRFFI, false);
     }
 
-    protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean reuseNonShared) {
+    protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure) {
         this.preserveNames = preserveNames;
         this.preserveDimensions = preserveDimensions;
         this.preserveAttributes = preserveAttributes;
@@ -91,8 +90,8 @@ public abstract class CastBaseNode extends CastNode {
         if (preserveDimensions) {
             getDimNamesNode = GetDimNamesAttributeNode.create();
         }
-        this.reuseNonShared = reuseNonShared;
-        reuseClassProfile = reuseNonShared ? ValueProfile.createClassProfile() : null;
+        this.useClosure = useClosure;
+        reuseClassProfile = useClosure ? ValueProfile.createClassProfile() : null;
     }
 
     public final boolean preserveNames() {
@@ -112,7 +111,7 @@ public abstract class CastBaseNode extends CastNode {
     }
 
     public final boolean reuseNonShared() {
-        return reuseNonShared;
+        return useClosure;
     }
 
     protected abstract RType getTargetType();
@@ -183,12 +182,12 @@ public abstract class CastBaseNode extends CastNode {
         return RNull.instance;
     }
 
-    protected boolean isReusable(RAbstractVector v) {
-        return reuseNonShared;
+    protected boolean useClosure() {
+        return useClosure;
     }
 
     protected RAbstractVector castWithReuse(RType targetType, RAbstractVector v, ConditionProfile naProfile) {
-        assert isReusable(v);
+        assert useClosure();
         return reuseClassProfile.profile(v.castSafe(targetType, naProfile, preserveAttributes()));
     }
 }

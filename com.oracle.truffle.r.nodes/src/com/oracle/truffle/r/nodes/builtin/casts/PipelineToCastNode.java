@@ -226,11 +226,11 @@ public final class PipelineToCastNode {
             RType type = step.getType();
             switch (type) {
                 case Integer:
-                    return step.vectorCoercion ? CastIntegerNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.reuseNonShared)
-                                    : CastIntegerBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.reuseNonShared);
+                    return step.vectorCoercion ? CastIntegerNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure)
+                                    : CastIntegerBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure);
                 case Double:
-                    return step.vectorCoercion ? CastDoubleNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.reuseNonShared)
-                                    : CastDoubleBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.reuseNonShared);
+                    return step.vectorCoercion ? CastDoubleNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure)
+                                    : CastDoubleBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure);
                 case Character:
                     return step.vectorCoercion ? CastStringNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
                                     : CastStringBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);

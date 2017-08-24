@@ -92,27 +92,27 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return vectorCopy(operand, ddata, !seenNA);
     }
 
-    @Specialization(guards = "isReusable(operand)")
+    @Specialization(guards = "useClosure()")
     protected RAbstractDoubleVector doIntVectorReuse(RAbstractIntVector operand) {
         return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
     }
 
-    @Specialization(guards = "isReusable(operand)")
+    @Specialization(guards = "useClosure()")
     protected RAbstractDoubleVector doLogicalVectorDimsReuse(RAbstractLogicalVector operand) {
         return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
     }
 
-    @Specialization(guards = "isReusable(operand)")
+    @Specialization(guards = "useClosure()")
     protected RAbstractDoubleVector doRawVectorReuse(RRawVector operand) {
         return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
     }
 
-    @Specialization(guards = "!isReusable(operand)")
+    @Specialization(guards = "!useClosure()")
     protected RDoubleVector doIntVector(RAbstractIntVector operand) {
         return createResultVector(operand, index -> naCheck.convertIntToDouble(operand.getDataAt(index)));
     }
 
-    @Specialization(guards = "!isReusable(operand)")
+    @Specialization(guards = "!useClosure()")
     protected RDoubleVector doLogicalVectorDims(RAbstractLogicalVector operand) {
         return createResultVector(operand, index -> naCheck.convertLogicalToDouble(operand.getDataAt(index)));
     }
@@ -172,7 +172,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return vectorCopy(operand, ddata, naCheck.neverSeenNA());
     }
 
-    @Specialization(guards = "!isReusable(operand)")
+    @Specialization(guards = "!useClosure()")
     protected RDoubleVector doRawVector(RRawVector operand) {
         return createResultVector(operand, index -> RRuntime.raw2double(operand.getDataAt(index)));
     }

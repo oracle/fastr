@@ -177,11 +177,10 @@ public abstract class PipelineStep<T, R> {
         public final boolean vectorCoercion;
 
         /**
-         * Allows the cast node to create and use wrappers for non-shared vectors. Only use if you
-         * know the vector to be casted won't escape and preferably if the vector is just used
-         * read-only.
+         * Allows the cast node to create and use wrappers for vectors. Only use if you know the
+         * vector to be casted won't escape and preferably if the vector is just used read-only.
          */
-        public final boolean reuseNonShared;
+        public final boolean useClosure;
 
         public CoercionStep(RType type, boolean vectorCoercion) {
             this(type, vectorCoercion, false, false, false, true, false);
@@ -191,14 +190,14 @@ public abstract class PipelineStep<T, R> {
             this(type, vectorCoercion, preserveNames, preserveDimensions, preserveAttributes, true, false);
         }
 
-        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector, boolean reuseNonShared) {
+        public CoercionStep(RType type, boolean vectorCoercion, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector, boolean useClosure) {
             this.type = type;
             this.vectorCoercion = vectorCoercion;
             this.preserveNames = preserveNames;
             this.preserveAttributes = preserveAttributes;
             this.preserveDimensions = preserveDimensions;
             this.preserveNonVector = preserveNonVector;
-            this.reuseNonShared = reuseNonShared;
+            this.useClosure = useClosure;
         }
 
         public RType getType() {

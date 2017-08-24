@@ -57,8 +57,8 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     private final BranchProfile warningBranch = BranchProfile.create();
 
-    protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean withReuse) {
-        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, withReuse);
+    protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, useClosure);
     }
 
     protected CastIntegerNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
@@ -160,32 +160,32 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return vectorCopy(operand, idata, !seenNA);
     }
 
-    @Specialization(guards = "isReusable(operand)")
+    @Specialization(guards = "useClosure()")
     public RAbstractIntVector doLogicalVectorReuse(RAbstractLogicalVector operand) {
         return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
     }
 
-    @Specialization(guards = "isReusable(operand)")
+    @Specialization(guards = "useClosure()")
     protected RAbstractIntVector doDoubleVectorReuse(RAbstractDoubleVector operand) {
         return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
     }
 
-    @Specialization(guards = "isReusable(operand)")
+    @Specialization(guards = "useClosure()")
     protected RAbstractIntVector doRawVectorReuse(RAbstractRawVector operand) {
         return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
     }
 
-    @Specialization(guards = "!isReusable(operand)")
+    @Specialization(guards = "!useClosure()")
     public RIntVector doLogicalVector(RAbstractLogicalVector operand) {
         return createResultVector(operand, index -> naCheck.convertLogicalToInt(operand.getDataAt(index)));
     }
 
-    @Specialization(guards = "!isReusable(operand)")
+    @Specialization(guards = "!useClosure()")
     protected RIntVector doDoubleVector(RAbstractDoubleVector operand) {
         return vectorCopy(operand, naCheck.convertDoubleVectorToIntData(operand), naCheck.neverSeenNA());
     }
 
-    @Specialization(guards = "!isReusable(operand)")
+    @Specialization(guards = "!useClosure()")
     protected RIntVector doRawVector(RAbstractRawVector operand) {
         return createResultVector(operand, index -> RRuntime.raw2int(operand.getDataAt(index)));
     }
