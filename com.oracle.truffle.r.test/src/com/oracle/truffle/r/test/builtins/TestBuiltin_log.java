@@ -170,4 +170,12 @@ public class TestBuiltin_log extends TestBase {
         assertEval("{ log(c(0.0, 0.0), 0+0i) }");
         assertEval("{ log(c(0+0i, 0+0i), 0+0i) }");
     }
+
+    @Test
+    public void testLogAttrs() {
+        assertEval("{ x <- array(1:3, 1); dimnames(x) <- list('a'); r <- log(x); names(r)[[1]] <- 'new'; list(x=x, r=r); }");
+        assertEval("{ x <- array(1:3, 3, list(x=c('x1','x2','x3'))); r <- log(x); r; }");
+        assertEval("{ y <- array(1:6, c(2,3), list(y=c('y1','y2'), x=c('x1','x2','x3'))); r <- log(y); r; }");
+    }
+
 }

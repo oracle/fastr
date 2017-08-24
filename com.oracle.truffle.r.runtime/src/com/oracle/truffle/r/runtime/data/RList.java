@@ -31,8 +31,12 @@ public final class RList extends RListBase implements RAbstractListVector {
 
     public String elementNamePrefix;
 
-    RList(Object[] data, int[] dims, RStringVector names) {
-        super(data, dims, names);
+    RList(Object[] data) {
+        super(data);
+    }
+
+    RList(Object[] data, int[] dims, RStringVector names, RList dimNames) {
+        super(data, dims, names, dimNames);
     }
 
     @Override
@@ -42,7 +46,7 @@ public final class RList extends RListBase implements RAbstractListVector {
 
     @Override
     protected RList internalCopy() {
-        return new RList(Arrays.copyOf(data, data.length), getDimensionsInternal(), null);
+        return new RList(Arrays.copyOf(data, data.length), getDimensionsInternal(), null, null);
     }
 
     @TruffleBoundary
@@ -54,7 +58,7 @@ public final class RList extends RListBase implements RAbstractListVector {
     protected RList internalDeepCopy() {
         // TOOD: only used for nested list updates, but still could be made faster (through a
         // separate AST node?)
-        RList listCopy = new RList(Arrays.copyOf(data, data.length), getDimensionsInternal(), null);
+        RList listCopy = new RList(Arrays.copyOf(data, data.length), getDimensionsInternal(), null, null);
         for (int i = 0; i < listCopy.getLength(); i++) {
             Object el = listCopy.getDataAt(i);
             if (el instanceof RVector) {

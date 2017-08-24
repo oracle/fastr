@@ -37,14 +37,15 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
 
     private final byte[] data;
 
-    RRawVector(byte[] data, int[] dims, RStringVector names) {
-        super(true, data.length, dims, names);
+    RRawVector(byte[] data) {
+        super(true);
         this.data = data;
         assert verify();
     }
 
-    private RRawVector(byte[] data, int[] dims) {
-        this(data, dims, null);
+    RRawVector(byte[] data, int[] dims, RStringVector names, RList dimNames) {
+        this(data);
+        initDimsNamesDimNames(dims, names, dimNames);
     }
 
     @Override
@@ -89,7 +90,7 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
 
     @Override
     protected RRawVector internalCopy() {
-        return new RRawVector(Arrays.copyOf(data, data.length), null);
+        return new RRawVector(Arrays.copyOf(data, data.length));
     }
 
     @Override

@@ -37,14 +37,15 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     private final int[] data;
 
-    RIntVector(int[] data, boolean complete, int[] dims, RStringVector names) {
-        super(complete, data.length, dims, names);
+    RIntVector(int[] data, boolean complete) {
+        super(complete);
         this.data = data;
         assert verify();
     }
 
-    private RIntVector(int[] data, boolean complete, int[] dims) {
-        this(data, complete, dims, null);
+    RIntVector(int[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
+        this(data, complete);
+        initDimsNamesDimNames(dims, names, dimNames);
     }
 
     @Override
@@ -89,7 +90,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     protected RIntVector internalCopy() {
-        return new RIntVector(Arrays.copyOf(data, data.length), isComplete(), null);
+        return new RIntVector(Arrays.copyOf(data, data.length), isComplete());
     }
 
     public RIntVector copyResetData(int[] newData) {
@@ -100,7 +101,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
                 break;
             }
         }
-        RIntVector result = new RIntVector(newData, isComplete, null);
+        RIntVector result = new RIntVector(newData, isComplete);
         setAttributes(result);
         return result;
     }

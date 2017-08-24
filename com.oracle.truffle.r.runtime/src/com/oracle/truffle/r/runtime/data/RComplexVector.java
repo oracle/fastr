@@ -37,20 +37,21 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
 
     private final double[] data;
 
-    RComplexVector(double[] data, boolean complete, int[] dims, RStringVector names) {
-        super(complete, data.length >> 1, dims, names);
+    RComplexVector(double[] data, boolean complete) {
+        super(complete);
         assert data.length % 2 == 0;
         this.data = data;
         assert verify();
     }
 
-    private RComplexVector(double[] data, boolean complete, int[] dims) {
-        this(data, complete, dims, null);
+    RComplexVector(double[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
+        this(data, complete);
+        initDimsNamesDimNames(dims, names, dimNames);
     }
 
     @Override
     protected RComplexVector internalCopy() {
-        return new RComplexVector(Arrays.copyOf(data, data.length), this.isComplete(), null);
+        return new RComplexVector(Arrays.copyOf(data, data.length), this.isComplete());
     }
 
     @Override

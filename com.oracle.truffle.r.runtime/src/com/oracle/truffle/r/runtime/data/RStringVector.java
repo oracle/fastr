@@ -38,14 +38,15 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
 
     private final String[] data;
 
-    RStringVector(String[] data, boolean complete, int[] dims, RStringVector names) {
-        super(complete, data.length, dims, names);
+    RStringVector(String[] data, boolean complete) {
+        super(complete);
         this.data = data;
         assert verify();
     }
 
-    private RStringVector(String[] data, boolean complete, int[] dims) {
-        this(data, complete, dims, null);
+    RStringVector(String[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
+        this(data, complete);
+        initDimsNamesDimNames(dims, names, dimNames);
     }
 
     @Override
@@ -79,7 +80,7 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
 
     @Override
     protected RStringVector internalCopy() {
-        return new RStringVector(Arrays.copyOf(data, data.length), isComplete(), null);
+        return new RStringVector(Arrays.copyOf(data, data.length), isComplete());
     }
 
     @Override
@@ -102,7 +103,7 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
                 break;
             }
         }
-        RStringVector result = new RStringVector(newData, isComplete, null);
+        RStringVector result = new RStringVector(newData, isComplete);
         setAttributes(result);
         return result;
     }

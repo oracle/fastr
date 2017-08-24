@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public final class RExpression extends RListBase implements RAbstractVector {
 
     RExpression(Object[] data, int[] dims, RStringVector names) {
-        super(data, dims, names);
+        super(data, dims, names, null);
     }
 
     @Override

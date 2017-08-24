@@ -31,6 +31,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -439,16 +440,17 @@ public final class SpecialAttributesFunctions {
                         @Cached("createClassProfile()") ValueProfile xTypeProfile,
                         @Cached("create()") BranchProfile namesNullProfile,
                         @Cached("create()") BranchProfile dimNamesAvlProfile,
-                        @Cached("create()") GetDimNamesAttributeNode getDimNames) {
+                        @Cached("create()") GetDimNamesAttributeNode getDimNames,
+                        @Cached("create()") ExtractListElement extractListElement) {
             RStringVector names = (RStringVector) super.getAttrFromAttributable(x, attrNullProfile, attrStorageProfile, xTypeProfile);
             if (names == null) {
                 namesNullProfile.enter();
                 RList dimNames = getDimNames.getDimNames(x);
                 if (dimNames != null && dimNames.getLength() == 1) {
                     dimNamesAvlProfile.enter();
-                    Object dimName = dimNames.getDataAt(0);
-                    return (dimName != RNull.instance) ? dimName : null; // For
-                                                                         // ".Dimnames=list(NULL)"
+                    Object dimName = extractListElement.execute(dimNames, 0);
+                    // RNull for ".Dimnames=list(NULL)"
+                    return (dimName != RNull.instance) ? dimName : null;
                 }
                 return null;
             }
@@ -875,6 +877,104 @@ public final class SpecialAttributesFunctions {
         protected Object getVectorDimNames(RAbstractContainer x,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile) {
             return xTypeProfile.profile(x).getDimNames();
+        }
+    }
+
+    public abstract static class InitDimsNamesDimNamesNode extends RBaseNode {
+
+        private final ConditionProfile oldAttrsNullProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile doAnythingProfile = ConditionProfile.createBinaryProfile();
+
+        @Child private GetDimAttributeNode getDimNode;
+        @Child private GetNamesAttributeNode getNamesNode;
+        @Child private GetDimNamesAttributeNode getDimNamesNode;
+
+        protected InitDimsNamesDimNamesNode() {
+        }
+
+        public static InitDimsNamesDimNamesNode create() {
+            return SpecialAttributesFunctionsFactory.InitDimsNamesDimNamesNodeGen.create();
+        }
+
+        public void initAttributes(RAbstractContainer x, int[] dimensions, RStringVector names, RList dimNames) {
+            if (doAnythingProfile.profile(dimensions != null || names != null || dimNames != null)) {
+                execute(x, dimensions, names, dimNames);
+            }
+        }
+
+        public void initAttributes(RAbstractContainer x, RAbstractContainer source) {
+            if (getDimNode == null) {
+                getDimNode = insert(GetDimAttributeNode.create());
+                getNamesNode = insert(GetNamesAttributeNode.create());
+                getDimNamesNode = insert(GetDimNamesAttributeNode.create());
+            }
+            this.initAttributes(x, getDimNode.getDimensions(source), getNamesNode.getNames(source), getDimNamesNode.getDimNames(source));
+        }
+
+        public abstract void execute(RAbstractContainer x, int[] dimensions, RStringVector names, RList dimNames);
+
+        @Specialization
+        protected void initContainerAttributes(RAbstractContainer x, int[] dimensions, RStringVector names, RList dimNames,
+                        @Cached("create()") ShareObjectNode shareObjectNode) {
+            assert names != x;
+            assert dimNames != x;
+            DynamicObject attrs = x.getAttributes();
+            if (dimNames != null) {
+                shareObjectNode.execute(dimNames);
+            }
+            if (names != null) {
+                assert names.getLength() == x.getLength() : "size mismatch: names.length=" + names.getLength() + " vs. length=" + x.getLength();
+                if (dimensions != null && dimensions.length == 1) {
+                    // one-dimensional arrays do not have names, only dimnames with one value
+                    if (dimNames == null) {
+                        shareObjectNode.execute(names);
+                        dimNames = RDataFactory.createList(new Object[]{names});
+                    }
+                    names = null;
+                } else {
+                    shareObjectNode.execute(names);
+                }
+            }
+
+            if (attrs == null) {
+                if (dimensions != null) {
+                    RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
+                    if (dimNames != null) {
+                        attrs = RAttributesLayout.createDimAndDimNames(dimensionsVector, dimNames);
+                        if (names != null) {
+                            attrs.define(RRuntime.NAMES_ATTR_KEY, names);
+                        }
+                    } else {
+                        if (names != null) {
+                            attrs = RAttributesLayout.createNamesAndDim(names, dimensionsVector);
+                        } else {
+                            attrs = RAttributesLayout.createDim(dimensionsVector);
+                        }
+                    }
+                } else {
+                    if (dimNames != null) {
+                        attrs = RAttributesLayout.createDimNames(dimNames);
+                        if (names != null) {
+                            attrs.define(RRuntime.NAMES_ATTR_KEY, names);
+                        }
+                    } else {
+                        assert (names != null); // only called with at least one attr != null
+                        attrs = RAttributesLayout.createNames(names);
+                    }
+                }
+                x.initAttributes(attrs);
+            } else { // attrs != null
+                if (dimensions != null) {
+                    RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
+                    x.setAttr(RRuntime.DIM_ATTR_KEY, dimensionsVector);
+                }
+                if (names != null) {
+                    x.setAttr(RRuntime.NAMES_ATTR_KEY, names);
+                }
+                if (dimNames != null) {
+                    x.setAttr(RRuntime.DIMNAMES_ATTR_KEY, dimNames);
+                }
+            }
         }
     }
 

@@ -50,10 +50,15 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
 
     protected final Object[] data;
 
-    RListBase(Object[] data, int[] dims, RStringVector names) {
-        super(false, data.length, dims, names);
+    RListBase(Object[] data) {
+        super(false);
         this.data = data;
         assert verify();
+    }
+
+    RListBase(Object[] data, int[] dims, RStringVector names, RList dimNames) {
+        this(data);
+        initDimsNamesDimNames(dims, names, dimNames);
     }
 
     @Override
