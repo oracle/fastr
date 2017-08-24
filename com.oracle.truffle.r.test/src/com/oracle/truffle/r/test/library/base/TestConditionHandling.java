@@ -46,10 +46,12 @@ public class TestConditionHandling extends TestRBase {
         // <simpleError in doTryCatch(return(expr), name, parentenv, handler): fred>
         // FastR output: [1] "Hello"
         // <simpleError: fred>
-        assertEval(Ignored.ImplementationError, "{ tryCatch(stop(\"fred\"), error = function(e) e, finally = print(\"Hello\"))}");
+        assertEval(Ignored.ImplementationError, "{ tryCatch(stop('fred'), error = function(e) e, finally = print('Hello'))}");
+        assertEval("x <- { tryCatch(stop('fred'), error = function(e) e, finally = print('Hello'))}; x$call <- NULL; x");
         assertEval("{ f <- function() { tryCatch(1, error = function(e) print(\"Hello\")); stop(\"fred\")}; f() }");
         assertEval("{ f <- function() { tryCatch(stop(\"fred\"), error = function(e) print(\"Hello\"))}; f() }");
         assertEval("{ tryCatch(stop(\"xyz\"), error=function(e) { cat(\"<error>\");123L }, finally=function() { cat(\"<finally>\")}) }");
+        assertEval("my.error <- function(war) cat('my.error:', war$message, '\\n'); f <- function() print(g); tryCatch({f()}, error=my.error)");
     }
 
     @Test
@@ -71,5 +73,11 @@ public class TestConditionHandling extends TestRBase {
         assertEval("withCallingHandlers({message(\"foo\");packageStartupMessage(\"bar\");123L},\n packageStartupMessage=function(e) {\n cat(\"<msg>\")\n invokeRestart(\"muffleMessage\")\n })");
         assertEval(Output.IgnoreErrorContext, "withCallingHandlers(stop('error message'), error=function(e) {})");
         assertEval(Output.IgnoreErrorMessage, "withCallingHandlers(unknownSymbol(), condition = function(e) {})");
+    }
+
+    @Test
+    public void testWarning() {
+        assertEval("tryCatch(warning('some warning text'), warning = function(w) {print('WARNING')})");
+        assertEval("my.warning <- function(war) cat('my.warning:', war$message, '\\n'); f <- function()  warning('from f'); tryCatch({f()}, warning=my.warning)");
     }
 }
