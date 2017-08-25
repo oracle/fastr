@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -160,33 +161,33 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return vectorCopy(operand, idata, !seenNA);
     }
 
-    @Specialization(guards = "useClosure()")
-    public RAbstractIntVector doLogicalVectorReuse(RAbstractLogicalVector operand) {
-        return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
-    }
-
-    @Specialization(guards = "useClosure()")
-    protected RAbstractIntVector doDoubleVectorReuse(RAbstractDoubleVector operand) {
-        return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
-    }
-
-    @Specialization(guards = "useClosure()")
-    protected RAbstractIntVector doRawVectorReuse(RAbstractRawVector operand) {
-        return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
-    }
-
-    @Specialization(guards = "!useClosure()")
-    public RIntVector doLogicalVector(RAbstractLogicalVector operand) {
+    @Specialization
+    public RAbstractIntVector doLogicalVector(RAbstractLogicalVector x,
+                    @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
+        RAbstractLogicalVector operand = operandTypeProfile.profile(x);
+        if (useClosure()) {
+            return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
+        }
         return createResultVector(operand, index -> naCheck.convertLogicalToInt(operand.getDataAt(index)));
     }
 
-    @Specialization(guards = "!useClosure()")
-    protected RIntVector doDoubleVector(RAbstractDoubleVector operand) {
+    @Specialization
+    protected RAbstractIntVector doDoubleVector(RAbstractDoubleVector x,
+                    @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
+        RAbstractDoubleVector operand = operandTypeProfile.profile(x);
+        if (useClosure()) {
+            return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
+        }
         return vectorCopy(operand, naCheck.convertDoubleVectorToIntData(operand), naCheck.neverSeenNA());
     }
 
-    @Specialization(guards = "!useClosure()")
-    protected RIntVector doRawVector(RAbstractRawVector operand) {
+    @Specialization
+    protected RAbstractIntVector doRawVector(RAbstractRawVector x,
+                    @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
+        RAbstractRawVector operand = operandTypeProfile.profile(x);
+        if (useClosure()) {
+            return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
+        }
         return createResultVector(operand, index -> RRuntime.raw2int(operand.getDataAt(index)));
     }
 

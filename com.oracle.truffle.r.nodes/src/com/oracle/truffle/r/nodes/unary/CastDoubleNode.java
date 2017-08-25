@@ -31,6 +31,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -39,13 +40,13 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
@@ -92,29 +93,34 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return vectorCopy(operand, ddata, !seenNA);
     }
 
-    @Specialization(guards = "useClosure()")
-    protected RAbstractDoubleVector doIntVectorReuse(RAbstractIntVector operand) {
-        return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
-    }
-
-    @Specialization(guards = "useClosure()")
-    protected RAbstractDoubleVector doLogicalVectorDimsReuse(RAbstractLogicalVector operand) {
-        return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
-    }
-
-    @Specialization(guards = "useClosure()")
-    protected RAbstractDoubleVector doRawVectorReuse(RRawVector operand) {
-        return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
-    }
-
-    @Specialization(guards = "!useClosure()")
-    protected RDoubleVector doIntVector(RAbstractIntVector operand) {
+    @Specialization
+    protected RAbstractDoubleVector doIntVector(RAbstractIntVector x,
+                    @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
+        RAbstractIntVector operand = operandTypeProfile.profile(x);
+        if (useClosure()) {
+            return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
+        }
         return createResultVector(operand, index -> naCheck.convertIntToDouble(operand.getDataAt(index)));
     }
 
-    @Specialization(guards = "!useClosure()")
-    protected RDoubleVector doLogicalVectorDims(RAbstractLogicalVector operand) {
+    @Specialization
+    protected RAbstractDoubleVector doLogicalVector(RAbstractLogicalVector x,
+                    @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
+        RAbstractLogicalVector operand = operandTypeProfile.profile(x);
+        if (useClosure()) {
+            return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
+        }
         return createResultVector(operand, index -> naCheck.convertLogicalToDouble(operand.getDataAt(index)));
+    }
+
+    @Specialization
+    protected RAbstractDoubleVector doRawVector(RAbstractRawVector x,
+                    @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
+        RAbstractRawVector operand = operandTypeProfile.profile(x);
+        if (useClosure()) {
+            return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
+        }
+        return createResultVector(operand, index -> RRuntime.raw2double(operand.getDataAt(index)));
     }
 
     @Specialization
@@ -170,11 +176,6 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
             warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return vectorCopy(operand, ddata, naCheck.neverSeenNA());
-    }
-
-    @Specialization(guards = "!useClosure()")
-    protected RDoubleVector doRawVector(RRawVector operand) {
-        return createResultVector(operand, index -> RRuntime.raw2double(operand.getDataAt(index)));
     }
 
     @Specialization
