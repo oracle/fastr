@@ -79,7 +79,6 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public int[] getInternalStore() {
-        assert data != null;
         return data;
     }
 

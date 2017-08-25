@@ -68,6 +68,7 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
 
     @Override
     public String[] getInternalStore() {
+        assert data != null : "support for native memory backed vectors is not complete";
         return data;
     }
 

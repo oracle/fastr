@@ -104,7 +104,8 @@ public final class NativeDataAccess {
          */
         private long dataAddress;
         /**
-         * Length of the native data array. E.g. for CHARSXP this is not just the length of the Java String.
+         * Length of the native data array. E.g. for CHARSXP this is not just the length of the Java
+         * String.
          */
         private long length;
 
@@ -121,9 +122,11 @@ public final class NativeDataAccess {
 
         void allocateNative(String source) {
             assert dataAddress == 0;
-            byte[] bytes = source.getBytes(StandardCharsets.UTF_8);
+            byte[] bytes = source.getBytes(StandardCharsets.US_ASCII);
             dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(bytes.length + 1);
-            UnsafeAdapter.UNSAFE.copyMemory(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, dataAddress, bytes.length + 1);
+            UnsafeAdapter.UNSAFE.copyMemory(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, dataAddress, bytes.length);
+            UnsafeAdapter.UNSAFE.putByte(dataAddress + bytes.length, (byte) 0); // C strings
+                                                                                // terminator
             this.length = bytes.length + 1;
         }
 
@@ -235,11 +238,40 @@ public final class NativeDataAccess {
         return UnsafeAdapter.UNSAFE.getByte(address + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
+    public static RComplex getComplexNativeMirrorData(Object nativeMirror, int index) {
+        long address = ((NativeMirror) nativeMirror).dataAddress;
+        assert address != 0;
+        assert index < ((NativeMirror) nativeMirror).length;
+        return RComplex.valueOf(UnsafeAdapter.UNSAFE.getDouble(address + index * 2 * Unsafe.ARRAY_DOUBLE_INDEX_SCALE),
+                        UnsafeAdapter.UNSAFE.getDouble(address + (index * 2 + 1) * Unsafe.ARRAY_DOUBLE_INDEX_SCALE));
+    }
+
     public static void setNativeMirrorData(Object nativeMirror, int index, double value) {
         long address = ((NativeMirror) nativeMirror).dataAddress;
         assert address != 0;
         assert index < ((NativeMirror) nativeMirror).length;
         UnsafeAdapter.UNSAFE.putDouble(address + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, value);
+    }
+
+    public static void setNativeMirrorData(Object nativeMirror, int index, byte value) {
+        long address = ((NativeMirror) nativeMirror).dataAddress;
+        assert address != 0;
+        assert index < ((NativeMirror) nativeMirror).length;
+        UnsafeAdapter.UNSAFE.putByte(address + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
+    }
+
+    public static void setNativeMirrorData(Object nativeMirror, int index, int value) {
+        long address = ((NativeMirror) nativeMirror).dataAddress;
+        assert address != 0;
+        assert index < ((NativeMirror) nativeMirror).length;
+        UnsafeAdapter.UNSAFE.putInt(address + index * Unsafe.ARRAY_INT_INDEX_SCALE, value);
+    }
+
+    public static void setNativeMirrorLogicalData(Object nativeMirror, int index, byte logical) {
+        long address = ((NativeMirror) nativeMirror).dataAddress;
+        assert address != 0;
+        assert index < ((NativeMirror) nativeMirror).length;
+        UnsafeAdapter.UNSAFE.putInt(address + index * Unsafe.ARRAY_INT_INDEX_SCALE, RRuntime.logical2int(logical));
     }
 
     public static double[] copyDoubleNativeData(Object mirrorObj) {
@@ -386,10 +418,7 @@ public final class NativeDataAccess {
         if (noComplexNative.isValid() || data != null) {
             return RComplex.valueOf(data[index * 2], data[index * 2 + 1]);
         } else {
-            long address = ((NativeMirror) vector.getNativeMirror()).dataAddress;
-            assert address != 0;
-            return RComplex.valueOf(UnsafeAdapter.UNSAFE.getDouble(address + index * 2 * Unsafe.ARRAY_DOUBLE_INDEX_SCALE),
-                            UnsafeAdapter.UNSAFE.getDouble(address + (index * 2 + 1) * Unsafe.ARRAY_DOUBLE_INDEX_SCALE));
+            return getComplexNativeMirrorData(vector.getNativeMirror(), index);
         }
     }
 

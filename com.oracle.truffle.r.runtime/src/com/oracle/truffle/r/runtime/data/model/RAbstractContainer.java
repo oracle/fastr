@@ -68,7 +68,7 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
      * beneficial when in loop.
      */
     default Object getInternalStore() {
-        return null;
+        return EmptyInternalStore.INSTANCE;
     }
 
     default RStringVector getNames() {
@@ -99,5 +99,12 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
     default void setRowNames(RAbstractVector rowNames) {
         CompilerAsserts.neverPartOfCompilation();
         setAttr(RRuntime.ROWNAMES_ATTR_KEY, rowNames);
+    }
+
+    final class EmptyInternalStore {
+        private EmptyInternalStore() {
+        }
+
+        public static EmptyInternalStore INSTANCE = new EmptyInternalStore();
     }
 }

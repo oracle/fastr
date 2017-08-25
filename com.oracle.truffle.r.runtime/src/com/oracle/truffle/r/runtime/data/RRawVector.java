@@ -84,7 +84,6 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
 
     @Override
     public byte[] getInternalStore() {
-        assert data != null;
         return data;
     }
 

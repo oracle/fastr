@@ -86,7 +86,6 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
 
     @Override
     public byte[] getInternalStore() {
-        assert data != null;
         return data;
     }
 

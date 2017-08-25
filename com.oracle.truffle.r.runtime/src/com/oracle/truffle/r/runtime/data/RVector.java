@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorToArray;
+import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -88,7 +88,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     /**
      * Returns the internal data Java array for read only purposes only or {@code null} if the
      * vector has been materialized to native mirror and it does not hold managed data anymore. This
-     * method is for only very specific purposes especially of {@link VectorToArray}.
+     * method is for only very specific purposes especially of {@link GetReadonlyData}.
      *
      * @return vector data
      */
@@ -106,9 +106,9 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     /**
      * Returns data for read-only purposes. The result may or may not be copy of the internal data.
      * This is a slow path operation for vector types that may have a native mirror, use
-     * {@link VectorToArray} node for fast path in such cases.
+     * {@link GetReadonlyData} node for fast path in such cases.
      *
-     * @see VectorToArray
+     * @see GetReadonlyData
      * @see RObject#getNativeMirror()
      * @return vector data
      */
