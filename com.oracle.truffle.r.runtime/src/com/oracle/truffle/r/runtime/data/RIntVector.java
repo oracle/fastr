@@ -91,8 +91,11 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     protected RIntVector internalCopy() {
-        assert data != null;
-        return new RIntVector(Arrays.copyOf(data, data.length), isComplete());
+        if (data != null) {
+            return new RIntVector(Arrays.copyOf(data, data.length), isComplete());
+        } else {
+            return new RIntVector(getDataCopy(), isComplete());
+        }
     }
 
     public RIntVector copyResetData(int[] newData) {
@@ -132,8 +135,11 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public int[] getDataCopy() {
-        assert data != null;
-        return Arrays.copyOf(data, data.length);
+        if (data != null) {
+            return Arrays.copyOf(data, data.length);
+        } else {
+            return NativeDataAccess.copyIntNativeData(getNativeMirror());
+        }
     }
 
     @Override
@@ -143,14 +149,16 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public int[] getReadonlyData() {
-        assert data != null;
-        return data;
+        if (data != null) {
+            return data;
+        } else {
+            return NativeDataAccess.copyIntNativeData(getNativeMirror());
+        }
     }
 
     @Override
     public RIntVector copyWithNewDimensions(int[] newDimensions) {
-        assert data != null;
-        return RDataFactory.createIntVector(data, isComplete(), newDimensions);
+        return RDataFactory.createIntVector(getReadonlyData(), isComplete(), newDimensions);
     }
 
     public RIntVector updateDataAt(int index, int value, NACheck valueNACheck) {
@@ -185,15 +193,13 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     }
 
     private int[] copyResizedData(int size, boolean fillNA) {
-        assert data != null;
-        int[] newData = Arrays.copyOf(data, size);
+        int[] newData = Arrays.copyOf(getReadonlyData(), size);
         return resizeData(newData, this.data, this.getLength(), fillNA);
     }
 
     @Override
     protected RIntVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        assert data != null;
-        boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
+        boolean isComplete = isComplete() && ((getLength() >= size) || !fillNA);
         return RDataFactory.createIntVector(copyResizedData(size, fillNA), isComplete, dimensions);
     }
 

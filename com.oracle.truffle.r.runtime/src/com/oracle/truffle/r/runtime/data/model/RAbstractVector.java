@@ -45,6 +45,8 @@ public interface RAbstractVector extends RAbstractContainer {
 
     RVector<?> copyResized(int size, boolean fillNA);
 
+    // TODO: this does not say anything about reference counting? It seems that its used wrongly
+    // w.r.t. reference counting.
     RAbstractVector copyWithNewDimensions(int[] newDimensions);
 
     RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA);

@@ -73,6 +73,7 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
 
     @Override
     public byte[] getInternalStore() {
+        assert data != null;
         return data;
     }
 
@@ -100,8 +101,11 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
 
     @Override
     protected RRawVector internalCopy() {
-        assert data != null;
-        return new RRawVector(Arrays.copyOf(data, data.length));
+        if (data != null) {
+            return new RRawVector(Arrays.copyOf(data, data.length));
+        } else {
+            return new RRawVector(NativeDataAccess.copyByteNativeData(getNativeMirror()));
+        }
     }
 
     @Override
@@ -121,20 +125,25 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
 
     @Override
     public byte[] getDataCopy() {
-        assert data != null;
-        return Arrays.copyOf(data, data.length);
+        if (data != null) {
+            return Arrays.copyOf(data, data.length);
+        } else {
+            return NativeDataAccess.copyByteNativeData(getNativeMirror());
+        }
     }
 
     @Override
     public byte[] getReadonlyData() {
-        assert data != null;
-        return data;
+        if (data != null) {
+            return data;
+        } else {
+            return NativeDataAccess.copyByteNativeData(getNativeMirror());
+        }
     }
 
     @Override
     public RRawVector copyWithNewDimensions(int[] newDimensions) {
-        assert data != null;
-        return RDataFactory.createRawVector(data, newDimensions);
+        return RDataFactory.createRawVector(getReadonlyData(), newDimensions);
     }
 
     @Override
@@ -154,8 +163,7 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     private byte[] copyResizedData(int size, boolean fillNA) {
-        assert data != null;
-        byte[] newData = Arrays.copyOf(data, size);
+        byte[] newData = Arrays.copyOf(getReadonlyData(), size);
         if (!fillNA) {
             // NA is 00 for raw
             for (int i = data.length, j = 0; i < size; ++i, j = Utils.incMod(j, data.length)) {

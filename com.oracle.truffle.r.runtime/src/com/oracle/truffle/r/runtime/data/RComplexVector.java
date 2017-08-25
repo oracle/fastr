@@ -51,8 +51,11 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
 
     @Override
     protected RComplexVector internalCopy() {
-        assert data != null;
-        return new RComplexVector(Arrays.copyOf(data, data.length), this.isComplete());
+        if (data != null) {
+            return new RComplexVector(Arrays.copyOf(data, data.length), this.isComplete());
+        } else {
+            return new RComplexVector(NativeDataAccess.copyDoubleNativeData(getNativeMirror()), this.isComplete(), null);
+        }
     }
 
     @Override
@@ -120,20 +123,25 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
 
     @Override
     public double[] getDataCopy() {
-        assert data != null;
-        return Arrays.copyOf(data, data.length);
+        if (data != null) {
+            return Arrays.copyOf(data, data.length);
+        } else {
+            return NativeDataAccess.copyDoubleNativeData(getNativeMirror());
+        }
     }
 
     @Override
     public double[] getReadonlyData() {
-        assert data != null;
-        return data;
+        if (data != null) {
+            return data;
+        } else {
+            return NativeDataAccess.copyDoubleNativeData(getNativeMirror());
+        }
     }
 
     @Override
     public RComplexVector copyWithNewDimensions(int[] newDimensions) {
-        assert data != null;
-        return RDataFactory.createComplexVector(data, isComplete(), newDimensions);
+        return RDataFactory.createComplexVector(getReadonlyData(), isComplete(), newDimensions);
     }
 
     private RComplexVector updateDataAt(int index, RComplex value, NACheck rightNACheck) {
@@ -152,9 +160,8 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
     }
 
     private double[] copyResizedData(int size, boolean fillNA) {
-        assert data != null;
         int csize = size << 1;
-        double[] newData = Arrays.copyOf(data, csize);
+        double[] newData = Arrays.copyOf(getReadonlyData(), csize);
         if (csize > this.getLength()) {
             if (fillNA) {
                 for (int i = data.length; i < size; i++) {
@@ -172,8 +179,7 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
 
     @Override
     protected RComplexVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        assert data != null;
-        boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
+        boolean isComplete = isComplete() && ((getLength() >= size) || !fillNA);
         return RDataFactory.createComplexVector(copyResizedData(size, fillNA), isComplete, dimensions);
     }
 

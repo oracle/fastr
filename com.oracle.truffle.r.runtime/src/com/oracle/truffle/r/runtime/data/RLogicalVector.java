@@ -93,8 +93,11 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
 
     @Override
     protected RLogicalVector internalCopy() {
-        assert data != null;
-        return new RLogicalVector(Arrays.copyOf(data, data.length), isComplete());
+        if (data != null) {
+            return new RLogicalVector(Arrays.copyOf(data, data.length), isComplete());
+        } else {
+            return new RLogicalVector(getNativeDataCopy(), isComplete());
+        }
     }
 
     public RLogicalVector copyResetData(byte[] newData) {
@@ -154,8 +157,7 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
     }
 
     private byte[] copyResizedData(int size, boolean fillNA) {
-        assert data != null;
-        byte[] newData = Arrays.copyOf(data, size);
+        byte[] newData = Arrays.copyOf(getReadonlyData(), size);
         if (size > this.getLength()) {
             if (fillNA) {
                 for (int i = data.length; i < size; i++) {
@@ -188,20 +190,25 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
 
     @Override
     public byte[] getDataCopy() {
-        assert data != null;
-        return Arrays.copyOf(data, data.length);
+        if (data != null) {
+            return Arrays.copyOf(data, data.length);
+        } else {
+            return getNativeDataCopy();
+        }
     }
 
     @Override
     public byte[] getReadonlyData() {
-        assert data != null;
-        return data;
+        if (data != null) {
+            return data;
+        } else {
+            return getNativeDataCopy();
+        }
     }
 
     @Override
     public RLogicalVector copyWithNewDimensions(int[] newDimensions) {
-        assert data != null;
-        return RDataFactory.createLogicalVector(data, isComplete(), newDimensions);
+        return RDataFactory.createLogicalVector(getReadonlyData(), isComplete(), newDimensions);
     }
 
     @Override
@@ -221,5 +228,15 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
             data = null;
             complete = false;
         }
+    }
+
+    private byte[] getNativeDataCopy() {
+        assert data == null;
+        int length = getLength();
+        byte[] result = new byte[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = getDataAt(i);
+        }
+        return result;
     }
 }

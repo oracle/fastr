@@ -68,8 +68,7 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
 
     @Override
     protected RDoubleVector internalCopy() {
-        assert data != null;
-        return new RDoubleVector(Arrays.copyOf(data, data.length), this.isComplete());
+        return new RDoubleVector(getDataCopy(), this.isComplete());
     }
 
     @Override
@@ -136,20 +135,25 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
 
     @Override
     public double[] getDataCopy() {
-        assert data != null;
-        return Arrays.copyOf(data, data.length);
+        if (data != null) {
+            return Arrays.copyOf(data, data.length);
+        } else {
+            return NativeDataAccess.copyDoubleNativeData(getNativeMirror());
+        }
     }
 
     @Override
     public double[] getReadonlyData() {
-        assert data != null;
-        return data;
+        if (data != null) {
+            return data;
+        } else {
+            return NativeDataAccess.copyDoubleNativeData(getNativeMirror());
+        }
     }
 
     @Override
     public RDoubleVector copyWithNewDimensions(int[] newDimensions) {
-        assert data != null;
-        return RDataFactory.createDoubleVector(data, isComplete(), newDimensions);
+        return RDataFactory.createDoubleVector(getReadonlyData(), isComplete(), newDimensions);
     }
 
     public RDoubleVector updateDataAt(int index, double value, NACheck valueNACheck) {
@@ -184,15 +188,13 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     }
 
     private double[] copyResizedData(int size, boolean fillNA) {
-        assert data != null;
-        double[] newData = Arrays.copyOf(data, size);
+        double[] newData = Arrays.copyOf(getReadonlyData(), size);
         return resizeData(newData, this.data, this.getLength(), fillNA);
     }
 
     @Override
     protected RDoubleVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        assert data != null;
-        boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
+        boolean isComplete = isComplete() && ((getLength() >= size) || !fillNA);
         return RDataFactory.createDoubleVector(copyResizedData(size, fillNA), isComplete, dimensions);
     }
 
