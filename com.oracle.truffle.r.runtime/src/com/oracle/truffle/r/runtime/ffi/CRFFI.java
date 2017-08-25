@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -54,6 +55,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 import sun.misc.Unsafe;
@@ -75,7 +77,7 @@ class TemporaryWrapperMR {
         protected Object access(TemporaryWrapper receiver) {
             long address = receiver.address;
             if (profile.profile(address == 0)) {
-                receiver.address = address = receiver.allocate();
+                return receiver.asPointer();
             }
             return address;
         }
@@ -117,12 +119,11 @@ abstract class TemporaryWrapper implements TruffleObject {
 
     protected long address;
     protected RAbstractAtomicVector vector;
+    protected boolean reuseVector = false;
 
     TemporaryWrapper(RAbstractAtomicVector vector) {
         this.vector = vector;
     }
-
-    public abstract long allocate();
 
     public Object read(long index) {
         throw RInternalError.unimplemented("read at " + index);
@@ -137,22 +138,36 @@ abstract class TemporaryWrapper implements TruffleObject {
         return TemporaryWrapperMRForeign.ACCESS;
     }
 
+    public long asPointer() {
+        // if the vector is temporary, we can re-use it. We turn it into native memory backed
+        // vector, keep it so and reuse it as the result.
+        if (vector instanceof RVector<?> && ((RVector<?>) vector).isTemporary()) {
+            NativeDataAccess.asPointer(vector);
+            reuseVector = true;
+            address = allocateNative((RVector<?>) vector);
+        } else {
+            reuseVector = false;
+            address = allocate(vector);
+        }
+        return address;
+    }
+
     public final RAbstractAtomicVector cleanup() {
-        if (address == 0) {
+        if (address == 0 || reuseVector) {
             return vector;
         } else {
-            return copyBack();
+            return copyBack(address, vector);
         }
     }
 
-    protected abstract RAbstractAtomicVector copyBack();
+    protected abstract long allocate(RAbstractVector vector);
 
-    protected static <ArrayT> ArrayT reuseData(RVector<ArrayT> vec) {
-        // Note: maybe we can reuse non-shared vectors too?
-        return vec.isTemporary() ? vec.getInternalManagedData() : null;
-    }
+    protected abstract long allocateNative(RVector<?> vector);
+
+    protected abstract RAbstractAtomicVector copyBack(long address, RAbstractVector vector);
 }
 
+// TODO: fortran only takes a pointer to the first string
 final class StringWrapper extends TemporaryWrapper {
 
     StringWrapper(RAbstractStringVector vector) {
@@ -160,11 +175,27 @@ final class StringWrapper extends TemporaryWrapper {
     }
 
     @Override
+    public long asPointer() {
+        address = allocate(vector);
+        return address;
+    }
+
+    @Override
+    protected long allocateNative(RVector<?> vector) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
     @TruffleBoundary
-    public long allocate() {
+    public long allocate(RAbstractVector vector) {
+        // We allocate contiguous memory that we'll use to store both the array of pointers (char**)
+        // and the arrays of characters (char*). Given vector of size N, we allocate memory for N
+        // adresses (long) and after those we put individual strings character by character, the
+        // pointers from the first segment of this memory will be pointing to the starts of those
+        // strings.
         RAbstractStringVector v = (RAbstractStringVector) vector;
         int length = v.getLength();
-        int size = length * 8;
+        int size = length * Long.BYTES;
         byte[][] bytes = new byte[length][];
         for (int i = 0; i < length; i++) {
             String element = v.getDataAt(i);
@@ -172,7 +203,7 @@ final class StringWrapper extends TemporaryWrapper {
             size += bytes[i].length + 1;
         }
         long memory = UnsafeAdapter.UNSAFE.allocateMemory(size);
-        long ptr = memory + length * 8; // start of the actual character data
+        long ptr = memory + length * Long.BYTES; // start of the actual character data
         for (int i = 0; i < length; i++) {
             UnsafeAdapter.UNSAFE.putLong(memory + i * 8, ptr);
             UnsafeAdapter.UNSAFE.copyMemory(bytes[i], Unsafe.ARRAY_BYTE_BASE_OFFSET, null, ptr, bytes[i].length);
@@ -185,12 +216,10 @@ final class StringWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    protected RStringVector copyBack() {
+    protected RStringVector copyBack(long address, RAbstractVector vector) {
         RStringVector result = ((RAbstractStringVector) vector).materialize();
-        String[] data = reuseData(result);
-        if (data == null) {
-            data = new String[result.getLength()];
-        }
+        boolean reuseResult = result.isTemporary() && !result.hasNativeMemoryData();
+        String[] data = reuseResult ? result.getInternalManagedData() : new String[result.getLength()];
         for (int i = 0; i < data.length; i++) {
             long ptr = UnsafeAdapter.UNSAFE.getLong(address + i * 8);
             int length = 0;
@@ -202,7 +231,13 @@ final class StringWrapper extends TemporaryWrapper {
             data[i] = new String(bytes, StandardCharsets.US_ASCII);
         }
         UnsafeAdapter.UNSAFE.freeMemory(address);
-        return RDataFactory.createStringVector(data, true);
+        if (reuseResult) {
+            return result;
+        } else {
+            RStringVector newResult = RDataFactory.createStringVector(data, true);
+            newResult.copyAttributesFrom(result);
+            return newResult;
+        }
     }
 }
 
@@ -214,7 +249,7 @@ final class IntWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    public long allocate() {
+    public long allocate(RAbstractVector vector) {
         RAbstractIntVector v = (RAbstractIntVector) vector;
         int length = v.getLength();
         long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_INT_INDEX_SCALE);
@@ -226,15 +261,16 @@ final class IntWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    protected RIntVector copyBack() {
-        RIntVector result = ((RAbstractIntVector) vector).materialize();
-        int[] data = reuseData(result);
-        if (data == null) {
-            data = new int[vector.getLength()];
-        }
-        UnsafeAdapter.UNSAFE.copyMemory(null, address, data, Unsafe.ARRAY_INT_BASE_OFFSET, vector.getLength() * Unsafe.ARRAY_INT_INDEX_SCALE);
-        UnsafeAdapter.UNSAFE.freeMemory(address);
-        return RDataFactory.createIntVector(data, false);
+    protected long allocateNative(RVector<?> vector) {
+        return ((RIntVector) vector).allocateNativeContents();
+    }
+
+    @Override
+    @TruffleBoundary
+    protected RIntVector copyBack(long address, RAbstractVector vector) {
+        RIntVector result = RDataFactory.createIntVectorFromNative(address, vector.getLength());
+        result.copyAttributesFrom(vector);
+        return result;
     }
 }
 
@@ -246,7 +282,7 @@ final class LogicalWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    public long allocate() {
+    public long allocate(RAbstractVector vector) {
         RAbstractLogicalVector v = (RAbstractLogicalVector) vector;
         int length = v.getLength();
         long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_INT_INDEX_SCALE);
@@ -258,18 +294,16 @@ final class LogicalWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    protected RLogicalVector copyBack() {
-        RLogicalVector result = ((RAbstractLogicalVector) vector).materialize();
-        byte[] data = reuseData(result);
-        if (data == null) {
-            data = new byte[result.getLength()];
-        }
-        int length = vector.getLength();
-        for (int i = 0; i < length; i++) {
-            data[i] = RRuntime.int2logical(UnsafeAdapter.UNSAFE.getInt(address + (i * Unsafe.ARRAY_INT_INDEX_SCALE)));
-        }
-        UnsafeAdapter.UNSAFE.freeMemory(address);
-        return RDataFactory.createLogicalVector(data, false);
+    protected long allocateNative(RVector<?> vector) {
+        return ((RLogicalVector) vector).allocateNativeContents();
+    }
+
+    @Override
+    @TruffleBoundary
+    protected RLogicalVector copyBack(long address, RAbstractVector vector) {
+        RLogicalVector result = RDataFactory.createLogicalVectorFromNative(address, vector.getLength());
+        result.copyAttributesFrom(vector);
+        return result;
     }
 }
 
@@ -281,7 +315,7 @@ final class DoubleWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    public long allocate() {
+    public long allocate(RAbstractVector vector) {
         RAbstractDoubleVector v = (RAbstractDoubleVector) vector;
         int length = v.getLength();
         long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
@@ -293,15 +327,16 @@ final class DoubleWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    protected RDoubleVector copyBack() {
-        RDoubleVector result = ((RAbstractDoubleVector) vector).materialize();
-        double[] data = reuseData(result);
-        if (data == null) {
-            data = new double[vector.getLength()];
-        }
-        UnsafeAdapter.UNSAFE.copyMemory(null, address, data, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vector.getLength() * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
-        UnsafeAdapter.UNSAFE.freeMemory(address);
-        return RDataFactory.createDoubleVector(data, false);
+    protected long allocateNative(RVector<?> vector) {
+        return ((RDoubleVector) vector).allocateNativeContents();
+    }
+
+    @Override
+    @TruffleBoundary
+    protected RDoubleVector copyBack(long address, RAbstractVector vector) {
+        RDoubleVector result = RDataFactory.createDoubleVectorFromNative(address, vector.getLength());
+        result.copyAttributesFrom(vector);
+        return result;
     }
 }
 
@@ -313,7 +348,7 @@ final class ComplexWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    public long allocate() {
+    public long allocate(RAbstractVector vector) {
         RAbstractComplexVector v = (RAbstractComplexVector) vector;
         int length = v.getLength();
         long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE * 2);
@@ -327,15 +362,16 @@ final class ComplexWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    protected RComplexVector copyBack() {
-        RComplexVector result = ((RAbstractComplexVector) vector).materialize();
-        double[] data = reuseData(result);
-        if (data == null) {
-            data = new double[result.getLength() * 2];
-        }
-        UnsafeAdapter.UNSAFE.copyMemory(null, address, data, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vector.getLength() * 2 * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
-        UnsafeAdapter.UNSAFE.freeMemory(address);
-        return RDataFactory.createComplexVector(data, false);
+    protected long allocateNative(RVector<?> vector) {
+        return ((RComplexVector) vector).allocateNativeContents();
+    }
+
+    @Override
+    @TruffleBoundary
+    protected RComplexVector copyBack(long address, RAbstractVector vector) {
+        RComplexVector result = RDataFactory.createComplexVectorFromNative(address, vector.getLength());
+        result.copyAttributesFrom(vector);
+        return result;
     }
 }
 
@@ -347,7 +383,7 @@ final class RawWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    public long allocate() {
+    public long allocate(RAbstractVector vector) {
         RAbstractRawVector v = (RAbstractRawVector) vector;
         int length = v.getLength();
         long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_BYTE_INDEX_SCALE);
@@ -359,20 +395,30 @@ final class RawWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    protected RRawVector copyBack() {
-        RRawVector result = ((RAbstractRawVector) vector).materialize();
-        byte[] data = reuseData(result);
-        if (data == null) {
-            data = new byte[result.getLength()];
-        }
-        UnsafeAdapter.UNSAFE.copyMemory(null, address, data, Unsafe.ARRAY_BYTE_BASE_OFFSET, vector.getLength() * Unsafe.ARRAY_BYTE_INDEX_SCALE);
-        UnsafeAdapter.UNSAFE.freeMemory(address);
-        return RDataFactory.createRawVector(data);
+    protected long allocateNative(RVector<?> vector) {
+        return ((RRawVector) vector).allocateNativeContents();
+    }
+
+    @Override
+    @TruffleBoundary
+    protected RRawVector copyBack(long address, RAbstractVector vector) {
+        RRawVector result = RDataFactory.createRawVectorFromNative(address, vector.getLength());
+        result.copyAttributesFrom(vector);
+        return result;
     }
 }
 
 /**
- * Support for the {.C} and {.Fortran} calls.
+ * Support for the {.C} and {.Fortran} calls. Arguments of these calls are only arrays of primitive
+ * types, in the case character vectors, only the first string. The vectors coming from the R side
+ * are duplicated (if not temporary) with all their attributes and then the pointer to the data of
+ * the new fresh vectors is passed to the function. The result is a list of all those new vectors
+ * (or the original vectors if they are temporary).
+ *
+ * Note: seems that symbols in GnuR may declare: expected types of their args (and other types
+ * should be coerced), whether an argument is only input (RNull is in its place in the result list)
+ * and whether the argument value must always be copied. We do not implement those as they do not
+ * seem necessary?
  */
 public interface CRFFI {
 

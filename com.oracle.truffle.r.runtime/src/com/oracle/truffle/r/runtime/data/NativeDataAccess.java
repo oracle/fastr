@@ -499,4 +499,23 @@ public final class NativeDataAccess {
         }
         return mirror.dataAddress;
     }
+
+    public static void setNativeContents(RObject obj, long address, int length) {
+        assert obj.getNativeMirror() != null;
+        if (noDoubleNative.isValid() && obj instanceof RDoubleVector) {
+            noDoubleNative.invalidate();
+        } else if (noComplexNative.isValid() && obj instanceof RComplexVector) {
+            noComplexNative.invalidate();
+        } else if (noIntNative.isValid() && obj instanceof RIntVector) {
+            noIntNative.invalidate();
+        } else if (noRawNative.isValid() && obj instanceof RRawVector) {
+            noRawNative.invalidate();
+        } else if (noLogicalNative.isValid() && obj instanceof RLogicalVector) {
+            noLogicalNative.invalidate();
+        }
+        NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
+        mirror.dataAddress = address;
+        mirror.length = length;
+
+    }
 }

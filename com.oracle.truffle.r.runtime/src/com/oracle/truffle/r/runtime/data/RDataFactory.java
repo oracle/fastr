@@ -56,6 +56,10 @@ public final class RDataFactory {
     public static final boolean INCOMPLETE_VECTOR = false;
     public static final boolean COMPLETE_VECTOR = true;
 
+    public static RIntVector createIntVectorFromNative(long address, int length) {
+        return traceDataCreated(RIntVector.fromNative(address, length));
+    }
+
     public static RIntVector createIntVector(int length) {
         return createIntVector(length, false);
     }
@@ -86,6 +90,10 @@ public final class RDataFactory {
 
     public static RIntVector createIntVector(int[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
         return traceDataCreated(new RIntVector(data, complete, dims, names, dimNames));
+    }
+
+    public static RDoubleVector createDoubleVectorFromNative(long address, int length) {
+        return traceDataCreated(RDoubleVector.fromNative(address, length));
     }
 
     public static RDoubleVector createDoubleVector(int length) {
@@ -142,6 +150,10 @@ public final class RDataFactory {
 
     public static RRawVector createRawVector(byte[] data, int[] dims, RStringVector names, RList dimNames) {
         return traceDataCreated(new RRawVector(data, dims, names, dimNames));
+    }
+
+    public static RComplexVector createComplexVectorFromNative(long address, int length) {
+        return traceDataCreated(RComplexVector.fromNative(address, length));
     }
 
     public static RComplexVector createComplexVector(int length) {
@@ -215,6 +227,10 @@ public final class RDataFactory {
 
     public static RStringVector createStringVector(String[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
         return traceDataCreated(new RStringVector(data, complete, dims, names, dimNames));
+    }
+
+    public static RLogicalVector createLogicalVectorFromNative(long address, int length) {
+        return traceDataCreated(RLogicalVector.fromNative(address, length));
     }
 
     public static RLogicalVector createLogicalVector(int length) {
@@ -315,6 +331,10 @@ public final class RDataFactory {
 
     public static RComplex createComplex(double realPart, double imaginaryPart) {
         return traceDataCreated(RComplex.valueOf(realPart, imaginaryPart));
+    }
+
+    public static RRawVector createRawVectorFromNative(long address, int length) {
+        return traceDataCreated(RRawVector.fromNative(address, length));
     }
 
     public static RRaw createRaw(byte value) {

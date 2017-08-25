@@ -48,6 +48,17 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
+    private RLogicalVector() {
+        super(false);
+    }
+
+    static RLogicalVector fromNative(long address, int length) {
+        RLogicalVector result = new RLogicalVector();
+        NativeDataAccess.asPointer(result);
+        NativeDataAccess.setNativeContents(result, address, length);
+        return result;
+    }
+
     @Override
     public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {

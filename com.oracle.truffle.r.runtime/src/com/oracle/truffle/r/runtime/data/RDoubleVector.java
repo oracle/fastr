@@ -48,6 +48,18 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
+    private RDoubleVector() {
+        super(false);
+    }
+
+    static RDoubleVector fromNative(long address, int length) {
+        RDoubleVector result = new RDoubleVector();
+        NativeDataAccess.asPointer(result);
+        NativeDataAccess.setNativeContents(result, address, length);
+        assert result.data == null;
+        return result;
+    }
+
     @Override
     public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {

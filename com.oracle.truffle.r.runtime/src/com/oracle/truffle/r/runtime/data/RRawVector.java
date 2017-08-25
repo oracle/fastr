@@ -48,6 +48,17 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
+    private RRawVector() {
+        super(true);
+    }
+
+    static RRawVector fromNative(long address, int length) {
+        RRawVector result = new RRawVector();
+        NativeDataAccess.asPointer(result);
+        NativeDataAccess.setNativeContents(result, address, length);
+        return result;
+    }
+
     @Override
     public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {

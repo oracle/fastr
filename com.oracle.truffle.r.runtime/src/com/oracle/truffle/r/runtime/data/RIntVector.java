@@ -48,6 +48,17 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
+    private RIntVector() {
+        super(false);
+    }
+
+    static RIntVector fromNative(long address, int length) {
+        RIntVector result = new RIntVector();
+        NativeDataAccess.asPointer(result);
+        NativeDataAccess.setNativeContents(result, address, length);
+        return result;
+    }
+
     @Override
     public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {

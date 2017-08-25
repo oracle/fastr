@@ -49,12 +49,23 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
+    private RComplexVector() {
+        super(false);
+    }
+
+    static RComplexVector fromNative(long address, int length) {
+        RComplexVector result = new RComplexVector();
+        NativeDataAccess.asPointer(result);
+        NativeDataAccess.setNativeContents(result, address, length);
+        return result;
+    }
+
     @Override
     protected RComplexVector internalCopy() {
         if (data != null) {
             return new RComplexVector(Arrays.copyOf(data, data.length), this.isComplete());
         } else {
-            return new RComplexVector(NativeDataAccess.copyDoubleNativeData(getNativeMirror()), this.isComplete(), null);
+            return new RComplexVector(NativeDataAccess.copyDoubleNativeData(getNativeMirror()), this.isComplete());
         }
     }
 
