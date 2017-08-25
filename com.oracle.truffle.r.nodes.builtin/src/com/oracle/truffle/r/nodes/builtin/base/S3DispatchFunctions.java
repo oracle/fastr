@@ -17,7 +17,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -27,6 +26,7 @@ import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.ReturnException;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -59,22 +58,9 @@ public abstract class S3DispatchFunctions {
         @Child private S3FunctionLookupNode methodLookup;
         @Child private CallMatcherNode callMatcher;
 
-        private final ConditionProfile callerFrameSlowPath = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile topLevelFrameProfile = ConditionProfile.createBinaryProfile();
-
         protected Helper(boolean nextMethod) {
             methodLookup = S3FunctionLookupNode.create(true, nextMethod);
             callMatcher = CallMatcherNode.create(false);
-        }
-
-        protected MaterializedFrame getCallerFrame(VirtualFrame frame) {
-            MaterializedFrame funFrame = RArguments.getCallerFrame(frame);
-            if (callerFrameSlowPath.profile(funFrame == null)) {
-                funFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE).materialize();
-                RError.performanceWarning("slow caller frame access in UseMethod dispatch");
-            }
-            // S3 method can be dispatched from top-level where there is no caller frame
-            return topLevelFrameProfile.profile(funFrame == null) ? frame.materialize() : funFrame;
         }
 
         protected Object dispatch(VirtualFrame frame, String generic, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame,
@@ -97,6 +83,7 @@ public abstract class S3DispatchFunctions {
 
         @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNode.createForDispatch(true);
         @Child private PromiseCheckHelperNode promiseCheckHelper;
+        @Child private GetCallerFrameNode getCallerFrameNode = new GetCallerFrameNode();
         @Child private Helper helper = new Helper(false);
 
         private final BranchProfile firstArgMissing = BranchProfile.create();
@@ -118,7 +105,7 @@ public abstract class S3DispatchFunctions {
             }
 
             RStringVector type = dispatchedObject == null ? RDataFactory.createEmptyStringVector() : classHierarchyNode.execute(dispatchedObject);
-            MaterializedFrame callerFrame = helper.getCallerFrame(frame);
+            MaterializedFrame callerFrame = getCallerFrameNode.execute(frame);
             MaterializedFrame genericDefFrame = RArguments.getEnclosingFrame(frame);
 
             ArgumentsSignature suppliedSignature = RArguments.getSuppliedSignature(frame);
