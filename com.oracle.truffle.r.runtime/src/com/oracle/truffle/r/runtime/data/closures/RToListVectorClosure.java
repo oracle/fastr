@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -215,6 +216,26 @@ final class RStringToListVectorClosure extends RToListVectorClosure {
 
     @Override
     public RStringVector getVector() {
+        return vector;
+    }
+
+    @Override
+    public String getDataAt(int index) {
+        return vector.getDataAt(index);
+    }
+}
+
+final class RStringSequenceToListVectorClosure extends RToListVectorClosure {
+
+    private final RStringSequence vector;
+
+    RStringSequenceToListVectorClosure(RStringSequence vector, boolean keepAttributes) {
+        super(keepAttributes);
+        this.vector = vector;
+    }
+
+    @Override
+    public RStringSequence getVector() {
         return vector;
     }
 

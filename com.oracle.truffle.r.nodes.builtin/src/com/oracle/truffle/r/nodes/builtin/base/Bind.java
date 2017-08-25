@@ -77,6 +77,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -304,7 +305,7 @@ public abstract class Bind extends RBaseNode {
             }
         }
         if (firstDimNames != RNull.instance) {
-            RStringVector names = (RStringVector) firstDimNames;
+            RAbstractStringVector names = (RAbstractStringVector) firstDimNames;
             if (names != null && names.getLength() == dimLength) {
                 firstDimResultNames = names;
             }

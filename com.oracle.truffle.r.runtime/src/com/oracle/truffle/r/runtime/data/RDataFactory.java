@@ -273,6 +273,10 @@ public final class RDataFactory {
         return createStringVector(new String[]{RRuntime.STRING_NA}, false);
     }
 
+    public static RStringSequence createStringSequence(String template, int start, int stride, int length) {
+        return traceDataCreated(new RStringSequence(template, start, stride, length));
+    }
+
     public static RComplexVector createEmptyComplexVector() {
         return createComplexVector(new double[0], true);
     }
