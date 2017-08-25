@@ -45,8 +45,11 @@ import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RScalar;
+import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -101,14 +104,18 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
     }
 
     @Specialization
-    protected RStringVector pasteListNullSep(VirtualFrame frame, RAbstractListVector values, String sep, @SuppressWarnings("unused") RNull collapse) {
+    protected RAbstractStringVector pasteListNullSep(VirtualFrame frame, RAbstractListVector values, String sep, @SuppressWarnings("unused") RNull collapse) {
         int length = lengthProfile.profile(values.getLength());
         if (hasNonNullElements(values, length)) {
-            String[] result = pasteListElements(frame, values, sep, length);
-            if (result == ONE_EMPTY_STRING) {
-                return RDataFactory.createEmptyStringVector();
+            if (isStringSequence(values, length)) {
+                return createStringSequence(values, length, sep);
             } else {
-                return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+                String[] result = pasteListElements(frame, values, sep, length);
+                if (result == ONE_EMPTY_STRING) {
+                    return RDataFactory.createEmptyStringVector();
+                } else {
+                    return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+                }
             }
         } else {
             return RDataFactory.createEmptyStringVector();
@@ -252,5 +259,31 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
             asCharacterNode = insert(newCastBuilder().returnIf(nullValue(), emptyStringVector()).asStringVector().buildCastNode());
         }
         return asCharacterNode;
+    }
+
+    /**
+     * Tests for pattern = { stringScalar } intSequence.
+     */
+    private static boolean isStringSequence(RAbstractListVector values, int length) {
+        int i = 0;
+        while (i < length && isScalar(values.getDataAt(i))) {
+            i++;
+        }
+        return i < length && values.getDataAt(i) instanceof RIntSequence;
+    }
+
+    private static boolean isScalar(Object dataAt) {
+        return dataAt instanceof RScalar || dataAt instanceof String || dataAt instanceof Double || dataAt instanceof Integer || dataAt instanceof Byte;
+    }
+
+    private static RStringSequence createStringSequence(RAbstractListVector values, int length, String sep) {
+        assert isStringSequence(values, length);
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < values.getLength() - 1; i++) {
+            sb.append(values.getDataAt(i)).append(sep);
+        }
+        RIntSequence seq = (RIntSequence) values.getDataAt(length - 1);
+        return RDataFactory.createStringSequence(sb.toString(), seq.getStart(), seq.getStride(), seq.getLength());
     }
 }
