@@ -73,7 +73,7 @@ public class JLineConsoleCompleter implements Completer {
         setFunction.execute(completionEnv, "start", start);
         setFunction.execute(completionEnv, "end", cursor);
         setFunction.execute(completionEnv, "linebuffer", buffer);
-        setFunction.execute(completionEnv, "token", buffer.substring(start, cursor));
+        setFunction.execute(completionEnv, "token", start > -1 && start < buffer.length() && cursor > -1 && cursor <= buffer.length() ? buffer.substring(start, cursor).trim() : "");
 
         completionFunction.execute();
 
@@ -98,13 +98,33 @@ public class JLineConsoleCompleter implements Completer {
 
     private static int getStart(String buffer, Value env, int cursor) {
         int start = 0;
+
+        // are we in quotes?
+        int lastQuoteIdx = isInQuotes(buffer, cursor);
+        if (lastQuoteIdx != -1) {
+            return lastQuoteIdx;
+        }
+
         Value opt = env.getMember("options");
         if (opt.hasMembers()) {
             start = lastIdxOf(buffer, opt, "funarg.suffix", start, cursor);
             start = lastIdxOf(buffer, opt, "function.suffix", start, cursor);
         }
-        start = lastIdxOf(buffer, "\"", start, cursor);
-        start = lastIdxOf(buffer, "'", start, cursor);
+
+        // are we just after a ',' or ' '
+        if (cursor > 0 && cursor <= buffer.length() && (buffer.charAt(cursor - 1) == ',' || buffer.charAt(cursor - 1) == ' ')) {
+            return cursor;
+        }
+
+        // is there any next closest ',' or ' '?
+        int idx = cursor >= buffer.length() ? buffer.length() - 1 : cursor;
+        while (idx >= start && (buffer.charAt(idx) != ',' && buffer.charAt(idx) != ' ')) {
+            --idx;
+        }
+        if (idx > -1) {
+            return ++idx;
+        }
+
         return start;
     }
 
@@ -118,6 +138,19 @@ public class JLineConsoleCompleter implements Completer {
             }
         }
         return start;
+    }
+
+    private static int isInQuotes(String buffer, int cursor) {
+        int idx = -1;
+        int qidx = -1;
+        int c = 0;
+        while (++idx <= cursor && idx < buffer.length()) {
+            if (buffer.charAt(idx) == '\'' || buffer.charAt(idx) == '\"') {
+                qidx = idx;
+                c++;
+            }
+        }
+        return c % 2 == 0 ? -1 : qidx;
     }
 
     private static int lastIdxOf(String buffer, String subs, int start, int cursor) {

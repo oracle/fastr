@@ -32,10 +32,10 @@ import org.graalvm.polyglot.Context;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.r.launcher.JLineConsoleCompleter;
+import org.junit.Ignore;
 
 public class TestJLineConsoleCompleter {
 
@@ -70,10 +70,27 @@ public class TestJLineConsoleCompleter {
         assertCompl("$", 1);
 
         assertCompl("strt", 4, "strtoi", "strtrim");
+        assertCompl("strt", 5);
+        assertCompl("strt", 6);
+
         assertCompl("strto", 5, "strtoi");
         assertCompl("strtoi", 5, "strtoi");
         assertCompl("strtoi", 4, "strtoi", "strtrim");
         assertCompl("strto ", 6);
+        assertCompl("strto,", 6);
+        assertCompl("blabla,strt", 11, "strtoi", "strtrim");
+        assertCompl("blabla strt", 11, "strtoi", "strtrim");
+        assertCompl("blabla,,strt", 12, "strtoi", "strtrim");
+        assertCompl("blabla  strt", 12, "strtoi", "strtrim");
+        assertCompl("blabla, strt", 12, "strtoi", "strtrim");
+        // Checkstyle: stop
+        assertCompl("blabla ,strt", 12, "strtoi", "strtrim");
+        // Checkstyle: resume
+
+        assertCompl("source('a')", 10);
+        assertCompl("source('a')", 11);
+        assertCompl("source('a') ", 12);
+        assertCompl("source('a') ", 13);
 
         assertCompl("base::strt", 10, "base::strtoi", "base::strtrim");
         assertCompl("base:::strt", 11, "base:::strtoi", "base:::strtrim");
@@ -87,6 +104,30 @@ public class TestJLineConsoleCompleter {
         assertCompl("f(strt(trt", 10);
         assertCompl("f(strt(strto", 11, "strtoi", "strtrim");
         assertCompl("f(strt(strto", 12, "strtoi");
+
+        assertCompl("grep(", 5, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
+        assertCompl("grep(pattern=\"a\",", 17, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
+        assertCompl("grep(pattern=\"a\"", 16);
+        assertCompl("grep(pattern=\"a\", fixe", 22, "fixed=");
+
+        assertCompl("grep (patt", 10, "pattern=");
+        assertCompl("grep,(patt", 10, "pattern=");
+        assertCompl("grep  (patt", 11, "pattern=");
+        assertCompl("grep,,(patt", 11, "pattern=");
+        // Checkstyle: stop
+        assertCompl("grep ,(patt", 11, "pattern=");
+        // Checkstyle: resume
+        assertCompl("grep, (patt", 11, "pattern=");
+
+        assertCompl("grep(patt ", 10, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
+        assertCompl("grep (patt ", 11, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
+        assertCompl("grep (patt  ", 12, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
+
+        // show only arguments for 'cor', and not also those for 'cor.test', 'cor.test.name' etc.
+        assertCompl("cor(", 3, "cor", "cor.test");
+        assertCompl("cor(", 4, "method=", "use=", "x=", "y=");
+        assertCompl("cor(", 5, "method=", "use=", "x=", "y=");
+        assertCompl("cor( ", 5, "method=", "use=", "x=", "y=");
 
         String noName = "_f_f_f_";
         assertCompl(noName + ".", 7);
