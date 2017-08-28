@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.unimplemented;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.rmi.RMISecurityException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,6 +83,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -110,7 +112,6 @@ import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.nmath.distr.Unif;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -684,19 +685,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object TAG(Object e) {
-        if (e instanceof RPairList) {
-            return ((RPairList) e).getTag();
-        } else if (e instanceof RArgsValuesAndNames) {
-            ArgumentsSignature signature = ((RArgsValuesAndNames) e).getSignature();
-            if (signature.getLength() > 0 && signature.getName(0) != null) {
-                return signature.getName(0);
-            }
-            return RNull.instance;
-        } else {
-            guaranteeInstanceOf(e, RExternalPtr.class);
-            // at the moment, this can only be used to null out the pointer
-            return ((RExternalPtr) e).getTag();
-        }
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.TAG).call(e);
     }
 
     @Override

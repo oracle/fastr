@@ -22,14 +22,22 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import java.util.Arrays;
+
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 
@@ -62,13 +70,18 @@ public final class ListAccessNodes {
         }
 
         @Specialization
+        protected Object car(RList list) {
+            return list.getDataAt(0);
+        }
+
+        @Specialization
         protected Object car(@SuppressWarnings("unused") RNull nil) {
             return RNull.instance;
         }
 
         @Fallback
         protected Object car(@SuppressWarnings("unused") Object obj) {
-            throw RInternalError.unimplemented("CAR only works on pair lists and language objects");
+            throw RInternalError.unimplemented("CAR only works on pair lists, language objects, argument lists, and symbols");
         }
     }
 
@@ -90,9 +103,26 @@ public final class ListAccessNodes {
             return args.toPairlist().cdr();
         }
 
+        @Specialization
+        protected Object cdr(RList list,
+                        @Cached("create()") GetNamesAttributeNode getNamesNode,
+                        @Cached("create()") SetNamesAttributeNode setNamesNode) {
+            if (list.getLength() == 1) {
+                return RNull.instance;
+            }
+            Object[] dataCopy = list.getDataWithoutCopying();
+            RStringVector names = getNamesNode.getNames(list);
+            RList copy = RDataFactory.createList(Arrays.copyOfRange(dataCopy, 1, list.getLength()));
+            if (names != null) {
+                String[] dataWithoutCopying = names.getDataWithoutCopying();
+                setNamesNode.setNames(copy, RDataFactory.createStringVector(Arrays.copyOfRange(dataWithoutCopying, 1, names.getLength()), true));
+            }
+            return copy;
+        }
+
         @Fallback
         protected Object cdr(@SuppressWarnings("unused") Object obj) {
-            throw RInternalError.unimplemented("CDR only works on pair lists and language objects");
+            throw RInternalError.unimplemented("CDR only works on pair lists, language objects, and argument lists");
 
         }
     }
