@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -112,9 +111,8 @@ public abstract class Rank extends RBuiltinNode.Arg3 {
         for (int i = 0; i < n; i++) {
             indx[i] = i;
         }
-        RIntVector indxVec = RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
         RAbstractVector x = xa instanceof RAbstractLogicalVector ? xa.castSafe(RType.Integer, isNAProfile) : xa;
-        initOrderVector1().execute(indxVec, x, RRuntime.LOGICAL_TRUE, false, rho);
+        initOrderVector1().execute(indx, x, RRuntime.LOGICAL_TRUE, false, rho);
         initOrderCmp();
         int j;
         for (int i = 0; i < n; i = j + 1) {

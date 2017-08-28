@@ -25,7 +25,7 @@ public final class PrettyIntevals {
     // transcribed from pretty.c
 
     public static double pretty(RBaseNode errorCtx, double[] lo, double[] up, int[] ndiv, int minN,
-                    double shrinkSml, double[] highUFact,
+                    double shrinkSml, double highUFact0, double highUFact1,
                     int epsCorrection, boolean returnBounds) {
         /*
          * From version 0.65 on, we had rounding_eps := 1e-5, before, r..eps = 0 1e-7 is consistent
@@ -33,8 +33,8 @@ public final class PrettyIntevals {
          */
         double roundingEps = 1e-7;
 
-        double h = highUFact[0];
-        double h5 = highUFact[1];
+        double h = highUFact0;
+        double h5 = highUFact1;
 
         double dx;
         double cell;

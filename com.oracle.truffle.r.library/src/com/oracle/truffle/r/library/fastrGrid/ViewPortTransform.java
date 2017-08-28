@@ -42,7 +42,7 @@ public final class ViewPortTransform {
         double height = Unit.cmToInches(GridUtils.asDouble(viewPort.getDataAt(ViewPort.PVP_HEIGHTCM)));
         double rotationAngle = GridUtils.asDouble(viewPort.getDataAt(ViewPort.VP_ANGLE));
         RAbstractDoubleVector trans = GridUtils.asDoubleVector(viewPort.getDataAt(ViewPort.PVP_TRANS));
-        double[][] transform = TransformMatrix.fromFlat(trans.materialize().getDataWithoutCopying());
+        double[][] transform = TransformMatrix.fromFlat(trans);
         return new ViewPortTransform(width, height, rotationAngle, transform);
     }
 }

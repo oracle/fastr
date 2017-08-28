@@ -1105,7 +1105,7 @@ public class GrepFunctions {
                         String txt = vector.getDataAt(i);
                         res = RDataFactory.createIntVector(txt.length());
                         for (int j = 0; j < txt.length(); j++) {
-                            res.setDataAt(res.getDataWithoutCopying(), j, j + 1);
+                            res.setDataAt(res.getInternalStore(), j, j + 1);
                         }
                         setMatchLengthAttrNode.execute(res, RDataFactory.createIntVector(txt.length()));
                         if (useBytes) {

@@ -25,6 +25,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -75,7 +76,8 @@ public abstract class LRaster extends RExternalBuiltinNode.Arg8 {
 
         int[] pixels;
         if (raster instanceof RAbstractIntVector && isNativeRaster(raster)) {
-            pixels = ((RAbstractIntVector) raster).materialize().getDataWithoutCopying();
+            RIntVector rasterVec = ((RAbstractIntVector) raster).materialize();
+            pixels = rasterVec.getDataTemp();
         } else {
             int rasterLen = raster.getLength();
             pixels = new int[rasterLen];

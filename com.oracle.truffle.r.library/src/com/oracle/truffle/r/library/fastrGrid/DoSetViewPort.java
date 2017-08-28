@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -54,12 +55,11 @@ final class DoSetViewPort {
     @TruffleBoundary
     public static RList doSetViewPort(RList pushedViewPort, boolean hasParent, boolean pushing) {
         GridState gridState = GridContext.getContext().getGridState();
-        Object[] pushedVPData = pushedViewPort.getDataWithoutCopying();
         if (hasParent && pushing) {
             RList parent = gridState.getViewPort();
-            pushedVPData[ViewPort.PVP_PARENT] = parent;
+            pushedViewPort.setDataAt(ViewPort.PVP_PARENT, parent);
             REnvironment children = GridUtils.asEnvironment(parent.getDataAt(ViewPort.PVP_CHILDREN));
-            children.safePut(RRuntime.asString(pushedVPData[ViewPort.VP_NAME]), pushedViewPort);
+            children.safePut(RRuntime.asString(pushedViewPort.getDataAt(ViewPort.VP_NAME)), pushedViewPort);
         }
 
         GridDevice currentDevice = GridContext.getContext().getCurrentDevice();
@@ -70,9 +70,9 @@ final class DoSetViewPort {
         calcViewportTransform(pushedViewPort, parent, doNotRecalculateParent, currentDevice, gpar);
 
         // TODO: clipping
-        pushedVPData[ViewPort.PVP_CLIPRECT] = RDataFactory.createDoubleVector(new double[]{0, 0, 0, 0}, RDataFactory.COMPLETE_VECTOR);
-        pushedVPData[ViewPort.PVP_DEVWIDTHCM] = scalar(Unit.inchesToCm(currentDevice.getWidth()));
-        pushedVPData[ViewPort.PVP_DEVHEIGHTCM] = scalar(Unit.inchesToCm(currentDevice.getHeight()));
+        pushedViewPort.setDataAt(ViewPort.PVP_CLIPRECT, RDataFactory.createDoubleVector(new double[]{0, 0, 0, 0}, RDataFactory.COMPLETE_VECTOR));
+        pushedViewPort.setDataAt(ViewPort.PVP_DEVWIDTHCM, scalar(Unit.inchesToCm(currentDevice.getWidth())));
+        pushedViewPort.setDataAt(ViewPort.PVP_DEVHEIGHTCM, scalar(Unit.inchesToCm(currentDevice.getHeight())));
 
         assert pushedViewPort.verify();
         return pushedViewPort;
@@ -108,17 +108,17 @@ final class DoSetViewPort {
         } else {
             assert parent instanceof RList : "inconsistent data: parent of a viewport must be a list";
             RList parentVPList = (RList) parent;
-            Object[] parentData = parentVPList.getDataWithoutCopying();
             if (!incremental) {
-                calcViewportTransform(parentVPList, parentData[ViewPort.PVP_PARENT], false, device, deviceTopLevelGpar);
+                calcViewportTransform(parentVPList, parentVPList.getDataAt(ViewPort.PVP_PARENT), false, device, deviceTopLevelGpar);
             }
-            parentSize = new Size(Unit.cmToInches(GridUtils.asDouble(parentData[ViewPort.PVP_WIDTHCM])), Unit.cmToInches(GridUtils.asDouble(parentData[ViewPort.PVP_HEIGHTCM])));
-            parentTransform = fromFlat(GridUtils.asDoubleVector(parentData[ViewPort.PVP_TRANS]).materialize().getDataWithoutCopying());
+            parentSize = new Size(Unit.cmToInches(GridUtils.asDouble(parentVPList.getDataAt(ViewPort.PVP_WIDTHCM))),
+                            Unit.cmToInches(GridUtils.asDouble(parentVPList.getDataAt(ViewPort.PVP_HEIGHTCM))));
+            parentTransform = fromFlat(GridUtils.asDoubleVector(parentVPList.getDataAt(ViewPort.PVP_TRANS)));
             parentContext = ViewPortContext.fromViewPort(parentVPList);
-            parentAngle = asDouble(parentData[ViewPort.PVP_ROTATION]);
+            parentAngle = asDouble(parentVPList.getDataAt(ViewPort.PVP_ROTATION));
 
             drawingContext = GPar.create(asList(viewPort.getDataAt(ViewPort.PVP_PARENTGPAR)));
-            boolean noLayout = (isNull(viewPort.getDataAt(ViewPort.VP_VALIDLPOSROW)) && isNull(viewPort.getDataAt(ViewPort.VP_VALIDLPOSCOL))) || isNull(parentData[ViewPort.VP_LAYOUT]);
+            boolean noLayout = (isNull(viewPort.getDataAt(ViewPort.VP_VALIDLPOSROW)) && isNull(viewPort.getDataAt(ViewPort.VP_VALIDLPOSCOL))) || isNull(parentVPList.getDataAt(ViewPort.VP_LAYOUT));
             if (noLayout) {
                 vpl = ViewPortLocation.fromViewPort(viewPort);
             } else {
@@ -160,11 +160,10 @@ final class DoSetViewPort {
             calcViewPortLayout(viewPort, new Size(width, height), vpCtx, device, GPar.create(asList(viewPort.getDataAt(ViewPort.PVP_GPAR))));
         }
 
-        Object[] viewPortData = viewPort.getDataWithoutCopying();
-        viewPortData[ViewPort.PVP_WIDTHCM] = scalar(Unit.inchesToCm(width));
-        viewPortData[ViewPort.PVP_HEIGHTCM] = scalar(Unit.inchesToCm(height));
-        viewPortData[ViewPort.PVP_ROTATION] = scalar(rotationAngle);
-        viewPortData[ViewPort.PVP_TRANS] = RDataFactory.createDoubleVector(flatten(transform), RDataFactory.COMPLETE_VECTOR, new int[]{3, 3});
+        viewPort.setDataAt(ViewPort.PVP_WIDTHCM, scalar(Unit.inchesToCm(width)));
+        viewPort.setDataAt(ViewPort.PVP_HEIGHTCM, scalar(Unit.inchesToCm(height)));
+        viewPort.setDataAt(ViewPort.PVP_ROTATION, scalar(rotationAngle));
+        viewPort.setDataAt(ViewPort.PVP_TRANS, RDataFactory.createDoubleVector(flatten(transform), RDataFactory.COMPLETE_VECTOR, new int[]{3, 3}));
     }
 
     private static void calcViewPortLayout(RList viewPort, Size size, ViewPortContext parentVPCtx, GridDevice device, GPar gpar) {
@@ -178,12 +177,12 @@ final class DoSetViewPort {
         // For both dimensions we find out which units are other than "null" for those we can
         // immediately calculate the physical size in npcWidth/npcHeights. The reducedWidth/Height
         // gives us how much of width/height is left after we take up the space by physical units
-        Object[] layoutData = asList(viewPort.getDataAt(ViewPort.VP_LAYOUT)).getDataWithoutCopying();
-        RAbstractContainer layoutWidths = asAbstractContainer(layoutData[ViewPort.LAYOUT_WIDTHS]);
+        RList layoutList = asList(viewPort.getDataAt(ViewPort.VP_LAYOUT));
+        RAbstractContainer layoutWidths = asAbstractContainer(layoutList.getDataAt(ViewPort.LAYOUT_WIDTHS));
         assert Unit.getLength(layoutWidths) == layoutSize.ncol : "inconsistent layout size with layout widths";
         double reducedWidth = getReducedDimension(layoutWidths, npcWidths, relativeWidths, size.getWidth(), conversionCtx, true);
 
-        RAbstractContainer layoutHeights = asAbstractContainer(layoutData[ViewPort.LAYOUT_HEIGHTS]);
+        RAbstractContainer layoutHeights = asAbstractContainer(layoutList.getDataAt(ViewPort.LAYOUT_HEIGHTS));
         assert Unit.getLength(layoutHeights) == layoutSize.nrow : "inconsistent layout size with layout height";
         double reducedHeight = getReducedDimension(layoutHeights, npcHeights, relativeHeights, size.getHeight(), conversionCtx, false);
 
@@ -192,7 +191,7 @@ final class DoSetViewPort {
         // Firstly allocate the respected widths/heights and calculate how much space remains
         RList layoutAsList = asList(viewPort.getDataAt(ViewPort.VP_LAYOUT));
         int respect = RRuntime.asInteger(layoutAsList.getDataAt(ViewPort.LAYOUT_VRESPECT));
-        int[] layoutRespectMat = ((RAbstractIntVector) layoutAsList.getDataAt(ViewPort.LAYOUT_MRESPECT)).materialize().getDataWithoutCopying();
+        RAbstractIntVector layoutRespectMat = ((RAbstractIntVector) layoutAsList.getDataAt(ViewPort.LAYOUT_MRESPECT));
         if ((reducedHeight > 0 || reducedWidth > 0) && respect > 0) {
             double sumRelWidth = sumRelativeDimension(layoutWidths, relativeWidths, parentVPCtx, device, gpar, true);
             double sumRelHeight = sumRelativeDimension(layoutHeights, relativeHeights, parentVPCtx, device, gpar, false);
@@ -253,12 +252,12 @@ final class DoSetViewPort {
         allocateRelativeDim(layoutSize, layoutHeights, npcHeights, relativeHeights, reducedHeight, respect, layoutRespectMat, device, gpar, parentVPCtx, false);
 
         // Create the result
-        Object[] vpData = viewPort.getDataWithoutCopying();
-        vpData[ViewPort.PVP_WIDTHS] = RDataFactory.createDoubleVector(npcWidths, RDataFactory.COMPLETE_VECTOR);
-        vpData[ViewPort.PVP_HEIGHTS] = RDataFactory.createDoubleVector(npcHeights, RDataFactory.COMPLETE_VECTOR);
+        viewPort.setDataAt(ViewPort.PVP_WIDTHS, RDataFactory.createDoubleVector(npcWidths, RDataFactory.COMPLETE_VECTOR));
+        viewPort.setDataAt(ViewPort.PVP_HEIGHTS, RDataFactory.createDoubleVector(npcHeights, RDataFactory.COMPLETE_VECTOR));
     }
 
-    private static void allocateRelativeDim(LayoutSize layoutSize, RAbstractContainer layoutItems, double[] npcItems, boolean[] relativeItems, double reducedDim, int respect, int[] layoutRespectMat,
+    private static void allocateRelativeDim(LayoutSize layoutSize, RAbstractContainer layoutItems, double[] npcItems, boolean[] relativeItems, double reducedDim, int respect,
+                    RAbstractIntVector layoutRespectMat,
                     GridDevice device, GPar gpar, ViewPortContext parentVPCtx, boolean isWidth) {
         assert relativeItems.length == npcItems.length;
         UnitConversionContext layoutModeCtx = new UnitConversionContext(new Size(0, 0), parentVPCtx, device, gpar, 1, 0);
@@ -282,28 +281,28 @@ final class DoSetViewPort {
         }
     }
 
-    private static boolean rowColRespected(int respected, int rowOrCol, int[] layoutRespectMat, LayoutSize layoutSize, boolean isColumn) {
+    private static boolean rowColRespected(int respected, int rowOrCol, RAbstractIntVector layoutRespectMat, LayoutSize layoutSize, boolean isColumn) {
         return isColumn ? colRespected(respected, rowOrCol, layoutRespectMat, layoutSize) : rowRespected(respected, rowOrCol, layoutRespectMat, layoutSize);
     }
 
-    private static boolean rowRespected(int respected, int row, int[] layoutRespectMat, LayoutSize layoutSize) {
+    private static boolean rowRespected(int respected, int row, RAbstractIntVector layoutRespectMat, LayoutSize layoutSize) {
         if (respected == 1) {
             return true;
         }
         for (int i = 0; i < layoutSize.ncol; i++) {
-            if (layoutRespectMat[i * layoutSize.nrow + row] != 0) {
+            if (layoutRespectMat.getDataAt(i * layoutSize.nrow + row) != 0) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean colRespected(int respected, int col, int[] layoutRespectMat, LayoutSize layoutSize) {
+    private static boolean colRespected(int respected, int col, RAbstractIntVector layoutRespectMat, LayoutSize layoutSize) {
         if (respected == 1) {
             return true;
         }
         for (int i = 0; i < layoutSize.nrow; i++) {
-            if (layoutRespectMat[col * layoutSize.nrow + i] != 0) {
+            if (layoutRespectMat.getDataAt(col * layoutSize.nrow + i) != 0) {
                 return true;
             }
         }
@@ -344,8 +343,8 @@ final class DoSetViewPort {
     // positions replaced with nrow/ncol already.
     private static ViewPortLocation calcViewportLocationFromLayout(LayoutPos pos, RList parentVP, Size parentSize) {
         // unlike in GnuR, we maintain parent viewport widths/heights in inches like anything else
-        double[] widths = GridUtils.asDoubleVector(parentVP.getDataAt(ViewPort.PVP_WIDTHS)).materialize().getDataWithoutCopying();
-        double[] heights = GridUtils.asDoubleVector(parentVP.getDataAt(ViewPort.PVP_HEIGHTS)).materialize().getDataWithoutCopying();
+        RAbstractDoubleVector widths = GridUtils.asDoubleVector(parentVP.getDataAt(ViewPort.PVP_WIDTHS));
+        RAbstractDoubleVector heights = GridUtils.asDoubleVector(parentVP.getDataAt(ViewPort.PVP_HEIGHTS));
         double totalWidth = sum(widths, 0, pos.layoutSize.ncol);
         double totalHeight = sum(heights, 0, pos.layoutSize.nrow);
         double width = sum(widths, pos.colMin, pos.colMax - pos.colMin + 1);
