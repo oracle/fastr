@@ -28,10 +28,10 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -71,6 +71,7 @@ public final class RFactorNodes {
     public static final class GetLevels extends Node {
         @Child private CastStringNode castString;
         @Child private GetFixedAttributeNode attrAccess = GetFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
+        @Child UpdateShareableChildValueNode updateAttrValue = UpdateShareableChildValueNode.create();
 
         private final BranchProfile notVectorBranch = BranchProfile.create();
         private final ConditionProfile nonScalarLevels = ConditionProfile.createBinaryProfile();
@@ -85,7 +86,7 @@ public final class RFactorNodes {
          * cast is done. May return null, if the 'levels' attribute is not present.
          */
         public RStringVector execute(RAbstractIntVector factor) {
-            Object attr = attrAccess.execute(factor.getAttributes());
+            Object attr = updateAttrValue.updateState(factor, attrAccess.execute(factor.getAttributes()));
 
             // Convert scalars to vector if necessary
             RAbstractVector vec;
@@ -110,7 +111,8 @@ public final class RFactorNodes {
                     castString = insert(CastStringNodeGen.create(false, false, false));
                 }
                 RStringVector slevels = ((RAbstractStringVector) castString.executeString(vec)).materialize();
-                return RDataFactory.createStringVector(slevels.getDataWithoutCopying(), RDataFactory.COMPLETE_VECTOR);
+                assert slevels.isTemporary() : "cast should create a new tmp vector since !(vec instanceof RStringVector)";
+                return slevels;
             }
         }
     }

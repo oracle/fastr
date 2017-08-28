@@ -88,7 +88,7 @@ public class SplineFunctions {
             double[] c = new double[n];
             double[] d = new double[n];
 
-            SplineFunctions.splineCoef(method, n, x.getDataWithoutCopying(), y.getDataWithoutCopying(), b, c, d);
+            SplineFunctions.splineCoef(method, n, x.getReadonlyData(), y.getReadonlyData(), b, c, d);
 
             final boolean complete = x.isComplete() && y.isComplete();
             RDoubleVector bv = RDataFactory.createDoubleVector(b, complete);
@@ -421,8 +421,8 @@ public class SplineFunctions {
         RDoubleVector c = (RDoubleVector) z.getDataAt(z.getElementIndexByName("c"));
         RDoubleVector d = (RDoubleVector) z.getDataAt(z.getElementIndexByName("d"));
 
-        splineEval(method, nu, xout.getDataWithoutCopying(), yout, nx, x.getDataWithoutCopying(), y.getDataWithoutCopying(), b.getDataWithoutCopying(), c.getDataWithoutCopying(),
-                        d.getDataWithoutCopying());
+        splineEval(method, nu, xout.getReadonlyData(), yout, nx, x.getReadonlyData(), y.getReadonlyData(), b.getReadonlyData(), c.getReadonlyData(),
+                        d.getReadonlyData());
         return RDataFactory.createDoubleVector(yout, xout.isComplete() && x.isComplete() && y.isComplete());
     }
 

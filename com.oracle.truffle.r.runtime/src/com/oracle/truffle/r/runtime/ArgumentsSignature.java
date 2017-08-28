@@ -76,7 +76,8 @@ public final class ArgumentsSignature implements Iterable<String> {
      * converted to {@code null} value.
      */
     public static ArgumentsSignature fromNamesAttribute(RStringVector names) {
-        return names == null ? null : get(names.getDataWithoutCopying(), true);
+        // Note: get makes a defensive copy of names anyway
+        return names == null ? null : get(names.getReadonlyData(), true);
     }
 
     @TruffleBoundary

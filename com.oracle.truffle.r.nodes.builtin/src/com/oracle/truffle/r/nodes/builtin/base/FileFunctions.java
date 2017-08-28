@@ -847,7 +847,7 @@ public class FileFunctions {
                 if (elem instanceof String) {
                     inputs[i] = new String[]{(String) elem};
                 } else if (elem instanceof RStringVector) {
-                    inputs[i] = ((RStringVector) elem).getDataWithoutCopying();
+                    inputs[i] = ((RStringVector) elem).getReadonlyData();
                 } else {
                     throw error(RError.Message.NON_STRING_ARG_TO_INTERNAL_PASTE);
                 }

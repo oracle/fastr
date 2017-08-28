@@ -83,7 +83,7 @@ abstract class UpdateSubscriptSpecial extends SubscriptSpecialCommon {
 
     @Specialization(guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index)", "isSingleElement(value)"})
     protected static Object set(RList list, int index, Object value) {
-        list.setDataAt(list.getInternalStore(), index - 1, value);
+        list.setDataAt(index - 1, value);
         return list;
     }
 
@@ -130,7 +130,7 @@ abstract class UpdateSubscriptSpecial2 extends SubscriptSpecial2Common {
 
     @Specialization(guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index1, index2)", "isSingleElement(value)"})
     protected Object set(RList list, int index1, int index2, Object value) {
-        list.setDataAt(list.getInternalStore(), matrixIndex(list, index1, index2), value);
+        list.setDataAt(matrixIndex(list, index1, index2), value);
         return list;
     }
 

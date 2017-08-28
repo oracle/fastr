@@ -35,9 +35,7 @@ import com.oracle.truffle.r.runtime.rng.user.UserRNG;
  * The fact that the R programmer can set {@code .Random.seed} explicitly, as opposed to the
  * recommended approach of calling {@code set.seed}, is something of a pain as it changes the
  * {@link Kind}, the {@link NormKind} and the actual seeds all in one go and in a totally
- * uncontrolled way, which then has to be checked. Currently we do not support reading it, although
- * we do create/update it when the seed/kind is changed, primarily as a debugging aid. N.B. GnuR
- * updates it on <i>every</i> random number generation!
+ * uncontrolled way, which then has to be checked.
  *
  * Important note: make sure to invoke {@link #getRNGState()} before invoking any other methods from
  * this class and to invoke {@link #putRNGState()} when done witch random number generation.
@@ -387,9 +385,13 @@ public class RRNG {
                 seeds = new int[]{(int) seedsObj};
             } else if (seedsObj instanceof RIntVector) {
                 RIntVector seedsVec = (RIntVector) seedsObj;
-                seeds = seedsVec.getDataWithoutCopying();
+                seeds = seedsVec.getReadonlyData();
                 if (seeds == currentGenerator().getSeeds()) {
-                    // no change of the .Random.seed variable
+                    // Optimization: if the array instance has not changed, then the .Random.seed
+                    // variable was not changed, nor materialized to a native mirror, we still hold
+                    // the same reference to its underlying data. Note: setISeed is potentially
+                    // doing some clean-up of the data, so it may not be O(1) operation and it's
+                    // good to avoid it.
                     return;
                 }
             } else if (seedsObj instanceof int[]) {

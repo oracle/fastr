@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorToArray;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -85,34 +86,51 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     }
 
     /**
+     * Returns the internal data Java array for read only purposes only or {@code null} if the
+     * vector has been materialized to native mirror and it does not hold managed data anymore. This
+     * method is for only very specific purposes especially of {@link VectorToArray}.
+     *
+     * @return vector data
+     */
+    public abstract ArrayT getInternalManagedData();
+
+    /**
      * Intended for external calls where a mutable copy is needed.
      */
     public abstract ArrayT getDataCopy();
 
     /**
-     * Intended for external calls where a copy is not needed. WARNING: think carefully before using
-     * this method rather than {@link #getDataCopy()}.
+     * Returns data for read-only purposes. The result may or may not be copy of the internal data.
+     * This is a slow path operation for vector types that may have a native mirror, use
+     * {@link VectorToArray} node for fast path in such cases.
+     *
+     * @see VectorToArray
+     * @see RObject#getNativeMirror()
+     * @return vector data
      */
-    public abstract ArrayT getDataWithoutCopying();
+    public abstract ArrayT getReadonlyData();
 
     /**
-     * Return vector data (copying if necessary) that's guaranteed not to be shared with any other
-     * vector instance (but maybe non-temporary in terms of vector's sharing mode).
+     * Return vector data (copying if necessary) that's guaranteed to be either temporary in terms
+     * of vector sharing mode, or owned by only one location (non-shared). It is not safe to re-use
+     * the array returned to create a new vector.
      *
      * @return vector data
      */
     public final ArrayT getDataNonShared() {
-        return isShared() ? getDataCopy() : getDataWithoutCopying();
+        return !isShared() ? getReadonlyData() : getDataCopy();
     }
 
     /**
      * Return vector data (copying if necessary) that's guaranteed to be "fresh" (temporary in terms
-     * of vector sharing mode).
+     * of vector sharing mode). As long as the vector is not retuned or put into a list/environment
+     * (i.e. if it is temporary, it will stay temporary), it is safe to reuse the array retuned by
+     * this method to create a new vector.
      *
      * @return vector data
      */
     public final ArrayT getDataTemp() {
-        return isTemporary() ? getDataWithoutCopying() : getDataCopy();
+        return isTemporary() ? getReadonlyData() : getDataCopy();
     }
 
     @Override

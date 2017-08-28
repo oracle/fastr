@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -117,7 +118,7 @@ abstract class TemporaryWrapper implements TruffleObject {
     protected long address;
     protected RAbstractAtomicVector vector;
 
-    public TemporaryWrapper(RAbstractAtomicVector vector) {
+    TemporaryWrapper(RAbstractAtomicVector vector) {
         this.vector = vector;
     }
 
@@ -145,11 +146,16 @@ abstract class TemporaryWrapper implements TruffleObject {
     }
 
     protected abstract RAbstractAtomicVector copyBack();
+
+    protected static <ArrayT> ArrayT reuseData(RVector<ArrayT> vec) {
+        // Note: maybe we can reuse non-shared vectors too?
+        return vec.isTemporary() ? vec.getInternalManagedData() : null;
+    }
 }
 
 final class StringWrapper extends TemporaryWrapper {
 
-    public StringWrapper(RAbstractStringVector vector) {
+    StringWrapper(RAbstractStringVector vector) {
         super(vector);
     }
 
@@ -181,7 +187,10 @@ final class StringWrapper extends TemporaryWrapper {
     @TruffleBoundary
     protected RStringVector copyBack() {
         RStringVector result = ((RAbstractStringVector) vector).materialize();
-        String[] data = result.isTemporary() ? result.getDataWithoutCopying() : result.getDataCopy();
+        String[] data = reuseData(result);
+        if (data == null) {
+            data = new String[result.getLength()];
+        }
         for (int i = 0; i < data.length; i++) {
             long ptr = UnsafeAdapter.UNSAFE.getLong(address + i * 8);
             int length = 0;
@@ -199,7 +208,7 @@ final class StringWrapper extends TemporaryWrapper {
 
 final class IntWrapper extends TemporaryWrapper {
 
-    public IntWrapper(RAbstractIntVector vector) {
+    IntWrapper(RAbstractIntVector vector) {
         super(vector);
     }
 
@@ -219,7 +228,10 @@ final class IntWrapper extends TemporaryWrapper {
     @TruffleBoundary
     protected RIntVector copyBack() {
         RIntVector result = ((RAbstractIntVector) vector).materialize();
-        int[] data = result.isTemporary() ? result.getDataWithoutCopying() : result.getDataCopy();
+        int[] data = reuseData(result);
+        if (data == null) {
+            data = new int[vector.getLength()];
+        }
         UnsafeAdapter.UNSAFE.copyMemory(null, address, data, Unsafe.ARRAY_INT_BASE_OFFSET, vector.getLength() * Unsafe.ARRAY_INT_INDEX_SCALE);
         UnsafeAdapter.UNSAFE.freeMemory(address);
         return RDataFactory.createIntVector(data, false);
@@ -228,7 +240,7 @@ final class IntWrapper extends TemporaryWrapper {
 
 final class LogicalWrapper extends TemporaryWrapper {
 
-    public LogicalWrapper(RAbstractLogicalVector vector) {
+    LogicalWrapper(RAbstractLogicalVector vector) {
         super(vector);
     }
 
@@ -248,7 +260,10 @@ final class LogicalWrapper extends TemporaryWrapper {
     @TruffleBoundary
     protected RLogicalVector copyBack() {
         RLogicalVector result = ((RAbstractLogicalVector) vector).materialize();
-        byte[] data = result.isTemporary() ? result.getDataWithoutCopying() : result.getDataCopy();
+        byte[] data = reuseData(result);
+        if (data == null) {
+            data = new byte[result.getLength()];
+        }
         int length = vector.getLength();
         for (int i = 0; i < length; i++) {
             data[i] = RRuntime.int2logical(UnsafeAdapter.UNSAFE.getInt(address + (i * Unsafe.ARRAY_INT_INDEX_SCALE)));
@@ -260,7 +275,7 @@ final class LogicalWrapper extends TemporaryWrapper {
 
 final class DoubleWrapper extends TemporaryWrapper {
 
-    public DoubleWrapper(RAbstractDoubleVector vector) {
+    DoubleWrapper(RAbstractDoubleVector vector) {
         super(vector);
     }
 
@@ -280,7 +295,10 @@ final class DoubleWrapper extends TemporaryWrapper {
     @TruffleBoundary
     protected RDoubleVector copyBack() {
         RDoubleVector result = ((RAbstractDoubleVector) vector).materialize();
-        double[] data = result.isTemporary() ? result.getDataWithoutCopying() : result.getDataCopy();
+        double[] data = reuseData(result);
+        if (data == null) {
+            data = new double[vector.getLength()];
+        }
         UnsafeAdapter.UNSAFE.copyMemory(null, address, data, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vector.getLength() * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
         UnsafeAdapter.UNSAFE.freeMemory(address);
         return RDataFactory.createDoubleVector(data, false);
@@ -289,7 +307,7 @@ final class DoubleWrapper extends TemporaryWrapper {
 
 final class ComplexWrapper extends TemporaryWrapper {
 
-    public ComplexWrapper(RAbstractComplexVector vector) {
+    ComplexWrapper(RAbstractComplexVector vector) {
         super(vector);
     }
 
@@ -311,7 +329,10 @@ final class ComplexWrapper extends TemporaryWrapper {
     @TruffleBoundary
     protected RComplexVector copyBack() {
         RComplexVector result = ((RAbstractComplexVector) vector).materialize();
-        double[] data = result.isTemporary() ? result.getDataWithoutCopying() : result.getDataCopy();
+        double[] data = reuseData(result);
+        if (data == null) {
+            data = new double[result.getLength() * 2];
+        }
         UnsafeAdapter.UNSAFE.copyMemory(null, address, data, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vector.getLength() * 2 * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
         UnsafeAdapter.UNSAFE.freeMemory(address);
         return RDataFactory.createComplexVector(data, false);
@@ -320,7 +341,7 @@ final class ComplexWrapper extends TemporaryWrapper {
 
 final class RawWrapper extends TemporaryWrapper {
 
-    public RawWrapper(RAbstractRawVector vector) {
+    RawWrapper(RAbstractRawVector vector) {
         super(vector);
     }
 
@@ -340,7 +361,10 @@ final class RawWrapper extends TemporaryWrapper {
     @TruffleBoundary
     protected RRawVector copyBack() {
         RRawVector result = ((RAbstractRawVector) vector).materialize();
-        byte[] data = result.isTemporary() ? result.getDataWithoutCopying() : result.getDataCopy();
+        byte[] data = reuseData(result);
+        if (data == null) {
+            data = new byte[result.getLength()];
+        }
         UnsafeAdapter.UNSAFE.copyMemory(null, address, data, Unsafe.ARRAY_BYTE_BASE_OFFSET, vector.getLength() * Unsafe.ARRAY_BYTE_INDEX_SCALE);
         UnsafeAdapter.UNSAFE.freeMemory(address);
         return RDataFactory.createRawVector(data);
@@ -352,7 +376,7 @@ final class RawWrapper extends TemporaryWrapper {
  */
 public interface CRFFI {
 
-    public static abstract class InvokeCNode extends RBaseNode {
+    abstract class InvokeCNode extends RBaseNode {
 
         /**
          * Invoke the native method identified by {@code symbolInfo} passing it the arguments in

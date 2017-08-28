@@ -69,6 +69,11 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
     }
 
     @Override
+    public byte[] getInternalManagedData() {
+        return data;
+    }
+
+    @Override
     public byte[] getInternalStore() {
         assert data != null;
         return data;
@@ -187,12 +192,8 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
         return Arrays.copyOf(data, data.length);
     }
 
-    /**
-     * Intended for external calls where a copy is not needed. WARNING: think carefully before using
-     * this method rather than {@link #getDataCopy()}.
-     */
     @Override
-    public byte[] getDataWithoutCopying() {
+    public byte[] getReadonlyData() {
         assert data != null;
         return data;
     }

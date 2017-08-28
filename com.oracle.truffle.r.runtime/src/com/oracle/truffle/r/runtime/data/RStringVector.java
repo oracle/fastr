@@ -62,6 +62,11 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
     }
 
     @Override
+    public String[] getInternalManagedData() {
+        return data;
+    }
+
+    @Override
     public String[] getInternalStore() {
         return data;
     }
@@ -108,12 +113,8 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
         return result;
     }
 
-    /**
-     * Intended for external calls where a copy is not needed. WARNING: think carefully before using
-     * this method rather than {@link #getDataCopy()}.
-     */
     @Override
-    public String[] getDataWithoutCopying() {
+    public String[] getReadonlyData() {
         return data;
     }
 

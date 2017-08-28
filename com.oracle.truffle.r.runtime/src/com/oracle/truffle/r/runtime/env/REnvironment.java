@@ -154,15 +154,6 @@ public abstract class REnvironment extends RAttributeStorage {
         @Override
         public void beforeDispose(RContext context) {
             beforeDestroyContext(context, this);
-            for (FrameSlot slot : globalFrame.getFrameDescriptor().getSlots()) {
-                if (globalFrame.isObject(slot)) {
-                    globalFrame.setObject(slot, null);
-                }
-            }
-            baseEnv = null;
-            namespaceRegistry = null;
-            searchPath = null;
-            parentGlobalFrame = null;
         }
 
         public static ContextStateImpl newContextState(RContext context) {

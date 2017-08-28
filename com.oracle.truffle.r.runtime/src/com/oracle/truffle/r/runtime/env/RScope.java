@@ -191,7 +191,9 @@ public final class RScope extends AbstractScope {
 
         private String[] ls() {
             RStringVector ls = frameAccess.ls(true, null, false);
-            return ls.getDataWithoutCopying();
+            // we make a defensive copy, another option would be to make the vector shared and reuse
+            // the underlying array
+            return ls.getDataCopy();
         }
 
         public static boolean isInstance(TruffleObject obj) {

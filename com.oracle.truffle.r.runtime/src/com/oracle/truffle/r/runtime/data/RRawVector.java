@@ -67,6 +67,11 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     @Override
+    public byte[] getInternalManagedData() {
+        return data;
+    }
+
+    @Override
     public byte[] getInternalStore() {
         return data;
     }
@@ -120,12 +125,8 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
         return Arrays.copyOf(data, data.length);
     }
 
-    /**
-     * Intended for external calls where a copy is not needed. WARNING: think carefully before using
-     * this method rather than {@link #getDataCopy()}.
-     */
     @Override
-    public byte[] getDataWithoutCopying() {
+    public byte[] getReadonlyData() {
         assert data != null;
         return data;
     }

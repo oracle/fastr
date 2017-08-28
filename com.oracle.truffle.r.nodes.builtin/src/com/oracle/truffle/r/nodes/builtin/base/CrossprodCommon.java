@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorToArray;
 
 /**
  * Implements the basic logic for {@code crossprod} and {@code tcrossprod}. Either the first matrix
@@ -101,6 +102,7 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "x.isMatrix()")
     protected RDoubleVector crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y,
+                    @Cached("create()") VectorToArray vectorToArrayNode,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") GetDimAttributeNode getResultDimsNode) {
         int[] xDims = getDimsNode.getDimensions(x);
@@ -110,7 +112,8 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
         int yCols = transposeX ? xDims[1] : xDims[0];
         RDoubleVector result = mirror(
                         matMult.doubleMatrixMultiply(x, x, xRows, xCols, yRows, yCols, getXRowStride(xDims[0]), getXColStride(xDims[0]), getYRowStride(xDims[0]), getYColStride(xDims[0]), true),
-                        getResultDimsNode);
+                        getResultDimsNode,
+                        vectorToArrayNode);
         return copyDimNames(x, x, result);
     }
 
@@ -169,13 +172,13 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
         return result;
     }
 
-    private static RDoubleVector mirror(RDoubleVector result, GetDimAttributeNode getResultDimsNode) {
+    private static RDoubleVector mirror(RDoubleVector result, GetDimAttributeNode getResultDimsNode, VectorToArray vectorToArrayNode) {
         // Mirroring the result is not only good for performance, but it is also required to produce
         // the same result as GNUR.
         int[] resultDims = getResultDimsNode.getDimensions(result);
         assert result.isMatrix() && resultDims[0] == resultDims[1];
         int size = resultDims[0];
-        double[] data = result.getDataWithoutCopying();
+        double[] data = vectorToArrayNode.getReadonly(result);
         for (int row = 0; row < size; row++) {
             int destIndex = row * size + row + 1;
             int sourceIndex = (row + 1) * size + row;

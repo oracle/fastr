@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.data.nodes.AccessVector;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -201,15 +202,16 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected Object doIntVector(RIntVector operand, boolean naRm, boolean finite) {
+    protected int doIntVector(RIntVector operand, boolean naRm, boolean finite,
+                              @Cached("new()") AccessVector.Int access) {
         RBaseNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm || finite);
         int result = semantics.getIntStart();
         na.enable(operand);
         int opCount = 0;
-        int[] data = operand.getDataWithoutCopying();
+        Object store = access.init(operand);
         for (int i = 0; i < operand.getLength(); i++) {
-            int d = data[i];
+            int d = access.getDataAt(operand, store, i);
             if (na.check(d)) {
                 if (profiledNaRm) {
                     continue;
@@ -236,6 +238,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     @Specialization
     protected double doDoubleVector(RDoubleVector operand, boolean naRm, boolean finite,
+                    @Cached("new()") AccessVector.Double access,
                     @Cached("createBinaryProfile()") ConditionProfile finiteProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isInfiniteProfile) {
         RBaseNode.reportWork(this, operand.getLength());
@@ -244,9 +247,9 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         double result = semantics.getDoubleStart();
         na.enable(operand);
         int opCount = 0;
-        double[] data = operand.getDataWithoutCopying();
+        Object store = access.init(operand);
         for (int i = 0; i < operand.getLength(); i++) {
-            double d = data[i];
+            double d = access.getDataAt(operand, store, i);
             if (na.checkNAorNaN(d)) {
                 if (profiledNaRm) {
                     continue;   // ignore NA/NaN
@@ -271,15 +274,16 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected Object doLogicalVector(RLogicalVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected int doLogicalVector(RLogicalVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite,
+                                  @Cached("new()") AccessVector.Logical access) {
         RBaseNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm);
         int result = semantics.getIntStart();
         na.enable(operand);
         int opCount = 0;
-        byte[] data = operand.getDataWithoutCopying();
+        Object store = access.init(operand);
         for (int i = 0; i < operand.getLength(); i++) {
-            byte d = data[i];
+            byte d = access.getDataAt(operand, store, i);
             if (na.check(d)) {
                 if (profiledNaRm) {
                     continue;

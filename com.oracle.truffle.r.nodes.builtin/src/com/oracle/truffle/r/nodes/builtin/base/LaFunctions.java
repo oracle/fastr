@@ -32,6 +32,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.lang.ref.SoftReference;
 import java.util.function.Function;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -43,6 +44,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNa
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
@@ -60,6 +62,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorToArray;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -317,20 +320,19 @@ public class LaFunctions {
         }
 
         @Specialization
-        protected RDoubleVector doQrCoefReal(RList qIn, RAbstractDoubleVector bIn,
+        protected RDoubleVector doQrCoefReal(RList qIn, RAbstractDoubleVector b,
+                        @Cached("create()") VectorToArray qrToArrayNode,
+                        @Cached("create()") VectorToArray tauToArrayNode,
                         @Cached("create()") GetDimAttributeNode getBDimsNode,
                         @Cached("create()") GetDimAttributeNode getQDimsNode,
                         @Cached("create()") LapackRFFI.DormqrNode dormqrNode,
                         @Cached("create()") LapackRFFI.DtrtrsNode dtrtrsNode) {
-            // If bIn was coerced this extra copy is unnecessary
-            RDoubleVector b = (RDoubleVector) bIn.copy();
-
             RDoubleVector qr = (RDoubleVector) qIn.getDataAt(0);
 
             RDoubleVector tau = (RDoubleVector) qIn.getDataAt(2);
             int k = tau.getLength();
 
-            int[] bDims = getBDimsNode.getDimensions(bIn);
+            int[] bDims = getBDimsNode.getDimensions(b);
             int[] qrDims = getQDimsNode.getDimensions(qr);
             int n = qrDims[0];
             if (bDims[0] != n) {
@@ -339,10 +341,10 @@ public class LaFunctions {
             int nrhs = bDims[1];
             double[] work = new double[1];
             // qr and tau do not really need copying
-            double[] qrData = qr.getDataWithoutCopying();
-            double[] tauData = tau.getDataWithoutCopying();
-            // we work directly in the internal data of b
-            double[] bData = b.getDataWithoutCopying();
+            double[] qrData = qrToArrayNode.getReadonly(qr);
+            double[] tauData = tauToArrayNode.getReadonly(tau);
+            // this will be the result, we are going to modify this array
+            double[] bData = b.materialize().getDataCopy();
             // ask for optimal size of work array
             int info = dormqrNode.execute(SIDE, TRANS, n, nrhs, k, qrData, n, tauData, bData, n, work, -1);
             if (info < 0) {
@@ -359,7 +361,7 @@ public class LaFunctions {
                 throw error(Message.LAPACK_ERROR, info, "dtrtrs");
             }
             // TODO check complete
-            return b;
+            return RDataFactory.createDoubleVector(bData, RDataFactory.INCOMPLETE_VECTOR);
         }
     }
 
@@ -385,6 +387,7 @@ public class LaFunctions {
         @Specialization
 
         protected RList doDetGeReal(RAbstractDoubleVector aIn, boolean useLog,
+                        @Cached("create()") VectorToArray vectorToArrayNode,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
                         @Cached("create()") LapackRFFI.DgetrfNode dgetrfNode) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
@@ -392,7 +395,7 @@ public class LaFunctions {
             int n = aDims[0];
             int[] ipiv = new int[n];
             double modulus = 0;
-            double[] aData = a.getDataWithoutCopying();
+            double[] aData = vectorToArrayNode.getReadonly(a);
             int info = dgetrfNode.execute(n, n, aData, n, ipiv);
             int sign = 1;
             if (info < 0) {
@@ -465,51 +468,63 @@ public class LaFunctions {
 
         @Specialization
         protected RDoubleVector doDetGeReal(RAbstractDoubleVector aIn, boolean piv, double tol,
+                        @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
                         @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
                         @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
                         @Cached("create()") LapackRFFI.DpotrfNode dpotrfNode,
                         @Cached("create()") LapackRFFI.DpstrfNode dpstrfNode) {
-            RDoubleVector a = (RDoubleVector) aIn.copy();
+            double[] aData = aIn.materialize().getDataCopy();
             int[] aDims = getDimsNode.getDimensions(aIn);
             int n = aDims[0];
             int m = aDims[1];
-            double[] aData = a.getDataWithoutCopying();
             /* zero the lower triangle */
             for (int j = 0; j < n; j++) {
                 for (int i = j + 1; i < n; i++) {
                     aData[i + n * j] = 0;
                 }
             }
+
             int info;
             if (noPivot.profile(!piv)) {
                 info = dpotrfNode.execute('U', m, aData, m);
                 if (info != 0) {
-                    // TODO informative error message (aka GnuR)
-                    throw error(Message.LAPACK_ERROR, info, "dpotrf");
-                }
-            } else {
-                int[] ipiv = new int[m];
-                double[] work = new double[2 * m];
-                int[] rank = new int[1];
-                info = dpstrfNode.execute('U', n, aData, n, ipiv, rank, tol, work);
-                if (info != 0) {
-                    // TODO informative error message (aka GnuR)
-                    throw error(Message.LAPACK_ERROR, info, "dpotrf");
-                }
-                setPivotAttrNode.execute(a, RRuntime.asLogical(piv));
-                setRankAttrNode.execute(a, rank[0]);
-                RList dn = getDimNamesNode.getDimNames(a);
-                if (dn != null && dn.getDataAt(0) != null) {
-                    Object[] dn2 = new Object[m];
-                    // need to pivot the colnames
-                    for (int i = 0; i < m; i++) {
-                        dn2[i] = dn.getDataAt(ipiv[i] - 1);
+                    CompilerDirectives.transferToInterpreter();
+                    if (info > 0) {
+                        throw error(Message.LAPACK_CHOL_NOT_POSITIVE_DEFINITE, info);
+                    } else {
+                        throw error(Message.LAPACK_ERROR, info, "dpotrf");
                     }
-                    setDimNamesNode.setDimNames(a, RDataFactory.createList(dn2));
+                }
+                return (RDoubleVector) copyAttributesNode.execute(RDataFactory.createDoubleVector(aData, RDataFactory.INCOMPLETE_VECTOR), aIn);
+            }
+
+            int[] ipiv = new int[m];
+            double[] work = new double[2 * m];
+            int[] rank = new int[1];
+            info = dpstrfNode.execute('U', n, aData, n, ipiv, rank, tol, work);
+            if (info != 0) {
+                CompilerDirectives.transferToInterpreter();
+                if (info > 0) {
+                    throw error(Message.LAPACK_CHOL_RANK_DEF_OR_INDEF, info);
+                } else {
+                    throw error(Message.LAPACK_ERROR, info, "dpotrf");
                 }
             }
-            return a;
+
+            RDoubleVector result = (RDoubleVector) copyAttributesNode.execute(RDataFactory.createDoubleVector(aData, RDataFactory.INCOMPLETE_VECTOR), aIn);
+            setPivotAttrNode.execute(result, RRuntime.asLogical(piv));
+            setRankAttrNode.execute(result, rank[0]);
+            RList dn = getDimNamesNode.getDimNames(aIn);
+            if (dn != null && dn.getDataAt(0) != null) {
+                Object[] dn2 = new Object[m];
+                // need to pivot the colnames
+                for (int i = 0; i < m; i++) {
+                    dn2[i] = dn.getDataAt(ipiv[i] - 1);
+                }
+                setDimNamesNode.setDimNames(result, RDataFactory.createList(dn2));
+            }
+            return result;
         }
     }
 
@@ -684,9 +699,10 @@ public class LaFunctions {
             double[] avals;
             if (aDouble.isShared()) {
                 avals = aCache.get(aDouble.getLength());
-                System.arraycopy(aDouble.getDataWithoutCopying(), 0, avals, 0, n * p);
+                // TODO: fixme more efficient copying
+                System.arraycopy(aDouble.getDataCopy(), 0, avals, 0, n * p);
             } else {
-                avals = aDouble.getDataWithoutCopying();
+                avals = aDouble.getDataCopy();
             }
             int info = dgesvNode.execute(n, p, avals, n, ipiv, bData, n);
             if (info < 0) {

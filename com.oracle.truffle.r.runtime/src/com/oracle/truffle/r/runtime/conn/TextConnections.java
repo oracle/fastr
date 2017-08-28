@@ -235,9 +235,9 @@ public class TextConnections {
         }
 
         void appendData(String[] appendedData) {
-            String[] existingData = textVec != null ? textVec.getDataWithoutCopying() : new String[0];
             String[] updateData = appendedData;
-            if (existingData.length > 0) {
+            if (textVec != null && textVec.getLength() > 0) {
+                String[] existingData = textVec.getReadonlyData();
                 updateData = new String[existingData.length + appendedData.length];
                 System.arraycopy(existingData, 0, updateData, 0, existingData.length);
                 System.arraycopy(appendedData, 0, updateData, existingData.length, appendedData.length);

@@ -18,6 +18,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.nodes.AccessVector.DoubleAccessor;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 
 public final class RMultinom {
@@ -31,7 +32,7 @@ public final class RMultinom {
      * prob[j]) , sum_j rN[j] == n, sum_j prob[j] == 1.
      */
     @TruffleBoundary
-    public static boolean rmultinom(int nIn, double[] prob, int maxK, int[] rN, int rnStartIdx, RandomNumberProvider rand, Rbinom rbinom) {
+    public static boolean rmultinom(int nIn, DoubleAccessor prob, int maxK, int[] rN, int rnStartIdx, RandomNumberProvider rand, Rbinom rbinom) {
         /*
          * This calculation is sensitive to exact values, so we try to ensure that the calculations
          * are as accurate as possible so different platforms are more likely to give the same
@@ -52,7 +53,7 @@ public final class RMultinom {
          */
         /* LDOUBLE */double pTot = 0.;
         for (int k = 0; k < maxK; k++) {
-            double pp = prob[k];
+            double pp = prob.getDataAt(k);
             if (!Double.isFinite(pp) || pp < 0. || pp > 1.) {
                 rN[rnStartIdx + k] = RRuntime.INT_NA;
                 return false;
@@ -75,7 +76,7 @@ public final class RMultinom {
         /* Generate the first K-1 obs. via binomials */
         for (int k = 0; k < maxK - 1; k++) {
             /* (p_tot, n) are for "remaining binomial" */
-            /* LDOUBLE */double probK = prob[k];
+            /* LDOUBLE */double probK = prob.getDataAt(k);
             if (probK != 0.) {
                 double pp = probK / pTot;
                 // System.out.printf("[%d] %.17f\n", k + 1, pp);

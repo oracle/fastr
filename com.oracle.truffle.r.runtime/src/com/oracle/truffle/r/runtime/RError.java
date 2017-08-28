@@ -573,6 +573,8 @@ public final class RError extends RuntimeException implements TruffleException {
         LAPACK_INVALID_VALUE("argument %d of Lapack routine %s had invalid value"),
         LAPACK_ZERO_INVERSE("element (%d, %d) is zero, so the inverse cannot be computed"),
         LAPACK_EXACTLY_SINGULAR("Lapack routine %s: system is exactly singular: U[%d,%d] = 0"),
+        LAPACK_CHOL_NOT_POSITIVE_DEFINITE("the leading minor of order %d is not positive definite"),
+        LAPACK_CHOL_RANK_DEF_OR_INDEF("the matrix is either rank-deficient or indefinite"),
         SYSTEM_COMP_SINGULAR("system is computationally singular: reciprocal condition number = %g"),
         RHS_SHOULD_HAVE_ROWS("right-hand side should have %d not %d rows"),
         SAME_NUMBER_ROWS("'%s' and '%s' must have the same number of rows"),

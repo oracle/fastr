@@ -766,7 +766,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                 RList argsList = ((RPairList) args).toRList();
                 result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), RCaller.topLevel, true,
                                 ArgumentsSignature.fromNamesAttribute(argsList.getNames()),
-                                argsList.getDataNonShared());
+                                argsList.getDataTemp());
             }
         } else if (expr instanceof RSymbol) {
             RSyntaxNode lookup = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) expr).getName(), false);

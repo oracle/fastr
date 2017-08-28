@@ -10,8 +10,8 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -20,6 +20,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.nodes.AccessVector;
 
 // translated from library/stats/src/hclust_utils.c
 
@@ -32,10 +33,10 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RIntVector cutree(RAbstractIntVector mergeIn, RAbstractIntVector whichIn,
+    protected RIntVector cutree(RAbstractIntVector merge, RAbstractIntVector which,
+                    @Cached("new()") AccessVector.Int mergeAccess,
+                    @Cached("new()") AccessVector.Int whichAccess,
                     @Cached("create()") GetDimAttributeNode getDimNode) {
-        RIntVector merge = mergeIn.materialize();
-        RIntVector which = whichIn.materialize();
         int whichLen = which.getLength();
 
         int j;
@@ -58,8 +59,8 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
         int[] z = new int[n];
 
         int[] iAns = new int[n * whichLen];
-        int[] iMerge = merge.getDataWithoutCopying();
-        int[] iWhich = which.getDataWithoutCopying();
+        Object mergeStore = mergeAccess.init(merge);
+        Object whichStore = whichAccess.init(which);
 
         // for (k = 1; k <= n; k++) {
         for (k = 0; k < n; k++) {
@@ -69,8 +70,8 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
 
         for (k = 1; k <= n - 1; k++) {
             /* k-th merge, from n-k+1 to n-k atoms: (m1,m2) = merge[ k , ] */
-            m1 = iMerge[k - 1];
-            m2 = iMerge[n - 1 + k - 1];
+            m1 = mergeAccess.getDataAt(merge, mergeStore, k - 1);
+            m2 = mergeAccess.getDataAt(merge, mergeStore, n - 1 + k - 1);
 
             if (m1 < 0 && m2 < 0) { /* merging atoms [-m1] and [-m2] */
                 mNr[adj(-m1)] = mNr[adj(-m2)] = k;
@@ -104,7 +105,7 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
              */
             foundJ = false;
             for (j = 0; j < whichLen; j++) {
-                if (iWhich[j] == n - k) {
+                if (whichAccess.getDataAt(which, whichStore, j) == n - k) {
                     if (!foundJ) { /* first match (and usually only one) */
                         foundJ = true;
                         // for (l = 1; l <= n; l++)
@@ -134,7 +135,7 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
 
         /* Dealing with trivial case which[] = n : */
         for (j = 0; j < whichLen; j++) {
-            if (iWhich[j] == n) {
+            if (whichAccess.getDataAt(which, whichStore, j) == n) {
                 for (l = 1, m1 = j * n; l <= n; l++, m1++) {
                     iAns[m1] = l;
                 }
