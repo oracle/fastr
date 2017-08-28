@@ -120,5 +120,12 @@ public class TestBuiltin_gregexpr extends TestBase {
         assertEval("{ x<-c(\"Aaa bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\", \"Aaa bbb Aaa Bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; gregexpr(p, x, perl=TRUE) }");
         assertEval("{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; gregexpr(p, x, perl=TRUE) }");
 
+        assertEval("gregexpr(')', 'abc()', fixed = TRUE)");
+        assertEval("gregexpr('(', 'abc()', fixed = TRUE)");
+        assertEval("gregexpr(')', 'abc()', fixed = FALSE)");
+        assertEval("gregexpr('\\\\)', 'abc()', fixed = FALSE)");
+        assertEval(Output.IgnoreErrorMessage, "gregexpr('(', 'abc()', fixed = FALSE)");
+        assertEval("gregexpr('\\\\(', 'abc()', fixed = FALSE)");
+
     }
 }

@@ -793,7 +793,7 @@ public class GrepFunctions {
                     throw RInternalError.unimplemented("multi-element patterns in regexpr not implemented yet");
                 }
                 String pattern = patternArg.getDataAt(0);
-                if (!perl) {
+                if (!perl && !fixed) {
                     pattern = RegExp.checkPreDefinedClasses(pattern);
                 }
                 // TODO: useBytes normally depends on the value of the parameter and (if false) on
@@ -1090,7 +1090,7 @@ public class GrepFunctions {
                     throw RInternalError.unimplemented("multi-element patterns in gregexpr not implemented yet");
                 }
                 String pattern = patternArg.getDataAt(0);
-                if (!perl) {
+                if (!perl && !fixed) {
                     pattern = RegExp.checkPreDefinedClasses(pattern);
                 }
                 // TODO: useBytes normally depends on the value of the parameter and (if false) on
