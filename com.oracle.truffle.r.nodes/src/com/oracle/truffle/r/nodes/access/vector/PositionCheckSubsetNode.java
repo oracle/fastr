@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -143,14 +144,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
                     @Cached("create()") GetNamesAttributeNode getNamesNode,
                     @Cached("create()") SetNamesAttributeNode setNamesNode) {
-        RAbstractIntVector intPosition = RDataFactory.createIntVector(positionLength);
-        // requires names preservation
-        RStringVector names = hasNamesProfile.profile(getNamesNode.getNames(position));
-        if (names != null) {
-            setNamesNode.setNames(intPosition, names);
-        }
-        Object convertedStore = intPosition.getInternalStore();
-
+        int[] intPosition = new int[positionLength];
         positionNACheck.enable(position);
         boolean hasSeenPositive = false;
         boolean hasSeenNegative = false;
@@ -201,10 +195,17 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     intPositionValue--;
                 }
             }
-            intPosition.setDataAt(convertedStore, i, intPositionValue);
+            intPosition[i] = intPositionValue;
         }
-        intPosition.setComplete(!hasSeenNA);
-        return doIntegerProfiled(profile, dimensionLength, intPosition, positionLength, hasSeenPositive, hasSeenNegative, hasSeenNA, outOfBoundsCount, zeroCount, maxOutOfBoundsIndex);
+
+        RIntVector intPositionVec = RDataFactory.createIntVector(intPosition, !hasSeenNA);
+        // requires names preservation
+        RStringVector names = hasNamesProfile.profile(getNamesNode.getNames(position));
+        if (names != null) {
+            setNamesNode.setNames(intPositionVec, names);
+        }
+
+        return doIntegerProfiled(profile, dimensionLength, intPositionVec, positionLength, hasSeenPositive, hasSeenNegative, hasSeenNA, outOfBoundsCount, zeroCount, maxOutOfBoundsIndex);
 
     }
 

@@ -18,7 +18,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.nodes.AccessVector.DoubleAccessor;
+import com.oracle.truffle.r.runtime.data.nodes.ReadAccessor;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 
 public final class RMultinom {
@@ -32,7 +32,7 @@ public final class RMultinom {
      * prob[j]) , sum_j rN[j] == n, sum_j prob[j] == 1.
      */
     @TruffleBoundary
-    public static boolean rmultinom(int nIn, DoubleAccessor prob, int maxK, int[] rN, int rnStartIdx, RandomNumberProvider rand, Rbinom rbinom) {
+    public static boolean rmultinom(int nIn, ReadAccessor.Double prob, int maxK, int[] rN, int rnStartIdx, RandomNumberProvider rand, Rbinom rbinom) {
         /*
          * This calculation is sensitive to exact values, so we try to ensure that the calculations
          * are as accurate as possible so different platforms are more likely to give the same

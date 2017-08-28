@@ -1005,7 +1005,7 @@ public abstract class ConnectionFunctions {
                 chars = new byte[1];
                 chars[0] = ((RRaw) vec).getRawDataAt(0);
             } else {
-                chars = ((RRawVector) vec).getDataWithoutCopying();
+                chars = ((RRawVector) vec).getReadonlyData();
             }
             strings.add(new String(chars, 0, n));
 

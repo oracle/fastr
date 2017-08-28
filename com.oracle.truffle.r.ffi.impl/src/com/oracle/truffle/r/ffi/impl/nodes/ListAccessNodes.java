@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -45,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.data.nodes.GetDataCopy;
 
 /**
  * Nodes that implement {@code CAR}, {@code CDR}, etc. N.B. GNU R does not error check the
@@ -114,17 +113,17 @@ public final class ListAccessNodes {
 
         @Specialization
         protected Object cdr(RList list,
+                        @Cached("create()") GetDataCopy.String getDataCopyNode,
                         @Cached("create()") GetNamesAttributeNode getNamesNode,
                         @Cached("create()") SetNamesAttributeNode setNamesNode) {
             if (list.getLength() == 1) {
                 return RNull.instance;
             }
-            Object[] dataCopy = list.getDataWithoutCopying();
             RStringVector names = getNamesNode.getNames(list);
-            RList copy = RDataFactory.createList(Arrays.copyOfRange(dataCopy, 1, list.getLength()));
+            RList copy = RDataFactory.createList(list.getDataCopy());
             if (names != null) {
-                String[] dataWithoutCopying = names.getDataWithoutCopying();
-                setNamesNode.setNames(copy, RDataFactory.createStringVector(Arrays.copyOfRange(dataWithoutCopying, 1, names.getLength()), true));
+                String[] namesDataCopy = getDataCopyNode.execute(names);
+                setNamesNode.setNames(copy, RDataFactory.createStringVector(namesDataCopy, true));
             }
             return copy;
         }

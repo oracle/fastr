@@ -62,7 +62,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorToArray;
+import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -321,8 +321,8 @@ public class LaFunctions {
 
         @Specialization
         protected RDoubleVector doQrCoefReal(RList qIn, RAbstractDoubleVector b,
-                        @Cached("create()") VectorToArray qrToArrayNode,
-                        @Cached("create()") VectorToArray tauToArrayNode,
+                        @Cached("create()") GetReadonlyData.Double qrToArrayNode,
+                        @Cached("create()") GetReadonlyData.Double tauToArrayNode,
                         @Cached("create()") GetDimAttributeNode getBDimsNode,
                         @Cached("create()") GetDimAttributeNode getQDimsNode,
                         @Cached("create()") LapackRFFI.DormqrNode dormqrNode,
@@ -341,8 +341,8 @@ public class LaFunctions {
             int nrhs = bDims[1];
             double[] work = new double[1];
             // qr and tau do not really need copying
-            double[] qrData = qrToArrayNode.getReadonly(qr);
-            double[] tauData = tauToArrayNode.getReadonly(tau);
+            double[] qrData = qrToArrayNode.execute(qr);
+            double[] tauData = tauToArrayNode.execute(tau);
             // this will be the result, we are going to modify this array
             double[] bData = b.materialize().getDataCopy();
             // ask for optimal size of work array
@@ -387,7 +387,7 @@ public class LaFunctions {
         @Specialization
 
         protected RList doDetGeReal(RAbstractDoubleVector aIn, boolean useLog,
-                        @Cached("create()") VectorToArray vectorToArrayNode,
+                        @Cached("create()") GetReadonlyData.Double vectorToArrayNode,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
                         @Cached("create()") LapackRFFI.DgetrfNode dgetrfNode) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
@@ -395,7 +395,7 @@ public class LaFunctions {
             int n = aDims[0];
             int[] ipiv = new int[n];
             double modulus = 0;
-            double[] aData = vectorToArrayNode.getReadonly(a);
+            double[] aData = vectorToArrayNode.execute(a);
             int info = dgetrfNode.execute(n, n, aData, n, ipiv);
             int sign = 1;
             if (info < 0) {
@@ -656,7 +656,10 @@ public class LaFunctions {
                     bData = bin.materialize().getDataNonShared();
                 } else {
                     bData = new double[n];
-                    System.arraycopy(bin.getInternalStore(), 0, bData, 0, n * p);
+                    // TODO: length for arraycopy is n*p, but bData is new double[n] ?? Should be
+                    // rewritten to manually copy using getDataAt, or using a new node in
+                    // c.o.t.r.runtime.data.nodes (the same in the "else" branch)
+                    System.arraycopy(bin.materialize().getReadonlyData(), 0, bData, 0, n * p);
                 }
                 b = RDataFactory.createDoubleVector(bData, RDataFactory.COMPLETE_VECTOR);
                 setBDimsNode.setDimensions(b, new int[]{n, p});
@@ -680,7 +683,7 @@ public class LaFunctions {
                     bData = bin.materialize().getDataNonShared();
                 } else {
                     bData = new double[n];
-                    System.arraycopy(bin.getInternalStore(), 0, bData, 0, n * p);
+                    System.arraycopy(bin.materialize().getReadonlyData(), 0, bData, 0, n * p);
                 }
                 b = RDataFactory.createDoubleVector(bData, RDataFactory.COMPLETE_VECTOR);
                 if (aDn != null) {

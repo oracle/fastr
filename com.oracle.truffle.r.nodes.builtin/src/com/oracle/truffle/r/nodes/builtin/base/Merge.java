@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorToArray;
+import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 
 /**
  * Note: invoked from merge.data.frame.
@@ -82,8 +82,8 @@ public abstract class Merge extends RBuiltinNode.Arg4 {
 
     @Specialization
     RList merge(RAbstractIntVector xIndsAbstract, RAbstractIntVector yIndsAbstract, boolean allX, boolean allY,
-                    @Cached("create()") VectorToArray xIndsToArray,
-                    @Cached("create()") VectorToArray yIndsToArray) {
+                    @Cached("create()") GetReadonlyData.Int xIndsToArray,
+                    @Cached("create()") GetReadonlyData.Int yIndsToArray) {
         RIntVector xInds = xIndsAbstract.materialize();
         RIntVector yInds = yIndsAbstract.materialize();
 
@@ -98,8 +98,8 @@ public abstract class Merge extends RBuiltinNode.Arg4 {
         for (int i = 0; i < ny; i++) {
             iy[i] = i + 1;
         }
-        int[] xIndsData = xIndsToArray.getReadonly(xInds);
-        int[] yIndsData = yIndsToArray.getReadonly(yInds);
+        int[] xIndsData = xIndsToArray.execute(xInds);
+        int[] yIndsData = yIndsToArray.execute(yInds);
         isortWithIndex(xIndsData, ix, nx);
         isortWithIndex(yIndsData, iy, ny);
 

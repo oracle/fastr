@@ -46,8 +46,8 @@ import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.nodes.AccessVector;
-import com.oracle.truffle.r.runtime.data.nodes.AccessVector.DoubleAccessor;
+import com.oracle.truffle.r.runtime.data.nodes.ReadAccessor;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReadAccess;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_1;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_2;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
@@ -376,8 +376,8 @@ public final class StatsFunctionsNodes {
 
         @Specialization
         protected RDoubleVector approx(RAbstractDoubleVector x, RAbstractDoubleVector y, RAbstractDoubleVector v, int method, double yl, double yr, double f,
-                                       @Cached("new()") AccessVector.Double xAccess,
-                                       @Cached("new()") AccessVector.Double yAccess) {
+                        @Cached("create()") VectorReadAccess.Double xAccess,
+                        @Cached("create()") VectorReadAccess.Double yAccess) {
             int nx = x.getLength();
             int nout = v.getLength();
             double[] yout = new double[nout];
@@ -390,8 +390,8 @@ public final class StatsFunctionsNodes {
             apprMeth.yhigh = yr;
             naCheck.enable(true);
 
-            DoubleAccessor xAccessor = new DoubleAccessor(x, xAccess);
-            DoubleAccessor yAccessor = new DoubleAccessor(y, yAccess);
+            ReadAccessor.Double xAccessor = new ReadAccessor.Double(x, xAccess);
+            ReadAccessor.Double yAccessor = new ReadAccessor.Double(y, yAccess);
             for (int i = 0; i < nout; i++) {
                 double xouti = v.getDataAt(i);
                 yout[i] = RRuntime.isNAorNaN(xouti) ? xouti : approx1(xouti, xAccessor, yAccessor, nx, apprMeth);
@@ -408,8 +408,8 @@ public final class StatsFunctionsNodes {
             int kind;
         }
 
-        private static double approx1(double v, DoubleAccessor x, DoubleAccessor y, int n,
-                                      ApprMeth apprMeth) {
+        private static double approx1(double v, ReadAccessor.Double x, ReadAccessor.Double y, int n,
+                        ApprMeth apprMeth) {
             /* Approximate y(v), given (x,y)[i], i = 0,..,n-1 */
             int i;
             int j;

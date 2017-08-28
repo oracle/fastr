@@ -36,8 +36,9 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.nodes.AccessVector;
-import com.oracle.truffle.r.runtime.data.nodes.AccessVector.DoubleAccessor;
+import com.oracle.truffle.r.runtime.data.nodes.ReadAccessor;
+import com.oracle.truffle.r.runtime.data.nodes.SetDataAt;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReadAccess;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nmath.distr.RMultinom;
 import com.oracle.truffle.r.runtime.nmath.distr.Rbinom;
@@ -68,7 +69,8 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
 
     @Specialization
     protected RIntVector doMultinom(int n, int size, RAbstractDoubleVector probsVec,
-                    @Cached("new()") AccessVector.Double probsAccess,
+                    @Cached("create()") VectorReadAccess.Double probsAccess,
+                    @Cached("create()") SetDataAt.Double probsSetter,
                     @Cached("create()") ReuseNonSharedNode reuseNonSharedNode,
                     @Cached("createClassProfile()") ValueProfile randGeneratorClassProfile,
                     @Cached("createBinaryProfile()") ConditionProfile hasAttributesProfile,
@@ -76,12 +78,12 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
                     @Cached("createNames()") GetFixedAttributeNode getNamesNode,
                     @Cached("createDimNames()") SetFixedAttributeNode setDimNamesNode) {
         RDoubleVector nonSharedProbs = ((RAbstractDoubleVector) reuseNonSharedNode.execute(probsVec)).materialize();
-        DoubleAccessor probs = new DoubleAccessor(nonSharedProbs, probsAccess);
-        fixupProb(nonSharedProbs, probs.store, probsAccess);
+        ReadAccessor.Double probs = new ReadAccessor.Double(nonSharedProbs, probsAccess);
+        fixupProb(nonSharedProbs, probs, probsSetter);
 
         RRNG.getRNGState();
         RandomNumberProvider rand = new RandomNumberProvider(randGeneratorClassProfile.profile(RRNG.currentGenerator()), RRNG.currentNormKind());
-        int k = probs.vector.getLength();
+        int k = nonSharedProbs.getLength();
         int[] result = new int[k * n];
         boolean isComplete = true;
         for (int i = 0, ik = 0; i < n; i++, ik += k) {
@@ -100,12 +102,12 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
         return resultVec;
     }
 
-    private void fixupProb(RDoubleVector p, Object pStore, AccessVector.Double pAccess) {
+    private void fixupProb(RDoubleVector p, ReadAccessor.Double pAccess, SetDataAt.Double pSetter) {
         double sum = 0.0;
         int npos = 0;
         int pLength = p.getLength();
         for (int i = 0; i < pLength; i++) {
-            double prob = pAccess.getDataAt(p, pStore, i);
+            double prob = pAccess.getDataAt(i);
             if (!Double.isFinite(prob)) {
                 throw error(NA_IN_PROB_VECTOR);
             }
@@ -121,8 +123,8 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
             throw error(NO_POSITIVE_PROBABILITIES);
         }
         for (int i = 0; i < pLength; i++) {
-            double prob = pAccess.getDataAt(p, pStore, i);
-            pAccess.setDataAt(p, pStore, i, prob / sum);
+            double prob = pAccess.getDataAt(i);
+            pSetter.setDataAt(p, pAccess.getStore(), i, prob / sum);
         }
     }
 }

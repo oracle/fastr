@@ -49,11 +49,11 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorIterator.IteratorData;
 
 abstract class VectorIteratorNodeAdapter extends Node {
     public static boolean hasNoNativeMemoryData(RAbstractVector vector) {
-        return !(vector instanceof RVector) || !((RVector) vector).hasNativeMemoryData();
+        return !(vector instanceof RVector<?>) || !((RVector<?>) vector).hasNativeMemoryData();
     }
 
     public static boolean isRVector(RAbstractVector vector) {
-        return vector instanceof RVector;
+        return vector instanceof RVector<?>;
     }
 }
 

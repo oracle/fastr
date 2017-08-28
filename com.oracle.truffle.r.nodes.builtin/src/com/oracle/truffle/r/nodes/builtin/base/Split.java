@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.AccessVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReadAccess;
 
 /**
  * The {@code split} internal. Internal version of 'split' is invoked from 'split.default' function
@@ -64,7 +64,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
     @SuppressWarnings("unused") private final ConditionProfile noStringLevels = ConditionProfile.createBinaryProfile();
     private final ConditionProfile namesProfile = ConditionProfile.createBinaryProfile();
-    @Child private AccessVector.Int factorAccess = new AccessVector.Int();
+    @Child private VectorReadAccess.Int factorAccess = VectorReadAccess.Int.create();
 
     private static final int INITIAL_SIZE = 5;
     private static final int SCALE_FACTOR = 2;
@@ -75,7 +75,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected RList split(RAbstractListVector x, RAbstractIntVector f) {
-        Object fStore = factorAccess.init(f);
+        Object fStore = factorAccess.getDataStore(f);
         RStringVector names = getLevelNode.execute(f);
         final int nLevels = getNLevels(names);
 
@@ -89,7 +89,8 @@ public abstract class Split extends RBuiltinNode.Arg2 {
         // perform split
         int factorLen = f.getLength();
         for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factorLen)) {
-            int resultIndex = factorAccess.getDataAt(f, fStore, fi) - 1; // a factor is a 1-based int vector
+            int resultIndex = factorAccess.getDataAt(f, fStore, fi) - 1; // a factor is a 1-based
+                                                                         // int vector
             Object[] collect = collectResults[resultIndex];
             if (collect.length == collectResultSize[resultIndex]) {
                 collectResults[resultIndex] = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
@@ -109,7 +110,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected RList split(RAbstractIntVector x, RAbstractIntVector f) {
-        Object fStore = factorAccess.init(f);
+        Object fStore = factorAccess.getDataStore(f);
         RStringVector names = getLevelNode.execute(f);
         final int nLevels = getNLevels(names);
 
@@ -123,7 +124,8 @@ public abstract class Split extends RBuiltinNode.Arg2 {
         // perform split
         int factorLen = f.getLength();
         for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factorLen)) {
-            int resultIndex = factorAccess.getDataAt(f, fStore, fi) - 1; // a factor is a 1-based int vector
+            int resultIndex = factorAccess.getDataAt(f, fStore, fi) - 1; // a factor is a 1-based
+                                                                         // int vector
             int[] collect = collectResults[resultIndex];
             if (collect.length == collectResultSize[resultIndex]) {
                 collectResults[resultIndex] = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
@@ -143,7 +145,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected RList split(RAbstractDoubleVector x, RAbstractIntVector f) {
-        Object fStore = factorAccess.init(f);
+        Object fStore = factorAccess.getDataStore(f);
         RStringVector names = getLevelNode.execute(f);
         final int nLevels = getNLevels(names);
 
@@ -157,7 +159,8 @@ public abstract class Split extends RBuiltinNode.Arg2 {
         // perform split
         int factorLen = f.getLength();
         for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factorLen)) {
-            int resultIndex = factorAccess.getDataAt(f, fStore, fi) - 1; // a factor is a 1-based int vector
+            int resultIndex = factorAccess.getDataAt(f, fStore, fi) - 1; // a factor is a 1-based
+                                                                         // int vector
             double[] collect = collectResults[resultIndex];
             if (collect.length == collectResultSize[resultIndex]) {
                 collectResults[resultIndex] = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
@@ -177,7 +180,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected RList split(RAbstractStringVector x, RAbstractIntVector f) {
-        Object fStore = factorAccess.init(f);
+        Object fStore = factorAccess.getDataStore(f);
         RStringVector names = getLevelNode.execute(f);
         final int nLevels = getNLevels(names);
 
@@ -191,7 +194,8 @@ public abstract class Split extends RBuiltinNode.Arg2 {
         // perform split
         int factorLen = f.getLength();
         for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factorLen)) {
-            int resultIndex = factorAccess.getDataAt(f, fStore, fi) - 1; // a factor is a 1-based int vector
+            int resultIndex = factorAccess.getDataAt(f, fStore, fi) - 1; // a factor is a 1-based
+                                                                         // int vector
             String[] collect = collectResults[resultIndex];
             if (collect.length == collectResultSize[resultIndex]) {
                 collectResults[resultIndex] = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
@@ -211,7 +215,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected RList split(RAbstractLogicalVector x, RAbstractIntVector f) {
-        Object fStore = factorAccess.init(f);
+        Object fStore = factorAccess.getDataStore(f);
         RStringVector names = getLevelNode.execute(f);
         final int nLevels = getNLevels(names);
 
@@ -225,7 +229,8 @@ public abstract class Split extends RBuiltinNode.Arg2 {
         // perform split
         int factorLen = f.getLength();
         for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factorLen)) {
-            int resultIndex = factorAccess.getDataAt(f, fStore, fi) - 1; // a factor is a 1-based int vector
+            int resultIndex = factorAccess.getDataAt(f, fStore, fi) - 1; // a factor is a 1-based
+                                                                         // int vector
             byte[] collect = collectResults[resultIndex];
             if (collect.length == collectResultSize[resultIndex]) {
                 collectResults[resultIndex] = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
@@ -245,7 +250,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected RList split(RRawVector x, RAbstractIntVector f) {
-        Object fStore = factorAccess.init(f);
+        Object fStore = factorAccess.getDataStore(f);
         RStringVector names = getLevelNode.execute(f);
         final int nLevels = getNLevels(names);
 
@@ -259,7 +264,8 @@ public abstract class Split extends RBuiltinNode.Arg2 {
         // perform split
         int factorLen = f.getLength();
         for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factorLen)) {
-            int resultIndex = factorAccess.getDataAt(f, fStore, fi) - 1; // a factor is a 1-based int vector
+            int resultIndex = factorAccess.getDataAt(f, fStore, fi) - 1; // a factor is a 1-based
+                                                                         // int vector
             byte[] collect = collectResults[resultIndex];
             if (collect.length == collectResultSize[resultIndex]) {
                 collectResults[resultIndex] = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
@@ -287,7 +293,9 @@ public abstract class Split extends RBuiltinNode.Arg2 {
             }
             int factorLen = factor.getLength();
             for (int i = 0, fi = 0; i < x.getLength(); ++i, fi = Utils.incMod(fi, factorLen)) {
-                int resultIndex = factorAccess.getDataAt(factor, fStore, fi) - 1; // a factor is a 1-based int vector
+                int resultIndex = factorAccess.getDataAt(factor, fStore, fi) - 1; // a factor is a
+                                                                                  // 1-based int
+                                                                                  // vector
                 namesArr[resultIndex][resultNamesIdxs[resultIndex]++] = xNames.getDataAt(i);
             }
             RStringVector[] resultNames = new RStringVector[nLevels];

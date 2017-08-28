@@ -20,7 +20,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.nodes.AccessVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReadAccess;
 
 // translated from library/stats/src/hclust_utils.c
 
@@ -34,8 +34,8 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
 
     @Specialization
     protected RIntVector cutree(RAbstractIntVector merge, RAbstractIntVector which,
-                    @Cached("new()") AccessVector.Int mergeAccess,
-                    @Cached("new()") AccessVector.Int whichAccess,
+                    @Cached("create()") VectorReadAccess.Int mergeAccess,
+                    @Cached("create()") VectorReadAccess.Int whichAccess,
                     @Cached("create()") GetDimAttributeNode getDimNode) {
         int whichLen = which.getLength();
 
@@ -59,8 +59,8 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
         int[] z = new int[n];
 
         int[] iAns = new int[n * whichLen];
-        Object mergeStore = mergeAccess.init(merge);
-        Object whichStore = whichAccess.init(which);
+        Object mergeStore = mergeAccess.getDataStore(merge);
+        Object whichStore = whichAccess.getDataStore(which);
 
         // for (k = 1; k <= n; k++) {
         for (k = 0; k < n; k++) {

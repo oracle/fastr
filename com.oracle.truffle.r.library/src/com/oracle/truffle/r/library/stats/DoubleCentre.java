@@ -20,7 +20,8 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.nodes.AccessVector;
+import com.oracle.truffle.r.runtime.data.nodes.SetDataAt;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReadAccess;
 
 public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
 
@@ -31,11 +32,12 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
 
     @Specialization
     protected RDoubleVector doubleCentre(RAbstractDoubleVector aVecAbs,
-                    @Cached("new()") AccessVector.Double aAccess,
+                    @Cached("create()") VectorReadAccess.Double aAccess,
+                    @Cached("create()") SetDataAt.Double aSetter,
                     @Cached("create()") GetDimAttributeNode getDimNode) {
         RDoubleVector aVec = aVecAbs.materialize();
         int n = getDimNode.nrows(aVec);
-        Object aStore = aAccess.init(aVec);
+        Object aStore = aAccess.getDataStore(aVec);
         for (int i = 0; i < n; i++) {
             double sum = 0;
             for (int j = 0; j < n; j++) {
@@ -44,7 +46,7 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
             sum /= n;
             for (int j = 0; j < n; j++) {
                 double val = aAccess.getDataAt(aVec, aStore, i + j * n);
-                aAccess.setDataAt(aVec, aStore, i + j * n, val - sum);
+                aSetter.setDataAt(aVec, aStore, i + j * n, val - sum);
             }
         }
         for (int j = 0; j < n; j++) {
@@ -55,7 +57,7 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
             sum /= n;
             for (int i = 0; i < n; i++) {
                 double val = aAccess.getDataAt(aVec, aStore, i + j * n);
-                aAccess.setDataAt(aVec, aStore, i + j * n, val - sum);
+                aSetter.setDataAt(aVec, aStore, i + j * n, val - sum);
             }
         }
         return aVec;

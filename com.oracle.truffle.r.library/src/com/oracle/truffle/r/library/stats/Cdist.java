@@ -25,6 +25,8 @@ import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.data.nodes.ReadAccessor;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReadAccess;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -32,8 +34,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.nodes.AccessVector;
-import com.oracle.truffle.r.runtime.data.nodes.AccessVector.DoubleAccessor;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
@@ -51,7 +51,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
 
     @Specialization(guards = "method == cachedMethod")
     protected RDoubleVector cdist(RAbstractDoubleVector x, @SuppressWarnings("unused") int method, RList list, double p, @SuppressWarnings("unused") @Cached("method") int cachedMethod,
-                    @Cached("new()") AccessVector.Double xAccess,
+                    @Cached("create()") VectorReadAccess.Double xAccess,
                     @Cached("getMethod(method)") Method methodObj,
                     @Cached("create()") SetAttributeNode setAttrNode,
                     @Cached("create()") SetClassAttributeNode setClassAttrNode,
@@ -61,7 +61,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         int n = nr * (nr - 1) / 2; /* avoid int overflow for N ~ 50,000 */
         double[] ans = new double[n];
         RDoubleVector xm = x.materialize();
-        rdistance(new DoubleAccessor(x, xAccess), nr, nc, ans, false, methodObj, p);
+        rdistance(new ReadAccessor.Double(x, xAccess), nr, nc, ans, false, methodObj, p);
         RDoubleVector result = RDataFactory.createDoubleVector(ans, naCheck.neverSeenNA());
         DynamicObject resultAttrs = result.initAttributes();
 
@@ -96,7 +96,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         return Method.values()[method - 1];
     }
 
-    private void rdistance(DoubleAccessor xAccess, int nr, int nc, double[] d, boolean diag, Method method, double p) {
+    private void rdistance(ReadAccessor.Double xAccess, int nr, int nc, double[] d, boolean diag, Method method, double p) {
         int ij; /* can exceed 2^31 - 1, but Java can't handle that */
         //
         if (method == Method.MINKOWSKI) {
@@ -119,7 +119,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
     public enum Method {
         EUCLIDEAN {
             @Override
-            public double dist(DoubleAccessor xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
+            public double dist(ReadAccessor.Double xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
                 double dev;
@@ -152,7 +152,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         MAXIMUM {
             @Override
-            public double dist(DoubleAccessor xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
+            public double dist(ReadAccessor.Double xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
                 double dev;
@@ -184,7 +184,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         MANHATTAN {
             @Override
-            public double dist(DoubleAccessor xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
+            public double dist(ReadAccessor.Double xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
                 double dev;
@@ -217,7 +217,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         CANBERRA {
             @Override
-            public double dist(DoubleAccessor xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
+            public double dist(ReadAccessor.Double xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
                 double dev;
@@ -258,7 +258,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         BINARY {
             @Override
-            public double dist(DoubleAccessor xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
+            public double dist(ReadAccessor.Double xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
                 int total;
@@ -300,7 +300,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         MINKOWSKI {
             @Override
-            public double dist(DoubleAccessor xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
+            public double dist(ReadAccessor.Double xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
                 double dev;
@@ -331,6 +331,6 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
             }
         };
 
-        public abstract double dist(DoubleAccessor xAccess, int nr, int nc, int i1, int i2, double p);
+        public abstract double dist(ReadAccessor.Double xAccess, int nr, int nc, int i1, int i2, double p);
     }
 }

@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorToArray;
+import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -75,7 +75,7 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = {"FULL_PRECISION", "args.getLength() == 1", "isRDoubleVector(args.getArgument(0))", "naRm == cachedNaRm"})
     protected double sumLengthOneRDoubleVector(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean naRm,
-                    @Cached("create()") VectorToArray vectorToArrayNode,
+                    @Cached("create()") GetReadonlyData.Double vectorToArrayNode,
                     @Cached("naRm") boolean cachedNaRm,
                     @Cached("create()") VectorLengthProfile lengthProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
@@ -86,7 +86,7 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
         int length = lengthProfile.profile(vector.getLength());
 
         if (needsExactSumProfile.profile(length >= 3)) {
-            return exactSumNode.execute(vectorToArrayNode.getReadonly(vector), !vector.isComplete(), cachedNaRm);
+            return exactSumNode.execute(vectorToArrayNode.execute(vector), !vector.isComplete(), cachedNaRm);
         } else {
             na.enable(vector);
             loopProfile.profileCounted(length);
