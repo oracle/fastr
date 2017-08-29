@@ -195,12 +195,11 @@ public abstract class ForeignArray2R extends RBaseNode {
      */
     public static RAbstractVector asAbstractVector(CollectedElements ce) {
         InteropTypeCheck.RType type = ce.typeCheck.getType();
-        if (type == null) {
-            return RDataFactory.createList(ce.elements.toArray(new Object[ce.elements.size()]));
-        }
         int size = ce.elements.size();
         boolean complete = true;
         switch (type) {
+            case NONE:
+                return RDataFactory.createList(ce.elements.toArray(new Object[ce.elements.size()]));
             case BOOLEAN:
                 byte[] bytes = new byte[size];
                 for (int i = 0; i < size; i++) {
@@ -263,13 +262,13 @@ public abstract class ForeignArray2R extends RBaseNode {
             BOOLEAN,
             DOUBLE,
             INTEGER,
-            STRING;
+            STRING,
+            NONE;
         }
 
         private RType type = null;
-        private boolean sameRType = true;
 
-        public void checkForeign(Object value) {
+        public RType checkForeign(Object value) {
             if (value instanceof Boolean) {
                 setType(RType.BOOLEAN);
             } else if (value instanceof Byte || value instanceof Integer || value instanceof Short) {
@@ -279,12 +278,12 @@ public abstract class ForeignArray2R extends RBaseNode {
             } else if (value instanceof Character || value instanceof String) {
                 setType(RType.STRING);
             } else {
-                this.type = null;
-                sameRType = false;
+                this.type = RType.NONE;
             }
+            return this.type;
         }
 
-        public void checkVector(RAbstractVector value) {
+        public RType checkVector(RAbstractVector value) {
             if (value instanceof RAbstractLogicalVector) {
                 setType(RType.BOOLEAN);
             } else if (value instanceof RAbstractIntVector) {
@@ -294,22 +293,23 @@ public abstract class ForeignArray2R extends RBaseNode {
             } else if (value instanceof RAbstractStringVector) {
                 setType(RType.STRING);
             } else {
-                this.type = null;
-                sameRType = false;
+                this.type = RType.NONE;
             }
+            return this.type;
         }
 
         private void setType(RType check) {
-            if (sameRType && this.type == null) {
-                this.type = check;
-            } else if (this.type != check) {
-                this.type = null;
-                sameRType = false;
+            if (this.type != RType.NONE) {
+                if (this.type == null) {
+                    this.type = check;
+                } else if (this.type != check) {
+                    this.type = RType.NONE;
+                }
             }
         }
 
         public RType getType() {
-            return sameRType ? type : null;
+            return type != null ? type : RType.NONE;
         }
     }
 

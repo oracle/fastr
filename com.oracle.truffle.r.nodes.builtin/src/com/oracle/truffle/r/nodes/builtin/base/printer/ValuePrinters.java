@@ -79,13 +79,7 @@ final class ValuePrinters implements ValuePrinter<Object> {
         } else {
             // handle types that are meant for or can appear via Truffle interop
             Object x = v;
-            if (x instanceof Boolean) {
-                x = RRuntime.asLogical((Boolean) x);
-            } else if (x instanceof Long || x instanceof Short || x instanceof Float) {
-                x = ((Number) x).doubleValue();
-            } else if (x instanceof Character) {
-                x = ((Character) x).toString();
-            } else if (x instanceof RInteropScalar) {
+            if (x instanceof RInteropScalar) {
                 x = ((RInteropScalar) x).getRValue();
             }
             // try to box a scalar primitive value to the respective vector
