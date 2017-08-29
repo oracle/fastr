@@ -30,8 +30,8 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 public abstract class Foreign2R extends RBaseNode {
 
     @Child private Foreign2R recursive;
+    @Child private Node isNull;
     @Child private Node isBoxed;
     @Child private Node unbox;
 
@@ -85,7 +86,15 @@ public abstract class Foreign2R extends RBaseNode {
     }
 
     @Specialization(guards = "isForeignObject(obj)")
-    public Object doUnbox(TruffleObject obj) {
+    public Object doForeignObject(TruffleObject obj) {
+        if (isNull == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            isNull = insert(Message.IS_NULL.createNode());
+        }
+        if (ForeignAccess.sendIsNull(isNull, obj)) {
+            return RNull.instance;
+        }
+
         /*
          * For the time being, we have to ask "IS_BOXED" all the time (instead of simply trying
          * UNBOX first), because some TruffleObjects return bogus values from UNBOX when IS_BOXED is
