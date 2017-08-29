@@ -118,5 +118,11 @@ public class TestBuiltin_regexpr extends TestBase {
         assertEval("{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
         assertEval("{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
 
+        assertEval("regexpr(')', 'abc()', fixed = TRUE)");
+        assertEval("regexpr('(', 'abc()', fixed = TRUE)");
+        assertEval("regexpr(')', 'abc()', fixed = FALSE)");
+        assertEval("regexpr('\\\\)', 'abc()', fixed = FALSE)");
+        assertEval(Output.IgnoreErrorMessage, "regexpr('(', 'abc()', fixed = FALSE)");
+        assertEval("regexpr('\\\\(', 'abc()', fixed = FALSE)");
     }
 }
