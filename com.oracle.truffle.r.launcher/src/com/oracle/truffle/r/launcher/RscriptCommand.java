@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.graalvm.options.OptionCategory;
@@ -45,7 +46,7 @@ public class RscriptCommand {
 
     // CheckStyle: stop system..print check
 
-    private static void preprocessRScriptOptions(RLauncher launcher, RCmdOptions options) {
+    private static String[] preprocessRScriptOptions(RLauncher launcher, RCmdOptions options) {
         String[] arguments = options.getArguments();
         int resultArgsLength = arguments.length;
         int firstNonOptionArgIndex = options.getFirstNonOptionArgIndex();
@@ -65,9 +66,6 @@ public class RscriptCommand {
                     System.exit(1);
                 }
             } else {
-                if (arguments[firstNonOptionArgIndex].startsWith("-")) {
-                    throw RCommand.fatal("file name is missing");
-                }
                 options.setValue(RCmdOption.FILE, arguments[firstNonOptionArgIndex]);
             }
         }
@@ -97,7 +95,7 @@ public class RscriptCommand {
                 adjArgs.add(arguments[rx++]);
             }
         }
-        options.setArguments(adjArgs.toArray(new String[adjArgs.size()]));
+        return adjArgs.toArray(new String[adjArgs.size()]);
     }
 
     public static void main(String[] args) {
@@ -117,20 +115,21 @@ public class RscriptCommand {
             }
         };
         Map<String, String> polyglotOptions = new HashMap<>();
-        for (int i = 1; i < argsList.size(); i++) {
-            String arg = argsList.get(i);
+        Iterator<String> iter = argsList.iterator();
+        while (iter.hasNext()) {
+            String arg = iter.next();
             if (launcher.parsePolyglotOption("R", polyglotOptions, arg)) {
-                argsList.remove(i);
+                iter.remove();
             }
         }
         if (launcher.runPolyglotAction()) {
             return 0;
         }
         RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, argsList.toArray(new String[argsList.size()]), false);
-        preprocessRScriptOptions(launcher, options);
+        String[] arguments = preprocessRScriptOptions(launcher, options);
 
         ConsoleHandler consoleHandler = RCommand.createConsoleHandler(options, false, inStream, outStream);
-        try (Context context = Context.newBuilder().options(polyglotOptions).arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
+        try (Context context = Context.newBuilder().options(polyglotOptions).arguments("R", arguments).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
             consoleHandler.setContext(context);
             return RCommand.readEvalPrint(context, consoleHandler);
         }
