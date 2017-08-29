@@ -67,7 +67,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     protected Object castLogicalRecursive(Object o) {
         if (recursiveCastLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastLogical = insert(CastLogicalNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
+            recursiveCastLogical = insert(CastLogicalNodeGen.create(preserveNames(), preserveDimensions(), preserveRegAttributes()));
         }
         return recursiveCastLogical.execute(o);
     }
@@ -93,7 +93,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     private RLogicalVector vectorCopy(RAbstractVector operand, byte[] bdata, boolean isComplete) {
         RLogicalVector ret = RDataFactory.createLogicalVector(bdata, isComplete, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -182,7 +182,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
             }
         }
         RLogicalVector ret = RDataFactory.createLogicalVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list));
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(list);
         }
         return ret;

@@ -33,15 +33,20 @@ import static com.oracle.truffle.r.runtime.RError.Message.UNIMPLEMENTED_TYPE_IN_
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.MODIFIES_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 public class RNGFunctions {
@@ -94,6 +99,48 @@ public class RNGFunctions {
 
         private static RIntVector getCurrent() {
             return RDataFactory.createIntVector(new int[]{RRNG.currentKindAsInt(), RRNG.currentNormKindAsInt()}, RDataFactory.COMPLETE_VECTOR);
+        }
+    }
+
+    @RBuiltin(name = ".fastr.set.seed", visibility = OFF, kind = PRIMITIVE, parameterNames = {"data"}, behavior = MODIFIES_STATE)
+    public abstract static class FastRSetSeed extends RBuiltinNode.Arg1 {
+
+        static {
+            Casts.noCasts(FastRSetSeed.class);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RNull setSeed(RAbstractIntVector data) {
+            int[] arr = new int[data.getLength()];
+            for (int i = 0; i < arr.length; i++) {
+                arr[i] = data.getDataAt(i);
+            }
+            RContext.getInstance().stateRNG.currentSeeds = arr;
+            return RNull.instance;
+        }
+
+        protected boolean isSetOperation(Object param) {
+            return !(param instanceof RMissing);
+        }
+
+        @Specialization(guards = {"isSetOperation(data)"})
+        @TruffleBoundary
+        protected RNull setSeed(Object data) {
+            RContext.getInstance().stateRNG.currentSeeds = data;
+            return RNull.instance;
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Object getSeed(@SuppressWarnings("unused") RMissing data) {
+            Object seeds = RContext.getInstance().stateRNG.currentSeeds;
+            if (seeds instanceof int[]) {
+                int[] seedsArr = (int[]) seeds;
+                return RDataFactory.createIntVector(seedsArr, RDataFactory.INCOMPLETE_VECTOR);
+            }
+            assert seeds != null;
+            return seeds;
         }
     }
 

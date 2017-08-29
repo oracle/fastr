@@ -70,19 +70,19 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     }
 
     @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         // TODO might be possible to implement some of these without closures
         switch (type) {
             case Integer:
-                return RClosures.createToIntVector(this);
+                return RClosures.createToIntVector(this, keepAttributes);
             case Double:
                 return this;
             case Complex:
-                return RClosures.createToComplexVector(this);
+                return RClosures.createToComplexVector(this, keepAttributes);
             case Character:
-                return RClosures.createToStringVector(this);
+                return RClosures.createToStringVector(this, keepAttributes);
             case List:
-                return RClosures.createToListVector(this);
+                return RClosures.createToListVector(this, keepAttributes);
             default:
                 return null;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,9 +32,9 @@ public class TestRRNG extends TestBase {
         // changes generator to MarsagliaMulticarry and sets its 2 seeds
         assertEval(".Random.seed <- c(401L, 1L, 2L); runif(3)");
         // wrong values: not integer
-        assertEval(Output.IgnoreWarningContext, ".Random.seed <- c(401, 1, 2); invisible(runif(3))");
+        assertEval(Output.IgnoreWarningContext, Output.MayIgnoreWarningContext, ".Random.seed <- c(401, 1, 2); invisible(runif(3))");
         // wrong values: wrong generator number
-        assertEval(Output.IgnoreWarningContext, ".Random.seed <- c(999, 1, 2); invisible(runif(3))");
+        assertEval(Output.IgnoreWarningContext, Output.MayIgnoreWarningContext, ".Random.seed <- c(999, 1, 2); invisible(runif(3))");
     }
 
     @Test

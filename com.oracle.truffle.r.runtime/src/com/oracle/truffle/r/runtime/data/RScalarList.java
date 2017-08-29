@@ -57,7 +57,7 @@ public final class RScalarList extends RScalarVector implements RAbstractListVec
     }
 
     @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case List:
                 return this;

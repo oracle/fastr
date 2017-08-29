@@ -127,8 +127,8 @@ public final class BinaryMapNode extends RBaseNode {
         RAbstractVector left = leftClass.cast(originalLeft);
         RAbstractVector right = rightClass.cast(originalRight);
 
-        RAbstractVector leftCast = left.castSafe(argumentType, leftIsNAProfile);
-        RAbstractVector rightCast = right.castSafe(argumentType, rightIsNAProfile);
+        RAbstractVector leftCast = left.castSafe(argumentType, leftIsNAProfile, false);
+        RAbstractVector rightCast = right.castSafe(argumentType, rightIsNAProfile, false);
 
         assert leftCast != null;
         assert rightCast != null;

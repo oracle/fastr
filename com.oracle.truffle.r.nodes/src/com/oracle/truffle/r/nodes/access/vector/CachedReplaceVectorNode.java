@@ -243,7 +243,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
 
         if (!isList() && value instanceof RAbstractVector) {
-            value = ((RAbstractVector) value).castSafe(castType, valueIsNA);
+            value = ((RAbstractVector) value).castSafe(castType, valueIsNA, false);
         }
 
         vector = share(vector, value);
@@ -352,7 +352,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         if (castType == RType.List) {
             return CastListNodeGen.create(true, false, true);
         } else {
-            return CastTypeNode.createCast(castType, true, true, true);
+            return CastTypeNode.createCast(castType, true, true, true, false);
         }
     }
 

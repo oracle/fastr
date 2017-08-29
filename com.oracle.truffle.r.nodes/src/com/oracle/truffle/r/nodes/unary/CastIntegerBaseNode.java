@@ -41,12 +41,12 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
 
     @Child private CastIntegerNode recursiveCastInteger;
 
-    protected CastIntegerBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
-        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
+    protected CastIntegerBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, useClosure);
     }
 
     protected CastIntegerBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes);
+        super(preserveNames, preserveDimensions, preserveAttributes, false, false);
     }
 
     @Override
@@ -57,7 +57,7 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
     protected Object castIntegerRecursive(Object o) {
         if (recursiveCastInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastInteger = insert(CastIntegerNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
+            recursiveCastInteger = insert(CastIntegerNodeGen.create(preserveNames(), preserveDimensions(), preserveRegAttributes(), false, reuseNonShared()));
         }
         return recursiveCastInteger.executeInt(o);
     }

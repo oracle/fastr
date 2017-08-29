@@ -44,82 +44,70 @@ public class TruffleNFI_C implements CRFFI {
         @Specialization(guards = "args.length == 0")
         protected void invokeCall0(NativeCallInfo nativeCallInfo, @SuppressWarnings("unused") Object[] args, @SuppressWarnings("unused") boolean hasStrings,
                         @Cached("createExecute(args.length)") Node executeNode) {
-            synchronized (TruffleNFI_Call.class) {
-                try {
-                    TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
-                                    nativeCallInfo.address.asTruffleObject(), "bind", "(): void");
-                    ForeignAccess.sendExecute(executeNode, callFunction);
-                } catch (InteropException ex) {
-                    throw RInternalError.shouldNotReachHere(ex);
-                }
+            try {
+                TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
+                                nativeCallInfo.address.asTruffleObject(), "bind", "(): void");
+                ForeignAccess.sendExecute(executeNode, callFunction);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
 
         @Specialization(guards = "args.length == 1")
         protected void invokeCall1(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean hasStrings,
                         @Cached("createExecute(args.length)") Node executeNode) {
-            synchronized (TruffleNFI_Call.class) {
-                try {
-                    Object[] nargs = new Object[args.length];
-                    TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
-                                    nativeCallInfo.address.asTruffleObject(), "bind", getSignature(args, nargs));
-                    ForeignAccess.sendExecute(executeNode, callFunction, nargs[0]);
-                } catch (InteropException ex) {
-                    throw RInternalError.shouldNotReachHere(ex);
-                }
+            try {
+                Object[] nargs = new Object[args.length];
+                TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
+                                nativeCallInfo.address.asTruffleObject(), "bind", getSignature(args, nargs));
+                ForeignAccess.sendExecute(executeNode, callFunction, nargs[0]);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
 
         @Specialization(guards = "args.length == 2")
         protected void invokeCall2(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean hasStrings,
                         @Cached("createExecute(args.length)") Node executeNode) {
-            synchronized (TruffleNFI_Call.class) {
-                try {
-                    Object[] nargs = new Object[args.length];
-                    TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
-                                    nativeCallInfo.address.asTruffleObject(), "bind", getSignature(args, nargs));
-                    ForeignAccess.sendExecute(executeNode, callFunction, nargs[0], nargs[1]);
-                } catch (InteropException ex) {
-                    throw RInternalError.shouldNotReachHere(ex);
-                }
+            try {
+                Object[] nargs = new Object[args.length];
+                TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
+                                nativeCallInfo.address.asTruffleObject(), "bind", getSignature(args, nargs));
+                ForeignAccess.sendExecute(executeNode, callFunction, nargs[0], nargs[1]);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
 
         @Specialization(guards = "args.length == 3")
         protected void invokeCall3(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean hasStrings,
                         @Cached("createExecute(args.length)") Node executeNode) {
-            synchronized (TruffleNFI_Call.class) {
-                try {
-                    Object[] nargs = new Object[args.length];
-                    TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
-                                    nativeCallInfo.address.asTruffleObject(), "bind", getSignature(args, nargs));
-                    ForeignAccess.sendExecute(executeNode, callFunction, nargs[0], nargs[1], nargs[2]);
-                } catch (InteropException ex) {
-                    throw RInternalError.shouldNotReachHere(ex);
-                }
+            try {
+                Object[] nargs = new Object[args.length];
+                TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
+                                nativeCallInfo.address.asTruffleObject(), "bind", getSignature(args, nargs));
+                ForeignAccess.sendExecute(executeNode, callFunction, nargs[0], nargs[1], nargs[2]);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
 
         @Specialization(guards = "args.length == 4")
         protected void invokeCall4(NativeCallInfo nativeCallInfo, Object[] args, @SuppressWarnings("unused") boolean hasStrings,
                         @Cached("createExecute(args.length)") Node executeNode) {
-            synchronized (TruffleNFI_Call.class) {
-                try {
-                    Object[] nargs = new Object[args.length];
-                    TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
-                                    nativeCallInfo.address.asTruffleObject(), "bind", getSignature(args, nargs));
-                    ForeignAccess.sendExecute(executeNode, callFunction, nargs[0], nargs[1], nargs[2], nargs[3]);
-                } catch (InteropException ex) {
-                    throw RInternalError.shouldNotReachHere(ex);
-                }
+            try {
+                Object[] nargs = new Object[args.length];
+                TruffleObject callFunction = (TruffleObject) ForeignAccess.sendInvoke(bindNode,
+                                nativeCallInfo.address.asTruffleObject(), "bind", getSignature(args, nargs));
+                ForeignAccess.sendExecute(executeNode, callFunction, nargs[0], nargs[1], nargs[2], nargs[3]);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
 
         @Fallback
         protected void invokeCallN(@SuppressWarnings("unused") NativeCallInfo nativeCallInfo, @SuppressWarnings("unused") Object[] args, @SuppressWarnings("unused") boolean hasStrings) {
-            synchronized (TruffleNFI_Call.class) {
-                throw RInternalError.unimplemented(".C (too many args)");
-            }
+            throw RInternalError.unimplemented(".C (too many args)");
         }
 
         public static Node createExecute(int n) {

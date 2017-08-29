@@ -102,7 +102,7 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
             FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameSlot, newValue, false, invalidateProfile);
         } else {
             // it's a local variable lookup; so use 'frame' for both, executing and looking up
-            return handleActiveBinding(frame, frame, value, frameSlot, invalidateProfile, isActiveBindingProfile);
+            return handleActiveBinding(frame, frame, value, frameSlot, invalidateProfile, isActiveBindingProfile, storedObjectProfile, mode);
         }
         return value;
     }

@@ -72,6 +72,7 @@ public final class RInternalCode {
         }
     }
 
+    @TruffleBoundary
     public synchronized RFunction lookupFunction(String name) {
         REnvironment env = this.evaluatedEnvironment;
         if (env == null) {
@@ -83,6 +84,7 @@ public final class RInternalCode {
         return fun;
     }
 
+    @TruffleBoundary
     public static RInternalCode lookup(RContext context, String basePackage, Source source) {
         ContextStateImpl state = context.stateInternalCode;
         RInternalCode code = state.get(source);

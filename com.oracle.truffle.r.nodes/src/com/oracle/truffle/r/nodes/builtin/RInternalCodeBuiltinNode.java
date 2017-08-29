@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
@@ -40,20 +38,17 @@ import com.oracle.truffle.r.runtime.data.RFunction;
  */
 public final class RInternalCodeBuiltinNode extends RExternalBuiltinNode {
 
-    private final RContext context;
     private final String basePackage;
     private final Source code;
     private final String functionName;
 
     @Child private CallMatcherNode call = CallMatcherNode.create(true);
-    @CompilationFinal private RFunction function;
 
     static {
         Casts.noCasts(RInternalCodeBuiltinNode.class);
     }
 
-    public RInternalCodeBuiltinNode(RContext context, String basePackage, Source code, String functionName) {
-        this.context = context;
+    public RInternalCodeBuiltinNode(String basePackage, Source code, String functionName) {
         this.basePackage = basePackage;
         this.code = code;
         this.functionName = functionName;
@@ -66,15 +61,13 @@ public final class RInternalCodeBuiltinNode extends RExternalBuiltinNode {
 
     @Override
     public Object call(VirtualFrame frame, RArgsValuesAndNames actualArgs) {
+        RInternalCode internalCode = RInternalCode.lookup(RContext.getInstance(), basePackage, code);
+        RFunction function = internalCode.lookupFunction(functionName);
         if (function == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            RInternalCode internalCode = RInternalCode.lookup(context, basePackage, code);
-            this.function = internalCode.lookupFunction(functionName);
-            if (this.function == null) {
-                throw RInternalError.shouldNotReachHere("Could not load RInternalCodeBuiltin function '" + functionName + "'.");
-            }
+            throw RInternalError.shouldNotReachHere("Could not load RInternalCodeBuiltin function '" + functionName + "'.");
         }
 
         return call.execute(frame, actualArgs.getSignature(), actualArgs.getArguments(), function, functionName, null);
     }
+
 }

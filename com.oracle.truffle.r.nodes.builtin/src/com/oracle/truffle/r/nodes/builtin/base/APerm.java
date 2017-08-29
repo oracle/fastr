@@ -10,7 +10,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVectorClosure;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
@@ -18,7 +18,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -56,7 +55,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
     static {
         Casts casts = new Casts(APerm.class);
         casts.arg("a").mustNotBeNull(RError.Message.FIRST_ARG_MUST_BE_ARRAY);
-        casts.arg("perm").allowNull().mustBe(numericValue().or(stringValue()).or(complexValue())).mapIf(numericValue().or(complexValue()), asIntegerVector());
+        casts.arg("perm").allowNull().mustBe(numericValue().or(stringValue()).or(complexValue())).mapIf(numericValue().or(complexValue()), asIntegerVectorClosure());
         casts.arg("resize").mustBe(numericValue().or(logicalValue()), Message.INVALID_LOGICAL, "resize").asLogicalVector().findFirst();
     }
 
@@ -129,7 +128,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         for (int i = 0; i < result.getLength(); i++) {
             int pos = toPos(applyPermute(posV, perm, true), dim);
             result.transferElementSameType(i, vector, pos);
-            posV = incArray(posV, pDim);
+            incArray(posV, pDim);
         }
 
         RList dimNames = getDimNamesNode.getDimNames(vector);
@@ -219,7 +218,6 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
     /**
      * Apply permute to an equal sized array.
      */
-    @TruffleBoundary
     private static int[] applyPermute(int[] a, int[] perm, boolean reverse) {
         int[] newA = a.clone();
         if (reverse) {
@@ -235,25 +233,21 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
     }
 
     /**
-     * Increment a stride array.
+     * Increment a stride array. Note: First input array may be modified.
      */
-    @TruffleBoundary
-    private static int[] incArray(int[] a, int[] dim) {
-        int[] newA = a.clone();
-        for (int i = 0; i < newA.length; i++) {
-            newA[i]++;
-            if (newA[i] < dim[i]) {
+    private static void incArray(int[] a, int[] dim) {
+        for (int i = 0; i < a.length; i++) {
+            a[i]++;
+            if (a[i] < dim[i]) {
                 break;
             }
-            newA[i] = 0;
+            a[i] = 0;
         }
-        return newA;
     }
 
     /**
      * Stride array to a linear position.
      */
-    @TruffleBoundary
     private static int toPos(int[] a, int[] dim) {
         int pos = a[0];
         for (int i = 1; i < a.length; i++) {

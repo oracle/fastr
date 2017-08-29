@@ -140,15 +140,25 @@ public class FastRContext {
             EvalThread[] threads = new EvalThread[length];
             int[] data = new int[length];
             int[] multiSlotIndices = new int[length];
+
+            // first, create context infos
+            ChildContextInfo[] childContextInfos = new ChildContextInfo[length];
             for (int i = 0; i < length; i++) {
-                ChildContextInfo info = createContextInfo(contextKind);
-                threads[i] = new EvalThread(RContext.getInstance().threads, info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL),
-                                FastROptions.SpawnUsesPolyglot.getBooleanValue());
-                data[i] = info.getId();
-                multiSlotIndices[i] = info.getMultiSlotInd();
+                childContextInfos[i] = createContextInfo(contextKind);
+                data[i] = childContextInfos[i].getId();
+                multiSlotIndices[i] = childContextInfos[i].getMultiSlotInd();
             }
+
+            // convert shared slots to multi slots
             if (contextKind == ContextKind.SHARE_ALL) {
                 REnvironment.convertSearchpathToMultiSlot(multiSlotIndices);
+            }
+
+            // create eval threads which may already set values to shared slots
+            for (int i = 0; i < length; i++) {
+                threads[i] = new EvalThread(RContext.getInstance().threads, childContextInfos[i],
+                                RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL),
+                                FastROptions.SpawnUsesPolyglot.getBooleanValue());
             }
             for (int i = 0; i < length; i++) {
                 threads[i].start();

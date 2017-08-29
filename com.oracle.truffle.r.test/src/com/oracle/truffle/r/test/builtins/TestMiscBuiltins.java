@@ -90,7 +90,7 @@ public class TestMiscBuiltins extends TestBase {
         assertEval("{ x<-7; as.list(environment()) }");
         assertEval("{ x<-7; .y<-42; as.list(environment()) }");
         // not sorted so can't compare list print
-        assertEval("{ x<-7; .y<-42; length(as.list(environment(), all.names=TRUE)) }");
+        assertEval("{ env <- new.env(); env$x<-7; env$.y<-42; length(as.list(env, all.names=TRUE)) }");
         assertEval("{ x<-7; f<-function() x<<-42; f_copy<-as.list(environment())[[\"f\"]]; f_copy(); x }");
 
         // as.matrix

@@ -23,7 +23,8 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -32,6 +33,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 abstract class RToVectorClosure implements RAbstractVector {
+
+    /** If {@code true}, attributes should be preserved when materializing. */
+    protected final boolean keepAttributes;
+
+    protected RToVectorClosure(boolean keepAttributes) {
+        this.keepAttributes = keepAttributes;
+    }
 
     public abstract RAbstractVector getVector();
 
@@ -122,22 +130,22 @@ abstract class RToVectorClosure implements RAbstractVector {
 
     @Override
     public final RAbstractVector copy() {
-        throw RInternalError.shouldNotReachHere();
+        return materialize().copy();
     }
 
     @Override
     public final RVector<?> copyResized(int size, boolean fillNA) {
-        throw RInternalError.shouldNotReachHere();
+        return materialize().copyResized(size, fillNA);
     }
 
     @Override
     public final RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        throw RInternalError.shouldNotReachHere();
+        return materialize().copyResizedWithDimensions(newDimensions, fillNA);
     }
 
     @Override
     public final RAbstractVector copyDropAttributes() {
-        throw RInternalError.shouldNotReachHere();
+        return materialize().copyDropAttributes();
     }
 
     @Override
@@ -168,5 +176,12 @@ abstract class RToVectorClosure implements RAbstractVector {
     @Override
     public boolean isS4() {
         return false;
+    }
+
+    @Override
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttrs) {
+        // Closures are trimmed to use a concrete type in order to avoid polymorphism. Therefore,
+        // first materialize and then cast and do not create a closure over a closure.
+        return materialize().castSafe(type, isNAProfile, keepAttrs);
     }
 }

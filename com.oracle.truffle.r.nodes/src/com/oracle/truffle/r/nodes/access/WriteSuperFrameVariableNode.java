@@ -111,7 +111,7 @@ abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
                 Object newValue = shareObjectValue(profiledFrame, frameSlot, storedObjectProfile.profile(value), mode, true);
                 FrameSlotChangeMonitor.setObjectAndInvalidate(profiledFrame, frameSlot, newValue, true, invalidateProfile);
             } else {
-                handleActiveBinding(frame, profiledFrame, value, frameSlot, invalidateProfile, isActiveBindingProfile);
+                handleActiveBinding(frame, profiledFrame, value, frameSlot, invalidateProfile, isActiveBindingProfile, storedObjectProfile, mode);
             }
         }
     }

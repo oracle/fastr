@@ -68,9 +68,27 @@ public interface RAbstractVector extends RAbstractContainer {
      * implementation may decide to just wrap the original vector with a closure. This method is
      * optimized for invocation with a compile-time constant {@link RType}.
      *
+     * @see #castSafe(RType, ConditionProfile, boolean)
+     */
+    default RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+        return castSafe(type, isNAProfile, false);
+    }
+
+    /**
+     * Casts a vector to another {@link RType}. If a safe cast to the target {@link RType} is not
+     * supported <code>null</code> is returned. Instead of materializing the cast for each index the
+     * implementation may decide to just wrap the original vector with a closure. This method is
+     * optimized for invocation with a compile-time constant {@link RType}.
+     *
+     * @param type
+     * @param isNAProfile
+     * @param keepAttributes If {@code true}, the cast itself will keep the attributes. This is,
+     *            however, a rather slow operation and you should set this to {@code false} and use
+     *            nodes for copying attributes if possible.
+     *
      * @see RType#getPrecedence()
      */
-    default RAbstractVector castSafe(RType type, @SuppressWarnings("unused") ConditionProfile isNAProfile) {
+    default RAbstractVector castSafe(RType type, @SuppressWarnings("unused") ConditionProfile isNAProfile, @SuppressWarnings("unused") boolean keepAttributes) {
         if (type == getRType()) {
             return this;
         } else {

@@ -48,7 +48,7 @@ public final class RString extends RScalarVector implements RAbstractStringVecto
     }
 
     @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case Character:
                 return this;

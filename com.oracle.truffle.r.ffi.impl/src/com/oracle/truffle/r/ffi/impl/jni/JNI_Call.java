@@ -52,53 +52,51 @@ public class JNI_Call implements CallRFFI {
         @Override
         @TruffleBoundary
         public Object execute(NativeCallInfo nativeCallInfo, Object[] args) {
-            synchronized (JNI_Call.class) {
-                long address = nativeCallInfo.address.asAddress();
-                Object result = null;
-                if (traceEnabled()) {
-                    traceDownCall(nativeCallInfo.name, args);
+            long address = nativeCallInfo.address.asAddress();
+            Object result = null;
+            if (traceEnabled()) {
+                traceDownCall(nativeCallInfo.name, args);
+            }
+            try {
+                switch (args.length) {
+                    case 0:
+                        result = call0(address);
+                        break;
+                    case 1:
+                        result = call1(address, args[0]);
+                        break;
+                    case 2:
+                        result = call2(address, args[0], args[1]);
+                        break;
+                    case 3:
+                        result = call3(address, args[0], args[1], args[2]);
+                        break;
+                    case 4:
+                        result = call4(address, args[0], args[1], args[2], args[3]);
+                        break;
+                    case 5:
+                        result = call5(address, args[0], args[1], args[2], args[3], args[4]);
+                        break;
+                    case 6:
+                        result = call6(address, args[0], args[1], args[2], args[3], args[4], args[5]);
+                        break;
+                    case 7:
+                        result = call7(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+                        break;
+                    case 8:
+                        result = call8(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+                        break;
+                    case 9:
+                        result = call9(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
+                        break;
+                    default:
+                        result = call(address, args);
+                        break;
                 }
-                try {
-                    switch (args.length) {
-                        case 0:
-                            result = call0(address);
-                            break;
-                        case 1:
-                            result = call1(address, args[0]);
-                            break;
-                        case 2:
-                            result = call2(address, args[0], args[1]);
-                            break;
-                        case 3:
-                            result = call3(address, args[0], args[1], args[2]);
-                            break;
-                        case 4:
-                            result = call4(address, args[0], args[1], args[2], args[3]);
-                            break;
-                        case 5:
-                            result = call5(address, args[0], args[1], args[2], args[3], args[4]);
-                            break;
-                        case 6:
-                            result = call6(address, args[0], args[1], args[2], args[3], args[4], args[5]);
-                            break;
-                        case 7:
-                            result = call7(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
-                            break;
-                        case 8:
-                            result = call8(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
-                            break;
-                        case 9:
-                            result = call9(address, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
-                            break;
-                        default:
-                            result = call(address, args);
-                            break;
-                    }
-                    return result;
-                } finally {
-                    if (traceEnabled()) {
-                        traceDownCallReturn(nativeCallInfo.name, result);
-                    }
+                return result;
+            } finally {
+                if (traceEnabled()) {
+                    traceDownCallReturn(nativeCallInfo.name, result);
                 }
             }
         }

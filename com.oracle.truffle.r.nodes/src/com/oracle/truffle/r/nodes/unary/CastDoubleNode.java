@@ -31,20 +31,22 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
@@ -52,12 +54,12 @@ import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 @ImportStatic(RRuntime.class)
 public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
-    protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
-        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
+    protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean withReuse) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, withReuse);
     }
 
     protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes);
+        super(preserveNames, preserveDimensions, preserveAttributes, false, false);
     }
 
     @Child private CastDoubleNode recursiveCastDouble;
@@ -65,7 +67,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     private Object castDoubleRecursive(Object o) {
         if (recursiveCastDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastDouble = insert(CastDoubleNodeGen.create(preserveNames(), preserveDimensions(), preserveAttributes()));
+            recursiveCastDouble = insert(CastDoubleNodeGen.create(preserveNames(), preserveDimensions(), preserveRegAttributes(), false, reuseNonShared()));
         }
         return recursiveCastDouble.executeDouble(o);
     }
@@ -73,7 +75,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     private RDoubleVector vectorCopy(RAbstractContainer operand, double[] data, boolean isComplete) {
         RDoubleVector ret = RDataFactory.createDoubleVector(data, isComplete, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -92,13 +94,33 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     @Specialization
-    protected RDoubleVector doIntVector(RAbstractIntVector operand) {
+    protected RAbstractDoubleVector doIntVector(RAbstractIntVector x,
+                    @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
+        RAbstractIntVector operand = operandTypeProfile.profile(x);
+        if (useClosure()) {
+            return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
+        }
         return createResultVector(operand, index -> naCheck.convertIntToDouble(operand.getDataAt(index)));
     }
 
     @Specialization
-    protected RDoubleVector doLogicalVectorDims(RAbstractLogicalVector operand) {
+    protected RAbstractDoubleVector doLogicalVector(RAbstractLogicalVector x,
+                    @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
+        RAbstractLogicalVector operand = operandTypeProfile.profile(x);
+        if (useClosure()) {
+            return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
+        }
         return createResultVector(operand, index -> naCheck.convertLogicalToDouble(operand.getDataAt(index)));
+    }
+
+    @Specialization
+    protected RAbstractDoubleVector doRawVector(RAbstractRawVector x,
+                    @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
+        RAbstractRawVector operand = operandTypeProfile.profile(x);
+        if (useClosure()) {
+            return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
+        }
+        return createResultVector(operand, index -> RRuntime.raw2double(operand.getDataAt(index)));
     }
 
     @Specialization
@@ -132,7 +154,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
@@ -157,18 +179,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     @Specialization
-    protected RDoubleVector doRawVector(RRawVector operand) {
-        return createResultVector(operand, index -> RRuntime.raw2double(operand.getDataAt(index)));
-    }
-
-    @Specialization
-    protected RDoubleVector doDoubleVector(RDoubleVector operand) {
-        return operand;
-    }
-
-    @Specialization
-    protected RDoubleSequence doDoubleVector(RDoubleSequence operand) {
-        // sequence does not have attributes - nothing to copy or drop
+    protected RAbstractDoubleVector doDoubleVector(RAbstractDoubleVector operand) {
         return operand;
     }
 
@@ -206,7 +217,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
             }
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list));
-        if (preserveAttributes()) {
+        if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(list);
         }
         return ret;
@@ -229,15 +240,19 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     public static CastDoubleNode create() {
-        return CastDoubleNodeGen.create(true, true, true);
+        return CastDoubleNodeGen.create(true, true, true, false, false);
+    }
+
+    public static CastDoubleNode createWithReuse() {
+        return CastDoubleNodeGen.create(true, true, true, false, true);
     }
 
     public static CastDoubleNode createForRFFI(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        return CastDoubleNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true);
+        return CastDoubleNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, true, false);
     }
 
     public static CastDoubleNode createNonPreserving() {
-        return CastDoubleNodeGen.create(false, false, false);
+        return CastDoubleNodeGen.create(false, false, false, false, false);
     }
 
     protected ForeignArray2R createForeignArray2RNode() {

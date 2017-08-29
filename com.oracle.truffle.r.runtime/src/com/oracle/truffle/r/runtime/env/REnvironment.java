@@ -930,7 +930,8 @@ public abstract class REnvironment extends RAttributeStorage {
         slots = namespacesFrame.getFrameDescriptor().getSlots().toArray(slots);
         for (int i = 0; i < slots.length; i++) {
             REnvironment namespaceEnv = (REnvironment) FrameSlotChangeMonitor.getValue(slots[i], namespacesFrame);
-            if (namespaceEnv != Base.baseNamespaceEnv()) {
+            // Could be 'null' due to multi slot data and an error during package loading
+            if (namespaceEnv != Base.baseNamespaceEnv() && namespaceEnv != null) {
                 // base namespace frame redirects all accesses to base frame and this would
                 // result in processing the slots twice
                 fun.apply(namespaceEnv.getFrame(), true);

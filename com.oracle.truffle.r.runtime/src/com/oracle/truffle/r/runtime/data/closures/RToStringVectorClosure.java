@@ -44,6 +44,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 abstract class RToStringVectorClosure extends RToVectorClosure implements RAbstractStringVector {
 
+    protected RToStringVectorClosure(boolean keepAttributes) {
+        super(keepAttributes);
+    }
+
     @Override
     public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createStringVector(new String[newLength], newIsComplete);
@@ -57,22 +61,24 @@ abstract class RToStringVectorClosure extends RToVectorClosure implements RAbstr
             String data = getDataAt(i);
             result[i] = data;
         }
-        return RDataFactory.createStringVector(result, getVector().isComplete(), getDimensionsMaterialized(), getNamesMaterialized());
+        RStringVector materialized = RDataFactory.createStringVector(result, getVector().isComplete());
+        copyAttributes(materialized);
+        return materialized;
     }
 
     @TruffleBoundary
-    private int[] getDimensionsMaterialized() {
-        return getDimensions();
-    }
-
-    @TruffleBoundary
-    private RStringVector getNamesMaterialized() {
-        return getNames();
+    private void copyAttributes(RStringVector materialized) {
+        if (keepAttributes) {
+            materialized.copyAttributesFrom(getVector());
+        }
     }
 
     @Override
-    public final RStringVector copyWithNewDimensions(int[] newDimensions) {
-        return materialize().copyWithNewDimensions(newDimensions);
+    public final RAbstractStringVector copyWithNewDimensions(int[] newDimensions) {
+        if (!keepAttributes) {
+            return materialize().copyWithNewDimensions(newDimensions);
+        }
+        return this;
     }
 }
 
@@ -80,7 +86,8 @@ final class RLogicalToStringVectorClosure extends RToStringVectorClosure {
 
     private final RLogicalVector vector;
 
-    RLogicalToStringVectorClosure(RLogicalVector vector) {
+    RLogicalToStringVectorClosure(RLogicalVector vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -104,7 +111,8 @@ final class RIntToStringVectorClosure extends RToStringVectorClosure {
 
     private final RIntVector vector;
 
-    RIntToStringVectorClosure(RIntVector vector) {
+    RIntToStringVectorClosure(RIntVector vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -127,7 +135,8 @@ final class RIntSequenceToStringVectorClosure extends RToStringVectorClosure {
 
     private final RIntSequence vector;
 
-    RIntSequenceToStringVectorClosure(RIntSequence vector) {
+    RIntSequenceToStringVectorClosure(RIntSequence vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -150,7 +159,8 @@ final class RDoubleToStringVectorClosure extends RToStringVectorClosure {
 
     private final RDoubleVector vector;
 
-    RDoubleToStringVectorClosure(RDoubleVector vector) {
+    RDoubleToStringVectorClosure(RDoubleVector vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -174,7 +184,8 @@ final class RDoubleSequenceToStringVectorClosure extends RToStringVectorClosure 
 
     private final RDoubleSequence vector;
 
-    RDoubleSequenceToStringVectorClosure(RDoubleSequence vector) {
+    RDoubleSequenceToStringVectorClosure(RDoubleSequence vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -198,7 +209,8 @@ final class RComplexToStringVectorClosure extends RToStringVectorClosure {
 
     private final RComplexVector vector;
 
-    RComplexToStringVectorClosure(RComplexVector vector) {
+    RComplexToStringVectorClosure(RComplexVector vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -221,7 +233,8 @@ final class RRawToStringVectorClosure extends RToStringVectorClosure {
 
     private final RRawVector vector;
 
-    RRawToStringVectorClosure(RRawVector vector) {
+    RRawToStringVectorClosure(RRawVector vector, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
     }
 
@@ -245,7 +258,8 @@ final class RFactorToStringVectorClosure extends RToStringVectorClosure {
     private final RAbstractStringVector levels;
     private final boolean withNames;
 
-    RFactorToStringVectorClosure(RAbstractIntVector vector, RAbstractStringVector levels, boolean withNames) {
+    RFactorToStringVectorClosure(RAbstractIntVector vector, RAbstractStringVector levels, boolean withNames, boolean keepAttributes) {
+        super(keepAttributes);
         this.vector = vector;
         this.levels = levels;
         this.withNames = withNames;
@@ -257,7 +271,7 @@ final class RFactorToStringVectorClosure extends RToStringVectorClosure {
     }
 
     @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, @SuppressWarnings("hiding") boolean keepAttributes) {
         switch (type) {
             case Character:
                 return this;

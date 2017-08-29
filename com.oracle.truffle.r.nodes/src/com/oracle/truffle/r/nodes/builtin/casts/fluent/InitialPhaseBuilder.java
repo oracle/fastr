@@ -159,6 +159,20 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
         return asIntegerVector(false, false, false);
     }
 
+    public CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVectorClosure(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        pipelineBuilder().appendAsVectorClosure(RType.Integer, preserveNames, preserveDimensions, preserveAttributes);
+        return new CoercedPhaseBuilder<>(pipelineBuilder(), Integer.class);
+    }
+
+    public CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVectorClosure() {
+        return asIntegerVectorClosure(false, false, false);
+    }
+
+    public CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVectorClosure(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        pipelineBuilder().appendAsVectorClosure(RType.Double, preserveNames, preserveDimensions, preserveAttributes);
+        return new CoercedPhaseBuilder<>(pipelineBuilder(), Double.class);
+    }
+
     public CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         pipelineBuilder().appendAsVector(RType.Double, preserveNames, preserveDimensions, preserveAttributes);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Double.class);

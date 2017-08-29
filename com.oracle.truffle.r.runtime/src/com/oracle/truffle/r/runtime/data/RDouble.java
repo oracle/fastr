@@ -53,7 +53,7 @@ public final class RDouble extends RScalarVector implements RAbstractDoubleVecto
     }
 
     @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile) {
+    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case Integer:
                 return this;

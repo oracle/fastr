@@ -39,7 +39,6 @@ import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -193,6 +192,6 @@ public final class FastRGridExternalLookup {
     }
 
     private static RExternalBuiltinNode getExternalFastRGridBuiltinNode(String name) {
-        return new RInternalCodeBuiltinNode(RContext.getInstance(), "grid", RInternalCode.loadSourceRelativeTo(LInitGrid.class, "fastrGrid.R"), name);
+        return new RInternalCodeBuiltinNode("grid", RInternalCode.loadSourceRelativeTo(LInitGrid.class, "fastrGrid.R"), name);
     }
 }

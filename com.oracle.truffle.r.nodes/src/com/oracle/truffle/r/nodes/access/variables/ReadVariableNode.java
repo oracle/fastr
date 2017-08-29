@@ -619,18 +619,17 @@ public final class ReadVariableNode extends RBaseNode {
         LookupResult lookup = FrameSlotChangeMonitor.lookup(variableFrame, identifier);
         if (lookup != null) {
             try {
-                if (lookup.getValue() instanceof RPromise) {
-                    evalPromiseSlowPathWithName(identifierAsString, frame, (RPromise) lookup.getValue());
+                Object value = lookup.getValue();
+                if (value instanceof RPromise) {
+                    evalPromiseSlowPathWithName(identifierAsString, frame, (RPromise) value);
                 }
-                if (lookup != null) {
-                    if (lookup instanceof FrameAndSlotLookupResult) {
-                        if (checkTypeSlowPath(frame, lookup.getValue())) {
-                            return new FrameAndSlotLookupLevel((FrameAndSlotLookupResult) lookup);
-                        }
-                    } else {
-                        if (lookup.getValue() == null || checkTypeSlowPath(frame, lookup.getValue())) {
-                            return new LookupLevel(lookup);
-                        }
+                if (lookup instanceof FrameAndSlotLookupResult) {
+                    if (checkTypeSlowPath(frame, value)) {
+                        return new FrameAndSlotLookupLevel((FrameAndSlotLookupResult) lookup);
+                    }
+                } else {
+                    if (value == null || checkTypeSlowPath(frame, value)) {
+                        return new LookupLevel(lookup);
                     }
                 }
             } catch (InvalidAssumptionException e) {

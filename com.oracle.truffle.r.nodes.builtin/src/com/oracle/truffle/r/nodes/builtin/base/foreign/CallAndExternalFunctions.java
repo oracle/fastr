@@ -62,12 +62,12 @@ import com.oracle.truffle.r.library.tools.ToolsTextFactory.DoTabExpandNodeGen;
 import com.oracle.truffle.r.library.utils.CountFieldsNodeGen;
 import com.oracle.truffle.r.library.utils.Crc64NodeGen;
 import com.oracle.truffle.r.library.utils.DownloadNodeGen;
-import com.oracle.truffle.r.library.utils.UnzipNodeGen;
 import com.oracle.truffle.r.library.utils.MenuNodeGen;
 import com.oracle.truffle.r.library.utils.ObjectSizeNodeGen;
 import com.oracle.truffle.r.library.utils.RprofNodeGen;
 import com.oracle.truffle.r.library.utils.RprofmemNodeGen;
 import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
+import com.oracle.truffle.r.library.utils.UnzipNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
@@ -581,7 +581,7 @@ public class CallAndExternalFunctions {
                     return getExternalModelBuiltinNode("updateform");
 
                 case "Cdqrls":
-                    return new RInternalCodeBuiltinNode(RContext.getInstance(), "stats", RInternalCode.loadSourceRelativeTo(RandFunctionsNodes.class, "lm.R"), "Cdqrls");
+                    return new RInternalCodeBuiltinNode("stats", RInternalCode.loadSourceRelativeTo(RandFunctionsNodes.class, "lm.R"), "Cdqrls");
 
                 case "dnorm":
                     return StatsFunctionsNodes.Function3_1Node.create(new DNorm());

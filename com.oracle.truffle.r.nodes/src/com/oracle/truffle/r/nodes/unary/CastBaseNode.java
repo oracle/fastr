@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
@@ -42,8 +43,8 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public abstract class CastBaseNode extends CastNode {
@@ -52,6 +53,8 @@ public abstract class CastBaseNode extends CastNode {
     private final ConditionProfile hasDimNamesProfile = ConditionProfile.createBinaryProfile();
     private final NullProfile hasDimensionsProfile = NullProfile.create();
     private final NullProfile hasNamesProfile = NullProfile.create();
+    private final ValueProfile reuseClassProfile;
+
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
     @Child private GetDimAttributeNode getDimNode;
     @Child private SetDimNamesAttributeNode setDimNamesNode;
@@ -60,6 +63,9 @@ public abstract class CastBaseNode extends CastNode {
     private final boolean preserveNames;
     private final boolean preserveDimensions;
     private final boolean preserveAttributes;
+
+    /** {@code true} if a cast should wrap the input in a closure. */
+    private final boolean useClosure;
 
     /**
      * GnuR provides several, sometimes incompatible, ways to coerce given value to given type. This
@@ -73,6 +79,10 @@ public abstract class CastBaseNode extends CastNode {
     }
 
     protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
+        this(preserveNames, preserveDimensions, preserveAttributes, forRFFI, false);
+    }
+
+    protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure) {
         this.preserveNames = preserveNames;
         this.preserveDimensions = preserveDimensions;
         this.preserveAttributes = preserveAttributes;
@@ -80,6 +90,8 @@ public abstract class CastBaseNode extends CastNode {
         if (preserveDimensions) {
             getDimNamesNode = GetDimNamesAttributeNode.create();
         }
+        this.useClosure = useClosure;
+        reuseClassProfile = useClosure ? ValueProfile.createClassProfile() : null;
     }
 
     public final boolean preserveNames() {
@@ -90,8 +102,16 @@ public abstract class CastBaseNode extends CastNode {
         return preserveDimensions;
     }
 
-    public final boolean preserveAttributes() {
+    public final boolean preserveRegAttributes() {
         return preserveAttributes;
+    }
+
+    public final boolean preserveAttributes() {
+        return preserveAttributes || preserveNames || preserveDimensions;
+    }
+
+    public final boolean reuseNonShared() {
+        return useClosure;
     }
 
     protected abstract RType getTargetType();
@@ -121,7 +141,7 @@ public abstract class CastBaseNode extends CastNode {
         }
     }
 
-    protected void preserveDimensionNames(RAbstractContainer operand, RVector<?> ret) {
+    protected void preserveDimensionNames(RAbstractContainer operand, RAbstractContainer ret) {
         if (preserveDimensions()) {
             RList dimNames = getDimNamesNode.getDimNames(operand);
             if (hasDimNamesProfile.profile(dimNames != null)) {
@@ -160,5 +180,14 @@ public abstract class CastBaseNode extends CastNode {
             throw error(RError.Message.CANNOT_COERCE, "truffleobject", getTargetType().getName());
         }
         return RNull.instance;
+    }
+
+    protected boolean useClosure() {
+        return useClosure;
+    }
+
+    protected RAbstractVector castWithReuse(RType targetType, RAbstractVector v, ConditionProfile naProfile) {
+        assert useClosure();
+        return reuseClassProfile.profile(v.castSafe(targetType, naProfile, preserveAttributes()));
     }
 }

@@ -44,8 +44,8 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
         super(preserveNames, preserveDimensions, preserveAttributes);
     }
 
-    protected CastDoubleBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
-        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
+    protected CastDoubleBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, useClosure);
     }
 
     @Override

@@ -165,12 +165,14 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
      * @param value The value to set.
      * @param frameSlot The frame slot of the value.
      * @param invalidateProfile The invalidation profile.
+     * @param mode
+     * @param storedObjectProfile
      */
-    protected static Object handleActiveBinding(VirtualFrame execFrame, Frame lookupFrame, Object value, FrameSlot frameSlot, BranchProfile invalidateProfile,
-                    ConditionProfile isActiveBindingProfile) {
+    protected Object handleActiveBinding(VirtualFrame execFrame, Frame lookupFrame, Object value, FrameSlot frameSlot, BranchProfile invalidateProfile,
+                    ConditionProfile isActiveBindingProfile, ValueProfile storedObjectProfile, Mode mode) {
         Object object;
         try {
-            object = lookupFrame.getObject(frameSlot);
+            object = FrameSlotChangeMonitor.getObject(frameSlot, lookupFrame);
         } catch (FrameSlotTypeException e) {
             object = null;
         }
@@ -178,7 +180,8 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
         if (isActiveBindingProfile.profile(object != null && ActiveBinding.isActiveBinding(object))) {
             return ((ActiveBinding) object).writeValue(value);
         } else {
-            FrameSlotChangeMonitor.setObjectAndInvalidate(lookupFrame, frameSlot, value, false, invalidateProfile);
+            Object newValue = shareObjectValue(lookupFrame, frameSlot, storedObjectProfile.profile(value), mode, false);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(lookupFrame, frameSlot, newValue, false, invalidateProfile);
         }
         return value;
     }

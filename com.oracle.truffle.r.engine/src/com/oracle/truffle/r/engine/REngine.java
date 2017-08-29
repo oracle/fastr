@@ -36,6 +36,8 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -76,6 +78,7 @@ import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
@@ -98,12 +101,15 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.rng.RRNG;
 
 /**
  * The engine for the FastR implementation. Handles parsing and evaluation. There is one instance of
@@ -152,6 +158,7 @@ final class REngine implements Engine, Engine.Timings {
         if (context.getKind() == RContext.ContextKind.SHARE_NOTHING) {
             initializeNonShared();
         }
+        initializeRNG();
     }
 
     private void initializeNonShared() {
@@ -199,6 +206,15 @@ final class REngine implements Engine, Engine.Timings {
 
             StartupTiming.timestamp("After Profiles Loaded");
         }
+    }
+
+    private void initializeRNG() {
+        assert REnvironment.globalEnv() != null;
+        RFunction fun = context.lookupBuiltin(".fastr.set.seed");
+        ActiveBinding dotRandomSeed = new ActiveBinding(RType.Any, fun);
+        Frame frame = REnvironment.globalEnv().getFrame();
+        FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RRNG.RANDOM_SEED, FrameSlotKind.Object);
+        FrameSlotChangeMonitor.setActiveBinding(frame, slot, dotRandomSeed, false, null);
     }
 
     @Override

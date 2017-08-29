@@ -76,12 +76,17 @@ public final class PipelineBuilder {
     }
 
     public void appendAsVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean preserveNonVector) {
-        append(new CoercionStep<>(RType.Any, true, preserveNames, preserveDimensions, preserveAttributes, preserveNonVector));
+        append(new CoercionStep<>(RType.Any, true, preserveNames, preserveDimensions, preserveAttributes, preserveNonVector, false));
     }
 
     public void appendAsVector(RType type, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         assert type == RType.Integer || type == RType.Double || type == RType.Complex || type == RType.Character || type == RType.Logical || type == RType.Raw;
-        append(new CoercionStep<>(type, true, preserveNames, preserveDimensions, preserveAttributes, true));
+        append(new CoercionStep<>(type, true, preserveNames, preserveDimensions, preserveAttributes, true, false));
+    }
+
+    public void appendAsVectorClosure(RType type, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        assert type == RType.Integer || type == RType.Double || type == RType.Complex || type == RType.Character || type == RType.Logical || type == RType.Raw;
+        append(new CoercionStep<>(type, true, preserveNames, preserveDimensions, preserveAttributes, true, true));
     }
 
     public void appendNotNA(Object naReplacement, Message message, Object[] messageArgs) {
