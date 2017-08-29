@@ -70,8 +70,7 @@ public final class GridState {
     }
 
     public void setDisplayListElement(Object element) {
-        Object[] data = devState.displayList.getDataWithoutCopying();
-        data[devState.displayListIndex] = element;
+        devState.displayList.setDataAt(devState.displayListIndex, element);
     }
 
     public boolean isDisplayListOn() {

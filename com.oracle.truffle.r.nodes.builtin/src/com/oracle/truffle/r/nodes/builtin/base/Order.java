@@ -85,9 +85,8 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         int n = v.getLength();
         reportWork(n);
 
-        RIntVector indxVec = RDataFactory.createIntVector(createIndexes(v, n, naLast), RDataFactory.COMPLETE_VECTOR);
-        initOrderVector1(needsStringCollation).execute(indxVec, v, naLast, dec, null);
-        int[] indx = indxVec.getDataWithoutCopying();
+        int[] indx = createIndexes(v, n, naLast);
+        initOrderVector1(needsStringCollation).execute(indx, v, naLast, dec, null);
         for (int i = 0; i < indx.length; i++) {
             indx[i] = indx[i] + 1;
         }
@@ -321,14 +320,13 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             this.needsStringCollation = needsStringCollation;
         }
 
-        public abstract Object execute(Object v, Object dv, byte naLast, boolean dec, Object rho);
+        public abstract Object execute(int[] v, Object dv, byte naLast, boolean dec, Object rho);
 
         @Specialization
-        protected Object orderVector1(RIntVector indxVec, RAbstractIntVector dv, byte naLast, boolean decreasing, Object rho) {
-            if (indxVec.getLength() < 2) {
-                return indxVec;
+        protected Object orderVector1(int[] indx, RAbstractIntVector dv, byte naLast, boolean decreasing, Object rho) {
+            if (indx.length < 2) {
+                return indx;
             }
-            int[] indx = indxVec.getDataWithoutCopying();
             int lo = 0;
             int hi = indx.length - 1;
             if (rho == null) {
@@ -359,15 +357,14 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             }
 
             sort(indx, dv, lo, hi, decreasing);
-            return indxVec;
+            return indx;
         }
 
         @Specialization
-        protected Object orderVector1(RIntVector indxVec, RAbstractDoubleVector dv, byte naLast, boolean decreasing, Object rho) {
-            if (indxVec.getLength() < 2) {
-                return indxVec;
+        protected Object orderVector1(int[] indx, RAbstractDoubleVector dv, byte naLast, boolean decreasing, Object rho) {
+            if (indx.length < 2) {
+                return indx;
             }
-            int[] indx = indxVec.getDataWithoutCopying();
             int lo = 0;
             int hi = indx.length - 1;
             if (rho == null && !RRuntime.isNA(naLast)) {
@@ -396,15 +393,14 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             }
 
             sort(indx, dv, lo, hi, decreasing);
-            return indxVec;
+            return indx;
         }
 
         @Specialization
-        protected Object orderVector1(RIntVector indxVec, RAbstractStringVector dv, byte naLast, boolean decreasing, Object rho) {
-            if (indxVec.getLength() < 2) {
-                return indxVec;
+        protected Object orderVector1(int[] indx, RAbstractStringVector dv, byte naLast, boolean decreasing, Object rho) {
+            if (indx.length < 2) {
+                return indx;
             }
-            int[] indx = indxVec.getDataWithoutCopying();
             int lo = 0;
             int hi = indx.length - 1;
             if (rho == null) {
@@ -435,15 +431,14 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             }
 
             sort(indx, dv, lo, hi, decreasing);
-            return indxVec;
+            return indx;
         }
 
         @Specialization
-        protected Object orderVector1(RIntVector indxVec, RAbstractComplexVector dv, byte naLast, boolean decreasing, Object rho) {
-            if (indxVec.getLength() < 2) {
-                return indxVec;
+        protected Object orderVector1(int[] indx, RAbstractComplexVector dv, byte naLast, boolean decreasing, Object rho) {
+            if (indx.length < 2) {
+                return indx;
             }
-            int[] indx = indxVec.getDataWithoutCopying();
             int lo = 0;
             int hi = indx.length - 1;
             if (rho == null) {
@@ -474,14 +469,14 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             }
 
             sort(indx, dv, lo, hi, decreasing);
-            return indxVec;
+            return indx;
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object orderVector1(RIntVector indxVec, RList dv, byte naLast, boolean decreasing, Object rho) {
+        protected Object orderVector1(int[] indx, RList dv, byte naLast, boolean decreasing, Object rho) {
             /* Only needed to satisfy .Internal(rank) in unit test */
-            return indxVec;
+            return indx;
         }
 
         private void sort(int[] indx, RAbstractDoubleVector dv, int lo, int hi, boolean dec) {

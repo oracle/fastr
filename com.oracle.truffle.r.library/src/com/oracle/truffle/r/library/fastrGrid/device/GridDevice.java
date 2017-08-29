@@ -97,7 +97,8 @@ public interface GridDevice {
     /**
      * Draws a raster image at specified position. The pixels array shall be treated as by row
      * matrix, the values are values compatible with the internal {@link GridColor} representation,
-     * e.g. what {@link GridColor#getRawValue()} would return.
+     * e.g. what {@link GridColor#getRawValue()} would return. The method is not required to make a
+     * defensive copy.
      */
     void drawRaster(double leftX, double bottomY, double width, double height, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation);
 

@@ -50,7 +50,7 @@ public abstract class LPretty extends RExternalBuiltinNode.Arg1 {
         double[] ns = new double[]{min};
         double[] nu = new double[]{max};
         int[] ndiv = new int[]{5};
-        double unit = PrettyIntevals.pretty(getErrorContext(), ns, nu, new int[]{5}, 1, 0.25, new double[]{.8, 1.7}, 2, false);
+        double unit = PrettyIntevals.pretty(getErrorContext(), ns, nu, new int[]{5}, 1, 0.25, .8, 1.7, 2, false);
 
         if (nu[0] >= ns[0] + 1) {
             if (ns[0] * unit < min - 1e-7 * unit) {

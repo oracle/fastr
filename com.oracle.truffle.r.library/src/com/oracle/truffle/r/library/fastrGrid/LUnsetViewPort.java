@@ -74,7 +74,7 @@ public abstract class LUnsetViewPort extends RExternalBuiltinNode.Arg1 {
         gridState.setViewPort(newVp);
 
         // remove the parent link from the old viewport
-        gvp.setDataAt(gvp.getInternalStore(), ViewPort.PVP_PARENT, RNull.instance);
+        gvp.setDataAt(ViewPort.PVP_PARENT, RNull.instance);
         return RNull.instance;
     }
 

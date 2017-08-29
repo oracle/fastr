@@ -47,19 +47,19 @@ public final class CPar extends RExternalBuiltinNode {
         }
 
         GridDevice device = GridContext.getContext().getCurrentDevice();
-        Object[] names = args.getArguments();
+        RList names = RDataFactory.createList(args.getArguments());
         // unwrap list if it is the first argument
-        if (names.length == 1) {
+        if (names.getLength() == 1) {
             Object first = args.getArgument(0);
             if (first instanceof RList) {
-                names = ((RList) first).getDataWithoutCopying();
+                names = (RList) first;
             }
         }
 
-        Object[] result = new Object[names.length];
-        String[] resultNames = new String[names.length];
-        for (int i = 0; i < names.length; i++) {
-            resultNames[i] = RRuntime.asString(names[i]);
+        Object[] result = new Object[names.getLength()];
+        String[] resultNames = new String[names.getLength()];
+        for (int i = 0; i < names.getLength(); i++) {
+            resultNames[i] = RRuntime.asString(names.getDataAt(i));
             result[i] = getParam(resultNames[i], device);
         }
         return RDataFactory.createList(result, RDataFactory.createStringVector(resultNames, RDataFactory.COMPLETE_VECTOR));

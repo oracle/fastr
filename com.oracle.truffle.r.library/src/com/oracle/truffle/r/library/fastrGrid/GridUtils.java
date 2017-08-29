@@ -228,13 +228,17 @@ final class GridUtils {
     }
 
     static double sum(double[] values) {
-        return sum(values, 0, values.length);
+        double result = 0;
+        for (int i = 0; i < values.length; i++) {
+            result += values[i];
+        }
+        return result;
     }
 
-    static double sum(double[] values, int from, int length) {
+    static double sum(RAbstractDoubleVector values, int from, int length) {
         double result = 0;
         for (int i = 0; i < length; i++) {
-            result += values[from + i];
+            result += values.getDataAt(from + i);
         }
         return result;
     }

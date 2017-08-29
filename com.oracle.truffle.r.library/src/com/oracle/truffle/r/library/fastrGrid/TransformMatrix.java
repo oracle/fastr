@@ -15,6 +15,7 @@ import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_PI;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 // transcribed from matrix.c
 
@@ -111,11 +112,11 @@ final class TransformMatrix {
     /**
      * Reverse operation to {@link #flatten(double[][])}.
      */
-    static double[][] fromFlat(double[] flat) {
+    static double[][] fromFlat(RAbstractDoubleVector flat) {
         double[][] res = new double[3][3];
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                res[i][j] = flat[i + j * 3];
+                res[i][j] = flat.getDataAt(i + j * 3);
             }
         }
         return res;

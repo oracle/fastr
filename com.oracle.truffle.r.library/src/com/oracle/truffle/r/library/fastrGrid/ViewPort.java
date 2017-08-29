@@ -89,12 +89,12 @@ final class ViewPort {
         double devWidthCm = inchesToCm(device.getWidth());
         boolean result = false;
         if (Math.abs(devWidthCm - asDouble(viewPort.getDataAt(PVP_DEVWIDTHCM))) >= 1e-6) {
-            viewPort.setDataAt(viewPort.getInternalStore(), PVP_DEVWIDTHCM, devWidthCm);
+            viewPort.setDataAt(PVP_DEVWIDTHCM, devWidthCm);
             result = true;
         }
         double devHeightCm = inchesToCm(device.getHeight());
         if (Math.abs(devHeightCm - asDouble(viewPort.getDataAt(PVP_DEVHEIGHTCM))) >= 1e-6) {
-            viewPort.setDataAt(viewPort.getInternalStore(), PVP_DEVHEIGHTCM, devHeightCm);
+            viewPort.setDataAt(PVP_DEVHEIGHTCM, devHeightCm);
         }
         return result;
     }

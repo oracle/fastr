@@ -168,37 +168,37 @@ public final class GPar {
     }
 
     private static final class GParDrawingContext implements DrawingContext {
-        private final Object[] data;
+        private final RList data;
         private final int index;
 
         private GParDrawingContext(RList list, int index) {
-            data = list.getDataWithoutCopying();
+            data = list;
             this.index = index;
         }
 
         @Override
         public byte[] getLineType() {
-            return convertNamedValue(data[GP_LTY], LINE_STYLES.length - 1, "line type", GParDrawingContext::lineTypeFromName, num -> LINE_STYLES[num]);
+            return convertNamedValue(data.getDataAt(GP_LTY), LINE_STYLES.length - 1, "line type", GParDrawingContext::lineTypeFromName, num -> LINE_STYLES[num]);
         }
 
         @Override
         public double getLineWidth() {
-            return asDouble(data[GP_LWD], index) * asDouble(data[GP_LEX], index);
+            return asDouble(data.getDataAt(GP_LWD), index) * asDouble(data.getDataAt(GP_LEX), index);
         }
 
         @Override
         public GridLineJoin getLineJoin() {
-            return convertNamedValue(data[GP_LINEJOIN], GridLineJoin.LAST_VALUE, "line join", GParDrawingContext::lineJoinFromName, GridLineJoin::fromInt);
+            return convertNamedValue(data.getDataAt(GP_LINEJOIN), GridLineJoin.LAST_VALUE, "line join", GParDrawingContext::lineJoinFromName, GridLineJoin::fromInt);
         }
 
         @Override
         public GridLineEnd getLineEnd() {
-            return convertNamedValue(data[GP_LINEEND], GridLineEnd.LAST_VALUE, "line end", GParDrawingContext::lineEndFromName, GridLineEnd::fromInt);
+            return convertNamedValue(data.getDataAt(GP_LINEEND), GridLineEnd.LAST_VALUE, "line end", GParDrawingContext::lineEndFromName, GridLineEnd::fromInt);
         }
 
         @Override
         public double getLineMitre() {
-            double value = asDouble(data[GP_LINEMITRE], index);
+            double value = asDouble(data.getDataAt(GP_LINEMITRE), index);
             if (value < 1.) {
                 throw RError.error(RError.NO_CALLER, Message.GENERIC, "Invalid line mitre.");
             }
@@ -212,22 +212,22 @@ public final class GPar {
 
         @Override
         public double getFontSize() {
-            return asDouble(data[GP_FONTSIZE], index) * asDouble(data[GP_CEX], index);
+            return asDouble(data.getDataAt(GP_FONTSIZE), index) * asDouble(data.getDataAt(GP_CEX), index);
         }
 
         @Override
         public GridFontStyle getFontStyle() {
-            return GridFontStyle.fromInt(GridUtils.asInt(data[GP_FONT], index));
+            return GridFontStyle.fromInt(GridUtils.asInt(data.getDataAt(GP_FONT), index));
         }
 
         @Override
         public String getFontFamily() {
-            return GridUtils.asString(data[GP_FONTFAMILY], index);
+            return GridUtils.asString(data.getDataAt(GP_FONTFAMILY), index);
         }
 
         @Override
         public double getLineHeight() {
-            return asDouble(data[GP_LINEHEIGHT], index);
+            return asDouble(data.getDataAt(GP_LINEHEIGHT), index);
         }
 
         @Override
@@ -264,9 +264,9 @@ public final class GPar {
         }
 
         private GridColor getGridColor(int listIndex) {
-            Object value = data[listIndex];
+            Object value = data.getDataAt(listIndex);
             GridColor color = GridColorUtils.getColor(value, index);
-            double alpha = asDouble(data[GP_ALPHA], index);
+            double alpha = asDouble(data.getDataAt(GP_ALPHA), index);
             if (alpha != 1.) {
                 int newAlpha = Math.min(255, (int) (alpha * ((color.getAlpha() / 255.0) * 255)));
                 return new GridColor(color.getRed(), color.getGreen(), color.getBlue(), newAlpha);

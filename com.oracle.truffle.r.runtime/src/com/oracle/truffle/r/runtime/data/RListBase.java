@@ -77,6 +77,10 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
         return ((Object[]) store)[index];
     }
 
+    public void setDataAt(int index, Object value) {
+        setDataAt(data, index, value);
+    }
+
     @Override
     public void setDataAt(Object store, int index, Object valueArg) {
         assert valueArg != null : "lists must not contain nulls";

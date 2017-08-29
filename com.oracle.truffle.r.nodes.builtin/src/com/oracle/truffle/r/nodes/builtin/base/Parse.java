@@ -123,18 +123,17 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
         } catch (IOException ex) {
             throw error(RError.Message.PARSE_ERROR);
         }
-        return doParse(connection, n, lines, prompt, srcFile, encoding);
+        return doParse(connection, n, coalesce(lines), prompt, srcFile, encoding);
     }
 
     @TruffleBoundary
     @Specialization
     protected RExpression parse(int conn, int n, RAbstractStringVector text, String prompt, Object srcFile, String encoding) {
         RConnection connection = RConnection.fromIndex(conn);
-        return doParse(connection, n, text.materialize().getDataWithoutCopying(), prompt, srcFile, encoding);
+        return doParse(connection, n, coalesce(text), prompt, srcFile, encoding);
     }
 
-    private RExpression doParse(RConnection conn, int n, String[] lines, @SuppressWarnings("unused") String prompt, Object srcFile, @SuppressWarnings("unused") String encoding) {
-        String coalescedLines = coalesce(lines);
+    private RExpression doParse(RConnection conn, int n, String coalescedLines, @SuppressWarnings("unused") String prompt, Object srcFile, @SuppressWarnings("unused") String encoding) {
         if (coalescedLines.length() == 0 || n == 0) {
             return RDataFactory.createExpression(new Object[0]);
         }
@@ -156,6 +155,15 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
         } catch (ParseException ex) {
             throw error(RError.Message.PARSE_ERROR);
         }
+    }
+
+    private static String coalesce(RAbstractStringVector lines) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < lines.getLength(); i++) {
+            sb.append(lines.getDataAt(i));
+            sb.append('\n');
+        }
+        return sb.toString();
     }
 
     private static String coalesce(String[] lines) {

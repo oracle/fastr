@@ -63,7 +63,7 @@ public abstract class Pretty extends RBuiltinNode.Arg7 {
         double[] lo = new double[]{l};
         double[] up = new double[]{u};
         int[] ndiv = new int[]{n};
-        PrettyIntevals.pretty(getErrorContext(), lo, up, ndiv, minN, shrinkSml, hi.materialize().getDataWithoutCopying(), epsCorrect, true);
+        PrettyIntevals.pretty(getErrorContext(), lo, up, ndiv, minN, shrinkSml, hi.getDataAt(0), hi.getDataAt(1), epsCorrect, true);
         Object[] data = new Object[3];
         data[0] = lo[0];
         data[1] = up[0];

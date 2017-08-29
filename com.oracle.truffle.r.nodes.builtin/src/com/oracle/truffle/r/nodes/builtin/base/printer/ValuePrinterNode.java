@@ -289,7 +289,7 @@ public final class ValuePrinterNode extends RBaseNode {
                     RAbstractStringVector abstractNames = new RStringWrapper(size, keys);
                     RStringVector names = RDataFactory.createStringVector(size);
                     for (int i = 0; i < size; i++) {
-                        names.getDataWithoutCopying()[i] = abstractNames.getDataAt(i);
+                        names.setDataAt(names.getInternalStore(), i, abstractNames.getDataAt(i));
                     }
 
                     class RListWrapper extends TruffleObjectWrapper implements RAbstractListVector {

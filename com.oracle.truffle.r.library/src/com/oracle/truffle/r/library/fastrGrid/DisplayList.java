@@ -49,7 +49,7 @@ public class DisplayList {
 
     static void initDisplayList(GridState gridState) {
         RList list = createInitialDisplayList();
-        list.setDataAt(list.getInternalStore(), 0, gridState.getViewPort());
+        list.setDataAt(0, gridState.getViewPort());
         gridState.setDisplayList(list);
         gridState.setDisplayListIndex(1);
     }
