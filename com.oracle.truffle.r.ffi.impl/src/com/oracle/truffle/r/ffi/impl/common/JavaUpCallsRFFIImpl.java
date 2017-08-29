@@ -1600,4 +1600,14 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return 0;
     }
 
+    @Override
+    public Object Rf_VectorToPairList(Object x) {
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_VectorToPairList).call(x);
+    }
+
+    @Override
+    public Object Rf_asCharacterFactor(Object x) {
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_asCharacterFactor).call(x);
+    }
+
 }

@@ -763,12 +763,11 @@ SEXP Rf_PairToVectorList(SEXP x){
 }
 
 SEXP Rf_VectorToPairList(SEXP x){
-	return unimplemented("Rf_VectorToPairList");
+	return checkRef(((call_Rf_VectorToPairList) callbacks[Rf_VectorToPairList_x])(x));
 }
 
 SEXP Rf_asCharacterFactor(SEXP x){
-	unimplemented("Rf_VectorToPairList");
-	return NULL;
+	return checkRef(((call_Rf_asCharacterFactor) callbacks[Rf_asCharacterFactor_x])(x));
 }
 
 int Rf_asLogical(SEXP x){

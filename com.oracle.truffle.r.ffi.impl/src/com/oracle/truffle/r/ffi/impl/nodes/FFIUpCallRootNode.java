@@ -99,7 +99,7 @@ public final class FFIUpCallRootNode extends RootNode {
         FFIUpCallRootNode.add(RFFIUpCallTable.Rf_asLogical, AsLogicalNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallTable.Rf_asInteger, AsIntegerNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallTable.Rf_asChar, AsCharNodeGen::create);
-        FFIUpCallRootNode.add(RFFIUpCallTable.Rf_coerceVector, CoerceVectorNode::create);
+        FFIUpCallRootNode.add(RFFIUpCallTable.Rf_coerceVector, CoerceNodes.CoerceVectorNode::create);
         FFIUpCallRootNode.add(RFFIUpCallTable.CAR, CARNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallTable.CDR, CDRNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallTable.CADR, CADRNodeGen::create);
@@ -116,5 +116,7 @@ public final class FFIUpCallRootNode extends RootNode {
         FFIUpCallRootNode.add(RFFIUpCallTable.Rf_namesgets, MiscNodesFactory.NamesGetsNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallTable.TAG, AttributesAccessNodesFactory.TAGNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallTable.Rf_copyMostAttrib, AttributesAccessNodesFactory.CopyMostAttribNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallTable.Rf_VectorToPairList, CoerceNodes.VectorToPairListNode::create);
+        FFIUpCallRootNode.add(RFFIUpCallTable.Rf_asCharacterFactor, CoerceNodes.AsCharacterFactor::create);
     }
 }
