@@ -34,6 +34,13 @@ import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;
  */
 public final class RMath {
 
+    public static double sign(double x) {
+        if (Double.isNaN(x)) {
+            return x;
+        }
+        return ((x > 0) ? 1 : ((x == 0) ? 0 : -1));
+    }
+
     public static boolean mlValid(double d) {
         return !Double.isNaN(d);
     }

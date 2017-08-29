@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,5 +39,16 @@ public class TestExternal_covcor extends TestBase {
         assertEval(".Call(stats:::C_cov, c('1','2','3','4','5'), 1:5, 4, FALSE)");
         assertEval(".Call(stats:::C_cov, NULL, 1:5, 4, FALSE)");
         assertEval(".Call(stats:::C_cov, 1:3, 1:5, 4, FALSE)");
+    }
+
+    @Test
+    public void testCombinations() {
+        String[] useCor = new String[]{"e", "a", "c", "n", "p"};
+        String[] useCov = new String[]{"e", "a", "c", "n"};
+        String[] methods = new String[]{"p", "k", "s"};
+        assertEval(template("cor(mtcars[,1:4], use='%0', method='%1')", useCor, methods));
+        assertEval(template("cor(1:4, c(1,7,1,-4), use='%0', method='%1')", useCor, methods));
+        assertEval(template("cov(mtcars[,1:4], use='%0', method='%1')", useCov, methods));
+        assertEval(template("cov(1:4, c(1,7,1,-4), use='%0', method='%1')", useCov, methods));
     }
 }
