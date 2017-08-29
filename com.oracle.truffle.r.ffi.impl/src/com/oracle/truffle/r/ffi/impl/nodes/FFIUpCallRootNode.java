@@ -115,5 +115,6 @@ public final class FFIUpCallRootNode extends RootNode {
         FFIUpCallRootNode.add(RFFIUpCallTable.Rf_punif, () -> RandFunction3_2NodeGen.create(new Unif.PUnif()));
         FFIUpCallRootNode.add(RFFIUpCallTable.Rf_namesgets, MiscNodesFactory.NamesGetsNodeGen::create);
         FFIUpCallRootNode.add(RFFIUpCallTable.TAG, AttributesAccessNodesFactory.TAGNodeGen::create);
+        FFIUpCallRootNode.add(RFFIUpCallTable.Rf_copyMostAttrib, AttributesAccessNodesFactory.CopyMostAttribNodeGen::create);
     }
 }

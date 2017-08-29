@@ -147,6 +147,7 @@ static jmethodID Rf_copyMatrixMethodID;
 static jmethodID Rf_nrowsMethodID;
 static jmethodID Rf_ncolsMethodID;
 static jmethodID Rf_namesgetsMethodID;
+static jmethodID Rf_copyMostAttribMethodID;
 
 static jclass CharSXPWrapperClass;
 jclass JNIUpCallsRFFIImplClass;
@@ -265,6 +266,7 @@ void init_internals(JNIEnv *env) {
     Rf_nrowsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_nrows", "(Ljava/lang/Object;)I", 0);
     Rf_ncolsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_ncols", "(Ljava/lang/Object;)I", 0);
     Rf_namesgetsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_namesgets", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+    Rf_copyMostAttribMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_copyMostAttrib", "(Ljava/lang/Object;Ljava/lang/Object;)I", 0);
 
     // static JNI-specific methods
 	JNIUpCallsRFFIImplClass = checkFindClass(env, "com/oracle/truffle/r/ffi/impl/jni/JNIUpCallsRFFIImpl");
@@ -446,7 +448,9 @@ SEXP Rf_applyClosure(SEXP x, SEXP y, SEXP z, SEXP a, SEXP b) {
 }
 
 void Rf_copyMostAttrib(SEXP x, SEXP y) {
-	unimplemented("Rf_copyMostAttrib");
+	TRACE(TARGpp, x, y);
+	JNIEnv *thisenv = getEnv();
+    (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_copyMostAttribMethodID, x, y);
 }
 
 void Rf_copyVector(SEXP x, SEXP y) {

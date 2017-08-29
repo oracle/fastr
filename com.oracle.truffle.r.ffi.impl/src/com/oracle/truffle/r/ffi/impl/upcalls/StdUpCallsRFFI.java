@@ -305,4 +305,5 @@ public interface StdUpCallsRFFI {
 
     Object Rf_namesgets(Object vec, Object val);
 
+    int Rf_copyMostAttrib(Object x, Object y);
 }

@@ -58,7 +58,7 @@ typedef SEXP (*call_Rf_coerceVector)(SEXP x, SEXPTYPE mode);
 typedef R_xlen_t (*call_Rf_any_duplicated)(SEXP x, Rboolean from_last);
 typedef SEXP (*call_Rf_duplicated)(SEXP x, Rboolean y);
 typedef SEXP (*call_Rf_applyClosure)(SEXP x, SEXP y, SEXP z, SEXP a, SEXP b);
-typedef void (*call_Rf_copyMostAttrib)(SEXP x, SEXP y);
+typedef int (*call_Rf_copyMostAttrib)(SEXP x, SEXP y);
 typedef void (*call_Rf_copyVector)(SEXP x, SEXP y);
 typedef int (*call_Rf_countContexts)(int x, int y);
 typedef Rboolean (*call_Rf_inherits)(SEXP x, const char * klass);

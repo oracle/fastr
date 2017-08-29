@@ -30,9 +30,10 @@ import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -52,60 +53,60 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
     @Child private GetFixedAttributeNode namesAttrGetter = GetFixedAttributeNode.createNames();
     @Child private GetFixedAttributeNode classAttrGetter = GetFixedAttributeNode.createClass();
 
-    public abstract void execute(RAbstractVector source, RVector<?> target);
+    public abstract void execute(RAttributable source, RAttributable target);
 
     public static CopyOfRegAttributesNode create() {
         return CopyOfRegAttributesNodeGen.create();
     }
 
     @Specialization(guards = "source.getAttributes() == null")
-    protected void copyNoAttributes(@SuppressWarnings("unused") RAbstractVector source, @SuppressWarnings("unused") RVector<?> target) {
+    protected void copyNoAttributes(@SuppressWarnings("unused") RAttributeStorage source, @SuppressWarnings("unused") RAttributeStorage target) {
         // nothing to do
     }
 
-    protected static final boolean emptyAttributes(RAbstractVector source) {
+    protected static final boolean emptyAttributes(RAttributeStorage source) {
         DynamicObject attributes = source.getAttributes();
         return attributes == null || attributes.isEmpty();
     }
 
     @Specialization(guards = "emptyAttributes(source)", replaces = "copyNoAttributes")
-    protected void copyEmptyAttributes(@SuppressWarnings("unused") RAbstractVector source, @SuppressWarnings("unused") RVector<?> target) {
+    protected void copyEmptyAttributes(@SuppressWarnings("unused") RAttributeStorage source, @SuppressWarnings("unused") RAttributeStorage target) {
         // nothing to do
     }
 
-    protected final boolean onlyDimAttribute(RAbstractVector source) {
+    protected final boolean onlyDimAttribute(RAttributeStorage source) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && dimAttrGetter.execute(attributes) != null;
     }
 
     @Specialization(guards = "onlyDimAttribute(source)")
-    protected void copyDimOnly(@SuppressWarnings("unused") RAbstractVector source, @SuppressWarnings("unused") RVector<?> target) {
+    protected void copyDimOnly(@SuppressWarnings("unused") RAttributeStorage source, @SuppressWarnings("unused") RAttributeStorage target) {
         // nothing to do
     }
 
-    protected final boolean onlyNamesAttribute(RAbstractVector source) {
+    protected final boolean onlyNamesAttribute(RAttributeStorage source) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && namesAttrGetter.execute(attributes) != null;
     }
 
     @Specialization(guards = "onlyNamesAttribute(source)")
-    protected void copyNamesOnly(@SuppressWarnings("unused") RAbstractVector source, @SuppressWarnings("unused") RVector<?> target) {
+    protected void copyNamesOnly(@SuppressWarnings("unused") RAttributeStorage source, @SuppressWarnings("unused") RAttributeStorage target) {
         // nothing to do
     }
 
-    protected final boolean onlyClassAttribute(RAbstractVector source) {
+    protected final boolean onlyClassAttribute(RAttributeStorage source) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && classAttrGetter.execute(attributes) != null;
     }
 
     @Specialization(guards = "onlyClassAttribute(source)")
-    protected void copyClassOnly(RAbstractVector source, RVector<?> target) {
+    protected void copyClassOnly(RAttributeStorage source, RVector<?> target) {
         Object classAttr = classAttrGetter.execute(source.getAttributes());
         target.initAttributes(RAttributesLayout.createClass(classAttr));
     }
 
     @Specialization
-    protected void copyGeneric(RAbstractVector source, RVector<?> target) {
+    protected void copyGeneric(RAttributeStorage source, RAttributeStorage target) {
         DynamicObject orgAttributes = source.getAttributes();
         if (orgAttributes != null) {
             Shape shape = orgAttributes.getShape();

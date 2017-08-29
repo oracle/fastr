@@ -311,7 +311,7 @@ SEXP Rf_applyClosure(SEXP x, SEXP y, SEXP z, SEXP a, SEXP b) {
 }
 
 void Rf_copyMostAttrib(SEXP x, SEXP y) {
-	unimplemented("Rf_copyMostAttrib");
+	((call_Rf_copyMostAttrib) callbacks[Rf_copyMostAttrib_x])(x, y);
 }
 
 void Rf_copyVector(SEXP x, SEXP y) {
