@@ -539,7 +539,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         @Child private CallArgumentsNode arguments;
         @Child private Node foreignCall;
-        @Child private Node isNullCall;
         @CompilationFinal private int foreignCallArgCount;
 
         public ForeignCall(CallArgumentsNode arguments) {
@@ -558,15 +557,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     argumentsArray[i] = r2Foreign.execute(argumentsArray[i]);
                 }
                 Object result = ForeignAccess.sendExecute(foreignCall, function, argumentsArray);
-                if (RRuntime.isForeignObject(result)) {
-                    if (isNullCall == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        isNullCall = insert(Message.IS_NULL.createNode());
-                    }
-                    if (ForeignAccess.sendIsNull(isNullCall, (TruffleObject) result)) {
-                        return RNull.instance;
-                    }
-                }
                 return foreign2R.execute(result);
             } catch (ArityException | UnsupportedMessageException | UnsupportedTypeException e) {
                 CompilerDirectives.transferToInterpreter();
