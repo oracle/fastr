@@ -36,6 +36,7 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -92,7 +93,7 @@ public class VectorMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{create("1:10"), create("as.numeric()")};
+        return new TruffleObject[]{RDataFactory.createDoubleVector(new double[]{1}, true), create("c(1:10)"), create("as.numeric()")};
     }
 
     @Override
@@ -103,6 +104,12 @@ public class VectorMRTest extends AbstractMRTest {
     @Override
     protected boolean isBoxed(TruffleObject obj) {
         return ((RAbstractVector) obj).getLength() == 1;
+    }
+
+    @Override
+    protected Object getUnboxed(TruffleObject obj) {
+        assertTrue(((RAbstractVector) obj).getLength() == 1);
+        return ((RAbstractVector) obj).getDataAtAsObject(0);
     }
 
     @Override
