@@ -102,7 +102,7 @@ public class JLineConsoleCompleter implements Completer {
         // are we in quotes?
         int lastQuoteIdx = isInQuotes(buffer, cursor);
         if (lastQuoteIdx != -1) {
-            return lastQuoteIdx;
+            return lastQuoteIdx + 1;
         }
 
         Value opt = env.getMember("options");
@@ -144,7 +144,7 @@ public class JLineConsoleCompleter implements Completer {
         int idx = -1;
         int qidx = -1;
         int c = 0;
-        while (++idx <= cursor && idx < buffer.length()) {
+        while (++idx < cursor && idx < buffer.length()) {
             if (buffer.charAt(idx) == '\'' || buffer.charAt(idx) == '\"') {
                 qidx = idx;
                 c++;
