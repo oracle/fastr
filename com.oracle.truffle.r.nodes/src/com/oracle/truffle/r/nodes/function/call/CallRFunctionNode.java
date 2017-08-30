@@ -51,9 +51,9 @@ public final class CallRFunctionNode extends Node {
         return new CallRFunctionNode(callTarget);
     }
 
-    public Object execute(VirtualFrame frame, RFunction function, RCaller caller, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature,
+    public Object execute(VirtualFrame frame, RFunction function, RCaller caller, Object callerFrameObject, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature,
                     MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
-        Object[] callArgs = RArguments.create(function, caller, callerFrame, evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
+        Object[] callArgs = RArguments.create(function, caller, callerFrameObject, evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
         try {
             return callNode.call(callArgs);
         } finally {

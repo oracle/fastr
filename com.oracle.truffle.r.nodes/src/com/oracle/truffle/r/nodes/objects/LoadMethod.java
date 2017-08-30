@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.SetNeedsCallerFrameClosure;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -131,7 +132,8 @@ abstract class LoadMethod extends RBaseNode {
             if (cached.profile(currentFunction == loadMethodFunction)) {
                 // TODO: technically, someone could override loadMethod function and access the
                 // caller, but it's rather unlikely
-                ret = (RFunction) loadMethodCall.execute(frame, loadMethodFunction, caller, null, new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())}, SIGNATURE,
+                ret = (RFunction) loadMethodCall.execute(frame, loadMethodFunction, caller, SetNeedsCallerFrameClosure.DUMMY,
+                                new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())}, SIGNATURE,
                                 loadMethodFunction.getEnclosingFrame(), null);
             } else {
                 // slow path

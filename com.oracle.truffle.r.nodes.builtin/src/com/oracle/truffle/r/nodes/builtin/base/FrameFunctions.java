@@ -159,7 +159,7 @@ public class FrameFunctions {
                 if (RArguments.getDepth(frame) - actualFrame <= ITERATE_LEVELS) {
                     Frame current = frame;
                     for (int i = 0; i < ITERATE_LEVELS; i++) {
-                        current = current == null ? null : RArguments.getCallerFrame(current);
+                        current = current == null ? null : getCallerFrame(current);
                         if (current != null && RArguments.getDepth(current) == actualFrame) {
                             return current;
                         }
@@ -168,6 +168,11 @@ public class FrameFunctions {
                 }
                 return Utils.getStackFrame(access, actualFrame);
             }
+        }
+
+        private static Frame getCallerFrame(Frame current) {
+            Object callerFrame = RArguments.getCallerFrame(current);
+            return callerFrame instanceof Frame ? (Frame) callerFrame : null;
         }
 
         @TruffleBoundary

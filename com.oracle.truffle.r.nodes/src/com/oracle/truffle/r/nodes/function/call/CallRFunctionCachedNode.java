@@ -51,14 +51,14 @@ public abstract class CallRFunctionCachedNode extends Node {
         this.cacheLimit = cacheLimit;
     }
 
-    public final Object execute(VirtualFrame frame, RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
-        Object[] callArgs = RArguments.create(function, call, callerFrame, evaluatedArgs, dispatchArgs);
+    public final Object execute(VirtualFrame frame, RFunction function, RCaller call, Object callerFrameObject, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
+        Object[] callArgs = RArguments.create(function, call, callerFrameObject, evaluatedArgs, dispatchArgs);
         return execute(frame, function.getTarget(), callArgs, call);
     }
 
-    public final Object execute(VirtualFrame frame, RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
+    public final Object execute(VirtualFrame frame, RFunction function, RCaller call, Object callerFrameObject, Object[] evaluatedArgs,
                     ArgumentsSignature suppliedSignature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
-        Object[] callArgs = RArguments.create(function, call, callerFrame, evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
+        Object[] callArgs = RArguments.create(function, call, callerFrameObject, evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
         return execute(frame, function.getTarget(), callArgs, call);
     }
 

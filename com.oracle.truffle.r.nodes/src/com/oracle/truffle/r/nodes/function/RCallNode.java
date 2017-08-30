@@ -83,6 +83,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.SetNeedsCallerFrameClosure;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
@@ -155,6 +156,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     @Child private FunctionDispatch internalDispatchCall;
 
     private final Assumption needsNoCallerFrame = Truffle.getRuntime().createAssumption("no caller frame");
+    private final SetNeedsCallerFrameClosure setNeedsCallerFrameClosure = new InvalidateNoCallerFrame(needsNoCallerFrame);
 
     public boolean setNeedsCallerFrame() {
         boolean value = !needsNoCallerFrame.isValid();
@@ -991,11 +993,26 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     call.getCallNode().cloneCallTarget();
                 }
             }
-            MaterializedFrame callerFrame = /* CompilerDirectives.inInterpreter() || */originalCall.needsNoCallerFrame.isValid() ? null : frame.materialize();
+            Object callerFrameObject = /* CompilerDirectives.inInterpreter() || */originalCall.needsNoCallerFrame.isValid() ? originalCall.setNeedsCallerFrameClosure : frame.materialize();
 
-            return call.execute(frame, function, originalCall.createCaller(frame, function), callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(),
+            return call.execute(frame, function, originalCall.createCaller(frame, function), callerFrameObject, orderedArguments.getArguments(), orderedArguments.getSignature(),
                             function.getEnclosingFrame(), s3Args);
         }
+    }
+
+    public static final class InvalidateNoCallerFrame extends SetNeedsCallerFrameClosure {
+
+        private final Assumption needsNoCallerFrame;
+
+        protected InvalidateNoCallerFrame(Assumption needsNoCallerFrame) {
+            this.needsNoCallerFrame = needsNoCallerFrame;
+        }
+
+        @Override
+        public void setNeedsCallerFrame() {
+            needsNoCallerFrame.invalidate();
+        }
+
     }
 
     @Override

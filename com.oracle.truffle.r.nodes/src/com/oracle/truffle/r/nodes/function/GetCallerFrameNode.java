@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,15 +24,14 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.SetNeedsCallerFrameClosure;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -47,16 +46,17 @@ public final class GetCallerFrameNode extends RBaseNode {
     }
 
     public MaterializedFrame execute(Frame frame) {
-        MaterializedFrame funFrame = RArguments.getCallerFrame(frame);
-        if (funFrame == null) {
+        Object callerFrameObject = RArguments.getCallerFrame(frame);
+        if (!(callerFrameObject instanceof MaterializedFrame)) {
             if (!slowPathInitialized) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 slowPathInitialized = true;
             }
-            notifyCallers(RArguments.getCall(frame));
+            notifyCallers(callerFrameObject);
             if (slowPathInitialized) {
                 RError.performanceWarning("slow caller frame access");
             }
+            // for now, get it on the very slow path
             Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
             if (callerFrame != null) {
                 return callerFrame.materialize();
@@ -66,19 +66,13 @@ public final class GetCallerFrameNode extends RBaseNode {
                 return frame.materialize();
             }
         }
-        return funFrame;
+        return (MaterializedFrame) callerFrameObject;
     }
 
-    @TruffleBoundary
-    private void notifyCallers(RCaller call) {
-        RCaller current = call;
-        while (current != null && current.isPromise()) {
-            current = current.getParent();
-        }
-        if (current != null && current.isValidCaller() && current.getSyntaxNode() instanceof RCallNode) {
-            if (!((RCallNode) current.getSyntaxNode()).setNeedsCallerFrame()) {
-                slowPathInitialized = false;
-            }
+    private static void notifyCallers(Object callerFrameObject) {
+        if (callerFrameObject instanceof SetNeedsCallerFrameClosure) {
+            // inform the responsible call node to create a caller frame
+            ((SetNeedsCallerFrameClosure) callerFrameObject).setNeedsCallerFrame();
         }
     }
 }
