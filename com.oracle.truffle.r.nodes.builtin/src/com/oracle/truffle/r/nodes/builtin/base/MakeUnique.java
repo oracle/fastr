@@ -48,13 +48,9 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 @RBuiltin(name = "make.unique", kind = INTERNAL, parameterNames = {"names", "sep"}, behavior = PURE)
 public abstract class MakeUnique extends RBuiltinNode.Arg2 {
 
-    private static final int SIMPLE_ALGORITHM_THRESHOLD = 1000;
-
     @Child private ReuseNonSharedNode reuseNonSharedNode;
 
     private final ConditionProfile trivialSizeProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile largeVectorProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile duplicatesProfile = ConditionProfile.createBinaryProfile();
     private final NACheck dummyCheck = NACheck.create(); // never triggered (used for vector update)
 
     static {
@@ -66,6 +62,7 @@ public abstract class MakeUnique extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected RAbstractStringVector makeUnique(String names, @SuppressWarnings("unused") String sep) {
+        // a single string cannot have duplicates
         return RDataFactory.createStringVectorFromScalar(names);
     }
 
@@ -73,8 +70,6 @@ public abstract class MakeUnique extends RBuiltinNode.Arg2 {
     protected RAbstractStringVector makeUnique(RStringVector names, String sep) {
         if (trivialSizeProfile.profile(names.getLength() == 0 || names.getLength() == 1)) {
             return names;
-        } else if (largeVectorProfile.profile(names.getLength() <= SIMPLE_ALGORITHM_THRESHOLD)) {
-            return doGeneric(names, sep);
         }
         if (reuseNonSharedNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -87,80 +82,53 @@ public abstract class MakeUnique extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected RAbstractStringVector makeUnique(RStringSequence names, @SuppressWarnings("unused") String sep) {
+        // a string sequence cannot have duplicates if stride is not zero
         if (names.getStride() != 0) {
             return names;
         }
         throw RInternalError.unimplemented("make.unique for string sequence with zero stride is not implemented");
     }
 
-    /**
-     * Uses a O(n^2) algorithm for checking if there are duplicates. So, do not use for large
-     * vectors.
-     */
-    protected RAbstractStringVector doGeneric(RAbstractStringVector names, String sep) {
-        // TODO: perhaps for longer vectors there is a faster algorithm using hash maps, but
-        // then it would probably have to be put on the slow path even for cases when no
-        // duplicates actually exist
-        int[] duplicates = new int[names.getLength()];
-        boolean duplicatesExist = false;
-        for (int i = 0; i < duplicates.length; i++) {
-            if (duplicates[i] > 0) {
-                // already processed
-                continue;
-            }
-            String current = names.getDataAt(i);
-            int duplicatesCount = 0;
-            for (int j = i + 1; j < duplicates.length; j++) {
-                if (current.equals(names.getDataAt(j))) {
-                    duplicatesExist = true;
-                    duplicates[j] = ++duplicatesCount;
-                }
-            }
-        }
-        if (duplicatesProfile.profile(!duplicatesExist)) {
-            return names;
-        } else {
-            if (reuseNonSharedNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                reuseNonSharedNode = insert(ReuseNonSharedNode.create());
-            }
-            RStringVector newNames = (RStringVector) reuseNonSharedNode.execute(names);
-            if (newNames.isShared()) {
-                newNames = (RStringVector) newNames.copy();
-            }
-            // start with 1 as the first one is never the duplicate
-            for (int i = 1; i < duplicates.length; i++) {
-                if (duplicates[i] > 0) {
-                    newNames.updateDataAt(i, concat(newNames.getDataAt(i), sep, duplicates[i]), dummyCheck);
-                }
-            }
-            return newNames;
-        }
-    }
-
     @TruffleBoundary
     protected RStringVector doLargeVector(RStringVector names, String sep) {
         HashMap<String, AtomicInteger> keys = new HashMap<>(names.getLength());
         boolean containsDuplicates = false;
+        boolean containsClashes = true;
         for (int i = 0; i < names.getLength(); i++) {
-            if (keys.put(names.getDataAt(i), new AtomicInteger(0)) != null) {
+            AtomicInteger value = new AtomicInteger(0);
+            String element = names.getDataAt(i);
+            AtomicInteger prev = keys.put(element, value);
+            if (prev != null) {
                 containsDuplicates = true;
+                value.incrementAndGet();
+                if (!containsClashes) {
+                    int lastIndexOf = element.lastIndexOf(sep);
+                    // If an element contains the separator string followed by a digit, we may
+                    // encounter clashes.
+                    containsClashes = lastIndexOf != -1 && lastIndexOf + 1 < element.length() && Character.isDigit(element.charAt(lastIndexOf + 1));
+                }
             }
         }
         if (containsDuplicates) {
-            for (int i = 1; i < names.getLength(); i++) {
-                AtomicInteger cnt = keys.get(names.getDataAt(i));
-                if (cnt.get() > 0) {
-                    int curCnt = cnt.getAndIncrement();
-                    names.updateDataAt(i, concat(names.getDataAt(i), sep, curCnt), dummyCheck);
+            for (int i = 0; i < names.getLength(); i++) {
+                AtomicInteger atomicInteger = keys.get(names.getDataAt(i));
+                int curCnt = atomicInteger.getAndIncrement() - 1;
+                if (curCnt > 0) {
+                    String updatedElement;
+                    do {
+                        updatedElement = names.getDataAt(i) + sep + curCnt;
+
+                        // The generated string may already be in the vector.
+                        if (containsClashes && keys.containsKey(updatedElement)) {
+                            curCnt = atomicInteger.getAndIncrement() - 1;
+                        } else {
+                            break;
+                        }
+                    } while (true);
+                    names.updateDataAt(i, updatedElement, dummyCheck);
                 }
             }
         }
         return names;
-    }
-
-    @TruffleBoundary
-    private static String concat(String s1, String sep, int index) {
-        return s1 + sep + index;
     }
 }

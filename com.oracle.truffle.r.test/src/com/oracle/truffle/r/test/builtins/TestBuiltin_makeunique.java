@@ -38,6 +38,28 @@ public class TestBuiltin_makeunique extends TestBase {
     }
 
     @Test
+    public void testMakeUnique5() {
+        assertEval("{ make.unique(rep('a', 10)) }");
+        assertEval("{ make.unique(paste0('a', 1:10)) }");
+    }
+
+    @Test
+    public void testMakeUnique6() {
+        // test string sequences
+        assertEval("{ make.unique(paste0('a', 1:10)) }");
+        assertEval("{ make.unique(paste('a', 1:10, sep = '.')) }");
+    }
+
+    @Test
+    public void testMakeUnique7() {
+        // test clashes
+        assertEval("{ make.unique(c('a', 'a', 'a.2', 'a'), sep = '.') }");
+        assertEval("{ make.unique(c('a.1', 'a.2', 'a', 'a'), sep = '.') }");
+        assertEval("{ make.unique(c('a.2', 'a.2', 'a', 'a', 'a'), sep = '.') }");
+        assertEval("{ make.unique(c('a.2', 'a.2', 'a.3', 'a.3', 'a', 'a', 'a'), sep = '.') }");
+    }
+
+    @Test
     public void testMakeUnique() {
         assertEval("{ make.unique(\"a\") }");
         assertEval("{ make.unique(character()) }");
@@ -54,6 +76,6 @@ public class TestBuiltin_makeunique extends TestBase {
         assertEval("{ .Internal(make.unique(c(\"7\", \"42\"), character())) }");
         assertEval("{ .Internal(make.unique(c(\"7\", \"42\"), c(\".\", \".\"))) }");
         assertEval("{ .Internal(make.unique(c(\"7\", \"42\"), NULL)) }");
-
     }
+
 }
