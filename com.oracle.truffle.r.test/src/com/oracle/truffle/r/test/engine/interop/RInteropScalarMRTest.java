@@ -26,13 +26,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
-import org.junit.Assert;
 
 public class RInteropScalarMRTest extends AbstractMRTest {
 
@@ -65,6 +65,11 @@ public class RInteropScalarMRTest extends AbstractMRTest {
     @Override
     protected boolean isBoxed(TruffleObject arg0) {
         return true;
+    }
+
+    @Override
+    protected boolean isPointer(TruffleObject obj) {
+        return false;
     }
 
     @Override

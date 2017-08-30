@@ -91,6 +91,10 @@ public abstract class AbstractMRTest {
         return false;
     }
 
+    protected boolean testToNative(TruffleObject obj) {
+        return true;
+    }
+
     protected int getSize(@SuppressWarnings("unused") TruffleObject obj) {
         throw new UnsupportedOperationException("override if hasSize returns true");
     }
@@ -123,6 +127,9 @@ public abstract class AbstractMRTest {
     @Test
     public void testNativePointer() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
+            if (!testToNative(obj)) {
+                continue;
+            }
             try {
                 assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
             } catch (UnsupportedMessageException unsupportedMessageException) {
