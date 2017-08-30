@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -34,13 +35,15 @@ public class RStringSequence extends RSequence implements RAbstractStringVector 
 
     private final int start;
     private final int stride;
-    private final String template;
+    private final String prefix;
+    private final String suffix;
 
-    protected RStringSequence(String template, int start, int stride, int length) {
+    protected RStringSequence(String prefix, String suffix, int start, int stride, int length) {
         super(length);
         this.start = start;
         this.stride = stride;
-        this.template = template;
+        this.prefix = prefix != null ? prefix : "";
+        this.suffix = suffix != null ? suffix : "";
     }
 
     private static void resizeData(String[] newData, String[] data, int oldDataLength, String fill) {
@@ -82,13 +85,13 @@ public class RStringSequence extends RSequence implements RAbstractStringVector 
     @Override
     public String getDataAt(int index) {
         assert index >= 0 && index < getLength();
-        return template + (start + stride * index);
+        return prefix + (start + stride * index) + suffix;
     }
 
     private void populateVectorData(String[] result) {
         int current = start;
         for (int i = 0; i < result.length && i < getLength(); i++) {
-            result[i] = template + current;
+            result[i] = prefix + current + suffix;
             current += stride;
         }
     }
@@ -102,13 +105,17 @@ public class RStringSequence extends RSequence implements RAbstractStringVector 
         return start;
     }
 
+    public int getEnd() {
+        return start + (getLength() - 1) * stride;
+    }
+
     public int getStride() {
         return stride;
     }
 
     @Override
     public Object getStartObject() {
-        return template + start;
+        return prefix + start + suffix;
     }
 
     @Override
@@ -131,5 +138,11 @@ public class RStringSequence extends RSequence implements RAbstractStringVector 
             default:
                 return null;
         }
+    }
+
+    @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        return "[\"" + getStartObject() + "\" - \"" + prefix + getEnd() + suffix + "\"]";
     }
 }

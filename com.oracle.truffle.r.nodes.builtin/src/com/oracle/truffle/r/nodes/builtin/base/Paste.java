@@ -108,8 +108,9 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
     protected RAbstractStringVector pasteListNullSep(VirtualFrame frame, RAbstractListVector values, String sep, @SuppressWarnings("unused") RNull collapse) {
         int length = lengthProfile.profile(values.getLength());
         if (hasNonNullElements(values, length)) {
-            if (isStringSequence(values, length)) {
-                return createStringSequence(values, length, sep);
+            int seqPos = isStringSequence(values, length);
+            if (seqPos != -1) {
+                return createStringSequence(values, length, seqPos, sep);
             } else {
                 String[] result = pasteListElements(frame, values, sep, length);
                 if (result == ONE_EMPTY_STRING) {
@@ -263,14 +264,25 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
     }
 
     /**
-     * Tests for pattern = { stringScalar } intSequence.
+     * Tests for pattern = { scalar } intSequence { scalar }.
      */
-    private static boolean isStringSequence(RAbstractListVector values, int length) {
+    private static int isStringSequence(RAbstractListVector values, int length) {
         int i = 0;
+        // consume prefix
         while (i < length && isScalar(values.getDataAt(i))) {
             i++;
         }
-        return i < length && values.getDataAt(i) instanceof RIntSequence;
+        if (i < length && values.getDataAt(i) instanceof RIntSequence) {
+            // consume suffix
+            int j = i + 1;
+            while (j < length && isScalar(values.getDataAt(j))) {
+                j++;
+            }
+            if (j == length) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private static boolean isScalar(Object dataAt) {
@@ -278,14 +290,18 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
     }
 
     @TruffleBoundary
-    private static RStringSequence createStringSequence(RAbstractListVector values, int length, String sep) {
-        assert isStringSequence(values, length);
+    private static RStringSequence createStringSequence(RAbstractListVector values, int length, int seqPos, String sep) {
+        assert isStringSequence(values, length) != -1;
 
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < values.getLength() - 1; i++) {
-            sb.append(values.getDataAt(i)).append(sep);
+        StringBuilder prefix = new StringBuilder();
+        for (int i = 0; i < seqPos; i++) {
+            prefix.append(values.getDataAt(i)).append(sep);
         }
-        RIntSequence seq = (RIntSequence) values.getDataAt(length - 1);
-        return RDataFactory.createStringSequence(sb.toString(), seq.getStart(), seq.getStride(), seq.getLength());
+        RIntSequence seq = (RIntSequence) values.getDataAt(seqPos);
+        StringBuilder suffix = new StringBuilder();
+        for (int i = seqPos + 1; i < length; i++) {
+            suffix.append(values.getDataAt(i)).append(sep);
+        }
+        return RDataFactory.createStringSequence(prefix.toString(), suffix.toString(), seq.getStart(), seq.getStride(), seq.getLength());
     }
 }
