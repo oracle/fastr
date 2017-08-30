@@ -121,4 +121,14 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
             }
         }
     }
+
+    @Specialization(guards = "!isAttributeStorage(source)")
+    @SuppressWarnings("unused")
+    protected void copyNothing(RAttributable source, RAttributable target) {
+        // do nothing, just pass
+    }
+
+    protected static boolean isAttributeStorage(Object o) {
+        return o instanceof RAttributeStorage;
+    }
 }
