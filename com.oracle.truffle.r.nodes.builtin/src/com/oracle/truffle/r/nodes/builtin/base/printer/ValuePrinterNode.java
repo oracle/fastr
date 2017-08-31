@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import java.io.IOException;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
@@ -33,7 +33,6 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.base.InheritsBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.InheritsBuiltinNodeGen;
@@ -51,7 +50,6 @@ import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -69,6 +67,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R.InteropTypeCheck;
+import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.InteropTypeCheck.RType.BOOLEAN;
+import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.InteropTypeCheck.RType.DOUBLE;
+import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.InteropTypeCheck.RType.INTEGER;
+import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.InteropTypeCheck.RType.STRING;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class ValuePrinterNode extends RBaseNode {
@@ -96,7 +100,7 @@ public final class ValuePrinterNode extends RBaseNode {
         @Child private Node isBoxedNode = com.oracle.truffle.api.interop.Message.IS_BOXED.createNode();
         @Child private Node unboxNode = com.oracle.truffle.api.interop.Message.UNBOX.createNode();
         @Child private Node keysNode = com.oracle.truffle.api.interop.Message.KEYS.createNode();
-        @Child private SetFixedAttributeNode namesAttrSetter = SetFixedAttributeNode.createNames();
+        @Child private Foreign2R foreign2R = Foreign2R.createForeign2R();
 
         @TruffleBoundary
         public Object convert(TruffleObject obj) {
@@ -118,13 +122,10 @@ public final class ValuePrinterNode extends RBaseNode {
                     Object value;
                     try {
                         value = ForeignAccess.sendRead(readNode, object, index);
-                        if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
-                            value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
-                        }
+                        return String.valueOf(foreign2R.execute(value));
                     } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                         throw RInternalError.shouldNotReachHere(e);
                     }
-                    return String.valueOf(value);
                 }
 
                 @Override
@@ -132,155 +133,148 @@ public final class ValuePrinterNode extends RBaseNode {
                     throw RInternalError.shouldNotReachHere();
                 }
             }
+            class RListWrapper extends TruffleObjectWrapper implements RAbstractListVector {
+
+                private final RStringVector names;
+
+                RListWrapper(int length, RStringVector names) {
+                    super(length);
+                    this.names = names;
+                    if (names != null) {
+                        DynamicObject attrs = RAttributesLayout.createNames(names);
+                        initAttributes(attrs);
+                    }
+                }
+
+                @Override
+                public Object getDataAtAsObject(int index) {
+                    return getDataAt(index);
+                }
+
+                @Override
+                public Object getDataAt(int index) {
+                    try {
+                        Object value = ForeignAccess.sendRead(readNode, obj, names != null ? names.getDataAt(index) : index);
+                        return foreign2R.execute(value);
+                    } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+                        throw RInternalError.shouldNotReachHere(e);
+                    }
+                }
+
+                @Override
+                public RStringVector getNames() {
+                    return names;
+                }
+
+                @Override
+                public RList materialize() {
+                    throw RInternalError.shouldNotReachHere();
+                }
+            }
             try {
                 if (ForeignAccess.sendHasSize(hasSizeNode, obj)) {
                     int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, obj);
-                    boolean allBoolean = true;
-                    boolean allInteger = true;
-                    boolean allNumber = true;
-                    boolean allCharacter = true;
-                    boolean allString = true;
+                    InteropTypeCheck typeCheck = new InteropTypeCheck();
                     for (int i = 0; i < size; i++) {
                         Object value = ForeignAccess.sendRead(readNode, obj, i);
                         if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
                             value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
                         }
-                        allBoolean &= value instanceof Boolean;
-                        allInteger &= value instanceof Integer;
-                        allNumber &= value instanceof Number;
-                        allCharacter &= value instanceof Character;
-                        allString &= value instanceof String;
+                        if (typeCheck.checkForeign(value) == InteropTypeCheck.RType.NONE) {
+                            break;
+                        }
                     }
-                    if (allBoolean) {
-                        class RLogicalWrapper extends TruffleObjectWrapper implements RAbstractLogicalVector {
+                    switch (typeCheck.getType()) {
+                        case BOOLEAN:
+                            class RLogicalWrapper extends TruffleObjectWrapper implements RAbstractLogicalVector {
 
-                            RLogicalWrapper(int length) {
-                                super(length);
-                            }
-
-                            @Override
-                            public Object getDataAtAsObject(int index) {
-                                return getDataAt(index);
-                            }
-
-                            @Override
-                            public byte getDataAt(int index) {
-                                Object value;
-                                try {
-                                    value = ForeignAccess.sendRead(readNode, obj, index);
-                                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
-                                        value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
-                                    }
-                                } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                                    throw RInternalError.shouldNotReachHere(e);
+                                RLogicalWrapper(int length) {
+                                    super(length);
                                 }
-                                return RRuntime.asLogical((Boolean) value);
-                            }
 
-                            @Override
-                            public RLogicalVector materialize() {
-                                throw RInternalError.shouldNotReachHere();
-                            }
-                        }
-                        return new RLogicalWrapper(size);
-                    } else if (allInteger) {
-                        class RIntWrapper extends TruffleObjectWrapper implements RAbstractIntVector {
-
-                            RIntWrapper(int length) {
-                                super(length);
-                            }
-
-                            @Override
-                            public Object getDataAtAsObject(int index) {
-                                return getDataAt(index);
-                            }
-
-                            @Override
-                            public int getDataAt(int index) {
-                                Object value;
-                                try {
-                                    value = ForeignAccess.sendRead(readNode, obj, index);
-                                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
-                                        value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
-                                    }
-                                } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                                    throw RInternalError.shouldNotReachHere(e);
+                                @Override
+                                public Object getDataAtAsObject(int index) {
+                                    return getDataAt(index);
                                 }
-                                return (Integer) value;
-                            }
 
-                            @Override
-                            public RIntVector materialize() {
-                                throw RInternalError.shouldNotReachHere();
-                            }
-                        }
-                        return new RIntWrapper(size);
-                    } else if (allNumber) {
-                        class RDoubleWrapper extends TruffleObjectWrapper implements RAbstractDoubleVector {
-
-                            RDoubleWrapper(int length) {
-                                super(length);
-                            }
-
-                            @Override
-                            public Object getDataAtAsObject(int index) {
-                                return getDataAt(index);
-                            }
-
-                            @Override
-                            public double getDataAt(int index) {
-                                Object value;
-                                try {
-                                    value = ForeignAccess.sendRead(readNode, obj, index);
-                                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
-                                        value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
+                                @Override
+                                public byte getDataAt(int index) {
+                                    try {
+                                        Object value = ForeignAccess.sendRead(readNode, obj, index);
+                                        return (byte) foreign2R.execute(value);
+                                    } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+                                        throw RInternalError.shouldNotReachHere(e);
                                     }
-                                } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                                    throw RInternalError.shouldNotReachHere(e);
                                 }
-                                return ((Number) value).doubleValue();
-                            }
 
-                            @Override
-                            public RDoubleVector materialize() {
-                                throw RInternalError.shouldNotReachHere();
+                                @Override
+                                public RLogicalVector materialize() {
+                                    throw RInternalError.shouldNotReachHere();
+                                }
                             }
-                        }
-                        return new RDoubleWrapper(size);
-                    } else if (allString || allCharacter) {
-                        return new RStringWrapper(size, obj);
-                    } else {
-                        class RListWrapper extends TruffleObjectWrapper implements RAbstractListVector {
+                            return new RLogicalWrapper(size);
+                        case INTEGER:
+                            class RIntWrapper extends TruffleObjectWrapper implements RAbstractIntVector {
 
-                            RListWrapper(int length) {
-                                super(length);
-                            }
+                                RIntWrapper(int length) {
+                                    super(length);
+                                }
 
-                            @Override
-                            public Object getDataAtAsObject(int index) {
-                                return getDataAt(index);
-                            }
+                                @Override
+                                public Object getDataAtAsObject(int index) {
+                                    return getDataAt(index);
+                                }
 
-                            @Override
-                            public Object getDataAt(int index) {
-                                Object value;
-                                try {
-                                    value = ForeignAccess.sendRead(readNode, obj, index);
-                                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
-                                        value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
+                                @Override
+                                public int getDataAt(int index) {
+                                    try {
+                                        Object value = ForeignAccess.sendRead(readNode, obj, index);
+                                        return ((Number) foreign2R.execute(value)).intValue();
+                                    } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+                                        throw RInternalError.shouldNotReachHere(e);
                                     }
-                                } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                                    throw RInternalError.shouldNotReachHere(e);
                                 }
-                                return value;
-                            }
 
-                            @Override
-                            public RList materialize() {
-                                throw RInternalError.shouldNotReachHere();
+                                @Override
+                                public RIntVector materialize() {
+                                    throw RInternalError.shouldNotReachHere();
+                                }
                             }
-                        }
-                        return new RListWrapper(size);
+                            return new RIntWrapper(size);
+                        case DOUBLE:
+                            class RDoubleWrapper extends TruffleObjectWrapper implements RAbstractDoubleVector {
+
+                                RDoubleWrapper(int length) {
+                                    super(length);
+                                }
+
+                                @Override
+                                public Object getDataAtAsObject(int index) {
+                                    return getDataAt(index);
+                                }
+
+                                @Override
+                                public double getDataAt(int index) {
+                                    try {
+                                        Object value = ForeignAccess.sendRead(readNode, obj, index);
+                                        return ((Number) foreign2R.execute(value)).doubleValue();
+                                    } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+                                        throw RInternalError.shouldNotReachHere(e);
+                                    }
+                                }
+
+                                @Override
+                                public RDoubleVector materialize() {
+                                    throw RInternalError.shouldNotReachHere();
+                                }
+                            }
+                            return new RDoubleWrapper(size);
+                        case STRING:
+                            return new RStringWrapper(size, obj);
+                        case NONE:
+                            return new RListWrapper(size, null);
+                        default:
+                            throw RInternalError.shouldNotReachHere();
                     }
                 }
                 TruffleObject keys = (TruffleObject) ForeignAccess.send(keysNode, obj);
@@ -292,44 +286,7 @@ public final class ValuePrinterNode extends RBaseNode {
                         names.setDataAt(names.getInternalStore(), i, abstractNames.getDataAt(i));
                     }
 
-                    class RListWrapper extends TruffleObjectWrapper implements RAbstractListVector {
-
-                        RListWrapper(int length) {
-                            super(length);
-                            DynamicObject attrs = RAttributesLayout.createNames(names);
-                            initAttributes(attrs);
-                        }
-
-                        @Override
-                        public Object getDataAtAsObject(int index) {
-                            return getDataAt(index);
-                        }
-
-                        @Override
-                        public Object getDataAt(int index) {
-                            Object value;
-                            try {
-                                value = ForeignAccess.sendRead(readNode, obj, names.getDataAt(index));
-                                if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
-                                    value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
-                                }
-                            } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                                throw RInternalError.shouldNotReachHere(e);
-                            }
-                            return value;
-                        }
-
-                        @Override
-                        public RStringVector getNames() {
-                            return names;
-                        }
-
-                        @Override
-                        public RList materialize() {
-                            throw RInternalError.shouldNotReachHere();
-                        }
-                    }
-                    return new RListWrapper(size);
+                    return new RListWrapper(size, names);
                 }
             } catch (InteropException e) {
                 // nothing to do
@@ -528,11 +485,6 @@ public final class ValuePrinterNode extends RBaseNode {
         @Override
         public void setRowNames(RAbstractVector rowNames) {
             throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public RType getRType() {
-            return RType.Integer;
         }
 
         @Override

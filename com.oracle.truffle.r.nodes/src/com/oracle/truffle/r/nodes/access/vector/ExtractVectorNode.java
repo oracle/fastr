@@ -31,7 +31,6 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -220,16 +219,12 @@ public abstract class ExtractVectorNode extends RBaseNode {
                     @Cached("create()") CastStringNode castNode,
                     @Cached("createFirstString()") FirstStringNode firstString,
                     @Cached("createClassProfile()") ValueProfile positionProfile,
-                    @Cached("IS_NULL.createNode()") Node isNullNode,
-                    @Cached("IS_BOXED.createNode()") Node isBoxedNode,
-                    @Cached("UNBOX.createNode()") Node unboxNode,
                     @Cached("createForeign2RNode()") Foreign2R foreign2RNode) {
         Object[] pos = positionProfile.profile(positions);
         if (pos.length == 0) {
             throw error(RError.Message.GENERIC, "No positions for foreign access.");
         }
         try {
-            // TODO implicite unboxing ok? method calls seem to behave this way
             Object result = object;
             for (int i = 0; i < pos.length; i++) {
                 result = read(this, pos[i], foreignRead, keyInfoNode, hasSizeNode, (TruffleObject) result, firstString, castNode);
@@ -237,22 +232,10 @@ public abstract class ExtractVectorNode extends RBaseNode {
                     assert result instanceof TruffleObject;
                 }
             }
-            return unbox(result, isNullNode, isBoxedNode, unboxNode, foreign2RNode);
+            return foreign2RNode.execute(result);
         } catch (InteropException | NoSuchFieldError e) {
             throw RError.interopError(RError.findParentRBase(this), e, object);
         }
-    }
-
-    private static Object unbox(Object obj, Node isNullNode, Node isBoxedNode, Node unboxNode, Foreign2R foreign2RNode) throws UnsupportedMessageException {
-        if (RRuntime.isForeignObject(obj)) {
-            if (ForeignAccess.sendIsNull(isNullNode, (TruffleObject) obj)) {
-                return RNull.instance;
-            }
-            if (ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) obj)) {
-                return foreign2RNode.execute(ForeignAccess.sendUnbox(unboxNode, (TruffleObject) obj));
-            }
-        }
-        return foreign2RNode.execute(obj);
     }
 
     public static Object read(RBaseNode caller, Object positions, Node foreignRead, Node keyInfoNode, Node hasSizeNode, TruffleObject object, FirstStringNode firstString, CastStringNode castNode)

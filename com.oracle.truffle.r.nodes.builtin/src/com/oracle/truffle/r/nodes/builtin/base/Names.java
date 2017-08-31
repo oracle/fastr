@@ -81,14 +81,12 @@ public abstract class Names extends RBuiltinNode.Arg1 {
     protected Object getNames(TruffleObject obj,
                     @Cached("GET_SIZE.createNode()") Node getSizeNode,
                     @Cached("KEYS.createNode()") Node keysNode,
-                    @Cached("READ.createNode()") Node readNode,
-                    @Cached("IS_BOXED.createNode()") Node isBoxedNode,
-                    @Cached("UNBOX.createNode()") Node unboxNode) {
+                    @Cached("READ.createNode()") Node readNode) {
 
         try {
             String[] names;
             try {
-                names = readKeys(keysNode, obj, getSizeNode, readNode, isBoxedNode, unboxNode);
+                names = readKeys(keysNode, obj, getSizeNode, readNode);
             } catch (UnsupportedMessageException e) {
                 // because it is a java function, java.util.Map (has special handling too) ... ?
                 return RNull.instance;
@@ -96,7 +94,7 @@ public abstract class Names extends RBuiltinNode.Arg1 {
             String[] staticNames = new String[0];
             try {
                 if (JavaInterop.isJavaObject(Object.class, obj)) {
-                    staticNames = readKeys(keysNode, toJavaClass(obj), getSizeNode, readNode, isBoxedNode, unboxNode);
+                    staticNames = readKeys(keysNode, toJavaClass(obj), getSizeNode, readNode);
                 }
             } catch (UnknownIdentifierException | NoSuchFieldError | UnsupportedMessageException e) {
                 // because it is a class ... ?
@@ -118,18 +116,14 @@ public abstract class Names extends RBuiltinNode.Arg1 {
         return JavaInterop.toJavaClass(obj);
     }
 
-    private static String[] readKeys(Node keysNode, TruffleObject obj, Node getSizeNode, Node readNode, Node isBoxedNode, Node unboxNode)
+    private static String[] readKeys(Node keysNode, TruffleObject obj, Node getSizeNode, Node readNode)
                     throws UnknownIdentifierException, InteropException, UnsupportedMessageException {
-        TruffleObject keys = (TruffleObject) ForeignAccess.send(keysNode, obj);
+        TruffleObject keys = ForeignAccess.sendKeys(keysNode, obj);
         if (keys != null) {
             int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, keys);
             String[] names = new String[size];
             for (int i = 0; i < size; i++) {
-                Object value;
-                value = ForeignAccess.sendRead(readNode, keys, i);
-                if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
-                    value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
-                }
+                Object value = ForeignAccess.sendRead(readNode, keys, i);
                 names[i] = (String) value;
             }
             return names;

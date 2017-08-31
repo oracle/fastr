@@ -390,6 +390,8 @@ public class TestJavaInterop extends TestBase {
                 testForValue(name, f.get(t));
             }
         }
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$mixedTypesArray",
+                        "cat('[external object]\n[[1]]\n[1] 1\n\n[[2]]\n[1] 2.1\n\n[[3]]\n[1] \"a\"\n\n[[4]]\n[1] TRUE\n\n[[5]]\nNULL\n\n', sep='')");
     }
 
     @Test
@@ -1417,12 +1419,16 @@ public class TestJavaInterop extends TestBase {
         return sb.toString();
     }
 
-    private static String getBooleanPrefix(Object value, int i) {
-        if (value.getClass().getComponentType() == Boolean.TYPE && (boolean) Array.get(value, i)) {
+    private static String getBooleanPrefix(Object array, int i) {
+        Object element = Array.get(array, i);
+        if (element == null) {
+            return "";
+        }
+        if (array.getClass().getComponentType() == Boolean.TYPE && (boolean) element) {
             return " ";
         }
-        if (i > 0 && value.getClass().getComponentType() == String.class &&
-                        (Array.get(value, i).equals("T") || Array.get(value, i).equals("F") || Array.get(value, i).equals("TRUE") || Array.get(value, i).equals("FALSE"))) {
+        if (i > 0 && array.getClass().getComponentType() == String.class &&
+                        (element.equals("T") || element.equals("F") || element.equals("TRUE") || element.equals("FALSE"))) {
             return " ";
         }
         return "";
@@ -1830,7 +1836,7 @@ public class TestJavaInterop extends TestBase {
             objectArray = new Object[]{new Object(), new Object(), new Object()};
             objectIntArray = new Object[]{1, 2, 3};
             objectDoubleArray = new Object[]{1.1, 2.1, 3.1};
-            mixedTypesArray = new Object[]{1, 2.1, 'a'};
+            mixedTypesArray = new Object[]{1, 2.1, 'a', true, null};
             hasNullIntArray = new Integer[]{1, null, 3};
 
             map = new HashMap<>();
