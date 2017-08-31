@@ -986,7 +986,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 }
             }
 
-            return call.execute(frame, function, originalCall.createCaller(frame, function), orderedArguments.getArguments(), orderedArguments.getSignature(), function.getEnclosingFrame(), s3Args);
+            return call.execute(frame, function, originalCall.createCaller(frame, function), orderedArguments.getArguments(), orderedArguments.getSignature(), function.getEnclosingFrame(),
+                            s3Args);
         }
     }
 

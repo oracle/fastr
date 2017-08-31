@@ -61,6 +61,12 @@ public abstract class CallRFunctionCachedNode extends CallRFunctionBaseNode {
         return execute(frame, function.getTarget(), callArgs, call);
     }
 
+    public final Object execute(VirtualFrame frame, RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
+                    ArgumentsSignature suppliedSignature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
+        Object[] callArgs = RArguments.create(function, call, getCallerFrameObject(frame, callerFrame, false), evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
+        return execute(frame, function.getTarget(), callArgs, call);
+    }
+
     protected abstract Object execute(VirtualFrame frame, CallTarget target, Object[] arguments, RCaller caller);
 
     protected static DirectCallNode createDirectCallNode(CallTarget target) {

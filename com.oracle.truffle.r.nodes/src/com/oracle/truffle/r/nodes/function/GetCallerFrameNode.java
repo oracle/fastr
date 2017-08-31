@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
@@ -30,9 +29,9 @@ import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -48,7 +47,6 @@ public final class GetCallerFrameNode extends RBaseNode {
 
     public MaterializedFrame execute(Frame frame) {
         Object callerFrameObject = RArguments.getCallerFrame(frame);
-        MaterializedFrame mCallerFrame;
         if (callerFrameObject instanceof CallerFrameClosure) {
             if (!slowPathInitialized) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -62,14 +60,14 @@ public final class GetCallerFrameNode extends RBaseNode {
             // if interpreted, we will have a materialized frame in the closure
             MaterializedFrame materializedCallerFrame = closure.getMaterializedCallerFrame();
             if (materializedCallerFrame != null) {
-                CompilerAsserts.neverPartOfCompilation();
+                assert CompilerDirectives.inInterpreter() || materializedCallerFrame == null;
                 return materializedCallerFrame;
             }
             RError.performanceWarning("slow caller frame access");
             // for now, get it on the very slow path
             Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
             if (callerFrame != null) {
-                mCallerFrame = callerFrame.materialize();
+                callerFrameObject = callerFrame.materialize();
             }
         }
         if (callerFrameObject == null) {
@@ -78,11 +76,9 @@ public final class GetCallerFrameNode extends RBaseNode {
             // must be the top level case.
             topLevelProfile.enter();
             return frame.materialize();
-        } else {
-            mCallerFrame = (MaterializedFrame) callerFrameObject;
         }
         assert callerFrameObject instanceof MaterializedFrame;
-        return mCallerFrame;
+        return (MaterializedFrame) callerFrameObject;
     }
 
 }

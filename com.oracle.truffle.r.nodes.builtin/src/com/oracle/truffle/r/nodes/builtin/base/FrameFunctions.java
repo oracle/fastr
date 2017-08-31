@@ -55,6 +55,7 @@ import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.HasSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -164,7 +165,6 @@ public class FrameFunctions {
                             return current;
                         }
                     }
-                    notifyRCallNodes(actualFrame, RArguments.getCall(frame));
                 }
                 return Utils.getStackFrame(access, actualFrame);
             }
@@ -172,21 +172,13 @@ public class FrameFunctions {
 
         private static Frame getCallerFrame(Frame current) {
             Object callerFrame = RArguments.getCallerFrame(current);
-            return callerFrame instanceof Frame ? (Frame) callerFrame : null;
-        }
-
-        @TruffleBoundary
-        private static void notifyRCallNodes(int actualFrame, RCaller caller) {
-            RCaller currentCaller = caller;
-            for (int i = 0; i < ITERATE_LEVELS; i++) {
-                if (currentCaller == null || currentCaller.getDepth() <= actualFrame) {
-                    break;
-                }
-                if (currentCaller.isValidCaller() && !currentCaller.isPromise() && currentCaller.getSyntaxNode() instanceof RCallNode) {
-                    ((RCallNode) currentCaller.getSyntaxNode()).setNeedsCallerFrame();
-                }
-                currentCaller = currentCaller.getParent();
+            if (callerFrame instanceof CallerFrameClosure) {
+                CallerFrameClosure closure = (CallerFrameClosure) callerFrame;
+                closure.setNeedsCallerFrame();
+                return closure.getMaterializedCallerFrame();
             }
+            assert callerFrame instanceof Frame;
+            return (Frame) callerFrame;
         }
     }
 

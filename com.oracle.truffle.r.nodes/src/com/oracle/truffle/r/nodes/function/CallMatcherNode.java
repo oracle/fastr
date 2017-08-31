@@ -16,6 +16,7 @@ import java.util.function.Supplier;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -32,6 +33,7 @@ import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
+import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RVisibility;
@@ -263,8 +265,11 @@ public abstract class CallMatcherNode extends RBaseNode {
                     String genFunctionName = functionName == null ? function.getName() : functionName;
                     Supplier<RSyntaxElement> argsSupplier = RCallerHelper.createFromArguments(genFunctionName, preparePermutation, suppliedArguments, suppliedSignature);
                     RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent) : RCaller.create(frame, parent, argsSupplier);
+                    MaterializedFrame callerFrame = dispatchArgs instanceof S3Args ? ((S3Args) dispatchArgs).callEnv : null;
                     try {
-                        return call.execute(frame, cachedFunction, caller, reorderedArgs, matchedArgs.getSignature(), cachedFunction.getEnclosingFrame(), dispatchArgs);
+                        return call.execute(frame, cachedFunction, caller, callerFrame, parent == null || parent.getDepth() == 0, reorderedArgs, matchedArgs.getSignature(),
+                                        cachedFunction.getEnclosingFrame(),
+                                        dispatchArgs);
                     } finally {
                         visibility.executeAfterCall(frame, caller);
                     }
@@ -343,8 +348,9 @@ public abstract class CallMatcherNode extends RBaseNode {
             RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent)
                             : RCaller.create(frame, RCallerHelper.createFromArguments(genFunctionName,
                                             new RArgsValuesAndNames(reorderedArgs.getArguments(), ArgumentsSignature.empty(reorderedArgs.getLength()))));
+            MaterializedFrame callerFrame = (dispatchArgs instanceof S3Args) ? ((S3Args) dispatchArgs).callEnv : null;
             try {
-                return call.execute(frame, function, caller, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function.getEnclosingFrame(), dispatchArgs);
+                return call.execute(frame, function, caller, callerFrame, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function.getEnclosingFrame(), dispatchArgs);
             } finally {
                 visibility.executeAfterCall(frame, caller);
             }
