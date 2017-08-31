@@ -39,6 +39,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -62,7 +63,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.SetNeedsCallerFrameClosure;
+import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -260,7 +261,7 @@ public class GetFunctions {
         @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
 
         private final Assumption needsNoCallerFrame = Truffle.getRuntime().createAssumption("no caller frame");
-        private final SetNeedsCallerFrameClosure setNeedsCallerFrameClosure = new SetNeedsCallerFrameFlag(needsNoCallerFrame);
+        private final CallerFrameClosure setNeedsCallerFrameClosure = new SetNeedsCallerFrameFlag(needsNoCallerFrame);
 
         static {
             Casts casts = new Casts(MGet.class);
@@ -403,7 +404,7 @@ public class GetFunctions {
             return value;
         }
 
-        private class SetNeedsCallerFrameFlag extends SetNeedsCallerFrameClosure {
+        private class SetNeedsCallerFrameFlag extends CallerFrameClosure {
 
             private final Assumption needsNoCallerFrame;
 
@@ -414,6 +415,11 @@ public class GetFunctions {
             @Override
             public void setNeedsCallerFrame() {
                 needsNoCallerFrame.invalidate();
+            }
+
+            @Override
+            public MaterializedFrame getMaterializedCallerFrame() {
+                return null;
             }
 
         }

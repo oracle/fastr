@@ -31,7 +31,7 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.SetNeedsCallerFrameClosure;
+import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -47,15 +47,18 @@ public final class GetCallerFrameNode extends RBaseNode {
 
     public MaterializedFrame execute(Frame frame) {
         Object callerFrameObject = RArguments.getCallerFrame(frame);
-        if (!(callerFrameObject instanceof MaterializedFrame)) {
+        if (callerFrameObject instanceof CallerFrameClosure) {
+            CallerFrameClosure closure = (CallerFrameClosure) callerFrameObject;
             if (!slowPathInitialized) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 slowPathInitialized = true;
             }
-            notifyCallers(callerFrameObject);
-            if (slowPathInitialized) {
-                RError.performanceWarning("slow caller frame access");
+            notifyCallers(closure);
+            MaterializedFrame materializedCallerFrame = closure.getMaterializedCallerFrame();
+            if (materializedCallerFrame != null) {
+                return materializedCallerFrame;
             }
+            RError.performanceWarning("slow caller frame access");
             // for now, get it on the very slow path
             Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
             if (callerFrame != null) {
@@ -69,10 +72,8 @@ public final class GetCallerFrameNode extends RBaseNode {
         return (MaterializedFrame) callerFrameObject;
     }
 
-    private static void notifyCallers(Object callerFrameObject) {
-        if (callerFrameObject instanceof SetNeedsCallerFrameClosure) {
-            // inform the responsible call node to create a caller frame
-            ((SetNeedsCallerFrameClosure) callerFrameObject).setNeedsCallerFrame();
-        }
+    private static void notifyCallers(CallerFrameClosure callerFrameObject) {
+        // inform the responsible call node to create a caller frame
+        callerFrameObject.setNeedsCallerFrame();
     }
 }

@@ -22,16 +22,37 @@
  */
 package com.oracle.truffle.r.runtime;
 
-public abstract class SetNeedsCallerFrameClosure {
-    public static final SetNeedsCallerFrameClosure DUMMY = new Dummy();
+import com.oracle.truffle.api.frame.MaterializedFrame;
 
+public abstract class CallerFrameClosure {
+// public static final CallerFrameClosure DUMMY = new Dummy();
+
+    /**
+     * Inform the call node to subsequently provide the caller frame.
+     */
     public abstract void setNeedsCallerFrame();
 
-    private static class Dummy extends SetNeedsCallerFrameClosure {
+    /**
+     * Retrieve the materialized caller frame if available (i.e. interpreter only).
+     */
+    public abstract MaterializedFrame getMaterializedCallerFrame();
+
+    public static class Dummy extends CallerFrameClosure {
+
+        private final int id;
+
+        public Dummy(int id) {
+            this.id = id;
+        }
 
         @Override
         public void setNeedsCallerFrame() {
             // do nothing
+        }
+
+        @Override
+        public MaterializedFrame getMaterializedCallerFrame() {
+            return null;
         }
 
     }
