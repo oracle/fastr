@@ -35,12 +35,20 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.oracle.truffle.r.launcher.JLineConsoleCompleter;
+import java.io.IOException;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 import org.junit.Ignore;
 
 public class TestJLineConsoleCompleter {
 
     private Context context;
     private JLineConsoleCompleter consoleCompleter;
+
+    private static final String TEST_PATH = "_TestJLineConsoleCompleter";
+
+    private static final Source GET_COMPLETION_ENV = Source.newBuilder("R", "utils:::.CompletionEnv", "<completion>").internal(true).buildLiteral();
+    private static final Source GET_FUNCTION = Source.newBuilder("R", "`$`", "<completion>").internal(true).buildLiteral();
 
     @Before
     public void before() {
@@ -53,6 +61,13 @@ public class TestJLineConsoleCompleter {
     public void dispose() {
         if (context != null) {
             context.close();
+        }
+        String testPath = getTestPath();
+        if (testPath != null) {
+            File f = new File(testPath);
+            if (f.exists()) {
+                delete(f);
+            }
         }
     }
 
@@ -141,6 +156,61 @@ public class TestJLineConsoleCompleter {
         assertCompl(noName + "\"." + File.separator, 8, NOT_EMPTY);
     }
 
+    @Ignore
+    @Test
+    public void testPathCompl() throws IOException {
+        testPathCompl('"');
+        testPathCompl('\'');
+    }
+
+    private void testPathCompl(char quote) throws IOException {
+        File testDir = getTestDir();
+        String testDirPath = testDir.getAbsolutePath() + File.separator;
+
+        // no files in {testDirPath}
+        // >source("{testDirPath}/<TAB> => no compl
+        String cli = "source(" + quote + testDirPath;
+        assertCompl(cli, cli.length());
+
+        // >source("{testDirPath}/pa<TAB> => no compl
+        cli = "source(" + quote + testDirPath + "pa";
+        assertCompl(cli, cli.length());
+
+        // one file in {testDirPath}
+        File path = new File(testDir, "path1");
+        path.mkdirs();
+
+        // >source("{testDirPath}/pa<TAB> => testDirPath}/path1
+        cli = "source(" + quote + testDirPath + "pa";
+        assertCompl(cli, cli.length(), testDir.getAbsolutePath() + File.separator + "path1");
+
+        // >source("{testDirPath}/pa<TAB>" (in closed quotes) => testDirPath}/path1
+        cli = "source(" + quote + testDirPath + "pa" + quote;
+        assertCompl(cli, cli.length() - 1, testDir.getAbsolutePath() + File.separator + "path1");
+
+        Value completionEnv = context.eval(GET_COMPLETION_ENV);
+        Value getFunction = context.eval(GET_FUNCTION);
+        Value token = getFunction.execute(completionEnv, "token");
+        Assert.assertEquals(testDirPath + "pa", token.asString());
+
+        // three files in {testDirPath}
+        new File(testDir, "path2").mkdirs();
+        new File(testDir, "path3").mkdirs();
+        // >source("{testDirPath}/pa<TAB> => testDirPath}/path1-3
+        cli = "source(" + quote + testDirPath + "pa";
+        assertCompl(cli, cli.length(), testDirPath + "path1", testDirPath + "path2", testDirPath + "path3");
+        token = getFunction.execute(completionEnv, "token");
+        Assert.assertEquals(testDirPath + "pa", token.asString());
+
+        // >source("{testDirPath}/pa<TAB>" (in closed quotes) => testDirPath}/path1-3
+        cli = "source(" + quote + testDirPath + "pa" + quote;
+        assertCompl(cli, cli.length() - 1, testDirPath + "path1", testDirPath + "path2", testDirPath + "path3");
+
+        // >source("{testDirPath}/papa<TAB> => no compl
+        cli = "source(" + quote + testDirPath + "papa";
+        assertCompl(cli, cli.length());
+    }
+
     // e.g. check if the file path completion returned at least something
     private static final String NOT_EMPTY = "_@_Only.Check.If.Result.Not.Empty_@_";
 
@@ -156,4 +226,40 @@ public class TestJLineConsoleCompleter {
             Assert.assertArrayEquals(expected, l.toArray(new CharSequence[l.size()]));
         }
     }
+
+    private File getTestDir() throws IOException {
+        String testPath = getTestPath();
+        if (testPath != null) {
+            File f = new File(testPath);
+            if (f.exists()) {
+                delete(f);
+            }
+            f.mkdirs();
+            return f;
+        }
+        return null;
+    }
+
+    private String getTestPath() {
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        if (tmpDir != null) {
+            return tmpDir + File.separator + TEST_PATH;
+        }
+        return null;
+    }
+
+    private void delete(File f) {
+        if (f.exists()) {
+            if (f.isDirectory()) {
+                File[] files = f.listFiles();
+                if (files != null) {
+                    for (File child : files) {
+                        delete(child);
+                    }
+                }
+            }
+            f.delete();
+        }
+    }
+
 }
