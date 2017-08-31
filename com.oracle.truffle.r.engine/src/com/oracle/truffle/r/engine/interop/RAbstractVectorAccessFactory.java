@@ -37,6 +37,7 @@ import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -280,7 +281,11 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
             @Override
             public Object execute(VirtualFrame frame) {
                 RAbstractVector arg = (RAbstractVector) ForeignAccess.getReceiver(frame);
-                return arg.getDataAtAsObject(0);
+                if (arg.getLength() == 1) {
+                    return arg.getDataAtAsObject(0);
+                } else {
+                    throw UnsupportedMessageException.raise(Message.UNBOX);
+                }
             }
         });
     }

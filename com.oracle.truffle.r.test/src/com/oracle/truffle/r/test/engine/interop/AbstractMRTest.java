@@ -38,6 +38,7 @@ import org.junit.BeforeClass;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import org.junit.Test;
 
 public abstract class AbstractMRTest {
@@ -150,11 +151,9 @@ public abstract class AbstractMRTest {
             assertEquals(isBoxed(obj), isBoxed);
             if (isBoxed) {
                 assertEquals(getUnboxed(obj), ForeignAccess.sendUnbox(Message.UNBOX.createNode(), obj));
+            } else {
+                assertInteropException(() -> ForeignAccess.sendUnbox(Message.UNBOX.createNode(), obj), UnsupportedMessageException.class);
             }
-            // else {
-            // assertInteropException(() -> ForeignAccess.sendUnbox(Message.UNBOX.createNode(),
-            // obj), UnsupportedMessageException.class);
-            // }
         }
     }
 
@@ -224,7 +223,13 @@ public abstract class AbstractMRTest {
                 Assert.fail("InteropException was expected but got insteat: " + ex);
             }
         }
-        assertTrue(ie);
+        if (!ie) {
+            if (expectedClazz != null) {
+                Assert.fail(expectedClazz + " was expected");
+            } else {
+                Assert.fail("InteropException was expected");
+            }
+        }
     }
 
 }
