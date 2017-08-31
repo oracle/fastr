@@ -22,32 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.function.call;
 
-import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
 @NodeInfo(cost = NodeCost.NONE)
-public final class CallRFunctionNode extends Node {
+public final class CallRFunctionNode extends CallRFunctionBaseNode {
 
     @Child private DirectCallNode callNode;
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
-
-    private final Assumption needsNoCallerFrame = Truffle.getRuntime().createAssumption("no caller frame");
-    private final CallerFrameClosure invalidateNoCallerFrame = new InvalidateNoCallerFrame(needsNoCallerFrame);
 
     private CallRFunctionNode(CallTarget callTarget) {
         this.callNode = Truffle.getRuntime().createDirectCallNode(callTarget);
@@ -57,22 +50,14 @@ public final class CallRFunctionNode extends Node {
         return new CallRFunctionNode(callTarget);
     }
 
-    public Object execute(VirtualFrame frame, RFunction function, RCaller caller, MaterializedFrame callerFrame, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature,
+    public Object execute(VirtualFrame frame, RFunction function, RCaller caller, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature,
                     MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
-        Object callerFrameObject = needsNoCallerFrame.isValid() ? getCallerFrameObject(frame) : frame.materialize();
-        Object[] callArgs = RArguments.create(function, caller, callerFrameObject, evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
+        Object[] callArgs = RArguments.create(function, caller, getCallerFrameObject(frame), evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
         try {
             return callNode.call(callArgs);
         } finally {
             visibility.executeAfterCall(frame, caller);
         }
-    }
-
-    private Object getCallerFrameObject(VirtualFrame callerFrame) {
-        if (CompilerDirectives.inInterpreter()) {
-            return new InvalidateNoCallerFrame(needsNoCallerFrame, callerFrame.materialize());
-        }
-        return invalidateNoCallerFrame;
     }
 
     public DirectCallNode getCallNode() {
@@ -97,32 +82,5 @@ public final class CallRFunctionNode extends Node {
         } finally {
             SetVisibilityNode.executeAfterCallSlowPath(callerFrame, caller);
         }
-    }
-
-    public static final class InvalidateNoCallerFrame extends CallerFrameClosure {
-
-        private final Assumption needsNoCallerFrame;
-        private final MaterializedFrame frame;
-
-        protected InvalidateNoCallerFrame(Assumption needsNoCallerFrame) {
-            this.needsNoCallerFrame = needsNoCallerFrame;
-            this.frame = null;
-        }
-
-        protected InvalidateNoCallerFrame(Assumption needsNoCallerFrame, MaterializedFrame frame) {
-            this.needsNoCallerFrame = needsNoCallerFrame;
-            this.frame = frame;
-        }
-
-        @Override
-        public void setNeedsCallerFrame() {
-            needsNoCallerFrame.invalidate();
-        }
-
-        @Override
-        public MaterializedFrame getMaterializedCallerFrame() {
-            return frame;
-        }
-
     }
 }

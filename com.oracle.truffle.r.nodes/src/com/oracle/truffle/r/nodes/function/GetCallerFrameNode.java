@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
@@ -47,33 +48,41 @@ public final class GetCallerFrameNode extends RBaseNode {
 
     public MaterializedFrame execute(Frame frame) {
         Object callerFrameObject = RArguments.getCallerFrame(frame);
+        MaterializedFrame mCallerFrame;
         if (callerFrameObject instanceof CallerFrameClosure) {
-            CallerFrameClosure closure = (CallerFrameClosure) callerFrameObject;
             if (!slowPathInitialized) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 slowPathInitialized = true;
             }
-            notifyCallers(closure);
+            CallerFrameClosure closure = (CallerFrameClosure) callerFrameObject;
+
+            // inform the responsible call node to create a caller frame
+            closure.setNeedsCallerFrame();
+
+            // if interpreted, we will have a materialized frame in the closure
             MaterializedFrame materializedCallerFrame = closure.getMaterializedCallerFrame();
             if (materializedCallerFrame != null) {
+                CompilerAsserts.neverPartOfCompilation();
                 return materializedCallerFrame;
             }
             RError.performanceWarning("slow caller frame access");
             // for now, get it on the very slow path
             Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
             if (callerFrame != null) {
-                return callerFrame.materialize();
-            } else {
-                topLevelProfile.enter();
-                // S3 method can be dispatched from top-level where there is no caller frame
-                return frame.materialize();
+                mCallerFrame = callerFrame.materialize();
             }
         }
-        return (MaterializedFrame) callerFrameObject;
+        if (callerFrameObject == null) {
+            // S3 method can be dispatched from top-level where there is no caller frame
+            // Since RArguments does not allow to create arguments with a 'null' caller frame, this
+            // must be the top level case.
+            topLevelProfile.enter();
+            return frame.materialize();
+        } else {
+            mCallerFrame = (MaterializedFrame) callerFrameObject;
+        }
+        assert callerFrameObject instanceof MaterializedFrame;
+        return mCallerFrame;
     }
 
-    private static void notifyCallers(CallerFrameClosure callerFrameObject) {
-        // inform the responsible call node to create a caller frame
-        callerFrameObject.setNeedsCallerFrame();
-    }
 }

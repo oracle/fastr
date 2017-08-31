@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -265,8 +264,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                     Supplier<RSyntaxElement> argsSupplier = RCallerHelper.createFromArguments(genFunctionName, preparePermutation, suppliedArguments, suppliedSignature);
                     RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent) : RCaller.create(frame, parent, argsSupplier);
                     try {
-                        return call.execute(frame, cachedFunction, caller, null, reorderedArgs, matchedArgs.getSignature(), cachedFunction.getEnclosingFrame(),
-                                        dispatchArgs);
+                        return call.execute(frame, cachedFunction, caller, reorderedArgs, matchedArgs.getSignature(), cachedFunction.getEnclosingFrame(), dispatchArgs);
                     } finally {
                         visibility.executeAfterCall(frame, caller);
                     }
@@ -346,7 +344,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                             : RCaller.create(frame, RCallerHelper.createFromArguments(genFunctionName,
                                             new RArgsValuesAndNames(reorderedArgs.getArguments(), ArgumentsSignature.empty(reorderedArgs.getLength()))));
             try {
-                return call.execute(frame, function, caller, new CallerFrameClosure.Dummy(3), reorderedArgs.getArguments(), reorderedArgs.getSignature(), function.getEnclosingFrame(), dispatchArgs);
+                return call.execute(frame, function, caller, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function.getEnclosingFrame(), dispatchArgs);
             } finally {
                 visibility.executeAfterCall(frame, caller);
             }

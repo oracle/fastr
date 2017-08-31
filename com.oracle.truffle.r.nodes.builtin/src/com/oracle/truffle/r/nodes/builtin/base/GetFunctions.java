@@ -33,13 +33,10 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -63,7 +60,6 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -260,9 +256,6 @@ public class GetFunctions {
         @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
         @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
 
-        private final Assumption needsNoCallerFrame = Truffle.getRuntime().createAssumption("no caller frame");
-        private final CallerFrameClosure setNeedsCallerFrameClosure = new SetNeedsCallerFrameFlag(needsNoCallerFrame);
-
         static {
             Casts casts = new Casts(MGet.class);
             casts.arg("x").mustBe(stringValue()).asStringVector();
@@ -379,13 +372,12 @@ public class GetFunctions {
         }
 
         private Object call(VirtualFrame frame, RFunction ifnFunc, String x) {
-            if (needsNoCallerFrame.isValid() && ((RRootNode) ifnFunc.getRootNode()).containsDispatch()) {
-                needsNoCallerFrame.invalidate();
+            if (((RRootNode) ifnFunc.getRootNode()).containsDispatch()) {
+                callCache.setNeedsCallerFrame();
             }
-            Object callerFrameObject = needsNoCallerFrame.isValid() ? setNeedsCallerFrameClosure : frame.materialize();
             FormalArguments formals = ((RRootNode) ifnFunc.getRootNode()).getFormalArguments();
             RArgsValuesAndNames args = new RArgsValuesAndNames(new Object[]{x}, ArgumentsSignature.empty(1));
-            return callCache.execute(frame, ifnFunc, RCaller.create(frame, RCallerHelper.createFromArguments(ifnFunc, args)), callerFrameObject, new Object[]{x}, formals.getSignature(),
+            return callCache.execute(frame, ifnFunc, RCaller.create(frame, RCallerHelper.createFromArguments(ifnFunc, args)), new Object[]{x}, formals.getSignature(),
                             ifnFunc.getEnclosingFrame(), null);
         }
 
@@ -404,24 +396,5 @@ public class GetFunctions {
             return value;
         }
 
-        private class SetNeedsCallerFrameFlag extends CallerFrameClosure {
-
-            private final Assumption needsNoCallerFrame;
-
-            SetNeedsCallerFrameFlag(Assumption needsNoCallerFrame) {
-                this.needsNoCallerFrame = needsNoCallerFrame;
-            }
-
-            @Override
-            public void setNeedsCallerFrame() {
-                needsNoCallerFrame.invalidate();
-            }
-
-            @Override
-            public MaterializedFrame getMaterializedCallerFrame() {
-                return null;
-            }
-
-        }
     }
 }

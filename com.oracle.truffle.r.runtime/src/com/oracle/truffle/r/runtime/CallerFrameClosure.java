@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 
 public abstract class CallerFrameClosure {
-// public static final CallerFrameClosure DUMMY = new Dummy();
 
     /**
      * Inform the call node to subsequently provide the caller frame.
@@ -37,23 +36,4 @@ public abstract class CallerFrameClosure {
      */
     public abstract MaterializedFrame getMaterializedCallerFrame();
 
-    public static class Dummy extends CallerFrameClosure {
-
-        private final int id;
-
-        public Dummy(int id) {
-            this.id = id;
-        }
-
-        @Override
-        public void setNeedsCallerFrame() {
-            // do nothing
-        }
-
-        @Override
-        public MaterializedFrame getMaterializedCallerFrame() {
-            return null;
-        }
-
-    }
 }
