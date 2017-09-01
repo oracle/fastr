@@ -267,9 +267,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                     RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent) : RCaller.create(frame, parent, argsSupplier);
                     MaterializedFrame callerFrame = dispatchArgs instanceof S3Args ? ((S3Args) dispatchArgs).callEnv : null;
                     try {
-                        return call.execute(frame, cachedFunction, caller, callerFrame, parent == null || parent.getDepth() == 0, reorderedArgs, matchedArgs.getSignature(),
-                                        cachedFunction.getEnclosingFrame(),
-                                        dispatchArgs);
+                        return call.execute(frame, cachedFunction, caller, callerFrame, reorderedArgs, matchedArgs.getSignature(), cachedFunction.getEnclosingFrame(), dispatchArgs);
                     } finally {
                         visibility.executeAfterCall(frame, caller);
                     }

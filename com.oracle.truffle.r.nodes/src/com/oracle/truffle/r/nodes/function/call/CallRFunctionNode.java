@@ -50,8 +50,10 @@ public final class CallRFunctionNode extends CallRFunctionBaseNode {
         return new CallRFunctionNode(callTarget);
     }
 
-    public Object execute(VirtualFrame frame, RFunction function, RCaller caller, MaterializedFrame candidate, boolean topLevel, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature,
+    public Object execute(VirtualFrame frame, RFunction function, RCaller caller, MaterializedFrame candidate, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature,
                     MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
+
+        boolean topLevel = caller == null || caller.getDepth() == 0;
         Object[] callArgs = RArguments.create(function, caller, getCallerFrameObject(frame, candidate, topLevel), evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
         try {
             return callNode.call(callArgs);
@@ -62,7 +64,7 @@ public final class CallRFunctionNode extends CallRFunctionBaseNode {
 
     public Object execute(VirtualFrame frame, RFunction function, RCaller caller, Object[] evaluatedArgs, ArgumentsSignature suppliedSignature,
                     MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
-        Object[] callArgs = RArguments.create(function, caller, getCallerFrameObject(frame, null, true), evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
+        Object[] callArgs = RArguments.create(function, caller, getCallerFrameObject(frame), evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
         try {
             return callNode.call(callArgs);
         } finally {

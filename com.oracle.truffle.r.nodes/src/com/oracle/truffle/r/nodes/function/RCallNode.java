@@ -985,9 +985,10 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     call.setNeedsCallerFrame();
                 }
             }
+            MaterializedFrame callerFrame = s3Args != null ? s3Args.callEnv : null;
+            RCaller caller = originalCall.createCaller(frame, function);
 
-            return call.execute(frame, function, originalCall.createCaller(frame, function), orderedArguments.getArguments(), orderedArguments.getSignature(), function.getEnclosingFrame(),
-                            s3Args);
+            return call.execute(frame, function, caller, callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(), function.getEnclosingFrame(), s3Args);
         }
     }
 
