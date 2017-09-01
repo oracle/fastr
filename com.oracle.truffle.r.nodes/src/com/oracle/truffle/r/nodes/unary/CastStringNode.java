@@ -33,7 +33,9 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -70,12 +72,21 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return ret;
     }
 
+    protected boolean isIntSequence(RAbstractContainer c) {
+        return c instanceof RIntSequence;
+    }
+
     @Specialization
     protected RStringVector doStringVector(RStringVector vector) {
         return vector;
     }
 
     @Specialization
+    protected RStringSequence doStringVector(RIntSequence vector) {
+        return RDataFactory.createStringSequence("", "", vector.getStart(), vector.getStride(), vector.getLength());
+    }
+
+    @Specialization(guards = "!isIntSequence(operandIn)")
     protected RStringVector doAbstractContainer(RAbstractContainer operandIn,
                     @Cached("createClassProfile()") ValueProfile operandProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isLanguageProfile) {
