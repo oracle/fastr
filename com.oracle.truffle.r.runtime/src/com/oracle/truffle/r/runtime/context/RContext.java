@@ -42,6 +42,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -356,7 +357,17 @@ public final class RContext implements RTruffleObject {
     public final WeakHashMap<Path, REnvironment> srcfileEnvironments = new WeakHashMap<>();
     public final List<String> libraryPaths = new ArrayList<>(1);
     public final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
+
+    /**
+     * Stack used by RFFI to implement the PROTECT/UNPROTECT functions.
+     */
     public final ArrayList<RObject> protectStack = new ArrayList<>();
+
+    /**
+     * FastR equivalent of GNUR's special dedicated global list that is GC root and so any vectors
+     * added to it will be guaranteed to be preserved.
+     */
+    public final HashSet<RObject> preserveList = new HashSet<>();
 
     private final AllocationReporter allocationReporter;
 

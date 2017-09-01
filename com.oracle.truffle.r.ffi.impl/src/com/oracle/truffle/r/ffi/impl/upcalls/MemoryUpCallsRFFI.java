@@ -25,9 +25,9 @@ package com.oracle.truffle.r.ffi.impl.upcalls;
 public interface MemoryUpCallsRFFI {
     // Checkstyle: stop method name check
 
-    int R_PreserveObject(Object obj);
+    void R_PreserveObject(Object obj);
 
-    int R_ReleaseObject(Object obj);
+    void R_ReleaseObject(Object obj);
 
     Object Rf_protect(Object x);
 

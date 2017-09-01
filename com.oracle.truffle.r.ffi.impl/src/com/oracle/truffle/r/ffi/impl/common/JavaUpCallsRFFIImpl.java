@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -1465,13 +1466,17 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int R_PreserveObject(Object obj) {
-        throw RInternalError.unimplemented();
+    public void R_PreserveObject(Object obj) {
+        guaranteeInstanceOf(obj, RObject.class);
+        HashSet<RObject> list = RContext.getInstance().preserveList;
+        list.add((RObject) obj);
     }
 
     @Override
-    public int R_ReleaseObject(Object obj) {
-        throw RInternalError.unimplemented();
+    public void R_ReleaseObject(Object obj) {
+        guaranteeInstanceOf(obj, RObject.class);
+        HashSet<RObject> list = RContext.getInstance().preserveList;
+        list.remove(obj);
     }
 
     @Override

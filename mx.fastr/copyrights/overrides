@@ -54,6 +54,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/tools/ToolsText.ja
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/CountFields.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/Download.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/Menu.java,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/src/truffle_common/Rembedded.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/common/arithmetic_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/coerce_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/errors_fastr.c,gnu_r.core.copyright

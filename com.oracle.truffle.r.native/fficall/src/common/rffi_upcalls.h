@@ -295,7 +295,7 @@ typedef void (*call_Rf_unprotect)(int x);
 typedef int (*call_R_ProtectWithIndex)(SEXP x);
 typedef void (*call_R_Reprotect)(SEXP x, int y);
 typedef void (*call_Rf_unprotect_ptr)(SEXP x);
-typedef SEXP (*call_R_PreserveObject)(SEXP x);
+typedef void (*call_R_PreserveObject)(SEXP x);
 typedef void (*call_R_ReleaseObject)(SEXP x);
 
 #endif
