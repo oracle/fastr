@@ -47,10 +47,14 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 public final class AttributesAccessNodes {
 
     abstract static class ATTRIB extends FFIUpCallNode.Arg1 {
-        @Child private GetAttributesNode getAttributesNode = GetAttributesNode.create();
+        @Child private GetAttributesNode getAttributesNode;
 
         @Specialization
         public Object doAttributable(RAttributable obj) {
+            if (getAttributesNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getAttributesNode = GetAttributesNode.create();
+            }
             return getAttributesNode.execute(obj);
         }
 
@@ -106,14 +110,14 @@ public final class AttributesAccessNodes {
 
     abstract static class CopyMostAttrib extends FFIUpCallNode.Arg2 {
 
-        @Child protected CopyOfRegAttributesNode copyRegAttributes = CopyOfRegAttributesNode.create();
+        @Child protected CopyOfRegAttributesNode copyRegAttributes;
 
         @Specialization
         public Object doList(RAttributeStorage x, RAttributeStorage y) {
-// if (copyRegAttributes == null) {
-// CompilerDirectives.transferToInterpreterAndInvalidate();
-// copyRegAttributes = CopyOfRegAttributesNode.create();
-// }
+            if (copyRegAttributes == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                copyRegAttributes = CopyOfRegAttributesNode.create();
+            }
             copyRegAttributes.execute(x, y);
             return null;
         }
