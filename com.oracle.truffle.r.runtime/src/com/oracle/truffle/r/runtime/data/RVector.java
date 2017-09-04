@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -323,7 +324,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
                             throw invokingNode.error(RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
                         }
                     } else {
-                        RStringVector dimVector = (RStringVector) dimObject;
+                        RAbstractStringVector dimVector = (RAbstractStringVector) dimObject;
                         if (dimVector == null) {
                             newDimNames.updateDataAt(i, RNull.instance, null);
                         } else if (dimVector.getLength() != dimensions[i]) {
