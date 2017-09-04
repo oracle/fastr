@@ -455,7 +455,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         } else if (call == RError.SHOW_CALLER2) {
             Frame frame = Utils.getActualCurrentFrame();
             if (frame != null && RArguments.isRFrame(frame)) {
-                frame = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
+                RCaller parent = RArguments.getCall(frame);
+                frame = Utils.getCallerFrame(parent, FrameAccess.READ_ONLY);
             }
             return findCallerFromFrame(frame);
         } else {

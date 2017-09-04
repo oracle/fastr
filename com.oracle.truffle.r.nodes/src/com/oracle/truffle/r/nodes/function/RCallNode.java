@@ -93,7 +93,6 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -1008,8 +1007,12 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         @Override
-        public void setNeedsCallerFrame() {
-            needsNoCallerFrame.invalidate();
+        public boolean setNeedsCallerFrame() {
+            if (needsNoCallerFrame.isValid()) {
+                needsNoCallerFrame.invalidate();
+                return true;
+            }
+            return false;
         }
 
         @Override

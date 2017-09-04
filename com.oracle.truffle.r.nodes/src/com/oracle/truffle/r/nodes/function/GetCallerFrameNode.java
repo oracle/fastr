@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -31,13 +31,15 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class GetCallerFrameNode extends RBaseNode {
 
-    private final BranchProfile topLevelProfile = BranchProfile.create();
+    private final BranchProfile frameAvailableProfile = BranchProfile.create();
+    private final BranchProfile closureProfile = BranchProfile.create();
     @CompilationFinal private boolean slowPathInitialized;
 
     @Override
@@ -47,38 +49,45 @@ public final class GetCallerFrameNode extends RBaseNode {
 
     public MaterializedFrame execute(Frame frame) {
         Object callerFrameObject = RArguments.getCallerFrame(frame);
+        if (callerFrameObject instanceof MaterializedFrame) {
+            frameAvailableProfile.enter();
+            return (MaterializedFrame) callerFrameObject;
+        }
         if (callerFrameObject instanceof CallerFrameClosure) {
-            if (!slowPathInitialized) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                slowPathInitialized = true;
-            }
+            closureProfile.enter();
             CallerFrameClosure closure = (CallerFrameClosure) callerFrameObject;
-
-            // inform the responsible call node to create a caller frame
-            closure.setNeedsCallerFrame();
-
-            // if interpreted, we will have a materialized frame in the closure
-            MaterializedFrame materializedCallerFrame = closure.getMaterializedCallerFrame();
-            if (materializedCallerFrame != null) {
-                assert CompilerDirectives.inInterpreter() || materializedCallerFrame == null;
-                return materializedCallerFrame;
-            }
-            RError.performanceWarning("slow caller frame access");
-            // for now, get it on the very slow path
-            Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
-            if (callerFrame != null) {
-                callerFrameObject = callerFrame.materialize();
+            RCaller parent = RArguments.getCall(frame);
+            MaterializedFrame slowPathFrame = notifyCallers(closure, parent);
+            if (slowPathFrame != null) {
+                return slowPathFrame;
             }
         }
-        if (callerFrameObject == null) {
-            // S3 method can be dispatched from top-level where there is no caller frame
-            // Since RArguments does not allow to create arguments with a 'null' caller frame, this
-            // must be the top level case.
-            topLevelProfile.enter();
-            return frame.materialize();
+        assert callerFrameObject == null;
+
+        // S3 method can be dispatched from top-level where there is no caller frame
+        // Since RArguments does not allow to create arguments with a 'null' caller frame, this
+        // must be the top level case.
+        return frame.materialize();
+    }
+
+    @TruffleBoundary
+    private static MaterializedFrame notifyCallers(CallerFrameClosure closure, RCaller parent) {
+
+        // inform the responsible call node to create a caller frame
+        closure.setNeedsCallerFrame();
+
+        // if interpreted, we will have a materialized frame in the closure
+        MaterializedFrame materializedCallerFrame = closure.getMaterializedCallerFrame();
+        if (materializedCallerFrame != null) {
+            return materializedCallerFrame;
         }
-        assert callerFrameObject instanceof MaterializedFrame;
-        return (MaterializedFrame) callerFrameObject;
+        RError.performanceWarning("slow caller frame access");
+        // for now, get it on the very slow path
+        Frame callerFrame = Utils.getCallerFrame(parent, FrameAccess.MATERIALIZE);
+        if (callerFrame != null) {
+            return callerFrame.materialize();
+        }
+        return null;
     }
 
 }

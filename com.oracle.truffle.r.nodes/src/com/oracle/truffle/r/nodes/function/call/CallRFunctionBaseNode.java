@@ -76,7 +76,8 @@ public abstract class CallRFunctionBaseNode extends Node {
     private static final class DummyCallerFrameClosure extends CallerFrameClosure {
 
         @Override
-        public void setNeedsCallerFrame() {
+        public boolean setNeedsCallerFrame() {
+            return false;
         }
 
         @Override
@@ -102,8 +103,12 @@ public abstract class CallRFunctionBaseNode extends Node {
         }
 
         @Override
-        public void setNeedsCallerFrame() {
-            needsNoCallerFrame.invalidate();
+        public boolean setNeedsCallerFrame() {
+            if (needsNoCallerFrame.isValid()) {
+                needsNoCallerFrame.invalidate();
+                return true;
+            }
+            return false;
         }
 
         @Override

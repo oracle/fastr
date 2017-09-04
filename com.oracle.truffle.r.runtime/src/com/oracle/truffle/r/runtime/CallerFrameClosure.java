@@ -29,7 +29,7 @@ public abstract class CallerFrameClosure {
     /**
      * Inform the call node to subsequently provide the caller frame.
      */
-    public abstract void setNeedsCallerFrame();
+    public abstract boolean setNeedsCallerFrame();
 
     /**
      * Retrieve the materialized caller frame if available (i.e. interpreter only).
