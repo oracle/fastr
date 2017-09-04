@@ -896,7 +896,8 @@ public final class RError extends RuntimeException implements TruffleException {
         OBJECT_SIZE_ESTIMATE("The object size is only estimated."),
         REPLACING_IN_NON_CHAR_OBJ("replacing substrings in a non-character object"),
         FILE_NOT_FOUND_IN_ZIP("requested file not found in the zip file"),
-        LIST_NO_VALID_NAMES("list argument has no valid names");
+        LIST_NO_VALID_NAMES("list argument has no valid names"),
+        VALUES_MUST_BE_LENGTH("values must be length %s,\n but FUN(X[[%d]]) result is length %s");
 
         public final String message;
         final boolean hasArgs;
