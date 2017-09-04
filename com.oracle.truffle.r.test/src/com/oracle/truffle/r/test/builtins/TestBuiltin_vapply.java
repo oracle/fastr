@@ -46,6 +46,10 @@ public class TestBuiltin_vapply extends TestBase {
         assertEval("{ vapply(quote(a), function(x) 42, 1); }");
         assertEval(Output.IgnoreErrorContext, "{ vapply(quote(a), function(x) quote(b), quote(a)); }");
         assertEval("{ vapply(c(1,2,3), 42, 1); }");
+
+        assertEval(Output.IgnoreErrorContext, "{ vapply(1:3, function(x) rep(1, x), 1); }");
+        assertEval(Output.IgnoreErrorContext, "{ vapply(1:3, function(x) rep(1, x), 1:3); }");
+        assertEval(Output.IgnoreErrorContext, "{ vapply(1:3, function(x) rep(1, x), 1L:3L); }");
     }
 
     @Test

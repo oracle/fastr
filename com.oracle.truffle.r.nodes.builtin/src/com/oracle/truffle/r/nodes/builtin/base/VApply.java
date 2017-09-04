@@ -182,7 +182,6 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         boolean applyResultZeroLength = zeroLengthProfile.profile(applyResult.length == 0);
 
         naCheck.enable(true);
-        // TODO check funValueLen against length of result
         if (funValueVec instanceof RAbstractIntVector) {
             int[] data = applyResultZeroLength ? new int[0] : convertIntVector(applyResult, funValueVecLen);
             result = RDataFactory.createIntVector(data, naCheck.neverSeenNA());
@@ -247,11 +246,19 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         return result;
     }
 
+    private static void checkValueLength(RAbstractVector v, int idx, int expectedLength) {
+        int actualLength = v.getLength();
+        if (actualLength != expectedLength) {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.VALUES_MUST_BE_LENGTH, expectedLength, idx + 1, actualLength);
+        }
+    }
+
     private double[] convertDoubleVector(Object[] values, int len) {
         double[] newArray = new double[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
             RAbstractDoubleVector v = (RAbstractDoubleVector) castDouble(values[i]);
+            checkValueLength(v, i, len);
             for (int j = 0; j < v.getLength(); j++) {
                 double val = v.getDataAt(j);
                 naCheck.check(val);
@@ -266,6 +273,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
             RAbstractIntVector v = (RAbstractIntVector) castInteger(values[i]);
+            checkValueLength(v, i, len);
             for (int j = 0; j < v.getLength(); j++) {
                 int val = v.getDataAt(j);
                 naCheck.check(val);
@@ -280,6 +288,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
             RAbstractLogicalVector v = (RAbstractLogicalVector) castLogical(values[i]);
+            checkValueLength(v, i, len);
             for (int j = 0; j < v.getLength(); j++) {
                 byte val = v.getDataAt(j);
                 naCheck.check(val);
@@ -294,6 +303,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
             RAbstractStringVector v = (RAbstractStringVector) castString(values[i]);
+            checkValueLength(v, i, len);
             for (int j = 0; j < v.getLength(); j++) {
                 String val = v.getDataAt(j);
                 naCheck.check(val);
@@ -308,6 +318,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
             RAbstractComplexVector v = (RAbstractComplexVector) castComplex(values[i]);
+            checkValueLength(v, i, len);
             for (int j = 0; j < v.getLength(); j++) {
                 RComplex val = v.getDataAt(j);
                 naCheck.check(val);
