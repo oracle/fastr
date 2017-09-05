@@ -82,7 +82,12 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     @Specialization
-    protected RStringSequence doStringVector(RIntSequence vector) {
+    protected RStringSequence doStringSequence(RStringSequence vector) {
+        return vector;
+    }
+
+    @Specialization
+    protected RStringSequence doIntSequence(RIntSequence vector) {
         return RDataFactory.createStringSequence("", "", vector.getStart(), vector.getStride(), vector.getLength());
     }
 

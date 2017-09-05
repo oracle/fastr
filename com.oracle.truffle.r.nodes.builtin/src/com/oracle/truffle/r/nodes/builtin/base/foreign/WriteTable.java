@@ -31,10 +31,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -162,7 +158,7 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
             // if (i % 1000 == 999)
             // R_CheckUserInterrupt();
             if (!(rnames instanceof RNull)) {
-                tmp.append(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec)).append(csep);
+                tmp.append(encodeElement2((RAbstractStringVector) rnames, i, quoteRn, qmethod, cdec)).append(csep);
             }
             for (int j = 0; j < nc; j++) {
                 Object xjObj = x.getDataAtAsObject(j);
@@ -214,8 +210,8 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
         if (indx < 0 || indx >= x.getLength()) {
             throw new IllegalArgumentException("index out of range");
         }
-        if (x instanceof RStringVector) {
-            RStringVector sx = (RStringVector) x;
+        if (x instanceof RAbstractStringVector) {
+            RAbstractStringVector sx = (RAbstractStringVector) x;
             String p0 = /* translateChar */sx.getDataAt(indx);
             return encodeStringElement(p0, quote, qmethod);
         }
@@ -246,16 +242,16 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
     }
 
     private static boolean isna(RAbstractContainer x, int indx) {
-        if (x instanceof RLogicalVector) {
-            return RRuntime.isNA(((RLogicalVector) x).getDataAt(indx));
-        } else if (x instanceof RDoubleVector) {
-            return RRuntime.isNA(((RDoubleVector) x).getDataAt(indx));
-        } else if (x instanceof RIntVector) {
-            return RRuntime.isNA(((RIntVector) x).getDataAt(indx));
-        } else if (x instanceof RStringVector) {
-            return RRuntime.isNA(((RStringVector) x).getDataAt(indx));
-        } else if (x instanceof RComplexVector) {
-            RComplexVector cvec = (RComplexVector) x;
+        if (x instanceof RAbstractLogicalVector) {
+            return RRuntime.isNA(((RAbstractLogicalVector) x).getDataAt(indx));
+        } else if (x instanceof RAbstractDoubleVector) {
+            return RRuntime.isNA(((RAbstractDoubleVector) x).getDataAt(indx));
+        } else if (x instanceof RAbstractIntVector) {
+            return RRuntime.isNA(((RAbstractIntVector) x).getDataAt(indx));
+        } else if (x instanceof RAbstractStringVector) {
+            return RRuntime.isNA(((RAbstractStringVector) x).getDataAt(indx));
+        } else if (x instanceof RAbstractComplexVector) {
+            RAbstractComplexVector cvec = (RAbstractComplexVector) x;
             RComplex c = cvec.getDataAt(indx);
             return c.isNA();
         } else {
