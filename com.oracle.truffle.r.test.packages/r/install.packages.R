@@ -509,6 +509,7 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 	for (pkgname in pkgnames) {
 		if (log) {
 		    cat("BEGIN processing:", pkgname, "\n")
+            cat("timestamp: ", Sys.time(), "\n")
 		}
 		dependent.install.ok <- T
 		if (install.dependents.first && !dependents.install) {
@@ -558,6 +559,7 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 				}
 				if (should.install) {
 					cat("installing:", pkgname, "(", install.count, "of", install.total, ")", "\n")
+                    cat("timestamp: ", Sys.time(), "\n")
 					this.result <- install.pkg(pkgname)
 					result <- result && this.result
 					if (dependents.install && !this.result) {
@@ -653,6 +655,7 @@ do.it <- function() {
 
 	if (install) {
 		cat("BEGIN package installation\n")
+        cat("timestamp: ", Sys.time(), "\n")
 		install.pkgs(test.pkgnames)
 		cat("END package installation\n")
 		show.install.status(test.pkgnames)
@@ -675,10 +678,12 @@ do.it <- function() {
 
 		# need to install the Suggests packages as they may be used
 		cat('BEGIN suggests install\n')
+        cat("timestamp: ", Sys.time(), "\n")
 		install.suggests(test.pkgnames)
 		cat('END suggests install\n')
 
 		cat("BEGIN package tests\n")
+        cat("timestamp: ", Sys.time(), "\n")
 		test.count = 1
 		test.total = length(test.pkgnames)
 		for (pkgname in test.pkgnames) {

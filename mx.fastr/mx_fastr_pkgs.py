@@ -33,6 +33,7 @@ In either case all the output is placed in the fastr suite dir. Separate directo
 and tests, namely 'lib.install.packages.{fastr,gnur}' and 'test.{fastr,gnur}' (sh syntax).
 '''
 from os.path import join, relpath
+from datetime import datetime
 import shutil, os, re
 import subprocess
 import mx
@@ -100,9 +101,14 @@ def _create_testdot(rvm):
     os.mkdir(testdir)
     return testdir
 
+def _log_timestamp():
+    if not quiet:
+        print "timestamp: {0}".format(str(datetime.now()))
+
 def _log_step(state, step, rvariant):
     if not quiet:
         print "{0} {1} with {2}".format(state, step, rvariant)
+        _log_timestamp()
 
 def _packages_test_project():
     return 'com.oracle.truffle.r.test.packages'
