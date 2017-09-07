@@ -233,6 +233,8 @@ public class LogFileParser {
         }
         installTest.setMode(mode);
 
+        timestamp();
+
         Section installationTask = parseInstallationTask();
         installTest.addSection(installationTask);
         if ("FastR".equals(mode)) {
@@ -244,14 +246,16 @@ public class LogFileParser {
         installTest.addSection(testing);
         installTest.setSuccess(testing.isSuccess() && success);
         expect(Token.END_INSTALL_TEST);
+        timestamp();
 
         return installTest;
     }
 
     private Section parseTesting() throws IOException {
         expect(Token.BEGIN_PACKAGE_TESTS);
-
         Section packageTests = new Section(logFile, Token.BEGIN_PACKAGE_TESTS.linePrefix, curLine.lineNr);
+
+        timestamp();
 
         if (("install failed, not testing: " + getPkgName()).equals(trim(la.text))) {
             consumeLine();
@@ -263,6 +267,7 @@ public class LogFileParser {
             packageTests.setSuccess(true);
         }
         expect(Token.END_PACKAGE_TESTS);
+        timestamp();
         return packageTests;
     }
 
@@ -338,17 +343,21 @@ public class LogFileParser {
     private Section parseInstallationTask() throws IOException {
         expect(Token.BEGIN_INSTALLATION);
         Section installation = new Section(logFile, Token.BEGIN_INSTALLATION.linePrefix, curLine.lineNr);
+        timestamp();
         Section processing = parseProcessingTask();
         installation.addSection(processing);
         expect(Token.END_INSTALLATION);
+        timestamp();
         return installation;
     }
 
     private Section parseProcessingTask() throws IOException {
         expect(Token.BEGIN_PROCESSING);
         Section installation = new Section(logFile, Token.BEGIN_PROCESSING.linePrefix, curLine.lineNr);
+        timestamp();
         installation.problems = applyDetectors(Token.BEGIN_PROCESSING, logFile.path, collectBody(Token.END_PROCESSING));
         expect(Token.END_PROCESSING);
+        timestamp();
         return installation;
     }
 
@@ -382,12 +391,15 @@ public class LogFileParser {
         expect(Token.BEGIN_SUGGESTS_INSTALL);
         Section section = new Section(logFile, Token.BEGIN_SUGGESTS_INSTALL.linePrefix, curLine.lineNr);
 
+        timestamp();
+
         // collect body of this section
 
         Collection<Problem> problems = applyDetectors(Token.BEGIN_SUGGESTS_INSTALL, logFile.path, collectBody(Token.END_SUGGESTS_INSTALL));
         section.problems = problems;
 
         expect(Token.END_SUGGESTS_INSTALL);
+        timestamp();
 
         return section;
     }
@@ -528,6 +540,12 @@ public class LogFileParser {
         }
     }
 
+    void timestamp() throws IOException {
+        if (laMatches(Token.TIMESTAMP)) {
+            consumeLine();
+        }
+    }
+
     LogFileParseException parseError(String message) {
         throw new LogFileParseException(message, pkg, getCurrentLocation());
     }
@@ -646,6 +664,7 @@ public class LogFileParser {
         MISSING_OUTPUT_FILE("FastR is missing output file:"),
         CONTENT_MALFORMED("content malformed: "),
         OUTPUT_MISMATCH_FASTR("FastR output mismatch: "),
+        TIMESTAMP("timestamp: "),
 
         TESTING_EXAMPLES("Testing examples for package"),
         RUNNING_SPECIFIC_TESTS("Running specific tests for package"),
