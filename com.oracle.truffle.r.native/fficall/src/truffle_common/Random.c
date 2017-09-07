@@ -20,8 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include <rffiutils.h>
-#include "../common/rffi_upcalls.h"
+#include "../truffle_nfi/rffiutils.h"
+#include "rffi_upcalls.h"
 
 void GetRNGstate() {
     ((call_GetRNGstate) callbacks[GetRNGstate_x])();

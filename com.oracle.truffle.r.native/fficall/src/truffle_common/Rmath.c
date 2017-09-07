@@ -20,20 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include <rffiutils.h>
-
-static jmethodID Rf_runifMethodID;
-static jmethodID Rf_punifMethodID;
-static jmethodID Rf_qunifMethodID;
-static jmethodID Rf_dunifMethodID;
-
-void init_rmath(JNIEnv *env) {
-
-	Rf_runifMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_runif", "(DD)D", 0);
-	Rf_punifMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_punif", "(DDDII)D", 0);
-	Rf_qunifMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_qunif", "(DDDII)D", 0);
-	Rf_dunifMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_dunif", "(DDDI)D", 0);
-}
+#include "../truffle_nfi/rffiutils.h"
+#include "rffi_upcalls.h"
 
 double Rf_dnorm(double a, double b, double c, int d) {
     unimplemented("Rf_dnorm");
@@ -72,27 +60,19 @@ void Rf_pnorm_both(double a, double * b, double * c, int d, int e) {
 }
 
 double Rf_dunif(double a, double b, double c, int d) {
-	TRACE(TARGs, a, b);
-	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallDoubleMethod(thisenv, UpCallsRFFIObject, Rf_dunifMethodID, a, b, c, d);
+	return ((call_Rf_dunif) callbacks[Rf_dunif_x])(a, b, c, d);
 }
 
 double Rf_punif(double a, double b, double c, int d, int e) {
-	TRACE(TARGs, a, b);
-	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallDoubleMethod(thisenv, UpCallsRFFIObject, Rf_punifMethodID, a, b, c, d, e);
+	return ((call_Rf_punif) callbacks[Rf_punif_x])(a, b, c, d, e);
 }
 
 double Rf_qunif(double a, double b, double c, int d, int e) {
-	TRACE(TARGs, a, b);
-	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallDoubleMethod(thisenv, UpCallsRFFIObject, Rf_qunifMethodID, a, b, c, d, e);
+	return ((call_Rf_qunif) callbacks[Rf_qunif_x])(a, b, c, d, e);
 }
 
 double Rf_runif(double a, double b) {
-	TRACE(TARGs, a, b);
-	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallDoubleMethod(thisenv, UpCallsRFFIObject, Rf_runifMethodID, a, b);
+	return ((call_Rf_runif) callbacks[Rf_runif_x])(a, b);
 }
 
 double Rf_dgamma(double a, double b, double c, int d) {
