@@ -292,11 +292,14 @@ public final class RScope extends AbstractScope {
                 assert RArguments.isRFrame(env.getFrame());
                 RFunction f = RArguments.getFunction(env.getFrame());
                 if (f != null) {
-                    return RContext.getRRuntimeASTAccess().getArgumentsSignature(f).getNames();
+                    ArgumentsSignature signature = RContext.getRRuntimeASTAccess().getArgumentsSignature(f);
+                    String[] names = signature.getNames();
+                    return names == null ? new String[signature.getLength()] : names;
                 } else {
                     ArgumentsSignature suppliedSignature = RArguments.getSuppliedSignature(env.getFrame());
                     if (suppliedSignature != null) {
-                        return suppliedSignature.getNames();
+                        String[] names = suppliedSignature.getNames();
+                        return names == null ? new String[suppliedSignature.getLength()] : names;
                     }
                 }
             }

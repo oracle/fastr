@@ -16,6 +16,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -331,12 +332,16 @@ public class FortranAndCFunctions {
                 namesProfile.enter();
                 String[] argNames = sig.getNames();
                 String[] names = new String[sig.getLength()];
-                for (int i = 0; i < sig.getLength(); i++) {
-                    String argName = argNames[i];
-                    if (argName == null) {
-                        names[i] = "";
-                    } else {
-                        names[i] = argName;
+                if (argNames == null) {
+                    Arrays.fill(names, "");
+                } else {
+                    for (int i = 0; i < sig.getLength(); i++) {
+                        String argName = argNames[i];
+                        if (argName == null) {
+                            names[i] = "";
+                        } else {
+                            names[i] = argName;
+                        }
                     }
                 }
                 namesSetter.execute(result, RDataFactory.createStringVector(names, true));
