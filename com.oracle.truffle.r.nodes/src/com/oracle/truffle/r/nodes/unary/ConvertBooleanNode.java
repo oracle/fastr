@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -180,6 +181,11 @@ public abstract class ConvertBooleanNode extends RNode {
         if (!RRuntime.isForeignObject(o)) {
             return convertBooleanRecursive(frame, o);
         }
+        throw error(RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+    }
+
+    @Fallback
+    protected byte doObject(Object o) {
         throw error(RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
     }
 
