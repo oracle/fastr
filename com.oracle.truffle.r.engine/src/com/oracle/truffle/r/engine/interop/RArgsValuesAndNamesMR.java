@@ -71,7 +71,12 @@ public class RArgsValuesAndNamesMR {
     @Resolve(message = "KEYS")
     public abstract static class RArgsValuesAndNamesKeysNode extends Node {
         protected Object access(RArgsValuesAndNames receiver) {
-            return RDataFactory.createStringVector(receiver.getSignature().getNames(), RDataFactory.COMPLETE_VECTOR);
+            ArgumentsSignature signature = receiver.getSignature();
+            String[] names = signature.getNames();
+            if (names == null) {
+                return RDataFactory.createStringVector(new String[signature.getLength()], RDataFactory.COMPLETE_VECTOR);
+            }
+            return RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR).makeSharedPermanent();
         }
     }
 
@@ -112,6 +117,10 @@ public class RArgsValuesAndNamesMR {
         protected Object access(RArgsValuesAndNames receiver, String identifier) {
             ArgumentsSignature sig = receiver.getSignature();
             String[] names = sig.getNames();
+            if (names == null) {
+                throw UnknownIdentifierException.raise("" + identifier);
+            }
+
             int idx = -1;
             for (int i = 0; i < names.length; i++) {
                 if (names[i].equals(identifier)) {
@@ -150,6 +159,9 @@ public class RArgsValuesAndNamesMR {
         protected Object access(RArgsValuesAndNames receiver, String identifier) {
             ArgumentsSignature sig = receiver.getSignature();
             String[] names = sig.getNames();
+            if (names == null) {
+                return 0;
+            }
             int idx = -1;
             for (int i = 0; i < names.length; i++) {
                 if (names[i].equals(identifier)) {

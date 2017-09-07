@@ -45,6 +45,7 @@ public final class ArgumentsSignature implements Iterable<String> {
      */
     public static final String UNMATCHED = new String();
     public static final String VARARG_NAME = "...";
+    public static final int[] EMPTY_VARARGS_INDEXES = new int[0];
     public static final int NO_VARARG = -1;
 
     @CompilationFinal(dimensions = 1) private static final ArgumentsSignature[] EMPTY_SIGNATURES = new ArgumentsSignature[32];
@@ -89,46 +90,58 @@ public final class ArgumentsSignature implements Iterable<String> {
     @CompilationFinal(dimensions = 1) private final String[] names;
     @CompilationFinal(dimensions = 1) private final int[] varArgIndexes;
     @CompilationFinal(dimensions = 1) private final boolean[] isVarArg;
+    private final int length;
     private final int varArgIndex;
     private final int nonNullCount;
 
     private ArgumentsSignature(String[] names, boolean convertEmpty) {
-        this.names = new String[names.length];
+        this.length = names.length;
+        String[] localNames = null;
         int nonNull = 0;
         for (int i = 0; i < names.length; i++) {
             String s = names[i];
             if (s == null || (s.isEmpty() && convertEmpty)) {
-                this.names[i] = null;
                 continue;
+            } else if (localNames == null) {
+                localNames = new String[names.length];
             }
             nonNull++;
-            this.names[i] = s == UNMATCHED ? s : s.intern();
+            localNames[i] = s == UNMATCHED ? s : s.intern();
         }
+        this.names = localNames;
         this.nonNullCount = nonNull;
 
-        int index = NO_VARARG;
-        int count = 0;
-        this.isVarArg = new boolean[names.length];
-        for (int i = 0; i < names.length; i++) {
-            String name = names[i];
-            if (name != null) {
-                if (VARARG_NAME.equals(name)) {
-                    this.isVarArg[i] = true;
-                    count++;
-                    if (index != NO_VARARG) {
-                        index = i;
+        int varArgsCount = 0;
+        boolean[] isVarArgsLocal = null;
+        if (localNames != null) {
+            for (int i = 0; i < names.length; i++) {
+                String name = names[i];
+                if (name != null) {
+                    if (VARARG_NAME.equals(name)) {
+                        if (isVarArgsLocal == null) {
+                            isVarArgsLocal = new boolean[names.length];
+                        }
+                        isVarArgsLocal[i] = true;
+                        varArgsCount++;
                     }
                 }
             }
         }
-        int pos = 0;
-        this.varArgIndexes = new int[count];
-        for (int i = 0; i < names.length; i++) {
-            if (isVarArg[i]) {
-                varArgIndexes[pos++] = i;
+        this.isVarArg = isVarArgsLocal;
+
+        if (isVarArgsLocal == null) {
+            this.varArgIndexes = EMPTY_VARARGS_INDEXES;
+            this.varArgIndex = NO_VARARG;
+        } else {
+            int pos = 0;
+            this.varArgIndexes = new int[varArgsCount];
+            for (int i = 0; i < names.length; i++) {
+                if (isVarArgsLocal[i]) {
+                    varArgIndexes[pos++] = i;
+                }
             }
+            this.varArgIndex = varArgIndexes[0];
         }
-        this.varArgIndex = varArgIndexes.length == 0 ? NO_VARARG : varArgIndexes[0];
     }
 
     public boolean isEmpty() {
@@ -136,7 +149,7 @@ public final class ArgumentsSignature implements Iterable<String> {
     }
 
     public int getLength() {
-        return names.length;
+        return length;
     }
 
     public int getNonNullCount() {
@@ -157,6 +170,9 @@ public final class ArgumentsSignature implements Iterable<String> {
     }
 
     public String getName(int index) {
+        if (names == null) {
+            return null;
+        }
         return names[index] == UNMATCHED ? null : names[index];
     }
 
@@ -169,11 +185,11 @@ public final class ArgumentsSignature implements Iterable<String> {
      * {@link #getName(int)} returns {@code null} in either case.
      */
     public boolean isUnmatched(int index) {
-        return names[index] == UNMATCHED;
+        return names != null && names[index] == UNMATCHED;
     }
 
     public boolean isVarArg(int index) {
-        return this.isVarArg[index];
+        return this.isVarArg != null && this.isVarArg[index];
     }
 
     /**
@@ -181,6 +197,9 @@ public final class ArgumentsSignature implements Iterable<String> {
      * interned string.
      */
     public int indexOfName(String find) {
+        if (names == null) {
+            return -1;
+        }
         for (int i = 0; i < names.length; i++) {
             if (names[i] == find) {
                 return i;
@@ -191,7 +210,7 @@ public final class ArgumentsSignature implements Iterable<String> {
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(names);
+        return Arrays.hashCode(names) ^ length;
     }
 
     @Override
@@ -212,11 +231,13 @@ public final class ArgumentsSignature implements Iterable<String> {
     @Override
     public Iterator<String> iterator() {
         CompilerAsserts.neverPartOfCompilation();
-        return Arrays.asList(names).iterator();
+        String[] namesLocal = names == null ? new String[length] : names;
+        return Arrays.asList(namesLocal).iterator();
     }
 
     @Override
     public String toString() {
-        return "Signature " + Arrays.toString(names);
+        String value = names == null ? length + " times null" : Arrays.toString(names);
+        return "Signature " + value;
     }
 }
