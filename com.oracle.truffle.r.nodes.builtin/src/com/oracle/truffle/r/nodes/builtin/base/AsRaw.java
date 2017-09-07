@@ -27,9 +27,11 @@ import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.opt.ReuseTemporaryNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -40,6 +42,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 public abstract class AsRaw extends RBuiltinNode.Arg1 {
 
     private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();
+
+    @Child private ReuseTemporaryNode reuseTemporaryNode;
 
     static {
         Casts casts = new Casts(AsRaw.class);
@@ -56,7 +60,13 @@ public abstract class AsRaw extends RBuiltinNode.Arg1 {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            return (RAbstractRawVector) v.copyDropAttributes();
+            if (reuseTemporaryNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                reuseTemporaryNode = insert(ReuseTemporaryNode.create());
+            }
+            RAbstractRawVector res = (RAbstractRawVector) reuseTemporaryNode.execute(v);
+            res.resetAllAttributes(true);
+            return res;
         }
     }
 }

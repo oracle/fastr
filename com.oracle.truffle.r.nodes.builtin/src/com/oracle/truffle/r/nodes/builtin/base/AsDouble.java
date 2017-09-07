@@ -32,7 +32,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
+import com.oracle.truffle.r.nodes.function.opt.ReuseTemporaryNode;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -43,7 +43,7 @@ public abstract class AsDouble extends RBuiltinNode.Arg2 {
 
     private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();
 
-    @Child protected ReuseNonSharedNode reuseNonShared;
+    @Child private ReuseTemporaryNode reuseTemporaryNode;
 
     static {
         Casts casts = new Casts(AsDouble.class);
@@ -55,11 +55,11 @@ public abstract class AsDouble extends RBuiltinNode.Arg2 {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            if (reuseNonShared == null) {
+            if (reuseTemporaryNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                reuseNonShared = insert(ReuseNonSharedNode.create());
+                reuseTemporaryNode = insert(ReuseTemporaryNode.create());
             }
-            RAbstractDoubleVector res = (RAbstractDoubleVector) reuseNonShared.execute(v);
+            RAbstractDoubleVector res = (RAbstractDoubleVector) reuseTemporaryNode.execute(v);
             res.resetAllAttributes(true);
             return res;
         }

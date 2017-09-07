@@ -186,5 +186,6 @@ public class TestBuiltin_asdouble extends TestBase {
         assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.double(x); attributes(y) }");
         assertEval("{ as.double(NULL) }");
         assertEval("{ as.double.cls <- function(x) 42; as.double(structure(c(1,2), class='cls')); }");
+        assertEval("{ y <- c(3.1, 3.2); attr(y, 'someAttr') <- 'someValue'; x <- as.double(y); x[[1]] <- 42; y }");
     }
 }

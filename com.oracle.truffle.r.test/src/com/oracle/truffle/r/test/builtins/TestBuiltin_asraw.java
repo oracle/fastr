@@ -72,5 +72,6 @@ public class TestBuiltin_asraw extends TestBase {
         assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1L, -2L, NA)) }");
         assertEval(Output.IgnoreWarningContext, "{ as.raw('10000001') }");
         assertEval(Output.IgnoreWarningContext, "{ as.raw(c('10000001', '42')) }");
+        assertEval("{ y <- as.raw(c(5L, 6L)); attr(y, 'someAttr') <- 'someValue'; x <- as.raw(y); x[[1]] <- as.raw(42); y }");
     }
 }
