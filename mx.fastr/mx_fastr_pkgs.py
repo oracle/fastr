@@ -101,7 +101,7 @@ def _create_testdot(rvm):
     os.mkdir(testdir)
     return testdir
 
-def _log_timestamp(state, step, rvariant):
+def _log_timestamp():
     if not quiet:
         print "timestamp: {0}".format(str(datetime.now()))
 
