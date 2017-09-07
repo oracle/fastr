@@ -69,7 +69,7 @@ final class PositionCharacterLookupNode extends RBaseNode {
             if (dimNames != null) {
                 Object dataAt = dimNames.getDataAt(dimensionIndex);
                 if (dataAt != RNull.instance) {
-                    RStringVector dimName = (RStringVector) dataAt;
+                    RAbstractStringVector dimName = (RAbstractStringVector) dataAt;
                     result = searchNode.apply(dimName, position, notFoundStartIndex, null);
                 } else {
                     emptyProfile.enter();
