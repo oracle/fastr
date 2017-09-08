@@ -24,12 +24,15 @@ package com.oracle.truffle.r.nodes;
 
 import java.util.function.Function;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.context.Engine;
@@ -64,13 +67,19 @@ public abstract class InlineCacheNode extends RBaseNode {
     protected Object doCached(Frame frame, Object value,
                     @Cached("value") Object cachedValue,
                     @Cached("createBinaryProfile()") ConditionProfile isVirtualFrameProfile,
-                    @Cached("cache(cachedValue)") RNode reified) {
+                    @Cached("cache(cachedValue)") RNode reified,
+                    @Cached("new(reified)") NodeInsertedClosure nodeInsertedClosure) {
         VirtualFrame vf;
         if (isVirtualFrameProfile.profile(frame instanceof VirtualFrame)) {
             vf = (VirtualFrame) frame;
         } else {
             vf = SubstituteVirtualFrame.create(frame.materialize());
         }
+
+        // Use a closure to notify the root node that a new node has just been inserted. The closure
+        // is necessary to do the notification just once.
+        nodeInsertedClosure.notifyNodeInserted();
+
         return reified.visibleExecute(vf);
     }
 
@@ -119,5 +128,22 @@ public abstract class InlineCacheNode extends RBaseNode {
     @TruffleBoundary
     private static Object evalPromise(Frame frame, Closure closure) {
         return closure.eval(frame.materialize());
+    }
+
+    protected class NodeInsertedClosure {
+        private final Node n;
+        @CompilationFinal boolean notified;
+
+        public NodeInsertedClosure(Node n) {
+            this.n = n;
+        }
+
+        void notifyNodeInserted() {
+            if (!notified) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                InlineCacheNode.this.notifyInserted(n);
+                notified = true;
+            }
+        }
     }
 }
