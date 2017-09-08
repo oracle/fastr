@@ -75,8 +75,8 @@ public class TestInteractiveDebug extends TestBase {
 
     @Test
     public void testPromise() {
-        // TODO enable test as soon as Truffle support is available
-        assertEval(Ignored.ImplementationError, "fun <- function(x) { cat({ cat(x); cat('\n') }) }; debug(fun); fun(3)\n\n\n\n\n");
+        // TODO test fails for unknown reason; the snippet runs correctly if used in REPL
+        assertEval(Ignored.Unknown, "fun <- function(x) { cat({ cat(x); cat('\n') }) }; debug(fun); fun(3)\n\n\n\n\n");
     }
 
     @Test
