@@ -100,5 +100,6 @@ public class TestBuiltin_aslogical extends TestBase {
         assertEval("{ as.logical(c(3+3i, 4+4i)) }");
         assertEval("{ as.logical(NULL) }");
         assertEval("{ as.logical.cls <- function(x) 42; as.logical(structure(c(1,2), class='cls')); }");
+        assertEval("{ y <- c(T, F); attr(y, 'someAttr') <- 'someValue'; x <- as.logical(y); x[[1]] <- F; y }");
     }
 }
