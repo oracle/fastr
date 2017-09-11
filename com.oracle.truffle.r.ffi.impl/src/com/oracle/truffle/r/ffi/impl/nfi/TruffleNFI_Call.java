@@ -35,7 +35,6 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
@@ -51,7 +50,6 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 public class TruffleNFI_Call implements CallRFFI {
 
@@ -70,11 +68,6 @@ public class TruffleNFI_Call implements CallRFFI {
             funName = "Call_initvar_" + name().toLowerCase();
         }
     }
-
-    /**
-     * Nesting of native calls is rare but can happen and the cleanup needs to be per call.
-     */
-    private static int callDepth;
 
     public TruffleNFI_Call() {
         initialize();
@@ -136,89 +129,6 @@ public class TruffleNFI_Call implements CallRFFI {
         }
     }
 
-    private enum ReturnArray {
-        INTEGER_CREATE("([sint32], sint32): uint64", 2),
-        DOUBLE_CREATE("([double], sint32): uint64", 2),
-        BYTE_CREATE("([uint8], sint32, sint32): uint64", 3),
-        INTEGER_EXISTING("(uint64): void", 1),
-        DOUBLE_EXISTING("(uint64): void", 1),
-        BYTE_EXISTING("(uint64): void", 1),
-        FREE("(uint64): void", 1);
-
-        private final String signature;
-        private final String funName;
-        private TruffleObject function;
-        private final Node executeNode;
-
-        ReturnArray(String signature, int numArgs) {
-            this.signature = signature;
-            this.funName = "return_" + name();
-            this.executeNode = Message.createExecute(numArgs).createNode();
-        }
-    }
-
-    private static void initReturnArray() {
-        Node bind = Message.createInvoke(1).createNode();
-        for (ReturnArray returnArrayFun : ReturnArray.values()) {
-            SymbolHandle symbolHandle = DLL.findSymbol(returnArrayFun.funName, null); // libR
-            try {
-                returnArrayFun.function = (TruffleObject) ForeignAccess.sendInvoke(bind, symbolHandle.asTruffleObject(), "bind", returnArrayFun.signature);
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
-        }
-    }
-
-    // TODO Nodify?
-    static long returnArrayCreate(Object array, boolean isString) {
-        try {
-            if (array instanceof int[]) {
-                return (long) ForeignAccess.sendExecute(ReturnArray.INTEGER_CREATE.executeNode, ReturnArray.INTEGER_CREATE.function, JavaInterop.asTruffleObject(array), ((int[]) array).length);
-            } else if (array instanceof double[]) {
-                return (long) ForeignAccess.sendExecute(ReturnArray.DOUBLE_CREATE.executeNode, ReturnArray.DOUBLE_CREATE.function, JavaInterop.asTruffleObject(array), ((double[]) array).length);
-            } else if (array instanceof byte[]) {
-                return (long) ForeignAccess.sendExecute(ReturnArray.BYTE_CREATE.executeNode, ReturnArray.BYTE_CREATE.function, JavaInterop.asTruffleObject(array), ((byte[]) array).length,
-                                isString ? 1 : 0);
-            } else {
-                throw RInternalError.shouldNotReachHere();
-            }
-        } catch (InteropException ex) {
-            throw RInternalError.shouldNotReachHere(ex);
-        }
-    }
-
-    static void returnArrayExisting(SEXPTYPE type, long address) {
-        try {
-            switch (type) {
-                case INTSXP:
-                case LGLSXP:
-                    ForeignAccess.sendExecute(ReturnArray.INTEGER_EXISTING.executeNode, ReturnArray.INTEGER_EXISTING.function, address);
-                    break;
-                case REALSXP:
-                    ForeignAccess.sendExecute(ReturnArray.DOUBLE_EXISTING.executeNode, ReturnArray.DOUBLE_EXISTING.function, address);
-                    break;
-                case CHARSXP:
-                case RAWSXP:
-                    ForeignAccess.sendExecute(ReturnArray.BYTE_EXISTING.executeNode, ReturnArray.BYTE_EXISTING.function, address);
-                    break;
-                default:
-                    throw RInternalError.shouldNotReachHere();
-
-            }
-        } catch (InteropException ex) {
-            throw RInternalError.shouldNotReachHere(ex);
-        }
-    }
-
-    static void freeArray(long address) {
-        Node executeNode = Message.createExecute(1).createNode();
-        try {
-            ForeignAccess.sendExecute(executeNode, ReturnArray.FREE.function, address);
-        } catch (InteropException ex) {
-            throw RInternalError.shouldNotReachHere(ex);
-        }
-    }
-
     private static void initialize() {
         RFFIUtils.initializeTracing();
         if (traceEnabled()) {
@@ -227,7 +137,6 @@ public class TruffleNFI_Call implements CallRFFI {
         try {
             initCallbacks(new TruffleNFI_UpCallsRFFIImpl());
             initVariables();
-            initReturnArray();
         } finally {
             if (traceEnabled()) {
                 traceDownCallReturn("initialize", null);
@@ -364,8 +273,6 @@ public class TruffleNFI_Call implements CallRFFI {
             args[i] = ffiWrapNodes[i].execute(args[i]);
         }
         boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
-        TruffleNFI_NativeArray.callEnter(callDepth);
-        callDepth++;
         return isNullSetting;
     }
 
@@ -373,9 +280,7 @@ public class TruffleNFI_Call implements CallRFFI {
         if (traceEnabled()) {
             traceDownCallReturn(name, result);
         }
-        TruffleNFI_NativeArray.callEnter(callDepth);
         RContext.getRForeignAccessFactory().setIsNull(isNullSetting);
-        callDepth--;
     }
 
     @Override
