@@ -182,12 +182,11 @@ internalPkgtest: ${common} {
 
 builds = [
   ${gateTestLinux}            {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64"}
-  ${gateTestLinuxNFI}         {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-nfi-amd64"}
   ${gateTestNoSpecialsLinux}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64-nospecials"}
   ${gateTestDarwin}           {capabilities : [darwin, amd64], targets : [gate], name: "gate-test-darwin-amd64"}
   ${gateStyle}                {capabilities : [linux, amd64],  targets : [gate], name: "gate-style-linux-amd64"}
   ${rbcheck}                  {capabilities : [linux, amd64],  targets : [gate], name: "gate-rbcheck-linux-amd64"}
   ${internalPkgtest}          {capabilities : [linux, amd64],  targets : [gate], name: "gate-internal-pkgtest-linux-amd64"}
-  ${gateTestManagedLinux}     {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-managed-linux-amd64"}
+  # ${gateTestManagedLinux}     {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-managed-linux-amd64"}
   ${gateTestJava9Linux}       {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-java9-linux-amd64"}
 ]
