@@ -31,7 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
@@ -70,8 +69,7 @@ import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.R2Foreign;
+import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
@@ -95,13 +93,14 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
@@ -153,14 +152,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     // needed for INTERNAL_GENERIC calls:
     @Child private FunctionDispatch internalDispatchCall;
-
-    private final Assumption needsNoCallerFrame = Truffle.getRuntime().createAssumption("no caller frame");
-
-    public boolean setNeedsCallerFrame() {
-        boolean value = !needsNoCallerFrame.isValid();
-        needsNoCallerFrame.invalidate();
-        return value;
-    }
 
     protected RCaller createCaller(VirtualFrame frame, RFunction function) {
         if (explicitArgs == null) {
@@ -956,6 +947,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         private final RootCallTarget cachedTarget;
         private final FastPathFactory fastPathFactory;
         private final RVisibility fastPathVisibility;
+        private final boolean containsDispatch;
 
         DispatchedCallNode(RootCallTarget cachedTarget, RCallNode originalCall) {
             super(originalCall);
@@ -965,9 +957,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             this.fastPath = fastPathFactory == null ? null : fastPathFactory.create();
             this.fastPathVisibility = fastPathFactory == null ? null : fastPathFactory.getVisibility();
             this.visibility = fastPathFactory == null ? null : SetVisibilityNode.create();
-            if (root.containsDispatch()) {
-                originalCall.setNeedsCallerFrame();
-            }
+            this.containsDispatch = root.containsDispatch();
         }
 
         @Override
@@ -990,12 +980,46 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 if (needsSplitting(cachedTarget)) {
                     call.getCallNode().cloneCallTarget();
                 }
+                if (containsDispatch) {
+                    call.setNeedsCallerFrame();
+                }
             }
-            MaterializedFrame callerFrame = /* CompilerDirectives.inInterpreter() || */originalCall.needsNoCallerFrame.isValid() ? null : frame.materialize();
+            MaterializedFrame callerFrame = s3Args != null ? s3Args.callEnv : null;
+            RCaller caller = originalCall.createCaller(frame, function);
 
-            return call.execute(frame, function, originalCall.createCaller(frame, function), callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(),
-                            function.getEnclosingFrame(), s3Args);
+            return call.execute(frame, function, caller, callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(), function.getEnclosingFrame(), s3Args);
         }
+    }
+
+    public static final class InvalidateNoCallerFrame extends CallerFrameClosure {
+
+        private final Assumption needsNoCallerFrame;
+        private final MaterializedFrame frame;
+
+        protected InvalidateNoCallerFrame(Assumption needsNoCallerFrame) {
+            this.needsNoCallerFrame = needsNoCallerFrame;
+            this.frame = null;
+        }
+
+        protected InvalidateNoCallerFrame(Assumption needsNoCallerFrame, MaterializedFrame frame) {
+            this.needsNoCallerFrame = needsNoCallerFrame;
+            this.frame = frame;
+        }
+
+        @Override
+        public boolean setNeedsCallerFrame() {
+            if (needsNoCallerFrame.isValid()) {
+                needsNoCallerFrame.invalidate();
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public MaterializedFrame getMaterializedCallerFrame() {
+            return frame;
+        }
+
     }
 
     @Override

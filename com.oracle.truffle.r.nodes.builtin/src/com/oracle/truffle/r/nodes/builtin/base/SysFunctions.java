@@ -55,6 +55,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -146,8 +147,9 @@ public class SysFunctions {
 
     @TruffleBoundary
     private static void doCheckNSLoad(MaterializedFrame frame, RAbstractStringVector values, boolean setting) {
-        Frame caller = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
-        RFunction func = RArguments.getFunction(caller);
+        RCaller caller = RArguments.getCall(frame);
+        Frame callerFrame = Utils.getCallerFrame(caller, FrameAccess.READ_ONLY);
+        RFunction func = RArguments.getFunction(callerFrame);
         if (func.toString().equals(LOADNAMESPACE)) {
             if (setting) {
                 RContext.getInstance().setNamespaceName(values.getDataAt(0));

@@ -25,11 +25,13 @@ package com.oracle.truffle.r.nodes.access.vector;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.ExtractDimNamesNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.SetNamesNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
@@ -278,7 +280,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private Object extract(int dimensionIndex, RAbstractStringVector vector, Object pos, PositionProfile profile) {
         if (extractDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            extractDimNames = insert(new ExtractDimNamesNode(numberOfDimensions));
+            extractDimNames = insert(ExtractDimNamesNodeGen.create(numberOfDimensions));
         }
         return extractDimNames.extract(dimensionIndex, vector, pos, profile);
     }
@@ -498,24 +500,45 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
     }
 
-    private static class ExtractDimNamesNode extends Node {
+    abstract static class ExtractDimNamesNode extends Node {
 
-        @Children private final CachedExtractVectorNode[] extractNodes;
+        protected final int limit;
+
+        @Child protected ExtractVectorNode fallbackExtractNode;
 
         ExtractDimNamesNode(int dimensions) {
-            this.extractNodes = new CachedExtractVectorNode[dimensions];
+            // Support at most 2 different kinds of cached extract nodes per dimension.
+            limit = dimensions * 2;
         }
 
-        public Object extract(int dimensionIndex, RAbstractStringVector vector, Object position, PositionProfile profile) {
-            Object[] positions = new Object[]{position};
+        protected abstract Object execute(int dimensionIndex, RAbstractStringVector vector, Object position, PositionProfile profile);
+
+        protected boolean isSupported(CachedExtractVectorNode cachedExtractNode, RAbstractStringVector vector, Object position) {
+            return cachedExtractNode.isSupported(vector, new Object[]{position}, RLogical.TRUE, RLogical.TRUE);
+        }
+
+        protected CachedExtractVectorNode createCached(RAbstractStringVector vector, Object position) {
+            return new CachedExtractVectorNode(ElementAccessMode.SUBSET, vector, new Object[]{position}, RLogical.TRUE, RLogical.TRUE, true);
+        }
+
+        @Specialization(limit = "limit", guards = {"dimensionIndex == cachedIndex", "isSupported(cachedExtractNode, vector, position)"})
+        public Object extractDimNamesCached(int dimensionIndex, RAbstractStringVector vector, Object position, PositionProfile profile,
+                        @Cached("createCached(vector, position)") CachedExtractVectorNode cachedExtractNode,
+                        @SuppressWarnings("unused") @Cached("dimensionIndex") int cachedIndex) {
             PositionProfile[] profiles = new PositionProfile[]{profile};
-            if (extractNodes[dimensionIndex] == null) {
+            CompilerAsserts.partialEvaluationConstant(dimensionIndex);
+            return cachedExtractNode.apply(vector, new Object[]{position}, profiles, RLogical.TRUE, RLogical.TRUE);
+        }
+
+        @Specialization(replaces = "extractDimNamesCached")
+        public Object extract(int dimensionIndex, RAbstractStringVector vector, Object position, @SuppressWarnings("unused") PositionProfile profile) {
+            if (fallbackExtractNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                extractNodes[dimensionIndex] = insert(new CachedExtractVectorNode(ElementAccessMode.SUBSET, vector, positions, RLogical.TRUE, RLogical.TRUE, false));
+                fallbackExtractNode = insert(ExtractVectorNode.createRecursive(ElementAccessMode.SUBSET));
             }
             CompilerAsserts.partialEvaluationConstant(dimensionIndex);
-            assert extractNodes[dimensionIndex].isSupported(vector, positions, RLogical.TRUE, RLogical.TRUE);
-            return extractNodes[dimensionIndex].apply(vector, positions, profiles, RLogical.TRUE, RLogical.TRUE);
+            Object[] positions = new Object[]{position};
+            return fallbackExtractNode.apply(vector, positions, RLogical.TRUE, RLogical.TRUE);
         }
     }
 }

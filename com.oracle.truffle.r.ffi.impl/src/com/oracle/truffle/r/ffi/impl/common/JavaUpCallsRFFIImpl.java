@@ -68,7 +68,6 @@ import com.oracle.truffle.r.runtime.conn.NativeConnections.NativeRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -110,7 +109,6 @@ import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.nmath.distr.Unif;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -684,19 +682,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object TAG(Object e) {
-        if (e instanceof RPairList) {
-            return ((RPairList) e).getTag();
-        } else if (e instanceof RArgsValuesAndNames) {
-            ArgumentsSignature signature = ((RArgsValuesAndNames) e).getSignature();
-            if (signature.getLength() > 0 && signature.getName(0) != null) {
-                return signature.getName(0);
-            }
-            return RNull.instance;
-        } else {
-            guaranteeInstanceOf(e, RExternalPtr.class);
-            // at the moment, this can only be used to null out the pointer
-            return ((RExternalPtr) e).getTag();
-        }
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.TAG).call(e);
     }
 
     @Override
@@ -1606,6 +1592,22 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object Rf_namesgets(Object x, Object y) {
         return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_namesgets).call(x, y);
+    }
+
+    @Override
+    public int Rf_copyMostAttrib(Object x, Object y) {
+        FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_copyMostAttrib).call(x, y);
+        return 0;
+    }
+
+    @Override
+    public Object Rf_VectorToPairList(Object x) {
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_VectorToPairList).call(x);
+    }
+
+    @Override
+    public Object Rf_asCharacterFactor(Object x) {
+        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_asCharacterFactor).call(x);
     }
 
 }

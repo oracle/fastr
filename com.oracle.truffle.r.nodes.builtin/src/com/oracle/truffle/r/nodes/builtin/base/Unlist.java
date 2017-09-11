@@ -35,6 +35,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.UnlistNodeGen.RecursiveLengthNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.UnlistNodeGen.UnlistLengthNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
@@ -75,11 +76,36 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     }
 
     @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
-    @Child private RLengthNode lengthNode;
+    @Child private UnlistLength lengthNode;
     @Child private RecursiveLength recursiveLengthNode;
     @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
     @Child private Node hasSizeNode;
     @Child private ForeignArray2R foreignArray2RNode;
+
+    @ImportStatic({Message.class, RRuntime.class, ForeignArray2R.class})
+    @TypeSystemReference(RTypes.class)
+    protected abstract static class UnlistLength extends Node {
+
+        public abstract int execute(Object vector);
+
+        @Child private RLengthNode lengthNode;
+
+        @Specialization
+        protected int getLength(@SuppressWarnings("unused") RLanguage l) {
+            // language object do not get expanded - as such their length for the purpose of unlist
+            // is 1
+            return 1;
+        }
+
+        @Fallback
+        protected int getLength(Object operand) {
+            if (lengthNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                lengthNode = insert(RLengthNode.create());
+            }
+            return lengthNode.executeInteger(operand);
+        }
+    }
 
     @ImportStatic({Message.class, RRuntime.class, ForeignArray2R.class})
     @TypeSystemReference(RTypes.class)
@@ -216,13 +242,13 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
 
     private int getLength(Object operand) {
         initLengthNode();
-        return lengthNode.executeInteger(operand);
+        return lengthNode.execute(operand);
     }
 
     private void initLengthNode() {
         if (lengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            lengthNode = insert(RLengthNode.create());
+            lengthNode = insert(UnlistLengthNodeGen.create());
         }
     }
 

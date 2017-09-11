@@ -30,7 +30,6 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
@@ -41,7 +40,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
 @NodeInfo(cost = NodeCost.NONE)
-public abstract class CallRFunctionCachedNode extends Node {
+public abstract class CallRFunctionCachedNode extends CallRFunctionBaseNode {
 
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
@@ -51,14 +50,21 @@ public abstract class CallRFunctionCachedNode extends Node {
         this.cacheLimit = cacheLimit;
     }
 
-    public final Object execute(VirtualFrame frame, RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
-        Object[] callArgs = RArguments.create(function, call, callerFrame, evaluatedArgs, dispatchArgs);
+    public final Object execute(VirtualFrame frame, RFunction function, RCaller call, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
+        Object[] callArgs = RArguments.create(function, call, getCallerFrameObject(frame), evaluatedArgs, dispatchArgs);
+        return execute(frame, function.getTarget(), callArgs, call);
+    }
+
+    public final Object execute(VirtualFrame frame, RFunction function, RCaller call, Object[] evaluatedArgs,
+                    ArgumentsSignature suppliedSignature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
+        Object[] callArgs = RArguments.create(function, call, getCallerFrameObject(frame), evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
         return execute(frame, function.getTarget(), callArgs, call);
     }
 
     public final Object execute(VirtualFrame frame, RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
                     ArgumentsSignature suppliedSignature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
-        Object[] callArgs = RArguments.create(function, call, callerFrame, evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
+        boolean topLevel = call == null || call.getDepth() == 0;
+        Object[] callArgs = RArguments.create(function, call, getCallerFrameObject(frame, callerFrame, topLevel), evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
         return execute(frame, function.getTarget(), callArgs, call);
     }
 

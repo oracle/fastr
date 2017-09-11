@@ -448,8 +448,8 @@ public final class Utils {
      * TODO Calls to this method should be validated with respect to whether promise evaluation is
      * in progress and replaced with use of {@code FrameDepthNode}.
      */
-    public static Frame getCallerFrame(Frame frame, FrameAccess fa) {
-        RCaller parent = RArguments.getCall(frame);
+    public static Frame getCallerFrame(RCaller caller, FrameAccess fa) {
+        RCaller parent = caller;
         while (parent != null && parent.isPromise()) {
             parent = parent.getParent();
         }

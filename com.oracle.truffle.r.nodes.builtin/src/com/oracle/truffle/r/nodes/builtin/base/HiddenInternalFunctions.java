@@ -253,7 +253,7 @@ public class HiddenInternalFunctions {
                 RSerialize.CallHook callHook = new RSerialize.CallHook() {
                     @Override
                     public Object eval(Object arg) {
-                        return callCache.execute(SubstituteVirtualFrame.create(frame), envhook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, null);
+                        return callCache.execute(SubstituteVirtualFrame.create(frame), envhook, RCaller.create(frame, getOriginalCall()), new Object[]{arg}, null);
                     }
                 };
                 String functionName = ReadVariableNode.getSlowPathEvaluationName();
@@ -385,7 +385,7 @@ public class HiddenInternalFunctions {
             RSerialize.CallHook callHook = new RSerialize.CallHook() {
                 @Override
                 public Object eval(Object arg) {
-                    return callCache.execute(SubstituteVirtualFrame.create(frame), hook, RCaller.create(frame, getOriginalCall()), null, new Object[]{arg}, null);
+                    return callCache.execute(SubstituteVirtualFrame.create(frame), hook, RCaller.create(frame, getOriginalCall()), new Object[]{arg}, null);
                 }
             };
 

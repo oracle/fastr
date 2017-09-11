@@ -105,6 +105,8 @@ static jmethodID Rf_coerceVectorMethodID;
 static jmethodID Rf_mkCharLenCEMethodID;
 static jmethodID Rf_asLogicalMethodID;
 static jmethodID Rf_PairToVectorListMethodID;
+static jmethodID Rf_VectorToPairListMethodID;
+static jmethodID Rf_asCharacterFactorMethodID;
 static jmethodID gnuRCodeForObjectMethodID;
 static jmethodID NAMED_MethodID;
 static jmethodID SET_TYPEOF_FASTR_MethodID;
@@ -147,6 +149,7 @@ static jmethodID Rf_copyMatrixMethodID;
 static jmethodID Rf_nrowsMethodID;
 static jmethodID Rf_ncolsMethodID;
 static jmethodID Rf_namesgetsMethodID;
+static jmethodID Rf_copyMostAttribMethodID;
 
 static jclass CharSXPWrapperClass;
 jclass JNIUpCallsRFFIImplClass;
@@ -227,6 +230,8 @@ void init_internals(JNIEnv *env) {
         Rf_coerceVectorMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_coerceVector", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 	Rf_asLogicalMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asLogical", "(Ljava/lang/Object;)I", 0);
 	Rf_PairToVectorListMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_PairToVectorList", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	Rf_VectorToPairListMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_VectorToPairList", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
+	Rf_asCharacterFactorMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_asCharacterFactor", "(Ljava/lang/Object;)Ljava/lang/Object;", 0);
 	NAMED_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "NAMED", "(Ljava/lang/Object;)I", 0);
 	SET_TYPEOF_FASTR_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_TYPEOF_FASTR", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 	SET_NAMED_FASTR_MethodID = checkGetMethodID(env, UpCallsRFFIClass, "SET_NAMED_FASTR", "(Ljava/lang/Object;I)Ljava/lang/Object;", 0);
@@ -265,6 +270,7 @@ void init_internals(JNIEnv *env) {
     Rf_nrowsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_nrows", "(Ljava/lang/Object;)I", 0);
     Rf_ncolsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_ncols", "(Ljava/lang/Object;)I", 0);
     Rf_namesgetsMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_namesgets", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
+    Rf_copyMostAttribMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_copyMostAttrib", "(Ljava/lang/Object;Ljava/lang/Object;)I", 0);
 
     // static JNI-specific methods
 	JNIUpCallsRFFIImplClass = checkFindClass(env, "com/oracle/truffle/r/ffi/impl/jni/JNIUpCallsRFFIImpl");
@@ -446,7 +452,9 @@ SEXP Rf_applyClosure(SEXP x, SEXP y, SEXP z, SEXP a, SEXP b) {
 }
 
 void Rf_copyMostAttrib(SEXP x, SEXP y) {
-	unimplemented("Rf_copyMostAttrib");
+	TRACE(TARGpp, x, y);
+	JNIEnv *thisenv = getEnv();
+    (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, Rf_copyMostAttribMethodID, x, y);
 }
 
 void Rf_copyVector(SEXP x, SEXP y) {
@@ -1186,13 +1194,17 @@ SEXP Rf_PairToVectorList(SEXP x){
 }
 
 SEXP Rf_VectorToPairList(SEXP x){
-	unimplemented("Rf_VectorToPairList");
-	return NULL;
+	TRACE(TARGp, x);
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_VectorToPairListMethodID, x);
+	return checkRef(thisenv, result);
 }
 
 SEXP Rf_asCharacterFactor(SEXP x){
-	unimplemented("Rf_VectorToPairList");
-	return NULL;
+	TRACE(TARGp, x);
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_asCharacterFactorMethodID, x);
+	return checkRef(thisenv, result);
 }
 
 int Rf_asLogical(SEXP x){

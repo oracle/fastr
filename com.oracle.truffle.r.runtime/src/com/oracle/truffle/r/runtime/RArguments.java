@@ -170,10 +170,10 @@ public final class RArguments {
         return frame.getArguments().length - INDEX_ARGUMENTS;
     }
 
-    public static Object[] create(RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
+    public static Object[] create(RFunction function, RCaller call, Object callerFrameObject, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
         ArgumentsSignature formalSignature = ((HasSignature) function.getRootNode()).getSignature();
         CompilerAsserts.neverPartOfCompilation();
-        return create(function, call, callerFrame, evaluatedArgs, ArgumentsSignature.empty(formalSignature.getLength()), function.getEnclosingFrame(), dispatchArgs);
+        return create(function, call, callerFrameObject, evaluatedArgs, ArgumentsSignature.empty(formalSignature.getLength()), function.getEnclosingFrame(), dispatchArgs);
     }
 
     /**
@@ -187,11 +187,12 @@ public final class RArguments {
      *         function as well as additional information like the parent frame or supplied
      *         signature.
      */
-    public static Object[] create(RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
+    public static Object[] create(RFunction function, RCaller call, Object callerFrameObject, Object[] evaluatedArgs,
                     ArgumentsSignature suppliedSignature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
         assert suppliedSignature.getLength() == evaluatedArgs.length : "suppliedSignature should match the evaluatedArgs (see Java docs).";
         assert evaluatedArgs != null : "RArguments.create evaluatedArgs is null";
         assert call != null : "RArguments.create call is null";
+        assert callerFrameObject != null : "RArguments.create callerFrameObject is null";
         // Eventually we want to have this invariant
         // assert call != null || REnvironment.isGlobalEnvFrame(callerFrame);
 
@@ -199,7 +200,7 @@ public final class RArguments {
         a[INDEX_ENVIRONMENT] = null;
         a[INDEX_FUNCTION] = function;
         a[INDEX_CALL] = call;
-        a[INDEX_CALLER_FRAME] = callerFrame;
+        a[INDEX_CALLER_FRAME] = callerFrameObject;
         a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
         a[INDEX_DISPATCH_ARGS] = dispatchArgs;
         a[INDEX_IS_IRREGULAR] = false;
@@ -226,9 +227,11 @@ public final class RArguments {
         return a;
     }
 
-    public static MaterializedFrame getCallerFrame(Frame frame) {
+    public static Object getCallerFrame(Frame frame) {
         Object[] args = frame.getArguments();
-        return (MaterializedFrame) args[INDEX_CALLER_FRAME];
+        // a 'null' caller frame is still allowed in case of environments
+        assert args[INDEX_CALLER_FRAME] != null || args[INDEX_ENVIRONMENT] != null;
+        return args[INDEX_CALLER_FRAME];
     }
 
     public static DispatchArgs getDispatchArgs(Frame frame) {

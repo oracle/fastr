@@ -106,7 +106,7 @@ public abstract class UpdateSlot extends RBuiltinNode.Arg3 {
             if (cached.profile(currentFunction == checkSlotAssignFunction)) {
                 // TODO: technically, someone could override checkAtAssignment function and access
                 // the caller, but it's rather unlikely
-                checkAtAssignmentCall.execute(frame, checkSlotAssignFunction, RCaller.createInvalid(frame), null, new Object[]{objClass, name, valClass}, SIGNATURE,
+                checkAtAssignmentCall.execute(frame, checkSlotAssignFunction, RCaller.createInvalid(frame), new Object[]{objClass, name, valClass}, SIGNATURE,
                                 checkSlotAssignFunction.getEnclosingFrame(), null);
             } else {
                 // slow path

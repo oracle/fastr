@@ -131,7 +131,7 @@ abstract class LoadMethod extends RBaseNode {
             if (cached.profile(currentFunction == loadMethodFunction)) {
                 // TODO: technically, someone could override loadMethod function and access the
                 // caller, but it's rather unlikely
-                ret = (RFunction) loadMethodCall.execute(frame, loadMethodFunction, caller, null, new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())}, SIGNATURE,
+                ret = (RFunction) loadMethodCall.execute(frame, loadMethodFunction, caller, new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())}, SIGNATURE,
                                 loadMethodFunction.getEnclosingFrame(), null);
             } else {
                 // slow path

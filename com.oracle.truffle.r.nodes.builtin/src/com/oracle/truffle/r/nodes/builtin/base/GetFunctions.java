@@ -37,7 +37,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -257,8 +256,6 @@ public class GetFunctions {
         @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
         @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
 
-        @CompilationFinal private boolean needsCallerFrame;
-
         static {
             Casts casts = new Casts(MGet.class);
             casts.arg("x").mustBe(stringValue()).asStringVector();
@@ -375,14 +372,12 @@ public class GetFunctions {
         }
 
         private Object call(VirtualFrame frame, RFunction ifnFunc, String x) {
-            if (!needsCallerFrame && ((RRootNode) ifnFunc.getRootNode()).containsDispatch()) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                needsCallerFrame = true;
+            if (((RRootNode) ifnFunc.getRootNode()).containsDispatch()) {
+                callCache.setNeedsCallerFrame();
             }
-            MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
             FormalArguments formals = ((RRootNode) ifnFunc.getRootNode()).getFormalArguments();
             RArgsValuesAndNames args = new RArgsValuesAndNames(new Object[]{x}, ArgumentsSignature.empty(1));
-            return callCache.execute(frame, ifnFunc, RCaller.create(frame, RCallerHelper.createFromArguments(ifnFunc, args)), callerFrame, new Object[]{x}, formals.getSignature(),
+            return callCache.execute(frame, ifnFunc, RCaller.create(frame, RCallerHelper.createFromArguments(ifnFunc, args)), new Object[]{x}, formals.getSignature(),
                             ifnFunc.getEnclosingFrame(), null);
         }
 
@@ -400,5 +395,6 @@ public class GetFunctions {
             }
             return value;
         }
+
     }
 }

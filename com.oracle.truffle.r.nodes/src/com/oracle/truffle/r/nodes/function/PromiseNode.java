@@ -521,8 +521,40 @@ public abstract class PromiseNode extends RNode {
             }
         }
 
-        @ExplodeLoop
         private int evaluateArguments(VirtualFrame frame, Object[] evaluatedArgs) {
+            if (evaluatedArgs.length <= 32) {
+                return evaluateArgumentsExplode(frame, evaluatedArgs);
+            }
+            return evaluateArgumentsLoop(frame, evaluatedArgs);
+        }
+
+        @ExplodeLoop
+        private int evaluateArgumentsExplode(VirtualFrame frame, Object[] evaluatedArgs) {
+            int size = 0;
+            boolean containsVarargs = false;
+            for (int i = 0; i < varargs.length; i++) {
+                Object argValue = varargs[i].execute(frame);
+                if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
+                    containsVarargs = true;
+                    size += ((RArgsValuesAndNames) argValue).getLength();
+                    evaluatedArgs[i] = argValue;
+                } else {
+                    size++;
+                    evaluatedArgs[i] = promiseCheckHelper.checkEvaluate(frame, argValue);
+                }
+                if (evaluatedArgs[i] == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    throw RInternalError.shouldNotReachHere("evaluated argument must not be null");
+                }
+            }
+            if (containsVarargProfile.profile(containsVarargs)) {
+                return size;
+            } else {
+                return -1;
+            }
+        }
+
+        private int evaluateArgumentsLoop(VirtualFrame frame, Object[] evaluatedArgs) {
             int size = 0;
             boolean containsVarargs = false;
             for (int i = 0; i < varargs.length; i++) {

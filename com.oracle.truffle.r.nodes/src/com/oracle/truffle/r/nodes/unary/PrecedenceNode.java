@@ -55,6 +55,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -154,6 +155,11 @@ public abstract class PrecedenceNode extends RBaseNode {
 
     @Specialization
     protected int doString(RStringVector val, boolean recursive) {
+        return STRING_PRECEDENCE;
+    }
+
+    @Specialization
+    protected int doString(RStringSequence val, boolean recursive) {
         return STRING_PRECEDENCE;
     }
 

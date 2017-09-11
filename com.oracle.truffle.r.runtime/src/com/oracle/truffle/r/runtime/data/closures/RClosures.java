@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -223,6 +224,10 @@ public class RClosures {
 
     public static RAbstractListVector createToListVector(RStringVector vector, boolean keepAttributes) {
         return new RStringToListVectorClosure(vector, keepAttributes);
+    }
+
+    public static RAbstractListVector createToListVector(RStringSequence vector, boolean keepAttributes) {
+        return new RStringSequenceToListVectorClosure(vector, keepAttributes);
     }
 
     // Factor to vector

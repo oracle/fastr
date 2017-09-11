@@ -878,4 +878,22 @@ final class TracingUpCallsRFFIImpl implements UpCallsRFFI {
         return delegate.Rf_namesgets(vec, val);
     }
 
+    @Override
+    public int Rf_copyMostAttrib(Object x, Object y) {
+        RFFIUtils.traceUpCall("Rf_copyMostAttrib", x, y);
+        return delegate.Rf_copyMostAttrib(x, y);
+    }
+
+    @Override
+    public Object Rf_VectorToPairList(Object x) {
+        RFFIUtils.traceUpCall("Rf_VectorToPairlist", x);
+        return delegate.Rf_VectorToPairList(x);
+    }
+
+    @Override
+    public Object Rf_asCharacterFactor(Object x) {
+        RFFIUtils.traceUpCall("Rf_asCharacterFactor", x);
+        return delegate.Rf_asCharacterFactor(x);
+    }
+
 }

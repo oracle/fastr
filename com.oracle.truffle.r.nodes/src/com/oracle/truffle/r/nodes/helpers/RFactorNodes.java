@@ -36,6 +36,8 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * Contains helper nodes related to factors, special R class of {@link RAbstractIntVector}. Note:
@@ -86,11 +88,11 @@ public final class RFactorNodes {
             Object attr = attrAccess.execute(factor.getAttributes());
 
             // Convert scalars to vector if necessary
-            RVector<?> vec;
+            RAbstractVector vec;
             if (nonScalarLevels.profile(attr instanceof RVector)) {
                 vec = (RVector<?>) attr;
             } else if (attr != null) {
-                vec = (RVector<?>) RRuntime.asAbstractVector(attr);   // scalar to vector
+                vec = (RAbstractVector) RRuntime.asAbstractVector(attr);   // scalar to vector
             } else {
                 notVectorBranch.enter();
                 // N.B: when a factor is lacking the 'levels' attribute, GNU R uses range 1:14331272
@@ -100,14 +102,14 @@ public final class RFactorNodes {
             }
 
             // Convert to string vector if necessary
-            if (stringVectorLevels.profile(vec instanceof RStringVector)) {
-                return (RStringVector) vec;
+            if (stringVectorLevels.profile(vec instanceof RAbstractStringVector)) {
+                return ((RAbstractStringVector) vec).materialize();
             } else {
                 if (castString == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     castString = insert(CastStringNodeGen.create(false, false, false));
                 }
-                RStringVector slevels = (RStringVector) castString.executeString(vec);
+                RStringVector slevels = ((RAbstractStringVector) castString.executeString(vec)).materialize();
                 return RDataFactory.createStringVector(slevels.getDataWithoutCopying(), RDataFactory.COMPLETE_VECTOR);
             }
         }
