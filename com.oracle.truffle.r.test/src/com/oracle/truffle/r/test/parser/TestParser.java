@@ -182,7 +182,7 @@ public class TestParser extends TestBase {
                     }
                     System.out.println("Error while parsing " + file.getAbsolutePath());
                     if (parser.isRecognitionException(t)) {
-                        System.out.println(source.getCode(parser.line(t)));
+                        System.out.println(source.getCharacters(parser.line(t)));
                         System.out.printf("%" + parser.charPositionInLine(t) + "s^%n", "");
                     }
                     System.out.println(t);

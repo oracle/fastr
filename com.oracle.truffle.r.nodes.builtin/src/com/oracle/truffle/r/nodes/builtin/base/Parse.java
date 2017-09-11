@@ -258,7 +258,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
         }
         setSrcRefAttrNode.execute(exprs, RDataFactory.createList(srcrefData));
         int[] wholeSrcrefData = new int[8];
-        int endOffset = source.getCode().length() - 1;
+        int endOffset = source.getCharacters().length() - 1;
         wholeSrcrefData[0] = source.getLineNumber(0);
         wholeSrcrefData[3] = source.getLineNumber(endOffset);
         source.getColumnNumber(0);

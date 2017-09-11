@@ -211,9 +211,12 @@ public abstract class FastRSyntaxTree extends RBuiltinNode.Arg4 {
     }
 
     private static void printSourceCode(SourceSection ss) {
-        String code = ss.getCode();
-        if (code.length() > 40) {
-            code = code.substring(0, 40) + " ....";
+        CharSequence codeText = ss.getCharacters();
+        String code;
+        if (codeText.length() > 40) {
+            code = codeText.subSequence(0, 40) + " ....";
+        } else {
+            code = codeText.toString();
         }
         code = code.replace("\n", "\\n ");
         writeString(" # ", false);

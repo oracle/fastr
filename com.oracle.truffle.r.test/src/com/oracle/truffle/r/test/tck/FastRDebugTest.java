@@ -278,7 +278,7 @@ public class FastRDebugTest {
                         "}", RSource.Internal.DEBUGTEST_DEBUG);
         final Source source = RSource.fromTextInternal("x <- 10L\n" +
                         "makeActiveBinding('ab', function(v) { if(missing(v)) x else x <<- v }, .GlobalEnv)\n" +
-                        "main <- " + srcFunMain.getCode() + "\n",
+                        "main <- " + srcFunMain.getCharacters() + "\n",
                         RSource.Internal.DEBUGTEST_DEBUG);
         engine.eval(source);
 
@@ -289,7 +289,7 @@ public class FastRDebugTest {
             debuggerSession.suspendNextExecution();
         });
 
-        assertLocation(1, "main()", "x", 10, "ab", 10, "main", srcFunMain.getCode());
+        assertLocation(1, "main()", "x", 10, "ab", 10, "main", srcFunMain.getCharacters());
         stepInto(1);
         assertLocation(4, "i = 3L");
         stepOver(1);
@@ -303,7 +303,7 @@ public class FastRDebugTest {
         stepOver(1);
         assertScope(9, "i", true, false, "ab", 4, "x", 4);
         stepOut();
-        assertLocation(1, "main()", "x", 4, "ab", 4, "main", srcFunMain.getCode());
+        assertLocation(1, "main()", "x", 4, "ab", 4, "main", srcFunMain.getCharacters());
         performWork();
 
         final Source evalSource = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_EVAL);
@@ -486,7 +486,7 @@ public class FastRDebugTest {
                 assertNotNull(suspendedEvent);
                 final int currentLine = suspendedEvent.getSourceSection().getStartLine();
                 assertEquals(line, currentLine);
-                final String currentCode = suspendedEvent.getSourceSection().getCode().trim();
+                final String currentCode = suspendedEvent.getSourceSection().getCharacters().toString().trim();
                 assertEquals(code, currentCode);
                 compareScope(line, code, false, false, expectedFrame);
             } catch (RuntimeException | Error e) {

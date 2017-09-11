@@ -110,7 +110,7 @@ public final class MemAllocProfilerPrinter {
                 out.println("No source available");
             } else {
                 out.format("<<< %s at %s:%s\n", entry.getName(), sel.getStartLine(), sel.getStartColumn());
-                out.println(sel.getCode());
+                out.println(sel.getCharacters());
                 out.format(">>> %s at %s:%s\n", entry.getName(), sel.getEndLine(), sel.getEndColumn());
             }
         }

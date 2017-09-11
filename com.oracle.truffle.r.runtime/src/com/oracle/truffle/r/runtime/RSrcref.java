@@ -164,7 +164,7 @@ public class RSrcref {
                 env.put(SrcrefFields.fixedNewlines.name(), RRuntime.LOGICAL_TRUE);
                 String[] lines = new String[source.getLineCount()];
                 for (int i = 0; i < lines.length; i++) {
-                    lines[i] = source.getCode(i + 1);
+                    lines[i] = source.getCharacters(i + 1).toString();
                 }
                 env.put(SrcrefFields.lines.name(), RDataFactory.createStringVector(lines, true));
                 env.safePut(SrcrefFields.Enc.name(), "unknown");
