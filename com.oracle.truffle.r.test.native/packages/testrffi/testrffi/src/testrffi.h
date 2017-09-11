@@ -97,3 +97,9 @@ extern SEXP test_stringNA(void);
 extern SEXP test_captureDotsWithSingleElement(SEXP env);
 
 extern SEXP test_evalAndNativeArrays(SEXP vec, SEXP expr, SEXP env);
+
+extern SEXP test_writeConnection(SEXP conn);
+
+extern SEXP test_readConnection(SEXP conn);
+
+extern SEXP test_createNativeConnection(void);

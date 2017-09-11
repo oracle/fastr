@@ -28,6 +28,8 @@
 #include <Rinterface.h>
 #include <Rinternals.h>
 #include <Rinterface.h>
+#include <R_ext/Connections.h>
+#include <string.h>
 #include "testrffi.h"
 
 void dotCModifiedArguments(int* len, int* idata, double* rdata, int* ldata, char** cdata) {
@@ -430,4 +432,92 @@ SEXP test_evalAndNativeArrays(SEXP vec, SEXP expr, SEXP env) {
 
     UNPROTECT(uprotectCount);
     return vec;
+}
+
+SEXP test_writeConnection(SEXP connVec) {
+	Rconnection connection = R_GetConnection(connVec);
+	char* greeting = "Hello from R_WriteConnection";
+	R_WriteConnection(connection, greeting, strlen(greeting));
+    return R_NilValue;
+}
+
+SEXP test_readConnection(SEXP connVec) {
+    Rconnection connection = R_GetConnection(connVec);
+    unsigned char buffer[255];
+    int size = R_ReadConnection(connection, buffer, 255);
+    SEXP result;
+    PROTECT(result = allocVector(RAWSXP, size));
+    unsigned char* resultData = RAW(result);
+    for (int i = 0; i < size; ++i) {
+        resultData[i] = buffer[i];
+    }
+    UNPROTECT(1);
+    return result;
+}
+
+static Rconnection customConn;
+
+static void printNow(const char* message) {
+    puts(message);
+    fflush(stdout);
+}
+
+static void testrfficonn_destroy(Rconnection conn) {
+    if (conn != customConn) {
+        printNow("ERROR: destroy function did not receive expected argument\n");
+    } else {
+        printNow("Custom connection destroyed\n");
+    }
+}
+
+static Rboolean testrfficonn_open(Rconnection conn) {
+    if (conn != customConn) {
+        printNow("ERROR: open function did not receive expected argument\n");
+        return 0;
+    } else {
+        printNow("Custom connection opened\n");
+        return 1;
+    }
+}
+
+static void testrfficonn_close(Rconnection conn) {
+    if (conn != customConn) {
+        printNow("ERROR: close function did not receive expected argument\n");
+    } else {
+        printNow("Custom connection closed\n");
+    }
+}
+
+static size_t testrfficonn_write(const void * message, size_t size, size_t nitems, Rconnection conn) {
+    if (conn != customConn) {
+        printNow("ERROR: write function did not receive expected argument\n");
+        return 0;
+    } else {
+        printf("Custom connection printing: %.*s\n", (int) (size * nitems), (char*) message);
+        fflush(stdout);
+        return size * nitems;
+    }
+}
+
+static size_t testrfficonn_read(void *buffer, size_t size, size_t niterms, Rconnection conn) {
+    if (conn != customConn) {
+        printNow("ERROR: read function did not receive expected argument\n");
+        return 0;
+    } else if (size * niterms > 0) {
+        ((char *)buffer)[0] = 'Q';
+        return 1;
+    }
+    return 0;
+}
+
+SEXP test_createNativeConnection() {
+    SEXP newConnSEXP = R_new_custom_connection("Connection for testing purposes", "w", "testrfficonn", &customConn);
+    customConn->isopen = 0;
+    customConn->canwrite = 1;
+    customConn->destroy = &testrfficonn_destroy;
+    customConn->open = &testrfficonn_open;
+    customConn->close = &testrfficonn_close;
+    customConn->write = &testrfficonn_write;
+    // customConn->read = &testrfficonn_read; TODO: read test
+    return newConnSEXP;
 }

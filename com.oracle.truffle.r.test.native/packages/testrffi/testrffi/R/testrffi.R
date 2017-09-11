@@ -176,3 +176,15 @@ rffi.captureDotsWithSingleElement <- function(env) {
 rffi.evalAndNativeArrays <- function(vec, expr, env) {
     .Call('test_evalAndNativeArrays', vec, expr, env)
 }
+
+rffi.writeConnection <- function(connection) {
+    .Call('test_writeConnection', connection);
+}
+
+rffi.readConnection <- function(connection) {
+    .Call('test_readConnection', connection);
+}
+
+rffi.createNativeConnection <- function() {
+    .Call('test_createNativeConnection');
+}

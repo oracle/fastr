@@ -278,8 +278,22 @@ typedef double (*call_Rf_runif)(double x, double y);
 
 typedef SEXP (*call_getvar)();
 
-typedef int (*call_FASTR_getConnectionChar)(SEXP connection);
+// connections
 
+typedef int (*call_FASTR_getConnectionChar)(SEXP connection);
+typedef int (*call_R_ReadConnection)(int fd, long bufAddress, int size);
+typedef int (*call_R_WriteConnection)(int fd, long bufAddress, int size);
+
+typedef SEXP (*call_R_new_custom_connection)(const char *description, const char *mode, const char *className, SEXP connAddrObj);
+
+typedef SEXP (*call_R_GetConnection)(int fd);
+typedef char* (*call_getConnectionClassString)(SEXP conn);
+typedef char* (*call_getSummaryDescription)(SEXP conn);
+typedef char* (*call_getOpenModeString)(SEXP conn);
+typedef int (*call_isSeekable)(SEXP conn);
+
+
+// symbols, dlls, etc.
 
 typedef void (*call_registerRoutines)(DllInfo *dllInfo, int nstOrd, int num, const void* routines);
 typedef int (*call_useDynamicSymbols)(DllInfo *dllInfo, Rboolean value);

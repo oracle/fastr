@@ -21,142 +21,81 @@
  * questions.
  */
 
-
-#if FALSE
-#include <assert.h>
-#include <rffiutils.h>
+#include <Defn.h>
 #include <R_ext/Connections.h>
+// Note: R_ext/Connections.h depends on Defn.h,
+// but does not include it -> the order is important
 
-
-static jmethodID readConnMethodID;
-static jmethodID writeConnMethodID;
-static jmethodID getConnMethodID;
-static jmethodID getConnClassMethodID;
-static jmethodID getSummaryDescMethodID;
-static jmethodID isSeekableMethodID;
-static jmethodID getOpenModeMethodID;
-static jmethodID newCustomConnectionMethodID;
-
-static jbyteArray wrap(JNIEnv *thisenv, void* buf, size_t n) {
-    jbyteArray barr = (*thisenv)->NewByteArray(thisenv, n);
-    (*thisenv)->SetByteArrayRegion(thisenv, barr, 0, n, buf);
-    return barr;
-}
+#include "rffi_upcalls.h"
+#include "../truffle_nfi/rffiutils.h"
 
 /*
  * Returns the file descriptor of the connection if possible.
  * Otherwise an error is issued.
  */
 static int getFd(Rconnection con) {
-	return (int) con->id;
+    return (int) con->id;
 }
 
 /*
  * Sets the file descriptor for the connection.
  */
-static void setFd(Rconnection con, jint fd) {
-	con->id = (void *) (jlong) fd;
-}
-
-
-void init_connections(JNIEnv *env) {
-	/* int readConn(int, byte[]) */
-	readConnMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_ReadConnection", "(ILjava/lang/Object;)I", 0);
-
-	/* int writeConn(int, byte[]) */
-	writeConnMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_WriteConnection", "(ILjava/lang/Object;)I", 0);
-
-	/* RConnection getConnection(int) */
-	getConnMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_GetConnection", "(I)Ljava/lang/Object;", 0);
-
-
-	/* String getConnectionClassString(BaseRConnection) */
-	getConnClassMethodID = checkGetMethodID(env, UpCallsRFFIClass, "getConnectionClassString", "(Ljava/lang/Object;)Ljava/lang/String;", 0);
-
-	/* String getSummaryDescription(BaseRConnection) */
-	getSummaryDescMethodID = checkGetMethodID(env, UpCallsRFFIClass, "getSummaryDescription", "(Ljava/lang/Object;)Ljava/lang/String;", 0);
-
-	/* boolean isSeekable(BaseRConnection) */
-	isSeekableMethodID = checkGetMethodID(env, UpCallsRFFIClass, "isSeekable", "(Ljava/lang/Object;)Z", 0);
-
-	/* String getOpenModeString(BaseRConnection) */
-	getOpenModeMethodID = checkGetMethodID(env, UpCallsRFFIClass, "getOpenModeString", "(Ljava/lang/Object;)Ljava/lang/String;", 0);
-
-	/* int R_new_custom_connection(String, String, String) */
-	newCustomConnectionMethodID = checkGetMethodID(env, UpCallsRFFIClass, "R_new_custom_connection", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 0);
-}
-
-static char *connStringToChars(JNIEnv *env, jstring string) {
-    jsize len = (*env)->GetStringUTFLength(env, string);
-    const char *stringChars = (*env)->GetStringUTFChars(env, string, NULL);
-    char *copyChars = malloc((len + 1)*sizeof(char));
-    memcpy(copyChars, stringChars, len*sizeof(char));
-    copyChars[len] = 0;
-	(*env)->ReleaseStringUTFChars(env, string, stringChars);
-	(*env)->DeleteLocalRef(env, string);
-    return copyChars;
+static void setFd(Rconnection con, int fd) {
+    con->id = (void *) (long) fd;
 }
 
 /* ------------------- null connection functions --------------------- */
 
-static Rboolean NORET null_open(Rconnection con)
-{
+static Rboolean NORET null_open(Rconnection con) {
     error(_("%s not enabled for this connection"), "open");
 }
 
-static void null_close(Rconnection con)
-{
+static void null_close(Rconnection con) {
     con->isopen = FALSE;
 }
 
-static void null_destroy(Rconnection con)
-{
-    if(con->private) free(con->private);
+static void null_destroy(Rconnection con) {
+    if (con->private) free(con->private);
 }
 
-static int NORET null_vfprintf(Rconnection con, const char *format, va_list ap)
-{
+static int NORET null_vfprintf(Rconnection con, const char *format, va_list ap) {
     error(_("%s not enabled for this connection"), "printing");
 }
 
-static int NORET null_fgetc(Rconnection con)
-{
+static int NORET null_fgetc(Rconnection con) {
     error(_("%s not enabled for this connection"), "'getc'");
 }
 
-static double NORET null_seek(Rconnection con, double where, int origin, int rw)
-{
+static double NORET null_seek(Rconnection con, double where, int origin, int rw) {
     error(_("%s not enabled for this connection"), "'seek'");
 }
 
-static void NORET null_truncate(Rconnection con)
-{
+static void NORET null_truncate(Rconnection con) {
     error(_("%s not enabled for this connection"), "truncation");
 }
 
-static int null_fflush(Rconnection con)
-{
-	return 0;
+static int null_fflush(Rconnection con) {
+    return 0;
 }
 
 static size_t NORET null_read(void *ptr, size_t size, size_t nitems,
-			Rconnection con)
-{
+                              Rconnection con) {
     error(_("%s not enabled for this connection"), "'read'");
 }
 
 static size_t NORET null_write(const void *ptr, size_t size, size_t nitems,
-			 Rconnection con)
-{
+                               Rconnection con) {
     error(_("%s not enabled for this connection"), "'write'");
 }
 
+/* ------------------- connection structure functions --------------------- */
+
 static void init_con(Rconnection new, char *description, int enc,
-	      const char * const mode)
-{
+                     const char *const mode) {
     new->description = description;
     new->enc = enc;
-    strncpy(new->mode, mode, 4); new->mode[4] = '\0';
+    strncpy(new->mode, mode, 4);
+    new->mode[4] = '\0';
     new->isopen = new->incomplete = new->blocking = new->isGzcon = FALSE;
     new->canread = new->canwrite = TRUE; /* in principle */
     new->canseek = FALSE;
@@ -182,56 +121,50 @@ static void init_con(Rconnection new, char *description, int enc,
 }
 
 SEXP R_new_custom_connection(const char *description, const char *mode, const char *class_name, Rconnection *ptr) {
-	JNIEnv *thisenv = getEnv();
-	Rconnection new;
-	SEXP ans, class;
+    Rconnection new = (Rconnection) malloc(sizeof(struct Rconn));
+    if (!new)
+        error(_("allocation of %s connection failed"), class_name);
 
-	new = (Rconnection) malloc(sizeof(struct Rconn));
-	if (!new)
-		error(_("allocation of %s connection failed"), class_name);
+    SEXP addrObj = R_MakeExternalPtr(new, R_NilValue, R_NilValue);
+    SEXP fastRConn = ((call_R_new_custom_connection) callbacks[R_new_custom_connection_x])(description, mode,
+                                                                                           class_name, addrObj);
+    // printf("DEBUG: R_new_custom_connection address %p SEXP value %p\n", ptr, addrObj);
+    if (fastRConn) {
+        new->class = (char *) malloc(strlen(class_name) + 1);
+        if (!new->class) {
+            free(new);
+            error(_("allocation of %s connection failed"), class_name);
+        }
+        strcpy(new->class, class_name);
+        new->description = (char *) malloc(strlen(description) + 1);
+        if (!new->description) {
+            free(new->class);
+            free(new);
+            error(_("allocation of %s connection failed"), class_name);
+        }
+        init_con(new, (char *) description, CE_NATIVE, mode);
+        /* all ptrs are init'ed to null_* so no need to repeat that,
+         but the following two are useful tools which could not be accessed otherwise */
+        // TODO dummy_vfprintf and dummy_fgetc not implemented in FastR yet
+        //    new->vfprintf = &dummy_vfprintf;
+        //    new->fgetc = &dummy_fgetc;
 
-	jstring jsDescription = (*thisenv)->NewStringUTF(thisenv, description);
-	jstring jsMode = (*thisenv)->NewStringUTF(thisenv, mode);
-	jstring jsClassName = (*thisenv)->NewStringUTF(thisenv, class_name);
-	jobject addrObj = R_MakeExternalPtr(new, R_NilValue, R_NilValue);
-	ans = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, newCustomConnectionMethodID, jsDescription, jsMode, jsClassName, addrObj);
-	if (ans) {
+        /* new->blocking = block; */
+        new->encname[0] = 0; /* "" (should have the same effect as "native.enc") */
+        new->ex_ptr = R_MakeExternalPtr(new->id, install("connection"), R_NilValue);
 
-		new->class = (char *) malloc(strlen(class_name) + 1);
-		if (!new->class) {
-			free(new);
-			error(_("allocation of %s connection failed"), class_name);
-		}
-		strcpy(new->class, class_name);
-		new->description = (char *) malloc(strlen(description) + 1);
-		if (!new->description) {
-			free(new->class);
-			free(new);
-			error(_("allocation of %s connection failed"), class_name);
-		}
-		init_con(new, (char *) description, CE_NATIVE, mode);
-		/* all ptrs are init'ed to null_* so no need to repeat that,
-		 but the following two are useful tools which could not be accessed otherwise */
-		// TODO dummy_vfprintf and dummy_fgetc not implemented yet
-//    new->vfprintf = &dummy_vfprintf;
-//    new->fgetc = &dummy_fgetc;
+        SEXP class = allocVector(STRSXP, 2);
+        SET_STRING_ELT(class, 0, mkChar(class_name));
+        SET_STRING_ELT(class, 1, mkChar("connection"));
+        classgets(fastRConn, class);
+        // setAttrib(ans, R_ConnIdSymbol, new->ex_ptr); -- TODO not implemented/needed? in FastR
 
-		/* new->blocking = block; */
-		new->encname[0] = 0; /* "" (should have the same effect as "native.enc") */
-		new->ex_ptr = R_MakeExternalPtr(new->id, install("connection"), R_NilValue);
+        if (ptr) {
+            *ptr = new;
+        }
+    }
 
-		class = allocVector(STRSXP, 2);
-		SET_STRING_ELT(class, 0, mkChar(class_name));
-		SET_STRING_ELT(class, 1, mkChar("connection"));
-		classgets(ans, class);
-//		setAttrib(ans, R_ConnIdSymbol, new->ex_ptr);
-
-		if (ptr) {
-			ptr[0] = new;
-		}
-	}
-
-	return ans;
+    return fastRConn;
 }
 
 /*
@@ -241,192 +174,151 @@ SEXP R_new_custom_connection(const char *description, const char *mode, const ch
  * This currently assumes max. 64-bit addresses !
  */
 static Rconnection convertToAddress(SEXP addrObj) {
-	if(!inherits(addrObj, "externalptr")) {
-		error(_("invalid address object"));
-	}
+    if (!inherits(addrObj, "externalptr")) {
+        error(_("invalid address object"));
+    }
     return (Rconnection) R_ExternalPtrAddr(addrObj);
 
 }
 
-/*
- * This function is used as Java down call function to query the value of a connection's flag.
- * DO NOT CHANGE ITS SIGNATURE !
- * If changing the signature is unavoidable, adapt it in class 'NativeConnections'.
+/* --------------------------------------------------------------------------- */
+/* ------------------- Functions used as Java down calls --------------------- */
+
+/* These functions are invoked from Java when the user does some operation on a
+ * custom connection registered via R_new_custom_connection. We only have native
+ * functions for such connection. These functions are invoked through the same
+ * mechanism as e.g. the .C or .Call builtin, i.e. they accept only SEXP arguments
+ * and may be either void or return SEXP. Otherwise we'd have to provide signature
+ * of each function so that NFI knows how to convert the arguments and we'd have to
+ * provide another mechanism to call native functions (aside .C/.Call/etc.)
+ * with supplied signature. Therefore:
+ *
+ * DO NOT CHANGE SIGNATURE OF THESE FUNCTIONS!
+ * If you do, update 'NativeConnections.java' accordingly.
+ * Arguments and return type can ONLY BE SEXP.
  */
-SEXP __GetFlagNativeConnection(SEXP rConnAddrObj, jstring jname) {
-    JNIEnv *thisenv = getEnv();
-	Rconnection con = convertToAddress(rConnAddrObj);
-	const char *name = connStringToChars(thisenv, jname);
-	Rboolean result = 0;
 
-	if(strcmp(name, "text") == 0) {
-		result = con->text;
-	} else if(strcmp(name, "isopen") == 0) {
-		result = con->isopen;
-	}else if(strcmp(name, "incomplete") == 0) {
-		result = con->incomplete;
-	}else if(strcmp(name, "canread") == 0) {
-		result = con->canread;
-	}else if(strcmp(name, "canwrite") == 0) {
-		result = con->canwrite;
-	}else if(strcmp(name, "canseek") == 0) {
-		result = con->canseek;
-	}else if(strcmp(name, "blocking") == 0) {
-		result = con->blocking;
-	}
-	free((char *)name);
-
-	return ScalarLogical(result);
+SEXP __GetFlagNativeConnection(SEXP rConnAddrObj, SEXP nameVec) {
+    Rconnection con = convertToAddress(rConnAddrObj);
+    const char *name = CHAR(Rf_asChar(nameVec));
+    // printf("DEBUG: __GetFlagNativeConnection address %p SEXP value %p, flag '%s'\n", con, rConnAddrObj, name);
+    if (strcmp(name, "text") == 0) {
+        return ScalarLogical(con->text);
+    } else if (strcmp(name, "isopen") == 0) {
+        return ScalarLogical(con->isopen);
+    } else if (strcmp(name, "incomplete") == 0) {
+        return ScalarLogical(con->incomplete);
+    } else if (strcmp(name, "canread") == 0) {
+        return ScalarLogical(con->canread);
+    } else if (strcmp(name, "canwrite") == 0) {
+        return ScalarLogical(con->canwrite);
+    } else if (strcmp(name, "canseek") == 0) {
+        return ScalarLogical(con->canseek);
+    } else if (strcmp(name, "blocking") == 0) {
+        return ScalarLogical(con->blocking);
+    }
+    char errorBuffer[128];
+    sprintf(errorBuffer, "Unknown flag '%.12s' in __GetFlagNativeConnection. "
+            "This function should be used from NativeConnections.java", name);
+    error(errorBuffer);
 }
 
-/*
- * This function is used as Java down call function to invoke the open function of a natively created connection.
- * DO NOT CHANGE ITS SIGNATURE !
- * If changing the signature is unavoidable, adapt it in class 'NativeConnections'.
- */
 SEXP __OpenNativeConnection(SEXP rConnAddrObj) {
-	Rconnection con = convertToAddress(rConnAddrObj);
-	Rboolean success = con->open(con);
-	return ScalarLogical(success);
+    Rconnection con = convertToAddress(rConnAddrObj);
+    Rboolean success = con->open(con);
+    return ScalarLogical(success);
 }
 
-/*
- * This function is used as Java down call function to invoke the open function of a natively created connection.
- * DO NOT CHANGE ITS SIGNATURE !
- * If changing the signature is unavoidable, adapt it in class 'NativeConnections'.
- */
-SEXP __CloseNativeConnection(SEXP rConnAddrObj) {
-	Rconnection con = convertToAddress(rConnAddrObj);
-	con->close(con);
-	return NULL;
+void __CloseNativeConnection(SEXP rConnAddrObj) {
+    Rconnection con = convertToAddress(rConnAddrObj);
+    con->close(con);
 }
 
-/*
- * This function is used as Java down call function to invoke the read function of a natively created connection.
- * DO NOT CHANGE ITS SIGNATURE !
- * If changing the signature is unavoidable, adapt it in class 'NativeConnections'.
- */
-SEXP __ReadNativeConnection(SEXP rConnAddrObj, jbyteArray bufObj, SEXP nVec) {
-    JNIEnv *thisenv = getEnv();
+// Note: we do not check if connection is open, this should be done on the Java side
+
+SEXP __ReadNativeConnection(SEXP rConnAddrObj, SEXP bufVec, SEXP nVec) {
+    Rconnection con = convertToAddress(rConnAddrObj);
     int n = asInteger(nVec);
-	Rconnection con = convertToAddress(rConnAddrObj);
-	void *tmp_buf = (*thisenv)->GetByteArrayElements(thisenv, bufObj, NULL);
-	size_t nread = con->read(tmp_buf, 1, n, con);
-	// copy back and release buffer
-	(*thisenv)->ReleaseByteArrayElements(thisenv, bufObj, tmp_buf, JNI_COMMIT);
-	return ScalarInteger(nread);
+    if (!con->canread) {
+        error(_("cannot read from this connection"));
+    }
+    return ScalarInteger(con->read(RAW(bufVec), 1, n, con));
 }
 
-/*
- * This function is used as Java down call function to invoke the write function of a natively created connection.
- * DO NOT CHANGE ITS SIGNATURE !
- * If changing the signature is unavoidable, adapt it in class 'NativeConnections'.
- */
-SEXP __WriteNativeConnection(SEXP rConnAddrObj, jbyteArray bufObj, SEXP nVec) {
-    JNIEnv *thisenv = getEnv();
+SEXP __WriteNativeConnection(SEXP rConnAddrObj, SEXP bufVec, SEXP nVec) {
+    Rconnection con = convertToAddress(rConnAddrObj);
     int n = asInteger(nVec);
-	Rconnection con = convertToAddress(rConnAddrObj);
-	void *bytes = (*thisenv)->GetByteArrayElements(thisenv, bufObj, NULL);
-	size_t nwritten = con->write(bytes, 1, n, con);
-	// just release buffer
-	(*thisenv)->ReleaseByteArrayElements(thisenv, bufObj, bytes, JNI_ABORT);
-	return ScalarInteger(nwritten);
+    if (!con->canread) {
+        error(_("cannot read from this connection"));
+    }
+    return ScalarInteger(con->write(RAW(bufVec), 1, n, con));
 }
 
-/*
- * This function is used as Java down call function to invoke the seek function of a natively created connection.
- * DO NOT CHANGE ITS SIGNATURE !
- * If changing the signature is unavoidable, adapt it in class 'NativeConnections'.
- */
-SEXP __SeekNativeConnection(SEXP rConnAddrObj, SEXP whereObj, SEXP originObj, SEXP rwObj) {
-	Rconnection con = convertToAddress(rConnAddrObj);
-    double where = asReal(whereObj);
-    int origin = asInteger(originObj);
-    int rw = asInteger(rwObj);
-	double oldPos = con->seek(con, where, origin, rw);
-	return ScalarReal(oldPos);
+SEXP __SeekNativeConnection(SEXP rConnAddrObj, SEXP whereVec, SEXP originVec, SEXP rwVec) {
+    Rconnection con = convertToAddress(rConnAddrObj);
+    int rw = asInteger(rwVec);
+    int origin = asInteger(originVec);
+    double where = asReal(whereVec);
+    return ScalarReal(con->seek(con, where, origin, rw));
 }
+
+/* --------------------------------------------------------------------------- */
+/* ---------------- R API functions for accessing connections ---------------- */
+
+/* These functions are used by packages to read/write data from/to connections.
+ * We have to upcall to Java, because the default connections are implemented there.
+ * If the connection happens to be custom connection implemented on the native side,
+ * then the Java side finds out and downcalls back to e.g. __ReadNativeConnection
+ */
 
 size_t R_ReadConnection(Rconnection con, void *buf, size_t n) {
-    JNIEnv *thisenv = getEnv();
-    jbyteArray barr = (*thisenv)->NewByteArray(thisenv, n);
-
-    jint result =  (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, readConnMethodID, getFd(con), barr);
-    size_t readBytes = result >= 0 ? (size_t) result : 0;
-    assert(result <= (ssize_t) n);
-    if(result > 0) {
-    	(*thisenv)->GetByteArrayRegion(thisenv, barr, 0, result, buf);
-    }
-    return readBytes;
+    return (size_t) ((call_R_ReadConnection) callbacks[R_ReadConnection_x])(getFd(con), (long) buf, (int) n);
 }
 
 size_t R_WriteConnection(Rconnection con, void *buf, size_t n) {
-    JNIEnv *thisenv = getEnv();
-    jbyteArray barr = wrap(thisenv, buf, n);
-
-    jint result =  (*thisenv)->CallIntMethod(thisenv, UpCallsRFFIObject, writeConnMethodID, getFd(con), barr);
-    return result >= 0 ? (size_t) result : 0;
+    return (size_t) ((call_R_WriteConnection) callbacks[R_WriteConnection_x])(getFd(con), (long) buf, (int) n);
 }
 
 Rconnection R_GetConnection(SEXP sConn) {
-	if (!inherits(sConn, "connection")) {
-		error(_("invalid connection"));
-	}
+    if (!inherits(sConn, "connection")) {
+        error(_("invalid connection"));
+    }
 
-	int fd = asInteger(sConn);
+    int fd = asInteger(sConn);
 
-	JNIEnv *thisenv = getEnv();
-	jobject jRconn = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, getConnMethodID, fd);
+    SEXP fastRCon = ((call_R_GetConnection) callbacks[R_GetConnection_x])(fd);
+    char *connClass = ((call_getConnectionClassString) callbacks[getConnectionClassString_x])(fastRCon);
+    char *summaryDesc = ((call_getSummaryDescription) callbacks[getSummaryDescription_x])(fastRCon);
+    char *openMode = ((call_getOpenModeString) callbacks[getOpenModeString_x])(fastRCon);
+    int isSeekable = ((call_isSeekable) callbacks[isSeekable_x])(fastRCon);
 
-	// query getConnectionClassString
-	jstring jConnClass = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, getConnClassMethodID, jRconn);
-	const char *sConnClass;
-	if (jConnClass != 0) {
-		sConnClass = connStringToChars(thisenv, jConnClass);
-	}
+    Rconnection new = (Rconnection) malloc(sizeof(struct Rconn));
+    if (!new) {
+        error(_("allocation of file connection failed"));
+    }
 
-	// query getSummaryDescription
-	jstring jSummaryDesc = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, getSummaryDescMethodID, jRconn);
-	char *sSummaryDesc;
-	if (jSummaryDesc != 0) {
-		sSummaryDesc = connStringToChars(thisenv, jSummaryDesc);
-	}
+    init_con(new, summaryDesc, 0, openMode);
+    free(openMode); // the init_con function makes a copy
+    new->class = connClass;
+    new->canseek = (Rboolean) isSeekable;
+    setFd(new, fd);
 
-	// query isSeekable()
-	jboolean seekable = (*thisenv)->CallBooleanMethod(thisenv, UpCallsRFFIObject, isSeekableMethodID, jRconn);
+    // TODO implement up-call functions and set them
+    // In fact reasonable code should see Rconnection as opaque pointer and does not attempt
+    // at calling these functions directly, but use e.g. R_WriteConnection instead. What is
+    // however important is to update the flags (e.g. opened) according to the current state
+    // on Java side -- i.e. writeLines may temporarily open-close the connection.
+    //    new->open = &file_open;
+    //    new->close = &file_close;
+    //    new->vfprintf = &file_vfprintf;
+    //    new->fgetc_internal = &file_fgetc_internal;
+    //    new->fgetc = &dummy_fgetc;
+    //    new->seek = &file_seek;
+    //    new->truncate = &file_truncate;
+    //    new->fflush = &file_fflush;
+    //    new->read = &file_read;
+    //    new->write = &file_write;
 
-	// query getOpenMode
-	jstring jOpenMode = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, getOpenModeMethodID, jRconn);
-	char *sOpenMode;
-	if (jOpenMode != 0) {
-		sOpenMode = connStringToChars(thisenv, jOpenMode);
-	}
-
-	Rconnection new = (Rconnection) malloc(sizeof(struct Rconn));
-	if (!new) {
-		error(_("allocation of file connection failed"));
-	}
-
-	init_con(new, sSummaryDesc, 0, sOpenMode);
-	free(sOpenMode);
-	new->class = (char *) sConnClass;
-	new->canseek = seekable;
-
-	setFd(new, fd);
-
-// TODO implement up-call functions and set them
-//    new->open = &file_open;
-//    new->close = &file_close;
-//    new->vfprintf = &file_vfprintf;
-//    new->fgetc_internal = &file_fgetc_internal;
-//    new->fgetc = &dummy_fgetc;
-//    new->seek = &file_seek;
-//    new->truncate = &file_truncate;
-//    new->fflush = &file_fflush;
-//    new->read = &file_read;
-//    new->write = &file_write;
-
-	return new;
+    return new;
 }
 
-#endif

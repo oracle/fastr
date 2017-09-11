@@ -108,12 +108,15 @@ import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
+
+import sun.misc.Unsafe;
 
 /**
  * This class provides a simple Java-based implementation of {@link UpCallsRFFI}, where all the
@@ -1398,21 +1401,26 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int R_ReadConnection(int fd, Object bufObj) {
-        byte[] buf = (byte[]) bufObj;
+    public int R_ReadConnection(int fd, long bufAddress, int size) {
+        // Workaround using Unsafe until GR-5927 is fixed
+        byte[] buf = new byte[size];
+        int result = 0;
         try (BaseRConnection fromIndex = RConnection.fromIndex(fd)) {
             Arrays.fill(buf, (byte) 0);
-            return fromIndex.readBin(ByteBuffer.wrap(buf));
+            result = fromIndex.readBin(ByteBuffer.wrap(buf));
         } catch (IOException e) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_READING_CONNECTION, e.getMessage());
         }
+        UnsafeAdapter.UNSAFE.copyMemory(buf, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, bufAddress, Math.min(result, size));
+        return result;
     }
 
     @Override
-    public int R_WriteConnection(int fd, Object bufObj) {
-        byte[] buf = (byte[]) bufObj;
+    public int R_WriteConnection(int fd, long bufAddress, int size) {
+        // Workaround using Unsafe until GR-5927 is fixed
+        byte[] buf = new byte[size];
+        UnsafeAdapter.UNSAFE.copyMemory(null, bufAddress, buf, Unsafe.ARRAY_BYTE_BASE_OFFSET, size);
         try (BaseRConnection fromIndex = RConnection.fromIndex(fd)) {
-            Arrays.fill(buf, (byte) 0);
             final ByteBuffer wrapped = ByteBuffer.wrap(buf);
             fromIndex.writeBin(wrapped);
             return wrapped.position();

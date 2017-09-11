@@ -297,9 +297,9 @@ public interface StdUpCallsRFFI {
 
     Object R_new_custom_connection(@RFFICstring String description, @RFFICstring String mode, @RFFICstring String className, Object readAddr);
 
-    int R_ReadConnection(int fd, Object bufObj);
+    int R_ReadConnection(int fd, long bufAddress, int size);
 
-    int R_WriteConnection(int fd, Object bufObj);
+    int R_WriteConnection(int fd, long bufAddress, int size);
 
     Object R_GetConnection(int fd);
 
