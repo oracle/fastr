@@ -37,8 +37,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.InitDimsNamesDimNamesNode;
 import com.oracle.truffle.r.nodes.binary.BinaryMapArithmeticFunctionNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -165,24 +164,22 @@ public class LogFunctions {
                         @Cached("createClassProfile()") ValueProfile vectorProfile,
                         @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
                         @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
-                        @Cached("create()") GetNamesAttributeNode getNamesNode,
-                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("create()") InitDimsNamesDimNamesNode initDimsNamesDimNames,
                         @Cached("create()") NACheck xNACheck,
                         @Cached("create()") NACheck baseNACheck) {
             RAbstractDoubleVector doubleVector = (RAbstractDoubleVector) vectorProfile.profile(vector).castSafe(RType.Double, isNAProfile);
-            return logInternal(doubleVector, base, copyAttrsNode, getNamesNode, getDimsNode, xNACheck, baseNACheck);
+            return logInternal(doubleVector, base, copyAttrsNode, initDimsNamesDimNames, xNACheck, baseNACheck);
         }
 
         @Specialization
         protected RComplexVector log(RAbstractComplexVector vector, double base,
                         @Cached("createClassProfile()") ValueProfile vectorProfile,
                         @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
-                        @Cached("create()") GetNamesAttributeNode getNamesNode,
-                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("create()") InitDimsNamesDimNamesNode initDimsNamesDimNames,
                         @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
                         @Cached("create()") NACheck xNACheck,
                         @Cached("create()") NACheck baseNACheck) {
-            return logInternal(vectorProfile.profile(vector), RComplex.valueOf(base, 0), divNode, getDimsNode, getNamesNode, copyAttrsNode, xNACheck, baseNACheck);
+            return logInternal(vectorProfile.profile(vector), RComplex.valueOf(base, 0), divNode, initDimsNamesDimNames, copyAttrsNode, xNACheck, baseNACheck);
         }
 
         @Specialization
@@ -190,16 +187,15 @@ public class LogFunctions {
                         @Cached("createClassProfile()") ValueProfile vectorProfile,
                         @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
                         @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
-                        @Cached("create()") GetNamesAttributeNode getNamesNode,
-                        @Cached("create()") GetDimAttributeNode getDimsNode,
+                        @Cached("create()") InitDimsNamesDimNamesNode initDimsNamesDimNames,
                         @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
                         @Cached("create()") NACheck xNACheck,
                         @Cached("create()") NACheck baseNACheck) {
             RAbstractComplexVector complexVector = (RAbstractComplexVector) vectorProfile.profile(vector).castSafe(RType.Complex, isNAProfile);
-            return logInternal(complexVector, base, divNode, getDimsNode, getNamesNode, copyAttrsNode, xNACheck, baseNACheck);
+            return logInternal(complexVector, base, divNode, initDimsNamesDimNames, copyAttrsNode, xNACheck, baseNACheck);
         }
 
-        private RDoubleVector logInternal(RAbstractDoubleVector vector, double base, CopyOfRegAttributesNode copyAttrsNode, GetNamesAttributeNode getNamesNode, GetDimAttributeNode getDimsNode,
+        private RDoubleVector logInternal(RAbstractDoubleVector vector, double base, CopyOfRegAttributesNode copyAttrsNode, InitDimsNamesDimNamesNode initDimsNamesDimNames,
                         NACheck xNACheck, NACheck baseNACheck) {
             baseNACheck.enable(base);
             double[] resultVector = new double[vector.getLength()];
@@ -220,7 +216,7 @@ public class LogFunctions {
                 }
             }
             boolean complete = xNACheck.neverSeenNA() && baseNACheck.neverSeenNA();
-            return createResult(vector, resultVector, complete, copyAttrsNode, getNamesNode, getDimsNode);
+            return createResult(vector, resultVector, complete, copyAttrsNode, initDimsNamesDimNames);
         }
 
         private double logb(double x, double base, NAProfile naBase) {
@@ -258,8 +254,8 @@ public class LogFunctions {
             return result;
         }
 
-        private RComplexVector logInternal(RAbstractComplexVector vector, RComplex base, BinaryMapArithmeticFunctionNode divNode, GetDimAttributeNode getDimsNode, GetNamesAttributeNode getNamesNode,
-                        CopyOfRegAttributesNode copyAttrsNode, NACheck xNACheck, NACheck baseNACheck) {
+        private RComplexVector logInternal(RAbstractComplexVector vector, RComplex base, BinaryMapArithmeticFunctionNode divNode,
+                        InitDimsNamesDimNamesNode initDimsNamesDimNames, CopyOfRegAttributesNode copyAttrsNode, NACheck xNACheck, NACheck baseNACheck) {
             baseNACheck.enable(base);
             double[] complexVector = new double[vector.getLength() * 2];
             if (baseNACheck.check(base)) {
@@ -285,7 +281,7 @@ public class LogFunctions {
                 }
             }
             boolean complete = xNACheck.neverSeenNA() && baseNACheck.neverSeenNA();
-            return createResult(vector, complexVector, complete, getDimsNode, getNamesNode, copyAttrsNode);
+            return createResult(vector, complexVector, complete, initDimsNamesDimNames, copyAttrsNode);
         }
 
         private static void fill(double[] array, int i, RComplex rc) {
@@ -328,16 +324,18 @@ public class LogFunctions {
             return RComplex.valueOf(Math.log(mod), arg);
         }
 
-        private static RDoubleVector createResult(RAbstractVector source, double[] resultData, boolean complete, CopyOfRegAttributesNode copyAttrsNode, GetNamesAttributeNode getNamesNode,
-                        GetDimAttributeNode getDimsNode) {
-            RDoubleVector result = RDataFactory.createDoubleVector(resultData, complete, getDimsNode.getDimensions(source), getNamesNode.getNames(source));
+        private static RDoubleVector createResult(RAbstractVector source, double[] resultData, boolean complete,
+                        CopyOfRegAttributesNode copyAttrsNode, InitDimsNamesDimNamesNode initDimsNamesDimNames) {
+            RDoubleVector result = RDataFactory.createDoubleVector(resultData, complete);
+            initDimsNamesDimNames.initAttributes(result, source);
             copyAttrsNode.execute(source, result);
             return result;
         }
 
-        private static RComplexVector createResult(RAbstractVector source, double[] resultData, boolean complete, GetDimAttributeNode getDimsNode, GetNamesAttributeNode getNamesNode,
-                        CopyOfRegAttributesNode copyAttrsNode) {
-            RComplexVector result = RDataFactory.createComplexVector(resultData, complete, getDimsNode.getDimensions(source), getNamesNode.getNames(source));
+        private static RComplexVector createResult(RAbstractVector source, double[] resultData, boolean complete,
+                        InitDimsNamesDimNamesNode initDimsNamesDimNames, CopyOfRegAttributesNode copyAttrsNode) {
+            RComplexVector result = RDataFactory.createComplexVector(resultData, complete);
+            initDimsNamesDimNames.initAttributes(result, source);
             copyAttrsNode.execute(source, result);
             return result;
         }

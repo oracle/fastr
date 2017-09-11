@@ -37,14 +37,15 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
 
     private final double[] data;
 
-    RDoubleVector(double[] data, boolean complete, int[] dims, RStringVector names) {
-        super(complete, data.length, dims, names);
+    RDoubleVector(double[] data, boolean complete) {
+        super(complete);
         this.data = data;
         assert verify();
     }
 
-    private RDoubleVector(double[] data, boolean complete, int[] dims) {
-        this(data, complete, dims, null);
+    RDoubleVector(double[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
+        this(data, complete);
+        initDimsNamesDimNames(dims, names, dimNames);
     }
 
     @Override
@@ -67,7 +68,7 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
 
     @Override
     protected RDoubleVector internalCopy() {
-        return new RDoubleVector(Arrays.copyOf(data, data.length), this.isComplete(), null);
+        return new RDoubleVector(Arrays.copyOf(data, data.length), this.isComplete());
     }
 
     @Override
@@ -95,7 +96,7 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
                 break;
             }
         }
-        RDoubleVector result = new RDoubleVector(newData, isComplete, null);
+        RDoubleVector result = new RDoubleVector(newData, isComplete);
         setAttributes(result);
         return result;
     }

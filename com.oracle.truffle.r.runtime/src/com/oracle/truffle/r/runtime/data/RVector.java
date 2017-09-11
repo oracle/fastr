@@ -62,29 +62,8 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     protected boolean complete; // "complete" means: does not contain NAs
 
-    protected RVector(boolean complete, int length, int[] dimensions, RStringVector names) {
+    protected RVector(boolean complete) {
         this.complete = complete;
-        assert names != this;
-        if (names != null) {
-            // since this constructor is for internal use only, the assertion shouldn't fail
-            assert names.getLength() == length : "size mismatch: " + names.getLength() + " vs. " + length;
-            if (dimensions == null) {
-                initAttributes(RAttributesLayout.createNames(names));
-            } else {
-                RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
-                if (dimensions.length != 1) {
-                    initAttributes(RAttributesLayout.createNamesAndDim(names, dimensionsVector));
-                } else {
-                    // one-dimensional arrays do not have names, only dimnames with one value
-                    RList newDimNames = RDataFactory.createList(new Object[]{names});
-                    initAttributes(RAttributesLayout.createDimAndDimNames(dimensionsVector, newDimNames));
-                }
-            }
-        } else {
-            if (dimensions != null) {
-                initAttributes(RAttributesLayout.createDim(RDataFactory.createIntVector(dimensions, true)));
-            }
-        }
     }
 
     private int[] getDimensionsFromAttrs() {
@@ -599,6 +578,59 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         }
         this.setDimensions(vector.getDimensions(), invokingNode);
         this.setDimNames(vector.getDimNames(), invokingNode);
+    }
+
+    /**
+     * Inits dims, names and dimnames attributes and it should only be invoked if no attributes were
+     * initialized yet.
+     */
+    @TruffleBoundary
+    protected final void initDimsNamesDimNames(int[] dimensions, RStringVector names, RList dimNames) {
+        assert (this.attributes == null) : "Vector attributes must be null";
+        assert names != this;
+        assert dimNames != this;
+        if (dimNames != null) {
+            DynamicObject attrs;
+            if (dimensions != null) {
+                RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
+                attrs = RAttributesLayout.createDimAndDimNames(dimensionsVector, dimNames);
+                // one-dimensional arrays do not have names, only dimnames with one value so do not
+                // init names in that case
+                if (names != null && dimensions.length != 1) {
+                    assert names.getLength() == getLength() : "size mismatch: names.length=" + names.getLength() + " vs. length=" + getLength();
+                    attrs.define(RRuntime.NAMES_ATTR_KEY, names);
+                }
+            } else {
+                attrs = RAttributesLayout.createDimNames(dimNames);
+                if (names != null) {
+                    assert names.getLength() == getLength() : "size mismatch: names.length=" + names.getLength() + " vs. length=" + getLength();
+                    attrs.define(RRuntime.NAMES_ATTR_KEY, names);
+                }
+            }
+            initAttributes(attrs);
+        } else {
+            if (names != null) {
+                // since this constructor is for internal use only, the assertion shouldn't fail
+                assert names.getLength() == getLength() : "size mismatch: " + names.getLength() + " vs. " + getLength();
+                if (dimensions != null) {
+                    RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
+                    if (dimensions.length != 1) {
+                        initAttributes(RAttributesLayout.createNamesAndDim(names, dimensionsVector));
+                    } else {
+                        // one-dimensional arrays do not have names, only dimnames with one value
+                        RList newDimNames = RDataFactory.createList(new Object[]{names});
+                        initAttributes(RAttributesLayout.createDimAndDimNames(dimensionsVector, newDimNames));
+                    }
+                } else {
+                    initAttributes(RAttributesLayout.createNames(names));
+                }
+            } else {
+                if (dimensions != null) {
+                    RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
+                    initAttributes(RAttributesLayout.createDim(dimensionsVector));
+                }
+            }
+        }
     }
 
     public final boolean copyNamesFrom(RAbstractVector vector) {

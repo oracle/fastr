@@ -37,14 +37,15 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
 
     private final byte[] data;
 
-    RLogicalVector(byte[] data, boolean complete, int[] dims, RStringVector names) {
-        super(complete, data.length, dims, names);
+    RLogicalVector(byte[] data, boolean complete) {
+        super(complete);
         this.data = data;
         assert verify();
     }
 
-    private RLogicalVector(byte[] data, boolean complete, int[] dims) {
-        this(data, complete, dims, null);
+    RLogicalVector(byte[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
+        this(data, complete);
+        initDimsNamesDimNames(dims, names, dimNames);
     }
 
     @Override
@@ -86,7 +87,7 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
 
     @Override
     protected RLogicalVector internalCopy() {
-        return new RLogicalVector(Arrays.copyOf(data, data.length), isComplete(), null);
+        return new RLogicalVector(Arrays.copyOf(data, data.length), isComplete());
     }
 
     public RLogicalVector copyResetData(byte[] newData) {
@@ -97,7 +98,7 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
                 break;
             }
         }
-        RLogicalVector result = new RLogicalVector(newData, isComplete, null);
+        RLogicalVector result = new RLogicalVector(newData, isComplete);
         setAttributes(result);
         return result;
     }
