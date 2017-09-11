@@ -278,6 +278,8 @@ typedef double (*call_Rf_runif)(double x, double y);
 
 typedef SEXP (*call_getvar)();
 
+typedef SEXP (*call_R_ParseVector)(SEXP text, int n, SEXP srcFile);
+
 // connections
 
 typedef int (*call_FASTR_getConnectionChar)(SEXP connection);

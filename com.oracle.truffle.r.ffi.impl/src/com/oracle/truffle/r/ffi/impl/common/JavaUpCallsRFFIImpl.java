@@ -44,7 +44,6 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.ffi.impl.common.ParseResult.ParseStatus;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
@@ -66,6 +65,7 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.InvalidConnection;
 import com.oracle.truffle.r.runtime.conn.NativeConnections.NativeRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
@@ -1058,22 +1058,36 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return p.isEvaluated() ? p.getValue() : RUnboundValue.instance;
     }
 
+    private enum ParseStatus {
+        PARSE_NULL,
+        PARSE_OK,
+        PARSE_INCOMPLETE,
+        PARSE_ERROR,
+        PARSE_EOF
+    }
+
     @Override
     public Object R_ParseVector(Object text, int n, Object srcFile) {
-        // TODO general case
-        assert n == 1;
-        assert srcFile == RNull.instance;
+        // TODO general case + all statuses
+        assert n == 1 : "unsupported: R_ParseVector with n != 0.";
+        assert srcFile == RNull.instance : "unsupported: R_ParseVector with non-null srcFile argument.";
         String textString = RRuntime.asString(text);
         assert textString != null;
 
+        Object[] resultData = new Object[2];
         try {
             Source source = RSource.fromTextInternal(textString, RSource.Internal.R_PARSEVECTOR);
             RExpression exprs = RContext.getEngine().parse(source);
-            return new ParseResult(ParseStatus.PARSE_OK.ordinal(), exprs);
+            resultData[0] = RDataFactory.createIntVectorFromScalar(ParseStatus.PARSE_OK.ordinal());
+            resultData[1] = exprs;
+        } catch (IncompleteSourceException ex) {
+            resultData[0] = RDataFactory.createIntVectorFromScalar(ParseStatus.PARSE_INCOMPLETE.ordinal());
+            resultData[1] = RNull.instance;
         } catch (ParseException ex) {
-            // TODO incomplete
-            return new ParseResult(ParseStatus.PARSE_ERROR.ordinal(), RNull.instance);
+            resultData[0] = RDataFactory.createIntVectorFromScalar(ParseStatus.PARSE_ERROR.ordinal());
+            resultData[1] = RNull.instance;
         }
+        return RDataFactory.createList(resultData);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@
 #include <Rinternals.h>
 #include <Rinterface.h>
 #include <R_ext/Connections.h>
+#include <R_ext/Parse.h>
 #include <string.h>
 #include "testrffi.h"
 
@@ -520,4 +521,15 @@ SEXP test_createNativeConnection() {
     customConn->write = &testrfficonn_write;
     // customConn->read = &testrfficonn_read; TODO: read test
     return newConnSEXP;
+}
+
+SEXP test_ParseVector(SEXP src) {
+    ParseStatus status;
+    SEXP parseResult, result;
+    PROTECT(parseResult = R_ParseVector(src, 1, &status, R_NilValue));
+    PROTECT(result = allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(result, 0, ScalarInteger(status));
+    SET_VECTOR_ELT(result, 1, parseResult);
+    UNPROTECT(2);
+    return result;
 }

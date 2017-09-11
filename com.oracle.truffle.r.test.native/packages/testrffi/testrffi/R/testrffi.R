@@ -188,3 +188,7 @@ rffi.readConnection <- function(connection) {
 rffi.createNativeConnection <- function() {
     .Call('test_createNativeConnection');
 }
+
+rffi.parseVector <- function(x) {
+    .Call('test_ParseVector', x);
+}

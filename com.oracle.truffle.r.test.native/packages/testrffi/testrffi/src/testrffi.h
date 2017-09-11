@@ -103,3 +103,5 @@ extern SEXP test_writeConnection(SEXP conn);
 extern SEXP test_readConnection(SEXP conn);
 
 extern SEXP test_createNativeConnection(void);
+
+extern SEXP test_ParseVector(SEXP src);
