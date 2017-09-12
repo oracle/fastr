@@ -170,8 +170,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         } else if (assignedTo instanceof RSyntaxLookup) {
             return ((RSyntaxLookup) assignedTo).getIdentifier();
         } else {
-            String functionBody = source.getCode();
-            return functionBody.substring(0, Math.min(functionBody.length(), 40)).replace("\n", "\\n");
+            CharSequence functionBody = source.getCharacters();
+            return functionBody.subSequence(0, Math.min(functionBody.length(), 40)).toString().replace("\n", "\\n");
         }
     }
 

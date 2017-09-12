@@ -76,7 +76,7 @@ import com.oracle.truffle.r.runtime.RError;
      * Always use this constructor to initialize the R specific fields.
      */
     public RParser(Source source, RCodeBuilder<T> builder, TruffleRLanguage language) {
-        super(new CommonTokenStream(new RLexer(new ANTLRStringStream(source.getCode()))));
+        super(new CommonTokenStream(new RLexer(new ANTLRStringStream(source.getCharacters().toString()))));
         assert source != null && builder != null;
         this.source = source;
         this.initialSource = source;
@@ -154,7 +154,7 @@ import com.oracle.truffle.r.runtime.RError;
 	    			String path = commentLine.substring(q0+1, q1);
 	    			try {
 	    			    String content = new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
-	    			    String lineEnding = detectLineEnding(initialSource.getCode());
+	    			    String lineEnding = detectLineEnding(initialSource.getCharacters());
 	    			    content = convertToLineEnding(content, lineEnding);
                         source = RSource.fromFileName(content, path, false);
                         fileStartOffset = commentToken.getStopIndex() + 1;
@@ -175,16 +175,22 @@ import com.oracle.truffle.r.runtime.RError;
 		fileStartOffset = 0;
 	}
 
-	private String detectLineEnding(String code) {
-		int lf = code.indexOf("\n");
-		int crlf = code.indexOf("\r\n");
-		
-		if(crlf != -1 && crlf < lf) {
-			return "\r\n";
-		}
-		return "\n";
-	}
-	
+        private String detectLineEnding(CharSequence code) {
+                int codeLen = code.length();
+                for (int i = 0; i < codeLen; i++) {
+                    switch (code.charAt(i)) {
+                        case '\r':
+                            if (i + 1 < codeLen && code.charAt(i+1) == '\n') {
+                                return "\r\n";
+                            }
+                            break;
+                        case '\n':
+                            return "\n";
+                    }
+                }
+                return "\n";
+        }
+                
 	private String convertToLineEnding(String content, String lineEnding) {
 		if("\n".equals(lineEnding)) {
 			return content.replaceAll("\\r\\n", "\n");

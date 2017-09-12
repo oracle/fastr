@@ -713,9 +713,10 @@ public class FastRInterop {
         @Specialization(guards = "isJavaObject(obj)")
         @TruffleBoundary
         public Object toArray(TruffleObject obj, @SuppressWarnings("unused") RMissing missing, @SuppressWarnings("unused") boolean flat,
+                        @Cached("HAS_SIZE.createNode()") Node hasSize,
                         @Cached("WRITE.createNode()") Node write) {
 
-            if (JavaInterop.isArray(obj)) {
+            if (ForeignAccess.sendHasSize(hasSize, obj)) {
                 // TODO should return copy?
                 return obj;
             }
