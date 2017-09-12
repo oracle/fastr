@@ -16,6 +16,8 @@ import static java.nio.file.StandardOpenOption.WRITE;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -405,6 +407,8 @@ public class RDeparse {
                         s.element.setSourceSection(source.createSection(s.start, s.length));
                     }
                 }
+            } catch (AccessDeniedException | FileAlreadyExistsException e) {
+                fixupSourcesTextInternal();
             } catch (IOException e) {
                 RInternalError.reportError(e);
                 fixupSourcesTextInternal();
