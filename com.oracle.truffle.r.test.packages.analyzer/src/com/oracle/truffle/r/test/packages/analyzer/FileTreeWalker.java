@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.logging.Logger;
 
+import com.oracle.truffle.r.test.packages.analyzer.detectors.ConfigureErrorDetector;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.DiffDetector;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.InstallationProblemDetector;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.RErrorDetector;
@@ -152,8 +153,9 @@ public class FileTreeWalker {
         lfParser.addDetector(RErrorDetector.INSTANCE);
         lfParser.addDetector(UnsupportedSpecializationDetector.INSTANCE);
         lfParser.addDetector(RInternalErrorDetector.INSTANCE);
-        lfParser.addTestResultDetector(DiffDetector.INSTANCE);
         lfParser.addDetector(SymbolLookupErrorDetector.INSTANCE);
+        lfParser.addDetector(ConfigureErrorDetector.INSTANCE);
+        lfParser.addTestResultDetector(DiffDetector.INSTANCE);
 
         LogFile parseLogFile = lfParser.parseLogFile();
         Collection<Problem> problems = parseLogFile.collectProblems();
