@@ -38,32 +38,34 @@ snapshot.init <- function(dir) {
 }
 
 snapshot <- function(...) {
-    vars <- list(...)
+    # the actual parameter expessions
+    actParExprs <- as.list(match.call()[-1])
+    valueList <- actParsToList(actParExprs, parent.frame())
     try({
-        snapshot_id(refcmpEnv$snapshot_id, vars)
+        snapshot_id(refcmpEnv$snapshot_id, valueList)
         refcmpEnv$snapshot_id <- refcmpEnv$snapshot_id + 1
     })
 }
 
-snapshot_id <- function(id, vars) {
+snapshot_id <- function(id, valueList, env = parent.frame()) {
     if(refcmpEnv$isReferenceRun()) {
-        snapshot.record(id, vars)
+        snapshot.record(id, valueList)
     } else {
-        snapshot.check(id, vars)
+        snapshot.check(id, valueList)
     }
 }
 
-snapshot.record <- function(id, vars) {
+snapshot.record <- function(id, valueList) {
     dumpDir <- file.path(refcmpEnv$snapshot_dir)
     if(!dir.exists(dumpDir)) {
         dir.create(dumpDir)
     }
     fcon <- file(file.path(refcmpEnv$snapshot_dir, paste0("snapshot", id, ".obj")))
-    saveRDS(vars, file=fcon)
+    saveRDS(valueList, file=fcon)
     close(fcon)
 }
 
-snapshot.check <- function(id, vars) {
+snapshot.check <- function(id, valueList) {
     fcon <- file(file.path(refcmpEnv$snapshot_dir, paste0("snapshot", id, ".obj")))
     restoredVars <- readRDS(file=fcon)
     close(fcon)
@@ -78,21 +80,40 @@ snapshot.check <- function(id, vars) {
         if(var_names[[i]] %in% restored_names) {
             actualVal <- vars[[var_names[[i]]]]
             expectedVal <- restoredVars[[var_names[[i]]]]
-            if(actualVal != expectedVal) {
+            if(!identical(expectedVal, actualVal)) {
                 stop(paste0("Value of variable '", var_names[[i]], "' differs. Expected ", expectedVal, " but was ", actualVal))
             }
         } else {
             stop(paste0("Missing variable '", var_names[[i]], "' in recorded variables"))
         }
-
     }
 }
 
 snapshot.show <- function(id = refcmpEnv$snapshot_id) {
-    fcon <- file(file.path(refcmpEnv$snapshot_dir, paste0("snapshot", id, ".obj")))
+    snapshot_filename <- file.path(refcmpEnv$snapshot_dir, paste0("snapshot", id, ".obj"))
+    if(!file.exists(snapshot_filename)) {
+        stop(paste0("Snapshot with ID=", id, " does not exist"))
+    }
+    fcon <- file(snapshot_filename)
     restoredVars <- readRDS(file=fcon)
     close(fcon)
 
-    restoredVars
+    return (restoredVars)
 }
+
+actParsToList <- function(pars, env) { 
+    l <- list() 
+    for(i in seq_along(pars)) { 
+        strrep <- as.character(pars[[i]])
+        if (is.symbol(pars[[i]])) {
+            value <- eval(pars[[i]], envir=env)
+            # cat(i, ": ", strrep, " = ", value, "\n")
+            l[[strrep]] <- value
+        } else {
+            warning(paste0("Skipping '", strrep, "' because only symbols are allowed"))
+        }
+    }
+    l
+}
+
 
