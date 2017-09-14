@@ -61,6 +61,7 @@ public final class GetCallerFrameNode extends RBaseNode {
             if (slowPathFrame != null) {
                 return slowPathFrame;
             }
+            callerFrameObject = null;
         }
         assert callerFrameObject == null;
 
