@@ -2,5 +2,5 @@
 
 export(snapshot)
 export(snapshot.init)
-export(snapshot_id)
+export(snapshot.named)
 export(snapshot.show)
