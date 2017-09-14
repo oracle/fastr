@@ -178,7 +178,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                         @Cached("create()") DropAttributesNode drop,
                         @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R) {
             if (RRuntime.isForeignObject(x)) {
-                Object o = foreignArray2R.execute(x, true);
+                Object o = foreignArray2R.convert(x);
                 if (!RRuntime.isForeignObject(o)) {
                     return cast == null ? o : cast.doCast(o);
                 }

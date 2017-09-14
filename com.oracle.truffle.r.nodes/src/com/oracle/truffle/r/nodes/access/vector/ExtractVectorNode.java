@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -52,7 +51,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R.CollectedElements;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R.ForeignArrayData;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
@@ -188,24 +187,15 @@ public abstract class ExtractVectorNode extends RBaseNode {
                     @Cached("createForeign2RNode()") Foreign2R foreign2RNode) {
 
         RAbstractVector vec = (RAbstractVector) positions[0];
-        CollectedElements ce = new CollectedElements();
+        ForeignArrayData arrayData = new ForeignArrayData();
 
         try {
             for (int i = 0; i < vec.getLength(); i++) {
                 Object res = read(this, vec.getDataAtAsObject(i), foreignRead, keyInfoNode, hasSizeNode, object, firstString, castNode);
-                if (RRuntime.isForeignObject(res)) {
-                    if (ForeignAccess.sendIsNull(isNullNode, (TruffleObject) res)) {
-                        res = RNull.instance;
-                    }
-                    if (ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) res)) {
-                        res = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) res);
-                    }
-                }
-                ce.getTypeCheck().checkForeign(res);
-                ce.getElements().add(foreign2RNode.execute(res));
+                arrayData.add(res, () -> isNullNode, () -> isBoxedNode, () -> unboxNode, () -> foreign2RNode);
             }
-            return ForeignArray2R.asAbstractVector(ce);
-        } catch (InteropException | NoSuchFieldError e) {
+            return ForeignArray2R.asAbstractVector(arrayData);
+        } catch (InteropException e) {
             throw RError.interopError(RError.findParentRBase(this), e, object);
         }
     }

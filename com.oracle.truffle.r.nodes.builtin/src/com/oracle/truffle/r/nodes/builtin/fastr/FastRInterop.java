@@ -781,7 +781,7 @@ public class FastRInterop {
                         @Cached("HAS_SIZE.createNode()") Node hasSize,
                         @Cached("createForeignArray2R()") ForeignArray2R array2R) {
             if (isArrayProfile.profile(ForeignAccess.sendHasSize(hasSize, obj))) {
-                return array2R.execute(obj, true);
+                return array2R.convert(obj);
             } else {
                 throw error(RError.Message.GENERIC, "not a java array");
             }

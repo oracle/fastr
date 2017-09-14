@@ -162,7 +162,7 @@ public abstract class CastListNode extends CastBaseNode {
     protected RList doForeignObject(TruffleObject obj,
                     @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
 
-        Object o = foreignArray2R.execute(obj, true);
+        Object o = foreignArray2R.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
             if (o instanceof RList) {
                 return (RList) o;

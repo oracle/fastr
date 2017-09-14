@@ -766,14 +766,18 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ", recursive=FALSE)", "c(" + result + ")");
 
         field = fieldPrefix + "2";
-        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ")", "c(" + result + ", " + result + ")");
-        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$" + field + "))", "'" + clazz + "'");
+        String resultVector = "c(" + result + ", " + result + ")";
+        String expected = fieldPrefix.contains("List") ? resultVector : "matrix(" + resultVector + ", nrow=2, ncol=3, byrow=T)";
 
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ")", expected);
+        expected = fieldPrefix.contains("List") ? "'" + clazz + "'" : "'matrix'";
+        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$" + field + "))", expected);
         assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ", recursive=FALSE)", "list(" + result + ", " + result + "))");
 
         field = fieldPrefix + "3";
         assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ")", "c(" + result + ", " + result + ", " + result + ", " + result + "))");
-        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$" + field + "))", "'" + clazz + "'");
+        expected = fieldPrefix.contains("List") ? "'" + clazz + "'" : "'array'";
+        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$" + field + "))", expected);
         assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ", recursive=FALSE)",
                         "cat('[[1]]','\n','[external object]','\n\n','[[2]]','\n','[external object]','\n\n','[[3]]','\n','[external object]','\n\n','[[4]]','\n','[external object]','\n\n', sep='')");
 
@@ -812,16 +816,37 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(list(" + mixWithVector + ", ta$" + field + "Array, ta$" + field + "List), recursive=FALSE)",
                         "c(" + resultInVector + ", " + testFieldArrayResult + ", " + testFieldListResult + ")");
 
+        String[] ra = testFieldArrayResult.split(",");
+        StringBuilder sb = new StringBuilder();
+        for (i = 0; i < ra.length; i++) {
+            String s = ra[i].trim();
+            sb.append(s).append(", ").append(s);
+            if (i < ra.length - 1) {
+                sb.append(", ");
+            }
+        }
+        String testFieldMatrixResult = sb.toString();
         assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(list(" + mixWithVector + ", ta$" + field + "Array2, ta$" + field + "List2))",
-                        "c(" + resultInVector + ", " + testFieldArrayResult + ", " + testFieldArrayResult + ", " + testFieldListResult + ", " + testFieldListResult + ")");
+                        "c(" + resultInVector + ", " + testFieldMatrixResult + ", " + testFieldListResult + ", " + testFieldListResult + ")");
         assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(list(" + mixWithVector + ", ta$" + field + "Array2, ta$" + field + "List2)))", "'" + clazz + "'");
         assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(list(" + mixWithVector + ", ta$" + field + "Array2, ta$" + field + "List2), recursive=FALSE)",
                         "cat(" + resultInList +
                                         "'[[4]]','\n','[external object]','\n\n','[[5]]','\n','[external object]','\n\n','[[6]]','\n','[external object]','\n\n','[[7]]','\n','[external object]','\n\n', sep='')");
 
+        ra = testFieldArrayResult.split(",");
+        sb = new StringBuilder();
+        for (i = 0; i < ra.length; i++) {
+            String s = ra[i].trim();
+            sb.append(s).append(", ").append(s).append(", ").append(s).append(", ").append(s);
+            if (i < ra.length - 1) {
+                sb.append(", ");
+            }
+        }
+        testFieldArrayResult = sb.toString();
         assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(list(" + mixWithVector + ", ta$" + field + "Array3, ta$" + field + "List3))",
-                        "c(" + resultInVector + ", " + testFieldArrayResult + ", " + testFieldArrayResult + ", " + testFieldArrayResult + ", " + testFieldArrayResult + ", " + testFieldListResult +
-                                        ", " + testFieldListResult + ", " + testFieldListResult + ", " + testFieldListResult + ")");
+                        "c(" + resultInVector + ", " +
+                                        testFieldArrayResult + ", " +
+                                        testFieldListResult + ", " + testFieldListResult + ", " + testFieldListResult + ", " + testFieldListResult + ")");
         assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(list(" + mixWithVector + ", ta$" + field + "Array3, ta$" + field + "List3)))", "'" + clazz + "'");
         assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(list(" + mixWithVector + ", ta$" + field + "Array3, ta$" + field + "List3), recursive=FALSE)",
                         "cat(" + resultInList +
@@ -858,6 +883,75 @@ public class TestJavaInterop extends TestBase {
             }
         }
         return sb.toString();
+    }
+
+    @Test
+    public void testMultiDimArrays() throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+        TestMultiDimArraysClass tac = new TestMultiDimArraysClass();
+        testMultiDimArrayElement(tac, "string");
+        testMultiDimArrayElement(tac, "boolean");
+        testMultiDimArrayElement(tac, "byte");
+        testMultiDimArrayElement(tac, "char");
+        testMultiDimArrayElement(tac, "double");
+        testMultiDimArrayElement(tac, "float");
+        testMultiDimArrayElement(tac, "integer");
+        testMultiDimArrayElement(tac, "long");
+        testMultiDimArrayElement(tac, "short");
+
+        testMultiDimArrayElement("integerArray2x3x4x5", new ArrayList<>(), tac.integerArray2x3x4x5);
+
+        assertEvalFastR("ta <- new('" + TestMultiDimArraysClass.class.getName() + "'); as.vector(ta$integerArray2NotSquare)", "c(1:7)");
+    }
+
+    public void testMultiDimArrayElement(TestMultiDimArraysClass tac, String fieldPrefix) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+        String fieldName = fieldPrefix + "Array2";
+        Object array = tac.getClass().getDeclaredField(fieldName).get(tac);
+        testMultiDimArrayElement(fieldName, new ArrayList<>(), array);
+
+        fieldName = fieldPrefix + "Array3";
+        array = tac.getClass().getDeclaredField(fieldName).get(tac);
+        testMultiDimArrayElement(fieldName, new ArrayList<>(), array);
+    }
+
+    public void testMultiDimArrayElement(String fieldName, final List<Integer> dims, Object obj) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+        if (obj.getClass().isArray()) {
+            for (int i = 0; i < Array.getLength(obj); i++) {
+                List<Integer> d = new ArrayList<>(dims);
+                d.add(i);
+                testMultiDimArrayElement(fieldName, d, Array.get(obj, i));
+            }
+        } else {
+            // as.vector(ta$integerArray3)[1,2,3] == ta$integerArray3[1,2,3]
+            String vectorCor = getRLikeCoordinates(dims);
+            assertEvalFastR("ta <- new('" + TestMultiDimArraysClass.class.getName() + "'); as.vector(ta$" + fieldName + ")" + vectorCor + " == ta$" + fieldName + vectorCor, "TRUE");
+
+            // as.vector(ta$integerArray3)[1,2,3] == ta$integerArray3[1][2][3]
+            String javaCor = getJavaLikeCoordinates(dims);
+            assertEvalFastR("ta <- new('" + TestMultiDimArraysClass.class.getName() + "'); as.vector(ta$" + fieldName + ")" + vectorCor + " == ta$" + fieldName + javaCor, "TRUE");
+        }
+    }
+
+    private String getRLikeCoordinates(final List<Integer> dims) {
+        StringBuilder cor = new StringBuilder();
+        cor.append("[");
+        for (int i = 0; i < dims.size(); i++) {
+            cor.append(dims.get(i) + 1);
+            if (i < dims.size() - 1) {
+                cor.append(", ");
+            }
+        }
+        cor.append("]");
+        return cor.toString();
+    }
+
+    private String getJavaLikeCoordinates(final List<Integer> dims) {
+        StringBuilder cor = new StringBuilder();
+        for (int i = 0; i < dims.size(); i++) {
+            cor.append("[");
+            cor.append(dims.get(i) + 1);
+            cor.append("]");
+        }
+        return cor.toString();
     }
 
     @Test
@@ -2135,6 +2229,7 @@ public class TestJavaInterop extends TestBase {
 
         public int[] integerArray = {1, 2, 3};
         public int[][] integerArray2 = {{1, 2, 3}, {1, 2, 3}};
+        public int[][] integerArray3x4 = {{1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10, 11, 12}};
         public int[][][] integerArray3 = {{{1, 2, 3}, {1, 2, 3}}, {{1, 2, 3}, {1, 2, 3}}};
 
         public long[] longArray = {1L, 2L, 3L};
@@ -2223,6 +2318,53 @@ public class TestJavaInterop extends TestBase {
         public List<?> stringList3 = Arrays.asList(new List<?>[]{stringList2, stringList2});
 
         public List<?> mixedIntegerList = Arrays.asList(new Object[]{new Integer[]{1, 2, 3}, Arrays.asList(new int[]{4, 5, 6}), new int[]{7, 8, 9}, 10, 11, 12});
+    }
+
+    public static class TestMultiDimArraysClass {
+        public boolean[][] booleanArray2 = {{true, false, true}, {false, false, true}};
+        public boolean[][][] booleanArray3 = {{{true, false, true}, {false, false, true}}, {{true, true, false}, {true, true, true}}};
+
+        public byte[][] byteArray2 = {{1, 2, 3}, {4, 5, 6}};
+        public byte[][][] byteArray3 = {{{1, 2, 3}, {4, 5, 6}}, {{7, 8, 9}, {10, 11, 12}}};
+
+        public char[][] charArray2 = {{'a', 'b', 'c'}, {'d', 'e', 'f'}};
+        public char[][][] charArray3 = {{{'a', 'b', 'c'}, {'d', 'e', 'f'}}, {{'g', 'h', 'i'}, {'j', 'k', 'l'}}};
+
+        public double[][] doubleArray2 = {{1.1, 1.2, 1.3}, {1.4, 1.5, 1.6}};
+        public double[][][] doubleArray3 = {{{1.1, 1.2, 1.3}, {1.4, 1.5, 1.6}}, {{1.7, 1.8, 1.9}, {1.11, 1.12, 1.13}}};
+
+        public float[][] floatArray2 = {{1.1f, 1.2f, 1.3f}, {1.4f, 1.5f, 1.6f}};
+        public float[][][] floatArray3 = {{{1.1f, 1.2f, 1.3f}, {1.4f, 1.5f, 1.6f}}, {{1.7f, 1.8f, 1.9f}, {1.11f, 1.12f, 1.13f}}};
+
+        public int[][] integerArray2 = {{1, 2, 3}, {4, 5, 6}};
+        public int[][][] integerArray3 = {{{1, 2, 3}, {4, 5, 6}}, {{7, 8, 9}, {10, 11, 12}}};
+
+        public Object[][] integerArray2NotSquare = new Object[][]{{1, 2, 3}, {4, 5, 6, 7}};
+        public Object[][] integerArray3NotSquare = new Object[][][]{{{1, 2, 3}, {4, 5, 6, 7}}, {{8, 9, 10}, {11, 12, 13, 14}}};
+        public int[][][][] integerArray2x3x4x5 = new int[2][3][4][5];
+
+        public long[][] longArray2 = {{1L, 2L, 3L}, {4L, 5L, 6L}};
+        public long[][][] longArray3 = {{{1L, 2L, 3L}, {4L, 5L, 6L}}, {{7L, 8L, 9L}, {10L, 11L, 12L}}};
+
+        public short[][] shortArray2 = {{1, 2, 3}, {4, 5, 6}};
+        public short[][][] shortArray3 = {{{1, 2, 3}, {4, 5, 6}}, {{7, 8, 9}, {10, 11, 12}}};
+
+        public String[][] stringArray2 = {{"a", "b", "c"}, {"d", "e", "f"}};
+        public String[][][] stringArray3 = {{{"a", "d", "c"}, {"b", "o", "r"}}, {{"i", "n", "g"}, {"h", "i", "j"}}};
+
+        public TestMultiDimArraysClass() {
+            int i = 1;
+            for (int x = 0; x < 2; x++) {
+                for (int y = 0; y < 3; y++) {
+                    for (int z = 0; z < 4; z++) {
+                        for (int k = 0; k < 5; k++) {
+                            integerArray2x3x4x5[x][y][z][k] = i++;
+                        }
+                    }
+                }
+            }
+        }
+
     }
 
     public static class TestIterableSize extends AbstractTestIterable {

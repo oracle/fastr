@@ -42,7 +42,7 @@ public abstract class CastForeignNode extends CastNode {
     protected Object castForeign(TruffleObject obj,
                     @Cached("HAS_SIZE.createNode()") Node hasSize,
                     @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R) {
-        return foreignArray2R.execute(obj, true);
+        return foreignArray2R.convert(obj);
     }
 
     @Fallback

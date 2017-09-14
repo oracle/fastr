@@ -234,7 +234,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     @Specialization(guards = "isForeignObject(obj)")
     protected RIntVector doForeignObject(TruffleObject obj,
                     @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
-        Object o = foreignArray2R.execute(obj, true);
+        Object o = foreignArray2R.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
             if (o instanceof RIntVector) {
                 return (RIntVector) o;
