@@ -222,6 +222,9 @@ public final class ArgumentsSignature implements Iterable<String> {
             return false;
         }
         ArgumentsSignature other = (ArgumentsSignature) obj;
+        if (length != other.length) {
+            return false;
+        }
         if (!Arrays.equals(names, other.names)) {
             return false;
         }
