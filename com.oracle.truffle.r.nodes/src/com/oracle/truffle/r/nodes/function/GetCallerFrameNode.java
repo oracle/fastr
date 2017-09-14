@@ -62,7 +62,7 @@ public final class GetCallerFrameNode extends RBaseNode {
                 return slowPathFrame;
             }
         }
-        assert callerFrameObject == null;
+        assert callerFrameObject instanceof CallerFrameClosure || callerFrameObject == null;
 
         // S3 method can be dispatched from top-level where there is no caller frame
         // Since RArguments does not allow to create arguments with a 'null' caller frame, this

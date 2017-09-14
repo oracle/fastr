@@ -363,8 +363,8 @@ abstract class DelegateRConnection implements RConnection, ByteChannel {
                 channel.position(offset);
                 break;
             case END:
-                throw RInternalError.unimplemented();
-
+                channel.position(channel.size());
+                break;
         }
         return position;
     }
