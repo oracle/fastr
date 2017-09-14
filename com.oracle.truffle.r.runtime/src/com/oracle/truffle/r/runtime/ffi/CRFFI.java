@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -479,6 +480,7 @@ public interface CRFFI {
                 results[i] = ((TemporaryWrapper) array[i]).cleanup();
             }
 
+            RContext.getInstance().runNativeCollector();
             return RDataFactory.createList(results, validateArgNames(array.length, args.getSignature()));
         }
 

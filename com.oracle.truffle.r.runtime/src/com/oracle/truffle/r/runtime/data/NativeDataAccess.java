@@ -198,12 +198,12 @@ public final class NativeDataAccess {
         WeakReference<RObject> reference = nativeMirrors.get(address);
         if (reference == null) {
             CompilerDirectives.transferToInterpreter();
-            throw RInternalError.shouldNotReachHere("unknown/stale native reference");
+            throw RInternalError.shouldNotReachHere("unknown/stale native reference " + address);
         }
         RObject result = reference.get();
         if (result == null) {
             CompilerDirectives.transferToInterpreter();
-            throw RInternalError.shouldNotReachHere("unknown/stale native reference");
+            throw RInternalError.shouldNotReachHere("unknown/stale native reference" + address);
         }
         return result;
     }

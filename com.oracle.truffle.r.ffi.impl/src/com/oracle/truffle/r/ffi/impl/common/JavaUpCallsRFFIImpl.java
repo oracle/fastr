@@ -1509,9 +1509,10 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public void Rf_unprotect(int x) {
-        ArrayList<RObject> stack = RContext.getInstance().protectStack;
+        RContext context = RContext.getInstance();
+        ArrayList<RObject> stack = context.protectStack;
         for (int i = 0; i < x; i++) {
-            stack.remove(stack.size() - 1);
+            context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
         }
     }
 
@@ -1527,10 +1528,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public void Rf_unprotect_ptr(Object x) {
-        ArrayList<RObject> stack = RContext.getInstance().protectStack;
+        RContext context = RContext.getInstance();
+        ArrayList<RObject> stack = context.protectStack;
         for (int i = stack.size() - 1; i >= 0; i--) {
             if (stack.get(i) == x) {
-                stack.remove(i);
+                context.registerReferenceUsedInNative(stack.remove(i));
                 return;
             }
         }

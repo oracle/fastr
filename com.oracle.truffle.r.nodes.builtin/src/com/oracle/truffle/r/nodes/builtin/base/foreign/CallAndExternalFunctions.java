@@ -658,7 +658,7 @@ public class CallAndExternalFunctions {
                         @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
                         @Cached("extractSymbolInfo.execute(symbol)") NativeCallInfo nativeCallInfo) {
-            return callRFFINode.execute(nativeCallInfo, args.getArguments());
+            return callRFFINode.dispatch(nativeCallInfo, args.getArguments());
         }
 
         /**
@@ -674,7 +674,7 @@ public class CallAndExternalFunctions {
                 throw RInternalError.shouldNotReachHere("Cache for .Calls with FastR reimplementation (lookupBuiltin(...) != null) exceeded the limit");
             }
             NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
-            return callRFFINode.execute(nativeCallInfo, args.getArguments());
+            return callRFFINode.dispatch(nativeCallInfo, args.getArguments());
         }
 
         /**
@@ -699,12 +699,12 @@ public class CallAndExternalFunctions {
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "Call", packageName);
             }
-            return callRFFINode.execute(new NativeCallInfo(symbol, func, rns.getDllInfo()), args.getArguments());
+            return callRFFINode.dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), args.getArguments());
         }
 
         @Specialization
         protected Object callNamedFunctionWithPackage(RExternalPtr symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            return callRFFINode.execute(new NativeCallInfo("", symbol.getAddr(), null), args.getArguments());
+            return callRFFINode.dispatch(new NativeCallInfo("", symbol.getAddr(), null), args.getArguments());
         }
 
         @SuppressWarnings("unused")
@@ -793,7 +793,7 @@ public class CallAndExternalFunctions {
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
                         @Cached("extractSymbolInfo.execute(symbol)") NativeCallInfo nativeCallInfo) {
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
-            return callRFFINode.execute(nativeCallInfo, new Object[]{list});
+            return callRFFINode.dispatch(nativeCallInfo, new Object[]{list});
         }
 
         @Specialization
@@ -812,7 +812,7 @@ public class CallAndExternalFunctions {
                 throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External", packageName);
             }
             Object list = encodeArgumentPairList(args, symbol);
-            return callRFFINode.execute(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{list});
+            return callRFFINode.dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{list});
         }
 
         @Fallback
@@ -890,7 +890,7 @@ public class CallAndExternalFunctions {
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
                         @Cached("extractSymbolInfo.execute(symbol)") NativeCallInfo nativeCallInfo) {
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
-            return callRFFINode.execute(nativeCallInfo, new Object[]{CALL, getOp(), list, RHO});
+            return callRFFINode.dispatch(nativeCallInfo, new Object[]{CALL, getOp(), list, RHO});
         }
 
         @Specialization
@@ -909,7 +909,7 @@ public class CallAndExternalFunctions {
                 throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External2", packageName);
             }
             Object list = encodeArgumentPairList(args, symbol);
-            return callRFFINode.execute(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, getOp(), list, RHO});
+            return callRFFINode.dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, getOp(), list, RHO});
         }
 
         @Fallback
@@ -946,7 +946,7 @@ public class CallAndExternalFunctions {
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
-            return callRFFINode.execute(nativeCallInfo, new Object[]{list});
+            return callRFFINode.dispatch(nativeCallInfo, new Object[]{list});
         }
 
         @Specialization
@@ -964,7 +964,7 @@ public class CallAndExternalFunctions {
                 throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
             Object list = encodeArgumentPairList(args, name);
-            return callRFFINode.execute(new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{list});
+            return callRFFINode.dispatch(new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{list});
         }
 
         @Fallback
@@ -1008,7 +1008,7 @@ public class CallAndExternalFunctions {
         protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
-            return callRFFINode.execute(nativeCallInfo, args.getArguments());
+            return callRFFINode.dispatch(nativeCallInfo, args.getArguments());
         }
 
         @Specialization
@@ -1026,7 +1026,7 @@ public class CallAndExternalFunctions {
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
-            return callRFFINode.execute(new NativeCallInfo(name, func, rns.getDllInfo()), args.getArguments());
+            return callRFFINode.dispatch(new NativeCallInfo(name, func, rns.getDllInfo()), args.getArguments());
         }
 
         @Fallback

@@ -470,7 +470,7 @@ public class DLL {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         invokeVoidCallNode = (InvokeVoidCallNode) insert((Node) RFFIFactory.getCallRFFI().createInvokeVoidCallNode());
                     }
-                    invokeVoidCallNode.execute(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
+                    invokeVoidCallNode.dispatch(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
                 } catch (ReturnException ex) {
                     // An error call can, due to condition handling, throw this which we must
                     // propagate

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,29 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.upcalls;
+package com.oracle.truffle.r.ffi.processor;
 
-import com.oracle.truffle.r.ffi.processor.RFFINoGC;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 
-public interface MemoryUpCallsRFFI {
-    // Checkstyle: stop method name check
-
-    void R_PreserveObject(Object obj);
-
-    void R_ReleaseObject(Object obj);
-
-    @RFFINoGC
-    Object Rf_protect(Object x);
-
-    @RFFINoGC
-    void Rf_unprotect(int x);
-
-    @RFFINoGC
-    int R_ProtectWithIndex(Object x);
-
-    @RFFINoGC
-    void R_Reprotect(Object x, int y);
-
-    @RFFINoGC
-    void Rf_unprotect_ptr(Object x);
+/**
+ * Tags upcall functions that should not perform simulation of GNUR's cooperative GC, i.e.
+ * unreachable objects allocated for native code should not be collected yet. See
+ * {@code RFFIContext} for more details.
+ */
+@Target({ElementType.METHOD})
+public @interface RFFINoGC {
 }
