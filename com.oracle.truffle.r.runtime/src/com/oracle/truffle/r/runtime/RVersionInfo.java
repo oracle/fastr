@@ -79,7 +79,7 @@ public enum RVersionInfo {
         return Character.toLowerCase(s.charAt(0)) + s.substring(1);
     }
 
-    private static void initialize() {
+    private static synchronized void initialize() {
         if (ListValues == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             ListValues = new String[VALUES.length];
