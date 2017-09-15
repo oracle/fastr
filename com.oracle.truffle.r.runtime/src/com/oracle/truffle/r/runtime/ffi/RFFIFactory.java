@@ -170,5 +170,5 @@ public abstract class RFFIFactory {
      */
     protected abstract RFFI createRFFI();
 
-    public abstract ContextState newContextState();
+    public abstract RFFIContext newContextState();
 }

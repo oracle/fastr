@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFI;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
@@ -213,8 +214,8 @@ public class Managed_RFFIFactory extends RFFIFactory {
     }
 
     @Override
-    public ContextState newContextState() {
-        return new ContextState() {
+    public RFFIContext newContextState() {
+        return new RFFIContext() {
             @Override
             public ContextState initialize(RContext context) {
                 return this;

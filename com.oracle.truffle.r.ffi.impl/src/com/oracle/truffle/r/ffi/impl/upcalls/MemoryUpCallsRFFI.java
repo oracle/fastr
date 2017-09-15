@@ -45,4 +45,6 @@ public interface MemoryUpCallsRFFI {
 
     @RFFINoGC
     void Rf_unprotect_ptr(Object x);
+
+    Object R_alloc(int n, int size);
 }

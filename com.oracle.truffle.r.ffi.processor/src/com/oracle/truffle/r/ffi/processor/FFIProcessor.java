@@ -167,7 +167,7 @@ public final class FFIProcessor extends AbstractProcessor {
 
     private void generateCallClass(ExecutableElement m) throws IOException {
         RFFIUpCallNode nodeAnnotation = m.getAnnotation(RFFIUpCallNode.class);
-        RFFINoGC noGCAnnotation = m.getAnnotation(RFFINoGC.class);
+        String canRunGc = m.getAnnotation(RFFINoGC.class) == null ? "true" : "false";
         String nodeClassName = null;
         TypeElement nodeClass = null;
         if (nodeAnnotation != null) {
@@ -236,6 +236,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("import com.oracle.truffle.api.interop.TruffleObject;\n");
         w.append("import com.oracle.truffle.api.nodes.RootNode;\n");
         w.append("import com.oracle.truffle.r.runtime.context.RContext;\n");
+        w.append("import com.oracle.truffle.r.runtime.ffi.RFFIContext;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n");
         w.append("import com.oracle.truffle.r.runtime.data.RTruffleObject;\n");
@@ -294,6 +295,8 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("                    if (RFFIUtils.traceEnabled) {\n");
         w.append("                        RFFIUtils.traceUpCall(\"" + name + "\", arguments);\n");
         w.append("                    }\n");
+        w.append("                    RFFIContext ctx = RContext.getInstance().getStateRFFI();\n");
+        w.append("                    ctx.beforeUpcall(" + canRunGc + ");\n");
         if (returnKind == TypeKind.VOID) {
             w.append("                    ");
         } else {
@@ -313,14 +316,12 @@ public final class FFIProcessor extends AbstractProcessor {
         } else {
             w.append(";\n");
         }
-        if (noGCAnnotation == null) {
-            w.append("                    RContext.getInstance().runNativeCollector(); // we could have run cooperative GC at this point \n");
-        }
+        w.append("                    ctx.afterUpcall(" + canRunGc + ");\n");
         if (returnKind == TypeKind.VOID) {
             w.append("                    return 0; // void return type\n");
         } else {
-            w.append("                    RContext.getInstance().registerReferenceUsedInNative(resultRObj); \n");
-            w.append("                    return resultRObj; // void return type\n");
+            w.append("                    ctx.registerReferenceUsedInNative(resultRObj); \n");
+            w.append("                    return resultRObj;\n");
         }
         w.append("                }\n");
         w.append("            });\n");

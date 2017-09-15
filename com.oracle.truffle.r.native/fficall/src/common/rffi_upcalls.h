@@ -314,5 +314,7 @@ typedef void (*call_Rf_unprotect_ptr)(SEXP x);
 typedef void (*call_R_PreserveObject)(SEXP x);
 typedef void (*call_R_ReleaseObject)(SEXP x);
 
+typedef void* (*call_R_alloc)(int n, int size);
+
 #endif
 

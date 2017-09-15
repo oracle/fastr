@@ -108,6 +108,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -1490,26 +1491,26 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public void R_PreserveObject(Object obj) {
         guaranteeInstanceOf(obj, RObject.class);
-        HashSet<RObject> list = RContext.getInstance().preserveList;
+        HashSet<RObject> list = getContext().preserveList;
         list.add((RObject) obj);
     }
 
     @Override
     public void R_ReleaseObject(Object obj) {
         guaranteeInstanceOf(obj, RObject.class);
-        HashSet<RObject> list = RContext.getInstance().preserveList;
+        HashSet<RObject> list = getContext().preserveList;
         list.remove(obj);
     }
 
     @Override
     public Object Rf_protect(Object x) {
-        RContext.getInstance().protectStack.add(guaranteeInstanceOf(x, RObject.class));
+        getContext().protectStack.add(guaranteeInstanceOf(x, RObject.class));
         return x;
     }
 
     @Override
     public void Rf_unprotect(int x) {
-        RContext context = RContext.getInstance();
+        RFFIContext context = getContext();
         ArrayList<RObject> stack = context.protectStack;
         for (int i = 0; i < x; i++) {
             context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
@@ -1528,7 +1529,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public void Rf_unprotect_ptr(Object x) {
-        RContext context = RContext.getInstance();
+        RFFIContext context = getContext();
         ArrayList<RObject> stack = context.protectStack;
         for (int i = stack.size() - 1; i >= 0; i--) {
             if (stack.get(i) == x) {
@@ -1673,4 +1674,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         throw implementedAsNode();
     }
 
+    private static RFFIContext getContext() {
+        return RContext.getInstance().getStateRFFI();
+    }
 }

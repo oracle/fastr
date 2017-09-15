@@ -218,7 +218,7 @@ void Rf_error(const char *format, ...) {
     va_end(ap);
     ((call_Rf_error) callbacks[Rf_error_x])(ensure_string(buf));
     // Should not reach here
-    UNIMPLEMENTED;
+    unimplemented("Unexpected return from Rf_error, should be no return function");
 }
 
 /*

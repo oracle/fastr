@@ -24,19 +24,16 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.r.ffi.impl.common.LibPaths;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
-import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFI;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
@@ -45,23 +42,9 @@ import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 public class TruffleNFI_RFFIFactory extends RFFIFactory {
 
-    private static class ContextStateImpl implements RContext.ContextState {
-        @Override
-        public ContextState initialize(RContext context) {
-            String librffiPath = LibPaths.getBuiltinLibPath("R");
-            if (context.isInitial()) {
-                DLL.loadLibR(librffiPath);
-            } else {
-                // force initialization of NFI
-                DLLRFFI.DLOpenRootNode.create(context).call(librffiPath, false, false);
-            }
-            return this;
-        }
-    }
-
     @Override
-    public ContextState newContextState() {
-        return new ContextStateImpl();
+    public RFFIContext newContextState() {
+        return new NFIContext();
     }
 
     @Override

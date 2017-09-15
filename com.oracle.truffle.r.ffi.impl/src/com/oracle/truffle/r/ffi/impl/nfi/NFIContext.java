@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,49 +20,43 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.llvm;
+package com.oracle.truffle.r.ffi.impl.nfi;
+
+import java.util.ArrayList;
 
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 
-/**
- * A facade for the context state for the Truffle LLVM factory. Delegates to the various
- * module-specific pieces of state.
- */
-class TruffleLLVM_RFFIContextState extends RFFIContext {
-    TruffleLLVM_DLL.ContextStateImpl dllState;
-    TruffleLLVM_Call.ContextStateImpl callState;
-
-    TruffleLLVM_RFFIContextState() {
-        dllState = new TruffleLLVM_DLL.ContextStateImpl();
-        callState = new TruffleLLVM_Call.ContextStateImpl();
-    }
-
-    static TruffleLLVM_RFFIContextState getContextState() {
-        return (TruffleLLVM_RFFIContextState) RContext.getInstance().getStateRFFI();
-    }
-
-    static TruffleLLVM_RFFIContextState getContextState(RContext context) {
-        return (TruffleLLVM_RFFIContextState) context.getStateRFFI();
-    }
+class NFIContext extends RFFIContext {
+    /**
+     * Memory allocated using Rf_alloc, which should be reclaimed at every down-call exit. Note:
+     * this is less efficient than GNUR's version, we may need to implement it properly should the
+     * performance be a problem.
+     */
+    public final ArrayList<Long> transientAllocations = new ArrayList<>();
 
     @Override
     public ContextState initialize(RContext context) {
+        String librffiPath = LibPaths.getBuiltinLibPath("R");
         if (context.isInitial()) {
-            String librffiPath = LibPaths.getBuiltinLibPath("R");
             DLL.loadLibR(librffiPath);
+        } else {
+            // force initialization of NFI
+            DLLRFFI.DLOpenRootNode.create(context).call(librffiPath, false, false);
         }
-        dllState.initialize(context);
-        callState.initialize(context);
         return this;
     }
 
     @Override
-    public void beforeDispose(RContext context) {
-        dllState.beforeDispose(context);
-        callState.beforeDispose(context);
+    public void afterDowncall() {
+        for (Long ptr : transientAllocations) {
+            UnsafeAdapter.UNSAFE.freeMemory(ptr);
+        }
+        transientAllocations.clear();
     }
 }

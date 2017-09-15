@@ -472,6 +472,7 @@ public interface CRFFI {
                 array[i] = getNativeArgument(i, args.getArgument(i));
             }
 
+            RContext.getInstance().getStateRFFI().beforeDowncall();
             execute(nativeCallInfo, array);
 
             // we have to assume that the native method updated everything
@@ -480,7 +481,7 @@ public interface CRFFI {
                 results[i] = ((TemporaryWrapper) array[i]).cleanup();
             }
 
-            RContext.getInstance().runNativeCollector();
+            RContext.getInstance().getStateRFFI().afterDowncall();
             return RDataFactory.createList(results, validateArgNames(array.length, args.getSignature()));
         }
 

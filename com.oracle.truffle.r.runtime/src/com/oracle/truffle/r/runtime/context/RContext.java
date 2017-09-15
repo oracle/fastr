@@ -42,7 +42,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -94,11 +93,11 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -348,54 +347,15 @@ public final class RContext implements RTruffleObject {
     public final DLL.ContextStateImpl stateDLL;
     /**
      * RFFI implementation state. Cannot be final as choice of FFI implementation is not made at the
-     * time the constructor is called.
+     * time the constructor is called. TODO: any reason for it not being @CompilationFinal?
      */
-    private ContextState stateRFFI;
+    private RFFIContext stateRFFI;
 
     public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
     public final WeakHashMap<Path, REnvironment> srcfileEnvironments = new WeakHashMap<>();
     public final List<String> libraryPaths = new ArrayList<>(1);
     public final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
-
-    /**
-     * Stack used by RFFI to implement the PROTECT/UNPROTECT functions. Objects registered on this
-     * stack do necessarily not have to be {@linke #registerReferenceUsedInNative}, but once popped
-     * off, they must be put into that list.
-     */
-    public final ArrayList<RObject> protectStack = new ArrayList<>();
-
-    public final ArrayList<Object> protectedNativeReferences = new ArrayList<>();
-
-    /**
-     * @see #runNativeCollector()
-     */
-    public void registerReferenceUsedInNative(Object obj) {
-        protectedNativeReferences.add(obj);
-    }
-
-    /**
-     * The GC in GNUR is cooperative, which means that unless native code calls back to the R engine
-     * (GNUR/FastR) it may assume (and unfortunately people do that) that GC will not run and will
-     * not collect anything that may be not reachable anymore, including the result of the last
-     * up-call and including the objects popped off the PROTECT/UNPROTECT stack! Moreover, some
-     * R-API functions are known to be not calling GC, therefore people may (and do) count on them
-     * not removing unreachable references, this is specifically true for {@code UPROTECT} and its
-     * variants and for macros like {@code INTEGER}. This behaviour is required e.g. for
-     * {@code C_parseRd}. We keep a list of all the objects that may not be reachable anymore, but
-     * must not be collected, because no garbagge collecting R-API function has been called since
-     * they became unreachable. This method clears this list so that Java GC can collect the
-     * objects.
-     */
-    public void runNativeCollector() {
-        protectedNativeReferences.clear();
-    }
-
-    /**
-     * FastR equivalent of GNUR's special dedicated global list that is GC root and so any vectors
-     * added to it will be guaranteed to be preserved.
-     */
-    public final HashSet<RObject> preserveList = new HashSet<>();
 
     private final AllocationReporter allocationReporter;
 
@@ -797,7 +757,7 @@ public final class RContext implements RTruffleObject {
         return language;
     }
 
-    public ContextState getStateRFFI() {
+    public RFFIContext getStateRFFI() {
         assert stateRFFI != null;
         return stateRFFI;
     }

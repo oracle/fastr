@@ -41,6 +41,7 @@ import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_UpCallsRFFIImplFactory.Vecto
 import com.oracle.truffle.r.ffi.impl.upcalls.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -53,6 +54,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 
 public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
@@ -82,6 +84,13 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
             throw RInternalError.shouldNotReachHere(ex);
         }
         return CharSXPWrapper.create(TruffleNFI_Utils.getString(address, len));
+    }
+
+    @Override
+    public Object R_alloc(int n, int size) {
+        long result = UnsafeAdapter.UNSAFE.allocateMemory(n * size);
+        getContext().transientAllocations.add(result);
+        return result;
     }
 
     @MessageResolution(receiverType = VectorWrapper.class)
@@ -218,5 +227,9 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
+    }
+
+    private static NFIContext getContext() {
+        return (NFIContext) RContext.getInstance().getStateRFFI();
     }
 }

@@ -9,103 +9,68 @@
  *
  * All rights reserved.
  */
-#include <rffiutils.h>
+#include "rffiutils.h"
 #include <stdlib.h>
 #include <string.h>
+#include <rffi_upcalls.h>
 
-#define T_MEM_TABLE_INITIAL_SIZE 0
-// The table of transient objects that have been allocated dur the current FFI call
-static void **tMemTable;
-// hwm of tMemTable
-static int tMemTableIndex;
-static int tMemTableLength;
-
-void init_memory() {
-    tMemTable = malloc(sizeof(void*) * T_MEM_TABLE_INITIAL_SIZE);
-    tMemTableLength = T_MEM_TABLE_INITIAL_SIZE;
-    tMemTableIndex = 0;
-}
-
-void *R_chk_calloc(size_t nelem, size_t elsize);
-
-// Memory that is auto-reclaimed across FFI calls
+// R_alloc should allocate memory that is auto-reclaimed across FFI calls.
+// In FastR this memory is managed by RContext to avoid race conditions.
+// FastR frees this memory in Java at the end of every FFI call (down-call).
 char *R_alloc(size_t n, int size) {
-    unimplemented("R_alloc should be implementd as UpCall functions to be thread safe");
-
-    void *p = R_chk_calloc(n, size);
-    if (tMemTableIndex >= tMemTableLength) {
-	int newLength = 2 * tMemTableLength;
-	void *newtMemTable = malloc(sizeof(void*) * newLength);
-	if (newtMemTable == NULL) {
-	    fatalError("malloc failure");
-	}
-	memcpy(newtMemTable, tMemTable, tMemTableLength * sizeof(void*));
-	free(tMemTable);
-	tMemTable = newtMemTable;
-	tMemTableLength = newLength;
-    }
-    tMemTable[tMemTableIndex] = p;
-    return (char*) p;
+    return (char *) ((call_R_alloc) callbacks[R_alloc_x])(n, size);
 }
 
-char* S_alloc(long n, int size) {
-	char *p = R_alloc(n, size);
-	memset(p, 0, n);
-	return p;
+// This is S compatible version of R_alloc
+char *S_alloc(long n, int size) {
+    char *p = R_alloc(n, size);
+    memset(p, 0, n);
+    return p;
 }
 
-char* S_realloc(char *p, long a, long b, int size) {
-	return unimplemented("S_realloc");
-}
-
-void allocExit() {
-    int i;
-    for (i = 0; i < tMemTableIndex; i++) {
-	free(tMemTable[i]);
-    }
+char *S_realloc(char *p, long a, long b, int size) {
+    return unimplemented("S_realloc");
 }
 
 void *R_chk_calloc(size_t nelem, size_t elsize) {
     void *p;
 #ifndef HAVE_WORKING_CALLOC
     if (nelem == 0)
-	return (NULL);
+        return (NULL);
 #endif
     p = calloc(nelem, elsize);
     if (!p) /* problem here is that we don't have a format for size_t. */
-	error("'Calloc' could not allocate memory (%.0f of %u bytes)",
-		(double) nelem, elsize);
+        error("'Calloc' could not allocate memory (%.0f of %u bytes)",
+              (double) nelem, elsize);
     return (p);
 }
 
 void *R_chk_realloc(void *ptr, size_t size) {
     void *p;
     /* Protect against broken realloc */
-    if(ptr) p = realloc(ptr, size); else p = malloc(size);
-    if(!p)
-	error("'Realloc' could not re-allocate memory (%.0f bytes)",
-	      (double) size);
-    return(p);
+    if (ptr) p = realloc(ptr, size); else p = malloc(size);
+    if (!p)
+        error("'Realloc' could not re-allocate memory (%.0f bytes)",
+              (double) size);
+    return (p);
 }
 
 void R_chk_free(void *ptr) {
-    if(ptr) {
-	    free(ptr);
+    if (ptr) {
+        free(ptr);
     }
 }
 
 int VMAX_MAGIC = 1234;
 
-void* vmaxget(void) {
-//    unimplemented("vmaxget");
+void *vmaxget(void) {
     // ignored
     return &VMAX_MAGIC;
 }
 
-void vmaxset(const void * x) {
-//    unimplemented("vmaxget");
+void vmaxset(const void *x) {
     if (x != &VMAX_MAGIC) {
-	unimplemented("vmaxset with different value");
+        unimplemented("vmaxset with different value");
     }
 }
 
@@ -119,7 +84,7 @@ int R_gc_running() {
 }
 
 SEXP Rf_allocS4Object() {
-	unimplemented("Rf_allocS4Object unimplemented");
-	return NULL;
+    unimplemented("Rf_allocS4Object unimplemented");
+    return NULL;
 }
 
