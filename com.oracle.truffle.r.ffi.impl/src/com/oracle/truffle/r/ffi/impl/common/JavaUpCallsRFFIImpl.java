@@ -380,7 +380,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int Rf_error(String msg) {
-        throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, msg);
+        RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, msg);
+        return 0;
     }
 
     @Override

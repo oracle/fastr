@@ -217,6 +217,7 @@ void Rf_error(const char *format, ...) {
     Rvsnprintf(buf, BUFSIZE - 1, format, ap);
     va_end(ap);
     ((call_Rf_error) callbacks[Rf_error_x])(ensure_string(buf));
+    exitCall();
     // Should not reach here
     unimplemented("Unexpected return from Rf_error, should be no return function");
 }

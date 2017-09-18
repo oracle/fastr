@@ -144,39 +144,44 @@ public class TruffleNFI_Call implements CallRFFI {
         }
     }
 
-    private static final String[] SIGNATURES = new String[32];
-
     private static String getSignatureForArity(int arity) {
         CompilerAsserts.neverPartOfCompilation();
-        if (arity >= SIGNATURES.length || SIGNATURES[arity] == null) {
-            StringBuilder str = new StringBuilder().append('(');
-            for (int i = 0; i < arity; i++) {
-                str.append(i > 0 ? ", " : "");
-                str.append("pointer");
+        StringBuilder str = new StringBuilder(10 * (arity + 2)).append("(");
+        for (int i = 0; i < arity + 1; i++) {
+            str.append(i > 0 ? ", " : "");
+            str.append("pointer");
+        }
+        return str.append("): pointer").toString();
+    }
+
+    private abstract static class NodeAdapter extends Node {
+        @Child private Node bindNode = Message.createInvoke(1).createNode();
+        private static DLL.DLLInfo rlibDLLInfo;
+
+        private static DLL.DLLInfo getRLibDLLInfo() {
+            if (rlibDLLInfo != null) {
+                rlibDLLInfo = DLL.findLibraryContainingSymbol("dot_call0");
             }
-            String signature = str.append("): pointer").toString();
-            if (arity < SIGNATURES.length) {
-                SIGNATURES[arity] = signature;
+            return rlibDLLInfo;
+        }
+
+        @TruffleBoundary
+        protected TruffleObject getFunction(String name, String signature) {
+            DLL.SymbolHandle symbolHandle = DLL.findSymbol(name, getRLibDLLInfo());
+            try {
+                return (TruffleObject) ForeignAccess.sendInvoke(bindNode, symbolHandle.asTruffleObject(), "bind", signature);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
-            return signature;
-        } else {
-            return SIGNATURES[arity];
         }
     }
 
     @ImportStatic(FFIWrapNode.class)
-    public abstract static class TruffleNFI_InvokeCallNode extends Node implements InvokeCallNode {
-
-        @Child private Node bindNode = Message.createInvoke(1).createNode();
+    public abstract static class TruffleNFI_InvokeCallNode extends NodeAdapter implements InvokeCallNode {
 
         @TruffleBoundary
-        protected TruffleObject getFunction(TruffleObject address, int arity) {
-            // cache signatures
-            try {
-                return (TruffleObject) ForeignAccess.sendInvoke(bindNode, address, "bind", getSignatureForArity(arity));
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
+        protected TruffleObject getFunction(int arity) {
+            return getFunction("dot_call" + arity, getSignatureForArity(arity));
         }
 
         @Specialization(guards = {"args.length == cachedArgsLength", "nativeCallInfo.address.asTruffleObject() == cachedAddress"})
@@ -186,12 +191,15 @@ public class TruffleNFI_Call implements CallRFFI {
                         @Cached("create()") FFIUnwrapNode unwrap,
                         @Cached("createExecute(cachedArgsLength)") Node executeNode,
                         @SuppressWarnings("unused") @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject cachedAddress,
-                        @Cached("getFunction(cachedAddress, cachedArgsLength)") TruffleObject cachedFunction) {
+                        @Cached("getFunction(cachedArgsLength)") TruffleObject cachedFunction) {
             synchronized (TruffleNFI_Call.class) {
                 Object result = null;
                 boolean isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes);
                 try {
-                    result = ForeignAccess.sendExecute(executeNode, cachedFunction, args);
+                    Object[] realArgs = new Object[cachedArgsLength + 1];
+                    System.arraycopy(args, 0, realArgs, 1, cachedArgsLength);
+                    realArgs[0] = cachedAddress;
+                    result = ForeignAccess.sendExecute(executeNode, cachedFunction, realArgs);
                     return unwrap.execute(result);
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
@@ -211,7 +219,10 @@ public class TruffleNFI_Call implements CallRFFI {
                 Object result = null;
                 boolean isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes);
                 try {
-                    result = ForeignAccess.sendExecute(executeNode, getFunction(nativeCallInfo.address.asTruffleObject(), cachedArgsLength), args);
+                    Object[] realArgs = new Object[cachedArgsLength + 1];
+                    System.arraycopy(args, 0, realArgs, 1, cachedArgsLength);
+                    realArgs[0] = nativeCallInfo.address;
+                    result = ForeignAccess.sendExecute(executeNode, getFunction(cachedArgsLength), realArgs);
                     return unwrap.execute(result);
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
@@ -226,10 +237,10 @@ public class TruffleNFI_Call implements CallRFFI {
         }
     }
 
-    private static class TruffleNFI_InvokeVoidCallNode extends Node implements InvokeVoidCallNode {
-        private static final String CallVoid1Sig = "(pointer): void";
-        private static final String CallVoid0Sig = "(): void";
-        @Child private Node bindNode = Message.createInvoke(1).createNode();
+    private static class TruffleNFI_InvokeVoidCallNode extends NodeAdapter implements InvokeVoidCallNode {
+        private static final String CallVoid1Sig = "(pointer, pointer): void";
+        private static final String CallVoid0Sig = "(pointer): void";
+
         @Child private Node execute0Node = Message.createExecute(0).createNode();
         @Child private Node execute1Node = Message.createExecute(1).createNode();
         @Children private final FFIWrapNode[] ffiWrapNodes0 = FFIWrapNode.create(0);
@@ -243,13 +254,13 @@ public class TruffleNFI_Call implements CallRFFI {
                     switch (args.length) {
                         case 0:
                             isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes0);
-                            TruffleObject callVoid0Function = (TruffleObject) ForeignAccess.sendInvoke(bindNode, nativeCallInfo.address.asTruffleObject(), "bind", CallVoid0Sig);
-                            ForeignAccess.sendExecute(execute0Node, callVoid0Function);
+                            TruffleObject callVoid0Function = getFunction("dot_call_void0", CallVoid0Sig);
+                            ForeignAccess.sendExecute(execute0Node, callVoid0Function, nativeCallInfo.address.asTruffleObject());
                             break;
                         case 1:
                             isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes1);
-                            TruffleObject callVoid1Function = (TruffleObject) ForeignAccess.sendInvoke(bindNode, nativeCallInfo.address.asTruffleObject(), "bind", CallVoid1Sig);
-                            ForeignAccess.sendExecute(execute1Node, callVoid1Function, args[0]);
+                            TruffleObject callVoid1Function = getFunction("dot_call_void1", CallVoid1Sig);
+                            ForeignAccess.sendExecute(execute1Node, callVoid1Function, nativeCallInfo.address.asTruffleObject(), args[0]);
                             break;
                         default:
                             throw RInternalError.shouldNotReachHere();
