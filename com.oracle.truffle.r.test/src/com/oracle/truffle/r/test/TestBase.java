@@ -604,8 +604,9 @@ public class TestBase {
             output.addAll(Arrays.asList(TestTrait.collect(traits, Output.class)));
             context.addAll(Arrays.asList(TestTrait.collect(traits, Context.class)));
             containsError = (!FULL_COMPARE_ERRORS && (output.contains(Output.IgnoreErrorContext) || output.contains(Output.ImprovedErrorContext) || output.contains(Output.IgnoreErrorMessage)));
-            isIgnored = ignored.size() > 0 ^ (ProcessFailedTests && (!IgnoredUnknownOnlyTests || (IgnoredUnknownOnlyTests && ignored.contains(Ignored.Unknown))) &&
-                            !(ignored.contains(Ignored.Unstable) || ignored.contains(Ignored.SideEffects)));
+            isIgnored = (ignored.size() > 0 || IgnoreIf.containsIgnoring(traits)) ^
+                            (ProcessFailedTests && (!IgnoredUnknownOnlyTests || (IgnoredUnknownOnlyTests && ignored.contains(Ignored.Unknown))) &&
+                                            !(ignored.contains(Ignored.Unstable) || ignored.contains(Ignored.SideEffects)));
             assert !output.contains(Output.IgnoreWhitespace) || output.size() == 1 : "IgnoreWhitespace trait does not work with any other Output trait";
 
         }
