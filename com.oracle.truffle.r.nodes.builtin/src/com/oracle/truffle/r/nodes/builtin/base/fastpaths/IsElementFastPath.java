@@ -57,7 +57,7 @@ public abstract class IsElementFastPath extends RFastPathNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(replaces = "iselementOneCachedString")
+    @Specialization(guards = "elIn.getLength() == 1", replaces = "iselementOneCachedString")
     protected Byte iselementOne(RAbstractStringVector elIn, RAbstractStringVector setIn,
                     @Cached("create()") BranchProfile trueProfile,
                     @Cached("create()") BranchProfile falseProfile) {
