@@ -9,6 +9,8 @@
 /mx.fastr/eclipse-config-libs.zip
 /mx.fastr/eclipse-config.zip
 /mx.fastr/netbeans-config.zip
+/mx.fastr/.project
+/mx.fastr/.pydevproject
 /mxbuild/
 /com.oracle.truffle.r.release/include/*
 /com.oracle.truffle.r.native/fficall/src/common/copy_appl_objects
