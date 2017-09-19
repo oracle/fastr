@@ -343,4 +343,6 @@ public interface StdUpCallsRFFI {
 
     @RFFIUpCallNode(CADDRNode.class)
     Object Rf_asCharacterFactor(Object x);
+
+    Object Rf_match(Object itables, Object ix, int nmatch);
 }

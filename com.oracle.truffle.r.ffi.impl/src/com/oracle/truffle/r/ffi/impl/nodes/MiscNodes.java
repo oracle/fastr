@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.objects.NewObject;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -192,6 +193,16 @@ public final class MiscNodes {
         Object doNewObject(Object vec, Object val) {
             setNamesNode.execute(vec, val);
             return vec;
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    abstract static class MatchNode extends FFIUpCallNode.Arg3 {
+
+        @SuppressWarnings("unused")
+        @Specialization
+        Object match(Object itables, Object ix, int nmatch) {
+            throw RInternalError.unimplemented("Rf_match");
         }
     }
 

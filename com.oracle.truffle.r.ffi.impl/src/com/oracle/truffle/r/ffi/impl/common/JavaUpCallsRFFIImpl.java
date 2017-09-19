@@ -1678,4 +1678,10 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     private static RFFIContext getContext() {
         return RContext.getInstance().getStateRFFI();
     }
+
+    @Override
+    public Object Rf_match(Object itables, Object ix, int nmatch) {
+        throw implementedAsNode();
+    }
+
 }

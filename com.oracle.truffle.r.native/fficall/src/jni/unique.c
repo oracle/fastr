@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,31 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 #include <rffiutils.h>
 
-void R_CheckStack(void) {
-    // TODO: check for stack overflow
-    // ignored
+static jmethodID Rf_matchMethodID;
+
+void init_unique(JNIEnv *env) {
+
+	Rf_matchMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_match", "(Ljava/lang/Object;Ljava/lang/Object;I)Ljava/lang/Object;", 0);
 }
 
-void R_CheckStack2(size_t extra) {
-    // TODO: check for stack overflow
-    // ignored
-}
-
-void R_CheckUserInterrupt(void) {
-    // ignored
-}
-
-void Rf_onintr() {
-    // TODO: implement interrupt handling, signal errors
-    // ignored
-}
-
-Rboolean isOrdered(SEXP s)
+SEXP Rf_matchE(SEXP itable, SEXP ix, int nmatch, SEXP env)
 {
-    return (TYPEOF(s) == INTSXP
-	    && inherits(s, "factor")
-	    && inherits(s, "ordered"));
+	unimplemented("Rf_matchE");
 }
+
+/* used from other code, not here: */
+SEXP Rf_match(SEXP itable, SEXP ix, int nmatch)
+{
+	TRACE(TARGppd, itable, ix, nmatch);
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_matchMethodID, itable, ix, nmatch);
+	return checkRef(thisenv, result);
+}
+
