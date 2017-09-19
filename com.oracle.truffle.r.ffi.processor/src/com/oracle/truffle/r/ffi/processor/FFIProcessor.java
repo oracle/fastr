@@ -167,7 +167,7 @@ public final class FFIProcessor extends AbstractProcessor {
 
     private void generateCallClass(ExecutableElement m) throws IOException {
         RFFIUpCallNode nodeAnnotation = m.getAnnotation(RFFIUpCallNode.class);
-        String canRunGc = m.getAnnotation(RFFINoGC.class) == null ? "true" : "false";
+        String canRunGc = m.getAnnotation(RFFIRunGC.class) == null ? "false" : "true";
         String nodeClassName = null;
         TypeElement nodeClass = null;
         if (nodeAnnotation != null) {
@@ -320,7 +320,9 @@ public final class FFIProcessor extends AbstractProcessor {
         if (returnKind == TypeKind.VOID) {
             w.append("                    return 0; // void return type\n");
         } else {
-            w.append("                    ctx.registerReferenceUsedInNative(resultRObj); \n");
+            if (!returnKind.isPrimitive() && m.getAnnotationsByType(RFFICpointer.class).length == 0) {
+                w.append("                    ctx.registerReferenceUsedInNative(resultRObj); \n");
+            }
             w.append("                    return resultRObj;\n");
         }
         w.append("                }\n");

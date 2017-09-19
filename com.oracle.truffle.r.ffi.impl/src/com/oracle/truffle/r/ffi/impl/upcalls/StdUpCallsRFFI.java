@@ -38,7 +38,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
-import com.oracle.truffle.r.ffi.processor.RFFINoGC;
+import com.oracle.truffle.r.ffi.processor.RFFIRunGC;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 
 /**
@@ -152,19 +152,14 @@ public interface StdUpCallsRFFI {
 
     int /* void */ SET_VECTOR_ELT(Object x, long i, Object v);
 
-    @RFFINoGC
     Object RAW(Object x);
 
-    @RFFINoGC
     Object LOGICAL(Object x);
 
-    @RFFINoGC
     Object INTEGER(Object x);
 
-    @RFFINoGC
     Object REAL(Object x);
 
-    @RFFINoGC
     Object COMPLEX(Object x);
 
     Object STRING_ELT(Object x, long i);
@@ -221,6 +216,7 @@ public interface StdUpCallsRFFI {
 
     Object R_FindNamespace(Object name);
 
+    @RFFIRunGC
     Object Rf_eval(Object expr, Object env);
 
     Object Rf_findFun(Object symbolObj, Object envObj);

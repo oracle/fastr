@@ -26,10 +26,10 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
 /**
- * Tags upcall functions that should not perform simulation of GNUR's cooperative GC, i.e.
- * unreachable objects allocated for native code should not be collected yet. See
- * {@code RFFIContext} for more details.
+ * Tags upcall functions that may perform simulation of GNUR's cooperative GC, i.e. unreachable
+ * objects allocated for native code can be collected at this point. See {@code RFFIContext} for
+ * more details.
  */
 @Target({ElementType.METHOD})
-public @interface RFFINoGC {
+public @interface RFFIRunGC {
 }
