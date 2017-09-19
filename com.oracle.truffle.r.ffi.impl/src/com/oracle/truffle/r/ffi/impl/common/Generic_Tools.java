@@ -65,7 +65,7 @@ public class Generic_Tools implements ToolsRFFI {
                 return callRFFINode.dispatch(nativeCallInfo,
                                 new Object[]{con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups});
             } catch (Throwable ex) {
-                throw RInternalError.shouldNotReachHere(ex, "error during Rd parsing");
+                throw RInternalError.shouldNotReachHere(ex, "error during Rd parsing" + ex.getMessage());
             }
         }
     }

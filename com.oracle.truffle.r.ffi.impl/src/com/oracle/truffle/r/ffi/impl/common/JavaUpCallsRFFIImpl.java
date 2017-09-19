@@ -194,6 +194,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public Object Rf_mkCharLenCE(Object bytes, int len, int encoding) {
         // TODO: handle encoding properly
         return CharSXPWrapper.create(new String((byte[]) bytes, StandardCharsets.UTF_8));
