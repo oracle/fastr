@@ -68,10 +68,8 @@ packagesLinux : ${pkgEnvironment} {
 packagesDarwin : {
   "pip:astroid" : "==1.1.0"
   "pip:pylint" : "==1.1.0"
-  "xz" : ""
-  "pcre" : ""
-  "z" : ""
-  "curl" : ""
+  "xz" : "==5.2.2"
+  "pcre" : "==8.38"
 }
 
 # Common settings for all builds but note that it uses the Linux package settings,
@@ -116,8 +114,7 @@ darwinEnvironment : {
 }
 
 gateTestDarwin : ${gateTestCommon} ${darwinEnvironment} {
-  packages : ${packagesDarwin} {
-  }
+  packages : ${packagesDarwin}
 }
 
 gateTestLinuxNFI : ${gateTestCommon} {
@@ -184,7 +181,7 @@ builds = [
   ${gateTestLinux}            {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64"}
   ${gateTestLinuxNFI}         {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-nfi-amd64"}
   ${gateTestNoSpecialsLinux}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64-nospecials"}
-  ${gateTestDarwin}           {capabilities : [darwin_elcapitan, amd64], targets : [gate], name: "gate-test-darwin-amd64"}
+  ${gateTestDarwin}           {capabilities : [darwin_sierra, amd64], targets : [gate], name: "gate-test-darwin-amd64"}
   ${gateStyle}                {capabilities : [linux, amd64],  targets : [gate], name: "gate-style-linux-amd64"}
   ${rbcheck}                  {capabilities : [linux, amd64],  targets : [gate], name: "gate-rbcheck-linux-amd64"}
   ${internalPkgtest}          {capabilities : [linux, amd64],  targets : [gate], name: "gate-internal-pkgtest-linux-amd64"}
