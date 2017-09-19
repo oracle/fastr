@@ -118,6 +118,7 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
      * Unlike atomic vectors, {@code RList} cannot have a native memory mirror, therefore this is a
      * fast operation.
      */
+    @Override
     public final Object[] getReadonlyData() {
         return data;
     }

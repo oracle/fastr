@@ -74,6 +74,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     private static Node asPointer = Message.AS_POINTER.createNode();
 
     @Override
+    @TruffleBoundary
     public Object Rf_mkCharLenCE(Object bytes, int len, int encoding) {
         // "bytes" is actually a Long unboxed from a NativePointer
         // TODO: handle encoding properly
@@ -216,7 +217,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         if (result == null) {
             throw RError.error(RError.NO_CALLER, RError.Message.UNKNOWN_OBJECT, functionName);
         }
-        return result.address.asAddress();
+        return result.address.value;
     }
 
     @Override

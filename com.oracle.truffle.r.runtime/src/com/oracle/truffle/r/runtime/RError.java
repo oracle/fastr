@@ -761,7 +761,7 @@ public final class RError extends RuntimeException implements TruffleException {
         DEPARSE_INVALID_CUTOFF("invalid 'cutoff' value for 'deparse', using default"),
         FILE_CANNOT_CREATE("cannot create file '%s'"),
         FILE_CANNOT_LINK("  cannot link '%s' to '%s', reason %s"),
-        FILE_CANNOT_COPY("  cannot link '%s' to '%s', reason %s"),
+        FILE_CANNOT_COPY("  cannot copy '%s' to '%s', reason %s"),
         FILE_CANNOT_REMOVE("  cannot remove file '%s'"),
         FILE_CANNOT_RENAME("  cannot rename file '%s' to '%s'"),
         FILE_COPY_RECURSIVE_IGNORED("'recursive' will be ignored as 'to' is not a single existing directory"),

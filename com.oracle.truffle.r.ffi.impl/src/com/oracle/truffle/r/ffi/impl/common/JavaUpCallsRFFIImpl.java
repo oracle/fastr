@@ -1521,12 +1521,15 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int R_ProtectWithIndex(Object x) {
-        throw RInternalError.unimplemented();
+        ArrayList<RObject> stack = getContext().protectStack;
+        stack.add(guaranteeInstanceOf(x, RObject.class));
+        return stack.size() - 1;
     }
 
     @Override
     public void R_Reprotect(Object x, int y) {
-        throw RInternalError.unimplemented();
+        ArrayList<RObject> stack = getContext().protectStack;
+        stack.set(y, guaranteeInstanceOf(x, RObject.class));
     }
 
     @Override

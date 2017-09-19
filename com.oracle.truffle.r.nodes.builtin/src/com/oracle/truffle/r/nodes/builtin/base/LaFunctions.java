@@ -106,11 +106,11 @@ public class LaFunctions {
         static {
             createCasts(Rg.class);
         }
+        @Child private LapackRFFI.DgeevNode dgeevNode = LapackRFFI.DgeevNode.create();
 
         @Specialization
         protected Object doRg(RAbstractDoubleVector matrix, boolean onlyValues,
-                        @Cached("create()") GetDimAttributeNode getDimsNode,
-                        @Cached("create()") LapackRFFI.DgeevNode dgeevNode) {
+                        @Cached("create()") GetDimAttributeNode getDimsNode) {
             int[] dims = getDimsNode.getDimensions(matrix);
             // copy array component of matrix as Lapack destroys it
             int n = dims[0];
@@ -204,11 +204,11 @@ public class LaFunctions {
         static {
             createCasts(Rs.class);
         }
+        @Child private LapackRFFI.DsyevrNode dsyevrNode = LapackRFFI.DsyevrNode.create();
 
         @Specialization
         protected Object doRs(RAbstractDoubleVector matrix, boolean onlyValues,
-                        @Cached("create()") GetDimAttributeNode getDimsNode,
-                        @Cached("create()") LapackRFFI.DsyevrNode dsyevrNode) {
+                        @Cached("create()") GetDimAttributeNode getDimsNode) {
             int[] dims = getDimsNode.getDimensions(matrix);
             int n = dims[0];
             char jobv = onlyValues ? 'N' : 'V';
@@ -268,12 +268,12 @@ public class LaFunctions {
             Casts casts = new Casts(Qr.class);
             casts.arg("in").asDoubleVector(false, true, false).mustBe(matrix(), Message.MUST_BE_NUMERIC_MATRIX, "a");
         }
+        @Child private LapackRFFI.Dgeqp3Node dgeqp3Node = LapackRFFI.Dgeqp3Node.create();
 
         @Specialization
         protected RList doQr(RAbstractDoubleVector aIn,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
-                        @Cached("create()") SetDimAttributeNode setDimsNode,
-                        @Cached("create()") LapackRFFI.Dgeqp3Node dgeqp3Node) {
+                        @Cached("create()") SetDimAttributeNode setDimsNode) {
             // This implementation is sufficient for B25 matcal-5.
             int[] dims = getDimsNode.getDimensions(aIn);
             // copy array component of matrix as Lapack destroys it
@@ -319,14 +319,15 @@ public class LaFunctions {
             casts.arg("b").asDoubleVector(false, true, false).mustBe(matrix(), Message.MUST_BE_NUMERIC_MATRIX, "b");
         }
 
+        @Child private LapackRFFI.DormqrNode dormqrNode = LapackRFFI.DormqrNode.create();
+        @Child private LapackRFFI.DtrtrsNode dtrtrsNode = LapackRFFI.DtrtrsNode.create();
+
         @Specialization
         protected RDoubleVector doQrCoefReal(RList qIn, RAbstractDoubleVector b,
                         @Cached("create()") GetReadonlyData.Double qrToArrayNode,
                         @Cached("create()") GetReadonlyData.Double tauToArrayNode,
                         @Cached("create()") GetDimAttributeNode getBDimsNode,
-                        @Cached("create()") GetDimAttributeNode getQDimsNode,
-                        @Cached("create()") LapackRFFI.DormqrNode dormqrNode,
-                        @Cached("create()") LapackRFFI.DtrtrsNode dtrtrsNode) {
+                        @Cached("create()") GetDimAttributeNode getQDimsNode) {
             RDoubleVector qr = (RDoubleVector) qIn.getDataAt(0);
 
             RDoubleVector tau = (RDoubleVector) qIn.getDataAt(2);
@@ -384,12 +385,12 @@ public class LaFunctions {
             casts.arg("uselog").defaultError(Message.MUST_BE_LOGICAL, "logarithm").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
-        @Specialization
+        @Child private LapackRFFI.DgetrfNode dgetrfNode = LapackRFFI.DgetrfNode.create();
 
+        @Specialization
         protected RList doDetGeReal(RAbstractDoubleVector aIn, boolean useLog,
                         @Cached("create()") GetReadonlyData.Double vectorToArrayNode,
-                        @Cached("create()") GetDimAttributeNode getDimsNode,
-                        @Cached("create()") LapackRFFI.DgetrfNode dgetrfNode) {
+                        @Cached("create()") GetDimAttributeNode getDimsNode) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
             int[] aDims = getDimsNode.getDimensions(aIn);
             int n = aDims[0];
@@ -466,14 +467,15 @@ public class LaFunctions {
             casts.arg("tol").asDoubleVector().findFirst(RRuntime.DOUBLE_NA);
         }
 
+        @Child private LapackRFFI.DpotrfNode dpotrfNode = LapackRFFI.DpotrfNode.create();
+        @Child private LapackRFFI.DpstrfNode dpstrfNode = LapackRFFI.DpstrfNode.create();
+
         @Specialization
         protected RDoubleVector doDetGeReal(RAbstractDoubleVector aIn, boolean piv, double tol,
                         @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
                         @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                        @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                        @Cached("create()") LapackRFFI.DpotrfNode dpotrfNode,
-                        @Cached("create()") LapackRFFI.DpstrfNode dpstrfNode) {
+                        @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
             double[] aData = aIn.materialize().getDataCopy();
             int[] aDims = getDimsNode.getDimensions(aIn);
             int n = aDims[0];
@@ -540,10 +542,11 @@ public class LaFunctions {
             casts.arg("size").asIntegerVector().mustBe(notEmpty()).findFirst().mustBe(gt(0), Message.MUST_BE_POSITIVE_INT);
         }
 
+        @Child private LapackRFFI.DpotriNode dpotriNode = LapackRFFI.DpotriNode.create();
+
         @Specialization
         protected RDoubleVector chol2inv(RAbstractDoubleVector a, int size,
-                        @Cached("create()") GetDimAttributeNode getDimsNode,
-                        @Cached("create()") LapackRFFI.DpotriNode dpotriNode) {
+                        @Cached("create()") GetDimAttributeNode getDimsNode) {
 
             int[] aDims = getDimsNode.getDimensions(a);
             int m = aDims[0];
@@ -617,6 +620,10 @@ public class LaFunctions {
             casts.arg("tolin").asDoubleVector().findFirst(RRuntime.DOUBLE_NA);
         }
 
+        @Child private LapackRFFI.DgesvNode dgesvNode = LapackRFFI.DgesvNode.create();
+        @Child private LapackRFFI.DgeconNode dgeconNode = LapackRFFI.DgeconNode.create();
+        @Child private LapackRFFI.DlangeNode dlangeNode = LapackRFFI.DlangeNode.create();
+
         @Specialization
         protected RDoubleVector laSolve(RAbstractVector a, RAbstractDoubleVector bin, double tol,
                         @Cached("create()") GetDimAttributeNode getADimsNode,
@@ -625,10 +632,7 @@ public class LaFunctions {
                         @Cached("create()") SetDimNamesAttributeNode setBDimNamesNode,
                         @Cached("create()") GetDimNamesAttributeNode getADimNamesNode,
                         @Cached("create()") GetDimNamesAttributeNode getBinDimNamesNode,
-                        @Cached("create()") SetNamesAttributeNode setNamesNode,
-                        @Cached("create()") LapackRFFI.DgesvNode dgesvNode,
-                        @Cached("create()") LapackRFFI.DgeconNode dgeconNode,
-                        @Cached("create()") LapackRFFI.DlangeNode dlangeNode) {
+                        @Cached("create()") SetNamesAttributeNode setNamesNode) {
             int[] aDims = getADimsNode.getDimensions(a);
             int n = aDims[0];
             if (n == 0) {
