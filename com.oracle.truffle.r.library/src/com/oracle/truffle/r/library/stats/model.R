@@ -582,14 +582,16 @@ termsform <- function (x.in, specials, data, keep.order, allowDotAsName) {
     varlist <<- list()
     ExtractVars(x)
     vars <- quote(list())
-    vars[2:(length(varlist) + 1L)] <- varlist
+    if(length(varlist)) {
+    	vars[2:(length(varlist) + 1L)] <- varlist
+    }
     attr(x, "variables") <- vars
     
     # Note: GnuR uses bitvector of integers and variable nwords to denote its size, we do not need that
     nvar <<- length(varlist) 
     formula <- EncodeVars(x)
     
-    # EncodeVars may have stretched varlist becuase it is a global variable (to reflect GnuR's implementation) 
+    # EncodeVars may have stretched varlist because it is a global variable (to reflect GnuR's implementation) 
     nvar <<- length(varlist)
     
     # Step 2a: Compute variable names 
@@ -611,24 +613,28 @@ termsform <- function (x.in, specials, data, keep.order, allowDotAsName) {
     
     # Step 3: Reorder the model terms by BitCount, otherwise
     # preserving their order. 
-    sCounts <- vapply(formula, BitCount, 0L)
-    bitmax <- max(sCounts)
-
-    if (keep.order) {
-        ord <- sCounts;
-    } else {
-      pattern <- formula # save original formula
-      callIdx <- 1L
-      ord <- integer(nterm)
-      for (i in 0:bitmax) {
-        for (n in 1:nterm) {
-          if (sCounts[[n]] == i) {
-            formula[[callIdx]] <- pattern[[n]]
-            ord[[callIdx]] <- i
-            callIdx <- callIdx + 1L
+    if(nterm) {
+        sCounts <- vapply(formula, BitCount, 0L)
+        bitmax <- max(sCounts)
+        
+        if (keep.order) {
+            ord <- sCounts;
+        } else {
+          pattern <- formula # save original formula
+          callIdx <- 1L
+          ord <- integer(nterm)
+          for (i in 0:bitmax) {
+            for (n in 1:nterm) {
+              if (sCounts[[n]] == i) {
+                formula[[callIdx]] <- pattern[[n]]
+                ord[[callIdx]] <- i
+                callIdx <- callIdx + 1L
+              }
+            }
           }
         }
-      }
+    } else {
+    	ord <- integer()
     }
     
     # Step 4: Compute the factor pattern for the model. 
