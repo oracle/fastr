@@ -475,12 +475,12 @@ void R_ProtectWithIndex(SEXP x, PROTECT_INDEX *y) {
 
 void R_Reprotect(SEXP x, PROTECT_INDEX y) {
     TRACE("%p %i", x, y);
-    return ((call_R_Reprotect) callbacks[R_Reprotect_x])(x, y);
+    ((call_R_Reprotect) callbacks[R_Reprotect_x])(x, y);
 }
 
 void Rf_unprotect_ptr(SEXP x) {
     TRACE1(x);
-    return ((call_Rf_unprotect_ptr) callbacks[Rf_unprotect_ptr_x])(x);
+    ((call_Rf_unprotect_ptr) callbacks[Rf_unprotect_ptr_x])(x);
 }
 
 void R_FlushConsole(void) {
