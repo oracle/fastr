@@ -35,107 +35,123 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 public class Managed_Base implements BaseRFFI {
+
+    private static final class ManagedGetpidNode extends Node implements GetpidNode {
+        private int fakePid = (int) System.currentTimeMillis();
+
+        @Override
+        public int execute() {
+            return fakePid;
+        }
+    }
+
     /**
      * Process id is used as seed for random number generator. We return another "random" number.
      */
     @Override
     public GetpidNode createGetpidNode() {
-        return new GetpidNode() {
-            private int fakePid = (int) System.currentTimeMillis();
+        return new ManagedGetpidNode();
+    }
 
-            @Override
-            public int execute() {
-                return fakePid;
-            }
-        };
+    private static final class ManagedGetwdNode extends Node implements GetwdNode {
+        @Override
+        @TruffleBoundary
+        public String execute() {
+            return Paths.get(".").toAbsolutePath().normalize().toString();
+        }
     }
 
     @Override
     public GetwdNode createGetwdNode() {
-        return new GetwdNode() {
-            @Override
-            @TruffleBoundary
-            public String execute() {
-                return Paths.get(".").toAbsolutePath().normalize().toString();
-            }
-        };
+        return new ManagedGetwdNode();
+    }
+
+    private static final class ManagedSetwdNode extends Node implements SetwdNode {
+        @Override
+        public int execute(String dir) {
+            throw unsupported("setwd");
+        }
     }
 
     @Override
     public SetwdNode createSetwdNode() {
-        return new SetwdNode() {
-            @Override
-            public int execute(String dir) {
-                throw unsupported("setwd");
-            }
-        };
+        return new ManagedSetwdNode();
+    }
+
+    private static final class ManagedMkdirNode extends Node implements MkdirNode {
+        @Override
+        @TruffleBoundary
+        public void execute(String dir, int mode) throws IOException {
+            Set<PosixFilePermission> permissions = permissionsFromMode(mode);
+            Files.createDirectories(Paths.get(dir), PosixFilePermissions.asFileAttribute(permissions));
+        }
     }
 
     @Override
     public MkdirNode createMkdirNode() {
-        return new MkdirNode() {
-            @Override
-            @TruffleBoundary
-            public void execute(String dir, int mode) throws IOException {
-                Set<PosixFilePermission> permissions = permissionsFromMode(mode);
-                Files.createDirectories(Paths.get(dir), PosixFilePermissions.asFileAttribute(permissions));
-            }
-        };
+        return new ManagedMkdirNode();
+    }
+
+    private static final class ManagedReadLinkNode extends Node implements ReadlinkNode {
+        @Override
+        public String execute(String path) throws IOException {
+            throw unsupported("linknode");
+        }
     }
 
     @Override
     public ReadlinkNode createReadlinkNode() {
-        return new ReadlinkNode() {
-            @Override
-            public String execute(String path) throws IOException {
-                throw unsupported("linknode");
+        return new ManagedReadLinkNode();
+    }
+
+    private static final class ManagedMkdtempNode extends Node implements MkdtempNode {
+        @Override
+        @TruffleBoundary
+        public String execute(String template) {
+            Path path = null;
+            boolean done = false;
+            while (!done) {
+                try {
+                    path = Paths.get(template);
+                    Files.createDirectories(path);
+                    done = true;
+                } catch (FileAlreadyExistsException e) {
+                    // nop
+                } catch (IOException e) {
+                    throw RError.error(RError.NO_CALLER, Message.GENERIC, "Cannot create temp directories.");
+                }
             }
-        };
+            return path.toString();
+        }
     }
 
     @Override
     public MkdtempNode createMkdtempNode() {
-        return new MkdtempNode() {
-            @Override
-            @TruffleBoundary
-            public String execute(String template) {
-                Path path = null;
-                boolean done = false;
-                while (!done) {
-                    try {
-                        path = Paths.get(template);
-                        Files.createDirectories(path);
-                        done = true;
-                    } catch (FileAlreadyExistsException e) {
-                        // nop
-                    } catch (IOException e) {
-                        throw RError.error(RError.NO_CALLER, Message.GENERIC, "Cannot create temp directories.");
-                    }
-                }
-                return path.toString();
+        return new ManagedMkdtempNode();
+    }
+
+    private static final class ManagedChmodNode extends Node implements ChmodNode {
+        @Override
+        @TruffleBoundary
+        public int execute(String path, int mode) {
+            try {
+                Files.setPosixFilePermissions(Paths.get(path), permissionsFromMode(mode));
+                return mode;
+            } catch (IOException e) {
+                throw RError.error(RError.NO_CALLER, Message.GENERIC, "Cannot change file permissions.");
             }
-        };
+        }
     }
 
     @Override
     public ChmodNode createChmodNode() {
-        return new ChmodNode() {
-            @Override
-            @TruffleBoundary
-            public int execute(String path, int mode) {
-                try {
-                    Files.setPosixFilePermissions(Paths.get(path), permissionsFromMode(mode));
-                    return mode;
-                } catch (IOException e) {
-                    throw RError.error(RError.NO_CALLER, Message.GENERIC, "Cannot change file permissions.");
-                }
-            }
-        };
+        return new ManagedChmodNode();
     }
 
     @Override
@@ -143,39 +159,41 @@ public class Managed_Base implements BaseRFFI {
         return null;
     }
 
+    private static final class ManagedUnameNode extends Node implements UnameNode {
+        @Override
+        public UtsName execute() {
+            return new UtsName() {
+                @Override
+                public String sysname() {
+                    return System.getProperty("os.name");
+                }
+
+                @Override
+                public String release() {
+                    return "";
+                }
+
+                @Override
+                public String version() {
+                    return System.getProperty("os.version");
+                }
+
+                @Override
+                public String machine() {
+                    return System.getProperty("os.arch");
+                }
+
+                @Override
+                public String nodename() {
+                    return "";
+                }
+            };
+        }
+    }
+
     @Override
     public UnameNode createUnameNode() {
-        return new UnameNode() {
-            @Override
-            public UtsName execute() {
-                return new UtsName() {
-                    @Override
-                    public String sysname() {
-                        return System.getProperty("os.name");
-                    }
-
-                    @Override
-                    public String release() {
-                        return "";
-                    }
-
-                    @Override
-                    public String version() {
-                        return System.getProperty("os.version");
-                    }
-
-                    @Override
-                    public String machine() {
-                        return System.getProperty("os.arch");
-                    }
-
-                    @Override
-                    public String nodename() {
-                        return "";
-                    }
-                };
-            }
-        };
+        return new ManagedUnameNode();
     }
 
     @Override
