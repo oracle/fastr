@@ -42,6 +42,7 @@ import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.CovcorNodeGen;
 import com.oracle.truffle.r.library.stats.CutreeNodeGen;
 import com.oracle.truffle.r.library.stats.DoubleCentreNodeGen;
+import com.oracle.truffle.r.library.stats.PPSum;
 import com.oracle.truffle.r.library.stats.RMultinomNode;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodes;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodes.RandFunction1Node;
@@ -570,6 +571,7 @@ public class CallAndExternalFunctions {
                 case "ar2ma":
                 case "Burg":
                 case "intgrt_vec":
+                    return PPSum.IntgrtVecNode.create();
                 case "pp_sum":
                 case "Fexact":
                 case "Fisher_sim":
