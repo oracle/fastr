@@ -590,7 +590,7 @@ install.suggests <- function(pkgnames) {
 				blacklist <- get.blacklist()
 				nsuggests <- suggests[!suggests %in% blacklist]
 				if (length(nsuggests) != length(suggests)) {
-					cat("not installing Suggests of:", pkgname, ", one or more is blacklisted", "\n")
+					cat("not installing Suggests of:", pkgname, ", one or more is blacklisted: ", paste(suggests[suggests %in% blacklist], sep=", "), "\n")
 					return()
 				}
 			}
@@ -605,8 +605,8 @@ install.suggests <- function(pkgnames) {
 			} else {
 				if (anyNA(dep.status)) {
 					# case 3
-					cat("installing Suggests of:", pkgname, "\n")
-					dependent.install.ok <- install.pkgs(suggests, dependents.install=T, log=F)
+					cat("installing Suggests of:", pkgname,":",paste(suggests[is.na(dep.status)], sep=", "), "\n")
+					dependent.install.ok <- install.pkgs(suggests[is.na(dep.status)], dependents.install=T, log=F)
 				} else {
 					# case 1
 				}
