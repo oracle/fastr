@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -80,7 +81,7 @@ class UnsafeAdapter {
  * Use {@link #asPointer(Object)} to assign a native mirror object to the given vector. The raw data
  * in native memory for a vector that already has a native mirror object assigned can be allocated
  * using e.g. {@link #allocateNativeContents(RIntVector, int[], int)} .
- * 
+ *
  * There is a registry of weak references to all native mirrors ever assigned to some vector object.
  * We use the finalizer to free the native memory (if allocated).
  */
@@ -88,6 +89,8 @@ public final class NativeDataAccess {
     private NativeDataAccess() {
         // no instances
     }
+
+    private static final boolean TRACE_MIRROR_ALLOCATION_SITES = false;
 
     public static boolean isNativeMirror(Object o) {
         return o instanceof NativeMirror;
@@ -145,6 +148,7 @@ public final class NativeDataAccess {
 
     private static final AtomicLong counter = new AtomicLong(0xdef000000000000L);
     private static final ConcurrentHashMap<Long, WeakReference<RObject>> nativeMirrors = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Long, RuntimeException> nativeMirrorInfo = new ConcurrentHashMap<>();
 
     public static CallTarget createIsPointer() {
         return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
@@ -180,10 +184,18 @@ public final class NativeDataAccess {
                 // System.out.println(String.format("adding %16x = %s", mirror.id,
                 // obj.getClass().getSimpleName()));
                 nativeMirrors.put(mirror.id, new WeakReference<>(obj));
+                if (TRACE_MIRROR_ALLOCATION_SITES) {
+                    registerAllocationSite(arg, mirror);
+                }
             }
             return mirror.id;
         }
         throw UnsupportedMessageException.raise(Message.AS_POINTER);
+    }
+
+    @TruffleBoundary
+    private static void registerAllocationSite(Object arg, NativeMirror mirror) {
+        nativeMirrorInfo.put(mirror.id, new RuntimeException(arg.getClass().getSimpleName() + " " + arg));
     }
 
     public static Object toNative(Object obj) {
@@ -198,14 +210,23 @@ public final class NativeDataAccess {
         WeakReference<RObject> reference = nativeMirrors.get(address);
         if (reference == null) {
             CompilerDirectives.transferToInterpreter();
-            throw RInternalError.shouldNotReachHere("unknown/stale native reference " + address);
+            throw reportDataAccessError(address);
         }
         RObject result = reference.get();
         if (result == null) {
             CompilerDirectives.transferToInterpreter();
-            throw RInternalError.shouldNotReachHere("unknown/stale native reference" + address);
+            throw reportDataAccessError(address);
         }
         return result;
+    }
+
+    private static RuntimeException reportDataAccessError(long address) {
+        RuntimeException location = nativeMirrorInfo.get(address);
+        if (location != null) {
+            System.out.println("Location at which the native mirror was allocated:");
+            location.printStackTrace();
+        }
+        throw RInternalError.shouldNotReachHere("unknown native reference " + address + "L / 0x" + Long.toHexString(address) + " (current id count: " + Long.toHexString(counter.get()) + ")");
     }
 
     // methods operating on the native mirror object directly:
