@@ -158,7 +158,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
                         @Cached("HAS_SIZE.createNode()") Node hasSize,
                         @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
                         @Cached("createRecursive()") LogicalScalarCastNode recursive) {
-            Object o = foreignArray2R.execute(operand, true);
+            Object o = foreignArray2R.convert(operand);
             return recursive.executeCast(o);
         }
 

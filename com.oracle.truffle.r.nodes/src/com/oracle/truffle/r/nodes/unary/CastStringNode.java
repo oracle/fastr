@@ -112,7 +112,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     @Specialization(guards = "isForeignObject(obj)")
     protected RStringVector doForeignObject(TruffleObject obj,
                     @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
-        Object o = foreignArray2R.execute(obj, true);
+        Object o = foreignArray2R.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
             if (o instanceof RStringVector) {
                 return (RStringVector) o;

@@ -44,12 +44,16 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import java.util.Arrays;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @ImportStatic({Message.class, RRuntime.class})
 public abstract class ForeignArray2R extends RBaseNode {
@@ -66,20 +70,49 @@ public abstract class ForeignArray2R extends RBaseNode {
         return ForeignArray2RNodeGen.create();
     }
 
-    public abstract Object execute(Object obj, boolean recursive);
+    /**
+     * Convert the provided foreign array to a vector. Multi dimensional arrays will be resolved
+     * recursively.
+     * 
+     * @param obj foreign array
+     * @return a vector if obj is a foreign array, otherwise obj
+     */
+    public Object convert(Object obj) {
+        return convert(obj, true);
+    }
+
+    /**
+     * Convert the provided foreign array to a vector.
+     * 
+     * @param obj foreign array
+     * @param recursive determines whether a provided multi dimensional array should be resolved
+     *            recursively or not.
+     * @return a vector if obj is a foreign array, otherwise obj
+     * 
+     */
+    public Object convert(Object obj, boolean recursive) {
+        Object result = execute(obj, recursive, null, 0);
+        if (result instanceof ForeignArrayData) {
+            ForeignArrayData arrayData = (ForeignArrayData) result;
+            if (arrayData.elements.isEmpty()) {
+                return RDataFactory.createList();
+            }
+            return asAbstractVector(arrayData);
+        }
+        return result;
+    }
+
+    protected abstract Object execute(Object obj, boolean recursive, ForeignArrayData arrayData, int depth);
 
     @Specialization(guards = {"isForeignArray(obj)"})
     @TruffleBoundary
-    public RAbstractVector doArray(TruffleObject obj, boolean recursive,
+    protected ForeignArrayData doArray(TruffleObject obj, boolean recursive, ForeignArrayData arrayData, int depth,
                     @Cached("GET_SIZE.createNode()") Node getSize) {
         try {
-            CollectedElements ce = new CollectedElements();
-            collectArrayElements(ce, obj, recursive, getSize);
-            if (ce.elements.isEmpty()) {
-                return RDataFactory.createList();
+            if (arrayData == null) {
+                arrayData = new ForeignArrayData();
             }
-
-            return asAbstractVector(ce);
+            return collectArrayElements(arrayData, obj, recursive, getSize, depth);
         } catch (UnsupportedMessageException | UnknownIdentifierException e) {
             throw error(RError.Message.GENERIC, "error while converting array: " + e.getMessage());
         }
@@ -87,27 +120,42 @@ public abstract class ForeignArray2R extends RBaseNode {
 
     @Specialization(guards = "isJavaIterable(obj)")
     @TruffleBoundary
-    protected RAbstractVector doJavaIterable(TruffleObject obj, boolean recursive,
+    protected ForeignArrayData doJavaIterable(TruffleObject obj, boolean recursive, ForeignArrayData arrayData, int depth,
                     @Cached("createExecute(0).createNode()") Node execute) {
 
         try {
-            CollectedElements ce = new CollectedElements();
-            ce = getIterableElements(ce, obj, recursive, execute);
-            return asAbstractVector(ce);
+            if (arrayData == null) {
+                arrayData = new ForeignArrayData();
+            }
+            return getIterableElements(arrayData, obj, recursive, execute, depth);
         } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException | ArityException e) {
             throw error(RError.Message.GENERIC, "error while casting external object to list: " + e.getMessage());
         }
     }
 
     @Fallback
-    public Object doObject(Object obj, @SuppressWarnings("unused") boolean recursive) {
+    protected Object doObject(Object obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") ForeignArrayData arrayData, @SuppressWarnings("unused") int depth) {
         return obj;
     }
 
-    private void collectArrayElements(CollectedElements ce, TruffleObject obj, boolean recursive, Node getSize) throws UnsupportedMessageException, UnknownIdentifierException {
+    private ForeignArrayData collectArrayElements(ForeignArrayData arrayData, TruffleObject obj, boolean recursive, Node getSize, int depth)
+                    throws UnsupportedMessageException, UnknownIdentifierException {
         int size = (int) ForeignAccess.sendGetSize(getSize, obj);
+
+        if (arrayData.dims != null) {
+            if (arrayData.dims.size() == depth) {
+                arrayData.dims.add(size);
+            } else if (depth < arrayData.dims.size()) {
+                if (arrayData.dims.get(depth) != size) {
+                    // had previously on the same depth an array with different length
+                    // -> not rectangular, skip the dimensions
+                    arrayData.dims = null;
+                }
+            }
+        }
+
         if (size == 0) {
-            return;
+            return arrayData;
         }
         for (int i = 0; i < size; i++) {
             if (read == null) {
@@ -116,14 +164,15 @@ public abstract class ForeignArray2R extends RBaseNode {
             }
             Object element = ForeignAccess.sendRead(read, obj, i);
             if (recursive && (isForeignArray(element, hasSize) || isJavaIterable(element))) {
-                recurse(ce, element);
+                recurse(arrayData, element, depth);
             } else {
-                ce.elements.add(element2R(element, ce));
+                arrayData.add(element, this::getIsNull, this::getIsBoxed, this::getUnbox, this::getForeign2R);
             }
         }
+        return arrayData;
     }
 
-    private CollectedElements getIterableElements(CollectedElements ce, TruffleObject obj, boolean recursive, Node execute)
+    private ForeignArrayData getIterableElements(ForeignArrayData arrayData, TruffleObject obj, boolean recursive, Node execute, int depth)
                     throws UnknownIdentifierException, ArityException, UnsupportedMessageException, UnsupportedTypeException {
         if (read == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -137,104 +186,180 @@ public abstract class ForeignArray2R extends RBaseNode {
             TruffleObject nextFunction = (TruffleObject) ForeignAccess.sendRead(read, it, "next");
             Object element = ForeignAccess.sendExecute(execute, nextFunction);
             if (recursive && (isJavaIterable(element) || isForeignArray(element, hasSize))) {
-                recurse(ce, element);
+                recurse(arrayData, element, depth);
             } else {
-                ce.elements.add(element2R(element, ce));
+                arrayData.add(element, this::getIsNull, this::getIsBoxed, this::getUnbox, this::getForeign2R);
             }
         }
-        return ce;
+        return arrayData;
     }
 
-    private void recurse(CollectedElements ce, Object element) {
+    private void recurse(ForeignArrayData arrayData, Object element, int depth) {
         if (foreignArray2R == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             foreignArray2R = insert(createForeignArray2R());
         }
-        RAbstractVector result = (RAbstractVector) foreignArray2R.execute(element, true);
-        for (int i = 0; i < result.getLength(); i++) {
-            Object value = result.getDataAtAsObject(i);
-            ce.elements.add(value);
-        }
-        ce.typeCheck.checkVector(result);
+        foreignArray2R.execute(element, true, arrayData, ++depth);
     }
 
-    private Object element2R(Object value, CollectedElements ce) throws UnsupportedMessageException {
-        Object unboxedValue = value;
-        if (unboxedValue instanceof TruffleObject) {
-            if (isNull == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                isNull = insert(Message.IS_NULL.createNode());
-            }
-            if (ForeignAccess.sendIsNull(isNull, (TruffleObject) unboxedValue)) {
-                unboxedValue = RNull.instance;
-            } else {
-                if (isBoxed == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    isBoxed = insert(Message.IS_BOXED.createNode());
-                }
-                if (ForeignAccess.sendIsBoxed(isBoxed, (TruffleObject) unboxedValue)) {
-                    if (unbox == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        unbox = insert(Message.UNBOX.createNode());
-                    }
-                    unboxedValue = ForeignAccess.sendUnbox(unbox, (TruffleObject) unboxedValue);
-                }
-            }
-        }
-        ce.typeCheck.checkForeign(unboxedValue);
-
+    private Foreign2R getForeign2R() {
         if (foreign2R == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             foreign2R = insert(Foreign2RNodeGen.create());
         }
-        return foreign2R.execute(unboxedValue);
+        return foreign2R;
+    }
+
+    private Node getUnbox() {
+        if (unbox == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            unbox = insert(Message.UNBOX.createNode());
+        }
+        return unbox;
+    }
+
+    private Node getIsBoxed() {
+        if (isBoxed == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            isBoxed = insert(Message.IS_BOXED.createNode());
+        }
+        return isBoxed;
+    }
+
+    private Node getIsNull() {
+        if (isNull == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            isNull = insert(Message.IS_NULL.createNode());
+        }
+        return isNull;
     }
 
     /**
      * Converts the elements collected from a foreign array or java iterable into a vector or list.
+     * 
+     * @param arrayData foreign array data
+     * @return a vector
      */
-    public static RAbstractVector asAbstractVector(CollectedElements ce) {
-        InteropTypeCheck.RType type = ce.typeCheck.getType();
-        int size = ce.elements.size();
-        boolean complete = true;
+    @TruffleBoundary
+    public static RAbstractVector asAbstractVector(final ForeignArrayData arrayData) {
+        InteropTypeCheck.RType type = arrayData.typeCheck.getType();
+        int size = arrayData.elements.size();
+
+        int[] dims = arrayData.dims != null && arrayData.dims.size() > 1 ? arrayData.dims.stream().mapToInt((i) -> i.intValue()).toArray() : null;
+        assert dims == null || sizeByDims(dims) == size : sizeByDims(dims) + " " + size;
+
         switch (type) {
             case NONE:
-                return RDataFactory.createList(ce.elements.toArray(new Object[ce.elements.size()]));
+                return RDataFactory.createList(arrayData.elements.toArray(new Object[arrayData.elements.size()]));
             case BOOLEAN:
-                byte[] bytes = new byte[size];
-                for (int i = 0; i < size; i++) {
-                    bytes[i] = ((Number) ce.elements.get(i)).byteValue();
-                    complete &= RRuntime.isNA(bytes[i]);
+                WriteArray<byte[]> wba = (byte[] array, int resultIdx, int sourceIdx, boolean[] complete) -> {
+                    array[resultIdx] = ((Number) arrayData.elements.get(sourceIdx)).byteValue();
+                    complete[0] &= RRuntime.isNA(array[resultIdx]);
+                };
+                byte[] byteArray = new byte[size];
+                if (dims != null) {
+                    return createVector(dims, byteArray, wba, (complete) -> RDataFactory.createLogicalVector(byteArray, complete, dims));
+                } else {
+                    return createFlatVector(size, byteArray, wba, (complete) -> RDataFactory.createLogicalVector(byteArray, complete));
                 }
-                return RDataFactory.createLogicalVector(bytes, complete);
             case DOUBLE:
-                double[] doubles = new double[size];
-                for (int i = 0; i < size; i++) {
-                    doubles[i] = ((Number) ce.elements.get(i)).doubleValue();
-                    complete &= RRuntime.isNA(doubles[i]);
+                WriteArray<double[]> wda = (array, resultIdx, sourceIdx, complete) -> {
+                    array[resultIdx] = ((Number) arrayData.elements.get(sourceIdx)).doubleValue();
+                    complete[0] &= RRuntime.isNA(array[resultIdx]);
+                };
+                double[] doubleArray = new double[size];
+                if (dims != null) {
+                    return createVector(dims, doubleArray, wda, (complete) -> RDataFactory.createDoubleVector(doubleArray, complete, dims));
+                } else {
+                    return createFlatVector(size, doubleArray, wda, (complete) -> RDataFactory.createDoubleVector(doubleArray, complete));
                 }
-                return RDataFactory.createDoubleVector(doubles, complete);
             case INTEGER:
-                int[] ints = new int[size];
-                for (int i = 0; i < size; i++) {
-                    ints[i] = ((Number) ce.elements.get(i)).intValue();
-                    complete &= RRuntime.isNA(ints[i]);
+                WriteArray<int[]> wia = (array, resultIdx, sourceIdx, complete) -> {
+                    array[resultIdx] = ((Number) arrayData.elements.get(sourceIdx)).intValue();
+                    complete[0] &= RRuntime.isNA(array[resultIdx]);
+                };
+                int[] intArray = new int[size];
+                if (dims != null) {
+                    return createVector(dims, intArray, wia, (complete) -> RDataFactory.createIntVector(intArray, complete, dims));
+                } else {
+                    return createFlatVector(size, intArray, wia, (complete) -> RDataFactory.createIntVector(intArray, complete));
                 }
-                return RDataFactory.createIntVector(ints, complete);
             case STRING:
-                String[] strings = new String[size];
-                for (int i = 0; i < size; i++) {
-                    strings[i] = String.valueOf(ce.elements.get(i));
-                    complete &= RRuntime.isNA(strings[i]);
+                WriteArray<String[]> wsa = (array, resultIdx, sourceIdx, complete) -> {
+                    array[resultIdx] = String.valueOf(arrayData.elements.get(sourceIdx));
+                    complete[0] &= RRuntime.isNA(array[resultIdx]);
+                };
+                String[] stringArray = new String[size];
+                if (dims != null) {
+                    return createVector(dims, stringArray, wsa, (complete) -> RDataFactory.createStringVector(stringArray, complete, dims));
+                } else {
+                    return createFlatVector(size, stringArray, wsa, (complete) -> RDataFactory.createStringVector(stringArray, complete));
                 }
-                return RDataFactory.createStringVector(strings, complete);
             default:
-                assert false;
+                assert false : "did not handle properly: " + type;
         }
 
-        // type != null but no vector created - how comes?
-        assert false : "did not handle properly: " + type;
-        return RDataFactory.createList(ce.elements.toArray(new Object[ce.elements.size()]));
+        return RDataFactory.createList(arrayData.elements.toArray(new Object[arrayData.elements.size()]));
+    }
+
+    private static int sizeByDims(int[] dims) {
+        return Arrays.stream(dims).reduce(1, (x, y) -> x * y);
+    }
+
+    @FunctionalInterface
+    private interface WriteArray<A> {
+        void apply(A array, int resultIdx, int sourceIdx, boolean[] complete);
+    }
+
+    private static <A> RAbstractVector createFlatVector(int length, A resultArray, WriteArray<A> writeResultArray, Function<Boolean, RVector<?>> createResult) {
+        boolean[] complete = new boolean[]{true};
+        for (int i = 0; i < length; i++) {
+            writeResultArray.apply(resultArray, i, i, complete);
+        }
+        return createResult.apply(complete[0]);
+    }
+
+    private static <A> RAbstractVector createVector(int[] dims, A resultArray, WriteArray<A> writeResultArray, Function<Boolean, RVector<?>> createResult) {
+        boolean[] complete = new boolean[]{true};
+        assert dims.length > 1;
+        populateResultArray(dims, new int[dims.length], 0, new int[]{0}, resultArray, writeResultArray, complete);
+        return createResult.apply(complete[0]);
+    }
+
+    private static <A> int populateResultArray(int[] dims, int[] currentCoordinates, int depth, int[] sourceIdx, A resultArray, WriteArray<A> writeResultArray, boolean[] complete) {
+        int[] cor = new int[currentCoordinates.length];
+        System.arraycopy(currentCoordinates, 0, cor, 0, currentCoordinates.length);
+        for (int i = 0; i < dims[depth]; i++) {
+            cor[depth] = i;
+            if (depth < dims.length - 1) {
+                populateResultArray(dims, cor, depth + 1, sourceIdx, resultArray, writeResultArray, complete);
+            } else {
+                int resultIdx = getResultIdx(cor, dims);
+                writeResultArray.apply(resultArray, resultIdx, sourceIdx[0], complete);
+                sourceIdx[0]++;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Computes index in vector given by the element coordinates. <br>
+     * cor[0] + cor[1] * dims[0] + ... + cor[n] * dim[0] * ... * dim[n-1]
+     * 
+     * @param cor coordinates to compute the index from
+     * @param dims vector dimensions
+     * @return the index
+     */
+    private static int getResultIdx(int[] cor, int[] dims) {
+        int idx = 0;
+        for (int c = 0; c < cor.length; c++) {
+            int dp = 1;
+            for (int d = 0; d < c; d++) {
+                dp *= dims[d];
+            }
+            idx += cor[c] * dp;
+        }
+        return idx;
     }
 
     protected boolean isForeignArray(Object obj) {
@@ -313,25 +438,28 @@ public abstract class ForeignArray2R extends RBaseNode {
         }
     }
 
-    public static class CollectedElements {
+    public static class ForeignArrayData {
         private InteropTypeCheck typeCheck = new InteropTypeCheck();
         private List<Object> elements = new ArrayList<>();
+        private List<Integer> dims = new ArrayList<>();
 
-        public InteropTypeCheck getTypeCheck() {
-            return typeCheck;
+        public void add(Object value, Supplier<Node> getIsNull, Supplier<Node> getIsBoxed, Supplier<Node> getUnbox, Supplier<Foreign2R> getForeign2R) throws UnsupportedMessageException {
+            typeCheck.checkForeign(value);
+
+            Object unboxedValue = value;
+            if (unboxedValue instanceof TruffleObject) {
+                if (ForeignAccess.sendIsNull(getIsNull.get(), (TruffleObject) unboxedValue)) {
+                    unboxedValue = RNull.instance;
+                } else {
+                    if (ForeignAccess.sendIsBoxed(getIsBoxed.get(), (TruffleObject) unboxedValue)) {
+                        unboxedValue = ForeignAccess.sendUnbox(getUnbox.get(), (TruffleObject) unboxedValue);
+                    }
+                }
+            }
+            typeCheck.checkForeign(unboxedValue);
+            unboxedValue = getForeign2R.get().execute(unboxedValue);
+
+            elements.add(unboxedValue);
         }
-
-        public void setTypeCheck(InteropTypeCheck typeCheck) {
-            this.typeCheck = typeCheck;
-        }
-
-        public List<Object> getElements() {
-            return elements;
-        }
-
-        public void setElements(List<Object> elements) {
-            this.elements = elements;
-        }
-
     }
 }

@@ -327,7 +327,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     }
 
     private Object unlistForeign(VirtualFrame frame, TruffleObject obj, boolean recursive, boolean useNames, ForeignArray2R foreignArray2R) {
-        Object result = foreignArray2R.execute(obj, recursive);
+        Object result = foreignArray2R.convert(obj, recursive);
         if (result instanceof RAbstractListVector) {
             result = execute(frame, result, recursive, useNames);
         }
@@ -368,7 +368,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
      */
     private RAbstractVector foreignToVector(TruffleObject obj, boolean recursive) {
         assert isForeignVector(obj);
-        return (RAbstractVector) getForeignArray2RNode().execute(obj, recursive);
+        return (RAbstractVector) getForeignArray2RNode().convert(obj, recursive);
     }
 
     private ForeignArray2R getForeignArray2RNode() {
