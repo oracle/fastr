@@ -36,6 +36,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDRNode;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.ffi.processor.RFFIRunGC;
@@ -344,5 +345,6 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(CADDRNode.class)
     Object Rf_asCharacterFactor(Object x);
 
+    @RFFIUpCallNode(MiscNodes.MatchNode.class)
     Object Rf_match(Object itables, Object ix, int nmatch);
 }

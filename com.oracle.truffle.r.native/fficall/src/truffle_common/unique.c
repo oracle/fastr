@@ -20,14 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include <rffiutils.h>
-
-static jmethodID Rf_matchMethodID;
-
-void init_unique(JNIEnv *env) {
-
-	Rf_matchMethodID = checkGetMethodID(env, UpCallsRFFIClass, "Rf_match", "(Ljava/lang/Object;Ljava/lang/Object;I)Ljava/lang/Object;", 0);
-}
+#include "../truffle_nfi/rffiutils.h"
+#include "rffi_upcalls.h"
 
 SEXP Rf_matchE(SEXP itable, SEXP ix, int nmatch, SEXP env)
 {
@@ -37,9 +31,6 @@ SEXP Rf_matchE(SEXP itable, SEXP ix, int nmatch, SEXP env)
 /* used from other code, not here: */
 SEXP Rf_match(SEXP itable, SEXP ix, int nmatch)
 {
-	TRACE(TARGppd, itable, ix, nmatch);
-	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallObjectMethod(thisenv, UpCallsRFFIObject, Rf_matchMethodID, itable, ix, nmatch);
-	return checkRef(thisenv, result);
+	return R_NilValue;
 }
 

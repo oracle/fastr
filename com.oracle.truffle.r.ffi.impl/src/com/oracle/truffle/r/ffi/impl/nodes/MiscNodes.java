@@ -197,12 +197,16 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
-    abstract static class MatchNode extends FFIUpCallNode.Arg3 {
+    public abstract static class MatchNode extends FFIUpCallNode.Arg3 {
 
         @SuppressWarnings("unused")
         @Specialization
         Object match(Object itables, Object ix, int nmatch) {
             throw RInternalError.unimplemented("Rf_match");
+        }
+
+        public static MatchNode create() {
+            return MiscNodesFactory.MatchNodeGen.create();
         }
     }
 
