@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,10 @@
 #ifndef GRAMRD_FASTR_H
 #define GRAMRD_FASTR_H
 
-int callGetCMethod(void *conn);
+extern int FASTR_getConnectionChar(void* conn);
+
+int callGetCMethod(void *conn) {
+    return FASTR_getConnectionChar(conn);
+}
 
 #endif //GRAMRD_FASTR_H

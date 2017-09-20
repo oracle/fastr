@@ -13,6 +13,7 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -38,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
@@ -98,7 +100,7 @@ public class DLL {
         }
 
         @Override
-        public void beforeDestroy(RContext contextArg) {
+        public void beforeDispose(RContext contextArg) {
             if (!isShareDLLKind(context.getKind())) {
                 for (int i = 1; i < list.size(); i++) {
                     DLLInfo dllInfo = list.get(i);
@@ -141,7 +143,7 @@ public class DLL {
      * Denotes info in registered native routines. GnuR has "subclasses" for C/Fortran, which is TBD
      * for FastR.
      */
-    public static class DotSymbol implements RTruffleObject {
+    public static class DotSymbol extends RObject implements RTruffleObject {
         public final String name;
         public final SymbolHandle fun;
         public final int numArgs;
@@ -151,6 +153,7 @@ public class DLL {
             this.fun = fun;
             this.numArgs = numArgs;
         }
+
     }
 
     public static class RegisteredNativeSymbol {
@@ -173,7 +176,7 @@ public class DLL {
         }
     }
 
-    public static final class DLLInfo implements RTruffleObject {
+    public static final class DLLInfo extends RObject implements RTruffleObject {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"name", "path", "dynamicLookup", "handle", "info"}, RDataFactory.COMPLETE_VECTOR);
         public static final String DLL_INFO_REFERENCE = "DLLInfoReference";
         private static final RStringVector INFO_REFERENCE_CLASS = RDataFactory.createStringVectorFromScalar(DLL_INFO_REFERENCE);
@@ -188,6 +191,7 @@ public class DLL {
         private boolean forceSymbols;
         private final DotSymbol[][] nativeSymbols = new DotSymbol[NativeSymbolType.values().length][];
         private ArrayList<CEntry> cEntryTable = null;
+        private final HashSet<String> unsuccessfulLookups = new HashSet<>();
 
         private DLLInfo(String name, String path, boolean dynamicLookup, Object handle) {
             this.id = ID.getAndIncrement();
@@ -466,7 +470,7 @@ public class DLL {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         invokeVoidCallNode = (InvokeVoidCallNode) insert((Node) RFFIFactory.getCallRFFI().createInvokeVoidCallNode());
                     }
-                    invokeVoidCallNode.execute(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
+                    invokeVoidCallNode.dispatch(new NativeCallInfo(pkgInit, initFunc, dllInfo), new Object[]{dllInfo});
                 } catch (ReturnException ex) {
                     // An error call can, due to condition handling, throw this which we must
                     // propagate
@@ -579,7 +583,7 @@ public class DLL {
     }
 
     public static final class RFindSymbolNode extends Node {
-        @Child RdlsymNode rdlsymNode = new RdlsymNode();
+        @Child private RdlsymNode rdlsymNode = new RdlsymNode();
 
         /**
          * Directly analogous to the GnuR function {@code R_FindSymbol}.
@@ -679,9 +683,13 @@ public class DLL {
                 mName = name + "_";
             }
             try {
+                if (dllInfo.unsuccessfulLookups.contains(mName)) {
+                    return SYMBOL_NOT_FOUND;
+                }
                 SymbolHandle symValue = dlSymNode.execute(dllInfo.handle, mName);
                 return symValue;
             } catch (UnsatisfiedLinkError ex) {
+                dllInfo.unsuccessfulLookups.add(mName);
                 return SYMBOL_NOT_FOUND;
             }
         }

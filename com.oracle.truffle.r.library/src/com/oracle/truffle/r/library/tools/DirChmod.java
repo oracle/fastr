@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.stream.Stream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -47,10 +46,11 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
         casts.arg(1).asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
     }
 
+    @Child private BaseRFFI.ChmodNode chmodNode = BaseRFFI.ChmodNode.create();
+
     @Specialization
     @TruffleBoundary
-    protected RNull dirChmod(String pathName, boolean setGroupWrite,
-                    @Cached("create()") BaseRFFI.ChmodNode chmodNode) {
+    protected RNull dirChmod(String pathName, boolean setGroupWrite) {
         Path path = FileSystems.getDefault().getPath(pathName);
         int fileMask = setGroupWrite ? GRPWRITE_FILE_MASK : FILE_MASK;
         int dirMask = setGroupWrite ? GRPWRITE_DIR_MASK : DIR_MASK;

@@ -39,7 +39,6 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
  */
 public abstract class RFFIFactory {
     public enum Type {
-        JNI("com.oracle.truffle.r.ffi.impl.jni.JNI_RFFIFactory"),
         LLVM("com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_RFFIFactory"),
         MANAGED("com.oracle.truffle.r.ffi.impl.managed.Managed_RFFIFactory"),
         NFI("com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_RFFIFactory");
@@ -53,7 +52,7 @@ public abstract class RFFIFactory {
 
     private static final String FACTORY_TYPE_PROPERTY = "fastr.rffi.factory.type";
     private static final String FACTORY_CLASS_ENV = "FASTR_RFFI";
-    private static final Type DEFAULT_FACTORY = Type.JNI;
+    private static final Type DEFAULT_FACTORY = Type.NFI;
 
     /**
      * Singleton instance of the factory.
@@ -122,10 +121,6 @@ public abstract class RFFIFactory {
         return getRFFI().getLapackRFFI();
     }
 
-    public static RApplRFFI getRApplRFFI() {
-        return getRFFI().getRApplRFFI();
-    }
-
     public static StatsRFFI getStatsRFFI() {
         return getRFFI().getStatsRFFI();
     }
@@ -175,5 +170,5 @@ public abstract class RFFIFactory {
      */
     protected abstract RFFI createRFFI();
 
-    public abstract ContextState newContextState();
+    public abstract RFFIContext newContextState();
 }

@@ -152,7 +152,7 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         int emptyCnt = 0;
         for (int i = 0; i < length; i++) {
             Object element = values.getDataAt(i);
-            String[] array = castCharacterVector(frame, element).materialize().getDataWithoutCopying();
+            String[] array = castCharacterVector(frame, element).materialize().getReadonlyData();
             maxLength = Math.max(maxLength, array.length);
             if (array.length == 0) {
                 converted[i] = ONE_EMPTY_STRING;

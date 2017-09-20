@@ -26,6 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.interop.NativeDoubleArray;
@@ -85,8 +86,8 @@ public class TruffleLLVM_Stats implements StatsRFFI {
                             NativeDoubleArray nwork = new NativeDoubleArray(work);
                             NativeIntegerArray niwork = new NativeIntegerArray(iwork)) {
                 return (int) ForeignAccess.sendExecute(messageNode, fftWork.asTruffleObject(), na, nseg, n, nspn, isn, nwork, niwork);
-            } catch (Throwable t) {
-                throw RInternalError.shouldNotReachHere(t);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
 
@@ -124,8 +125,8 @@ public class TruffleLLVM_Stats implements StatsRFFI {
             try (NativeIntegerArray npmaxf = new NativeIntegerArray(pmaxf);
                             NativeIntegerArray npmaxp = new NativeIntegerArray(pmaxp)) {
                 ForeignAccess.sendExecute(messageNode, fftFactor.asTruffleObject(), n, npmaxf, npmaxp);
-            } catch (Throwable t) {
-                throw RInternalError.shouldNotReachHere(t);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
 

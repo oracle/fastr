@@ -23,7 +23,7 @@
 
 #include <rffiutils.h>
 
-double exactSumFunc(double* contents, int length, int hasNa, int naRm) {
+double call_misc_exactSumFunc(double* contents, int length, int hasNa, int naRm) {
 
 	long double sum = 0;
 	int i = 0;
@@ -47,4 +47,10 @@ double exactSumFunc(double* contents, int length, int hasNa, int naRm) {
 	}
 
 	return sum;
+}
+
+extern void dqrls_(double *x, int *n, int *p, double *y, int *ny, double *tol, double *b, double *rsd, double *qty, int *k, int *jpvt, double *qraux, double *work);
+
+void call_misc_dqrls(double *x, int n, int p, double *y, int ny, double tol, double *b, double *rsd, double *qty, int *k, int *jpvt, double *qraux, double *work) {
+	dqrls_(x, &n, &p, y, &ny, &tol, b, rsd, qty, k, jpvt, qraux, work);
 }

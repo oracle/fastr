@@ -58,7 +58,7 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 public final class CoerceNodes {
 
-    abstract static class VectorToPairListNode extends FFIUpCallNode.Arg1 {
+    public abstract static class VectorToPairListNode extends FFIUpCallNode.Arg1 {
 
         @Child private CopyOfRegAttributesNode copyRegAttributesNode;
         @Child private GetNamesAttributeNode getNamesAttributeNode;
@@ -119,7 +119,7 @@ public final class CoerceNodes {
         }
     }
 
-    abstract static class AsCharacterFactor extends FFIUpCallNode.Arg1 {
+    public abstract static class AsCharacterFactor extends FFIUpCallNode.Arg1 {
 
         @Child private InheritsCheckNode inheritsFactorNode = InheritsCheckNode.createFactor();
         @Child private GetAttributeNode getAttributeNode = GetAttributeNode.create();
@@ -164,7 +164,7 @@ public final class CoerceNodes {
     /**
      * Implements Rf_coerceVector.
      */
-    abstract static class CoerceVectorNode extends FFIUpCallNode.Arg2 {
+    public abstract static class CoerceVectorNode extends FFIUpCallNode.Arg2 {
 
         public static CoerceVectorNode create() {
             return CoerceNodesFactory.CoerceVectorNodeGen.create();

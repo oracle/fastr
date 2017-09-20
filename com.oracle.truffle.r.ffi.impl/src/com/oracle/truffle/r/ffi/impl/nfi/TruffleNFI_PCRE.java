@@ -36,8 +36,8 @@ public class TruffleNFI_PCRE implements PCRERFFI {
 
     private static class TruffleNFI_MaketablesNode extends TruffleNFI_DownCallNode implements MaketablesNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.maketables;
+        protected NativeFunction getFunction() {
+            return NativeFunction.maketables;
         }
 
         @Override
@@ -48,8 +48,8 @@ public class TruffleNFI_PCRE implements PCRERFFI {
 
     private static class TruffleNFI_GetCaptureCountNode extends TruffleNFI_DownCallNode implements GetCaptureCountNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.getcapturecount;
+        protected NativeFunction getFunction() {
+            return NativeFunction.getcapturecount;
         }
 
         @Override
@@ -60,8 +60,8 @@ public class TruffleNFI_PCRE implements PCRERFFI {
 
     private static class TruffleNFI_GetCaptureNamesNode extends TruffleNFI_DownCallNode implements GetCaptureNamesNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.getcapturenames;
+        protected NativeFunction getFunction() {
+            return NativeFunction.getcapturenames;
         }
 
         @Override
@@ -79,8 +79,8 @@ public class TruffleNFI_PCRE implements PCRERFFI {
 
     private static class TruffleNFI_CompileNode extends TruffleNFI_DownCallNode implements CompileNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.compile;
+        protected NativeFunction getFunction() {
+            return NativeFunction.compile;
         }
 
         @Override
@@ -93,8 +93,8 @@ public class TruffleNFI_PCRE implements PCRERFFI {
 
     private static class TruffleNFI_ExecNode extends TruffleNFI_DownCallNode implements ExecNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.exec;
+        protected NativeFunction getFunction() {
+            return NativeFunction.exec;
         }
 
         @Override

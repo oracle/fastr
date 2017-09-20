@@ -26,19 +26,18 @@ import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 
 /**
  * A facade for the context state for the Truffle LLVM factory. Delegates to the various
  * module-specific pieces of state.
  */
-class TruffleLLVM_RFFIContextState implements ContextState {
+class TruffleLLVM_RFFIContextState extends RFFIContext {
     TruffleLLVM_DLL.ContextStateImpl dllState;
-    TruffleLLVM_PkgInit.ContextStateImpl pkgInitState;
     TruffleLLVM_Call.ContextStateImpl callState;
 
     TruffleLLVM_RFFIContextState() {
         dllState = new TruffleLLVM_DLL.ContextStateImpl();
-        pkgInitState = new TruffleLLVM_PkgInit.ContextStateImpl();
         callState = new TruffleLLVM_Call.ContextStateImpl();
     }
 
@@ -57,15 +56,13 @@ class TruffleLLVM_RFFIContextState implements ContextState {
             DLL.loadLibR(librffiPath);
         }
         dllState.initialize(context);
-        pkgInitState.initialize(context);
         callState.initialize(context);
         return this;
     }
 
     @Override
-    public void beforeDestroy(RContext context) {
-        dllState.beforeDestroy(context);
-        pkgInitState.beforeDestroy(context);
-        callState.beforeDestroy(context);
+    public void beforeDispose(RContext context) {
+        dllState.beforeDispose(context);
+        callState.beforeDispose(context);
     }
 }

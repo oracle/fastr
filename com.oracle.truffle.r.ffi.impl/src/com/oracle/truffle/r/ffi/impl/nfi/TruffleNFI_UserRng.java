@@ -25,6 +25,7 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
@@ -50,8 +51,8 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
                 Node bind = Message.createInvoke(1).createNode();
                 try {
                     targetFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, function.getSymbolHandle().asTruffleObject(), "bind", signature);
-                } catch (Throwable t) {
-                    throw RInternalError.shouldNotReachHere();
+                } catch (InteropException ex) {
+                    throw RInternalError.shouldNotReachHere(ex);
                 }
             }
         }
@@ -64,8 +65,8 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
             init(Function.Init, "(sint32): void");
             try {
                 ForeignAccess.sendExecute(message, targetFunction, seed);
-            } catch (Throwable t) {
-                throw RInternalError.shouldNotReachHere();
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
     }
@@ -78,8 +79,8 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
             try {
                 Object address = ForeignAccess.sendExecute(message, targetFunction);
                 return (double) ForeignAccess.sendExecute(readPointerNode, TruffleNFI_CAccess.Function.READ_POINTER_DOUBLE.getSymbolFunction(), address);
-            } catch (Throwable t) {
-                throw RInternalError.shouldNotReachHere();
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
     }
@@ -92,8 +93,8 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
             try {
                 Object address = ForeignAccess.sendExecute(message, targetFunction);
                 return (int) ForeignAccess.sendExecute(readPointerNode, TruffleNFI_CAccess.Function.READ_POINTER_INT.getSymbolFunction(), address);
-            } catch (Throwable t) {
-                throw RInternalError.shouldNotReachHere();
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
     }
@@ -108,8 +109,8 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
                 for (int i = 0; i < n.length; i++) {
                     n[i] = (int) ForeignAccess.sendExecute(readPointerNode, TruffleNFI_CAccess.Function.READ_ARRAY_INT.getSymbolFunction(), address, i);
                 }
-            } catch (Throwable t) {
-                throw RInternalError.shouldNotReachHere();
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
     }

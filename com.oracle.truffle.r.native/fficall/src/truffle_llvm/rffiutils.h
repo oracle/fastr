@@ -31,7 +31,6 @@
 
 char *ensure_truffle_chararray(const char *x);
 void *ensure_string(const char *x);
-void *ensure_fun(void *fun);
 SEXP unimplemented(char *name);
 
 #endif /* RFFIUTILS_H */

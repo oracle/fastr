@@ -76,3 +76,7 @@ rffi.inlined_length(expr[[1]])
 #
 # foo <-function(...) rffi.inlined_length(get('...'))
 # foo(a = 1, b = 2, c = 3, d = 42)
+
+rffi.parseVector('1+2')
+rffi.parseVector('.*/-')
+rffi.parseVector('1+')

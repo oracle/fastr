@@ -614,6 +614,12 @@ public final class SpecialAttributesFunctions {
             return GetDimAttributeNodeGen.create();
         }
 
+        // TODO: getDimensions returns a naked array, which is in many places used to create a fresh
+        // vector ignoring the reference counting. This should really return a vector and the users
+        // should increment its ref-count if they want to put it into other
+        // attributes/list/environment/... This way, we wouldn't need to call getReadonlyData, which
+        // may copy the contents.
+
         public final int[] getDimensions(Object x) {
             // Let's handle the following two types directly so as to avoid wrapping and unwrapping
             // RIntVector. The getContainerDims spec would be invoked otherwise.
@@ -626,7 +632,7 @@ public final class SpecialAttributesFunctions {
                 return ((RPairList) x).getDimensions();
             }
             RIntVector dims = (RIntVector) execute(x);
-            return nullDimsProfile.profile(dims == null) ? null : dims.getInternalStore();
+            return nullDimsProfile.profile(dims == null) ? null : dims.getReadonlyData();
         }
 
         public static boolean isArray(int[] dimensions) {
@@ -635,6 +641,14 @@ public final class SpecialAttributesFunctions {
 
         public static boolean isMatrix(int[] dimensions) {
             return dimensions != null && dimensions.length == 2;
+        }
+
+        public static boolean isArray(RIntVector dimensions) {
+            return dimensions != null && dimensions.getLength() > 0;
+        }
+
+        public static boolean isMatrix(RIntVector dimensions) {
+            return dimensions != null && dimensions.getLength() == 2;
         }
 
         public final boolean isArray(RAbstractVector vector) {

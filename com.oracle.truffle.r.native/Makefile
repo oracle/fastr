@@ -32,7 +32,7 @@ export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
 
 
 ifndef FASTR_RFFI
-export FASTR_RFFI = jni
+export FASTR_RFFI = nfi
 endif
 
 # Completely accurate dependency analysis is very difficult for this project, so use a version number

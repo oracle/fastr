@@ -54,6 +54,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/tools/ToolsText.ja
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/CountFields.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/Download.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/Menu.java,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/src/truffle_common/Rembedded.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/common/arithmetic_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/coerce_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/errors_fastr.c,gnu_r.core.copyright
@@ -76,16 +77,8 @@ com.oracle.truffle.r.native/fficall/src/include/nmath.h,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/include/Print.h,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/include/Rgraphics.h,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/include/rlocale.h,gnu_r_gentleman_ihaka.copyright
-com.oracle.truffle.r.native/fficall/src/jni/Memory.c,gnu_r.copyright
-com.oracle.truffle.r.native/fficall/src/jni/pcre_rffi.c,gnu_r_gentleman_ihaka2.copyright
-com.oracle.truffle.r.native/fficall/src/jni/Rdynload_fastr.c,gnu_r.copyright
-com.oracle.truffle.r.native/fficall/src/jni/Rembedded.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/truffle_llvm/Memory.c,gnu_r.copyright
-com.oracle.truffle.r.native/fficall/src/truffle_llvm/pcre_rffi.c,gnu_r_gentleman_ihaka2.copyright
-com.oracle.truffle.r.native/fficall/src/truffle_llvm/Rdynload_fastr.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/truffle_nfi/Memory.c,gnu_r.copyright
-com.oracle.truffle.r.native/fficall/src/truffle_nfi/pcre_rffi.c,gnu_r_gentleman_ihaka2.copyright
-com.oracle.truffle.r.native/fficall/src/truffle_nfi/Rdynload_fastr.c,gnu_r.copyright
 com.oracle.truffle.r.native/library/base/src/registration.c,no.copyright
 com.oracle.truffle.r.native/library/grDevices/src/gzio.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/library/methods/src/methods_dummy.c,no.copyright
@@ -128,8 +121,6 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/E
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/FileFunctions.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/foreign/CairoProps.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/foreign/CallAndExternalFunctions.java,gnu_r.copyright
-com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/foreign/Dqrcf.java,gnu_r.copyright
-com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/foreign/Dqrdc2.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/foreign/Fft.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/foreign/Flushconsole.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/foreign/FortranAndCFunctions.java,gnu_r.copyright

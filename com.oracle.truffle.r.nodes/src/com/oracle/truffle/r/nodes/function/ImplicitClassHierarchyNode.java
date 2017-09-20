@@ -138,10 +138,9 @@ public abstract class ImplicitClassHierarchyNode extends UnaryNode {
             RAttributable attributable = (RAttributable) value;
             RIntVector dim = (RIntVector) attributable.getAttr(RRuntime.DIM_ATTR_KEY);
             if (dim != null) {
-                int[] dimArray = dim.getInternalStore();
-                if (GetDimAttributeNode.isMatrix(dimArray)) {
+                if (GetDimAttributeNode.isMatrix(dim)) {
                     return implicitMatrixClass;
-                } else if (GetDimAttributeNode.isArray(dimArray)) {
+                } else if (GetDimAttributeNode.isArray(dim)) {
                     return implicitArrayClass;
                 }
             }

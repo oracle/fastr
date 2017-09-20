@@ -28,8 +28,8 @@ public class TruffleNFI_Stats implements StatsRFFI {
 
     private static class TruffleNFI_FactorNode extends TruffleNFI_DownCallNode implements FactorNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.fft_factor;
+        protected NativeFunction getFunction() {
+            return NativeFunction.fft_factor;
         }
 
         @Override
@@ -40,8 +40,8 @@ public class TruffleNFI_Stats implements StatsRFFI {
 
     private static class TruffleNFI_WorkNode extends TruffleNFI_DownCallNode implements WorkNode {
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.fft_work;
+        protected NativeFunction getFunction() {
+            return NativeFunction.fft_work;
         }
 
         @Override

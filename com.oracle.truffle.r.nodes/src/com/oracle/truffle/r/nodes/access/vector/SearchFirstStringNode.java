@@ -110,7 +110,7 @@ final class SearchFirstStringNode extends Node {
         if (exactMatch) {
             RAbstractIntVector genericResult = searchGeneric(target, targetLength, elements, elementsLength, -1, true, names);
             if (genericResult != null) {
-                return (int[]) genericResult.getInternalStore();
+                return genericResult.materialize().getReadonlyData();
             }
         }
         return null;

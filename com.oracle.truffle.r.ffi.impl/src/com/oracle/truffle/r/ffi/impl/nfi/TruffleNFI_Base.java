@@ -38,8 +38,8 @@ public class TruffleNFI_Base implements BaseRFFI {
     private static class TruffleNFI_GetpidNode extends TruffleNFI_DownCallNode implements GetpidNode {
 
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.getpid;
+        protected NativeFunction getFunction() {
+            return NativeFunction.getpid;
         }
 
         @Override
@@ -51,8 +51,8 @@ public class TruffleNFI_Base implements BaseRFFI {
     private static final class TruffleNFI_GetwdNode extends TruffleNFI_DownCallNode implements GetwdNode {
 
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.getcwd;
+        protected NativeFunction getFunction() {
+            return NativeFunction.getcwd;
         }
 
         @TruffleBoundary
@@ -75,8 +75,8 @@ public class TruffleNFI_Base implements BaseRFFI {
     private static class TruffleNFI_SetwdNode extends TruffleNFI_DownCallNode implements SetwdNode {
 
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.chdir;
+        protected NativeFunction getFunction() {
+            return NativeFunction.chdir;
         }
 
         @Override
@@ -88,8 +88,8 @@ public class TruffleNFI_Base implements BaseRFFI {
     private static class TruffleNFI_MkdirNode extends TruffleNFI_DownCallNode implements MkdirNode {
 
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.mkdir;
+        protected NativeFunction getFunction() {
+            return NativeFunction.mkdir;
         }
 
         @Override
@@ -104,8 +104,8 @@ public class TruffleNFI_Base implements BaseRFFI {
         private static final int EINVAL = 22;
 
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.readlink;
+        protected NativeFunction getFunction() {
+            return NativeFunction.readlink;
         }
 
         @Override
@@ -127,8 +127,8 @@ public class TruffleNFI_Base implements BaseRFFI {
     private static class TruffleNFI_MkdtempNode extends TruffleNFI_DownCallNode implements MkdtempNode {
 
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.mkdtemp;
+        protected NativeFunction getFunction() {
+            return NativeFunction.mkdtemp;
         }
 
         @TruffleBoundary
@@ -154,8 +154,8 @@ public class TruffleNFI_Base implements BaseRFFI {
     private static class TruffleNFI_ChmodNode extends TruffleNFI_DownCallNode implements ChmodNode {
 
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.chmod;
+        protected NativeFunction getFunction() {
+            return NativeFunction.chmod;
         }
 
         @Override
@@ -167,8 +167,8 @@ public class TruffleNFI_Base implements BaseRFFI {
     private static class TruffleNFI_StrolNode extends TruffleNFI_DownCallNode implements StrolNode {
 
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.strtol;
+        protected NativeFunction getFunction() {
+            return NativeFunction.strtol;
         }
 
         @Override
@@ -186,8 +186,8 @@ public class TruffleNFI_Base implements BaseRFFI {
     private static class TruffleNFI_UnameNode extends TruffleNFI_DownCallNode implements UnameNode {
 
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.uname;
+        protected NativeFunction getFunction() {
+            return NativeFunction.uname;
         }
 
         @Override
@@ -201,8 +201,8 @@ public class TruffleNFI_Base implements BaseRFFI {
     private static class TruffleNFI_GlobNode extends TruffleNFI_DownCallNode implements GlobNode {
 
         @Override
-        protected NFIFunction getFunction() {
-            return NFIFunction.glob;
+        protected NativeFunction getFunction() {
+            return NativeFunction.glob;
         }
 
         @Override

@@ -22,24 +22,23 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import org.junit.Test;
+
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropException;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.vm.PolyglotEngine;
 
 public abstract class AbstractMRTest {
 
@@ -81,7 +80,7 @@ public abstract class AbstractMRTest {
     }
 
     protected boolean isPointer(@SuppressWarnings("unused") TruffleObject obj) {
-        return false;
+        return true;
     }
 
     protected boolean isBoxed(@SuppressWarnings("unused") TruffleObject obj) {
@@ -90,6 +89,10 @@ public abstract class AbstractMRTest {
 
     protected boolean hasSize(@SuppressWarnings("unused") TruffleObject obj) {
         return false;
+    }
+
+    protected boolean testToNative(TruffleObject obj) {
+        return true;
     }
 
     protected int getSize(@SuppressWarnings("unused") TruffleObject obj) {
@@ -117,15 +120,18 @@ public abstract class AbstractMRTest {
     @Test
     public void testIsPointer() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
-            assertEquals(isPointer(obj), ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
+            assertEquals(obj.getClass().getSimpleName(), isPointer(obj), ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
         }
     }
 
     @Test
     public void testNativePointer() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
+            if (!testToNative(obj)) {
+                continue;
+            }
             try {
-                assertTrue(ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) instanceof NativePointer);
+                assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
             } catch (UnsupportedMessageException unsupportedMessageException) {
             }
         }

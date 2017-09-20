@@ -37,14 +37,13 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDoubleSequence;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorIterator;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -201,15 +200,16 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected Object doIntVector(RIntVector operand, boolean naRm, boolean finite) {
+    protected Object doIntVector(RAbstractIntVector operand, boolean naRm, boolean finite,
+                    @Cached("create()") VectorIterator.Int iterator) {
         RBaseNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm || finite);
         int result = semantics.getIntStart();
         na.enable(operand);
         int opCount = 0;
-        int[] data = operand.getDataWithoutCopying();
-        for (int i = 0; i < operand.getLength(); i++) {
-            int d = data[i];
+        Object it = iterator.init(operand);
+        while (iterator.hasNext(operand, it)) {
+            int d = iterator.next(operand, it);
             if (na.check(d)) {
                 if (profiledNaRm) {
                     continue;
@@ -235,7 +235,8 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected double doDoubleVector(RDoubleVector operand, boolean naRm, boolean finite,
+    protected double doDoubleVector(RAbstractDoubleVector operand, boolean naRm, boolean finite,
+                    @Cached("create()") VectorIterator.Double iterator,
                     @Cached("createBinaryProfile()") ConditionProfile finiteProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isInfiniteProfile) {
         RBaseNode.reportWork(this, operand.getLength());
@@ -244,9 +245,10 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         double result = semantics.getDoubleStart();
         na.enable(operand);
         int opCount = 0;
-        double[] data = operand.getDataWithoutCopying();
-        for (int i = 0; i < operand.getLength(); i++) {
-            double d = data[i];
+
+        Object it = iterator.init(operand);
+        while (iterator.hasNext(operand, it)) {
+            double d = iterator.next(operand, it);
             if (na.checkNAorNaN(d)) {
                 if (profiledNaRm) {
                     continue;   // ignore NA/NaN
@@ -271,15 +273,17 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected Object doLogicalVector(RLogicalVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected Object doLogicalVector(RAbstractLogicalVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite,
+                    @Cached("create()") VectorIterator.Logical iterator) {
         RBaseNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm);
         int result = semantics.getIntStart();
         na.enable(operand);
         int opCount = 0;
-        byte[] data = operand.getDataWithoutCopying();
-        for (int i = 0; i < operand.getLength(); i++) {
-            byte d = data[i];
+
+        Object it = iterator.init(operand);
+        while (iterator.hasNext(operand, it)) {
+            byte d = iterator.next(operand, it);
             if (na.check(d)) {
                 if (profiledNaRm) {
                     continue;
@@ -300,43 +304,6 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
             if (semantics.isUseDoubleStartForEmptyVector()) {
                 return semantics.getDoubleStart();
             }
-        }
-        return result;
-    }
-
-    @Specialization
-    protected Object doIntSequence(RIntSequence operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
-        RBaseNode.reportWork(this, operand.getLength());
-        int result = semantics.getIntStart();
-        int current = operand.getStart();
-        for (int i = 0; i < operand.getLength(); i++) {
-            result = arithmetic.op(result, current);
-            if (RRuntime.isNA(result)) {
-                naResultWarning();
-                return RRuntime.INT_NA;
-            }
-            current += operand.getStride();
-        }
-        if (operand.getLength() == 0) {
-            emptyWarning();
-            if (semantics.isUseDoubleStartForEmptyVector()) {
-                return semantics.getDoubleStart();
-            }
-        }
-        return result;
-    }
-
-    @Specialization
-    protected double doDoubleSequence(RDoubleSequence operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
-        RBaseNode.reportWork(this, operand.getLength());
-        double result = semantics.getDoubleStart();
-        double current = operand.getStart();
-        for (int i = 0; i < operand.getLength(); i++) {
-            result = arithmetic.op(result, current);
-            current += operand.getStride();
-        }
-        if (operand.getLength() == 0) {
-            emptyWarning();
         }
         return result;
     }

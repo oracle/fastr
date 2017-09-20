@@ -23,14 +23,15 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.r.ffi.impl.interop.NativeRawArray;
+import com.oracle.truffle.r.ffi.impl.nfi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 public class TruffleLLVM_Zip implements ZipRFFI {
     private static class TruffleLLVM_CompressNode extends TruffleLLVM_DownCallNode implements CompressNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.compress;
+        protected NativeFunction getFunction() {
+            return NativeFunction.compress;
         }
 
         @Override
@@ -48,8 +49,8 @@ public class TruffleLLVM_Zip implements ZipRFFI {
     private static class TruffleLLVM_UncompressNode extends TruffleLLVM_DownCallNode implements UncompressNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.uncompress;
+        protected NativeFunction getFunction() {
+            return NativeFunction.uncompress;
         }
 
         @Override

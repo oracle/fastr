@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -152,7 +153,7 @@ public class ConnectionSupport {
         }
 
         @Override
-        public void beforeDestroy(RContext context) {
+        public void beforeDispose(RContext context) {
             // close all open connections
             for (int i = 3; i <= hwm; i++) {
                 WeakReference<BaseRConnection> ref = allConnections.get(i);
@@ -520,7 +521,7 @@ public class ConnectionSupport {
      * it subsequently will throw an error. The latter will open/close the connection (internally)
      * and this can be repeated indefinitely.
      */
-    public abstract static class BaseRConnection implements RConnection {
+    public abstract static class BaseRConnection extends RObject implements RConnection {
 
         /**
          * {@code true} is the connection has been opened successfully. N.B. This supports lazy

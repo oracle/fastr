@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -150,6 +151,9 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     private final BranchProfile incompleteProfile = BranchProfile.create();
     @CompilationFinal private boolean seenLargeMatrix;
 
+    @Child private GetReadonlyData.Double aToArrayNode = GetReadonlyData.Double.create();
+    @Child private GetReadonlyData.Double bToArrayNode = GetReadonlyData.Double.create();
+
     private RDoubleVector doubleMatrixMultiply(RAbstractDoubleVector a, RAbstractDoubleVector b, int aRows, int aCols, int bRows, int bCols) {
         return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols, 1, aRows, 1, bRows, false);
     }
@@ -176,8 +180,8 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
         if (aCols != bRows) {
             throw error(RError.Message.NON_CONFORMABLE_ARGS);
         }
-        double[] dataA = a.materialize().getDataWithoutCopying();
-        double[] dataB = b.materialize().getDataWithoutCopying();
+        double[] dataA = aToArrayNode.execute(a.materialize());
+        double[] dataB = bToArrayNode.execute(b.materialize());
         double[] result = new double[aRows * bCols];
 
         if (!seenLargeMatrix && (aRows > BLOCK_SIZE || aCols > BLOCK_SIZE || bRows > BLOCK_SIZE || bCols > BLOCK_SIZE)) {

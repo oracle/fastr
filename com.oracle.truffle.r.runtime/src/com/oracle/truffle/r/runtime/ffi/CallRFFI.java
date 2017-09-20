@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInterface;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
@@ -31,6 +32,14 @@ import com.oracle.truffle.r.runtime.data.RNull;
  */
 public interface CallRFFI {
     interface InvokeCallNode extends NodeInterface {
+
+        default Object dispatch(NativeCallInfo nativeCallInfo, Object[] args) {
+            RContext.getInstance().getStateRFFI().beforeDowncall();
+            Object result = execute(nativeCallInfo, args);
+            RContext.getInstance().getStateRFFI().afterDowncall();
+            return result;
+        }
+
         /**
          * Invoke the native function identified by {@code symbolInfo} passing it the arguments in
          * {@code args}. The values in {@code args} can be any of the types used to represent
@@ -40,6 +49,12 @@ public interface CallRFFI {
     }
 
     interface InvokeVoidCallNode extends NodeInterface {
+        default void dispatch(NativeCallInfo nativeCallInfo, Object[] args) {
+            RContext.getInstance().getStateRFFI().beforeDowncall();
+            execute(nativeCallInfo, args);
+            RContext.getInstance().getStateRFFI().afterDowncall();
+        }
+
         /**
          * Variant that does not return a result (primarily for library "init" methods).
          */
@@ -60,7 +75,7 @@ public interface CallRFFI {
         @Override
         public Object execute(VirtualFrame frame) {
             Object[] args = frame.getArguments();
-            return rffiNode.execute((NativeCallInfo) args[0], (Object[]) args[1]);
+            return rffiNode.dispatch((NativeCallInfo) args[0], (Object[]) args[1]);
         }
 
         public static InvokeCallRootNode create() {
@@ -81,7 +96,7 @@ public interface CallRFFI {
         @Override
         public Object execute(VirtualFrame frame) {
             Object[] args = frame.getArguments();
-            rffiNode.execute((NativeCallInfo) args[0], (Object[]) args[1]);
+            rffiNode.dispatch((NativeCallInfo) args[0], (Object[]) args[1]);
             return RNull.instance; // unused
         }
 

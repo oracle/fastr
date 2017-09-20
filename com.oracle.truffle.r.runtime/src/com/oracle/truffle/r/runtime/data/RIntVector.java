@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RIntVector extends RVector<int[]> implements RAbstractIntVector {
 
-    private final int[] data;
+    private int[] data;
 
     RIntVector(int[] data, boolean complete) {
         super(complete);
@@ -46,6 +46,17 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     RIntVector(int[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
         this(data, complete);
         initDimsNamesDimNames(dims, names, dimNames);
+    }
+
+    private RIntVector() {
+        super(false);
+    }
+
+    static RIntVector fromNative(long address, int length) {
+        RIntVector result = new RIntVector();
+        NativeDataAccess.asPointer(result);
+        NativeDataAccess.setNativeContents(result, address, length);
+        return result;
     }
 
     @Override
@@ -73,24 +84,28 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public int getDataAt(int index) {
-        return data[index];
+        return NativeDataAccess.getData(this, data, index);
     }
 
     @Override
     public int getDataAt(Object store, int index) {
         assert data == store;
-        return ((int[]) store)[index];
+        return NativeDataAccess.getData(this, (int[]) store, index);
     }
 
     @Override
     public void setDataAt(Object store, int index, int value) {
         assert data == store;
-        ((int[]) store)[index] = value;
+        NativeDataAccess.setData(this, (int[]) store, index, value);
     }
 
     @Override
     protected RIntVector internalCopy() {
-        return new RIntVector(Arrays.copyOf(data, data.length), isComplete());
+        if (data != null) {
+            return new RIntVector(Arrays.copyOf(data, data.length), isComplete());
+        } else {
+            return new RIntVector(getDataCopy(), isComplete());
+        }
     }
 
     public RIntVector copyResetData(int[] newData) {
@@ -108,7 +123,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public int getLength() {
-        return data.length;
+        return NativeDataAccess.getDataLength(this, data);
     }
 
     @Override
@@ -119,8 +134,8 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     @Override
     public boolean verify() {
         if (isComplete()) {
-            for (int x : data) {
-                if (x == RRuntime.INT_NA) {
+            for (int i = 0; i < getLength(); i++) {
+                if (RRuntime.isNA(getDataAt(i))) {
                     return false;
                 }
             }
@@ -130,30 +145,40 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public int[] getDataCopy() {
-        return Arrays.copyOf(data, data.length);
+        if (data != null) {
+            return Arrays.copyOf(data, data.length);
+        } else {
+            return NativeDataAccess.copyIntNativeData(getNativeMirror());
+        }
     }
 
-    /**
-     * Intended for external calls where a copy is not needed. WARNING: think carefully before using
-     * this method rather than {@link #getDataCopy()}.
-     */
     @Override
-    public int[] getDataWithoutCopying() {
+    public int[] getInternalManagedData() {
         return data;
     }
 
     @Override
-    public RIntVector copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createIntVector(data, isComplete(), newDimensions);
+    public int[] getReadonlyData() {
+        if (data != null) {
+            return data;
+        } else {
+            return NativeDataAccess.copyIntNativeData(getNativeMirror());
+        }
     }
 
-    public RIntVector updateDataAt(int i, int right, NACheck valueNACheck) {
+    @Override
+    public RIntVector copyWithNewDimensions(int[] newDimensions) {
+        return RDataFactory.createIntVector(getReadonlyData(), isComplete(), newDimensions);
+    }
+
+    public RIntVector updateDataAt(int index, int value, NACheck valueNACheck) {
         assert !this.isShared();
-        data[i] = right;
-        if (valueNACheck.check(right)) {
+
+        NativeDataAccess.setData(this, data, index, value);
+        if (valueNACheck.check(value)) {
             setComplete(false);
         }
-        assert !isComplete() || !RRuntime.isNA(right);
+        assert !isComplete() || !RRuntime.isNA(value);
         return this;
     }
 
@@ -178,13 +203,13 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     }
 
     private int[] copyResizedData(int size, boolean fillNA) {
-        int[] newData = Arrays.copyOf(data, size);
+        int[] newData = Arrays.copyOf(getReadonlyData(), size);
         return resizeData(newData, this.data, this.getLength(), fillNA);
     }
 
     @Override
     protected RIntVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
+        boolean isComplete = isComplete() && ((getLength() >= size) || !fillNA);
         return RDataFactory.createIntVector(copyResizedData(size, fillNA), isComplete, dimensions);
     }
 
@@ -200,8 +225,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        RAbstractIntVector other = (RAbstractIntVector) fromVector;
-        data[toIndex] = other.getDataAt(fromIndex);
+        NativeDataAccess.setData(this, data, toIndex, ((RAbstractIntVector) fromVector).getDataAt(fromIndex));
     }
 
     @Override
@@ -210,7 +234,16 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     }
 
     @Override
-    public void setElement(int i, Object value) {
-        data[i] = (int) value;
+    public void setElement(int index, Object value) {
+        NativeDataAccess.setData(this, data, index, (int) value);
+    }
+
+    public long allocateNativeContents() {
+        try {
+            return NativeDataAccess.allocateNativeContents(this, data, getLength());
+        } finally {
+            data = null;
+            complete = false;
+        }
     }
 }

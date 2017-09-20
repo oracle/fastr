@@ -27,6 +27,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.ATTRIBNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.CopyMostAttribNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.TAGNodeGen;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
@@ -46,7 +49,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public final class AttributesAccessNodes {
 
-    abstract static class ATTRIB extends FFIUpCallNode.Arg1 {
+    public abstract static class ATTRIB extends FFIUpCallNode.Arg1 {
         @Child private GetAttributesNode getAttributesNode;
 
         @Specialization
@@ -68,9 +71,13 @@ public final class AttributesAccessNodes {
                 throw RError.error(RError.NO_CALLER, Message.GENERIC, "object of type '" + type + "' cannot be attributed");
             }
         }
+
+        public static ATTRIB create() {
+            return ATTRIBNodeGen.create();
+        }
     }
 
-    abstract static class TAG extends FFIUpCallNode.Arg1 {
+    public abstract static class TAG extends FFIUpCallNode.Arg1 {
 
         @Specialization
         public Object doPairlist(RPairList obj) {
@@ -106,9 +113,13 @@ public final class AttributesAccessNodes {
         public RNull doOthers(Object obj) {
             throw RInternalError.unimplemented("TAG is not implemented for type " + obj.getClass().getSimpleName());
         }
+
+        public static TAG create() {
+            return TAGNodeGen.create();
+        }
     }
 
-    abstract static class CopyMostAttrib extends FFIUpCallNode.Arg2 {
+    public abstract static class CopyMostAttrib extends FFIUpCallNode.Arg2 {
 
         @Child protected CopyOfRegAttributesNode copyRegAttributes;
 
@@ -126,6 +137,10 @@ public final class AttributesAccessNodes {
         @SuppressWarnings("unused")
         public Void doOthers(Object x, Object y) {
             throw RInternalError.unimplemented("Rf_copyMostAttrib only works with atrributables.");
+        }
+
+        public static CopyMostAttrib create() {
+            return CopyMostAttribNodeGen.create();
         }
     }
 }

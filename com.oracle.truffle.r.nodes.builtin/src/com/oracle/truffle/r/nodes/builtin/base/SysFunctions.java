@@ -45,7 +45,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -255,10 +254,11 @@ public class SysFunctions {
             casts.arg("paths").mustBe(stringValue());
         }
 
+        @Child private BaseRFFI.ReadlinkNode readlinkNode = BaseRFFI.ReadlinkNode.create();
+
         @Specialization
         @TruffleBoundary
-        protected Object sysReadlink(RAbstractStringVector vector,
-                        @Cached("create()") BaseRFFI.ReadlinkNode readlinkNode) {
+        protected Object sysReadlink(RAbstractStringVector vector) {
             String[] paths = new String[vector.getLength()];
             boolean complete = RDataFactory.COMPLETE_VECTOR;
             for (int i = 0; i < paths.length; i++) {
@@ -300,10 +300,11 @@ public class SysFunctions {
             casts.arg("use_umask").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
+        @Child private BaseRFFI.ChmodNode chmodNode = BaseRFFI.ChmodNode.create();
+
         @Specialization
         @TruffleBoundary
-        protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RAbstractIntVector octmode, @SuppressWarnings("unused") boolean useUmask,
-                        @Cached("create()") BaseRFFI.ChmodNode chmodNode) {
+        protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RAbstractIntVector octmode, @SuppressWarnings("unused") boolean useUmask) {
             byte[] data = new byte[pathVec.getLength()];
             for (int i = 0; i < data.length; i++) {
                 String path = Utils.tildeExpand(pathVec.getDataAt(i));
@@ -378,10 +379,11 @@ public class SysFunctions {
             casts.arg("dirmask").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
+        @Child private BaseRFFI.GlobNode globNode = BaseRFFI.GlobNode.create();
+
         @Specialization
         @TruffleBoundary
-        protected Object sysGlob(RAbstractStringVector pathVec, @SuppressWarnings("unused") boolean dirMask,
-                        @Cached("create()") BaseRFFI.GlobNode globNode) {
+        protected Object sysGlob(RAbstractStringVector pathVec, @SuppressWarnings("unused") boolean dirMask) {
             ArrayList<String> matches = new ArrayList<>();
             // Sys.glob closure already called path.expand
             for (int i = 0; i < pathVec.getLength(); i++) {

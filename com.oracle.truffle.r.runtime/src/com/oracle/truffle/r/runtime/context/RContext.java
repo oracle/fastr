@@ -97,6 +97,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -192,10 +193,10 @@ public final class RContext implements RTruffleObject {
          */
         ACTIVE,
         /**
-         * The {@link RContext} object has been destroyed by the {@link #destroy} method. All
+         * The {@link RContext} object has been destroyed by the {@link #dispose} method. All
          * subsequent operations ideally should throw {@link IllegalStateException}.
          */
-        DESTROYED
+        DISPOSED
     }
 
     /**
@@ -214,11 +215,11 @@ public final class RContext implements RTruffleObject {
         }
 
         /**
-         * Called in response to the {@link RContext#destroy} method. Provides a hook for finalizing
+         * Called in response to the {@link RContext#dispose} method. Provides a hook for finalizing
          * any state before the context is destroyed.
          */
         @SuppressWarnings("unused")
-        default void beforeDestroy(RContext context) {
+        default void beforeDispose(RContext context) {
             // default empty implementation
         }
     }
@@ -346,9 +347,9 @@ public final class RContext implements RTruffleObject {
     public final DLL.ContextStateImpl stateDLL;
     /**
      * RFFI implementation state. Cannot be final as choice of FFI implementation is not made at the
-     * time the constructor is called.
+     * time the constructor is called. TODO: any reason for it not being @CompilationFinal?
      */
-    private ContextState stateRFFI;
+    private RFFIContext stateRFFI;
 
     public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
@@ -563,17 +564,17 @@ public final class RContext implements RTruffleObject {
     /**
      * Destroy this context.
      */
-    public synchronized void destroy() {
-        if (!state.contains(State.DESTROYED)) {
+    public synchronized void dispose() {
+        if (!state.contains(State.DISPOSED)) {
             if (state.contains(State.INITIALIZED)) {
                 for (ContextState contextState : contextStates()) {
-                    contextState.beforeDestroy(this);
+                    contextState.beforeDispose(this);
                 }
             }
             if (contextKind == ContextKind.SHARE_PARENT_RW) {
                 parentContext.sharedChild = null;
             }
-            state = EnumSet.of(State.DESTROYED);
+            state = EnumSet.of(State.DISPOSED);
 
             this.allocationReporter.removePropertyChangeListener(ALLOCATION_ACTIVATION_LISTENER);
         }
@@ -756,7 +757,7 @@ public final class RContext implements RTruffleObject {
         return language;
     }
 
-    public ContextState getStateRFFI() {
+    public RFFIContext getStateRFFI() {
         assert stateRFFI != null;
         return stateRFFI;
     }

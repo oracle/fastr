@@ -20,6 +20,7 @@ import static com.oracle.truffle.r.runtime.RError.Message.INVALID_LOGICAL;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -30,6 +31,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 
 /**
  * Note: invoked from merge.data.frame.
@@ -79,7 +81,9 @@ public abstract class Merge extends RBuiltinNode.Arg4 {
     }
 
     @Specialization
-    RList merge(RAbstractIntVector xIndsAbstract, RAbstractIntVector yIndsAbstract, boolean allX, boolean allY) {
+    RList merge(RAbstractIntVector xIndsAbstract, RAbstractIntVector yIndsAbstract, boolean allX, boolean allY,
+                    @Cached("create()") GetReadonlyData.Int xIndsToArray,
+                    @Cached("create()") GetReadonlyData.Int yIndsToArray) {
         RIntVector xInds = xIndsAbstract.materialize();
         RIntVector yInds = yIndsAbstract.materialize();
 
@@ -94,8 +98,8 @@ public abstract class Merge extends RBuiltinNode.Arg4 {
         for (int i = 0; i < ny; i++) {
             iy[i] = i + 1;
         }
-        int[] xIndsData = xInds.getDataWithoutCopying();
-        int[] yIndsData = yInds.getDataWithoutCopying();
+        int[] xIndsData = xIndsToArray.execute(xInds);
+        int[] yIndsData = yIndsToArray.execute(yInds);
         isortWithIndex(xIndsData, ix, nx);
         isortWithIndex(yIndsData, iy, ny);
 

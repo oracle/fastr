@@ -26,6 +26,10 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.LENGTHNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoNewObjectNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotAssignNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
@@ -35,13 +39,13 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.S
 import com.oracle.truffle.r.nodes.objects.NewObject;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 public final class MiscNodes {
@@ -102,6 +106,10 @@ public final class MiscNodes {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(RError.SHOW_CALLER2, RError.Message.LENGTH_MISAPPLIED, SEXPTYPE.gnuRTypeForObject(obj).name());
         }
+
+        public static LENGTHNode create() {
+            return LENGTHNodeGen.create();
+        }
     }
 
     @TypeSystemReference(RTypes.class)
@@ -121,6 +129,10 @@ public final class MiscNodes {
         @Fallback
         Object doSlot(@SuppressWarnings("unused") Object o, Object name) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.INVALID_ARGUMENT_OF_TYPE, "name", SEXPTYPE.gnuRTypeForObject(name).name());
+        }
+
+        public static RDoSlotNode create() {
+            return RDoSlotNodeGen.create();
         }
     }
 
@@ -142,6 +154,10 @@ public final class MiscNodes {
         Object doSlot(@SuppressWarnings("unused") Object o, Object name, @SuppressWarnings("unused") Object value) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.INVALID_ARGUMENT_OF_TYPE, "name", SEXPTYPE.gnuRTypeForObject(name).name());
         }
+
+        public static RDoSlotAssignNode create() {
+            return RDoSlotAssignNodeGen.create();
+        }
     }
 
     @TypeSystemReference(RTypes.class)
@@ -156,6 +172,10 @@ public final class MiscNodes {
         @Specialization
         Object doNewObject(Object classDef) {
             return newObjectNode.execute(classDef);
+        }
+
+        public static RDoNewObjectNode create() {
+            return RDoNewObjectNodeGen.create();
         }
     }
 

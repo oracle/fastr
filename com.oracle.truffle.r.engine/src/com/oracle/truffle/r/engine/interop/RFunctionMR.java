@@ -32,11 +32,11 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -66,7 +66,7 @@ public class RFunctionMR {
     @Resolve(message = "TO_NATIVE")
     public abstract static class RFunctionToNativeNode extends Node {
         protected Object access(RFunction receiver) {
-            return new NativePointer(receiver);
+            return NativeDataAccess.toNative(receiver);
         }
     }
 
@@ -101,6 +101,20 @@ public class RFunctionMR {
             } finally {
                 FrameSlotChangeMonitor.setObject(dummyFrame, slot, null);
             }
+        }
+    }
+
+    @Resolve(message = "IS_POINTER")
+    public abstract static class IsPointerNode extends Node {
+        protected boolean access(Object receiver) {
+            return NativeDataAccess.isPointer(receiver);
+        }
+    }
+
+    @Resolve(message = "AS_POINTER")
+    public abstract static class AsPointerNode extends Node {
+        protected long access(Object receiver) {
+            return NativeDataAccess.asPointer(receiver);
         }
     }
 

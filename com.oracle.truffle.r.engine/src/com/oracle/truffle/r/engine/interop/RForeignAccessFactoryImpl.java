@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.context.RForeignAccessFactory;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteger;
@@ -73,6 +74,8 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return RNullMRForeign.ACCESS;
         } else if (obj instanceof RList) {
             return RListMRForeign.ACCESS;
+        } else if (obj instanceof RExpression) {
+            return RExpressionMRForeign.ACCESS;
         } else if (obj instanceof REnvironment) {
             return REnvironmentMRForeign.ACCESS;
         } else if (obj instanceof RPairList) {

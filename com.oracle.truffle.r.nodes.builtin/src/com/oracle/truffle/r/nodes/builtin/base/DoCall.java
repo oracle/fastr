@@ -28,8 +28,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -145,11 +143,9 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
                         @Cached("createBinaryProfile()") ConditionProfile quoteProfile,
                         @Cached("create()") BranchProfile containsRSymbolProfile,
                         @Cached("createClassProfile()") ValueProfile frameAccessProfile) {
-            Object[] argValuesData = argsAsList.getDataWithoutCopying();
-            Object[] argValues = argValuesData;
+            Object[] argValues = argsAsList.getDataCopy();
             MaterializedFrame envFrame = env.getFrame(frameAccessProfile).materialize();
             if (quoteProfile.profile(!quote)) {
-                argValues = Arrays.copyOf(argValuesData, argValuesData.length);
                 for (int i = 0; i < argValues.length; i++) {
                     Object arg = argValues[i];
                     if (arg instanceof RSymbol) {

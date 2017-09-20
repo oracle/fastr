@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-abstract class RBaseObject implements RTypedValue {
+abstract class RBaseObject extends RObject implements RTypedValue {
 
     private int typedValueInfo;
 

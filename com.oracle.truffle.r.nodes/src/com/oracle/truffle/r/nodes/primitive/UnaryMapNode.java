@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.primitive;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -46,8 +47,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.GetDataStore;
+import com.oracle.truffle.r.runtime.data.nodes.SetDataAt;
+import com.oracle.truffle.r.runtime.data.nodes.VectorIterator;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class UnaryMapNode extends RBaseNode {
@@ -150,9 +153,9 @@ public final class UnaryMapNode extends RBaseNode {
             target = scalarNode.tryFoldConstantTime(operandCast, operandLength);
         }
         if (target == null) {
-            target = createOrShareVector(operandLength, operand);
-            Object store = target.getInternalStore();
-            vectorNode.apply(scalarNode, store, operandCast, operandLength);
+            RVector<?> targetVec = createOrShareVector(operandLength, operand);
+            target = targetVec;
+            vectorNode.apply(scalarNode, targetVec, operandCast, operandLength);
             RBaseNode.reportWork(this, operandLength);
             target.setComplete(scalarNode.isComplete());
         }
@@ -162,10 +165,10 @@ public final class UnaryMapNode extends RBaseNode {
         return target;
     }
 
-    private RAbstractVector createOrShareVector(int operandLength, RAbstractVector operand) {
+    private RVector<?> createOrShareVector(int operandLength, RAbstractVector operand) {
         RType resultType = getResultType();
-        if (mayShareOperand && operand.getRType() == resultType && shareOperand.profile(((RShareable) operand).isTemporary())) {
-            return operand;
+        if (mayShareOperand && operand.getRType() == resultType && shareOperand.profile(((RShareable) operand).isTemporary()) && operand instanceof RVector<?>) {
+            return (RVector<?>) operand;
         }
         return resultType.create(operandLength, false);
     }
@@ -211,50 +214,29 @@ public final class UnaryMapNode extends RBaseNode {
         result.copyNamesFrom(attributeSource);
     }
 
-    @SuppressWarnings("unused")
+    @ImportStatic(Utils.class)
     protected abstract static class MapUnaryVectorInternalNode extends RBaseNode {
 
-        private static final MapIndexedAction<byte[], RAbstractLogicalVector> LOGICAL = //
-                        (arithmetic, result, resultIndex, left, leftIndex) -> {
-                            result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex));
-                        };
+        private static final MapIndexedAction<Byte> LOGICAL = (arithmetic, value) -> arithmetic.applyLogical(value);
+        private static final MapIndexedAction<Integer> INTEGER = (arithmetic, value) -> arithmetic.applyInteger(value);
+        private static final MapIndexedAction<Double> DOUBLE = (arithmetic, value) -> arithmetic.applyDouble(value);
+        private static final MapIndexedAction<RComplex> COMPLEX = (arithmetic, value) -> arithmetic.applyComplex(value);
+        private static final MapIndexedAction<RComplex> DOUBLE_COMPLEX = (arithmetic, value) -> arithmetic.applyDouble(value);
+        private static final MapIndexedAction<String> CHARACTER = (arithmetic, value) -> arithmetic.applyCharacter(value);
 
-        private static final MapIndexedAction<int[], RAbstractIntVector> INTEGER = //
-                        (arithmetic, result, resultIndex, left, leftIndex) -> {
-                            result[resultIndex] = arithmetic.applyInteger(left.getDataAt(leftIndex));
-                        };
-
-        private static final MapIndexedAction<double[], RAbstractDoubleVector> DOUBLE = //
-                        (arithmetic, result, resultIndex, left, leftIndex) -> {
-                            result[resultIndex] = arithmetic.applyDouble(left.getDataAt(leftIndex));
-                        };
-
-        private static final MapIndexedAction<double[], RAbstractComplexVector> COMPLEX = //
-                        (arithmetic, result, resultIndex, left, leftIndex) -> {
-                            RComplex value = arithmetic.applyComplex(left.getDataAt(leftIndex));
-                            result[resultIndex << 1] = value.getRealPart();
-                            result[(resultIndex << 1) + 1] = value.getImaginaryPart();
-                        };
-
-        private static final MapIndexedAction<double[], RAbstractComplexVector> DOUBLE_COMPLEX = //
-                        (arithmetic, result, resultIndex, left, leftIndex) -> {
-                            result[resultIndex] = arithmetic.applyDouble(left.getDataAt(leftIndex));
-                        };
-
-        private static final MapIndexedAction<String[], RAbstractStringVector> CHARACTER = //
-                        (arithmetic, result, resultIndex, left, leftIndex) -> {
-                            result[resultIndex] = arithmetic.applyCharacter(left.getDataAt(leftIndex));
-                        };
-
-        private final MapIndexedAction<Object, RAbstractVector> indexedAction;
+        private final MapIndexedAction<Object> indexedAction;
         private final RType argumentType;
         private final RType resultType;
 
+        @Child private GetDataStore getTargetDataStore = GetDataStore.create();
+        @Child private SetDataAt targetSetDataAt;
+
         @SuppressWarnings("unchecked")
         protected MapUnaryVectorInternalNode(RType resultType, RType argumentType) {
-            this.indexedAction = (MapIndexedAction<Object, RAbstractVector>) createIndexedAction(resultType, argumentType);
+            this.indexedAction = (MapIndexedAction<Object>) createIndexedAction(resultType, argumentType);
             this.argumentType = argumentType;
             this.resultType = resultType;
+            this.targetSetDataAt = Utils.createSetDataAtNode(resultType);
         }
 
         public RType getArgumentType() {
@@ -269,7 +251,7 @@ public final class UnaryMapNode extends RBaseNode {
             return MapUnaryVectorInternalNodeGen.create(resultType, argumentType);
         }
 
-        private static MapIndexedAction<? extends Object, ? extends RAbstractVector> createIndexedAction(RType resultType, RType argumentType) {
+        private static MapIndexedAction<?> createIndexedAction(RType resultType, RType argumentType) {
             switch (argumentType) {
                 case Logical:
                     return LOGICAL;
@@ -300,56 +282,38 @@ public final class UnaryMapNode extends RBaseNode {
             }
         }
 
-        private void apply(UnaryMapFunctionNode scalarAction, Object store, RAbstractVector operand, int operandLength) {
+        private void apply(UnaryMapFunctionNode scalarAction, RVector<?> target, RAbstractVector operand, int operandLength) {
             assert operand.getLength() == operandLength;
             assert operand.getRType() == argumentType;
-            assert isStoreCompatible(store, resultType, operandLength);
-
-            executeInternal(scalarAction, store, operand, operandLength);
-        }
-
-        private static boolean isStoreCompatible(Object store, RType resultType, int operandLength) {
-            switch (resultType) {
-                case Logical:
-                    assert store instanceof byte[] && ((byte[]) store).length == operandLength;
-                    return true;
-                case Integer:
-                    assert store instanceof int[] && ((int[]) store).length == operandLength;
-                    return true;
-                case Double:
-                    assert store instanceof double[] && ((double[]) store).length == operandLength;
-                    return true;
-                case Complex:
-                    assert store instanceof double[] && ((double[]) store).length >> 1 == operandLength;
-                    return true;
-                case Character:
-                    assert store instanceof String[] && ((String[]) store).length == operandLength;
-                    return true;
-                default:
-                    throw RInternalError.shouldNotReachHere();
-            }
+            executeInternal(scalarAction, target, operand, operandLength);
         }
 
         protected abstract void executeInternal(UnaryMapFunctionNode node, Object store, RAbstractVector operand, int operandLength);
 
         @Specialization(guards = {"operandLength == 1"})
-        protected void doScalar(UnaryMapFunctionNode node, Object store, RAbstractVector operand, int operandLength) {
-            indexedAction.perform(node, store, 0, operand, 0);
+        protected void doScalar(UnaryMapFunctionNode node, RVector<?> target, RAbstractVector operand, int operandLength,
+                        @Cached("createIterator()") VectorIterator.Generic iterator) {
+            Object it = iterator.init(operand);
+            Object targetStore = getTargetDataStore.execute(target);
+            Object value = iterator.next(operand, it);
+            targetSetDataAt.setDataAtAsObject(target, targetStore, 0, indexedAction.perform(node, value));
         }
 
         @Specialization(replaces = "doScalar")
-        protected void doScalarVector(UnaryMapFunctionNode node, Object store, RAbstractVector operand, int operandLength,
+        protected void doScalarVector(UnaryMapFunctionNode node, RVector<?> target, RAbstractVector operand, int operandLength,
+                        @Cached("createIterator()") VectorIterator.Generic iterator,
                         @Cached("createCountingProfile()") LoopConditionProfile profile) {
+            Object targetStore = getTargetDataStore.execute(target);
+            Object it = iterator.init(operand);
             profile.profileCounted(operandLength);
             for (int i = 0; profile.inject(i < operandLength); ++i) {
-                indexedAction.perform(node, store, i, operand, i);
+                Object value = indexedAction.perform(node, iterator.next(operand, it));
+                targetSetDataAt.setDataAtAsObject(target, targetStore, i, value);
             }
         }
 
-        private interface MapIndexedAction<A, V extends RAbstractVector> {
-
-            void perform(UnaryMapFunctionNode action, A store, int resultIndex, V operand, int operandIndex);
-
+        private interface MapIndexedAction<V> {
+            Object perform(UnaryMapFunctionNode action, V val);
         }
     }
 }

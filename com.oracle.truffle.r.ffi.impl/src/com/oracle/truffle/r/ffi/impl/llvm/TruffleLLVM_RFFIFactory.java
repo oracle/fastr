@@ -32,9 +32,9 @@ import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
-import com.oracle.truffle.r.runtime.ffi.RApplRFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFI;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 public class TruffleLLVM_RFFIFactory extends RFFIFactory {
 
     @Override
-    public ContextState newContextState() {
+    public RFFIContext newContextState() {
         return new TruffleLLVM_RFFIContextState();
     }
 
@@ -117,17 +117,6 @@ public class TruffleLLVM_RFFIFactory extends RFFIFactory {
                     truffleStatsRFFI = new TruffleLLVM_Stats();
                 }
                 return truffleStatsRFFI;
-            }
-
-            @CompilationFinal private RApplRFFI rApplRFFI;
-
-            @Override
-            public RApplRFFI getRApplRFFI() {
-                CompilerAsserts.neverPartOfCompilation();
-                if (rApplRFFI == null) {
-                    rApplRFFI = new TruffleLLVM_RAppl();
-                }
-                return rApplRFFI;
             }
 
             @CompilationFinal private LapackRFFI lapackRFFI;

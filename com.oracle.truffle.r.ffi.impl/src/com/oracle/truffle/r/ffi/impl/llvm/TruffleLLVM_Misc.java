@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
+import com.oracle.truffle.r.ffi.impl.nfi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 
 public class TruffleLLVM_Misc implements MiscRFFI {
@@ -29,8 +30,8 @@ public class TruffleLLVM_Misc implements MiscRFFI {
     private static class TruffleLLVM_ExactSumNode extends TruffleLLVM_DownCallNode implements ExactSumNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.exactSumFunc;
+        protected NativeFunction getFunction() {
+            return NativeFunction.exactSumFunc;
         }
 
         @Override
@@ -39,8 +40,27 @@ public class TruffleLLVM_Misc implements MiscRFFI {
         }
     }
 
+    private static final class TruffleLLVM_DqrlsNode extends TruffleLLVM_DownCallNode implements DqrlsNode {
+
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.dqrls;
+        }
+
+        @Override
+        public void execute(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work) {
+            call(x, n, p, y, ny, tol, b, rsd, qty, k, jpvt, qraux, work);
+        }
+    }
+
     @Override
     public ExactSumNode createExactSumNode() {
         return new TruffleLLVM_ExactSumNode();
     }
+
+    @Override
+    public DqrlsNode createDqrlsNode() {
+        return new TruffleLLVM_DqrlsNode();
+    }
+
 }

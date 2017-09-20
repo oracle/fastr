@@ -109,13 +109,22 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
         return true;
     }
 
+    @Override
+    public Object[] getInternalManagedData() {
+        return data;
+    }
+
     /**
-     * Intended for external calls where a copy is not needed. WARNING: think carefully before using
-     * this method rather than {@link #getDataCopy()}.
+     * Unlike atomic vectors, {@code RList} cannot have a native memory mirror, therefore this is a
+     * fast operation.
      */
     @Override
-    public final Object[] getDataWithoutCopying() {
+    public final Object[] getReadonlyData() {
         return data;
+    }
+
+    public final Object[] getDataWithoutCopying() {
+        return getReadonlyData();
     }
 
     @Override

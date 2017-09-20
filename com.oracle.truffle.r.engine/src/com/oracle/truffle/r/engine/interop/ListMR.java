@@ -39,12 +39,13 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.engine.interop.ListMRFactory.ListKeyInfoImplNodeGen;
 import com.oracle.truffle.r.engine.interop.ListMRFactory.ListReadImplNodeGen;
 import com.oracle.truffle.r.engine.interop.ListMRFactory.ListWriteImplNodeGen;
-import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
+import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -118,7 +119,21 @@ public class ListMR {
         @Resolve(message = "TO_NATIVE")
         public abstract static class RListToNativeNode extends Node {
             protected Object access(RTruffleObject receiver) {
-                return toNativePointer(receiver);
+                return NativeDataAccess.toNative(receiver);
+            }
+        }
+
+        @Resolve(message = "IS_POINTER")
+        public abstract static class IsPointerNode extends Node {
+            protected boolean access(Object receiver) {
+                return NativeDataAccess.isPointer(receiver);
+            }
+        }
+
+        @Resolve(message = "AS_POINTER")
+        public abstract static class AsPointerNode extends Node {
+            protected long access(Object receiver) {
+                return NativeDataAccess.asPointer(receiver);
             }
         }
 
@@ -127,6 +142,104 @@ public class ListMR {
 
             protected static boolean test(TruffleObject receiver) {
                 return receiver instanceof RList;
+            }
+        }
+    }
+
+    @MessageResolution(receiverType = RExpression.class)
+    public static class RExpressionMR extends ListMR {
+        @Resolve(message = "IS_BOXED")
+        public abstract static class RExpressionIsBoxedNode extends Node {
+            protected Object access(RExpression receiver) {
+                return isBoxed(receiver);
+            }
+        }
+
+        @Resolve(message = "HAS_SIZE")
+        public abstract static class RExpressionHasSizeNode extends Node {
+            protected Object access(RExpression receiver) {
+                return hasSize(receiver);
+            }
+        }
+
+        @Resolve(message = "GET_SIZE")
+        public abstract static class RExpressionGetSizeNode extends Node {
+            @Child private RLengthNode lengthNode = RLengthNode.create();
+
+            protected Object access(RExpression receiver) {
+                return getSize(receiver, lengthNode);
+            }
+        }
+
+        @Resolve(message = "IS_NULL")
+        public abstract static class RExpressionIsNullNode extends Node {
+            protected Object access(RExpression receiver) {
+                return isNull(receiver);
+            }
+        }
+
+        @Resolve(message = "READ")
+        public abstract static class RExpressionReadNode extends Node {
+            @Child private ListReadImplNode read = ListReadImplNodeGen.create();
+
+            protected Object access(VirtualFrame frame, RExpression receiver, Object identifier) {
+                return read.execute(frame, receiver, identifier);
+            }
+        }
+
+        @Resolve(message = "WRITE")
+        public abstract static class RExpressionWriteNode extends Node {
+            @Child private ListWriteImplNode writeNode = ListWriteImplNodeGen.create();
+
+            protected Object access(RExpression receiver, Object identifier, Object valueObj) {
+                return writeNode.execute(receiver, identifier, valueObj);
+            }
+        }
+
+        @Resolve(message = "KEYS")
+        public abstract static class RExpressionKeysNode extends Node {
+            @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
+
+            protected Object access(RExpression receiver) {
+                return listKeys(receiver, getNamesNode);
+            }
+        }
+
+        @Resolve(message = "KEY_INFO")
+        public abstract static class RExpressionKeyInfoNode extends Node {
+            @Child private ListKeyInfoImplNode keyInfoNode = ListKeyInfoImplNodeGen.create();
+
+            protected Object access(TruffleObject receiver, Object idx) {
+                return keyInfoNode.execute(receiver, idx);
+            }
+        }
+
+        @Resolve(message = "TO_NATIVE")
+        public abstract static class RExpressionToNativeNode extends Node {
+            protected Object access(RTruffleObject receiver) {
+                return NativeDataAccess.toNative(receiver);
+            }
+        }
+
+        @Resolve(message = "IS_POINTER")
+        public abstract static class IsPointerNode extends Node {
+            protected boolean access(Object receiver) {
+                return NativeDataAccess.isPointer(receiver);
+            }
+        }
+
+        @Resolve(message = "AS_POINTER")
+        public abstract static class AsPointerNode extends Node {
+            protected long access(Object receiver) {
+                return NativeDataAccess.asPointer(receiver);
+            }
+        }
+
+        @CanResolve
+        public abstract static class RExpressionCheck extends Node {
+
+            protected static boolean test(TruffleObject receiver) {
+                return receiver instanceof RExpression;
             }
         }
     }
@@ -196,7 +309,21 @@ public class ListMR {
         @Resolve(message = "TO_NATIVE")
         public abstract static class RPairListToNativeNode extends Node {
             protected Object access(RPairList receiver) {
-                return toNativePointer(receiver);
+                return NativeDataAccess.toNative(receiver);
+            }
+        }
+
+        @Resolve(message = "IS_POINTER")
+        public abstract static class IsPointerNode extends Node {
+            protected boolean access(Object receiver) {
+                return NativeDataAccess.isPointer(receiver);
+            }
+        }
+
+        @Resolve(message = "AS_POINTER")
+        public abstract static class AsPointerNode extends Node {
+            protected long access(Object receiver) {
+                return NativeDataAccess.asPointer(receiver);
             }
         }
 
@@ -388,6 +515,14 @@ public class ListMR {
         }
     }
 
+    private static boolean isBoxed(@SuppressWarnings("unused") TruffleObject receiver) {
+        return false;
+    }
+
+    private static boolean isNull(@SuppressWarnings("unused") TruffleObject receiver) {
+        return false;
+    }
+
     private static boolean hasSize(@SuppressWarnings("unused") TruffleObject receiver) {
         return true;
     }
@@ -399,9 +534,5 @@ public class ListMR {
     private static Object listKeys(TruffleObject receiver, GetNamesAttributeNode getNamesNode) {
         RStringVector names = getNamesNode.getNames(receiver);
         return names != null ? names : RNull.instance;
-    }
-
-    private static Object toNativePointer(RTruffleObject receiver) {
-        return new NativePointer(receiver);
     }
 }

@@ -1103,10 +1103,11 @@ public class GrepFunctions {
                     RIntVector res;
                     if (pattern.length() == 0) {
                         String txt = vector.getDataAt(i);
-                        res = RDataFactory.createIntVector(txt.length());
+                        int[] resData = new int[txt.length()];
                         for (int j = 0; j < txt.length(); j++) {
-                            res.setDataAt(res.getInternalStore(), j, j + 1);
+                            resData[j] = j + 1;
                         }
+                        res = RDataFactory.createIntVector(resData, RDataFactory.COMPLETE_VECTOR);
                         setMatchLengthAttrNode.execute(res, RDataFactory.createIntVector(txt.length()));
                         if (useBytes) {
                             setUseBytesAttrNode.execute(res, RRuntime.LOGICAL_TRUE);

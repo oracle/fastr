@@ -20,18 +20,5 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include "../gramRd_fastr.h"
-#include <truffle.h>
 
-typedef int (*call_getc)(void *conn);
 
-static void **gramRd_callbacks = NULL;
-
-void gramRd_addCallback(void *callback) {
-	gramRd_callbacks = truffle_managed_malloc(1 * sizeof(void*));
-	gramRd_callbacks[0] = callback;
-}
-
-int callGetCMethod(void *conn) {
-	return ((call_getc) gramRd_callbacks[0])(conn);
-}

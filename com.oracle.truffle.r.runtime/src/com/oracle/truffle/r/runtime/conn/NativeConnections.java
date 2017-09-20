@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -297,6 +298,14 @@ public class NativeConnections {
 
     private static class NativeChannel implements ByteChannel {
 
+        // Note: we wrap the ByteBuffer's array with a raw vector, which is on the native side
+        // converted to a pointer using RAW macro. This turns the raw vector into a native memory
+        // backed vector and any consecutive (write) operations in the native code are actually not
+        // done on the original vector that backs the byte buffer, so we need to copy back the date
+        // to the byte buffer. It would be more efficitent to use direct byte buffer, but then we'd
+        // need to make the native call interface (CallRFFI.InvokeCallRootNode) more flexible so
+        // that it can accept other argument types than SEXPs.
+
         private final NativeRConnection base;
 
         NativeChannel(NativeRConnection base) {
@@ -307,16 +316,19 @@ public class NativeConnections {
         public int read(ByteBuffer dst) throws IOException {
             NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(READ_NATIVE_CONNECTION);
             RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
-            Object call = nativeCallTarget.call(ni, new Object[]{base.addr, dst.array(), dst.remaining()});
-
-            if (call instanceof RIntVector) {
-                int nread = ((RIntVector) call).getDataAt(0);
-                // update buffer's position !
-                dst.position(nread);
-                return nread;
+            RRawVector bufferVec = RDataFactory.createRawVector(dst.remaining());
+            Object call = nativeCallTarget.call(ni, new Object[]{base.addr, bufferVec, dst.remaining()});
+            if (!(call instanceof RIntVector)) {
+                throw RInternalError.shouldNotReachHere("unexpected result type from native function, did the signature change?");
             }
-
-            throw RInternalError.shouldNotReachHere("unexpected result type");
+            int nread = ((RIntVector) call).getDataAt(0);
+            if (nread > 0) {
+                // this should also update the buffer position
+                for (int i = 0; i < bufferVec.getLength(); i++) {
+                    dst.put(bufferVec.getRawDataAt(i));
+                }
+            }
+            return nread;
         }
 
         @Override
@@ -327,7 +339,7 @@ public class NativeConnections {
         @Override
         public void close() throws IOException {
             NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(CLOSE_NATIVE_CONNECTION);
-            RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
+            RootCallTarget nativeCallTarget = CallRFFI.InvokeVoidCallRootNode.create().getCallTarget();
             nativeCallTarget.call(ni, new Object[]{base.addr});
         }
 
@@ -335,13 +347,15 @@ public class NativeConnections {
         public int write(ByteBuffer src) throws IOException {
             NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(WRITE_NATIVE_CONNECTION);
             RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
-
-            Object result = nativeCallTarget.call(ni, new Object[]{base.addr, src.array(), src.remaining()});
-
+            ByteBuffer slice = src;
+            if (src.position() > 0) {
+                slice = src.slice();
+            }
+            RRawVector bufferVec = RDataFactory.createRawVector(slice.array());
+            Object result = nativeCallTarget.call(ni, new Object[]{base.addr, bufferVec, src.remaining()});
             if (result instanceof RIntVector) {
                 return ((RIntVector) result).getDataAt(0);
             }
-
             throw RInternalError.shouldNotReachHere("unexpected result type");
         }
     }

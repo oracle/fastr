@@ -11,7 +11,6 @@
 package com.oracle.truffle.r.nodes.function;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -160,7 +159,11 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
                 if (i == 0) {
                     dispatchType = type.copyResized(type.getLength(), false);
                 } else {
-                    RStringVector clazz = RDataFactory.createStringVector(Arrays.copyOfRange(type.getDataWithoutCopying(), i, type.getLength()), true);
+                    String[] clazzData = new String[type.getLength() - i];
+                    for (int j = i; j < type.getLength(); j++) {
+                        clazzData[j - i] = type.getDataAt(j);
+                    }
+                    RStringVector clazz = RDataFactory.createStringVector(clazzData, true);
                     clazz.setAttr(RRuntime.PREVIOUS_ATTR_KEY, type.copyResized(type.getLength(), false));
                     dispatchType = clazz;
                 }

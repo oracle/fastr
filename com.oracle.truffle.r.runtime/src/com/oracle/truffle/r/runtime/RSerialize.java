@@ -318,7 +318,7 @@ public class RSerialize {
 
     @TruffleBoundary
     public static Object unserialize(RAbstractRawVector data) {
-        byte[] buffer = data.materialize().getDataWithoutCopying();
+        byte[] buffer = data.materialize().getReadonlyData();
         try {
             return new Input(new ByteArrayInputStream(buffer)).unserialize();
         } catch (IOException e) {
@@ -1520,10 +1520,10 @@ public class RSerialize {
                              * matter, so we use the "frame" form, which is a pairlist. tag is
                              * binding name, car is binding value
                              */
-                            String[] bindings = env.ls(true, null, false).getDataWithoutCopying();
-                            for (String binding : bindings) {
-                                Object value = getValueIgnoreActiveBinding(env.getFrame(), binding);
-                                writePairListEntry(binding, value);
+                            RStringVector bindings = env.ls(true, null, false);
+                            for (int i = 0; i < bindings.getLength(); i++) {
+                                Object value = getValueIgnoreActiveBinding(env.getFrame(), bindings.getDataAt(i));
+                                writePairListEntry(bindings.getDataAt(i), value);
                             }
                             terminatePairList();
                             writeItem(RNull.instance); // hashtab
@@ -1631,7 +1631,7 @@ public class RSerialize {
 
                             case RAWSXP: {
                                 RRawVector raw = (RRawVector) obj;
-                                byte[] data = raw.getDataWithoutCopying();
+                                byte[] data = raw.getReadonlyData();
                                 stream.writeInt(data.length);
                                 stream.writeRaw(data);
                                 break;

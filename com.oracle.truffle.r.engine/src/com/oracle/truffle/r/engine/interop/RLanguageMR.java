@@ -35,9 +35,9 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -64,7 +64,7 @@ public class RLanguageMR {
     @Resolve(message = "TO_NATIVE")
     public abstract static class RLanguageToNativeNode extends Node {
         protected Object access(RLanguage receiver) {
-            return new NativePointer(receiver);
+            return NativeDataAccess.toNative(receiver);
         }
     }
 
@@ -83,6 +83,20 @@ public class RLanguageMR {
 
         protected Object access(RLanguage receiver, Object obj) {
             return keyInfoNode.execute(receiver, obj);
+        }
+    }
+
+    @Resolve(message = "IS_POINTER")
+    public abstract static class IsPointerNode extends Node {
+        protected boolean access(Object receiver) {
+            return NativeDataAccess.isPointer(receiver);
+        }
+    }
+
+    @Resolve(message = "AS_POINTER")
+    public abstract static class AsPointerNode extends Node {
+        protected long access(Object receiver) {
+            return NativeDataAccess.asPointer(receiver);
         }
     }
 

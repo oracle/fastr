@@ -22,12 +22,12 @@
  */
 #include <rffiutils.h>
 
-SEXP unimplemented(char *name) {
+SEXP unimplemented(const char *name) {
 	printf("unimplemented %s\n", name);
 	exit(1);
 }
 
-void fatalError(char *msg) {
+void fatalError(const char *msg) {
 	printf("faatal error %s\n", msg);
     exit(1);
 }

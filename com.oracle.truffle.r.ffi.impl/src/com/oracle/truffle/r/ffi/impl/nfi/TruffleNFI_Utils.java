@@ -40,17 +40,12 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 
 public class TruffleNFI_Utils {
 
-    private static String getString(long address, int len) {
+    static String getString(long address, int len) {
         byte[] byteArray = new byte[len];
         for (int i = 0; i < len; i++) {
             byteArray[i] = UnsafeAdapter.UNSAFE.getByte(address + i);
         }
         return new String(byteArray, StandardCharsets.UTF_8);
-    }
-
-    static String convertCstring(Object cstring, int len) {
-        long address = (long) cstring;
-        return getString(address, len);
     }
 
     private static TruffleObject defaultLibrary;

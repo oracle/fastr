@@ -49,8 +49,8 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public Void getInternalStore() {
-        return null;
+    public EmptyInternalStore getInternalStore() {
+        return EmptyInternalStore.INSTANCE;
     }
 
     @Override

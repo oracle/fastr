@@ -29,8 +29,10 @@ import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.unimplemented;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -42,9 +44,6 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.ffi.impl.common.ParseResult.ParseStatus;
-import com.oracle.truffle.r.ffi.impl.nodes.FFIUpCallRootNode;
-import com.oracle.truffle.r.ffi.impl.upcalls.RFFIUpCallTable;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
@@ -66,27 +65,26 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.InvalidConnection;
 import com.oracle.truffle.r.runtime.conn.NativeConnections.NativeRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
-import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -105,14 +103,21 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
-import com.oracle.truffle.r.runtime.ffi.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
+
+import sun.misc.Unsafe;
 
 /**
  * This class provides a simple Java-based implementation of {@link UpCallsRFFI}, where all the
@@ -129,6 +134,10 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
 public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     private final Map<String, Object> nameSymbolCache = new ConcurrentHashMap<>();
+
+    private static RuntimeException implementedAsNode() {
+        throw RInternalError.shouldNotReachHere("upcall function is implemented via a node");
+    }
 
     // Checkstyle: stop method name check
 
@@ -161,30 +170,31 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int Rf_asInteger(Object x) {
-        return (int) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_asInteger).call(x);
+        throw implementedAsNode();
     }
 
     @Override
     public double Rf_asReal(Object x) {
-        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_asReal).call(x);
+        throw implementedAsNode();
     }
 
     @Override
     public int Rf_asLogical(Object x) {
-        return (int) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_asLogical).call(x);
+        throw implementedAsNode();
     }
 
     @Override
     public Object Rf_asChar(Object x) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_asChar).call(x);
+        throw implementedAsNode();
     }
 
     @Override
     public Object Rf_coerceVector(Object x, int mode) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_coerceVector).call(x, mode);
+        throw implementedAsNode();
     }
 
     @Override
+    @TruffleBoundary
     public Object Rf_mkCharLenCE(Object bytes, int len, int encoding) {
         // TODO: handle encoding properly
         return CharSXPWrapper.create(new String((byte[]) bytes, StandardCharsets.UTF_8));
@@ -208,7 +218,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object R_do_MAKE_CLASS(Object clazz) {
+    public Object R_do_MAKE_CLASS(String clazz) {
         String name = "getClass";
         RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, REnvironment.getRegisteredNamespace("methods").get(name));
         return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), true, null, clazz);
@@ -216,7 +226,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object R_do_new_object(Object classDef) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.R_do_new_object).call(classDef);
+        throw implementedAsNode();
     }
 
     @Override
@@ -261,10 +271,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object ATTRIB(Object obj) {
-        if (obj instanceof RAttributable) {
-            return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.ATTRIB).call(obj);
-        }
-        return RNull.instance;
+        throw implementedAsNode();
     }
 
     @Override
@@ -320,7 +327,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int Rf_inherits(Object x, Object clazz) {
+    public int Rf_inherits(Object x, String clazz) {
         int result = 0;
         RStringVector hierarchy = getClassHr(x);
         for (int i = 0; i < hierarchy.getLength(); i++) {
@@ -332,12 +339,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_install(Object name) {
-        String nameStr = (String) name;
-        Object ret = nameSymbolCache.get(nameStr);
+    public Object Rf_install(String name) {
+        Object ret = nameSymbolCache.get(name);
         if (ret == null) {
-            ret = RDataFactory.createSymbolInterned(nameStr);
-            nameSymbolCache.put(nameStr, ret);
+            ret = RDataFactory.createSymbolInterned(name);
+            nameSymbolCache.put(name, ret);
         }
         return ret;
     }
@@ -374,25 +380,26 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int Rf_error(Object msg) {
-        throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, msg);
+    public int Rf_error(String msg) {
+        RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, msg);
+        return 0;
     }
 
     @Override
-    public int Rf_warning(Object msg) {
+    public int Rf_warning(String msg) {
         RError.warning(RError.SHOW_CALLER2, RError.Message.GENERIC, msg);
         return 0;
     }
 
     @Override
-    public int Rf_warningcall(Object call, Object msg) {
-        RErrorHandling.warningcallRFFI(call, (String) msg);
+    public int Rf_warningcall(Object call, String msg) {
+        RErrorHandling.warningcallRFFI(call, msg);
         return 0;
     }
 
     @Override
-    public int Rf_errorcall(Object call, Object msg) {
-        RErrorHandling.errorcallRFFI(call, (String) msg);
+    public int Rf_errorcall(Object call, String msg) {
+        RErrorHandling.errorcallRFFI(call, msg);
         return 0;
     }
 
@@ -488,7 +495,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int LENGTH(Object x) {
-        return (int) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.LENGTH).call(x);
+        throw implementedAsNode();
     }
 
     @Override
@@ -508,61 +515,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         RList list = guaranteeInstanceOf(x, RList.class);
         list.setElement((int) i, v);
         return 0;
-    }
-
-    @Override
-    public Object RAW(Object x) {
-        if (x instanceof RRawVector) {
-            return ((RRawVector) x).getDataWithoutCopying();
-        } else if (x instanceof RRaw) {
-            return new byte[]{((RRaw) x).getValue()};
-        } else {
-            throw unimplemented();
-        }
-    }
-
-    @Override
-    public Object LOGICAL(Object x) {
-        if (x instanceof RLogicalVector) {
-            return ((RLogicalVector) x).getDataWithoutCopying();
-        } else if (x instanceof Byte) {
-            return new byte[]{(Byte) x};
-        } else {
-            throw unimplemented();
-        }
-    }
-
-    @Override
-    public Object INTEGER(Object x) {
-        if (x instanceof RIntVector) {
-            return ((RIntVector) x).getDataWithoutCopying();
-        } else if (x instanceof RIntSequence) {
-            return ((RIntSequence) x).materialize().getDataWithoutCopying();
-        } else if (x instanceof Integer) {
-            return new int[]{(Integer) x};
-        } else if (x instanceof RLogicalVector) {
-            RLogicalVector vec = (RLogicalVector) x;
-            int[] result = new int[vec.getLength()];
-            for (int i = 0; i < result.length; i++) {
-                result[i] = vec.getDataAt(i);
-            }
-            return result;
-        } else {
-            guaranteeInstanceOf(x, Byte.class);
-            return new int[]{(Byte) x};
-        }
-    }
-
-    @Override
-    public Object REAL(Object x) {
-        if (x instanceof RDoubleVector) {
-            return ((RDoubleVector) x).getDataWithoutCopying();
-        } else if (x instanceof RDoubleSequence) {
-            return ((RDoubleSequence) x).materialize().getDataWithoutCopying();
-        } else {
-            guaranteeInstanceOf(x, Double.class);
-            return new double[]{(Double) x};
-        }
     }
 
     @Override
@@ -682,33 +634,32 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object TAG(Object e) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.TAG).call(e);
+        throw implementedAsNode();
     }
 
     @Override
     public Object CAR(Object e) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.CAR).call(e);
+        throw implementedAsNode();
     }
 
     @Override
     public Object CDR(Object e) {
-        Object result = FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.CDR).call(e);
-        return result;
+        throw implementedAsNode();
     }
 
     @Override
     public Object CADR(Object e) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.CADR).call(e);
+        throw implementedAsNode();
     }
 
     @Override
     public Object CADDR(Object e) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.CADDR).call(e);
+        throw implementedAsNode();
     }
 
     @Override
     public Object CDDR(Object e) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.CDDR).call(e);
+        throw implementedAsNode();
     }
 
     @Override
@@ -822,7 +773,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                 RList argsList = ((RPairList) args).toRList();
                 result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), RCaller.topLevel, true,
                                 ArgumentsSignature.fromNamesAttribute(argsList.getNames()),
-                                argsList.getDataNonShared());
+                                argsList.getDataTemp());
             }
         } else if (expr instanceof RSymbol) {
             RSyntaxNode lookup = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) expr).getName(), false);
@@ -1110,22 +1061,36 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return p.isEvaluated() ? p.getValue() : RUnboundValue.instance;
     }
 
+    private enum ParseStatus {
+        PARSE_NULL,
+        PARSE_OK,
+        PARSE_INCOMPLETE,
+        PARSE_ERROR,
+        PARSE_EOF
+    }
+
     @Override
     public Object R_ParseVector(Object text, int n, Object srcFile) {
-        // TODO general case
-        assert n == 1;
-        assert srcFile == RNull.instance;
+        // TODO general case + all statuses
+        assert n == 1 : "unsupported: R_ParseVector with n != 0.";
+        assert srcFile == RNull.instance : "unsupported: R_ParseVector with non-null srcFile argument.";
         String textString = RRuntime.asString(text);
         assert textString != null;
 
+        Object[] resultData = new Object[2];
         try {
             Source source = RSource.fromTextInternal(textString, RSource.Internal.R_PARSEVECTOR);
             RExpression exprs = RContext.getEngine().parse(source);
-            return new ParseResult(ParseStatus.PARSE_OK.ordinal(), exprs);
+            resultData[0] = RDataFactory.createIntVectorFromScalar(ParseStatus.PARSE_OK.ordinal());
+            resultData[1] = exprs;
+        } catch (IncompleteSourceException ex) {
+            resultData[0] = RDataFactory.createIntVectorFromScalar(ParseStatus.PARSE_INCOMPLETE.ordinal());
+            resultData[1] = RNull.instance;
         } catch (ParseException ex) {
-            // TODO incomplete
-            return new ParseResult(ParseStatus.PARSE_ERROR.ordinal(), RNull.instance);
+            resultData[0] = RDataFactory.createIntVectorFromScalar(ParseStatus.PARSE_ERROR.ordinal());
+            resultData[1] = RNull.instance;
         }
+        return RDataFactory.createList(resultData);
     }
 
     @Override
@@ -1204,8 +1169,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int Rprintf(Object message) {
-        RContext.getInstance().getConsole().print((String) message);
+    public int Rprintf(String message) {
+        RContext.getInstance().getConsole().print(message);
         return 0;
     }
 
@@ -1442,35 +1407,37 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object R_new_custom_connection(Object description, Object mode, Object className, Object connAddrObj) {
+    public Object R_new_custom_connection(String description, String mode, String className, Object connAddrObj) {
         // TODO handle encoding properly !
-        String strDescription = (String) description;
-        String strMode = (String) mode;
-        String strClassName = (String) className;
         RExternalPtr connAddr = guaranteeInstanceOf(connAddrObj, RExternalPtr.class);
         try {
-            return new NativeRConnection(strDescription, strMode, strClassName, connAddr).asVector();
+            return new NativeRConnection(description, mode, className, connAddr).asVector();
         } catch (IOException e) {
             return InvalidConnection.instance.asVector();
         }
     }
 
     @Override
-    public int R_ReadConnection(int fd, Object bufObj) {
-        byte[] buf = (byte[]) bufObj;
+    public int R_ReadConnection(int fd, long bufAddress, int size) {
+        // Workaround using Unsafe until GR-5927 is fixed
+        byte[] buf = new byte[size];
+        int result = 0;
         try (BaseRConnection fromIndex = RConnection.fromIndex(fd)) {
             Arrays.fill(buf, (byte) 0);
-            return fromIndex.readBin(ByteBuffer.wrap(buf));
+            result = fromIndex.readBin(ByteBuffer.wrap(buf));
         } catch (IOException e) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_READING_CONNECTION, e.getMessage());
         }
+        UnsafeAdapter.UNSAFE.copyMemory(buf, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, bufAddress, Math.min(result, size));
+        return result;
     }
 
     @Override
-    public int R_WriteConnection(int fd, Object bufObj) {
-        byte[] buf = (byte[]) bufObj;
+    public int R_WriteConnection(int fd, long bufAddress, int size) {
+        // Workaround using Unsafe until GR-5927 is fixed
+        byte[] buf = new byte[size];
+        UnsafeAdapter.UNSAFE.copyMemory(null, bufAddress, buf, Unsafe.ARRAY_BYTE_BASE_OFFSET, size);
         try (BaseRConnection fromIndex = RConnection.fromIndex(fd)) {
-            Arrays.fill(buf, (byte) 0);
             final ByteBuffer wrapped = ByteBuffer.wrap(buf);
             fromIndex.writeBin(wrapped);
             return wrapped.position();
@@ -1510,12 +1477,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object R_do_slot(Object o, Object name) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.R_do_slot).call(o, name);
+        throw implementedAsNode();
     }
 
     @Override
     public Object R_do_slot_assign(Object o, Object name, Object value) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.R_do_slot_assign).call(o, name, value);
+        throw implementedAsNode();
     }
 
     @Override
@@ -1523,11 +1490,74 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return REnvironment.getRegisteredNamespace("methods");
     }
 
+    @Override
+    public void R_PreserveObject(Object obj) {
+        guaranteeInstanceOf(obj, RObject.class);
+        HashSet<RObject> list = getContext().preserveList;
+        list.add((RObject) obj);
+    }
+
+    @Override
+    public void R_ReleaseObject(Object obj) {
+        guaranteeInstanceOf(obj, RObject.class);
+        HashSet<RObject> list = getContext().preserveList;
+        list.remove(obj);
+    }
+
+    @Override
+    public Object Rf_protect(Object x) {
+        getContext().protectStack.add(guaranteeInstanceOf(x, RObject.class));
+        return x;
+    }
+
+    @Override
+    public void Rf_unprotect(int x) {
+        RFFIContext context = getContext();
+        ArrayList<RObject> stack = context.protectStack;
+        for (int i = 0; i < x; i++) {
+            context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
+        }
+    }
+
+    @Override
+    public int R_ProtectWithIndex(Object x) {
+        ArrayList<RObject> stack = getContext().protectStack;
+        stack.add(guaranteeInstanceOf(x, RObject.class));
+        return stack.size() - 1;
+    }
+
+    @Override
+    public void R_Reprotect(Object x, int y) {
+        ArrayList<RObject> stack = getContext().protectStack;
+        stack.set(y, guaranteeInstanceOf(x, RObject.class));
+    }
+
+    @Override
+    public void Rf_unprotect_ptr(Object x) {
+        RFFIContext context = getContext();
+        ArrayList<RObject> stack = context.protectStack;
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            if (stack.get(i) == x) {
+                context.registerReferenceUsedInNative(stack.remove(i));
+                return;
+            }
+        }
+    }
+
+    @Override
+    public int FASTR_getConnectionChar(Object obj) {
+        try {
+            return guaranteeInstanceOf(obj, RConnection.class).getc();
+        } catch (IOException e) {
+            return -1;
+        }
+    }
+
     private HashMap<String, Integer> name2typeTable;
 
     @Override
     @TruffleBoundary
-    public int Rf_str2type(Object name) {
+    public int Rf_str2type(String name) {
         if (name == null) {
             return -1;
         }
@@ -1570,44 +1600,86 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public double Rf_dunif(double a, double b, double c, int d) {
-        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_dunif).call(a, b, c, d);
-    }
-
-    @Override
-    public double Rf_qunif(double a, double b, double c, int d, int e) {
-        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_qunif).call(a, b, c, d, e);
-    }
-
-    @Override
-    public double Rf_punif(double a, double b, double c, int d, int e) {
-        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_punif).call(a, b, c, d, e);
-    }
-
-    @Override
-    public double Rf_runif(double a, double b) {
-        return (double) FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_runif).call(a, b);
-    }
-
-    @Override
-    public Object Rf_namesgets(Object x, Object y) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_namesgets).call(x, y);
-    }
-
-    @Override
-    public int Rf_copyMostAttrib(Object x, Object y) {
-        FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_copyMostAttrib).call(x, y);
+    public int registerRoutines(Object dllInfoObj, int nstOrd, int num, Object routines) {
+        DLLInfo dllInfo = guaranteeInstanceOf(dllInfoObj, DLLInfo.class);
+        DotSymbol[] array = new DotSymbol[num];
+        for (int i = 0; i < num; i++) {
+            Object sym = setSymbol(dllInfo, nstOrd, routines, i);
+            array[i] = (DotSymbol) sym;
+        }
+        dllInfo.setNativeSymbols(nstOrd, array);
         return 0;
     }
 
     @Override
+    public int registerCCallable(String pkgName, String functionName, Object address) {
+        DLLInfo lib = DLL.safeFindLibrary(pkgName);
+        lib.registerCEntry(new CEntry(functionName, new SymbolHandle(address)));
+        return 0;
+    }
+
+    @Override
+    public int useDynamicSymbols(Object dllInfoObj, int value) {
+        DLLInfo dllInfo = guaranteeInstanceOf(dllInfoObj, DLLInfo.class);
+        return DLL.useDynamicSymbols(dllInfo, value);
+    }
+
+    @Override
+    public int forceSymbols(Object dllInfoObj, int value) {
+        DLLInfo dllInfo = guaranteeInstanceOf(dllInfoObj, DLLInfo.class);
+        return DLL.forceSymbols(dllInfo, value);
+    }
+
+    @Override
+    public DotSymbol setDotSymbolValues(Object dllInfoObj, String name, Object fun, int numArgs) {
+        @SuppressWarnings("unused")
+        DLLInfo dllInfo = guaranteeInstanceOf(dllInfoObj, DLLInfo.class);
+        return new DotSymbol(name, new SymbolHandle(fun), numArgs);
+    }
+
+    protected abstract Object setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index);
+
+    @Override
+    public double Rf_dunif(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qunif(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_punif(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_runif(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object Rf_namesgets(Object x, Object y) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public int Rf_copyMostAttrib(Object x, Object y) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public Object Rf_VectorToPairList(Object x) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_VectorToPairList).call(x);
+        throw implementedAsNode();
     }
 
     @Override
     public Object Rf_asCharacterFactor(Object x) {
-        return FFIUpCallRootNode.getCallTarget(RFFIUpCallTable.Rf_asCharacterFactor).call(x);
+        throw implementedAsNode();
     }
 
+    private static RFFIContext getContext() {
+        return RContext.getInstance().getStateRFFI();
+    }
 }

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
+import com.oracle.truffle.r.ffi.impl.nfi.NativeFunction;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
@@ -77,8 +78,8 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     private static final class TruffleLLVM_IlaverNode extends TruffleLLVM_DownCallNode implements IlaverNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.ilaver;
+        protected NativeFunction getFunction() {
+            return NativeFunction.ilaver;
         }
 
         @Override
@@ -90,8 +91,8 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     private static final class TruffleLLVM_DgeevNode extends TruffleLLVM_DownCallNode implements DgeevNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dgeev;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dgeev;
         }
 
         @Override
@@ -103,8 +104,8 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     private static final class TruffleLLVM_Dgeqp3Node extends TruffleLLVM_DownCallNode implements Dgeqp3Node {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dgeqp3;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dgeqp3;
         }
 
         @Override
@@ -116,8 +117,8 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     private static final class TruffleLLVM_DormqrNode extends TruffleLLVM_DownCallNode implements DormqrNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dormq;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dormq;
         }
 
         @Override
@@ -129,8 +130,8 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     private static final class TruffleLLVM_DtrtrsNode extends TruffleLLVM_DownCallNode implements DtrtrsNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dtrtrs;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dtrtrs;
         }
 
         @Override
@@ -142,8 +143,8 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     private static final class TruffleLLVM_DgetrfNode extends TruffleLLVM_DownCallNode implements DgetrfNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dgetrf;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dgetrf;
         }
 
         @Override
@@ -155,8 +156,8 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     private static final class TruffleLLVM_DpotrfNode extends TruffleLLVM_DownCallNode implements DpotrfNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dpotrf;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dpotrf;
         }
 
         @Override
@@ -168,8 +169,8 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     private static final class TruffleLLVM_DpotriNode extends TruffleLLVM_DownCallNode implements DpotriNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dpotri;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dpotri;
         }
 
         @Override
@@ -181,8 +182,8 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     private static final class TruffleLLVM_DpstrfNode extends TruffleLLVM_DownCallNode implements DpstrfNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dpstrf;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dpstrf;
         }
 
         @Override
@@ -194,8 +195,8 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     private static final class TruffleLLVM_DgesvNode extends TruffleLLVM_DownCallNode implements DgesvNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dgesv;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dgesv;
         }
 
         @Override
@@ -207,8 +208,8 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     private static final class TruffleLLVM_DlangeNode extends TruffleLLVM_DownCallNode implements DlangeNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dlange;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dlange;
         }
 
         @Override
@@ -220,8 +221,8 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     private static final class TruffleLLVM_DgeconNode extends TruffleLLVM_DownCallNode implements DgeconNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dgecon;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dgecon;
         }
 
         @Override
@@ -233,8 +234,8 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     private static final class TruffleLLVM_DsyevrNode extends TruffleLLVM_DownCallNode implements DsyevrNode {
 
         @Override
-        protected LLVMFunction getFunction() {
-            return LLVMFunction.dsyevr;
+        protected NativeFunction getFunction() {
+            return NativeFunction.dsyevr;
         }
 
         @Override

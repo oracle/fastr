@@ -22,12 +22,24 @@
  */
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
+import com.oracle.truffle.r.ffi.impl.nodes.AsCharNode;
+import com.oracle.truffle.r.ffi.impl.nodes.AsIntegerNode;
+import com.oracle.truffle.r.ffi.impl.nodes.AsLogicalNode;
+import com.oracle.truffle.r.ffi.impl.nodes.AsRealNode;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.ATTRIB;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.CopyMostAttrib;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.TAG;
+import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
+import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADDRNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADRNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CARNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDDRNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDRNode;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RExternalPtr;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.ffi.processor.RFFIRunGC;
+import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 
 /**
  * This class defines methods that match the functionality of the macro/function definitions in the
@@ -52,22 +64,27 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 public interface StdUpCallsRFFI {
     // Checkstyle: stop method name check
 
-    RIntVector Rf_ScalarInteger(int value);
+    Object Rf_ScalarInteger(int value);
 
-    RLogicalVector Rf_ScalarLogical(int value);
+    Object Rf_ScalarLogical(int value);
 
-    RDoubleVector Rf_ScalarDouble(double value);
+    Object Rf_ScalarDouble(double value);
 
-    RStringVector Rf_ScalarString(Object value);
+    Object Rf_ScalarString(Object value);
 
+    @RFFIUpCallNode(AsIntegerNode.class)
     int Rf_asInteger(Object x);
 
+    @RFFIUpCallNode(AsRealNode.class)
     double Rf_asReal(Object x);
 
+    @RFFIUpCallNode(AsLogicalNode.class)
     int Rf_asLogical(Object x);
 
+    @RFFIUpCallNode(AsCharNode.class)
     Object Rf_asChar(Object x);
 
+    @RFFIUpCallNode(CoerceVectorNode.class)
     Object Rf_coerceVector(Object x, int mode);
 
     Object Rf_mkCharLenCE(@RFFICstring(convert = false) Object bytes, int len, int encoding);
@@ -76,7 +93,7 @@ public interface StdUpCallsRFFI {
 
     int /* void */ Rf_defineVar(Object symbolArg, Object value, Object envArg);
 
-    Object R_do_MAKE_CLASS(@RFFICstring Object clazz);
+    Object R_do_MAKE_CLASS(@RFFICstring String clazz);
 
     Object R_do_new_object(Object classDef);
 
@@ -89,15 +106,16 @@ public interface StdUpCallsRFFI {
 
     Object Rf_findVarInFrame3(Object envArg, Object symbolArg, int doGet);
 
+    @RFFIUpCallNode(ATTRIB.class)
     Object ATTRIB(Object obj);
 
     Object Rf_getAttrib(Object obj, Object name);
 
     int /* void */ Rf_setAttrib(Object obj, Object name, Object val);
 
-    int Rf_inherits(Object x, @RFFICstring Object clazz);
+    int Rf_inherits(Object x, @RFFICstring String clazz);
 
-    Object Rf_install(@RFFICstring Object name);
+    Object Rf_install(@RFFICstring String name);
 
     Object Rf_installChar(Object name);
 
@@ -109,13 +127,13 @@ public interface StdUpCallsRFFI {
 
     Object Rf_PairToVectorList(Object x);
 
-    int /* void */ Rf_error(@RFFICstring Object msg);
+    int /* void */ Rf_error(@RFFICstring String msg);
 
-    int /* void */ Rf_warning(@RFFICstring Object msg);
+    int /* void */ Rf_warning(@RFFICstring String msg);
 
-    int /* void */ Rf_warningcall(Object call, @RFFICstring Object msg);
+    int /* void */ Rf_warningcall(Object call, @RFFICstring String msg);
 
-    int /* void */ Rf_errorcall(Object call, @RFFICstring Object msg);
+    int /* void */ Rf_errorcall(Object call, @RFFICstring String msg);
 
     Object Rf_allocVector(int mode, long n);
 
@@ -127,6 +145,7 @@ public interface StdUpCallsRFFI {
 
     int Rf_ncols(Object x);
 
+    @RFFIUpCallNode(LENGTHNode.class)
     int LENGTH(Object x);
 
     int /* void */ SET_STRING_ELT(Object x, long i, Object v);
@@ -140,6 +159,8 @@ public interface StdUpCallsRFFI {
     Object INTEGER(Object x);
 
     Object REAL(Object x);
+
+    Object COMPLEX(Object x);
 
     Object STRING_ELT(Object x, long i);
 
@@ -161,16 +182,22 @@ public interface StdUpCallsRFFI {
 
     Object PRINTNAME(Object x);
 
+    @RFFIUpCallNode(TAG.class)
     Object TAG(Object e);
 
+    @RFFIUpCallNode(CARNode.class)
     Object CAR(Object e);
 
+    @RFFIUpCallNode(CDRNode.class)
     Object CDR(Object e);
 
+    @RFFIUpCallNode(CADRNode.class)
     Object CADR(Object e);
 
+    @RFFIUpCallNode(CADDRNode.class)
     Object CADDR(Object e);
 
+    @RFFIUpCallNode(CDDRNode.class)
     Object CDDR(Object e);
 
     Object SET_TAG(Object x, Object y);
@@ -189,6 +216,7 @@ public interface StdUpCallsRFFI {
 
     Object R_FindNamespace(Object name);
 
+    @RFFIRunGC
     Object Rf_eval(Object expr, Object env);
 
     Object Rf_findFun(Object symbolObj, Object envObj);
@@ -233,7 +261,7 @@ public interface StdUpCallsRFFI {
 
     int /* void */ UNSET_S4_OBJECT(Object x);
 
-    int /* void */ Rprintf(@RFFICstring Object message);
+    int /* void */ Rprintf(@RFFICstring String message);
 
     int /* void */ GetRNGstate();
 
@@ -243,7 +271,7 @@ public interface StdUpCallsRFFI {
 
     Object Rf_classgets(Object x, Object y);
 
-    RExternalPtr R_MakeExternalPtr(long addr, Object tag, Object prot);
+    Object R_MakeExternalPtr(long addr, Object tag, Object prot);
 
     long R_ExternalPtrAddr(Object x);
 
@@ -271,11 +299,11 @@ public interface StdUpCallsRFFI {
 
     Object R_CHAR(Object x);
 
-    Object R_new_custom_connection(@RFFICstring Object description, @RFFICstring Object mode, @RFFICstring Object className, Object readAddr);
+    Object R_new_custom_connection(@RFFICstring String description, @RFFICstring String mode, @RFFICstring String className, Object readAddr);
 
-    int R_ReadConnection(int fd, Object bufObj);
+    int R_ReadConnection(int fd, long bufAddress, int size);
 
-    int R_WriteConnection(int fd, Object bufObj);
+    int R_WriteConnection(int fd, long bufAddress, int size);
 
     Object R_GetConnection(int fd);
 
@@ -293,7 +321,9 @@ public interface StdUpCallsRFFI {
 
     Object R_MethodsNamespace();
 
-    int Rf_str2type(@RFFICstring Object name);
+    int Rf_str2type(@RFFICstring String name);
+
+    int FASTR_getConnectionChar(Object obj);
 
     double Rf_dunif(double a, double b, double c, int d);
 
@@ -305,9 +335,12 @@ public interface StdUpCallsRFFI {
 
     Object Rf_namesgets(Object vec, Object val);
 
+    @RFFIUpCallNode(CopyMostAttrib.class)
     int Rf_copyMostAttrib(Object x, Object y);
 
+    @RFFIUpCallNode(VectorToPairListNode.class)
     Object Rf_VectorToPairList(Object x);
 
+    @RFFIUpCallNode(CADDRNode.class)
     Object Rf_asCharacterFactor(Object x);
 }

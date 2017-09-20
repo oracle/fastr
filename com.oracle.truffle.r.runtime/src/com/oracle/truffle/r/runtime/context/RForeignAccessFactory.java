@@ -36,8 +36,9 @@ public interface RForeignAccessFactory {
      * Changes the interpretation of {@RNull} as {@code null} to {@code value}. This allows the
      * {@code FFI} implementations to prevent {@RNull} being converted across the {@code FFI}
      * interface, which would be incorrect.
-     *
+     * 
      * @return the previous setting
      */
     boolean setIsNull(boolean value);
+
 }

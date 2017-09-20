@@ -77,6 +77,10 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(test_stringNA, 0),
         CALLDEF(test_captureDotsWithSingleElement, 1),
         CALLDEF(test_evalAndNativeArrays, 3),
+        CALLDEF(test_writeConnection, 1),
+        CALLDEF(test_readConnection, 1),
+        CALLDEF(test_createNativeConnection, 0),
+        CALLDEF(test_ParseVector, 1),
         {NULL, NULL, 0}
 };
 

@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.r.runtime.Arguments;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
@@ -33,7 +33,18 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 /**
  * A simple wrapper class for passing the ... argument through RArguments
  */
-public final class RArgsValuesAndNames extends Arguments<Object> implements RTypedValue {
+public final class RArgsValuesAndNames extends RObject implements RTypedValue {
+
+    /**
+     * Array of arguments; semantics have to be specified by child classes.
+     */
+    @CompilationFinal(dimensions = 1) private final Object[] values;
+
+    /**
+     * Array of arguments; semantics have to be specified by child classes.
+     */
+    private final ArgumentsSignature signature;
+
     /**
      * Default instance for empty "..." ("..." that resolve to contain no expression at runtime).
      * The {@link RMissing#instance} for "...".
@@ -41,7 +52,8 @@ public final class RArgsValuesAndNames extends Arguments<Object> implements RTyp
     public static final RArgsValuesAndNames EMPTY = new RArgsValuesAndNames(new Object[0], ArgumentsSignature.empty(0));
 
     public RArgsValuesAndNames(Object[] values, ArgumentsSignature signature) {
-        super(values, signature);
+        this.values = values;
+        this.signature = signature;
         assert signature != null && signature.getLength() == values.length : Arrays.toString(values) + " " + signature;
     }
 
@@ -62,9 +74,37 @@ public final class RArgsValuesAndNames extends Arguments<Object> implements RTyp
         throw RInternalError.shouldNotReachHere();
     }
 
+    public ArgumentsSignature getSignature() {
+        return signature;
+    }
+
+    public int getLength() {
+        return signature.getLength();
+    }
+
+    public Object[] getArguments() {
+        return values;
+    }
+
+    public Object getArgument(int index) {
+        return values[index];
+    }
+
+    public boolean isEmpty() {
+        return signature.isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder().append(getClass().getSimpleName()).append(": ");
+        for (int i = 0; i < values.length; i++) {
+            str.append(i == 0 ? "" : ", ").append(signature.getName(i)).append(" = ").append(values[i]);
+        }
+        return str.toString();
+    }
+
     public RPairList toPairlist() {
         RPairList head = null;
-        ArgumentsSignature signature = getSignature();
         assert signature.getLength() == getLength();
         for (int i = 0; i < getLength(); i++) {
             String name = signature.getName(i);

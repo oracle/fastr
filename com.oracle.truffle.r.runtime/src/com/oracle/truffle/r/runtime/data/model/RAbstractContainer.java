@@ -58,8 +58,17 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
         return getDataAtAsObject(index);
     }
 
+    /**
+     * Returns an object that could be passed to {@link #getDataAtAsObject(Object, int)} or type
+     * specialized versions in concrete vector types. The {@code store} object should contain data
+     * necessary for the vector to perform {@link #getDataAtAsObject(Object, int)} and similar
+     * methods without any field loads. If {@code store} is saved into a local variable, then the
+     * {@code getDataAsObject} overloads with {@code store} parameter do not have to load the
+     * vector's fields, but instead read the necessary data from a local variable, which could be
+     * beneficial when in loop.
+     */
     default Object getInternalStore() {
-        return null;
+        return EmptyInternalStore.INSTANCE;
     }
 
     default RStringVector getNames() {
@@ -90,5 +99,12 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
     default void setRowNames(RAbstractVector rowNames) {
         CompilerAsserts.neverPartOfCompilation();
         setAttr(RRuntime.ROWNAMES_ATTR_KEY, rowNames);
+    }
+
+    final class EmptyInternalStore {
+        private EmptyInternalStore() {
+        }
+
+        public static EmptyInternalStore INSTANCE = new EmptyInternalStore();
     }
 }

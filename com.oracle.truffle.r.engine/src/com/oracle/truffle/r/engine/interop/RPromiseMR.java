@@ -36,9 +36,9 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.engine.interop.RPromiseMRFactory.RPromiseKeyInfoImplNodeGen;
 import com.oracle.truffle.r.engine.interop.RPromiseMRFactory.RPromiseReadImplNodeGen;
 import com.oracle.truffle.r.engine.interop.RPromiseMRFactory.RPromiseWriteImplNodeGen;
-import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -89,7 +89,21 @@ public class RPromiseMR {
     @Resolve(message = "TO_NATIVE")
     public abstract static class RPromiseToNativeNode extends Node {
         protected Object access(RPromise receiver) {
-            return new NativePointer(receiver);
+            return NativeDataAccess.toNative(receiver);
+        }
+    }
+
+    @Resolve(message = "IS_POINTER")
+    public abstract static class IsPointerNode extends Node {
+        protected boolean access(Object receiver) {
+            return NativeDataAccess.isPointer(receiver);
+        }
+    }
+
+    @Resolve(message = "AS_POINTER")
+    public abstract static class AsPointerNode extends Node {
+        protected long access(Object receiver) {
+            return NativeDataAccess.asPointer(receiver);
         }
     }
 

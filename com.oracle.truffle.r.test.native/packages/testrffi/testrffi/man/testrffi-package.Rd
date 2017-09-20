@@ -1,8 +1,8 @@
+\title{Tests the R FFI interface}
 \name{testrffi-package}
 \alias{testrffi-package}
 \alias{testrffi}
 \docType{package}
-\title{Tests the R FFI interface}
 \description{Tests the R FFI interface via a collection of R functions that
 call down to native code using .Call which then typically make R FFI upcalls to
 test the individual functions. The set of tests is not comprehensive.

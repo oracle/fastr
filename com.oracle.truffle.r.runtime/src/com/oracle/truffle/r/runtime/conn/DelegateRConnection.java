@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 /**
@@ -53,7 +54,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
  * operations.
  * </p>
  */
-abstract class DelegateRConnection implements RConnection, ByteChannel {
+abstract class DelegateRConnection extends RObject implements RConnection, ByteChannel {
     public static final int DEFAULT_CACHE_SIZE = 16 * 1024;
     protected final BaseRConnection base;
     private final ByteBuffer cache;

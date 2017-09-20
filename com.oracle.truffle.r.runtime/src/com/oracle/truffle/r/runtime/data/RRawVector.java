@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RRawVector extends RVector<byte[]> implements RAbstractRawVector {
 
-    private final byte[] data;
+    private byte[] data;
 
     RRawVector(byte[] data) {
         super(true);
@@ -46,6 +46,17 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     RRawVector(byte[] data, int[] dims, RStringVector names, RList dimNames) {
         this(data);
         initDimsNamesDimNames(dims, names, dimNames);
+    }
+
+    private RRawVector() {
+        super(true);
+    }
+
+    static RRawVector fromNative(long address, int length) {
+        RRawVector result = new RRawVector();
+        NativeDataAccess.asPointer(result);
+        NativeDataAccess.setNativeContents(result, address, length);
+        return result;
     }
 
     @Override
@@ -67,14 +78,8 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     @Override
-    public byte getRawDataAt(int index) {
-        return data[index];
-    }
-
-    @Override
-    public byte getRawDataAt(Object store, int index) {
-        assert data == store;
-        return ((byte[]) store)[index];
+    public byte[] getInternalManagedData() {
+        return data;
     }
 
     @Override
@@ -83,19 +88,39 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     @Override
+    public RRaw getDataAt(int index) {
+        return RDataFactory.createRaw(NativeDataAccess.getData(this, data, index));
+    }
+
+    @Override
+    public byte getRawDataAt(int index) {
+        return NativeDataAccess.getData(this, data, index);
+    }
+
+    @Override
+    public byte getRawDataAt(Object store, int index) {
+        assert data == store;
+        return NativeDataAccess.getData(this, (byte[]) store, index);
+    }
+
+    @Override
     public void setRawDataAt(Object store, int index, byte value) {
         assert data == store;
-        ((byte[]) store)[index] = value;
+        NativeDataAccess.setData(this, (byte[]) store, index, value);
     }
 
     @Override
     protected RRawVector internalCopy() {
-        return new RRawVector(Arrays.copyOf(data, data.length));
+        if (data != null) {
+            return new RRawVector(Arrays.copyOf(data, data.length));
+        } else {
+            return new RRawVector(NativeDataAccess.copyByteNativeData(getNativeMirror()));
+        }
     }
 
     @Override
     public int getLength() {
-        return data.length;
+        return NativeDataAccess.getDataLength(this, data);
     }
 
     @Override
@@ -109,27 +134,26 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     @Override
-    public RRaw getDataAt(int i) {
-        return RDataFactory.createRaw(data[i]);
-    }
-
-    @Override
     public byte[] getDataCopy() {
-        return Arrays.copyOf(data, data.length);
+        if (data != null) {
+            return Arrays.copyOf(data, data.length);
+        } else {
+            return NativeDataAccess.copyByteNativeData(getNativeMirror());
+        }
     }
 
-    /**
-     * Intended for external calls where a copy is not needed. WARNING: think carefully before using
-     * this method rather than {@link #getDataCopy()}.
-     */
     @Override
-    public byte[] getDataWithoutCopying() {
-        return data;
+    public byte[] getReadonlyData() {
+        if (data != null) {
+            return data;
+        } else {
+            return NativeDataAccess.copyByteNativeData(getNativeMirror());
+        }
     }
 
     @Override
     public RRawVector copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createRawVector(data, newDimensions);
+        return RDataFactory.createRawVector(getReadonlyData(), newDimensions);
     }
 
     @Override
@@ -137,9 +161,9 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
         return this;
     }
 
-    public RRawVector updateDataAt(int i, RRaw right) {
+    public RRawVector updateDataAt(int index, RRaw value) {
         assert !this.isShared();
-        data[i] = right.getValue();
+        NativeDataAccess.setData(this, data, index, value.getValue());
         return this;
     }
 
@@ -149,7 +173,7 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     private byte[] copyResizedData(int size, boolean fillNA) {
-        byte[] newData = Arrays.copyOf(data, size);
+        byte[] newData = Arrays.copyOf(getReadonlyData(), size);
         if (!fillNA) {
             // NA is 00 for raw
             for (int i = data.length, j = 0; i < size; ++i, j = Utils.incMod(j, data.length)) {
@@ -172,12 +196,20 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        RAbstractRawVector other = (RAbstractRawVector) fromVector;
-        data[toIndex] = other.getRawDataAt(fromIndex);
+        NativeDataAccess.setData(this, data, toIndex, ((RAbstractRawVector) fromVector).getRawDataAt(fromIndex));
     }
 
     @Override
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
+    }
+
+    public long allocateNativeContents() {
+        try {
+            return NativeDataAccess.allocateNativeContents(this, data, getLength());
+        } finally {
+            data = null;
+            complete = false;
+        }
     }
 }

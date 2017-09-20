@@ -12,11 +12,11 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyDoubleVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -46,6 +46,8 @@ import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.nodes.ReadAccessor;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReadAccess;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_1;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_2;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
@@ -363,8 +365,8 @@ public final class StatsFunctionsNodes {
 
         static {
             Casts casts = new Casts(Approx.class);
-            casts.arg(0).mustBe(instanceOf(RDoubleVector.class));
-            casts.arg(1).mustBe(instanceOf(RDoubleVector.class));
+            casts.arg(0).mustBe(doubleValue());
+            casts.arg(1).mustBe(doubleValue());
             casts.arg(2).mustBe(missingValue().not()).mapIf(nullValue(), emptyDoubleVector()).asDoubleVector();
             casts.arg(3).asIntegerVector().findFirst();
             casts.arg(4).asDoubleVector().findFirst();
@@ -373,7 +375,9 @@ public final class StatsFunctionsNodes {
         }
 
         @Specialization
-        protected RDoubleVector approx(RDoubleVector x, RDoubleVector y, RAbstractDoubleVector v, int method, double yl, double yr, double f) {
+        protected RDoubleVector approx(RAbstractDoubleVector x, RAbstractDoubleVector y, RAbstractDoubleVector v, int method, double yl, double yr, double f,
+                        @Cached("create()") VectorReadAccess.Double xAccess,
+                        @Cached("create()") VectorReadAccess.Double yAccess) {
             int nx = x.getLength();
             int nout = v.getLength();
             double[] yout = new double[nout];
@@ -385,9 +389,12 @@ public final class StatsFunctionsNodes {
             apprMeth.ylow = yl;
             apprMeth.yhigh = yr;
             naCheck.enable(true);
+
+            ReadAccessor.Double xAccessor = new ReadAccessor.Double(x, xAccess);
+            ReadAccessor.Double yAccessor = new ReadAccessor.Double(y, yAccess);
             for (int i = 0; i < nout; i++) {
                 double xouti = v.getDataAt(i);
-                yout[i] = RRuntime.isNAorNaN(xouti) ? xouti : approx1(xouti, x.getDataWithoutCopying(), y.getDataWithoutCopying(), nx, apprMeth);
+                yout[i] = RRuntime.isNAorNaN(xouti) ? xouti : approx1(xouti, xAccessor, yAccessor, nx, apprMeth);
                 naCheck.check(yout[i]);
             }
             return RDataFactory.createDoubleVector(yout, naCheck.neverSeenNA());
@@ -401,7 +408,7 @@ public final class StatsFunctionsNodes {
             int kind;
         }
 
-        private static double approx1(double v, double[] x, double[] y, int n,
+        private static double approx1(double v, ReadAccessor.Double x, ReadAccessor.Double y, int n,
                         ApprMeth apprMeth) {
             /* Approximate y(v), given (x,y)[i], i = 0,..,n-1 */
             int i;
@@ -416,17 +423,17 @@ public final class StatsFunctionsNodes {
             j = n - 1;
 
             /* handle out-of-domain points */
-            if (v < x[i]) {
+            if (v < x.getDataAt(i)) {
                 return apprMeth.ylow;
             }
-            if (v > x[j]) {
+            if (v > x.getDataAt(j)) {
                 return apprMeth.yhigh;
             }
 
             /* find the correct interval by bisection */
-            while (i < j - 1) { /* x[i] <= v <= x[j] */
+            while (i < j - 1) { /* x.getDataAt(i) <= v <= x.getDataAt(j) */
                 ij = (i + j) / 2; /* i+1 <= ij <= j-1 */
-                if (v < x[ij]) {
+                if (v < x.getDataAt(ij)) {
                     j = ij;
                 } else {
                     i = ij;
@@ -437,18 +444,18 @@ public final class StatsFunctionsNodes {
 
             /* interpolation */
 
-            if (v == x[j]) {
-                return y[j];
+            if (v == x.getDataAt(j)) {
+                return y.getDataAt(j);
             }
-            if (v == x[i]) {
-                return y[i];
+            if (v == x.getDataAt(i)) {
+                return y.getDataAt(i);
             }
-            /* impossible: if(x[j] == x[i]) return y[i]; */
+            /* impossible: if(x.getDataAt(j) == x.getDataAt(i)) return y.getDataAt(i); */
 
             if (apprMeth.kind == 1) { /* linear */
-                return y[i] + (y[j] - y[i]) * ((v - x[i]) / (x[j] - x[i]));
+                return y.getDataAt(i) + (y.getDataAt(j) - y.getDataAt(i)) * ((v - x.getDataAt(i)) / (x.getDataAt(j) - x.getDataAt(i)));
             } else { /* 2 : constant */
-                return (apprMeth.f1 != 0.0 ? y[i] * apprMeth.f1 : 0.0) + (apprMeth.f2 != 0.0 ? y[j] * apprMeth.f2 : 0.0);
+                return (apprMeth.f1 != 0.0 ? y.getDataAt(i) * apprMeth.f1 : 0.0) + (apprMeth.f2 != 0.0 ? y.getDataAt(j) * apprMeth.f2 : 0.0);
             }
         }/* approx1() */
 

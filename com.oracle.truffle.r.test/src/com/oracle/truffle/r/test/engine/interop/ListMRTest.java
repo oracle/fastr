@@ -38,7 +38,6 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -51,8 +50,9 @@ public class ListMRTest extends AbstractMRTest {
     @Override
     @Test
     public void testNativePointer() throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
-        assertTrue(ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), create("list", testValues)) instanceof NativePointer);
-        assertTrue(ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), create("pairlist", testValues)) instanceof NativePointer);
+        for (TruffleObject obj : new TruffleObject[]{create("list", testValues), create("pairlist", testValues)}) {
+            assertTrue(ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
+        }
     }
 
     @Test

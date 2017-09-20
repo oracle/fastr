@@ -35,12 +35,13 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
         casts.arg(1).mustNotBeNull().asLogicalVector().findFirst().map(Predef.toBoolean());
     }
 
+    @Child private StatsRFFI.FactorNode factorNode = StatsRFFI.FactorNode.create();
+    @Child private StatsRFFI.WorkNode workNode = StatsRFFI.WorkNode.create();
+
     // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
     @Specialization
     public Object execute(RAbstractComplexVector zVec, boolean inverse,
-                    @Cached("create()") GetDimAttributeNode getDimNode,
-                    @Cached("create()") StatsRFFI.FactorNode factorNode,
-                    @Cached("create()") StatsRFFI.WorkNode workNode) {
+                    @Cached("create()") GetDimAttributeNode getDimNode) {
         double[] z = zVec.materialize().getDataTemp();
         int inv = inverse ? 2 : -2;
         int[] d = getDimNode.getDimensions(zVec);

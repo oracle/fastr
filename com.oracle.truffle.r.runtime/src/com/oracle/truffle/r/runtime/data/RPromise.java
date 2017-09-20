@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
  * Denotes an R {@code promise}.
  */
 @ValueType
-public class RPromise implements RTypedValue {
+public class RPromise extends RObject implements RTypedValue {
 
     private static final int DEFAULT_BIT = 0x1;
     private static final int FULL_PROMISE_BIT = 0x2;

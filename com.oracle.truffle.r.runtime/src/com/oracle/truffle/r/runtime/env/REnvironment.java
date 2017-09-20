@@ -152,7 +152,7 @@ public abstract class REnvironment extends RAttributeStorage {
         }
 
         @Override
-        public void beforeDestroy(RContext context) {
+        public void beforeDispose(RContext context) {
             beforeDestroyContext(context, this);
         }
 

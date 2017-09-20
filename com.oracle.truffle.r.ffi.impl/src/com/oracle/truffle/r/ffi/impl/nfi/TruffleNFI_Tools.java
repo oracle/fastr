@@ -22,54 +22,21 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.Generic_Tools;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.ffi.impl.interop.tools.RConnGetCCall;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
-import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 
 public class TruffleNFI_Tools implements ToolsRFFI {
 
     private static class TruffleNFI_ToolsRFFINode extends Generic_Tools.Generic_ToolsRFFINode {
-        private static boolean initialized;
-
-        @Child private DLLRFFI.DLSymNode dysymNode = DLLRFFI.DLSymNode.create();
 
         @Override
         public synchronized Object execute(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
                         RLogicalVector warndups) {
-            if (!initialized) {
-                initCallback();
-                initialized = true;
-            }
             return super.execute(con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups);
-        }
-
-        private void initCallback() {
-            DLLInfo toolsDLLInfo = DLL.findLibrary(TOOLS);
-            assert toolsDLLInfo != null;
-            SymbolHandle symbolHandle = dysymNode.execute(toolsDLLInfo.handle, "gramRd_nfi_init");
-            assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
-            Node bind = Message.createInvoke(1).createNode();
-            Node executeNode = Message.createExecute(1).createNode();
-            try {
-                TruffleObject function = (TruffleObject) ForeignAccess.sendInvoke(bind, symbolHandle.asTruffleObject(), "bind", "(env, (object): sint32): void");
-                ForeignAccess.sendExecute(executeNode, function, new RConnGetCCall());
-            } catch (InteropException t) {
-                throw RInternalError.shouldNotReachHere(t);
-            }
         }
     }
 

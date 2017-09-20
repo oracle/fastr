@@ -50,8 +50,6 @@ public class ExtBuiltinsList {
                     com.oracle.truffle.r.nodes.builtin.base.foreign.MakeQuartzDefault.class,
                     com.oracle.truffle.r.nodes.builtin.base.foreign.Flushconsole.class,
                     com.oracle.truffle.r.nodes.builtin.base.foreign.FftNodeGen.class,
-                    com.oracle.truffle.r.nodes.builtin.base.foreign.Dqrdc2NodeGen.class,
-                    com.oracle.truffle.r.nodes.builtin.base.foreign.Dqrcf.class,
                     com.oracle.truffle.r.nodes.builtin.base.foreign.CairoPropsNodeGen.class,
                     com.oracle.truffle.r.library.tools.ToolsTextFactory.DoTabExpandNodeGen.class,
                     com.oracle.truffle.r.library.tools.ToolsTextFactory.CodeFilesAppendNodeGen.class,

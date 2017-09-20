@@ -27,8 +27,10 @@ import static com.oracle.truffle.r.runtime.RDispatch.SUMMARY_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUMMARY;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -42,6 +44,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -72,19 +75,25 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
         return value instanceof RDoubleVector;
     }
 
+    @Child private MiscRFFI.ExactSumNode exactSumNode;
+
     @Specialization(guards = {"FULL_PRECISION", "args.getLength() == 1", "isRDoubleVector(args.getArgument(0))", "naRm == cachedNaRm"})
     protected double sumLengthOneRDoubleVector(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean naRm,
+                    @Cached("create()") GetReadonlyData.Double vectorToArrayNode,
                     @Cached("naRm") boolean cachedNaRm,
                     @Cached("create()") VectorLengthProfile lengthProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
                     @Cached("create()") NACheck na,
-                    @Cached("createBinaryProfile()") ConditionProfile needsExactSumProfile,
-                    @Cached("create()") MiscRFFI.ExactSumNode exactSumNode) {
+                    @Cached("createBinaryProfile()") ConditionProfile needsExactSumProfile) {
         RDoubleVector vector = (RDoubleVector) args.getArgument(0);
         int length = lengthProfile.profile(vector.getLength());
 
         if (needsExactSumProfile.profile(length >= 3)) {
-            return exactSumNode.execute(vector.getDataWithoutCopying(), !vector.isComplete(), cachedNaRm);
+            if (exactSumNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                exactSumNode = (MiscRFFI.ExactSumNode) insert((Node) MiscRFFI.ExactSumNode.create());
+            }
+            return exactSumNode.execute(vectorToArrayNode.execute(vector), !vector.isComplete(), cachedNaRm);
         } else {
             na.enable(vector);
             loopProfile.profileCounted(length);
