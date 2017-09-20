@@ -186,24 +186,25 @@ public class TruffleNFI_Call implements CallRFFI {
 
         @Specialization(guards = {"args.length == cachedArgsLength", "nativeCallInfo.address.asTruffleObject() == cachedAddress"})
         protected Object invokeCallCached(NativeCallInfo nativeCallInfo, Object[] args,
-                        @SuppressWarnings("unused") @Cached("args.length") int cachedArgsLength,
+                        @Cached("args.length") int cachedArgsLength,
                         @Cached("create(cachedArgsLength)") FFIWrapNode[] ffiWrapNodes,
                         @Cached("create()") FFIUnwrapNode unwrap,
                         @Cached("createExecute(cachedArgsLength)") Node executeNode,
-                        @SuppressWarnings("unused") @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject cachedAddress,
+                        @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject cachedAddress,
                         @Cached("getFunction(cachedArgsLength)") TruffleObject cachedFunction) {
             synchronized (TruffleNFI_Call.class) {
                 Object result = null;
                 boolean isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes);
+                Object[] realArgs = new Object[cachedArgsLength + 1];
+                System.arraycopy(args, 0, realArgs, 1, cachedArgsLength);
+                realArgs[0] = cachedAddress;
                 try {
-                    Object[] realArgs = new Object[cachedArgsLength + 1];
-                    System.arraycopy(args, 0, realArgs, 1, cachedArgsLength);
-                    realArgs[0] = cachedAddress;
                     result = ForeignAccess.sendExecute(executeNode, cachedFunction, realArgs);
                     return unwrap.execute(result);
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
                 } finally {
+                    assert realArgs != null; // to keep the values alive
                     prepareReturn(nativeCallInfo.name, result, isNullSetting);
                 }
             }
@@ -218,15 +219,16 @@ public class TruffleNFI_Call implements CallRFFI {
             synchronized (TruffleNFI_Call.class) {
                 Object result = null;
                 boolean isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes);
+                Object[] realArgs = new Object[cachedArgsLength + 1];
+                System.arraycopy(args, 0, realArgs, 1, cachedArgsLength);
+                realArgs[0] = nativeCallInfo.address;
                 try {
-                    Object[] realArgs = new Object[cachedArgsLength + 1];
-                    System.arraycopy(args, 0, realArgs, 1, cachedArgsLength);
-                    realArgs[0] = nativeCallInfo.address;
                     result = ForeignAccess.sendExecute(executeNode, getFunction(cachedArgsLength), realArgs);
                     return unwrap.execute(result);
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
                 } finally {
+                    assert realArgs != null; // to keep the values alive
                     prepareReturn(nativeCallInfo.name, result, isNullSetting);
                 }
             }

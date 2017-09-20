@@ -1369,6 +1369,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public REnvironment R_NewHashedEnv(Object parent, Object initialSize) {
         // We know this is an RIntVector from use site in gramRd.c
         REnvironment env = RDataFactory.createNewEnv(REnvironment.UNNAMED, true, ((RIntVector) initialSize).getDataAt(0));

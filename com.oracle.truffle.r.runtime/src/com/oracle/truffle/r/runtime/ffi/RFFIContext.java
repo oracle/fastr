@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.ffi;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.data.RObject;
 
@@ -86,6 +87,7 @@ public abstract class RFFIContext implements ContextState {
     }
 
     // this emulates the GNUR's cooperative GC
+    @TruffleBoundary
     private void cooperativeGc() {
         protectedNativeReferences.clear();
     }
