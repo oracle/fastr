@@ -101,7 +101,9 @@ else
 ifeq ($(FASTR_RFFI),llvm)
 	$(MAKE) -C src/truffle_llvm clean
 else
+ifneq ($(FASTR_RFFI),managed)
 	$(error unknown value for FASTR_RFFI)
+endif
 endif
 endif
 	rm -rf $(R_LIB)

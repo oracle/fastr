@@ -7,8 +7,7 @@ FastR with environment variable `FASTR_RFFI` set to `managed`.
 # Details
 FastR has an 'implementation' of RFFI that does not use any native code directly (e.g. through JNI) and implements only small subset of the API.
 Any usage of the unimplemented parts will cause error at runtime. To enable this RFFI implementation clean build FastR with environment variable
-`FASTR_RFFI` set to *managed* and when running FastR set java property named *fastr.rffi.factory.class* to
-`com.oracle.truffle.r.runtime.ffi.managed.Managed_RFFIFactory`.
+`FASTR_RFFI` set to *managed* and when running FastR set java property named *fastr.rffi.factory.type* to `managed`.
 
 There are additional options that can restrict other usages of native code in FastR:
 
@@ -23,3 +22,10 @@ Following option can be useful for improving security when running FastR:
 
 * Set java property *fastr.objectsize.factory.class*  to `com.oracle.truffle.r.runtime.data.SimpleObjectSizeFactory` to avoid
 usage of otherwise more precise `AgentObjectSizeFactory`, which uses instrumentation agent.
+
+Note that boolean FastR options are passed using syntax R:+/-OptionName. Command line to run FastR with all the
+aforementioned options:
+
+```
+mx --J @'-DR:-LoadPackagesNativeCode -DR:-LoadProfiles -Dfastr.objectsize.factory.class=com.oracle.truffle.r.runtime.data.SimpleObjectSizeFactory -Dfastr.rffi.factory.type=managed' r
+```
