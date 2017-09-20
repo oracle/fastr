@@ -151,6 +151,11 @@ public final class MiscNodes {
             return updateSlotNode.executeUpdate(o, name, value);
         }
 
+        @Specialization
+        Object doSlotAssign(Object o, RSymbol name, Object value) {
+            return updateSlotNode.executeUpdate(o, name.getName(), value);
+        }
+
         @Fallback
         Object doSlot(@SuppressWarnings("unused") Object o, Object name, @SuppressWarnings("unused") Object value) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.INVALID_ARGUMENT_OF_TYPE, "name", SEXPTYPE.gnuRTypeForObject(name).name());
