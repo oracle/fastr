@@ -945,4 +945,8 @@ public class RRuntime {
     private static boolean hasDims(RAbstractContainer xa) {
         return xa.hasDimensions();
     }
+
+    public static boolean isS4Object(Object o) {
+        return o instanceof RTypedValue && ((RTypedValue) o).isS4();
+    }
 }

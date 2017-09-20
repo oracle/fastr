@@ -36,6 +36,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
@@ -79,6 +80,7 @@ import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -435,11 +437,14 @@ public abstract class Bind extends RBaseNode {
     @Specialization(guards = {"precedence != NO_PRECEDENCE", "args.length == 1"})
     protected Object allOneElem(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence,
                     @Cached("create()") GetNamesAttributeNode getNamesNode) {
+
         RAbstractVector vec = vectorProfile.profile(castVector(args[0]));
-        int[] rawDimensions = getVectorDimensions(vec);
+        int[] rawDimensions = null;
+        rawDimensions = getVectorDimensions(vec);
         if (GetDimAttributeNode.isMatrix(rawDimensions)) {
             return vec;
         }
+
         // for cbind dimNamesA is names for the 1st dim and dimNamesB is names for 2nd dim; for
         // rbind the other way around
         Object dimNamesA = getNamesNode.getNames(vec);
@@ -574,7 +579,7 @@ public abstract class Bind extends RBaseNode {
 
         @Specialization
         protected Object bind(VirtualFrame frame, int deparseLevel, RArgsValuesAndNames args) {
-            RFunction dispatchFunction = createDispatchFunction(frame, args.getArguments());
+            RFunction dispatchFunction = createDispatchFunction(frame, args.getArguments(), deparseLevel);
             if (hasDispatchFunction.profile(dispatchFunction != null)) {
                 if (dispatchCallNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -607,9 +612,20 @@ public abstract class Bind extends RBaseNode {
             return precedence;
         }
 
-        private RFunction createDispatchFunction(VirtualFrame frame, Object[] args) {
+        private RFunction createDispatchFunction(VirtualFrame frame, Object[] args, int deparseLevel) {
+
+            // S4 dispatch is only considered if deparseLevel is non-negative
+            boolean tryS4 = deparseLevel >= 0;
+
+            // indicating if any of the arguments is an S4 object
+            boolean anyS4 = false;
+
             Result result = null;
             for (Object arg : args) {
+                if (tryS4 && !anyS4 && RRuntime.isS4Object(arg)) {
+                    anyS4 = true;
+                }
+
                 RStringVector clazz = classHierarchy.execute(arg);
                 if (hasClassProfile.profile(clazz != null)) {
                     if (lookup == null) {
@@ -630,7 +646,17 @@ public abstract class Bind extends RBaseNode {
                     }
                 }
             }
-            return result != null ? result.function : null;
+
+            RFunction dispatchFunction = result != null ? result.function : null;
+
+            // TODO class compatibility: record if S3 classes were compatible, if not, do S4
+            // dispatch
+            // In this case, call function 'methods::cbind' or 'methods::rbind'.
+            if (dispatchFunction == null && anyS4) {
+                REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
+                dispatchFunction = ReadVariableNode.lookupFunction(type.name(), methodsEnv.getFrame(), true, true);
+            }
+            return dispatchFunction;
         }
     }
 
