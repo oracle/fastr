@@ -1,6 +1,3 @@
-Package: ABCoptim
-Reason: corebug
-
 Package: beadarray
 Reason: Bioconductor
 
@@ -25,23 +22,14 @@ Reason: Bioconductor
 Package: SAGx
 Reason: Bioconductor
 
-Package: RJSONIO
-Reason: C++
-
 Package: LBE
 Reason: Bioconductor
 
 Package: widgetTools
 Reason: Bioconductor
 
-Package: gmp
-Reason: C++
-
 Package: rgl
 Reason: graphics
-
-Package: qtbase
-Reason: C++
 
 Package: ChemmineR
 Reason: Bioconductor
@@ -58,9 +46,6 @@ Reason: Bioconductor
 Package: MergeMaid
 Reason: Bioconductor
 
-Package: stepR
-Reason: C++
-
 Package: rtracklayer
 Reason: Bioconductor
 
@@ -73,14 +58,8 @@ Reason: Bioconductor
 Package: Cairo
 Reason: graphics
 
-Package: timeDate
-Reason: corebug
-
 Package: GlobalAncova
 Reason: Bioconductor
-
-Package: archiDART
-Reason: corebug
 
 Package: DNAcopy
 Reason: Bioconductor
@@ -94,26 +73,14 @@ Reason: Bioconductor
 Package: GEOmetadb
 Reason: Bioconductor
 
-Package: EMCC
-Reason: C++
-
 Package: tcltk2
 Reason: tcltk
-
-Package: simplexreg
-Reason: C++
-
-Package: Rcpp
-Reason: C++
 
 Package: BSgenome
 Reason: Bioconductor
 
 Package: nem
 Reason: Bioconductor
-
-Package: vignettes
-Reason: corebug
 
 Package: minet
 Reason: Bioconductor
@@ -124,14 +91,8 @@ Reason: Bioconductor
 Package: R.methodsS3
 Reason: replacement
 
-Package: depmixS4
-Reason: C++
-
 Package: breastCancerVDX
 Reason: Bioconductor
-
-Package: pcaPP
-Reason: C++
 
 Package: topGO
 Reason: Bioconductor
@@ -151,30 +112,17 @@ Reason: Bioconductor
 Package: globaltest
 Reason: Bioconductor
 
-Package: proxy
-Reason: corebug
-Analysis: stack overflow in vector extract
-
 Package: convert
 Reason: Bioconductor
 
 Package: RDAVIDWebService
 Reason: Bioconductor
 
-Package: MaXact
-Reason: C++
-
-Package: Rglpk
-Reason: native
-
 Package: simpleaffy
 Reason: Bioconductor
 
 Package: GO.db
 Reason: Bioconductor
-
-Package: mixer
-Reason: C++
 
 Package: EBImage
 Reason: Bioconductor
@@ -185,20 +133,11 @@ Reason: Bioconductor
 Package: S4Vectors
 Reason: Bioconductor
 
-Package: HiDimDA
-Reason: C++
-
-Package: wle
-Reason: native
-
 Package: xcms
 Reason: Bioconductor
 
 Package: qvalue
 Reason: Bioconductor
-
-Package: bnpmr
-Reason: C++
 
 Package: BSgenome.Hsapiens.UCSC.hg19
 Reason: Bioconductor
@@ -206,20 +145,11 @@ Reason: Bioconductor
 Package: GOstats
 Reason: Bioconductor
 
-Package: dbarts
-Reason: C++
-
-Package: aidar
-Reason: corebug
-
 Package: pcaMethods
 Reason: Bioconductor
 
 Package: BiocGenerics
 Reason: Bioconductor
-
-Package: synchronicity
-Reason: C++
 
 Package: phyloseq
 Reason: Bioconductor
@@ -254,9 +184,6 @@ Reason: Bioconductor
 Package: AnnotLists
 Reason: tcltk
 
-Package: corpcor
-Reason: corebug
-
 Package: fabia
 Reason: Bioconductor
 
@@ -268,9 +195,6 @@ Reason: Bioconductor
 
 Package: aroma.light
 Reason: Bioconductor
-
-Package: flam
-Reason: C++
 
 Package: marray
 Reason: Bioconductor
@@ -284,17 +208,11 @@ Reason: Bioconductor
 Package: Rgraphviz
 Reason: Bioconductor
 
-Package: OjaNP
-Reason: C++
-
 Package: biomaRt
 Reason: Bioconductor
 
 Package: DESeq2
 Reason: Bioconductor
-
-Package: colorspace
-Reason: replacement
 
 Package: preprocessCore
 Reason: Bioconductor
@@ -305,26 +223,14 @@ Reason: Bioconductor
 Package: Biobase
 Reason: Bioconductor
 
-Package: cit
-Reason: C++
-
 Package: aplpack
 Reason: tcltk
-
-Package: TraMineR
-Reason: C++
 
 Package: siggenes
 Reason: Bioconductor
 
-Package: mixcat
-Reason: C++
-
 Package: survcomp
 Reason: Bioconductor
-
-Package: multic
-Reason: C++
 
 Package: Rsamtools
 Reason: Bioconductor
@@ -337,9 +243,6 @@ Reason: Bioconductor
 
 Package: GSEABase
 Reason: Bioconductor
-
-Package: DALY
-Reason: C++
 
 Package: limma
 Reason: Bioconductor
@@ -386,17 +289,8 @@ Reason: Bioconductor
 Package: Biostrings
 Reason: Bioconductor
 
-Package: quantreg
-Reason: corebug
-
 Package: gcrma
 Reason: Bioconductor
-
-Package: IM
-Reason: C++
-
-Package: ff
-Reason: C++
 
 Package: lumi
 Reason: Bioconductor
@@ -407,17 +301,8 @@ Reason: java
 Package: mzR
 Reason: Bioconductor
 
-Package: stringi
-Reason: C++
-
-Package: KFKSDS
-Reason: C++
-
 Package: edgeR
 Reason: Bioconductor
-
-Package: tpr
-Reason: C++
 
 Package: MassSpecWavelet
 Reason: Bioconductor
