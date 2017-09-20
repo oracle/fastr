@@ -23,10 +23,12 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class CastToVectorNode extends CastNode {
@@ -71,6 +73,12 @@ public abstract class CastToVectorNode extends CastNode {
     @Specialization
     protected RAbstractVector cast(RAbstractVector vector) {
         return vector;
+    }
+
+    @Specialization
+    protected RAbstractVector cast(@SuppressWarnings("unused") RS4Object s4obj) {
+        // TODO implement according to function 'R_getS4DataSlot' in 'attrib.c'
+        throw error(RError.Message.CANNOT_COERCE_S4_TO_VECTOR);
     }
 
     public static CastToVectorNode create() {
