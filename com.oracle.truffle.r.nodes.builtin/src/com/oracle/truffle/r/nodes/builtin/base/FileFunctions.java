@@ -990,7 +990,7 @@ public class FileFunctions {
 
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                Path newDir = toDir.resolve(fromDir.relativize(fromDir));
+                Path newDir = toDir.resolve(fromDir.relativize(dir));
                 try {
                     Files.copy(dir, newDir, copyOptions);
                 } catch (FileAlreadyExistsException x) {
