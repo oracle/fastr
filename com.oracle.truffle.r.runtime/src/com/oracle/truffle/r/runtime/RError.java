@@ -319,6 +319,7 @@ public final class RError extends RuntimeException implements TruffleException {
         MORE_SUPPLIED_REPLACE("more elements supplied than there are to replace"),
         NA_SUBSCRIPTED("NAs are not allowed in subscripted assignments"),
         INVALID_ARG_TYPE("invalid argument type"),
+        INVALID_LEN_0_ARG("invalid length 0 argument"),
         INVALID_ARG_UNARY("invalid argument to unary operator"),
         VECTOR_SIZE_NEGATIVE("vector size cannot be negative"),
         VECTOR_SIZE_NA("vector size cannot be NA"),
