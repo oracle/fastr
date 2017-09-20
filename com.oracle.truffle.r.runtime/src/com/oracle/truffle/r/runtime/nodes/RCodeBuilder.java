@@ -163,6 +163,14 @@ public interface RCodeBuilder<T> {
         }.accept(original);
     }
 
+    static <T> ArrayList<Argument<T>> createArgumentList(ArgumentsSignature signature, T[] arguments) {
+        ArrayList<Argument<T>> args = new ArrayList<>(arguments.length);
+        for (int i = 0; i < arguments.length; i++) {
+            args.add(RCodeBuilder.argument(null, signature.getName(i), arguments[i] == null ? null : arguments[i]));
+        }
+        return args;
+    }
+
     /** @see #process(RSyntaxElement) */
     default T process(RSyntaxElement original, CodeBuilderContext context) {
         CodeBuilderContext saved = getContext();

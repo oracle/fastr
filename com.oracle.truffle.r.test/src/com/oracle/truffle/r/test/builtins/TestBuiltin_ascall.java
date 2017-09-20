@@ -63,5 +63,20 @@ public class TestBuiltin_ascall extends TestBase {
         assertEval("{ as.call(42) }");
 
         assertEval("typeof(as.call(list(substitute(graphics::par))))");
+
+        assertEval("e <- substitute(a$b(c)); as.call(lapply(e, function(x) x))");
+        assertEval(Output.IgnoreWhitespace, "e <- expression(function(a) b); as.call(list(e[[1]][[1]]))");
+        assertEval("e <- expression(function(a) b); as.call(list(e[[1]][[2]]))");
+        assertEval("call('foo')");
+        assertEval(Output.IgnoreWhitespace, "call('function', 'a')");
+        assertEval(Output.IgnoreWhitespace, "call('function', pairlist(a=1))");
+        assertEval(Output.IgnoreWhitespace, "call('function', pairlist(a=1), 3)");
+        assertEval(Output.IgnoreWhitespace, "call('function', pairlist(a=1), 5,3)");
+        assertEval(Output.IgnoreWhitespace, "call('function', pairlist(a=1), 5)");
+        assertEval("as.call(list('function', pairlist(a=1), 5))");
+        assertEval(Output.IgnoreWhitespace, "as.call(list(as.symbol('function'), pairlist(a=1), 5))");
+        assertEval(Output.IgnoreWhitespace, "as.call(list(as.symbol('function'), pairlist(a=1)))");
+        assertEval(Output.IgnoreWhitespace, "as.call(list(as.symbol('function')))");
+        assertEval(Output.IgnoreWhitespace, "call('function')");
     }
 }
