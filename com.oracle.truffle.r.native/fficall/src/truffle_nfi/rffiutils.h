@@ -53,6 +53,10 @@ typedef void (*callvoid0func)(void);
 
 typedef void (*callvoid1func)(SEXP arg1);
 
+void set_shutdown_phase(unsigned char value);
+
+int is_shutdown_phase();
+
 void dot_call_void0(callvoid0func);
 
 void dot_call_void1(callvoid1func, SEXP);

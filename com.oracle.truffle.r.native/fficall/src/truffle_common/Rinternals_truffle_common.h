@@ -828,8 +828,8 @@ void SET_PRCODE(SEXP x, SEXP v) {
 }
 
 int TRUELENGTH(SEXP x) {
-    TRACE0();
-    unimplemented("unimplemented");
+    TRACE(TARGp, x);
+    // TODO do not throw an error for now
     return 0;
 }
 
@@ -1342,7 +1342,9 @@ void R_PreserveObject(SEXP x) {
 
 void R_ReleaseObject(SEXP x) {
     TRACE0();
-    ((call_R_ReleaseObject) callbacks[R_ReleaseObject_x])(x);
+    if(!is_shutdown_phase()) {
+    	((call_R_ReleaseObject) callbacks[R_ReleaseObject_x])(x);
+    }
 }
 
 void R_dot_Last(void) {

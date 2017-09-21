@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
@@ -49,7 +50,18 @@ class NFIContext extends RFFIContext {
             // force initialization of NFI
             DLLRFFI.DLOpenRootNode.create(context).call(librffiPath, false, false);
         }
+        if (RContext.getContextCnt() == 0) {
+            BaseRFFI.SetShutdownFlagRootNode.create().getCallTarget().call(false);
+        }
         return this;
+    }
+
+    @Override
+    public void beforeDispose(RContext context) {
+        if (RContext.getContextCnt() == 1) {
+            BaseRFFI.SetShutdownFlagRootNode.create().getCallTarget().call(true);
+        }
+        super.beforeDispose(context);
     }
 
     @Override

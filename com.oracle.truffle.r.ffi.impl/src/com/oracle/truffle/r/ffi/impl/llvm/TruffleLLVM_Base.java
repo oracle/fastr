@@ -223,6 +223,19 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
+    private static class TruffleLLVM_SetShutdownFlagNode extends TruffleLLVM_DownCallNode implements SetShutdownFlagNode {
+
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.set_shutdown_phase;
+        }
+
+        @Override
+        public void execute(boolean value) {
+            call(value ? 1 : 0);
+        }
+    }
+
     @Override
     public GetpidNode createGetpidNode() {
         return new TruffleLLVM_GetpidNode();
@@ -271,5 +284,10 @@ public class TruffleLLVM_Base implements BaseRFFI {
     @Override
     public GlobNode createGlobNode() {
         return new TruffleLLVM_GlobNode();
+    }
+
+    @Override
+    public SetShutdownFlagNode createSetShutdownFlagNode() {
+        return new TruffleLLVM_SetShutdownFlagNode();
     }
 }
