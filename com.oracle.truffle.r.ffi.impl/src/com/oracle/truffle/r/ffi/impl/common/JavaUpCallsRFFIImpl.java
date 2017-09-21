@@ -1554,23 +1554,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         }
     }
 
-    private HashMap<String, Integer> name2typeTable;
-
-    @Override
-    @TruffleBoundary
-    public int Rf_str2type(String name) {
-        if (name == null) {
-            return -1;
-        }
-        initName2typeTable();
-        Integer result = name2typeTable.get(name);
-        return result != null ? result : -1;
-    }
-
-    private void initName2typeTable() {
-        if (name2typeTable != null) {
-            return;
-        }
+    private static HashMap<String, Integer> name2typeTable;
+    static {
         name2typeTable = new HashMap<>(26);
         name2typeTable.put("NULL", SEXPTYPE.NILSXP.code); /* real types */
         name2typeTable.put("symbol", SEXPTYPE.SYMSXP.code);
@@ -1598,6 +1583,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         name2typeTable.put("S4", SEXPTYPE.S4SXP.code);
         name2typeTable.put("numeric", SEXPTYPE.REALSXP.code);
         name2typeTable.put("name", SEXPTYPE.SYMSXP.code);
+    }
+
+    @Override
+    @TruffleBoundary
+    public int Rf_str2type(String name) {
+        if (name == null) {
+            return -1;
+        }
+        Integer result = name2typeTable.get(name);
+        return result != null ? result : -1;
     }
 
     @Override

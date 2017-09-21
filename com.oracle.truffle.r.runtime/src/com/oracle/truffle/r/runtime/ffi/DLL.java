@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.CustomNativeMirror;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -176,7 +177,7 @@ public class DLL {
         }
     }
 
-    public static final class DLLInfo extends RObject implements RTruffleObject {
+    public static final class DLLInfo extends RObject implements RTruffleObject, CustomNativeMirror {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"name", "path", "dynamicLookup", "handle", "info"}, RDataFactory.COMPLETE_VECTOR);
         public static final String DLL_INFO_REFERENCE = "DLLInfoReference";
         private static final RStringVector INFO_REFERENCE_CLASS = RDataFactory.createStringVectorFromScalar(DLL_INFO_REFERENCE);
@@ -283,6 +284,11 @@ public class DLL {
         @Override
         public String toString() {
             return String.format("name: %s, path: %s, dynamicLookup: %b, forceSymbols %b", name, path, dynamicLookup, forceSymbols);
+        }
+
+        @Override
+        public long getCustomMirrorAddress() {
+            return StringWrapper.allocateNativeStringVector(RDataFactory.createStringVector(new String[]{path, name}, true));
         }
     }
 
