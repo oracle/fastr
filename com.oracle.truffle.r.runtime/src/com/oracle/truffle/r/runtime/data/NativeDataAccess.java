@@ -202,7 +202,7 @@ public final class NativeDataAccess {
 
     @TruffleBoundary
     private static NativeMirror putMirrorObject(Object arg, RObject obj) {
-        NativeMirror mirror;
+        NativeMirror mirror; 
         obj.setNativeMirror(mirror = arg instanceof CustomNativeMirror ? new NativeMirror(((CustomNativeMirror) arg).getCustomMirrorAddress()) : new NativeMirror());
         // System.out.println(String.format("adding %16x = %s", mirror.id,
         // obj.getClass().getSimpleName()));
