@@ -136,6 +136,9 @@ public class TestBuiltin_cbind extends TestBase {
         assertEval("{ v1 <- 1; class(v1) <- 'foo1'; cbind.foo1 <- function(...) 'foo1'; v2 <- 2; class(v2) <- 'foo2'; cbind.foo2 <- function(...) 'foo2'; cbind(v1, v2) }");
         assertEval("{ v1 <- 1; class(v1) <- 'foo1'; cbind.foo1 <- function(...) 'foo1'; v2 <- 2; class(v2) <- 'foo2'; cbind(v1, v2) }");
         assertEval("{ v1 <- 1; class(v1) <- 'foo1'; v2 <- 2; class(v2) <- 'foo2'; cbind.foo2 <- function(...) 'foo2'; cbind(v1, v2) }");
+
+        // S4
+        assertEval("{ setClass('fooo', slots = c(a='numeric')); obj <- new('fooo'); cbind(obj) }");
     }
 
     @Test
