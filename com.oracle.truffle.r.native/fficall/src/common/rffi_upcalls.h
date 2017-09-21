@@ -276,6 +276,7 @@ typedef double (*call_Rf_dunif)(double a, double b, double c, int d);
 typedef double (*call_Rf_punif)(double a, double b, double c, int d, int e);
 typedef double (*call_Rf_runif)(double x, double y);
 typedef SEXP (*call_Rf_match)(SEXP itable, SEXP ix, int nmatch);
+typedef Rboolean (*call_Rf_NonNullStringMatch)(SEXP s, SEXP t);
 
 typedef SEXP (*call_getvar)();
 

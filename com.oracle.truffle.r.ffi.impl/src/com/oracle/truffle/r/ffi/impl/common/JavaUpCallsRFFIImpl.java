@@ -1684,4 +1684,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         throw implementedAsNode();
     }
 
+    @Override
+    public Object Rf_NonNullStringMatch(Object s, Object t) {
+        throw implementedAsNode();
+    }
+
 }
