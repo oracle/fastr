@@ -43,6 +43,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.test.IgnoreOS;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.TestBase.Context;
 import com.oracle.truffle.r.test.TestBase.Ignored;
@@ -270,6 +271,9 @@ public class TestOutputManager {
                                 break;
                             case "WhiteList":
                                 trait = WhiteList.create(traitParts[1]);
+                                break;
+                            case "IgnoreOS":
+                                trait = IgnoreOS.valueOf(traitParts[1]);
                                 break;
                             default:
                                 System.err.println("unrecognized TestTrait: " + traitClass);
