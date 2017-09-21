@@ -88,3 +88,9 @@ SEXP Rf_allocS4Object() {
     return NULL;
 }
 
+SEXP do_address(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+    return R_MakeExternalPtr((void *) CAR(args), R_NilValue, R_NilValue);
+}
+
