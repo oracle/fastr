@@ -22,16 +22,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 
 @RBuiltin(name = "@", kind = PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = 1, behavior = COMPLEX)
 public abstract class Slot extends RBuiltinNode.Arg2 {
@@ -46,20 +43,12 @@ public abstract class Slot extends RBuiltinNode.Arg2 {
 
     private String getName(Object nameObj) {
         if (nameObj instanceof RPromise) {
-            Object rep = ((RPromise) nameObj).getRep();
-            if (rep instanceof WrapArgumentNode) {
-                rep = ((WrapArgumentNode) rep).getOperand();
-            }
-            if (rep instanceof ConstantNode) {
-                Object val = ((ConstantNode) rep).getValue();
-                if (val instanceof String) {
-                    return (String) val;
-                }
-                if (val instanceof RSymbol) {
-                    return ((RSymbol) val).getName();
-                }
-            } else if (rep instanceof RSyntaxLookup) {
-                return ((RSyntaxLookup) rep).getIdentifier();
+            RPromise promise = (RPromise) nameObj;
+            Closure closure = promise.getClosure();
+            if (closure.asStringConstant() != null) {
+                return closure.asStringConstant();
+            } else if (closure.asSymbol() != null) {
+                return closure.asSymbol();
             }
         }
         CompilerDirectives.transferToInterpreter();
