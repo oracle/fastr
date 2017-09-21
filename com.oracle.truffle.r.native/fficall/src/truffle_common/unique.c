@@ -31,6 +31,6 @@ SEXP Rf_matchE(SEXP itable, SEXP ix, int nmatch, SEXP env)
 /* used from other code, not here: */
 SEXP Rf_match(SEXP itable, SEXP ix, int nmatch)
 {
-	return R_NilValue;
+	return ((call_Rf_match) callbacks[Rf_match_x])(itable, ix, nmatch);
 }
 
