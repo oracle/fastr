@@ -56,7 +56,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 import sun.misc.Unsafe;
@@ -145,10 +144,10 @@ abstract class TemporaryWrapper implements TruffleObject {
         if (vector instanceof RVector<?> && ((RVector<?>) vector).isTemporary()) {
             NativeDataAccess.asPointer(vector);
             reuseVector = true;
-            address = allocateNative((RVector<?>) vector);
+            address = allocateNative();
         } else {
             reuseVector = false;
-            address = allocate(vector);
+            address = allocate();
         }
         return address;
     }
@@ -157,15 +156,15 @@ abstract class TemporaryWrapper implements TruffleObject {
         if (address == 0 || reuseVector) {
             return vector;
         } else {
-            return copyBack(address, vector);
+            return copyBack();
         }
     }
 
-    protected abstract long allocate(RAbstractVector vector);
+    protected abstract long allocate();
 
-    protected abstract long allocateNative(RVector<?> vector);
+    protected abstract long allocateNative();
 
-    protected abstract RAbstractAtomicVector copyBack(long address, RAbstractVector vector);
+    protected abstract RAbstractAtomicVector copyBack();
 }
 
 // TODO: fortran only takes a pointer to the first string
@@ -177,29 +176,32 @@ final class StringWrapper extends TemporaryWrapper {
 
     @Override
     public long asPointer() {
-        address = allocate(vector);
+        address = allocate();
         return address;
     }
 
     @Override
-    protected long allocateNative(RVector<?> vector) {
+    protected long allocateNative() {
         throw RInternalError.shouldNotReachHere();
     }
 
     @Override
     @TruffleBoundary
-    public long allocate(RAbstractVector vector) {
+    public long allocate() {
+        return allocateNativeStringVector((RAbstractStringVector) vector);
+    }
+
+    public static long allocateNativeStringVector(RAbstractStringVector vector) {
         // We allocate contiguous memory that we'll use to store both the array of pointers (char**)
         // and the arrays of characters (char*). Given vector of size N, we allocate memory for N
         // adresses (long) and after those we put individual strings character by character, the
         // pointers from the first segment of this memory will be pointing to the starts of those
         // strings.
-        RAbstractStringVector v = (RAbstractStringVector) vector;
-        int length = v.getLength();
+        int length = vector.getLength();
         int size = length * Long.BYTES;
         byte[][] bytes = new byte[length][];
         for (int i = 0; i < length; i++) {
-            String element = v.getDataAt(i);
+            String element = vector.getDataAt(i);
             bytes[i] = element.getBytes(StandardCharsets.US_ASCII);
             size += bytes[i].length + 1;
         }
@@ -217,7 +219,7 @@ final class StringWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    protected RStringVector copyBack(long address, RAbstractVector vector) {
+    protected RStringVector copyBack() {
         RStringVector result = ((RAbstractStringVector) vector).materialize();
         boolean reuseResult = result.isTemporary() && !result.hasNativeMemoryData();
         String[] data = reuseResult ? result.getInternalManagedData() : new String[result.getLength()];
@@ -250,7 +252,7 @@ final class IntWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    public long allocate(RAbstractVector vector) {
+    public long allocate() {
         RAbstractIntVector v = (RAbstractIntVector) vector;
         int length = v.getLength();
         long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_INT_INDEX_SCALE);
@@ -262,13 +264,13 @@ final class IntWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    protected long allocateNative(RVector<?> vector) {
+    protected long allocateNative() {
         return ((RIntVector) vector).allocateNativeContents();
     }
 
     @Override
     @TruffleBoundary
-    protected RIntVector copyBack(long address, RAbstractVector vector) {
+    protected RIntVector copyBack() {
         RIntVector result = RDataFactory.createIntVectorFromNative(address, vector.getLength());
         result.copyAttributesFrom(vector);
         return result;
@@ -283,7 +285,7 @@ final class LogicalWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    public long allocate(RAbstractVector vector) {
+    public long allocate() {
         RAbstractLogicalVector v = (RAbstractLogicalVector) vector;
         int length = v.getLength();
         long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_INT_INDEX_SCALE);
@@ -295,13 +297,13 @@ final class LogicalWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    protected long allocateNative(RVector<?> vector) {
+    protected long allocateNative() {
         return ((RLogicalVector) vector).allocateNativeContents();
     }
 
     @Override
     @TruffleBoundary
-    protected RLogicalVector copyBack(long address, RAbstractVector vector) {
+    protected RLogicalVector copyBack() {
         RLogicalVector result = RDataFactory.createLogicalVectorFromNative(address, vector.getLength());
         result.copyAttributesFrom(vector);
         return result;
@@ -316,7 +318,7 @@ final class DoubleWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    public long allocate(RAbstractVector vector) {
+    public long allocate() {
         RAbstractDoubleVector v = (RAbstractDoubleVector) vector;
         int length = v.getLength();
         long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
@@ -328,13 +330,13 @@ final class DoubleWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    protected long allocateNative(RVector<?> vector) {
+    protected long allocateNative() {
         return ((RDoubleVector) vector).allocateNativeContents();
     }
 
     @Override
     @TruffleBoundary
-    protected RDoubleVector copyBack(long address, RAbstractVector vector) {
+    protected RDoubleVector copyBack() {
         RDoubleVector result = RDataFactory.createDoubleVectorFromNative(address, vector.getLength());
         result.copyAttributesFrom(vector);
         return result;
@@ -349,7 +351,7 @@ final class ComplexWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    public long allocate(RAbstractVector vector) {
+    public long allocate() {
         RAbstractComplexVector v = (RAbstractComplexVector) vector;
         int length = v.getLength();
         long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE * 2);
@@ -363,13 +365,13 @@ final class ComplexWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    protected long allocateNative(RVector<?> vector) {
+    protected long allocateNative() {
         return ((RComplexVector) vector).allocateNativeContents();
     }
 
     @Override
     @TruffleBoundary
-    protected RComplexVector copyBack(long address, RAbstractVector vector) {
+    protected RComplexVector copyBack() {
         RComplexVector result = RDataFactory.createComplexVectorFromNative(address, vector.getLength());
         result.copyAttributesFrom(vector);
         return result;
@@ -384,7 +386,7 @@ final class RawWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    public long allocate(RAbstractVector vector) {
+    public long allocate() {
         RAbstractRawVector v = (RAbstractRawVector) vector;
         int length = v.getLength();
         long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_BYTE_INDEX_SCALE);
@@ -396,13 +398,13 @@ final class RawWrapper extends TemporaryWrapper {
 
     @Override
     @TruffleBoundary
-    protected long allocateNative(RVector<?> vector) {
+    protected long allocateNative() {
         return ((RRawVector) vector).allocateNativeContents();
     }
 
     @Override
     @TruffleBoundary
-    protected RRawVector copyBack(long address, RAbstractVector vector) {
+    protected RRawVector copyBack() {
         RRawVector result = RDataFactory.createRawVectorFromNative(address, vector.getLength());
         result.copyAttributesFrom(vector);
         return result;

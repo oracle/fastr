@@ -90,6 +90,10 @@ public final class NativeDataAccess {
         // no instances
     }
 
+    public interface CustomNativeMirror {
+        long getCustomMirrorAddress();
+    }
+
     private static final boolean TRACE_MIRROR_ALLOCATION_SITES = false;
 
     public static boolean isNativeMirror(Object o) {
@@ -114,6 +118,15 @@ public final class NativeDataAccess {
 
         NativeMirror() {
             this.id = counter.incrementAndGet();
+        }
+
+        /**
+         * Creates a new mirror with a specified native address as both ID and address. The buffer
+         * will be freed when the Java object is collected.
+         */
+        NativeMirror(long address) {
+            this.id = address;
+            this.dataAddress = address;
         }
 
         void allocateNative(Object source, int len, int elementBase, int elementSize) {
@@ -180,7 +193,7 @@ public final class NativeDataAccess {
             RObject obj = (RObject) arg;
             NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
             if (mirror == null) {
-                obj.setNativeMirror(mirror = new NativeMirror());
+                obj.setNativeMirror(mirror = arg instanceof CustomNativeMirror ? new NativeMirror(((CustomNativeMirror) arg).getCustomMirrorAddress()) : new NativeMirror());
                 // System.out.println(String.format("adding %16x = %s", mirror.id,
                 // obj.getClass().getSimpleName()));
                 nativeMirrors.put(mirror.id, new WeakReference<>(obj));

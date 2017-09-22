@@ -1370,6 +1370,11 @@ int FASTR_getConnectionChar(SEXP conn) {
     return ((call_FASTR_getConnectionChar) callbacks[FASTR_getConnectionChar_x])(conn);
 }
 
+SEXPTYPE Rf_str2type(const char *s) {
+    TRACE0();
+    return ((call_Rf_str2type) callbacks[Rf_str2type_x])(s);
+}
+
 // Must match ordinal value for DLL.NativeSymbolType
 #define C_NATIVE_TYPE 0
 #define CALL_NATIVE_TYPE 1
