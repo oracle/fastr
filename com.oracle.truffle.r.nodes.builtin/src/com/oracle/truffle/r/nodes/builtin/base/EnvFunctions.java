@@ -168,6 +168,7 @@ public class EnvFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected REnvironment asEnvironment(RList list,
                         @Cached("new()") RList2EnvNode list2Env) {
             REnvironment env = RDataFactory.createNewEnv(null);
