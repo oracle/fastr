@@ -19,6 +19,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
@@ -149,6 +150,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
+    @TruffleBoundary
     private static void cov_pairwise1(int n, int ncx, double[] x, double[] ans, boolean[] sd_0, boolean cor, boolean kendall) {
         for (int i = 0; i < ncx; i++) {
             int xx = i * n;
@@ -162,6 +164,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
+    @TruffleBoundary
     private static void cov_pairwise2(int n, int ncx, int ncy, double[] x, double[] y, double[] ans, boolean[] sd_0, boolean cor, boolean kendall) {
         for (int i = 0; i < ncx; i++) {
             int xx = i * n;
@@ -814,66 +817,96 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    @TruffleBoundary
-    private static void evaluate(RDoubleVector y, boolean kendall, boolean cor, int n, int ncx, int ncy, boolean na_fail, boolean everything, boolean empty_err, boolean pair, double[] xData,
+    private void evaluate(RDoubleVector y, boolean kendall, boolean cor, int n, int ncx, int ncy, boolean na_fail, boolean everything, boolean empty_err, boolean pair, double[] xData,
                     double[] ans, boolean[] sd_0) {
         if (y == null) {
-            if (everything) { /* NA's are propagated */
-                double[] xm = new double[ncx];
-                boolean[] ind = new boolean[ncx];
-                find_na_1(n, ncx, xData, /* --> has_na[] = */ ind);
-                cov_na_1(n, ncx, xData, xm, ind, ans, sd_0, cor, kendall);
-            } else if (!pair) { /* all | complete "var" */
-                double[] xm = new double[ncx];
-                boolean[] ind = new boolean[n];
-                complete1(n, ncx, xData, ind, na_fail);
-                cov_complete1(n, ncx, xData, xm, ind, ans, sd_0, cor, kendall);
-                if (empty_err) {
-                    boolean indany = false;
-                    for (int i = 0; i < n; i++) {
-                        if (ind[i]) {
-                            indany = true;
-                            break;
-                        }
-                    }
-                    if (!indany) {
-                        error("no complete element pairs");
-                    }
-                }
-            } else { /* pairwise "var" */
-                cov_pairwise1(n, ncx, xData, ans, sd_0, cor, kendall);
-            }
+            evaluateXOnly(kendall, cor, n, ncx, na_fail, everything, empty_err, pair, xData, ans, sd_0);
         } else { /* Co[vr] (x, y) */
-            double[] yData = y.getReadonlyData();
-            if (everything) {
-                double[] xm = new double[ncx];
-                double[] ym = new double[ncy];
-                boolean[] ind = new boolean[ncx];
-                boolean[] has_na_y = new boolean[ncy];
-                find_na_2(n, ncx, ncy, xData, yData, ind, has_na_y);
-                cov_na_2(n, ncx, ncy, xData, yData, xm, ym, ind, has_na_y, ans, sd_0, cor, kendall);
-            } else if (!pair) { /* all | complete */
-                double[] xm = new double[ncx];
-                double[] ym = new double[ncy];
-                boolean[] ind = new boolean[n];
-                complete2(n, ncx, ncy, xData, yData, ind, na_fail);
-                cov_complete2(n, ncx, ncy, xData, yData, xm, ym, ind, ans, sd_0, cor, kendall);
-                if (empty_err) {
-                    boolean indany = false;
-                    for (int i = 0; i < n; i++) {
-                        if (ind[i]) {
-                            indany = true;
-                            break;
-                        }
-                    }
-                    if (!indany) {
-                        error("no complete element pairs");
-                    }
+            evaluateWithY(y, kendall, cor, n, ncx, ncy, na_fail, everything, empty_err, pair, xData, ans, sd_0);
+        }
+    }
+
+    private void evaluateWithY(RDoubleVector y, boolean kendall, boolean cor, int n, int ncx, int ncy, boolean na_fail, boolean everything, boolean empty_err, boolean pair, double[] xData,
+                    double[] ans, boolean[] sd_0) {
+        double[] yData = getReadonlyDataNode.execute(y);
+        if (everything) {
+            evaluateWithYEverything(kendall, cor, n, ncx, ncy, xData, ans, sd_0, yData);
+        } else if (!pair) { /* all | complete */
+            evaluateWithYAllOrComplete(kendall, cor, n, ncx, ncy, na_fail, empty_err, xData, ans, sd_0, yData);
+        } else { /* pairwise */
+            cov_pairwise2(n, ncx, ncy, xData, yData, ans, sd_0, cor, kendall);
+        }
+    }
+
+    @TruffleBoundary
+    private static void evaluateWithYAllOrComplete(boolean kendall, boolean cor, int n, int ncx, int ncy, boolean na_fail, boolean empty_err, double[] xData, double[] ans, boolean[] sd_0,
+                    double[] yData) {
+        double[] xm = new double[ncx];
+        double[] ym = new double[ncy];
+        boolean[] ind = new boolean[n];
+        complete2(n, ncx, ncy, xData, yData, ind, na_fail);
+        cov_complete2(n, ncx, ncy, xData, yData, xm, ym, ind, ans, sd_0, cor, kendall);
+        if (empty_err) {
+            boolean indany = false;
+            for (int i = 0; i < n; i++) {
+                if (ind[i]) {
+                    indany = true;
+                    break;
                 }
-            } else { /* pairwise */
-                cov_pairwise2(n, ncx, ncy, xData, yData, ans, sd_0, cor, kendall);
+            }
+            if (!indany) {
+                error("no complete element pairs");
             }
         }
+    }
+
+    @TruffleBoundary
+    private static void evaluateWithYEverything(boolean kendall, boolean cor, int n, int ncx, int ncy, double[] xData, double[] ans, boolean[] sd_0, double[] yData) {
+        double[] xm = new double[ncx];
+        double[] ym = new double[ncy];
+        boolean[] ind = new boolean[ncx];
+        boolean[] has_na_y = new boolean[ncy];
+        find_na_2(n, ncx, ncy, xData, yData, ind, has_na_y);
+        cov_na_2(n, ncx, ncy, xData, yData, xm, ym, ind, has_na_y, ans, sd_0, cor, kendall);
+    }
+
+    private static void evaluateXOnly(boolean kendall, boolean cor, int n, int ncx, boolean na_fail, boolean everything, boolean empty_err, boolean pair, double[] xData, double[] ans,
+                    boolean[] sd_0) {
+        if (everything) { /* NA's are propagated */
+            evaluateXOnlyEverything(kendall, cor, n, ncx, xData, ans, sd_0);
+        } else if (!pair) { /* all | complete "var" */
+            evaluateXOnlyAllOrComplete(kendall, cor, n, ncx, na_fail, empty_err, xData, ans, sd_0);
+        } else { /* pairwise "var" */
+            cov_pairwise1(n, ncx, xData, ans, sd_0, cor, kendall);
+        }
+    }
+
+    @TruffleBoundary
+    private static void evaluateXOnlyAllOrComplete(boolean kendall, boolean cor, int n, int ncx, boolean na_fail, boolean empty_err, double[] xData, double[] ans, boolean[] sd_0) {
+        double[] xm = new double[ncx];
+        boolean[] ind = new boolean[n];
+        complete1(n, ncx, xData, ind, na_fail);
+        cov_complete1(n, ncx, xData, xm, ind, ans, sd_0, cor, kendall);
+        if (empty_err) {
+            boolean indany = false;
+            for (int i = 0; i < n; i++) {
+                if (ind[i]) {
+                    indany = true;
+                    break;
+                }
+            }
+            if (!indany) {
+                error("no complete element pairs");
+            }
+        }
+    }
+
+    @TruffleBoundary
+    private static void evaluateXOnlyEverything(boolean kendall, boolean cor, int n, int ncx, double[] xData, double[] ans, boolean[] sd_0) {
+        double[] xm = new double[ncx];
+        boolean[] ind = new boolean[ncx];
+        find_na_1(n, ncx, xData, /* --> has_na[] = */ ind);
+        cov_na_1(n, ncx, xData, xm, ind, ans, sd_0, cor, kendall);
     }
 
     private final boolean isCor;
@@ -892,16 +925,17 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
 
     @Specialization
     public Object call(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y, int method, boolean iskendall) {
-        return corcov(x.materialize(), null, method, iskendall);
+        return corcov(x.materialize(), null, methodValueProfile.profile(method), iskendall);
     }
 
     @Specialization
     public Object call(RAbstractDoubleVector x, RAbstractDoubleVector y, int method, boolean iskendall) {
-        return corcov(x.materialize(), y.materialize(), method, iskendall);
+        return corcov(x.materialize(), y.materialize(), methodValueProfile.profile(method), iskendall);
     }
 
     private final BranchProfile naInRes = BranchProfile.create();
     private final ConditionProfile matrixProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile methodValueProfile = ValueProfile.createEqualityProfile();
 
     @Child private GetReadonlyData.Double getReadonlyDataNode = GetReadonlyData.Double.create();
     @Child private GetDimAttributeNode getDimsXNode = GetDimAttributeNode.create();
