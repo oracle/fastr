@@ -113,7 +113,7 @@ public class TestBuiltin_rbind extends TestBase {
         assertEval("{ v1 <- 1; class(v1) <- 'foo1'; v2 <- 2; class(v2) <- 'foo2'; rbind.foo2 <- function(...) 'foo2'; rbind(v1, v2) }");
 
         // S4
-        assertEval("{ setClass('fooo', slots = c(a='numeric')); obj <- new('fooo'); rbind(obj) }");
+        assertEval(Output.IgnoreErrorContext, "{ setClass('fooo', slots = c(a='numeric')); obj <- new('fooo'); rbind(obj) }");
     }
 
     @Test
