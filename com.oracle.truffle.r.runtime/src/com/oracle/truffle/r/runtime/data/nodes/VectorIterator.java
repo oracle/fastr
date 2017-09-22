@@ -334,6 +334,10 @@ public abstract class VectorIterator<T> extends Node {
         public static Double create() {
             return new Double(false);
         }
+
+        public static Double createWrapAround() {
+            return new Double(true);
+        }
     }
 
     public static final class Logical extends VectorIterator<Byte> {
