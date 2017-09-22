@@ -16,7 +16,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -34,8 +33,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.nodes.ReadAccessor;
-import com.oracle.truffle.r.runtime.data.nodes.VectorReadAccess;
+import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.nmath.RMath;
 
 /*
@@ -73,20 +71,20 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
     /**
      * Compute Cov(xx[], yy[]) or Cor(.,.) with n = length(xx)
      */
-    private static void COV_PAIRWISE_BODY(double[] ans, int n, int ncx, int i, int j, ReadAccessor.Double x, ReadAccessor.Double y, int xx, int yy, boolean[] sd_0, boolean cor, boolean kendall) {
+    private static void COV_PAIRWISE_BODY(double[] ans, int n, int ncx, int i, int j, double[] x, double[] y, int xx, int yy, boolean[] sd_0, boolean cor, boolean kendall) {
         double xmean = 0, ymean = 0;
         int nobs = 0;
         if (!kendall) {
             for (int k = 0; k < n; k++) {
-                if (!(ISNAN(x.getDataAt(xx + k)) || ISNAN(y.getDataAt(yy + k)))) {
+                if (!(ISNAN(x[xx + k]) || ISNAN(y[yy + k]))) {
                     nobs++;
-                    xmean += x.getDataAt(xx + k);
-                    ymean += y.getDataAt(yy + k);
+                    xmean += x[xx + k];
+                    ymean += y[yy + k];
                 }
             }
         } else /* kendall */
             for (int k = 0; k < n; k++) {
-                if (!(ISNAN(x.getDataAt(xx + k)) || ISNAN(y.getDataAt(yy + k)))) {
+                if (!(ISNAN(x[xx + k]) || ISNAN(y[yy + k]))) {
                     nobs++;
                 }
             }
@@ -100,10 +98,10 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                 n1 = nobs - 1;
             }
             for (int k = 0; k < n; k++) {
-                if (!(ISNAN(x.getDataAt(xx + k)) || ISNAN(y.getDataAt(yy + k)))) {
+                if (!(ISNAN(x[xx + k]) || ISNAN(y[yy + k]))) {
                     if (!kendall) {
-                        double xm = x.getDataAt(xx + k) - xmean;
-                        double ym = y.getDataAt(yy + k) - ymean;
+                        double xm = x[xx + k] - xmean;
+                        double ym = y[yy + k] - ymean;
 
                         sum += xm * ym;
                         if (cor) {
@@ -114,9 +112,9 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
 
                     else { /* Kendall's tau */
                         for (n1 = 0; n1 < k; n1++) {
-                            if (!(ISNAN(x.getDataAt(xx + n1)) || ISNAN(y.getDataAt(yy + n1)))) {
-                                double xm = RMath.sign(x.getDataAt(xx + k) - x.getDataAt(xx + n1));
-                                double ym = RMath.sign(y.getDataAt(yy + k) - y.getDataAt(yy + n1));
+                            if (!(ISNAN(x[xx + n1]) || ISNAN(y[yy + n1]))) {
+                                double xm = RMath.sign(x[xx + k] - x[xx + n1]);
+                                double ym = RMath.sign(y[yy + k] - y[yy + n1]);
 
                                 sum += xm * ym;
                                 if (cor) {
@@ -151,7 +149,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    private static void cov_pairwise1(int n, int ncx, ReadAccessor.Double x, double[] ans, boolean[] sd_0, boolean cor, boolean kendall) {
+    private static void cov_pairwise1(int n, int ncx, double[] x, double[] ans, boolean[] sd_0, boolean cor, boolean kendall) {
         for (int i = 0; i < ncx; i++) {
             int xx = i * n;
             for (int j = 0; j <= i; j++) {
@@ -164,7 +162,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    private static void cov_pairwise2(int n, int ncx, int ncy, ReadAccessor.Double x, ReadAccessor.Double y, double[] ans, boolean[] sd_0, boolean cor, boolean kendall) {
+    private static void cov_pairwise2(int n, int ncx, int ncy, double[] x, double[] y, double[] ans, boolean[] sd_0, boolean cor, boolean kendall) {
         for (int i = 0; i < ncx; i++) {
             int xx = i * n;
             for (int j = 0; j < ncy; j++) {
@@ -180,14 +178,14 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
      */
 
     /* This uses two passes for better accuracy */
-    private static void MEAN(int n, int ncx, ReadAccessor.Double x, double[] xm, boolean[] ind, int nobs) {
+    private static void MEAN(int n, int ncx, double[] x, double[] xm, boolean[] ind, int nobs) {
         /* variable means */
         for (int i = 0; i < ncx; i++) {
             int xx = i * n;
             double sum = 0;
             for (int k = 0; k < n; k++) {
                 if (ind[k]) {
-                    sum += x.getDataAt(xx + k);
+                    sum += x[xx + k];
                 }
             }
             double tmp = sum / nobs;
@@ -195,7 +193,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                 sum = 0;
                 for (int k = 0; k < n; k++) {
                     if (ind[k]) {
-                        sum += (x.getDataAt(xx + k) - tmp);
+                        sum += (x[xx + k] - tmp);
                     }
                 }
                 tmp = tmp + sum / nobs;
@@ -205,7 +203,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
     }
 
     /* This uses two passes for better accuracy */
-    private static void MEAN_(int n, int ncx, ReadAccessor.Double x, double[] xm, boolean[] has_na) {
+    private static void MEAN_(int n, int ncx, double[] x, double[] xm, boolean[] has_na) {
         /* variable means (has_na) */
         for (int i = 0; i < ncx; i++) {
             double tmp;
@@ -215,13 +213,13 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                 int xx = i * n;
                 double sum = 0;
                 for (int k = 0; k < n; k++) {
-                    sum += x.getDataAt(xx + k);
+                    sum += x[xx + k];
                 }
                 tmp = sum / n;
                 if (Double.isFinite(tmp)) {
                     sum = 0;
                     for (int k = 0; k < n; k++) {
-                        sum += (x.getDataAt(xx + k) - tmp);
+                        sum += (x[xx + k] - tmp);
                     }
                     tmp = tmp + sum / n;
                 }
@@ -230,7 +228,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    private static void cov_complete1(int n, int ncx, ReadAccessor.Double x, double[] xm, boolean[] ind, double[] ans, boolean[] sd_0, boolean cor, boolean kendall) {
+    private static void cov_complete1(int n, int ncx, double[] x, double[] xm, boolean[] ind, double[] ans, boolean[] sd_0, boolean cor, boolean kendall) {
         int n1 = -1;
 
         /* total number of complete observations */
@@ -264,7 +262,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                     double sum = 0;
                     for (int k = 0; k < n; k++) {
                         if (ind[k]) {
-                            sum += (x.getDataAt(xx + k) - xxm) * (x.getDataAt(yy + k) - yym);
+                            sum += (x[xx + k] - xxm) * (x[yy + k] - yym);
                         }
                     }
                     double result = sum / n1;
@@ -279,7 +277,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                         if (ind[k]) {
                             for (n1 = 0; n1 < n; n1++) {
                                 if (ind[n1]) {
-                                    sum += RMath.sign(x.getDataAt(xx + k) - x.getDataAt(xx + n1)) * RMath.sign(x.getDataAt(yy + k) - x.getDataAt(yy + n1));
+                                    sum += RMath.sign(x[xx + k] - x[xx + n1]) * RMath.sign(x[yy + k] - x[yy + n1]);
                                 }
                             }
                         }
@@ -316,7 +314,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    private static void cov_na_1(int n, int ncx, ReadAccessor.Double x, double[] xm, boolean[] has_na, double[] ans, boolean[] sd_0, boolean cor, boolean kendall) {
+    private static void cov_na_1(int n, int ncx, double[] x, double[] xm, boolean[] has_na, double[] ans, boolean[] sd_0, boolean cor, boolean kendall) {
         int n1 = -1;
         if (n <= 1) { /* too many missing */
             for (int i = 0; i < ncx; i++) {
@@ -351,7 +349,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                             double yym = xm[j];
                             double sum = 0;
                             for (int k = 0; k < n; k++) {
-                                sum += (x.getDataAt(xx + k) - xxm) * (x.getDataAt(yy + k) - yym);
+                                sum += (x[xx + k] - xxm) * (x[yy + k] - yym);
                             }
                             double result = sum / n1;
                             ANS(ans, ncx, j, i, result);
@@ -368,7 +366,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                             double sum = 0;
                             for (int k = 0; k < n; k++) {
                                 for (n1 = 0; n1 < n; n1++) {
-                                    sum += RMath.sign(x.getDataAt(xx + k) - x.getDataAt(xx + n1)) * RMath.sign(x.getDataAt(yy + k) - x.getDataAt(yy + n1));
+                                    sum += RMath.sign(x[xx + k] - x[xx + n1]) * RMath.sign(x[yy + k] - x[yy + n1]);
                                 }
                             }
                             ANS(ans, ncx, j, i, sum);
@@ -409,7 +407,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    private static void COV_SDEV1(int n, int n1, int nc, ReadAccessor.Double array, double[] m, boolean[] ind, boolean kendall) {
+    private static void COV_SDEV1(int n, int n1, int nc, double[] array, double[] m, boolean[] ind, boolean kendall) {
         for (int i = 0; i < nc; i++) { /* Var(X[i]) */
             int xx = i * n;
             double sum = 0;
@@ -417,7 +415,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                 double xxm = m[i];
                 for (int k = 0; k < n; k++) {
                     if (ind[k]) {
-                        sum += (array.getDataAt(xx + k) - xxm) * (array.getDataAt(xx + k) - xxm);
+                        sum += (array[xx + k] - xxm) * (array[xx + k] - xxm);
                     }
                 }
                 sum /= n1;
@@ -425,7 +423,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                 for (int k = 0; k < n; k++) {
                     if (ind[k]) {
                         for (int n1_ = 0; n1_ < n; n1_++) {
-                            if (ind[n1_] && array.getDataAt(xx + k) != array.getDataAt(xx + n1_)) {
+                            if (ind[n1_] && array[xx + k] != array[xx + n1_]) {
                                 sum++; /* = sign(. - .)^2 */
                             }
                         }
@@ -436,8 +434,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    private static void cov_complete2(int n, int ncx, int ncy, ReadAccessor.Double x, ReadAccessor.Double y, double[] xm, double[] ym, boolean[] ind, double[] ans, boolean[] sd_0, boolean cor,
-                    boolean kendall) {
+    private static void cov_complete2(int n, int ncx, int ncy, double[] x, double[] y, double[] xm, double[] ym, boolean[] ind, double[] ans, boolean[] sd_0, boolean cor, boolean kendall) {
         int n1 = -1;
 
         /* total number of complete observations */
@@ -471,7 +468,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                     double sum = 0;
                     for (int k = 0; k < n; k++) {
                         if (ind[k]) {
-                            sum += (x.getDataAt(xx + k) - xxm) * (y.getDataAt(yy + k) - yym);
+                            sum += (x[xx + k] - xxm) * (y[yy + k] - yym);
                         }
                     }
                     ANS(ans, ncx, i, j, sum / n1);
@@ -484,7 +481,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                         if (ind[k]) {
                             for (n1 = 0; n1 < n; n1++) {
                                 if (ind[n1]) {
-                                    sum += RMath.sign(x.getDataAt(xx + k) - x.getDataAt(xx + n1)) * RMath.sign(y.getDataAt(yy + k) - y.getDataAt(yy + n1));
+                                    sum += RMath.sign(x[xx + k] - x[xx + n1]) * RMath.sign(y[yy + k] - y[yy + n1]);
                                 }
                             }
                         }
@@ -519,7 +516,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    private static void COV_SDEV2(int n, int n1, int nc, ReadAccessor.Double array, double[] m, boolean[] has_na, boolean kendall) {
+    private static void COV_SDEV2(int n, int n1, int nc, double[] array, double[] m, boolean[] has_na, boolean kendall) {
         for (int i = 0; i < nc; i++) {
             if (!has_na[i]) { /* Var(X[j]) */
                 int xx = i * n;
@@ -527,13 +524,13 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                 if (!kendall) {
                     double xxm = m[i];
                     for (int k = 0; k < n; k++) {
-                        sum += (array.getDataAt(xx + k) - xxm) * (array.getDataAt(xx + k) - xxm);
+                        sum += (array[xx + k] - xxm) * (array[xx + k] - xxm);
                     }
                     sum /= n1;
                 } else { /* Kendall's tau */
                     for (int k = 0; k < n; k++) {
                         for (int n1_ = 0; n1_ < n; n1_++) {
-                            if (array.getDataAt(xx + k) != array.getDataAt(xx + n1_)) {
+                            if (array[xx + k] != array[xx + n1_]) {
                                 sum++; /* = sign(. - .)^2 */
                             }
                         }
@@ -544,8 +541,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    private static void cov_na_2(int n, int ncx, int ncy, ReadAccessor.Double x, ReadAccessor.Double y, double[] xm, double[] ym, boolean[] has_na_x, boolean[] has_na_y, double[] ans, boolean[] sd_0,
-                    boolean cor,
+    private static void cov_na_2(int n, int ncx, int ncy, double[] x, double[] y, double[] xm, double[] ym, boolean[] has_na_x, boolean[] has_na_y, double[] ans, boolean[] sd_0, boolean cor,
                     boolean kendall) {
         int n1 = -1;
         if (n <= 1) {/* too many missing */
@@ -579,7 +575,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                             double yym = ym[j];
                             double sum = 0;
                             for (int k = 0; k < n; k++) {
-                                sum += (x.getDataAt(xx + k) - xxm) * (y.getDataAt(yy + k) - yym);
+                                sum += (x[xx + k] - xxm) * (y[yy + k] - yym);
                             }
                             ANS(ans, ncx, i, j, sum / n1);
                         }
@@ -593,7 +589,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                             double sum = 0;
                             for (int k = 0; k < n; k++) {
                                 for (n1 = 0; n1 < n; n1++) {
-                                    sum += RMath.sign(x.getDataAt(xx + k) - x.getDataAt(xx + n1)) * RMath.sign(y.getDataAt(yy + k) - y.getDataAt(yy + n1));
+                                    sum += RMath.sign(x[xx + k] - x[xx + n1]) * RMath.sign(y[yy + k] - y[yy + n1]);
                                 }
                             }
                             ANS(ans, ncx, i, j, sum);
@@ -641,9 +637,9 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
      * This might look slightly inefficient, but it is designed to optimise paging in virtual memory
      * systems ... (or at least that's my story, and I'm sticking to it.)
      */
-    private static void NA_LOOP(int n, int z, ReadAccessor.Double x, boolean[] ind, boolean na_fail) {
+    private static void NA_LOOP(int n, int z, double[] x, boolean[] ind, boolean na_fail) {
         for (int i = 0; i < n; i++) {
-            if (ISNAN(x.getDataAt(z + i))) {
+            if (ISNAN(x[z + i])) {
                 if (na_fail) {
                     error("missing observations in cov/cor");
                 } else {
@@ -653,7 +649,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    private static void complete1(int n, int ncx, ReadAccessor.Double x, boolean[] ind, boolean na_fail) {
+    private static void complete1(int n, int ncx, double[] x, boolean[] ind, boolean na_fail) {
         for (int i = 0; i < n; i++) {
             ind[i] = true;
         }
@@ -663,7 +659,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    static void complete2(int n, int ncx, int ncy, ReadAccessor.Double x, ReadAccessor.Double y, boolean[] ind, boolean na_fail) {
+    static void complete2(int n, int ncx, int ncy, double[] x, double[] y, boolean[] ind, boolean na_fail) {
         complete1(n, ncx, x, ind, na_fail);
 
         for (int j = 0; j < ncy; j++) {
@@ -672,12 +668,12 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    static void find_na_1(int n, int ncx, ReadAccessor.Double x, boolean[] has_na) {
+    static void find_na_1(int n, int ncx, double[] x, boolean[] has_na) {
         for (int j = 0; j < ncx; j++) {
             int z = j * n;
             has_na[j] = false;
             for (int i = 0; i < n; i++) {
-                if (ISNAN(x.getDataAt(z + i))) {
+                if (ISNAN(x[z + i])) {
                     has_na[j] = true;
                     break;
                 }
@@ -685,7 +681,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         }
     }
 
-    static void find_na_2(int n, int ncx, int ncy, ReadAccessor.Double x, ReadAccessor.Double y, boolean[] has_na_x, boolean[] has_na_y) {
+    static void find_na_2(int n, int ncx, int ncy, double[] x, double[] y, boolean[] has_na_x, boolean[] has_na_y) {
         find_na_1(n, ncx, x, has_na_x);
         find_na_1(n, ncy, y, has_na_y);
     }
@@ -694,36 +690,36 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
      * co[vr](x, y, use = { 1, 2, 3, 4, 5 } "all.obs", "complete.obs", "pairwise.complete",
      * "everything", "na.or.complete" kendall = TRUE/FALSE)
      */
-    public RDoubleVector corcov(ReadAccessor.Double x, ReadAccessor.Double y, int method, boolean kendall) throws RError {
+    public RDoubleVector corcov(RDoubleVector x, RDoubleVector y, int method, boolean kendall) throws RError {
         int n, ncx, ncy;
 
         /* Arg.1: x */
-        if (isFactorX.executeIsFactor(x.getVector())) {
+        if (isFactorX.executeIsFactor(x)) {
             error("'x' is a factor");
             // maybe only warning: "Calling var(x) on a factor x is deprecated and will become an
             // error.\n Use something like 'all(duplicated(x)[-1L])' to test for a constant vector."
         }
         /* length check of x -- only if(empty_err) --> below */
-        int[] xDims = getDimsXNode.getDimensions(x.getVector());
+        int[] xDims = getDimsXNode.getDimensions(x);
         boolean ansmat = matrixProfile.profile(GetDimAttributeNode.isMatrix(xDims));
         if ((ansmat)) {
             n = xDims[0];
             ncx = xDims[1];
         } else {
-            n = x.getVector().getLength();
+            n = x.getLength();
             ncx = 1;
         }
         /* Arg.2: y */
         if (y == null) {/* y = x : var() */
             ncy = ncx;
         } else {
-            if (isFactorY.executeIsFactor(y.getVector())) {
+            if (isFactorY.executeIsFactor(y)) {
                 error("'y' is a factor");
                 // maybe only warning: "Calling var(x) on a factor x is deprecated and will become
                 // an error.\n Use something like 'all(duplicated(x)[-1L])' to test for a constant
                 // vector."
             }
-            int[] yDims = getDimsYNode.getDimensions(y.getVector());
+            int[] yDims = getDimsYNode.getDimensions(y);
             if (GetDimAttributeNode.isMatrix(yDims)) {
                 if (yDims[0] != n) {
                     error("incompatible dimensions");
@@ -731,7 +727,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                 ncy = yDims[1];
                 ansmat = true;
             } else {
-                if (y.getVector().getLength() != n) {
+                if (y.getLength() != n) {
                     error("incompatible dimensions");
                 }
                 ncy = 1;
@@ -749,7 +745,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                 break;
             case 2: /* complete */
                 /* did na.omit in R */
-                if (x.getVector().getLength() == 0) {
+                if (x.getLength() == 0) {
                     error("no complete element pairs");
                 }
                 break;
@@ -766,14 +762,15 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
             default:
                 error("invalid 'use' (computational method)");
         }
-        if (empty_err && x.getVector().getLength() == 0) {
+        if (empty_err && x.getLength() == 0) {
             error("'x' is empty");
         }
 
+        double[] xData = getReadonlyDataNode.execute(x);
         double[] ans = new double[ncx * ncy];
         boolean[] sd_0 = new boolean[1];
 
-        evaluate(y, kendall, isCor, n, ncx, ncy, na_fail, everything, empty_err, pair, x, ans, sd_0);
+        evaluate(y, kendall, isCor, n, ncx, ncy, na_fail, everything, empty_err, pair, xData, ans, sd_0);
 
         if (sd_0[0]) { /* only in cor() */
             warning(RError.Message.SD_ZERO);
@@ -791,7 +788,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
         if (ansmat) { /* set dimnames() when applicable */
             RList newDimNames = null;
             if (y == null) {
-                RList dimNames = getDimsNamesXNode.getDimNames(x.getVector());
+                RList dimNames = getDimsNamesXNode.getDimNames(x);
                 if (dimNames != null) {
                     Object names = dimNames.getDataAt(1);
                     if (names != RNull.instance) {
@@ -799,8 +796,8 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                     }
                 }
             } else {
-                RList dimNamesX = getDimsNamesXNode.getDimNames(x.getVector());
-                RList dimNamesY = getDimsNamesYNode.getDimNames(y.getVector());
+                RList dimNamesX = getDimsNamesXNode.getDimNames(x);
+                RList dimNamesY = getDimsNamesYNode.getDimNames(y);
                 Object namesX = dimNamesX.getLength() >= 2 ? dimNamesX.getDataAt(1) : RNull.instance;
                 Object namesY = dimNamesY.getLength() >= 2 ? dimNamesY.getDataAt(1) : RNull.instance;
                 if (namesX != RNull.instance || namesY != RNull.instance) {
@@ -818,19 +815,19 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
     }
 
     @TruffleBoundary
-    private static void evaluate(ReadAccessor.Double y, boolean kendall, boolean cor, int n, int ncx, int ncy, boolean na_fail, boolean everything, boolean empty_err, boolean pair,
-                    ReadAccessor.Double x, double[] ans, boolean[] sd_0) {
+    private static void evaluate(RDoubleVector y, boolean kendall, boolean cor, int n, int ncx, int ncy, boolean na_fail, boolean everything, boolean empty_err, boolean pair, double[] xData,
+                    double[] ans, boolean[] sd_0) {
         if (y == null) {
             if (everything) { /* NA's are propagated */
                 double[] xm = new double[ncx];
                 boolean[] ind = new boolean[ncx];
-                find_na_1(n, ncx, x, /* --> has_na[] = */ ind);
-                cov_na_1(n, ncx, x, xm, ind, ans, sd_0, cor, kendall);
+                find_na_1(n, ncx, xData, /* --> has_na[] = */ ind);
+                cov_na_1(n, ncx, xData, xm, ind, ans, sd_0, cor, kendall);
             } else if (!pair) { /* all | complete "var" */
                 double[] xm = new double[ncx];
                 boolean[] ind = new boolean[n];
-                complete1(n, ncx, x, ind, na_fail);
-                cov_complete1(n, ncx, x, xm, ind, ans, sd_0, cor, kendall);
+                complete1(n, ncx, xData, ind, na_fail);
+                cov_complete1(n, ncx, xData, xm, ind, ans, sd_0, cor, kendall);
                 if (empty_err) {
                     boolean indany = false;
                     for (int i = 0; i < n; i++) {
@@ -844,22 +841,23 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                     }
                 }
             } else { /* pairwise "var" */
-                cov_pairwise1(n, ncx, x, ans, sd_0, cor, kendall);
+                cov_pairwise1(n, ncx, xData, ans, sd_0, cor, kendall);
             }
         } else { /* Co[vr] (x, y) */
+            double[] yData = y.getReadonlyData();
             if (everything) {
                 double[] xm = new double[ncx];
                 double[] ym = new double[ncy];
                 boolean[] ind = new boolean[ncx];
                 boolean[] has_na_y = new boolean[ncy];
-                find_na_2(n, ncx, ncy, x, y, ind, has_na_y);
-                cov_na_2(n, ncx, ncy, x, y, xm, ym, ind, has_na_y, ans, sd_0, cor, kendall);
+                find_na_2(n, ncx, ncy, xData, yData, ind, has_na_y);
+                cov_na_2(n, ncx, ncy, xData, yData, xm, ym, ind, has_na_y, ans, sd_0, cor, kendall);
             } else if (!pair) { /* all | complete */
                 double[] xm = new double[ncx];
                 double[] ym = new double[ncy];
                 boolean[] ind = new boolean[n];
-                complete2(n, ncx, ncy, x, y, ind, na_fail);
-                cov_complete2(n, ncx, ncy, x, y, xm, ym, ind, ans, sd_0, cor, kendall);
+                complete2(n, ncx, ncy, xData, yData, ind, na_fail);
+                cov_complete2(n, ncx, ncy, xData, yData, xm, ym, ind, ans, sd_0, cor, kendall);
                 if (empty_err) {
                     boolean indany = false;
                     for (int i = 0; i < n; i++) {
@@ -873,7 +871,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                     }
                 }
             } else { /* pairwise */
-                cov_pairwise2(n, ncx, ncy, x, y, ans, sd_0, cor, kendall);
+                cov_pairwise2(n, ncx, ncy, xData, yData, ans, sd_0, cor, kendall);
             }
         }
     }
@@ -893,21 +891,19 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
     }
 
     @Specialization
-    public Object call(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y, int method, boolean iskendall,
-                    @Cached("create()") VectorReadAccess.Double vecReadAccess) {
-        return corcov(new ReadAccessor.Double(x, vecReadAccess), null, method, iskendall);
+    public Object call(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y, int method, boolean iskendall) {
+        return corcov(x.materialize(), null, method, iskendall);
     }
 
     @Specialization
-    public Object call(RAbstractDoubleVector x, RAbstractDoubleVector y, int method, boolean iskendall,
-                    @Cached("create()") VectorReadAccess.Double xReadAccess,
-                    @Cached("create()") VectorReadAccess.Double yReadAccess) {
-        return corcov(new ReadAccessor.Double(x, xReadAccess), new ReadAccessor.Double(y, yReadAccess), method, iskendall);
+    public Object call(RAbstractDoubleVector x, RAbstractDoubleVector y, int method, boolean iskendall) {
+        return corcov(x.materialize(), y.materialize(), method, iskendall);
     }
 
     private final BranchProfile naInRes = BranchProfile.create();
     private final ConditionProfile matrixProfile = ConditionProfile.createBinaryProfile();
 
+    @Child private GetReadonlyData.Double getReadonlyDataNode = GetReadonlyData.Double.create();
     @Child private GetDimAttributeNode getDimsXNode = GetDimAttributeNode.create();
     @Child private GetDimAttributeNode getDimsYNode = GetDimAttributeNode.create();
     @Child private GetDimNamesAttributeNode getDimsNamesXNode = GetDimNamesAttributeNode.create();
