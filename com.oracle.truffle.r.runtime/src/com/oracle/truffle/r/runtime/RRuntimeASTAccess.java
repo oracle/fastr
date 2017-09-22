@@ -73,7 +73,7 @@ public interface RRuntimeASTAccess {
      * object whose rep is a {@code RCallNode} with the first list element as the function and the
      * remainder as the arguments, or a {@code RFunction} (as determined by repType).
      */
-    Object fromList(RList list, RLanguage.RepType repType);
+    Object createLanguageFromList(RList list, RLanguage.RepType repType);
 
     /**
      * Get the "names" attribute for an {@link RLanguage} object, or {@code null} if none.

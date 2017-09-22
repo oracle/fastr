@@ -274,7 +274,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     @TruffleBoundary
     private static Object materializeLanguage(RAbstractVector extractedVector) {
-        return RContext.getRRuntimeASTAccess().fromList((RList) extractedVector, RLanguage.RepType.CALL);
+        return RContext.getRRuntimeASTAccess().createLanguageFromList((RList) extractedVector, RLanguage.RepType.CALL);
     }
 
     private Object extract(int dimensionIndex, RAbstractStringVector vector, Object pos, PositionProfile profile) {

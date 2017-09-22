@@ -92,6 +92,7 @@ import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
@@ -222,21 +223,27 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     @TruffleBoundary
-    public Object fromList(RList list, RLanguage.RepType repType) {
+    public Object createLanguageFromList(RList list, RLanguage.RepType repType) {
         int length = list.getLength();
         if (length == 0) {
             return RNull.instance;
         } else if (repType == RLanguage.RepType.CALL) {
             RStringVector formals = list.getNames();
-            RSyntaxNode[] arguments = new RSyntaxNode[length - 1];
-            String[] sigNames = new String[arguments.length];
+
+            List<RCodeBuilder.Argument<RSyntaxNode>> argList = new ArrayList<>(length - 1);
             for (int i = 1; i < length; i++) {
-                arguments[i - 1] = (RSyntaxNode) unwrapToRNode(list.getDataAtAsObject(i));
                 String formal = formals == null ? null : formals.getDataAt(i);
-                sigNames[i - 1] = formal != null && formal.length() > 0 ? formal : null;
+                RSyntaxNode syntaxArg = (RSyntaxNode) unwrapToRNode(list.getDataAtAsObject(i));
+                if (formal != null) {
+                    argList.add(RCodeBuilder.argument(RSourceSectionNode.LAZY_DEPARSE, formal, syntaxArg));
+                } else {
+                    argList.add(RCodeBuilder.argument(syntaxArg));
+                }
             }
+
             RNode fn = unwrapToRNode(list.getDataAtAsObject(0));
-            RLanguage result = RDataFactory.createLanguage(RASTUtils.createCall(fn, false, ArgumentsSignature.get(sigNames), arguments).asRNode());
+            RSyntaxNode call = RContext.getASTBuilder().call(RSourceSectionNode.LAZY_DEPARSE, fn.asRSyntaxNode(), argList);
+            RLanguage result = RDataFactory.createLanguage(call.asRNode());
             if (formals != null && formals.getLength() > 0 && formals.getDataAt(0).length() > 0) {
                 result.setCallLHSName(formals.getDataAt(0));
             }
