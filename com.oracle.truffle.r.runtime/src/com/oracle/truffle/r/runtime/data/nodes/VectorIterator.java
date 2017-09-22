@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -45,15 +46,16 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.GetNextNodeGen.GetNextGenericNodeGen;
 import com.oracle.truffle.r.runtime.data.nodes.VectorIterator.IteratorData;
 
 abstract class VectorIteratorNodeAdapter extends Node {
-    public static boolean hasNoNativeMemoryData(RAbstractVector vector) {
-        return !(vector instanceof RVector<?>) || !((RVector<?>) vector).hasNativeMemoryData();
+    public static boolean hasNoNativeMemoryData(RAbstractVector vector, Class<? extends RAbstractVector> vecClass) {
+        return !(RVector.class.isAssignableFrom(vecClass)) || !((RVector<?>) vecClass.cast(vector)).hasNativeMemoryData();
     }
 
-    public static boolean isRVector(RAbstractVector vector) {
-        return vector instanceof RVector<?>;
+    public static boolean isRVector(Class<? extends RAbstractVector> vecClass) {
+        return RVector.class.isAssignableFrom(vecClass);
     }
 }
 
@@ -65,11 +67,11 @@ abstract class GetIteratorNode extends VectorIteratorNodeAdapter {
         return new IteratorData<>(vector.getNativeMirror(), vector.getLength());
     }
 
-    @Specialization(guards = {"hasNoNativeMemoryData(vector)", "vectorClass == vector.getClass()"})
+    @Specialization(guards = {"vectorClass == vector.getClass()", "hasNoNativeMemoryData(vector, vectorClass)"}, limit = "10")
     protected IteratorData<?> generic(RAbstractVector vector,
                     @Cached("vector.getClass()") Class<? extends RAbstractVector> vectorClass) {
         RAbstractVector profiledVec = vectorClass.cast(vector);
-        return new IteratorData<>(profiledVec.getInternalStore(), vector.getLength());
+        return new IteratorData<>(profiledVec.getInternalStore(), profiledVec.getLength());
     }
 
     @Fallback
@@ -106,7 +108,7 @@ abstract class HasNextNode extends VectorIteratorNodeAdapter {
         return iter.index < ((String[]) iter.store).length;
     }
 
-    @Specialization(guards = {"!isRVector(vector)", "vectorClass == vector.getClass()"})
+    @Specialization(guards = {"vectorClass == vector.getClass()", "!isRVector(vectorClass)"}, limit = "10")
     protected boolean generic(RAbstractVector vector, IteratorData<?> iter,
                     @Cached("vector.getClass()") Class<? extends RAbstractVector> vectorClass) {
         RAbstractVector profiledVec = vectorClass.cast(vector);
@@ -183,40 +185,62 @@ abstract class GetNextNode extends VectorIteratorNodeAdapter {
         throw RInternalError.unimplemented("string vectors backed by native memory");
     }
 
-    @Specialization(guards = "!isRVector(vector)")
-    protected int intVectorGeneric(RAbstractIntVector vector, IteratorData<?> iter,
-                    @Cached("create()") GetDataAt.Int getDataAtNode) {
-        return getDataAtNode.get(vector, iter.store, iter.index);
+    @Child private GetNextGenericNode getNextGenericNode;
+
+    @Fallback
+    protected Object doGeneric(RAbstractVector vector, IteratorData<?> iter) {
+        // we use fallback and extra node so that we do not have to explicitly check that the vector is not
+        // RVector, DSL generates fallback guard that compares the class with the all RVector subclasses
+        // used in the specializations above, "vector instanceof RVector" would not be a leaf-check.
+        if (getNextGenericNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getNextGenericNode = insert(GetNextGenericNode.create());
+        }
+        return getNextGenericNode.execute(vector, iter);
     }
 
-    @Specialization(guards = "!isRVector(vector)")
-    protected double doubleVectorGeneric(RAbstractDoubleVector vector, IteratorData<?> iter,
-                    @Cached("create()") GetDataAt.Double getDataAtNode) {
-        return getDataAtNode.get(vector, iter.store, iter.index);
-    }
+    static abstract class GetNextGenericNode extends Node {
+        public abstract Object execute(RAbstractVector vector, IteratorData<?> iter);
 
-    @Specialization(guards = "!isRVector(vector)")
-    protected String stringVectorGeneric(RAbstractStringVector vector, IteratorData<?> iter,
-                    @Cached("create()") GetDataAt.String getDataAtNode) {
-        return getDataAtNode.get(vector, iter.store, iter.index);
-    }
+        public static GetNextGenericNode create() {
+            return GetNextGenericNodeGen.create();
+        }
 
-    @Specialization(guards = "!isRVector(vector)")
-    protected byte rawVectorGeneric(RAbstractRawVector vector, IteratorData<?> iter,
-                    @Cached("create()") GetDataAt.Raw getDataAtNode) {
-        return getDataAtNode.get(vector, iter.store, iter.index);
-    }
+        @Specialization
+        protected int intVectorGeneric(RAbstractIntVector vector, IteratorData<?> iter,
+                        @Cached("create()") GetDataAt.Int getDataAtNode) {
+            return getDataAtNode.get(vector, iter.store, iter.index);
+        }
 
-    @Specialization(guards = "!isRVector(vector)")
-    protected byte logicalVectorGeneric(RAbstractLogicalVector vector, IteratorData<?> iter,
-                    @Cached("create()") GetDataAt.Logical getDataAtNode) {
-        return getDataAtNode.get(vector, iter.store, iter.index);
-    }
+        @Specialization
+        protected double doubleVectorGeneric(RAbstractDoubleVector vector, IteratorData<?> iter,
+                        @Cached("create()") GetDataAt.Double getDataAtNode) {
+            return getDataAtNode.get(vector, iter.store, iter.index);
+        }
 
-    @Specialization(guards = "!isRVector(vector)")
-    protected RComplex complexVectorGeneric(RAbstractComplexVector vector, IteratorData<?> iter,
-                    @Cached("create()") GetDataAt.Complex getDataAtNode) {
-        return getDataAtNode.get(vector, iter.store, iter.index);
+        @Specialization
+        protected String stringVectorGeneric(RAbstractStringVector vector, IteratorData<?> iter,
+                        @Cached("create()") GetDataAt.String getDataAtNode) {
+            return getDataAtNode.get(vector, iter.store, iter.index);
+        }
+
+        @Specialization
+        protected byte rawVectorGeneric(RAbstractRawVector vector, IteratorData<?> iter,
+                        @Cached("create()") GetDataAt.Raw getDataAtNode) {
+            return getDataAtNode.get(vector, iter.store, iter.index);
+        }
+
+        @Specialization
+        protected byte logicalVectorGeneric(RAbstractLogicalVector vector, IteratorData<?> iter,
+                        @Cached("create()") GetDataAt.Logical getDataAtNode) {
+            return getDataAtNode.get(vector, iter.store, iter.index);
+        }
+
+        @Specialization
+        protected RComplex complexVectorGeneric(RAbstractComplexVector vector, IteratorData<?> iter,
+                        @Cached("create()") GetDataAt.Complex getDataAtNode) {
+            return getDataAtNode.get(vector, iter.store, iter.index);
+        }
     }
 }
 
