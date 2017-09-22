@@ -113,7 +113,7 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
-    abstract static class RDoSlotNode extends FFIUpCallNode.Arg2 {
+    public abstract static class RDoSlotNode extends FFIUpCallNode.Arg2 {
 
         @Child private AccessSlotNode accessSlotNode;
 
@@ -137,7 +137,7 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
-    abstract static class RDoSlotAssignNode extends FFIUpCallNode.Arg3 {
+    public abstract static class RDoSlotAssignNode extends FFIUpCallNode.Arg3 {
 
         @Child private UpdateSlotNode updateSlotNode;
 
@@ -166,7 +166,7 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
-    abstract static class RDoNewObjectNode extends FFIUpCallNode.Arg1 {
+    public abstract static class RDoNewObjectNode extends FFIUpCallNode.Arg1 {
 
         @Child private NewObject newObjectNode;
 
@@ -185,7 +185,7 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
-    abstract static class NamesGetsNode extends FFIUpCallNode.Arg2 {
+    public abstract static class NamesGetsNode extends FFIUpCallNode.Arg2 {
 
         @Child private SetNamesAttributeNode setNamesNode;
 
@@ -197,6 +197,10 @@ public final class MiscNodes {
         Object doNewObject(Object vec, Object val) {
             setNamesNode.execute(vec, val);
             return vec;
+        }
+
+        public static NamesGetsNode create() {
+            return MiscNodesFactory.NamesGetsNodeGen.create();
         }
     }
 

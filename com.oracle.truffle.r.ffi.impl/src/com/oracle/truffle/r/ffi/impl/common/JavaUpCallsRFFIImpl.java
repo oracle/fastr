@@ -136,7 +136,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     private final Map<String, Object> nameSymbolCache = new ConcurrentHashMap<>();
 
     private static RuntimeException implementedAsNode() {
-        throw RInternalError.shouldNotReachHere("upcall function is implemented via a node");
+        // TODO: Exception handling over native boundaries is currently missing. Once this works,
+        // remove the following two lines.
+        System.err.println("upcall function is implemented via a node");
+        System.exit(1);
+
+        return RInternalError.shouldNotReachHere("upcall function is implemented via a node");
     }
 
     // Checkstyle: stop method name check

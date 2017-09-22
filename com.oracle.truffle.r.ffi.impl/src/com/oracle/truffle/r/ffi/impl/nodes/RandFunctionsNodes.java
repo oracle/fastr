@@ -24,13 +24,16 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions;
+import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
+import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
+import com.oracle.truffle.r.runtime.nmath.distr.Unif;
 
 public final class RandFunctionsNodes {
 
-    public abstract static class RandFunction3_2Node extends FFIUpCallNode.Arg5 {
+    abstract static class RandFunction3_2Node extends FFIUpCallNode.Arg5 {
         private final MathFunctions.Function3_2 inner;
 
         protected RandFunction3_2Node(MathFunctions.Function3_2 inner) {
@@ -43,7 +46,7 @@ public final class RandFunctionsNodes {
         }
     }
 
-    public abstract static class RandFunction3_1Node extends FFIUpCallNode.Arg4 {
+    abstract static class RandFunction3_1Node extends FFIUpCallNode.Arg4 {
         private final MathFunctions.Function3_1 inner;
 
         protected RandFunction3_1Node(MathFunctions.Function3_1 inner) {
@@ -56,7 +59,7 @@ public final class RandFunctionsNodes {
         }
     }
 
-    public abstract static class RandFunction2Node extends FFIUpCallNode.Arg2 {
+    abstract static class RandFunction2Node extends FFIUpCallNode.Arg2 {
         @Child private RandomFunctions.RandFunction2_Double inner;
 
         protected RandFunction2Node(RandFunction2_Double inner) {
@@ -69,4 +72,51 @@ public final class RandFunctionsNodes {
         }
     }
 
+    public abstract static class RunifNode extends RandFunction2Node {
+
+        protected RunifNode(RandFunction2_Double inner) {
+            super(inner);
+        }
+
+        public static RunifNode create() {
+            return RandFunctionsNodesFactory.RunifNodeGen.create(new Unif.Runif());
+        }
+
+    }
+
+    public abstract static class DunifNode extends RandFunction3_1Node {
+
+        protected DunifNode(Function3_1 inner) {
+            super(inner);
+        }
+
+        public static DunifNode create() {
+            return RandFunctionsNodesFactory.DunifNodeGen.create(new Unif.DUnif());
+        }
+
+    }
+
+    public abstract static class QunifNode extends RandFunction3_2Node {
+
+        protected QunifNode(Function3_2 inner) {
+            super(inner);
+        }
+
+        public static QunifNode create() {
+            return RandFunctionsNodesFactory.QunifNodeGen.create(new Unif.QUnif());
+        }
+
+    }
+
+    public abstract static class PunifNode extends RandFunction3_2Node {
+
+        protected PunifNode(Function3_2 inner) {
+            super(inner);
+        }
+
+        public static PunifNode create() {
+            return RandFunctionsNodesFactory.PunifNodeGen.create(new Unif.PUnif());
+        }
+
+    }
 }

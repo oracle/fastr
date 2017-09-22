@@ -37,7 +37,9 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MatchNodes;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.ffi.processor.RFFIRunGC;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
@@ -96,6 +98,7 @@ public interface StdUpCallsRFFI {
 
     Object R_do_MAKE_CLASS(@RFFICstring String clazz);
 
+    @RFFIUpCallNode(MiscNodes.RDoNewObjectNode.class)
     Object R_do_new_object(Object classDef);
 
     /**
@@ -316,8 +319,10 @@ public interface StdUpCallsRFFI {
 
     boolean isSeekable(Object x);
 
+    @RFFIUpCallNode(MiscNodes.RDoSlotNode.class)
     Object R_do_slot(Object o, Object name);
 
+    @RFFIUpCallNode(MiscNodes.RDoSlotAssignNode.class)
     Object R_do_slot_assign(Object o, Object name, Object value);
 
     Object R_MethodsNamespace();
@@ -326,14 +331,19 @@ public interface StdUpCallsRFFI {
 
     int FASTR_getConnectionChar(Object obj);
 
+    @RFFIUpCallNode(RandFunctionsNodes.DunifNode.class)
     double Rf_dunif(double a, double b, double c, int d);
 
+    @RFFIUpCallNode(RandFunctionsNodes.QunifNode.class)
     double Rf_qunif(double a, double b, double c, int d, int e);
 
+    @RFFIUpCallNode(RandFunctionsNodes.PunifNode.class)
     double Rf_punif(double a, double b, double c, int d, int e);
 
+    @RFFIUpCallNode(RandFunctionsNodes.RunifNode.class)
     double Rf_runif(double a, double b);
 
+    @RFFIUpCallNode(MiscNodes.NamesGetsNode.class)
     Object Rf_namesgets(Object vec, Object val);
 
     @RFFIUpCallNode(CopyMostAttrib.class)
