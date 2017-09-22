@@ -189,8 +189,10 @@ abstract class GetNextNode extends VectorIteratorNodeAdapter {
 
     @Fallback
     protected Object doGeneric(RAbstractVector vector, IteratorData<?> iter) {
-        // we use fallback and extra node so that we do not have to explicitly check that the vector is not
-        // RVector, DSL generates fallback guard that compares the class with the all RVector subclasses
+        // we use fallback and extra node so that we do not have to explicitly check that the vector
+        // is not
+        // RVector, DSL generates fallback guard that compares the class with the all RVector
+        // subclasses
         // used in the specializations above, "vector instanceof RVector" would not be a leaf-check.
         if (getNextGenericNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -199,7 +201,7 @@ abstract class GetNextNode extends VectorIteratorNodeAdapter {
         return getNextGenericNode.execute(vector, iter);
     }
 
-    static abstract class GetNextGenericNode extends Node {
+    abstract static class GetNextGenericNode extends Node {
         public abstract Object execute(RAbstractVector vector, IteratorData<?> iter);
 
         public static GetNextGenericNode create() {
