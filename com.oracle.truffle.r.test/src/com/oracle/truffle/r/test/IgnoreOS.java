@@ -44,7 +44,7 @@ public enum IgnoreOS implements TestTrait {
 
     private boolean isIgnoring() {
         String current = System.getProperty("os.name");
-        return current != null && current.contains(osName);
+        return current != null && current.toLowerCase().contains(osName);
     }
 
     @Override
