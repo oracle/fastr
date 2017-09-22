@@ -96,6 +96,8 @@ public interface StdUpCallsRFFI {
 
     int /* void */ Rf_defineVar(Object symbolArg, Object value, Object envArg);
 
+    Object R_getClassDef(@RFFICstring String clazz);
+
     Object R_do_MAKE_CLASS(@RFFICstring String clazz);
 
     @RFFIUpCallNode(MiscNodes.RDoNewObjectNode.class)

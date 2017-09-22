@@ -1316,8 +1316,8 @@ SEXP R_do_MAKE_CLASS(const char *what) {
 }
 
 SEXP R_getClassDef (const char *what) {
-    TRACE0();
-    return unimplemented("R_getClassDef");
+    TRACE(TARGs, what);
+    return ((call_R_getClassDef) callbacks[R_getClassDef_x])(what);
 }
 
 SEXP R_do_new_object(SEXP class_def) {
