@@ -213,6 +213,19 @@ public class TruffleNFI_Base implements BaseRFFI {
         }
     }
 
+    private static class TruffleNFI_SetShutdownFlagNode extends TruffleNFI_DownCallNode implements SetShutdownFlagNode {
+
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.set_shutdown_phase;
+        }
+
+        @Override
+        public void execute(boolean value) {
+            call(value ? 1 : 0);
+        }
+    }
+
     @Override
     public GetpidNode createGetpidNode() {
         return new TruffleNFI_GetpidNode();
@@ -261,5 +274,10 @@ public class TruffleNFI_Base implements BaseRFFI {
     @Override
     public GlobNode createGlobNode() {
         return new TruffleNFI_GlobNode();
+    }
+
+    @Override
+    public SetShutdownFlagNode createSetShutdownFlagNode() {
+        return new TruffleNFI_SetShutdownFlagNode();
     }
 }

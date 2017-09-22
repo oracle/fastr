@@ -41,6 +41,8 @@ void init_utils(TruffleEnv *env) {
     }
 }
 
+static unsigned char shutdown_phase = 0;
+
 #define ERROR_JMP_BUF_STACK_SIZE 32
 static jmp_buf *callErrorJmpBufStack[ERROR_JMP_BUF_STACK_SIZE];
 static int callErrorJmpBufStackIndex = 0;
@@ -78,6 +80,14 @@ static void popJmpBuf() {
     }                               \
     popJmpBuf();                    \
     return result;
+
+void set_shutdown_phase(unsigned char value) {
+	shutdown_phase = value;
+}
+
+int is_shutdown_phase() {
+	return shutdown_phase;
+}
 
 void dot_call_void0(callvoid0func fun) {
     DO_CALL_VOID(fun());

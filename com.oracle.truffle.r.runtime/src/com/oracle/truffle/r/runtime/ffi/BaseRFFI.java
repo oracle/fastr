@@ -27,6 +27,7 @@ import java.util.ArrayList;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInterface;
+import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
  * A statically typed interface to exactly those native functions required by the R {@code base}
@@ -163,6 +164,14 @@ public interface BaseRFFI {
         }
     }
 
+    interface SetShutdownFlagNode extends NodeInterface {
+        void execute(boolean value);
+
+        static SetShutdownFlagNode create() {
+            return RFFIFactory.getBaseRFFI().createSetShutdownFlagNode();
+        }
+    }
+
     /*
      * The RFFI implementation influences exactly what subclass of the above nodes is created. Each
      * implementation must therefore, implement these methods that are called by the associated
@@ -188,6 +197,8 @@ public interface BaseRFFI {
     UnameNode createUnameNode();
 
     GlobNode createGlobNode();
+
+    SetShutdownFlagNode createSetShutdownFlagNode();
 
     /*
      * Some functions are called from non-Truffle contexts, which requires a RootNode
@@ -273,4 +284,27 @@ public interface BaseRFFI {
             return unameRootNode;
         }
     }
+
+    final class SetShutdownFlagRootNode extends RFFIRootNode<SetShutdownFlagNode> {
+        protected SetShutdownFlagRootNode() {
+            super(RFFIFactory.getBaseRFFI().createSetShutdownFlagNode());
+        }
+
+        private static SetShutdownFlagRootNode setShutdownFlagRootNode;
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            Object[] args = frame.getArguments();
+            rffiNode.execute((boolean) args[0]);
+            return RNull.instance;
+        }
+
+        public static SetShutdownFlagRootNode create() {
+            if (setShutdownFlagRootNode == null) {
+                setShutdownFlagRootNode = new SetShutdownFlagRootNode();
+            }
+            return setShutdownFlagRootNode;
+        }
+    }
+
 }

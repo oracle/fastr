@@ -48,6 +48,7 @@ import java.util.TimeZone;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.Assumption;
@@ -292,6 +293,8 @@ public final class RContext implements RTruffleObject {
      */
     private static boolean embedded;
 
+    private static final AtomicInteger CONTEXT_CNT = new AtomicInteger(0);
+
     /*
      * Workarounds to finesse project circularities between runtime/nodes.
      */
@@ -370,6 +373,10 @@ public final class RContext implements RTruffleObject {
 
     public static boolean isEmbedded() {
         return embedded;
+    }
+
+    public static int getContextCnt() {
+        return CONTEXT_CNT.get();
     }
 
     /**
@@ -523,6 +530,7 @@ public final class RContext implements RTruffleObject {
         if (initial && !embedded) {
             initialContextInitialized = true;
         }
+        CONTEXT_CNT.incrementAndGet();
         return this;
     }
 
@@ -574,6 +582,7 @@ public final class RContext implements RTruffleObject {
             if (contextKind == ContextKind.SHARE_PARENT_RW) {
                 parentContext.sharedChild = null;
             }
+            CONTEXT_CNT.decrementAndGet();
             state = EnumSet.of(State.DISPOSED);
 
             this.allocationReporter.removePropertyChangeListener(ALLOCATION_ACTIVATION_LISTENER);
