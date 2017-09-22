@@ -202,7 +202,7 @@ public class Managed_Base implements BaseRFFI {
     }
 
     private static final class ManagedSetShutdownFlagNode extends Node implements SetShutdownFlagNode {
-    
+
         @Override
         public void execute(boolean value) {
             // do nothing
