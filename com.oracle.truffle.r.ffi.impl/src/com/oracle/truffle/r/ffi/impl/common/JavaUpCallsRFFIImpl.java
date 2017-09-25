@@ -688,15 +688,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object SETCAR(Object x, Object y) {
-        RPairList pl;
-        if (x instanceof RLanguage) {
-            pl = ((RLanguage) x).getPairList();
-        } else {
-            guaranteeInstanceOf(x, RPairList.class);
-            pl = (RPairList) x;
-        }
-        pl.setCar(y);
-        return y;
+        throw implementedAsNode();
     }
 
     @Override
@@ -708,8 +700,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object SETCADR(Object x, Object y) {
-        SETCAR(CDR(x), y);
-        return y;
+        throw implementedAsNode();
     }
 
     @Override
