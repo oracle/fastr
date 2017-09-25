@@ -60,7 +60,7 @@ public class TestFormulae extends TestBase {
                     "y~z", "y~1+z", "y~0+z", "y~-1+z", "y~z*k", "y~z*k+w*m", "u~z*k+w*m",
                     "y~z:k", "y~z^2", "y~(z+k)^2", "y~z*((m+w)^3)",
                     "y~(z+k)*(w+u)", "y~w%in%v", "y~w/k", "y~(1 + w/k)",
-                    "~k+y+z"
+                    "~k+y+z", "~1"
     };
 
     /**

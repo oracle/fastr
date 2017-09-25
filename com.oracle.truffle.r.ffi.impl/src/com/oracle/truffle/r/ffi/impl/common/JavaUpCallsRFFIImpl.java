@@ -136,7 +136,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     private final Map<String, Object> nameSymbolCache = new ConcurrentHashMap<>();
 
     private static RuntimeException implementedAsNode() {
-        throw RInternalError.shouldNotReachHere("upcall function is implemented via a node");
+        // TODO: Exception handling over native boundaries is currently missing. Once this works,
+        // remove the following two lines.
+        System.err.println("upcall function is implemented via a node");
+        System.exit(1);
+
+        return RInternalError.shouldNotReachHere("upcall function is implemented via a node");
     }
 
     // Checkstyle: stop method name check
@@ -215,6 +220,13 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             throw RError.error(RError.SHOW_CALLER2, ex);
         }
         return 0;
+    }
+
+    @Override
+    public Object R_getClassDef(String clazz) {
+        String name = "getClassDef";
+        RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, REnvironment.getRegisteredNamespace("methods").get(name));
+        return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), true, null, clazz);
     }
 
     @Override
@@ -1678,4 +1690,15 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     private static RFFIContext getContext() {
         return RContext.getInstance().getStateRFFI();
     }
+
+    @Override
+    public Object Rf_match(Object itables, Object ix, int nmatch) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object Rf_NonNullStringMatch(Object s, Object t) {
+        throw implementedAsNode();
+    }
+
 }

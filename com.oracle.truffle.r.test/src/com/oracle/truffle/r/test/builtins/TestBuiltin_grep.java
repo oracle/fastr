@@ -107,6 +107,8 @@ public class TestBuiltin_grep extends TestBase {
         assertEval(Output.IgnoreErrorMessage, "grep('([)]', ')')");
         assertEval(Output.IgnoreErrorMessage, "grep('([(]', ')')");
         assertEval(Output.IgnoreErrorMessage, "grep('(()', ')')");
+        assertEval("grep('*.lsmc', c('prefix.lsmc', 'arm'), value = TRUE)");
+        assertEval("grep('*', c('prefix.lsmc', 'arm'), value = TRUE)");
     }
 
     @Test

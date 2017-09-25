@@ -193,17 +193,24 @@ public final class NativeDataAccess {
             RObject obj = (RObject) arg;
             NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
             if (mirror == null) {
-                obj.setNativeMirror(mirror = arg instanceof CustomNativeMirror ? new NativeMirror(((CustomNativeMirror) arg).getCustomMirrorAddress()) : new NativeMirror());
-                // System.out.println(String.format("adding %16x = %s", mirror.id,
-                // obj.getClass().getSimpleName()));
-                nativeMirrors.put(mirror.id, new WeakReference<>(obj));
-                if (TRACE_MIRROR_ALLOCATION_SITES) {
-                    registerAllocationSite(arg, mirror);
-                }
+                mirror = putMirrorObject(arg, obj);
             }
             return mirror.id;
         }
         throw UnsupportedMessageException.raise(Message.AS_POINTER);
+    }
+
+    @TruffleBoundary
+    private static NativeMirror putMirrorObject(Object arg, RObject obj) {
+        NativeMirror mirror;
+        obj.setNativeMirror(mirror = arg instanceof CustomNativeMirror ? new NativeMirror(((CustomNativeMirror) arg).getCustomMirrorAddress()) : new NativeMirror());
+        // System.out.println(String.format("adding %16x = %s", mirror.id,
+        // obj.getClass().getSimpleName()));
+        nativeMirrors.put(mirror.id, new WeakReference<>(obj));
+        if (TRACE_MIRROR_ALLOCATION_SITES) {
+            registerAllocationSite(arg, mirror);
+        }
+        return mirror;
     }
 
     @TruffleBoundary

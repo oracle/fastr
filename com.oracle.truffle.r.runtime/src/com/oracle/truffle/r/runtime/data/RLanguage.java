@@ -84,7 +84,7 @@ public final class RLanguage extends RSharingAttributeStorage implements RAbstra
         } else {
             l = (RList) o;
         }
-        return RContext.getRRuntimeASTAccess().fromList(l, type);
+        return RContext.getRRuntimeASTAccess().createLanguageFromList(l, type);
     }
 
     public RBaseNode getRep() {

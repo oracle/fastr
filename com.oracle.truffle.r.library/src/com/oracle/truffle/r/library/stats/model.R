@@ -582,14 +582,16 @@ termsform <- function (x.in, specials, data, keep.order, allowDotAsName) {
     varlist <<- list()
     ExtractVars(x)
     vars <- quote(list())
-    vars[2:(length(varlist) + 1L)] <- varlist
+    if(length(varlist)) {
+    	vars[2:(length(varlist) + 1L)] <- varlist
+    }
     attr(x, "variables") <- vars
     
     # Note: GnuR uses bitvector of integers and variable nwords to denote its size, we do not need that
     nvar <<- length(varlist) 
     formula <- EncodeVars(x)
     
-    # EncodeVars may have stretched varlist becuase it is a global variable (to reflect GnuR's implementation) 
+    # EncodeVars may have stretched varlist because it is a global variable (to reflect GnuR's implementation) 
     nvar <<- length(varlist)
     
     # Step 2a: Compute variable names 
@@ -611,24 +613,28 @@ termsform <- function (x.in, specials, data, keep.order, allowDotAsName) {
     
     # Step 3: Reorder the model terms by BitCount, otherwise
     # preserving their order. 
-    sCounts <- vapply(formula, BitCount, 0L)
-    bitmax <- max(sCounts)
-
-    if (keep.order) {
-        ord <- sCounts;
-    } else {
-      pattern <- formula # save original formula
-      callIdx <- 1L
-      ord <- integer(nterm)
-      for (i in 0:bitmax) {
-        for (n in 1:nterm) {
-          if (sCounts[[n]] == i) {
-            formula[[callIdx]] <- pattern[[n]]
-            ord[[callIdx]] <- i
-            callIdx <- callIdx + 1L
+    if(nterm) {
+        sCounts <- vapply(formula, BitCount, 0L)
+        bitmax <- max(sCounts)
+        
+        if (keep.order) {
+            ord <- sCounts;
+        } else {
+          pattern <- formula # save original formula
+          callIdx <- 1L
+          ord <- integer(nterm)
+          for (i in 0:bitmax) {
+            for (n in 1:nterm) {
+              if (sCounts[[n]] == i) {
+                formula[[callIdx]] <- pattern[[n]]
+                ord[[callIdx]] <- i
+                callIdx <- callIdx + 1L
+              }
+            }
           }
         }
-      }
+    } else {
+    	ord <- integer()
     }
     
     # Step 4: Compute the factor pattern for the model. 
@@ -996,7 +1002,7 @@ modelmatrix <- function(formula, modelframe) {
     # If there is no intercept we look through the factor pattern
     # matrix and adjust the code for the first factor found so that
     # it will be coded by dummy variables rather than contrasts.
-    if (!intercept) {
+    if (!intercept && nterms > 0L) {
         # Note/TODO: in GnuR response is retrieved using asLogical, 
         # but here it is used as an index, is this intended?
         done <- FALSE
@@ -1034,7 +1040,7 @@ modelmatrix <- function(formula, modelframe) {
     # By convention, an rhs term identical to the response generates nothing
     # in the model matrix (but interactions involving the response do).
     rhs_response = -1;
-    if (response > 0) {
+    if (response > 0 && nterms > 0L) {
         for (j in 1:nterms) {
             if (factors[response, j] != 0L && sum(factors[,j] > 0L) == 1L) {
                 rhs_response = j
@@ -1052,36 +1058,38 @@ modelmatrix <- function(formula, modelframe) {
     if (intercept) {
         dnc <- 1
     }
-    for (j in 1:nterms) {
-        if (j == rhs_response) {
-            warning("the response appeared on the right-hand side and was dropped")
-            count[[j]] <- 0L
-        }
-        
-        dk <- 1L
-        for (i in 1:nvar) {
-            factors_ij <- factors[i,j]
-            if (factors_ij == 0L) {
-                next
+    if(nterms > 0L) {
+        for (j in 1:nterms) {
+            if (j == rhs_response) {
+                warning("the response appeared on the right-hand side and was dropped")
+                count[[j]] <- 0L
             }
             
-            if (nlevs[[i]] != 0L) {
-                if (factors_ij == 1L) {
-                    dk <- dk * ncols(contr1[[i]])
-                } else if (factors_ij == 2L) {
-                    dk <- dk * ncols(contr2[[i]])
+            dk <- 1L
+            for (i in 1:nvar) {
+                factors_ij <- factors[i,j]
+                if (factors_ij == 0L) {
+                    next
                 }
-            } else {
-                dk <- dk * columns[[i]]
+                
+                if (nlevs[[i]] != 0L) {
+                    if (factors_ij == 1L) {
+                        dk <- dk * ncols(contr1[[i]])
+                    } else if (factors_ij == 2L) {
+                        dk <- dk * ncols(contr2[[i]])
+                    }
+                } else {
+                    dk <- dk * columns[[i]]
+                }
             }
-        }
-        
-        if (typeof(dk) == "double") {
-            error(paste0("term ", j, " would require ", dk, " columns"))
-        }
-        count[[j]] <- dk
-        dnc <- dnc + dk
-    }    
+            
+            if (typeof(dk) == "double") {
+                error(paste0("term ", j, " would require ", dk, " columns"))
+            }
+            count[[j]] <- dk
+            dnc <- dnc + dk
+        }    
+    }
     
     # Record which columns of the design matrix are associated with which model terms
     assign <- integer(dnc)
@@ -1090,15 +1098,17 @@ modelmatrix <- function(formula, modelframe) {
         assign[[k]] <- 0L
         k <- k + 1
     }
-    for (j in 1:nterms) {
-        if (count[[j]] <= 0L) {
-            warning(paste0("problem with term ", j, " in model.matrix: no columns are assigned"))
+    if(nterms > 0L) {
+        for (j in 1:nterms) {
+            if (count[[j]] <= 0L) {
+                warning(paste0("problem with term ", j, " in model.matrix: no columns are assigned"))
+            }
+            
+            # idx.seq covers columns that are associated with term 'j'
+            idx.seq <- seq(k, length.out = count[[j]])
+            assign[idx.seq] <- j
+            k <- k + count[[j]]
         }
-        
-        # idx.seq covers columns that are associated with term 'j'
-        idx.seq <- seq(k, length.out = count[[j]])
-        assign[idx.seq] <- j
-        k <- k + count[[j]]
     }
     
     # Create column labels for the matrix columns.
@@ -1122,58 +1132,60 @@ modelmatrix <- function(formula, modelframe) {
     # append them together with ':', this gives us 'x', 'q', 'x:q'. Plus 
     # some special handling that makes it less straightforward
     
-    for (j in 1:nterms) {
-        if (j == rhs_response) {
-            next
-        }
-        for (kk in 1:count[j]) {
-            first <- TRUE
-            indx <- kk - 1 # zero base like in GnuR C code
-            buffer <- ""
-            for (i in 1:nvar) {
-                ll <- factors[i,j]
-                if (ll != 0L) {
-                    var_i <- variable[[i]]
-                    if (!first) {
-                        buffer  <- paste0(buffer, ":")
-                    }
-                    first <- FALSE
-                    if (is.factor(var_i) || is.logical(var_i)) {
-                        if (ll == 1) {
-                            x = ColumnNames(contr1[[i]])
-                            ll <- ncols(contr1[[i]])
-                        } else {
-                            x = ColumnNames(contr2[[i]])
-                            ll <- ncols(contr2[[i]])
+    if(nterms > 0L) {
+        for (j in 1:nterms) {
+            if (j == rhs_response) {
+                next
+            }
+            for (kk in 1:count[j]) {
+                first <- TRUE
+                indx <- kk - 1 # zero base like in GnuR C code
+                buffer <- ""
+                for (i in 1:nvar) {
+                    ll <- factors[i,j]
+                    if (ll != 0L) {
+                        var_i <- variable[[i]]
+                        if (!first) {
+                            buffer  <- paste0(buffer, ":")
                         }
-                        buffer <- paste0(buffer, vnames[[i]])
-                        if (is.null(x)) {
-                            buffer <- paste0(buffer, indx %% ll + 1)
-                        } else {
-                            buffer <- paste0(buffer, x[[indx %% ll + 1]])
-                        }
-                    } else if (is.complex(var_i)) {
-                        error("complex variables are not currently allowed in model matrices");
-                    } else if (is.numeric(var_i)) {
-                        x = ColumnNames(var_i)
-                        ll = ncols(var_i)
-                        buffer = paste0(buffer, vnames[[i]])
-                        if (ll > 1L) {
+                        first <- FALSE
+                        if (is.factor(var_i) || is.logical(var_i)) {
+                            if (ll == 1) {
+                                x = ColumnNames(contr1[[i]])
+                                ll <- ncols(contr1[[i]])
+                            } else {
+                                x = ColumnNames(contr2[[i]])
+                                ll <- ncols(contr2[[i]])
+                            }
+                            buffer <- paste0(buffer, vnames[[i]])
                             if (is.null(x)) {
                                 buffer <- paste0(buffer, indx %% ll + 1)
                             } else {
                                 buffer <- paste0(buffer, x[[indx %% ll + 1]])
                             }
+                        } else if (is.complex(var_i)) {
+                            error("complex variables are not currently allowed in model matrices");
+                        } else if (is.numeric(var_i)) {
+                            x = ColumnNames(var_i)
+                            ll = ncols(var_i)
+                            buffer = paste0(buffer, vnames[[i]])
+                            if (ll > 1L) {
+                                if (is.null(x)) {
+                                    buffer <- paste0(buffer, indx %% ll + 1)
+                                } else {
+                                    buffer <- paste0(buffer, x[[indx %% ll + 1]])
+                                }
+                            }
+                        } else {
+                            error(paste0("variables of type '", typeof(var_i), "' are not allowed in model matrices"))
                         }
-                    } else {
-                        error(paste0("variables of type '", typeof(var_i), "' are not allowed in model matrices"))
+                        indx <- indx %/% ll;
                     }
-                    indx <- indx %/% ll;
                 }
+                
+                xnames[[k]] <- buffer
+                k <- k + 1
             }
-            
-            xnames[[k]] <- buffer
-            k <- k + 1
         }
     }
     
@@ -1202,54 +1214,56 @@ modelmatrix <- function(formula, modelframe) {
     jnext <- as.integer(intercept) + 1
     jstart <- jnext
     contrast <- NULL
-    for (k in 1:nterms) {
-        if (k == rhs_response) { next }
-        # for each term we go through the rows in corresponding column in 'factor'
-        for (i in 1:nvar) {
-            if (columns[[i]] == 0L) { next } # num of cols == 0
-            var_i <- variable[[i]]
-            factor_ik <- factors[i,k]
-            
-            # if factor for this variable is != 0 we do some action with it, resulting 
-            # into putting new columns into the result 'x'. This moves jnext by the 
-            # number of new columns, jstart tells us the first column that was copied 
-            # within this innermost loop
-            if (factor_ik == 0L) { next }
-            if (factor_ik == 1L) {
-                contrast <- contr1[[i]]
-            } else {
-                contrast <- contr2[[i]]
-            }
-            
-            # is this the first non-zero factor in this factor column?
-            if (jnext == jstart) {
-                if (nlevs[[i]] > 0L) {
-                    for (j in 1:ncols(contrast)) {
-                        x[,jstart + j - 1] = get.col(contrast,j)[var_i]
+    if(nterms > 0L) {
+        for (k in 1:nterms) {
+            if (k == rhs_response) { next }
+            # for each term we go through the rows in corresponding column in 'factor'
+            for (i in 1:nvar) {
+                if (columns[[i]] == 0L) { next } # num of cols == 0
+                var_i <- variable[[i]]
+                factor_ik <- factors[i,k]
+                
+                # if factor for this variable is != 0 we do some action with it, resulting 
+                # into putting new columns into the result 'x'. This moves jnext by the 
+                # number of new columns, jstart tells us the first column that was copied 
+                # within this innermost loop
+                if (factor_ik == 0L) { next }
+                if (factor_ik == 1L) {
+                    contrast <- contr1[[i]]
+                } else {
+                    contrast <- contr2[[i]]
+                }
+                
+                # is this the first non-zero factor in this factor column?
+                if (jnext == jstart) {
+                    if (nlevs[[i]] > 0L) {
+                        for (j in 1:ncols(contrast)) {
+                            x[,jstart + j - 1] = get.col(contrast,j)[var_i]
+                        }
+                        jnext = jnext + ncols(contrast)
+                    } else {
+                        # first variable in this term is simply copied, note that it can 
+                        # be a matrix or a vector, this assignment handles both: 
+                        # vector is treated as a single column matrix
+                        x[, seq(jstart, length.out = ncols(var_i))] <- var_i
+                        jnext = jnext + ncols(var_i)
                     }
-                    jnext = jnext + ncols(contrast)
                 } else {
-                    # first variable in this term is simply copied, note that it can 
-                    # be a matrix or a vector, this assignment handles both: 
-                    # vector is treated as a single column matrix
-                    x[, seq(jstart, length.out = ncols(var_i))] <- var_i
-                    jnext = jnext + ncols(var_i)
-                }
-            } else {
-                if (nlevs[[i]] > 0L) {
-                    cont.var = matrix(0L, nrows(var_i), ncols(contrast))
-                    for (j in 1:ncols(contrast)) {
-                        cont.var[,j] = get.col(contrast,j)[var_i]
-                    }                    
-                    x <- addvar(x, jstart, jnext - jstart, cont.var)
-                    jnext <- jnext + (jnext - jstart) * (ncols(contrast) - 1);
-                } else {
-                    x <- addvar(x, jstart, jnext - jstart, var_i)
-                    jnext <- jnext + (jnext - jstart) * (ncols(var_i) - 1);
+                    if (nlevs[[i]] > 0L) {
+                        cont.var = matrix(0L, nrows(var_i), ncols(contrast))
+                        for (j in 1:ncols(contrast)) {
+                            cont.var[,j] = get.col(contrast,j)[var_i]
+                        }                    
+                        x <- addvar(x, jstart, jnext - jstart, cont.var)
+                        jnext <- jnext + (jnext - jstart) * (ncols(contrast) - 1);
+                    } else {
+                        x <- addvar(x, jstart, jnext - jstart, var_i)
+                        jnext <- jnext + (jnext - jstart) * (ncols(var_i) - 1);
+                    }
                 }
             }
+            jstart <- jnext
         }
-        jstart <- jnext
     }
     
     dimnames(x) <- list(row.names(modelframe), xnames)

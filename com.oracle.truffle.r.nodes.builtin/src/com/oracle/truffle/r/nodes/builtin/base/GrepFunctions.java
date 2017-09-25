@@ -925,7 +925,14 @@ public class GrepFunctions {
 
         @TruffleBoundary
         private static Matcher getPatternMatcher(String pattern, String text, boolean ignoreCase) {
-            return Pattern.compile(pattern, ignoreCase ? Pattern.CASE_INSENSITIVE : 0).matcher(text);
+            String actualPattern = pattern;
+
+            // If a pattern starts with a '*', GnuR virtually prepends an empty string literal to
+            // the star. This won't match anything, so just remove '*' from the pattern.
+            if (pattern.length() > 0 && pattern.charAt(0) == '*') {
+                actualPattern = pattern.substring(1);
+            }
+            return Pattern.compile(actualPattern, ignoreCase ? Pattern.CASE_INSENSITIVE : 0).matcher(text);
         }
     }
 

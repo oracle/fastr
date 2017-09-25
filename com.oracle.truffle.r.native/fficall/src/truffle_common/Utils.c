@@ -41,3 +41,10 @@ void Rf_onintr() {
     // TODO: implement interrupt handling, signal errors
     // ignored
 }
+
+Rboolean isOrdered(SEXP s)
+{
+    return (TYPEOF(s) == INTSXP
+	    && inherits(s, "factor")
+	    && inherits(s, "ordered"));
+}

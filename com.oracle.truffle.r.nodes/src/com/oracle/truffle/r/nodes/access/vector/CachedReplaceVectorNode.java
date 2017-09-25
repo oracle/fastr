@@ -318,7 +318,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private Object wrapResult(RAbstractVector vector, RLanguage.RepType repType) {
         switch (vectorType) {
             case Language:
-                return RContext.getRRuntimeASTAccess().fromList((RList) vector, repType);
+                return RContext.getRRuntimeASTAccess().createLanguageFromList((RList) vector, repType);
             default:
                 return vector;
         }
