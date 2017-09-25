@@ -23,24 +23,30 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.GetFunctionEnvironmentNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.LENGTHNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoNewObjectNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotAssignNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RHasSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
+import com.oracle.truffle.r.nodes.access.HasSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.SetNamesAttributeNodeGen;
+import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.GetFunctionEnvironmentNode;
 import com.oracle.truffle.r.nodes.objects.NewObject;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
@@ -185,6 +191,31 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    public abstract static class RHasSlotNode extends FFIUpCallNode.Arg2 {
+
+        @Child private HasSlotNode hasSlotNode;
+
+        RHasSlotNode() {
+            hasSlotNode = HasSlotNode.create(false);
+        }
+
+        @Specialization
+        Object doSlot(Object o, RSymbol nameSym) {
+            return hasSlotNode.executeAccess(o, nameSym.getName());
+        }
+
+        @Fallback
+        @SuppressWarnings("unused")
+        Object doSlot(Object o, Object name) {
+            return false;
+        }
+
+        public static RHasSlotNode create() {
+            return RHasSlotNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
     public abstract static class NamesGetsNode extends FFIUpCallNode.Arg2 {
 
         @Child private SetNamesAttributeNode setNamesNode;
@@ -201,6 +232,23 @@ public final class MiscNodes {
 
         public static NamesGetsNode create() {
             return MiscNodesFactory.NamesGetsNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public abstract static class GetFunctionEnvironment extends FFIUpCallNode.Arg1 {
+
+        /**
+         * Returns the environment that {@code func} was created in.
+         */
+        @Specialization
+        protected Object environment(RFunction fun,
+                        @Cached("create()") GetFunctionEnvironmentNode getEnvNode) {
+            return getEnvNode.getEnvironment(fun);
+        }
+
+        public static GetFunctionEnvironment create() {
+            return GetFunctionEnvironmentNodeGen.create();
         }
     }
 

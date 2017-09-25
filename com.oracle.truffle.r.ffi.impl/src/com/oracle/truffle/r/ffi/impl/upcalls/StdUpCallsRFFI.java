@@ -31,6 +31,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.CopyMostAttrib;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.TAG;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
+import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CARNode;
@@ -184,6 +185,7 @@ public interface StdUpCallsRFFI {
 
     int OBJECT(Object x);
 
+    @RFFIUpCallNode(DuplicateNodes.DuplicateNode.class)
     Object Rf_duplicate(Object x, int deep);
 
     long Rf_any_duplicated(Object x, int fromLast);
@@ -366,4 +368,10 @@ public interface StdUpCallsRFFI {
 
     @RFFIUpCallNode(MatchNodes.NonNullStringMatchNode.class)
     Object Rf_NonNullStringMatch(Object s, Object t);
+
+    @RFFIUpCallNode(MiscNodes.RHasSlotNode.class)
+    int R_has_slot(Object container, Object name);
+
+    @RFFIUpCallNode(MiscNodes.GetFunctionEnvironment.class)
+    Object CLOENV(Object x);
 }

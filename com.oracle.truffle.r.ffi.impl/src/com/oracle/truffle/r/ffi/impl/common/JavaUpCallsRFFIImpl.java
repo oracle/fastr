@@ -85,7 +85,6 @@ import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
-import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -638,16 +637,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object Rf_duplicate(Object x, int deep) {
-        guarantee(x != null, "unexpected type: null instead of " + x.getClass().getSimpleName());
-        guarantee(x instanceof RShareable || x instanceof RSequence || x instanceof RExternalPtr,
-                        "unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of RShareable or RExternalPtr");
-        if (x instanceof RShareable) {
-            return deep == 1 ? ((RShareable) x).deepCopy() : ((RShareable) x).copy();
-        } else if (x instanceof RSequence) {
-            return ((RSequence) x).materialize();
-        } else {
-            return ((RExternalPtr) x).copy();
-        }
+        throw implementedAsNode();
     }
 
     @Override
@@ -1767,6 +1757,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object Rf_NonNullStringMatch(Object s, Object t) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public int R_has_slot(Object container, Object name) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object CLOENV(Object x) {
         throw implementedAsNode();
     }
 

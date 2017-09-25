@@ -406,14 +406,14 @@ SEXP Rf_setAttrib(SEXP vec, SEXP name, SEXP val) {
 }
 
 SEXP Rf_duplicate(SEXP x) {
-    TRACE0();
+    TRACE(TARGp, x);
     SEXP result = ((call_Rf_duplicate) callbacks[Rf_duplicate_x])(x, 1);
     checkExitCall();
     return result;
 }
 
 SEXP Rf_shallow_duplicate(SEXP x) {
-    TRACE0();
+    TRACE(TARGp, x);
     SEXP result = ((call_Rf_duplicate) callbacks[Rf_duplicate_x])(x, 0);
     checkExitCall();
     return result;
@@ -770,8 +770,8 @@ SEXP BODY(SEXP x) {
 }
 
 SEXP CLOENV(SEXP x) {
-    TRACE0();
-    return unimplemented("CLOENV");
+    TRACE(TARGp, x);
+    return ((call_CLOENV) callbacks[CLOENV_x])(x);
 }
 
 int RDEBUG(SEXP x) {
@@ -1496,9 +1496,10 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
 }
 
 int R_has_slot(SEXP obj, SEXP name) {
-    TRACE0();
-    unimplemented("R_has_slot");
-    return 0;
+    TRACE(TARGpp, obj, name);
+    SEXP result = ((call_R_has_slot) callbacks[R_has_slot_x])(obj, name);
+    checkExitCall();
+    return result;
 }
 
 SEXP R_do_MAKE_CLASS(const char *what) {
