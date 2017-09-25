@@ -224,7 +224,7 @@ public class CallAndExternalFunctions {
     public abstract static class DotCall extends LookupAdapter {
 
         @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
-        @Child MaterializeNode materializeNode = MaterializeNode.create();
+        @Child MaterializeNode materializeNode = MaterializeNode.create(true);
 
         static {
             Casts.noCasts(DotCall.class);
