@@ -221,7 +221,7 @@ public class TruffleNFI_Call implements CallRFFI {
                 boolean isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes);
                 Object[] realArgs = new Object[cachedArgsLength + 1];
                 System.arraycopy(args, 0, realArgs, 1, cachedArgsLength);
-                realArgs[0] = nativeCallInfo.address;
+                realArgs[0] = nativeCallInfo.address.asTruffleObject();
                 try {
                     result = ForeignAccess.sendExecute(executeNode, getFunction(cachedArgsLength), realArgs);
                     return unwrap.execute(result);
