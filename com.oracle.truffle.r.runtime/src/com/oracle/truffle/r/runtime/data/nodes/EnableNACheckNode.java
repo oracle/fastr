@@ -20,35 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.test;
+package com.oracle.truffle.r.runtime.data.nodes;
 
-import java.util.Arrays;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-/**
- * This test trait allows ignoring tests on certain operating systems.
- */
-public enum IgnoreOS implements TestTrait {
-    Solaris("sunos"),
-    Linux("linux"),
-    MacOS("darwin");
+public abstract class EnableNACheckNode extends Node {
+    public abstract void execute(NACheck check, RAbstractVector vector);
 
-    private String osName;
-
-    IgnoreOS(String name) {
-        osName = name;
+    public static EnableNACheckNode create() {
+        return EnableNACheckNodeGen.create();
     }
 
-    public static boolean containsIgnoring(TestTrait[] traits) {
-        return Arrays.stream(TestTrait.collect(traits, IgnoreOS.class)).anyMatch(t -> t.isIgnoring());
+    @Specialization(guards = "vector.getClass() == clazz", limit = "10")
+    public void doEnable(NACheck check, RAbstractVector vector,
+                    @Cached("vector.getClass()") Class<? extends RAbstractVector> clazz) {
+        check.enable(clazz.cast(vector));
     }
 
-    private boolean isIgnoring() {
-        String current = System.getProperty("os.name");
-        return current != null && current.toLowerCase().contains(osName);
-    }
-
-    @Override
-    public String getName() {
-        return name();
+    @Fallback
+    public void doEnable(NACheck check, RAbstractVector vector) {
+        check.enable(vector);
     }
 }

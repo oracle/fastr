@@ -33,6 +33,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -43,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.nodes.EnableNACheckNode;
 import com.oracle.truffle.r.runtime.data.nodes.VectorIterator;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -201,11 +203,13 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     @Specialization
     protected Object doIntVector(RAbstractIntVector operand, boolean naRm, boolean finite,
+                    @Cached("create()") EnableNACheckNode enableNACheckNode,
+                    @Cached("create()") RLengthNode lengthNode,
                     @Cached("create()") VectorIterator.Int iterator) {
-        RBaseNode.reportWork(this, operand.getLength());
+        RBaseNode.reportWork(this, lengthNode.executeInteger(operand));
         boolean profiledNaRm = naRmProfile.profile(naRm || finite);
         int result = semantics.getIntStart();
-        na.enable(operand);
+        enableNACheckNode.execute(na, operand);
         int opCount = 0;
         Object it = iterator.init(operand);
         while (iterator.hasNext(operand, it)) {
@@ -236,14 +240,16 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     @Specialization
     protected double doDoubleVector(RAbstractDoubleVector operand, boolean naRm, boolean finite,
+                    @Cached("create()") EnableNACheckNode enableNACheckNode,
+                    @Cached("create()") RLengthNode lengthNode,
                     @Cached("create()") VectorIterator.Double iterator,
                     @Cached("createBinaryProfile()") ConditionProfile finiteProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isInfiniteProfile) {
-        RBaseNode.reportWork(this, operand.getLength());
+        RBaseNode.reportWork(this, lengthNode.executeInteger(operand));
         boolean profiledNaRm = naRmProfile.profile(naRm || finite);
         boolean profiledFinite = finiteProfile.profile(finite);
         double result = semantics.getDoubleStart();
-        na.enable(operand);
+        enableNACheckNode.execute(na, operand);
         int opCount = 0;
 
         Object it = iterator.init(operand);
@@ -274,11 +280,13 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     @Specialization
     protected Object doLogicalVector(RAbstractLogicalVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite,
+                    @Cached("create()") EnableNACheckNode enableNACheckNode,
+                    @Cached("create()") RLengthNode lengthNode,
                     @Cached("create()") VectorIterator.Logical iterator) {
-        RBaseNode.reportWork(this, operand.getLength());
+        RBaseNode.reportWork(this, lengthNode.executeInteger(operand));
         boolean profiledNaRm = naRmProfile.profile(naRm);
         int result = semantics.getIntStart();
-        na.enable(operand);
+        enableNACheckNode.execute(na, operand);
         int opCount = 0;
 
         Object it = iterator.init(operand);
