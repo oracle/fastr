@@ -46,9 +46,21 @@ static unsigned char shutdown_phase = 0;
 #define ERROR_JMP_BUF_STACK_SIZE 32
 static jmp_buf *callErrorJmpBufStack[ERROR_JMP_BUF_STACK_SIZE];
 static int callErrorJmpBufStackIndex = 0;
+static int exceptionFlag = 0;
 
 void exitCall() {
     longjmp(*callErrorJmpBufStack[callErrorJmpBufStackIndex - 1], 1);
+}
+
+void checkExitCall() {
+    if (exceptionFlag) {
+        exceptionFlag = 0;
+        exitCall();
+    }
+}
+
+void set_exception_flag() {
+    exceptionFlag = 1;
 }
 
 static void pushJmpBuf(jmp_buf *buf) {
@@ -74,7 +86,7 @@ static void popJmpBuf() {
 #define DO_CALL(call)               \
     jmp_buf error_jmpbuf;           \
     pushJmpBuf(&error_jmpbuf);      \
-    SEXP result;                    \
+    SEXP result = R_NilValue;       \
     if (!setjmp(error_jmpbuf)) {    \
         result = call;              \
     }                               \

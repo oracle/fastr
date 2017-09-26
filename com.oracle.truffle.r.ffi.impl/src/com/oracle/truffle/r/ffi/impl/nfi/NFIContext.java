@@ -35,11 +35,25 @@ import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 
 class NFIContext extends RFFIContext {
     /**
+     * Last yet unhandled exception that happened during an up-call.
+     */
+    private RuntimeException lastException;
+
+    /**
      * Memory allocated using Rf_alloc, which should be reclaimed at every down-call exit. Note:
      * this is less efficient than GNUR's version, we may need to implement it properly should the
      * performance be a problem.
      */
     public final ArrayList<Long> transientAllocations = new ArrayList<>();
+
+    public void setLastUpCallException(RuntimeException ex) {
+        assert ex == null || lastException == null : "last up-call exception is already set";
+        lastException = ex;
+    }
+
+    public RuntimeException getLastUpCallException() {
+        return lastException;
+    }
 
     @Override
     public ContextState initialize(RContext context) {

@@ -236,6 +236,8 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("import com.oracle.truffle.api.interop.TruffleObject;\n");
         w.append("import com.oracle.truffle.api.nodes.RootNode;\n");
         w.append("import com.oracle.truffle.r.runtime.context.RContext;\n");
+        w.append("import com.oracle.truffle.r.runtime.data.RDataFactory;\n");
+        w.append("import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;\n");
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFIContext;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n");
@@ -286,8 +288,10 @@ public final class FFIProcessor extends AbstractProcessor {
             } else {
                 w.append("                @Child private " + nodeClassName + " node = new " + nodeClassName + "();\n");
             }
-            w.append("\n");
+
         }
+        w.append("                HandleUpCallExceptionNode handleExceptionNode = HandleUpCallExceptionNode.create();");
+        w.append("\n");
         w.append("                @Override\n");
         w.append("                public Object execute(VirtualFrame frame) {\n");
         w.append("                    List<Object> arguments = ForeignAccess.getArguments(frame);\n");
@@ -316,6 +320,11 @@ public final class FFIProcessor extends AbstractProcessor {
         } else {
             w.append(";\n");
         }
+        w.append("                    } catch (Exception ex) {\n");
+        w.append("                        CompilerDirectives.transferToInterpreter();");
+        w.append("                        handleExceptionNode.execute(ex);\n");
+        w.append("                        resultRObj = RDataFactory.createIntVectorFromScalar(-1);\n");
+        w.append("                    }\n");
         w.append("                    ctx.afterUpcall(" + canRunGc + ");\n");
         if (returnKind == TypeKind.VOID) {
             w.append("                    return 0; // void return type\n");

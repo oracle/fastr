@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.managed;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -31,6 +32,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
+import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
@@ -104,6 +106,13 @@ public class Managed_RFFIFactory extends RFFIFactory {
                 };
             }
 
+            class IgnoreUpCallExceptionNode extends Node implements HandleUpCallExceptionNode {
+                @Override
+                public void execute(Throwable ex) {
+                    // nop
+                }
+            }
+
             @Override
             public CallRFFI getCallRFFI() {
                 CompilerAsserts.neverPartOfCompilation();
@@ -116,6 +125,11 @@ public class Managed_RFFIFactory extends RFFIFactory {
                     @Override
                     public InvokeVoidCallNode createInvokeVoidCallNode() {
                         throw unsupported("native code invocation");
+                    }
+
+                    @Override
+                    public HandleUpCallExceptionNode createHandleUpCallExceptionNode() {
+                        return new IgnoreUpCallExceptionNode();
                     }
                 };
             }

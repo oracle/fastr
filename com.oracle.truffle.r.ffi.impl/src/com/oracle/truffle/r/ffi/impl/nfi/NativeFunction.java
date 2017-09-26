@@ -79,7 +79,9 @@ public enum NativeFunction {
     // stats
     fft_factor("(sint32, [sint32], [sint32]): void", TruffleNFI_Utils::lookupAndBindStats),
     fft_work("([double], sint32, sint32, sint32, sint32, [double], [sint32]): sint32", TruffleNFI_Utils::lookupAndBindStats),
-    set_shutdown_phase("(uint8): void", TruffleNFI_Utils::lookupAndBind);
+    set_shutdown_phase("(uint8): void", TruffleNFI_Utils::lookupAndBind),
+    // FastR helpers
+    set_exception_flag("(): void", TruffleNFI_Utils::lookupAndBind);
 
     private final int argumentCount;
     private final String signature;
