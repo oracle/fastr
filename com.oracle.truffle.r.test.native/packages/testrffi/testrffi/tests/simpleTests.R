@@ -86,6 +86,11 @@ rffi.parseVector('1+')
 for(i in seq(5000)) {
     rffi.preserve_object()
 }
+
 for(i in seq(5000)) {
     rffi.release_object()
 }
+
+# test isNull
+rffi.isNull(NULL)
+

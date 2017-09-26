@@ -533,3 +533,7 @@ SEXP test_ParseVector(SEXP src) {
     UNPROTECT(2);
     return result;
 }
+
+Rboolean test_isNull(SEXP x) {
+	return Rf_isNull(x);
+}

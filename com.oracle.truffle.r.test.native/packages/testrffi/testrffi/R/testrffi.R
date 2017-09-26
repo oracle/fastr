@@ -192,3 +192,7 @@ rffi.createNativeConnection <- function() {
 rffi.parseVector <- function(x) {
     .Call('test_ParseVector', x);
 }
+
+rffi.isNull <- function(x) {
+    .Call('test_isNull', x);
+}
