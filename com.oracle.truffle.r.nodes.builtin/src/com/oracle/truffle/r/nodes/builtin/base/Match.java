@@ -31,6 +31,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -207,6 +208,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RIntVector match(RAbstractIntVector x, RAbstractIntVector table, int nomatch) {
             int[] result = initResult(x.getLength(), nomatch);
             boolean matchAll = true;
@@ -242,6 +244,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RIntVector match(RAbstractDoubleVector x, RAbstractIntVector table, int nomatch) {
             int[] result = initResult(x.getLength(), nomatch);
             boolean matchAll = true;
@@ -277,6 +280,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RIntVector match(RAbstractIntVector x, RAbstractDoubleVector table, int nomatch) {
             int[] result = initResult(x.getLength(), nomatch);
             boolean matchAll = true;
@@ -319,6 +323,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RIntVector match(RAbstractDoubleVector x, RAbstractDoubleVector table, int nomatch) {
             int[] result = initResult(x.getLength(), nomatch);
             boolean matchAll = true;
@@ -354,6 +359,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RIntVector match(RAbstractIntVector x, RAbstractLogicalVector table, int nomatch) {
             int[] result = initResult(x.getLength(), nomatch);
             boolean matchAll = true;
@@ -385,6 +391,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         }
 
         @Specialization(guards = "x.getLength() == 1")
+        @TruffleBoundary
         protected int matchSizeOne(RAbstractStringVector x, RAbstractStringVector table, int nomatch,
                         @Cached("create()") NAProfile naProfile,
                         @Cached("create()") BranchProfile foundProfile,
@@ -411,6 +418,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RIntVector match(RAbstractStringVector x, RAbstractStringVector table, int nomatch) {
             int[] result = initResult(x.getLength(), nomatch);
             boolean matchAll = true;
@@ -470,6 +478,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RIntVector match(RAbstractLogicalVector x, RAbstractLogicalVector table, int nomatch) {
             int[] result = initResult(x.getLength(), nomatch);
             boolean matchAll = true;
@@ -500,6 +509,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         }
 
         @Specialization(guards = "!isRAbstractStringVector(table)")
+        @TruffleBoundary
         protected RIntVector match(RAbstractStringVector x, RAbstractVector table, int nomatch) {
             int[] result = initResult(x.getLength(), nomatch);
             boolean matchAll = true;
@@ -521,6 +531,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RIntVector match(RAbstractComplexVector x, RAbstractComplexVector table, int nomatch) {
             int[] result = initResult(x.getLength(), nomatch);
             boolean matchAll = true;
