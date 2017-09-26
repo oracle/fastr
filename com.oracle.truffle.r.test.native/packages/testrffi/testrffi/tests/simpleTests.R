@@ -80,3 +80,12 @@ rffi.inlined_length(expr[[1]])
 rffi.parseVector('1+2')
 rffi.parseVector('.*/-')
 rffi.parseVector('1+')
+
+# preserve and release object
+# using loop to trigger compilation
+for(i in seq(5000)) {
+    rffi.preserve_object()
+}
+for(i in seq(5000)) {
+    rffi.release_object()
+}
