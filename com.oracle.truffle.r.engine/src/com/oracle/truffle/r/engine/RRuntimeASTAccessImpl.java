@@ -233,7 +233,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             List<RCodeBuilder.Argument<RSyntaxNode>> argList = new ArrayList<>(length - 1);
             for (int i = 1; i < length; i++) {
                 String formal = formals == null ? null : formals.getDataAt(i);
-                RSyntaxNode syntaxArg = (RSyntaxNode) unwrapToRNode(list.getDataAtAsObject(i));
+                RSyntaxNode syntaxArg = (RSyntaxNode) unwrapToRNode(list.getDataAtAsObject(i), false);
                 if (formal != null) {
                     argList.add(RCodeBuilder.argument(RSourceSectionNode.LAZY_DEPARSE, formal, syntaxArg));
                 } else {
@@ -241,7 +241,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 }
             }
 
-            RNode fn = unwrapToRNode(list.getDataAtAsObject(0));
+            RNode fn = unwrapToRNode(list.getDataAtAsObject(0), true);
             RSyntaxNode call = RContext.getASTBuilder().call(RSourceSectionNode.LAZY_DEPARSE, fn.asRSyntaxNode(), argList);
             RLanguage result = RDataFactory.createLanguage(call.asRNode());
             if (formals != null && formals.getLength() > 0 && formals.getDataAt(0).length() > 0) {
@@ -250,13 +250,13 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             return addAttributes(result, list);
         } else if (repType == RLanguage.RepType.FUNCTION) {
             RList argsList = (RList) list.getDataAt(1);
-            RSyntaxNode body = (RSyntaxNode) unwrapToRNode(list.getDataAt(2));
+            RSyntaxNode body = (RSyntaxNode) unwrapToRNode(list.getDataAt(2), false);
             List<Argument<RSyntaxNode>> resArgs = new LinkedList<>();
             RStringVector argsNames = argsList.getNames();
             for (int i = 0; i < argsList.getLength(); i++) {
                 String argName = argsNames == null ? null : argsNames.getDataAt(i);
                 Object argVal = argsList.getDataAt(i);
-                Argument<RSyntaxNode> arg = RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, argName, argVal == RSymbol.MISSING ? null : (RSyntaxNode) unwrapToRNode(argVal));
+                Argument<RSyntaxNode> arg = RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, argName, argVal == RSymbol.MISSING ? null : (RSyntaxNode) unwrapToRNode(argVal, false));
                 resArgs.add(arg);
             }
             RootCallTarget rootCallTarget = RContext.getASTBuilder().rootFunction(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, resArgs, body, null);
@@ -276,14 +276,14 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return result;
     }
 
-    private RNode unwrapToRNode(Object objArg) {
+    private RNode unwrapToRNode(Object objArg, boolean functionLookup) {
         Object obj = objArg;
         // obj is RSymbol or a primitive value.
         // A symbol needs to be converted back to a ReadVariableNode
         if (obj instanceof RLanguage) {
             return (RNode) RASTUtils.unwrap(((RLanguage) obj).getRep());
         } else if (obj instanceof RSymbol) {
-            return RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) obj).getName(), false).asRNode();
+            return RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) obj).getName(), functionLookup).asRNode();
         } else if (obj instanceof RPromise) {
             // Evaluate promise and return the result as constant.
             return ConstantNode.create(forcePromise("unwrapToRNode", objArg));
