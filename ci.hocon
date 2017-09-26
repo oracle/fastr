@@ -34,6 +34,7 @@ logfiles : [
     "com.oracle.truffle.r.native/gnur/R-*/gnur_configure.log"
     "com.oracle.truffle.r.native/gnur/R-*/gnur_make.log"
     "com.oracle.truffle.r.native/gnur/R-*/Makeconf"
+    "com.oracle.truffle.r.native/gnur/tests/log/all.diff"
     "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_configure.log"
     "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_make.log"
     "*-tests/*.Rout"
@@ -181,6 +182,13 @@ internalPkgtest: ${common} {
   logs: ${common.logs}
 }
 
+gnurTests: ${common} {
+  run : [
+    ["mx", "build"]
+    ["mx", "gnu-rtests"]
+  ]
+}
+
 # The standard set of gate builds. N.B. the style/builtin checks are only run on Linux as they are not OS-dependent.
 
 builds = [
@@ -192,4 +200,5 @@ builds = [
   ${internalPkgtest}          {capabilities : [linux, amd64],  targets : [gate], name: "gate-internal-pkgtest-linux-amd64"}
   # ${gateTestManagedLinux}     {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-managed-linux-amd64"}
   ${gateTestJava9Linux}       {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-java9-linux-amd64"}
+  ${gnurTests}                {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-gnur-tests"}
 ]

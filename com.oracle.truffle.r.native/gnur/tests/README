@@ -1,0 +1,10 @@
+Tests extracted from 'tests' subdirectory of GunR's installation.
+Examples subdirectory contains joined code snippets from Examples section of various builtins.
+
+Some test snippets are currently omitted:
+- Snippet from base-Ex.R requesting load of MASS package.
+- Snippets requiring graphics package.
+
+Tests can be executed by
+    mx gnu-rtests
+
