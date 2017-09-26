@@ -31,6 +31,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CARNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDDRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDRNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCARNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -90,6 +91,41 @@ public final class ListAccessNodes {
 
         public static CARNode create() {
             return CARNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public static final class SETCADRNode extends FFIUpCallNode.Arg2 {
+        @Child private SETCARNode setcarNode = SETCARNode.create();
+        @Child private CDRNode cdrNode = CDRNode.create();
+
+        @Override
+        public Object executeObject(Object x, Object y) {
+            return setcarNode.executeObject(cdrNode.executeObject(x), y);
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public abstract static class SETCARNode extends FFIUpCallNode.Arg2 {
+        public static SETCARNode create() {
+            return SETCARNodeGen.create();
+        }
+
+        @Specialization
+        protected Object doRLang(RLanguage x, Object y) {
+            x.getPairList().setCar(y);
+            return y;
+        }
+
+        @Specialization
+        protected Object doRLang(RPairList x, Object y) {
+            x.setCar(y);
+            return y;
+        }
+
+        @Fallback
+        protected Object car(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
+            throw RInternalError.unimplemented("SETCAR only works on pair lists or language objects");
         }
     }
 

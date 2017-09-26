@@ -61,9 +61,19 @@ public interface CallRFFI {
         void execute(NativeCallInfo nativeCallInfo, Object[] args);
     }
 
+    interface HandleUpCallExceptionNode extends NodeInterface {
+        void execute(Throwable ex);
+
+        static HandleUpCallExceptionNode create() {
+            return RFFIFactory.getCallRFFI().createHandleUpCallExceptionNode();
+        }
+    }
+
     InvokeCallNode createInvokeCallNode();
 
     InvokeVoidCallNode createInvokeVoidCallNode();
+
+    HandleUpCallExceptionNode createHandleUpCallExceptionNode();
 
     final class InvokeCallRootNode extends RFFIRootNode<InvokeCallNode> {
         private static InvokeCallRootNode invokeCallRootNode;

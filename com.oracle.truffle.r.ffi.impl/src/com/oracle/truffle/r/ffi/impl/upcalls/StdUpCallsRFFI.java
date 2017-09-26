@@ -36,6 +36,8 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDRNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCADRNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MatchNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
@@ -208,10 +210,12 @@ public interface StdUpCallsRFFI {
 
     Object SET_TAG(Object x, Object y);
 
+    @RFFIUpCallNode(SETCARNode.class)
     Object SETCAR(Object x, Object y);
 
     Object SETCDR(Object x, Object y);
 
+    @RFFIUpCallNode(SETCADRNode.class)
     Object SETCADR(Object x, Object y);
 
     Object SYMVALUE(Object x);

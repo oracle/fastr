@@ -275,4 +275,9 @@ final class TruffleLLVM_Call implements CallRFFI {
     public InvokeVoidCallNode createInvokeVoidCallNode() {
         return new TruffleLLVM_InvokeVoidCallNode();
     }
+
+    @Override
+    public HandleUpCallExceptionNode createHandleUpCallExceptionNode() {
+        return new HandleLLVMUpCallExceptionNode();
+    }
 }

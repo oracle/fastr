@@ -274,15 +274,21 @@ SEXP FASTR_R_SrcfileSymbol() {
 void Call_initvar_double(int index, double value) {
 	switch (index) {
     case R_NaN_x: R_NaN = value; break;
+    case R_PosInf_x: R_PosInf = value; break;
+    case R_NegInf_x: R_NegInf = value; break;
+    case R_NaReal_x: R_NaReal = value; break;
+    default:
+        printf("Call_initvar_double: unimplemented index %d\n", index);
+        exit(1);
 	}
 }
 
 void Call_initvar_int(int index, int value) {
 	switch (index) {
     case R_NaInt_x: R_NaInt = value; break;
-    case R_PosInf_x: R_PosInf = value; break;
-    case R_NegInf_x: R_NegInf = value; break;
-    case R_NaReal_x: R_NaReal = value; break;
+    default:
+        printf("Call_initvar_int: unimplemented index %d\n", index);
+        exit(1);
 	}
 }
 
@@ -297,6 +303,9 @@ void Call_initvar_string(int index, char *value) {
 	switch (index) {
     case R_Home_x: R_Home_static = copystring(value); break;
     case R_TempDir_x: R_TempDir_static = copystring(value); break;
+    default:
+        printf("Call_initvar_string: unimplemented index %d\n", index);
+        exit(1);
 	}
 }
 

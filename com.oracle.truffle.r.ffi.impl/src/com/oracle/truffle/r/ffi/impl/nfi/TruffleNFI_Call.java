@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCallReturn
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceEnabled;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -221,7 +222,7 @@ public class TruffleNFI_Call implements CallRFFI {
                 boolean isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes);
                 Object[] realArgs = new Object[cachedArgsLength + 1];
                 System.arraycopy(args, 0, realArgs, 1, cachedArgsLength);
-                realArgs[0] = nativeCallInfo.address;
+                realArgs[0] = nativeCallInfo.address.asTruffleObject();
                 try {
                     result = ForeignAccess.sendExecute(executeNode, getFunction(cachedArgsLength), realArgs);
                     return unwrap.execute(result);
@@ -293,6 +294,13 @@ public class TruffleNFI_Call implements CallRFFI {
         if (traceEnabled()) {
             traceDownCallReturn(name, result);
         }
+        NFIContext nfiCtx = (NFIContext) RContext.getInstance().getStateRFFI();
+        RuntimeException lastUpCallEx = nfiCtx.getLastUpCallException();
+        if (lastUpCallEx != null) {
+            CompilerDirectives.transferToInterpreter();
+            nfiCtx.setLastUpCallException(null);
+            throw lastUpCallEx;
+        }
         RContext.getRForeignAccessFactory().setIsNull(isNullSetting);
     }
 
@@ -304,5 +312,10 @@ public class TruffleNFI_Call implements CallRFFI {
     @Override
     public InvokeVoidCallNode createInvokeVoidCallNode() {
         return new TruffleNFI_InvokeVoidCallNode();
+    }
+
+    @Override
+    public HandleUpCallExceptionNode createHandleUpCallExceptionNode() {
+        return new HandleNFIUpCallExceptionNode();
     }
 }

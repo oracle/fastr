@@ -44,6 +44,12 @@ void *unimplemented(const char *msg) __attribute__((noreturn));
 // use to immediately exit from the current .Call/.Fortran
 void exitCall() __attribute__((noreturn));
 
+// checks the exit call flag and if set, jumps to the exit from current .Call/.Fortran
+void checkExitCall();
+
+// invoked from Java to set the exit call flag
+void set_exception_flag();
+
 // use for any fatal error
 void fatalError(const char *msg) __attribute__((noreturn));
 
