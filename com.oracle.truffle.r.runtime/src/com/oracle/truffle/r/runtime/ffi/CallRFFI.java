@@ -62,7 +62,7 @@ public interface CallRFFI {
     }
 
     interface HandleUpCallExceptionNode extends NodeInterface {
-        abstract void execute(Throwable ex);
+        void execute(Throwable ex);
 
         static HandleUpCallExceptionNode create() {
             return RFFIFactory.getCallRFFI().createHandleUpCallExceptionNode();
