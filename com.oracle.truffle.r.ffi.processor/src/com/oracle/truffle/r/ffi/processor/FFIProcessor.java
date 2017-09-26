@@ -230,6 +230,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("import java.util.List;\n");
         w.append("\n");
         w.append("import com.oracle.truffle.api.CallTarget;\n");
+        w.append("import com.oracle.truffle.api.CompilerDirectives;\n");
         w.append("import com.oracle.truffle.api.Truffle;\n");
         w.append("import com.oracle.truffle.api.frame.VirtualFrame;\n");
         w.append("import com.oracle.truffle.api.interop.ForeignAccess;\n");
@@ -300,11 +301,15 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("                        RFFIUtils.traceUpCall(\"" + name + "\", arguments);\n");
         w.append("                    }\n");
         w.append("                    RFFIContext ctx = RContext.getInstance().getStateRFFI();\n");
+        if (returnKind != TypeKind.VOID) {
+            w.append("                Object resultRObj;");
+        }
         w.append("                    ctx.beforeUpcall(" + canRunGc + ");\n");
+        w.append("                    try {\n");
         if (returnKind == TypeKind.VOID) {
-            w.append("                    ");
+            w.append("                        ");
         } else {
-            w.append("                    Object resultRObj = ");
+            w.append("                        resultRObj = ");
         }
         if (needsReturnWrap) {
             w.append("returnWrap.execute(");
@@ -321,9 +326,11 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append(";\n");
         }
         w.append("                    } catch (Exception ex) {\n");
-        w.append("                        CompilerDirectives.transferToInterpreter();");
+        w.append("                        CompilerDirectives.transferToInterpreter();\n");
         w.append("                        handleExceptionNode.execute(ex);\n");
-        w.append("                        resultRObj = RDataFactory.createIntVectorFromScalar(-1);\n");
+        if (returnKind != TypeKind.VOID) {
+            w.append("                        resultRObj = RDataFactory.createIntVectorFromScalar(-1);\n");
+        }
         w.append("                    }\n");
         w.append("                    ctx.afterUpcall(" + canRunGc + ");\n");
         if (returnKind == TypeKind.VOID) {
