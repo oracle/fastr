@@ -32,6 +32,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -85,6 +86,15 @@ public abstract class AsCall extends RBuiltinNode.Arg1 {
             }
             return ArgumentsSignature.get(names);
         }
+    }
+
+    protected boolean containsCall(RLanguage l) {
+        return l.getRep() instanceof RCallBaseNode;
+    }
+
+    @Specialization(guards = "containsCall(l)")
+    protected RLanguage asCall(RLanguage l) {
+        return l;
     }
 
     @Fallback

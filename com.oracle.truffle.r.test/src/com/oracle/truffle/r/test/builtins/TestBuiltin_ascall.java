@@ -78,5 +78,7 @@ public class TestBuiltin_ascall extends TestBase {
         assertEval(Output.IgnoreWhitespace, "as.call(list(as.symbol('function'), pairlist(a=1)))");
         assertEval(Output.IgnoreWhitespace, "as.call(list(as.symbol('function')))");
         assertEval(Output.IgnoreWhitespace, "call('function')");
+
+        assertEval(Output.IgnoreWhitespace, "{ cl <- quote(fun(3)); as.call(cl) }");
     }
 }
