@@ -449,7 +449,8 @@ void Rf_copyVector(SEXP x, SEXP y) {
 
 int Rf_countContexts(int x, int y) {
     TRACE0();
-    return (int) unimplemented("Rf_countContexts");
+    unimplemented("Rf_countContexts");
+    return 0;
 }
 
 Rboolean Rf_inherits(SEXP x, const char * klass) {
@@ -775,14 +776,14 @@ SEXP CLOENV(SEXP x) {
 
 int RDEBUG(SEXP x) {
     TRACE0();
-    SEXP result = ((call_RDEBUG) callbacks[RDEBUG_x])(x);
+    int result = ((call_RDEBUG) callbacks[RDEBUG_x])(x);
     checkExitCall();
     return result;
 }
 
 int RSTEP(SEXP x) {
     TRACE0();
-    SEXP result = ((call_RSTEP) callbacks[RSTEP_x])(x);
+    int result = ((call_RSTEP) callbacks[RSTEP_x])(x);
     checkExitCall();
     return result;
 }
@@ -925,7 +926,7 @@ SEXP PRVALUE(SEXP x) {
 
 int PRSEEN(SEXP x) {
     TRACE0();
-    SEXP result = ((call_PRSEEN) callbacks[PRSEEN_x])(x);
+    int result = ((call_PRSEEN) callbacks[PRSEEN_x])(x);
     checkExitCall();
     return result;
 }
@@ -1104,14 +1105,14 @@ SEXP Rf_asCharacterFactor(SEXP x){
 
 int Rf_asLogical(SEXP x) {
     TRACE0();
-    SEXP result = ((call_Rf_asLogical) callbacks[Rf_asLogical_x])(x);
+    int result = ((call_Rf_asLogical) callbacks[Rf_asLogical_x])(x);
     checkExitCall();
     return result;
 }
 
 int Rf_asInteger(SEXP x) {
     TRACE0();
-    SEXP result = ((call_Rf_asInteger) callbacks[Rf_asInteger_x])(x);
+    int result = ((call_Rf_asInteger) callbacks[Rf_asInteger_x])(x);
     checkExitCall();
     return result;
 }
@@ -1214,7 +1215,8 @@ void R_qsort_int_I(int *iv, int *II, int i, int j) {
 
 R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
     TRACE0();
-    return (R_len_t) unimplemented("R_BadLongVector");
+    unimplemented("R_BadLongVector");
+    return (R_len_t) 0;
 }
 
 int IS_S4_OBJECT(SEXP x) {
@@ -1494,7 +1496,8 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
 
 int R_has_slot(SEXP obj, SEXP name) {
     TRACE0();
-    return (int) unimplemented("R_has_slot");
+    unimplemented("R_has_slot");
+    return 0;
 }
 
 SEXP R_do_MAKE_CLASS(const char *what) {
@@ -1568,7 +1571,7 @@ void Rf_copyMatrix(SEXP s, SEXP t, Rboolean byrow) {
 
 int FASTR_getConnectionChar(SEXP conn) {
     TRACE0();
-    SEXP result = ((call_FASTR_getConnectionChar) callbacks[FASTR_getConnectionChar_x])(conn);
+    int result = ((call_FASTR_getConnectionChar) callbacks[FASTR_getConnectionChar_x])(conn);
     checkExitCall();
     return result;
 }

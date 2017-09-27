@@ -102,7 +102,7 @@ public final class GridState {
         this.currentGrob = RNull.instance;
     }
 
-    void initGPar(GridDevice currentDevice) {
+    public void initGPar(GridDevice currentDevice) {
         devState.gpar = GPar.createNew(currentDevice);
         assert devState.gpar.verify();
     }

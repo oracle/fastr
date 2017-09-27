@@ -31,6 +31,7 @@ import com.oracle.truffle.r.library.fastrGrid.grDevices.DevCairo;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevCurr;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevHoldFlush;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevOff;
+import com.oracle.truffle.r.library.fastrGrid.grDevices.DevSize;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.InitWindowedDevice;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.SavePlot;
 import com.oracle.truffle.r.library.fastrGrid.graphics.CPar;
@@ -55,6 +56,8 @@ public final class FastRGridExternalLookup {
         switch (name) {
             case "devholdflush":
                 return DevHoldFlush.create();
+            case "devsize":
+                return new DevSize();
             case "devcur":
                 return new DevCurr();
             case "devoff":
