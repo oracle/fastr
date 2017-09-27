@@ -22,8 +22,13 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.graphics;
 
+import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_TO_POINTS_FACTOR;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.library.fastrGrid.GPar;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
+import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -73,8 +78,30 @@ public final class CPar extends RExternalBuiltinNode {
         switch (name) {
             case "din":
                 return RDataFactory.createDoubleVector(new double[]{device.getWidth(), device.getHeight()}, RDataFactory.COMPLETE_VECTOR);
+            case "cin":
+                /*
+                 * character size ‘(width, height)’ in inches. These are the same measurements as ‘cra’, expressed
+                 * in different units.
+                 *
+                 * Note: cin/cra is used in dev.size() to figure out the conversion ratio between pixels and inches.
+                 * For the time being what is important is to choose the values to keep this ratio!
+                 */
+                double cin = getCurrentDrawingContext().getFontSize() / INCH_TO_POINTS_FACTOR;
+                return RDataFactory.createDoubleVector(new double[]{cin, cin}, RDataFactory.COMPLETE_VECTOR);
+            case "cra":
+                /*
+                 * size of default character ‘(width, height)’ in ‘rasters’ (pixels). Some devices have no concept
+                 * of pixels and so assume an arbitrary pixel size, usually 1/72 inch. These are the same
+                 * measurements as ‘cin’, expressed in different units.
+                 */
+                double cra = getCurrentDrawingContext().getFontSize();
+                return RDataFactory.createDoubleVector(new double[]{cra, cra}, RDataFactory.COMPLETE_VECTOR);
             default:
                 throw RError.nyi(RError.NO_CALLER, "C_Par parameter '" + name + "'");
         }
+    }
+
+    private static DrawingContext getCurrentDrawingContext() {
+        return GPar.create(GridContext.getContext().getGridState().getGpar()).getDrawingContext(0);
     }
 }
