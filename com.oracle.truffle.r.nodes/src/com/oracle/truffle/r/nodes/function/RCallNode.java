@@ -434,17 +434,34 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         Object dispatchObject = promiseHelperNode.checkEvaluate(frame, args[typeXIdx]);
 
+        boolean isS4Dispatch = false;
+
+        // CHECK FOR S4 DISPATCH
+        // First, check S4 dispatch for 'dispatchObject' (= first suitable argument)
         if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
+            isS4Dispatch = true;
+        } else if (args.length > typeXIdx + 1 && dispatch == RDispatch.OPS_GROUP_GENERIC) {
+            for (int i = typeXIdx + 1; i < args.length; i++) {
+                Object argi = promiseHelperNode.checkEvaluate(frame, args[i]);
+                if (isAttributableProfile.profile(argi instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) argi).isS4())) {
+                    isS4Dispatch = true;
+                    break;
+                }
+            }
+        }
+
+        if (isS4Dispatch) {
             RList list = (RList) promiseHelperNode.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
             int index = list.getElementIndexByName(builtin.getName());
             if (index != -1) {
                 RFunction basicFun = (RFunction) list.getDataAt(index);
-                Object result = call.execute(frame, basicFun, new RArgsValuesAndNames(args, argsSignature), null, null);
-                if (result != RRuntime.DEFERRED_DEFAULT_MARKER) {
-                    return result;
+                Object res = call.execute(frame, basicFun, new RArgsValuesAndNames(args, argsSignature), null, null);
+                if (res != RRuntime.DEFERRED_DEFAULT_MARKER) {
+                    return res;
                 }
             }
         }
+
         RStringVector typeX = classHierarchyNodeX.execute(dispatchObject);
         Result resultX = null;
         if (implicitTypeProfileX.profile(typeX != null)) {
@@ -524,6 +541,36 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         return call.execute(frame, resultFunction, new RArgsValuesAndNames(args, argsSignature), s3Args, s3DefaulArguments);
+    }
+
+    private static Object tryS4Dispatch(VirtualFrame frame, ConditionProfile isAttributableProfile, ConditionProfile isS4Profile, PromiseCheckHelperNode promiseHelperNode, FunctionDispatch call,
+                    Object[] args, int typeXIdx, ArgumentsSignature argsSignature, RBuiltinDescriptor builtin, Object dispatchObject) {
+
+        boolean isS4Dispatch = false;
+
+        // First, check S4 dispatch for 'dispatchObject' (= first suitable argument)
+        if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
+            isS4Dispatch = true;
+        } else if (args.length > typeXIdx + 1) {
+            for (int i = typeXIdx + 1; i < args.length; i++) {
+                Object argi = promiseHelperNode.checkEvaluate(frame, args[i]);
+                if (isAttributableProfile.profile(argi instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) argi).isS4())) {
+                    isS4Dispatch = true;
+                    break;
+                }
+            }
+        }
+
+        if (isS4Dispatch) {
+            RList list = (RList) promiseHelperNode.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
+            int index = list.getElementIndexByName(builtin.getName());
+            if (index != -1) {
+                RFunction basicFun = (RFunction) list.getDataAt(index);
+                return call.execute(frame, basicFun, new RArgsValuesAndNames(args, argsSignature), null, null);
+            }
+        }
+
+        return null;
     }
 
     protected final class ForeignCall extends Node {
