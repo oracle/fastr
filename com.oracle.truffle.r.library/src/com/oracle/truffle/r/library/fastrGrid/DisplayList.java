@@ -47,7 +47,7 @@ public class DisplayList {
         return list;
     }
 
-    static void initDisplayList(GridState gridState) {
+    public static void initDisplayList(GridState gridState) {
         RList list = createInitialDisplayList();
         list.setDataAt(0, gridState.getViewPort());
         gridState.setDisplayList(list);

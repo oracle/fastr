@@ -15,6 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.library.fastrGrid.ViewPort.InitViewPortNode;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
+import com.oracle.truffle.r.library.fastrGrid.grDevices.OpenDefaultDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -28,6 +29,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
  */
 final class LGridDirty extends RExternalBuiltinNode {
     @Child private InitViewPortNode initViewPort = new InitViewPortNode();
+    @Child private OpenDefaultDevice openDefaultDevice = new OpenDefaultDevice();
 
     static {
         Casts.noCasts(LGridDirty.class);
@@ -41,16 +43,11 @@ final class LGridDirty extends RExternalBuiltinNode {
         }
 
         // the rest only takes place if the device has been changed since the last time
+        openDefaultDevice.execute();
+
         CompilerDirectives.transferToInterpreter();
-
-        // if no device has been opened yet, open the default one and make it current
-        if (GridContext.getContext().getCurrentDevice() == null) {
-            GridContext.getContext().openDefaultDevice();
-            // grid state is device dependent
-            gridState = GridContext.getContext().getGridState();
-        }
-
         // the current device has not been initialized yet...
+        gridState = GridContext.getContext().getGridState();
         GridDevice device = GridContext.getContext().getCurrentDevice();
         device.openNewPage();
         gridState.initGPar(device);
