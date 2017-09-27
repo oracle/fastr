@@ -68,6 +68,7 @@ public enum NativeFunction {
     dpotri("(uint8, sint32, [double], sint32) : sint32", "call_lapack_"),
     dpstrf("uint8, sint32, [double], sint32, [sint32], [sint32], double, [double]) : sint32", "call_lapack_"),
     dgesv("(sint32, sint32, [double], sint32, [sint32], [double], sint32) : sint32", "call_lapack_"),
+    dgesdd("(uint8, sint32, sint32, [double], sint32, [double], [double], sint32, [double], sint32, [double], sint32, [sint32]) : sint32", "call_lapack_"),
     dlange("(uint8, sint32, sint32, [double], sint32, [double]) : double", "call_lapack_"),
     dgecon("(uint8, sint32, [double], sint32, double, [double], [double], [sint32]) : sint32", "call_lapack_"),
     dsyevr(

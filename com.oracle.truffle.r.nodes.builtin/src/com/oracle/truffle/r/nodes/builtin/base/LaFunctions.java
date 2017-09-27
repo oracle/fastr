@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.dimEq;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.dimGt;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyDoubleVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
@@ -24,6 +25,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.or;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.squareMatrix;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
@@ -38,6 +40,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.CopyAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
@@ -62,6 +65,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.GetDataCopy;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -728,6 +732,83 @@ public class LaFunctions {
                 }
             }
             return b;
+        }
+    }
+
+    @RBuiltin(name = "La_svd", kind = INTERNAL, parameterNames = {"jobu", "x", "s", "u", "vt"}, behavior = PURE)
+    public abstract static class Svd extends RBuiltinNode.Arg5 {
+
+        static {
+            Casts casts = new Casts(Svd.class);
+            casts.arg("jobu").defaultError(Message.MUST_BE_STRING, "jobu").mustNotBeNull().mustBe(stringValue()).asStringVector().findFirst();
+            casts.arg("x").mustNotBeNull().mustBe(doubleValue()).asDoubleVectorClosure(true, true, true);
+            casts.arg("s").mustNotBeNull().mustBe(doubleValue()).asDoubleVector(true, true, true);
+            casts.arg("u").mustNotBeNull().mustBe(doubleValue()).asDoubleVector(true, true, true);
+            casts.arg("vt").mustNotBeNull().mustBe(doubleValue()).asDoubleVector(true, true, true);
+        }
+
+        @Child private LapackRFFI.DgesddNode dgesddNode = LapackRFFI.DgesddNode.create();
+
+        @Specialization
+        protected Object doSvd(String ju, RAbstractDoubleVector x, RAbstractDoubleVector s, RAbstractDoubleVector u, RAbstractDoubleVector vt,
+                        @Cached("create()") GetDataCopy.Double getDataCopyNode,
+                        @Cached("createCopyAllAttributes()") CopyAttributesNode copyAttrNode,
+                        @Cached("create()") GetDimAttributeNode getDimsNode) {
+
+            int[] xdims = getDimsNode.getDimensions(x);
+            int n = xdims[0];
+            int p = xdims[1];
+
+            int[] udims = getDimsNode.getDimensions(u);
+            int ldu = udims[0];
+
+            int[] vtdims = getDimsNode.getDimensions(vt);
+            int ldvt = vtdims[0];
+
+            int[] iwork = new int[8 * Math.min(n, p)];
+
+            RDoubleVector xMaterialized = x.materialize();
+            RDoubleVector sMaterialized = s.materialize();
+            RDoubleVector uMaterialized = u.materialize();
+            RDoubleVector vtMaterialized = vt.materialize();
+
+            double[] xvals = getDataCopyNode.execute(xMaterialized);
+            double[] sdata = getDataCopyNode.execute(sMaterialized);
+            double[] udata = getDataCopyNode.execute(uMaterialized);
+            double[] vtdata = getDataCopyNode.execute(vtMaterialized);
+            double[] tmp = new double[1];
+
+// F77_CALL(dgesdd)(ju, &n, &p, xvals, &n, REAL(s), REAL(u), &ldu, REAL(vt), &ldvt, &tmp, &lwork,
+// iwork, &info);
+            int info = dgesddNode.execute(ju.charAt(0), n, p, xvals, n, sdata, udata, ldu, vtdata, ldvt, tmp, -1, iwork);
+            if (info != 0) {
+                error(Message.LAPACK_ERROR, info, "dgesdd");
+            }
+
+            int lwork = (int) tmp[0];
+            double[] work = new double[lwork];
+// F77_CALL(dgesdd)(ju, &n, &p, xvals, &n, REAL(s), REAL(u), &ldu, REAL(vt), &ldvt, work, &lwork,
+// iwork, &info);
+            dgesddNode.execute(ju.charAt(0), n, p, xvals, n, sdata, udata, ldu, vtdata, ldvt, work, lwork, iwork);
+            if (info != 0) {
+                error(Message.LAPACK_ERROR, info, "dgesdd");
+            }
+
+            RStringVector nm = RDataFactory.createStringVector(new String[]{"d", "u", "vt"}, true);
+            Object[] val = new Object[3];
+            RDoubleVector sResult = RDataFactory.createDoubleVector(sdata, false);
+            RDoubleVector uResult = RDataFactory.createDoubleVector(udata, false);
+            RDoubleVector vtResult = RDataFactory.createDoubleVector(vtdata, false);
+
+            copyAttrNode.execute(sResult, sResult, sResult.getLength(), sMaterialized, sMaterialized.getLength());
+            copyAttrNode.execute(uResult, uResult, uResult.getLength(), uMaterialized, uMaterialized.getLength());
+            copyAttrNode.execute(vtResult, vtResult, vtResult.getLength(), vtMaterialized, vtMaterialized.getLength());
+
+            val[0] = sResult;
+            val[1] = uResult;
+            val[2] = vtResult;
+
+            return RDataFactory.createList(val, nm);
         }
     }
 }

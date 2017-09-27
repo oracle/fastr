@@ -205,6 +205,19 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
         }
     }
 
+    private static final class TruffleLLVM_DgesddNode extends TruffleLLVM_DownCallNode implements DgesddNode {
+
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.dgesdd;
+        }
+
+        @Override
+        public int execute(char jobz, int m, int n, double[] a, int lda, double[] s, double[] u, int ldu, double[] vt, int ldtv, double[] work, int lwork, int[] iwork) {
+            return (int) call(jobz, m, n, a, lda, s, u, ldu, vt, ldtv, work, lwork, iwork);
+        }
+    }
+
     private static final class TruffleLLVM_DlangeNode extends TruffleLLVM_DownCallNode implements DlangeNode {
 
         @Override
@@ -293,6 +306,11 @@ public class TruffleLLVM_Lapack implements LapackRFFI {
     @Override
     public DgesvNode createDgesvNode() {
         return new TruffleLLVM_DgesvNode();
+    }
+
+    @Override
+    public DgesddNode createDgesddNode() {
+        return new TruffleLLVM_DgesddNode();
     }
 
     @Override
