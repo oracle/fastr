@@ -101,4 +101,14 @@ public class TestRandGenerationFunctions extends TestBase {
     public void testGenerators() {
         assertEval("for(gen in c(\"Buggy Kinderman-Ramage\", \"Ahrens-Dieter\", \"Box-Muller\", \"Inversion\", \"Kinderman-Ramage\", \"default\")) { print(paste0(gen, \":\")); RNGkind(NULL,gen); set.seed(42); print(rnorm(30)); }");
     }
+
+    @Test
+    public void testDotRandomSeed() {
+        assertEval(Output.IgnoreErrorContext, "{ .Random.seed }");
+        assertEval(Output.IgnoreErrorContext, "{ print(.Random.seed) }");
+        assertEval(Output.IgnoreErrorContext, "{ get('.Random.seed', envir = .GlobalEnv, inherits = FALSE) }");
+        assertEval("{ get0('.Random.seed', envir = .GlobalEnv, inherits = FALSE) }");
+        assertEval(Output.IgnoreErrorContext, "{ get('.Random.seed', envir = .GlobalEnv, inherits = TRUE) }");
+        assertEval("{ get0('.Random.seed', envir = .GlobalEnv, inherits = TRUE) }");
+    }
 }
