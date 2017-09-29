@@ -41,6 +41,8 @@ import com.oracle.truffle.r.runtime.Utils;
 
 public class SVGDevice implements GridDevice, FileGridDevice {
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.000");
+    private static final double COORD_FACTOR = INCH_TO_POINTS_FACTOR;
+
     private final StringBuilder data = new StringBuilder(1024);
     private String filename;
     private final double width;
@@ -65,12 +67,11 @@ public class SVGDevice implements GridDevice, FileGridDevice {
         // saving it anywhere.
         data.setLength(0);
         cachedCtx = null;
+        append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
         append("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">");
-        // we could use real inches, but that makes the output different to GnuR and other formats
-        // (jpg, ...), which use conversion 70px ~ 1in
-        append("<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' width='%.3fpx' height='%.3fpx' viewBox='0 0 %.3f %.3f'>", width * 70d, height * 70d,
-                        width,
-                        height);
+        append("<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' viewBox='0 0 %.3f %.3f'>",
+                        width * COORD_FACTOR,
+                        height * COORD_FACTOR);
     }
 
     @Override
@@ -88,9 +89,9 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     @Override
     public void drawRect(DrawingContext ctx, double leftX, double bottomY, double newWidth, double newHeight, double rotationAnticlockWise) {
         appendStyle(ctx);
-        append("<rect vector-effect='non-scaling-stroke' x='%.3f' y='%.3f' width='%.3f' height='%.3f'", leftX, transY(bottomY + newHeight), newWidth, newHeight);
+        append("<rect x='%.3f' y='%.3f' width='%.3f' height='%.3f'", leftX * COORD_FACTOR, transY(bottomY + newHeight) * COORD_FACTOR, newWidth * COORD_FACTOR, newHeight * COORD_FACTOR);
         if (rotationAnticlockWise != 0) {
-            append("transform='rotate(%.3f %.3f,%.3f)'", toDegrees(rotationAnticlockWise), (leftX + newWidth / 2.), transY(bottomY + newHeight / 2.));
+            append("transform='rotate(%.3f %.3f,%.3f)'", toDegrees(rotationAnticlockWise), (leftX + newWidth / 2.) * COORD_FACTOR, transY(bottomY + newHeight / 2.) * COORD_FACTOR);
         }
         data.append("/>"); // end of 'rect' tag
     }
@@ -108,24 +109,25 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     @Override
     public void drawCircle(DrawingContext ctx, double centerX, double centerY, double radius) {
         appendStyle(ctx);
-        append("<circle vector-effect='non-scaling-stroke' cx='%.3f' cy='%.3f' r='%.3f'/>", centerX, transY(centerY), radius);
+        append("<circle cx='%.3f' cy='%.3f' r='%.3f'/>", centerX * COORD_FACTOR, transY(centerY) * COORD_FACTOR, radius * COORD_FACTOR);
     }
 
     @Override
     public void drawRaster(double leftX, double bottomY, double width, double height, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation) {
         byte[] bitmap = Bitmap.create(pixels, pixelsColumnsCount);
         String base64 = Base64.getEncoder().encodeToString(bitmap);
-        append("<image x='%.3f' y='%.3f' width='%.3f' height='%.3f' preserveAspectRatio='none' xlink:href='data:image/bmp;base64,%s'/>", leftX, transY(bottomY + height), width, height, base64);
+        append("<image x='%.3f' y='%.3f' width='%.3f' height='%.3f' preserveAspectRatio='none' xlink:href='data:image/bmp;base64,%s'/>", leftX * COORD_FACTOR, transY(bottomY + height) * COORD_FACTOR,
+                        width * COORD_FACTOR, height * COORD_FACTOR, base64);
     }
 
     @Override
     public void drawString(DrawingContext ctx, double leftX, double bottomY, double rotationAnticlockWise, String text) {
-        appendStyle(ctx);
-        append("<text x='%.3f' y='%.3f' textLength='%.3f' lengthAdjust='spacingAndGlyphs' ", leftX, transY(bottomY), getStringWidth(ctx, text));
+        closeStyle();
+        append("<text x='%.3f' y='%.3f' textLength='%.3fpx' lengthAdjust='spacingAndGlyphs' ", leftX * COORD_FACTOR, transY(bottomY) * COORD_FACTOR, getStringWidth(ctx, text) * COORD_FACTOR);
         // SVG interprets the "fill" as the color of the text
-        data.append("style='").append(getStyleColor("fill", ctx.getColor())).append(";stroke:transparent'");
+        data.append("style='").append(getStyleColor("fill", ctx.getColor())).append('\'');
         if (rotationAnticlockWise != 0) {
-            append(" transform='rotate(%.3f %.3f,%.3f)'", toDegrees(rotationAnticlockWise), leftX, transY(bottomY));
+            append(" transform='rotate(%.3f %.3f,%.3f)'", toDegrees(rotationAnticlockWise), leftX * COORD_FACTOR, transY(bottomY) * COORD_FACTOR);
         }
         data.append(">").append(text).append("</text>");
     }
@@ -147,9 +149,9 @@ public class SVGDevice implements GridDevice, FileGridDevice {
         // supports this by means of "textLength" attribute, which allows us to force text to have
         // specified width. So we approximate the width of given text in the calculation below and
         // then force the text to actually have such width if it ever gets displayed by #drawString.
-        double factor = 0.5;    // empirically chosen
+        double factor = 0.6;    // empirically chosen
         if (ctx.getFontStyle() == GridFontStyle.BOLD || ctx.getFontStyle() == GridFontStyle.BOLDITALIC) {
-            factor = 0.62;
+            factor = 0.675;
         }
         double letterWidth = (ctx.getFontSize() / INCH_TO_POINTS_FACTOR);
         double result = text.length() * factor * letterWidth;
@@ -157,7 +159,7 @@ public class SVGDevice implements GridDevice, FileGridDevice {
             char c = text.charAt(i);
             if (c == 'w' || c == 'm') {
                 result += letterWidth * 0.2;
-            } else if (c == 'z') {
+            } else if (c == 'z' || c == 'v') {
                 result += letterWidth * 0.1;
             }
         }
@@ -168,16 +170,16 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     public double getStringHeight(DrawingContext ctx, String text) {
         // we need height without ascent/descent of letters that are not in the string, this is
         // empirically tested calculation
-        return 0.8 * (ctx.getFontSize() / INCH_TO_POINTS_FACTOR);
+        return 0.7 * (ctx.getFontSize() / INCH_TO_POINTS_FACTOR);
     }
 
     private void drawPoly(DrawingContext ctx, double[] x, double[] y, int startIndex, int length, String attributes) {
         appendStyle(ctx);
-        data.append("<polyline vector-effect='non-scaling-stroke' points='");
+        data.append("<polyline points='");
         for (int i = 0; i < length; i++) {
-            data.append(DECIMAL_FORMAT.format(x[i + startIndex]));
+            data.append(DECIMAL_FORMAT.format(x[i + startIndex] * COORD_FACTOR));
             data.append(',');
-            data.append(DECIMAL_FORMAT.format(transY(y[i + startIndex])));
+            data.append(DECIMAL_FORMAT.format(transY(y[i + startIndex]) * COORD_FACTOR));
             data.append(' ');
         }
         data.append("' ").append(attributes).append(" />");
@@ -201,6 +203,14 @@ public class SVGDevice implements GridDevice, FileGridDevice {
             append("</g>");
         }
         append("</svg>");
+    }
+
+    // closes opened <g> tag if necessary
+    private void closeStyle() {
+        if (cachedCtx != null) {
+            cachedCtx = null;
+            append("</g>");
+        }
     }
 
     private void appendStyle(DrawingContext ctx) {
@@ -238,7 +248,7 @@ public class SVGDevice implements GridDevice, FileGridDevice {
         if (ctx.getLineJoin() == GridLineJoin.MITRE) {
             data.append(";stroke-miterlimit:").append(ctx.getLineMitre());
         }
-        data.append(";font-size:").append(ctx.getFontSize() / INCH_TO_POINTS_FACTOR).append("px");
+        data.append(";font-size:").append(ctx.getFontSize()).append("px");
         if (!ctx.getFontFamily().isEmpty()) {
             // Font-family strings 'mono', 'sans', and 'serif' are OK for us
             data.append(";font-family:").append(ctx.getFontFamily());
