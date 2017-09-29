@@ -48,7 +48,7 @@ public class RRuntime {
     //@formatter:off
     // Parts of the welcome message originate from GNU R.
     public static final String WELCOME_MESSAGE =
-        "FastR version " + RVersionNumber.FULL + "\n" +
+        "R version " + RVersionNumber.FULL + " (FastR)\n" +
         "Copyright (c) 2013-17, Oracle and/or its affiliates\n" +
         "Copyright (c) 1995-2016, The R Core Team\n" +
         "Copyright (c) 2016 The R Foundation for Statistical Computing\n" +
