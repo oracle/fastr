@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
@@ -38,7 +40,7 @@ public class TruffleNFI_CAccess {
         READ_POINTER_DOUBLE("(pointer): double"),
         READ_ARRAY_DOUBLE("(pointer, sint32): double");
 
-        private TruffleObject symbolFunction;
+        @CompilationFinal private TruffleObject symbolFunction;
         private final String signature;
 
         Function(String signature) {
@@ -47,6 +49,7 @@ public class TruffleNFI_CAccess {
 
         public TruffleObject getSymbolFunction() {
             if (symbolFunction == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 SymbolHandle symbolHandle = DLL.findSymbol(cName(), null);
                 assert symbolHandle != null;
                 Node bind = Message.createInvoke(1).createNode();

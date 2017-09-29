@@ -29,6 +29,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.Utils;
 
 public abstract class RBuiltinDescriptor {
 
@@ -56,7 +57,7 @@ public abstract class RBuiltinDescriptor {
                     int[] nonEvalArgs, boolean splitCaller,
                     boolean alwaysSplit, RDispatch dispatch, String genericName, RBehavior behavior, RSpecialFactory specialCall) {
         this.specialCall = specialCall;
-        this.name = name.intern();
+        this.name = Utils.intern(name);
         this.builtinMetaClass = builtinMetaClass;
         this.builtinNodeClass = builtinNodeClass;
         this.visibility = visibility;
@@ -67,7 +68,7 @@ public abstract class RBuiltinDescriptor {
         this.splitCaller = splitCaller;
         this.alwaysSplit = alwaysSplit;
         this.dispatch = dispatch;
-        this.genericName = genericName.intern();
+        this.genericName = Utils.intern(genericName);
         this.behavior = behavior;
 
         evaluatesArgument = new boolean[signature.getLength()];

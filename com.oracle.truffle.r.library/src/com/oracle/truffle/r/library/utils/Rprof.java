@@ -218,17 +218,21 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements MemoryC
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (newInterval) {
-                /* context tells here we are now, frame provides callers. */
-                final ArrayList<RSyntaxElement> stack = new ArrayList<>();
-                stack.add((RSyntaxElement) context.getInstrumentedNode());
-                collectStack(stack);
-                intervalStacks.add(stack);
-                RprofState profState = RprofState.get();
-                if (profState.memoryProfiling) {
-                    intervalMemory.add(profState.memoryQuad.copyAndClear());
-                }
-
+                onEnter(context);
                 newInterval = false;
+            }
+        }
+
+        @TruffleBoundary
+        private void onEnter(EventContext context) {
+            /* context tells here we are now, frame provides callers. */
+            ArrayList<RSyntaxElement> stack = new ArrayList<>();
+            stack.add((RSyntaxElement) context.getInstrumentedNode());
+            collectStack(stack);
+            intervalStacks.add(stack);
+            RprofState profState = RprofState.get();
+            if (profState.memoryProfiling) {
+                intervalMemory.add(profState.memoryQuad.copyAndClear());
             }
         }
 

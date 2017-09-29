@@ -443,7 +443,7 @@ public class RPromise extends RObject implements RTypedValue {
         private Closure(RBaseNode expr) {
             this.expr = expr;
             if (expr.asRSyntaxNode() instanceof RSyntaxLookup) {
-                this.symbol = ((RSyntaxLookup) expr.asRSyntaxNode()).getIdentifier().intern();
+                this.symbol = Utils.intern(((RSyntaxLookup) expr.asRSyntaxNode()).getIdentifier());
             } else {
                 this.symbol = null;
             }

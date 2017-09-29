@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -68,7 +69,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         public final boolean groupMatch;
 
         private Result(String generic, RFunction function, Object clazz, String targetFunctionName, boolean groupMatch) {
-            this.generic = generic.intern();
+            this.generic = Utils.intern(generic);
             this.function = function;
             this.signature = function == null ? null : ArgumentMatcher.getFunctionSignature(function);
             this.clazz = clazz;

@@ -129,6 +129,7 @@ public final class NativeDataAccess {
             this.dataAddress = address;
         }
 
+        @TruffleBoundary
         void allocateNative(Object source, int len, int elementBase, int elementSize) {
             assert dataAddress == 0;
             dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(len * elementSize);
@@ -136,6 +137,7 @@ public final class NativeDataAccess {
             this.length = len;
         }
 
+        @TruffleBoundary
         void allocateNative(String source) {
             assert dataAddress == 0;
             byte[] bytes = source.getBytes(StandardCharsets.US_ASCII);
@@ -224,8 +226,10 @@ public final class NativeDataAccess {
     }
 
     /**
-     * For given native mirror ID returns the Java side object (vector).
+     * For given native mirror ID returns the Java side object (vector). TruffleBoundary because it
+     * calls into HashMap.
      */
+    @TruffleBoundary
     public static Object lookup(long address) {
         WeakReference<RObject> reference = nativeMirrors.get(address);
         if (reference == null) {

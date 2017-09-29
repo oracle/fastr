@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -83,11 +84,13 @@ public class RStringSequence extends RSequence implements RAbstractStringVector 
     }
 
     @Override
+    @TruffleBoundary
     public String getDataAt(int index) {
         assert index >= 0 && index < getLength();
         return prefix + (start + stride * index) + suffix;
     }
 
+    @TruffleBoundary
     private void populateVectorData(String[] result) {
         int current = start;
         for (int i = 0; i < result.length && i < getLength(); i++) {
@@ -114,11 +117,13 @@ public class RStringSequence extends RSequence implements RAbstractStringVector 
     }
 
     @Override
+    @TruffleBoundary
     public Object getStartObject() {
         return prefix + start + suffix;
     }
 
     @Override
+    @TruffleBoundary
     public Object getStrideObject() {
         return Integer.toString(stride);
     }

@@ -107,7 +107,7 @@ public final class ArgumentsSignature implements Iterable<String> {
                 localNames = new String[names.length];
             }
             nonNull++;
-            localNames[i] = s == UNMATCHED ? s : s.intern();
+            localNames[i] = s == UNMATCHED ? s : Utils.intern(s);
         }
         this.names = localNames;
         this.nonNullCount = nonNull;

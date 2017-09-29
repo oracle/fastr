@@ -362,6 +362,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                         for (RPairList expr : current) {
                             if (expr.car() != RNull.instance) {
                                 if (!(expr.car() instanceof RNode)) {
+                                    CompilerDirectives.transferToInterpreter();
                                     RInternalError.shouldNotReachHere("unexpected type for on.exit entry: " + expr.car());
                                 }
                                 onExitExpressionCache.execute(frame, expr.car());

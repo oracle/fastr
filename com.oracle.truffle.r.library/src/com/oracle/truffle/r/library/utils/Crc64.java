@@ -42,6 +42,7 @@ public abstract class Crc64 extends RExternalBuiltinNode.Arg1 {
         return crc(x);
     }
 
+    @TruffleBoundary
     public static String crc(RAbstractStringVector x) {
         final String string = x.getDataAt(0);
         byte[] bytes = string.getBytes();

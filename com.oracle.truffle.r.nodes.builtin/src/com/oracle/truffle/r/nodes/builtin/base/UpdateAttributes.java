@@ -47,6 +47,7 @@ import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -237,7 +238,7 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         setAttrNode = insert(SetAttributeNode.create());
                     }
-                    setAttrNode.execute(res, attrName.intern(), value);
+                    setAttrNode.execute(res, Utils.intern(attrName), value);
                 }
             }
         }
@@ -274,7 +275,7 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
                     }
                     obj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue));
                 } else {
-                    obj.setAttr(attrName.intern(), list.getDataAt(i));
+                    obj.setAttr(Utils.intern(attrName), list.getDataAt(i));
                 }
             }
         }
