@@ -110,5 +110,7 @@ public class TestRandGenerationFunctions extends TestBase {
         assertEval("{ get0('.Random.seed', envir = .GlobalEnv, inherits = FALSE) }");
         assertEval(Output.IgnoreErrorContext, "{ get('.Random.seed', envir = .GlobalEnv, inherits = TRUE) }");
         assertEval("{ get0('.Random.seed', envir = .GlobalEnv, inherits = TRUE) }");
+
+        assertEval("exists('.Random.seed', envir = .GlobalEnv, inherits = FALSE)");
     }
 }
