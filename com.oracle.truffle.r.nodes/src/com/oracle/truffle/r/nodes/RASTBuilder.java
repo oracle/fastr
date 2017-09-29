@@ -36,7 +36,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.InternalNode;
 import com.oracle.truffle.r.nodes.control.BlockNode;
 import com.oracle.truffle.r.nodes.control.BreakNode;
-import com.oracle.truffle.r.nodes.control.ForNode;
+import com.oracle.truffle.r.nodes.control.ForNodeGen;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.NextNode;
 import com.oracle.truffle.r.nodes.control.RepeatNode;
@@ -129,7 +129,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                     case "for":
                         if (args.get(0).value instanceof RSyntaxLookup) {
                             RSyntaxLookup var = (RSyntaxLookup) args.get(0).value;
-                            return new ForNode(source, lhsLookup, var, args.get(1).value.asRNode(), args.get(2).value.asRNode());
+                            return ForNodeGen.create(source, lhsLookup, var, args.get(2).value.asRNode(), args.get(1).value.asRNode());
                         }
                         break;
                     case "if":

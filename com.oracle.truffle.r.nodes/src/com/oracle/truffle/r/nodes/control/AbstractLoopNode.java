@@ -76,6 +76,7 @@ public abstract class AbstractLoopNode extends OperatorNode {
             Node grandparent = parent.getParent();
             return grandparent instanceof AbstractRepeatingNode && ((AbstractRepeatingNode) grandparent).body == parent;
         }
-        return parent instanceof AbstractRepeatingNode && ((AbstractRepeatingNode) parent).body == n;
+        return (parent instanceof AbstractRepeatingNode && ((AbstractRepeatingNode) parent).body == n) ||
+                        (parent instanceof ForNode && ((ForNode) parent).body == n);
     }
 }
