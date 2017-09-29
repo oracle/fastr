@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -75,7 +76,10 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
             Object value = FrameSlotChangeMonitor.getValue(slot, frame);
             // special treatment for active binding: call bound function
             if (ActiveBinding.isActiveBinding(value)) {
-                return ((ActiveBinding) value).readValue();
+                Object readValue = ((ActiveBinding) value).readValue();
+                // special case: if the active binding returns RMissing, then this should behave
+                // like the variable does not exist.
+                return readValue != RMissing.instance ? readValue : null;
             }
             return value;
         }
@@ -161,7 +165,8 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
         for (int i = 0; i < names.length; i++) {
             String name = names[i];
             FrameSlot frameSlot = fd.findFrameSlot(name);
-            if (FrameSlotChangeMonitor.getValue(frameSlot, frame) == null) {
+            Object value = FrameSlotChangeMonitor.getValue(frameSlot, frame);
+            if (value == null || !ActiveBinding.isListed(value)) {
                 continue;
             }
             if (REnvironment.includeName(name, allNames, pattern)) {

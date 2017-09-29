@@ -211,7 +211,7 @@ final class REngine implements Engine, Engine.Timings {
     private void initializeRNG() {
         assert REnvironment.globalEnv() != null;
         RFunction fun = context.lookupBuiltin(".fastr.set.seed");
-        ActiveBinding dotRandomSeed = new ActiveBinding(RType.Any, fun);
+        ActiveBinding dotRandomSeed = new ActiveBinding(RType.Any, fun, true);
         Frame frame = REnvironment.globalEnv().getFrame();
         FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RRNG.RANDOM_SEED, FrameSlotKind.Object);
         FrameSlotChangeMonitor.setActiveBinding(frame, slot, dotRandomSeed, false, null);

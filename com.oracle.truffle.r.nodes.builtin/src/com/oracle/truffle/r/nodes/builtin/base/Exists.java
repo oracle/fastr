@@ -69,14 +69,14 @@ public abstract class Exists extends RBuiltinNode.Arg4 {
             if (modeType != RType.Any && obj instanceof RPromise) {
                 obj = PromiseHelperNode.evaluateSlowPath((RPromise) obj);
             }
-            return RRuntime.asLogical(obj != null && obj != RMissing.instance && RRuntime.checkType(obj, modeType));
+            return RRuntime.asLogical(obj != null && RRuntime.checkType(obj, modeType));
         }
         for (REnvironment e = env; e != REnvironment.emptyEnv(); e = e.getParent()) {
             Object obj = e.get(name);
             if (modeType != RType.Any && obj instanceof RPromise) {
                 obj = PromiseHelperNode.evaluateSlowPath((RPromise) obj);
             }
-            if (obj != null && obj != RMissing.instance && RRuntime.checkType(obj, modeType)) {
+            if (obj != null && RRuntime.checkType(obj, modeType)) {
                 return RRuntime.LOGICAL_TRUE;
             }
         }

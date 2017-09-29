@@ -151,7 +151,9 @@ public class RNGFunctions {
                 int[] seedsArr = (int[]) seeds;
                 return RDataFactory.createIntVector(seedsArr, RDataFactory.INCOMPLETE_VECTOR);
             }
-            assert seeds != null;
+            if (seeds == null) {
+                return RNull.instance;
+            }
             return seeds;
         }
     }
