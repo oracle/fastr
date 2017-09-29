@@ -1188,8 +1188,8 @@ SEXP SET_TYPEOF_FASTR(SEXP x, int v) {
 }
 
 void SET_NAMED(SEXP x, int v) {
-    TRACE0();
-    unimplemented("SET_NAMED");
+    TRACE(TARGpd, x, v);
+    ((call_SET_NAMED) callbacks[SET_NAMED_FASTR_x])(x, v);
 }
 
 void SET_ATTRIB(SEXP x, SEXP v) {
