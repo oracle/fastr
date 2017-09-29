@@ -480,7 +480,7 @@ public final class RDataFactory {
      * serialization/deparsing.
      */
     public static RSymbol createSymbolInterned(String name) {
-        return createSymbol(name.intern());
+        return createSymbol(Utils.intern(name));
     }
 
     public static RLanguage createLanguage(RBaseNode rep) {

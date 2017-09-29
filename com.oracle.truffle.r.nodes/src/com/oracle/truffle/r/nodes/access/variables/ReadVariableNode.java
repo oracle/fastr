@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.StableValue;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -199,7 +200,7 @@ public final class ReadVariableNode extends RBaseNode {
 
     private ReadVariableNode(Object identifier, RType mode, ReadKind kind) {
         this.identifier = identifier;
-        this.identifierAsString = identifier.toString().intern();
+        this.identifierAsString = Utils.intern(identifier.toString());
         this.mode = mode;
         this.kind = kind;
 

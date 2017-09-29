@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -618,20 +619,20 @@ public abstract class Deriv extends RExternalBuiltinNode {
     }
 
     private static RSyntaxNode createAssignNode(String varName, RSyntaxNode rhs) {
-        return RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("<-"), createLookup(varName.intern()), addParens(rhs));
+        return RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("<-"), createLookup(Utils.intern(varName)), addParens(rhs));
     }
 
     private static RSyntaxNode hessAssign1(String varName, RSyntaxNode rhs) {
         RSyntaxNode tmp = RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("["), createLookup(".hessian"), ConstantNode.create(REmpty.instance),
-                        ConstantNode.create(varName.intern()), ConstantNode.create(varName.intern()));
+                        ConstantNode.create(Utils.intern(varName)), ConstantNode.create(Utils.intern(varName)));
         return RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("<-"), tmp, rhs);
     }
 
     private static RSyntaxNode hessAssign2(String varName1, String varName2, RSyntaxNode rhs) {
         RSyntaxNode tmp1 = RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("["), createLookup(".hessian"), ConstantNode.create(REmpty.instance),
-                        ConstantNode.create(varName1.intern()), ConstantNode.create(varName2.intern()));
+                        ConstantNode.create(Utils.intern(varName1)), ConstantNode.create(Utils.intern(varName2)));
         RSyntaxNode tmp2 = RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("["), createLookup(".hessian"), ConstantNode.create(REmpty.instance),
-                        ConstantNode.create(varName2.intern()), ConstantNode.create(varName1.intern()));
+                        ConstantNode.create(Utils.intern(varName2)), ConstantNode.create(Utils.intern(varName1)));
 
         RSyntaxNode tmp3 = RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("<-"), tmp2, rhs);
         return RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("<-"), tmp1, tmp3);
@@ -641,7 +642,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
         int n = names.getLength();
         List<Argument<RSyntaxNode>> cArgs = new ArrayList<>();
         for (int i = 0; i < n; i++) {
-            cArgs.add(RCodeBuilder.argument(ConstantNode.create(names.getDataAt(i).intern())));
+            cArgs.add(RCodeBuilder.argument(ConstantNode.create(Utils.intern(names.getDataAt(i)))));
         }
         RSyntaxNode tmp1 = RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("c"), cArgs);
         RSyntaxNode dimnames = RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("list"), ConstantNode.create(RNull.instance), tmp1);
@@ -658,7 +659,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
         int n = names.getLength();
         List<Argument<RSyntaxNode>> cArgs = new ArrayList<>();
         for (int i = 0; i < n; i++) {
-            cArgs.add(RCodeBuilder.argument(ConstantNode.create(names.getDataAt(i).intern())));
+            cArgs.add(RCodeBuilder.argument(ConstantNode.create(Utils.intern(names.getDataAt(i)))));
         }
         RSyntaxNode tmp1 = RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("c"), cArgs);
         RSyntaxNode tmp1Clone = cloneElement(tmp1);
@@ -674,7 +675,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
 
     private static RSyntaxNode derivAssign(String name, RSyntaxNode expr) {
         RSyntaxNode tmp = RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("["), createLookup(".grad"), ConstantNode.create(REmpty.instance),
-                        ConstantNode.create(name.intern()));
+                        ConstantNode.create(Utils.intern(name)));
         return RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("<-"), tmp, expr);
     }
 

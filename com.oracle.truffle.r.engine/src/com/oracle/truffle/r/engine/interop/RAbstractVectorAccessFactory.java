@@ -94,6 +94,7 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
                         @Cached("createKeyInfoNode()") VectorKeyInfoImplNode keyInfo) {
             int info = keyInfo.execute(frame, receiver, idx);
             if (unknownIdentifier.profile(!KeyInfo.isExisting(info))) {
+                CompilerDirectives.transferToInterpreter();
                 throw UnknownIdentifierException.raise("" + idx);
             }
             return read(receiver, new Object[]{idx + 1});
@@ -104,6 +105,7 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
                         @Cached("createKeyInfoNode()") VectorKeyInfoImplNode keyInfo) {
             int info = keyInfo.execute(frame, receiver, idx);
             if (unknownIdentifier.profile(!KeyInfo.isExisting(info))) {
+                CompilerDirectives.transferToInterpreter();
                 throw UnknownIdentifierException.raise("" + idx);
             }
             return read(receiver, new Object[]{idx + 1});
@@ -124,6 +126,7 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
 
         @Fallback
         protected Object read(@SuppressWarnings("unused") Object receiver, Object indentifier) {
+            CompilerDirectives.transferToInterpreter();
             throw UnknownIdentifierException.raise("" + indentifier);
         }
 
@@ -172,6 +175,7 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
 
         @Fallback
         protected Object write(@SuppressWarnings("unused") Object receiver, Object field, @SuppressWarnings("unused") Object object) {
+            CompilerDirectives.transferToInterpreter();
             throw UnknownIdentifierException.raise("" + field);
         }
     }

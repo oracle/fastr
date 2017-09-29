@@ -63,6 +63,7 @@ public class RNGFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
+        @TruffleBoundary
         protected RNull setSeed(int seed, int kind, RNull normKind) {
             doSetSeed(seed, kind, RRNG.NO_KIND_CHANGE);
             return RNull.instance;
@@ -70,6 +71,7 @@ public class RNGFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
+        @TruffleBoundary
         protected RNull setSeed(RNull seed, int kind, RNull normKind) {
             doSetSeed(RRNG.timeToSeed(), kind, RRNG.NO_KIND_CHANGE);
             return RNull.instance;
@@ -90,6 +92,7 @@ public class RNGFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RIntVector doRNGkind(int kind, int normKind) {
             RRNG.getRNGState();
             RIntVector result = getCurrent();

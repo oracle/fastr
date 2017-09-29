@@ -53,6 +53,7 @@ import com.oracle.truffle.r.nodes.function.signature.MissingNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -256,7 +257,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     @Override
     public RSyntaxNode constant(SourceSection source, Object value) {
         if (value instanceof String && !RRuntime.isNA((String) value)) {
-            return ConstantNode.create(source, ((String) value).intern());
+            return ConstantNode.create(source, Utils.intern((String) value));
         } else {
             if (value instanceof RShareable) {
                 RShareable shareable = (RShareable) value;

@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
+import com.oracle.truffle.r.runtime.Utils;
+
 /**
  * The base class for the nodes that get/set/remove a fixed attribute.
  */
@@ -32,7 +34,7 @@ public abstract class FixedAttributeAccessNode extends AttributeAccessNode {
     protected final String name;
 
     protected FixedAttributeAccessNode(String name) {
-        assert name.intern() == name;
+        assert Utils.isInterned(name);
         this.name = name;
     }
 }

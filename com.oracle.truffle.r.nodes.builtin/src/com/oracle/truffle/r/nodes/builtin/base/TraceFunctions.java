@@ -263,11 +263,13 @@ public class TraceFunctions {
 
         @Specialization
         protected Object execute(VirtualFrame frame, Object x, @SuppressWarnings("unused") RNull previous) {
+            CompilerDirectives.transferToInterpreter();
             return getResult(frame, x);
         }
 
         @Specialization
         protected Object execute(VirtualFrame frame, Object x, @SuppressWarnings("unused") RMissing previous) {
+            CompilerDirectives.transferToInterpreter();
             return getResult(frame, x);
         }
 

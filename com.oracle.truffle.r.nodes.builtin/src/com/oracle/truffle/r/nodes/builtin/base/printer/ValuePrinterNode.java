@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
@@ -69,10 +69,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R.InteropTypeCheck;
-import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.InteropTypeCheck.RType.BOOLEAN;
-import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.InteropTypeCheck.RType.DOUBLE;
-import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.InteropTypeCheck.RType.INTEGER;
-import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.InteropTypeCheck.RType.STRING;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class ValuePrinterNode extends RBaseNode {
@@ -113,11 +109,13 @@ public final class ValuePrinterNode extends RBaseNode {
                 }
 
                 @Override
+                @TruffleBoundary
                 public Object getDataAtAsObject(int index) {
                     return getDataAt(index);
                 }
 
                 @Override
+                @TruffleBoundary
                 public String getDataAt(int index) {
                     Object value;
                     try {
@@ -129,6 +127,7 @@ public final class ValuePrinterNode extends RBaseNode {
                 }
 
                 @Override
+                @TruffleBoundary
                 public RStringVector materialize() {
                     throw RInternalError.shouldNotReachHere();
                 }
@@ -147,11 +146,13 @@ public final class ValuePrinterNode extends RBaseNode {
                 }
 
                 @Override
+                @TruffleBoundary
                 public Object getDataAtAsObject(int index) {
                     return getDataAt(index);
                 }
 
                 @Override
+                @TruffleBoundary
                 public Object getDataAt(int index) {
                     try {
                         Object value = ForeignAccess.sendRead(readNode, obj, names != null ? names.getDataAt(index) : index);
@@ -162,11 +163,13 @@ public final class ValuePrinterNode extends RBaseNode {
                 }
 
                 @Override
+                @TruffleBoundary
                 public RStringVector getNames() {
                     return names;
                 }
 
                 @Override
+                @TruffleBoundary
                 public RList materialize() {
                     throw RInternalError.shouldNotReachHere();
                 }
@@ -193,11 +196,13 @@ public final class ValuePrinterNode extends RBaseNode {
                                 }
 
                                 @Override
+                                @TruffleBoundary
                                 public Object getDataAtAsObject(int index) {
                                     return getDataAt(index);
                                 }
 
                                 @Override
+                                @TruffleBoundary
                                 public byte getDataAt(int index) {
                                     try {
                                         Object value = ForeignAccess.sendRead(readNode, obj, index);
@@ -208,6 +213,7 @@ public final class ValuePrinterNode extends RBaseNode {
                                 }
 
                                 @Override
+                                @TruffleBoundary
                                 public RLogicalVector materialize() {
                                     throw RInternalError.shouldNotReachHere();
                                 }
@@ -221,11 +227,13 @@ public final class ValuePrinterNode extends RBaseNode {
                                 }
 
                                 @Override
+                                @TruffleBoundary
                                 public Object getDataAtAsObject(int index) {
                                     return getDataAt(index);
                                 }
 
                                 @Override
+                                @TruffleBoundary
                                 public int getDataAt(int index) {
                                     try {
                                         Object value = ForeignAccess.sendRead(readNode, obj, index);
@@ -236,6 +244,7 @@ public final class ValuePrinterNode extends RBaseNode {
                                 }
 
                                 @Override
+                                @TruffleBoundary
                                 public RIntVector materialize() {
                                     throw RInternalError.shouldNotReachHere();
                                 }
@@ -249,11 +258,13 @@ public final class ValuePrinterNode extends RBaseNode {
                                 }
 
                                 @Override
+                                @TruffleBoundary
                                 public Object getDataAtAsObject(int index) {
                                     return getDataAt(index);
                                 }
 
                                 @Override
+                                @TruffleBoundary
                                 public double getDataAt(int index) {
                                     try {
                                         Object value = ForeignAccess.sendRead(readNode, obj, index);
@@ -264,6 +275,7 @@ public final class ValuePrinterNode extends RBaseNode {
                                 }
 
                                 @Override
+                                @TruffleBoundary
                                 public RDoubleVector materialize() {
                                     throw RInternalError.shouldNotReachHere();
                                 }

@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_UpCallsRFFIImpl.VectorWrapper;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
@@ -101,8 +103,8 @@ public abstract class FFIWrapNode extends Node {
 
     @Fallback
     protected static Object wrap(Object value) {
-        System.out.println("invalid wrapping: " + value.getClass().getSimpleName());
-        return value;
+        CompilerDirectives.transferToInterpreter();
+        throw RInternalError.shouldNotReachHere("invalid wrapping: " + value.getClass().getSimpleName());
     }
 
     public static FFIWrapNode create() {

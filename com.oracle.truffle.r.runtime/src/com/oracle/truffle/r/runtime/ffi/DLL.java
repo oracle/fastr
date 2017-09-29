@@ -389,6 +389,7 @@ public class DLL {
             if (value instanceof TruffleObject) {
                 return (TruffleObject) value;
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere("value: " + value);
             }
         }

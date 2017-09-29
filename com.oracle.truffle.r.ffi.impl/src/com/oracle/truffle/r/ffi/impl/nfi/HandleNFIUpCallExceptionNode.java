@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;
 public class HandleNFIUpCallExceptionNode extends Node implements HandleUpCallExceptionNode {
     @Child SetFlagNode setFlagNode = new SetFlagNode();
 
+    @Override
     @TruffleBoundary
     public void execute(Throwable originalEx) {
         setFlagNode.execute();

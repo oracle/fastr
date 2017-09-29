@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
@@ -80,7 +81,7 @@ public final class SpecialAttributesFunctions {
          * The fast-path method.
          */
         public boolean execute(String name) {
-            assert name.intern() == name;
+            assert Utils.isInterned(name);
             if (name == RRuntime.NAMES_ATTR_KEY) {
                 namesProfile.enter();
                 return true;
@@ -104,7 +105,7 @@ public final class SpecialAttributesFunctions {
          * The slow-path method.
          */
         public static boolean isSpecialAttribute(String name) {
-            assert name.intern() == name;
+            assert Utils.isInterned(name);
             return name == RRuntime.NAMES_ATTR_KEY ||
                             name == RRuntime.DIM_ATTR_KEY ||
                             name == RRuntime.DIMNAMES_ATTR_KEY ||
@@ -134,7 +135,7 @@ public final class SpecialAttributesFunctions {
         }
 
         public void execute(RAttributable x, String name, Object value) {
-            assert name.intern() == name;
+            assert Utils.isInterned(name);
             if (name == RRuntime.NAMES_ATTR_KEY) {
                 namesProfile.enter();
                 if (namesAttrNode == null) {
@@ -180,7 +181,7 @@ public final class SpecialAttributesFunctions {
      * @return the node
      */
     public static SetSpecialAttributeNode createSetSpecialAttributeNode(String name) {
-        assert name.intern() == name;
+        assert Utils.isInterned(name);
         if (name == RRuntime.NAMES_ATTR_KEY) {
             return SetNamesAttributeNode.create();
         } else if (name == RRuntime.DIM_ATTR_KEY) {
@@ -203,7 +204,7 @@ public final class SpecialAttributesFunctions {
      * @return the node
      */
     public static RemoveSpecialAttributeNode createRemoveSpecialAttributeNode(String name) {
-        assert name.intern() == name;
+        assert Utils.isInterned(name);
         if (name == RRuntime.NAMES_ATTR_KEY) {
             return RemoveNamesAttributeNode.create();
         } else if (name == RRuntime.DIM_ATTR_KEY) {
@@ -226,7 +227,7 @@ public final class SpecialAttributesFunctions {
      * @return the node
      */
     public static GetFixedAttributeNode createGetSpecialAttributeNode(String name) {
-        assert name.intern() == name;
+        assert Utils.isInterned(name);
         if (name == RRuntime.NAMES_ATTR_KEY) {
             return GetNamesAttributeNode.create();
         } else if (name == RRuntime.DIM_ATTR_KEY) {

@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.Conver
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertValueNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -51,7 +52,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 class SpecialsUtils {
 
-    private static final String valueArgName = "value".intern();
+    private static final String valueArgName = Utils.intern("value");
 
     public static boolean isCorrectUpdateSignature(ArgumentsSignature signature) {
         if (signature.getLength() == 3) {

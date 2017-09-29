@@ -314,7 +314,7 @@ public abstract class Identical extends RBuiltinNode.Arg7 {
                     if (xSubList.getTag() instanceof RSymbol && ySubList.getTag() instanceof RSymbol) {
                         String xTagName = ((RSymbol) xSubList.getTag()).getName();
                         String yTagName = ((RSymbol) ySubList.getTag()).getName();
-                        assert xTagName == xTagName.intern() && yTagName == yTagName.intern();
+                        assert Utils.isInterned(xTagName) && Utils.isInterned(yTagName);
                         if (xTagName != yTagName) {
                             return RRuntime.LOGICAL_FALSE;
                         }

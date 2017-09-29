@@ -889,7 +889,7 @@ public class RSerialize {
             Object result = object;
             while (true) {
                 RSymbol tagSym = (RSymbol) pl.getTag();
-                String tag = tagSym.getName().intern();
+                String tag = Utils.intern(tagSym.getName());
                 // this may convert a plain vector to a data.frame or factor
                 Object attrValue = pl.car();
                 if (attrValue instanceof RShareable && ((RShareable) attrValue).isTemporary()) {
