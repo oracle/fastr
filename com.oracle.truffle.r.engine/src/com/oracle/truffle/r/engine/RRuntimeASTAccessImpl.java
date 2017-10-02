@@ -224,30 +224,16 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     @TruffleBoundary
     public Object createLanguageFromList(RList list, RLanguage.RepType repType) {
-        int origLength = list.getLength();
-        int length = origLength;
+        int length = list.getLength();
         if (length == 0) {
             return RNull.instance;
         } else if (repType == RLanguage.RepType.CALL) {
-
-            Object fnSym = list.getDataAtAsObject(0);
-            /**
-             * A language object representing a replacement normally consists of three elements: the
-             * assignment symbol, the replacement function and the assigned value (i.e. rhs).
-             * However, under certain circumstances the last element (rhs) can get removed by
-             * assigning NULL, e.g. l <- quote(a(x)<–1); l[[3]] <- NULL. In such a case that
-             * language object is treated as if its third element were the NULL constant.
-             */
-            if (length == 2 && fnSym instanceof RSymbol && ((RSymbol) fnSym).getName() == Utils.intern("<-")) {
-                length++;
-            }
-
             RStringVector formals = list.getNames();
 
             List<RCodeBuilder.Argument<RSyntaxNode>> argList = new ArrayList<>(length - 1);
             for (int i = 1; i < length; i++) {
-                String formal = formals == null || i == origLength ? null : formals.getDataAt(i);
-                RSyntaxNode syntaxArg = i < origLength ? (RSyntaxNode) unwrapToRNode(list.getDataAtAsObject(i)) : ConstantNode.create(RNull.instance);
+                String formal = formals == null ? null : formals.getDataAt(i);
+                RSyntaxNode syntaxArg = (RSyntaxNode) unwrapToRNode(list.getDataAtAsObject(i));
                 if (formal != null) {
                     argList.add(RCodeBuilder.argument(RSourceSectionNode.LAZY_DEPARSE, formal, syntaxArg));
                 } else {
@@ -255,7 +241,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 }
             }
 
-            RNode fn = unwrapToRNode(fnSym);
+            RNode fn = unwrapToRNode(list.getDataAtAsObject(0));
             RSyntaxNode call = RContext.getASTBuilder().call(RSourceSectionNode.LAZY_DEPARSE, fn.asRSyntaxNode(), argList);
             RLanguage result = RDataFactory.createLanguage(call.asRNode());
             if (formals != null && formals.getLength() > 0 && formals.getDataAt(0).length() > 0) {

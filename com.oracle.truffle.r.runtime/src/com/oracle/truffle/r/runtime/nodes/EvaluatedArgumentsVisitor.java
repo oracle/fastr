@@ -124,7 +124,6 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
             }
             if (symbol.equals("<-")) {
                 Info info = Info.createNew();
-                assert arguments.length == 2;
                 RSyntaxElement current = arguments[0];
                 if (arguments[0] instanceof RSyntaxLookup) {
                     info.maybeAssignedNames.add(((RSyntaxLookup) arguments[0]).getIdentifier());
@@ -139,7 +138,9 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
                         return Info.ANY;
                     }
                 }
-                info.addBefore(accept(arguments[1]));
+                if (arguments.length == 2) {
+                    info.addBefore(accept(arguments[1]));
+                }
                 return info;
             } else if (wellKnownFunctions.contains(symbol)) {
                 Info info = Info.createNew();

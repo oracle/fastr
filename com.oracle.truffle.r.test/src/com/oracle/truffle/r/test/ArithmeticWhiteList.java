@@ -91,5 +91,7 @@ public class ArithmeticWhiteList {
         WHITELIST.add("c(1i,1i,1i)/(-0.0)", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NaN-Infi NaN-Infi NaN-Infi\n");
         WHITELIST.add("c(1i,1i,1i)/FALSE", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NaN+Infi NaN+Infi NaN+Infi\n");
         WHITELIST.add("c(1i,1i,1i)/c(FALSE,FALSE,FALSE)", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NaN+Infi NaN+Infi NaN+Infi\n");
+        WHITELIST.add("{ as.raw(c(1,4)) | raw() }", "raw(0)\n", "logical(0)\n");
+        WHITELIST.add("{ raw() | as.raw(c(1,4))}", "raw(0)\n", "logical(0)\n");
     }
 }

@@ -602,8 +602,8 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ as.raw(10) && \"hi\" }");
         assertEval("{ c(TRUE,FALSE) | logical() }");
         assertEval("{ logical() | c(TRUE,FALSE) }");
-        assertEval("{ as.raw(c(1,4)) | raw() }");
-        assertEval("{ raw() | as.raw(c(1,4))}");
+        assertEval(ArithmeticWhiteList.WHITELIST, "{ as.raw(c(1,4)) | raw() }");
+        assertEval(ArithmeticWhiteList.WHITELIST, "{ raw() | as.raw(c(1,4))}");
         assertEval("{ logical(0) || logical(0) }");
         assertEval("{ logical(0) || TRUE }");
         assertEval("{ logical(0) || FALSE }");

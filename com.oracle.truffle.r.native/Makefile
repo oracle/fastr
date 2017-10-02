@@ -58,12 +58,12 @@ clean:
 
 version.source := $(shell cat version.source)
 
-$(info version: $(version.source))
+#$(info version: $(version.source))
 ifeq ($(wildcard version.built),)
 	doclean = 1
 else
 version.built := $(shell cat version.built)
-$(info version.built: $(version.built))
+#$(info version.built: $(version.built))
 ifneq ($(version.source),$(version.built))
 	doclean = 1
 else

@@ -37,6 +37,7 @@ logfiles : [
     "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_configure.log"
     "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_make.log"
     "*-tests/*.Rout"
+    "com.oracle.truffle.r.native/gnur/R-*/config.log"
   ]
 
 # This is needed by all (Linux) builds but is specific to the module system employed
@@ -46,7 +47,7 @@ logfiles : [
 pkgEnvironment: {
   environment : {
     PKG_INCLUDE_FLAGS_OVERRIDE : """-I/cm/shared/apps/zlib/1.2.8/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/pcre/8.38/include -I/cm/shared/apps/curl/7.50.1/include"""
-    PKG_LDFLAGS_OVERRIDE : """-L/cm/shared/apps/zlib/1.2.8/lib -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1/lib -L/cm/shared/apps/gcc/4.9.1/lib64"""
+    PKG_LDFLAGS_OVERRIDE : """"-L/cm/shared/apps/zlib/1.2.8/lib -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1/lib -L/cm/shared/apps/gcc/4.9.1/lib64""""
 	TZDIR: "/usr/share/zoneinfo"
   }
 }
@@ -114,7 +115,7 @@ darwinEnvironment : {
     F77: "/usr/local/bin/gfortran-4.9"
     TZDIR: "/usr/share/zoneinfo"
 	PKG_INCLUDE_FLAGS_OVERRIDE : """-I/cm/shared/apps/zlib/1.2.8/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/pcre/8.38/include -I/cm/shared/apps/curl/7.50.1/include"""
-    PKG_LDFLAGS_OVERRIDE : """-L/cm/shared/apps/zlib/1.2.8/lib -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1/lib -L/cm/shared/apps/gcc/4.9.1/lib64"""
+    PKG_LDFLAGS_OVERRIDE : """"-L/cm/shared/apps/zlib/1.2.8/lib -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1/lib -L/cm/shared/apps/gcc/4.9.1/lib64""""
   }
 }
 
