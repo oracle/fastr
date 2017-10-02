@@ -296,7 +296,8 @@ public class RCommand {
                 context.eval(QUIT_EOF);
             } catch (PolyglotException e2) {
                 if (e2.isExit()) {
-                    return e2.getExitStatus();
+                    // don't use the exit code from the PolyglotException
+                    return lastStatus;
                 }
                 throw fatal(e, "error while calling quit");
             }
