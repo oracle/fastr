@@ -28,7 +28,10 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import javax.imageio.ImageIO;
 
@@ -72,9 +75,18 @@ public final class BufferedImageDevice extends Graphics2DDevice implements FileG
 
     private void saveImage() throws DeviceCloseException {
         try {
+            if (!Files.exists(Paths.get(filename).getParent())) {
+                // Bug in JDK? when the path contains directory that does not exist, the code throws
+                // NPE and prints out to the standard output (!) stack trace of
+                // FileNotFoundException. We still catch the exception, because this check and
+                // following Image.write are not atomic.
+                throw new DeviceCloseException(new FileNotFoundException("Path " + filename + " does not exist"));
+            }
             ImageIO.write(image, fileType, new File(filename));
         } catch (IOException e) {
             throw new DeviceCloseException(e);
+        } catch (NullPointerException npe) {
+            throw new DeviceCloseException(new FileNotFoundException("Path " + filename + " does not exist"));
         }
     }
 
