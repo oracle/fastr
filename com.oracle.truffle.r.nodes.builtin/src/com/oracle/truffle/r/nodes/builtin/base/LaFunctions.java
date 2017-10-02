@@ -778,8 +778,6 @@ public class LaFunctions {
             double[] vtdata = getDataCopyNode.execute(vtMaterialized);
             double[] tmp = new double[1];
 
-// F77_CALL(dgesdd)(ju, &n, &p, xvals, &n, REAL(s), REAL(u), &ldu, REAL(vt), &ldvt, &tmp, &lwork,
-// iwork, &info);
             int info = dgesddNode.execute(ju.charAt(0), n, p, xvals, n, sdata, udata, ldu, vtdata, ldvt, tmp, -1, iwork);
             if (info != 0) {
                 error(Message.LAPACK_ERROR, info, "dgesdd");
@@ -787,8 +785,6 @@ public class LaFunctions {
 
             int lwork = (int) tmp[0];
             double[] work = new double[lwork];
-// F77_CALL(dgesdd)(ju, &n, &p, xvals, &n, REAL(s), REAL(u), &ldu, REAL(vt), &ldvt, work, &lwork,
-// iwork, &info);
             dgesddNode.execute(ju.charAt(0), n, p, xvals, n, sdata, udata, ldu, vtdata, ldvt, work, lwork, iwork);
             if (info != 0) {
                 error(Message.LAPACK_ERROR, info, "dgesdd");

@@ -49,8 +49,11 @@ public class TestS4 extends TestRBase {
         assertEval("{ x<-42; `@`(x, \".Data\") }");
         assertEval("{ x<-42; `@`(x, .Data) }");
         assertEval("{ x<-42; slot(x, \".Data\") }");
-        assertEval("{ setClass(\"foo\", contains=\"numeric\"); x<-new(\"foo\"); res<-x@.Data; removeClass(\"foo\"); res }");
-        assertEval("{ setClass(\"foo\", contains=\"numeric\"); x<-new(\"foo\"); res<-slot(x, \".Data\"); removeClass(\"foo\"); res }");
+
+        // disabled because of side effects causing other tests to fail
+        assertEval(Ignored.ImplementationError, "{ setClass(\"foo\", contains=\"numeric\"); x<-new(\"foo\"); res<-x@.Data; removeClass(\"foo\"); res }");
+        assertEval(Ignored.ImplementationError, "{ setClass(\"foo\", contains=\"numeric\"); x<-new(\"foo\"); res<-slot(x, \".Data\"); removeClass(\"foo\"); res }");
+
         assertEval(Output.IgnoreErrorContext, "{ getClass(\"ClassUnionRepresentation\")@foo }");
         assertEval(Output.IgnoreErrorContext, "{ c(42)@foo }");
         assertEval(Output.IgnoreErrorContext, " { x<-42; attr(x, \"foo\")<-7; x@foo }");

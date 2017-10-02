@@ -1,12 +1,24 @@
 /*
- * This material is distributed under the GNU General Public License
- * Version 2. You may review the terms of this license at
- * http://www.gnu.org/licenses/gpl-2.0.html
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * All rights reserved.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.oracle.truffle.r.test.builtins;
 
@@ -20,6 +32,6 @@ public class TestBuiltin_svd extends TestBase {
 
     @Test
     public void testSvd() {
-        assertEval("");
+        assertEval("{ hilbert <- function(n) { i <- 1:n; 1 / outer(i - 1, i, '+') }; X <- hilbert(9)[, 1:6]; svd(X)");
     }
 }
