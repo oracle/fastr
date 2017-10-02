@@ -177,7 +177,7 @@ public class RSource {
     public static Source fromFileName(String path, boolean internal) throws IOException {
         File file = new File(path);
         return getCachedByOrigin(file, origin -> {
-            Source.Builder<IOException, RuntimeException, RuntimeException> builder = Source.newBuilder(new File(path)).mimeType(RRuntime.R_APP_MIME);
+            Source.Builder<IOException, RuntimeException, RuntimeException> builder = Source.newBuilder(file).mimeType(RRuntime.R_APP_MIME);
             if (internal) {
                 builder.internal();
             }
