@@ -24,13 +24,16 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.WeakHashMap;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RSrcref.SrcrefFields;
@@ -93,6 +96,12 @@ public class RSource {
             this.string = text;
         }
     }
+
+    /**
+     * A weak map associating {@link Source} objects to corresponding origin (= {@link File} or
+     * {@link URL}, ...).
+     */
+    private static final WeakHashMap<Object, WeakReference<Source>> deserializedSources = new WeakHashMap<>();
 
     /**
      * Create an (external) source from the {@code text} that is known to originate from the file
@@ -166,32 +175,35 @@ public class RSource {
      * Create an (external) source from the file system path {@code path}.
      */
     public static Source fromFileName(String path, boolean internal) throws IOException {
-        Source.Builder<IOException, RuntimeException, RuntimeException> builder = Source.newBuilder(new File(path)).mimeType(RRuntime.R_APP_MIME);
-        if (internal) {
-            builder.internal();
-        }
-        return builder.build();
+        File file = new File(path);
+        return getCachedByOrigin(file, origin -> {
+            Source.Builder<IOException, RuntimeException, RuntimeException> builder = Source.newBuilder(new File(path)).mimeType(RRuntime.R_APP_MIME);
+            if (internal) {
+                builder.internal();
+            }
+            return builder.build();
+        });
     }
 
     /**
      * Create an (external) source from the file system path denoted by {@code file}.
      */
     public static Source fromFile(File file) throws IOException {
-        return Source.newBuilder(file).name(file.getName()).mimeType(RRuntime.R_APP_MIME).build();
+        return getCachedByOrigin(file, origin -> Source.newBuilder(file).name(file.getName()).mimeType(RRuntime.R_APP_MIME).build());
     }
 
     /**
      * Create a source from the file system path denoted by {@code file}.
      */
     public static Source fromTempFile(File file) throws IOException {
-        return Source.newBuilder(file).name(file.getName()).mimeType(RRuntime.R_APP_MIME).internal().build();
+        return getCachedByOrigin(file, origin -> Source.newBuilder(file).name(file.getName()).mimeType(RRuntime.R_APP_MIME).internal().build());
     }
 
     /**
      * Create an (external) source from {@code url}.
      */
     public static Source fromURL(URL url, String name) throws IOException {
-        return Source.newBuilder(url).name(name).mimeType(RRuntime.R_APP_MIME).build();
+        return getCachedByOrigin(url, origin -> Source.newBuilder(url).name(name).mimeType(RRuntime.R_APP_MIME).build());
     }
 
     /**
@@ -280,5 +292,24 @@ public class RSource {
         } else {
             return path;
         }
+    }
+
+    private static <T> Source getCachedByOrigin(T origin, SourceGenerator<T> generator) throws IOException {
+        CompilerAsserts.neverPartOfCompilation();
+        Source src;
+        synchronized (deserializedSources) {
+            WeakReference<Source> weakReference = deserializedSources.get(origin);
+            src = weakReference != null ? weakReference.get() : null;
+            if (src == null) {
+                src = generator.apply(origin);
+                deserializedSources.put(origin, new WeakReference<>(src));
+            }
+        }
+        return src;
+    }
+
+    @FunctionalInterface
+    private interface SourceGenerator<T> {
+        Source apply(T origin) throws IOException;
     }
 }
