@@ -27,6 +27,8 @@ import com.oracle.truffle.r.library.fastrGrid.DisplayList.LInitDisplayList;
 import com.oracle.truffle.r.library.fastrGrid.DisplayList.LSetDisplayListOn;
 import com.oracle.truffle.r.library.fastrGrid.PaletteExternals.CPalette;
 import com.oracle.truffle.r.library.fastrGrid.PaletteExternals.CPalette2;
+import com.oracle.truffle.r.library.fastrGrid.color.Col2RGB;
+import com.oracle.truffle.r.library.fastrGrid.color.RGB;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevCairo;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevCurr;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevHoldFlush;
@@ -184,6 +186,12 @@ public final class FastRGridExternalLookup {
                 return new LInitDisplayList();
             case "L_newpagerecording":
                 return new IgnoredGridExternal(RNull.instance);
+
+            // Color conversions
+            case "col2rgb":
+                return Col2RGB.create();
+            case "rgb":
+                return RGB.create();
 
             default:
                 if (name.startsWith("L_")) {

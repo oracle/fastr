@@ -35,8 +35,10 @@ import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARG;
 import static com.oracle.truffle.r.runtime.RRuntime.LOGICAL_FALSE;
 
 import java.util.Arrays;
-import java.util.TreeSet;
+import java.util.Map;
+import java.util.TreeMap;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -93,9 +95,16 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
         data[firstPos] = firstVal;
         for (int i = firstPos + 1; i < data.length; i++) {
             String s = x.getDataAt(i);
-            boolean isNA = isNA(s, naStrings);
-            data[i] = isNA ? RRuntime.INT_NA : RRuntime.string2intNoCheck(s, true);
-            complete = complete && !isNA;
+            if (isNA(s, naStrings)) {
+                data[i] = RRuntime.INT_NA;
+                complete = false;
+            } else {
+                int result = RRuntime.parseInt(s);
+                if (result == RRuntime.INT_NA) {
+                    throw new NumberFormatException();
+                }
+                data[i] = result;
+            }
         }
         return RDataFactory.createIntVector(data, complete);
     }
@@ -133,13 +142,14 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
     }
 
     @Specialization
+    @TruffleBoundary
     protected Object typeConvert(RAbstractStringVector x, RAbstractStringVector naStrings, boolean asIs, @SuppressWarnings("unused") Object dec, @SuppressWarnings("unused") Object numeral) {
         if (x.getLength() == 0) {
             return RDataFactory.createEmptyLogicalVector();
         }
 
         int i = 0;
-        while (i < x.getLength() && isNA(x.getDataAt(i), naStrings)) {
+        while (i < x.getLength() && (x.getDataAt(i).isEmpty() || isNA(x.getDataAt(i), naStrings))) {
             i++;
         }
 
@@ -153,7 +163,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
         String s = x.getDataAt(i);
         if (RRuntime.hasHexPrefix(s)) {
             // this is a mess
-            // double takes precedense even if s is a hexadecimal integer
+            // double takes precedence even if s is a hexadecimal integer
             try {
                 double doubleVal = RRuntime.string2doubleNoCheck(s, true);
                 return readDoubleVector(x, i, doubleVal, naStrings);
@@ -191,35 +201,33 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
         if (asIs) {
             return x;
         } else {
-            // create a factor
-            TreeSet<String> levels = new TreeSet<>();
+            // collect levels for a factor result
+            TreeMap<String, Integer> levels = new TreeMap<>();
             for (int j = 0; j < x.getLength(); j++) {
                 s = x.getDataAt(j);
                 if (!isNA(s, naStrings)) {
-                    levels.add(s);
+                    levels.put(s, 0);
                 }
             }
-            String[] levelsArray = new String[levels.size()];
-            levels.toArray(levelsArray);
+            // assign levels IDs
+            int pos = 1;
+            for (Map.Entry<String, Integer> entry : levels.entrySet()) {
+                entry.setValue(pos++);
+            }
 
             int[] data = new int[x.getLength()];
             boolean complete = true;
             for (int j = 0; j < data.length; j++) {
                 s = x.getDataAt(j);
                 if (!isNA(s, naStrings)) {
-                    for (int k = 0; k < levelsArray.length; k++) {
-                        if (levelsArray[k].equals(s)) {
-                            data[j] = k + 1;
-                            break;
-                        }
-                    }
+                    data[j] = levels.get(s);
                 } else {
                     data[j] = RRuntime.INT_NA;
                     complete = false;
                 }
             }
             RIntVector res = RDataFactory.createIntVector(data, complete);
-            setLevelsAttrNode.execute(res, RDataFactory.createStringVector(levelsArray, RDataFactory.COMPLETE_VECTOR));
+            setLevelsAttrNode.execute(res, RDataFactory.createStringVector(levels.keySet().toArray(new String[0]), RDataFactory.COMPLETE_VECTOR));
             return RVector.setVectorClassAttr(res, RDataFactory.createStringVector("factor"));
         }
     }

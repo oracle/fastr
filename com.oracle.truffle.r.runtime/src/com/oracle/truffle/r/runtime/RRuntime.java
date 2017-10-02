@@ -351,6 +351,84 @@ public class RRuntime {
     // conversions from string
 
     @TruffleBoundary
+    public static int parseInt(String s) {
+        int length = s.length();
+        long value = 0;
+        if (s.charAt(0) == '-') {
+            if (length == 1) {
+                throw new NumberFormatException();
+            }
+            int pos = 1;
+            while (pos < length) {
+                char ch = s.charAt(pos++);
+                if (ch < '0' || ch > '9') {
+                    throw new NumberFormatException();
+                }
+                value = value * 10 + (ch - '0');
+                if (value > (Integer.MAX_VALUE + 1L)) {
+                    return INT_NA;
+                }
+            }
+            return (int) -value;
+        } else {
+            if (length == 0) {
+                throw new NumberFormatException();
+            }
+            int pos = 0;
+            while (pos < length) {
+                char ch = s.charAt(pos++);
+                if (ch < '0' || ch > '9') {
+                    throw new NumberFormatException();
+                }
+                value = value * 10 + (ch - '0');
+                if (value > Integer.MAX_VALUE) {
+                    return INT_NA;
+                }
+            }
+            return (int) value;
+        }
+    }
+
+    @TruffleBoundary
+    public static int parseIntWithNA(String s) {
+        int length = s.length();
+        long value = 0;
+        if (s.charAt(0) == '-') {
+            if (length == 1) {
+                return INT_NA;
+            }
+            int pos = 1;
+            while (pos < length) {
+                char ch = s.charAt(pos++);
+                if (ch < '0' || ch > '9') {
+                    return INT_NA;
+                }
+                value = value * 10 + (ch - '0');
+                if (value > (Integer.MAX_VALUE + 1L)) {
+                    return INT_NA;
+                }
+            }
+            return (int) -value;
+        } else {
+            if (length == 0) {
+                return INT_NA;
+            }
+            int pos = 0;
+            while (pos < length) {
+                char ch = s.charAt(pos++);
+                if (ch < '0' || ch > '9') {
+                    return INT_NA;
+                }
+                value = value * 10 + (ch - '0');
+                if (value > Integer.MAX_VALUE) {
+                    return INT_NA;
+                }
+            }
+            return (int) value;
+        }
+    }
+
+    @TruffleBoundary
     public static int string2intNoCheck(String s, boolean exceptionOnFail) {
         // FIXME use R rules
         int result;
@@ -367,6 +445,7 @@ public class RRuntime {
             throw new NumberFormatException();
         }
         return result;
+
     }
 
     @TruffleBoundary

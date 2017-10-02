@@ -34,6 +34,8 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/ViewPort
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/ViewPortContext.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/ViewPortLocation.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/ViewPortTransform.java,gnu_r_murrel_core.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/color/Col2RGB.java,gnu_r.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/color/RGB.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/graphics/RGraphics.java,gnu_r_graphics.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/methods/MethodsListDispatch.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/methods/Slot.java,gnu_r.copyright
