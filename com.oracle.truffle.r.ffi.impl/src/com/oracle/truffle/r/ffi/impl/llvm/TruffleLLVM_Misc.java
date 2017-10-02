@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import com.oracle.truffle.r.ffi.impl.nfi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
 public class TruffleLLVM_Misc implements MiscRFFI {
 

@@ -474,17 +474,20 @@ public interface CRFFI {
                 array[i] = getNativeArgument(i, args.getArgument(i));
             }
 
-            RContext.getInstance().getStateRFFI().beforeDowncall();
-            execute(nativeCallInfo, array);
+            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            long before = stateRFFI.beforeDowncall();
+            try {
+                execute(nativeCallInfo, array);
 
-            // we have to assume that the native method updated everything
-            Object[] results = new Object[array.length];
-            for (int i = 0; i < array.length; i++) {
-                results[i] = ((TemporaryWrapper) array[i]).cleanup();
+                // we have to assume that the native method updated everything
+                Object[] results = new Object[array.length];
+                for (int i = 0; i < array.length; i++) {
+                    results[i] = ((TemporaryWrapper) array[i]).cleanup();
+                }
+                return RDataFactory.createList(results, validateArgNames(array.length, args.getSignature()));
+            } finally {
+                stateRFFI.afterDowncall(before);
             }
-
-            RContext.getInstance().getStateRFFI().afterDowncall();
-            return RDataFactory.createList(results, validateArgNames(array.length, args.getSignature()));
         }
 
         private static RStringVector validateArgNames(int argsLength, ArgumentsSignature signature) {

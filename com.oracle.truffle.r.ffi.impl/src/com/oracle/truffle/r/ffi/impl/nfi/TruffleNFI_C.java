@@ -78,12 +78,10 @@ public class TruffleNFI_C implements CRFFI {
                         @Cached("createExecute(cachedArgsLength)") Node executeNode,
                         @SuppressWarnings("unused") @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject cachedAddress,
                         @Cached("getFunction(cachedAddress, cachedArgsLength)") TruffleObject cachedFunction) {
-            synchronized (TruffleNFI_Call.class) {
-                try {
-                    ForeignAccess.sendExecute(executeNode, cachedFunction, args);
-                } catch (InteropException ex) {
-                    throw RInternalError.shouldNotReachHere(ex);
-                }
+            try {
+                ForeignAccess.sendExecute(executeNode, cachedFunction, args);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
 
@@ -91,12 +89,10 @@ public class TruffleNFI_C implements CRFFI {
         protected void invokeCallCachedLength(NativeCallInfo nativeCallInfo, Object[] args,
                         @Cached("args.length") int cachedArgsLength,
                         @Cached("createExecute(cachedArgsLength)") Node executeNode) {
-            synchronized (TruffleNFI_Call.class) {
-                try {
-                    ForeignAccess.sendExecute(executeNode, getFunction(nativeCallInfo.address.asTruffleObject(), cachedArgsLength), args);
-                } catch (InteropException ex) {
-                    throw RInternalError.shouldNotReachHere(ex);
-                }
+            try {
+                ForeignAccess.sendExecute(executeNode, getFunction(nativeCallInfo.address.asTruffleObject(), cachedArgsLength), args);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
 

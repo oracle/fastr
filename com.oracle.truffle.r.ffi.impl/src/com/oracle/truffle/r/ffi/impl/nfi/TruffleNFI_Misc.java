@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.nfi;
 
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
 public class TruffleNFI_Misc implements MiscRFFI {
 

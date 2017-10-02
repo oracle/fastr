@@ -24,10 +24,10 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
-import com.oracle.truffle.r.ffi.impl.nfi.NativeFunction;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
 /**
  * When the embedded GNU R is built, LLVM is created for the components of the {@code libRblas} and

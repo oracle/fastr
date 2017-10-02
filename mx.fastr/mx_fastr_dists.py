@@ -83,15 +83,12 @@ class ReleaseBuildTask(mx.NativeBuildTask):
         for d in ['bin', 'include', 'library', 'etc', 'share', 'doc']:
             target_dir = join(output_dir, d)
             if os.path.exists(target_dir):
-                print("delete " + target_dir)
                 shutil.rmtree(target_dir)
-            print("copy from " + join(fastr_dir, d) + " to " + target_dir)
             shutil.copytree(join(fastr_dir, d), target_dir)
 
         lib_fastr_dir = join(fastr_dir, 'lib')
         lib_output_dir = join(output_dir, 'lib')
         if os.path.exists(lib_output_dir):
-            print("delete " + lib_output_dir)
             shutil.rmtree(lib_output_dir)
         os.mkdir(lib_output_dir)
         for f in os.listdir(lib_fastr_dir):
@@ -99,10 +96,8 @@ class ReleaseBuildTask(mx.NativeBuildTask):
             target_file = join(lib_output_dir, f)
             if f != '.DS_Store':
                 if os.path.islink(source_file):
-                    print("copy from " + join(lib_fastr_dir, f) + " to " + target_file)
                     os.symlink(os.readlink(source_file), target_file)
                 else:
-                    print("copy from " + join(lib_fastr_dir, f) + " to " + target_file)
                     shutil.copy(source_file, target_file)
 
         # copyrights

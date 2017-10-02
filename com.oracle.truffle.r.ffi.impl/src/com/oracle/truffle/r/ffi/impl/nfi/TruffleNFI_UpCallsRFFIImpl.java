@@ -50,28 +50,15 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 
 public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
-    private static final String SETSYMBOL_SIGNATURE = "(pointer, sint32, pointer, sint32): pointer";
-    private static TruffleObject setSymbolFunction;
-
-    public TruffleNFI_UpCallsRFFIImpl() {
-        Node bind = Message.createInvoke(1).createNode();
-        SymbolHandle symbolHandle = DLL.findSymbol("Rdynload_setSymbol", null);
-        try {
-            setSymbolFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, symbolHandle.asTruffleObject(), "bind", SETSYMBOL_SIGNATURE);
-        } catch (InteropException ex) {
-            throw RInternalError.shouldNotReachHere(ex);
-        }
-    }
-
-    private static Node asPointer = Message.AS_POINTER.createNode();
+    private final Node asPointer = Message.AS_POINTER.createNode();
 
     @Override
     @TruffleBoundary
@@ -221,16 +208,18 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     }
 
     @Override
+    @TruffleBoundary
     protected DotSymbol setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
         Node executeNode = Message.createExecute(4).createNode();
         try {
-            return (DotSymbol) FFIUnwrapNode.unwrap(ForeignAccess.sendExecute(executeNode, setSymbolFunction, dllInfo, nstOrd, routines, index));
+            return (DotSymbol) FFIUnwrapNode.unwrap(
+                            ForeignAccess.sendExecute(executeNode, TruffleNFI_Context.getInstance().lookupNativeFunction(NativeFunction.Rdynload_setSymbol), dllInfo, nstOrd, routines, index));
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
     }
 
-    private static NFIContext getContext() {
-        return (NFIContext) RContext.getInstance().getStateRFFI();
+    private static TruffleNFI_Context getContext() {
+        return (TruffleNFI_Context) RContext.getInstance().getStateRFFI();
     }
 }

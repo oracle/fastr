@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 
 public class TruffleNFI_Stats implements StatsRFFI {

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.nfi;
 
 import com.oracle.truffle.api.interop.java.JavaInterop;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 public class TruffleNFI_Zip implements ZipRFFI {

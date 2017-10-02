@@ -33,20 +33,14 @@ void *unimplemented(const char *f) {
     exit(1);
 }
 
-static TruffleContext *truffleContext = NULL;
-
 void init_utils(TruffleEnv *env) {
-    if (truffleContext == NULL) {
-        truffleContext = (*env)->getTruffleContext(env);
-    }
+    // nothing to initialize
 }
 
-static unsigned char shutdown_phase = 0;
-
-#define ERROR_JMP_BUF_STACK_SIZE 32
-static jmp_buf *callErrorJmpBufStack[ERROR_JMP_BUF_STACK_SIZE];
-static int callErrorJmpBufStackIndex = 0;
-static int exceptionFlag = 0;
+#define ERROR_JMP_BUF_STACK_SIZE 1024
+static __thread jmp_buf *callErrorJmpBufStack[ERROR_JMP_BUF_STACK_SIZE];
+static __thread int callErrorJmpBufStackIndex = 0;
+static __thread int exceptionFlag = 0;
 
 void exitCall() {
     longjmp(*callErrorJmpBufStack[callErrorJmpBufStackIndex - 1], 1);
@@ -92,14 +86,6 @@ static void popJmpBuf() {
     }                               \
     popJmpBuf();                    \
     return result;
-
-void set_shutdown_phase(unsigned char value) {
-	shutdown_phase = value;
-}
-
-int is_shutdown_phase() {
-	return shutdown_phase;
-}
 
 void dot_call_void0(callvoid0func fun) {
     DO_CALL_VOID(fun());

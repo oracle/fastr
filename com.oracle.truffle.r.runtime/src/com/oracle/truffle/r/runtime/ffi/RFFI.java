@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.r.runtime.context.RContext.ContextState;
+
 /**
  * FastR foreign function interface. There are separate interfaces for the various kinds of foreign
  * functions that are possible in R:
@@ -39,37 +41,40 @@ package com.oracle.truffle.r.runtime.ffi;
  * <li>{@link ZipRFFI}: interface to zip compression</li>
  * <li>{@link DLLRFFI}: interface to dll functions, e.g., {@code dlopen}</li>
  * <li>{@link REmbedRFFI}: interface to embedded support</li>
- * <li>{@link MiscRFFI}: interface to miscellaneous native functions</li> from {@link CallRFFI}).
- * There is no public access to this interface as it should never be called from FastR Java code and
- * is always implemented by a specific FFI factory.
+ * <li>{@link MiscRFFI}: interface to miscellaneous native functions</li>
  * </ul>
  *
  * These interfaces may be implemented by one or more providers, specified either when the FastR
  * system is built or run.
  */
-public interface RFFI {
-    BaseRFFI getBaseRFFI();
+public abstract class RFFI implements ContextState {
 
-    LapackRFFI getLapackRFFI();
+    public final CRFFI cRFFI;
+    public final BaseRFFI baseRFFI;
+    public final CallRFFI callRFFI;
+    public final DLLRFFI dllRFFI;
+    public final UserRngRFFI userRngRFFI;
+    public final ZipRFFI zipRFFI;
+    public final PCRERFFI pcreRFFI;
+    public final LapackRFFI lapackRFFI;
+    public final StatsRFFI statsRFFI;
+    public final ToolsRFFI toolsRFFI;
+    public final REmbedRFFI embedRFFI;
+    public final MiscRFFI miscRFFI;
 
-    StatsRFFI getStatsRFFI();
-
-    ToolsRFFI getToolsRFFI();
-
-    CRFFI getCRFFI();
-
-    CallRFFI getCallRFFI();
-
-    UserRngRFFI getUserRngRFFI();
-
-    PCRERFFI getPCRERFFI();
-
-    ZipRFFI getZipRFFI();
-
-    DLLRFFI getDLLRFFI();
-
-    REmbedRFFI getREmbedRFFI();
-
-    MiscRFFI getMiscRFFI();
-
+    protected RFFI(CRFFI cRFFI, BaseRFFI baseRFFI, CallRFFI callRFFI, DLLRFFI dllRFFI, UserRngRFFI userRngRFFI, ZipRFFI zipRFFI, PCRERFFI pcreRFFI, LapackRFFI lapackRFFI, StatsRFFI statsRFFI,
+                    ToolsRFFI toolsRFFI, REmbedRFFI embedRFFI, MiscRFFI miscRFFI) {
+        this.cRFFI = cRFFI;
+        this.baseRFFI = baseRFFI;
+        this.callRFFI = callRFFI;
+        this.dllRFFI = dllRFFI;
+        this.userRngRFFI = userRngRFFI;
+        this.zipRFFI = zipRFFI;
+        this.pcreRFFI = pcreRFFI;
+        this.lapackRFFI = lapackRFFI;
+        this.statsRFFI = statsRFFI;
+        this.toolsRFFI = toolsRFFI;
+        this.embedRFFI = embedRFFI;
+        this.miscRFFI = miscRFFI;
+    }
 }

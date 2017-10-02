@@ -30,8 +30,8 @@ import com.oracle.truffle.r.ffi.impl.interop.base.GlobResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.ReadlinkResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.StrtolResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.UnameResult;
-import com.oracle.truffle.r.ffi.impl.nfi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
 public class TruffleLLVM_Base implements BaseRFFI {
     private static final class TruffleLLVM_GetpidNode extends TruffleLLVM_DownCallNode implements GetpidNode {
@@ -223,19 +223,6 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
-    private static class TruffleLLVM_SetShutdownFlagNode extends TruffleLLVM_DownCallNode implements SetShutdownFlagNode {
-
-        @Override
-        protected NativeFunction getFunction() {
-            return NativeFunction.set_shutdown_phase;
-        }
-
-        @Override
-        public void execute(boolean value) {
-            call(value ? 1 : 0);
-        }
-    }
-
     @Override
     public GetpidNode createGetpidNode() {
         return new TruffleLLVM_GetpidNode();
@@ -284,10 +271,5 @@ public class TruffleLLVM_Base implements BaseRFFI {
     @Override
     public GlobNode createGlobNode() {
         return new TruffleLLVM_GlobNode();
-    }
-
-    @Override
-    public SetShutdownFlagNode createSetShutdownFlagNode() {
-        return new TruffleLLVM_SetShutdownFlagNode();
     }
 }

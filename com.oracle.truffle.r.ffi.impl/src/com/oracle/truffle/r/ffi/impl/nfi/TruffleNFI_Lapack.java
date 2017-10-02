@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.nfi;
 
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
 public class TruffleNFI_Lapack implements LapackRFFI {
 

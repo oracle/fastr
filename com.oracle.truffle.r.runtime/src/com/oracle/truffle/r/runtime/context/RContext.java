@@ -48,7 +48,6 @@ import java.util.TimeZone;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.Assumption;
@@ -293,8 +292,6 @@ public final class RContext implements RTruffleObject {
      */
     private static boolean embedded;
 
-    private static final AtomicInteger CONTEXT_CNT = new AtomicInteger(0);
-
     /*
      * Workarounds to finesse project circularities between runtime/nodes.
      */
@@ -348,11 +345,8 @@ public final class RContext implements RTruffleObject {
     public final InstrumentationState stateInstrumentation;
     public final ContextStateImpl stateInternalCode;
     public final DLL.ContextStateImpl stateDLL;
-    /**
-     * RFFI implementation state. Cannot be final as choice of FFI implementation is not made at the
-     * time the constructor is called. TODO: any reason for it not being @CompilationFinal?
-     */
-    private RFFIContext stateRFFI;
+
+    @CompilationFinal private RFFIContext stateRFFI;
 
     public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
@@ -373,10 +367,6 @@ public final class RContext implements RTruffleObject {
 
     public static boolean isEmbedded() {
         return embedded;
-    }
-
-    public static int getContextCnt() {
-        return CONTEXT_CNT.get();
     }
 
     /**
@@ -493,9 +483,20 @@ public final class RContext implements RTruffleObject {
         state.add(State.ATTACHED);
 
         stateDLL.initialize(this);
-        stateRFFI = RFFIFactory.getInstance().newContextState();
+        switch (contextKind) {
+            case SHARE_NOTHING:
+            case SHARE_ALL:
+                stateRFFI = RFFIFactory.create();
+                break;
+            case SHARE_PARENT_RO:
+            case SHARE_PARENT_RW:
+                stateRFFI = parentContext.getStateRFFI();
+                break;
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
         // separate in case initialize calls getStateRFFI()!
-        stateRFFI.initialize(this);
+        getStateRFFI().initialize(this);
 
         if (!embedded) {
             doEnvOptionsProfileInitialization();
@@ -530,7 +531,6 @@ public final class RContext implements RTruffleObject {
         if (initial && !embedded) {
             initialContextInitialized = true;
         }
-        CONTEXT_CNT.incrementAndGet();
         return this;
     }
 
@@ -582,7 +582,6 @@ public final class RContext implements RTruffleObject {
             if (contextKind == ContextKind.SHARE_PARENT_RW) {
                 parentContext.sharedChild = null;
             }
-            CONTEXT_CNT.decrementAndGet();
             state = EnumSet.of(State.DISPOSED);
 
             this.allocationReporter.removePropertyChangeListener(ALLOCATION_ACTIVATION_LISTENER);
@@ -766,9 +765,9 @@ public final class RContext implements RTruffleObject {
         return language;
     }
 
-    public RFFIContext getStateRFFI() {
-        assert stateRFFI != null;
-        return stateRFFI;
+    public RFFIContext getRFFI() {
+        assert getStateRFFI() != null;
+        return getStateRFFI();
     }
 
     public TruffleContext getTruffleContext() {
@@ -1015,5 +1014,9 @@ public final class RContext implements RTruffleObject {
 
     public ConsoleIO getConsole() {
         return console;
+    }
+
+    public RFFIContext getStateRFFI() {
+        return stateRFFI;
     }
 }
