@@ -63,8 +63,8 @@ find.in.children <- function(path, name, strict, currPath, children, depth) {
 
 # path is a string, e.g. "A::B::C", or NULL if we are not searching for particular path
 # name is a string, the name of child we are looking for
-L_downvppath <- function(path, name, strict) {
-    currVp <- .Call(grid:::L_currentViewport)
+downvppath <- function(path, name, strict) {
+    currVp <- .Call(grid:::C_currentViewport)
     result <- find.viewport(path, name, strict, NULL, currVp, 1L);
     if (result[[1]]) {
         .Internal(.fastr.grid.doSetViewPort(result[[2L]], FALSE, FALSE));
@@ -74,17 +74,17 @@ L_downvppath <- function(path, name, strict) {
     }
 }
 
-L_downviewport <- function(name, strict) {
-    L_downvppath(0L, name, strict)
+downviewport <- function(name, strict) {
+    downvppath(0L, name, strict)
 }
 
-L_setviewport <- function(vp, hasParent) {
+setviewport <- function(vp, hasParent) {
     pushedVP <- grid:::pushedvp(vp);
     .Internal(.fastr.grid.doSetViewPort(pushedVP, hasParent, TRUE));
 }
 
-L_unsetviewport <- function(n) {
-    gvp <- .Call(grid:::L_currentViewport)
+unsetviewport <- function(n) {
+    gvp <- .Call(grid:::C_currentViewport)
     newVp <- gvp;
     for (i in 1:n) {
         gvp <- newVp;
@@ -152,8 +152,8 @@ getUnitData <- function(unit, index) {
 isPureNullUnitGrobDim <- function(unit, index, dimFunction) {
     # Can a grob have "null" width/height?
     # to be sure we cover everything, we keep the check here (like in GnuR)
-    savedgpar <- .Call(grid:::L_getGPar)
-    savedgrob <- .Call(grid:::L_getCurrentGrob)
+    savedgpar <- .Call(grid:::C_getGPar)
+    savedgrob <- .Call(grid:::C_getCurrentGrob)
 
     grob <- findGrob(getUnitData(unit, index), savedgrob)
 
@@ -161,8 +161,8 @@ isPureNullUnitGrobDim <- function(unit, index, dimFunction) {
     result <- isPureNullUnit(dimFunction(updatedgrob), 1)
     grid:::postDraw(updatedgrob)
 
-    .Call(grid:::L_setGPar, savedgpar)
-    .Call(grid:::L_setCurrentGrob, savedgrob)
+    .Call(grid:::C_setGPar, savedgpar)
+    .Call(grid:::C_setCurrentGrob, savedgrob)
     result
 }
 
@@ -190,7 +190,7 @@ isPureNullUnitArithmetic <- function(x, index) {
 # { gt <- grid.text("Hi there"); isPureNullUnit(unit(1, "grobheight", gt), 1) } == FALSE
 
 grobConversionPreDraw <- function(grobIn) {
-    grob <- findGrob(grobIn, .Call(grid:::L_getCurrentGrob))
+    grob <- findGrob(grobIn, .Call(grid:::C_getCurrentGrob))
     grid:::preDraw(grob)
 }
 

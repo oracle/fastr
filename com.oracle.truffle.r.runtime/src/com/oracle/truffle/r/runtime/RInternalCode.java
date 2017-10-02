@@ -80,7 +80,7 @@ public final class RInternalCode {
             this.evaluatedEnvironment = env;
         }
         RFunction fun = (RFunction) env.get(name);
-        assert fun != null;
+        assert fun != null : "No internal function '" + name + "' found";
         return fun;
     }
 
