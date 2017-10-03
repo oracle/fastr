@@ -58,10 +58,11 @@ public abstract class ProcTime extends RBuiltinNode.Arg0 {
         long sysTimeInNanos = userSysTimeInNanos[1];
         data[0] = userTimeInNanos < 0 ? RRuntime.DOUBLE_NA : asDoubleSecs(userTimeInNanos);
         data[1] = sysTimeInNanos < 0 ? RRuntime.DOUBLE_NA : asDoubleSecs(sysTimeInNanos);
+        boolean complete = userTimeInNanos >= 0 && sysTimeInNanos >= 0;
         data[2] = asDoubleSecs(nowInNanos);
         long[] childTimes = timings.childTimesInNanos();
         boolean na = childTimes[0] < 0 || childTimes[1] < 0;
-        boolean complete = na ? RDataFactory.INCOMPLETE_VECTOR : RDataFactory.COMPLETE_VECTOR;
+        complete &= !na;
         data[3] = na ? RRuntime.DOUBLE_NA : asDoubleSecs(childTimes[0]);
         data[4] = na ? RRuntime.DOUBLE_NA : asDoubleSecs(childTimes[1]);
         if (RNAMES == null) {
