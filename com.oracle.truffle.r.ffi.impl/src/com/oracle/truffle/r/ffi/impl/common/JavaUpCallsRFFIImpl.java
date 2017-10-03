@@ -1561,8 +1561,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public void R_ReleaseObject(Object obj) {
         guaranteeInstanceOf(obj, RObject.class);
-        HashSet<RObject> list = getContext().preserveList;
-        list.remove(obj);
+        RFFIContext context = getContext();
+        HashSet<RObject> list = context.preserveList;
+        if (list.remove(obj)) {
+            context.registerReferenceUsedInNative(obj);
+        }
     }
 
     @Override
