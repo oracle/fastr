@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.library.fastrGrid;
 
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedJFrameDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -42,13 +41,13 @@ public final class WindowDevice {
     }
 
     public static GridDevice createWindowDevice(int width, int height) {
-        JFrameDevice frameDevice = JFrameDevice.create(width, height);
+        JFrameDevice frameDevice = new JFrameDevice(width, height);
         if (RContext.getInstance().hasExecutor()) {
             frameDevice.setResizeListener(WindowDevice::redrawAll);
         } else {
             noSchedulingSupportWarning();
         }
-        return new BufferedJFrameDevice(frameDevice);
+        return frameDevice;
     }
 
     public static RError awtNotSupported() {
