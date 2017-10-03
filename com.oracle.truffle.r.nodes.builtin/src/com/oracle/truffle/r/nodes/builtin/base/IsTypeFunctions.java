@@ -50,6 +50,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -126,12 +127,13 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        protected boolean isListVector(RAbstractVector arg) {
-            return arg instanceof RListBase;
-        }
-
         @Specialization(guards = "isForeignObject(obj)")
         protected byte isRecursive(@SuppressWarnings("unused") TruffleObject obj) {
+            return RRuntime.LOGICAL_FALSE;
+        }
+
+        @Specialization
+        protected byte isRecursive(@SuppressWarnings("unused") RExternalPtr obj) {
             return RRuntime.LOGICAL_FALSE;
         }
 

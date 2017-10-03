@@ -88,5 +88,6 @@ public class TestBuiltin_isrecursive extends TestBase {
         assertEval("{ is.recursive(TRUE) }");
         assertEval("{ !is.recursive(list()) }");
         assertEval("{ !is.recursive(function() {}) }");
+        assertEval("{ !is.recursive(tools:::C_parseRd$address) }");
     }
 }
