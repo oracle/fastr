@@ -211,5 +211,6 @@ public class TestBuiltin_length extends TestBase {
         assertEval("length(quote(x))");
         assertEval("length(as.symbol('x'))");
         assertEval("{ foo <- function(...) length(get('...')); foo(a=1, b=2, c=3, d=4); }");
+        assertEval("{ setClass('LengthTestClass', representation(a = 'numeric'), where=e); obj <- new('LengthTestClass', a = 1:100); length(obj) }");
     }
 }
