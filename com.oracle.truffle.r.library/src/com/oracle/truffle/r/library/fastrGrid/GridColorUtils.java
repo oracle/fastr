@@ -13,10 +13,12 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import com.oracle.truffle.r.library.fastrGrid.GridState.GridPalette;
 import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
@@ -86,15 +88,11 @@ public final class GridColorUtils {
             return GridColor.TRANSPARENT;
         }
 
-        Object result = findByName(value);
+        GridColor result = findByName(value);
         if (result == null) {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "Invalid color '" + value + "'.");
         }
-        if (result instanceof String) {
-            return parseHex((String) result);
-        }
-        assert result instanceof GridColor : "synonyms map should only contain Strings and GridColors";
-        return (GridColor) result;
+        return result;
     }
 
     public static String gridColorToRString(GridColor color) {
@@ -104,7 +102,7 @@ public final class GridColorUtils {
         return String.format("#%02x%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
     }
 
-    private static GridColor parseHex(String value) {
+    public static GridColor parseHex(String value) {
         // hex format, e.g. #ffffff
         int red = Integer.parseInt(value.substring(1, 3), 16);
         int green = Integer.parseInt(value.substring(3, 5), 16);
@@ -116,8 +114,8 @@ public final class GridColorUtils {
         return new GridColor(red, green, blue, alpha);
     }
 
-    private static Object findByName(String synonym) {
-        return NamesHolder.NAMES.get(normalizeColorName(synonym));
+    private static GridColor findByName(String synonym) {
+        return (GridColor) NamesHolder.NAMES.get(normalizeColorName(synonym));
     }
 
     // GnuR compares the user given color name to the dictionary ignoring spaces and case. We remove
@@ -162,11 +160,7 @@ public final class GridColorUtils {
     }
 
     private static int paletteIdxFromString(String colorId) {
-        try {
-            return Integer.parseInt(colorId, 10);
-        } catch (NumberFormatException ex) {
-            return RRuntime.INT_NA;
-        }
+        return RRuntime.parseIntWithNA(colorId);
     }
 
     private static final class NamesHolder {
@@ -831,6 +825,15 @@ public final class GridColorUtils {
             NAMES.put("yellow3", "#CDCD00");
             NAMES.put("yellow4", "#8B8B00");
             NAMES.put("yellowgreen", "#9ACD32");
+            for (Map.Entry<String, Object> entry : NAMES.entrySet()) {
+                if (entry.getValue() instanceof GridColor) {
+                    // nothing to do
+                } else if (entry.getValue() instanceof String) {
+                    entry.setValue(parseHex((String) entry.getValue()));
+                } else {
+                    throw RInternalError.shouldNotReachHere();
+                }
+            }
         }
     }
 }

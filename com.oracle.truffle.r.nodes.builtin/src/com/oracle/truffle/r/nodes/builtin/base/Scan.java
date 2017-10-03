@@ -28,8 +28,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -80,10 +79,9 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
     private static class LocalData {
         RAbstractStringVector naStrings = null;
         boolean quiet = false;
-        String sepchar = null;
-        String sepregex = null;
+        char sepchar = 0; // 0 means any whitespace
         char decchar = '.';
-        String quoteset = null;
+        char[] quoteset = new char[0];
         int comchar = NO_COMCHAR;
         // connection-related (currently not supported)
         // int ttyflag = 0;
@@ -152,14 +150,13 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
         LocalData data = new LocalData();
 
         // TODO: some sort of character translation happens here?
-        data.sepchar = sep.isEmpty() ? null : sep.substring(0, 1);
-        data.sepregex = sep.isEmpty() ? null : Pattern.quote(sep.substring(0, 1));
+        data.sepchar = sep.isEmpty() ? 0 : sep.charAt(0);
 
         // TODO: some sort of character translation happens here?
         data.decchar = dec.charAt(0);
 
         // TODO: some sort of character translation happens here?
-        data.quoteset = quotes;
+        data.quoteset = quotes.toCharArray();
 
         data.naStrings = naStringsVec;
 
@@ -202,89 +199,75 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
         }
     }
 
-    private static int getFirstQuoteInd(String str, char quotechar, Character sepChar) {
-        int quoteInd = str.indexOf(quotechar);
-        if (quoteInd >= 0) {
-            if (quoteInd == 0 || (str.charAt(quoteInd - 1) == ' ' || str.charAt(quoteInd - 1) == '\t') || sepChar != null && str.charAt(quoteInd - 1) == sepChar) {
-                // it's a quote character if it starts the string or is preceded by a blank space
-                return quoteInd;
+    private static int skipWhitespace(String s, int start) {
+        int pos = start;
+        while (pos < s.length() && (s.charAt(pos) == ' ' || s.charAt(pos) == '\t')) {
+            pos++;
+        }
+        return pos;
+    }
+
+    private static boolean isInSet(char ch, char[] quoteset) {
+        for (int i = 0; i < quoteset.length; i++) {
+            if (ch == quoteset[i]) {
+                return true;
             }
         }
-        return -1;
+        return false;
     }
 
     private static String[] getQuotedItems(LocalData data, String s) {
-        LinkedList<String> items = new LinkedList<>();
+        ArrayList<String> items = new ArrayList<>();
 
-        String str = s;
-        StringBuilder sb = null;
-
-        while (true) {
-            int sepInd;
-            if (data.sepchar == null) {
-                int blInd = str.indexOf(' ');
-                int tabInd = str.indexOf('\t');
-                if (blInd == -1) {
-                    sepInd = tabInd;
-                } else if (tabInd == -1) {
-                    sepInd = blInd;
-                } else {
-                    sepInd = Math.min(blInd, tabInd);
-                }
-            } else {
-                assert data.sepchar.length() == 1;
-                sepInd = str.indexOf(data.sepchar.charAt(0));
-            }
-
-            Character sepChar = data.sepchar != null ? data.sepchar.charAt(0) : null;
-            int quoteInd = getFirstQuoteInd(str, data.quoteset.charAt(0), sepChar);
-            char quoteChar = data.quoteset.charAt(0);
-            for (int i = 1; i < data.quoteset.length(); i++) {
-                int ind = getFirstQuoteInd(str, data.quoteset.charAt(i), sepChar);
-                if (ind >= 0 && (quoteInd == -1 || (quoteInd >= 0 && ind < quoteInd))) {
-                    // update quoteInd if either the new index is smaller or the previous one (for
-                    // another separator) was not found
-                    quoteInd = ind;
-                    quoteChar = data.quoteset.charAt(i);
-                }
-            }
-
-            if (sb == null) {
-                // first iteration
-                if (quoteInd == -1) {
-                    // no quotes at all
-                    return data.sepregex == null ? s.split("\\s+") : s.split(data.sepregex);
-                } else {
-                    sb = new StringBuilder();
-                }
-            }
-
-            if (sepInd == -1 && quoteInd == -1) {
-                // no more separators and no more quotes - add the last item and return
-                sb.append(str);
-                items.add(sb.toString());
-                break;
-            }
-
-            if (quoteInd >= 0 && (sepInd == -1 || (sepInd >= 0 && quoteInd < sepInd))) {
-                // quote character was found before the separator character - everything from the
-                // beginning of str up to the end of quote becomes part of this item
-                sb.append(str.substring(0, quoteInd));
-                int nextQuoteInd = str.indexOf(quoteChar, quoteInd + 1);
-                sb.append(str.substring(quoteInd + 1, nextQuoteInd));
-                str = str.substring(nextQuoteInd + 1, str.length());
-            } else {
-                assert sepInd >= 0;
-                // everything from the beginning of str becomes part of this time and item
-                // processing is completed (also eat up separators)
-                String[] tuple = data.sepregex == null ? str.split("\\s+", 2) : str.split(data.sepregex, 2);
-                assert tuple.length == 2;
-                sb.append(tuple[0]);
-                str = tuple[1];
-                items.add(sb.toString());
-                sb = new StringBuilder();
-            }
+        char sepchar = data.sepchar;
+        char[] quoteset = data.quoteset;
+        int length = s.length();
+        int pos = 0;
+        if (sepchar == 0) {
+            pos = skipWhitespace(s, pos);
         }
+        if (pos == length) {
+            return new String[0];
+        }
+        StringBuilder str = new StringBuilder();
+        do {
+            char ch = s.charAt(pos);
+            if (sepchar == 0 && (ch == ' ' || ch == '\t')) {
+                pos = skipWhitespace(s, pos);
+                if (pos == length) {
+                    break;
+                }
+                items.add(str.toString());
+                str.setLength(0);
+            } else if (sepchar != 0 && ch == sepchar) {
+                pos++;
+                items.add(str.toString());
+                str.setLength(0);
+            } else if (str.length() == 0 && isInSet(ch, quoteset)) {
+                char quoteStart = ch;
+                pos++;
+                while (true) {
+                    if (pos == length) {
+                        throw RError.error(RError.SHOW_CALLER, Message.INCOMPLETE_FINAL_LINE, s);
+                    }
+                    ch = s.charAt(pos++);
+                    if (ch == quoteStart) {
+                        if (pos < length && s.charAt(pos) == quoteStart) {
+                            str.append(quoteStart);
+                            pos++;
+                        } else {
+                            break;
+                        }
+                    } else {
+                        str.append(ch);
+                    }
+                }
+            } else {
+                str.append(ch);
+                pos++;
+            }
+        } while (pos < s.length());
+        items.add(str.toString());
 
         return items.toArray(new String[items.size()]);
     }
@@ -295,15 +278,11 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
             if (str == null || str.length == 0) {
                 return null;
             } else {
-                String s = str[0].trim();
-                if (blSkip && s.length() == 0) {
+                String[] items = getQuotedItems(data, str[0]);
+                if (blSkip && items.length == 0) {
                     continue;
                 } else {
-                    if (data.quoteset.length() == 0) {
-                        return data.sepregex == null ? s.split("\\s+") : s.split(data.sepregex);
-                    } else {
-                        return getQuotedItems(data, s);
-                    }
+                    return items.length == 0 ? new String[]{""} : items;
                 }
             }
         }
@@ -317,8 +296,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
     }
 
     private RVector<?> scanFrame(RList what, int maxRecords, int maxLines, boolean flush, boolean fill, @SuppressWarnings("unused") boolean stripWhite, boolean blSkip, boolean multiLine,
-                    LocalData data)
-                    throws IOException {
+                    LocalData data) throws IOException {
 
         int nc = what.getLength();
         if (nc == 0) {
@@ -505,45 +483,49 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
     }
 
     private static Object extractItem(RAbstractVector what, String buffer, LocalData data) {
-        switch (what.getRType()) {
-            case Logical:
-                if (isNaString(buffer, 0, data)) {
-                    return RRuntime.LOGICAL_NA;
-                } else {
-                    return RRuntime.string2logicalNoCheck(buffer);
-                }
-            case Integer:
-                if (isNaString(buffer, 0, data)) {
-                    return RRuntime.INT_NA;
-                } else {
-                    return RRuntime.string2intNoCheck(buffer);
-                }
-            case Double:
-                if (isNaString(buffer, 0, data)) {
-                    return RRuntime.DOUBLE_NA;
-                } else {
-                    return RRuntime.string2doubleNoCheck(buffer);
-                }
-            case Complex:
-                if (isNaString(buffer, 0, data)) {
-                    return RComplex.createNA();
-                } else {
-                    return RRuntime.string2complexNoCheck(buffer);
-                }
-            case Character:
-                if (isNaString(buffer, 1, data)) {
-                    return RRuntime.STRING_NA;
-                } else {
-                    return buffer;
-                }
-            case Raw:
-                if (isNaString(buffer, 0, data)) {
-                    return RDataFactory.createRaw((byte) 0);
-                } else {
-                    return RRuntime.string2raw(buffer);
-                }
-            default:
-                throw RInternalError.shouldNotReachHere();
+        try {
+            switch (what.getRType()) {
+                case Logical:
+                    if (isNaString(buffer, 0, data)) {
+                        return RRuntime.LOGICAL_NA;
+                    } else {
+                        return RRuntime.string2logicalNoCheck(buffer);
+                    }
+                case Integer:
+                    if (isNaString(buffer, 0, data)) {
+                        return RRuntime.INT_NA;
+                    } else {
+                        return RRuntime.parseInt(buffer);
+                    }
+                case Double:
+                    if (isNaString(buffer, 0, data)) {
+                        return RRuntime.DOUBLE_NA;
+                    } else {
+                        return RRuntime.string2doubleNoCheck(buffer);
+                    }
+                case Complex:
+                    if (isNaString(buffer, 0, data)) {
+                        return RComplex.createNA();
+                    } else {
+                        return RRuntime.string2complexNoCheck(buffer);
+                    }
+                case Character:
+                    if (isNaString(buffer, 1, data)) {
+                        return RRuntime.STRING_NA;
+                    } else {
+                        return buffer;
+                    }
+                case Raw:
+                    if (isNaString(buffer, 0, data)) {
+                        return RDataFactory.createRaw((byte) 0);
+                    } else {
+                        return RRuntime.string2raw(buffer);
+                    }
+                default:
+                    throw RInternalError.shouldNotReachHere();
+            }
+        } catch (NumberFormatException e) {
+            throw RError.error(RError.SHOW_CALLER, Message.SCAN_UNEXPECTED, what.getRType().getName(), buffer);
         }
     }
 }
