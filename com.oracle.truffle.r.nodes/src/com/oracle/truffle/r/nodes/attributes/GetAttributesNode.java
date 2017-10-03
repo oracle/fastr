@@ -32,6 +32,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -51,8 +52,12 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 public abstract class GetAttributesNode extends RBaseNode {
 
     private final BranchProfile rownamesBranch = BranchProfile.create();
+    private final BranchProfile namesBranch = BranchProfile.create();
+    private final ConditionProfile namesOneDimTest = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile dimNamesNullTest = ConditionProfile.createBinaryProfile();
     @Child private ArrayAttributeNode arrayAttrAccess = ArrayAttributeNode.create();
     @Child private SetNamesAttributeNode setNamesNode = SetNamesAttributeNode.create();
+    @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
 
     public static GetAttributesNode create() {
         return GetAttributesNodeGen.create();
@@ -114,7 +119,21 @@ public abstract class GetAttributesNode extends RBaseNode {
                 continue;
             }
             names[z] = name;
-            if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
+            if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
+                namesBranch.enter();
+                RList dimNames = getDimNamesNode.getDimNames(attributable);
+                if (namesOneDimTest.profile(dimNames != null && dimNames.getLength() == 1)) {
+                    // "dimnames" shadow "names" as long as the vector is one-dimensional
+                    Object dimNamesOneDim = dimNames.getDataAt(0);
+                    if (dimNamesNullTest.profile(dimNamesOneDim == null)) {
+                        values[z] = attr.getValue();
+                    } else {
+                        values[z] = dimNamesOneDim;
+                    }
+                } else {
+                    values[z] = attr.getValue();
+                }
+            } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                 rownamesBranch.enter();
                 values[z] = getFullRowNames(attr.getValue());
             } else {

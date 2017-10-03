@@ -82,9 +82,9 @@ public class TestBuiltin_seq extends TestBase {
     // seq(from, to, by=)
     @Test
     public void testFromToByNumeric() {
-        assertEval(Output.MayIgnoreErrorContext, template("%0(%1, %2, %3)", SEQFUNS, INT_VALUES, INT_VALUES, BY_INT_VALUES));
-        assertEval(Output.MayIgnoreErrorContext, template("%0(%1, %2, %3)", SEQFUNS, DOUBLE_VALUES, DOUBLE_VALUES, BY_INT_VALUES));
-        assertEval(Output.MayIgnoreErrorContext, template("%0(%1, %2, %3)", SEQFUNS, DOUBLE_VALUES, DOUBLE_VALUES, BY_DOUBLE_VALUES));
+        assertEval(Output.IgnoreErrorMessage, template("%0(%1, %2, %3)", SEQFUNS, INT_VALUES, INT_VALUES, BY_INT_VALUES));
+        assertEval(Output.IgnoreErrorMessage, template("%0(%1, %2, %3)", SEQFUNS, DOUBLE_VALUES, DOUBLE_VALUES, BY_INT_VALUES));
+        assertEval(Output.IgnoreErrorMessage, template("%0(%1, %2, %3)", SEQFUNS, DOUBLE_VALUES, DOUBLE_VALUES, BY_DOUBLE_VALUES));
         // tests setting of last value to "to"
         assertEval(template("%0(2.3, 7.6, 0.1)", SEQFUNS));
     }
@@ -92,12 +92,12 @@ public class TestBuiltin_seq extends TestBase {
     // seq(from, to, by, length.out=)
     @Test
     public void testFromToLengthOutNumeric() {
-        assertEval(Output.MayIgnoreErrorContext, template("%0(%1, length.out=%2)", SEQFUNS, INT_VALUES, INT_VALUES));
-        assertEval(Output.MayIgnoreErrorContext, template("%0(%1, length.out=%2)", SEQFUNS, DOUBLE_VALUES, DOUBLE_VALUES));
-        assertEval(Output.MayIgnoreErrorContext, template("%0(to=%1, length.out=%2)", SEQFUNS, INT_VALUES, INT_VALUES));
-        assertEval(Output.MayIgnoreErrorContext, template("%0(to=%1, length.out=%2)", SEQFUNS, DOUBLE_VALUES, DOUBLE_VALUES));
-        assertEval(Output.MayIgnoreErrorContext, template("%0(%1, %2, length.out=%3)", SEQFUNS, INT_VALUES, INT_VALUES, INT_VALUES));
-        assertEval(Output.MayIgnoreErrorContext, template("%0(%1, %2, length.out=%3)", SEQFUNS, DOUBLE_VALUES, DOUBLE_VALUES, DOUBLE_VALUES));
+        assertEval(Output.IgnoreErrorMessage, template("%0(%1, length.out=%2)", SEQFUNS, INT_VALUES, INT_VALUES));
+        assertEval(Output.IgnoreErrorMessage, template("%0(%1, length.out=%2)", SEQFUNS, DOUBLE_VALUES, DOUBLE_VALUES));
+        assertEval(Output.IgnoreErrorMessage, template("%0(to=%1, length.out=%2)", SEQFUNS, INT_VALUES, INT_VALUES));
+        assertEval(Output.IgnoreErrorMessage, template("%0(to=%1, length.out=%2)", SEQFUNS, DOUBLE_VALUES, DOUBLE_VALUES));
+        assertEval(Output.IgnoreErrorMessage, template("%0(%1, %2, length.out=%3)", SEQFUNS, INT_VALUES, INT_VALUES, INT_VALUES));
+        assertEval(Output.IgnoreErrorMessage, template("%0(%1, %2, length.out=%3)", SEQFUNS, DOUBLE_VALUES, DOUBLE_VALUES, DOUBLE_VALUES));
     }
 
     // seq(along.with= )
@@ -110,8 +110,8 @@ public class TestBuiltin_seq extends TestBase {
 
     @Test
     public void testLengthOutOnly() {
-        assertEval(Output.MayIgnoreErrorContext, template("%0(length.out=%1)", SEQFUNS, INT_VALUES));
-        assertEval(Output.MayIgnoreErrorContext, template("%0(length.out=%1)", SEQFUNS, DOUBLE_VALUES));
+        assertEval(Output.IgnoreErrorMessage, template("%0(length.out=%1)", SEQFUNS, INT_VALUES));
+        assertEval(Output.IgnoreErrorMessage, template("%0(length.out=%1)", SEQFUNS, DOUBLE_VALUES));
     }
 
     // missing (aka empty) parameters

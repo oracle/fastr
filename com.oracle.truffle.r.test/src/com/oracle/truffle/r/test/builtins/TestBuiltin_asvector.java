@@ -419,7 +419,7 @@ public class TestBuiltin_asvector extends TestBase {
         assertEval("{ as.vector(\"foo\", \"character\") }");
         assertEval("{ as.vector(\"foo\", \"list\") }");
         assertEval("{ as.vector(\"foo\") }");
-        assertEval(Output.ImprovedErrorContext, "{ as.vector(\"foo\", \"bar\") }");
+        assertEval("{ as.vector(\"foo\", \"bar\") }");
         assertEval("{ as.vector(c(\"foo\", \"bar\"), \"raw\") }");
         assertEval("x<-c(a=1.1, b=2.2); as.vector(x, \"raw\")");
         assertEval("x<-c(a=1L, b=2L); as.vector(x, \"complex\")");
@@ -438,9 +438,9 @@ public class TestBuiltin_asvector extends TestBase {
         assertEval("as.vector(x~z)");
         assertEval("as.vector(file(''))");
 
-        assertEval(Output.ImprovedErrorContext, "{ as.vector(42, NULL) }");
-        assertEval(Output.ImprovedErrorContext, "{ as.vector(42, c(\"character\", \"character\")) }");
-        assertEval(Output.ImprovedErrorContext, "{ as.vector(42, character())  }");
+        assertEval("{ as.vector(42, NULL) }");
+        assertEval("{ as.vector(42, c(\"character\", \"character\")) }");
+        assertEval("{ as.vector(42, character())  }");
 
         assertEval("as.vector(NULL, mode='pairlist')");
         assertEval("{ as.vector.cls <- function(x, mode) 42; as.vector(structure(c(1,2), class='cls')); }");

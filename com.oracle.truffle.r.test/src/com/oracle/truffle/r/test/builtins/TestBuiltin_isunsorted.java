@@ -109,6 +109,6 @@ public class TestBuiltin_isunsorted extends TestBase {
         assertEval("{ is.unsorted(c(1,2,2,3), strictly=TRUE) }");
         assertEval("{ is.unsorted(c(1+1i,2+1i,2+1i), strictly=FALSE) }");
         assertEval("{ is.unsorted(c(1+1i,2+1i,2+1i), strictly=TRUE) }");
-        assertEval(Output.IgnoreErrorContext, "{ is.unsorted(c(1,2,2), strictly=NA) }");
+        assertEval("{ is.unsorted(c(1,2,2), strictly=NA) }");
     }
 }

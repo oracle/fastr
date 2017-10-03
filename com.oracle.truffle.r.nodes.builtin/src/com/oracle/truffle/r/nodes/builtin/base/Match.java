@@ -390,6 +390,38 @@ public abstract class Match extends RBuiltinNode.Arg4 {
             return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
         }
 
+        @Specialization
+        @TruffleBoundary
+        protected RIntVector match(RAbstractDoubleVector x, RAbstractLogicalVector table, int nomatch) {
+            int[] result = initResult(x.getLength(), nomatch);
+            boolean matchAll = true;
+            int[] values = {RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA};
+            int[] indexes = new int[values.length];
+            for (int i = 0; i < values.length; i++) {
+                byte value = (byte) values[i];
+                for (int j = 0; j < table.getLength(); j++) {
+                    if (table.getDataAt(j) == value) {
+                        indexes[i] = j + 1;
+                        break;
+                    }
+                }
+                values[i] = RRuntime.logical2int(value);
+            }
+            for (int i = 0; i < result.length; i++) {
+                double xx = x.getDataAt(i);
+                boolean match = false;
+                for (int j = 0; j < values.length; j++) {
+                    if (xx == values[j] && indexes[j] != 0) {
+                        result[i] = indexes[j];
+                        match = true;
+                        break;
+                    }
+                }
+                matchAll &= match;
+            }
+            return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
+        }
+
         @Specialization(guards = "x.getLength() == 1")
         @TruffleBoundary
         protected int matchSizeOne(RAbstractStringVector x, RAbstractStringVector table, int nomatch,

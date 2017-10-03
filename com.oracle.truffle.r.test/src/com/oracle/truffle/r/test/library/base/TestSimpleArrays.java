@@ -392,7 +392,8 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ m <- matrix(1:6, nrow=2) ; m[1, 2] <- 1:3 }");
 
         // pushback child of a selector node
-        assertEval("{ m <- matrix(1:100, nrow=10) ; z <- 1; s <- 0 ; for(i in 1:3) { m[z <- z + 1,z <- z + 1] <- z * z * 1000 } ; sum(m) }");
+        // It's likely a bug in GNUR introduced to 3.4.0
+        assertEval(Ignored.ImplementationError, "{ m <- matrix(1:100, nrow=10) ; z <- 1; s <- 0 ; for(i in 1:3) { m[z <- z + 1,z <- z + 1] <- z * z * 1000 } ; sum(m) }");
 
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(1,-1) ; m }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(1, c(-1,-10)) ; m }");

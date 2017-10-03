@@ -322,3 +322,13 @@ Rconnection R_GetConnection(SEXP sConn) {
     return new;
 }
 
+void* R_GetFastRConnection(SEXP sConn) {
+    if (!inherits(sConn, "connection")) {
+        error(_("invalid connection"));
+    }
+
+    int fd = asInteger(sConn);
+
+    SEXP fastRCon = ((call_R_GetConnection) callbacks[R_GetConnection_x])(fd);
+    return fastRCon;
+}

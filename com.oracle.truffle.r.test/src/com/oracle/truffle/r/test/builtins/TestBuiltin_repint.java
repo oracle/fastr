@@ -173,7 +173,7 @@ public class TestBuiltin_repint extends TestBase {
         assertEval("{ rep.int(7, NULL) }");
         assertEval("{ rep.int(7, \"7\") }");
         assertEval("{ rep.int(7, c(7, 42)) }");
-        assertEval("{ rep_int(7, function() 42) }");
+        assertEval(Output.IgnoreErrorContext, "{ rep_int(7, function() 42) }");
         assertEval("{ rep.int(7, NA)  }");
         assertEval("{ rep.int(7, -4)  }");
         assertEval("{ rep.int(c(7,1), c(1,-4))  }");

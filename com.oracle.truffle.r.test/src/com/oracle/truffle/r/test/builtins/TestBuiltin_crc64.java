@@ -32,8 +32,8 @@ public class TestBuiltin_crc64 extends TestBase {
     @Test
     public void testCrc64_Internal() {
 
-        assertEval("crc64()");
-        assertEval("crc64('a')");
+        assertEval(Output.IgnoreErrorContext, "crc64()");
+        assertEval(Output.IgnoreErrorContext, "crc64('a')");
         assertEval(".Internal(crc64())");
         assertEval(".Internal(crc64('a'))");
         assertEval(".Internal(crc64(paste(c(letters, LETTERS, 0:9), collapse=\"\")))");

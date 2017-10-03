@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asDoubleVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.complexValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte0;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
@@ -31,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "diag", kind = INTERNAL, parameterNames = {"x", "nrow", "ncol"}, behavior = PURE)
@@ -38,7 +40,7 @@ public abstract class Diag extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(Diag.class);
-        casts.arg("x").mustNotBeMissing().returnIf(nullValue()).mapIf(complexValue().not(), asDoubleVector());
+        casts.arg("x").mustNotBeMissing().returnIf(nullValue()).mapIf(complexValue().not().and(logicalValue().not()), asDoubleVector());
         casts.arg("nrow").asIntegerVector().findFirst().mustBe(notIntNA(), Message.INVALID_LARGE_NA_VALUE, "nrow").mustBe(gte0(), Message.INVALID_NEGATIVE_VALUE, "nrow");
         casts.arg("ncol").asIntegerVector().findFirst().mustBe(notIntNA(), Message.INVALID_LARGE_NA_VALUE, "ncol").mustBe(gte0(), Message.INVALID_NEGATIVE_VALUE, "ncol");
     }
@@ -69,7 +71,7 @@ public abstract class Diag extends RBuiltinNode.Arg3 {
         for (int j = 0; j < mn; j++) {
             data[j * (nrow + 1)] = x;
         }
-        return RDataFactory.createDoubleVector(data, RRuntime.isNA(x), new int[]{nrow, ncol});
+        return RDataFactory.createDoubleVector(data, !RRuntime.isNA(x), new int[]{nrow, ncol});
     }
 
     @Specialization
@@ -98,4 +100,17 @@ public abstract class Diag extends RBuiltinNode.Arg3 {
         }
         return RDataFactory.createDoubleVector(data, source.isComplete(), new int[]{nrow, ncol});
     }
+
+    @Specialization
+    protected Object diag(RAbstractLogicalVector source, int nrow, int ncol) {
+        int mn = checkX(source, nrow, ncol);
+
+        byte[] data = new byte[nrow * ncol];
+        int nx = source.getLength();
+        for (int j = 0; j < mn; j++) {
+            data[j * (nrow + 1)] = source.getDataAt(j % nx);
+        }
+        return RDataFactory.createLogicalVector(data, source.isComplete(), new int[]{nrow, ncol});
+    }
+
 }

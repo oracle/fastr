@@ -119,7 +119,7 @@ public abstract class MatchArg extends RBuiltinNode.Arg3 {
 
         @Specialization(guards = "!severalOK")
         protected String matchArg(RAbstractStringVector arg, RAbstractStringVector choices, @SuppressWarnings("unused") boolean severalOK) {
-            if (identical.executeByte(arg, choices, true, true, true, true, true) == RRuntime.LOGICAL_TRUE) {
+            if (identical.executeByte(arg, choices, true, true, true, true, true, true) == RRuntime.LOGICAL_TRUE) {
                 return choices.getDataAt(0);
             }
             if (arg.getLength() != 1) {

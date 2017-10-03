@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
@@ -258,7 +259,7 @@ public class TraceFunctions {
 
         static {
             Casts casts = new Casts(Retracemem.class);
-            casts.arg("previous").defaultError(Message.INVALID_ARGUMENT, "previous").allowNullAndMissing().mustBe(stringValue()).asStringVector().findFirst();
+            casts.arg("previous").defaultError(Message.INVALID_ARGUMENT, "previous").allowNullAndMissing().mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
         }
 
         @Specialization

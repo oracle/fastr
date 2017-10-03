@@ -30,6 +30,8 @@ export FASTR_NATIVE_DIR = $(TOPDIR)
 export R_VERSION = $(subst R-,,$(notdir $(basename $(basename $(wildcard $(FASTR_R_HOME)/libdownloads/R-*.gz)))))
 export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
 
+$(info R_VERSION: $(R_VERSION))
+$(info GNUR_HOME: $(GNUR_HOME))
 
 ifndef FASTR_RFFI
 export FASTR_RFFI = nfi
@@ -69,7 +71,7 @@ else
 endif
 endif
 
-#$(info doclean: $(doclean))
+$(info doclean: $(doclean))
 checkversion:
 ifeq ($(doclean),1)
 	$(MAKE) clean

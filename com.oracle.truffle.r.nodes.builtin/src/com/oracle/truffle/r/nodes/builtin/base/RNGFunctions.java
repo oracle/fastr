@@ -138,6 +138,15 @@ public class RNGFunctions {
         @TruffleBoundary
         protected Object getSeed(@SuppressWarnings("unused") RMissing data) {
             Object seeds = RContext.getInstance().stateRNG.currentSeeds;
+            if (seeds == RMissing.instance) {
+                /*
+                 * Some R functions, such as initDefaultClusterOptions in package parallel (since
+                 * R3.4.0), read directly the value of the .Random.seed variable from the global
+                 * environment. They expect NULL (not MISSING) to be returned if
+                 * .GlobalEnv$.Random.seed is not initialized.
+                 */
+                return RNull.instance;
+            }
             if (seeds instanceof int[]) {
                 int[] seedsArr = (int[]) seeds;
                 return RDataFactory.createIntVector(seedsArr, RDataFactory.INCOMPLETE_VECTOR);

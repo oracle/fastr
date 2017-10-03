@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -44,7 +45,8 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 public abstract class Formals extends RBuiltinNode.Arg1 {
 
     static {
-        Casts.noCasts(Formals.class);
+        Casts casts = new Casts(Formals.class);
+        casts.arg("fun").shouldBe(RFunction.class, RError.Message.ARGUMENT_NOT_FUNCTION);
     }
 
     @SuppressWarnings("unused")

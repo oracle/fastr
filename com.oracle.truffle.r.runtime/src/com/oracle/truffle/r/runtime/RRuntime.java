@@ -50,8 +50,8 @@ public class RRuntime {
     public static final String WELCOME_MESSAGE =
         "R version " + RVersionNumber.FULL + " (FastR)\n" +
         "Copyright (c) 2013-17, Oracle and/or its affiliates\n" +
-        "Copyright (c) 1995-2016, The R Core Team\n" +
-        "Copyright (c) 2016 The R Foundation for Statistical Computing\n" +
+        "Copyright (c) 1995-2017, The R Core Team\n" +
+        "Copyright (c) 2017 The R Foundation for Statistical Computing\n" +
         "Copyright (c) 2012-4 Purdue University\n" +
         "Copyright (c) 1997-2002, Makoto Matsumoto and Takuji Nishimura\n" +
         "All rights reserved.\n" +

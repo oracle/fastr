@@ -44,13 +44,17 @@ NATIVE_PROJECT := $(subst native.recommended,native,$(CURDIR))
 R_VERSION := $(notdir $(wildcard $(NATIVE_PROJECT)/gnur/R-*))
 GNUR_HOME := $(NATIVE_PROJECT)/gnur/$(R_VERSION)
 # order matters due to inter-package dependencies
+ifdef FASTR_RELEASE
 GNUR_RECOMMENDED_PKGNAMES := codetools MASS boot class cluster lattice nnet spatial Matrix survival KernSmooth foreign nlme rpart
+else
+# codetools must be always installed because of S4
+GNUR_RECOMMENDED_PKGNAMES := codetools
+endif
 GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_HOME)/src/library/Recommended/$(pkg).tgz)
 #$(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
 
 all: install.recommended
 
-ifdef FASTR_RELEASE
 ifneq ($(FASTR_RFFI),managed)
 install.recommended: $(GNUR_RECOMMENDED_TARS)
 	for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
@@ -68,9 +72,6 @@ else
 install.recommended:
 endif
 	touch install.recommended
-else
-install.recommended:
-endif
 
 clean:
 	for pkgname in $(GNUR_RECOMMENDED_PKGNAMES); do \

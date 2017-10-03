@@ -69,28 +69,58 @@ static int Rconn_fgetc(Rconnection con) {
   arguments are as per the GnuR version, just passed explicitly (.Call style)
   rather then as a list.
 */
-SEXP C_parseRd(SEXP con, SEXP source, SEXP verbose, SEXP fragment, SEXP basename, SEXP warningcalls, SEXP macros, SEXP warnDupsArg) {
-    SEXP s = R_NilValue;
+SEXP parseRd(SEXP call, SEXP op, SEXP args, SEXP env) {
+    args = CDR(args);   // arg 0 skipped
+
+    SEXP s = R_NilValue, source;
+    Rconnection con;
+    SEXP conArg;
+    Rboolean fragment;
+    int ifile; 
+    int wcall;
     ParseStatus status;
+    SEXP macros;
 
 #if DEBUGMODE
     yydebug = 1;
-#endif
+#endif 
 
     R_ParseError = 0;
     R_ParseErrorMsg[0] = '\\0';
-
+    
     PushState();
 
-//    parseState.xxDebugTokens = asInteger(verbose);
-    parseState.xxBasename = CHAR(STRING_ELT(basename, 0));
-    wCalls = asLogical(warningcalls);
-    warnDups = asLogical(warnDupsArg);
+    conArg = CAR(args);  // arg 1
+    ifile = asInteger(conArg);
+    
+	con = R_GetFastRConnection(conArg);
 
-    s = R_ParseRd(con, &status, source, asLogical(fragment), macros);
-    PopState();
-    if (status != PARSE_OK) {
-        // TODO throw an exception
+    args = CDR(args);
+
+    source = CAR(args);	  // arg 2
+    args = CDR(args);
+    /* encoding is unused */
+    args = CDR(args);
+    if(!isLogical(CAR(args)) || LENGTH(CAR(args)) != 1)   // arg 4
+    	error(_("invalid '%s' value"), "verbose");
+    parseState.xxDebugTokens = asInteger(CAR(args));	  // arg 4
+    args = CDR(args);
+    parseState.xxBasename = CHAR(STRING_ELT(CAR(args), 0));	  // arg 5
+    args = CDR(args);
+    fragment = asLogical(CAR(args));				  // arg 6
+    args = CDR(args);
+    wcall = asLogical(CAR(args));   // arg 7
+    args = CDR(args);
+    if (wcall == NA_LOGICAL)
+    	error(_("invalid '%s' value"), "warningCalls");
+    wCalls = wcall;
+    macros = CAR(args);						  // arg 8
+    args = CDR(args);
+    warnDups = asLogical(CAR(args));	  // arg 9
+
+    if (ifile >= 3) {/* file != "" */
+	s = R_ParseRd(con, &status, source, fragment, macros);
+	PopState();
     }
     return s;
 }
@@ -127,6 +157,9 @@ SEXP C_parseRd(SEXP con, SEXP source, SEXP verbose, SEXP fragment, SEXP basename
             elif sline == 'static void con_cleanup(void *data)':
                 # skip
                 i = i + 5
+            elif 'installTrChar(STRING_ELT(thename, 0))' in line:
+                line = line.replace('installTrChar(STRING_ELT(thename, 0))', 'install(CHAR(STRING_ELT(thename, 0)))')
+                f.write(line)
             elif '.External2(C_parseRd' in sline:
                 f.write(line)
                 f.write(c_parserd)

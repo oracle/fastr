@@ -38,7 +38,6 @@ import com.oracle.truffle.r.library.fastrGrid.graphics.CPar;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalCode;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -92,105 +91,101 @@ public final class FastRGridExternalLookup {
 
     public static RExternalBuiltinNode lookupDotCall(String name) {
         switch (name) {
-            case "L_gridDirty":
+            case "gridDirty":
                 return new LGridDirty();
-            case "L_initGrid":
+            case "initGrid":
                 return LInitGrid.create();
-            case "L_newpage":
+            case "newpage":
                 return new LNewPage();
-            case "L_convert":
+            case "convert":
                 return LConvert.create();
-            case "L_validUnits":
+            case "validUnits":
                 return LValidUnit.create();
-            case "L_pretty":
+            case "pretty":
                 return LPretty.create();
-            case "L_stringMetric":
+            case "stringMetric":
                 return LStringMetric.create();
 
             // Viewport management
-            case "L_upviewport":
+            case "upviewport":
                 return LUpViewPort.create();
-            case "L_initViewportStack":
+            case "initViewportStack":
                 return new LInitViewPortStack();
-            case "L_unsetviewport":
+            case "unsetviewport":
                 return LUnsetViewPort.create();
-            case "L_setviewport":
-            case "L_downviewport":
-            case "L_downvppath":
+            case "setviewport":
+            case "downviewport":
+            case "downvppath":
                 return getExternalFastRGridBuiltinNode(name);
 
             // Drawing primitives
-            case "L_rect":
+            case "rect":
                 return LRect.create();
-            case "L_lines":
+            case "lines":
                 return LLines.create();
-            case "L_polygon":
+            case "polygon":
                 return LPolygon.create();
-            case "L_text":
+            case "text":
                 return LText.create();
-            case "L_textBounds":
+            case "textBounds":
                 return LTextBounds.create();
-            case "L_segments":
+            case "segments":
                 return LSegments.create();
-            case "L_circle":
+            case "circle":
                 return LCircle.create();
-            case "L_points":
+            case "points":
                 return LPoints.create();
-            case "L_raster":
+            case "raster":
                 return LRaster.create();
 
             // Bounds primitive:
-            case "L_rectBounds":
+            case "rectBounds":
                 return LRectBounds.create();
-            case "L_locnBounds":
+            case "locnBounds":
                 return LLocnBounds.create();
-            case "L_circleBounds":
+            case "circleBounds":
                 return LCircleBounds.create();
 
             // Simple grid state access
-            case "L_getGPar":
+            case "getGPar":
                 return new GridStateGetNode(GridState::getGpar);
-            case "L_setGPar":
+            case "setGPar":
                 return GridStateSetNode.create((state, val) -> state.setGpar((RList) val));
-            case "L_getCurrentGrob":
+            case "getCurrentGrob":
                 return new GridStateGetNode(GridState::getCurrentGrob);
-            case "L_setCurrentGrob":
+            case "setCurrentGrob":
                 return GridStateSetNode.create(GridState::setCurrentGrob);
-            case "L_currentViewport":
+            case "currentViewport":
                 return new GridStateGetNode(GridState::getViewPort);
-            case "L_initGPar":
+            case "initGPar":
                 return new LInitGPar();
 
             // Display list stuff
-            case "L_getDisplayList":
+            case "getDisplayList":
                 return new GridStateGetNode(GridState::getDisplayList);
-            case "L_setDisplayList":
+            case "setDisplayList":
                 return GridStateSetNode.create((state, val) -> state.setDisplayList((RList) val));
-            case "L_getDLindex":
+            case "getDLindex":
                 return new GridStateGetNode(GridState::getDisplayListIndex);
-            case "L_setDLindex":
+            case "setDLindex":
                 return GridStateSetNode.create((state, val) -> state.setDisplayListIndex(RRuntime.asInteger(val)));
-            case "L_setDLelt":
+            case "setDLelt":
                 return GridStateSetNode.create(GridState::setDisplayListElement);
-            case "L_getDLelt":
+            case "getDLelt":
                 return LGetDisplayListElement.create();
-            case "L_setDLon":
+            case "setDLon":
                 return LSetDisplayListOn.create();
-            case "L_getDLon":
+            case "getDLon":
                 return new GridStateGetNode(state -> RRuntime.asLogical(state.isDisplayListOn()));
-            case "L_getEngineDLon":
+            case "getEngineDLon":
                 return new IgnoredGridExternal(RRuntime.LOGICAL_FALSE);
-            case "L_initDisplayList":
+            case "initDisplayList":
                 return new LInitDisplayList();
-            case "L_newpagerecording":
+            case "newpagerecording":
                 return new IgnoredGridExternal(RNull.instance);
 
             default:
-                if (name.startsWith("L_")) {
-                    throw RInternalError.shouldNotReachHere("Unimplemented grid external " + name);
-                } else {
-                    return null;
-                }
+                return null;
         }
     }
 

@@ -1117,34 +1117,34 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testForeignVectorArithmeticOp() throws NoSuchFieldException,
                     IllegalAccessException {
-        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldBooleanArray", false);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldByteArray", false);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldDoubleArray", false);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldFloatArray", false);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldIntegerArray", false);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldLongArray", false);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldShortArray", false);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldBooleanArray", false, "integer(0)");
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldByteArray", false, "integer(0)");
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldDoubleArray", false, "numeric(0)");
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldFloatArray", false, "numeric(0)");
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldIntegerArray", false, "integer(0)");
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldLongArray", false, "numeric(0)");
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldShortArray", false, "integer(0)");
 
-        TestJavaInterop.this.testForeignVectorArithmeticOp("listBoolean", false);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("listByte", false);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("listDouble", false);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("listFloat", false);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("listInteger", false);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("listLong", false);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("listShort", false);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listBoolean", false, "integer(0)");
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listByte", false, "integer(0)");
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listDouble", false, "numeric(0)");
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listFloat", false, "numeric(0)");
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listInteger", false, "integer(0)");
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listLong", false, "numeric(0)");
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listShort", false, "integer(0)");
 
-        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldCharArray", true);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldStringArray", true);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("listString", true);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("listStringInt", true);
-        TestJavaInterop.this.testForeignVectorArithmeticOp("listChar", true);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldCharArray", true, null);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("fieldStringArray", true, null);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listString", true, null);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listStringInt", true, null);
+        TestJavaInterop.this.testForeignVectorArithmeticOp("listChar", true, null);
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to + 1", errorIn("to + 1", "non-numeric argument to binary operator"));
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "1 + to", errorIn("1 + to", "non-numeric argument to binary operator"));
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to + to", errorIn("to + to", "non-numeric argument to binary operator"));
     }
 
-    private void testForeignVectorArithmeticOp(String vec, boolean fail) throws NoSuchFieldException, IllegalAccessException {
+    private void testForeignVectorArithmeticOp(String vec, boolean fail, String expectedOKForNull) throws NoSuchFieldException, IllegalAccessException {
         TestClass t = new TestClass();
 
         String expectedOK;
@@ -1174,13 +1174,11 @@ public class TestJavaInterop extends TestBase {
         expectedKO = errorIn("-(to$" + vec + ")", "invalid argument to unary operator");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "-(to$" + vec + ")", fail ? expectedKO : expectedOK);
 
-        expectedOK = "numeric(0)";
         expectedKO = errorIn("to$" + vec + " + NULL", "non-numeric argument to binary operator");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " + NULL", fail ? expectedKO : expectedOK);
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " + NULL", fail ? expectedKO : expectedOKForNull);
 
-        expectedOK = "numeric(0)";
         expectedKO = errorIn("NULL + to$" + vec, "non-numeric argument to binary operator");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "NULL + to$" + vec, fail ? expectedKO : expectedOK);
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "NULL + to$" + vec, fail ? expectedKO : expectedOKForNull);
     }
 
     @Test

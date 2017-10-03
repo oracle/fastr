@@ -26,12 +26,12 @@ public class TestBuiltin_lm extends TestBase {
 
     @Test
     public void testlm112() {
-        assertEval("require(stats);" + "lm(formula = weight ~ group - 1)");
+        assertEval(Output.IgnoreErrorMessage, "require(stats);" + "lm(formula = weight ~ group - 1)");
     }
 
     @Test
     public void testlm223() {
-        assertEval("require(stats);" + "lm(formula = weight ~ group, method = 'model.frame')");
+        assertEval(Output.IgnoreErrorMessage, "require(stats);" + "lm(formula = weight ~ group, method = 'model.frame')");
     }
 
     @Test
@@ -66,7 +66,7 @@ public class TestBuiltin_lm extends TestBase {
 
     @Test
     public void testlm880() {
-        assertEval("require(stats); lm(formula = y ~ x)");
+        assertEval(Output.IgnoreErrorMessage, "require(stats); lm(formula = y ~ x)");
     }
 
     @Test

@@ -180,8 +180,8 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
     }
 
     private static RType getResultType(BooleanOperationFactory factory, RAbstractVector a, RAbstractVector b) {
-        RType resultType = RType.Logical;
-        if (factory == BinaryLogic.AND || factory == BinaryLogic.OR && getArgumentType(a, b) == RType.Raw) {
+        RType resultType;
+        if ((factory == BinaryLogic.AND || factory == BinaryLogic.OR) && getArgumentType(a, b) == RType.Raw) {
             resultType = RType.Raw;
         } else {
             resultType = RType.Logical;

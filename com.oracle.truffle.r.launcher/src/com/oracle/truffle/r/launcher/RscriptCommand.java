@@ -111,7 +111,8 @@ public class RscriptCommand {
             @Override
             protected void printVersion() {
                 System.out.print("R scripting front-end version ");
-                System.out.println(RVersionNumber.FULL);
+                System.out.print(RVersionNumber.FULL);
+                System.out.println(RVersionNumber.RELEASE_DATE);
             }
         };
         Map<String, String> polyglotOptions = new HashMap<>();

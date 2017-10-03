@@ -235,7 +235,7 @@ public class FrameFunctions {
             casts.arg("definition").mustBe(RFunction.class);
             casts.arg("call").mustBe(RLanguage.class);
             casts.arg("expand.dots").asLogicalVector().findFirst();
-            casts.arg("envir").mustBe(REnvironment.class, Message.MUST_BE_ENVIRON);
+            casts.arg("envir").mustBe(REnvironment.class, Message.MUST_BE_ENVIRON, "envir");
         }
 
         @Specialization
