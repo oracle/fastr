@@ -33,6 +33,7 @@ import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_methods
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_nextMethodCallNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_set_method_dispatchNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_getSlotNodeGen;
+import com.oracle.truffle.r.library.methods.SlotFactory.R_hasSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SubstituteDirectNodeGen;
 import com.oracle.truffle.r.library.parallel.ParallelFunctionsFactory.MCIsChildNodeGen;
@@ -276,7 +277,7 @@ public class CallAndExternalFunctions {
                 case "R_get_slot":
                     return R_getSlotNodeGen.create();
                 case "R_hasSlot":
-                    return new UnimplementedExternal(name);
+                    return R_hasSlotNodeGen.create();
                 case "R_identC":
                     return R_identCNodeGen.create();
                 case "R_methods_test_MAKE_CLASS":
