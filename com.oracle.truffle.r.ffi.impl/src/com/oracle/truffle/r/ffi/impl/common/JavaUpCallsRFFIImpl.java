@@ -983,6 +983,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                     int sIdx = 0;
                     for (int i = 0; i < tLen; i++) {
                         c.copy(sIdx, i);
+                        sIdx++;
                         if (sIdx >= sLen) {
                             sIdx -= sLen;
                         }
