@@ -130,7 +130,7 @@ public final class AttributesAccessNodes {
                 copyRegAttributes = CopyOfRegAttributesNode.create();
             }
             copyRegAttributes.execute(x, y);
-            return null;
+            return RNull.instance;
         }
 
         @Fallback
