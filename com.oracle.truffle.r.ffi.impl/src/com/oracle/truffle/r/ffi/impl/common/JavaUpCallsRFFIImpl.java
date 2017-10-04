@@ -321,7 +321,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             }
             nameAsString = Utils.intern(nameAsString);
             if (val == RNull.instance) {
-                removeAttr(attrObj, nameAsString);
+                if ("class" == nameAsString) {
+                    removeClassAttr(attrObj);
+                } else {
+                    removeAttr(attrObj, nameAsString);
+                }
             } else if ("class" == nameAsString) {
                 attrObj.initAttributes().define(nameAsString, val);
             } else {
@@ -336,6 +340,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     private static void removeAttr(RAttributable a, String name) {
         a.removeAttr(name);
+    }
+
+    @TruffleBoundary
+    private static void removeClassAttr(RAttributable a) {
+        a.setClassAttr(null);
     }
 
     public static RStringVector getClassHr(Object v) {
@@ -644,7 +653,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public long Rf_any_duplicated(Object x, int fromLast) {
         RAbstractVector vec = (RAbstractVector) x;
-        if (vec.getLength() == 0) {
+        if (vec.getLength() <= 1) {
             return 0;
         } else {
             return DuplicationHelper.analyze(vec, null, true, fromLast != 0).getIndex();
@@ -873,7 +882,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         RFunction indenticalBuiltin = RContext.getInstance().lookupBuiltin("identical");
         Object res = RContext.getEngine().evalFunction(indenticalBuiltin, null, null, true, null, x, y, RRuntime.asLogical((!((flags & 1) == 0))),
                         RRuntime.asLogical((!((flags & 2) == 0))), RRuntime.asLogical((!((flags & 4) == 0))), RRuntime.asLogical((!((flags & 8) == 0))), RRuntime.asLogical((!((flags & 16) == 0))));
-        return (int) res;
+        return RRuntime.logical2int((byte) res);
     }
 
     @Override
