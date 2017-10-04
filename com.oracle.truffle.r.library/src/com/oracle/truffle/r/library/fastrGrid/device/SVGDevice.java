@@ -33,6 +33,7 @@ import java.text.DecimalFormat;
 import java.util.Base64;
 import java.util.Collections;
 
+import com.oracle.truffle.r.library.fastrGrid.GridColorUtils;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridFontStyle;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineEnd;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineJoin;
@@ -268,7 +269,7 @@ public class SVGDevice implements GridDevice, FileGridDevice {
             data.append(';');
             appendStyleColorAttrs("fill", ctx.getFillColor());
         } else {
-            data.append(";fill=").append(fillColorOverride);
+            data.append(";fill:").append(fillColorOverride);
         }
         data.append('\'');
     }
@@ -319,7 +320,13 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     private void appendStyleColorAttrs(String prefix, GridColor color) {
         data.append(prefix).append(':');
         if (color.getAlpha() == GridColor.OPAQUE_ALPHA) {
-            data.append(String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue()));
+            data.append('#');
+            data.append(GridColorUtils.getHexDigit(color.getRed() >> 4));
+            data.append(GridColorUtils.getHexDigit(color.getRed()));
+            data.append(GridColorUtils.getHexDigit(color.getGreen() >> 4));
+            data.append(GridColorUtils.getHexDigit(color.getGreen()));
+            data.append(GridColorUtils.getHexDigit(color.getBlue() >> 4));
+            data.append(GridColorUtils.getHexDigit(color.getBlue()));
         } else {
             data.append("rgb(").append(color.getRed()).append(',').append(color.getGreen()).append(',').append(color.getBlue()).append(')').append(';');
             data.append(prefix).append("-opacity:").append(DECIMAL_FORMAT.format(color.getAlpha() / 255d));
