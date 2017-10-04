@@ -98,8 +98,8 @@ rffi.iterate_iptr <- function(x) {
 	.Call("iterate_iptr", x, PACKAGE = "testrffi")
 }
 
-rffi.preserve_object <- function() {
-	.Call("preserve_object", PACKAGE = "testrffi")
+rffi.preserve_object <- function(v) {
+	.Call("preserve_object", v, PACKAGE = "testrffi")
 }
 
 rffi.release_object <- function(x) {
@@ -191,8 +191,4 @@ rffi.createNativeConnection <- function() {
 
 rffi.parseVector <- function(x) {
     .Call('test_ParseVector', x);
-}
-
-rffi.isNull <- function(x) {
-    .Call('test_isNull', x);
 }

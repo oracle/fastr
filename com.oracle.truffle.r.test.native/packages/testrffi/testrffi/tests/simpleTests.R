@@ -83,14 +83,12 @@ rffi.parseVector('1+')
 
 # preserve and release object
 # using loop to trigger compilation
+preserved_objects <- list()
 for(i in seq(5000)) {
-    rffi.preserve_object()
+    preserved_objects[[i]] <- rffi.preserve_object(i)
 }
 
 for(i in seq(5000)) {
-    rffi.release_object()
+    obj <- preserved_objects[[i]]
+    rffi.release_object(obj)
 }
-
-# test isNull
-rffi.isNull(NULL)
-

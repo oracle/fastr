@@ -66,7 +66,7 @@ extern SEXP iterate_iarray(SEXP x);
 
 extern SEXP iterate_iptr(SEXP x);
 
-extern SEXP preserve_object(void);
+extern SEXP preserve_object(SEXP val);
 
 extern SEXP release_object(SEXP x);
 
@@ -105,5 +105,3 @@ extern SEXP test_readConnection(SEXP conn);
 extern SEXP test_createNativeConnection(void);
 
 extern SEXP test_ParseVector(SEXP src);
-
-extern Rboolean test_isNUll(SEXP x);

@@ -61,7 +61,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(null, 0),
         CALLDEF(iterate_iarray, 1),
         CALLDEF(iterate_iptr, 1),
-        CALLDEF(preserve_object, 0),
+        CALLDEF(preserve_object, 1),
         CALLDEF(release_object, 1),
         CALLDEF(findvar, 2),
         CALLDEF(test_asReal, 1),

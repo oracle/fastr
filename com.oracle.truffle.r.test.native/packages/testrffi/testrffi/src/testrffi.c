@@ -278,9 +278,16 @@ SEXP iterate_iptr(SEXP x) {
     return v;
 }
 
-SEXP preserve_object(void) {
+SEXP preserve_object(SEXP val) {
 	SEXP v;
 	v = allocVector(INTSXP, 1);
+    int *iv = INTEGER(v);
+    if(LENGTH(val) > 0) {
+    	int *ival = INTEGER(val);
+    	iv[0] = ival[1];
+    } else {
+    	iv[0] = 1234;
+    }
 	R_PreserveObject(v);
 	return v;
 }
@@ -532,8 +539,4 @@ SEXP test_ParseVector(SEXP src) {
     SET_VECTOR_ELT(result, 1, parseResult);
     UNPROTECT(2);
     return result;
-}
-
-Rboolean test_isNull(SEXP x) {
-	return Rf_isNull(x);
 }
