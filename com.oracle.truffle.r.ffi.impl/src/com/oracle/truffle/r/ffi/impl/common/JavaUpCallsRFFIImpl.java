@@ -749,6 +749,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public int R_LockBinding(Object sym, Object env) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public int R_unLockBinding(Object sym, Object env) {
+        throw implementedAsNode();
+    }
+
+    @Override
     @TruffleBoundary
     public Object R_FindNamespace(Object name) {
         Object result = RContext.getInstance().stateREnvironment.getNamespaceRegistry().get(RRuntime.asString(name));

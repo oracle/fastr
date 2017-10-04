@@ -32,6 +32,8 @@ import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.TAG;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes;
+import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.LockBindingNode;
+import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.UnlockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CARNode;
@@ -225,6 +227,12 @@ public interface StdUpCallsRFFI {
     int /* void */ SET_SYMVALUE(Object x, Object v);
 
     int R_BindingIsLocked(Object sym, Object env);
+
+    @RFFIUpCallNode(LockBindingNode.class)
+    int R_LockBinding(Object sym, Object env);
+
+    @RFFIUpCallNode(UnlockBindingNode.class)
+    int R_unLockBinding(Object sym, Object env);
 
     Object R_FindNamespace(Object name);
 

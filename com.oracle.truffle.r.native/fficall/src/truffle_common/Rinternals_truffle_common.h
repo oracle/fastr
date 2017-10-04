@@ -1170,7 +1170,7 @@ int NAMED(SEXP x) {
     TRACE0();
     int result = (int) ((call_NAMED) callbacks[NAMED_x])(x);
     checkExitCall();
-    return result;;
+    return result;
 }
 
 int REFCNT(SEXP x) {
@@ -1233,7 +1233,7 @@ int IS_S4_OBJECT(SEXP x) {
     TRACE0();
     int result = (int) ((call_IS_S4_OBJECT) callbacks[IS_S4_OBJECT_x])(x);
     checkExitCall();
-    return result;;
+    return result;
 }
 
 void SET_S4_OBJECT(SEXP x) {
@@ -1307,12 +1307,14 @@ Rboolean R_EnvironmentIsLocked(SEXP env) {
 
 void R_LockBinding(SEXP sym, SEXP env) {
     TRACE0();
-    unimplemented("R_LockBinding");
+    ((call_R_LockBinding) callbacks[R_LockBinding_x])(sym, env);
+    checkExitCall();
 }
 
 void R_unLockBinding(SEXP sym, SEXP env) {
     TRACE0();
-    unimplemented("R_unLockBinding");
+    ((call_R_unLockBinding) callbacks[R_unLockBinding_x])(sym, env);
+    checkExitCall();
 }
 
 void R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env) {
@@ -1324,7 +1326,7 @@ Rboolean R_BindingIsLocked(SEXP sym, SEXP env) {
     TRACE0();
     Rboolean result = (Rboolean) ((call_R_BindingIsLocked) callbacks[R_BindingIsLocked_x])(sym, env);
     checkExitCall();
-    return result;;
+    return result;
 }
 
 Rboolean R_BindingIsActive(SEXP sym, SEXP env) {
@@ -1567,7 +1569,7 @@ Rboolean R_compute_identical(SEXP x, SEXP y, int flags) {
     TRACE0();
     Rboolean result = (Rboolean) ((call_R_compute_identical) callbacks[R_compute_identical_x])(x, y, flags);
     checkExitCall();
-    return result;;
+    return result;
 }
 
 void Rf_copyListMatrix(SEXP s, SEXP t, Rboolean byrow) {
