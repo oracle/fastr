@@ -140,7 +140,8 @@ snapshot.check <- function(id, valueList) {
         if(var_names[[i]] %in% restored_names) {
             actualVal <- valueList[[var_names[[i]]]]
             expectedVal <- restoredVars[[var_names[[i]]]]
-            if(!refcmpEnv$equals(expectedVal, actualVal)) {
+            equalsResult <- refcmpEnv$equals(expectedVal, actualVal)
+            if(!is.logical(equalsResult) || !equalsResult) {
                 stop(paste0("Value of variable '", var_names[[i]], "' differs. Expected ", expectedVal, " but was ", actualVal))
             }
         } else {
