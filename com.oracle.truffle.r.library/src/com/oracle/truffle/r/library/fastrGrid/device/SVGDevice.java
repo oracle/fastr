@@ -24,6 +24,7 @@ package com.oracle.truffle.r.library.fastrGrid.device;
 
 import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GRID_LINE_BLANK;
 import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_TO_POINTS_FACTOR;
+import static java.lang.Math.round;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -70,9 +71,9 @@ public class SVGDevice implements GridDevice, FileGridDevice {
         cachedCtx = null;
         data.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
         data.append("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n");
-        append("<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' viewBox='0 0 %.3f %.3f'>\n",
-                        width * COORD_FACTOR,
-                        height * COORD_FACTOR);
+        append("<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' viewBox='0 0 %d %d' style='fill:transparent'>\n",
+                        trRound(width),
+                        trRound(height));
     }
 
     @Override
@@ -90,9 +91,10 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     @Override
     public void drawRect(DrawingContext ctx, double leftX, double bottomY, double newWidth, double newHeight, double rotationAnticlockWise) {
         appendStyle(ctx);
-        append("<rect x='%.3f' y='%.3f' width='%.3f' height='%.3f'", leftX * COORD_FACTOR, transY(bottomY + newHeight) * COORD_FACTOR, newWidth * COORD_FACTOR, newHeight * COORD_FACTOR);
+        data.append("<rect x='").append(trRound(leftX)).append("' y='").append(trRound(transY(bottomY + newHeight))).append("' width='").append(trRound(newWidth)).append("' height='").append(
+                        trRound(newHeight)).append('\'');
         if (rotationAnticlockWise != 0) {
-            append(" transform='rotate(%.3f %.3f,%.3f)'", toDegrees(rotationAnticlockWise), (leftX + newWidth / 2.) * COORD_FACTOR, transY(bottomY + newHeight / 2.) * COORD_FACTOR);
+            appendTransform((int) round(toDegrees(rotationAnticlockWise)), trRound(leftX + newWidth / 2.), trRound(transY(bottomY + newHeight / 2.)));
         }
         appendColorStyle(ctx);
         data.append("/>\n"); // end of 'rect' tag
@@ -100,18 +102,18 @@ public class SVGDevice implements GridDevice, FileGridDevice {
 
     @Override
     public void drawPolyLines(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
-        drawPoly(ctx, x, y, startIndex, length, "transparent");
+        drawPoly(ctx, x, y, startIndex, length, true);
     }
 
     @Override
     public void drawPolygon(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
-        drawPoly(ctx, x, y, startIndex, length, null);
+        drawPoly(ctx, x, y, startIndex, length, false);
     }
 
     @Override
     public void drawCircle(DrawingContext ctx, double centerX, double centerY, double radius) {
         appendStyle(ctx);
-        append("<circle cx='%.3f' cy='%.3f' r='%.3f'", centerX * COORD_FACTOR, transY(centerY) * COORD_FACTOR, radius * COORD_FACTOR);
+        data.append("<circle cx='").append(trRound(centerX)).append("' cy='").append(trRound(transY(centerY))).append("' r='").append(trRound(radius)).append('\'');
         appendColorStyle(ctx);
         data.append("/>\n");
     }
@@ -120,18 +122,19 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     public void drawRaster(double leftX, double bottomY, double width, double height, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation) {
         byte[] bitmap = Bitmap.create(pixels, pixelsColumnsCount);
         String base64 = Base64.getEncoder().encodeToString(bitmap);
-        append("<image x='%.3f' y='%.3f' width='%.3f' height='%.3f' preserveAspectRatio='none' xlink:href='data:image/bmp;base64,%s'/>\n", leftX * COORD_FACTOR,
-                        transY(bottomY + height) * COORD_FACTOR,
-                        width * COORD_FACTOR, height * COORD_FACTOR, base64);
+        data.append("<image x='").append(round(leftX * COORD_FACTOR)).append("' y='").append(trRound(transY(bottomY + height)));
+        data.append("' width='").append(round(width * COORD_FACTOR)).append("' height='").append(trRound(height));
+        data.append("' preserveAspectRatio='none' xlink:href='data:image/bmp;base64,").append(base64).append("'/>\n");
     }
 
     @Override
     public void drawString(DrawingContext ctx, double leftX, double bottomY, double rotationAnticlockWise, String text) {
         closeStyle();
-        append("<text x='%.3f' y='%.3f' textLength='%.3fpx' lengthAdjust='spacingAndGlyphs'", leftX * COORD_FACTOR, transY(bottomY) * COORD_FACTOR, getStringWidth(ctx, text) * COORD_FACTOR);
+        data.append("<text x='").append(round(leftX * COORD_FACTOR)).append("' y='").append(trRound(transY(bottomY)));
+        data.append("' lengthAdjust='spacingAndGlyphs' textLength='").append(round(getStringWidth(ctx, text) * COORD_FACTOR)).append("px'");
         appendFontStyle(ctx);
         if (rotationAnticlockWise != 0) {
-            append(" transform='rotate(%.3f %.3f,%.3f)'", toDegrees(rotationAnticlockWise), leftX * COORD_FACTOR, transY(bottomY) * COORD_FACTOR);
+            appendTransform((int) round(toDegrees(rotationAnticlockWise)), trRound(leftX), trRound(transY(bottomY)));
         }
         data.append(">").append(text).append("</text>\n");
     }
@@ -177,20 +180,20 @@ public class SVGDevice implements GridDevice, FileGridDevice {
         return 0.7 * (ctx.getFontSize() / INCH_TO_POINTS_FACTOR);
     }
 
-    private void drawPoly(DrawingContext ctx, double[] x, double[] y, int startIndex, int length, String fillColorOverride) {
+    private void drawPoly(DrawingContext ctx, double[] x, double[] y, int startIndex, int length, boolean noFill) {
         appendStyle(ctx);
         data.append("<polyline points='");
         for (int i = 0; i < length; i++) {
-            data.append(DECIMAL_FORMAT.format(x[i + startIndex] * COORD_FACTOR));
+            data.append(trRound(x[i + startIndex]));
             data.append(',');
-            data.append(DECIMAL_FORMAT.format(transY(y[i + startIndex]) * COORD_FACTOR));
+            data.append(trRound(transY(y[i + startIndex])));
             if (i != length - 1) {
                 data.append(' ');
             }
         }
         data.append('\'');
-        appendColorStyle(ctx, fillColorOverride);
-        data.append("/>");
+        appendColorStyle(ctx, noFill);
+        data.append("/>\n");
     }
 
     private void saveFile() throws DeviceCloseException {
@@ -254,10 +257,10 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     }
 
     private void appendColorStyle(DrawingContext ctx) {
-        appendColorStyle(ctx, null);
+        appendColorStyle(ctx, false);
     }
 
-    private void appendColorStyle(DrawingContext ctx, String fillColorOverride) {
+    private void appendColorStyle(DrawingContext ctx, boolean noFill) {
         byte[] lineType = ctx.getLineType();
         if (lineType == GRID_LINE_BLANK) {
             data.append(" style='stroke:transparent");
@@ -265,11 +268,10 @@ public class SVGDevice implements GridDevice, FileGridDevice {
             data.append(" style='");
             appendStyleColorAttrs("stroke", ctx.getColor());
         }
-        if (fillColorOverride == null) {
+        if (!noFill && !ctx.getFillColor().equals(GridColor.TRANSPARENT)) {
             data.append(';');
             appendStyleColorAttrs("fill", ctx.getFillColor());
-        } else {
-            data.append(";fill:").append(fillColorOverride);
+            data.append('\'');
         }
         data.append('\'');
     }
@@ -337,12 +339,20 @@ public class SVGDevice implements GridDevice, FileGridDevice {
         data.append(Utils.stringFormat(fmt, args));
     }
 
+    private void appendTransform(int a, int b, int c) {
+        data.append(" transform='rotate(").append(a).append(',').append(b).append(',').append(c).append(")'");
+    }
+
     private double transY(double y) {
         return (height - y);
     }
 
     private static double toDegrees(double rotationAnticlockWise) {
         return (180. / Math.PI) * -rotationAnticlockWise;
+    }
+
+    private int trRound(double value) {
+        return (int) Math.round(value * COORD_FACTOR);
     }
 
     static boolean areSameGlobalStyles(DrawingContext ctx1, DrawingContext ctx2) {
