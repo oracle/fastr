@@ -72,6 +72,7 @@ public class Graphics2DDevice implements GridDevice {
     private Graphics2D graphics;
     private final boolean graphicsIsExclusive;
     private DrawingContext cachedContext;
+    private BasicStroke stokeCache;
 
     /**
      * @param graphics Object that should be used for the drawing.
@@ -329,7 +330,7 @@ public class Graphics2DDevice implements GridDevice {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
     }
 
-    private static BasicStroke getStrokeFromCtx(DrawingContext ctx) {
+    private BasicStroke getStrokeFromCtx(DrawingContext ctx) {
         byte[] type = ctx.getLineType();
         double width = ctx.getLineWidth();
         int lineJoin = fromGridLineJoin(ctx.getLineJoin());
@@ -338,7 +339,10 @@ public class Graphics2DDevice implements GridDevice {
         if (type == DrawingContext.GRID_LINE_BLANK) {
             return blankStroke;
         } else if (type == DrawingContext.GRID_LINE_SOLID) {
-            return new BasicStroke((float) (width), endCap, lineJoin, lineMitre);
+            if (stokeCache == null || !areEqual(stokeCache, (float) width, endCap, lineJoin, lineMitre)) {
+                stokeCache = new BasicStroke((float) (width), endCap, lineJoin, lineMitre);
+            }
+            return stokeCache;
         }
         float[] pattern = new float[type.length];
         for (int i = 0; i < pattern.length; i++) {
@@ -382,5 +386,12 @@ public class Graphics2DDevice implements GridDevice {
 
     private static int iround(double val) {
         return (int) Math.round(val);
+    }
+
+    private static boolean areEqual(BasicStroke s, float width, int endCap, int lineJoin, float lineMitre) {
+        return s.getLineWidth() == width &&
+                        s.getEndCap() == endCap &&
+                        s.getLineJoin() == lineJoin &&
+                        s.getMiterLimit() == lineMitre;
     }
 }
