@@ -66,6 +66,15 @@
 
 #include <rffiutils.h>
 
+// these two functions are here just to handle casting void* to void function pointers...
+DL_FUNC R_ExternalPtrAddrFn(SEXP s) {
+    return (DL_FUNC) R_ExternalPtrAddr(s);
+}
+
+SEXP R_MakeExternalPtrFn(DL_FUNC p, SEXP tag, SEXP prot) {
+    return R_MakeExternalPtr((void *) p, tag, prot);
+}
+
 // R_GlobalEnv et al are not a variables in FASTR as they are RContext specific
 SEXP FASTR_R_GlobalEnv() {
     TRACE0();
@@ -1391,6 +1400,7 @@ SEXP R_MakeExternalPtr(void *p, SEXP tag, SEXP prot) {
 }
 
 void *R_ExternalPtrAddr(SEXP s) {
+
     TRACE0();
     SEXP result = ((call_R_ExternalPtrAddr) callbacks[R_ExternalPtrAddr_x])(s);
     checkExitCall();
