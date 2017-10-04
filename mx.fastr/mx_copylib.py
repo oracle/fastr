@@ -118,8 +118,15 @@ def copylib(args):
                         if os.path.exists(os.path.join(path, plain_libpath_base)):
                             f = plain_libpath_base
                         target_dir = args[1]
+                        target = os.path.join(path, f)
                         if not os.path.exists(os.path.join(target_dir, f)):
-                            _copylib(args[0], os.path.join(path, f), plain_libpath_base, args[1])
+                            if os.path.islink(target):
+                                link_target = os.path.join(path, os.readlink(target))
+                                if link_target == '/usr/lib/libSystem.B.dylib':
+                                    # simply copy over the link to the system library
+                                    os.symlink(link_target, os.path.join(target_dir, plain_libpath_base))
+                                    return 0
+                            _copylib(args[0], target, plain_libpath_base, args[1])
                         return 0
 
     if os.environ.has_key('FASTR_RELEASE'):
