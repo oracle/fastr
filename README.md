@@ -66,15 +66,18 @@ prior to the build. These are:
     A jvmci-enabled Java JDK which is available from [pre-built binary](http://www.oracle.com/technetwork/oracle-labs/program-languages/downloads/index.html)
     Python version 2.7.x
     A Fortran compiler and libraries. Typically gfortran 4.8 or later
+    A C compiler and libraries. Typically gcc or clang
     The pcre package, version 8.38 or later
     The zlib package, version 1.2.8 or later
     The bzip2 package, version 1.0.6 or later
     The xz package, version 5.2.2 or later
+    The curl package, version 7.50.1 or later
 
-If any of these are missing the GNU R build will fail which will cause the FastR build to fail also. Note that your system may have existing installations of these
-packages, possibly in standard system locations, but older versions. These must either be upgraded or newer versions installed with the package manager on your system.
-Since different systems use different package managers some of which install packages in directories that are not scanned by default by the C compiler and linker,
-it may be necessary to inform the build of these locations using the following environment variables:
+If any of these are missing the GNU R build will fail which will cause the FastR build to fail also. If the build fails, more details can be found in `gnur_configure.log`
+file in the `com.oracle.truffle.r.native/gnur/R-{version}` directory. Note that your system may have existing installations of these packages, possibly in standard system locations,
+but older versions. These must either be upgraded or newer versions installed with the package manager on your system. Since different systems use different package
+managers some of which install packages in directories that are not scanned by default by the C compiler and linker, it may be necessary to inform the build of these
+locations using the following environment variables:
 
     PKG_INCLUDE_FLAGS_OVERRIDE
     PKG_LDFLAGS_OVERRIDE
