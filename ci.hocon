@@ -62,7 +62,7 @@ packagesLinux : ${pkgEnvironment} {
     gcc-build-essentials : "==4.9.1" # GCC 4.9.0 fails on cluster
     readline : "==6.3"
     pcre : ">=8.38"
-    z : ">=1.2.8"
+    zlib : ">=1.2.8"
     curl : ">=7.50.1"
   }
 }
@@ -70,9 +70,7 @@ packagesLinux : ${pkgEnvironment} {
 packagesDarwin : {
   "pip:astroid" : "==1.1.0"
   "pip:pylint" : "==1.1.0"
-  "xz" : "==5.2.2"
   "pcre" : "==8.38"
-#  "zlib" : ""
 }
 
 # Common settings for all builds but note that it uses the Linux package settings,
@@ -114,8 +112,8 @@ darwinEnvironment : {
     PATH : "/usr/local/bin:$JAVA_HOME/bin:$PATH"
     F77: "/usr/local/bin/gfortran-4.9"
     TZDIR: "/usr/share/zoneinfo"
-	PKG_INCLUDE_FLAGS_OVERRIDE : """-I/cm/shared/apps/zlib/1.2.8/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/pcre/8.38/include -I/cm/shared/apps/curl/7.50.1/include"""
-    PKG_LDFLAGS_OVERRIDE : """"-L/cm/shared/apps/zlib/1.2.8/lib -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1/lib -L/cm/shared/apps/gcc/4.9.1/lib64""""
+	PKG_INCLUDE_FLAGS_OVERRIDE : """-I/cm/shared/apps/pcre/8.38/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/curl/7.50.1/include"""
+    PKG_LDFLAGS_OVERRIDE : """" -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1/lib -L/cm/shared/apps/gcc/4.9.1/lib64 -L/usr/local/Cellar/gcc@4.9/4.9.4/lib/gcc/4.9/ -L/usr/lib""""
   }
 }
 
