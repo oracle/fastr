@@ -277,12 +277,10 @@ typedef double (*call_Rf_punif)(double a, double b, double c, int d, int e);
 typedef double (*call_Rf_runif)(double x, double y);
 typedef SEXP (*call_Rf_match)(SEXP itable, SEXP ix, int nmatch);
 typedef Rboolean (*call_Rf_NonNullStringMatch)(SEXP s, SEXP t);
-
 typedef SEXP (*call_getvar)();
-
 typedef SEXP (*call_R_ParseVector)(SEXP text, int n, SEXP srcFile);
-
 typedef SEXPTYPE (*call_Rf_str2type)(const char *s);
+typedef SEXP (*call_CLOENV)(SEXP closure);
 
 // connections
 

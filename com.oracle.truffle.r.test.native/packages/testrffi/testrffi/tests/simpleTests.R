@@ -80,3 +80,15 @@ rffi.inlined_length(expr[[1]])
 rffi.parseVector('1+2')
 rffi.parseVector('.*/-')
 rffi.parseVector('1+')
+
+# preserve and release object
+# using loop to trigger compilation
+preserved_objects <- list()
+for(i in seq(5000)) {
+    preserved_objects[[i]] <- rffi.preserve_object(i)
+}
+
+for(i in seq(5000)) {
+    obj <- preserved_objects[[i]]
+    rffi.release_object(obj)
+}

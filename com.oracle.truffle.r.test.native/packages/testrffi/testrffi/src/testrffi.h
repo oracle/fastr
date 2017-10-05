@@ -66,7 +66,7 @@ extern SEXP iterate_iarray(SEXP x);
 
 extern SEXP iterate_iptr(SEXP x);
 
-extern SEXP preserve_object(void);
+extern SEXP preserve_object(SEXP val);
 
 extern SEXP release_object(SEXP x);
 

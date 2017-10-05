@@ -78,6 +78,11 @@ public class Managed_LapackRFFI implements LapackRFFI {
     }
 
     @Override
+    public DgesddNode createDgesddNode() {
+        throw unsupported("lapack");
+    }
+
+    @Override
     public DlangeNode createDlangeNode() {
         throw unsupported("lapack");
     }

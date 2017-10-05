@@ -33,6 +33,7 @@ import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_methods
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_nextMethodCallNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_set_method_dispatchNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_getSlotNodeGen;
+import com.oracle.truffle.r.library.methods.SlotFactory.R_hasSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SubstituteDirectNodeGen;
 import com.oracle.truffle.r.library.parallel.ParallelFunctionsFactory.MCIsChildNodeGen;
@@ -71,6 +72,7 @@ import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
 import com.oracle.truffle.r.library.utils.UnzipNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
+import com.oracle.truffle.r.nodes.helpers.MaterializeNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -85,7 +87,6 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.nodes.MaterializeNode;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
@@ -224,7 +225,7 @@ public class CallAndExternalFunctions {
     public abstract static class DotCall extends LookupAdapter {
 
         @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
-        @Child MaterializeNode materializeNode = MaterializeNode.create();
+        @Child MaterializeNode materializeNode = MaterializeNode.create(true);
 
         static {
             Casts.noCasts(DotCall.class);
@@ -276,7 +277,7 @@ public class CallAndExternalFunctions {
                 case "R_get_slot":
                     return R_getSlotNodeGen.create();
                 case "R_hasSlot":
-                    return new UnimplementedExternal(name);
+                    return R_hasSlotNodeGen.create();
                 case "R_identC":
                     return R_identCNodeGen.create();
                 case "R_methods_test_MAKE_CLASS":

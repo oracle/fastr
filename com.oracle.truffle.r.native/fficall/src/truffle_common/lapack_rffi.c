@@ -108,6 +108,14 @@ int call_lapack_dgesv(int n, int nrhs, double *a, int lda, int *ipiv, double *b,
     return info;
 }
 
+extern int dgesdd_(char *jobz, int *m, int *n, double *a, int *lda, double *s, double *u, int *ldu, double *vt, int *ldtv, double *work, int *lwork, int *iwork, int *info);
+
+int call_lapack_dgesdd(char jobz, int m, int n, double *a, int lda, double *s, double *u, int ldu, double *vt, int ldtv, double *work, int lwork, int *iwork) {
+    int info;
+    dgesdd_(&jobz, &m, &n, a, &lda, s, u, &ldu, vt, &ldtv, work, &lwork, iwork, &info);
+    return info;
+}
+
 extern double dlange_(char *norm, int *m, int *n, double *a, int *lda, double *work);
 
 double call_lapack_dlange(char norm, int m, int n, double *a, int lda, double *work) {

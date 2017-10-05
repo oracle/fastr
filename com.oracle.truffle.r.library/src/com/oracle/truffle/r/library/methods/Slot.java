@@ -14,10 +14,12 @@ package com.oracle.truffle.r.library.methods;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
+import com.oracle.truffle.r.nodes.access.HasSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
@@ -25,6 +27,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNode;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 
 // Transcribed from src/library/methods/src/slot.c
@@ -84,4 +87,40 @@ public class Slot {
             return updateSlotNode.executeUpdate(castAttributable.executeObject(object), getInternedName(name), value);
         }
     }
+
+    public abstract static class R_hasSlot extends RExternalBuiltinNode.Arg2 {
+
+        @Child private HasSlotNode hasSlotNode;
+        @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
+
+        static {
+            Casts casts = new Casts(R_hasSlot.class);
+            casts.arg(1, "name").defaultError(RError.Message.GENERIC, "invalid type or length for slot name").mustBe(stringValue()).asStringVector().mustBe(
+                            singleElement()).findFirst().mustBe(Predef.lengthGt(0), RError.Message.ZERO_LENGTH_VARIABLE);
+        }
+
+        protected static String getInternedName(String name) {
+            return Utils.intern(name);
+        }
+
+        @Specialization(guards = {"name.equals(cachedInternedName)"})
+        protected Object hasSlotCached(Object object, @SuppressWarnings("unused") String name,
+                        @Cached("getInternedName(name)") String cachedInternedName) {
+            if (hasSlotNode == null) {
+                CompilerDirectives.transferToInterpreter();
+                hasSlotNode = insert(HasSlotNode.create(false));
+            }
+            return RRuntime.asLogical(hasSlotNode.executeAccess(object, cachedInternedName));
+        }
+
+        @Specialization(replaces = "hasSlotCached")
+        protected Object hasSlot(Object object, String name) {
+            if (hasSlotNode == null) {
+                CompilerDirectives.transferToInterpreter();
+                hasSlotNode = insert(HasSlotNode.create(false));
+            }
+            return RRuntime.asLogical(hasSlotNode.executeAccess(object, name));
+        }
+    }
+
 }

@@ -146,6 +146,18 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
+    private static class TruffleNFI_DgesddNode extends TruffleNFI_DownCallNode implements DgesddNode {
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.dgesdd;
+        }
+
+        @Override
+        public int execute(char jobz, int m, int n, double[] a, int lda, double[] s, double[] u, int ldu, double[] vt, int ldtv, double[] work, int lwork, int[] iwork) {
+            return (int) call(jobz, m, n, a, lda, s, u, ldu, vt, ldtv, work, lwork, iwork);
+        }
+    }
+
     private static class TruffleNFI_DlangeNode extends TruffleNFI_DownCallNode implements DlangeNode {
         @Override
         protected NativeFunction getFunction() {
@@ -231,6 +243,11 @@ public class TruffleNFI_Lapack implements LapackRFFI {
     @Override
     public DgesvNode createDgesvNode() {
         return new TruffleNFI_DgesvNode();
+    }
+
+    @Override
+    public DgesddNode createDgesddNode() {
+        return new TruffleNFI_DgesddNode();
     }
 
     @Override

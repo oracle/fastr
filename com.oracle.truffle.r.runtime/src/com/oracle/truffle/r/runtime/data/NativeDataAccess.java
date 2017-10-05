@@ -96,6 +96,8 @@ public final class NativeDataAccess {
 
     private static final boolean TRACE_MIRROR_ALLOCATION_SITES = false;
 
+    private static final long EMPTY_DATA_ADDRESS = 0xBAD;
+
     public static boolean isNativeMirror(Object o) {
         return o instanceof NativeMirror;
     }
@@ -132,9 +134,16 @@ public final class NativeDataAccess {
         @TruffleBoundary
         void allocateNative(Object source, int len, int elementBase, int elementSize) {
             assert dataAddress == 0;
-            dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(len * elementSize);
-            UnsafeAdapter.UNSAFE.copyMemory(source, elementBase, null, dataAddress, len * elementSize);
+            if (len != 0) {
+                dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(len * elementSize);
+                UnsafeAdapter.UNSAFE.copyMemory(source, elementBase, null, dataAddress, len * elementSize);
+            } else {
+                dataAddress = EMPTY_DATA_ADDRESS;
+            }
             this.length = len;
+
+            // ensure that marker address is not used
+            assert this.length == 0 || dataAddress != EMPTY_DATA_ADDRESS;
         }
 
         @TruffleBoundary
@@ -146,6 +155,9 @@ public final class NativeDataAccess {
             UnsafeAdapter.UNSAFE.putByte(dataAddress + bytes.length, (byte) 0); // C strings
                                                                                 // terminator
             this.length = bytes.length + 1;
+
+            // ensure that marker address is not used
+            assert this.length == 0 || dataAddress != EMPTY_DATA_ADDRESS;
         }
 
         @Override
@@ -153,7 +165,9 @@ public final class NativeDataAccess {
             super.finalize();
             nativeMirrors.remove(id);
             // System.out.println(String.format("gc'ing %16x", id));
-            if (dataAddress != 0) {
+            if (dataAddress == EMPTY_DATA_ADDRESS) {
+                assert (dataAddress = 0xbadbad) != 0;
+            } else if (dataAddress != 0) {
                 // System.out.println(String.format("freeing data at %16x", dataAddress));
                 UnsafeAdapter.UNSAFE.freeMemory(dataAddress);
                 assert (dataAddress = 0xbadbad) != 0;

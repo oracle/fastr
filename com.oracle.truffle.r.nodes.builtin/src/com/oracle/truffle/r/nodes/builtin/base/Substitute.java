@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ENVIRONMENT_SPECIFIED;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -31,11 +33,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.library.methods.SubstituteDirect;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
-import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ENVIRONMENT_SPECIFIED;
 import com.oracle.truffle.r.runtime.RSubstitute;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RLanguage;

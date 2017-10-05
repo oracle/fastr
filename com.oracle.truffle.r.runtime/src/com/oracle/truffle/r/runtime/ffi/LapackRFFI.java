@@ -144,6 +144,17 @@ public interface LapackRFFI {
         }
     }
 
+    interface DgesddNode extends NodeInterface {
+        /**
+         * See <a href="http://www.netlib.org/lapack/explore-html/db/db4/dgesdd_8f.html">spec</a>.
+         */
+        int execute(char jobz, int m, int n, double[] a, int lda, double[] s, double[] u, int ldu, double[] vt, int ldtv, double[] work, int lwork, int[] iwork);
+
+        static DgesddNode create() {
+            return RFFIFactory.getLapackRFFI().createDgesddNode();
+        }
+    }
+
     interface DlangeNode extends NodeInterface {
 
         /**
@@ -197,6 +208,8 @@ public interface LapackRFFI {
     DpstrfNode createDpstrfNode();
 
     DgesvNode createDgesvNode();
+
+    DgesddNode createDgesddNode();
 
     DlangeNode createDlangeNode();
 

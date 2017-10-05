@@ -22,16 +22,17 @@
  */
 package com.oracle.truffle.r.library.methods;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_LIST_FOR_SUBSTITUTION;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
 import com.oracle.truffle.r.runtime.RError;
-import static com.oracle.truffle.r.runtime.RError.Message.INVALID_LIST_FOR_SUBSTITUTION;
 import com.oracle.truffle.r.runtime.RSubstitute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;

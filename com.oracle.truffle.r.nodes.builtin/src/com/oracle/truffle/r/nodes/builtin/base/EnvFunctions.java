@@ -53,8 +53,9 @@ import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.GetFunctionEnvironmentNode;
+import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
@@ -361,17 +362,8 @@ public class EnvFunctions {
          */
         @Specialization
         protected Object environment(RFunction fun,
-                        @Cached("createBinaryProfile()") ConditionProfile noEnvProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile createProfile) {
-            Frame enclosing = fun.getEnclosingFrame();
-            if (noEnvProfile.profile(enclosing == null)) {
-                return RNull.instance;
-            }
-            REnvironment env = RArguments.getEnvironment(enclosing);
-            if (createProfile.profile(env == null)) {
-                return REnvironment.createEnclosingEnvironments(enclosing.materialize());
-            }
-            return env;
+                        @Cached("create()") GetFunctionEnvironmentNode getEnv) {
+            return getEnv.getEnvironment(fun);
         }
 
         @Specialization
