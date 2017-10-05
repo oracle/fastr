@@ -633,7 +633,7 @@ public class DLL {
     private static final class RFindSymbolRootNode extends RootNode {
         private static RFindSymbolRootNode findSymbolRootNode;
 
-        @Child RFindSymbolNode findSymbolNode = RFindSymbolNode.create();
+        @Child private RFindSymbolNode findSymbolNode = RFindSymbolNode.create();
 
         private RFindSymbolRootNode() {
             super(RContext.getInstance().getLanguage());
@@ -660,7 +660,7 @@ public class DLL {
     }
 
     public static final class RdlsymNode extends Node {
-        @Child DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
+        @Child private DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
 
         /**
          * Directly analogous to the GnuR function {@code R_dlsym}. Checks first for a

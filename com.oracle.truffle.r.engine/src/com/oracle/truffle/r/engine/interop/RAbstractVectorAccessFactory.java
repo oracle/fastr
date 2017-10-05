@@ -181,7 +181,7 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
     }
 
     abstract static class VectorKeyInfoRootNode extends InteropRootNode {
-        @Child VectorKeyInfoImplNode keyInfoNode = VectorKeyInfoImplNodeGen.create();
+        @Child private VectorKeyInfoImplNode keyInfoNode = VectorKeyInfoImplNodeGen.create();
 
         @Override
         public final Object execute(VirtualFrame frame) {

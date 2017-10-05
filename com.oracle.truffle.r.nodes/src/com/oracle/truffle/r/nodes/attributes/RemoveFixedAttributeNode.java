@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode {
 
-    @Child RemoveFixedAttributeNode recursive;
+    @Child private RemoveFixedAttributeNode recursive;
 
     protected RemoveFixedAttributeNode(String name) {
         super(name);

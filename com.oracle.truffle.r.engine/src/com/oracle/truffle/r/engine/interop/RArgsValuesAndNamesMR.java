@@ -62,7 +62,7 @@ public class RArgsValuesAndNamesMR {
 
     @Resolve(message = "READ")
     public abstract static class RArgsValuesAndNamesReadNode extends Node {
-        @Child RArgsValuesAndNamesReadImplNode readNode = RArgsValuesAndNamesReadImplNodeGen.create();
+        @Child private RArgsValuesAndNamesReadImplNode readNode = RArgsValuesAndNamesReadImplNodeGen.create();
 
         protected Object access(RArgsValuesAndNames receiver, Object identifier) {
             return readNode.execute(receiver, identifier);

@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.data.RAttributeStorage;
  */
 public abstract class SetAttributeNode extends AttributeAccessNode {
 
-    @Child SetAttributeNode recursive;
+    @Child private SetAttributeNode recursive;
 
     protected SetAttributeNode() {
     }

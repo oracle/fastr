@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 @RBuiltin(name = "inherits", kind = INTERNAL, parameterNames = {"x", "what", "which"}, behavior = PURE)
 public abstract class InheritsBuiltin extends RBuiltinNode.Arg3 {
 
-    @Child InheritsNode inheritsNode = InheritsNodeGen.create();
+    @Child private InheritsNode inheritsNode = InheritsNodeGen.create();
 
     public abstract Object execute(Object x, Object what, Object which);
 

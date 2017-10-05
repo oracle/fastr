@@ -217,7 +217,7 @@ public class GrepFunctions {
     }
 
     protected static final class GrepCommonCodeNode extends CommonCodeNode {
-        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getPCRERFFI().createExecNode();
+        @Child private PCRERFFI.ExecNode execNode = RFFIFactory.getPCRERFFI().createExecNode();
 
         protected Object doGrep(String patternArg, RAbstractStringVector vector, boolean ignoreCase, boolean value, boolean perlPar, boolean fixed,
                         @SuppressWarnings("unused") boolean useBytes, boolean invert, boolean grepl) {
@@ -421,7 +421,7 @@ public class GrepFunctions {
     }
 
     protected static final class SubCommonCodeNode extends CommonCodeNode {
-        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getPCRERFFI().createExecNode();
+        @Child private PCRERFFI.ExecNode execNode = RFFIFactory.getPCRERFFI().createExecNode();
 
         protected RStringVector doSub(String patternArg, String replacementArg, RAbstractStringVector vector, boolean ignoreCase, boolean perlPar,
                         boolean fixedPar, @SuppressWarnings("unused") boolean useBytes, boolean gsub) {
@@ -738,15 +738,15 @@ public class GrepFunctions {
     @RBuiltin(name = "regexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Regexpr extends RBuiltinNode.Arg6 {
 
-        @Child SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
-        @Child SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
-        @Child SetFixedAttributeNode setCaptureStartAttrNode = SetFixedAttributeNode.create("capture.start");
-        @Child SetFixedAttributeNode setCaptureLengthAttrNode = SetFixedAttributeNode.create("capture.length");
-        @Child SetFixedAttributeNode setCaptureNamesAttrNode = SetFixedAttributeNode.create("capture.names");
-        @Child SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
-        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getPCRERFFI().createExecNode();
-        @Child PCRERFFI.GetCaptureNamesNode getCaptureNamesNode = RFFIFactory.getPCRERFFI().createGetCaptureNamesNode();
-        @Child PCRERFFI.GetCaptureCountNode getCaptureCountNode = RFFIFactory.getPCRERFFI().createGetCaptureCountNode();
+        @Child private SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
+        @Child private SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
+        @Child private SetFixedAttributeNode setCaptureStartAttrNode = SetFixedAttributeNode.create("capture.start");
+        @Child private SetFixedAttributeNode setCaptureLengthAttrNode = SetFixedAttributeNode.create("capture.length");
+        @Child private SetFixedAttributeNode setCaptureNamesAttrNode = SetFixedAttributeNode.create("capture.names");
+        @Child private SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
+        @Child private PCRERFFI.ExecNode execNode = RFFIFactory.getPCRERFFI().createExecNode();
+        @Child private PCRERFFI.GetCaptureNamesNode getCaptureNamesNode = RFFIFactory.getPCRERFFI().createGetCaptureNamesNode();
+        @Child private PCRERFFI.GetCaptureCountNode getCaptureCountNode = RFFIFactory.getPCRERFFI().createGetCaptureCountNode();
 
         static {
             Casts casts = new Casts(Regexpr.class);
@@ -940,9 +940,9 @@ public class GrepFunctions {
     @RBuiltin(name = "regexec", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Regexec extends RBuiltinNode.Arg5 {
 
-        @Child SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
-        @Child SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
-        @Child SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
+        @Child private SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
+        @Child private SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
+        @Child private SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
 
         static {
             Casts casts = new Casts(Regexec.class);
@@ -1051,12 +1051,12 @@ public class GrepFunctions {
     @RBuiltin(name = "gregexpr", kind = INTERNAL, parameterNames = {"pattern", "text", "ignore.case", "perl", "fixed", "useBytes"}, behavior = PURE)
     public abstract static class Gregexpr extends Regexpr {
 
-        @Child SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
-        @Child SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
-        @Child SetFixedAttributeNode setCaptureStartAttrNode = SetFixedAttributeNode.create("capture.start");
-        @Child SetFixedAttributeNode setCaptureLengthAttrNode = SetFixedAttributeNode.create("capture.length");
-        @Child SetFixedAttributeNode setCaptureNamesAttrNode = SetFixedAttributeNode.create("capture.names");
-        @Child SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
+        @Child private SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
+        @Child private SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
+        @Child private SetFixedAttributeNode setCaptureStartAttrNode = SetFixedAttributeNode.create("capture.start");
+        @Child private SetFixedAttributeNode setCaptureLengthAttrNode = SetFixedAttributeNode.create("capture.length");
+        @Child private SetFixedAttributeNode setCaptureNamesAttrNode = SetFixedAttributeNode.create("capture.names");
+        @Child private SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
 
         static {
             Casts casts = new Casts(Gregexpr.class);
@@ -1350,7 +1350,7 @@ public class GrepFunctions {
     @ImportStatic(GrepFunctions.class)
     @RBuiltin(name = "strsplit", kind = INTERNAL, parameterNames = {"x", "split", "fixed", "perl", "useBytes"}, behavior = PURE)
     public abstract static class Strsplit extends RBuiltinNode.Arg5 {
-        @Child PCRERFFI.ExecNode execNode = RFFIFactory.getPCRERFFI().createExecNode();
+        @Child private PCRERFFI.ExecNode execNode = RFFIFactory.getPCRERFFI().createExecNode();
 
         static {
             Casts casts = new Casts(Strsplit.class);

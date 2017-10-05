@@ -224,8 +224,8 @@ public class CallAndExternalFunctions {
     @RBuiltin(name = ".Call", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotCall extends LookupAdapter {
 
-        @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
-        @Child MaterializeNode materializeNode = MaterializeNode.create(true);
+        @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
+        @Child private MaterializeNode materializeNode = MaterializeNode.create(true);
 
         static {
             Casts.noCasts(DotCall.class);
@@ -734,7 +734,7 @@ public class CallAndExternalFunctions {
     @RBuiltin(name = ".External", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotExternal extends LookupAdapter {
 
-        @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
+        @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
 
         static {
             Casts.noCasts(DotExternal.class);
@@ -848,7 +848,7 @@ public class CallAndExternalFunctions {
          */
         @CompilationFinal private Object op = null;
 
-        @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
+        @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
 
         static {
             Casts.noCasts(DotExternal2.class);
@@ -934,7 +934,7 @@ public class CallAndExternalFunctions {
     @RBuiltin(name = ".External.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotExternalGraphics extends LookupAdapter {
 
-        @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
+        @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
 
         static {
             Casts.noCasts(DotExternalGraphics.class);
@@ -989,7 +989,7 @@ public class CallAndExternalFunctions {
     @RBuiltin(name = ".Call.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotCallGraphics extends LookupAdapter {
 
-        @Child CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
+        @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
 
         static {
             Casts.noCasts(DotCallGraphics.class);

@@ -71,7 +71,7 @@ public final class RFactorNodes {
     public static final class GetLevels extends Node {
         @Child private CastStringNode castString;
         @Child private GetFixedAttributeNode attrAccess = GetFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
-        @Child UpdateShareableChildValueNode updateAttrValue = UpdateShareableChildValueNode.create();
+        @Child private UpdateShareableChildValueNode updateAttrValue = UpdateShareableChildValueNode.create();
 
         private final BranchProfile notVectorBranch = BranchProfile.create();
         private final ConditionProfile nonScalarLevels = ConditionProfile.createBinaryProfile();

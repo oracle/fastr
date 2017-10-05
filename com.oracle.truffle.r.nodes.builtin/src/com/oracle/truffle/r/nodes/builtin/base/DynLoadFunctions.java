@@ -84,7 +84,7 @@ public class DynLoadFunctions {
 
     @RBuiltin(name = "dyn.unload", visibility = OFF, kind = INTERNAL, parameterNames = {"lib"}, behavior = COMPLEX)
     public abstract static class DynUnload extends RBuiltinNode.Arg1 {
-        @Child DLL.UnloadNode dllUnloadNode = DLL.UnloadNode.create();
+        @Child private DLL.UnloadNode dllUnloadNode = DLL.UnloadNode.create();
 
         static {
             Casts casts = new Casts(DynUnload.class);
@@ -128,7 +128,7 @@ public class DynLoadFunctions {
 
     @RBuiltin(name = "is.loaded", kind = INTERNAL, parameterNames = {"symbol", "PACKAGE", "type"}, behavior = READS_STATE)
     public abstract static class IsLoaded extends RBuiltinNode.Arg3 {
-        @Child DLL.RFindSymbolNode findSymbolNode = DLL.RFindSymbolNode.create();
+        @Child private DLL.RFindSymbolNode findSymbolNode = DLL.RFindSymbolNode.create();
 
         static {
             Casts casts = new Casts(IsLoaded.class);
@@ -164,7 +164,7 @@ public class DynLoadFunctions {
 
     @RBuiltin(name = "getSymbolInfo", kind = INTERNAL, parameterNames = {"symbol", "package", "withRegistrationInfo"}, behavior = READS_STATE)
     public abstract static class GetSymbolInfo extends RBuiltinNode.Arg3 {
-        @Child DLL.RFindSymbolNode findSymbolNode = DLL.RFindSymbolNode.create();
+        @Child private DLL.RFindSymbolNode findSymbolNode = DLL.RFindSymbolNode.create();
 
         static {
             Casts casts = new Casts(GetSymbolInfo.class);
