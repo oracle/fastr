@@ -19,6 +19,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
 import com.oracle.truffle.r.nodes.function.signature.CollectArgumentsNode;
 import com.oracle.truffle.r.nodes.function.signature.CollectArgumentsNodeGen;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S4Args;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -41,13 +42,18 @@ final class ExecuteMethod extends RBaseNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             collectArgs = insert(CollectArgumentsNodeGen.create());
         }
+        ArgumentsSignature signature = RArguments.getSignature(frame);
+
+        // Collect arguments; we cannot use the arguments of the original call because there might
+        // be overriding default arguments.
+        Object[] cumulativeArgs = collectArgs.execute(frame, signature);
+
         if (callMatcher == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             callMatcher = insert(CallMatcherNode.create(false));
         }
 
         S4Args s4Args = new S4Args(readDefined.execute(frame), readMethod.execute(frame), readTarget.execute(frame), readGeneric.execute(frame), readMethods.execute(frame));
-
-        return callMatcher.execute(frame, RArguments.getSignature(frame), RArguments.getArguments(frame), fdef, fname, s4Args);
+        return callMatcher.execute(frame, signature, cumulativeArgs, fdef, fname, s4Args);
     }
 }
