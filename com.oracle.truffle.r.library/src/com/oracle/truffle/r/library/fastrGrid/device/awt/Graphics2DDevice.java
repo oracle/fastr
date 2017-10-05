@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.library.fastrGrid.device.awt;
 
 import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_TO_POINTS_FACTOR;
-import static java.awt.geom.Path2D.WIND_EVEN_ODD;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -33,13 +32,10 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Paint;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.Shape;
 import java.awt.Toolkit;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Path2D;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.MemoryImageSource;
 
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
@@ -72,6 +68,7 @@ public class Graphics2DDevice implements GridDevice {
     private Graphics2D graphics;
     private final boolean graphicsIsExclusive;
     private DrawingContext cachedContext;
+    private BasicStroke stokeCache;
 
     /**
      * @param graphics Object that should be used for the drawing.
@@ -96,59 +93,76 @@ public class Graphics2DDevice implements GridDevice {
 
     @Override
     public void openNewPage() {
-        ensureOpen();
         graphics.clearRect(0, 0, getWidthAwt(), getHeightAwt());
         cachedContext = null;
     }
 
     @Override
     public void drawRect(DrawingContext ctx, double leftXIn, double bottomYIn, double widthIn, double heightIn, double rotationAnticlockWise) {
-        ensureOpen();
         double leftXReal = transX(leftXIn);
         double topYReal = transY(bottomYIn + heightIn);
         int rectWidth = transDim(widthIn, leftXReal);
         int rectHeight = transDim(heightIn, topYReal);
         int leftX = iround(leftXReal);
         int topY = iround(topYReal);
-        setContext(ctx);
+        setStroke(ctx);
         if (rotationAnticlockWise == 0.) {
-            drawShape(ctx, new Rectangle2D.Double(leftX, topY, rectWidth, rectHeight));
+            drawRectInternal(ctx, new Rectangle(leftX, topY, rectWidth, rectHeight));
         } else {
             int halfWidth = iround(rectWidth / 2.);
             int halfHeight = iround(rectHeight / 2.);
-            transformed(iround(leftX + halfWidth), iround(topY + halfHeight), rotationAnticlockWise, () -> drawShape(ctx, new Rectangle2D.Double(-halfWidth, -halfHeight, rectWidth, rectHeight)));
+            transformed(iround(leftX + halfWidth), iround(topY + halfHeight), rotationAnticlockWise, () -> drawRectInternal(ctx, new Rectangle(-halfWidth, -halfHeight, rectWidth, rectHeight)));
         }
     }
 
     @Override
     public void drawPolyLines(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
-        ensureOpen();
-        Path2D.Double path = getPath2D(x, y, startIndex, length);
-        setContext(ctx);
-        graphics.draw(path);
+        int[] xi = new int[length];
+        int[] yi = new int[length];
+        getPath2D(x, y, xi, yi, startIndex, length);
+        setStroke(ctx);
+        setColor(ctx.getColor());
+        graphics.drawPolyline(xi, yi, length);
     }
 
     @Override
     public void drawPolygon(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
-        ensureOpen();
-        Path2D.Double path = getPath2D(x, y, startIndex, length);
-        setContext(ctx);
-        drawShape(ctx, path);
+        int[] xi = new int[length];
+        int[] yi = new int[length];
+        getPath2D(x, y, xi, yi, startIndex, length);
+        setStroke(ctx);
+        GridColor fillColor = ctx.getFillColor();
+        if (!fillColor.equals(GridColor.TRANSPARENT)) {
+            setColor(fillColor);
+            graphics.fillPolygon(xi, yi, length);
+        }
+        if (!fillColor.equals(ctx.getColor())) {
+            setColor(ctx.getColor());
+            graphics.drawPolygon(xi, yi, length);
+        }
     }
 
     @Override
     public void drawCircle(DrawingContext ctx, double centerXIn, double centerYIn, double radiusIn) {
-        ensureOpen();
-        setContext(ctx);
+        setStroke(ctx);
         double xRel = transX(centerXIn - radiusIn);
         double yRel = transY(centerYIn + radiusIn);
         int diameter = transDim(radiusIn * 2d, Math.max(xRel % 1, yRel % 1));
-        drawShape(ctx, new Ellipse2D.Double(iround(xRel), iround(yRel), diameter, diameter));
+        int xi = iround(xRel);
+        int yi = iround(yRel);
+        GridColor fillColor = ctx.getFillColor();
+        if (!fillColor.equals(GridColor.TRANSPARENT)) {
+            setColor(fillColor);
+            graphics.fillOval(xi, yi, diameter, diameter);
+        }
+        if (!fillColor.equals(ctx.getColor())) {
+            setColor(ctx.getColor());
+            graphics.drawOval(xi, yi, diameter, diameter);
+        }
     }
 
     @Override
     public void drawRaster(double leftX, double bottomY, double width, double height, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation) {
-        ensureOpen();
         graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, fromInterpolation(interpolation));
         Image image = Toolkit.getDefaultToolkit().createImage(new MemoryImageSource(pixelsColumnsCount, pixels.length / pixelsColumnsCount, pixels, 0, pixelsColumnsCount));
         double yRel = transY(bottomY + height);
@@ -158,8 +172,7 @@ public class Graphics2DDevice implements GridDevice {
 
     @Override
     public void drawString(DrawingContext ctx, double leftXIn, double bottomYIn, double rotationAnticlockWise, String text) {
-        ensureOpen();
-        setContextAndFont(ctx);
+        setStrokeAndFont(ctx);
         int leftX = iround(transX(leftXIn));
         FontMetrics fontMetrics = graphics.getFontMetrics(graphics.getFont());
         int bottomY = iround(transY(bottomYIn)) - fontMetrics.getDescent();
@@ -178,14 +191,14 @@ public class Graphics2DDevice implements GridDevice {
 
     @Override
     public double getStringWidth(DrawingContext ctx, String text) {
-        setContextAndFont(ctx);
+        setStrokeAndFont(ctx);
         int swingUnits = graphics.getFontMetrics(graphics.getFont()).stringWidth(text);
         return swingUnits / AWT_POINTS_IN_INCH;
     }
 
     @Override
     public double getStringHeight(DrawingContext ctx, String text) {
-        setContextAndFont(ctx);
+        setStrokeAndFont(ctx);
         FontMetrics fontMetrics = graphics.getFontMetrics(graphics.getFont());
         double swingUnits = fontMetrics.getAscent() + fontMetrics.getDescent();
         return swingUnits / AWT_POINTS_IN_INCH;
@@ -203,15 +216,6 @@ public class Graphics2DDevice implements GridDevice {
      */
     int getHeightAwt() {
         return height;
-    }
-
-    /**
-     * If the device can be closed by an action outside of the R interpreter (not e.g. dev.close()),
-     * then the device should be able to re-open itself if any drawing happens after it was closed
-     * in such way.
-     */
-    void ensureOpen() {
-        // nop
     }
 
     void setGraphics2D(Graphics2D newGraphics) {
@@ -253,39 +257,51 @@ public class Graphics2DDevice implements GridDevice {
         graphics.setTransform(oldTransform);
     }
 
-    private Path2D.Double getPath2D(double[] x, double[] y, int startIndex, int length) {
+    private void getPath2D(double[] x, double[] y, int[] xi, int[] yi, int startIndex, int length) {
         assert startIndex >= 0 && startIndex < x.length && startIndex < y.length : "startIndex out of bounds";
         assert length > 0 && (startIndex + length) <= Math.min(x.length, y.length) : "length out of bounds";
-        Path2D.Double path = new Path2D.Double(WIND_EVEN_ODD, x.length);
-        path.moveTo(transX(x[startIndex]), transY(y[startIndex]));
-        for (int i = startIndex + 1; i < length; i++) {
-            path.lineTo(transX(x[i]), transY(y[i]));
+        for (int i = 0; i < length; i++) {
+            xi[i] = iround(transX(x[i + startIndex]));
+            yi[i] = iround(transY(y[i + startIndex]));
         }
-        return path;
     }
 
-    private void drawShape(DrawingContext drawingCtx, Shape shape) {
+    private void drawRectInternal(DrawingContext drawingCtx, Rectangle shape) {
+        GridColor fillColor = drawingCtx.getFillColor();
+        if (!fillColor.equals(GridColor.TRANSPARENT)) {
+            setColor(fillColor);
+            graphics.fill(shape);
+        }
+        if (!fillColor.equals(drawingCtx.getColor())) {
+            setColor(drawingCtx.getColor());
+            graphics.draw(shape);
+        }
+    }
+
+    private void setColor(GridColor color) {
+        Color awtColor = fromGridColor(color);
         Paint paint = graphics.getPaint();
-        graphics.setPaint(fromGridColor(drawingCtx.getFillColor()));
-        graphics.fill(shape);
-        graphics.setPaint(paint);
-        graphics.draw(shape);
+        // Note: setting different color intance (even if equal to the original) causes graphical
+        // pipeline invalidation in Graphics2D implementation
+        if (!(paint instanceof Color && ((Color) paint).equals(awtColor))) {
+            graphics.setColor(awtColor);
+        }
     }
 
-    private void setContext(DrawingContext ctx) {
+    private void setStroke(DrawingContext ctx) {
         if (graphicsIsExclusive && cachedContext == ctx) {
             return;
         }
-        graphics.setColor(fromGridColor(ctx.getColor()));
         graphics.setStroke(getStrokeFromCtx(ctx));
         cachedContext = ctx;
     }
 
-    private void setContextAndFont(DrawingContext ctx) {
+    private void setStrokeAndFont(DrawingContext ctx) {
         if (graphicsIsExclusive && cachedContext == ctx) {
             return;
         }
-        setContext(ctx);
+        setStroke(ctx);
+        setColor(ctx.getColor());
         float fontSize = (float) ((ctx.getFontSize() / INCH_TO_POINTS_FACTOR) * AWT_POINTS_IN_INCH);
         Font font = new Font(getFontName(ctx.getFontFamily()), getAwtFontStyle(ctx.getFontStyle()), 1).deriveFont(fontSize);
         graphics.setFont(font);
@@ -329,7 +345,7 @@ public class Graphics2DDevice implements GridDevice {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
     }
 
-    private static BasicStroke getStrokeFromCtx(DrawingContext ctx) {
+    private BasicStroke getStrokeFromCtx(DrawingContext ctx) {
         byte[] type = ctx.getLineType();
         double width = ctx.getLineWidth();
         int lineJoin = fromGridLineJoin(ctx.getLineJoin());
@@ -338,7 +354,10 @@ public class Graphics2DDevice implements GridDevice {
         if (type == DrawingContext.GRID_LINE_BLANK) {
             return blankStroke;
         } else if (type == DrawingContext.GRID_LINE_SOLID) {
-            return new BasicStroke((float) (width), endCap, lineJoin, lineMitre);
+            if (stokeCache == null || !areEqual(stokeCache, (float) width, endCap, lineJoin, lineMitre)) {
+                stokeCache = new BasicStroke((float) (width), endCap, lineJoin, lineMitre);
+            }
+            return stokeCache;
         }
         float[] pattern = new float[type.length];
         for (int i = 0; i < pattern.length; i++) {
@@ -382,5 +401,12 @@ public class Graphics2DDevice implements GridDevice {
 
     private static int iround(double val) {
         return (int) Math.round(val);
+    }
+
+    private static boolean areEqual(BasicStroke s, float width, int endCap, int lineJoin, float lineMitre) {
+        return s.getLineWidth() == width &&
+                        s.getEndCap() == endCap &&
+                        s.getLineJoin() == lineJoin &&
+                        s.getMiterLimit() == lineMitre;
     }
 }

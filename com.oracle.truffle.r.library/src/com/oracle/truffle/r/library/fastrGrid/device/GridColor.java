@@ -30,6 +30,7 @@ public final class GridColor {
     public static final int OPAQUE_ALPHA = 0xff;
     private static final int TRANSPARENT_ALPHA = 0;
     public static final GridColor TRANSPARENT = new GridColor(0, 0, 0, TRANSPARENT_ALPHA);
+    public static final GridColor BLACK = new GridColor(0, 0, 0, OPAQUE_ALPHA);
 
     private final int value;
 

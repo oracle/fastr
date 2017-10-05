@@ -18,8 +18,8 @@ import java.util.Map;
 import com.oracle.truffle.r.library.fastrGrid.GridState.GridPalette;
 import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -96,10 +96,20 @@ public final class GridColorUtils {
     }
 
     public static String gridColorToRString(GridColor color) {
+        int size = color.getAlpha() == GridColor.OPAQUE_ALPHA ? 7 : 9;
+        char[] value = new char[size];
+        value[0] = '#';
+        value[1] = getHexDigit(color.getRed() >> 4);
+        value[2] = getHexDigit(color.getRed());
+        value[3] = getHexDigit(color.getGreen() >> 4);
+        value[4] = getHexDigit(color.getGreen());
+        value[5] = getHexDigit(color.getBlue() >> 4);
+        value[6] = getHexDigit(color.getBlue());
         if (color.getAlpha() == GridColor.OPAQUE_ALPHA) {
-            return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
+            value[7] = getHexDigit((color.getAlpha()) >> 4);
+            value[8] = getHexDigit(color.getAlpha());
         }
-        return String.format("#%02x%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+        return new String(value);
     }
 
     public static GridColor parseHex(String value) {
@@ -112,6 +122,12 @@ public final class GridColorUtils {
             alpha = Integer.parseInt(value.substring(7, 9), 16);
         }
         return new GridColor(red, green, blue, alpha);
+    }
+
+    private static final char[] HEX_DIGITS = new char[]{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+
+    public static char getHexDigit(int digit) {
+        return HEX_DIGITS[digit & 0xf];
     }
 
     private static GridColor findByName(String synonym) {
