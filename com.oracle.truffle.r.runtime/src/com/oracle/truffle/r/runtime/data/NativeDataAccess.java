@@ -231,7 +231,15 @@ public final class NativeDataAccess {
 
     @TruffleBoundary
     private static void registerAllocationSite(Object arg, NativeMirror mirror) {
-        nativeMirrorInfo.put(mirror.id, new RuntimeException(arg.getClass().getSimpleName() + " " + arg));
+        String argInfo;
+        if (arg instanceof RVector<?> && ((RVector) arg).hasNativeMemoryData()) {
+            // this must be vector created by fromNative factory method, it has data == null, but
+            // does not have its address assigned yet
+            argInfo = "[empty]";
+        } else {
+            argInfo = arg.toString();
+        }
+        nativeMirrorInfo.put(mirror.id, new RuntimeException(arg.getClass().getSimpleName() + " " + argInfo));
     }
 
     public static Object toNative(Object obj) {
