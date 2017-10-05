@@ -767,15 +767,10 @@ public class LaFunctions {
 
             int[] iwork = new int[8 * Math.min(n, p)];
 
-            RDoubleVector xMaterialized = x.materialize();
-            RDoubleVector sMaterialized = s.materialize();
-            RDoubleVector uMaterialized = u.materialize();
-            RDoubleVector vtMaterialized = vt.materialize();
-
-            double[] xvals = getDataCopyNode.execute(xMaterialized);
-            double[] sdata = getDataCopyNode.execute(sMaterialized);
-            double[] udata = getDataCopyNode.execute(uMaterialized);
-            double[] vtdata = getDataCopyNode.execute(vtMaterialized);
+            double[] xvals = getDataCopyNode.execute(x);
+            double[] sdata = getDataCopyNode.execute(s);
+            double[] udata = getDataCopyNode.execute(u);
+            double[] vtdata = getDataCopyNode.execute(vt);
             double[] tmp = new double[1];
 
             int info = dgesddNode.execute(ju.charAt(0), n, p, xvals, n, sdata, udata, ldu, vtdata, ldvt, tmp, -1, iwork);
@@ -796,9 +791,9 @@ public class LaFunctions {
             RDoubleVector uResult = RDataFactory.createDoubleVector(udata, false);
             RDoubleVector vtResult = RDataFactory.createDoubleVector(vtdata, false);
 
-            copyAttrNode.execute(sResult, sResult, sResult.getLength(), sMaterialized, sMaterialized.getLength());
-            copyAttrNode.execute(uResult, uResult, uResult.getLength(), uMaterialized, uMaterialized.getLength());
-            copyAttrNode.execute(vtResult, vtResult, vtResult.getLength(), vtMaterialized, vtMaterialized.getLength());
+            copyAttrNode.execute(sResult, sResult, sdata.length, s, sdata.length);
+            copyAttrNode.execute(uResult, uResult, udata.length, u, udata.length);
+            copyAttrNode.execute(vtResult, vtResult, vtdata.length, vt, vtdata.length);
 
             val[0] = sResult;
             val[1] = uResult;
