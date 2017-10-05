@@ -48,6 +48,7 @@ import com.oracle.truffle.api.debug.DebugValue;
 import com.oracle.truffle.api.debug.Debugger;
 import com.oracle.truffle.api.debug.DebuggerSession;
 import com.oracle.truffle.api.debug.SuspendedEvent;
+import com.oracle.truffle.api.debug.SuspensionFilter;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.vm.PolyglotEngine;
@@ -110,6 +111,20 @@ public class FastRDebugTest {
                         "    }\n" +
                         "}\n",
                         RSource.Internal.DEBUGTEST_FACTORIAL);
+    }
+
+    private static Source createRStatements() {
+        return RSource.fromTextInternal("foo <- function(a) {\n" +
+                        "  x = 2L * a\n" +
+                        "}\n" +
+                        "foo(1)\n" +
+                        "x <- 1:100\n" +
+                        "print(foo(x))\n" +
+                        "y <- sin(x/10)\n" +
+                        "print(foo(y))\n" +
+                        "z <- cos(x^1.3/(runif(1)*5+10))\n" +
+                        "print(foo(z))\n",
+                        RSource.Internal.DEBUGTEST_DEBUG);
     }
 
     protected final String getOut() {
@@ -426,6 +441,37 @@ public class FastRDebugTest {
         final Source evalSource = RSource.fromTextInternal("x <- 0L\nmain(closure)\n", RSource.Internal.DEBUGTEST_EVAL);
         engine.eval(evalSource);
 
+        assertExecutedOK();
+    }
+
+    @Test
+    public void testStepOverStatements() throws Throwable {
+        run.addLast(() -> {
+            assertNull(suspendedEvent);
+            assertNotNull(debuggerSession);
+            debuggerSession.setSteppingFilter(SuspensionFilter.newBuilder().ignoreLanguageContextInitialization(true).build());
+            debuggerSession.suspendNextExecution();
+        });
+        assertLocation(1, "foo <- function(a) {\n" +
+                        "  x = 2L * a\n" +
+                        "}");
+        stepOver(1);
+        assertLocation(4, "foo(1)");
+        stepOver(1);
+        assertLocation(5, "x <- 1:100");
+        stepOver(1);
+        assertLocation(6, "print(foo(x))");
+        stepOver(1);
+        assertLocation(7, "y <- sin(x/10)");
+        stepOver(1);
+        assertLocation(8, "print(foo(y))");
+        stepOver(1);
+        assertLocation(9, "z <- cos(x^1.3/(runif(1)*5+10))");
+        stepOver(1);
+        assertLocation(10, "print(foo(z))");
+        continueExecution();
+        performWork();
+        engine.eval(createRStatements());
         assertExecutedOK();
     }
 
