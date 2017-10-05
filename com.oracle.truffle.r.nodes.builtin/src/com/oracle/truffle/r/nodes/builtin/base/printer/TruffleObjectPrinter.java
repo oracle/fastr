@@ -29,7 +29,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 
 final class TruffleObjectPrinter extends AbstractValuePrinter<TruffleObject> {
 
-    static TruffleObjectPrinter INSTANCE = new TruffleObjectPrinter();
+    static final TruffleObjectPrinter INSTANCE = new TruffleObjectPrinter();
 
     private TruffleObjectPrinter() {
         // singleton

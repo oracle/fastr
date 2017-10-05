@@ -31,7 +31,7 @@ public abstract class RSyntaxUtils {
         // empty
     }
 
-    private static String SPACE = "                                                                                                  ";
+    private static final String SPACE = "                                                                                                  ";
 
     /**
      * This is a simple example usage of the {@link RSyntaxVisitor} class that prints the given

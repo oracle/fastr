@@ -51,21 +51,23 @@ public class Generic_Tools implements ToolsRFFI {
          * Invoke C implementation, N.B., code is not thread safe.
          */
         @Override
-        public synchronized Object execute(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
+        public Object execute(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
                         RLogicalVector warndups) {
-            try {
-                if (nativeCallInfo == null) {
-                    // lookup entry point (assert library is loaded)
-                    DLLInfo toolsDLLInfo = DLL.findLibrary(TOOLS);
-                    assert toolsDLLInfo != null;
-                    SymbolHandle symbolHandle = findSymbolNode.execute(C_PARSE_RD, TOOLS, DLL.RegisteredNativeSymbol.any());
-                    assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
-                    nativeCallInfo = new NativeCallInfo(C_PARSE_RD, symbolHandle, toolsDLLInfo);
+            synchronized (Generic_Tools.class) {
+                try {
+                    if (nativeCallInfo == null) {
+                        // lookup entry point (assert library is loaded)
+                        DLLInfo toolsDLLInfo = DLL.findLibrary(TOOLS);
+                        assert toolsDLLInfo != null;
+                        SymbolHandle symbolHandle = findSymbolNode.execute(C_PARSE_RD, TOOLS, DLL.RegisteredNativeSymbol.any());
+                        assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
+                        nativeCallInfo = new NativeCallInfo(C_PARSE_RD, symbolHandle, toolsDLLInfo);
+                    }
+                    return callRFFINode.dispatch(nativeCallInfo,
+                                    new Object[]{con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups});
+                } catch (Throwable ex) {
+                    throw RInternalError.shouldNotReachHere(ex, "error during Rd parsing" + ex.getMessage());
                 }
-                return callRFFINode.dispatch(nativeCallInfo,
-                                new Object[]{con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups});
-            } catch (Throwable ex) {
-                throw RInternalError.shouldNotReachHere(ex, "error during Rd parsing" + ex.getMessage());
             }
         }
     }

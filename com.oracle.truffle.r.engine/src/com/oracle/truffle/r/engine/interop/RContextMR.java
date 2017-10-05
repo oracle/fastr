@@ -40,7 +40,7 @@ public class RContextMR {
     }
 
     @CanResolve
-    public abstract static class RContext extends Node {
+    public abstract static class IsRContext extends Node {
 
         protected static boolean test(TruffleObject receiver) {
             return receiver instanceof RContext;

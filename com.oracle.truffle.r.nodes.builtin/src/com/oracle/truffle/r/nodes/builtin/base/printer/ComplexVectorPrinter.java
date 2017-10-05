@@ -347,7 +347,7 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         return new ComplexVectorMetrics(wr, dr, er, wi, di, ei);
     }
 
-    private static RoundArithmetic round = new Round.RoundArithmetic();
+    private static final RoundArithmetic round = new Round.RoundArithmetic();
 
     private static final int MAX_DIGITS = 22;
 

@@ -61,7 +61,7 @@ public class Graphics2DDevice implements GridDevice {
     // original one after we're done.
     static final double AWT_POINTS_IN_INCH = GraphicsEnvironment.isHeadless() ? 72. : Toolkit.getDefaultToolkit().getScreenResolution();
 
-    private static BasicStroke blankStroke;
+    private static final BasicStroke blankStroke = new BasicStroke(0f);
 
     private final int width;
     private final int height;
@@ -78,7 +78,6 @@ public class Graphics2DDevice implements GridDevice {
      *            this class, then it can optimize some things.
      */
     public Graphics2DDevice(Graphics2D graphics, int width, int height, boolean graphicsIsExclusive) {
-        initStrokes();
         setGraphics2D(graphics);
         this.width = width;
         this.height = height;
@@ -238,13 +237,6 @@ public class Graphics2DDevice implements GridDevice {
 
     private static int transDim(double widthOrHeight, double transformedAxis) {
         return (int) Math.round(widthOrHeight * AWT_POINTS_IN_INCH + transformedAxis % 1);
-    }
-
-    private static void initStrokes() {
-        if (blankStroke != null) {
-            return;
-        }
-        blankStroke = new BasicStroke(0f);
     }
 
     private void transformed(int centreX, int centreY, double radiansAnticlockwise, Runnable action) {

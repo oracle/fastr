@@ -191,7 +191,7 @@ public final class REnvVars implements RContext.ContextState {
         return rHome;
     }
 
-    private static CodeSource codeSource = REnvVars.class.getProtectionDomain().getCodeSource();
+    private static final CodeSource codeSource = REnvVars.class.getProtectionDomain().getCodeSource();
 
     /**
      * In the case where {@code R_HOME} is not set, which should only occur when FastR is invoked
