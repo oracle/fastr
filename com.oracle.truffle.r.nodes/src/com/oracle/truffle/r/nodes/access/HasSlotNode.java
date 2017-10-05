@@ -13,6 +13,7 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
@@ -62,11 +63,9 @@ public abstract class HasSlotNode extends BaseAccessSlotNode {
         return result != null;
     }
 
-    // this is really a fallback specialization but @Fallback does not work here (because of the
-    // type of "object"?)
-    @Specialization(guards = {"!slotAccessAllowed(object)", "!isDotData(name)"})
+    @Fallback
     @SuppressWarnings("unused")
-    protected boolean getSlot(RAttributable object, String name) {
+    protected boolean getSlot(Object object, String name) {
         return false;
     }
 
