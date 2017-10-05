@@ -17,5 +17,3 @@ obj <- new("DDAVFoo", a=c(1,2,3),b=c(4,5,6))
 obj[2,3]
 
 obj[drop=T,j=3,i=2]
-
-obj[drop=T,j=3,i=2,a="unnecessary"]
