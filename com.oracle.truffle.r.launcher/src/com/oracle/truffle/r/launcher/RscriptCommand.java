@@ -115,12 +115,15 @@ public class RscriptCommand {
                 System.out.println(RVersionNumber.RELEASE_DATE);
             }
         };
+        boolean useJVM = false;
         Map<String, String> polyglotOptions = new HashMap<>();
-        Iterator<String> iter = argsList.iterator();
-        while (iter.hasNext()) {
-            String arg = iter.next();
-            if (launcher.parsePolyglotOption("R", polyglotOptions, arg)) {
-                iter.remove();
+        for (int i = 1; i < argsList.size(); i++) {
+            String arg = argsList.get(i);
+            if ("--jvm".equals(arg)) {
+                useJVM = true;
+                argsList.remove(i);
+            } else if (launcher.parsePolyglotOption("R", polyglotOptions, arg)) {
+                argsList.remove(i);
             }
         }
         if (launcher.runPolyglotAction()) {
@@ -130,7 +133,8 @@ public class RscriptCommand {
         String[] arguments = preprocessRScriptOptions(launcher, options);
 
         ConsoleHandler consoleHandler = RCommand.createConsoleHandler(options, false, inStream, outStream);
-        try (Context context = Context.newBuilder().options(polyglotOptions).arguments("R", arguments).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
+        try (Context context = Context.newBuilder().allowHostAccess(useJVM).options(polyglotOptions).arguments("R", arguments).in(consoleHandler.createInputStream()).out(outStream).err(
+                        errStream).build()) {
             consoleHandler.setContext(context);
             return RCommand.readEvalPrint(context, consoleHandler);
         }
