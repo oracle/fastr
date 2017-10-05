@@ -96,7 +96,7 @@ public final class NativeDataAccess {
 
     private static final boolean TRACE_MIRROR_ALLOCATION_SITES = false;
 
-    private static final long EMPTY_DATA_ADDRESS = 0xDEADL;
+    private static final long EMPTY_DATA_ADDRESS = 0xBAD;
 
     public static boolean isNativeMirror(Object o) {
         return o instanceof NativeMirror;
@@ -507,7 +507,7 @@ public final class NativeDataAccess {
         } else {
             NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
             long address = mirror.dataAddress;
-            assert address != 0 || address == EMPTY_DATA_ADDRESS;
+            assert address != 0;
             int length = 0;
             while (length < mirror.length && UnsafeAdapter.UNSAFE.getByte(address + length) != 0) {
                 length++;
@@ -521,7 +521,7 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RLogicalVector vector, byte[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ (data == null || mirror.dataAddress == EMPTY_DATA_ADDRESS);
+        assert mirror.dataAddress == 0 ^ data == null;
         if (mirror.dataAddress == 0) {
             int[] intArray = new int[data.length];
             for (int i = 0; i < data.length; i++) {
@@ -536,7 +536,7 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RIntVector vector, int[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ (data == null || mirror.dataAddress == EMPTY_DATA_ADDRESS);
+        assert mirror.dataAddress == 0 ^ data == null;
         if (mirror.dataAddress == 0) {
             noIntNative.invalidate();
             mirror.allocateNative(data, length, Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
@@ -547,7 +547,7 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RRawVector vector, byte[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ (data == null || mirror.dataAddress == EMPTY_DATA_ADDRESS);
+        assert mirror.dataAddress == 0 ^ data == null;
         if (mirror.dataAddress == 0) {
             noRawNative.invalidate();
             mirror.allocateNative(data, length, Unsafe.ARRAY_BYTE_BASE_OFFSET, Unsafe.ARRAY_BYTE_INDEX_SCALE);
@@ -558,7 +558,7 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RDoubleVector vector, double[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ (data == null || mirror.dataAddress == EMPTY_DATA_ADDRESS);
+        assert mirror.dataAddress == 0 ^ data == null;
         if (mirror.dataAddress == 0) {
             noDoubleNative.invalidate();
             mirror.allocateNative(data, length, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
@@ -569,7 +569,7 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RComplexVector vector, double[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ (data == null || mirror.dataAddress == EMPTY_DATA_ADDRESS);
+        assert mirror.dataAddress == 0 ^ data == null;
         if (mirror.dataAddress == 0) {
             noComplexNative.invalidate();
             mirror.allocateNative(data, length, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE * 2);
@@ -580,7 +580,7 @@ public final class NativeDataAccess {
     static long allocateNativeContents(CharSXPWrapper vector, String contents) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ (contents == null || mirror.dataAddress == EMPTY_DATA_ADDRESS);
+        assert mirror.dataAddress == 0 ^ contents == null;
         if (mirror.dataAddress == 0) {
             noCahrSXPNative.invalidate();
             mirror.allocateNative(contents);
