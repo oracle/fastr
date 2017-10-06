@@ -79,7 +79,7 @@ public class REmbedded {
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
 
         consoleHandler = RCommand.createConsoleHandler(options, true, System.in, System.out);
-        try (Context cntx = Context.newBuilder().arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(System.out).err(System.err).build()) {
+        try (Context cntx = Context.newBuilder().allowHostAccess(true).arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(System.out).err(System.err).build()) {
             context = cntx;
             consoleHandler.setContext(context);
             context.eval(INIT);

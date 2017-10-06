@@ -141,11 +141,15 @@ public class RCommand {
             }
         }
 
+        boolean useJVM = false;
         RLauncher launcher = new RLauncher(Client.R);
         Map<String, String> polyglotOptions = new HashMap<>();
         for (int i = 1; i < argsList.size(); i++) {
             String arg = argsList.get(i);
-            if (launcher.parsePolyglotOption("R", polyglotOptions, arg)) {
+            if ("--jvm".equals(arg)) {
+                useJVM = true;
+                argsList.remove(i);
+            } else if (launcher.parsePolyglotOption("R", polyglotOptions, arg)) {
                 argsList.remove(i);
             }
         }
@@ -155,7 +159,8 @@ public class RCommand {
         RCmdOptions options = RCmdOptions.parseArguments(Client.R, argsList.toArray(new String[argsList.size()]), false);
         assert env == null || env.length == 0 : "re-enable setting environments";
         ConsoleHandler consoleHandler = createConsoleHandler(options, false, inStream, outStream);
-        try (Context context = Context.newBuilder().options(polyglotOptions).arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
+        try (Context context = Context.newBuilder().allowHostAccess(useJVM).options(polyglotOptions).arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(
+                        errStream).build()) {
             consoleHandler.setContext(context);
             StartupTiming.timestamp("VM Created");
             StartupTiming.printSummary();

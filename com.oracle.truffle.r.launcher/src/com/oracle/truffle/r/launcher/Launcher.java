@@ -148,10 +148,12 @@ public abstract class Launcher {
             System.out.println();
             System.out.println("Runtime Options:");
             printOption("--polyglot",                   "Run with all other guest languages accessible.");
-            printOption("--native",                     "Run using the native launcher with limited Java access (default).");
-            printOption("--native.[option]",            "Pass options to the native image; for example, '--native.Xmx1G'. To see available options, use '--native.help'.");
+            // not applicable at the moment
+            // printOption("--native",                     "Run using the native launcher with limited Java access (default).");
+            // printOption("--native.[option]",            "Pass options to the native image; for example, '--native.Xmx1G'. To see available options, use '--native.help'.");
             printOption("--jvm",                        "Run on the Java Virtual Machine with Java access.");
-            printOption("--jvm.[option]",               "Pass options to the JVM; for example, '--jvm.classpath=myapp.jar'. To see available options. use '--jvm.help'.");
+            // not applicable at the moment
+            // printOption("--jvm.[option]",               "Pass options to the JVM; for example, '--jvm.classpath=myapp.jar'. To see available options. use '--jvm.help'.");
             printOption("--help",                       "Print this help message.");
             printOption("--help:languages",             "Print options for all installed languages.");
             printOption("--help:tools",                 "Print options for all installed tools.");
@@ -276,10 +278,10 @@ public abstract class Launcher {
             case "--show-version":
                 versionAction = VersionAction.PrintAndContinue;
                 return true;
-            case "--polyglot":
-            case "--jvm":
-            case "--native":
-                return false;
+            // case "--polyglot":
+            // case "--jvm":
+            // case "--native":
+            // return false;
             default:
                 // getLanguageId() or null?
                 if (arg.length() <= 2 || !arg.startsWith("--")) {
@@ -451,6 +453,7 @@ public abstract class Launcher {
         }
     }
 
+    @SuppressWarnings("deprecation")
     protected static void printLanguages(Engine engine, boolean printWhenEmpty) {
         if (engine.getLanguages().isEmpty()) {
             if (printWhenEmpty) {
