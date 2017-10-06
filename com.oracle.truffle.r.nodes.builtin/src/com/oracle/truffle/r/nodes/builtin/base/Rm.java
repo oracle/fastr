@@ -93,7 +93,7 @@ public abstract class Rm extends RBuiltinNode.Arg3 {
             warning(RError.Message.UNKNOWN_OBJECT, x);
         } else {
             // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, fs, null, false, invalidateProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frm, fs, null, false, invalidateProfile);
         }
     }
 }
