@@ -94,7 +94,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
      */
     public abstract ArrayT getInternalManagedData();
 
-    public boolean hasNativeMemoryData() {
+    public final boolean hasNativeMemoryData() {
         return getInternalManagedData() == null;
     }
 
