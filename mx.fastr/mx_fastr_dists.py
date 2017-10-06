@@ -80,11 +80,25 @@ class ReleaseBuildTask(mx.NativeBuildTask):
         # copy the release directories
         output_dir = self.subject.dir
         fastr_dir = mx_fastr._fastr_suite.dir
-        for d in ['bin', 'include', 'lib', 'library', 'etc', 'share', 'doc']:
+        for d in ['bin', 'include', 'library', 'etc', 'share', 'doc']:
             target_dir = join(output_dir, d)
             if os.path.exists(target_dir):
                 shutil.rmtree(target_dir)
             shutil.copytree(join(fastr_dir, d), target_dir)
+
+        lib_fastr_dir = join(fastr_dir, 'lib')
+        lib_output_dir = join(output_dir, 'lib')
+        if os.path.exists(lib_output_dir):
+            shutil.rmtree(lib_output_dir)
+        os.mkdir(lib_output_dir)
+        for f in os.listdir(lib_fastr_dir):
+            source_file = join(lib_fastr_dir, f)
+            target_file = join(lib_output_dir, f)
+            if f != '.DS_Store':
+                if os.path.islink(source_file):
+                    os.symlink(os.readlink(source_file), target_file)
+                else:
+                    shutil.copy(source_file, target_file)
 
         # copyrights
         copyrights_dir = join(fastr_dir, 'mx.fastr', 'copyrights')

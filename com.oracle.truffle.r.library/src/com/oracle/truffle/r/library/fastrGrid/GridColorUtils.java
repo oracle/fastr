@@ -27,7 +27,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class GridColorUtils {
 
-    private static GridPalette defaultPalette;
+    // Note: default palette copied from GNU R
+    private static final GridPalette defaultPalette = new GridPalette(new String[]{"black", "red", "green3", "blue", "cyan", "magenta", "yellow", "grey"});
 
     private GridColorUtils() {
         // only static members
@@ -56,19 +57,6 @@ public final class GridColorUtils {
     }
 
     public static GridPalette getDefaultPalette() {
-        if (defaultPalette == null) {
-            // Note: default palette copied from GNU R
-            defaultPalette = new GridPalette(new String[]{
-                            "black",
-                            "red",
-                            "green3",
-                            "blue",
-                            "cyan",
-                            "magenta",
-                            "yellow",
-                            "grey"
-            });
-        }
         return defaultPalette;
     }
 

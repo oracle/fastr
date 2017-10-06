@@ -39,8 +39,8 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 public abstract class RExplicitBaseEnvCallDispatcher extends Node {
 
     @Child private LocalReadVariableNode readFunc;
-    @Child RExplicitCallNode callNode = RExplicitCallNode.create();
-    @Child GetBaseEnvFrameNode getBaseEnvFrameNode = GetBaseEnvFrameNode.create();
+    @Child private RExplicitCallNode callNode = RExplicitCallNode.create();
+    @Child private GetBaseEnvFrameNode getBaseEnvFrameNode = GetBaseEnvFrameNode.create();
 
     public RExplicitBaseEnvCallDispatcher(LocalReadVariableNode readFunc) {
         this.readFunc = readFunc;

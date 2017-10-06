@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ public abstract class RSyntaxUtils {
         // empty
     }
 
-    private static String SPACE = "                                                                                                  ";
+    private static final String SPACE = "                                                                                                  ";
 
     /**
      * This is a simple example usage of the {@link RSyntaxVisitor} class that prints the given

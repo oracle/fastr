@@ -22,23 +22,27 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 
 /**
  * A facade for the context state for the Truffle LLVM factory. Delegates to the various
  * module-specific pieces of state.
  */
-class TruffleLLVM_RFFIContextState extends RFFIContext {
-    TruffleLLVM_DLL.ContextStateImpl dllState;
-    TruffleLLVM_Call.ContextStateImpl callState;
+final class TruffleLLVM_RFFIContextState extends RFFIContext {
+
+    TruffleLLVM_DLL.ContextStateImpl dllState = new TruffleLLVM_DLL.ContextStateImpl();
+    TruffleLLVM_Call.ContextStateImpl callState = new TruffleLLVM_Call.ContextStateImpl();
 
     TruffleLLVM_RFFIContextState() {
-        dllState = new TruffleLLVM_DLL.ContextStateImpl();
-        callState = new TruffleLLVM_Call.ContextStateImpl();
+        super(new TruffleLLVM_C(), new TruffleLLVM_Base(), new TruffleLLVM_Call(), new TruffleLLVM_DLL(), new TruffleLLVM_UserRng(), new TruffleLLVM_Zip(), new TruffleLLVM_PCRE(),
+                        new TruffleLLVM_Lapack(), new TruffleLLVM_Stats(),
+                        new TruffleLLVM_Tools(), new TruffleLLVM_REmbed(), new TruffleLLVM_Misc());
     }
 
     static TruffleLLVM_RFFIContextState getContextState() {
@@ -64,5 +68,11 @@ class TruffleLLVM_RFFIContextState extends RFFIContext {
     public void beforeDispose(RContext context) {
         dllState.beforeDispose(context);
         callState.beforeDispose(context);
+    }
+
+    @Override
+    public TruffleObject lookupNativeFunction(NativeFunction function) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

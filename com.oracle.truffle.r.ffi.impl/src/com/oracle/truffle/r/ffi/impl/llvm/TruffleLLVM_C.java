@@ -41,7 +41,7 @@ class TruffleLLVM_C implements CRFFI {
         private int numArgs;
 
         @Override
-        public synchronized void execute(NativeCallInfo nativeCallInfo, Object[] args) {
+        public void execute(NativeCallInfo nativeCallInfo, Object[] args) {
             Object[] wargs = wrap(args);
             try {
                 if (messageNode == null) {

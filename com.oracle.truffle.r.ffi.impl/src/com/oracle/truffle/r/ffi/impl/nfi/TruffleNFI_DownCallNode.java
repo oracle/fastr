@@ -32,7 +32,7 @@ public abstract class TruffleNFI_DownCallNode extends DownCallNode {
 
     @Override
     protected final TruffleObject getTarget() {
-        return getFunction().getFunction();
+        return TruffleNFI_Context.getInstance().lookupNativeFunction(getFunction());
     }
 
     @SuppressWarnings("cast")

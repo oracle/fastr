@@ -51,7 +51,7 @@ public interface RCodeBuilder<T> {
     }
 
     final class CodeBuilderContext {
-        public static CodeBuilderContext DEFAULT = new CodeBuilderContext(0);
+        public static final CodeBuilderContext DEFAULT = new CodeBuilderContext(0);
 
         private final int replacementVarsStartIndex;
 

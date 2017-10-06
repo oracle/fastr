@@ -22,20 +22,18 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 
 /**
  * Factory class for the different possible implementations of the {@link RFFI} interface.
  *
- * The RFFI may need to do special things in the case of multiple contexts, hence any given factory
- * must support the {@link #newContextState()} method. Initialization of factory state that is
- * dependent on the system being properly initialized <b>must</b> be done in the
- * {@link ContextState#initialize} method and not in the constructor or {@link #createRFFI} method
- * as they are invoked in the static block and the system is not typically initialized at that
- * point.
+ * Initialization of factory state that is dependent on the system being properly initialized
+ * <b>must</b> be done in the {@link ContextState#initialize} method and not in the constructor or
+ * {@link #createRFFIContext()} method as they are invoked in the static block and the system is not
+ * typically initialized at that point.
  */
 public abstract class RFFIFactory {
     public enum Type {
@@ -54,59 +52,43 @@ public abstract class RFFIFactory {
     private static final String FACTORY_CLASS_ENV = "FASTR_RFFI";
     private static final Type DEFAULT_FACTORY = Type.NFI;
 
-    /**
-     * Singleton instance of the factory.
-     */
-    private static RFFIFactory instance;
-
-    @CompilationFinal protected static RFFI theRFFI;
-    @CompilationFinal private static Type type;
+    private static Type type;
+    private static RFFIFactory rffiFactory;
 
     static {
-        if (instance == null) {
-            type = getFactoryType();
-            String klassName = type.klassName;
-            try {
-                instance = (RFFIFactory) Class.forName(klassName).newInstance();
-                theRFFI = instance.createRFFI();
-            } catch (Exception ex) {
-                throw Utils.rSuicide("Failed to instantiate class: " + klassName + ": " + ex);
-            }
+        String property = System.getProperty(FACTORY_TYPE_PROPERTY);
+        String env = System.getenv(FACTORY_CLASS_ENV);
+        if (property != null) {
+            type = checkFactoryName(property);
+        } else if (env != null) {
+            type = checkFactoryName(env);
+        } else if (FastRConfig.ManagedMode) {
+            type = Type.MANAGED;
+        } else {
+            type = DEFAULT_FACTORY;
+        }
+        String klassName = getFactoryType().klassName;
+        try {
+            rffiFactory = (RFFIFactory) Class.forName(klassName).newInstance();
+        } catch (Exception ex) {
+            throw Utils.rSuicide("Failed to instantiate class: " + klassName + ": " + ex);
         }
     }
 
-    private static Type getFactoryType() {
-        String prop = System.getProperty(FACTORY_TYPE_PROPERTY);
-        if (prop != null) {
-            return checkFactoryName(prop);
-        }
-        prop = System.getenv(FACTORY_CLASS_ENV);
-        if (prop != null) {
-            return checkFactoryName(prop);
-        }
-        if (FastRConfig.ManagedMode) {
-            return Type.MANAGED;
-        }
-        return DEFAULT_FACTORY;
+    public static Type getFactoryType() {
+        return type;
     }
 
     private static Type checkFactoryName(String prop) {
         try {
-            Type factory = Type.valueOf(prop.toUpperCase());
-            return factory;
+            return Type.valueOf(prop.toUpperCase());
         } catch (IllegalArgumentException ex) {
             throw Utils.rSuicide("No RFFI factory: " + prop);
         }
     }
 
-    public static RFFIFactory getInstance() {
-        assert instance != null;
-        return instance;
-    }
-
     private static RFFI getRFFI() {
-        assert theRFFI != null : "RFFI factory is not initialized!";
-        return theRFFI;
+        return RContext.getInstance().getStateRFFI();
     }
 
     /*
@@ -114,61 +96,59 @@ public abstract class RFFIFactory {
      */
 
     public static BaseRFFI getBaseRFFI() {
-        return getRFFI().getBaseRFFI();
+        return getRFFI().baseRFFI;
     }
 
     public static LapackRFFI getLapackRFFI() {
-        return getRFFI().getLapackRFFI();
+        return getRFFI().lapackRFFI;
     }
 
     public static StatsRFFI getStatsRFFI() {
-        return getRFFI().getStatsRFFI();
+        return getRFFI().statsRFFI;
     }
 
     public static ToolsRFFI getToolsRFFI() {
-        return getRFFI().getToolsRFFI();
+        return getRFFI().toolsRFFI;
     }
 
     public static CRFFI getCRFFI() {
-        return getRFFI().getCRFFI();
+        return getRFFI().cRFFI;
     }
 
     public static CallRFFI getCallRFFI() {
-        return getRFFI().getCallRFFI();
+        return getRFFI().callRFFI;
     }
 
     public static UserRngRFFI getUserRngRFFI() {
-        return getRFFI().getUserRngRFFI();
+        return getRFFI().userRngRFFI;
     }
 
     public static PCRERFFI getPCRERFFI() {
-        return getRFFI().getPCRERFFI();
+        return getRFFI().pcreRFFI;
     }
 
     public static ZipRFFI getZipRFFI() {
-        return getRFFI().getZipRFFI();
+        return getRFFI().zipRFFI;
     }
 
     public static DLLRFFI getDLLRFFI() {
-        return getRFFI().getDLLRFFI();
+        return getRFFI().dllRFFI;
     }
 
     public static REmbedRFFI getREmbedRFFI() {
-        return getRFFI().getREmbedRFFI();
+        return getRFFI().embedRFFI;
     }
 
     public static MiscRFFI getMiscRFFI() {
-        return getRFFI().getMiscRFFI();
-    }
-
-    public static Type getType() {
-        return type;
+        return getRFFI().miscRFFI;
     }
 
     /**
-     * Subclass implements this method to actually create the concrete {@link RFFI} instance.
+     * Subclass implements this method to actually create the concrete {@link RFFIContext} instance.
      */
-    protected abstract RFFI createRFFI();
+    protected abstract RFFIContext createRFFIContext();
 
-    public abstract RFFIContext newContextState();
+    public static RFFIContext create() {
+        return rffiFactory.createRFFIContext();
+    }
 }

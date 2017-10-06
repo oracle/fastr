@@ -29,9 +29,9 @@ import com.oracle.truffle.r.ffi.impl.interop.NativeCharArray;
 import com.oracle.truffle.r.ffi.impl.interop.pcre.CaptureNamesResult;
 import com.oracle.truffle.r.ffi.impl.interop.pcre.CompileResult;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_Utils.AsPointerNode;
-import com.oracle.truffle.r.ffi.impl.nfi.NativeFunction;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 
 public class TruffleLLVM_PCRE implements PCRERFFI {

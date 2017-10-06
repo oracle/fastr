@@ -56,6 +56,8 @@ public class RFFIUtils {
      */
     @CompilationFinal public static boolean traceEnabled;
 
+    public static boolean traceInitialized;
+
     /**
      * Always trace to a file because stdout is problematic for embedded mode.
      */
@@ -69,11 +71,14 @@ public class RFFIUtils {
     /**
      * Handles the initialization of the RFFI downcalls/upcall tracing implementation.
      */
-    public static void initializeTracing() {
-        traceEnabled = alwaysTrace || FastROptions.TraceNativeCalls.getBooleanValue();
-        if (traceEnabled) {
-            if (traceStream == null) {
-                initTraceStream();
+    public static synchronized void initializeTracing() {
+        if (!traceInitialized) {
+            traceInitialized = true;
+            traceEnabled = alwaysTrace || FastROptions.TraceNativeCalls.getBooleanValue();
+            if (traceEnabled) {
+                if (traceStream == null) {
+                    initTraceStream();
+                }
             }
         }
     }

@@ -25,19 +25,15 @@
 #include <Rinternals_common.h>
 #include "../common/rffi_upcalls.h"
 
-void **callbacks = NULL;
+__thread void **callbacks = NULL;
 
-static TruffleContext* truffleContext = NULL;
+void Rinternals_addCallback(TruffleEnv* env, void** theCallbacks, int index, void *closure) {
+        (*env)->newClosureRef(env, closure);
+        theCallbacks[index] = closure;
+}
 
-void Rinternals_addCallback(TruffleEnv* env, int index, void *closure) {
-    if (truffleContext == NULL) {
-        truffleContext = (*env)->getTruffleContext(env);
-    }
-	if (callbacks == NULL) {
-		callbacks = malloc(UPCALLS_TABLE_SIZE * sizeof(void*));
-	}
-	(*env)->newClosureRef(env, closure);
-	callbacks[index] = closure;
+void*** Rinternals_getCallbacksAddress() {
+        return &callbacks;
 }
 
 static int* return_int;

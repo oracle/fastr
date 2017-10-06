@@ -27,7 +27,6 @@ import java.util.ArrayList;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInterface;
-import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
  * A statically typed interface to exactly those native functions required by the R {@code base}
@@ -164,14 +163,6 @@ public interface BaseRFFI {
         }
     }
 
-    interface SetShutdownFlagNode extends NodeInterface {
-        void execute(boolean value);
-
-        static SetShutdownFlagNode create() {
-            return RFFIFactory.getBaseRFFI().createSetShutdownFlagNode();
-        }
-    }
-
     /*
      * The RFFI implementation influences exactly what subclass of the above nodes is created. Each
      * implementation must therefore, implement these methods that are called by the associated
@@ -198,14 +189,11 @@ public interface BaseRFFI {
 
     GlobNode createGlobNode();
 
-    SetShutdownFlagNode createSetShutdownFlagNode();
-
     /*
      * Some functions are called from non-Truffle contexts, which requires a RootNode
      */
 
     final class GetpidRootNode extends RFFIRootNode<GetpidNode> {
-        private static GetpidRootNode getpidRootNode;
 
         private GetpidRootNode() {
             super(RFFIFactory.getBaseRFFI().createGetpidNode());
@@ -217,15 +205,11 @@ public interface BaseRFFI {
         }
 
         public static GetpidRootNode create() {
-            if (getpidRootNode == null) {
-                getpidRootNode = new GetpidRootNode();
-            }
-            return getpidRootNode;
+            return new GetpidRootNode();
         }
     }
 
     final class GetwdRootNode extends RFFIRootNode<GetwdNode> {
-        private static GetwdRootNode getwdRootNode;
 
         private GetwdRootNode() {
             super(RFFIFactory.getBaseRFFI().createGetwdNode());
@@ -237,15 +221,11 @@ public interface BaseRFFI {
         }
 
         public static GetwdRootNode create() {
-            if (getwdRootNode == null) {
-                getwdRootNode = new GetwdRootNode();
-            }
-            return getwdRootNode;
+            return new GetwdRootNode();
         }
     }
 
     final class MkdtempRootNode extends RFFIRootNode<MkdtempNode> {
-        private static MkdtempRootNode mkdtempRootNode;
 
         private MkdtempRootNode() {
             super(RFFIFactory.getBaseRFFI().createMkdtempNode());
@@ -258,15 +238,11 @@ public interface BaseRFFI {
         }
 
         public static MkdtempRootNode create() {
-            if (mkdtempRootNode == null) {
-                mkdtempRootNode = new MkdtempRootNode();
-            }
-            return mkdtempRootNode;
+            return new MkdtempRootNode();
         }
     }
 
     final class UnameRootNode extends RFFIRootNode<UnameNode> {
-        private static UnameRootNode unameRootNode;
 
         private UnameRootNode() {
             super(RFFIFactory.getBaseRFFI().createUnameNode());
@@ -278,32 +254,7 @@ public interface BaseRFFI {
         }
 
         public static UnameRootNode create() {
-            if (unameRootNode == null) {
-                unameRootNode = new UnameRootNode();
-            }
-            return unameRootNode;
-        }
-    }
-
-    final class SetShutdownFlagRootNode extends RFFIRootNode<SetShutdownFlagNode> {
-        protected SetShutdownFlagRootNode() {
-            super(RFFIFactory.getBaseRFFI().createSetShutdownFlagNode());
-        }
-
-        private static SetShutdownFlagRootNode setShutdownFlagRootNode;
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            Object[] args = frame.getArguments();
-            rffiNode.execute((boolean) args[0]);
-            return RNull.instance;
-        }
-
-        public static SetShutdownFlagRootNode create() {
-            if (setShutdownFlagRootNode == null) {
-                setShutdownFlagRootNode = new SetShutdownFlagRootNode();
-            }
-            return setShutdownFlagRootNode;
+            return new UnameRootNode();
         }
     }
 

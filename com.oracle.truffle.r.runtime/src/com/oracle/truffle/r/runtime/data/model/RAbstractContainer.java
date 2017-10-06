@@ -105,6 +105,6 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
         private EmptyInternalStore() {
         }
 
-        public static EmptyInternalStore INSTANCE = new EmptyInternalStore();
+        public static final EmptyInternalStore INSTANCE = new EmptyInternalStore();
     }
 }

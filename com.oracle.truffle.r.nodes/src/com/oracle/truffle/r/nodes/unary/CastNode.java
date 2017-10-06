@@ -96,6 +96,7 @@ public abstract class CastNode extends UnaryNode {
         if (isTesting) {
             lastWarning = String.format(message.getMessage().message, args);
         } else {
+            // cannot use method in RBaseNode because of varargs
             RError.warning(getErrorContext(), message.getMessage(), args);
         }
     }

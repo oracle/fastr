@@ -251,7 +251,7 @@ final class TruffleLLVM_Call implements CallRFFI {
         @Child private TruffleLLVM_InvokeCallNode invokeCallNode = TruffleLLVM_InvokeCallNodeGen.create(true);
 
         @Override
-        public synchronized void execute(NativeCallInfo nativeCallInfo, Object[] args) {
+        public void execute(NativeCallInfo nativeCallInfo, Object[] args) {
             invokeCallNode.dispatch(nativeCallInfo, args);
         }
     }

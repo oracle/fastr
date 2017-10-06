@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 
 final class NullPrinter extends AbstractValuePrinter<RNull> {
 
-    static NullPrinter INSTANCE = new NullPrinter();
+    static final NullPrinter INSTANCE = new NullPrinter();
 
     private NullPrinter() {
         // singleton

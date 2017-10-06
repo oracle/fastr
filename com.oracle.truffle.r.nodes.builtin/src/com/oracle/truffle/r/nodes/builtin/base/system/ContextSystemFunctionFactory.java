@@ -47,7 +47,7 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
     }
 
     public abstract static class ContextRSystemFunctionNode extends ContextSystemFunctionNode {
-        @Child FastRContext.R contextRNode;
+        @Child private FastRContext.R contextRNode;
 
         private void initContextRNode() {
             if (contextRNode == null) {
@@ -65,7 +65,7 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
     }
 
     public abstract static class ContextRscriptSystemFunctionNode extends ContextSystemFunctionNode {
-        @Child FastRContext.Rscript contextRscriptNode;
+        @Child private FastRContext.Rscript contextRscriptNode;
 
         private void initContextRscriptNode() {
             if (contextRscriptNode == null) {

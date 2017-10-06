@@ -20,13 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.nfi;
+package com.oracle.truffle.r.runtime.ffi;
 
-import java.util.function.BiFunction;
-
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.RInternalError;
 
 /**
  * Enumerates all the C functions that are internal to the implementation and called via Truffle
@@ -78,45 +74,99 @@ public enum NativeFunction {
     exactSumFunc("([double], sint32, sint32, sint32): double", "call_misc_"),
     dqrls("([double], sint32, sint32, [double], sint32, double, [double], [double], [double], [sint32], [sint32], [double], [double]): void", "call_misc_"),
     // stats
-    fft_factor("(sint32, [sint32], [sint32]): void", TruffleNFI_Utils::lookupAndBindStats),
-    fft_work("([double], sint32, sint32, sint32, sint32, [double], [sint32]): sint32", TruffleNFI_Utils::lookupAndBindStats),
-    set_shutdown_phase("(uint8): void", TruffleNFI_Utils::lookupAndBind),
+    fft_factor("(sint32, [sint32], [sint32]): void", "", "stats"),
+    fft_work("([double], sint32, sint32, sint32, sint32, [double], [sint32]): sint32", "", "stats"),
     // FastR helpers
-    set_exception_flag("(): void", TruffleNFI_Utils::lookupAndBind);
+    set_exception_flag("(): void"),
+    // user-defined RNG
+    unif_init("(sint32): void", "user_", anyLibrary()),
+    norm_rand("(): pointer", "user_", anyLibrary()),
+    unif_rand("(): pointer", "user_", anyLibrary()),
+    unif_nseed("(): pointer", "user_", anyLibrary()),
+    unif_seedloc("(): pointer", "user_", anyLibrary()),
+    // memory access helper functions
+    read_pointer_int("(pointer): sint32", "caccess_"),
+    read_array_int("(pointer, sint64): sint32", "caccess_"),
+    read_pointer_double("(pointer): double", "caccess_"),
+    read_array_double("(pointer, sint32): double", "caccess_"),
+    // initialization helpers
+    Rdynload_setSymbol("(pointer, sint32, pointer, sint32): pointer"),
+    initvar_obj("(env, sint32, pointer) : void", "Call_"),
+    initvar_double("(sint32, double): void", "Call_"),
+    initvar_string("(sint32, string): void", "Call_"),
+    initvar_int("(sint32, sint32) : void", "Call_");
 
-    private final int argumentCount;
-    private final String signature;
     private final String callName;
-    private final BiFunction<String, String, TruffleObject> lookup;
-    @CompilationFinal private TruffleObject function;
+    private final String signature;
+    private final int argumentCount;
+    private final String library;
 
-    NativeFunction(String signature, BiFunction<String, String, TruffleObject> lookup) {
-        this.argumentCount = TruffleNFI_Utils.getArgCount(signature);
+    NativeFunction(String signature, String prefix, String library) {
+        this.callName = prefix + name();
         this.signature = signature;
-        this.callName = name();
-        this.lookup = lookup;
+        this.argumentCount = getArgCount(signature);
+        this.library = library;
     }
 
     NativeFunction(String signature, String prefix) {
-        this.argumentCount = TruffleNFI_Utils.getArgCount(signature);
-        this.signature = signature;
-        this.callName = prefix + name();
-        this.lookup = TruffleNFI_Utils::lookupAndBind;
+        this(signature, prefix, baseLibrary());
+    }
+
+    NativeFunction(String signature) {
+        this(signature, "", baseLibrary());
     }
 
     public String getCallName() {
         return callName;
     }
 
-    public TruffleObject getFunction() {
-        if (function == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            function = lookup.apply(callName, signature);
-        }
-        return function;
+    public String getSignature() {
+        return signature;
     }
 
     public int getArgumentCount() {
         return argumentCount;
+    }
+
+    public String getLibrary() {
+        return library;
+    }
+
+    // Functions because the enum constants cannot refer to static final fields:
+
+    public static String anyLibrary() {
+        return "any";
+    }
+
+    public static String baseLibrary() {
+        return "base";
+    }
+
+    /**
+     * Returns the number of arguments in an NFI signature.
+     */
+    public static int getArgCount(String signature) {
+        int argCount = 0;
+        int nestCount = -1;
+        boolean type = false;
+        for (int i = 0; i < signature.length(); i++) {
+            char ch = signature.charAt(i);
+            if (ch == '(') {
+                nestCount++;
+            } else if (ch == ')') {
+                if (nestCount > 0) {
+                    nestCount--;
+                } else {
+                    return type ? argCount + 1 : 0;
+                }
+            } else if (ch == ',') {
+                if (nestCount == 0) {
+                    argCount++;
+                }
+            } else {
+                type = true;
+            }
+        }
+        throw RInternalError.shouldNotReachHere();
     }
 }

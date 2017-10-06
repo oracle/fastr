@@ -34,10 +34,13 @@ public interface CallRFFI {
     interface InvokeCallNode extends NodeInterface {
 
         default Object dispatch(NativeCallInfo nativeCallInfo, Object[] args) {
-            RContext.getInstance().getStateRFFI().beforeDowncall();
-            Object result = execute(nativeCallInfo, args);
-            RContext.getInstance().getStateRFFI().afterDowncall();
-            return result;
+            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            long before = stateRFFI.beforeDowncall();
+            try {
+                return execute(nativeCallInfo, args);
+            } finally {
+                stateRFFI.afterDowncall(before);
+            }
         }
 
         /**
@@ -50,9 +53,13 @@ public interface CallRFFI {
 
     interface InvokeVoidCallNode extends NodeInterface {
         default void dispatch(NativeCallInfo nativeCallInfo, Object[] args) {
-            RContext.getInstance().getStateRFFI().beforeDowncall();
-            execute(nativeCallInfo, args);
-            RContext.getInstance().getStateRFFI().afterDowncall();
+            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            long before = stateRFFI.beforeDowncall();
+            try {
+                execute(nativeCallInfo, args);
+            } finally {
+                stateRFFI.afterDowncall(before);
+            }
         }
 
         /**

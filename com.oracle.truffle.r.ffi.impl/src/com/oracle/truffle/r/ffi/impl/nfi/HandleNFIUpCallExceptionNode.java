@@ -24,11 +24,11 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
 public class HandleNFIUpCallExceptionNode extends Node implements HandleUpCallExceptionNode {
-    @Child SetFlagNode setFlagNode = new SetFlagNode();
+    @Child private SetFlagNode setFlagNode = new SetFlagNode();
 
     @Override
     @TruffleBoundary
@@ -40,7 +40,7 @@ public class HandleNFIUpCallExceptionNode extends Node implements HandleUpCallEx
         } else {
             ex = new RuntimeException(originalEx);
         }
-        ((NFIContext) RContext.getInstance().getStateRFFI()).setLastUpCallException(ex);
+        TruffleNFI_Context.getInstance().setLastUpCallException(ex);
     }
 
     private static final class SetFlagNode extends TruffleNFI_DownCallNode {

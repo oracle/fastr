@@ -34,7 +34,7 @@ public class TruffleNFI_Tools implements ToolsRFFI {
     private static class TruffleNFI_ToolsRFFINode extends Generic_Tools.Generic_ToolsRFFINode {
 
         @Override
-        public synchronized Object execute(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
+        public Object execute(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
                         RLogicalVector warndups) {
             return super.execute(con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups);
         }

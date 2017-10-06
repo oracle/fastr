@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 public abstract class RemoveAttributeNode extends AttributeAccessNode {
 
-    @Child RemoveAttributeNode recursive;
+    @Child private RemoveAttributeNode recursive;
 
     protected RemoveAttributeNode() {
     }

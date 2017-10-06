@@ -34,9 +34,9 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.interop.NativeDoubleArray;
 import com.oracle.truffle.r.ffi.impl.interop.NativeIntegerArray;
 import com.oracle.truffle.r.ffi.impl.interop.NativeNACheck;
-import com.oracle.truffle.r.ffi.impl.nfi.NativeFunction;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public abstract class CallToNativeNode extends Node {
@@ -49,7 +49,7 @@ public abstract class CallToNativeNode extends Node {
     }
 
     public CallToNativeNode create(NativeFunction f) {
-        switch (RFFIFactory.getType()) {
+        switch (RFFIFactory.getFactoryType()) {
             case LLVM:
                 return new NFI(f);
             case NFI:
@@ -82,13 +82,16 @@ public abstract class CallToNativeNode extends Node {
 
     private final class NFI extends CallToNativeNode {
 
+        @CompilationFinal private TruffleObject target;
+
         private NFI(NativeFunction function) {
             super(function);
         }
 
         @Override
         protected TruffleObject getTarget() {
-            return function.getFunction();
+            throw RInternalError.unimplemented("unused implementation");
+            // return function.getFunction();
         }
 
         @SuppressWarnings("cast")

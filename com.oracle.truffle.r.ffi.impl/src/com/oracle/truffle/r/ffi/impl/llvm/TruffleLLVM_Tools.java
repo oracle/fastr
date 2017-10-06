@@ -36,7 +36,7 @@ public class TruffleLLVM_Tools implements ToolsRFFI {
          * Invoke C implementation, N.B., code is not thread safe.
          */
         @Override
-        public synchronized Object execute(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
+        public Object execute(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls, Object macros,
                         RLogicalVector warndups) {
             return super.execute(con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups);
         }

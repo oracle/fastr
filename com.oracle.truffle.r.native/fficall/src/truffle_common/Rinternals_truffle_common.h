@@ -1552,7 +1552,8 @@ void R_PreserveObject(SEXP x) {
 
 void R_ReleaseObject(SEXP x) {
     TRACE0();
-    if(!is_shutdown_phase()) {
+    // this function is sometimes called after the engine has shut down (e.g., from C++ destructors in Rcpp)
+    if(callbacks != NULL) {
     	((call_R_ReleaseObject) callbacks[R_ReleaseObject_x])(x);
     }
 }

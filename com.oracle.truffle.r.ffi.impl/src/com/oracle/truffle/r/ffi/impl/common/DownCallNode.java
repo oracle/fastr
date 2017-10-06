@@ -23,17 +23,19 @@
 package com.oracle.truffle.r.ffi.impl.common;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.nfi.NativeFunction;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
 public abstract class DownCallNode extends Node {
 
     @Child private Node message;
+    @CompilationFinal private TruffleObject target;
 
     protected abstract TruffleObject getTarget();
 
@@ -45,8 +47,12 @@ public abstract class DownCallNode extends Node {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 message = insert(Message.createExecute(getFunction().getArgumentCount()).createNode());
             }
+            if (target == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                target = getTarget();
+            }
             wrapArguments(args);
-            return ForeignAccess.sendExecute(message, getTarget(), args);
+            return ForeignAccess.sendExecute(message, target, args);
         } catch (InteropException e) {
             throw RInternalError.shouldNotReachHere(e);
         } finally {

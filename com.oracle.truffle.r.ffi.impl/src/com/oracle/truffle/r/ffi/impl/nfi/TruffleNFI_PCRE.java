@@ -30,6 +30,7 @@ import com.oracle.truffle.r.ffi.impl.interop.pcre.CaptureNamesResult;
 import com.oracle.truffle.r.ffi.impl.interop.pcre.CompileResult;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 
 public class TruffleNFI_PCRE implements PCRERFFI {

@@ -52,7 +52,7 @@ public class RPromiseMR {
 
     @Resolve(message = "READ")
     public abstract static class RPromiseReadNode extends Node {
-        @Child RPromiseReadImplNode readNode = RPromiseReadImplNodeGen.create();
+        @Child private RPromiseReadImplNode readNode = RPromiseReadImplNodeGen.create();
 
         @TruffleBoundary
         protected Object access(RPromise receiver, String field) {
@@ -62,7 +62,7 @@ public class RPromiseMR {
 
     @Resolve(message = "WRITE")
     public abstract static class RPromiseWriteNode extends Node {
-        @Child RPromiseWriteImplNode writeNode = RPromiseWriteImplNodeGen.create();
+        @Child private RPromiseWriteImplNode writeNode = RPromiseWriteImplNodeGen.create();
 
         protected Object access(RPromise receiver, String field, Object valueObj) {
             return writeNode.execute(receiver, field, valueObj);
@@ -79,7 +79,7 @@ public class RPromiseMR {
 
     @Resolve(message = "KEY_INFO")
     public abstract static class RPromiseKeyInfoNode extends Node {
-        @Child RPromiseKeyInfoImplNode keyInfoNode = RPromiseKeyInfoImplNodeGen.create();
+        @Child private RPromiseKeyInfoImplNode keyInfoNode = RPromiseKeyInfoImplNodeGen.create();
 
         protected Object access(RPromise receiver, String identifier) {
             return keyInfoNode.execute(receiver, identifier);

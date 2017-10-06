@@ -26,14 +26,20 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.context.RContext.ContextState;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.data.RObject;
 
 /**
  * Holds per RContext specific state of the RFFI. RFFI implementation agnostic data and methods are
  * implemented here, RFFI implementations may add their specifics.
  */
-public abstract class RFFIContext implements ContextState {
+public abstract class RFFIContext extends RFFI {
+
+    protected RFFIContext(CRFFI cRFFI, BaseRFFI baseRFFI, CallRFFI callRFFI, DLLRFFI dllRFFI, UserRngRFFI userRngRFFI, ZipRFFI zipRFFI, PCRERFFI pcreRFFI, LapackRFFI lapackRFFI, StatsRFFI statsRFFI,
+                    ToolsRFFI toolsRFFI, REmbedRFFI rEmbedRFFI, MiscRFFI miscRFFI) {
+        super(cRFFI, baseRFFI, callRFFI, dllRFFI, userRngRFFI, zipRFFI, pcreRFFI, lapackRFFI, statsRFFI, toolsRFFI, rEmbedRFFI, miscRFFI);
+        // forward constructor
+    }
 
     /**
      * @see #registerReferenceUsedInNative(Object)
@@ -54,9 +60,9 @@ public abstract class RFFIContext implements ContextState {
      * up-call and including the objects popped off the PROTECT/UNPROTECT stack! Moreover, some
      * R-API functions are known to be not calling GC, therefore people may (and do) count on them
      * not removing unreachable references, this is specifically true for {@code UPROTECT} and its
-     * variants and for macros like {@code INTEGER}. This behaviour is required e.g. for
+     * variants and for macros like {@code INTEGER}. This behavior is required e.g. for
      * {@code C_parseRd}. We keep a list of all the objects that may not be reachable anymore, but
-     * must not be collected, because no garbagge collecting R-API function has been called since
+     * must not be collected, because no garbage collecting R-API function has been called since
      * they became unreachable. This method clears this list so that Java GC can collect the
      * objects.
      */
@@ -70,6 +76,8 @@ public abstract class RFFIContext implements ContextState {
      */
     public final HashSet<RObject> preserveList = new HashSet<>();
 
+    public abstract TruffleObject lookupNativeFunction(NativeFunction function);
+
     public void beforeUpcall(boolean canRunGc) {
     }
 
@@ -79,10 +87,11 @@ public abstract class RFFIContext implements ContextState {
         }
     }
 
-    public void beforeDowncall() {
+    public long beforeDowncall() {
+        return 0;
     }
 
-    public void afterDowncall() {
+    public void afterDowncall(long before) {
         cooperativeGc();
     }
 
@@ -90,5 +99,14 @@ public abstract class RFFIContext implements ContextState {
     @TruffleBoundary
     private void cooperativeGc() {
         protectedNativeReferences.clear();
+    }
+
+    private RFFI instance;
+
+    public RFFI getRFFI() {
+        if (instance == null) {
+            instance = RFFIFactory.create();
+        }
+        return instance;
     }
 }

@@ -30,29 +30,37 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
-import com.oracle.truffle.r.runtime.rng.user.UserRNG.Function;
 
 public class TruffleNFI_UserRng implements UserRngRFFI {
 
     private abstract static class RNGNode extends Node {
 
-        @CompilationFinal protected Node message;
-        @CompilationFinal protected Node readPointerNode = Message.createExecute(1).createNode();
-        @CompilationFinal protected TruffleObject targetFunction;
+        @CompilationFinal protected Node userFunctionNode;
+        @CompilationFinal protected Node readPointerNode;
+        @CompilationFinal protected TruffleObject userFunctionTarget;
+        @CompilationFinal protected TruffleObject readPointerTarget;
 
-        protected void init(Function function, String signature) {
-            if (message == null) {
+        protected void init(NativeFunction userFunction, NativeFunction readFunction) {
+            if (userFunctionNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                message = Message.createExecute(TruffleNFI_Utils.getArgCount(signature)).createNode();
+                userFunctionNode = Message.createExecute(userFunction.getArgumentCount()).createNode();
             }
-            if (targetFunction == null) {
+            if (userFunctionTarget == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                Node bind = Message.createInvoke(1).createNode();
-                try {
-                    targetFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, function.getSymbolHandle().asTruffleObject(), "bind", signature);
-                } catch (InteropException ex) {
-                    throw RInternalError.shouldNotReachHere(ex);
+                userFunctionTarget = TruffleNFI_Context.getInstance().lookupNativeFunction(userFunction);
+            }
+            if (readFunction != null) {
+                if (readPointerNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    readPointerNode = Message.createExecute(readFunction.getArgumentCount()).createNode();
+                }
+                if (readPointerTarget == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    readPointerTarget = TruffleNFI_Context.getInstance().lookupNativeFunction(readFunction);
                 }
             }
         }
@@ -62,11 +70,15 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
 
         @Override
         public void execute(int seed) {
-            init(Function.Init, "(sint32): void");
+            init(NativeFunction.unif_init, null);
+            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            long before = stateRFFI.beforeDowncall();
             try {
-                ForeignAccess.sendExecute(message, targetFunction, seed);
+                ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget, seed);
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
+            } finally {
+                stateRFFI.afterDowncall(before);
             }
         }
     }
@@ -75,12 +87,16 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
 
         @Override
         public double execute() {
-            init(Function.Rand, "(): pointer");
+            init(NativeFunction.unif_rand, NativeFunction.read_pointer_double);
+            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            long before = stateRFFI.beforeDowncall();
             try {
-                Object address = ForeignAccess.sendExecute(message, targetFunction);
-                return (double) ForeignAccess.sendExecute(readPointerNode, TruffleNFI_CAccess.Function.READ_POINTER_DOUBLE.getSymbolFunction(), address);
+                Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
+                return (double) ForeignAccess.sendExecute(readPointerNode, readPointerTarget, address);
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
+            } finally {
+                stateRFFI.afterDowncall(before);
             }
         }
     }
@@ -89,12 +105,16 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
 
         @Override
         public int execute() {
-            init(Function.NSeed, "(): pointer");
+            init(NativeFunction.unif_nseed, NativeFunction.read_pointer_int);
+            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            long before = stateRFFI.beforeDowncall();
             try {
-                Object address = ForeignAccess.sendExecute(message, targetFunction);
-                return (int) ForeignAccess.sendExecute(readPointerNode, TruffleNFI_CAccess.Function.READ_POINTER_INT.getSymbolFunction(), address);
+                Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
+                return (int) ForeignAccess.sendExecute(readPointerNode, readPointerTarget, address);
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
+            } finally {
+                stateRFFI.afterDowncall(before);
             }
         }
     }
@@ -103,14 +123,18 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
 
         @Override
         public void execute(int[] n) {
-            init(Function.Seedloc, "(): pointer");
+            init(NativeFunction.unif_seedloc, NativeFunction.read_array_int);
+            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            long before = stateRFFI.beforeDowncall();
             try {
-                Object address = ForeignAccess.sendExecute(message, targetFunction);
+                Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
                 for (int i = 0; i < n.length; i++) {
-                    n[i] = (int) ForeignAccess.sendExecute(readPointerNode, TruffleNFI_CAccess.Function.READ_ARRAY_INT.getSymbolFunction(), address, i);
+                    n[i] = (int) ForeignAccess.sendExecute(readPointerNode, readPointerTarget, address, i);
                 }
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
+            } finally {
+                stateRFFI.afterDowncall(before);
             }
         }
     }
