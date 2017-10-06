@@ -14,6 +14,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.graphics;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.FastRGridExternalLookup;
 import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.RError;
@@ -79,9 +80,26 @@ public final class RGridGraphicsAdapter {
         }
     }
 
+    /**
+     * Fixup .Devices array as someone may have set it to something that is not a pair list nor
+     * RNull, which breaks dev.cur built-in R function and others. GNUR seems to have active binding
+     * for it. This is such special case that it doesn't seem necessary for now.
+     */
+    @TruffleBoundary
+    public static void fixupDevicesVariable() {
+        Object devices = REnvironment.baseEnv().get(DOT_DEVICES);
+        if (devices == RNull.instance || !(devices instanceof RPairList)) {
+            // reset the .Devices and .Device variables to initial values
+            REnvironment.baseEnv().safePut(DOT_DEVICES, RNull.instance);
+            addDevice(NULL_DEVICE);
+            setCurrentDevice(NULL_DEVICE);
+        }
+    }
+
     public static void removeDevice(int index) {
         assert index > 0 : "cannot remove null device";
         REnvironment baseEnv = REnvironment.baseEnv();
+        fixupDevicesVariable();
         RPairList devices = (RPairList) baseEnv.get(DOT_DEVICES);
         assert index < devices.getLength() : "wrong index in removeDevice";
         RPairList prev = devices;
@@ -95,7 +113,7 @@ public final class RGridGraphicsAdapter {
 
     public static void setCurrentDevice(String name) {
         REnvironment baseEnv = REnvironment.baseEnv();
-        assert contains((RPairList) baseEnv.get(DOT_DEVICES), name) : "setCurrentDevice can be invoked only after the device is added with addDevice";
+        assert contains(baseEnv.get(DOT_DEVICES), name) : "setCurrentDevice can be invoked only after the device is added with addDevice";
         baseEnv.safePut(DOT_DEVICE, name);
     }
 
@@ -124,13 +142,11 @@ public final class RGridGraphicsAdapter {
         return dotDevices instanceof RPairList ? ((RPairList) dotDevices).getLength() : 0;
     }
 
-    public static String getDeviceName(int index) {
-        RPairList dotDevices = (RPairList) REnvironment.baseEnv().get(DOT_DEVICES);
-        return RRuntime.asString(dotDevices.getDataAtAsObject(index));
-    }
-
-    private static boolean contains(RPairList devices, String name) {
-        for (RPairList dev : devices) {
+    private static boolean contains(Object devices, String name) {
+        if (!(devices instanceof RPairList)) {
+            return false;
+        }
+        for (RPairList dev : (RPairList) devices) {
             if (dev.car().equals(name)) {
                 return true;
             }
