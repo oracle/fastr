@@ -287,28 +287,29 @@ public class RCommand {
                         }
                         break;
                     }
+                } catch (EOFException e) {
+                    try {
+                        context.eval(QUIT_EOF);
+                    } catch (PolyglotException e2) {
+                        if (e2.isExit()) {
+                            // don't use the exit code from the PolyglotException
+                            return lastStatus;
+                        } else if (e2.isCancelled()) {
+                            continue;
+                        }
+                        throw fatal(e, "error while calling quit");
+                    }
                 } catch (UserInterruptException e) {
                     // interrupted by ctrl-c
                 }
             }
-        } catch (EOFException e) {
-            try {
-                context.eval(QUIT_EOF);
-            } catch (PolyglotException e2) {
-                if (e2.isExit()) {
-                    // don't use the exit code from the PolyglotException
-                    return lastStatus;
-                }
-                throw fatal(e, "error while calling quit");
-            }
         } catch (ExitException e) {
             return e.code;
         }
-        return lastStatus;
     }
 
-    @SuppressWarnings("serial")
     private static final class ExitException extends RuntimeException {
+        private static final long serialVersionUID = 1L;
         private final int code;
 
         ExitException(int code) {
