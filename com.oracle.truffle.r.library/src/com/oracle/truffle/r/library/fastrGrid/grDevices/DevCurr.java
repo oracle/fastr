@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
+import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -34,6 +35,7 @@ public final class DevCurr extends RExternalBuiltinNode.Arg0 {
 
     @Override
     public RAbstractIntVector execute() {
+        RGridGraphicsAdapter.fixupDevicesVariable();
         int index = GridContext.getContext().getCurrentDeviceIndex();
         return RDataFactory.createIntVector(new int[]{index + 1}, RDataFactory.COMPLETE_VECTOR);
     }

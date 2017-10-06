@@ -55,6 +55,12 @@ public abstract class GetDataStore extends Node {
 
     @Fallback
     protected Object doFallback(RAbstractVector vector) {
+        if (noNativeMemoryData(vector)) {
+            RVector<?> vec = (RVector<?>) vector;
+            if (vec.hasNativeMemoryData()) {
+                return vec.getNativeMirror();
+            }
+        }
         return vector.getInternalStore();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,24 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.TruffleException;
+import com.oracle.truffle.api.nodes.Node;
+
 /**
  * Thrown whenever the system wants to return to the top level, e.g. "Q" in browser, "c" in the
  * {@code quit} builtin.
  */
-public class JumpToTopLevelException extends RuntimeException {
+public class JumpToTopLevelException extends RuntimeException implements TruffleException {
 
     private static final long serialVersionUID = 1L;
 
+    @Override
+    public Node getLocation() {
+        return null;
+    }
+
+    @Override
+    public boolean isCancelled() {
+        return true;
+    }
 }
