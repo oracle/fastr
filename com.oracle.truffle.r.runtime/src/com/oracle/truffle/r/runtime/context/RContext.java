@@ -87,6 +87,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.TempPathName;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinLookup;
@@ -299,6 +300,7 @@ public final class RContext implements RTruffleObject {
     @CompilationFinal private static RBuiltinLookup builtinLookup;
     @CompilationFinal private static RForeignAccessFactory foreignAccessFactory;
     @CompilationFinal private static boolean initialContextInitialized;
+    @CompilationFinal private static int initialPid;
 
     public static boolean isInitialContextInitialized() {
         return initialContextInitialized;
@@ -529,6 +531,11 @@ public final class RContext implements RTruffleObject {
             // that methods package is loaded
             this.methodTableDispatchOn = parentContext.methodTableDispatchOn;
         }
+
+        if (initial) {
+            RContext.initialPid = Utils.getPid();
+        }
+
         if (initial && !embedded) {
             initialContextInitialized = true;
         }
@@ -1011,5 +1018,12 @@ public final class RContext implements RTruffleObject {
 
     public RFFIContext getStateRFFI() {
         return stateRFFI;
+    }
+
+    /**
+     * Returns the PID as retrieved by the initial context.
+     */
+    public static int getInitialPid() {
+        return initialPid;
     }
 }

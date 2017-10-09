@@ -23,8 +23,6 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
