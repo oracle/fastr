@@ -349,11 +349,9 @@ public class RDeparse {
 
         private static MessageDigest digest = null;
 
-        private Path emitToFile(String qualifiedFunctionName) throws IOException, NoSuchAlgorithmException {
-            Path tmpDir = Paths.get(Utils.getUserTempDir()).resolve("deparse");
-            if (!Files.exists(tmpDir)) {
-                Files.createDirectory(tmpDir);
-            }
+        private Path emitToFile(String qualifiedFunctionName, String deparsePath) throws IOException, NoSuchAlgorithmException {
+            Path tmpDir = Paths.get(deparsePath);
+            assert Files.exists(tmpDir);
 
             Path path;
             if (FastROptions.EmitTmpHashed.getBooleanValue()) {
@@ -382,8 +380,9 @@ public class RDeparse {
         }
 
         public void fixupSources() {
-            if (FastROptions.EmitTmpSource.getBooleanValue()) {
-                fixupSourcesTempFile();
+            String deparsePath = TempPathName.deparsePath();
+            if (FastROptions.EmitTmpSource.getBooleanValue() && deparsePath != null) {
+                fixupSourcesTempFile(deparsePath);
             } else {
                 fixupSourcesTextInternal();
             }
@@ -396,11 +395,11 @@ public class RDeparse {
             }
         }
 
-        private void fixupSourcesTempFile() {
+        private void fixupSourcesTempFile(String deparsePath) {
             try {
                 RootNode rootNode = getRootNode();
                 String name = rootNode != null ? rootNode.getName() : null;
-                Path path = emitToFile(name);
+                Path path = emitToFile(name, deparsePath);
                 Source source = RSource.fromFile(path.toFile());
                 for (SourceSectionElement s : sources) {
                     if (s.element.getLazySourceSection() == null || s.element.getLazySourceSection() == RSyntaxNode.LAZY_DEPARSE) {

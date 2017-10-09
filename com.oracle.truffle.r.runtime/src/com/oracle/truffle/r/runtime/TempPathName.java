@@ -33,6 +33,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Random;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
@@ -48,6 +49,9 @@ public class TempPathName implements RContext.ContextState {
     private static final int RANDOM_CHARACTERS_LENGTH = RANDOM_CHARACTERS.length();
     private static final int RANDOM_LENGTH = 12; // as per GnuR
     private static final Random rand = new Random();
+    private static final String DEPARSE_DIR_NAME = "deparse";
+
+    @CompilationFinal private static String deparseDir = null;
 
     private String tempDirPath;
 
@@ -70,7 +74,52 @@ public class TempPathName implements RContext.ContextState {
         } else {
             Utils.rSuicide("cannot create 'R_TempDir'");
         }
+
+        // initialize deparse directory
+        if (deparseDir == null && FastROptions.EmitTmpSource.getBooleanValue()) {
+            deparseDir = determineDeparseDir();
+        }
+
         return this;
+    }
+
+    @TruffleBoundary
+    private String determineDeparseDir() {
+        try {
+            // primary location: $R_HOME/deparse
+            String rHomeParent = ensureAccessibleDeparseDir(REnvVars.rHome());
+            if (rHomeParent != null) {
+                return rHomeParent;
+            }
+
+            // secondary location: /tmp/deparse
+            String tmpDir = ensureAccessibleDeparseDir(Utils.getUserTempDir());
+            if (tmpDir != null) {
+                return tmpDir;
+            }
+
+            // tertiary location: RtmpXXXXXX/deparse
+            String rtmpDir = ensureAccessibleDeparseDir(tempDirPath);
+            if (rtmpDir != null) {
+                return rtmpDir;
+            }
+        } catch (IOException e) {
+            // Be very defensive and do not even report this exception.
+        }
+
+        // Cannot find writable location
+        return null;
+    }
+
+    private static String ensureAccessibleDeparseDir(String parentDeparseDir) throws IOException {
+        Path rHomePath = Paths.get(parentDeparseDir);
+        if (Files.isDirectory(rHomePath) && Files.isWritable(rHomePath)) {
+            Path resolvedDeparseDir = Files.createDirectories(rHomePath.resolve(DEPARSE_DIR_NAME));
+            if (Files.isDirectory(resolvedDeparseDir) && Files.isWritable(resolvedDeparseDir)) {
+                return resolvedDeparseDir.toAbsolutePath().toString();
+            }
+        }
+        return null;
     }
 
     @Override
@@ -92,6 +141,10 @@ public class TempPathName implements RContext.ContextState {
 
     public static TempPathName newContextState() {
         return new TempPathName();
+    }
+
+    public static String deparsePath() {
+        return deparseDir;
     }
 
     @TruffleBoundary
