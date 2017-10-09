@@ -503,6 +503,8 @@ public class DLL {
          * that errors loading (user) packages added to R_DEFAULT_PACKAGES do throw RErrors.
          */
         private synchronized DLLInfo doLoad(String absPath, boolean local, boolean now, boolean addToList) throws DLLException {
+            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            long before = stateRFFI.beforeDowncall();
             try {
                 Object handle = dlOpenNode.execute(absPath, local, now);
                 DLLInfo dllInfo = DLLInfo.create(libName(absPath), absPath, true, handle, addToList);
@@ -514,6 +516,8 @@ public class DLL {
                 } else {
                     throw Utils.rSuicide(ex, "error loading default package: " + absPath + "\n" + dlError);
                 }
+            } finally {
+                stateRFFI.afterDowncall(before);
             }
         }
     }
