@@ -475,7 +475,17 @@ public final class Utils {
             // Truffle/R system has started
             return null;
         }
-        return RArguments.unwrap(frameInstance.getFrame(FrameAccess.MATERIALIZE));
+        Frame frame = RArguments.unwrap(frameInstance.getFrame(FrameAccess.MATERIALIZE));
+        if (!RArguments.isRFrame(frame)) {
+            return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
+                @Override
+                public Frame visitFrame(FrameInstance instance) {
+                    Frame current = RArguments.unwrap(instance.getFrame(FrameAccess.MATERIALIZE));
+                    return RArguments.isRFrame(current) ? current : null;
+                }
+            });
+        }
+        return frame;
     }
 
     private static final class TracebackVisitor implements FrameInstanceVisitor<Frame> {

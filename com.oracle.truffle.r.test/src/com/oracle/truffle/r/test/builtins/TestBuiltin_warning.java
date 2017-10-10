@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -22,6 +22,8 @@ public class TestBuiltin_warning extends TestBase {
     public void testwarning() {
         assertEval("warning('foo')");
         assertEval("f <- function() warning('foo'); f()");
+        assertEval("options(warn=1); f <- function() warning('foo'); f()");
         assertEval("f <- function() warning('foo'); f2 <- function() f(); f2()");
+        assertEval("options(warn=1); f <- function() warning('foo'); f2 <- function() f(); f2()");
     }
 }

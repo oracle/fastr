@@ -767,7 +767,7 @@ public class RErrorHandling {
         // (is 74 a given percentage of console width?)
         if (preamble.length() + 1 + message.length() >= 74) {
             // +1 is for the extra space following the colon
-            return preamble + " \n  " + message;
+            return preamble + "\n  " + message;
         } else {
             return preamble + " " + message;
         }
