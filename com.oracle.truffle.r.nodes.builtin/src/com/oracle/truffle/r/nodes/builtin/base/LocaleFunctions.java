@@ -87,8 +87,12 @@ public class LocaleFunctions {
             }
         }
 
-        private static int getLCCategory(int category) {
-            return category - 2;
+        private static boolean isAll(int category) {
+            return category == 1;
+        }
+
+        private static LC getLCCategory(int category) {
+            return LC.values()[category - 2];
         }
     }
 
@@ -109,8 +113,7 @@ public class LocaleFunctions {
         }
 
         protected String getLocaleData(int category) {
-            String data = "";
-            if (category == 1) {
+            if (LC.isAll(category)) {
                 // "LC_ALL"
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < ALL_CATEGORIES.length; i++) {
@@ -122,11 +125,10 @@ public class LocaleFunctions {
                         }
                     }
                 }
-                data = sb.toString();
+                return sb.toString();
             } else {
-                data = LC.values()[LC.getLCCategory(category)].getLCEnvVar();
+                return LC.getLCCategory(category).getLCEnvVar();
             }
-            return data;
         }
     }
 
@@ -142,7 +144,13 @@ public class LocaleFunctions {
         @Specialization
         @TruffleBoundary
         protected Object setLocale(int category, String locale) {
-            LC.values()[LC.getLCCategory(category)].value = locale;
+            if (LC.isAll(category)) {
+                for (LC lc : LC.values()) {
+                    lc.value = locale;
+                }
+            } else {
+                LC.getLCCategory(category).value = locale;
+            }
             return locale;
         }
     }

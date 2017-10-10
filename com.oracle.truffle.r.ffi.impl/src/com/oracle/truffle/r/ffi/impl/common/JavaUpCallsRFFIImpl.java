@@ -677,6 +677,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object CAAR(Object e) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public Object CDR(Object e) {
         throw implementedAsNode();
     }
@@ -687,12 +692,32 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object CDAR(Object e) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public Object CADDR(Object e) {
         throw implementedAsNode();
     }
 
     @Override
+    public Object CADDDR(Object e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object CAD4R(Object e) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public Object CDDR(Object e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object CDDDR(Object e) {
         throw implementedAsNode();
     }
 

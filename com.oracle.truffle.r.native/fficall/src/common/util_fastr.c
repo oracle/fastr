@@ -5,13 +5,14 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 
 #include <Rinternals.h>
 #include <stdlib.h>
+#include <float.h>
 #include <R_ext/RS.h>
 
 #define _(Source) (Source)
@@ -217,4 +218,173 @@ SEXP nthcdr(SEXP s, int n)
     }
     else error(_("'nthcdr' needs a list to CDR down"));
     return R_NilValue;/* for -Wall */
+}
+
+#define LDOUBLE double
+
+double R_strtod5(const char *str, char **endptr, char dec,
+                 Rboolean NA, int exact)
+{
+    LDOUBLE ans = 0.0, p10 = 10.0, fac = 1.0;
+    int n, expn = 0, sign = 1, ndigits = 0, exph = -1;
+    const char *p = str;
+
+    /* optional whitespace */
+    while (isspace(*p)) p++;
+
+    if (NA && strncmp(p, "NA", 2) == 0) {
+        ans = NA_REAL;
+        p += 2;
+        goto done;
+    }
+
+   /* optional sign */
+    switch (*p) {
+    case '-': sign = -1;
+    case '+': p++;
+    default: ;
+    }
+
+    if (strncasecmp(p, "NaN", 3) == 0) {
+        ans = R_NaN;
+        p += 3;
+        goto done;
+    /* C99 specifies this: must come first to avoid 'inf' match */
+    } else if (strncasecmp(p, "infinity", 8) == 0) {
+        ans = R_PosInf;
+        p += 8;
+        goto done;
+    } else if (strncasecmp(p, "Inf", 3) == 0) {
+        ans = R_PosInf;
+        p += 3;
+        goto done;
+    }
+
+    if(strlen(p) > 2 && p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) {
+        /* This will overflow to Inf if appropriate */
+        for(p += 2; p; p++) {
+            if('0' <= *p && *p <= '9') ans = 16*ans + (*p -'0');
+            else if('a' <= *p && *p <= 'f') ans = 16*ans + (*p -'a' + 10);
+            else if('A' <= *p && *p <= 'F') ans = 16*ans + (*p -'A' + 10);
+            else if(*p == dec) {exph = 0; continue;}
+            else break;
+            if (exph >= 0) exph += 4;
+        }
+#define strtod_EXACT_CLAUSE                                             \
+        if(exact && ans > 0x1.fffffffffffffp52) {                       \
+            if(exact == NA_LOGICAL)                                     \
+                warning(_(                                              \
+                "accuracy loss in conversion from \"%s\" to numeric"),  \
+                        str);                                           \
+            else {                                                      \
+                ans = NA_REAL;                                          \
+                p = str; /* back out */                                 \
+                goto done;                                              \
+            }                                                           \
+        }
+        strtod_EXACT_CLAUSE;
+        if (*p == 'p' || *p == 'P') {
+            int expsign = 1;
+            double p2 = 2.0;
+            switch(*++p) {
+            case '-': expsign = -1;
+            case '+': p++;
+            default: ;
+            }
+            /* The test for n is in response to PR#16358; it's not right if the exponent is
+               very large, but the overflow or underflow below will handle it. */
+#define MAX_EXPONENT_PREFIX 9999
+            for (n = 0; *p >= '0' && *p <= '9'; p++) n = (n < MAX_EXPONENT_PREFIX) ? n * 10 + (*p - '0') : n;
+            if (ans != 0.0) { /* PR#15976:  allow big exponents on 0 */
+                expn += expsign * n;
+                if(exph > 0) {
+                    if (expn - exph < -122) {   /* PR#17199:  fac may overflow below if expn - exph is too small.
+                                                   2^-122 is a bit bigger than 1E-37, so should be fine on all systems */
+                        for (n = exph, fac = 1.0; n; n >>= 1, p2 *= p2)
+                            if (n & 1) fac *= p2;
+                        ans /= fac;
+                        p2 = 2.0;
+                    } else
+                        expn -= exph;
+                }
+                if (expn < 0) {
+                    for (n = -expn, fac = 1.0; n; n >>= 1, p2 *= p2)
+                        if (n & 1) fac *= p2;
+                    ans /= fac;
+                } else {
+                    for (n = expn, fac = 1.0; n; n >>= 1, p2 *= p2)
+                        if (n & 1) fac *= p2;
+                    ans *= fac;
+                }
+            }
+        }
+        goto done;
+    }
+
+    for ( ; *p >= '0' && *p <= '9'; p++, ndigits++) ans = 10*ans + (*p - '0');
+    if (*p == dec)
+        for (p++; *p >= '0' && *p <= '9'; p++, ndigits++, expn--)
+            ans = 10*ans + (*p - '0');
+    if (ndigits == 0) {
+        ans = NA_REAL;
+        p = str; /* back out */
+        goto done;
+    }
+    strtod_EXACT_CLAUSE;
+
+    if (*p == 'e' || *p == 'E') {
+        int expsign = 1;
+        switch(*++p) {
+        case '-': expsign = -1;
+        case '+': p++;
+        default: ;
+        }
+        for (n = 0; *p >= '0' && *p <= '9'; p++) n = (n < MAX_EXPONENT_PREFIX) ? n * 10 + (*p - '0') : n;
+        expn += expsign * n;
+    }
+
+    /* avoid unnecessary underflow for large negative exponents */
+    if (expn + ndigits < -300) {
+        for (n = 0; n < ndigits; n++) ans /= 10.0;
+        expn += ndigits;
+    }
+    if (expn < -307) { /* use underflow, not overflow */
+        for (n = -expn, fac = 1.0; n; n >>= 1, p10 *= p10)
+            if (n & 1) fac /= p10;
+        ans *= fac;
+    } else if (expn < 0) { /* positive powers are exact */
+        for (n = -expn, fac = 1.0; n; n >>= 1, p10 *= p10)
+            if (n & 1) fac *= p10;
+        ans /= fac;
+    } else if (ans != 0.0) { /* PR#15976:  allow big exponents on 0, e.g. 0E4933 */
+        for (n = expn, fac = 1.0; n; n >>= 1, p10 *= p10)
+            if (n & 1) fac *= p10;
+        ans *= fac;
+    }
+
+    /* explicit overflow to infinity */
+    if (ans > DBL_MAX) {
+        if (endptr) *endptr = (char *) p;
+        return (sign > 0) ? R_PosInf : R_NegInf;
+    }
+
+done:
+    if (endptr) *endptr = (char *) p;
+    return sign * (double) ans;
+}
+
+
+double R_strtod4(const char *str, char **endptr, char dec, Rboolean NA)
+{
+    return R_strtod5(str, endptr, dec, NA, FALSE);
+}
+
+double R_strtod(const char *str, char **endptr)
+{
+    return R_strtod5(str, endptr, '.', FALSE, FALSE);
+}
+
+double R_atof(const char *str)
+{
+    return R_strtod5(str, NULL, '.', FALSE, FALSE);
 }
