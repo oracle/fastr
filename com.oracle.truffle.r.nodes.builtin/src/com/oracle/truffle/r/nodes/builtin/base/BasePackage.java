@@ -26,7 +26,6 @@ import java.util.function.Supplier;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.library.fastrGrid.DoSetViewPortBuiltin;
-import com.oracle.truffle.r.library.utils.Download;
 import com.oracle.truffle.r.library.utils.Download.CurlDownload;
 import com.oracle.truffle.r.library.utils.DownloadNodeGen.CurlDownloadNodeGen;
 import com.oracle.truffle.r.nodes.RRootNode;

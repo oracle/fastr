@@ -351,7 +351,7 @@ public class SVGDevice implements GridDevice, FileGridDevice {
         return (180. / Math.PI) * -rotationAnticlockWise;
     }
 
-    private int trRound(double value) {
+    private static int trRound(double value) {
         return (int) Math.round(value * COORD_FACTOR);
     }
 

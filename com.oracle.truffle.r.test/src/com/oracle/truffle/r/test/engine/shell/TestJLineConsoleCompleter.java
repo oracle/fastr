@@ -29,16 +29,15 @@ import java.io.File;
 import java.util.LinkedList;
 
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.r.launcher.JLineConsoleCompleter;
-import java.io.IOException;
-import org.graalvm.polyglot.Source;
-import org.graalvm.polyglot.Value;
-import org.junit.Ignore;
 
 public class TestJLineConsoleCompleter {
 
@@ -158,12 +157,12 @@ public class TestJLineConsoleCompleter {
 
     @Ignore
     @Test
-    public void testPathCompl() throws IOException {
+    public void testPathCompl() {
         testPathCompl('"');
         testPathCompl('\'');
     }
 
-    private void testPathCompl(char quote) throws IOException {
+    private void testPathCompl(char quote) {
         File testDir = getTestDir();
         String testDirPath = testDir.getAbsolutePath() + File.separator;
 
@@ -227,7 +226,7 @@ public class TestJLineConsoleCompleter {
         }
     }
 
-    private File getTestDir() throws IOException {
+    private File getTestDir() {
         String testPath = getTestPath();
         if (testPath != null) {
             File f = new File(testPath);
@@ -240,7 +239,7 @@ public class TestJLineConsoleCompleter {
         return null;
     }
 
-    private String getTestPath() {
+    private static String getTestPath() {
         String tmpDir = System.getProperty("java.io.tmpdir");
         if (tmpDir != null) {
             return tmpDir + File.separator + TEST_PATH;

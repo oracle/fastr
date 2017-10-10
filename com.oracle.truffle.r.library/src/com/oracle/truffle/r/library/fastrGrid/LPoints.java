@@ -344,9 +344,5 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
         public GridColor getFillColor() {
             return fillColor;
         }
-
-        private DrawingContext getWrapped() {
-            return inner;
-        }
     }
 }

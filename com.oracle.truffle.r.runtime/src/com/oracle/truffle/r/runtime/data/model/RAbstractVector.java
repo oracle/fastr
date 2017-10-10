@@ -90,7 +90,7 @@ public interface RAbstractVector extends RAbstractContainer {
      *
      * @see RType#getPrecedence()
      */
-    default RAbstractVector castSafe(RType type, @SuppressWarnings("unused") ConditionProfile isNAProfile, @SuppressWarnings("unused") boolean keepAttributes) {
+    default RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         if (type == getRType()) {
             return this;
         } else {
