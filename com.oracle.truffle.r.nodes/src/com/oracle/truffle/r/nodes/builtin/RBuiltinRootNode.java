@@ -95,6 +95,11 @@ public final class RBuiltinRootNode extends RRootNode {
             initialize();
             Object[] arguments = new Object[args.length];
             for (int i = 0; i < args.length; i++) {
+                if (args[i] == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    args[i] = insert(AccessArgumentNode.create(i));
+                    args[i].setFormals(call.getFormals());
+                }
                 arguments[i] = args[i].execute(frame);
             }
             return call.execute(frame, null, new RArgsValuesAndNames(arguments, factory.getSignature()), null);
@@ -117,10 +122,6 @@ public final class RBuiltinRootNode extends RRootNode {
                 assert factory.getSignature().getVarArgCount() == 0 || factory.getSignature().getVarArgIndex() == factory.getSignature().getLength() - 1 : "only last argument can be vararg";
             }
             call = insert(new BuiltinCallNode(builtin, factory, formalArguments, null, true));
-            for (int i = 0; i < args.length; i++) {
-                args[i] = insert(AccessArgumentNode.create(i));
-                args[i].setFormals(formalArguments);
-            }
         }
     }
 
