@@ -60,8 +60,8 @@ public class TestBuiltin_asmatrix extends TestBase {
         assertEval("{ matrix(c(1+1i,2+2i,3+3i,4+4i),2) }");
         assertEval("{ matrix(nrow=2,ncol=2) }");
         assertEval("{ matrix(1:4,2,2) }");
-        assertEval(Ignored.ReferenceError, "{ matrix(1i,10,10) }");
-        assertEval(Ignored.ReferenceError, "{ matrix(c(1i,NA),10,10) }");
+        assertEval("{ matrix(1i,10,10) }");
+        assertEval("{ matrix(c(1i,NA),10,10) }");
         assertEval("{ matrix(c(10+10i,5+5i,6+6i,20-20i),2) }");
         assertEval("{ matrix(c(1i,100i),10,10) }");
         assertEval("{ matrix(1:6, nrow=3,byrow=TRUE)}");
