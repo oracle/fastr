@@ -111,14 +111,10 @@ public class JLineConsoleCompleter implements Completer {
             start = lastIdxOf(buffer, opt, "function.suffix", start, cursor);
         }
 
-        // are we just after a ',' or ' '
-        if (cursor > 0 && cursor <= buffer.length() && (buffer.charAt(cursor - 1) == ',' || buffer.charAt(cursor - 1) == ' ')) {
-            return cursor;
-        }
-
-        // is there any next closest ',' or ' '?
-        int idx = cursor >= buffer.length() ? buffer.length() - 1 : cursor;
-        while (idx >= start && (buffer.charAt(idx) != ',' && buffer.charAt(idx) != ' ')) {
+        // is there any preceeding ',' or ' ' - lets start from there
+        String precBuffer = buffer.length() > cursor ? buffer.substring(0, cursor) : buffer;
+        int idx = cursor >= precBuffer.length() ? precBuffer.length() - 1 : cursor - 1;
+        while (idx >= start && precBuffer.charAt(idx) != ',' && precBuffer.charAt(idx) != ' ') {
             --idx;
         }
         if (idx > -1) {
