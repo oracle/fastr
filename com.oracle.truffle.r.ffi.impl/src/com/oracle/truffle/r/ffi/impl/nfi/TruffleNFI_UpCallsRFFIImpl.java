@@ -47,13 +47,14 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 
 public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
@@ -92,6 +93,8 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         }
 
         public abstract static class DispatchAllocate extends Node {
+            private static final long EMPTY_DATA_ADDRESS = 0x1BAD;
+
             public abstract long execute(Object vector);
 
             @Specialization
@@ -122,6 +125,12 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
             @Specialization
             protected static long get(CharSXPWrapper vector) {
                 return vector.allocateNativeContents();
+            }
+
+            @Specialization
+            protected static long get(RNull nullValue) {
+                // Note: GnuR is OK with e.g. INTEGER(RNull), it probably returns some garbage
+                return EMPTY_DATA_ADDRESS;
             }
 
             @Fallback
@@ -167,33 +176,33 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     @Override
     public Object INTEGER(Object x) {
         // also handles LOGICAL
-        assert x instanceof RIntVector || x instanceof RLogicalVector;
-        return new VectorWrapper(guaranteeInstanceOf(x, RVector.class));
+        assert x instanceof RIntVector || x instanceof RLogicalVector || x == RNull.instance;
+        return new VectorWrapper(guaranteeVectorOrNull(x, RVector.class));
     }
 
     @Override
     public Object LOGICAL(Object x) {
-        return new VectorWrapper(guaranteeInstanceOf(x, RLogicalVector.class));
+        return new VectorWrapper(guaranteeVectorOrNull(x, RLogicalVector.class));
     }
 
     @Override
     public Object REAL(Object x) {
-        return new VectorWrapper(guaranteeInstanceOf(x, RDoubleVector.class));
+        return new VectorWrapper(guaranteeVectorOrNull(x, RDoubleVector.class));
     }
 
     @Override
     public Object RAW(Object x) {
-        return new VectorWrapper(guaranteeInstanceOf(x, RRawVector.class));
+        return new VectorWrapper(guaranteeVectorOrNull(x, RRawVector.class));
     }
 
     @Override
     public Object COMPLEX(Object x) {
-        return new VectorWrapper(guaranteeInstanceOf(x, RComplexVector.class));
+        return new VectorWrapper(guaranteeVectorOrNull(x, RComplexVector.class));
     }
 
     @Override
     public Object R_CHAR(Object x) {
-        return new VectorWrapper(guaranteeInstanceOf(x, CharSXPWrapper.class));
+        return new VectorWrapper(guaranteeVectorOrNull(x, CharSXPWrapper.class));
     }
 
     @Override
@@ -221,5 +230,12 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     private static TruffleNFI_Context getContext() {
         return (TruffleNFI_Context) RContext.getInstance().getStateRFFI();
+    }
+
+    private static Object guaranteeVectorOrNull(Object obj, Class<?> clazz) {
+        if (obj == RNull.instance) {
+            return RNull.instance;
+        }
+        return guaranteeInstanceOf(obj, clazz);
     }
 }

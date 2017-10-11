@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarList;
+import com.oracle.truffle.r.runtime.data.RSequence;
 
 public abstract class FFIWrapNode extends Node {
 
@@ -99,6 +100,11 @@ public abstract class FFIWrapNode extends Node {
     @Specialization
     protected static Object wrap(VectorWrapper value) {
         return value;
+    }
+
+    @Specialization
+    protected static Object wrap(RSequence seq) {
+        return seq.createVector();
     }
 
     @Fallback

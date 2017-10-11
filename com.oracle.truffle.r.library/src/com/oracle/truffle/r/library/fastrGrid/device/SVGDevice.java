@@ -271,7 +271,6 @@ public class SVGDevice implements GridDevice, FileGridDevice {
         if (!noFill && !ctx.getFillColor().equals(GridColor.TRANSPARENT)) {
             data.append(';');
             appendStyleColorAttrs("fill", ctx.getFillColor());
-            data.append('\'');
         }
         data.append('\'');
     }
