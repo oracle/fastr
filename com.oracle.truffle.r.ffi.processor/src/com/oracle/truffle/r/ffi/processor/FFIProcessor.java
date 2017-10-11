@@ -237,7 +237,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("import com.oracle.truffle.api.interop.TruffleObject;\n");
         w.append("import com.oracle.truffle.api.nodes.RootNode;\n");
         w.append("import com.oracle.truffle.r.runtime.context.RContext;\n");
-        if (returnKind != TypeKind.VOID) {
+        if (!returnKind.isPrimitive() && returnKind != TypeKind.VOID) {
             w.append("import com.oracle.truffle.r.runtime.data.RDataFactory;\n");
         }
         w.append("import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;\n");
@@ -330,7 +330,9 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("                    } catch (Exception ex) {\n");
         w.append("                        CompilerDirectives.transferToInterpreter();\n");
         w.append("                        handleExceptionNode.execute(ex);\n");
-        if (returnKind != TypeKind.VOID) {
+        if (returnKind.isPrimitive()) {
+            w.append("                        resultRObj = Integer.valueOf(-1);\n");
+        } else if (returnKind != TypeKind.VOID) {
             w.append("                        resultRObj = RDataFactory.createIntVectorFromScalar(-1);\n");
         }
         w.append("                    }\n");
