@@ -41,7 +41,6 @@ import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.ROptions.OptionsException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;

@@ -342,7 +342,7 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    public void testCombineForeignObjects() throws IllegalAccessException, IllegalArgumentException {
+    public void testCombineForeignObjects() throws IllegalArgumentException {
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " class(c(to))", "'list'");
         assertEvalFastR("tc <- new.java.class('" + TEST_CLASS + "'); t <- new.external(tc); t1 <- new.external(tc); class(c(t, t1))", "'list'");
@@ -1441,7 +1441,7 @@ public class TestJavaInterop extends TestBase {
         return toRVector(l, null);
     }
 
-    private List<?> list(Object o) {
+    private static List<?> list(Object o) {
         if (o.getClass().isArray()) {
             List<Object> l = new ArrayList<>();
             for (int i = 0; i < Array.getLength(o); i++) {

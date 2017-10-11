@@ -237,7 +237,9 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("import com.oracle.truffle.api.interop.TruffleObject;\n");
         w.append("import com.oracle.truffle.api.nodes.RootNode;\n");
         w.append("import com.oracle.truffle.r.runtime.context.RContext;\n");
-        w.append("import com.oracle.truffle.r.runtime.data.RDataFactory;\n");
+        if (returnKind != TypeKind.VOID) {
+            w.append("import com.oracle.truffle.r.runtime.data.RDataFactory;\n");
+        }
         w.append("import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;\n");
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFIContext;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;\n");

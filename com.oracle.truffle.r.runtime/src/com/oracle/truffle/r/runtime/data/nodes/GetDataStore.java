@@ -65,7 +65,7 @@ public abstract class GetDataStore extends Node {
     }
 
     protected static boolean noNativeMemoryData(RAbstractVector vector) {
-        return !(vector instanceof RVector<?>) || !((RVector) vector).hasNativeMemoryData();
+        return !(vector instanceof RVector<?>) || !((RVector<?>) vector).hasNativeMemoryData();
     }
 
     protected static Class<?> getStoreClass(RAbstractVector vector) {

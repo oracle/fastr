@@ -232,7 +232,7 @@ public final class NativeDataAccess {
     @TruffleBoundary
     private static void registerAllocationSite(Object arg, NativeMirror mirror) {
         String argInfo;
-        if (arg instanceof RVector<?> && ((RVector) arg).hasNativeMemoryData()) {
+        if (arg instanceof RVector<?> && ((RVector<?>) arg).hasNativeMemoryData()) {
             // this must be vector created by fromNative factory method, it has data == null, but
             // does not have its address assigned yet
             argInfo = "[empty]";

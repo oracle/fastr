@@ -267,6 +267,7 @@ public abstract class GetDataAt extends Node {
             return RComplex.valueOf(store[index * 2], store[index * 2 + 1]);
         }
 
+        @SuppressWarnings("unused")
         @Specialization(guards = "isNativeMirror(store)")
         protected RComplex doRVector(RComplexVector vector, Object store, int index) {
             throw RInternalError.unimplemented();
@@ -310,6 +311,7 @@ public abstract class GetDataAt extends Node {
             return store[index];
         }
 
+        @SuppressWarnings("unused")
         @Specialization(guards = "isNativeMirror(store)")
         protected java.lang.String doRVector(RStringVector vector, Object store, int index) {
             throw RInternalError.unimplemented();

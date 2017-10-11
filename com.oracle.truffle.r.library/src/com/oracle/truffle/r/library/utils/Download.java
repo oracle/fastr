@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.nodes.builtin.RBuiltinBaseNode;
 
 /**
  * Support for the "internal"method of "utils::download.file". TODO take note of "quiet", "mode" and
