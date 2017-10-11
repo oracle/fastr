@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
@@ -169,7 +171,7 @@ final class TruffleNFI_Context extends RFFIContext {
         }
     }
 
-    private void initCallbacks(RContext context) {
+    private void initCallbacksAddress() {
         // get the address of the native thread local
         try {
             Node bind = Message.createInvoke(1).createNode();
@@ -179,7 +181,9 @@ final class TruffleNFI_Context extends RFFIContext {
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
+    }
 
+    private void initCallbacks(RContext context) {
         if (context.getKind() == ContextKind.SHARE_NOTHING) {
             // create and fill a new callbacks table
             callbacks = UnsafeAdapter.UNSAFE.allocateMemory(Callbacks.values().length * Unsafe.ARRAY_LONG_INDEX_SCALE);
@@ -203,10 +207,16 @@ final class TruffleNFI_Context extends RFFIContext {
     }
 
     private long callbacks;
-    private long callbacksAddress;
+    @CompilationFinal private long callbacksAddress;
 
     private long pushCallbacks() {
+        if (callbacksAddress == 0) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            initCallbacksAddress();
+        }
         long oldCallbacks = UnsafeAdapter.UNSAFE.getLong(callbacksAddress);
+        assert callbacks != 0L;
+        assert callbacksAddress != 0L;
         UnsafeAdapter.UNSAFE.putLong(callbacksAddress, callbacks);
         return oldCallbacks;
     }
