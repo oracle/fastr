@@ -158,7 +158,7 @@ void Rf_gsetVar(SEXP symbol, SEXP value, SEXP rho) {
 }
 
 SEXP Rf_coerceVector(SEXP x, SEXPTYPE mode) {
-    TRACE0();
+    TRACE(TARGpp, x, mode);
     SEXP result = ((call_Rf_coerceVector) callbacks[Rf_coerceVector_x])(x, mode);
     checkExitCall();
     return result;

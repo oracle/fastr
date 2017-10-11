@@ -127,7 +127,7 @@ public interface StdUpCallsRFFI {
 
     Object Rf_getAttrib(Object obj, Object name);
 
-    int /* void */ Rf_setAttrib(Object obj, Object name, Object val);
+    Object Rf_setAttrib(Object obj, Object name, Object val);
 
     int Rf_inherits(Object x, @RFFICstring String clazz);
 

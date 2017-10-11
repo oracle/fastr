@@ -310,7 +310,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public int Rf_setAttrib(Object obj, Object name, Object val) {
+    public Object Rf_setAttrib(Object obj, Object name, Object val) {
         if (obj instanceof RAttributable) {
             RAttributable attrObj = (RAttributable) obj;
             String nameAsString;
@@ -335,7 +335,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         } else {
             throw RInternalError.shouldNotReachHere();
         }
-        return 0;
+        return val;
     }
 
     @TruffleBoundary
