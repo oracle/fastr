@@ -28,6 +28,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -84,7 +85,14 @@ public class ActiveBinding implements RTruffleObject {
     }
 
     public Object readValue() {
+        if (hidden && !initialized) {
+            return RMissing.instance;
+        }
         return RContext.getEngine().evalFunction(function, REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), true, null);
+    }
+
+    public void setInitialized() {
+        initialized = true;
     }
 
     public static boolean isListed(Object value) {

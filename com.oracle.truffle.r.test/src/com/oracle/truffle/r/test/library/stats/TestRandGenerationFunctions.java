@@ -112,5 +112,13 @@ public class TestRandGenerationFunctions extends TestBase {
         assertEval("{ get0('.Random.seed', envir = .GlobalEnv, inherits = TRUE) }");
 
         assertEval("exists('.Random.seed', envir = .GlobalEnv, inherits = FALSE)");
+        assertEval("{ .GlobalEnv$.Random.seed  }");
+
+        assertEval("{ runif(1); length(.Random.seed) }");
+        assertEval("{ runif(1); print(length(.Random.seed)) }");
+        assertEval("{ runif(1); length(.GlobalEnv$.Random.seed)  }");
+        assertEval("{ .Random.seed <- c(1,2,3); .Random.seed }");
+        assertEval("{ .Random.seed <- c(1,2,3); print(.Random.seed) }");
+        assertEval("{ .Random.seed <- c(1,2,3); .GlobalEnv$.Random.seed  }");
     }
 }

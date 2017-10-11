@@ -158,7 +158,7 @@ final class REngine implements Engine, Engine.Timings {
         if (context.getKind() == RContext.ContextKind.SHARE_NOTHING) {
             initializeNonShared();
         }
-        initializeRNG();
+        context.stateRNG.initializeDotRandomSeed(context);
     }
 
     private void initializeNonShared() {
@@ -208,7 +208,7 @@ final class REngine implements Engine, Engine.Timings {
         }
     }
 
-    private void initializeRNG() {
+    public void initializeRNG() {
         assert REnvironment.globalEnv() != null;
         RFunction fun = context.lookupBuiltin(".fastr.set.seed");
         ActiveBinding dotRandomSeed = new ActiveBinding(RType.Any, fun, true);

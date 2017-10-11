@@ -11,17 +11,26 @@
  */
 package com.oracle.truffle.r.runtime.rng;
 
+import java.lang.ref.WeakReference;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.rng.mm.MarsagliaMulticarry;
 import com.oracle.truffle.r.runtime.rng.mt.MersenneTwister;
@@ -102,13 +111,14 @@ public class RRNG {
         private RandomNumberGenerator currentGenerator;
         private final RandomNumberGenerator[] allGenerators;
         private NormKind currentNormKind;
+        private WeakReference<ActiveBinding> dotRandomSeedBinding;
 
         /**
          * Stores the current RNG seed. The type is Object because the user may assign an arbitrary
          * value to variable {@value RRNG#RANDOM_SEED}. Allowed types are therefore any R value or
          * an {@code int[]}.
          */
-        public Object currentSeeds = RMissing.instance;
+        private Object currentSeeds = null;
 
         private ContextStateImpl() {
             this.currentNormKind = DEFAULT_NORM_KIND;
@@ -175,6 +185,31 @@ public class RRNG {
         public static ContextStateImpl newContextState() {
             return new ContextStateImpl();
         }
+
+        public void initializeDotRandomSeed(RContext context) {
+            assert REnvironment.globalEnv() != null;
+            RFunction fun = context.lookupBuiltin(".fastr.set.seed");
+            ActiveBinding dotRandomSeed = new ActiveBinding(RType.Any, fun, true);
+            Frame frame = REnvironment.globalEnv().getFrame();
+            FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RRNG.RANDOM_SEED, FrameSlotKind.Object);
+            FrameSlotChangeMonitor.setActiveBinding(frame, slot, dotRandomSeed, false, null);
+            dotRandomSeedBinding = new WeakReference<>(dotRandomSeed);
+        }
+
+        public void setCurrentSeeds(Object seeds) {
+            if (this.currentSeeds == null) {
+                ActiveBinding activeBinding = dotRandomSeedBinding.get();
+                if (activeBinding != null) {
+                    activeBinding.setInitialized();
+                }
+            }
+            this.currentSeeds = seeds;
+        }
+
+        public Object getCurrentSeeds() {
+            return this.currentSeeds;
+        }
+
     }
 
     private static ContextStateImpl getContextState() {
@@ -284,7 +319,7 @@ public class RRNG {
 
     @TruffleBoundary
     private static Object getDotRandomSeed() {
-        return RContext.getInstance().stateRNG.currentSeeds;
+        return RContext.getInstance().stateRNG.getCurrentSeeds();
     }
 
     /**
@@ -424,6 +459,6 @@ public class RRNG {
     public static void putRNGState() {
         int[] seeds = currentGenerator().getSeeds();
         seeds[0] = currentKind().ordinal() + 100 * currentNormKind().ordinal();
-        RContext.getInstance().stateRNG.currentSeeds = seeds;
+        RContext.getInstance().stateRNG.setCurrentSeeds(seeds);
     }
 }
