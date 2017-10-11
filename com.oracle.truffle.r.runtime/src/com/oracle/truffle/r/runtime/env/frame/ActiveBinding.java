@@ -28,6 +28,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -39,10 +40,17 @@ public class ActiveBinding implements RTruffleObject {
 
     private final RType expectedType;
     private final RFunction function;
+    private boolean initialized = false;
+    private boolean hidden = false;
 
-    public ActiveBinding(RType expectedType, RFunction fun) {
+    public ActiveBinding(RType expectedType, RFunction fun, boolean hidden) {
         this.expectedType = Objects.requireNonNull(expectedType);
         this.function = Objects.requireNonNull(fun);
+        this.hidden = hidden;
+    }
+
+    public ActiveBinding(RType expectedType, RFunction fun) {
+        this(expectedType, fun, false);
     }
 
     public RFunction getFunction() {
@@ -62,11 +70,36 @@ public class ActiveBinding implements RTruffleObject {
         return "active binding";
     }
 
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    public boolean isInitialized() {
+        return initialized;
+    }
+
     public Object writeValue(Object value) {
-        return RContext.getEngine().evalFunction(function, REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), true, null, value);
+        Object result = RContext.getEngine().evalFunction(function, REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), true, null, value);
+        initialized = true;
+        return result;
     }
 
     public Object readValue() {
+        if (hidden && !initialized) {
+            return RMissing.instance;
+        }
         return RContext.getEngine().evalFunction(function, REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), true, null);
+    }
+
+    public void setInitialized() {
+        initialized = true;
+    }
+
+    public static boolean isListed(Object value) {
+        if (isActiveBinding(value)) {
+            ActiveBinding binding = (ActiveBinding) value;
+            return !binding.hidden || binding.initialized;
+        }
+        return true;
     }
 }

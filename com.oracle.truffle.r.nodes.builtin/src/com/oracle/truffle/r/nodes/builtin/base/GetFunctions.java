@@ -112,7 +112,7 @@ public class GetFunctions {
 
         protected Object getAndCheck(VirtualFrame frame, String x, REnvironment env, RType modeType, String modeString, boolean fail) throws RError {
             Object obj = checkPromise(frame, env.get(x), x);
-            if (obj != null && RRuntime.checkType(obj, modeType)) {
+            if (obj != null && obj != RMissing.instance && RRuntime.checkType(obj, modeType)) {
                 return obj;
             } else {
                 if (fail) {
@@ -136,7 +136,7 @@ public class GetFunctions {
                         }
                     }
                 }
-                if (r == null && fail) {
+                if ((r == null || r == RMissing.instance) && fail) {
                     unknownObject(x, modeType, modeString);
                 }
             }

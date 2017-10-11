@@ -120,7 +120,11 @@ public final class LocalReadVariableNode extends Node {
         }
         // special treatment for active binding: call bound function
         if (!containsNoActiveBindingAssumption.isValid() && ActiveBinding.isActiveBinding(result)) {
-            return ((ActiveBinding) result).readValue();
+            Object readValue = ((ActiveBinding) result).readValue();
+            if (readValue == RMissing.instance) {
+                return null;
+            }
+            return readValue;
         }
 
         if (forceResult) {
