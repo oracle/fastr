@@ -119,16 +119,13 @@ public abstract class Names extends RBuiltinNode.Arg1 {
     private static String[] readKeys(Node keysNode, TruffleObject obj, Node getSizeNode, Node readNode)
                     throws UnknownIdentifierException, InteropException, UnsupportedMessageException {
         TruffleObject keys = ForeignAccess.sendKeys(keysNode, obj);
-        if (keys != null) {
-            int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, keys);
-            String[] names = new String[size];
-            for (int i = 0; i < size; i++) {
-                Object value = ForeignAccess.sendRead(readNode, keys, i);
-                names[i] = (String) value;
-            }
-            return names;
+        int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, keys);
+        String[] names = new String[size];
+        for (int i = 0; i < size; i++) {
+            Object value = ForeignAccess.sendRead(readNode, keys, i);
+            names[i] = (String) value;
         }
-        return new String[0];
+        return names;
     }
 
     @Fallback

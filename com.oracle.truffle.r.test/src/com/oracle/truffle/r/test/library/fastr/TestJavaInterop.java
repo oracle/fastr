@@ -1115,6 +1115,13 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
+    public void testFor() {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "for(i in to$fieldIntegerArray) print(i)", "for(i in c(1,2,3)) print(i)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "for(i in to$listInteger) print(i)", "for(i in c(1,2,3)) print(i)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "for(i in to$map) print(i)", "for(i in c('1','2','3')) print(i)");
+    }
+
+    @Test
     public void testForeignVectorArithmeticOp() throws NoSuchFieldException,
                     IllegalAccessException {
         TestJavaInterop.this.testForeignVectorArithmeticOp("fieldBooleanArray", false, "integer(0)");
