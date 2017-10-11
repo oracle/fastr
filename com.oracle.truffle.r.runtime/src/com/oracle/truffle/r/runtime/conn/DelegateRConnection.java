@@ -119,8 +119,10 @@ abstract class DelegateRConnection extends RObject implements RConnection, ByteC
         if (!isSeekable()) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.NOT_ENABLED_FOR_THIS_CONN, "seek");
         }
-        final long res = seekInternal(offset, seekMode, seekRWMode);
-        invalidateCache();
+        long res = seekInternal(offset, seekMode, seekRWMode);
+        if (seekMode != SeekMode.ENQUIRE) {
+            invalidateCache();
+        }
         return res;
     }
 
@@ -350,8 +352,8 @@ abstract class DelegateRConnection extends RObject implements RConnection, ByteC
      * <it>Standard</it> means that there is a shared cursor between reading and writing operations.
      * </p>
      */
-    public static long seek(SeekableByteChannel channel, long offset, SeekMode seekMode, @SuppressWarnings("unused") SeekRWMode seekRWMode) throws IOException {
-        long position = channel.position();
+    public static long seek(SeekableByteChannel channel, long offset, SeekMode seekMode, @SuppressWarnings("unused") SeekRWMode seekRWMode, int bytesInCache) throws IOException {
+        long position = channel.position() - bytesInCache;
         switch (seekMode) {
             case ENQUIRE:
                 break;
@@ -599,6 +601,10 @@ abstract class DelegateRConnection extends RObject implements RConnection, ByteC
             getChannel().write(cache);
             cache.clear();
         }
+    }
+
+    protected int bytesInCache() {
+        return cache.remaining();
     }
 
     @Override
