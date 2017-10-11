@@ -54,7 +54,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Value;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
-import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
@@ -95,8 +95,12 @@ public class FastRDebugTest {
         }
     }
 
+    private static Source sourceFromText(String code, String name) {
+        return Source.newBuilder(code).name(name).language("R").mimeType(RRuntime.R_APP_MIME).interactive().build();
+    }
+
     private static Source createFactorial() {
-        return RSource.fromTextInternal("main <- function() {\n" +
+        return sourceFromText("main <- function() {\n" +
                         "  res = fac(2)\n" +
                         "  res\n" +
                         "}\n" +
@@ -110,11 +114,11 @@ public class FastRDebugTest {
                         "        res\n" +
                         "    }\n" +
                         "}\n",
-                        RSource.Internal.DEBUGTEST_FACTORIAL);
+                        "factorial.r");
     }
 
     private static Source createRStatements() {
-        return RSource.fromTextInternal("foo <- function(a) {\n" +
+        return sourceFromText("foo <- function(a) {\n" +
                         "  x = 2L * a\n" +
                         "}\n" +
                         "foo(1)\n" +
@@ -124,7 +128,7 @@ public class FastRDebugTest {
                         "print(foo(y))\n" +
                         "z <- cos(x^1.3/(runif(1)*5+10))\n" +
                         "print(foo(z))\n",
-                        RSource.Internal.DEBUGTEST_DEBUG);
+                        "statements.r");
     }
 
     protected final String getOut() {
@@ -158,7 +162,7 @@ public class FastRDebugTest {
                         "n", "2.0");
         continueExecution();
 
-        final Source evalSrc = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_DEBUG);
+        final Source evalSrc = sourceFromText("main()\n", "test.r");
         final Value value = engine.eval(evalSrc);
         assertExecutedOK();
         Assert.assertEquals("[1] 2\n", getOut());
@@ -173,12 +177,12 @@ public class FastRDebugTest {
     @Test
     @Ignore
     public void testConditionalBreakpoint() throws Throwable {
-        final Source source = RSource.fromTextInternal("main <- function() {\n" +
+        final Source source = sourceFromText("main <- function() {\n" +
                         "  for(i in seq(10)) {\n" +
                         "    print(i)\n" +
                         "  }\n" +
                         "}\n",
-                        RSource.Internal.DEBUGTEST_DEBUG);
+                        "test.r");
         engine.eval(source);
 
         run.addLast(() -> {
@@ -195,7 +199,7 @@ public class FastRDebugTest {
         // Init before eval:
         performWork();
 
-        final Source evalSrc = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_DEBUG);
+        final Source evalSrc = sourceFromText("main()\n", "test.r");
         engine.eval(evalSrc);
         assertExecutedOK();
     }
@@ -240,7 +244,7 @@ public class FastRDebugTest {
 
         // Init before eval:
         performWork();
-        final Source evalSource = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_EVAL);
+        final Source evalSource = sourceFromText("main()\n", "evaltest.r");
         final Value value = engine.eval(evalSource);
         assertExecutedOK();
         Assert.assertEquals("[1] 2\n", getOut());
@@ -251,14 +255,14 @@ public class FastRDebugTest {
 
     @Test
     public void testFindMetaObjectAndSourceLocation() throws Throwable {
-        final Source source = RSource.fromTextInternal("main <- function() {\n" +
+        final Source source = sourceFromText("main <- function() {\n" +
                         "  i = 3L\n" +
                         "  n = 15\n" +
                         "  str = 'hello'\n" +
                         "  i <- i + 1L\n" +
                         "  i\n" +
                         "}\n",
-                        RSource.Internal.DEBUGTEST_DEBUG);
+                        "test.r");
         engine.eval(source);
 
         // @formatter:on
@@ -275,7 +279,7 @@ public class FastRDebugTest {
         stepOut();
         performWork();
 
-        final Source evalSource = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_EVAL);
+        final Source evalSource = sourceFromText("main()\n", "evaltest.r");
         engine.eval(evalSource);
 
         assertExecutedOK();
@@ -283,18 +287,18 @@ public class FastRDebugTest {
 
     @Test
     public void testScopeFunction() throws Throwable {
-        final Source srcFunMain = RSource.fromTextInternal("function () {\n" +
+        final Source srcFunMain = sourceFromText("function () {\n" +
                         "    i = 3L\n" +
                         "    n = 15L\n" +
                         "    str = \"hello\"\n" +
                         "    i <- i + 1L\n" +
                         "    ab <<- i\n" +
                         "    i\n" +
-                        "}", RSource.Internal.DEBUGTEST_DEBUG);
-        final Source source = RSource.fromTextInternal("x <- 10L\n" +
+                        "}", "testFunc.r");
+        final Source source = sourceFromText("x <- 10L\n" +
                         "makeActiveBinding('ab', function(v) { if(missing(v)) x else x <<- v }, .GlobalEnv)\n" +
                         "main <- " + srcFunMain.getCharacters() + "\n",
-                        RSource.Internal.DEBUGTEST_DEBUG);
+                        "test.r");
         engine.eval(source);
 
         // @formatter:on
@@ -321,7 +325,7 @@ public class FastRDebugTest {
         assertLocation(1, "main()", "x", 4, "ab", 4, "main", srcFunMain.getCharacters());
         performWork();
 
-        final Source evalSource = RSource.fromTextInternal("main()\n", RSource.Internal.DEBUGTEST_EVAL);
+        final Source evalSource = sourceFromText("main()\n", "evaltest.r");
         engine.eval(evalSource);
 
         assertExecutedOK();
@@ -329,7 +333,7 @@ public class FastRDebugTest {
 
     @Test
     public void testScopePromise() throws Throwable {
-        final Source source = RSource.fromTextInternal("main <- function(e) {\n" +
+        final Source source = sourceFromText("main <- function(e) {\n" +
                         "   x <- 10L\n" +
                         "   e()\n" +
                         "   x\n" +
@@ -339,7 +343,7 @@ public class FastRDebugTest {
                         "   x\n" +
                         "}\n",
 
-                        RSource.Internal.DEBUGTEST_DEBUG);
+                        "test.r");
         engine.eval(source);
 
         // @formatter:on
@@ -361,7 +365,7 @@ public class FastRDebugTest {
         continueExecution();
         performWork();
 
-        final Source evalSource = RSource.fromTextInternal("x <- 0L\nmain(closure)\n", RSource.Internal.DEBUGTEST_EVAL);
+        final Source evalSource = sourceFromText("x <- 0L\nmain(closure)\n", "evaltest.r");
         engine.eval(evalSource);
 
         assertExecutedOK();
@@ -369,7 +373,7 @@ public class FastRDebugTest {
 
     @Test
     public void testScopeArguments() throws Throwable {
-        final Source source = RSource.fromTextInternal("main <- function(a, b, c, d) {\n" +
+        final Source source = sourceFromText("main <- function(a, b, c, d) {\n" +
                         "   x <- 10L\n" +
                         "}\n" +
                         "closure <- function() {\n" +
@@ -377,7 +381,7 @@ public class FastRDebugTest {
                         "   x\n" +
                         "}\n",
 
-                        RSource.Internal.DEBUGTEST_DEBUG);
+                        "test.r");
         engine.eval(source);
 
         // @formatter:on
@@ -394,7 +398,7 @@ public class FastRDebugTest {
         continueExecution();
         performWork();
 
-        final Source evalSource = RSource.fromTextInternal("main(1, 2, 3, 4)\n", RSource.Internal.DEBUGTEST_EVAL);
+        final Source evalSource = sourceFromText("main(1, 2, 3, 4)\n", "evaltest.r");
         engine.eval(evalSource);
 
         assertExecutedOK();
@@ -402,7 +406,7 @@ public class FastRDebugTest {
 
     @Test
     public void testChangedScopeChain() throws Throwable {
-        final Source source = RSource.fromTextInternal("main <- function(e) {\n" +
+        final Source source = sourceFromText("main <- function(e) {\n" +
                         "   x <- 10L\n" +
                         "   environment(e) <- environment()\n" +
                         "   e()\n" +
@@ -412,7 +416,7 @@ public class FastRDebugTest {
                         "   x <<- 123L\n" +
                         "   x\n" +
                         "}\n",
-                        RSource.Internal.DEBUGTEST_DEBUG);
+                        "test.r");
         engine.eval(source);
 
         // @formatter:on
@@ -438,7 +442,7 @@ public class FastRDebugTest {
         continueExecution();
         performWork();
 
-        final Source evalSource = RSource.fromTextInternal("x <- 0L\nmain(closure)\n", RSource.Internal.DEBUGTEST_EVAL);
+        final Source evalSource = sourceFromText("x <- 0L\nmain(closure)\n", "evaltest.r");
         engine.eval(evalSource);
 
         assertExecutedOK();
