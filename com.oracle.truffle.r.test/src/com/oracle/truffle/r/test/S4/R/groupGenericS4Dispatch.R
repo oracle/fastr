@@ -4,4 +4,5 @@ setMethod("%*%", signature(x = "ANY", y = "Foo1234"), function(x, y) { "s4 dispa
 obj <- new("Foo1234")
 x <- matrix(1.1:16.1, 4, 4)
 obj@a <- runif(10)
-x %*% obj
+res <- x %*% obj
+print(res)

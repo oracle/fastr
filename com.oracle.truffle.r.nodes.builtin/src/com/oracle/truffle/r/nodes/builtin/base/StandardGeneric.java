@@ -106,9 +106,9 @@ public abstract class StandardGeneric extends RBuiltinNode.Arg2 {
         }
         if (collectArgumentsNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            collectArgumentsNode = insert(CollectGenericArgumentsNodeGen.create(sigArgs.getDataWithoutCopying(), sigLength));
+            collectArgumentsNode = insert(CollectGenericArgumentsNodeGen.create(sigLength));
         }
-        RStringVector classes = collectArgumentsNode.execute(frame, sigArgs, sigLength);
+        RStringVector classes = collectArgumentsNode.execute(frame, sigLength);
         Object ret = dispatchGeneric.executeObject(frame, mtable, classes, def, fname);
         return ret;
     }

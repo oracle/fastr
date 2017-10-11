@@ -22,107 +22,119 @@
  */
 package com.oracle.truffle.r.nodes.objects;
 
-import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.SlowPathException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
-import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-// transcribed from /src/library/methods/src/methods_list_dispatch.c (R_dispatch_generic function)
+// transcribed from /src/library/methods/src/methods_list_dispatch.c (R_dispatchGeneric function)
 
 /*
  * Used to collect arguments of the generic function for S4 method dispatch. Modeled after {@link CollectArgumentsNode}.
+ * The way GnuR determines the classes of the arguments is by looking up the names of the formal arguments in the dispatching function.
+ * However, the dispatching function may define default values for arguments that can change the signature of the actual arguments.
+ * The function lookup must be done by using the original actual arguments (i.e. actual arguments without default values).
+ * Since the arguments have already been matched and are ordered, we can just look at the arguments in the frame.
+ * Varargs do not appear in the formal signature, therefore any vararg parameter must be skipped.
  */
 public abstract class CollectGenericArgumentsNode extends RBaseNode {
 
     // TODO: re-do with a multi-element cache? (list comparison will have some cost, though)
 
-    @Children private final LocalReadVariableNode[] argReads;
     @Children private final ClassHierarchyScalarNode[] classHierarchyNodes;
     @Child private ClassHierarchyScalarNode classHierarchyNodeSlowPath;
     @Child private PromiseCheckHelperNode promiseHelper = new PromiseCheckHelperNode();
 
+    private final int nProvidedArgs;
+
     private final ConditionProfile valueMissingProfile = ConditionProfile.createBinaryProfile();
 
-    public abstract RStringVector execute(VirtualFrame frame, RList arguments, int argLength);
+    public abstract RStringVector execute(VirtualFrame frame, int argLength);
 
-    protected CollectGenericArgumentsNode(Object[] arguments, int argLength) {
-        LocalReadVariableNode[] reads = new LocalReadVariableNode[argLength];
+    protected CollectGenericArgumentsNode(int argLength) {
         ClassHierarchyScalarNode[] hierarchyNodes = new ClassHierarchyScalarNode[argLength];
         for (int i = 0; i < argLength; i++) {
-            RSymbol s = (RSymbol) arguments[i];
-            reads[i] = LocalReadVariableNode.create(s.getName(), true);
             hierarchyNodes[i] = ClassHierarchyScalarNodeGen.create();
         }
-        argReads = insert(reads);
-        classHierarchyNodes = insert(hierarchyNodes);
+        nProvidedArgs = argLength;
+        classHierarchyNodes = hierarchyNodes;
     }
 
     @ExplodeLoop
     @Specialization(rewriteOn = SlowPathException.class)
-    protected RStringVector combineCached(VirtualFrame frame, RList arguments, int argLength) throws SlowPathException {
-        if (argLength != argReads.length) {
+    protected RStringVector combineCached(VirtualFrame frame, int argLength) throws SlowPathException {
+        int nActualArgs = RArguments.getArgumentsLength(frame);
+        if (argLength != nProvidedArgs || !(nActualArgs == nProvidedArgs || nActualArgs == nProvidedArgs + 1)) {
             throw new SlowPathException();
         }
-        String[] result = new String[argReads.length];
-        for (int i = 0; i < argReads.length; i++) {
-            Object cachedId = argReads[i].getIdentifier();
-            String id = ((RSymbol) (arguments.getDataAt(i))).getName();
-            assert cachedId instanceof String && Utils.isInterned((String) cachedId) && Utils.isInterned(id);
-            if (cachedId != id) {
-                throw new SlowPathException();
+        String[] result = new String[nProvidedArgs];
+
+        // The length of the actual and formal arguments may not be equal because "..." is just
+        // ignored in formals (i.e. '.SigArgs').
+        assert nActualArgs == result.length || nActualArgs == result.length + 1;
+
+        // Intentionally using 'i' as loop variable since nActualArgs >=
+        // signatureArgumentNames.length
+        int j = 0;
+        for (int i = 0; i < nProvidedArgs; i++) {
+            Object value = RArguments.getArgument(frame, j);
+            if (value instanceof RArgsValuesAndNames) {
+                j++;
+                value = RArguments.getArgument(frame, j);
             }
-            Object value = argReads[i].execute(frame);
             if (value == REmpty.instance || value == RMissing.instance) {
                 value = null;
             }
-            result[i] = valueMissingProfile.profile(value == null) ? "missing" : classHierarchyNodes[i].executeString(promiseHelper.checkEvaluate(frame, value));
+            Object evaledArg = promiseHelper.checkEvaluate(frame, value);
+            assert !(evaledArg instanceof RArgsValuesAndNames);
+            result[i] = valueMissingProfile.profile(value == null) ? "missing" : classHierarchyNodes[i].executeString(evaledArg);
+            j++;
         }
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization
-    protected RStringVector combine(VirtualFrame frame, RList arguments, int argLength) {
-        return readFromMaterialized(frame.materialize(), arguments, argLength);
+    protected RStringVector combine(VirtualFrame frame, int argLength) {
+        return readFromMaterialized(frame.materialize(), argLength);
     }
 
-    @TruffleBoundary
-    private RStringVector readFromMaterialized(MaterializedFrame frame, RList arguments, int argLength) {
-        CompilerAsserts.neverPartOfCompilation();
-        classHierarchyNodeSlowPath = insert(ClassHierarchyScalarNodeGen.create());
+    private RStringVector readFromMaterialized(MaterializedFrame frame, int argLength) {
+        if (classHierarchyNodeSlowPath == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            classHierarchyNodeSlowPath = insert(ClassHierarchyScalarNodeGen.create());
+        }
+
+        int nActualArgs = RArguments.getArgumentsLength(frame);
+        assert nActualArgs >= argLength;
+
         String[] result = new String[argLength];
-        FrameDescriptor desc = frame.getFrameDescriptor();
-        for (int i = 0; i < argLength; i++) {
-            RSymbol s = (RSymbol) arguments.getDataAt(i);
-            FrameSlot slot = desc.findFrameSlot(s.getName());
-            if (slot == null) {
-                result[i] = "missing";
-            } else {
-                Object value = FrameSlotChangeMonitor.getValue(slot, frame);
+        for (int j = 0, i = 0; i < argLength && j < nActualArgs; j++) {
+            Object value = RArguments.getArgument(frame, j);
+            if (value == REmpty.instance || value == RMissing.instance) {
+                value = null;
+            }
+            if (!(value instanceof RArgsValuesAndNames)) {
                 if (value instanceof RPromise) {
                     value = PromiseHelperNode.evaluateSlowPath((RPromise) value);
                 }
-                result[i] = classHierarchyNodeSlowPath.executeString(value);
+                assert !(value instanceof RArgsValuesAndNames);
+                result[i] = value == null ? "missing" : classHierarchyNodeSlowPath.executeString(value);
+                i++;
             }
         }
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
