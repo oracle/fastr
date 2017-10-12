@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState;
@@ -78,7 +79,12 @@ public class BrowserFunctions {
         @Specialization
         protected RNull browser(VirtualFrame frame, Object text, RNull condition, boolean expr, int skipCalls) {
             if (expr) {
-                BrowserState browserState = RContext.getInstance().stateInstrumentation.getBrowserState();
+                RContext instance = RContext.getInstance();
+                if (instance.getKind() == ContextKind.SHARE_NOTHING) {
+                    return RNull.instance;
+                }
+
+                BrowserState browserState = instance.stateInstrumentation.getBrowserState();
                 try {
                     browserState.push(new HelperState(text, condition));
                     MaterializedFrame mFrame = frame.materialize();
