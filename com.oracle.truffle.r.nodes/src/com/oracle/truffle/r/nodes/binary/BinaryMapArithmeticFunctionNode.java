@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNAFunctionNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -47,6 +48,8 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNode {
 
     @Child private BinaryArithmetic arithmetic;
+
+    private final ConditionProfile finiteResult = ConditionProfile.createBinaryProfile();
 
     public BinaryMapArithmeticFunctionNode(BinaryArithmetic arithmetic) {
         this.arithmetic = arithmetic;
@@ -248,10 +251,12 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
             return null;
         }
         double newStride;
+        double otherStrideDouble;
         if (otherStride == null) {
             newStride = castSequence.getStride();
+            otherStrideDouble = 0d;
         } else {
-            double otherStrideDouble = (double) otherStride;
+            otherStrideDouble = (double) otherStride;
             if (otherNACheck.check(otherStrideDouble)) {
                 return null;
             }
@@ -260,7 +265,17 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
                 return null;
             }
         }
-        return RDataFactory.createDoubleSequence(newStart, newStride, castSequence.getLength());
+        if (finiteResult.profile(Double.isFinite(newStart) && Double.isFinite(newStride))) {
+            return RDataFactory.createDoubleSequence(newStart, newStride, castSequence.getLength());
+        }
+        int len = castSequence.getLength();
+        double[] data = new double[len];
+        double otherVal = otherStartDouble;
+        for (int i = 0; i < len; i++) {
+            data[i] = applyDouble(castSequence.getDataAt(i), otherVal);
+            otherVal += otherStrideDouble;
+        }
+        return RDataFactory.createDoubleVector(data, true);
     }
 
     private RAbstractVector foldIntSequence(RSequence sequence, Object otherStart, Object otherStride, NACheck otherNACheck) {
@@ -282,10 +297,12 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
             return null;
         }
         double newStride;
+        int otherStrideInt;
         if (otherStride == null) {
             newStride = castSequence.getStride();
+            otherStrideInt = 0;
         } else {
-            int otherStrideInt = (int) otherStride;
+            otherStrideInt = (int) otherStride;
             if (otherNACheck.check(otherStartInt)) {
                 return null;
             }
@@ -294,7 +311,17 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
                 return null;
             }
         }
-        return RDataFactory.createDoubleSequence(newStart, newStride, castSequence.getLength());
+        if (finiteResult.profile(Double.isFinite(newStart) && Double.isFinite(newStride))) {
+            return RDataFactory.createDoubleSequence(newStart, newStride, castSequence.getLength());
+        }
+        int len = castSequence.getLength();
+        double[] data = new double[len];
+        double otherVal = otherStartInt;
+        for (int i = 0; i < len; i++) {
+            data[i] = applyDouble(castSequence.getDataAt(i), otherVal);
+            otherVal += otherStrideInt;
+        }
+        return RDataFactory.createDoubleVector(data, true);
     }
 
     private RAbstractVector foldIntSequenceIntResult(RSequence sequence, int otherStartInt, Object otherStride, NACheck otherNACheck) {

@@ -286,6 +286,8 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ c(1,3) - 4 }");
         assertEval("{ c(1,3) %/% c(2,4) }");
         assertEval("{ c(1,3) / c(2,4) }");
+        assertEval("{ 1:1 / 0:0 }");
+        assertEval("{ -2:2 / 0:0 }");
     }
 
     @Test
