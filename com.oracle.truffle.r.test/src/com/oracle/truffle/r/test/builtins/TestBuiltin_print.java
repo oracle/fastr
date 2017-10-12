@@ -72,5 +72,6 @@ public class TestBuiltin_print extends TestBase {
         assertEval("{ nql <- noquote(letters); nql}");
         assertEval("{ x <- 42; attr(x,'myattr') <- list(k=3); attributes(x) }");
         assertEval("{ val <- 42L; attr(val, 'contrast') <- list(k=1); qr <- list(qr=val); qr }");
+        assertEval("{ callExpr <- quote(a[,2]); res <- lapply(callExpr, function(x) x); print(res[[3]]) }");
     }
 }

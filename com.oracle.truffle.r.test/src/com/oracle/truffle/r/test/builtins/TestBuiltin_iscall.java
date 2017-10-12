@@ -148,5 +148,6 @@ public class TestBuiltin_iscall extends TestBase {
         assertEval("{ cl <- call(\"f\", 2, 3) ; is.call(cl) }");
         assertEval("{ cl <- list(f, 2, 3) ; is.call(cl) }");
         assertEval("{ is.call(call) }");
+        assertEval("{ callExpr <- quote(asd[,1]); lapply(callExpr, function(x) is.call(x)) }");
     }
 }
