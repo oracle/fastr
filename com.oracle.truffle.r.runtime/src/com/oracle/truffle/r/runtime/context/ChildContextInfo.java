@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime.context;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.TimeZone;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,8 +34,8 @@ import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
 import com.oracle.truffle.r.launcher.RCmdOptions;
-import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
+import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
@@ -71,9 +71,8 @@ public final class ChildContextInfo {
     static final AtomicInteger multiSlotInds = new AtomicInteger(-1);
 
     private final RStartParams startParams;
-    private final String[] env;
+    private final Map<String, String> env;
     private final RContext.ContextKind kind;
-    private final TimeZone systemTimeZone;
 
     /**
      * Any context created by another has a parent. When such a context is destroyed we must reset
@@ -89,7 +88,8 @@ public final class ChildContextInfo {
     private PolyglotEngine vm;
     public Executor executor;
 
-    private ChildContextInfo(RStartParams startParams, String[] env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr, TimeZone systemTimeZone, int id,
+    private ChildContextInfo(RStartParams startParams, Map<String, String> env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr,
+                    int id,
                     int multiSlotInd) {
         this.startParams = startParams;
         this.env = env;
@@ -98,7 +98,6 @@ public final class ChildContextInfo {
         this.stdin = stdin;
         this.stdout = stdout;
         this.stderr = stderr;
-        this.systemTimeZone = systemTimeZone;
         this.multiSlotInd = multiSlotInd;
         this.id = id;
     }
@@ -149,10 +148,8 @@ public final class ChildContextInfo {
      * @param kind defines the degree to which this context shares base and package environments
      *            with its parent
      * @param parent if non-null {@code null}, the parent creating the context
-     * @param systemTimeZone the system's time zone
      */
-    public static ChildContextInfo create(RStartParams startParams, String[] env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr,
-                    TimeZone systemTimeZone) {
+    public static ChildContextInfo create(RStartParams startParams, Map<String, String> env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr) {
         int id = contextInfoIds.incrementAndGet();
         int multiSlotInd = multiSlotInds.get();
         if (kind == ContextKind.SHARE_ALL || kind == ContextKind.SHARE_NOTHING) {
@@ -164,23 +161,18 @@ public final class ChildContextInfo {
             throw RInternalError.shouldNotReachHere();
         }
         assert kind != ContextKind.SHARE_PARENT_RW || (kind == ContextKind.SHARE_PARENT_RW && parent.getKind() == ContextKind.SHARE_NOTHING && parent.getMultiSlotInd() == 0);
-        return new ChildContextInfo(startParams, env, kind, parent, stdin, stdout, stderr, systemTimeZone, id, kind == ContextKind.SHARE_PARENT_RW ? 0 : multiSlotInd);
-    }
-
-    public static ChildContextInfo create(RStartParams startParams, String[] env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr) {
-        return create(startParams, env, kind, parent, stdin, stdout, stderr, TimeZone.getDefault());
+        return new ChildContextInfo(startParams, env, kind, parent, stdin, stdout, stderr, id, kind == ContextKind.SHARE_PARENT_RW ? 0 : multiSlotInd);
     }
 
     /**
      * Create a context configuration object such that FastR does not restore previously stored
      * sessions on startup.
      *
-     * @param env TODO
      * @param kind defines the degree to which this context shares base and package environments
      *            with its parent
      * @param parent if non-null {@code null}, the parent creating the context
      */
-    public static ChildContextInfo createNoRestore(Client client, String[] env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr) {
+    public static ChildContextInfo createNoRestore(Client client, Map<String, String> env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr) {
         RStartParams params = new RStartParams(RCmdOptions.parseArguments(client, new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
         return create(params, env, kind, parent, stdin, stdout, stderr);
     }
@@ -189,7 +181,7 @@ public final class ChildContextInfo {
         return startParams;
     }
 
-    public String[] getEnv() {
+    public Map<String, String> getEnv() {
         return env;
     }
 
@@ -199,10 +191,6 @@ public final class ChildContextInfo {
 
     public RContext getParent() {
         return parent;
-    }
-
-    public TimeZone getSystemTimeZone() {
-        return systemTimeZone;
     }
 
     public int getId() {

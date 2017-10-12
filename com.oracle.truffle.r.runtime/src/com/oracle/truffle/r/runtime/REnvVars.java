@@ -35,6 +35,7 @@ import java.security.CodeSource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.vm.PolyglotEngine;
@@ -53,15 +54,14 @@ import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
  */
 public final class REnvVars implements RContext.ContextState {
 
-    private final Map<String, String> envVars = new HashMap<>(System.getenv());
+    private final HashMap<String, String> envVars;
 
-    private REnvVars() {
+    private REnvVars(Map<String, String> initialEnvVars) {
+        envVars = new HashMap<>(initialEnvVars);
     }
 
     @Override
     public RContext.ContextState initialize(RContext context) {
-        // explicit environment settings in nested contexts must be installed first
-        checkExplicitEnvSettings(context);
         RCmdOptions cmdOptions = context.getCmdOptions();
         // If running Rscript, R_DEFAULT_PACKAGES may need to be set
         String defaultPackages = cmdOptions.getString(RCmdOption.DEFAULT_PACKAGES);
@@ -125,23 +125,8 @@ public final class REnvVars implements RContext.ContextState {
         return this;
     }
 
-    public static REnvVars newContextState() {
-        return new REnvVars();
-    }
-
-    private void checkExplicitEnvSettings(RContext context) {
-        String[] envs = context.getEnvSettings();
-        if (envs == null || envs.length == 0) {
-            return;
-        }
-        for (String envdef : envs) {
-            String[] parts = envdef.split("=");
-            if (parts.length == 2) {
-                envVars.put(parts[0], parts[1]);
-            } else {
-                // for now just ignore
-            }
-        }
+    public static REnvVars newContextState(Map<String, String> initialEnvVars) {
+        return new REnvVars(initialEnvVars);
     }
 
     private String getEitherCase(String var) {
@@ -288,6 +273,14 @@ public final class REnvVars implements RContext.ContextState {
                 envVars.put(var, value);
             }
         }
+    }
+
+    public TimeZone getSystemTimeZone() {
+        String tzName = envVars.get("TZ");
+        if (tzName != null) {
+            return TimeZone.getTimeZone(tzName);
+        }
+        return TimeZone.getDefault();
     }
 
     private String expandParameters(String value) {

@@ -46,8 +46,10 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RLocale;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -79,7 +81,7 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
         Charset fromCharset = getCharset(from, from, to);
         Charset toCharset = getCharset(to, from, to);
         boolean complete = x.isComplete();
-        if (fromCharset == StandardCharsets.UTF_8 && toCharset == StandardCharsets.UTF_8) {
+        if ((fromCharset == StandardCharsets.UTF_8 || fromCharset == StandardCharsets.UTF_16) && (toCharset == StandardCharsets.UTF_8 || toCharset == StandardCharsets.UTF_16)) {
             // this conversion cannot change anything
             return x;
         } else {
@@ -117,13 +119,15 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
     }
 
     private Charset getCharset(String name, String from, String to) {
-        String toCharsetName = "".equals(name) ? LocaleFunctions.LC.CTYPE.getValue() : name;
+        if (name.isEmpty()) {
+            return RContext.getInstance().stateRLocale.getCharset(RLocale.CTYPE);
+        }
         Charset toCharset;
-        if ("C".equals(toCharsetName)) {
+        if ("C".equals(name)) {
             toCharset = StandardCharsets.US_ASCII;
         } else {
             try {
-                toCharset = Charset.forName(toCharsetName);
+                toCharset = Charset.forName(name);
             } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
                 throw error(Message.UNSUPPORTED_ENCODING_CONVERSION, from, to);
             }
