@@ -25,15 +25,14 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -63,286 +62,165 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
         casts.arg("na.encode").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).mustBe(notLogicalNA()).map(toBoolean());
     }
 
-    private int computeWidth(RAbstractStringVector x, int width, final String quote) {
-        if (!RRuntime.isNA(width)) {
-            return width == 0 ? 1 : width;
+    private static StringBuilder append(String source, int offset, StringBuilder str, String snippet) {
+        if (str == null) {
+            StringBuilder newStr = new StringBuilder(source.length() + 2);
+            newStr.append(source, 0, offset);
+            return newStr.append(snippet);
         }
-        int maxElWidth = -1;
-        na.enable(x);
-        // Find the element in x with the largest width.
-        for (int i = 0; i < x.getLength(); i++) {
-            if (!na.check(x.getDataAt(i))) {
-                int curLen = x.getDataAt(i).length();
-                if (maxElWidth < curLen) {
-                    maxElWidth = curLen;
-                }
-            }
-        }
-        maxElWidth += quote.length() > 0 ? 2 : 0; // Accounting for the quote.
-        if (!RRuntime.isNA(width) && width > maxElWidth) {
-            maxElWidth = width;
-        }
-        return maxElWidth;
+        return str.append(snippet);
     }
 
     @TruffleBoundary
-    private static String concat(Object... args) {
-        StringBuilder sb = new StringBuilder();
-        for (Object arg : args) {
-            sb.append(arg);
-        }
-        return sb.toString();
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"leftJustify(justify)", "encodeNA"})
-    protected RStringVector encodeStringLeftJustifyEncodeNA(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA,
-                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
-        final int maxElWidth = computeWidth(x, width, quoteEl);
-        final String[] result = new String[x.getLength()];
-        na.enable(x);
-        for (int i = 0; i < x.getLength(); i++) {
-            String currentEl = x.getDataAt(i);
-            if (na.check(currentEl)) {
-                everSeenNA.enter();
-                if (quoteEl.isEmpty()) {
-                    currentEl = concat("<", currentEl, ">");
-                }
-                result[i] = Utils.stringFormat(concat("%-", maxElWidth, "s"), currentEl);
-            } else {
-                result[i] = Utils.stringFormat(concat("%-", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
+    private static String encodeString(String value, char quote) {
+        StringBuilder str = null;
+        int offset = 0;
+        while (offset < value.length()) {
+            int codepoint = value.codePointAt(offset);
+            switch (codepoint) {
+                case '\n':
+                    str = append(value, offset, str, "\\n");
+                    break;
+                case '\r':
+                    str = append(value, offset, str, "\\r");
+                    break;
+                case '\t':
+                    str = append(value, offset, str, "\\t");
+                    break;
+                case '\b':
+                    str = append(value, offset, str, "\\b");
+                    break;
+                case 7:
+                    str = append(value, offset, str, "\\a");
+                    break;
+                case '\f':
+                    str = append(value, offset, str, "\\f");
+                    break;
+                case 11:
+                    str = append(value, offset, str, "\\v");
+                    break;
+                case '\\':
+                    str = append(value, offset, str, "\\\\");
+                    break;
+                case '"':
+                    if (quote == '"') {
+                        str = append(value, offset, str, "\\\"");
+                    } else {
+                        if (str != null) {
+                            str.appendCodePoint(codepoint);
+                        }
+                    }
+                    break;
+                case '\'':
+                    if (quote == '\'') {
+                        str = append(value, offset, str, "\\'");
+                    } else {
+                        if (str != null) {
+                            str.appendCodePoint(codepoint);
+                        }
+                    }
+                    break;
+                default:
+                    if (codepoint < 32 || codepoint == 0x7f) {
+                        str.append("\\").append(codepoint >>> 6).append((codepoint >>> 3) & 0x7).append(codepoint & 0x7);
+                    } else if (codepoint > 64967) { // determined by experimentation
+                        if (codepoint < 0x10000) {
+                            str.append("\\u").append(String.format("%04x", codepoint));
+                        } else {
+                            str.append("\\U").append(String.format("%08x", codepoint));
+                        }
+                    } else {
+                        if (str != null) {
+                            str.appendCodePoint(codepoint);
+                        }
+                    }
+                    break;
             }
+            offset += Character.charCount(codepoint);
         }
-        RStringVector resultVector = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
-        copyAttributesNode.execute(resultVector, x);
-        return resultVector;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"leftJustify(justify)", "!encodeNA"})
-    protected RStringVector encodeStringLeftJustify(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA,
-                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
-        final int maxElWidth = computeWidth(x, width, quoteEl);
-        final String[] result = new String[x.getLength()];
-        na.enable(x);
-        boolean seenNA = false;
-        for (int i = 0; i < x.getLength(); i++) {
-            final String currentEl = x.getDataAt(i);
-            if (na.check(currentEl)) {
-                everSeenNA.enter();
-                result[i] = currentEl;
-                seenNA = true;
-            } else {
-                result[i] = Utils.stringFormat(concat("%-", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
-            }
-        }
-        RStringVector resultVector = RDataFactory.createStringVector(result, !seenNA);
-        copyAttributesNode.execute(resultVector, x);
-        return resultVector;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"rightJustify(justify)", "encodeNA"})
-    protected RStringVector encodeStringRightJustifyEncodeNA(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA,
-                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
-        final int maxElWidth = computeWidth(x, width, quoteEl);
-        final String[] result = new String[x.getLength()];
-        na.enable(x);
-        for (int i = 0; i < x.getLength(); i++) {
-            String currentEl = x.getDataAt(i);
-            if (na.check(currentEl)) {
-                everSeenNA.enter();
-                if (quoteEl.isEmpty()) {
-                    currentEl = concat("<", currentEl, ">");
-                }
-                result[i] = Utils.stringFormat(concat("%", maxElWidth, "s"), currentEl);
-            } else {
-                result[i] = Utils.stringFormat(concat("%", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
-            }
-        }
-        RStringVector resultVector = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
-        copyAttributesNode.execute(resultVector, x);
-        return resultVector;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"rightJustify(justify)", "!encodeNA"})
-    protected RStringVector encodeStringRightJustify(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA,
-                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
-        final int maxElWidth = computeWidth(x, width, quoteEl);
-        final String[] result = new String[x.getLength()];
-        na.enable(x);
-        boolean seenNA = false;
-        for (int i = 0; i < x.getLength(); i++) {
-            final String currentEl = x.getDataAt(i);
-            if (na.check(currentEl)) {
-                everSeenNA.enter();
-                result[i] = currentEl;
-                seenNA = true;
-            } else {
-                result[i] = Utils.stringFormat(concat("%", maxElWidth, "s"), concat(quoteEl, currentEl, quoteEl));
-            }
-        }
-        RStringVector resultVector = RDataFactory.createStringVector(result, !seenNA);
-        copyAttributesNode.execute(resultVector, x);
-        return resultVector;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"centerJustify(justify)", "encodeNA"})
-    protected RStringVector encodeStringCenterJustifyEncodeNA(RAbstractStringVector x, int width, String quoteEl, RAbstractIntVector justify, boolean encodeNA,
-                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
-        final int maxElWidth = computeWidth(x, width, quoteEl);
-        final String[] result = new String[x.getLength()];
-        final int quoteLength = quoteEl.length() > 0 ? 2 : 0;
-        final int padding = maxElWidth - quoteLength;
-
-        na.enable(x);
-        for (int i = 0; i < x.getLength(); i++) {
-            final String currentEl = x.getDataAt(i);
-            int totalPadding = padding - currentEl.length();
-            if (na.check(currentEl)) {
-                everSeenNA.enter();
-                if (quoteEl.isEmpty()) {
-                    // Accounting for <> in <NA>
-                    totalPadding -= 2;
-                } else {
-                    totalPadding += quoteLength;
-                }
-            }
-            final int leftPadding = totalPadding >> 1;
-            final int rightPadding = totalPadding - leftPadding;
-            result[i] = addPadding(currentEl, leftPadding, rightPadding, quoteEl);
-        }
-        RStringVector resultVector = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
-        copyAttributesNode.execute(resultVector, x);
-        return resultVector;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"centerJustify(justify)", "!encodeNA"})
-    protected RStringVector encodeStringCenterJustify(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA,
-                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
-        final int maxElWidth = computeWidth(x, width, quoteEl);
-        final String[] result = new String[x.getLength()];
-        final int quoteLength = quoteEl.length() > 0 ? 2 : 0;
-        final int padding = maxElWidth - quoteLength;
-        na.enable(x);
-        boolean seenNA = false;
-        for (int i = 0; i < x.getLength(); i++) {
-            final String currentEl = x.getDataAt(i);
-            if (na.check(currentEl)) {
-                everSeenNA.enter();
-                result[i] = currentEl;
-                seenNA = true;
-            } else {
-                final int totalPadding = padding - currentEl.length();
-                final int leftPadding = totalPadding >> 1;
-                final int rightPadding = totalPadding - leftPadding;
-                result[i] = addPaddingIgnoreNA(currentEl, leftPadding, rightPadding, quoteEl);
-            }
-        }
-        RStringVector resultVector = RDataFactory.createStringVector(result, !seenNA);
-        copyAttributesNode.execute(resultVector, x);
-        return resultVector;
+        return str == null ? value : str.toString();
     }
 
     @TruffleBoundary
-    private static String addPaddingIgnoreNA(final String el, final int leftPadding, final int rightPadding, final String quoteEl) {
-        final StringBuilder sb = new StringBuilder();
-        for (int j = 0; j < leftPadding; j++) {
-            sb.append(" ");
-        }
-        sb.append(quoteEl);
-        sb.append(el);
-        sb.append(quoteEl);
-        for (int j = 0; j < rightPadding; j++) {
-            sb.append(" ");
-        }
-        return sb.toString();
-    }
-
-    @TruffleBoundary
-    private String addPadding(final String el, final int leftPadding, final int rightPadding, final String quoteEl) {
-        final StringBuilder sb = new StringBuilder();
-        for (int j = 0; j < leftPadding; j++) {
-            sb.append(" ");
-        }
-        if (RRuntime.isNA(el)) {
-            everSeenNA.enter();
-            if (quoteEl.isEmpty()) {
-                sb.append("<");
-                sb.append(el);
-                sb.append(">");
+    private static String justifyAndQuote(int width, int justify, int quoteLength, char quoteChar, String currentEl) {
+        String res;
+        if (currentEl.length() + quoteLength >= width || justify == JUSTIFY.NONE.ordinal()) {
+            if (quoteLength == 0) {
+                res = currentEl;
             } else {
-                sb.append(el);
+                res = new StringBuilder(currentEl.length() + quoteLength).append(quoteChar).append(currentEl).append(quoteChar).toString();
             }
         } else {
-            sb.append(quoteEl);
-            sb.append(el);
-            sb.append(quoteEl);
+            StringBuilder str = new StringBuilder(width);
+            int remainder = width - currentEl.length() - quoteLength;
+            int before = justify == JUSTIFY.RIGHT.ordinal() ? remainder : justify == JUSTIFY.CENTER.ordinal() ? remainder / 2 : 0;
+            int whitespaces = 0;
+            for (; whitespaces < before; whitespaces++) {
+                str.append(' ');
+            }
+            if (quoteLength > 0) {
+                str.append(quoteChar);
+            }
+            str.append(currentEl);
+            if (quoteLength > 0) {
+                str.append(quoteChar);
+            }
+            for (; whitespaces < remainder; whitespaces++) {
+                str.append(' ');
+            }
+            res = str.toString();
         }
-        for (int j = 0; j < rightPadding; j++) {
-            sb.append(" ");
-        }
-        return sb.toString();
+        return res;
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"noJustify(width, justify)", "encodeNA"})
-    protected RStringVector encodeStringNoJustifyEncodeNA(RAbstractStringVector x, int width, String quoteEl, RAbstractIntVector justify, boolean encodeNA,
-                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
-        final String[] result = new String[x.getLength()];
+    @Specialization
+    protected RStringVector encodeStringLeftJustifyEncodeNA(RAbstractStringVector x, int width, final String quoteEl, int justify, boolean encodeNA,
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
+                    @Cached("createBinaryProfile()") ConditionProfile widthNAProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile encodeNAProfile) {
+        int quoteLength = quoteEl.isEmpty() ? 0 : 2; // only the first char of quoteEl is used
+        char quoteChar = quoteEl.isEmpty() ? 0 : quoteEl.charAt(0);
+        String[] result = new String[x.getLength()];
         na.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
-            final String currentEl = x.getDataAt(i);
+            String currentEl = x.getDataAt(i);
             if (na.check(currentEl)) {
-                everSeenNA.enter();
-                result[i] = new String(currentEl);
+                result[i] = RRuntime.STRING_NA;
             } else {
-                result[i] = concat(quoteEl, currentEl, quoteEl);
+                result[i] = encodeString(currentEl, quoteChar);
             }
         }
-        RStringVector resultVector = RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
-        copyAttributesNode.execute(resultVector, x);
-        return resultVector;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"noJustify(width, justify)", "!encodeNA"})
-    protected RStringVector encodeStringNoJustify(RAbstractStringVector x, int width, final String quoteEl, RAbstractIntVector justify, boolean encodeNA,
-                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
-        final String[] result = new String[x.getLength()];
-        na.enable(x);
-        boolean seenNA = false;
+        int maxWidth;
+        if (widthNAProfile.profile(RRuntime.isNA(width))) {
+            maxWidth = 0;
+            for (int i = 0; i < x.getLength(); i++) {
+                int w;
+                if (na.check(result[i])) {
+                    w = encodeNA ? 2 + quoteLength : 0;
+                } else {
+                    w = result[i].length() + quoteLength;
+                }
+                maxWidth = Math.max(maxWidth, w);
+            }
+        } else {
+            maxWidth = width;
+        }
+        boolean complete = true;
         for (int i = 0; i < x.getLength(); i++) {
-            final String currentEl = x.getDataAt(i);
+            String currentEl = result[i];
             if (na.check(currentEl)) {
-                everSeenNA.enter();
-                result[i] = currentEl;
-                seenNA = true;
+                if (encodeNAProfile.profile(encodeNA)) {
+                    result[i] = justifyAndQuote(maxWidth, justify, 0, (char) 0, quoteLength == 0 ? "<NA>" : "NA");
+                } else {
+                    result[i] = RRuntime.STRING_NA;
+                    complete = false;
+                }
             } else {
-                result[i] = concat(quoteEl, currentEl, quoteEl);
+                result[i] = justifyAndQuote(maxWidth, justify, quoteLength, quoteChar, currentEl);
             }
         }
-        RStringVector resultVector = RDataFactory.createStringVector(result, !seenNA);
+        RStringVector resultVector = RDataFactory.createStringVector(result, complete);
         copyAttributesNode.execute(resultVector, x);
         return resultVector;
-    }
-
-    protected boolean leftJustify(RAbstractIntVector justify) {
-        return justify.getDataAt(0) == JUSTIFY.LEFT.ordinal();
-    }
-
-    protected boolean rightJustify(RAbstractIntVector justify) {
-        return justify.getDataAt(0) == JUSTIFY.RIGHT.ordinal();
-    }
-
-    protected boolean centerJustify(RAbstractIntVector justify) {
-        return justify.getDataAt(0) == JUSTIFY.CENTER.ordinal();
-    }
-
-    protected boolean noJustify(int width, RAbstractIntVector justify) {
-        return justify.getDataAt(0) == JUSTIFY.NONE.ordinal() || width == 0;
     }
 }
