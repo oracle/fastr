@@ -66,7 +66,7 @@ public final class RGridGraphicsAdapter {
     }
 
     public static void initialize() {
-        addDevice(NULL_DEVICE);
+        REnvironment.baseEnv().safePut(DOT_DEVICES, RDataFactory.createPairList(NULL_DEVICE));
         setCurrentDevice(NULL_DEVICE);
         RContext ctx = RContext.getInstance();
         ROptions.ContextStateImpl options = ctx.stateROptions;
@@ -82,25 +82,41 @@ public final class RGridGraphicsAdapter {
     }
 
     /**
-     * Fixup .Devices array as someone may have set it to something that is not a (pair) list nor
-     * RNull, which breaks dev.cur built-in R function and others.
+     * Fixup .Devices global variable to be a pair list of length at least 1. Non-empty lists are
+     * converted to pair lists, anything else causes the variable to be reset back to the initial
+     * value.
      */
     @TruffleBoundary
-    public static void fixupDevicesVariable() {
-        Object devices = REnvironment.baseEnv().get(DOT_DEVICES);
-        if (!(devices instanceof RPairList || devices instanceof RList)) {
-            // reset the .Devices and .Device variables to initial values
-            REnvironment.baseEnv().safePut(DOT_DEVICES, RNull.instance);
-            addDevice(NULL_DEVICE);
-            setCurrentDevice(NULL_DEVICE);
+    public static RPairList fixupDevicesVariable() {
+        REnvironment baseEnv = REnvironment.baseEnv();
+        Object devices = baseEnv.get(DOT_DEVICES);
+        if (devices instanceof RPairList) {
+            return (RPairList) devices;
         }
+        if (devices instanceof RList) {
+            RList list = (RList) devices;
+            if (list.getLength() > 0) {
+                RPairList head = RDataFactory.createPairList(list.getDataAt(0));
+                RPairList curr = head;
+                for (int i = 1; i < list.getLength(); i++) {
+                    RPairList next = RDataFactory.createPairList(list.getDataAt(i));
+                    curr.setCdr(next);
+                    curr = next;
+                }
+                baseEnv.safePut(DOT_DEVICES, head);
+                return head;
+            }
+        }
+        // reset the .Devices and .Device variables to initial values
+        RPairList nullDevice = RDataFactory.createPairList(NULL_DEVICE);
+        baseEnv.safePut(DOT_DEVICES, nullDevice);
+        setCurrentDevice(NULL_DEVICE);
+        return nullDevice;
     }
 
     public static void removeDevice(int index) {
         assert index > 0 : "cannot remove null device";
-        REnvironment baseEnv = REnvironment.baseEnv();
-        fixupDevicesVariable();
-        RPairList devices = (RPairList) baseEnv.get(DOT_DEVICES);
+        RPairList devices = fixupDevicesVariable();
         assert index < devices.getLength() : "wrong index in removeDevice";
         RPairList prev = devices;
         for (int i = 0; i < index - 1; ++i) {
@@ -120,12 +136,8 @@ public final class RGridGraphicsAdapter {
     public static void addDevice(String name) {
         REnvironment baseEnv = REnvironment.baseEnv();
         baseEnv.safePut(DOT_DEVICE, name);
-        Object dotDevices = baseEnv.get(DOT_DEVICES);
-        if (dotDevices instanceof RPairList) {
-            ((RPairList) dotDevices).appendToEnd(RDataFactory.createPairList(name));
-        } else {
-            baseEnv.safePut(DOT_DEVICES, RDataFactory.createPairList(name));
-        }
+        RPairList dotDevices = fixupDevicesVariable();
+        dotDevices.appendToEnd(RDataFactory.createPairList(name));
     }
 
     public static String getDefaultDevice() {
