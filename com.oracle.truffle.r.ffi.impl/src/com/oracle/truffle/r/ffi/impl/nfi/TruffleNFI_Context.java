@@ -29,10 +29,12 @@ import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceEnabled;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
@@ -43,6 +45,7 @@ import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
@@ -76,6 +79,9 @@ class UnsafeAdapter {
 }
 
 final class TruffleNFI_Context extends RFFIContext {
+
+    @CompilationFinal private static boolean hasAccessLock;
+    private static ReentrantLock accessLock;
 
     TruffleNFI_Context() {
         super(new TruffleNFI_C(), new TruffleNFI_Base(), new TruffleNFI_Call(), new TruffleNFI_DLL(), new TruffleNFI_UserRng(), new TruffleNFI_Zip(), new TruffleNFI_PCRE(), new TruffleNFI_Lapack(),
@@ -231,6 +237,7 @@ final class TruffleNFI_Context extends RFFIContext {
     @Override
     public ContextState initialize(RContext context) {
         RFFIUtils.initializeTracing();
+        initializeLock();
         if (traceEnabled()) {
             traceDownCall("initialize");
         }
@@ -263,6 +270,13 @@ final class TruffleNFI_Context extends RFFIContext {
             if (traceEnabled()) {
                 traceDownCallReturn("initialize", null);
             }
+        }
+    }
+
+    private static synchronized void initializeLock() {
+        hasAccessLock = FastROptions.SynchronizeNativeCode.getBooleanValue();
+        if (hasAccessLock && accessLock == null) {
+            accessLock = new ReentrantLock();
         }
     }
 
@@ -301,5 +315,31 @@ final class TruffleNFI_Context extends RFFIContext {
 
     public DLLInfo getRLibDLLInfo() {
         return rlibDLLInfo;
+    }
+
+    @Override
+    public void beforeUpcall(boolean canRunGc) {
+        super.beforeUpcall(canRunGc);
+        if (hasAccessLock) {
+            acquireLock();
+        }
+    }
+
+    @Override
+    public void afterUpcall(boolean canRunGc) {
+        super.afterUpcall(canRunGc);
+        if (hasAccessLock) {
+            releaseLock();
+        }
+    }
+
+    @TruffleBoundary
+    private void acquireLock() {
+        accessLock.lock();
+    }
+
+    @TruffleBoundary
+    private void releaseLock() {
+        accessLock.unlock();
     }
 }
