@@ -24,6 +24,8 @@ package com.oracle.truffle.r.runtime.env;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.regex.Pattern;
 
@@ -114,6 +116,8 @@ import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
 public abstract class REnvironment extends RAttributeStorage {
 
     public static final class ContextStateImpl implements RContext.ContextState {
+        private static Map<RStringVector, WeakReference<FrameDescriptor>> frameDescriptorCache;
+
         private final MaterializedFrame globalFrame;
         @CompilationFinal private Base baseEnv;
         @CompilationFinal private REnvironment namespaceRegistry;
@@ -178,6 +182,33 @@ public abstract class REnvironment extends RAttributeStorage {
             this.baseEnv = newBaseEnv;
             this.namespaceRegistry = newNamespaceRegistry;
             this.searchPath = newSearchPath;
+        }
+
+        public static FrameDescriptor getFrameDescriptorFromList(RList list) {
+            CompilerAsserts.neverPartOfCompilation();
+
+            // create lazily
+            if (frameDescriptorCache == null) {
+                frameDescriptorCache = Collections.synchronizedMap(new WeakHashMap<>());
+            }
+
+            RStringVector names = list.getNames();
+
+            WeakReference<FrameDescriptor> weakReference = frameDescriptorCache.get(names);
+            FrameDescriptor fd = weakReference != null ? weakReference.get() : null;
+
+            if (fd == null) {
+                // ensure that string vector is not modified anymore
+                names.makeSharedPermanent();
+
+                fd = RRuntime.createFrameDescriptorWithMetaData("<new-cachedfd-env>");
+                for (int i = 0; i < list.getLength(); i++) {
+                    FrameSlotKind valueSlotKind = RRuntime.getSlotKind(list.getDataAt(i));
+                    FrameSlotChangeMonitor.findOrAddFrameSlot(fd, names.getDataAt(i), valueSlotKind);
+                }
+                frameDescriptorCache.put(names, new WeakReference<>(fd));
+            }
+            return fd;
         }
     }
 
@@ -670,7 +701,7 @@ public abstract class REnvironment extends RAttributeStorage {
         REnvironment result;
         RStringVector names = list.getNames();
         if (list.getLength() >= LARGE_LIST_THRESHOLD) {
-            FrameDescriptor cachedFd = getFrameDescriptorFromList(list);
+            FrameDescriptor cachedFd = ContextStateImpl.getFrameDescriptorFromList(list);
             result = RDataFactory.createNewEnv(cachedFd, null);
         } else {
             result = RDataFactory.createNewEnv(null);
@@ -684,33 +715,6 @@ public abstract class REnvironment extends RAttributeStorage {
             }
         }
         return result;
-    }
-
-    private static WeakHashMap<RStringVector, WeakReference<FrameDescriptor>> frameDescriptorCache;
-
-    public static FrameDescriptor getFrameDescriptorFromList(RList list) {
-        // create lazily
-        if (frameDescriptorCache == null) {
-            frameDescriptorCache = new WeakHashMap<>();
-        }
-
-        RStringVector names = list.getNames();
-
-        WeakReference<FrameDescriptor> weakReference = frameDescriptorCache.get(names);
-        FrameDescriptor fd = weakReference != null ? weakReference.get() : null;
-
-        if (fd == null) {
-            // ensure that string vector is not modified anymore
-            names.makeSharedPermanent();
-
-            fd = RRuntime.createFrameDescriptorWithMetaData("<new-cachedfd-env>");
-            for (int i = 0; i < list.getLength(); i++) {
-                FrameSlotKind valueSlotKind = RRuntime.getSlotKind(list.getDataAt(i));
-                FrameSlotChangeMonitor.findOrAddFrameSlot(fd, names.getDataAt(i), valueSlotKind);
-            }
-            frameDescriptorCache.put(names, new WeakReference<>(fd));
-        }
-        return fd;
     }
 
     // END of static methods
