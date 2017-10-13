@@ -92,6 +92,11 @@ public class TestJLineConsoleCompleter {
         assertCompl("strtoi", 4, "strtoi", "strtrim");
         assertCompl("strto ", 6);
         assertCompl("strto,", 6);
+        assertCompl("strt blabla", 4, "strtoi", "strtrim");
+        assertCompl("strt  blabla", 4, "strtoi", "strtrim");
+        assertCompl("strt,,blabla", 4, "strtoi", "strtrim");
+        assertCompl("strt, blabla", 4, "strtoi", "strtrim");
+        assertCompl("strto blabla", 4, "strtoi", "strtrim");
         assertCompl("blabla,strt", 11, "strtoi", "strtrim");
         assertCompl("blabla strt", 11, "strtoi", "strtrim");
         assertCompl("blabla,,strt", 12, "strtoi", "strtrim");
