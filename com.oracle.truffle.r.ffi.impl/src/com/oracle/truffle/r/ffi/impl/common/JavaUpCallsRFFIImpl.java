@@ -145,7 +145,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     // Checkstyle: stop method name check
-
     @Override
     public RIntVector Rf_ScalarInteger(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
@@ -212,7 +211,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public int Rf_defineVar(Object symbolArg, Object value, Object envArg) {
+    public void Rf_defineVar(Object symbolArg, Object value, Object envArg) {
         REnvironment env = (REnvironment) envArg;
         RSymbol name = (RSymbol) symbolArg;
         try {
@@ -220,7 +219,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         } catch (PutException ex) {
             throw RError.error(RError.SHOW_CALLER2, ex);
         }
-        return 0;
     }
 
     @Override
@@ -310,7 +308,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public Object Rf_setAttrib(Object obj, Object name, Object val) {
+    public void Rf_setAttrib(Object obj, Object name, Object val) {
         if (obj instanceof RAttributable) {
             RAttributable attrObj = (RAttributable) obj;
             String nameAsString;
@@ -335,7 +333,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         } else {
             throw RInternalError.shouldNotReachHere();
         }
-        return val;
     }
 
     @TruffleBoundary
@@ -413,30 +410,26 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public int Rf_error(String msg) {
+    public void Rf_error(String msg) {
         RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, msg);
-        return 0;
     }
 
     @Override
     @TruffleBoundary
-    public int Rf_warning(String msg) {
+    public void Rf_warning(String msg) {
         RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, msg);
-        return 0;
     }
 
     @Override
     @TruffleBoundary
-    public int Rf_warningcall(Object call, String msg) {
+    public void Rf_warningcall(Object call, String msg) {
         RErrorHandling.warningcallRFFI(call, msg);
-        return 0;
     }
 
     @Override
     @TruffleBoundary
-    public int Rf_errorcall(Object call, String msg) {
+    public void Rf_errorcall(Object call, String msg) {
         RErrorHandling.errorcallRFFI(call, msg);
-        return 0;
     }
 
     @Override
@@ -540,7 +533,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int SET_STRING_ELT(Object x, long i, Object v) {
+    public void SET_STRING_ELT(Object x, long i, Object v) {
         RStringVector vector = guaranteeInstanceOf(x, RStringVector.class);
         CharSXPWrapper element = guaranteeInstanceOf(v, CharSXPWrapper.class);
         String value = element.getContents();
@@ -548,14 +541,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             vector.setComplete(false);
         }
         vector.setElement((int) i, value);
-        return 0;
     }
 
     @Override
-    public int SET_VECTOR_ELT(Object x, long i, Object v) {
+    public void SET_VECTOR_ELT(Object x, long i, Object v) {
         RList list = guaranteeInstanceOf(x, RList.class);
         list.setElement((int) i, v);
-        return 0;
     }
 
     @Override
@@ -767,12 +758,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public int SET_SYMVALUE(Object x, Object v) {
+    public void SET_SYMVALUE(Object x, Object v) {
         if (!(x instanceof RSymbol)) {
             throw RInternalError.shouldNotReachHere();
         }
         REnvironment.baseEnv().safePut(((RSymbol) x).getName(), v);
-        return 0;
     }
 
     @Override
@@ -784,12 +774,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int R_LockBinding(Object sym, Object env) {
+    public void R_LockBinding(Object sym, Object env) {
         throw implementedAsNode();
     }
 
     @Override
-    public int R_unLockBinding(Object sym, Object env) {
+    public void R_unLockBinding(Object sym, Object env) {
         throw implementedAsNode();
     }
 
@@ -878,7 +868,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public int Rf_gsetVar(Object symbol, Object value, Object rho) {
+    public void Rf_gsetVar(Object symbol, Object value, Object rho) {
         guarantee(symbol instanceof RSymbol);
         REnvironment baseEnv = RContext.getInstance().stateREnvironment.getBaseEnv();
         guarantee(rho == baseEnv);
@@ -887,19 +877,17 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         } catch (PutException e) {
             e.printStackTrace();
         }
-        return 0;
     }
 
     @Override
     @TruffleBoundary
-    public int DUPLICATE_ATTRIB(Object to, Object from) {
+    public void DUPLICATE_ATTRIB(Object to, Object from) {
         if (from instanceof RAttributable) {
             guaranteeInstanceOf(to, RAttributable.class);
             DynamicObject attributes = ((RAttributable) from).getAttributes();
             ((RAttributable) to).initAttributes(attributes == null ? null : RAttributesLayout.copy(attributes));
         }
         // TODO: copy OBJECT? and S4 attributes
-        return 0;
     }
 
     @Override
@@ -912,13 +900,13 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int Rf_copyListMatrix(Object t, Object s, int byrow) {
+    public void Rf_copyListMatrix(Object t, Object s, int byrow) {
         throw unimplemented();
     }
 
     @Override
     @TruffleBoundary
-    public int Rf_copyMatrix(Object t, Object s, int byRow) {
+    public void Rf_copyMatrix(Object t, Object s, int byRow) {
         int tRows = RRuntime.nrows(t);
         int tCols = RRuntime.ncols(t);
         final Object sav = RRuntime.asAbstractVector(s);
@@ -938,6 +926,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                 };
             } else if (sav instanceof RAbstractDoubleVector) {
                 c = new ContainerItemCopier() {
+
                     private final RAbstractDoubleVector sv = (RAbstractDoubleVector) sav;
                     private final RAbstractDoubleVector tv = (RAbstractDoubleVector) t;
                     private final Object tvStore = tv.getInternalStore();
@@ -1038,7 +1027,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         } else { // source is non-RAbstractContainer
             throw unimplemented();
         }
-        return 0;
     }
 
     /**
@@ -1047,6 +1035,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
      * target container.
      */
     interface ContainerItemCopier {
+
         void copy(int sIdx, int tIdx);
     }
 
@@ -1093,7 +1082,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public int SET_RDEBUG(Object x, int v) {
+    public void SET_RDEBUG(Object x, int v) {
         REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
         if (env instanceof REnvironment.Function) {
             REnvironment.Function funcEnv = (REnvironment.Function) env;
@@ -1104,7 +1093,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                 RContext.getRRuntimeASTAccess().disableDebug(func);
             }
         }
-        return 0;
     }
 
     @Override
@@ -1117,7 +1105,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public int SET_RSTEP(Object x, int v) {
+    public void SET_RSTEP(Object x, int v) {
         @SuppressWarnings("unused")
         REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
         throw RInternalError.unimplemented("SET_RSTEP");
@@ -1189,9 +1177,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public int R_CleanUp(int sa, int status, int runlast) {
+    public void R_CleanUp(int sa, int status, int runlast) {
         RCleanUp.stdCleanUp(SA_TYPE.values()[sa], status, runlast != 0);
-        return 0;
     }
 
     @Override
@@ -1240,36 +1227,31 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int SET_S4_OBJECT(Object x) {
+    public void SET_S4_OBJECT(Object x) {
         guaranteeInstanceOf(x, RTypedValue.class).setS4();
-        return 0;
     }
 
     @Override
-    public int UNSET_S4_OBJECT(Object x) {
+    public void UNSET_S4_OBJECT(Object x) {
         guaranteeInstanceOf(x, RTypedValue.class).unsetS4();
-        return 0;
     }
 
     @Override
     @TruffleBoundary
-    public int Rprintf(String message) {
+    public void Rprintf(String message) {
         RContext.getInstance().getConsole().print(message);
-        return 0;
     }
 
     @Override
     @TruffleBoundary
-    public int GetRNGstate() {
+    public void GetRNGstate() {
         RRNG.getRNGState();
-        return 0;
     }
 
     @Override
     @TruffleBoundary
-    public int PutRNGstate() {
+    public void PutRNGstate() {
         RRNG.putRNGState();
-        return 0;
     }
 
     @Override
@@ -1279,7 +1261,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     // Checkstyle: stop method name check
-
     @Override
     @TruffleBoundary
     public Object R_getGlobalFunctionContext() {
@@ -1442,24 +1423,21 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int R_SetExternalPtrAddr(Object x, long addr) {
+    public void R_SetExternalPtrAddr(Object x, long addr) {
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         p.setAddr(new SymbolHandle(addr));
-        return 0;
     }
 
     @Override
-    public int R_SetExternalPtrTag(Object x, Object tag) {
+    public void R_SetExternalPtrTag(Object x, Object tag) {
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         p.setTag(tag);
-        return 0;
     }
 
     @Override
-    public int R_SetExternalPtrProtected(Object x, Object prot) {
+    public void R_SetExternalPtrProtected(Object x, Object prot) {
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         p.setProt(prot);
-        return 0;
     }
 
     @Override
@@ -1681,9 +1659,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     private static HashMap<String, Integer> name2typeTable;
+
     static {
         name2typeTable = new HashMap<>(26);
-        name2typeTable.put("NULL", SEXPTYPE.NILSXP.code); /* real types */
+        name2typeTable.put("NULL", SEXPTYPE.NILSXP.code);
+        /* real types */
         name2typeTable.put("symbol", SEXPTYPE.SYMSXP.code);
         name2typeTable.put("pairlist", SEXPTYPE.LISTSXP.code);
         name2typeTable.put("closure", SEXPTYPE.CLOSXP.code);
@@ -1695,7 +1675,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         name2typeTable.put("char", SEXPTYPE.CHARSXP.code);
         name2typeTable.put("logical", SEXPTYPE.LGLSXP.code);
         name2typeTable.put("integer", SEXPTYPE.INTSXP.code);
-        name2typeTable.put("double", SEXPTYPE.REALSXP.code); /*-  "real", for R <= 0.61.x */
+        name2typeTable.put("double", SEXPTYPE.REALSXP.code);
+        /*-  "real", for R <= 0.61.x */
         name2typeTable.put("complex", SEXPTYPE.CPLXSXP.code);
         name2typeTable.put("character", SEXPTYPE.STRSXP.code);
         name2typeTable.put("...", SEXPTYPE.DOTSXP.code);
@@ -1792,7 +1773,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int Rf_copyMostAttrib(Object x, Object y) {
+    public void Rf_copyMostAttrib(Object x, Object y) {
         throw implementedAsNode();
     }
 

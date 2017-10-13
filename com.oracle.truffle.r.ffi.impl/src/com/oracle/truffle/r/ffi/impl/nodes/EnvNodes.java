@@ -37,14 +37,14 @@ public class EnvNodes {
     public abstract static class LockBindingNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
-        int lock(RSymbol sym, REnvironment env) {
+        Void lock(RSymbol sym, REnvironment env) {
             // TODO copied from EnvFunctions.LockBinding
             env.lockBinding(sym.getName());
-            return 0;
+            return null;
         }
 
         @Fallback
-        int lock(Object sym, Object env) {
+        Void lock(Object sym, Object env) {
             guaranteeInstanceOf(sym, RSymbol.class);
             guaranteeInstanceOf(env, REnvironment.class);
             throw RInternalError.shouldNotReachHere();
@@ -59,14 +59,14 @@ public class EnvNodes {
     public abstract static class UnlockBindingNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
-        int unlock(RSymbol sym, REnvironment env) {
+        Void unlock(RSymbol sym, REnvironment env) {
             // TODO copied from EnvFunctions.LockBinding
             env.unlockBinding(sym.getName());
-            return 0;
+            return null;
         }
 
         @Fallback
-        int unlock(Object sym, Object env) {
+        Void unlock(Object sym, Object env) {
             guaranteeInstanceOf(sym, RSymbol.class);
             guaranteeInstanceOf(env, REnvironment.class);
             throw RInternalError.shouldNotReachHere();

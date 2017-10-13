@@ -124,13 +124,13 @@ public final class AttributesAccessNodes {
         @Child protected CopyOfRegAttributesNode copyRegAttributes;
 
         @Specialization
-        public int doRAttributeStorage(RAttributeStorage x, RAttributeStorage y) {
+        public Void doRAttributeStorage(RAttributeStorage x, RAttributeStorage y) {
             if (copyRegAttributes == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 copyRegAttributes = CopyOfRegAttributesNode.create();
             }
             copyRegAttributes.execute(x, y);
-            return 0;
+            return null;
         }
 
         @Fallback

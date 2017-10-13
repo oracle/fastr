@@ -69,10 +69,6 @@ import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
  * implementations. For example, many arguments are "strings" but we do not specify them as
  * {@code String} here. In particular do not use array types as these are passed as custom Truffle
  * objects in some implementations.
- *
- * N.B. Although some functions do not return results, the Truffle interop EXECUTE message machinery
- * does not like {@code void} functions, so we just use {@code int}. Evidently the actual value does
- * not matter.
  */
 public interface StdUpCallsRFFI {
     // Checkstyle: stop method name check
@@ -104,7 +100,7 @@ public interface StdUpCallsRFFI {
 
     Object Rf_cons(Object car, Object cdr);
 
-    int /* void */ Rf_defineVar(Object symbolArg, Object value, Object envArg);
+    void Rf_defineVar(Object symbolArg, Object value, Object envArg);
 
     Object R_getClassDef(@RFFICstring String clazz);
 
@@ -127,7 +123,7 @@ public interface StdUpCallsRFFI {
 
     Object Rf_getAttrib(Object obj, Object name);
 
-    Object Rf_setAttrib(Object obj, Object name, Object val);
+    void Rf_setAttrib(Object obj, Object name, Object val);
 
     int Rf_inherits(Object x, @RFFICstring String clazz);
 
@@ -143,13 +139,13 @@ public interface StdUpCallsRFFI {
 
     Object Rf_PairToVectorList(Object x);
 
-    int /* void */ Rf_error(@RFFICstring String msg);
+    void Rf_error(@RFFICstring String msg);
 
-    int /* void */ Rf_warning(@RFFICstring String msg);
+    void Rf_warning(@RFFICstring String msg);
 
-    int /* void */ Rf_warningcall(Object call, @RFFICstring String msg);
+    void Rf_warningcall(Object call, @RFFICstring String msg);
 
-    int /* void */ Rf_errorcall(Object call, @RFFICstring String msg);
+    void Rf_errorcall(Object call, @RFFICstring String msg);
 
     Object Rf_allocVector(int mode, long n);
 
@@ -164,9 +160,9 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(LENGTHNode.class)
     int LENGTH(Object x);
 
-    int /* void */ SET_STRING_ELT(Object x, long i, Object v);
+    void SET_STRING_ELT(Object x, long i, Object v);
 
-    int /* void */ SET_VECTOR_ELT(Object x, long i, Object v);
+    void SET_VECTOR_ELT(Object x, long i, Object v);
 
     Object RAW(Object x);
 
@@ -244,15 +240,15 @@ public interface StdUpCallsRFFI {
 
     Object SYMVALUE(Object x);
 
-    int /* void */ SET_SYMVALUE(Object x, Object v);
+    void SET_SYMVALUE(Object x, Object v);
 
     int R_BindingIsLocked(Object sym, Object env);
 
     @RFFIUpCallNode(LockBindingNode.class)
-    int R_LockBinding(Object sym, Object env);
+    void R_LockBinding(Object sym, Object env);
 
     @RFFIUpCallNode(UnlockBindingNode.class)
-    int R_unLockBinding(Object sym, Object env);
+    void R_unLockBinding(Object sym, Object env);
 
     Object R_FindNamespace(Object name);
 
@@ -263,15 +259,15 @@ public interface StdUpCallsRFFI {
 
     Object Rf_GetOption1(Object tag);
 
-    int /* void */ Rf_gsetVar(Object symbol, Object value, Object rho);
+    void Rf_gsetVar(Object symbol, Object value, Object rho);
 
-    int /* void */ DUPLICATE_ATTRIB(Object to, Object from);
+    void DUPLICATE_ATTRIB(Object to, Object from);
 
     int R_compute_identical(Object x, Object y, int flags);
 
-    int /* void */ Rf_copyListMatrix(Object s, Object t, int byrow);
+    void Rf_copyListMatrix(Object s, Object t, int byrow);
 
-    int /* void */ Rf_copyMatrix(Object s, Object t, int byrow);
+    void Rf_copyMatrix(Object s, Object t, int byrow);
 
     Object R_tryEval(Object expr, Object env, int silent);
 
@@ -279,11 +275,11 @@ public interface StdUpCallsRFFI {
 
     int RDEBUG(Object x);
 
-    int /* void */ SET_RDEBUG(Object x, int v);
+    void SET_RDEBUG(Object x, int v);
 
     int RSTEP(Object x);
 
-    int /* void */ SET_RSTEP(Object x, int v);
+    void SET_RSTEP(Object x, int v);
 
     Object ENCLOS(Object x);
 
@@ -297,15 +293,15 @@ public interface StdUpCallsRFFI {
 
     int IS_S4_OBJECT(Object x);
 
-    int /* void */ SET_S4_OBJECT(Object x);
+    void SET_S4_OBJECT(Object x);
 
-    int /* void */ UNSET_S4_OBJECT(Object x);
+    void UNSET_S4_OBJECT(Object x);
 
-    int /* void */ Rprintf(@RFFICstring String message);
+    void Rprintf(@RFFICstring String message);
 
-    int /* void */ GetRNGstate();
+    void GetRNGstate();
 
-    int /* void */ PutRNGstate();
+    void PutRNGstate();
 
     double unif_rand();
 
@@ -319,13 +315,13 @@ public interface StdUpCallsRFFI {
 
     Object R_ExternalPtrProtected(Object x);
 
-    int /* void */ R_SetExternalPtrAddr(Object x, long addr);
+    void R_SetExternalPtrAddr(Object x, long addr);
 
-    int /* void */ R_SetExternalPtrTag(Object x, Object tag);
+    void R_SetExternalPtrTag(Object x, Object tag);
 
-    int /* void */ R_SetExternalPtrProtected(Object x, Object prot);
+    void R_SetExternalPtrProtected(Object x, Object prot);
 
-    int /* void */ R_CleanUp(int sa, int status, int runlast);
+    void R_CleanUp(int sa, int status, int runlast);
 
     Object R_NewHashedEnv(Object parent, Object initialSize);
 
@@ -383,7 +379,7 @@ public interface StdUpCallsRFFI {
     Object Rf_namesgets(Object vec, Object val);
 
     @RFFIUpCallNode(CopyMostAttrib.class)
-    int Rf_copyMostAttrib(Object x, Object y);
+    void Rf_copyMostAttrib(Object x, Object y);
 
     @RFFIUpCallNode(VectorToPairListNode.class)
     Object Rf_VectorToPairList(Object x);
