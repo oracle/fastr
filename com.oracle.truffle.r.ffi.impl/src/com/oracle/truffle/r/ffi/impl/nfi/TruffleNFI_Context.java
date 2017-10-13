@@ -123,9 +123,17 @@ final class TruffleNFI_Context extends RFFIContext {
             if (function.getLibrary() == NativeFunction.baseLibrary()) {
                 dllInfo = TruffleNFI_Context.getInstance().defaultLibrary;
             } else if (function.getLibrary() == NativeFunction.anyLibrary()) {
-                dllInfo = ((NFIHandle) DLL.findLibraryContainingSymbol(function.getCallName()).handle).libHandle;
+                DLLInfo lib = DLL.findLibraryContainingSymbol(function.getCallName());
+                if (lib == null) {
+                    throw RInternalError.shouldNotReachHere("Could not find library containing symbol " + function.getCallName());
+                }
+                dllInfo = ((NFIHandle) lib.handle).libHandle;
             } else {
-                dllInfo = ((NFIHandle) DLL.findLibrary(function.getLibrary()).handle).libHandle;
+                DLLInfo lib = DLL.findLibrary(function.getLibrary());
+                if (lib == null) {
+                    throw RInternalError.shouldNotReachHere("Could not find library  " + function.getLibrary());
+                }
+                dllInfo = ((NFIHandle) lib.handle).libHandle;
             }
             try {
                 TruffleObject symbol = ((TruffleObject) ForeignAccess.sendRead(Message.READ.createNode(), dllInfo, function.getCallName()));
