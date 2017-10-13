@@ -236,10 +236,10 @@ public class CallAndExternalFunctions {
             return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RMissing.instance};
         }
 
-        private Object[] materializeArgs(VirtualFrame frame, Object[] args) {
+        private Object[] materializeArgs(Object[] args) {
             Object[] materializedArgs = new Object[args.length];
             for (int i = 0; i < args.length; i++) {
-                materializedArgs[i] = materializeNode.execute(frame, args[i]);
+                materializedArgs[i] = materializeNode.execute(args[i]);
             }
             return materializedArgs;
         }
@@ -666,38 +666,37 @@ public class CallAndExternalFunctions {
          */
         @SuppressWarnings("unused")
         @Specialization(limit = "2", guards = {"cached == symbol", "builtin == null"})
-        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
+        protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
                         @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
                         @Cached("extractSymbolInfo.execute(symbol)") NativeCallInfo nativeCallInfo) {
-            return callRFFINode.dispatch(nativeCallInfo, materializeArgs(frame, args.getArguments()));
+            return callRFFINode.dispatch(nativeCallInfo, materializeArgs(args.getArguments()));
         }
 
         /**
          * For some reason, the list instance may change, although it carries the same info. For
          * such cases there is this generic version.
          */
-        @SuppressWarnings("unused")
         @Specialization(replaces = {"callNamedFunction", "doExternal"})
-        protected Object callNamedFunctionGeneric(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
+        protected Object callNamedFunctionGeneric(RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
             RExternalBuiltinNode builtin = lookupBuiltin(symbol);
             if (builtin != null) {
                 throw RInternalError.shouldNotReachHere("Cache for .Calls with FastR reimplementation (lookupBuiltin(...) != null) exceeded the limit");
             }
             NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
-            return callRFFINode.dispatch(nativeCallInfo, materializeArgs(frame, args.getArguments()));
+            return callRFFINode.dispatch(nativeCallInfo, materializeArgs(args.getArguments()));
         }
 
         /**
          * {@code .NAME = string}, no package specified.
          */
         @Specialization
-        protected Object callNamedFunction(VirtualFrame frame, String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
+        protected Object callNamedFunction(String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
                         @Cached("createRegisteredNativeSymbol(CallNST)") DLL.RegisteredNativeSymbol rns,
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
-            return callNamedFunctionWithPackage(frame, symbol, args, null, rns, findSymbolNode);
+            return callNamedFunctionWithPackage(symbol, args, null, rns, findSymbolNode);
         }
 
         /**
@@ -705,19 +704,19 @@ public class CallAndExternalFunctions {
          * define that symbol.
          */
         @Specialization
-        protected Object callNamedFunctionWithPackage(VirtualFrame frame, String symbol, RArgsValuesAndNames args, String packageName,
+        protected Object callNamedFunctionWithPackage(String symbol, RArgsValuesAndNames args, String packageName,
                         @Cached("createRegisteredNativeSymbol(CallNST)") DLL.RegisteredNativeSymbol rns,
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "Call", packageName);
             }
-            return callRFFINode.dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), materializeArgs(frame, args.getArguments()));
+            return callRFFINode.dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), materializeArgs(args.getArguments()));
         }
 
         @Specialization
-        protected Object callNamedFunctionWithPackage(VirtualFrame frame, RExternalPtr symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            return callRFFINode.dispatch(new NativeCallInfo("", symbol.getAddr(), null), materializeArgs(frame, args.getArguments()));
+        protected Object callNamedFunctionWithPackage(RExternalPtr symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            return callRFFINode.dispatch(new NativeCallInfo("", symbol.getAddr(), null), materializeArgs(args.getArguments()));
         }
 
         @SuppressWarnings("unused")

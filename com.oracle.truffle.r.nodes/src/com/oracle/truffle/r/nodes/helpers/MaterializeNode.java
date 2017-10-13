@@ -24,10 +24,10 @@ package com.oracle.truffle.r.nodes.helpers;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.attributes.HasAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.IterableAttributeNode;
@@ -45,9 +45,6 @@ public abstract class MaterializeNode extends Node {
     @Child private IterableAttributeNode attributesIt;
     @Child private SetAttributeNode setAttributeNode;
 
-    @Child private MaterializeNode recursive;
-    @Child private MaterializeNode recursiveAttr;
-
     private final boolean deep;
 
     protected MaterializeNode(boolean deep) {
@@ -58,25 +55,53 @@ public abstract class MaterializeNode extends Node {
         }
     }
 
-    public abstract Object execute(VirtualFrame frame, Object arg);
+    public abstract Object execute(Object arg);
 
     @Specialization
-    protected RList doList(VirtualFrame frame, RList vec) {
-        RList materialized = materializeContents(frame, vec);
-        materializeAttributes(frame, materialized);
+    protected RList doList(RList vec) {
+        RList materialized = materializeContents(vec);
+        materializeAttributes(materialized);
         return materialized;
     }
 
-    private RList materializeContents(VirtualFrame frame, RList list) {
+    @Specialization(limit = "LIMIT", guards = {"vec.getClass() == cachedClass"})
+    protected RAttributable doAbstractContainerCached(RAttributable vec,
+                    @SuppressWarnings("unused") @Cached("vec.getClass()") Class<?> cachedClass) {
+        if (vec instanceof RList) {
+            return doList((RList) vec);
+        } else if (vec instanceof RAbstractContainer) {
+            RAbstractContainer materialized = ((RAbstractContainer) vec).materialize();
+            materializeAttributes(materialized);
+            return materialized;
+        }
+        materializeAttributes(vec);
+        return vec;
+    }
+
+    @Specialization(replaces = "doAbstractContainerCached")
+    protected RAttributable doAbstractContainer(RAttributable vec) {
+        if (vec instanceof RList) {
+            return doList((RList) vec);
+        } else if (vec instanceof RAbstractContainer) {
+            RAbstractContainer materialized = ((RAbstractContainer) vec).materialize();
+            materializeAttributes(materialized);
+            return materialized;
+        }
+        materializeAttributes(vec);
+        return vec;
+    }
+
+    @Fallback
+    protected Object doGeneric(Object o) {
+        return o;
+    }
+
+    private RList materializeContents(RList list) {
         boolean changed = false;
         RList materializedContents = null;
         for (int i = 0; i < list.getLength(); i++) {
-            if (recursive == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                recursive = insert(MaterializeNode.create(deep));
-            }
             Object element = list.getDataAt(i);
-            Object materializedElem = recursive.execute(frame, element);
+            Object materializedElem = doGenericSlowPath(element);
             if (materializedElem != element) {
                 materializedContents = (RList) list.copy();
                 changed = true;
@@ -91,49 +116,15 @@ public abstract class MaterializeNode extends Node {
         return list;
     }
 
-    @Specialization(limit = "LIMIT", guards = {"vec.getClass() == cachedClass"})
-    protected RAttributable doAbstractContainerCached(VirtualFrame frame, RAttributable vec,
-                    @SuppressWarnings("unused") @Cached("vec.getClass()") Class<?> cachedClass) {
-        if (vec instanceof RList) {
-            return doList(frame, (RList) vec);
-        } else if (vec instanceof RAbstractContainer) {
-            RAbstractContainer materialized = ((RAbstractContainer) vec).materialize();
-            materializeAttributes(frame, materialized);
-            return materialized;
-        }
-        materializeAttributes(frame, vec);
-        return vec;
-    }
-
-    @Specialization(replaces = "doAbstractContainerCached")
-    protected RAttributable doAbstractContainer(VirtualFrame frame, RAttributable vec) {
-        if (vec instanceof RList) {
-            return doList(frame, (RList) vec);
-        } else if (vec instanceof RAbstractContainer) {
-            RAbstractContainer materialized = ((RAbstractContainer) vec).materialize();
-            materializeAttributes(frame, materialized);
-            return materialized;
-        }
-        materializeAttributes(frame, vec);
-        return vec;
-    }
-
-    @Fallback
-    protected Object doGeneric(Object o) {
-        return o;
-    }
-
-    private void materializeAttributes(VirtualFrame frame, RAttributable materialized) {
+    private void materializeAttributes(RAttributable materialized) {
         // TODO we could further optimize by first checking for fixed/special attributes
         if (deep && hasAttributes.execute(materialized)) {
             if (attributesIt == null) {
-                assert recursiveAttr == null;
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 attributesIt = insert(IterableAttributeNode.create());
-                recursiveAttr = insert(MaterializeNode.create(deep));
             }
             for (RAttribute attr : attributesIt.execute(materialized)) {
-                Object materializedAttr = recursiveAttr.execute(frame, attr.getValue());
+                Object materializedAttr = doGenericSlowPath(attr.getValue());
                 if (materializedAttr != attr.getValue()) {
                     if (setAttributeNode == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -143,6 +134,14 @@ public abstract class MaterializeNode extends Node {
                 }
             }
         }
+    }
+
+    @TruffleBoundary
+    private Object doGenericSlowPath(Object element) {
+        if (element instanceof RAttributable) {
+            return doAbstractContainer((RAttributable) element);
+        }
+        return element;
     }
 
     public static MaterializeNode create(boolean deep) {
