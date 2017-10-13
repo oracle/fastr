@@ -24,6 +24,7 @@ import com.oracle.truffle.r.runtime.ROptions.OptionsException;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -81,14 +82,13 @@ public final class RGridGraphicsAdapter {
     }
 
     /**
-     * Fixup .Devices array as someone may have set it to something that is not a pair list nor
-     * RNull, which breaks dev.cur built-in R function and others. GNUR seems to have active binding
-     * for it. This is such special case that it doesn't seem necessary for now.
+     * Fixup .Devices array as someone may have set it to something that is not a (pair) list nor
+     * RNull, which breaks dev.cur built-in R function and others.
      */
     @TruffleBoundary
     public static void fixupDevicesVariable() {
         Object devices = REnvironment.baseEnv().get(DOT_DEVICES);
-        if (devices == RNull.instance || !(devices instanceof RPairList)) {
+        if (!(devices instanceof RPairList || devices instanceof RList)) {
             // reset the .Devices and .Device variables to initial values
             REnvironment.baseEnv().safePut(DOT_DEVICES, RNull.instance);
             addDevice(NULL_DEVICE);

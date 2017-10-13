@@ -50,8 +50,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * Encapsulated the access to the global grid state.
  */
 public final class GridContext {
-    private static final GridContext INSTANCE = new GridContext();
-
     private RInternalCode internalCode;
     private final GridState gridState = new GridState();
     /**
@@ -65,7 +63,11 @@ public final class GridContext {
     }
 
     public static GridContext getContext() {
-        return INSTANCE;
+        RContext rCtx = RContext.getInstance();
+        if (rCtx.gridContext == null) {
+            rCtx.gridContext = new GridContext();
+        }
+        return (GridContext) rCtx.gridContext;
     }
 
     @TruffleBoundary

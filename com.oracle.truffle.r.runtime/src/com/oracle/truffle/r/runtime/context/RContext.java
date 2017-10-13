@@ -350,6 +350,10 @@ public final class RContext implements RTruffleObject {
 
     @CompilationFinal private RFFIContext stateRFFI;
 
+    // Context specific state required for libraries, the initialization is handled lazily by the
+    // concrete library.
+    public Object gridContext = null;
+
     public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
     public final WeakHashMap<Path, REnvironment> srcfileEnvironments = new WeakHashMap<>();
