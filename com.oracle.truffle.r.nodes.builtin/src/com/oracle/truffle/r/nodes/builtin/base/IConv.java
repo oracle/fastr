@@ -90,14 +90,28 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
             CharsetDecoder decoder = toCharset.newDecoder();
             if (RRuntime.isNA(sub)) {
                 encoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+                encoder.onMalformedInput(CodingErrorAction.REPORT);
                 decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
                 decoder.onMalformedInput(CodingErrorAction.REPORT);
+            } else if ("byte".equals(sub)) {
+                // TODO: special mode that inserts <hexcode>
+                encoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+                encoder.onMalformedInput(CodingErrorAction.IGNORE);
+                decoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+                decoder.onMalformedInput(CodingErrorAction.IGNORE);
+            } else if (sub.isEmpty()) {
+                encoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+                encoder.onMalformedInput(CodingErrorAction.IGNORE);
+                decoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+                decoder.onMalformedInput(CodingErrorAction.IGNORE);
             } else {
-                decoder.replaceWith(sub);
+                // ignore encoding errors
+                encoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+                encoder.onMalformedInput(CodingErrorAction.IGNORE);
+                // TODO: support more than one character in "replacement"
+                decoder.replaceWith(sub.substring(0, 1));
                 decoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
                 decoder.onMalformedInput(CodingErrorAction.REPLACE);
-                encoder.replaceWith(sub.getBytes(toCharset));
-                encoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
             }
             int length = x.getLength();
             String[] data = new String[length];

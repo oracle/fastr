@@ -80,5 +80,10 @@ public class TestBuiltin_iconv extends TestBase {
         assertEval("{ .Internal(iconv(\"7\", \"latin1\", \"ASCII\", 42, T, F)) }");
         assertEval("{ .Internal(iconv(\"7\", \"latin1\", \"ASCII\", character(), T, F)) }");
         assertEval("Sys.setlocale('LC_CTYPE', 'C'); iconv(c('²a²²','b')); Sys.setlocale('LC_CTYPE', 'UTF-8'); iconv(c('²a²²','b'))");
+        assertEval("iconv('foo²²', 'UTF8', 'ASCII')");
+        assertEval(Ignored.Unimplemented, "iconv('foo²²', 'UTF8', 'ASCII', sub='byte')");
+        assertEval(Ignored.Unimplemented, "iconv('foo²²', 'UTF8', 'ASCII', sub='fooooo')");
+        assertEval("iconv('foo²²', 'UTF8', 'ASCII', sub='f')");
+        assertEval("iconv('foo²²', 'UTF8', 'ASCII', sub='')");
     }
 }
