@@ -27,7 +27,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guaranteeInstanceOf;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -38,14 +37,14 @@ public class EnvNodes {
     public abstract static class LockBindingNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
-        Object lock(RSymbol sym, REnvironment env) {
+        Void lock(RSymbol sym, REnvironment env) {
             // TODO copied from EnvFunctions.LockBinding
             env.lockBinding(sym.getName());
-            return RNull.instance;
+            return null;
         }
 
         @Fallback
-        Object lock(Object sym, Object env) {
+        Void lock(Object sym, Object env) {
             guaranteeInstanceOf(sym, RSymbol.class);
             guaranteeInstanceOf(env, REnvironment.class);
             throw RInternalError.shouldNotReachHere();
@@ -60,14 +59,14 @@ public class EnvNodes {
     public abstract static class UnlockBindingNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
-        Object unlock(RSymbol sym, REnvironment env) {
+        Void unlock(RSymbol sym, REnvironment env) {
             // TODO copied from EnvFunctions.LockBinding
             env.unlockBinding(sym.getName());
-            return RNull.instance;
+            return null;
         }
 
         @Fallback
-        Object unlock(Object sym, Object env) {
+        Void unlock(Object sym, Object env) {
             guaranteeInstanceOf(sym, RSymbol.class);
             guaranteeInstanceOf(env, REnvironment.class);
             throw RInternalError.shouldNotReachHere();
