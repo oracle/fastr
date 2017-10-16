@@ -26,6 +26,7 @@
 /com.oracle.truffle.r.native/gnur/platform.mk.temp*
 /com.oracle.truffle.r.native/gnur/R-*
 /com.oracle.truffle.r.native/gnur/rcopylib.done
+/com.oracle.truffle.r.native/gnur/tests/log
 /com.oracle.truffle.r.native/run/Makeconf.etc
 /com.oracle.truffle.r.native/include/*.h
 /com.oracle.truffle.r.native/include/R_ext/*.h

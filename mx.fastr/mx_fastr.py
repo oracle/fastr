@@ -34,6 +34,7 @@ import mx_fastr_edinclude
 import mx_unittest
 
 import os
+import shutil
 
 '''
 This is the launchpad for all the functions available for building/running/testing/analyzing
@@ -457,6 +458,46 @@ def gnu_rscript(args, env=None):
     cmd = [join(_gnur_path(), 'Rscript')] + args
     return mx.run(cmd, nonZeroIsFatal=False, env=env)
 
+def gnu_rtests(args, env=None):
+    '''
+    run tests of the internally built GNU R under tests subdirectory
+    '''
+    os.chdir(_fastr_suite.dir) # Packages install fails otherwise
+ #   mx_fastr_pkgs.installpkgs(['--pkg-pattern', '^MASS$']) # required by tests/Examples/base-Ex.R
+    np = mx.project('com.oracle.truffle.r.native')
+    tst = join(np.dir, 'gnur', 'tests')
+    tstsrc = join(tst, 'src')
+    tstlog = join(tst, 'log')
+    shutil.rmtree(tstlog, True)
+    os.mkdir(tstlog)
+    diffname = join(tstlog, 'all.diff')
+    diff = open(diffname, 'a')
+    for subd in ['Examples', '']:
+        logd = join(tstlog, subd)
+        if subd != '':
+            os.mkdir(logd)
+        os.chdir(logd)
+        srcd = join(tstsrc, subd)
+        for f in sorted(os.listdir(srcd)):
+            if f.endswith('.R'):
+                print 'Running {} explicitly by FastR CMD BATCH ...'.format(f)
+                mx.run([r_path(), '--vanilla', 'CMD', 'BATCH', join(srcd, f)] + args, nonZeroIsFatal=False, env=env, timeout=90)
+                outf = f + 'out'
+                if os.path.isfile(outf):
+                    outff = outf + '.fastr'
+                    os.rename(outf, outff)
+                    print 'Running {} explicitly by GnuR CMD BATCH ...'.format(f)
+                    mx.run([join(_gnur_path(), 'R'), '--vanilla', 'CMD', 'BATCH', join(srcd, f)] + args, nonZeroIsFatal=False, env=env, timeout=90)
+                    if os.path.isfile(outf):
+                        outfg = outf + '.gnur'
+                        os.rename(outf, outfg)
+                        diff.write('\nRdiff {} {}:\n'.format(outfg, outff))
+                        diff.flush()
+                        subprocess.Popen([r_path(), 'CMD', 'Rdiff', outfg, outff], stdout=diff, stderr=diff, shell=False)
+                        diff.flush()
+    diff.close()
+    print 'FastR to GnuR diff was written to {}.'.format(diffname)
+
 def nativebuild(args):
     '''
     force the build of part or all of the native project
@@ -510,6 +551,7 @@ _commands = {
     'edinclude' : [mx_fastr_edinclude.edinclude, '[]'],
     'gnu-r' : [gnu_r, '[]'],
     'gnu-rscript' : [gnu_rscript, '[]'],
+    'gnu-rtests' : [gnu_rtests, '[]'],
     'nativebuild' : [nativebuild, '[]'],
     }
 
