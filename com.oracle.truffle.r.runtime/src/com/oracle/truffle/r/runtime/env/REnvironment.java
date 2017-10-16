@@ -116,7 +116,7 @@ import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
 public abstract class REnvironment extends RAttributeStorage {
 
     public static final class ContextStateImpl implements RContext.ContextState {
-        private static Map<RStringVector, WeakReference<FrameDescriptor>> frameDescriptorCache;
+        private static Map<RStringVector, WeakReference<FrameDescriptor>> frameDescriptorCache = Collections.synchronizedMap(new WeakHashMap<>(0));
 
         private final MaterializedFrame globalFrame;
         @CompilationFinal private Base baseEnv;
@@ -187,13 +187,7 @@ public abstract class REnvironment extends RAttributeStorage {
         public static FrameDescriptor getFrameDescriptorFromList(RList list) {
             CompilerAsserts.neverPartOfCompilation();
 
-            // create lazily
-            if (frameDescriptorCache == null) {
-                frameDescriptorCache = Collections.synchronizedMap(new WeakHashMap<>());
-            }
-
             RStringVector names = list.getNames();
-
             WeakReference<FrameDescriptor> weakReference = frameDescriptorCache.get(names);
             FrameDescriptor fd = weakReference != null ? weakReference.get() : null;
 
