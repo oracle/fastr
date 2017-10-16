@@ -654,7 +654,7 @@ public class DLL {
             return findSymbolNode.execute((String) args[0], (String) args[1], (RegisteredNativeSymbol) args[2]);
         }
 
-        private static RFindSymbolRootNode create() {
+        private static synchronized RFindSymbolRootNode create() {
             if (findSymbolRootNode == null) {
                 findSymbolRootNode = new RFindSymbolRootNode();
                 Truffle.getRuntime().createCallTarget(findSymbolRootNode);

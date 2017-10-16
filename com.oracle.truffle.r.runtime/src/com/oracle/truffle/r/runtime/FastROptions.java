@@ -61,6 +61,7 @@ public enum FastROptions {
     EmitTmpDir("The directory where to allocate temporary files with deparsed source code.", null, true),
     EmitTmpHashed("Use an SHA-256 hash as file name to reduce temporary file creation.", true),
     SpawnUsesPolyglot("use PolyglotEngine for .fastr.context.spwan", false),
+    SynchronizeNativeCode("allow only one thread to enter packages' native code", false),
 
     // Promises optimizations
     EagerEval("If enabled, overrides all other EagerEval switches (see EagerEvalHelper)", false),
