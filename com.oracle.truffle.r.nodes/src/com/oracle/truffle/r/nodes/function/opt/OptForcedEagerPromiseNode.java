@@ -91,7 +91,10 @@ public final class OptForcedEagerPromiseNode extends PromiseNode {
                 call = call.getParent();
             }
         }
-        return factory.createEagerSuppliedPromise(value, alwaysValidAssumption, call, null, wrapIndex);
+        if (CompilerDirectives.inInterpreter()) {
+            return factory.createEagerSuppliedPromise(value, alwaysValidAssumption, call, null, wrapIndex, frame.materialize());
+        }
+        return factory.createEagerSuppliedPromise(value, alwaysValidAssumption, call, null, wrapIndex, null);
     }
 
     @Override

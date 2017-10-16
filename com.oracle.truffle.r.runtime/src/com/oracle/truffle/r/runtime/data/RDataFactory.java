@@ -502,18 +502,18 @@ public final class RDataFactory {
     }
 
     public static RPromise createEagerPromise(PromiseState state, Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback,
-                    int wrapIndex) {
+                    int wrapIndex, MaterializedFrame execFrame) {
         if (FastROptions.noEagerEval()) {
             throw RInternalError.shouldNotReachHere();
         }
-        return traceDataCreated(new RPromise.EagerPromise(state, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, wrapIndex));
+        return traceDataCreated(new RPromise.EagerPromise(state, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, wrapIndex, execFrame));
     }
 
-    public static RPromise createPromisedPromise(Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback) {
+    public static RPromise createPromisedPromise(Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, MaterializedFrame execFrame) {
         if (FastROptions.noEagerEval()) {
             throw RInternalError.shouldNotReachHere();
         }
-        return traceDataCreated(new RPromise.EagerPromise(PromiseState.Promised, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, -1));
+        return traceDataCreated(new RPromise.EagerPromise(PromiseState.Promised, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, -1, execFrame));
     }
 
     public static Object createLangPairList(int size) {
