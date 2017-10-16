@@ -23,7 +23,8 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -74,7 +75,7 @@ public abstract class RFFIContext extends RFFI {
      * FastR equivalent of GNUR's special dedicated global list that is GC root and so any vectors
      * added to it will be guaranteed to be preserved.
      */
-    public final HashSet<RObject> preserveList = new HashSet<>();
+    public final IdentityHashMap<RObject, AtomicInteger> preserveList = new IdentityHashMap<>();
 
     public abstract TruffleObject lookupNativeFunction(NativeFunction function);
 

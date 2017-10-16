@@ -32,9 +32,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -309,7 +310,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public int Rf_setAttrib(Object obj, Object name, Object val) {
+    public Object Rf_setAttrib(Object obj, Object name, Object val) {
         if (obj instanceof RAttributable) {
             RAttributable attrObj = (RAttributable) obj;
             String nameAsString;
@@ -334,7 +335,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         } else {
             throw RInternalError.shouldNotReachHere();
         }
-        return 0;
+        return val;
     }
 
     @TruffleBoundary
@@ -1598,8 +1599,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public void R_PreserveObject(Object obj) {
         guaranteeInstanceOf(obj, RObject.class);
-        HashSet<RObject> list = getContext().preserveList;
-        list.add((RObject) obj);
+        IdentityHashMap<RObject, AtomicInteger> preserveList = getContext().preserveList;
+        AtomicInteger prevCnt = preserveList.putIfAbsent((RObject) obj, new AtomicInteger(1));
+        if (prevCnt != null) {
+            prevCnt.incrementAndGet();
+        }
     }
 
     @Override
@@ -1607,9 +1611,17 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public void R_ReleaseObject(Object obj) {
         guaranteeInstanceOf(obj, RObject.class);
         RFFIContext context = getContext();
-        HashSet<RObject> list = context.preserveList;
-        if (list.remove(obj)) {
-            context.registerReferenceUsedInNative(obj);
+        IdentityHashMap<RObject, AtomicInteger> preserveList = context.preserveList;
+        AtomicInteger atomicInteger = preserveList.get(obj);
+        if (atomicInteger != null) {
+            int decrementAndGet = atomicInteger.decrementAndGet();
+            if (decrementAndGet == 0) {
+                // remove from "list"
+                preserveList.remove(obj);
+                context.registerReferenceUsedInNative(obj);
+            }
+        } else {
+            // TODO report ?
         }
     }
 

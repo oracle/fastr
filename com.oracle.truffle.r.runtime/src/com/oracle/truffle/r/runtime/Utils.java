@@ -283,8 +283,14 @@ public final class Utils {
      */
     public static Path getLogPath(String fileName) {
         String root = RContext.isEmbedded() ? "/tmp" : REnvVars.rHome();
-        int pid = (int) BaseRFFI.GetpidRootNode.create().getCallTarget().call();
-        String baseName = RContext.isEmbedded() ? fileName + "-" + Integer.toString(pid) : fileName;
+        String baseName;
+        if (RContext.isEmbedded()) {
+            int pid = RContext.getInitialPid();
+            String threadName = Thread.currentThread().getName();
+            baseName = fileName + "-" + Integer.toString(pid) + "-" + threadName;
+        } else {
+            baseName = fileName;
+        }
         return FileSystems.getDefault().getPath(root, baseName);
     }
 
@@ -734,5 +740,12 @@ public final class Utils {
         } else {
             return (int) (fileTime.toMillis() / 1000);
         }
+    }
+
+    /**
+     * Determines the PID using a system call.
+     */
+    public static int getPid() {
+        return (int) BaseRFFI.GetpidRootNode.create().getCallTarget().call();
     }
 }

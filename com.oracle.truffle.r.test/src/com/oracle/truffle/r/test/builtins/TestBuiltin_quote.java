@@ -45,5 +45,8 @@ public class TestBuiltin_quote extends TestBase {
         // in GNUR, these behave inconsistently:
         assertEval(Ignored.ImplementationError, "quote()");
         assertEval("quote(expr=)");
+
+        assertEval(Ignored.ImplementationError, "typeof(quote(a[,2])[[3]])");
+        assertEval(Ignored.ImplementationError, "{ res <- quote(a[,2])[[3]]; typeof(res) }");
     }
 }

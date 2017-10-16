@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -148,5 +148,6 @@ public class TestBuiltin_iscall extends TestBase {
         assertEval("{ cl <- call(\"f\", 2, 3) ; is.call(cl) }");
         assertEval("{ cl <- list(f, 2, 3) ; is.call(cl) }");
         assertEval("{ is.call(call) }");
+        assertEval("{ callExpr <- quote(asd[,1]); lapply(callExpr, function(x) is.call(x)) }");
     }
 }

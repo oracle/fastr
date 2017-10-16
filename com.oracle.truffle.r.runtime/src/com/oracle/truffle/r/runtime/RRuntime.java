@@ -206,6 +206,12 @@ public class RRuntime {
         return frame;
     }
 
+    public static FrameDescriptor createFrameDescriptorWithMetaData(String name) {
+        FrameDescriptor fd = new FrameDescriptor();
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(name, fd);
+        return fd;
+    }
+
     /**
      * Since a distinguished NaN value is used for NA, checking for {@code isNaN} suffices.
      */

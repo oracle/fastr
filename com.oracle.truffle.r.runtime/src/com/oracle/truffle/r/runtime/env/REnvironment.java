@@ -22,14 +22,20 @@
  */
 package com.oracle.truffle.r.runtime.env;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.regex.Pattern;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
@@ -110,6 +116,8 @@ import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
 public abstract class REnvironment extends RAttributeStorage {
 
     public static final class ContextStateImpl implements RContext.ContextState {
+        private static Map<RStringVector, WeakReference<FrameDescriptor>> frameDescriptorCache = Collections.synchronizedMap(new WeakHashMap<>(0));
+
         private final MaterializedFrame globalFrame;
         @CompilationFinal private Base baseEnv;
         @CompilationFinal private REnvironment namespaceRegistry;
@@ -175,6 +183,27 @@ public abstract class REnvironment extends RAttributeStorage {
             this.namespaceRegistry = newNamespaceRegistry;
             this.searchPath = newSearchPath;
         }
+
+        public static FrameDescriptor getFrameDescriptorFromList(RList list) {
+            CompilerAsserts.neverPartOfCompilation();
+
+            RStringVector names = list.getNames();
+            WeakReference<FrameDescriptor> weakReference = frameDescriptorCache.get(names);
+            FrameDescriptor fd = weakReference != null ? weakReference.get() : null;
+
+            if (fd == null) {
+                // ensure that string vector is not modified anymore
+                names.makeSharedPermanent();
+
+                fd = RRuntime.createFrameDescriptorWithMetaData("<new-cachedfd-env>");
+                for (int i = 0; i < list.getLength(); i++) {
+                    FrameSlotKind valueSlotKind = RRuntime.getSlotKind(list.getDataAt(i));
+                    FrameSlotChangeMonitor.findOrAddFrameSlot(fd, names.getDataAt(i), valueSlotKind);
+                }
+                frameDescriptorCache.put(names, new WeakReference<>(fd));
+            }
+            return fd;
+        }
     }
 
     public static class PutException extends RErrorException {
@@ -217,6 +246,7 @@ public abstract class REnvironment extends RAttributeStorage {
     public static final String UNNAMED = new String("");
     private static final String NAME_ATTR_KEY = "name";
     private static final Empty emptyEnv = new Empty();
+    private static final int LARGE_LIST_THRESHOLD = 100;
 
     private final String name;
     private final REnvFrameAccess frameAccess;
@@ -662,9 +692,15 @@ public abstract class REnvironment extends RAttributeStorage {
      */
     @TruffleBoundary
     public static REnvironment createFromList(RList list, REnvironment parent) {
-        REnvironment result = RDataFactory.createNewEnv(null);
-        RArguments.initializeEnclosingFrame(result.getFrame(), parent.getFrame());
+        REnvironment result;
         RStringVector names = list.getNames();
+        if (list.getLength() >= LARGE_LIST_THRESHOLD) {
+            FrameDescriptor cachedFd = ContextStateImpl.getFrameDescriptorFromList(list);
+            result = RDataFactory.createNewEnv(cachedFd, null);
+        } else {
+            result = RDataFactory.createNewEnv(null);
+        }
+        RArguments.initializeEnclosingFrame(result.getFrame(), parent.getFrame());
         for (int i = 0; i < list.getLength(); i++) {
             try {
                 result.put(names.getDataAt(i), UpdateShareableChildValue.update(list, list.getDataAt(i)));

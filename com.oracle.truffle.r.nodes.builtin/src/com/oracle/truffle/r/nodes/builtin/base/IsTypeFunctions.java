@@ -181,7 +181,7 @@ public class IsTypeFunctions {
     public abstract static class IsCall extends MissingAdapter {
 
         static {
-            createCasts(IsCall.class);
+            Casts.noCasts(IsCall.class);
         }
 
         @Specialization
@@ -189,7 +189,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isRLanguage(value)"})
+        @Specialization(guards = {"!isRLanguage(value)"})
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
