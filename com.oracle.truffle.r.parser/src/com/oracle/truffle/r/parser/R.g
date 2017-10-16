@@ -695,7 +695,7 @@ ID
     | '`' BACKTICK_NAME
     ;
 
-OP : '%' OP_NAME+ '%' ;
+OP : '%' (~('%' | '\n' | '\r' | '\f'))+ '%' ;
 
 fragment BACKTICK_NAME
     @init { final StringBuilder buf = new StringBuilder(); }

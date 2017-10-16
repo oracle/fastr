@@ -434,7 +434,7 @@ def _set_test_status(fastr_test_info):
             with open(fastr_testfile_status.abspath) as f:
                 fastr_content = f.readlines()
 
-            result = _fuzzy_compare(gnur_content, fastr_content)
+            result = _fuzzy_compare(gnur_content, fastr_content, gnur_testfile_status.abspath, fastr_testfile_status.abspath)
             if result == -1:
                 print "{0}: content malformed: {1}".format(pkg, gnur_test_output_relpath)
                 fastr_test_status.status = "INDETERMINATE"
@@ -503,9 +503,14 @@ def _find_line(gnur_line, fastr_content, fastr_i):
 
 def _replace_engine_references(output):
     for idx, val in enumerate(output):
-        output[idx] = val.replace('fastr', '<engine>').replace('gnur', '<engine>')
+        if "RUNIT TEST PROTOCOL -- " in val:
+            # RUnit prints the current date and time
+            output[idx] = "RUNIT TEST PROTOCOL -- <date/time>"
+        else:
+            # ignore differences which come from test directory paths
+            output[idx] = val.replace('fastr', '<engine>').replace('gnur', '<engine>')
 
-def _fuzzy_compare(gnur_content, fastr_content):
+def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename):
     _replace_engine_references(gnur_content)
     _replace_engine_references(fastr_content)
     gnur_start = _find_start(gnur_content)
@@ -525,15 +530,31 @@ def _fuzzy_compare(gnur_content, fastr_content):
 
         fastr_line = fastr_content[fastr_i]
         if gnur_line != fastr_line:
+            if fastr_line.startswith('Warning') and 'FastR does not support graphics package' in fastr_content[fastr_i + 1]:
+                # ignore warning about FastR not supporting the graphics package
+                fastr_i = fastr_i + 2
+                if fastr_content[fastr_i].startswith('NULL') and not gnur_line.startswith('NULL'):
+                    # ignore additional visible NULL
+                    fastr_i = fastr_i + 1
+                continue
+            if gnur_line.startswith('Warning') and gnur_i + 1 < gnur_end and 'closing unused connection' in gnur_content[gnur_i + 1]:
+                # ignore message about closed connection
+                gnur_i = gnur_i + 2
+                continue
+            if gnur_i > 0 and gnur_content[gnur_i - 1].startswith('   user  system elapsed'):
+                # ignore differences in timing
+                gnur_i = gnur_i + 1
+                fastr_i = fastr_i + 1
+                continue
             # we are fuzzy on Error/Warning as FastR often differs
             # in the context/format of the error/warniong message AND GnuR is sometimes
             # inconsistent over which error message it uses. Unlike the unit test environment,
             # we cannot tag tests in any way, so we simply check that FastR does report
             # an error. We then scan forward to try to get the files back in sync, as the
             # the number of error/warning lines may differ.
-            if gnur_line.startswith(('Error', 'Warning')):
-                to_match = 'Error' if gnur_line.startswith('Error') else 'Warning'
-                if not fastr_line.startswith(to_match):
+            if 'Error' in gnur_line or 'Warning' in gnur_line:
+                to_match = 'Error' if 'Error' in gnur_line else 'Warning'
+                if to_match not in fastr_line:
                     result = 1
                     break
                 else:
@@ -562,6 +583,11 @@ def _fuzzy_compare(gnur_content, fastr_content):
                     break
         gnur_i = gnur_i + 1
         fastr_i = fastr_i + 1
+    if result == 1:
+        print gnur_filename + ':%d' % gnur_i + ' vs. ' + fastr_filename + ':%d' % fastr_i
+        print gnur_line.strip()
+        print "vs."
+        print fastr_line.strip()
     return result
 
 def _ignore_whitespace(gnur_line, fastr_line):
@@ -572,7 +598,7 @@ def pkgtest_cmp(args):
         gnur_content = f.readlines()
     with open(args[1]) as f:
         fastr_content = f.readlines()
-    return _fuzzy_compare(gnur_content, fastr_content)
+    return _fuzzy_compare(gnur_content, fastr_content, args[0], args[1])
 
 def find_top100(args):
     libinstall = join(_fastr_suite_dir(), "top100.tmp")

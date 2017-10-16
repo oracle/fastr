@@ -29,7 +29,7 @@ import org.junit.Test;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
-import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.tck.TruffleTCK;
 
 public class FastRTckTest extends TruffleTCK {
@@ -40,7 +40,7 @@ public class FastRTckTest extends TruffleTCK {
     }
 
     // @formatter:off
-    private static final Source INITIALIZATION = RSource.fromTextInternal(
+    private static final String INITIALIZATION_CODE =
         "fourtyTwo <- function() {\n" +
         "  42L\n" +
         "}\n" +
@@ -148,10 +148,10 @@ public class FastRTckTest extends TruffleTCK {
         "builtinFunctionType <- function() 'builtin'\n" +
         "valueWithSource <- function() intValue\n" +
         "objectWithKeyInfoAttributes <- function() { list(rw=1, invocable=function(){ 'invoked' }) }\n" +
-        "for (name in ls()) export(name, get(name))\n",
-        RSource.Internal.TCK_INIT
-    );
+        "for (name in ls()) export(name, get(name))\n";
     // @formatter:on
+
+    private static final Source INITIALIZATION = Source.newBuilder(INITIALIZATION_CODE).name("TCK").mimeType(RRuntime.R_APP_MIME).build();
 
     @Override
     protected PolyglotEngine prepareVM(Builder builder) throws Exception {

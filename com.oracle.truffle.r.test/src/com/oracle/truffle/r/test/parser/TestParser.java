@@ -150,6 +150,14 @@ public class TestParser extends TestBase {
         assertEval("{ ...... <- 42; cat(......); }");
     }
 
+    @Test
+    public void testUserOp() {
+        assertEval("`%foo%` <- function(a,b) 1; 10 %foo% 20");
+        assertEval("`%5%` <- function(a,b) 1; 10 %5% 20");
+        assertEval("`%Š%` <- function(a,b) 1; 10 %Š% 20");
+        assertEval("`%!@#$^&*()%` <- function(a,b) 1; 10 %!@#$^&*()% 20");
+    }
+
     /**
      * Recursively look for .r source files in the args[0] directory and parse them.
      */

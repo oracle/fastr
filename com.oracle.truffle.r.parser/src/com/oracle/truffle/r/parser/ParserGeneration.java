@@ -94,6 +94,7 @@ public class ParserGeneration {
         "pass along TruffleRLanguage",
         "convert line endings",
         "handle four and more dots as identifier",
-        "allow greek characters in identifiers"
+        "allow greek characters in identifiers",
+        "allow everything but newlines in %<ident>% operators"
     };
 }
