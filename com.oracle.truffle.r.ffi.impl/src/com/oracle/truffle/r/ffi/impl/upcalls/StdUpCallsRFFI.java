@@ -34,9 +34,14 @@ import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.LockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.UnlockBindingNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CAARNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CAD4RNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADDDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CARNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDARNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDDDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCADRNode;
@@ -200,8 +205,14 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(CARNode.class)
     Object CAR(Object e);
 
+    @RFFIUpCallNode(CAARNode.class)
+    Object CAAR(Object e);
+
     @RFFIUpCallNode(CDRNode.class)
     Object CDR(Object e);
+
+    @RFFIUpCallNode(CDARNode.class)
+    Object CDAR(Object e);
 
     @RFFIUpCallNode(CADRNode.class)
     Object CADR(Object e);
@@ -209,8 +220,17 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(CADDRNode.class)
     Object CADDR(Object e);
 
+    @RFFIUpCallNode(CADDDRNode.class)
+    Object CADDDR(Object e);
+
+    @RFFIUpCallNode(CAD4RNode.class)
+    Object CAD4R(Object e);
+
     @RFFIUpCallNode(CDDRNode.class)
     Object CDDR(Object e);
+
+    @RFFIUpCallNode(CDDDRNode.class)
+    Object CDDDR(Object e);
 
     Object SET_TAG(Object x, Object y);
 

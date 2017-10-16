@@ -287,17 +287,27 @@ public class TestBuiltin_format extends TestBase {
         assertEval("x <- c(1.0,2.0);names(x) <- c(\"x\",\"y\");argv <- list(x, FALSE, NULL, 0L, NULL, 0L, FALSE, FALSE, \".\");names(.Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]])))");
     }
 
+    @Test
     public void testFormat() {
-        assertEval("{ format(7) }");
-        assertEval("{ format(7.42) }");
-        assertEval("{ format(c(7,42)) }");
-        assertEval("{ format(c(7.42,42.7)) }");
-        assertEval("{ format(c(7.42,42.7,NA)) }");
-        assertEval("{ .Internal(format(.GlobalEnv,FALSE,NA,0,0,3,TRUE,NA,'.')) }");
-        assertEval("{ format(1.1, scientific=TRUE) }");
-        assertEval("{ format(1.1, scientific=FALSE) }");
-        assertEval("{ format(1.1, scientific=c(TRUE, FALSE)) }");
-        assertEval("{ format(1.1, scientific=-10) }");
-        assertEval("{ format(1.1, scientific=c(-10, 1)) }");
+        assertEval("format(7)");
+        assertEval("format(7.42)");
+        assertEval("format(c(7,42))");
+        assertEval("format(c(7.42,42.7))");
+        assertEval("format(c(7.42,42.7,NA))");
+        assertEval(".Internal(format(.GlobalEnv,FALSE,NA,0,0,3,TRUE,NA,'.'))");
+        assertEval("format(1.1, scientific=TRUE)");
+        assertEval("format(1.1, scientific=FALSE)");
+        assertEval("format(1.1, scientific=c(TRUE, FALSE))");
+        assertEval("format(1.1, scientific=-10)");
+        assertEval("format(1.1, scientific=c(-10, 1))");
+        assertEval("format(c(9.99951, 13.1), digits=4)");
+        assertEval("format(1.60085, digits=5)");
+        assertEval("format(1.6000085, digits=7)");
+        assertEval("format(1.6001095, digits=7)");
+        assertEval(Ignored.OutputFormatting, "format(1.6011095, digits=7)");
+        assertEval("format(4.125e-04, digits=3)");
+        assertEval("format(4.135e-04, digits=3)");
+        assertEval("format(9.999999999995, digits=13); format(9.999999999995, digits=11)");
+        assertEval("format(9.999999995, digits=10)");
     }
 }

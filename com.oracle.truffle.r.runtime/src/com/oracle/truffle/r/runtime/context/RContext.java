@@ -40,11 +40,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -80,6 +80,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalCode.ContextStateImpl;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RLocale;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -226,9 +227,7 @@ public final class RContext implements RTruffleObject {
 
     private final RStartParams startParameters;
     private final RCmdOptions cmdOptions;
-    private final String[] environment;
     private final RContext.ContextKind contextKind;
-    private final TimeZone systemTimeZone;
     public final Map<Class<?>, RootCallTarget> nativeCallTargets = new HashMap<>();
 
     public RootCallTarget getOrCreateNativeCallTarget(Class<?> clazz, Supplier<RootCallTarget> creatFunction) {
@@ -332,6 +331,7 @@ public final class RContext implements RTruffleObject {
      * processor, but the set is relatively small, so we just enumerate them here.
      */
     public final REnvVars stateREnvVars;
+    public final RLocale.ContextStateImpl stateRLocale;
     public final TempPathName stateTempPath;
     public final RProfile stateRProfile;
     public final StdConnections.ContextStateImpl stateStdConnections;
@@ -357,7 +357,8 @@ public final class RContext implements RTruffleObject {
     private final AllocationReporter allocationReporter;
 
     private ContextState[] contextStates() {
-        return new ContextState[]{stateREnvVars, stateRProfile, stateTempPath, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI,
+        return new ContextState[]{stateREnvVars, stateRLocale, stateRProfile, stateTempPath, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG,
+                        stateRFFI,
                         stateRSerialize, stateLazyDBCache, stateInstrumentation, stateDLL};
     }
 
@@ -386,35 +387,33 @@ public final class RContext implements RTruffleObject {
         }
 
         Object initialInfo = env.getConfig().get(ChildContextInfo.CONFIG_KEY);
+        Map<String, String> initialEnvVars;
         if (initialInfo == null) {
             /*
              * This implies that FastR is being invoked initially from another Truffle language or
-             * via RCommand/RscriptCommand. TODO How to deciden if session state is to be restored
-             * stored session should be restored.
+             * via RCommand/RscriptCommand. TODO How to decide if session state is to be restored
              */
             this.cmdOptions = RCmdOptions.parseArguments(Client.R, args, true);
             this.startParameters = new RStartParams(cmdOptions, false);
-            this.environment = null;
             this.contextKind = ContextKind.SHARE_NOTHING;
-            this.systemTimeZone = TimeZone.getDefault();
             this.parentContext = null;
             this.id = ChildContextInfo.contextInfoIds.incrementAndGet();
             this.multiSlotIndex = 0;
-            this.truffleContext = null; // TODO
+            this.truffleContext = null;
             this.executor = null;
+            initialEnvVars = System.getenv();
         } else {
             // child spawned explicitly by R
             ChildContextInfo info = (ChildContextInfo) initialInfo;
             this.cmdOptions = RCmdOptions.parseArguments(Client.R, args, true);
             this.startParameters = info.getStartParams();
-            this.environment = info.getEnv();
             this.contextKind = info.getKind();
-            this.systemTimeZone = info.getSystemTimeZone();
             this.parentContext = info.getParent();
             this.id = info.getId();
             this.multiSlotIndex = info.getMultiSlotInd();
             this.truffleContext = info.getTruffleContext();
             this.executor = info.executor;
+            initialEnvVars = info.getEnv() == null ? Collections.emptyMap() : info.getEnv();
         }
 
         outputWelcomeMessage(startParameters);
@@ -425,7 +424,8 @@ public final class RContext implements RTruffleObject {
 
         this.initial = isInitial;
         this.env = env;
-        this.stateREnvVars = REnvVars.newContextState();
+        this.stateREnvVars = REnvVars.newContextState(initialEnvVars);
+        this.stateRLocale = RLocale.ContextStateImpl.newContextState();
         this.stateTempPath = TempPathName.newContextState();
         this.stateROptions = ROptions.ContextStateImpl.newContextState(stateREnvVars);
         this.stateRProfile = RProfile.newContextState(stateREnvVars);
@@ -502,6 +502,7 @@ public final class RContext implements RTruffleObject {
             doEnvOptionsProfileInitialization();
         }
 
+        stateRLocale.initialize(this);
         stateREnvironment.initialize(this);
         stateRErrorHandling.initialize(this);
         stateRConnection.initialize(this);
@@ -730,10 +731,6 @@ public final class RContext implements RTruffleObject {
         return startParameters;
     }
 
-    public String[] getEnvSettings() {
-        return environment;
-    }
-
     public boolean hasExecutor() {
         return executor != null;
     }
@@ -788,10 +785,6 @@ public final class RContext implements RTruffleObject {
 
     public boolean getLoadingBase() {
         return loadingBase;
-    }
-
-    public TimeZone getSystemTimeZone() {
-        return systemTimeZone;
     }
 
     public String getNamespaceName() {

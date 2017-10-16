@@ -413,14 +413,14 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public int Rf_error(String msg) {
-        RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, msg);
+        RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, msg);
         return 0;
     }
 
     @Override
     @TruffleBoundary
     public int Rf_warning(String msg) {
-        RError.warning(RError.SHOW_CALLER2, RError.Message.GENERIC, msg);
+        RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, msg);
         return 0;
     }
 
@@ -443,7 +443,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public Object Rf_allocVector(int mode, long n) {
         SEXPTYPE type = SEXPTYPE.mapInt(mode);
         if (n > Integer.MAX_VALUE) {
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.LONG_VECTORS_NOT_SUPPORTED);
+            throw RError.error(RError.SHOW_CALLER, RError.Message.LONG_VECTORS_NOT_SUPPORTED);
             // TODO check long vector
         }
         int ni = (int) n;
@@ -677,6 +677,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object CAAR(Object e) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public Object CDR(Object e) {
         throw implementedAsNode();
     }
@@ -687,12 +692,32 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object CDAR(Object e) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public Object CADDR(Object e) {
         throw implementedAsNode();
     }
 
     @Override
+    public Object CADDDR(Object e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object CAD4R(Object e) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public Object CDDR(Object e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object CDDDR(Object e) {
         throw implementedAsNode();
     }
 

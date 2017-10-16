@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -49,7 +50,7 @@ public abstract class Expression extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    @ExplodeLoop
+    @TruffleBoundary
     protected Object doExpression(RArgsValuesAndNames args) {
         Object[] argValues = args.getArguments();
         Object[] data = new Object[argValues.length];

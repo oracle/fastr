@@ -313,8 +313,11 @@ def _get_test_outputs(rvm, pkg_name, test_info):
         for f in files:
             ext = os.path.splitext(f)[1]
             # suppress .pdf's for now (we can't compare them)
-            ignore = ['.R', '.Rin', '.prev', '.bug', '.pdf', '.save']
-            if f == 'test_time' or ext in ignore:
+            # ignore = ['.R', '.Rin', '.prev', '.bug', '.pdf', '.save']
+            # if f == 'test_time' or ext in ignore:
+            #     continue
+            included = ['.Rout', '.fail']
+            if f == 'test_time' or not ext in included:
                 continue
             status = "OK"
             if ext == '.fail':
@@ -498,7 +501,13 @@ def _find_line(gnur_line, fastr_content, fastr_i):
         fastr_i = fastr_i + 1
     return -1
 
+def _replace_engine_references(output):
+    for idx, val in enumerate(output):
+        output[idx] = val.replace('fastr', '<engine>').replace('gnur', '<engine>')
+
 def _fuzzy_compare(gnur_content, fastr_content):
+    _replace_engine_references(gnur_content)
+    _replace_engine_references(fastr_content)
     gnur_start = _find_start(gnur_content)
     gnur_end = _find_end(gnur_content)
     fastr_start = _find_start(fastr_content)

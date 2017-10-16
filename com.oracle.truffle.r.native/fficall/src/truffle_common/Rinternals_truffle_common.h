@@ -663,14 +663,16 @@ SEXP PRINTNAME(SEXP e) {
 
 SEXP CAAR(SEXP e) {
     TRACE0();
-    unimplemented("CAAR");
-    return NULL;
+    SEXP result = ((call_CAAR) callbacks[CAAR_x])(e);
+    checkExitCall();
+    return result;
 }
 
 SEXP CDAR(SEXP e) {
     TRACE0();
-    unimplemented("CDAR");
-    return NULL;
+    SEXP result = ((call_CDAR) callbacks[CDAR_x])(e);
+    checkExitCall();
+    return result;
 }
 
 SEXP CADR(SEXP e) {
@@ -689,8 +691,9 @@ SEXP CDDR(SEXP e) {
 
 SEXP CDDDR(SEXP e) {
     TRACE0();
-    unimplemented("CDDDR");
-    return NULL;
+    SEXP result = ((call_CDDDR) callbacks[CDDDR_x])(e);
+    checkExitCall();
+    return result;
 }
 
 SEXP CADDR(SEXP e) {
@@ -702,14 +705,16 @@ SEXP CADDR(SEXP e) {
 
 SEXP CADDDR(SEXP e) {
     TRACE0();
-    unimplemented("CADDDR");
-    return NULL;
+    SEXP result = ((call_CADDDR) callbacks[CADDDR_x])(e);
+    checkExitCall();
+    return result;
 }
 
 SEXP CAD4R(SEXP e) {
     TRACE0();
-    unimplemented("CAD4R");
-    return NULL;
+    SEXP result = ((call_CAD4R) callbacks[CAD4R_x])(e);
+    checkExitCall();
+    return result;
 }
 
 int MISSING(SEXP x) {
@@ -1364,7 +1369,7 @@ SEXP R_tryEvalSilent(SEXP x, SEXP y, int *ErrorOccurred) {
     TRACE0();
     return R_tryEvalInternal(x, y, ErrorOccurred, 1);
 }
-
+/*
 double R_atof(const char *str) {
     TRACE0();
     unimplemented("R_atof");
@@ -1375,7 +1380,7 @@ double R_strtod(const char *c, char **end) {
     TRACE0();
     unimplemented("R_strtod");
     return 0;
-}
+}*/
 
 SEXP R_PromiseExpr(SEXP x) {
     TRACE0();
@@ -1509,7 +1514,7 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
 
 int R_has_slot(SEXP obj, SEXP name) {
     TRACE(TARGpp, obj, name);
-    SEXP result = ((call_R_has_slot) callbacks[R_has_slot_x])(obj, name);
+    int result = ((call_R_has_slot) callbacks[R_has_slot_x])(obj, name);
     checkExitCall();
     return result;
 }

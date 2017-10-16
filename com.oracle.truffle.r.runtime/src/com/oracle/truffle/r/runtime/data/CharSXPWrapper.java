@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.r.runtime.RRuntime;
+
 /**
  * Internally GNU R distinguishes "strings" and "vectors of strings" using the {@code CHARSXP} and
  * {@code STRSXP} types, respectively. Although this difference is invisible at the R level, it
@@ -32,6 +34,8 @@ package com.oracle.truffle.r.runtime.data;
  * N.B. Use limited to RFFI implementations.
  */
 public final class CharSXPWrapper extends RObject implements RTruffleObject {
+    private static final CharSXPWrapper NA = new CharSXPWrapper(RRuntime.STRING_NA);
+
     private String contents;
 
     private CharSXPWrapper(String contents) {
@@ -48,7 +52,11 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
     }
 
     public static CharSXPWrapper create(String contents) {
-        return new CharSXPWrapper(contents);
+        if (contents == RRuntime.STRING_NA) {
+            return NA;
+        } else {
+            return new CharSXPWrapper(contents);
+        }
     }
 
     public long allocateNativeContents() {

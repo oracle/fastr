@@ -280,7 +280,7 @@ public class FileConnections {
 
         @Override
         public long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            return DelegateRConnection.seek(channel, offset, seekMode, seekRWMode);
+            return DelegateRConnection.seek(channel, offset, seekMode, seekRWMode, bytesInCache());
         }
 
         @Override
@@ -342,7 +342,7 @@ public class FileConnections {
 
         @Override
         protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            return DelegateRConnection.seek(channel, offset, seekMode, seekRWMode);
+            return DelegateRConnection.seek(channel, offset, seekMode, seekRWMode, bytesInCache());
         }
 
         @Override

@@ -30,7 +30,8 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
-import java.util.TimeZone;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -113,7 +114,9 @@ public final class FastRSession implements RSession {
 
     public ChildContextInfo createContextInfo(ContextKind contextKind) {
         RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.R, new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
-        return ChildContextInfo.create(params, null, contextKind, mainContext, input, output, output, TimeZone.getTimeZone("GMT"));
+        Map<String, String> env = new HashMap<>();
+        env.put("TZ", "GMT");
+        return ChildContextInfo.create(params, env, contextKind, mainContext, input, output, output);
     }
 
     private FastRSession() {

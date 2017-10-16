@@ -913,10 +913,8 @@ public class FileFunctions {
                 if (copyMode || copyDate) {
                     copyOptions = new CopyOption[overwrite ? 2 : 1];
                     copyOptions[overwrite ? 1 : 0] = StandardCopyOption.COPY_ATTRIBUTES;
-                } else if (overwrite) {
-                    copyOptions = new CopyOption[1];
                 } else {
-                    copyOptions = new CopyOption[0];
+                    copyOptions = new CopyOption[overwrite ? 1 : 0];
                 }
                 if (overwrite) {
                     copyOptions[0] = StandardCopyOption.REPLACE_EXISTING;
@@ -938,20 +936,20 @@ public class FileFunctions {
 
                 for (int i = 0; i < lenFrom; i++) {
                     String from = vecFrom.getDataAt(i % lenFrom);
-                    String to = vecTo.getDataAt(i % lenTo);
-                    Path fromPathKeepRel = fileSystem.getPath(Utils.tildeExpand(from, true));
-                    if (toDir != null && !fromPathKeepRel.isAbsolute()) {
-                        to = toDir.resolve(fromPathKeepRel.getFileName()).toString();
-                    }
                     Path fromPath = fileSystem.getPath(Utils.tildeExpand(from));
+                    String to = vecTo.getDataAt(i % lenTo);
                     Path toPath = fileSystem.getPath(Utils.tildeExpand(to));
-                    status[i] = RRuntime.LOGICAL_TRUE;
+                    assert !recursive || toDir != null;
+                    status[i] = RRuntime.LOGICAL_FALSE;
                     try {
-                        if (recursive && Files.isDirectory(fromPath)) {
-                            // to is just one dir (checked above)
-                            boolean copyError = copyDir(fromPath, toPath, copyOptions);
-                            if (copyError) {
-                                status[i] = RRuntime.LOGICAL_FALSE;
+                        if (toDir != null) {
+                            toPath = toDir.resolve(fromPath.getFileName());
+                        }
+                        if (Files.isDirectory(fromPath)) {
+                            if (recursive) {
+                                assert toDir != null;
+                                // to is just one dir (checked above)
+                                status[i] = RRuntime.asLogical(copyDir(fromPath, toPath, copyOptions));
                             }
                         } else {
                             // copy to existing files is skipped unless overWrite
@@ -960,15 +958,11 @@ public class FileFunctions {
                                  * toB Be careful if toPath is a directory, if empty Java will
                                  * replace it with a plain file, otherwise the copy will fail
                                  */
-                                if (Files.isDirectory(toPath)) {
-                                    Path fromFileNamePath = fromPath.getFileName();
-                                    toPath = toPath.resolve(fromFileNamePath);
-                                }
                                 Files.copy(fromPath, toPath, copyOptions);
+                                status[i] = RRuntime.LOGICAL_TRUE;
                             }
                         }
                     } catch (UnsupportedOperationException | IOException ex) {
-                        status[i] = RRuntime.LOGICAL_FALSE;
                         warning(RError.Message.FILE_CANNOT_COPY, from, to, ex.getMessage());
                     }
                 }
@@ -1014,7 +1008,7 @@ public class FileFunctions {
         private boolean copyDir(Path fromDir, Path toDir, CopyOption[] copyOptions) throws IOException {
             DirCopy dirCopy = new DirCopy(fromDir, toDir, copyOptions);
             Files.walkFileTree(fromDir, dirCopy);
-            return dirCopy.error;
+            return !dirCopy.error;
         }
     }
 

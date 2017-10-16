@@ -189,7 +189,7 @@ public class DatePOSIXFunctions {
         protected RList asPOSIXlt(RAbstractDoubleVector x, String tz) {
             TimeZone zone;
             if (tz.isEmpty()) {
-                zone = RContext.getInstance().getSystemTimeZone();
+                zone = RContext.getInstance().stateREnvVars.getSystemTimeZone();
             } else {
                 zone = TimeZone.getTimeZone(tz);
             }
@@ -235,7 +235,7 @@ public class DatePOSIXFunctions {
             RAbstractVector yearVector = (RAbstractVector) RRuntime.convertScalarVectors(x.getDataAt(5));
             TimeZone zone;
             if (tz.isEmpty()) {
-                zone = RContext.getInstance().getSystemTimeZone();
+                zone = RContext.getInstance().stateREnvVars.getSystemTimeZone();
             } else {
                 zone = TimeZone.getTimeZone(tz);
             }
@@ -360,7 +360,7 @@ public class DatePOSIXFunctions {
                     builder.appendLiteral(' ').appendZoneText(TextStyle.SHORT);
                 }
             } else {
-                zone = RContext.getInstance().getSystemTimeZone().toZoneId();
+                zone = RContext.getInstance().stateREnvVars.getSystemTimeZone().toZoneId();
             }
 
             DateTimeFormatter[] formatters = new DateTimeFormatter[builders.length];
@@ -406,7 +406,7 @@ public class DatePOSIXFunctions {
             TimeZone zone;
             String zoneString = RRuntime.asString(tz);
             if (zoneString.isEmpty()) {
-                zone = RContext.getInstance().getSystemTimeZone();
+                zone = RContext.getInstance().stateREnvVars.getSystemTimeZone();
             } else {
                 zone = TimeZone.getTimeZone(zoneString);
             }

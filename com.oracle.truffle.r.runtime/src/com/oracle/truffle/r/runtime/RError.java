@@ -903,6 +903,7 @@ public final class RError extends RuntimeException implements TruffleException {
         FILE_NOT_FOUND_IN_ZIP("requested file not found in the zip file"),
         LIST_NO_VALID_NAMES("list argument has no valid names"),
         VALUES_MUST_BE_LENGTH("values must be length %s,\n but FUN(X[[%d]]) result is length %s"),
+        OS_REQUEST_LOCALE("OS reports request to set locale to \"%s\" cannot be honored"),
         INVALID_TYPE("invalid type (%s) for '%s' (must be a %s)");
 
         public final String message;

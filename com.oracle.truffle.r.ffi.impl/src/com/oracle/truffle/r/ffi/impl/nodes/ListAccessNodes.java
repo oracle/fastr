@@ -26,9 +26,14 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CAARNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CAD4RNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADDDRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADDRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CARNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDARNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDDDRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDDRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCARNodeGen;
@@ -91,6 +96,22 @@ public final class ListAccessNodes {
 
         public static CARNode create() {
             return CARNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public abstract static class CAARNode extends FFIUpCallNode.Arg1 {
+
+        @Child private CARNode car1 = CARNode.create();
+        @Child private CARNode car2 = CARNode.create();
+
+        @Specialization
+        protected Object caar(Object value) {
+            return car2.executeObject(car1.executeObject(value));
+        }
+
+        public static CAARNode create() {
+            return CAARNodeGen.create();
         }
     }
 
@@ -197,6 +218,21 @@ public final class ListAccessNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    public abstract static class CDARNode extends FFIUpCallNode.Arg1 {
+        @Child private CARNode car = CARNode.create();
+        @Child private CDRNode cdr = CDRNode.create();
+
+        @Specialization
+        protected Object cdar(Object value) {
+            return cdr.executeObject(car.executeObject(value));
+        }
+
+        public static CDARNode create() {
+            return CDARNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
     public abstract static class CADDRNode extends FFIUpCallNode.Arg1 {
         @Specialization
         protected Object caddr(RPairList pl) {
@@ -219,6 +255,52 @@ public final class ListAccessNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    public abstract static class CADDDRNode extends FFIUpCallNode.Arg1 {
+        @Specialization
+        protected Object cadddr(RPairList pl) {
+            RPairList tmp = (RPairList) pl.cddr();
+            return tmp.cadr();
+        }
+
+        @Specialization
+        protected Object cadddr(RLanguage lang) {
+            return lang.getDataAtAsObject(3);
+        }
+
+        @Fallback
+        protected Object cadddr(@SuppressWarnings("unused") Object obj) {
+            throw RInternalError.unimplemented("CADDDR only works on pair lists and language objects");
+        }
+
+        public static CADDDRNode create() {
+            return CADDDRNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public abstract static class CAD4RNode extends FFIUpCallNode.Arg1 {
+        @Specialization
+        protected Object cad4r(RPairList pl) {
+            RPairList tmp = (RPairList) pl.cddr();
+            return tmp.caddr();
+        }
+
+        @Specialization
+        protected Object cad4r(RLanguage lang) {
+            return lang.getDataAtAsObject(4);
+        }
+
+        @Fallback
+        protected Object cad4r(@SuppressWarnings("unused") Object obj) {
+            throw RInternalError.unimplemented("CAD4R only works on pair lists and language objects");
+        }
+
+        public static CAD4RNode create() {
+            return CAD4RNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
     public abstract static class CDDRNode extends FFIUpCallNode.Arg1 {
         @Specialization
         protected Object cddr(RPairList pl) {
@@ -226,7 +308,7 @@ public final class ListAccessNodes {
         }
 
         @Specialization
-        protected Object cdr(RLanguage lang) {
+        protected Object cddr(RLanguage lang) {
             RPairList l = lang.getPairList();
             return l.cddr();
         }
@@ -238,6 +320,29 @@ public final class ListAccessNodes {
 
         public static CDDRNode create() {
             return CDDRNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public abstract static class CDDDRNode extends FFIUpCallNode.Arg1 {
+        @Specialization
+        protected Object cdddr(RPairList pl) {
+            return pl.cddr();
+        }
+
+        @Specialization
+        protected Object cdddr(RLanguage lang) {
+            RPairList l = (RPairList) lang.getPairList().cddr();
+            return l.cdr();
+        }
+
+        @Fallback
+        protected Object cdddr(@SuppressWarnings("unused") Object obj) {
+            throw RInternalError.unimplemented("CDDDR only works on pair lists and language objects");
+        }
+
+        public static CDDDRNode create() {
+            return CDDDRNodeGen.create();
         }
     }
 }

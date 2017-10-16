@@ -86,6 +86,8 @@ public class GnuROneShotRSession implements RSession {
         // fix time zone to "GMT" (to create consistent expected output)
         pb.environment().put("TZ", "GMT");
         pb.environment().remove("R_HOME"); // don't confuse GnuR with FastR!
+        pb.environment().remove("LC_ALL");
+        pb.environment().remove("LC_COLLATE");
         pb.redirectErrorStream(true);
         Process p = pb.start();
         p.getOutputStream().write(GNUR_OPTIONS.getBytes());

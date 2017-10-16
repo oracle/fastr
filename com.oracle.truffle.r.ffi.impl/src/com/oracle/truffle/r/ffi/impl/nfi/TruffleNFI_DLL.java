@@ -51,8 +51,8 @@ public class TruffleNFI_DLL implements DLLRFFI {
 
     private static class TruffleNFI_DLOpenNode extends Node implements DLLRFFI.DLOpenNode {
 
-        @TruffleBoundary
         @Override
+        @TruffleBoundary
         public Object execute(String path, boolean local, boolean now) {
             String libName = DLL.libName(path);
             Env env = RContext.getInstance().getEnv();
@@ -77,6 +77,7 @@ public class TruffleNFI_DLL implements DLLRFFI {
     private static class TruffleNFI_DLSymNode extends Node implements DLLRFFI.DLSymNode {
 
         @Override
+        @TruffleBoundary
         public SymbolHandle execute(Object handle, String symbol) {
             assert handle instanceof NFIHandle;
             NFIHandle nfiHandle = (NFIHandle) handle;

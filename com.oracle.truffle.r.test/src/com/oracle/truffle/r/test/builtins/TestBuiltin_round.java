@@ -48,9 +48,12 @@ public class TestBuiltin_round extends TestBase {
         assertEval("{ round(c(0,0.2,NaN,0.6,NA,1)) }");
         assertEval("{ round(as.complex(c(0,0.2,NaN,0.6,NA,1))) }");
 
-        // FIXME: we need to decide whether 2.8 means three digits (GnuR) or two (FastR) when
-        // calling round()
-        assertEval(Ignored.ImplementationError, "{ round(1.123456,digit=2.8) }");
+        assertEval("{ round(1.123456,digit=2.8) }");
+        assertEval("{ round(1.123456,digit=2.5) }");
+        assertEval("{ round(1.123456,digit=2.3) }");
+        assertEval("{ round(12344.126,digit=-2.8) }");
+        assertEval("{ round(12344.123456,digit=-2.5) }");
+        assertEval("{ round(12344.123456,digit=-2.3) }");
 
         assertEval("{ typeof(round(42L)); }");
         assertEval("{ typeof(round(TRUE)); }");

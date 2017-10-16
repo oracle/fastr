@@ -48,7 +48,7 @@ public abstract class Capabilities extends RBuiltinNode.Arg0 {
         libxml(false, null),
         fifo(true, null),
         cledit(false, null),
-        iconv(false, null),
+        iconv(true, null),
         nls(false, "NLS"),
         profmem(false, null),
         cairo(false, null),

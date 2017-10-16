@@ -52,8 +52,6 @@ public abstract class Rank extends RBuiltinNode.Arg3 {
     @Child private Order.CmpNode orderCmpNode;
     private final BranchProfile errorProfile = BranchProfile.create();
 
-    private static final Object rho = new Object();
-
     private enum TiesKind {
         AVERAGE,
         MAX,
@@ -76,7 +74,7 @@ public abstract class Rank extends RBuiltinNode.Arg3 {
     private Order.OrderVector1Node initOrderVector1() {
         if (orderVector1Node == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            orderVector1Node = insert(OrderVector1NodeGen.create(false));
+            orderVector1Node = insert(OrderVector1NodeGen.create());
         }
         return orderVector1Node;
     }
@@ -112,7 +110,7 @@ public abstract class Rank extends RBuiltinNode.Arg3 {
             indx[i] = i;
         }
         RAbstractVector x = xa instanceof RAbstractLogicalVector ? xa.castSafe(RType.Integer, isNAProfile) : xa;
-        initOrderVector1().execute(indx, x, RRuntime.LOGICAL_TRUE, false, rho);
+        initOrderVector1().execute(indx, x, RRuntime.LOGICAL_TRUE, false, false);
         initOrderCmp();
         int j;
         for (int i = 0; i < n; i = j + 1) {

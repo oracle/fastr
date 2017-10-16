@@ -36,7 +36,7 @@ public class TestBuiltin_dqr extends TestBase {
 
     @Test
     public void testdqrcf() {
-        assertEval(Ignored.OutputFormatting, ".Fortran(.F_dqrcf, 1, 1L, 1L, 1, 1, 1L, 1, 1L)");
+        assertEval(".Fortran(.F_dqrcf, 1, 1L, 1L, 1, 1, 1L, 1, 1L)");
     }
 
     @Test

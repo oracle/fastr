@@ -22,19 +22,34 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.dsl.Cached;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RLocale;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -46,25 +61,91 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
         Casts casts = new Casts(IConv.class);
         casts.arg("x").mustBe(stringValue(), RError.Message.NOT_CHARACTER_VECTOR, "x");
         // with default error message, NO_CALLER does not work
-        casts.arg("from").defaultError(RError.Message.INVALID_ARGUMENT, "from").mustBe(stringValue()).asStringVector().mustBe(size(1));
-        casts.arg("to").defaultError(RError.Message.INVALID_ARGUMENT, "to").mustBe(stringValue()).asStringVector().mustBe(size(1));
-        casts.arg("sub").defaultError(RError.Message.INVALID_ARGUMENT, "sub").mustBe(stringValue()).asStringVector().mustBe(size(1));
-        casts.arg("mark").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
-        casts.arg("toRaw").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
+        casts.arg("from").defaultError(RError.Message.INVALID_ARGUMENT, "from").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
+        casts.arg("to").defaultError(RError.Message.INVALID_ARGUMENT, "to").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
+        casts.arg("sub").defaultError(RError.Message.INVALID_ARGUMENT, "sub").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
+        casts.arg("mark").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg("toRaw").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
 
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected RStringVector doIConv(RAbstractStringVector x, Object from, Object to, Object sub, byte mark, byte toRaw,
-                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
-                    @Cached("createBinaryProfile()") ConditionProfile xLengthProfile) {
-        // TODO implement
-        RStringVector xv = x.materialize();
-        RStringVector result = RDataFactory.createStringVector(xv.getDataCopy(), RDataFactory.COMPLETE_VECTOR);
-        if (xLengthProfile.profile(result.getLength() == x.getLength())) {
-            copyAttributesNode.execute(result, x);
+    @TruffleBoundary
+    protected RAbstractStringVector doIConv(RAbstractStringVector x, String from, String to, String sub, @SuppressWarnings("unused") boolean mark, boolean toRaw,
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
+
+        if (toRaw) {
+            throw RInternalError.unimplemented("iconv with toRaw=TRUE");
         }
-        return result;
+
+        Charset fromCharset = getCharset(from, from, to);
+        Charset toCharset = getCharset(to, from, to);
+        boolean complete = x.isComplete();
+        if ((fromCharset == StandardCharsets.UTF_8 || fromCharset == StandardCharsets.UTF_16) && (toCharset == StandardCharsets.UTF_8 || toCharset == StandardCharsets.UTF_16)) {
+            // this conversion cannot change anything
+            return x;
+        } else {
+            // simulate the results of charset conversion
+            CharsetEncoder encoder = fromCharset.newEncoder();
+            CharsetDecoder decoder = toCharset.newDecoder();
+            if (RRuntime.isNA(sub)) {
+                encoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+                encoder.onMalformedInput(CodingErrorAction.REPORT);
+                decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+                decoder.onMalformedInput(CodingErrorAction.REPORT);
+            } else if ("byte".equals(sub)) {
+                // TODO: special mode that inserts <hexcode>
+                encoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+                encoder.onMalformedInput(CodingErrorAction.IGNORE);
+                decoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+                decoder.onMalformedInput(CodingErrorAction.IGNORE);
+            } else if (sub.isEmpty()) {
+                encoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+                encoder.onMalformedInput(CodingErrorAction.IGNORE);
+                decoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+                decoder.onMalformedInput(CodingErrorAction.IGNORE);
+            } else {
+                // ignore encoding errors
+                encoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+                encoder.onMalformedInput(CodingErrorAction.IGNORE);
+                // TODO: support more than one character in "replacement"
+                decoder.replaceWith(sub.substring(0, 1));
+                decoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
+                decoder.onMalformedInput(CodingErrorAction.REPLACE);
+            }
+            int length = x.getLength();
+            String[] data = new String[length];
+            for (int i = 0; i < length; i++) {
+                String value = x.getDataAt(i);
+                if (!RRuntime.isNA(value)) {
+                    try {
+                        data[i] = decoder.decode(encoder.encode(CharBuffer.wrap(value))).toString();
+                    } catch (CharacterCodingException e) {
+                        complete = false;
+                        data[i] = RRuntime.STRING_NA;
+                    }
+                }
+            }
+            RStringVector result = RDataFactory.createStringVector(data, complete);
+            copyAttributesNode.execute(result, x);
+            return result;
+        }
+    }
+
+    private Charset getCharset(String name, String from, String to) {
+        if (name.isEmpty()) {
+            return RContext.getInstance().stateRLocale.getCharset(RLocale.CTYPE);
+        }
+        Charset toCharset;
+        if ("C".equals(name)) {
+            toCharset = StandardCharsets.US_ASCII;
+        } else {
+            try {
+                toCharset = Charset.forName(name);
+            } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
+                throw error(Message.UNSUPPORTED_ENCODING_CONVERSION, from, to);
+            }
+        }
+        return toCharset;
     }
 }

@@ -45,7 +45,7 @@
 # A list of repos can be provided  with the --repos argument, which ia comma separated string of name=value pairs.
 # The names "CRAN", "BIOC" and "FASTR" are understood and have default values.
 # By default, we use the CRAN mirror specified in the --repos argument or env var CRAN_MIRROR.
-# The default value for --repos is "CRAN=http://cran.cnr.berkeley.edu"
+# The default value for --repos is "CRAN=http://cloud.r-project.org/"
 
 # Packages are installed into the directory specified by the --lib arg (or R_LIBS_USER env var)
 
@@ -279,7 +279,7 @@ set.repos <- function() {
 		} else if (name == "CRAN") {
 			if (is.na(uri)) {
 				# not set on command line
-				cran.mirror <<- Sys.getenv("CRAN_MIRROR", unset = "http://cran.cnr.berkeley.edu/")
+				cran.mirror <<- Sys.getenv("CRAN_MIRROR", unset = "http://cloud.r-project.org/")
 			} else {
 				cran.mirror <- uri
 			}
