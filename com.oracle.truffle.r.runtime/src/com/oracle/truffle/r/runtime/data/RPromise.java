@@ -238,7 +238,6 @@ public class RPromise extends RObject implements RTypedValue {
      * @see #execFrame
      */
     public final MaterializedFrame getFrame() {
-        assert !isEvaluated();
         return execFrame;
     }
 
