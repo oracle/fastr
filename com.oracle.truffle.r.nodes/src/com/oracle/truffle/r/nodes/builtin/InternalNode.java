@@ -297,12 +297,17 @@ public abstract class InternalNode extends OperatorNode {
         @Override
         @ExplodeLoop
         protected Object[] prepareArgs(VirtualFrame frame) {
-            Object[] args = new Object[factory.getSignature().getLength()];
+            int argsLength = factory.getSignature().getLength();
+            if (arguments.length < argsLength - 1) {
+                // Note: GnuR seems to be OK with this and makes up some random values
+                throw error(Message.ARGUMENT_LENGTHS_DIFFER);
+            }
+            Object[] args = new Object[argsLength];
 
             for (int i = 0; i < args.length - 1; i++) {
                 args[i] = arguments[i].execute(frame);
             }
-            Object[] varArgs = new Object[arguments.length - (factory.getSignature().getLength() - 1)];
+            Object[] varArgs = new Object[arguments.length - (argsLength - 1)];
             for (int i = 0; i < varArgs.length; i++) {
                 varArgs[i] = arguments[args.length - 1 + i].execute(frame);
             }
