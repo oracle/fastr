@@ -26,7 +26,6 @@ import java.util.HashMap;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
@@ -301,8 +300,8 @@ public class RPromise extends RObject implements RTypedValue {
          */
         private boolean deoptimized = false;
 
-        EagerPromise(PromiseState state, Closure closure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, int wrapIndex) {
-            super(state, (MaterializedFrame) null, closure);
+        EagerPromise(PromiseState state, Closure closure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, int wrapIndex, MaterializedFrame execFrame) {
+            super(state, execFrame, closure);
             assert state != PromiseState.Explicit;
             this.eagerValue = eagerValue;
             this.notChangedNonLocally = notChangedNonLocally;
@@ -317,7 +316,6 @@ public class RPromise extends RObject implements RTypedValue {
         public boolean deoptimize() {
             if (!deoptimized && !isEvaluated() && feedback != null) {
                 deoptimized = true;
-                notifyFailure();
                 materialize();
                 return false;
             }
@@ -327,8 +325,10 @@ public class RPromise extends RObject implements RTypedValue {
         @TruffleBoundary
         public void materialize() {
             if (execFrame == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
                 this.execFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, targetFrame).materialize();
+                if (feedback != null) {
+                    notifyFailure();
+                }
             }
         }
 
@@ -408,14 +408,14 @@ public class RPromise extends RObject implements RTypedValue {
          *            until evaluation
          * @return An {@link EagerPromise}
          */
-        public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, int wrapIndex) {
+        public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, int wrapIndex, MaterializedFrame execFrame) {
             return RDataFactory.createEagerPromise(state == PromiseState.Default ? PromiseState.EagerDefault : PromiseState.EagerSupplied, exprClosure, eagerValue, notChangedNonLocally, targetFrame,
-                            feedback, wrapIndex);
+                            feedback, wrapIndex, execFrame);
         }
 
-        public RPromise createPromisedPromise(RPromise promisedPromise, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback) {
+        public RPromise createPromisedPromise(RPromise promisedPromise, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, MaterializedFrame execFrame) {
             assert state == PromiseState.Supplied;
-            return RDataFactory.createPromisedPromise(exprClosure, promisedPromise, notChangedNonLocally, targetFrame, feedback);
+            return RDataFactory.createPromisedPromise(exprClosure, promisedPromise, notChangedNonLocally, targetFrame, feedback, execFrame);
         }
 
         public Object getExpr() {

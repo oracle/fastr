@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function.opt;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -99,10 +100,16 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
             promiseCallerProfile.enter();
             call = call.getParent();
         }
+
+        MaterializedFrame execFrame = null;
+        if (CompilerDirectives.inInterpreter()) {
+            execFrame = frame.materialize();
+        }
+
         if (result instanceof RPromise) {
-            return factory.createPromisedPromise((RPromise) result, notChangedNonLocally, call, this);
+            return factory.createPromisedPromise((RPromise) result, notChangedNonLocally, call, this, execFrame);
         } else {
-            return factory.createEagerSuppliedPromise(result, notChangedNonLocally, call, this, wrapIndex);
+            return factory.createEagerSuppliedPromise(result, notChangedNonLocally, call, this, wrapIndex, execFrame);
         }
     }
 

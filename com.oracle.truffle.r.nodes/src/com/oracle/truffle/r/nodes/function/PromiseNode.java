@@ -540,10 +540,10 @@ public abstract class PromiseNode extends RNode {
                     evaluatedArgs[i] = argValue;
                 } else {
                     size++;
-                    evaluatedArgs[i] = promiseCheckHelper.checkEvaluate(frame, argValue);
+                    Object arg = promiseCheckHelper.checkEvaluate(frame, argValue);
+                    evaluatedArgs[i] = arg;
                 }
                 if (evaluatedArgs[i] == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     throw RInternalError.shouldNotReachHere("evaluated argument must not be null");
                 }
             }
@@ -565,10 +565,10 @@ public abstract class PromiseNode extends RNode {
                     evaluatedArgs[i] = argValue;
                 } else {
                     size++;
-                    evaluatedArgs[i] = promiseCheckHelper.checkEvaluate(frame, argValue);
+                    Object arg = promiseCheckHelper.checkEvaluate(frame, argValue);
+                    evaluatedArgs[i] = arg;
                 }
                 if (evaluatedArgs[i] == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     throw RInternalError.shouldNotReachHere("evaluated argument must not be null");
                 }
             }

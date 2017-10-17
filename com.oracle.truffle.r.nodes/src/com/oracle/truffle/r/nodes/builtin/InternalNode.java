@@ -242,7 +242,8 @@ public abstract class InternalNode extends OperatorNode {
         protected Object[] prepareArgs(VirtualFrame frame) {
             Object[] args = new Object[arguments.length];
             for (int i = 0; i < args.length; i++) {
-                args[i] = arguments[i].execute(frame);
+                Object execute = arguments[i].execute(frame);
+                args[i] = execute;
             }
             return args;
         }
@@ -300,11 +301,13 @@ public abstract class InternalNode extends OperatorNode {
             Object[] args = new Object[factory.getSignature().getLength()];
 
             for (int i = 0; i < args.length - 1; i++) {
-                args[i] = arguments[i].execute(frame);
+                Object arg = arguments[i].execute(frame);
+                args[i] = arg;
             }
             Object[] varArgs = new Object[arguments.length - (factory.getSignature().getLength() - 1)];
             for (int i = 0; i < varArgs.length; i++) {
-                varArgs[i] = arguments[args.length - 1 + i].execute(frame);
+                Object arg = arguments[args.length - 1 + i].execute(frame);
+                varArgs[i] = arg;
             }
             args[args.length - 1] = new RArgsValuesAndNames(varArgs, ArgumentsSignature.empty(varArgs.length));
             return args;
