@@ -26,10 +26,15 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.channels.ByteChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.HashMap;
+import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
@@ -75,6 +80,36 @@ public class SocketConnections {
         @Override
         public String getSummaryDescription() {
             return (server ? "<-" : "->") + host + ":" + port;
+        }
+
+        @TruffleBoundary
+        public static byte[] select(RSocketConnection[] socketConnections, boolean write, long timeout) throws IOException {
+            int op = write ? SelectionKey.OP_WRITE : SelectionKey.OP_READ;
+
+            HashMap<RSocketConnection, SelectionKey> table = new HashMap<>();
+            Selector selector = Selector.open();
+            for (RSocketConnection con : socketConnections) {
+                con.checkOpen();
+
+                SocketChannel sc = (SocketChannel) con.theConnection.getChannel();
+                sc.configureBlocking(false);
+                table.put(con, sc.register(selector, op));
+            }
+            int select;
+            if (timeout >= 0) {
+                select = selector.select(timeout);
+            } else {
+                select = selector.select();
+            }
+
+            byte[] result = new byte[socketConnections.length];
+            if (select > 0) {
+                Set<SelectionKey> selectedKeys = selector.selectedKeys();
+                for (int i = 0; i < result.length; i++) {
+                    result[i] = RRuntime.asLogical(selectedKeys.contains(table.get(socketConnections[i])));
+                }
+            }
+            return result;
         }
     }
 
@@ -170,6 +205,12 @@ public class SocketConnections {
             super.close();
             connectionSocket.close();
         }
+
+        @Override
+        public ByteChannel getChannel() {
+            return connectionSocket;
+        }
+
     }
 
     private static class RClientSocketConnection extends RSocketReadWriteConnection {

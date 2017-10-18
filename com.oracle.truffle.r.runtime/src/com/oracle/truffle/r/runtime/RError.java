@@ -904,7 +904,9 @@ public final class RError extends RuntimeException implements TruffleException {
         LIST_NO_VALID_NAMES("list argument has no valid names"),
         VALUES_MUST_BE_LENGTH("values must be length %s,\n but FUN(X[[%d]]) result is length %s"),
         OS_REQUEST_LOCALE("OS reports request to set locale to \"%s\" cannot be honored"),
-        INVALID_TYPE("invalid type (%s) for '%s' (must be a %s)");
+        INVALID_TYPE("invalid type (%s) for '%s' (must be a %s)"),
+        NOT_A_LIST_OF_SOCKETS("not a list of sockets"),
+        NOT_A_SOCKET_CONNECTION("not a socket connection");
 
         public final String message;
         final boolean hasArgs;
