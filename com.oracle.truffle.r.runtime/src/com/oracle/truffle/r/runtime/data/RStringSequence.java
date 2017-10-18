@@ -79,8 +79,8 @@ public class RStringSequence extends RSequence implements RAbstractStringVector 
     }
 
     @Override
-    public RDoubleVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
+    public RStringVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createStringVector(new String[newLength], newIsComplete);
     }
 
     @Override
