@@ -2796,6 +2796,7 @@ stopifnot(r1 == r2)
 ##
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since points() uses graphics package
 ## PR#6652, points.formula with subset and extra arguments.
 roller <-
     data.frame(weight = c(1.9, 3.1, 3.3, 4.8, 5.3, 6.1, 6.4, 7.6, 9.8, 12.4),
@@ -2806,6 +2807,7 @@ with(roller, points( depression~weight, subset=8:10, col=2:4))
 plot(depression ~ weight, data=roller, type="n")
 points(depression~weight, subset=8:10, col=2:4, data=roller)
 ## first two gave error in 1.8.1
+} # [FastR] END Test snippet disabled since points() uses graphics package
 
 
 ## PR#4558 part 2
@@ -4134,6 +4136,7 @@ stopifnot(is.na(mean(NA)))
 ## failed in R 2.3.0
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since title() uses graphics package
 ## title etc failed if passed col etc of length > 1
 plot(1:2)
 title("foo", col=1:3)
@@ -4142,6 +4145,7 @@ title("foo", lty=1:3)
 title("foo", lwd=1:3)
 title("foo", bg=4:7)
 ## threw errors in R <= 2.3.0
+} # [FastR] END Test snippet disabled since title() uses graphics package
 
 
 ## glm did not allow array offsets

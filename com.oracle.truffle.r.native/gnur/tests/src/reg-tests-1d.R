@@ -259,10 +259,12 @@ stopifnot(tt == 1, length(nt <- names(tt)) == 4, is.na(nt[4])
 options(op) # (revert to default)
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since contour() uses graphics package
 ## contour() did not check args sufficiently
 tryCatch(contour(matrix(rnorm(100), 10, 10), levels = 0, labels = numeric()),
          error = function(e) e$message)
 ## caused segfault in R 3.3.1 and earlier
+} # [FastR] END Test snippet disabled since contour() uses graphics package
 
 
 ## unique.warnings() needs better duplicated():

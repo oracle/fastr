@@ -1,6 +1,7 @@
 pkgname <- "grDevices"
 source(file.path(R.home("share"), "R", "examples-header.R"))
 options(warn = 1)
+if(FALSE) { # [FastR] BEGIN Test body disabled due to graphics package use
 library('grDevices')
 
 base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
@@ -1596,6 +1597,7 @@ xyz.coords(data.frame(x = -1:9, y = 2:12, z = 3:13), y = NULL, z = NULL,
 
 
 
+} # [FastR] END Test body disabled due to graphics package use
 ### * <FOOTER>
 ###
 options(digits = 7L)

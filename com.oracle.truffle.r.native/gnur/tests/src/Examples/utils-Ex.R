@@ -268,7 +268,9 @@ Sweave(testfile)
 ## create an R source file from the code chunks
 Stangle(testfile)
 ## which can be sourced, e.g.
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since the source calls pairs() which uses graphics package
 source("Sweave-test-1.R")
+} # [FastR] END Test snippet disabled since the source calls pairs() which uses graphics package
 
 ## Don't show: 
 if(!interactive()) unlink("Sweave-test-1*")
@@ -1077,7 +1079,9 @@ flush(stderr()); flush(stdout())
 
 ### ** Examples
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 example(InsectSprays)
+} # [FastR] END Test snippet disabled due to graphics package use
 ## force use of the standard package 'stats':
 example("smooth", package = "stats", lib.loc = .Library)
 
@@ -1724,6 +1728,7 @@ flush(stderr()); flush(stdout())
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("methods")
 ### * methods
@@ -1762,6 +1767,7 @@ print(attr(m, "info"))    # more extensive information
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("modifyList")
 ### * modifyList
@@ -2034,6 +2040,7 @@ toBibtex(b)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("prompt")
 ### * prompt
@@ -2067,6 +2074,7 @@ unlink("sunspots.Rd")
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("promptData")
 ### * promptData
@@ -2524,6 +2532,7 @@ stack(pg, select = -ctrl)    # omitting one vector
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("str")
 ### * str
@@ -2625,6 +2634,7 @@ if(!had.stats4 && rs) detach("package:stats4")
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("strcapture")
 ### * strcapture

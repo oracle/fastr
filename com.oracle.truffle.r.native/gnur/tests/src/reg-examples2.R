@@ -30,7 +30,9 @@ example(ls.diag, run.donttest = TRUE)
 example(model.tables, run.donttest = TRUE)
 example(nlminb, run.donttest = TRUE)
 example(optim, run.donttest = TRUE)
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 example(prcomp, run.donttest = TRUE)
+} # [FastR] END Test snippet disabled due to graphics package use
 example(step, run.donttest = TRUE)
 example(summary.manova, run.donttest = TRUE)
 example(uniroot, run.donttest = TRUE)

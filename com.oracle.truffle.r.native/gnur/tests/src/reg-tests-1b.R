@@ -16,11 +16,12 @@ x <- structure(list(2), class="foo")
 str(x)
 ## gave infinite recursion < 2.6.0
 
-
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 curve(sin, -2*pi, 3*pi); pu1 <- par("usr")[1:2]
 curve(cos, add = NA) # add = NA new in 2.14.0
 stopifnot(all.equal(par("usr")[1:2], pu1))
 ## failed in R <= 2.6.0
+} # [FastR] END Test snippet disabled due to graphics package use
 
 
 ## tests of side-effects with CHARSXP caching
@@ -255,11 +256,13 @@ p2 <- predict(fit.log, log(nd))
 stopifnot(all.equal(p1, p2))
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since segments() uses graphics package
 ## wishlist PR#11192
 plot(1:10)
 segments(1, 1, 10, 10, col='green')
 segments(numeric(0), numeric(0), numeric(0), numeric(0), col='green')
 ## last was error in R < 2.8.0
+} # [FastR] END Test snippet disabled since segments() uses graphics package
 
 
 ## merging with a zero-row data frame
@@ -412,11 +415,13 @@ nls(y ~ ((g1)*exp((log(g2/g1))*(1-exp(-k*(x-Ta)))/(1-exp(-k*(Tb-Ta))))),
 ## failed for find weights in R <= 2.7.1
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 ## barplot(log = "y") with NAs (PR#11585)
 dat <- matrix(1:25, 5)
 dat[2,3] <- NA
 barplot(dat, beside = TRUE, log = "y")
 ## failed in 2.7.1
+} # [FastR] END Test snippet disabled due to graphics package use
 
 
 ## related to PR#12551
@@ -481,6 +486,7 @@ close(zz)
 ## was " .haha" (not according to DCF standard)
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since text() uses graphics package
 ## pdf() with CIDfonts active -- they need MBCS to be supported
 pdf(file = "testCID.pdf", family="Japan1") # << for CIDfonts, pd->fonts is NULL
 try({
@@ -498,6 +504,7 @@ plot(1,1,pch="", axes=FALSE)
 try(text(1,1,"A",family="Japan1"))
 unlink("testCID.ps")
 ## error instead of seg.fault
+} # [FastR] END Test snippet disabled since text() uses graphics package
 
 
 ## splinefun with derivatives evaluated to the left of first knot
@@ -568,14 +575,17 @@ stopifnot(length(deparse(quote(foo(1,2,3)), width.cutoff = 20, nlines=7)) ==1)
 ## was 7.
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since legend() uses graphics package
 ## legend did not reset xpd correctly (PR#12756)
 par(xpd = FALSE)
 plot(1)
 legend("top", legend="Tops", xpd=NA, inset=-0.1)
 stopifnot(identical(par("xpd"), FALSE))
 ## left xpd as NA
+} # [FastR] END Test snippet disabled since legend() uses graphics package
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since lines() uses graphics package
 ## lines.formula with 'subset' and no 'data' needed a tweak
 ## (R-help, John Field, 20008-11-14)
 x <- 1:5
@@ -583,6 +593,7 @@ y <- c(1,3,NA,2,5)
 plot(y ~ x, type="n")
 lines(y ~ x, subset = !is.na(y), col="red")
 ## error in 2.8.0
+} # [FastR] END Test snippet disabled since lines() uses graphics package
 
 
 ## prettyNum(*, drop0trailing) erronously dropped 0 in '1e10':

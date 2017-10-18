@@ -22,14 +22,18 @@ stopifnot(all.equal(
 
 par(pty="s")
 plot(c(-1,16), c(-1,16), type="n", xlab="", ylab="", xaxs="i", yaxs="i")
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 title("Centred chars in default char set (ISO Latin1)")
 grid(17, 17, lty=1)
+} # [FastR] END Test snippet disabled due to graphics package use
 known <- c(32:126, 160:255)
 
 for(i in known) {
     x <- i %% 16
     y <- i %/% 16
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
     points(x, y, pch=-i)
+} # [FastR] END Test snippet disabled due to graphics package use
 }
 
 par(pty="m")
@@ -38,6 +42,7 @@ par(pty="m")
 
 ### Prior to 1.2.2, the label sizes were unaffected by cex.
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 dotchart(VADeaths, main = "Death Rates in Virginia - 1940", cex = 0.5)
 dotchart(VADeaths, main = "Death Rates in Virginia - 1940", cex = 1.5)
 
@@ -47,8 +52,10 @@ t1 <- ts(0:100)
 plot(t1, log = "y")
 plot(cbind(t1, 10*t1, t1 - 4), log="y", plot.type = "single")
 stopifnot(par("usr")[4] > 3) # log10: ylim[2] = 1000
+} # [FastR] END Test snippet disabled due to graphics package use
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 ## This one needs to be looked at.
 ## lty = "blank" killed the fill colour too.
 plot(1:10, type="n")
@@ -58,6 +65,7 @@ rect(6, 6, 10, 10,  col="blue", border="red", lty="blank")
 with(trees, symbols(Height, Volume, circles=Girth/24, inches=FALSE,
                     lty="blank", bg="blue"))
 ## in 1.5.0 ignored the lty.
+} # [FastR] END Test snippet disabled due to graphics package use
 
 ## axis() and par(mgp < 0) {keep this example S+ compatible!}:
 lt <- if(is.R()) "31" else 2
@@ -66,6 +74,7 @@ op <- par(tck= +0.02, mgp = -c(3,2,0))
 plot(x, x^2 - 1.2, xaxt = "n", xlab="", type ='l', col = 2,
      main = "mgp < 0: all ticks and labels inside `frame'")
 x <- -2:3
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 lines(x, x^2 - 1.2, type ="h", col = 3, lwd=3)
 axis(1, pos = 0, at=-1:1, lty = lt, col=4)## col & lty work only from R 1.6
 par(op)
@@ -79,7 +88,9 @@ plot(UCBAdmissions, xlab = "x label", ylab = "YY")# wrong in 1.5.1
 plot(tt <- table(c(rep(0,7), rep(1,4), rep(5, 3))), axes = FALSE)
 plot(tt, xaxt = "n")
 ## wrong till (incl.) 1.6.x
+} # [FastR] END Test snippet disabled due to graphics package use
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 ## legend with call
 lo <- legend(2,2, substitute(hat(theta) == that, list(that= pi)))
 stopifnot(length(lo$text$x) == 1)
@@ -87,7 +98,9 @@ stopifnot(length(lo$text$x) == 1)
 
 plot(ecdf(c(1:4,8,12)), ylab = "ECDF", main=NULL)
 ## ylab didn't work till 1.8.0
+} # [FastR] END Test snippet disabled due to graphics package use
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 plot(1:10, pch = NA) # gave error till 1.9.0
 points(1:3, pch=c("o",NA,"x"))# used "N"
 try(points(4, pch=c(NA,FALSE)))# still give an error
@@ -96,6 +109,7 @@ try(points(4, pch=c(NA,FALSE)))# still give an error
 legend(1,10, c("A","bcd"), lwd = 2:3, pch= 21:22, pt.bg="skyblue",
        col = 2:3, bg = "thistle")
 ## (gave an error for 2 days in "2.0.0 unstable")
+} # [FastR] END Test snippet disabled due to graphics package use
 
 x <- 2^seq(1,1001, length=20)
 plot(x, x^0.9, type="l", log="xy")
@@ -104,6 +118,7 @@ plot(x, x^0.9, type="l", log="xy")
 plot(as.Date("2001/1/1") + 12*(1:9), 1:9)
 ## used bad 'xlab/ylab' in some versions of R 2.2.0(unstable)
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 ## dotchart() restoring par()
 Opar <- par(no.readonly=TRUE) ; dotchart(1:4, cex= 0.7)
 Npar <- par(no.readonly=TRUE)
@@ -137,6 +152,7 @@ curve(5*exp(-x), 0.1, 100, n = 3, log="x", ylab="", axes=FALSE)
 curve(5*exp(-x), add=TRUE, n = 3, col=2,lwd=3)
 ## should fully overplot; wrong default xlim in 2.6.1
 ## (and *slightly* wrong up to 2.6.0)
+} # [FastR] END Test snippet disabled due to graphics package use
 
 ## Axis() calls via plot()  {[xy]axt to keep *.ps small}
 x <- as.Date("2008-04-22 09:45") + (i <- c(0,4))
@@ -144,6 +160,7 @@ plot(x,    xaxt="n")# not ok in 2.6.2, nor 2.7.0
 plot(x, i, yaxt="n")# ok in 2.6.2  and 2.7.0
 plot(i, x, xaxt="n")# ok in 2.6.2 and not in 2.7.0
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 ## table methods should be bypassed:
 dotchart(table(infert$education))
 ## failed in 2.12.[12]
@@ -152,6 +169,7 @@ dotchart(table(infert$education))
 hc <- hclust(dst <- dist(c(1:2, 5)), method="ave")
 plot(hc, cex = 2, axes=FALSE, ann=FALSE)
 ## cex was not used in 3.0.[01]
+} # [FastR] END Test snippet disabled due to graphics package use
 
 ## axis.Date() and axis.POSIXct() with reversed 'xlim'
 toD <- as.Date("2016-08-19"); dates <- c(toD - 10, toD)
