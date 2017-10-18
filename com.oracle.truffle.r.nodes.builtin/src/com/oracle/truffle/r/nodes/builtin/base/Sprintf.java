@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -31,11 +32,14 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -49,12 +53,18 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public abstract class Sprintf extends RBuiltinNode.Arg2 {
 
     static {
-        Casts.noCasts(Sprintf.class);
+        Casts casts = new Casts(Sprintf.class);
+        casts.arg("fmt").mustBe(stringValue()).asStringVector();
     }
 
     public abstract Object executeObject(String fmt, Object args);
 
     @Child private Sprintf sprintfRecursive;
+
+    @Specialization
+    protected RStringVector sprintf(RAbstractStringVector fmt, RList values) {
+        return sprintf(fmt, new RArgsValuesAndNames(values.getReadonlyData(), ArgumentsSignature.empty(values.getLength())));
+    }
 
     @Specialization
     protected RStringVector sprintf(@SuppressWarnings("unused") RAbstractStringVector fmt, @SuppressWarnings("unused") RNull x) {
@@ -272,7 +282,10 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
                     data[i] = (String) formattedObj;
                 } else {
                     RStringVector formatted = (RStringVector) formattedObj;
-                    assert formatted.getLength() > 0;
+                    if (formatted.getLength() == 0) {
+                        // Any NULL inside args causes the whole result to be empty vector
+                        return formatted;
+                    }
                     data[i] = formatted.getDataAt(i % formatted.getLength());
                 }
             }
@@ -494,7 +507,11 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
                             widthAndPrecision(cs, j, fi);
                             j = fi.nextChar;
                         } else if (c == '.') {
-                            // apparently precision can be specified without width as well
+                            // apparently precision can be specified without width as well, but in
+                            // such case the '0' prefix if any should be interpreted as width...
+                            if (fi.padZero) {
+                                fi.padZero = false;
+                            }
                             oneWidth(cs, j + 1, fi, false);
                             j = fi.nextChar;
                         } else {
@@ -532,7 +549,7 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
         if (isNumeric(cs[j])) {
             n = number(cs, j, fi);
             j = fi.nextChar;
-        } else {
+        } else if (cs[j] == '*') {
             assert cs[j] == '*';
             if (width) {
                 fi.widthIsArg = true;
@@ -548,6 +565,11 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
             } else {
                 n = fi.argc++;
             }
+        } else {
+            if (!isConversion(cs[j])) {
+                throw RError.error(RError.NO_CALLER, Message.UNRECOGNIZED_FORMAT, new String(cs));
+            }
+            n = 0;
         }
         if (width) {
             fi.width = n;
