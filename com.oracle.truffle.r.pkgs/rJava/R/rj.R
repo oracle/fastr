@@ -154,7 +154,7 @@ J <- function (class, method, ...)
 #
 
 #' @export
-.jinit <- function ()
+.jinit <- function (...)
 {    
     # do nothing
 }
