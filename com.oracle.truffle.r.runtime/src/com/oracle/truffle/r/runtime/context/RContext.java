@@ -93,6 +93,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinLookup;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
+import com.oracle.truffle.r.runtime.data.LanguageClosureCache;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -359,6 +360,7 @@ public final class RContext implements RTruffleObject {
     public final WeakHashMap<Path, REnvironment> srcfileEnvironments = new WeakHashMap<>();
     public final List<String> libraryPaths = new ArrayList<>(1);
     public final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
+    public final LanguageClosureCache languageClosureCache = new LanguageClosureCache();
 
     private final AllocationReporter allocationReporter;
 

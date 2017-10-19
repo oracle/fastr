@@ -20,26 +20,34 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.function;
+package com.oracle.truffle.r.runtime.data;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * A trait that enables the caching of {@link Closure}s for certain expressions ({@link RNode}s).
  */
-interface ClosureCache {
+public interface ClosureCache {
+
+    default Closure getOrCreatePromiseClosure(RNode expr) {
+        return getOrCreateClosure(Closure.PROMISE_CLOSURE_WRAPPER_NAME, expr);
+    }
+
+    default Closure getOrCreateLanguageClosure(RNode expr) {
+        return getOrCreateClosure(Closure.LANGUAGE_CLOSURE_WRAPPER_NAME, expr);
+    }
+
     /**
      * @param expr
      * @return A {@link Closure} representing the given {@link RNode}. If expr is <code>null</code>
      *         <code>null</code> is returned.
      */
     @TruffleBoundary
-    default Closure getOrCreateClosure(RNode expr) {
+    default Closure getOrCreateClosure(String name, RNode expr) {
         if (expr == null) {
             return null;
         }
@@ -47,7 +55,7 @@ interface ClosureCache {
         IdentityHashMap<RNode, Closure> cache = getContent();
         Closure result = cache.get(expr);
         if (result == null) {
-            result = Closure.create(expr);
+            result = Closure.create(name, expr);
             cache.put(expr, result);
         }
         return result;

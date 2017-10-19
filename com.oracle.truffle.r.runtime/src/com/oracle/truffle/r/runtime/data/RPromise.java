@@ -22,27 +22,18 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.HashMap;
-
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 /**
  * Denotes an R {@code promise}.
@@ -427,78 +418,6 @@ public class RPromise extends RObject implements RTypedValue {
 
         public PromiseState getState() {
             return state;
-        }
-    }
-
-    public static final class Closure {
-        private HashMap<FrameDescriptor, RootCallTarget> callTargets;
-
-        public static final String CLOSURE_WRAPPER_NAME = new String("<promise>");
-
-        private final RBaseNode expr;
-        private final String symbol;
-        private final String stringConstant;
-
-        private Closure(RBaseNode expr) {
-            this.expr = expr;
-            if (expr.asRSyntaxNode() instanceof RSyntaxLookup) {
-                this.symbol = Utils.intern(((RSyntaxLookup) expr.asRSyntaxNode()).getIdentifier());
-            } else {
-                this.symbol = null;
-            }
-            if (expr.asRSyntaxNode() instanceof RSyntaxConstant) {
-                Object constant = ((RSyntaxConstant) expr.asRSyntaxNode()).getValue();
-                if (constant instanceof String) {
-                    this.stringConstant = (String) constant;
-                } else if (constant instanceof RAbstractStringVector && ((RAbstractStringVector) constant).getLength() == 1) {
-                    this.stringConstant = ((RAbstractStringVector) constant).getDataAt(0);
-                } else {
-                    this.stringConstant = null;
-                }
-            } else {
-                this.stringConstant = null;
-            }
-        }
-
-        public static Closure create(RBaseNode expr) {
-            return new Closure(expr);
-        }
-
-        /**
-         * Evaluates an {@link com.oracle.truffle.r.runtime.data.RPromise.Closure} in {@code frame}.
-         */
-        public Object eval(MaterializedFrame frame) {
-            CompilerAsserts.neverPartOfCompilation();
-
-            // Create lazily, as it is not needed at all for INLINED promises!
-            if (callTargets == null) {
-                callTargets = new HashMap<>();
-            }
-            FrameDescriptor desc = frame.getFrameDescriptor();
-            RootCallTarget callTarget = callTargets.get(desc);
-
-            if (callTarget == null) {
-                // clone for additional call targets
-                callTarget = generateCallTarget((RNode) (callTargets.isEmpty() ? expr : RContext.getASTBuilder().process(expr.asRSyntaxNode())));
-                callTargets.put(desc, callTarget);
-            }
-            return callTarget.call(frame);
-        }
-
-        private static RootCallTarget generateCallTarget(RNode expr) {
-            return RContext.getEngine().makePromiseCallTarget(expr, CLOSURE_WRAPPER_NAME + System.identityHashCode(expr));
-        }
-
-        public RBaseNode getExpr() {
-            return expr;
-        }
-
-        public String asSymbol() {
-            return symbol;
-        }
-
-        public String asStringConstant() {
-            return stringConstant;
         }
     }
 

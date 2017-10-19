@@ -66,6 +66,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -75,7 +76,6 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -282,7 +282,7 @@ public class FrameFunctions {
                     VarArgsPromiseNode vararg = (VarArgsPromiseNode) arg;
 
                     ArgumentsSignature varArgSignature = vararg.getSignature();
-                    RPromise.Closure[] closures = vararg.getClosures();
+                    Closure[] closures = vararg.getClosures();
 
                     RNode[] varArgNodes = new RNode[varArgSignature.getLength()];
                     for (int i2 = 0; i2 < varArgNodes.length; i2++) {
@@ -339,7 +339,7 @@ public class FrameFunctions {
             RSyntaxNode[] newArgs = nodes.toArray(new RSyntaxNode[nodes.size()]);
 
             RSyntaxNode modCallNode = RASTUtils.createCall(callNode.getFunction(), false, sig, newArgs);
-            return RDataFactory.createLanguage(modCallNode.asRNode());
+            return RDataFactory.createLanguage(Closure.createLanguageClosure(modCallNode.asRNode()));
         }
 
         private static RNode checkForVarArgNode(RArgsValuesAndNames varArgParameter, RNode arg) {

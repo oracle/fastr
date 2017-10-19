@@ -49,6 +49,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
@@ -64,7 +65,6 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RScalar;
@@ -2597,13 +2597,14 @@ public class RSerialize {
         }
 
         public static RLanguage processLanguage(Object car, Object cdr, Object tag) {
-            return RDataFactory.createLanguage(processCall(car, cdr, tag).asRNode());
+            Closure closure = Closure.createLanguageClosure(processCall(car, cdr, tag).asRNode());
+            return RDataFactory.createLanguage(closure);
         }
 
         public static RPromise processPromise(Object car, Object cdr, Object tag) {
             // car == value, cdr == expression, tag == environment
 
-            Closure closure = Closure.create(processBody(cdr).asRNode());
+            Closure closure = Closure.createPromiseClosure(processBody(cdr).asRNode());
             if (car == RUnboundValue.instance) {
                 REnvironment env = tag == RNull.instance ? REnvironment.baseEnv() : (REnvironment) tag;
                 return RDataFactory.createPromise(PromiseState.Explicit, closure, env.getFrame());

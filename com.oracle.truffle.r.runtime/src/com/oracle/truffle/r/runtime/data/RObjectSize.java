@@ -123,7 +123,7 @@ public class RObjectSize {
         registerTypeCustomizer(Node.class, IGNORE);
         registerTypeCustomizer(CallTarget.class, IGNORE);
         registerTypeCustomizer(RBuiltinDescriptor.class, IGNORE);
-        registerTypeCustomizer(RPromise.Closure.class, IGNORE);
+        registerTypeCustomizer(Closure.class, IGNORE);
         registerTypeCustomizer(Assumption.class, IGNORE);
         registerTypeCustomizer(RCaller.class, IGNORE);
         registerTypeCustomizer(SEXPTYPE.class, IGNORE);

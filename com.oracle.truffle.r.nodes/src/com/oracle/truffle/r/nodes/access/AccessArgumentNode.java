@@ -41,10 +41,10 @@ import com.oracle.truffle.r.nodes.function.opt.OptConstantPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptVariablePromiseBaseNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -142,7 +142,7 @@ public final class AccessArgumentNode extends RNode {
     private void checkPromiseFactory() {
         if (factory == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            Closure defaultClosure = formals.getOrCreateClosure(formals.getDefaultArgument(index));
+            Closure defaultClosure = formals.getOrCreatePromiseClosure(formals.getDefaultArgument(index));
             factory = RPromiseFactory.create(PromiseState.Default, defaultClosure);
         }
     }

@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -172,7 +173,8 @@ public class FastRTrace {
             // the complex case
             RLanguage tracer;
             if (tracerObj instanceof RFunction) {
-                tracer = RDataFactory.createLanguage(RASTUtils.createCall(tracerObj, false, ArgumentsSignature.empty(0)).asRNode());
+                Closure closure = Closure.createLanguageClosure(RASTUtils.createCall(tracerObj, false, ArgumentsSignature.empty(0)).asRNode());
+                tracer = RDataFactory.createLanguage(closure);
             } else if (tracerObj instanceof RLanguage) {
                 tracer = (RLanguage) tracerObj;
             } else {

@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -467,7 +468,7 @@ public class MethodsListDispatch {
             for (int i = 0; i < args.length; i++) {
                 args[i] = RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, sig.getName(i), false);
             }
-            RLanguage newCall = RDataFactory.createLanguage(RCallNode.createCall(RSyntaxNode.SOURCE_UNAVAILABLE, f, sig, args));
+            RLanguage newCall = RDataFactory.createLanguage(Closure.createLanguageClosure(RCallNode.createCall(RSyntaxNode.SOURCE_UNAVAILABLE, f, sig, args)));
             Object res = RContext.getEngine().eval(newCall, ev.getFrame());
             return res;
         }

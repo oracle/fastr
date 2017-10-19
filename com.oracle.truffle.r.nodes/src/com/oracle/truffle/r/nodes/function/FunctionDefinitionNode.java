@@ -69,6 +69,7 @@ import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -365,7 +366,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                                     CompilerDirectives.transferToInterpreter();
                                     RInternalError.shouldNotReachHere("unexpected type for on.exit entry: " + expr.car());
                                 }
-                                onExitExpressionCache.execute(frame, expr.car());
+                                onExitExpressionCache.execute(frame, Closure.createLanguageClosure((RNode) expr.car()));
                             }
                         }
                     } catch (ReturnException ex) {

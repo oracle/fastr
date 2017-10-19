@@ -39,10 +39,8 @@ import com.oracle.truffle.r.nodes.InlineCacheNodesFactory.InlineCachePromiseNode
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.context.Engine;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.TruffleBiFunction;
@@ -101,8 +99,8 @@ public abstract class InlineCacheNodes {
         }
 
         /**
-         * Creates an inline cache that will execute runtime expression given to it as RNodes by using a
-         * PIC and falling back to {@link Engine#eval(RLanguage, MaterializedFrame)}.
+         * Creates an inline cache that will execute runtime expression given to it as RNodes by
+         * using a PIC and falling back to {@link Engine#eval(RLanguage, MaterializedFrame)}.
          *
          * @param maxPicDepth maximum number of entries in the polymorphic inline cache
          */
@@ -111,8 +109,8 @@ public abstract class InlineCacheNodes {
         }
 
         /**
-         * Creates an inline cache that will execute promises closures by using a PIC and falling back
-         * to {@link InlineCacheNode#evalPromise(Frame, Closure)}.
+         * Creates an inline cache that will execute promises closures by using a PIC and falling
+         * back to {@link InlineCacheNode#evalPromise(Frame, Closure)}.
          *
          * @param maxPicDepth maximum number of entries in the polymorphic inline cache
          */
@@ -174,12 +172,12 @@ public abstract class InlineCacheNodes {
 
         @Specialization(replaces = "doCached")
         protected Object doGeneric(Frame frame, Object value) {
-            return RContext.getEngine().eval(RDataFactory.createLanguage((RNode) value), frame.materialize());
+            return evalPromise(frame, (Closure) value);
         }
 
         @Override
         protected RNode cache(Object value) {
-            return RASTUtils.cloneNode((RNode) value);
+            return RASTUtils.cloneNode((RNode) ((Closure) value).getExpr());
         }
 
         public static InlineCacheExpressionNode create(int maxPicDepth) {

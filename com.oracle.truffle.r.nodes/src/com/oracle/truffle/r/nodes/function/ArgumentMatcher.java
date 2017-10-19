@@ -53,12 +53,13 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.data.Closure;
+import com.oracle.truffle.r.runtime.data.ClosureCache;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -493,7 +494,7 @@ public class ArgumentMatcher {
              * InfixEmulationFunctions.tilde).
              */
             RNode defaultArg = formals.getDefaultArgument(formalIndex);
-            Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
+            Closure defaultClosure = formals.getOrCreatePromiseClosure(defaultArg);
             return PromiseNode.create(RPromiseFactory.create(PromiseState.Default, defaultClosure), noOpt, false);
         }
         return ConstantNode.create(formals.getInternalDefaultArgumentAt(formalIndex));
@@ -510,7 +511,7 @@ public class ArgumentMatcher {
         if (shouldInlineArgument(builtin, formalIndex, fastPath)) {
             return PromiseNode.createInlined(suppliedArg, formals.getInternalDefaultArgumentAt(formalIndex), builtin == null || builtin.getKind() == RBuiltinKind.PRIMITIVE);
         } else {
-            Closure closure = closureCache.getOrCreateClosure(suppliedArg);
+            Closure closure = closureCache.getOrCreatePromiseClosure(suppliedArg);
             boolean forcedEager = fastPath != null && fastPath.forcedEagerPromise(formalIndex);
             return PromiseNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), noOpt, forcedEager);
         }

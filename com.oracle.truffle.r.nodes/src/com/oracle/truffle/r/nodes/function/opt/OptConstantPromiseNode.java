@@ -24,9 +24,9 @@ package com.oracle.truffle.r.nodes.function.opt;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -43,7 +43,7 @@ public final class OptConstantPromiseNode extends PromiseNode {
     public OptConstantPromiseNode(PromiseState state, RBaseNode constantExpression, Object constantValue) {
         super(null);
         this.state = state;
-        this.constantExpression = Closure.create(constantExpression);
+        this.constantExpression = Closure.createPromiseClosure(constantExpression);
         this.constantValue = constantValue;
     }
 

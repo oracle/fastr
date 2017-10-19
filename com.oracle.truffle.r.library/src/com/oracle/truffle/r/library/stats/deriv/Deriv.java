@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -350,7 +351,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
 
             return new DerivResult(blockCall, targetArgs);
         } else {
-            RLanguage lan = RDataFactory.createLanguage(blockCall.asRNode());
+            RLanguage lan = RDataFactory.createLanguage(Closure.createLanguageClosure(blockCall.asRNode()));
             RExpression res = RDataFactory.createExpression(new Object[]{lan});
             return new DerivResult(res);
         }

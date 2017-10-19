@@ -63,6 +63,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -70,7 +71,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -195,7 +195,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
 
         @TruffleBoundary
         private static RPromise createLookupPromise(MaterializedFrame callerFrame, RSymbol symbol) {
-            Closure closure = RPromise.Closure.create(RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, symbol.getName(), false).asRNode());
+            Closure closure = Closure.createPromiseClosure(RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, symbol.getName(), false).asRNode());
             return RDataFactory.createPromise(PromiseState.Supplied, closure, callerFrame);
         }
 
@@ -239,7 +239,8 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
             for (int i = 0; i < argValues.length; i++) {
                 ShareObjectNode.share(argValues[i]);
             }
-            RLanguage lang = RDataFactory.createLanguage(RASTUtils.createCall(ConstantNode.create(function), true, argsSignature, argsConstants).asRNode());
+            Closure closure = Closure.createLanguageClosure(RASTUtils.createCall(ConstantNode.create(function), true, argsSignature, argsConstants).asRNode());
+            RLanguage lang = RDataFactory.createLanguage(closure);
             try {
                 Object resultValue = RContext.getEngine().eval(lang, env, call.withInternalParent());
                 MaterializedFrame envFrame = env.getFrame();

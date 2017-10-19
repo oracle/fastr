@@ -42,6 +42,7 @@ import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory.FullCallNeededException;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -159,7 +160,7 @@ abstract class ReplacementNode extends OperatorNode {
     static RLanguage getLanguage(WriteVariableNode wvn) {
         Node parent = wvn.getParent();
         if (parent instanceof ReplacementNode) {
-            return RDataFactory.createLanguage((ReplacementNode) parent);
+            return RDataFactory.createLanguage(Closure.createLanguageClosure((ReplacementNode) parent));
         }
         return null;
     }

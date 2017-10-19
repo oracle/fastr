@@ -88,6 +88,7 @@ import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -462,8 +463,8 @@ final class REngine implements Engine, Engine.Timings {
         if (n instanceof ConstantNode) {
             return ((ConstantNode) n).getValue();
         }
-        RootCallTarget callTarget = doMakeCallTarget(n, RSource.Internal.EVAL_WRAPPER.string, false, false);
-        return callTarget.call(frame);
+        Closure closure = expr.getClosure();
+        return closure.eval(frame);
     }
 
     @Override

@@ -86,6 +86,7 @@ import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -94,7 +95,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -543,36 +543,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return call.execute(frame, resultFunction, new RArgsValuesAndNames(args, argsSignature), s3Args, s3DefaulArguments);
     }
 
-    private static Object tryS4Dispatch(VirtualFrame frame, ConditionProfile isAttributableProfile, ConditionProfile isS4Profile, PromiseCheckHelperNode promiseHelperNode, FunctionDispatch call,
-                    Object[] args, int typeXIdx, ArgumentsSignature argsSignature, RBuiltinDescriptor builtin, Object dispatchObject) {
-
-        boolean isS4Dispatch = false;
-
-        // First, check S4 dispatch for 'dispatchObject' (= first suitable argument)
-        if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
-            isS4Dispatch = true;
-        } else if (args.length > typeXIdx + 1) {
-            for (int i = typeXIdx + 1; i < args.length; i++) {
-                Object argi = promiseHelperNode.checkEvaluate(frame, args[i]);
-                if (isAttributableProfile.profile(argi instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) argi).isS4())) {
-                    isS4Dispatch = true;
-                    break;
-                }
-            }
-        }
-
-        if (isS4Dispatch) {
-            RList list = (RList) promiseHelperNode.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
-            int index = list.getElementIndexByName(builtin.getName());
-            if (index != -1) {
-                RFunction basicFun = (RFunction) list.getDataAt(index);
-                return call.execute(frame, basicFun, new RArgsValuesAndNames(args, argsSignature), null, null);
-            }
-        }
-
-        return null;
-    }
-
     protected final class ForeignCall extends Node {
 
         @Child private CallArgumentsNode arguments;
@@ -972,7 +942,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         @TruffleBoundary
         private static Object createPromise(Object arg) {
-            return RDataFactory.createEvaluatedPromise(Closure.create(ConstantNode.create(arg)), arg);
+            return RDataFactory.createEvaluatedPromise(Closure.createPromiseClosure(ConstantNode.create(arg)), arg);
         }
 
         @Override

@@ -150,7 +150,7 @@ public class RPromiseMR {
         @Specialization
         protected Object access(RPromise receiver, String identifier) {
             if (PROP_EXPR.equals(identifier)) {
-                return RDataFactory.createLanguage(receiver.getRep());
+                return RDataFactory.createLanguage(receiver.getClosure());
             }
             if (PROP_IS_EVALUATED.equals(identifier)) {
                 return RRuntime.asLogical(receiver.isEvaluated());
