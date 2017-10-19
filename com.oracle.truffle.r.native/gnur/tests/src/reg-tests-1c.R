@@ -75,9 +75,11 @@ try ( k. <- kmeans(r., 3) ) # after rounding, have only two distinct points
       k. <- kmeans(r., 2)   # fine
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since stem() uses graphics package
 ## PR#15376
 stem(c(1, Inf))
 ## hung in 3.0.1
+} # [FastR] END Test snippet disabled since stem() uses graphics package
 
 
 ## PR#15377, very long variable names
@@ -203,11 +205,13 @@ agg <- aggregate.data.frame(x, by, mean)
 stopifnot(nrow(unique(by)) == nrow(agg))
 ## rounding caused groups to be falsely merged
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since contour() uses graphics package
 ## PR#15454
 set.seed(357)
 z <- matrix(c(runif(50, -1, 1), runif(50, -1e-190, 1e-190)), nrow = 10)
 contour(z)
 ## failed because rounding made crossing tests inconsistent
+} # [FastR] END Test snippet disabled since contour() uses graphics package
 
 ## Various cases where zero length vectors were not handled properly
 ## by functions in base and utils, including PR#15499

@@ -9,7 +9,9 @@ dont <- list(graphics = c("Hershey", "Japanese", "plotmath"),
              stats = c("lm.glm", "nlm")
              )
 ## don't take tcltk here
-for(pkg in c("base", "graphics", "stats")) {
+# [FastR] Skip "graphics" package demos
+#for(pkg in c("base", "graphics", "stats")) {
+for(pkg in c("base", "stats")) {
 
     demos <- list.files(file.path(system.file(package = pkg), "demo"),
                         pattern = "\\.R$")

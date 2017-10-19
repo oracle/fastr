@@ -36,6 +36,7 @@ for(m in marg) print(apply(arr, print(m), sum))
 for(m in marg) ## 75% of the time here was spent on the names
   print(dim(apply(arr, print(m), quantile, names=FALSE)) == c(5,d.arr[m]))
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since legend() and besselY() use graphics package
 ## Bessel
 nus <- c(0:5,10,20)
 
@@ -58,6 +59,7 @@ which(bY >= 0)
 summary(bY <- besselY(2,nu = nu <- seq(3,300,len=51)))
 summary(bI <- besselI(x = x <- 10:700, 1))
 ## end of moved from Bessel.Rd
+} # [FastR] END Test snippet disabled since legend() and besselY() use graphics package
 
 ## data.frame
 set.seed(123)
@@ -1172,6 +1174,7 @@ summary(sample.aov)
 ## failed in 1.8.1
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since stem() uses graphics package
 ## PR#6645  stem() with near-constant values
 stem(rep(1, 100))
 stem(rep(0.1, 10))
@@ -1179,6 +1182,7 @@ stem(c(rep(1, 10), 1+1.e-8))
 stem(c(rep(1, 10), 1+1.e-9))
 stem(c(rep(1, 10), 1+1.e-10), atom=0) # integer-overflow is avoided.
 ##  had integer overflows in 1.8.1, and silly shifts of decimal point
+} # [FastR] END Test snippet disabled since stem() uses graphics package
 
 
 ## PR#6633 warnings with vector op matrix, and more
@@ -1232,9 +1236,11 @@ try(x[-c(1, NA)])
 ## worked on some platforms, segfaulted on others in 1.8.1
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since boxplot() uses graphics package
 ## vector 'border' (and no 'pch', 'cex' nor 'bg'):
 boxplot(count ~ spray, data = InsectSprays, border=2:7)
 ## gave warnings in 1.9.0
+} # [FastR] END Test snippet disabled since boxplot() uses graphics package
 
 summary(as.Date(paste("2002-12", 26:31, sep="-")))
 ## printed all "2002.-12-29" in 1.9.1 {because digits was too small}
@@ -1682,9 +1688,11 @@ a.frame
 ### end of tests added in 2.2.0 patched ###
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since pairs() uses graphics package
 ## test of fix of trivial warning PR#8252
 pairs(iris[1:4], oma=rep(3,4))
 ## warned in 2.2.0 only
+} # [FastR] END Test snippet disabled since pairs() uses graphics package
 
 
 ## str(<dendrogram>)

@@ -47,7 +47,9 @@ example(news, run.donttest = TRUE)
 example(sessionInfo, run.donttest = TRUE)
 
 ## datasets
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 example(JohnsonJohnson, run.donttest = TRUE)
+} # [FastR] END Test snippet disabled due to graphics package use
 example(ability.cov, run.donttest = TRUE)
 example(npk, run.donttest = TRUE)
 

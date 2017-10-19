@@ -1,6 +1,7 @@
 pkgname <- "graphics"
 source(file.path(R.home("share"), "R", "examples-header.R"))
 options(warn = 1)
+if(FALSE) { # [FastR] BEGIN Test body disabled due to graphics package use
 library('graphics')
 
 base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
@@ -2683,6 +2684,7 @@ arrows(res$x[nr-3], res$y[nr-3], res$x[nr], res$y[nr], code = 2, length = 0.1)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test body disabled due to graphics package use
 ### * <FOOTER>
 ###
 options(digits = 7L)

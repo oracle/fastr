@@ -39,13 +39,17 @@ summary(iris)
 ###################################################
 ### code chunk number 6: Sweave-test-1.Rnw:53-55
 ###################################################
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 library(graphics)
 pairs(iris)
+} # [FastR] END Test snippet disabled due to graphics package use
 
 
 ###################################################
 ### code chunk number 7: Sweave-test-1.Rnw:63-64
 ###################################################
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 boxplot(Sepal.Length~Species, data=iris)
+} # [FastR] END Test snippet disabled due to graphics package use
 
 

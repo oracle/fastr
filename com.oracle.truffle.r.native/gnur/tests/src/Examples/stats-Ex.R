@@ -96,6 +96,7 @@ x <- seq(0, 1, length = 21)
 dbeta(x, 1, 1)
 pbeta(x, 1, 1)
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since abline() uses graphics package
 ## Visualization, including limit cases:
 pl.beta <- function(a,b, asp = if(isLim) 1, ylim = if(isLim) c(0,1.1)) {
   if(isLim <- a == 0 || b == 0 || a == Inf || b == Inf) {
@@ -129,9 +130,11 @@ pl.beta(Inf, 2) ## point mass at 1 ; the same as
 pl.beta(3, 0)
 
 pl.beta(Inf, Inf)# point mass at 1/2
+} # [FastR] END Test snippet disabled since abline() uses graphics package
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("Binomial")
 ### * Binomial
@@ -162,6 +165,7 @@ mtext("log(dbinom(k))", col = "red", adj = 1)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("Cauchy")
 ### * Cauchy
@@ -179,6 +183,7 @@ dcauchy(-1:4)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("Chisquare")
 ### * Chisquare
@@ -217,6 +222,7 @@ stopifnot(all.equal(p00, exp(-lam/2)),
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("Exponential")
 ### * Exponential
@@ -236,7 +242,9 @@ dexp(1) - exp(-1) #-> 0
 rsunif <- function(n) { n1 <- n+1
    cE <- cumsum(rexp(n1)); cE[seq_len(n)]/cE[n1] }
 plot(rsunif(1000), ylim=0:1, pch=".")
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since abline() uses graphics package
 abline(0,1/(1000+1), col=adjustcolor(1, 0.5))
+} # [FastR] END Test snippet disabled since abline() uses graphics package
 
 
 
@@ -309,6 +317,7 @@ Ni <- rgeom(20, prob = 1/4); table(factor(Ni, 0:max(Ni)))
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("HoltWinters")
 ### * HoltWinters
@@ -349,6 +358,7 @@ options(od)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("Hypergeometric")
 ### * Hypergeometric
@@ -554,6 +564,7 @@ NLSstRtAsymptote( DN.srt )
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("NegBinomial")
 ### * NegBinomial
@@ -595,6 +606,8 @@ barplot(rbind(h1$counts, h2$counts, h3$counts),
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("Normal")
 ### * Normal
@@ -640,6 +653,8 @@ erfcinv <- function (x) qnorm(x/2, lower = FALSE)/sqrt(2)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("Poisson")
 ### * Poisson
@@ -675,6 +690,7 @@ stopifnot(identical(dpois(0,0), 1),
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("SSD")
 ### * SSD
@@ -713,6 +729,7 @@ estVar(mlmfit)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("SSasymp")
 ### * SSasymp
@@ -770,6 +787,8 @@ require(graphics)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("SSasympOff")
 ### * SSasympOff
@@ -820,6 +839,8 @@ require(graphics)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("SSasympOrig")
 ### * SSasympOrig
@@ -859,6 +880,8 @@ require(graphics)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("SSbiexp")
 ### * SSbiexp
@@ -903,6 +926,7 @@ summary(fm1)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("SSfol")
 ### * SSfol
@@ -927,6 +951,7 @@ summary(fm1)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("SSfpl")
 ### * SSfpl
@@ -982,6 +1007,7 @@ require(graphics)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("SSgompertz")
 ### * SSgompertz
@@ -1008,6 +1034,7 @@ summary(fm1)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("SSlogis")
 ### * SSlogis
@@ -1048,6 +1075,8 @@ require(graphics)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("SSmicmen")
 ### * SSmicmen
@@ -1098,6 +1127,7 @@ require(graphics)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("SSweibull")
 ### * SSweibull
@@ -1122,6 +1152,7 @@ summary(fm1)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("SignRank")
 ### * SignRank
@@ -1153,6 +1184,8 @@ stopifnot(round(dsignrank(0:56, n = 10)* 2^10) == c(p, rev(p), 0),
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("StructTS")
 ### * StructTS
@@ -1187,6 +1220,8 @@ StructTS(log10(UKgas), type = "BSM", fixed = c(0.1,0.001,NA,NA),
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("TDist")
 ### * TDist
@@ -1219,6 +1254,7 @@ plot(function(x) dt(x, df = 3, ncp = 2), -3, 11, ylim = c(0, 0.32),
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("Tukey")
 ### * Tukey
@@ -1240,6 +1276,7 @@ if(interactive())
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("TukeyHSD")
 ### * TukeyHSD
@@ -1261,6 +1298,7 @@ plot(TukeyHSD(fm1, "tension"))
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("Uniform")
 ### * Uniform
@@ -1307,6 +1345,7 @@ all.equal(qweibull(x/11, shape = 1, scale = pi), qexp(x/11, rate = 1/pi))
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("Wilcoxon")
 ### * Wilcoxon
@@ -1350,6 +1389,8 @@ text(n+.2, n+.5, labels = tU, col = "red")
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("acf")
 ### * acf
@@ -1382,6 +1423,7 @@ pacf(presidents, na.action = na.pass)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("acf2AR")
 ### * acf2AR
@@ -1400,6 +1442,7 @@ acf2AR(Acf)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("add1")
 ### * add1
@@ -1436,6 +1479,7 @@ options(od)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("addmargins")
 ### * addmargins
@@ -1622,6 +1666,7 @@ anova(fit4, fit2, fit0, test = "F") # unconventional order
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("anova.mlm")
 ### * anova.mlm
@@ -1670,6 +1715,7 @@ plot(colMeans(reacttime))
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("ansari.test")
 ### * ansari.test
@@ -1732,6 +1778,7 @@ options(op)  # reset to previous
 
 
 base::options(contrasts = c(unordered = "contr.treatment",ordered = "contr.poly"))
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("approxfun")
 ### * approxfun
@@ -1777,6 +1824,7 @@ approx(x, y, xout = x, ties = max)$y
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("ar")
 ### * ar
@@ -1830,6 +1878,7 @@ ar.ols(x, order.max = 6, demean = FALSE, intercept = TRUE)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("arima")
 ### * arima
@@ -1875,6 +1924,8 @@ predict(fit3, 3)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("arima.sim")
 ### * arima.sim
@@ -1902,6 +1953,7 @@ ts.plot(ts.sim)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("arima0")
 ### * arima0
@@ -1976,6 +2028,7 @@ asOneSidedFormula(~ age)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("ave")
 ### * ave
@@ -2007,6 +2060,8 @@ detach()
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("bandwidth")
 ### * bandwidth
@@ -2035,6 +2090,8 @@ legend(55, 0.035,
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("bartlett.test")
 ### * bartlett.test
@@ -2056,6 +2113,7 @@ bartlett.test(count ~ spray, data = InsectSprays)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("binom.test")
 ### * binom.test
@@ -2083,6 +2141,7 @@ binom.test(682, 682 + 243, p = 3/4)   # The same.
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("biplot.princomp")
 ### * biplot.princomp
@@ -2101,6 +2160,8 @@ biplot(princomp(USArrests))
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("birthday")
 ### * birthday
@@ -2141,6 +2202,7 @@ pbirthday(1000, coincident = 100)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("box.test")
 ### * box.test
@@ -2255,6 +2317,7 @@ chisq.test(table(x))            # NOT 'chisq.test(x)'!
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("cmdscale")
 ### * cmdscale
@@ -2280,6 +2343,7 @@ text(x, y, rownames(loc), cex = 0.6)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("coef")
 ### * coef
@@ -2410,6 +2474,7 @@ contrasts(fff) <- contr.sum(5)[, 1:2]; contrasts(fff)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("convolve")
 ### * convolve
@@ -2446,6 +2511,8 @@ lines(x[-c(1:2, (n-1):n)], Han(Han(y)), lwd = 2, col = "dark blue")
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("cophenetic")
 ### * cophenetic
@@ -2480,6 +2547,7 @@ cor(d0, d.coph) # 0.9911
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("cor")
 ### * cor
@@ -2553,6 +2621,7 @@ summary(abs(1 - EV(Rp)/EV(R.)) / abs(1 - EV(Rc)/EV(R.)))
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("cor.test")
 ### * cor.test
@@ -2596,6 +2665,7 @@ cor.test(~ CONT + INTG, data = USJudgeRatings)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("cov.wt")
 ### * cov.wt
@@ -2616,6 +2686,7 @@ flush(stderr()); flush(stdout())
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("cpgram")
 ### * cpgram
@@ -2641,6 +2712,7 @@ cpgram(ldeaths)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("cutree")
 ### * cutree
@@ -2665,6 +2737,7 @@ table(grp2 = g24[,"2"], grp4 = g24[,"4"])
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("decompose")
 ### * decompose
@@ -2695,6 +2768,7 @@ round(decompose(x)$figure / 10, 2)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("delete.response")
 ### * delete.response
@@ -2732,6 +2806,7 @@ stopifnot(identical(      ~ var, reformulate("var")),
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("dendrapply")
 ### * dendrapply
@@ -2777,6 +2852,8 @@ par(op)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("dendrogram")
 ### * dendrogram
@@ -2867,6 +2944,8 @@ plot(d3e, nodePar =  nP, leaflab = "textlike")
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("density")
 ### * density
@@ -2959,6 +3038,7 @@ legend(55, 0.035, legend = kernels, col = seq(kernels), lty = 1)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("deriv")
 ### * deriv
@@ -3070,6 +3150,7 @@ diffinv(d, xi = 1)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("dist")
 ### * dist
@@ -3133,6 +3214,7 @@ dist(rbind(x, y), method = "manhattan")  # 2.4
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("dummy.coef")
 ### * dummy.coef
@@ -3157,6 +3239,7 @@ dummy.coef(npk.aovE)
 
 
 base::options(contrasts = c(unordered = "contr.treatment",ordered = "contr.poly"))
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("ecdf")
 ### * ecdf
@@ -3226,6 +3309,7 @@ par(op)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("eff.aovlist")
 ### * eff.aovlist
@@ -3582,6 +3666,7 @@ fivenum(c(rnorm(100), -1:1/0))
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("fligner.test")
 ### * fligner.test
@@ -3604,6 +3689,7 @@ fligner.test(count ~ spray, data = InsectSprays)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("formula")
 ### * formula
@@ -3842,6 +3928,7 @@ flush(stderr()); flush(stdout())
 ### ** Examples
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("hclust")
 ### * hclust
@@ -3897,6 +3984,8 @@ par(opar)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("heatmap")
 ### * heatmap
@@ -3958,6 +4047,7 @@ utils::str(hU$Colv)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("identify.hclust")
 ### * identify.hclust
@@ -3992,6 +4082,7 @@ flush(stderr()); flush(stdout())
 ## End(Not run)
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("influence.measures")
 ### * influence.measures
@@ -4061,6 +4152,7 @@ stopifnot(all.equal(imI$infmat[,"cook.d"],
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("integrate")
 ### * integrate
@@ -4110,6 +4202,7 @@ integrate(dnorm, 0:1, 20) #-> error!
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("interaction.plot")
 ### * interaction.plot
@@ -4162,6 +4255,7 @@ rm(esophNA) # to clear up
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("is.empty")
 ### * is.empty
@@ -4182,6 +4276,7 @@ is.empty.model(lm(y ~ 0))
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("isoreg")
 ### * isoreg
@@ -4219,6 +4314,7 @@ stopifnot(all.equal(with(m, yf[iKnots]),
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("kernapply")
 ### * kernapply
@@ -4237,6 +4333,7 @@ flush(stderr()); flush(stdout())
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("kernel")
 ### * kernel
@@ -4277,6 +4374,8 @@ spectrum(sunspot.year, kernel = kernel("daniell", c(11,7,3)), log = "no")
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("kmeans")
 ### * kmeans
@@ -4329,6 +4428,8 @@ points(cl$centers, col = 1:5, pch = 8)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("kruskal.test")
 ### * kruskal.test
@@ -4365,6 +4466,8 @@ kruskal.test(Ozone ~ Month, data = airquality)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("ks.test")
 ### * ks.test
@@ -4399,6 +4502,8 @@ ks.test(x, x2, alternative = "l")
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("ksmooth")
 ### * ksmooth
@@ -4422,6 +4527,7 @@ with(cars, {
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("lag")
 ### * lag
@@ -4439,6 +4545,7 @@ lag(ldeaths, 12) # starts one year earlier
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("lag.plot")
 ### * lag.plot
@@ -4468,6 +4575,8 @@ lag.plot(sqrt(sunspots), set = c(1:4, 9:12), pch = ".", col = "gold")
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("line")
 ### * line
@@ -4491,6 +4600,8 @@ plot(residuals(z) ~ fitted(z), main = deparse(z$call))
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("lm")
 ### * lm
@@ -4527,6 +4638,7 @@ stopifnot(identical(lm(weight ~ group, method = "model.frame"),
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("lm.influence")
 ### * lm.influence
@@ -4682,6 +4794,7 @@ fm
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("lowess")
 ### * lowess
@@ -4704,6 +4817,7 @@ legend(5, 120, c(paste("f = ", c("2/3", ".2"))), lty = 1, col = 2:3)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("ls.diag")
 ### * ls.diag
@@ -4764,6 +4878,7 @@ c(mad(x, constant = 1),
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("mahalanobis")
 ### * mahalanobis
@@ -4798,6 +4913,7 @@ abline(0, 1, col = 'gray')
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("make.link")
 ### * make.link
@@ -4815,6 +4931,7 @@ utils::str(make.link("logit"))
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("makepredictcall")
 ### * makepredictcall
@@ -4842,6 +4959,7 @@ lines(ht, predict(fm, data.frame(height = ht)))
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("manova")
 ### * manova
@@ -5024,6 +5142,7 @@ median(c(1:3, 100, 1000))  # = 3 [odd, robust]
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("medpolish")
 ### * medpolish
@@ -5057,6 +5176,7 @@ all(deaths ==
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("model.extract")
 ### * model.extract
@@ -5145,6 +5265,7 @@ flush(stderr()); flush(stdout())
 ### ** Examples
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("monthplot")
 ### * monthplot
@@ -5180,6 +5301,7 @@ monthplot(co2, phase = quarter)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("mood.test")
 ### * mood.test
@@ -5329,6 +5451,7 @@ flush(stderr()); flush(stdout())
 ### ** Examples
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("nls")
 ### * nls
@@ -5466,6 +5589,7 @@ options(od)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("nls.control")
 ### * nls.control
@@ -5546,6 +5670,7 @@ flush(stderr()); flush(stdout())
 ### ** Examples
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("optimize")
 ### * optimize
@@ -5578,6 +5703,7 @@ optimize(fp, c(-7, 20))   # ok
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("order.dendrogram")
 ### * order.dendrogram
@@ -5606,6 +5732,7 @@ stopifnot(identical(labels(d2),
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("p.adjust")
 ### * p.adjust
@@ -5652,6 +5779,7 @@ round((pN.a / p.adj)[1:20, ] , 4)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("pairwise.prop.test")
 ### * pairwise.prop.test
@@ -5715,6 +5843,7 @@ detach()
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("plot.acf")
 ### * plot.acf
@@ -5738,6 +5867,8 @@ acf(z7) # multi-page
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("plot.isoreg")
 ### * plot.isoreg
@@ -5774,6 +5905,8 @@ plot(ir <- isoreg(sample(10), sample(10, replace = TRUE)),
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("plot.lm")
 ### * plot.lm
@@ -5823,6 +5956,8 @@ plot(lm(long.var.name.1 ~
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("plot.ppr")
 ### * plot.ppr
@@ -5850,6 +5985,8 @@ plot(update(rock.ppr, sm.method = "gcv", gcvpen = 2),
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("plot.profile.nls")
 ### * plot.profile.nls
@@ -5881,6 +6018,8 @@ par(opar)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("plot.stepfun")
 ### * plot.stepfun
@@ -5924,6 +6063,8 @@ plot.stepfun(rt(50, df = 3), col.vert = "gray20")
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("plot.ts")
 ### * plot.ts
@@ -5965,6 +6106,7 @@ plot(lag(SMI, 20), SMI, pch = ".", log = "xy",
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("poisson.test")
 ### * poisson.test
@@ -6123,6 +6265,7 @@ PP.test(y)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("ppoints")
 ### * ppoints
@@ -6172,6 +6315,8 @@ if(!any("MASS" == lNs)) unloadNamespace("MASS")
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("ppr")
 ### * ppr
@@ -6226,6 +6371,7 @@ detach()
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("prcomp")
 ### * prcomp
@@ -6257,6 +6403,7 @@ stopifnot(ncol(pZ$rotation) == 14, ncol(pz3$rotation) == 3,
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("predict.HoltWinters")
 ### * predict.HoltWinters
@@ -6278,6 +6425,7 @@ plot(m, p)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("predict")
 ### * predict
@@ -6335,6 +6483,7 @@ options(od)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("predict.glm")
 ### * predict.glm
@@ -6371,6 +6520,8 @@ lines(2^ld, predict(budworm.lg, data.frame(ldose = ld,
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("predict.lm")
 ### * predict.lm
@@ -6418,6 +6569,7 @@ stopifnot(all.equal(pt[,1:4], pt.,
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("predict.loess")
 ### * predict.loess
@@ -6440,6 +6592,7 @@ predict(cars.lo2, data.frame(speed = seq(5, 30, 1)), se = TRUE)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("predict.nls")
 ### * predict.nls
@@ -6475,6 +6628,8 @@ options(od)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("predict.smooth.spline")
 ### * predict.smooth.spline
@@ -6529,6 +6684,8 @@ detach(); par(op)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("princomp")
 ### * princomp
@@ -6571,6 +6728,7 @@ pc.cr <- princomp(~ Murder + Assault + UrbanPop,
 (pc.cl  <- princomp(stackloss))
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("print.power.htest")
 ### * print.power.htest
@@ -6748,6 +6906,7 @@ prop.trend.test(smokers, patients, c(0,0,0,1))
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("qqnorm")
 ### * qqnorm
@@ -6780,6 +6939,7 @@ mtext("qqline(*, dist = qchisq(., df=3), prob = c(0.1, 0.6))")
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("quade.test")
 ### * quade.test
@@ -6965,6 +7125,7 @@ write.ftable(ft22, quote = FALSE, method="compact")
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("rect.hclust")
 ### * rect.hclust
@@ -6988,6 +7149,7 @@ x
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("relevel")
 ### * relevel
@@ -7006,6 +7168,7 @@ summary(lm(breaks ~ wool + tension, data = warpbreaks))
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("reorder.dendrogram")
 ### * reorder.dendrogram
@@ -7036,6 +7199,8 @@ par(op)
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("reorder.factor")
 ### * reorder.factor
@@ -7059,6 +7224,7 @@ boxplot(count ~ bymedian, data = InsectSprays,
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("replications")
 ### * replications
@@ -7149,6 +7315,7 @@ reshape(wide)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("runmed")
 ### * runmed
@@ -7195,6 +7362,8 @@ legend(length(y),max(y), c("data", "lowess(y, f = 0.3)", "runmed(y, 7)"),
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("scatter.smooth")
 ### * scatter.smooth
@@ -7217,6 +7386,8 @@ with(cars, scatter.smooth(speed, dist, lpars =
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("screeplot")
 ### * screeplot
@@ -7243,6 +7414,7 @@ screeplot(fit, npcs = 24, type = "lines")
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("sd")
 ### * sd
@@ -7529,6 +7701,7 @@ S4 <- simulate(modb2, nsim = 4)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("smooth")
 ### * smooth
@@ -7577,6 +7750,8 @@ lines(sm, col = 2, lwd = 1.25)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("smooth.spline")
 ### * smooth.spline
@@ -7651,6 +7826,8 @@ stopifnot(all.equal(s2[nn], s2.[nn], tol = 7e-7), # seen 6.86e-8
 ## End(Don't show)
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("smoothEnds")
 ### * smoothEnds
@@ -7682,6 +7859,7 @@ stopifnot(identical(s7m, smoothEnds(s7k, 7)))
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("sortedXyData")
 ### * sortedXyData
@@ -7700,6 +7878,7 @@ sortedXyData( expression(log(conc)), expression(density), DNase.2 )
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("spec.ar")
 ### * spec.ar
@@ -7727,6 +7906,8 @@ spec.ar(log(lynx), method = "ols", add = TRUE, col = "blue")
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("spec.pgram")
 ### * spec.pgram
@@ -7775,6 +7956,8 @@ plot(sales.spc, plot.type = "phase")
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("spectrum")
 ### * spectrum
@@ -7813,6 +7996,8 @@ spectrum(ldeaths, method = "ar")
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("splinefun")
 ### * splinefun
@@ -7919,6 +8104,7 @@ legend("topright",
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("stat.anova")
 ### * stat.anova
@@ -7993,6 +8179,7 @@ stopifnot(identical(y0[-1], sfun0 (1:3)), # right = FALSE
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("stl")
 ### * stl
@@ -8032,6 +8219,7 @@ par(op)   # reset
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("summary.aov")
 ### * summary.aov
@@ -8152,6 +8340,7 @@ print(summary(princomp(USArrests, cor = TRUE),
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("supsmu")
 ### * supsmu
@@ -8175,6 +8364,7 @@ with(cars, {
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("symnum")
 ### * symnum
@@ -8226,6 +8416,7 @@ noquote(cbind(P.val = format(pval), Signif = symp))
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("t.test")
 ### * t.test
@@ -8253,6 +8444,8 @@ t.test(extra ~ group, data = sleep)
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("termplot")
 ### * termplot
@@ -8285,6 +8478,7 @@ if(!had.splines && rs) detach("package:splines")
 
 
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("terms.object")
 ### * terms.object
@@ -8310,6 +8504,7 @@ terms(y ~ x + x:z + s(x), specials = "s", keep.order = TRUE)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("time")
 ### * time
@@ -8331,6 +8526,7 @@ plot(as.vector(time(presidents)), as.vector(presidents), type = "l")
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("toeplitz")
 ### * toeplitz
@@ -8349,6 +8545,7 @@ toeplitz (x)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("ts")
 ### * ts
@@ -8385,6 +8582,8 @@ plot(nhtemp, lag(nhtemp, 1), cex = .8, col = "blue",
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("ts.plot")
 ### * ts.plot
@@ -8405,6 +8604,7 @@ ts.plot(ldeaths, mdeaths, fdeaths,
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("ts.union")
 ### * ts.union
@@ -8669,6 +8869,7 @@ weighted.residuals(lmxy, drop0 = FALSE)
 
 
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("wilcox.test")
 ### * wilcox.test
@@ -8719,6 +8920,7 @@ wilcox.test(Ozone ~ Month, data = airquality,
 
 
 
+} # [FastR] END Test snippet disabled due to graphics package use
 cleanEx()
 nameEx("window")
 ### * window
