@@ -585,8 +585,12 @@ public class RSerialize {
                                 }
                                 Debug.printClosure(pairList);
                             }
-                            boolean restore = setupLibPath((REnvironment) tagItem);
-                            RFunction func = PairlistDeserializer.processFunction(carItem, cdrItem, (REnvironment) tagItem, currentFunctionName, packageName);
+
+                            // older versions of GnuR allowed 'NULL'
+                            assert tagItem == RNull.instance || tagItem instanceof REnvironment;
+                            REnvironment enclosingEnv = tagItem == RNull.instance ? REnvironment.baseEnv() : (REnvironment) tagItem;
+                            boolean restore = setupLibPath(enclosingEnv);
+                            RFunction func = PairlistDeserializer.processFunction(carItem, cdrItem, enclosingEnv, currentFunctionName, packageName);
                             if (attrItem != RNull.instance) {
                                 setAttributes(func, attrItem);
                                 handleFunctionSrcrefAttr(func);
@@ -2786,6 +2790,10 @@ public class RSerialize {
      * @return {@code true} if a path has been added, {@code false} otherwise.
      */
     private static boolean setupLibPath(REnvironment environment) {
+        if (environment == REnvironment.baseEnv()) {
+            return false;
+        }
+
         REnvironment cur = environment;
         while (cur != REnvironment.emptyEnv() && !cur.isNamespaceEnv()) {
             cur = cur.getParent();
