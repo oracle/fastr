@@ -1870,8 +1870,10 @@ stopifnot(identical( ## assert that all three are the same :
              format(round(as.vector(sl)/1024, 1))))
 
 ## find the 10 largest objects in the base package
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since it causes fastr_errors.log increase by 200MB
 z <- sapply(ls("package:base"), function(x)
             object.size(get(x, envir = baseenv())))
+} # [FastR] BEGIN Test snippet disabled since it causes fastr_errors.log increase by 200MB
 if(interactive()) {
 as.matrix(rev(sort(z))[1:10])
 } else # (more constant over time):

@@ -3881,6 +3881,7 @@ env$logic <- c(TRUE, FALSE, FALSE, TRUE)
 # what have we there?
 utils::ls.str(env)
 
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since it causes fastr_errors.log increase by 500MB
 # compute the mean for each list element
        eapply(env, mean)
 unlist(eapply(env, mean, USE.NAMES = FALSE))
@@ -3888,6 +3889,7 @@ unlist(eapply(env, mean, USE.NAMES = FALSE))
 # median and quartiles for each element (making use of "..." passing):
 eapply(env, quantile, probs = 1:3/4)
 eapply(env, quantile)
+} # [FastR] END Test snippet disabled since it causes fastr_errors.log increase by 500MB
 
 
 
@@ -4121,11 +4123,13 @@ x <- seq(0, 10, length.out = 100)
 y <- seq(-1, 1, length.out = 20)
 d1 <- expand.grid(x = x, y = y)
 d2 <- expand.grid(x = x, y = y, KEEP.OUT.ATTRS = FALSE)
+if(FALSE) { # [FastR] BEGIN Test snippet disabled since it causes fastr_errors.log increase by 500MB
 object.size(d1) - object.size(d2)
 ##-> 5992 or 8832 (on 32- / 64-bit platform)
 ## Don't show: 
 stopifnot(object.size(d1) > object.size(d2))
 ## End(Don't show)
+} # [FastR] BEGIN Test snippet disabled since it causes due to fastr_errors.log increase by 500MB
 
 
 
