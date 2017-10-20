@@ -438,7 +438,7 @@ final class REngine implements Engine, Engine.Timings {
     @Override
     @TruffleBoundary
     public Object eval(RLanguage expr, REnvironment envir, RCaller caller) {
-        return evalNode(expr.getRep().asRSyntaxNode(), envir, caller);
+        return expr.getClosure().eval(envir, caller);
     }
 
     @Override

@@ -34,7 +34,6 @@ import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -52,7 +51,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 @RBuiltin(name = "recordGraphics", kind = INTERNAL, parameterNames = {"expr", "list", "env"}, behavior = COMPLEX)
 public abstract class RecordGraphics extends RBuiltinNode.Arg3 {
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
-    @Child private RList2EnvNode list2EnvNode = new RList2EnvNode();
+    @Child private RList2EnvNode list2EnvNode = RList2EnvNode.create();
 
     static {
         Casts casts = new Casts(RecordGraphics.class);
@@ -86,8 +85,6 @@ public abstract class RecordGraphics extends RBuiltinNode.Arg3 {
     }
 
     private REnvironment createEnv(RList list, REnvironment parent) {
-        REnvironment newEnv = RDataFactory.createNewEnv("<recordGraphics env>", true, list.getLength());
-        newEnv.setParent(parent);
-        return list2EnvNode.execute(list, newEnv);
+        return list2EnvNode.execute(list, null, "<recordGraphics env>", parent);
     }
 }

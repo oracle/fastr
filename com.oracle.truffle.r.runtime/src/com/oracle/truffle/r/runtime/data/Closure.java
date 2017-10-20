@@ -6,9 +6,12 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -81,6 +84,25 @@ public final class Closure {
             callTargets.put(desc, callTarget);
         }
         return callTarget.call(frame);
+    }
+
+    public Object eval(REnvironment envir, RCaller caller) {
+        CompilerAsserts.neverPartOfCompilation();
+
+        // Create lazily, as it is not needed at all for INLINED promises!
+        if (callTargets == null) {
+            callTargets = new HashMap<>();
+        }
+        FrameDescriptor desc = envir.getFrame().getFrameDescriptor();
+        RootCallTarget callTarget = callTargets.get(desc);
+
+        if (callTarget == null) {
+            // clone for additional call targets
+            callTarget = generateCallTarget((RNode) (callTargets.isEmpty() ? expr : RContext.getASTBuilder().process(expr.asRSyntaxNode())));
+            callTargets.put(desc, callTarget);
+        }
+        MaterializedFrame vFrame = VirtualEvalFrame.create(envir.getFrame(), (RFunction) null, caller);
+        return callTarget.call(vFrame);
     }
 
     private RootCallTarget generateCallTarget(RNode expr) {

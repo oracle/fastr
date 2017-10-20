@@ -38,6 +38,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EvalNodeGen.EvalEnvCastNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.FrameFunctions.SysFrame;
@@ -78,6 +79,8 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
      */
     abstract static class EvalEnvCast extends RBaseNode {
 
+        @Child private RList2EnvNode rList2EnvNode;
+
         public abstract REnvironment execute(VirtualFrame frame, Object env, Object enclos);
 
         @Specialization
@@ -104,24 +107,36 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
         @Specialization
         protected REnvironment cast(RList list, REnvironment enclos) {
-            return REnvironment.createFromList(list, enclos);
+            lazyCreateRList2EnvNode();
+            return rList2EnvNode.execute(list, null, null, enclos);
         }
 
         @Specialization
         protected REnvironment cast(RPairList list, REnvironment enclos) {
-            return REnvironment.createFromList(list.toRList(), enclos);
+            lazyCreateRList2EnvNode();
+            return rList2EnvNode.execute(list.toRList(), null, null, enclos);
         }
 
         @Specialization
         protected REnvironment cast(RList list, @SuppressWarnings("unused") RNull enclos) {
+            lazyCreateRList2EnvNode();
+
             // This can happen when envir is a list and enclos is explicitly set to NULL
-            return REnvironment.createFromList(list, REnvironment.baseEnv());
+            return rList2EnvNode.execute(list, null, null, REnvironment.baseEnv());
         }
 
         @Specialization
         protected REnvironment cast(RPairList list, @SuppressWarnings("unused") RNull enclos) {
+            lazyCreateRList2EnvNode();
+
             // This can happen when envir is a pairlist and enclos is explicitly set to NULL
-            return REnvironment.createFromList(list.toRList(), REnvironment.baseEnv());
+            return rList2EnvNode.execute(list.toRList(), null, null, REnvironment.baseEnv());
+        }
+
+        private void lazyCreateRList2EnvNode() {
+            if (rList2EnvNode == null) {
+                rList2EnvNode = insert(RList2EnvNode.create());
+            }
         }
 
         @Specialization
