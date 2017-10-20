@@ -269,23 +269,11 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
     }
 
-    private static int getVariadicComponentIndex(String symbol) {
-        if (symbol.length() > 2 && symbol.charAt(0) == '.' && symbol.charAt(1) == '.') {
-            for (int i = 2; i < symbol.length(); i++) {
-                if (symbol.charAt(i) < '\u0030' || symbol.charAt(i) > '\u0039') {
-                    return -1;
-                }
-            }
-            return Integer.parseInt(symbol.substring(2));
-        }
-        return -1;
-    }
-
     @Override
     public RSyntaxNode lookup(SourceSection source, String symbol, boolean functionLookup) {
         assert source != null;
         if (!functionLookup) {
-            int index = getVariadicComponentIndex(symbol);
+            int index = RSyntaxLookup.getVariadicComponentIndex(symbol);
             if (index != -1) {
                 return new ReadVariadicComponentNode(source, index > 0 ? index - 1 : index);
             }

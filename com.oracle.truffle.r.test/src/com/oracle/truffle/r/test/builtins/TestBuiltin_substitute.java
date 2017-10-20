@@ -114,5 +114,29 @@ public class TestBuiltin_substitute extends TestBase {
         assertEval("substitute(quote(x+1), setClass('a'))");
 
         assertEval("typeof(substitute(set))");
+
+        // variations of "..." and "..1"
+        assertEval("{ foo <- function(...) assign.dots(...); assign.dots <- function (...) { args <- list(...); sapply(substitute(list(...))[-1], deparse) }; q <- 1; foo(q); }");
+
+        assertEval("{ foo <- function(...) bar(..1); bar <- function(x) { substitute(x); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(..1); bar <- function(x) { x; substitute(x); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(..1); bar <- function(...) { substitute(..1); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(..1); bar <- function(...) { ..1; substitute(..1); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(..1); bar <- function(...) { substitute(list(...)); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(..1); bar <- function(...) { list(...); substitute(list(...)); }; foo(1+2); }");
+
+        assertEval("{ foo <- function(...) bar(...); bar <- function(x) { substitute(x); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(...); bar <- function(x) { x; substitute(x); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(...); bar <- function(...) { substitute(..1); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(...); bar <- function(...) { ..1; substitute(..1); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(...); bar <- function(...) { substitute(list(...)); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(...); bar <- function(...) { list(...); substitute(list(...)); }; foo(1+2); }");
+
+        assertEval("{ foo <- function(...) bar(3+2); bar <- function(x) { substitute(x); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(3+2); bar <- function(x) { x; substitute(x); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(3+2); bar <- function(...) { substitute(..1); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(3+2); bar <- function(...) { ..1; substitute(..1); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(3+2); bar <- function(...) { substitute(list(...)); }; foo(1+2); }");
+        assertEval("{ foo <- function(...) bar(3+2); bar <- function(...) { list(...); substitute(list(...)); }; foo(1+2); }");
     }
 }

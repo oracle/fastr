@@ -31,11 +31,41 @@ import com.oracle.truffle.r.runtime.Utils;
 public interface RSyntaxLookup extends RSyntaxElement {
 
     /**
+     * If the given identifier identifies a variadic argument component (i.e. identifier in form of
+     * {@code ..X} or {@code .XY} where X and Y are digits), then this method returns the numeric
+     * part of the identifier, otherwise {@code -1}.
+     */
+    static int getVariadicComponentIndex(String symbol) {
+        int len = symbol.length();
+        if (len > 1 && symbol.charAt(0) == '.') {
+            int start = len > 2 && symbol.charAt(1) == '.' ? 2 : 1;
+            int result = 0;
+            for (int i = start; i < len; i++) {
+                int digit = symbol.charAt(i) - '\u0030';
+                if (digit < 0 || digit > 9) {
+                    return -1;
+                }
+                result = result * 10 + digit;
+            }
+            return result;
+        }
+        return -1;
+    }
+
+    /**
      * @return The identifier that this lookup represents - this needs to be an interned string.
      */
     String getIdentifier();
 
     boolean isFunctionLookup();
+
+    /**
+     * Distinguishes between actual syntax nodes and disguised syntax node used as promise
+     * expression for unrolled varargs. Support needed for the substitute builtin.
+     */
+    default boolean isPromiseLookup() {
+        return false;
+    }
 
     /**
      * Helper function: creates a synthetic RSyntaxLookup. The first {@code identifier.length()}
