@@ -70,5 +70,7 @@ public class TestBuiltin_charmatch extends TestBase {
         assertEval("{charmatch(c(\"ole\",\"ab\"),c(\"ole\",\"ab\"))}");
         assertEval("{charmatch(c(\"ole\",\"ab\"),c(\"ole\",\"ole\"))}");
         assertEval("{charmatch(matrix(c('h','l','e',6),2,2,byrow=T), \"hello\")}");
+        assertEval("{charmatch('hello', c(''))}");
+        assertEval("{charmatch(c('', 'hello', '[', 'foo', '{', '(', ''), c('[', '(', '{', ''), nomatch = NA)}");
     }
 }
