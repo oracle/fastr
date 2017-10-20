@@ -36,10 +36,6 @@ void*** Rinternals_getCallbacksAddress() {
         return &callbacks;
 }
 
-static int* return_int;
-static double* return_double;
-static char* return_byte;
-
 char *ensure_truffle_chararray_n(const char *x, int n) {
 	return (char *) x;
 }
@@ -49,3 +45,77 @@ void *ensure_string(const char * x) {
 }
 
 #include "../truffle_common/Rinternals_truffle_common.h"
+
+#define ARRAY_CACHE_SIZE 5
+
+typedef struct array_cache_entry {
+	SEXP key;
+	void *data;
+	unsigned int hits;
+} ArrayCacheEntry;
+
+static __thread ArrayCacheEntry int_cache[ARRAY_CACHE_SIZE];
+static __thread ArrayCacheEntry real_cache[ARRAY_CACHE_SIZE];
+
+static inline int array_cache_lookup(ArrayCacheEntry *cache, SEXP key) {
+#if ARRAY_CACHE_SIZE > 0
+  for(int i=0; i < ARRAY_CACHE_SIZE; i++) {
+    	if(cache[i].key == key) {
+    		(cache[i].hits)++;
+    		return i;
+    	}
+    }
+#endif
+  return -1;
+}
+
+static inline void array_cache_insert(ArrayCacheEntry *cache, SEXP key,
+		void *data) {
+
+#if ARRAY_CACHE_SIZE > 0
+	// replace least frequent
+	unsigned hits = cache[0].hits;
+	int idx = 0;
+
+	for (int i = 1; i < ARRAY_CACHE_SIZE && hits != 0; i++) {
+		if (cache[i].hits < hits) {
+			hits = cache[i].hits;
+			idx = i;
+		}
+	}
+
+	cache[idx].key = key;
+	cache[idx].data = data;
+	cache[idx].hits = 0;
+#endif
+}
+
+int *INTEGER(SEXP x) {
+    TRACE(TARGp, x);
+
+    // lookup in cache
+    int idx = array_cache_lookup(int_cache, x);
+    if(idx >= 0) {
+    	return (int *)int_cache[idx].data;
+    }
+
+    int *result = FASTR_INTEGER(x);
+
+    array_cache_insert(int_cache, x, result);
+    return result;
+}
+
+double *REAL(SEXP x){
+    TRACE(TARGp, x);
+
+    // lookup in cache
+    int idx = array_cache_lookup(real_cache, x);
+    if(idx >= 0) {
+    	return (double *)real_cache[idx].data;
+    }
+
+    double *result = FASTR_REAL(x);
+
+    array_cache_insert(real_cache, x, result);
+    return result;
+}
