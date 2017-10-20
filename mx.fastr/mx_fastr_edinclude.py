@@ -27,17 +27,7 @@ Handles all the editing of R FFI header files from the GNUR include directory to
 FastR include directory.
 '''
 # variables in Rinternals.h that are Java Objects and so remapped to functions
-r_internals_vars = ['R_NilValue', 'R_UnboundValue', 'R_MissingArg', 'R_GlobalEnv',
-    'R_EmptyEnv', 'R_BaseEnv', 'R_BaseNamespace', 'R_NamespaceRegistry', 'R_Srcref', 'R_Bracket2Symbol',
-    'R_BracketSymbol', 'R_BraceSymbol', 'R_ClassSymbol', 'R_DeviceSymbol', 'R_DevicesSymbol',
-    'R_DimNamesSymbol', 'R_DimSymbol', 'R_DollarSymbol', 'R_DotsSymbol', 'R_DropSymbol', 'R_LastvalueSymbol',
-    'R_LevelsSymbol', 'R_ModeSymbol', 'R_NameSymbol', 'R_NamesSymbol', 'R_NaRmSymbol', 'R_PackageSymbol',
-    'R_QuoteSymbol', 'R_RowNamesSymbol', 'R_SeedsSymbol', 'R_SourceSymbol', 'R_TspSymbol', 'R_dot_defined',
-    'R_dot_Method', 'R_dot_target', 'R_SrcrefSymbol', 'R_SrcfileSymbol', 'R_NaString', 'R_BlankString',
-    'R_DoubleColonSymbol', 'R_BlankScalarString', 'R_BaseSymbol', 'R_baseSymbol', 'R_NamespaceEnvSymbol']
-
-interface_vars = ['R_Home', 'R_TempDir',]
-
+r_internals_vars = ['R_GlobalEnv', 'R_BaseEnv', 'R_BaseNamespace', 'R_NamespaceRegistry']
 
 def edinclude(args):
     '''
@@ -127,21 +117,10 @@ def ed_r_internals(gnu_dir):
 def rewrite_var(f, var, line):
     f.write('#ifdef FASTR\n')
     f.write('LibExtern SEXP FASTR_{0}();\n'.format(var))
-    if var == 'R_baseSymbol': # alias
-        f.write('#define {0} FASTR_R_BaseSymbol()\n'.format(var))
-    else:
-        f.write('#define {0} FASTR_{0}()\n'.format(var))
+    f.write('#define {0} FASTR_{0}()\n'.format(var))
     f.write('#else\n')
-    # Ugly special case, comment split on two lines, just
-    if var == 'R_EmptyEnv':
-        split = line.split(';')
-        f.write(split[0])
-        f.write(';\n')
-        f.write('#endif\n')
-        f.write(split[1])
-    else:
-        f.write(line)
-        f.write('#endif\n')
+    f.write(line)
+    f.write('#endif\n')
 
 def is_internal_var(line):
     for var in r_internals_vars:
@@ -173,12 +152,6 @@ extern Rboolean FASTR_R_Interactive();
 #else
 '''
 
-rhome_rewrite = '''#ifdef FASTR
-extern char* FASTR_R_Home();
-#define R_Home FASTR_R_Home()
-#else
-'''
-
 def ed_r_interface(gnu_dir):
     r_interface_h = join(gnu_dir, 'Rinterface.h')
     with open(r_interface_h) as f:
@@ -192,10 +165,6 @@ def ed_r_interface(gnu_dir):
                 f.write('#endif\n')
             elif 'R_Interactive' in line:
                 f.write(interactive_rewrite)
-                f.write(line)
-                f.write('#endif\n')
-            elif 'R_Home;' in line:
-                f.write(rhome_rewrite)
                 f.write(line)
                 f.write('#endif\n')
             else:

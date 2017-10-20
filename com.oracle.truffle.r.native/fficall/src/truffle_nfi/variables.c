@@ -26,61 +26,6 @@
 #include <rffiutils.h>
 #include "../common/rffi_variablesindex.h"
 
-
-static const char *R_Home_static;
-static const char *R_TempDir_static;
-static SEXP R_EmptyEnv_static;
-static SEXP R_Srcref_static;
-static SEXP R_NilValue_static;
-static SEXP R_NilValue_static2;
-static SEXP R_UnboundValue_static;
-static SEXP R_MissingArg_static;
-static SEXP R_BaseSymbol_static;
-static SEXP R_Bracket2Symbol_static;   /* "[[" */
-static SEXP R_BracketSymbol_static;    /* "[" */
-static SEXP R_BraceSymbol_static;      /* "{" */
-static SEXP R_DoubleColonSymbol_static;/* "::" */
-static SEXP R_ClassSymbol_static;     /* "class" */
-static SEXP R_DeviceSymbol_static;     /* ".Device" */
-static SEXP R_DevicesSymbol_static;     /* ".Devices" */
-static SEXP R_DimNamesSymbol_static;   /* "dimnames" */
-static SEXP R_DimSymbol_static;     /* "dim" */
-static SEXP R_DollarSymbol_static;     /* "$" */
-static SEXP R_DotsSymbol_static;     /* "..." */
-static SEXP R_DropSymbol_static;     /* "drop" */
-static SEXP R_LastvalueSymbol_static;  /* ".Last.value" */
-static SEXP R_LevelsSymbol_static;     /* "levels" */
-static SEXP R_ModeSymbol_static;     /* "mode" */
-static SEXP R_NameSymbol_static;     /* "name" */
-static SEXP R_NamesSymbol_static;     /* "names" */
-static SEXP R_NaRmSymbol_static;     /* "na.rm" */
-static SEXP R_PackageSymbol_static;    /* "package" */
-static SEXP R_QuoteSymbol_static;     /* "quote" */
-static SEXP R_RowNamesSymbol_static;   /* "row.names" */
-static SEXP R_SeedsSymbol_static;     /* ".Random.seed" */
-static SEXP R_SourceSymbol_static;     /* "source" */
-static SEXP R_TspSymbol_static;     /* "tsp" */
-static SEXP R_dot_defined_static;      /* ".defined" */
-static SEXP R_dot_Method_static;       /* ".Method" */
-static SEXP R_dot_target_static;       /* ".target" */
-static SEXP R_NaString_static;	    /* NA_STRING as a CHARSXP */
-static SEXP R_BlankString_static;	    /* "" as a CHARSXP */
-static SEXP R_BlankScalarString_static;	    /* "" as a STRSXP */
-static SEXP R_BaseSymbol_static;	    /* "base" as a SYMSXP */
-static SEXP	R_NamespaceEnvSymbol_static;   // ".__NAMESPACE__."
-
-// Symbols not part of public API but used in FastR tools implementation
-static SEXP R_SrcrefSymbol_static;
-static SEXP R_SrcfileSymbol_static;
-static SEXP R_RestartToken_static;
-
-// Arith.h
-double R_NaN;		/* IEEE NaN */
-double R_PosInf;	/* IEEE Inf */
-double R_NegInf;	/* IEEE -Inf */
-double R_NaReal;	/* NA_REAL: IEEE */
-int R_NaInt;	/* NA_INTEGER:= INT_MIN currently */
-
 // various ignored flags and variables nevertheless needed to resolve symbols
 Rboolean R_Visible;
 Rboolean R_interrupts_suspended;
@@ -97,200 +42,8 @@ int max_contour_segments = 25000;
 // from sys-std.c
 #include <R_ext/eventloop.h>
 
-static InputHandler BasicInputHandler = {2, -1, NULL};
+InputHandler BasicInputHandler = {2, -1, NULL};
 InputHandler *R_InputHandlers = &BasicInputHandler;
-
-char *FASTR_R_Home() {
-	return (char *) R_Home_static;
-}
-
-char *FASTR_R_TempDir() {
-	return (char *) R_TempDir_static;
-}
-
-SEXP FASTR_R_EmptyEnv() {
-    return R_EmptyEnv_static;
-}
-
-SEXP FASTR_R_Srcref() {
-    return R_Srcref_static;
-}
-
-SEXP FASTR_R_NilValue() {
-    return R_NilValue_static;
-}
-
-SEXP FASTR_R_UnboundValue() {
-    return R_UnboundValue_static;
-}
-
-SEXP FASTR_R_MissingArg() {
-    return R_MissingArg_static;
-}
-
-SEXP FASTR_R_BaseSymbol() {
-    return R_BaseSymbol_static;
-}
-
-
-SEXP FASTR_R_BraceSymbol() {
-    return R_BraceSymbol_static;
-}
-
-SEXP FASTR_R_DoubleColonSymbol() {
-    return R_DoubleColonSymbol_static;
-}
-
-SEXP FASTR_R_Bracket2Symbol() {
-    return R_Bracket2Symbol_static;
-}
-
-SEXP FASTR_R_BracketSymbol() {
-    return R_BracketSymbol_static;
-}
-
-SEXP FASTR_R_ClassSymbol() {
-    return R_ClassSymbol_static;
-}
-
-SEXP FASTR_R_DimNamesSymbol() {
-    return R_DimNamesSymbol_static;
-}
-
-SEXP FASTR_R_DimSymbol() {
-    return R_DimSymbol_static;
-}
-
-
-SEXP FASTR_R_DollarSymbol() {
-    return R_DollarSymbol_static;
-}
-
-SEXP FASTR_R_DotsSymbol() {
-    return R_DotsSymbol_static;
-}
-
-
-SEXP FASTR_R_DropSymbol() {
-    return R_DropSymbol_static;
-}
-
-SEXP FASTR_R_LastvalueSymbol() {
-    return R_LastvalueSymbol_static;
-}
-
-
-SEXP FASTR_R_LevelsSymbol() {
-    return R_LevelsSymbol_static;
-}
-
-SEXP FASTR_R_ModeSymbol() {
-    return R_ModeSymbol_static;
-}
-
-SEXP FASTR_R_NaRmSymbol() {
-    return R_NaRmSymbol_static;
-}
-
-
-SEXP FASTR_R_NameSymbol() {
-    return R_NameSymbol_static;
-}
-
-SEXP FASTR_R_NamesSymbol() {
-    return R_NamesSymbol_static;
-}
-
-
-SEXP FASTR_R_NamespaceEnvSymbol() {
-    return R_NamespaceEnvSymbol_static;
-}
-
-SEXP FASTR_R_PackageSymbol() {
-    return R_PackageSymbol_static;
-}
-
-SEXP FASTR_R_QuoteSymbol() {
-    return R_QuoteSymbol_static;
-}
-
-SEXP FASTR_R_RowNamesSymbol() {
-    return R_RowNamesSymbol_static;
-}
-
-SEXP FASTR_R_SeedsSymbol() {
-    return R_SeedsSymbol_static;
-}
-
-SEXP FASTR_R_SourceSymbol() {
-    return R_SourceSymbol_static;
-}
-
-SEXP FASTR_R_TspSymbol() {
-    return R_TspSymbol_static;
-}
-
-SEXP FASTR_R_dot_defined() {
-    return R_dot_defined_static;
-}
-
-SEXP FASTR_R_dot_Method() {
-    return R_dot_Method_static;
-}
-
-SEXP FASTR_R_dot_target() {
-    return R_dot_target_static;
-}
-
-SEXP FASTR_R_NaString() {
-    return R_NaString_static;
-}
-
-
-SEXP FASTR_R_BlankString() {
-    return R_BlankString_static;
-}
-
-SEXP FASTR_R_BlankScalarString() {
-    return R_BlankScalarString_static;
-}
-
-SEXP FASTR_R_DevicesSymbol() {
-    return R_DevicesSymbol_static;
-}
-
-SEXP FASTR_R_DeviceSymbol() {
-    return R_DeviceSymbol_static;
-}
-
-SEXP FASTR_R_SrcrefSymbol() {
-    return R_SrcrefSymbol_static;
-}
-
-SEXP FASTR_R_SrcfileSymbol() {
-    return R_SrcfileSymbol_static;
-}
-
-void Call_initvar_double(int index, double value) {
-	switch (index) {
-    case R_NaN_x: R_NaN = value; break;
-    case R_PosInf_x: R_PosInf = value; break;
-    case R_NegInf_x: R_NegInf = value; break;
-    case R_NaReal_x: R_NaReal = value; break;
-    default:
-        printf("Call_initvar_double: unimplemented index %d\n", index);
-        exit(1);
-	}
-}
-
-void Call_initvar_int(int index, int value) {
-	switch (index) {
-    case R_NaInt_x: R_NaInt = value; break;
-    default:
-        printf("Call_initvar_int: unimplemented index %d\n", index);
-        exit(1);
-	}
-}
 
 char *copystring(char *value) {
 	char *result = malloc(strlen(value) + 1);
@@ -298,62 +51,145 @@ char *copystring(char *value) {
 	return result;
 }
 
-// value must be copied
-void Call_initvar_string(int index, char *value) {
-	switch (index) {
-    case R_Home_x: R_Home_static = copystring(value); break;
-    case R_TempDir_x: R_TempDir_static = copystring(value); break;
-    default:
-        printf("Call_initvar_string: unimplemented index %d\n", index);
-        exit(1);
-	}
+// ---------------------------------------------------
+// Generated by RFFIVariables.java:
+
+char* R_Home;
+char* R_TempDir;
+SEXP R_NilValue;
+SEXP R_UnboundValue;
+SEXP R_MissingArg;
+SEXP R_EmptyEnv;
+SEXP R_Srcref;
+SEXP R_Bracket2Symbol; /* "[[" */
+SEXP R_BracketSymbol; /* "[" */
+SEXP R_BraceSymbol; /* "{" */
+SEXP R_DoubleColonSymbol; /* "::" */
+SEXP R_ClassSymbol; /* "class" */
+SEXP R_DeviceSymbol; /* ".Device" */
+SEXP R_DevicesSymbol; /* ".Devices" */
+SEXP R_DimNamesSymbol; /* "dimnames" */
+SEXP R_DimSymbol; /* "dim" */
+SEXP R_DollarSymbol; /* "$" */
+SEXP R_DotsSymbol; /* "..." */
+SEXP R_DropSymbol; /* "drop" */
+SEXP R_LastvalueSymbol; /* ".Last.value" */
+SEXP R_LevelsSymbol; /* "levels" */
+SEXP R_ModeSymbol; /* "mode" */
+SEXP R_NameSymbol; /* "name" */
+SEXP R_NamesSymbol; /* "names" */
+SEXP R_NaRmSymbol; /* "na.rm" */
+SEXP R_PackageSymbol; /* "package" */
+SEXP R_QuoteSymbol; /* "quote" */
+SEXP R_RowNamesSymbol; /* "row.names" */
+SEXP R_SeedsSymbol; /* ".Random.seed" */
+SEXP R_SourceSymbol; /* "source" */
+SEXP R_TspSymbol; /* "tsp" */
+SEXP R_dot_defined; /* ".defined" */
+SEXP R_dot_Method; /* ".Method" */
+SEXP R_dot_target; /* ".target" */
+SEXP R_dot_packageName; /* ".packageName" */
+SEXP R_dot_Generic; /* ".Generic" */
+SEXP R_SrcrefSymbol; /* "srcref" */
+SEXP R_SrcfileSymbol; /* "srcfile" */
+SEXP R_NaString;
+double R_NaN;
+double R_PosInf;
+double R_NegInf;
+double R_NaReal;
+int R_NaInt;
+SEXP R_BlankString;
+SEXP R_BlankScalarString;
+SEXP R_BaseSymbol; /* "base" */
+SEXP R_NamespaceEnvSymbol; /* ".__NAMESPACE__." */
+SEXP R_RestartToken;
+SEXP R_SortListSymbol; /* "sort.list" */
+SEXP R_SpecSymbol; /* "spec" */
+SEXP R_TripleColonSymbol; /* ":::" */
+SEXP R_PreviousSymbol; /* "previous" */
+
+void Call_initvar_double(int index, double value) {
+    switch (index) {
+        case R_NaN_x: R_NaN = value; break;
+        case R_PosInf_x: R_PosInf = value; break;
+        case R_NegInf_x: R_NegInf = value; break;
+        case R_NaReal_x: R_NaReal = value; break;
+        default:
+            printf("Call_initvar_double: unimplemented index %d\n", index);
+            exit(1);
+    }
+}
+
+void Call_initvar_int(int index, int value) {
+    switch (index) {
+        case R_NaInt_x: R_NaInt = value; break;
+        default:
+            printf("Call_initvar_int: unimplemented index %d\n", index);
+            exit(1);
+    }
+}
+
+void Call_initvar_string(int index, char* value) {
+    switch (index) {
+        case R_Home_x: R_Home = copystring(value); break;
+        case R_TempDir_x: R_TempDir = copystring(value); break;
+        default:
+            printf("Call_initvar_string: unimplemented index %d\n", index);
+            exit(1);
+    }
 }
 
 void Call_initvar_obj(TruffleEnv* env, int index, void* value) {
-	init_utils(env);
-	switch (index) {
-    case R_NilValue_x: R_NilValue_static = value; break;
-    case R_UnboundValue_x: R_UnboundValue_static = value; break;
-    case R_MissingArg_x: R_MissingArg_static = value; break;
-    case R_Srcref_x: R_Srcref_static = value; break;
-    case R_EmptyEnv_x: R_EmptyEnv_static = value; break;
-    case R_Bracket2Symbol_x: R_Bracket2Symbol_static = value; break;
-    case R_BracketSymbol_x: R_BracketSymbol_static = value; break;
-    case R_BraceSymbol_x: R_BraceSymbol_static = value; break;
-    case R_DoubleColonSymbol_x: R_DoubleColonSymbol_static = value; break;
-    case R_ClassSymbol_x: R_ClassSymbol_static = value; break;
-    case R_DeviceSymbol_x: R_DeviceSymbol_static = value; break;
-    case R_DevicesSymbol_x: R_DevicesSymbol_static = value; break;
-    case R_DimNamesSymbol_x: R_DimNamesSymbol_static = value; break;
-    case R_DimSymbol_x: R_DimSymbol_static = value; break;
-    case R_DollarSymbol_x: R_DollarSymbol_static = value; break;
-    case R_DotsSymbol_x: R_DotsSymbol_static = value; break;
-    case R_DropSymbol_x: R_DropSymbol_static = value; break;
-    case R_LastvalueSymbol_x: R_LastvalueSymbol_static = value; break;
-    case R_LevelsSymbol_x: R_LevelsSymbol_static = value; break;
-    case R_ModeSymbol_x: R_ModeSymbol_static = value; break;
-    case R_NameSymbol_x: R_NameSymbol_static = value; break;
-    case R_NamesSymbol_x: R_NamesSymbol_static = value; break;
-    case R_NaRmSymbol_x: R_NaRmSymbol_static = value; break;
-    case R_PackageSymbol_x: R_PackageSymbol_static = value; break;
-    case R_QuoteSymbol_x: R_QuoteSymbol_static = value; break;
-    case R_RowNamesSymbol_x: R_RowNamesSymbol_static = value; break;
-    case R_SeedsSymbol_x: R_SeedsSymbol_static = value; break;
-    case R_SourceSymbol_x: R_SourceSymbol_static = value; break;
-    case R_TspSymbol_x: R_TspSymbol_static = value; break;
-    case R_dot_defined_x: R_dot_defined_static = value; break;
-    case R_dot_Method_x: R_dot_Method_static = value; break;
-    case R_dot_target_x: R_dot_target_static = value; break;
-    case R_SrcrefSymbol_x: R_SrcrefSymbol_static = value; break;
-    case R_SrcfileSymbol_x: R_SrcfileSymbol_static = value; break;
-    case R_NaString_x: R_NaString_static = value; break;
-    case R_BlankString_x: R_BlankString_static = value; break;
-    case R_BlankScalarString_x: R_BlankString_static = value; break;
-    case R_BaseSymbol_x: R_BaseSymbol_static = value; break;
-    case R_NamespaceEnvSymbol_x: R_NamespaceEnvSymbol_static = value; break;
-    // case R_RestartToken_x: R_RestartToken_static = value; break;
-    default:
-    	printf("Call_initvar_obj: unimplemented index %d\n", index);
-    	exit(1);
-	}
+    init_utils(env);
+    switch (index) {
+        case R_NilValue_x: R_NilValue = value; break;
+        case R_UnboundValue_x: R_UnboundValue = value; break;
+        case R_MissingArg_x: R_MissingArg = value; break;
+        case R_EmptyEnv_x: R_EmptyEnv = value; break;
+        case R_Srcref_x: R_Srcref = value; break;
+        case R_Bracket2Symbol_x: R_Bracket2Symbol = value; break;
+        case R_BracketSymbol_x: R_BracketSymbol = value; break;
+        case R_BraceSymbol_x: R_BraceSymbol = value; break;
+        case R_DoubleColonSymbol_x: R_DoubleColonSymbol = value; break;
+        case R_ClassSymbol_x: R_ClassSymbol = value; break;
+        case R_DeviceSymbol_x: R_DeviceSymbol = value; break;
+        case R_DevicesSymbol_x: R_DevicesSymbol = value; break;
+        case R_DimNamesSymbol_x: R_DimNamesSymbol = value; break;
+        case R_DimSymbol_x: R_DimSymbol = value; break;
+        case R_DollarSymbol_x: R_DollarSymbol = value; break;
+        case R_DotsSymbol_x: R_DotsSymbol = value; break;
+        case R_DropSymbol_x: R_DropSymbol = value; break;
+        case R_LastvalueSymbol_x: R_LastvalueSymbol = value; break;
+        case R_LevelsSymbol_x: R_LevelsSymbol = value; break;
+        case R_ModeSymbol_x: R_ModeSymbol = value; break;
+        case R_NameSymbol_x: R_NameSymbol = value; break;
+        case R_NamesSymbol_x: R_NamesSymbol = value; break;
+        case R_NaRmSymbol_x: R_NaRmSymbol = value; break;
+        case R_PackageSymbol_x: R_PackageSymbol = value; break;
+        case R_QuoteSymbol_x: R_QuoteSymbol = value; break;
+        case R_RowNamesSymbol_x: R_RowNamesSymbol = value; break;
+        case R_SeedsSymbol_x: R_SeedsSymbol = value; break;
+        case R_SourceSymbol_x: R_SourceSymbol = value; break;
+        case R_TspSymbol_x: R_TspSymbol = value; break;
+        case R_dot_defined_x: R_dot_defined = value; break;
+        case R_dot_Method_x: R_dot_Method = value; break;
+        case R_dot_target_x: R_dot_target = value; break;
+        case R_dot_packageName_x: R_dot_packageName = value; break;
+        case R_dot_Generic_x: R_dot_Generic = value; break;
+        case R_SrcrefSymbol_x: R_SrcrefSymbol = value; break;
+        case R_SrcfileSymbol_x: R_SrcfileSymbol = value; break;
+        case R_NaString_x: R_NaString = value; break;
+        case R_BlankString_x: R_BlankString = value; break;
+        case R_BlankScalarString_x: R_BlankScalarString = value; break;
+        case R_BaseSymbol_x: R_BaseSymbol = value; break;
+        case R_NamespaceEnvSymbol_x: R_NamespaceEnvSymbol = value; break;
+        case R_RestartToken_x: R_RestartToken = value; break;
+        case R_SortListSymbol_x: R_SortListSymbol = value; break;
+        case R_SpecSymbol_x: R_SpecSymbol = value; break;
+        case R_TripleColonSymbol_x: R_TripleColonSymbol = value; break;
+        case R_PreviousSymbol_x: R_PreviousSymbol = value; break;
+        default:
+            printf("Call_initvar_obj: unimplemented index %d\n", index);
+            exit(1);
+    }
 }
