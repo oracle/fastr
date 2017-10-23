@@ -294,4 +294,10 @@ public class TestEnvironments extends TestBase {
         // Turning frame into an environment should not evaluate all the promises:
         assertEval("{ makefun <- function(f,s) function(a) f(a); s <- function() cat('side effect'); .Internal(islistfactor(environment(makefun(function(b) 2*b, s()))$f, F)); }");
     }
+
+    @Test
+    public void testSharing() {
+        assertEval("{ e <- new.env(); e$vec <- c(1,2,3); vv <- e$vec; vv[[1]] <- 42; e$vec; }");
+        assertEval("{ e <- new.env(); f <- new.env(); e$vec <- c(1,2,3); f$vec <- e$vec; e$vec[[1]] <- 42; list(f = f$vec, e = e$vec); }");
+    }
 }

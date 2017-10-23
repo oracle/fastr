@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -123,10 +124,14 @@ public class AgentObjectSizeFactory extends ObjectSizeFactory {
 
     @Override
     public long getObjectSize(Object obj, IgnoreObjectHandler ignoreObjectHandler) {
-        return getObjectSize(obj, obj, ignoreObjectHandler);
+        return getObjectSize(obj, obj, ignoreObjectHandler, new HashSet<>());
     }
 
-    private long getObjectSize(Object rootObj, Object obj, IgnoreObjectHandler ignoreObjectHandler) {
+    private long getObjectSize(Object rootObj, Object obj, IgnoreObjectHandler ignoreObjectHandler, HashSet<Object> visited) {
+        if (visited.contains(obj)) {
+            return 0;
+        }
+        visited.add(obj);
         try {
             long basicSize = ObjSizeAgent.objectSize(obj);
             long size = basicSize;
@@ -137,7 +142,7 @@ public class AgentObjectSizeFactory extends ObjectSizeFactory {
                     if (elem == null || isNa(elem)) {
                         continue;
                     } else {
-                        size += getObjectSize(rootObj, elem, ignoreObjectHandler);
+                        size += getObjectSize(rootObj, elem, ignoreObjectHandler, visited);
                     }
                 }
             } else {
@@ -154,7 +159,7 @@ public class AgentObjectSizeFactory extends ObjectSizeFactory {
                     } else {
                         TypeCustomizer typeCustomizer = getCustomizer(fieldObj.getClass());
                         if (typeCustomizer == null) {
-                            size += getObjectSize(rootObj, fieldObj, ignoreObjectHandler);
+                            size += getObjectSize(rootObj, fieldObj, ignoreObjectHandler, visited);
                         } else {
                             size += typeCustomizer.getObjectSize(fieldObj);
                         }

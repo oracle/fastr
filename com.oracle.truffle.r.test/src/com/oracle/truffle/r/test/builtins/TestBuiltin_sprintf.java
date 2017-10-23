@@ -151,5 +151,28 @@ public class TestBuiltin_sprintf extends TestBase {
         assertEval("{ sprintf(c(\"foo %f %d\", \"bar %f %d\"), c(7,1), c(42L, 2L)) }");
         assertEval("{ sprintf(\"%.3g\", 1.234) }");
         assertEval("{ sprintf('plot_%02g', 3L) }");
+        assertEval("{ sprintf(c('hello', 'world'), NULL) }");
+        assertEval("{ sprintf('%s', list('hello world')) }");
+        // Note: we save the result to variable to avoid diff because of different formatting,
+        // however, at least we test that the format expression is not causing any problems to
+        // FastR.
+        assertEval("{ asdfgerta <- sprintf('%0.f', 1); }");
+        assertEval("{ asdfgerta <- sprintf('%0.0f', 1); }");
+        assertEval("{ asdfgerta <- sprintf('%.0f', 1); }");
+    }
+
+    @Test
+    public void testGenericDispatch() {
+        // from the doc: sprintf uses as.character for %s arguments, and as.double for %f, %E, ...
+        assertEval(Ignored.Unimplemented, "{ as.character.myclass65231 <- function(x) '42'; y <- 2; class(y) <- 'myclass65231'; sprintf('%s', y); }");
+        assertEval(Ignored.Unimplemented, "{ as.double.myclass65321 <- function(x) 3.14; y <- 3L; class(y) <- 'myclass65321'; sprintf('%g', y); }");
+        // catch: probably before calling as.double there is numeric validation? Strings are not OK
+        // even, when they have as.double function
+        assertEval(Ignored.Unimplemented, "{ as.double.myclass65321 <- function(x) 3.14; y <- 'str'; class(y) <- 'myclass65321'; sprintf('%g', y); }");
+    }
+
+    @Test
+    public void testCornerCases() {
+        assertEval(Ignored.ImplementationError, "{ sprintf(c('hello %d %s', 'world %d %s'), list(2, 'x')) }");
     }
 }

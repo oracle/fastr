@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GeneratedBy;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -107,6 +108,7 @@ public abstract class RBuiltinNode extends RBuiltinBaseNode implements NodeWithA
     }
 
     @Override
+    @TruffleBoundary
     public RBaseNode getErrorContext() {
         ErrorContext context = RError.contextForBuiltin(getRBuiltin());
         return context == null ? this : context;

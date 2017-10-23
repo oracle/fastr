@@ -55,6 +55,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -887,6 +888,14 @@ public abstract class REnvironment extends RAttributeStorage {
             if (frameAccess.get(key) == null) {
                 throw new PutException(RError.Message.ENV_ADD_BINDINGS);
             }
+        }
+        if (value instanceof RSharingAttributeStorage) {
+            RSharingAttributeStorage shareable = (RSharingAttributeStorage) value;
+            if (!shareable.isShared()) {
+                shareable.incRefCount();
+            }
+        } else {
+            RSharingAttributeStorage.verify(value);
         }
         frameAccess.put(key, value);
     }

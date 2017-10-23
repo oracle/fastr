@@ -106,7 +106,9 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
                         } else {
                             assert signature.getVarArgCount() == 1 : signature;
                             assert innerArguments.length == signature.getLength() || signature.getVarArgIndex() == signature.getLength() - 1 : signature;
-                            assert innerArguments.length >= signature.getLength() - 1 : signature + " " + innerArguments.length;
+                            // holds only for well-formed code, so we cannot rely on it:
+                            // assert innerArguments.length >= signature.getLength() - 1 : signature
+                            // + " " + innerArguments.length;
                         }
                         Info info = Info.createNew();
                         for (int i = innerArguments.length - 1; i >= 0; i--) {
