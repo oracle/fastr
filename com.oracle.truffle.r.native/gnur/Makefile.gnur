@@ -149,7 +149,6 @@ $(info Installing R-$(R_VERSION) into $(GNUR_HOME_BINARY) ...)
 $(GNUR_HOME_BINARY):
 	mkdir -p $(GNUR_HOME_BINARY_PARENT)
 	tar xf $(TOPDIR)/../libdownloads/R-$(R_VERSION).tar.gz -C $(GNUR_HOME_BINARY_PARENT)
-	ln -s $(GNUR_HOME_BINARY_PARENT)/R-$(R_VERSION) $(GNUR_HOME_BINARY)
 	(cd $(GNUR_HOME_BINARY); ./configure --with-x=no --with-aqua=no $(RECPKGS) --enable-memory-profiling $(GNUR_CONFIG_FLAGS) > gnur_configure.log 2>&1; $(MAKE) MAKE=$(MAKE) -j > gnur_make.log 2>&1)
 else
 $(GNUR_HOME_BINARY): 

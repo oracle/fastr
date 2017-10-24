@@ -439,7 +439,7 @@ def rbdiag(args):
     mx.run_java(vmArgs + args)
 
 def _gnur_path():
-    gnurHome = os.environ.get('GNUR_HOME_BINARY', 'libdownloads')
+    gnurHome = os.environ.get('GNUR_HOME_BINARY', join(_fastr_suite.dir, 'libdownloads'))
     return join(gnurHome, r_version(), 'bin')
 
 def gnu_r(args):
