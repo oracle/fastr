@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.ContextStateImpl;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class EnvironmentNodes {
@@ -81,12 +82,27 @@ public final class EnvironmentNodes {
             }
             REnvironment result;
             if (target == null) {
+                assert parentEnv != null;
+
                 FrameDescriptor cachedFd = ContextStateImpl.getFrameDescriptorFromList(list);
+                boolean hasEnclosingFD = !FrameSlotChangeMonitor.isEnclosingFrameDescriptor(cachedFd,
+                                parentEnv.getFrame());
+                if (hasEnclosingFD) {
+                    cachedFd = cachedFd.copy();
+                }
+
                 result = RDataFactory.createNewEnv(cachedFd, envName);
+                if (hasEnclosingFD) {
+                    FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(result.getName(), result.getFrame());
+                }
                 RArguments.initializeEnclosingFrame(result.getFrame(), parentEnv.getFrame());
+                RArguments.setEnclosingFrame(result.getFrame(), parentEnv.getFrame(), false);
                 result.setParent(parentEnv);
             } else {
                 result = target;
+            }
+            if (parentEnv != null) {
+                result.setParent(parentEnv);
             }
             for (int i = list.getLength() - 1; i >= 0; i--) {
                 String name = names.getDataAt(i);

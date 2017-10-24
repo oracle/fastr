@@ -98,7 +98,7 @@ public final class Closure {
 
         if (callTarget == null) {
             // clone for additional call targets
-            callTarget = generateCallTarget((RNode) (callTargets.isEmpty() ? expr : RContext.getASTBuilder().process(expr.asRSyntaxNode())));
+            callTarget = generateCallTarget((RNode) RContext.getASTBuilder().process(expr.asRSyntaxNode()));
             callTargets.put(desc, callTarget);
         }
         MaterializedFrame vFrame = VirtualEvalFrame.create(envir.getFrame(), (RFunction) null, caller);
