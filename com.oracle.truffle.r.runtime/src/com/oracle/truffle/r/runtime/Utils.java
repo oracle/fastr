@@ -32,7 +32,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -640,14 +639,6 @@ public final class Utils {
         } catch (Throwable t) {
             str.append("<exception ").append(t.getMessage()).append(" ").append(t.getClass().getSimpleName()).append("<");
         }
-    }
-
-    public static <T> T[] resizeArray(T[] oldValues, int newSize) {
-        T[] newValues = oldValues;
-        if (oldValues != null) {
-            newValues = Arrays.copyOf(oldValues, newSize);
-        }
-        return newValues;
     }
 
     public static void writeStderr(String s, boolean nl) {
