@@ -328,6 +328,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             }
             if (runOnExitHandlers) {
                 visibility.executeEndOfFunction(frame);
+                boolean actualVisibility = RArguments.getCall(frame).getVisibility();
+
                 if (!noHandlerStackSlot.isValid()) {
                     FrameSlot slot = getHandlerFrameSlot(frame);
                     if (frame.isObject(slot)) {
@@ -376,6 +378,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                             throw ex;
                         }
                     }
+
+                    // Restore visibility flag because an on.exit call may have changed it.
+                    RArguments.getCall(frame).setVisibility(actualVisibility);
                 }
             }
         }
