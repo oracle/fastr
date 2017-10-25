@@ -33,9 +33,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 
 /**
  * Mostly support for tracing R FFI up/down calls. Currently tracing of the arguments to calls is
@@ -63,10 +65,6 @@ public class RFFIUtils {
      */
     private static final String TRACEFILE = "fastr_trace_nativecalls.log";
     private static FileOutputStream traceStream;
-    /**
-     * Records the call depth. TBD: make context specific
-     */
-    private static int depth;
 
     /**
      * Handles the initialization of the RFFI downcalls/upcall tracing implementation.
@@ -108,22 +106,22 @@ public class RFFIUtils {
 
     @TruffleBoundary
     public static void traceUpCall(String name, List<Object> args) {
-        traceCall(CallMode.UP, name, depth, args.toArray());
+        traceCall(CallMode.UP, name, getContext().getCallDepth(), args.toArray());
     }
 
     @TruffleBoundary
     public static void traceUpCallReturn(String name, Object result) {
-        traceCall(CallMode.UP_RETURN, name, depth, result);
+        traceCall(CallMode.UP_RETURN, name, getContext().getCallDepth(), result);
     }
 
     @TruffleBoundary
     public static void traceDownCall(String name, Object... args) {
-        traceCall(CallMode.DOWN, name, ++depth, args);
+        traceCall(CallMode.DOWN, name, getContext().getCallDepth(), args);
     }
 
     @TruffleBoundary
     public static void traceDownCallReturn(String name, Object result) {
-        traceCall(CallMode.DOWN_RETURN, name, depth--, result);
+        traceCall(CallMode.DOWN_RETURN, name, getContext().getCallDepth(), result);
     }
 
     public static boolean traceEnabled() {
@@ -142,6 +140,8 @@ public class RFFIUtils {
             sb.append('(');
             printArgs(sb, args);
             sb.append(')');
+            sb.append(" [ctx:").append(System.identityHashCode(RContext.getInstance()));
+            sb.append(",thread:").append(Thread.currentThread().getId()).append(']');
             try {
                 traceStream.write(sb.toString().getBytes());
                 traceStream.write('\n');
@@ -202,5 +202,9 @@ public class RFFIUtils {
             unimplemented("unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of " + clazz.getSimpleName());
         }
         return clazz.cast(x);
+    }
+
+    private static RFFIContext getContext() {
+        return RContext.getInstance().getRFFI();
     }
 }

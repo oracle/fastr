@@ -42,6 +42,8 @@ public abstract class RFFIContext extends RFFI {
         // forward constructor
     }
 
+    private int callDepth = 0;
+
     /**
      * @see #registerReferenceUsedInNative(Object)
      */
@@ -89,11 +91,17 @@ public abstract class RFFIContext extends RFFI {
     }
 
     public long beforeDowncall() {
+        callDepth++;
         return 0;
     }
 
     public void afterDowncall(long before) {
+        callDepth--;
         cooperativeGc();
+    }
+
+    public int getCallDepth() {
+        return callDepth;
     }
 
     // this emulates the GNUR's cooperative GC

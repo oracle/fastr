@@ -305,6 +305,10 @@ final class TruffleNFI_Context extends RFFIContext {
 
     @Override
     public long beforeDowncall() {
+        super.beforeDowncall();
+        if (hasAccessLock) {
+            acquireLock();
+        }
         return pushCallbacks();
     }
 
@@ -315,6 +319,10 @@ final class TruffleNFI_Context extends RFFIContext {
             UnsafeAdapter.UNSAFE.freeMemory(ptr);
         }
         transientAllocations.clear();
+        if (hasAccessLock) {
+            releaseLock();
+        }
+        super.afterDowncall(beforeValue);
     }
 
     public static TruffleNFI_Context getInstance() {
