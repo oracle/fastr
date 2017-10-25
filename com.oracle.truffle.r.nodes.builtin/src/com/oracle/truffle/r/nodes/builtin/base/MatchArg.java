@@ -184,8 +184,9 @@ public abstract class MatchArg extends RBuiltinNode.Arg3 {
                     RNode defaultArg = arguments.getDefaultArgument(i);
                     if (defaultArg == null) {
                         this.value = RContext.getASTBuilder().constant(RSyntaxNode.INTERNAL, RDataFactory.createEmptyStringVector()).asRNode();
+                    } else {
+                        this.value = RContext.getASTBuilder().process(defaultArg.asRSyntaxNode()).asRNode();
                     }
-                    this.value = RContext.getASTBuilder().process(defaultArg.asRSyntaxNode()).asRNode();
                     return;
                 }
             }
