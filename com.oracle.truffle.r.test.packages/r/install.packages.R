@@ -751,7 +751,11 @@ gnu_rscript <- function() {
 	} else {
 		rv <- R.Version()
 		dirv <- paste0('R-', rv$major, '.', rv$minor)
-		file.path("com.oracle.truffle.r.native/gnur", dirv, 'bin', 'Rscript')
+		gnurHome <- Sys.getenv("GNUR_HOME_BINARY")
+		if (gnurHome == "") {
+			gnurHome <- "libdownloads"
+		}
+		file.path(gnurHome, dirv, 'bin', 'Rscript')
 	}
 }
 

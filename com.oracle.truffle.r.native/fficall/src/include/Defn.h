@@ -39,6 +39,8 @@
 #define N_(String) String
 #define ngettext(String, StringP, N) (N > 1 ? StringP: String)
 
+#define checkArity(a,b) Rf_checkArityCall(a,b,call)
+
 void sortVector(SEXP, Rboolean);
 int Scollate(SEXP a, SEXP b);
 void Rf_checkArityCall(SEXP, SEXP, SEXP);

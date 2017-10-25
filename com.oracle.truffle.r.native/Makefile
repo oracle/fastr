@@ -27,14 +27,19 @@ export TOPDIR = $(CURDIR)
 export FASTR_R_HOME=$(abspath $(TOPDIR)/..)
 export FASTR_LIB_DIR=$(FASTR_R_HOME)/lib
 export FASTR_NATIVE_DIR = $(TOPDIR)
-export R_VERSION = $(subst R-,,$(notdir $(basename $(basename $(wildcard $(FASTR_R_HOME)/libdownloads/R-*.gz)))))
-export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
+export R_VERSION = 3.4.0
+export GNUR_HOME = $(TOPDIR)/gnur/patch-build
 
 $(info R_VERSION: $(R_VERSION))
 $(info GNUR_HOME: $(GNUR_HOME))
 
 ifndef FASTR_RFFI
 export FASTR_RFFI = nfi
+endif
+
+ifndef GNUR_HOME_BINARY
+export GNUR_HOME_BINARY = $(FASTR_R_HOME)/libdownloads/R-$(R_VERSION)
+$(info GNUR_HOME_BINARY not set. Assuming the default location at $(GNUR_HOME_BINARY))
 endif
 
 # Completely accurate dependency analysis is very difficult for this project, so use a version number
@@ -45,14 +50,13 @@ all: checkversion
 	$(MAKE) -C gnur
 	$(MAKE) -C include
 	$(MAKE) -C fficall
-	$(MAKE) -C library
+	$(MAKE) -C $(GNUR_HOME)/src/library
 	$(MAKE) -C run
 	cp version.source version.built
 
 clean: 
 	$(MAKE) -C include clean
 	$(MAKE) -C fficall clean
-	$(MAKE) -C library clean
 	$(MAKE) -C run clean
 	$(MAKE) -C gnur clean
 

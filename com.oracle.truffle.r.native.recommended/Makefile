@@ -29,6 +29,15 @@
 
 FASTR_R_HOME := $(abspath $(CURDIR)/..)
 NATIVE_PROJECT_DIR := $(FASTR_R_HOME)/com.oracle.truffle.r.native
+TOPDIR := $(FASTR_R_HOME)/com.oracle.truffle.r.native.recommended
+
+# The package tar balls are copied from $(GNUR_HOME_BINARY)/src/library/Recommended
+ifndef GNUR_HOME_BINARY
+FASTR_R_HOME = $(abspath $(TOPDIR)/..)
+R_VERSION = $(subst R-,,$(notdir $(basename $(basename $(wildcard $(FASTR_R_HOME)/libdownloads/R-*.gz)))))
+export GNUR_HOME_BINARY = $(FASTR_R_HOME)/libdownloads/R-$(R_VERSION)
+$(info GNUR_HOME_BINARY not set. Assuming the default location at $(GNUR_HOME_BINARY))
+endif
 
 ifneq (,$(wildcard $(NATIVE_PROJECT_DIR)/platform.mk))
 include $(NATIVE_PROJECT_DIR)/platform.mk
@@ -40,23 +49,21 @@ endif
 
 .PHONY: all clean
 
-NATIVE_PROJECT := $(subst native.recommended,native,$(CURDIR))
-R_VERSION := $(notdir $(wildcard $(NATIVE_PROJECT)/gnur/R-*))
-GNUR_HOME := $(NATIVE_PROJECT)/gnur/$(R_VERSION)
 # order matters due to inter-package dependencies
 ifdef FASTR_RELEASE
 GNUR_RECOMMENDED_PKGNAMES := codetools MASS boot class cluster lattice nnet spatial Matrix survival KernSmooth foreign nlme rpart
 else
-# codetools must be always installed because of S4
+# codetools must always be installed because of S4
 GNUR_RECOMMENDED_PKGNAMES := codetools
 endif
-GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_HOME)/src/library/Recommended/$(pkg).tgz)
-#$(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
+GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_HOME_BINARY)/src/library/Recommended/$(pkg).tgz)
 
 all: install.recommended
 
+$(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
+
 ifneq ($(FASTR_RFFI),managed)
-install.recommended: $(GNUR_RECOMMENDED_TARS)
+install.recommended:
 	for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
 		$(FASTR_R_HOME)/bin/R CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar; \
 	done
@@ -68,6 +75,7 @@ ifeq ($(OS_NAME),Darwin)
 		fi \
 	done
 endif
+	touch install.recommended
 else
 install.recommended:
 endif
@@ -78,4 +86,3 @@ clean:
 		rm -rf $(FASTR_R_HOME)/library/$$pkgname; \
 	done
 	rm -f install.recommended
-

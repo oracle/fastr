@@ -38,7 +38,7 @@ R_HEADERS := $(wildcard $(GNUR_HOME)/include/*.h)
 R_HEADERS_FILENAMES := $(notdir $(R_HEADERS))
 #$(info R_HEADERS_FILENAMES=$(R_HEADERS_FILENAMES))
 R_HEADERS_LOCAL := src/Rinternals.h src/Rinterface.h
-#$(info R_HEADERS_LOCAL=$(R_HEADERS_LOCAL))>
+#$(info R_HEADERS_LOCAL=$(R_HEADERS_LOCAL))
 R_HEADERS_TO_LINK := $(filter-out $(notdir $(R_HEADERS_LOCAL)),$(R_HEADERS_FILENAMES))
 #$(info R_HEADERS_TO_LINK=$(R_HEADERS_TO_LINK))
 
@@ -52,6 +52,7 @@ linked:
 #	cp $(R_EXT_HEADERS_LOCAL) R_ext
 	touch linked
 
+$(info R_HEADERS_FILENAMES: $(R_HEADERS_FILENAMES))
 clean:
 	rm -rf include linked
 	$(foreach file,$(R_HEADERS_FILENAMES),rm -f $(file);)

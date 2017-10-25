@@ -31,14 +31,12 @@ java9Downloads : {
 logfiles : [
     "fastr_errors.log"
     "results.json"
-    "com.oracle.truffle.r.native/gnur/R-*/gnur_configure.log"
-    "com.oracle.truffle.r.native/gnur/R-*/gnur_make.log"
-    "com.oracle.truffle.r.native/gnur/R-*/Makeconf"
+    "libdownloads/R-*/gnur_configure.log"
+    "libdownloads/R-*/config.log"
+    "libdownloads/R-*/gnur_make.log"
+    "libdownloads/R-*/Makeconf"
     "com.oracle.truffle.r.native/gnur/tests/log/all.diff"
-    "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_configure.log"
-    "com.oracle.truffle.r.native/gnur/libiconv-*/iconv_make.log"
     "*-tests/*.Rout"
-    "com.oracle.truffle.r.native/gnur/R-*/config.log"
   ]
 
 # This is needed by all (Linux) builds but is specific to the module system employed

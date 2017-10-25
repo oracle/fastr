@@ -25,6 +25,7 @@ package com.oracle.truffle.r.test.tools;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -39,9 +40,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
+import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
@@ -63,7 +64,7 @@ import com.oracle.truffle.r.test.TestBase.Ignored;
  */
 public final class RBuiltinCheck {
 
-    private static final String DEFAULT_NAMESC = "com.oracle.truffle.r.native/gnur/" + RVersionNumber.R_HYPHEN_FULL + "/src/main/names.c";
+    private static final Path DEFAULT_NAMESC = Paths.get(REnvVars.gnurHome(), "src", "main", "names.c");
     private static final String BUILTIN_TEST_PATH = "com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_%s.java";
 
     // old-style code annotation to get rid of javadoc error.
@@ -166,7 +167,7 @@ public final class RBuiltinCheck {
         final Map<String, BuiltinInfo> fastr = extractFastRBuiltins();
         final Map<String, BuiltinInfo> gnur;
         try {
-            gnur = extractGnuRBuiltins(suitePath);
+            gnur = extractGnuRBuiltins();
         } catch (IOException ex) {
             System.err.println("Cannot read names.c file from GNU R distribution. \n" + ex.getClass().getName() + ":" + ex.getMessage());
             System.exit(1);
@@ -281,8 +282,8 @@ public final class RBuiltinCheck {
         return result;
     }
 
-    private static Map<String, BuiltinInfo> extractGnuRBuiltins(String suiteDir) throws IOException {
-        String content = Files.lines(Paths.get(suiteDir, DEFAULT_NAMESC)).collect(Collectors.joining("\n"));
+    private static Map<String, BuiltinInfo> extractGnuRBuiltins() throws IOException {
+        String content = Files.lines(DEFAULT_NAMESC).collect(Collectors.joining("\n"));
         Matcher matcher = Pattern.compile(FUNTAB_REGEXP).matcher(content);
         Map<String, BuiltinInfo> result = new TreeMap<>();
         while (matcher.find()) {

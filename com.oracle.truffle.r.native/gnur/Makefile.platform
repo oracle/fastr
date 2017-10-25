@@ -35,8 +35,6 @@ all: $(TOPDIR)/platform.mk
 
 $(TOPDIR)/platform.mk: sedMakeconf $(GNUR_HOME)/Makeconf Makefile
 	sed -f sedMakeconf $(GNUR_HOME)/Makeconf > /dev/null 2>&1
-	sed -f sedEtcMakeconf $(GNUR_HOME)/etc/Makeconf > /dev/null 2>&1
-	cat platform.mk.temp1 platform.mk.temp2 > platform.mk.temp
 	ed platform.mk.temp < edAddFASTR
 ifeq ($(FASTR_RFFI),llvm)
 	ed platform.mk.temp <edLLVM

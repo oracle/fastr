@@ -51,7 +51,7 @@ all: $(R_LIB)
 # N.B. if things change in the subdirs, a clean must be invoked
 # to remove the sentinels
 
-$(R_LIB): fficall.done 
+$(R_LIB): fficall.done
 ifeq ($(FASTR_RFFI),managed)
 	# nop
 else
@@ -91,7 +91,7 @@ endif #managed
 
 common.done:
 	$(MAKE) -C src/common all	
-
+	touch common.done
 
 clean:
 	$(MAKE) -C src/common clean
@@ -108,4 +108,5 @@ endif
 endif
 	rm -rf $(R_LIB)
 	rm -rf fficall.done
+	rm -rf common.done
 

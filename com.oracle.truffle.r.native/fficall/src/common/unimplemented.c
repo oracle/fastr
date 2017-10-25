@@ -75,6 +75,13 @@ addInputHandler(InputHandler *handlers, int fd, InputHandlerProc handler,
     return NULL;
 }
 
+int
+removeInputHandler(InputHandler **handlers, InputHandler *it)
+{
+    unimplemented("removeInputHandler");
+    return NULL;
+}
+
 void setup_RdotApp(void) {
 	unimplemented("setup_RdotApp");
 }

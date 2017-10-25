@@ -24,10 +24,14 @@
 .PHONY: all clean make_subdirs clean_subdirs clean_recommended
 
 SUBDIRS = testrffi vanilla tests4
-NATIVE_PROJECT = $(subst test.native,native,$(TOPDIR))
-R_VERSION := $(notdir $(wildcard $(NATIVE_PROJECT)/gnur/R-*))
-export GNUR_HOME := $(NATIVE_PROJECT)/gnur/$(R_VERSION)
-GNUR_RECOMMENDED := $(wildcard $(GNUR_HOME)/src/library/Recommended/*.tgz)
+NATIVE_RECOMMENDED_PROJECT = $(subst test.native,native.recommended,$(TOPDIR))
+ifndef GNUR_HOME_BINARY
+FASTR_R_HOME = $(abspath $(TOPDIR)/..)
+R_VERSION = $(subst R-,,$(notdir $(basename $(basename $(wildcard $(FASTR_R_HOME)/libdownloads/R-*.gz)))))
+export GNUR_HOME_BINARY = $(FASTR_R_HOME)/libdownloads/R-$(R_VERSION)
+$(info GNUR_HOME_BINARY not set. Assuming the default location at $(GNUR_HOME_BINARY))
+endif
+GNUR_RECOMMENDED := $(wildcard $(GNUR_HOME_BINARY)/src/library/Recommended/*.tgz)
 
 # We have to copy the GNU R recommended packages into this project
 # to keep the mx archiver happy, which asserts that every path

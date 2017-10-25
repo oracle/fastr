@@ -43,15 +43,15 @@ FASTR_ETC_DIR := $(FASTR_R_HOME)/etc
 FASTR_SHARE_DIR := $(FASTR_R_HOME)/share
 FASTR_INCLUDE_DIR := $(FASTR_R_HOME)/include
 
-R_SCRIPT := $(addprefix $(GNUR_HOME)/bin/,R)
-BIN_FILES := $(wildcard $(GNUR_HOME)/bin/*)
+R_SCRIPT := $(addprefix $(GNUR_HOME_BINARY)/bin/,R)
+BIN_FILES := $(wildcard $(GNUR_HOME_BINARY)/bin/*)
 
-DOC_FILES := $(wildcard $(GNUR_HOME)/doc/*)
+DOC_FILES := $(wildcard $(GNUR_HOME_BINARY)/doc/*)
 
 # Not all of these work unchanged
-ETC_FILES := $(addprefix $(GNUR_HOME)/etc/,javaconf ldpaths Renviron repositories)
+ETC_FILES := $(addprefix $(GNUR_HOME_BINARY)/etc/,javaconf ldpaths Renviron repositories)
 
-SHARE_FILES := $(addprefix $(GNUR_HOME)/share/,R Rd make java encodings)
+SHARE_FILES := $(addprefix $(GNUR_HOME_BINARY)/share/,R Rd make java encodings)
 
 LLVM_TOOLS := $(wildcard $(FASTR_NATIVE_DIR)/llvm_tools/*)
 
@@ -81,11 +81,11 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	(sed -e 's!^\(R_HOME_DIR=\)\(.*\)!\1"$(FASTR_R_HOME)"!' | sed -e 's/    -h.--help./    --r-help\)/') < $(R_SCRIPT) > $(FASTR_BIN_DIR)/R
 	chmod +x $(FASTR_BIN_DIR)/R 
 	touch $(FASTR_ETC_DIR)/ldpaths
-	sed -e "s|\(R_LIBS_USER=.*-'\)\(.*\)'}|\1$(FASTR_R_HOME)/library'}|" < $(GNUR_HOME)/etc/Renviron > $(FASTR_ETC_DIR)/Renviron
-	cp $(GNUR_HOME)/etc/Makeconf Makeconf.etc
-	cp $(GNUR_HOME)/etc/javaconf $(FASTR_ETC_DIR)/javaconf
-	cp $(GNUR_HOME)/etc/repositories $(FASTR_ETC_DIR)/repositories
-	cp $(GNUR_HOME)/etc/ldpaths $(FASTR_ETC_DIR)/ldpaths
+	sed -e "s|\(R_LIBS_USER=.*-'\)\(.*\)'}|\1$(FASTR_R_HOME)/library'}|" < $(GNUR_HOME_BINARY)/etc/Renviron > $(FASTR_ETC_DIR)/Renviron
+	cp $(GNUR_HOME_BINARY)/etc/Makeconf Makeconf.etc
+	cp $(GNUR_HOME_BINARY)/etc/javaconf $(FASTR_ETC_DIR)/javaconf
+	cp $(GNUR_HOME_BINARY)/etc/repositories $(FASTR_ETC_DIR)/repositories
+	cp $(GNUR_HOME_BINARY)/etc/ldpaths $(FASTR_ETC_DIR)/ldpaths
 	ed Makeconf.etc < edMakeconf.etc
 ifeq ($(FASTR_RFFI),llvm)
 	ed Makeconf.etc < edMakeconf.etc.llvm

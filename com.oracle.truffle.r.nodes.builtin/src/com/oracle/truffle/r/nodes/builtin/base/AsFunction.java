@@ -129,7 +129,7 @@ public abstract class AsFunction extends RBuiltinNode.Arg2 {
         RBaseNode body;
         Object bodyObject = x.getDataAtAsObject(x.getLength() - 1);
         if (bodyObject instanceof RLanguage) {
-            body = ((RLanguage) x.getDataAtAsObject(x.getLength() - 1)).getRep();
+            body = (RBaseNode) RContext.getASTBuilder().process(((RLanguage) x.getDataAtAsObject(x.getLength() - 1)).getRep().asRSyntaxNode());
         } else if (bodyObject instanceof RSymbol) {
             body = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) bodyObject).getName(), false).asRNode();
         } else {

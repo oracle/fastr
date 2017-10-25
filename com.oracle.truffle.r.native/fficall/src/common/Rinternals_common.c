@@ -111,6 +111,8 @@ void *DATAPTR(SEXP x) {
 		return REAL(x);
 	} else if (type == LGLSXP) {
 		return LOGICAL(x);
+	} else if (type == RAWSXP) {
+		return RAW(x);
 	} else {
 		printf("DATAPTR %d\n", type);
 		unimplemented("R_DATAPTR");

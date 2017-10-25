@@ -45,11 +45,11 @@ all: $(FASTR_LIB_DIR) $(BLAS_TARGET) $(LAPACK_TARGET) rcopylib.done
 $(FASTR_LIB_DIR):
 	mkdir -p $(FASTR_LIB_DIR)
 
-$(BLAS_TARGET): $(GNUR_HOME)/lib/libRblas$(DYLIB_EXT)
-	cp $(GNUR_HOME)/lib/libRblas$(DYLIB_EXT) $(BLAS_TARGET)
+$(BLAS_TARGET): $(GNUR_HOME_BINARY)/lib/libRblas$(DYLIB_EXT)
+	cp $(GNUR_HOME_BINARY)/lib/libRblas$(DYLIB_EXT) $(BLAS_TARGET)
 
-$(LAPACK_TARGET): $(GNUR_HOME)/lib/libRlapack$(DYLIB_EXT)
-	cp $(GNUR_HOME)/lib/libRlapack$(DYLIB_EXT) $(LAPACK_TARGET)
+$(LAPACK_TARGET): $(GNUR_HOME_BINARY)/lib/libRlapack$(DYLIB_EXT)
+	cp $(GNUR_HOME_BINARY)/lib/libRlapack$(DYLIB_EXT) $(LAPACK_TARGET)
 ifeq ($(OS_NAME),Darwin)
 # libRblas depends on libgfortran, libquadmath
 # libRlapack depends on libgfortran, libquadmath, libRblas, libR

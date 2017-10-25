@@ -45,11 +45,11 @@ TEMPLATE_FILE := ../Rutils/template.R
 all: $(RIN_R_FILES) $(PKG_TAR)
 
 $(PKG_TAR): $(PKG_FILES)
-	(cd $(REPO_DIR); TZDIR=/usr/share/zoneinfo/ $(GNUR_HOME)/bin/R CMD build $(CURDIR)/$(PACKAGE))
+	(cd $(REPO_DIR); TZDIR=/usr/share/zoneinfo/ $(GNUR_HOME_BINARY)/bin/R CMD build $(CURDIR)/$(PACKAGE))
 
 $(RIN_R_FILES): $(RIN_FILES)
 	for rf in $(RIN_FILES); do \
-		TEMPLATE_FILE=$(TEMPLATE_FILE) $(GNUR_HOME)/bin/Rscript $$rf $$rf || exit 1; \
+		TEMPLATE_FILE=$(TEMPLATE_FILE) $(GNUR_HOME_BINARY)/bin/Rscript $$rf $$rf || exit 1; \
 	done
 
 clean:

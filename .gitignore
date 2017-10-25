@@ -143,3 +143,4 @@ com.oracle.truffle.r.test.native/packages/testrffi/testrffi/tests/asTests.R
 com.oracle.truffle.r.test.native/packages/testrffi/testrffi/tests/coerceTests.R
 com.oracle.truffle.r.native/version.built
 documentation/.pydevproject
+com.oracle.truffle.r.native/gnur/patch-build
