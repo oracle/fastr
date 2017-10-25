@@ -209,7 +209,7 @@ public class RCommand {
                 throw fatal("embedded mode disabled");
                 // consoleHandler = new EmbeddedConsoleHandler(rsp, engine);
             } else {
-                boolean useReadLine = !rsp.noReadline();
+                boolean useReadLine = isInteractive && !rsp.noReadline();
                 if (useReadLine) {
                     return new JLineConsoleHandler(inStream, outStream, rsp.isSlave());
                 } else {
