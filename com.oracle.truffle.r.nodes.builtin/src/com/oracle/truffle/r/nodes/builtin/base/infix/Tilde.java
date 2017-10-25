@@ -34,7 +34,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -73,8 +72,9 @@ public abstract class Tilde extends RBuiltinNode.Arg2 {
     protected RLanguage tilde(VirtualFrame frame, @SuppressWarnings("unused") Object response, @SuppressWarnings("unused") Object model,
                     @Cached("createSetEnvAttrNode()") SetFixedAttributeNode setEnvAttrNode) {
         RCallNode call = (RCallNode) ((RBaseNode) getParent()).asRSyntaxNode();
-        Closure closure = RContext.getInstance().languageClosureCache.getOrCreateLanguageClosure(call);
-        RLanguage lang = RDataFactory.createLanguage(closure);
+
+        // Do not cache the closure because formulas are usually not evaluated.
+        RLanguage lang = RDataFactory.createLanguage(Closure.createLanguageClosure(call));
         setClassAttrNode.execute(lang, FORMULA_CLASS);
         REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
         setEnvAttrNode.execute(lang, env);
