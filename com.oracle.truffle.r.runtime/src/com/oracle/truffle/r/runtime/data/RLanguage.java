@@ -87,11 +87,7 @@ public final class RLanguage extends RSharingAttributeStorage implements RAbstra
         return RContext.getRRuntimeASTAccess().createLanguageFromList(l, type);
     }
 
-    public Closure getClosure() {
-        return closure;
-    }
-
-    public RBaseNode getRep() {
+    private void regenerateFromList() {
         if (list != null) {
             // we could rest rep but we keep it around to remember type of the language object
             assert closure.getExpr() != null;
@@ -99,10 +95,20 @@ public final class RLanguage extends RSharingAttributeStorage implements RAbstra
             RPairList oldList = this.list;
             this.list = null;
             RLanguage newLang = (RLanguage) fromList(oldList, RContext.getRRuntimeASTAccess().getRepType(this));
-            this.closure = newLang.getClosure();
+            assert newLang.list == null;
+            this.closure = newLang.closure;
             this.length = newLang.length;
             this.attributes = newLang.attributes;
         }
+    }
+
+    public Closure getClosure() {
+        regenerateFromList();
+        return closure;
+    }
+
+    public RBaseNode getRep() {
+        regenerateFromList();
         return closure.getExpr();
     }
 
