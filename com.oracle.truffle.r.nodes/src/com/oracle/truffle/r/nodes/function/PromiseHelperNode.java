@@ -180,7 +180,7 @@ public class PromiseHelperNode extends RBaseNode {
         try {
             if (promiseClosureCache == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseClosureCache = insert(InlineCacheNode.createPromise(FastROptions.PromiseCacheSize.getNonNegativeIntValue()));
+                promiseClosureCache = insert(InlineCacheNode.create(FastROptions.PromiseCacheSize.getNonNegativeIntValue()));
             }
             promise.setUnderEvaluation();
             Frame execFrame = isInOriginFrame(frame, promise) ? frame : wrapPromiseFrame(frame, promiseFrameProfile.profile(promise.getFrame()));

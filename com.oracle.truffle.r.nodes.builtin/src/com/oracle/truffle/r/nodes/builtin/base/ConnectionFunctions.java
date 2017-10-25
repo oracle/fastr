@@ -30,6 +30,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalTrue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
@@ -1399,6 +1400,42 @@ public abstract class ConnectionFunctions {
             } catch (IOException ex) {
                 throw RInternalError.shouldNotReachHere();
             }
+        }
+    }
+
+    @RBuiltin(name = "sockSelect", kind = RBuiltinKind.INTERNAL, parameterNames = {"socklist", "write", "timeout"}, behavior = IO)
+    public abstract static class SockSelect extends RBuiltinNode.Arg3 {
+
+        static {
+            Casts casts = new Casts(SockSelect.class);
+            casts.arg("socklist").defaultError(Message.NOT_A_LIST_OF_SOCKETS).mustNotBeMissing().mustNotBeNull().asIntegerVector().findFirst();
+            casts.arg("write").mustNotBeMissing().mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("timeout").mustNotBeMissing().asIntegerVector().findFirst();
+        }
+
+        @Specialization
+        protected RLogicalVector selectMultiple(RAbstractIntVector socklist, boolean write, int timeout) {
+            RSocketConnection[] socketConnections = getSocketConnections(socklist);
+            try {
+                byte[] selected = RSocketConnection.select(socketConnections, write, timeout * 1000L);
+                return RDataFactory.createLogicalVector(selected, true);
+            } catch (IOException e) {
+                throw error(RError.Message.GENERIC, e.getMessage());
+            }
+        }
+
+        @TruffleBoundary
+        private RSocketConnection[] getSocketConnections(RAbstractIntVector socklist) {
+            RSocketConnection[] socketConnections = new RSocketConnection[socklist.getLength()];
+            for (int i = 0; i < socklist.getLength(); i++) {
+                BaseRConnection baseConnection = getBaseConnection(RConnection.fromIndex(socklist.getDataAt(i)));
+                if (baseConnection instanceof RSocketConnection) {
+                    socketConnections[i] = (RSocketConnection) baseConnection;
+                } else {
+                    throw error(Message.NOT_A_SOCKET_CONNECTION);
+                }
+            }
+            return socketConnections;
         }
     }
 }

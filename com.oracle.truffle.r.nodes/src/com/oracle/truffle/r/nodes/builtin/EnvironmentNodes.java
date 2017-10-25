@@ -23,41 +23,86 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.REnvironment.ContextStateImpl;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class EnvironmentNodes {
 
     /**
-     * Abstracted for use by other nodes that need to convert a list into an environment.
+     * Convert an {@link RList} to an {@link REnvironment}, which is needed in several builtins,
+     * e.g. {@code substitute}.
      */
-    public static final class RList2EnvNode extends RBaseNode {
+    public abstract static class RList2EnvNode extends RBaseNode {
         private final boolean ignoreMissingNames;
 
-        public RList2EnvNode() {
+        protected RList2EnvNode() {
             this(false);
         }
 
-        public RList2EnvNode(boolean ignoreMissingNames) {
+        protected RList2EnvNode(boolean ignoreMissingNames) {
             this.ignoreMissingNames = ignoreMissingNames;
         }
 
-        @TruffleBoundary
-        public REnvironment execute(RAbstractListVector list, REnvironment env) {
-            if (list.getLength() == 0) {
-                return env;
+        public abstract REnvironment execute(Object listOrNull, REnvironment target, String envName, REnvironment parentEnv);
+
+        @Specialization(guards = "isEmpty(list)")
+        protected REnvironment doEmptyList(@SuppressWarnings("unused") RAbstractListVector list, REnvironment target, String envName, REnvironment parentEnv) {
+            REnvironment createNewEnv;
+            if (target == null) {
+                createNewEnv = RDataFactory.createNewEnv(envName);
+                RArguments.initializeEnclosingFrame(createNewEnv.getFrame(), parentEnv.getFrame());
+                createNewEnv.setParent(parentEnv);
+            } else {
+                createNewEnv = target;
             }
+            return createNewEnv;
+        }
+
+        @Specialization(guards = "!isEmpty(list)")
+        @TruffleBoundary
+        protected REnvironment doList(RAbstractListVector list, REnvironment target, String envName, REnvironment parentEnv) {
             RStringVector names = list.getNames();
             if (names == null) {
                 throw error(RError.Message.LIST_NAMES_SAME_LENGTH);
+            }
+            REnvironment result;
+            if (target == null) {
+                assert parentEnv != null;
+
+                FrameDescriptor cachedFd = ContextStateImpl.getFrameDescriptorFromList(list);
+                boolean hasEnclosingFD = !FrameSlotChangeMonitor.isEnclosingFrameDescriptor(cachedFd,
+                                parentEnv.getFrame());
+                if (hasEnclosingFD) {
+                    cachedFd = cachedFd.copy();
+                }
+
+                result = RDataFactory.createNewEnv(cachedFd, envName);
+                if (hasEnclosingFD) {
+                    FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(result.getName(), result.getFrame());
+                }
+                RArguments.initializeEnclosingFrame(result.getFrame(), parentEnv.getFrame());
+                RArguments.setEnclosingFrame(result.getFrame(), parentEnv.getFrame(), false);
+                result.setParent(parentEnv);
+            } else {
+                result = target;
+            }
+            if (parentEnv != null) {
+                result.setParent(parentEnv);
             }
             for (int i = list.getLength() - 1; i >= 0; i--) {
                 String name = names.getDataAt(i);
@@ -65,11 +110,23 @@ public final class EnvironmentNodes {
                     throw error(RError.Message.ZERO_LENGTH_VARIABLE);
                 }
                 // in case of duplicates, last element in list wins
-                if (env.get(name) == null) {
-                    env.safePut(name, list.getDataAt(i));
+                if (result.get(name) == null) {
+                    result.safePut(name, UpdateShareableChildValue.update(list, list.getDataAt(i)));
                 }
             }
-            return env;
+            return result;
+        }
+
+        protected boolean isEmpty(RAbstractListVector list) {
+            return list.getLength() == 0;
+        }
+
+        public static RList2EnvNode create() {
+            return EnvironmentNodesFactory.RList2EnvNodeGen.create();
+        }
+
+        public static RList2EnvNode create(boolean ignoreMissingNames) {
+            return EnvironmentNodesFactory.RList2EnvNodeGen.create(ignoreMissingNames);
         }
     }
 

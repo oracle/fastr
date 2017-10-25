@@ -70,6 +70,7 @@ import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -833,7 +834,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             }
         } else if (expr instanceof RSymbol) {
             RSyntaxNode lookup = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) expr).getName(), false);
-            result = RContext.getEngine().eval(RDataFactory.createLanguage(lookup.asRNode()), (REnvironment) env, RCaller.topLevel);
+            result = RContext.getEngine().eval(RDataFactory.createLanguage(Closure.createLanguageClosure(lookup.asRNode())), (REnvironment) env, RCaller.topLevel);
         } else {
             // just return value
             result = expr;

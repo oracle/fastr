@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -144,7 +145,8 @@ public final class RASTUtils {
             return RDataFactory.createSymbol(id);
         } else {
             assert element instanceof RSyntaxCall || element instanceof RSyntaxFunction;
-            return RDataFactory.createLanguage(((RSyntaxNode) element).asRNode());
+            Closure closure = RContext.getInstance().languageClosureCache.getOrCreateLanguageClosure(((RSyntaxNode) element).asRNode());
+            return RDataFactory.createLanguage(closure);
         }
     }
 

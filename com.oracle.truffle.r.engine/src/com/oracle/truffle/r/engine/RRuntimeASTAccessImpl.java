@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.Frame;
@@ -73,6 +74,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -243,7 +245,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
             RNode fn = unwrapToRNode(list.getDataAtAsObject(0), true);
             RSyntaxNode call = RContext.getASTBuilder().call(RSourceSectionNode.LAZY_DEPARSE, fn.asRSyntaxNode(), argList);
-            RLanguage result = RDataFactory.createLanguage(call.asRNode());
+            RLanguage result = RDataFactory.createLanguage(Closure.createLanguageClosure(call.asRNode()));
             if (formals != null && formals.getLength() > 0 && formals.getDataAt(0).length() > 0) {
                 result.setCallLHSName(formals.getDataAt(0));
             }
@@ -261,7 +263,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             }
             RootCallTarget rootCallTarget = RContext.getASTBuilder().rootFunction(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, resArgs, body, null);
             FunctionExpressionNode fnExprNode = FunctionExpressionNode.create(RSyntaxNode.LAZY_DEPARSE, rootCallTarget);
-            RLanguage result = RDataFactory.createLanguage(fnExprNode);
+            RLanguage result = RDataFactory.createLanguage(Closure.createLanguageClosure(fnExprNode));
             return addAttributes(result, list);
         } else {
             throw RInternalError.shouldNotReachHere("unexpected type");
@@ -364,7 +366,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 newNames[i] = names.getDataAt(j);
             }
             // copying is already handled by RShareable
-            rl.setRep(RCallNode.createCall(RSyntaxNode.INTERNAL, ((RCallNode) node).getFunction(), ArgumentsSignature.get(newNames), args.getArguments()));
+            RCallNode newCall = RCallNode.createCall(RSyntaxNode.INTERNAL, ((RCallNode) node).getFunction(), ArgumentsSignature.get(newNames), args.getArguments());
+            rl.setClosure(Closure.createLanguageClosure(newCall));
         } else {
             throw RInternalError.shouldNotReachHere();
         }
@@ -417,7 +420,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             call = call.getParent();
         }
         RSyntaxElement syntaxNode = call.getSyntaxNode();
-        return RDataFactory.createLanguage(((RSyntaxNode) syntaxNode).asRNode());
+        return RDataFactory.createLanguage(getOrCreateLanguageClosure(((RSyntaxNode) syntaxNode).asRNode()));
     }
 
     private static RBaseNode checkBuiltin(RBaseNode bn) {
@@ -469,7 +472,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         } else {
             RBaseNode originalCall = checkBuiltin(call);
             if (originalCall != null && originalCall.checkasRSyntaxNode() != null) {
-                return RDataFactory.createLanguage(originalCall.asRSyntaxNode().asRNode());
+                return RDataFactory.createLanguage(getOrCreateLanguageClosure(originalCall.asRSyntaxNode().asRNode()));
             } else {
                 // See checkBuiltin. Also some RBaseNode subclasses do not provide an RSyntaxNode.
                 Frame frame = Utils.getActualCurrentFrame();
@@ -742,5 +745,10 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public RContext getCurrentContext() {
         return TruffleRLanguageImpl.getCurrentContext();
+    }
+
+    private static Closure getOrCreateLanguageClosure(RNode expr) {
+        CompilerAsserts.neverPartOfCompilation();
+        return RContext.getInstance().languageClosureCache.getOrCreateLanguageClosure(expr);
     }
 }

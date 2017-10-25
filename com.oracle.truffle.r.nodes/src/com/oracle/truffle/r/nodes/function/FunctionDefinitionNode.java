@@ -69,6 +69,7 @@ import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -327,6 +328,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             }
             if (runOnExitHandlers) {
                 visibility.executeEndOfFunction(frame);
+                boolean actualVisibility = RArguments.getCall(frame).getVisibility();
+
                 if (!noHandlerStackSlot.isValid()) {
                     FrameSlot slot = getHandlerFrameSlot(frame);
                     if (frame.isObject(slot)) {
@@ -351,7 +354,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                 if (onExitProfile.profile(onExitSlot.hasValue(frame))) {
                     if (onExitExpressionCache == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        onExitExpressionCache = insert(InlineCacheNode.createExpression(3));
+                        onExitExpressionCache = insert(InlineCacheNode.create(3));
                     }
                     RPairList current = getCurrentOnExitList(frame, onExitSlot.executeFrameSlot(frame));
                     /*
@@ -365,7 +368,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                                     CompilerDirectives.transferToInterpreter();
                                     RInternalError.shouldNotReachHere("unexpected type for on.exit entry: " + expr.car());
                                 }
-                                onExitExpressionCache.execute(frame, expr.car());
+                                Closure closure = RContext.getInstance().languageClosureCache.getOrCreateLanguageClosure((RNode) expr.car());
+                                onExitExpressionCache.execute(frame, closure);
                             }
                         }
                     } catch (ReturnException ex) {
@@ -375,6 +379,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                             throw ex;
                         }
                     }
+
+                    // Restore visibility flag because an on.exit call may have changed it.
+                    RArguments.getCall(frame).setVisibility(actualVisibility);
                 }
             }
         }

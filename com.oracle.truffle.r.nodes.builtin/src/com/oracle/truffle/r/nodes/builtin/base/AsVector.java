@@ -224,7 +224,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
 
             @Specialization(guards = "o.getAttributes() != null")
             protected static RLanguage drop(RLanguage o) {
-                return RDataFactory.createLanguage(o.getRep());
+                return RDataFactory.createLanguage(o.getClosure());
             }
 
             @Specialization(guards = "o.getAttributes() != null")

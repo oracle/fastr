@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -101,7 +102,7 @@ public abstract class Call extends RBuiltinNode.Arg2 {
             argList = pl.cdr();
         }
         RSyntaxNode function = RContext.getASTBuilder().function(language, RSyntaxNode.LAZY_DEPARSE, finalArgs, RASTUtils.createNodeForValue(body).asRSyntaxNode(), null);
-        return RDataFactory.createLanguage(function.asRNode());
+        return RDataFactory.createLanguage(Closure.createLanguageClosure(function.asRNode()));
     }
 
     @TruffleBoundary
@@ -111,6 +112,6 @@ public abstract class Call extends RBuiltinNode.Arg2 {
             args[i] = (RSyntaxNode) RASTUtils.createNodeForValue(arguments[i]);
         }
         RNode call = RContext.getASTBuilder().call(RSyntaxNode.LAZY_DEPARSE, target, RCodeBuilder.createArgumentList(signature, args)).asRNode();
-        return RDataFactory.createLanguage(call);
+        return RDataFactory.createLanguage(Closure.createLanguageClosure(call));
     }
 }

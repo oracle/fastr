@@ -53,11 +53,10 @@ import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.NSBaseMaterializedFrame;
 import com.oracle.truffle.r.runtime.env.frame.REnvEmptyFrameAccess;
@@ -185,7 +184,7 @@ public abstract class REnvironment extends RAttributeStorage {
             this.searchPath = newSearchPath;
         }
 
-        public static FrameDescriptor getFrameDescriptorFromList(RList list) {
+        public static FrameDescriptor getFrameDescriptorFromList(RAbstractListVector list) {
             CompilerAsserts.neverPartOfCompilation();
 
             RStringVector names = list.getNames();
@@ -247,7 +246,6 @@ public abstract class REnvironment extends RAttributeStorage {
     public static final String UNNAMED = new String("");
     private static final String NAME_ATTR_KEY = "name";
     private static final Empty emptyEnv = new Empty();
-    private static final int LARGE_LIST_THRESHOLD = 100;
 
     private final String name;
     private final REnvFrameAccess frameAccess;
@@ -685,31 +683,6 @@ public abstract class REnvironment extends RAttributeStorage {
             env = REnvironment.Function.create(f);
         }
         return env;
-    }
-
-    /**
-     * Convert an {@link RList} to an {@link REnvironment}, which is needed in several builtins,
-     * e.g. {@code substitute}.
-     */
-    @TruffleBoundary
-    public static REnvironment createFromList(RList list, REnvironment parent) {
-        REnvironment result;
-        RStringVector names = list.getNames();
-        if (list.getLength() >= LARGE_LIST_THRESHOLD) {
-            FrameDescriptor cachedFd = ContextStateImpl.getFrameDescriptorFromList(list);
-            result = RDataFactory.createNewEnv(cachedFd, null);
-        } else {
-            result = RDataFactory.createNewEnv(null);
-        }
-        RArguments.initializeEnclosingFrame(result.getFrame(), parent.getFrame());
-        for (int i = 0; i < list.getLength(); i++) {
-            try {
-                result.put(names.getDataAt(i), UpdateShareableChildValue.update(list, list.getDataAt(i)));
-            } catch (PutException ex) {
-                throw RError.error(RError.SHOW_CALLER2, ex);
-            }
-        }
-        return result;
     }
 
     // END of static methods

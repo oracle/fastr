@@ -34,6 +34,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
@@ -43,7 +44,6 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
@@ -654,7 +654,7 @@ public class RChannel {
 
         @TruffleBoundary
         private RPromise unserializePromise(SerializedPromise p) throws IOException {
-            Closure closure = Closure.create(RContext.getASTBuilder().process(p.getSerializedExpr()).asRNode());
+            Closure closure = Closure.createPromiseClosure(RContext.getASTBuilder().process(p.getSerializedExpr()).asRNode());
             if (p.getValue() == RUnboundValue.instance) {
                 Object environment = p.getEnv();
                 if (environment != RNull.instance) {

@@ -1011,37 +1011,37 @@ int SETLEVELS(SEXP x, int v) {
     return 0;
 }
 
-int *INTEGER(SEXP x) {
-    TRACE0();
-    SEXP result = ((call_INTEGER) callbacks[INTEGER_x])(x);
+int *FASTR_INTEGER(SEXP x) {
+    TRACE(TARGp, x);
+    int *result = ((call_INTEGER) callbacks[INTEGER_x])(x);
     checkExitCall();
     return result;
 }
 
 int *LOGICAL(SEXP x){
     TRACE0();
-    SEXP result = ((call_LOGICAL) callbacks[LOGICAL_x])(x);
+    int *result = ((call_LOGICAL) callbacks[LOGICAL_x])(x);
     checkExitCall();
     return result;
 }
 
-double *REAL(SEXP x){
-    TRACE0();
-    SEXP result = ((call_REAL) callbacks[REAL_x])(x);
+double *FASTR_REAL(SEXP x){
+    TRACE(TARGp, x);
+    double *result = ((call_REAL) callbacks[REAL_x])(x);
     checkExitCall();
     return result;
 }
 
 Rbyte *RAW(SEXP x) {
     TRACE0();
-    SEXP result = ((call_RAW) callbacks[RAW_x])(x);
+    Rbyte *result = ((call_RAW) callbacks[RAW_x])(x);
     checkExitCall();
     return result;
 }
 
 Rcomplex *COMPLEX(SEXP x) {
     TRACE0();
-    SEXP result = ((call_COMPLEX) callbacks[COMPLEX_x])(x);
+    Rcomplex *result = ((call_COMPLEX) callbacks[COMPLEX_x])(x);
     checkExitCall();
     return result;
 }

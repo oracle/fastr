@@ -98,4 +98,11 @@ const char *R_CHAR(SEXP charsxp) {
 	return ((call_charSXPToNativeCharArray) callbacks[charSXPToNativeCharArray_x])(charsxp);
 }
 
+int *INTEGER(SEXP x) {
+    return FASTR_INTEGER(x);
+}
+
+double *REAL(SEXP x){
+    return FASTR_REAL(x);
+}
 

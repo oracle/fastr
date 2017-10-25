@@ -52,6 +52,7 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -60,7 +61,6 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -119,7 +119,7 @@ public class HiddenInternalFunctions {
                 RCallNode expr0 = RCallNode.createCloneReplacingArgs(callNode, vecNode);
                 try {
                     // We want this call to have a SourceSection
-                    aenv.put(name, RDataFactory.createPromise(PromiseState.Explicit, Closure.create(expr0), eenv.getFrame()));
+                    aenv.put(name, RDataFactory.createPromise(PromiseState.Explicit, Closure.createPromiseClosure(expr0), eenv.getFrame()));
                 } catch (PutException ex) {
                     /*
                      * When loading the {@code base} package we may encounter a locked binding that

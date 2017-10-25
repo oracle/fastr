@@ -35,9 +35,9 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -56,7 +56,7 @@ public abstract class DelayedAssign extends RBuiltinNode.Arg4 {
     @TruffleBoundary
     protected Object doDelayedAssign(String name, Object value, REnvironment evalEnv, REnvironment assignEnv) {
         try {
-            assignEnv.put(name, RDataFactory.createPromise(PromiseState.Explicit, Closure.create(RASTUtils.createNodeForValue(value)), evalEnv.getFrame()));
+            assignEnv.put(name, RDataFactory.createPromise(PromiseState.Explicit, Closure.createPromiseClosure(RASTUtils.createNodeForValue(value)), evalEnv.getFrame()));
             return RNull.instance;
         } catch (PutException ex) {
             throw error(ex);

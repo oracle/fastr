@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,9 @@ package com.oracle.truffle.r.nodes.function.opt;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -43,7 +43,7 @@ public final class OptConstantPromiseNode extends PromiseNode {
     public OptConstantPromiseNode(PromiseState state, RBaseNode constantExpression, Object constantValue) {
         super(null);
         this.state = state;
-        this.constantExpression = Closure.create(constantExpression);
+        this.constantExpression = Closure.createPromiseClosure(constantExpression);
         this.constantValue = constantValue;
     }
 

@@ -45,7 +45,7 @@ public abstract class List2Env extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected REnvironment doList2Env(RAbstractListVector list, REnvironment env,
-                    @Cached("new()") RList2EnvNode list2Env) {
-        return list2Env.execute(list, env);
+                    @Cached("create()") RList2EnvNode list2Env) {
+        return list2Env.execute(list, env, null, null);
     }
 }

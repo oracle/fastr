@@ -42,14 +42,12 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class RDataFactory {
 
@@ -483,8 +481,8 @@ public final class RDataFactory {
         return createSymbol(Utils.intern(name));
     }
 
-    public static RLanguage createLanguage(RBaseNode rep) {
-        return traceDataCreated(new RLanguage(rep));
+    public static RLanguage createLanguage(Closure closure) {
+        return traceDataCreated(new RLanguage(closure));
     }
 
     public static RPromise createPromise(PromiseState state, Closure closure, MaterializedFrame env) {

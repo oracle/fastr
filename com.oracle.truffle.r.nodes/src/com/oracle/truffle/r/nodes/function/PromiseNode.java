@@ -47,10 +47,11 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.Closure;
+import com.oracle.truffle.r.runtime.data.ClosureCache;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
@@ -372,7 +373,7 @@ public abstract class PromiseNode extends RNode {
                 }
             }
             for (int i = 0; i < nodes.length; i++) {
-                Closure closure = closureCache.getOrCreateClosure(nodes[i]);
+                Closure closure = closureCache.getOrCreatePromiseClosure(nodes[i]);
                 this.closures[i] = closure;
                 if (RASTUtils.isLookup(nodes[i], ArgumentsSignature.VARARG_NAME)) {
                     this.promised[i] = nodes[i];

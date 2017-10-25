@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -70,5 +70,7 @@ public class TestBuiltin_charmatch extends TestBase {
         assertEval("{charmatch(c(\"ole\",\"ab\"),c(\"ole\",\"ab\"))}");
         assertEval("{charmatch(c(\"ole\",\"ab\"),c(\"ole\",\"ole\"))}");
         assertEval("{charmatch(matrix(c('h','l','e',6),2,2,byrow=T), \"hello\")}");
+        assertEval("{charmatch('hello', c(''))}");
+        assertEval("{charmatch(c('', 'hello', '[', 'foo', '{', '(', ''), c('[', '(', '{', ''), nomatch = NA)}");
     }
 }

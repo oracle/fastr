@@ -27,8 +27,8 @@ import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 
 @RBuiltin(name = "@", kind = PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = 1, behavior = COMPLEX)
 public abstract class Slot extends RBuiltinNode.Arg2 {

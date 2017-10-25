@@ -36,6 +36,8 @@ import com.oracle.truffle.r.nodes.binary.BinaryBooleanNodeGen;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanScalarNodeGen;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanSpecial;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackage;
+import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctions.SockSelect;
+import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.SockSelectNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.DebugFunctions.FastRSetBreakpoint;
 import com.oracle.truffle.r.nodes.builtin.base.DebugFunctionsFactory.FastRSetBreakpointNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.AssignFastPathNodeGen;
@@ -676,6 +678,7 @@ public class BasePackage extends RBuiltinPackage {
         add(SinkFunctions.Sink.class, SinkFunctionsFactory.SinkNodeGen::create);
         add(SinkFunctions.SinkNumber.class, SinkFunctionsFactory.SinkNumberNodeGen::create);
         add(Slot.class, SlotNodeGen::create);
+        add(SockSelect.class, SockSelectNodeGen::create);
         add(SortFunctions.PartialSort.class, SortFunctionsFactory.PartialSortNodeGen::create);
         add(SortFunctions.QSort.class, SortFunctionsFactory.QSortNodeGen::create);
         add(SortFunctions.RadixSort.class, SortFunctionsFactory.RadixSortNodeGen::create);

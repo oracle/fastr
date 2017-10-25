@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.access.WriteVariableSyntaxNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -169,7 +170,8 @@ public final class ReplacementDispatchNode extends OperatorNode {
             // check for syntax nodes as this will be required to recreate a call during
             // replacement form construction in createFunctionUpdate
             if (call.getSyntaxLHS() instanceof RSyntaxLookup) {
-                if (((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier().equals("::")) {
+                String identifier = ((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier();
+                if (RRuntime.OP_NAMESPACE_SCOPE_EXPORTED.equals(identifier) || RRuntime.OP_NAMESPACE_SCOPE.equals(identifier)) {
                     RSyntaxElement[] args = call.getSyntaxArguments();
                     if (args.length == 2 && args[0] instanceof RSyntaxLookup && args[1] instanceof RSyntaxLookup) {
                         return true;

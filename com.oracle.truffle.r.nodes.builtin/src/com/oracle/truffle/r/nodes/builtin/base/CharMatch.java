@@ -43,7 +43,7 @@ public abstract class CharMatch extends RBuiltinNode.Arg3 {
             for (int j = 0; j < table.getLength(); j++) {
                 final String targetString = table.getDataAt(j);
                 int matchLength = 0;
-                while (matchLength < matchString.length() && (matchString.charAt(matchLength) == targetString.charAt(matchLength))) {
+                while (matchLength < matchString.length() && matchLength < targetString.length() && (matchString.charAt(matchLength) == targetString.charAt(matchLength))) {
                     matchLength++;
                 }
                 /*

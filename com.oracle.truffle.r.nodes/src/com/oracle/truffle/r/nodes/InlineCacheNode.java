@@ -22,27 +22,19 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import java.util.function.Function;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
-import com.oracle.truffle.r.runtime.context.Engine;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.TruffleBiFunction;
 
 /**
  * This node reifies a runtime object into the AST by creating nodes for frequently encountered
@@ -51,15 +43,11 @@ import com.oracle.truffle.r.runtime.nodes.TruffleBiFunction;
 public abstract class InlineCacheNode extends RBaseNode {
 
     protected final int maxPicDepth;
-    private final Function<Object, RNode> reify;
-    private final TruffleBiFunction<Frame, Object, Object> generic;
 
     public abstract Object execute(Frame frame, Object value);
 
-    InlineCacheNode(int maxPicDepth, Function<Object, RNode> reify, TruffleBiFunction<Frame, Object, Object> generic) {
+    protected InlineCacheNode(int maxPicDepth) {
         this.maxPicDepth = maxPicDepth;
-        this.reify = reify;
-        this.generic = generic;
     }
 
     @SuppressWarnings("unused")
@@ -76,57 +64,34 @@ public abstract class InlineCacheNode extends RBaseNode {
             vf = SubstituteVirtualFrame.create(frame.materialize());
         }
 
-        // Use a closure to notify the root node that a new node has just been inserted. The closure
-        // is necessary to do the notification just once.
+        // Use a closure to notify the root node that a new node has just been inserted. The
+        // closure is necessary to do the notification just once.
         nodeInsertedClosure.notifyNodeInserted();
 
         return reified.visibleExecute(vf);
     }
 
-    protected RNode cache(Object value) {
-        return RASTUtils.cloneNode(reify.apply(value));
-    }
-
     @Specialization(replaces = "doCached")
     protected Object doGeneric(Frame frame, Object value) {
-        return generic.apply(frame, value);
+        return evalPromise(frame, (Closure) value);
     }
 
-    /**
-     * Creates an inline cache.
-     *
-     * @param maxPicDepth maximum number of entries in the polymorphic inline cache
-     * @param reify a function that turns the runtime value into an RNode
-     * @param generic a function that will be used to evaluate the given value after the polymorphic
-     *            inline cache has reached its maximum size
-     */
-    @SuppressWarnings("unchecked")
-    public static <T> InlineCacheNode createCache(int maxPicDepth, Function<T, RNode> reify, TruffleBiFunction<Frame, T, Object> generic) {
-        return InlineCacheNodeGen.create(maxPicDepth, (Function<Object, RNode>) reify, (TruffleBiFunction<Frame, Object, Object>) generic);
-    }
-
-    /**
-     * Creates an inline cache that will execute runtime expression given to it as RNodes by using a
-     * PIC and falling back to {@link Engine#eval(RLanguage, MaterializedFrame)}.
-     *
-     * @param maxPicDepth maximum number of entries in the polymorphic inline cache
-     */
-    public static <F extends Frame> InlineCacheNode createExpression(int maxPicDepth) {
-        return createCache(maxPicDepth, value -> (RNode) value, (frame, value) -> RContext.getEngine().eval(RDataFactory.createLanguage((RNode) value), frame.materialize()));
+    protected RNode cache(Object value) {
+        return RASTUtils.cloneNode((RNode) ((Closure) value).getExpr());
     }
 
     /**
      * Creates an inline cache that will execute promises closures by using a PIC and falling back
-     * to {@link #evalPromise(Frame, Closure)}.
+     * to {@link InlineCacheNode#evalPromise(Frame, Closure)}.
      *
      * @param maxPicDepth maximum number of entries in the polymorphic inline cache
      */
-    public static <F extends Frame> InlineCacheNode createPromise(int maxPicDepth) {
-        return createCache(maxPicDepth, closure -> (RNode) closure.getExpr(), InlineCacheNode::evalPromise);
+    public static InlineCacheNode create(int maxPicDepth) {
+        return InlineCacheNodeGen.create(maxPicDepth);
     }
 
     @TruffleBoundary
-    private static Object evalPromise(Frame frame, Closure closure) {
+    protected static Object evalPromise(Frame frame, Closure closure) {
         return closure.eval(frame.materialize());
     }
 

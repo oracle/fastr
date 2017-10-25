@@ -89,15 +89,16 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
 
     @TruffleBoundary
     public static REnvironment createEnvironment(RList list, RList2EnvNode list2Env) {
+        if (list2Env != null) {
+            return list2Env.execute(list, null, null, REnvironment.baseEnv());
+        }
+
         REnvironment env = RDataFactory.createNewEnv(null);
         env.setParent(REnvironment.baseEnv());
-        if (list2Env != null) {
-            list2Env.execute(list, env);
-        }
         return env;
     }
 
     protected static RList2EnvNode createList2EnvNode() {
-        return new RList2EnvNode(true);
+        return RList2EnvNode.create(true);
     }
 }

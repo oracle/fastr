@@ -158,6 +158,10 @@ public class RRuntime {
 
     public static final String DOT_SIG_ARGS = ".SigArgs";
 
+    public static final String OP_NAMESPACE_SCOPE = ":::";
+
+    public static final String OP_NAMESPACE_SCOPE_EXPORTED = "::";
+
     public static final RSymbol DEFERRED_DEFAULT_MARKER = new RSymbol("__Deferred_Default_Marker__");
 
     public static final String R_TARGET = "target";
@@ -1034,4 +1038,5 @@ public class RRuntime {
     public static boolean isS4Object(Object o) {
         return o instanceof RTypedValue && ((RTypedValue) o).isS4();
     }
+
 }

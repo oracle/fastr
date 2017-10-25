@@ -58,7 +58,6 @@ public final class RLanguage extends RSharingAttributeStorage implements RAbstra
         UNKNOWN
     }
 
-    private RBaseNode rep;
     private RPairList list;
     private String callLHSName;
 
@@ -66,13 +65,14 @@ public final class RLanguage extends RSharingAttributeStorage implements RAbstra
      * Lazily computed value.
      */
     private int length = -1;
+    private Closure closure;
 
-    RLanguage(RBaseNode rep) {
-        this.rep = rep;
+    RLanguage(Closure closure) {
+        this.closure = closure;
     }
 
-    private RLanguage(RBaseNode rep, int length) {
-        this.rep = rep;
+    private RLanguage(Closure closure, int length) {
+        this.closure = closure;
         this.length = length;
     }
 
@@ -87,23 +87,27 @@ public final class RLanguage extends RSharingAttributeStorage implements RAbstra
         return RContext.getRRuntimeASTAccess().createLanguageFromList(l, type);
     }
 
+    public Closure getClosure() {
+        return closure;
+    }
+
     public RBaseNode getRep() {
         if (list != null) {
             // we could rest rep but we keep it around to remember type of the language object
-            assert rep != null;
+            assert closure.getExpr() != null;
             // list must be reset before rep type is obtained
             RPairList oldList = this.list;
             this.list = null;
             RLanguage newLang = (RLanguage) fromList(oldList, RContext.getRRuntimeASTAccess().getRepType(this));
-            this.rep = newLang.rep;
+            this.closure = newLang.getClosure();
             this.length = newLang.length;
             this.attributes = newLang.attributes;
         }
-        return rep;
+        return closure.getExpr();
     }
 
-    public void setRep(RBaseNode rep) {
-        this.rep = rep;
+    public void setClosure(Closure closure) {
+        this.closure = closure;
         this.list = null;
     }
 
@@ -228,7 +232,7 @@ public final class RLanguage extends RSharingAttributeStorage implements RAbstra
 
     @Override
     public RLanguage copy() {
-        RLanguage l = new RLanguage(getRep(), this.length);
+        RLanguage l = new RLanguage(closure, length);
         if (this.attributes != null) {
             l.initAttributes(RAttributesLayout.copy(attributes));
         }
