@@ -229,7 +229,7 @@ public class FastRDebugTest {
         assertLocation(11, "res = n * nMOFact",
                         "n", 2.0, "nMinusOne", 1.0,
                         "nMOFact", 1.0);
-        assertMetaObjects(factorial, "n", "double", "nMOFact", "double", "nMinusOne", "double");
+        assertMetaObjectsOrStringValues(factorial, true, "n", "double", "nMOFact", "double", "nMinusOne", "double");
         stepOver(1);
         assertLocation(12, "res",
                         "n", 2.0,
@@ -275,7 +275,7 @@ public class FastRDebugTest {
         stepInto(1);
         stepOver(3);
         assertLocation(5, "i <- i + 1L", "i", 3, "n", 15.0, "str", "hello");
-        assertMetaObjects(source, "i", "integer", "n", "double", "str", "character");
+        assertMetaObjectsOrStringValues(source, true, "i", "integer", "n", "double", "str", "character");
         stepOut();
         performWork();
 
@@ -456,9 +456,7 @@ public class FastRDebugTest {
             debuggerSession.setSteppingFilter(SuspensionFilter.newBuilder().ignoreLanguageContextInitialization(true).build());
             debuggerSession.suspendNextExecution();
         });
-        assertLocation(1, "foo <- function(a) {\n" +
-                        "  x = 2L * a\n" +
-                        "}");
+        assertLocation(1, "foo <- function(a) {");
         stepOver(1);
         assertLocation(4, "foo(1)");
         stepOver(1);
@@ -476,6 +474,33 @@ public class FastRDebugTest {
         continueExecution();
         performWork();
         engine.eval(createRStatements());
+        assertExecutedOK();
+    }
+
+    @Test
+    public void testValueToString() throws Throwable {
+        Source source = createFactorial();
+        engine.eval(source);
+
+        run.addLast(() -> {
+            assertNull(suspendedEvent);
+            assertNotNull(debuggerSession);
+            debuggerSession.suspendNextExecution();
+        });
+
+        stepInto(1);
+        assertLocation(2, "res = fac(2)");
+        stepInto(1);
+        assertLocation(6, "if (n <= 1) {");
+        assertMetaObjectsOrStringValues(source, true, "n", "promise");
+        assertMetaObjectsOrStringValues(source, false, "n", "2");
+
+        continueExecution();
+        performWork();
+
+        final Source evalSource = sourceFromText("main()\n", "evaltest.r");
+        engine.eval(evalSource);
+
         assertExecutedOK();
     }
 
@@ -536,7 +561,13 @@ public class FastRDebugTest {
                 assertNotNull(suspendedEvent);
                 final int currentLine = suspendedEvent.getSourceSection().getStartLine();
                 assertEquals(line, currentLine);
-                final String currentCode = suspendedEvent.getSourceSection().getCharacters().toString().trim();
+                String currentCode = suspendedEvent.getSourceSection().getCharacters().toString();
+                // Trim extra lines in currentCode
+                int nl = currentCode.indexOf('\n');
+                if (nl >= 0) {
+                    currentCode = currentCode.substring(0, nl);
+                }
+                currentCode = currentCode.trim();
                 assertEquals(code, currentCode);
                 compareScope(line, code, false, false, expectedFrame);
             } catch (RuntimeException | Error e) {
@@ -675,33 +706,57 @@ public class FastRDebugTest {
         assertTrue("Assuming all requests processed: " + run, run.isEmpty());
     }
 
-    private void assertMetaObjects(final Source expectedSource, final String... nameAndMetaObjectPairs) {
+    /**
+     * Assert either meta object or string value for a set of variables.
+     * 
+     * @param expectedSource expected source in which the values should be examined.
+     * @param metaObjects <code>true</code> for checking metaObject or <code>false</code> for
+     *            checking <code>value.as(String.class)</code>.
+     * @param nameAndValuePairs name followed by value (arbitrary number of times).
+     */
+    private void assertMetaObjectsOrStringValues(final Source expectedSource, boolean metaObjects, final String... nameAndValuePairs) {
         run.addLast((Runnable) () -> {
-            DebugStackFrame frame = suspendedEvent.getTopStackFrame();
-            for (int i = 0; i < nameAndMetaObjectPairs.length;) {
-                String name = nameAndMetaObjectPairs[i++];
-                String expectedMO = nameAndMetaObjectPairs[i++];
-                boolean found = false;
-                for (DebugValue value : frame) {
-                    if (name.equals(value.getName())) {
-                        DebugValue moDV = value.getMetaObject();
-                        if (moDV != null || expectedMO != null) {
-                            String mo = moDV.as(String.class);
-                            Assert.assertEquals("MetaObjects of '" + name + "' differ:", expectedMO, mo);
-                        }
-                        found = true;
-                        // Trigger findSourceLocation() call
-                        SourceSection sourceLocation = value.getSourceLocation();
-                        if (sourceLocation != null) {
-                            Assert.assertSame("Sources differ", expectedSource, sourceLocation.getSource());
+            try {
+                DebugStackFrame frame = suspendedEvent.getTopStackFrame();
+                for (int i = 0; i < nameAndValuePairs.length;) {
+                    String name = nameAndValuePairs[i++];
+                    String expectedValue = nameAndValuePairs[i++];
+                    boolean found = false;
+                    for (DebugValue value : frame) {
+                        if (name.equals(value.getName())) {
+                            if (metaObjects) {
+                                DebugValue moDV = value.getMetaObject();
+                                if (moDV != null || expectedValue != null) {
+                                    String mo = moDV.as(String.class);
+                                    Assert.assertEquals("MetaObjects of '" + name + "' differ:", expectedValue, mo);
+                                }
+                            } else { // Check as(String.class) value
+                                String valAsString = value.as(String.class);
+                                Assert.assertEquals("Unexpected " + name + "toString():", expectedValue, valAsString);
+                            }
+                            found = true;
+                            // Trigger findSourceLocation() call
+                            SourceSection sourceLocation = value.getSourceLocation();
+                            if (sourceLocation != null) {
+                                Assert.assertSame("Sources differ", expectedSource, sourceLocation.getSource());
+                            }
                         }
                     }
+                    if (!found) {
+                        Assert.fail("DebugValue named '" + name + "' not found.");
+                    }
                 }
-                if (!found) {
-                    Assert.fail("DebugValue named '" + name + "' not found.");
+                if (!run.isEmpty()) {
+                    run.removeFirst().run();
                 }
+            } catch (RuntimeException | Error e) {
+                final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
+                frame.forEach(var -> {
+                    System.out.println(var);
+                });
+                throw e;
             }
-            run.removeFirst().run();
         });
     }
+
 }

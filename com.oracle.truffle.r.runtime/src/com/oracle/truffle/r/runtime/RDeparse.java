@@ -50,6 +50,8 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -799,6 +801,15 @@ public class RDeparse {
                 append("<environment>");
             } else if (value instanceof REmpty) {
                 append("");
+            } else if (value instanceof EagerPromise) {
+                return appendConstant(((EagerPromise) value).getEagerValue());
+            } else if (value instanceof RPromise) {
+                RPromise promise = (RPromise) value;
+                if (promise.isEvaluated()) {
+                    return appendConstant(promise.getValue());
+                } else {
+                    append("<unevaluated>");
+                }
             } else if (value instanceof TruffleObject) {
                 append("<truffle object>");
             } else {
