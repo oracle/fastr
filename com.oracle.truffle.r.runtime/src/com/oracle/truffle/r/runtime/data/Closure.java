@@ -1,6 +1,6 @@
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.HashMap;
+import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
@@ -21,7 +21,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
  * A closure for creating promises and languages.
  */
 public final class Closure {
-    private HashMap<FrameDescriptor, RootCallTarget> callTargets;
+    private WeakHashMap<FrameDescriptor, RootCallTarget> callTargets;
 
     public static final String PROMISE_CLOSURE_WRAPPER_NAME = new String("<promise>");
     public static final String LANGUAGE_CLOSURE_WRAPPER_NAME = new String("<language>");
@@ -65,19 +65,23 @@ public final class Closure {
         return new Closure(name, expr);
     }
 
+    private RootCallTarget getCallTarget(FrameDescriptor desc) {
+
+        // Create lazily, as it is not needed at all for INLINED promises!
+        if (callTargets == null) {
+            callTargets = new WeakHashMap<>();
+        }
+        return callTargets.get(desc);
+    }
+
     /**
-     * Evaluates an {@link com.oracle.truffle.r.runtime.data.Closure} in {@code frame}.
+     * Evaluates a {@link com.oracle.truffle.r.runtime.data.Closure} in {@code frame}.
      */
     public Object eval(MaterializedFrame frame) {
         CompilerAsserts.neverPartOfCompilation();
 
-        // Create lazily, as it is not needed at all for INLINED promises!
-        if (callTargets == null) {
-            callTargets = new HashMap<>();
-        }
         FrameDescriptor desc = frame.getFrameDescriptor();
-        RootCallTarget callTarget = callTargets.get(desc);
-
+        RootCallTarget callTarget = getCallTarget(desc);
         if (callTarget == null) {
             // clone for additional call targets
             callTarget = generateCallTarget((RNode) (callTargets.isEmpty() ? expr : RContext.getASTBuilder().process(expr.asRSyntaxNode())));
@@ -86,16 +90,14 @@ public final class Closure {
         return callTarget.call(frame);
     }
 
+    /**
+     * Evaluates this clousure in {@code envir} using caller {@code caller}.
+     */
     public Object eval(REnvironment envir, RCaller caller) {
         CompilerAsserts.neverPartOfCompilation();
 
-        // Create lazily, as it is not needed at all for INLINED promises!
-        if (callTargets == null) {
-            callTargets = new HashMap<>();
-        }
         FrameDescriptor desc = envir.getFrame().getFrameDescriptor();
-        RootCallTarget callTarget = callTargets.get(desc);
-
+        RootCallTarget callTarget = getCallTarget(desc);
         if (callTarget == null) {
             // clone for additional call targets
             callTarget = generateCallTarget((RNode) RContext.getASTBuilder().process(expr.asRSyntaxNode()));
@@ -105,8 +107,8 @@ public final class Closure {
         return callTarget.call(vFrame);
     }
 
-    private RootCallTarget generateCallTarget(RNode expr) {
-        return RContext.getEngine().makePromiseCallTarget(expr, closureName + System.identityHashCode(expr));
+    private RootCallTarget generateCallTarget(RNode n) {
+        return RContext.getEngine().makePromiseCallTarget(n, closureName + System.identityHashCode(n));
     }
 
     public RBaseNode getExpr() {

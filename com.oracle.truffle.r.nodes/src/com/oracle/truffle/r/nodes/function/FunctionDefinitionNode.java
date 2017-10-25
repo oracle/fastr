@@ -368,7 +368,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                                     CompilerDirectives.transferToInterpreter();
                                     RInternalError.shouldNotReachHere("unexpected type for on.exit entry: " + expr.car());
                                 }
-                                onExitExpressionCache.execute(frame, Closure.createLanguageClosure((RNode) expr.car()));
+                                Closure closure = RContext.getInstance().languageClosureCache.getOrCreateLanguageClosure((RNode) expr.car());
+                                onExitExpressionCache.execute(frame, closure);
                             }
                         }
                     } catch (ReturnException ex) {

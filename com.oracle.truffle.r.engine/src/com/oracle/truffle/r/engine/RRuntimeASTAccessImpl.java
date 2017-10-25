@@ -32,7 +32,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.Frame;
@@ -246,7 +245,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
             RNode fn = unwrapToRNode(list.getDataAtAsObject(0), true);
             RSyntaxNode call = RContext.getASTBuilder().call(RSourceSectionNode.LAZY_DEPARSE, fn.asRSyntaxNode(), argList);
-            RLanguage result = RDataFactory.createLanguage(getOrCreateLanguageClosure(call.asRNode()));
+            RLanguage result = RDataFactory.createLanguage(Closure.createLanguageClosure(call.asRNode()));
             if (formals != null && formals.getLength() > 0 && formals.getDataAt(0).length() > 0) {
                 result.setCallLHSName(formals.getDataAt(0));
             }
@@ -264,7 +263,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             }
             RootCallTarget rootCallTarget = RContext.getASTBuilder().rootFunction(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, resArgs, body, null);
             FunctionExpressionNode fnExprNode = FunctionExpressionNode.create(RSyntaxNode.LAZY_DEPARSE, rootCallTarget);
-            RLanguage result = RDataFactory.createLanguage(getOrCreateLanguageClosure(fnExprNode));
+            RLanguage result = RDataFactory.createLanguage(Closure.createLanguageClosure(fnExprNode));
             return addAttributes(result, list);
         } else {
             throw RInternalError.shouldNotReachHere("unexpected type");
@@ -368,7 +367,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             }
             // copying is already handled by RShareable
             RCallNode newCall = RCallNode.createCall(RSyntaxNode.INTERNAL, ((RCallNode) node).getFunction(), ArgumentsSignature.get(newNames), args.getArguments());
-            rl.setClosure(getOrCreateLanguageClosure(newCall));
+            rl.setClosure(Closure.createLanguageClosure(newCall));
         } else {
             throw RInternalError.shouldNotReachHere();
         }
@@ -748,7 +747,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return TruffleRLanguageImpl.getCurrentContext();
     }
 
-    public Closure getOrCreateLanguageClosure(RNode expr) {
+    private static Closure getOrCreateLanguageClosure(RNode expr) {
         CompilerAsserts.neverPartOfCompilation();
         return RContext.getInstance().languageClosureCache.getOrCreateLanguageClosure(expr);
     }

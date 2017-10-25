@@ -145,7 +145,8 @@ public final class RASTUtils {
             return RDataFactory.createSymbol(id);
         } else {
             assert element instanceof RSyntaxCall || element instanceof RSyntaxFunction;
-            return RDataFactory.createLanguage(Closure.createLanguageClosure(((RSyntaxNode) element).asRNode()));
+            Closure closure = RContext.getInstance().languageClosureCache.getOrCreateLanguageClosure(((RSyntaxNode) element).asRNode());
+            return RDataFactory.createLanguage(closure);
         }
     }
 

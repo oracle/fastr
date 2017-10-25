@@ -160,7 +160,8 @@ abstract class ReplacementNode extends OperatorNode {
     static RLanguage getLanguage(WriteVariableNode wvn) {
         Node parent = wvn.getParent();
         if (parent instanceof ReplacementNode) {
-            return RDataFactory.createLanguage(Closure.createLanguageClosure((ReplacementNode) parent));
+            Closure closure = RContext.getInstance().languageClosureCache.getOrCreateLanguageClosure((ReplacementNode) parent);
+            return RDataFactory.createLanguage(closure);
         }
         return null;
     }
