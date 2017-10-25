@@ -28,10 +28,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -505,7 +503,6 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testReadByVector() {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(1, 3)]", "c('a', 'c')");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$map[c('one', 'three')]", "c('1', '3')");
 
         TestClass tc = new TestClass();
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[c('fieldStringObject', 'fieldChar')]", "c('" + tc.fieldStringObject + "', '" + tc.fieldChar + "')");
@@ -531,16 +528,6 @@ public class TestJavaInterop extends TestBase {
         }
     }
 
-    public void testMap() {
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " m <- to$map; m['one']", "'1'");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " m <- to$map; m['two']", "'2'");
-
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " m <- to$map; m['one']<-'11'; m['one']", "'11'");
-
-        // truffle
-        assertEvalFastR(Ignored.Unimplemented, "how to put into map?", "'11'");
-    }
-
     @Test
     public void testNamesForForeignObject() {
         assertEvalFastR("tc <- new.java.class('" + TestNamesClassNoMembers.class.getName() + "'); t <- new.external(tc); names(t)", "NULL");
@@ -549,11 +536,6 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("tc <- new.java.class('" + TestNamesClass.class.getName() + "'); names(tc$staticField)", "NULL");
         assertEvalFastR("tc <- new.java.class('" + TestNamesClass.class.getName() + "'); names(tc$staticMethod)", "NULL");
         assertEvalFastR("tc <- new.java.class('" + TestNamesClass.class.getName() + "'); t <- new.external(tc); sort(names(t))", "c('field', 'method', 'staticField', 'staticMethod')");
-        // Note: The following two tests fails on Solaris. It seems that the Java interop on
-        // Solaris treats the two inner classes SimpleImmutableEntry and SimpleEntry of
-        // java.util.AbstractMap as if they were members.
-        assertEvalFastR(Ignored.Unstable, "cl <- new.java.class('java.util.Collections'); em<-cl$EMPTY_MAP; names(em)", "NULL");
-        assertEvalFastR(Ignored.Unstable, "tc <- new.java.class('" + TestNamesClassMap.class.getName() + "'); to <- new.external(tc); sort(names(to$m()))", "c('one', 'two')");
     }
 
     @Test
@@ -1118,7 +1100,6 @@ public class TestJavaInterop extends TestBase {
     public void testFor() {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "for(i in to$fieldIntegerArray) print(i)", "for(i in c(1,2,3)) print(i)");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "for(i in to$listInteger) print(i)", "for(i in c(1,2,3)) print(i)");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "for(i in to$map) print(i)", "for(i in c('1','2','3')) print(i)");
     }
 
     @Test
@@ -1610,15 +1591,6 @@ public class TestJavaInterop extends TestBase {
         int i;
     }
 
-    public static class TestNamesClassMap {
-        public static Map<String, String> m() {
-            HashMap<String, String> m = new HashMap<>();
-            m.put("one", "1");
-            m.put("two", "2");
-            return m;
-        }
-    }
-
     public static class TestNullClass {
         public TestNullClass(Object o) {
             assert o == null;
@@ -1866,8 +1838,6 @@ public class TestJavaInterop extends TestBase {
         public List<Element> listObject = new ArrayList<>(Arrays.asList(new Element("a"), new Element("b"), new Element("c"), null));
         public Element[] arrayObject = new Element[]{new Element("a"), new Element("b"), new Element("c"), null};
 
-        public Map<String, String> map;
-
         public TestClass() {
             this(true, Byte.MAX_VALUE, 'a', Double.MAX_VALUE, 1.1f, Integer.MAX_VALUE, Long.MAX_VALUE, Short.MAX_VALUE, "a string");
         }
@@ -1937,11 +1907,6 @@ public class TestJavaInterop extends TestBase {
             objectDoubleArray = new Object[]{1.1, 2.1, 3.1};
             mixedTypesArray = new Object[]{1, 2.1, 'a', true, null};
             hasNullIntArray = new Integer[]{1, null, 3};
-
-            map = new HashMap<>();
-            map.put("one", "1");
-            map.put("two", "2");
-            map.put("three", "3");
         }
 
         public static boolean methodStaticBoolean() {
