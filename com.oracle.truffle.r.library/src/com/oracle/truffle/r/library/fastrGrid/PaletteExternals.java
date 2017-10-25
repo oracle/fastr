@@ -12,6 +12,7 @@
 package com.oracle.truffle.r.library.fastrGrid;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyIntegerVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -19,8 +20,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.GridState.GridPalette;
 import com.oracle.truffle.r.library.fastrGrid.PaletteExternalsFactory.CPalette2NodeGen;
 import com.oracle.truffle.r.library.fastrGrid.PaletteExternalsFactory.CPaletteNodeGen;
+import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -79,12 +82,17 @@ public final class PaletteExternals {
 
     /**
      * Implements external {@code C_palette2} used only internally in grDevices, the parameter are
-     * colors encoded in integer already.
+     * colors encoded in integer already. This built-in can be used to query the current palette or
+     * set the current palette, and is only used in the following internal piece of code
+     * {@code .Call.graphics(C_palette2, .Call(C_palette2, NULL))} whose purpose is to record the
+     * current palette in the graphics display list, which FastR does not support. For this reason,
+     * we only implement the query version and do not implement the set version as it would require
+     * costly lookup of color name by its numeric value only for the sake of the code snippet above.
      */
     public abstract static class CPalette2 extends RExternalBuiltinNode.Arg1 {
         static {
             Casts casts = new Casts(CPalette2.class);
-            casts.arg(0).mustBe(abstractVectorValue());
+            casts.arg(0).mapNull(emptyIntegerVector()).mustBe(abstractVectorValue());
         }
 
         public static CPalette2 create() {
@@ -95,16 +103,15 @@ public final class PaletteExternals {
         @TruffleBoundary
         public RIntVector updatePalette(RAbstractVector palette) {
             GridState state = GridContext.getContext().getGridState();
-            int[] newPalette = null;
             if (palette.getLength() > 0) {
-                RAbstractIntVector data = GridUtils.asIntVector(palette);
-                newPalette = data.materialize().getDataCopy();
+                // the argument is the new palette
+                if (!areSame(GridUtils.asIntVector(palette), state.getPalette())) {
+                    // this external expects the argument to be the current palette already as this
+                    // is how it is used in grDevices and this external should not be used elsewhere
+                    throw RInternalError.unimplemented("C_palette2 external actually changes the palette.");
+                }
             }
-            RIntVector result = getResult(state);
-            if (newPalette != null) {
-                state.setPalette(new GridPalette(newPalette));
-            }
-            return result;
+            return getResult(state);
         }
 
         private static RIntVector getResult(GridState state) {
@@ -116,6 +123,19 @@ public final class PaletteExternals {
                 complete &= !RRuntime.isNA(result[i]);
             }
             return RDataFactory.createIntVector(result, complete);
+        }
+
+        private static boolean areSame(RAbstractIntVector p1, GridPalette p2) {
+            GridColor[] p2Colors = p2.colors;
+            if (p1.getLength() != p2Colors.length) {
+                return false;
+            }
+            for (int i = 0; i < p2Colors.length; i++) {
+                if (p1.getDataAt(i) != p2Colors[i].getRawValue()) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

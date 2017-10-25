@@ -80,10 +80,6 @@ public final class FastRGridExternalLookup {
                 return SavePlot.create();
             case "X11":
                 return new InitWindowedDevice();
-            case "palette":
-                return CPalette.create();
-            case "palette2":
-                return CPalette2.create();
             case "devAskNewPage":
                 return new IgnoredGridExternal(RRuntime.LOGICAL_FALSE);
             default:
@@ -191,7 +187,24 @@ public final class FastRGridExternalLookup {
                 return Col2RGB.create();
             case "rgb":
                 return RGB.create();
+            case "palette2":
+                return CPalette2.create();
+            case "palette":
+                return CPalette.create();
 
+            default:
+                return null;
+        }
+    }
+
+    public static RExternalBuiltinNode lookupDotCallGraphics(String name) {
+        switch (name) {
+            case "gridDirty":
+                return new LGridDirty();
+            case "palette2":
+                return CPalette2.create();
+            case "palette":
+                return CPalette.create();
             default:
                 return null;
         }

@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public final class GridColorUtils {
 
     // Note: default palette copied from GNU R
-    private static final GridPalette defaultPalette = new GridPalette(new String[]{"black", "red", "green3", "blue", "cyan", "magenta", "yellow", "grey"});
+    private static final GridPalette defaultPalette = new GridPalette(new String[]{"black", "red", "green3", "blue", "cyan", "magenta", "yellow", "gray"});
 
     private GridColorUtils() {
         // only static members
@@ -84,7 +84,8 @@ public final class GridColorUtils {
     }
 
     public static String gridColorToRString(GridColor color) {
-        int size = color.getAlpha() == GridColor.OPAQUE_ALPHA ? 7 : 9;
+        boolean isOpaque = color.getAlpha() == GridColor.OPAQUE_ALPHA;
+        int size = isOpaque ? 7 : 9;
         char[] value = new char[size];
         value[0] = '#';
         value[1] = getHexDigit(color.getRed() >> 4);
@@ -93,7 +94,7 @@ public final class GridColorUtils {
         value[4] = getHexDigit(color.getGreen());
         value[5] = getHexDigit(color.getBlue() >> 4);
         value[6] = getHexDigit(color.getBlue());
-        if (color.getAlpha() == GridColor.OPAQUE_ALPHA) {
+        if (!isOpaque) {
             value[7] = getHexDigit((color.getAlpha()) >> 4);
             value[8] = getHexDigit(color.getAlpha());
         }

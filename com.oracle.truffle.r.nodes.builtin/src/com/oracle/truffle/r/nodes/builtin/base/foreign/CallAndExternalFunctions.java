@@ -1002,10 +1002,7 @@ public class CallAndExternalFunctions {
         @Override
         @TruffleBoundary
         public RExternalBuiltinNode lookupBuiltin(RList f) {
-            switch (lookupName(f)) {
-                default:
-                    return null;
-            }
+            return FastRGridExternalLookup.lookupDotCallGraphics(lookupName(f));
         }
 
         @SuppressWarnings("unused")
