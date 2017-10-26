@@ -22,7 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.env;
 
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Scope;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -35,7 +40,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.metadata.ScopeProvider.AbstractScope;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -52,7 +56,7 @@ import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
  * Represents a variable scope for external tools like a debugger.<br>
  * This is basically a view on R environments.
  */
-public final class RScope extends AbstractScope {
+public final class RScope {
 
     private final Node current;
     private REnvironment env;
@@ -70,7 +74,6 @@ public final class RScope extends AbstractScope {
         this.env = env;
     }
 
-    @Override
     protected String getName() {
         // just to be sure
         if (env == REnvironment.emptyEnv()) {
@@ -88,13 +91,11 @@ public final class RScope extends AbstractScope {
         }
     }
 
-    @Override
     protected Node getNode() {
         return current;
     }
 
-    @Override
-    protected Object getVariables(Frame frame) {
+    protected Object getVariables() {
         return new EnvVariablesObject(env, false);
     }
 
@@ -105,25 +106,72 @@ public final class RScope extends AbstractScope {
         return null;
     }
 
-    @Override
-    protected Object getArguments(Frame frame) {
+    protected Object getArguments() {
         return new EnvVariablesObject(env, true);
     }
 
-    @Override
-    protected AbstractScope findParent() {
+    protected RScope findParent() {
         if (env == REnvironment.emptyEnv() || env.getParent() == REnvironment.emptyEnv()) {
             return null;
         }
         return new RScope(env.getParent());
     }
 
-    public static AbstractScope createScope(Node node, Frame frame) {
+    public static Iterable<Scope> createLocalScopes(RContext context, Node node, Frame frame) {
         REnvironment env = getEnv(frame);
-        if (env != null && env != REnvironment.emptyEnv()) {
-            return new RScope(node.getRootNode(), env);
+        if (env == context.stateREnvironment.getGlobalEnv()) {
+            return Collections.emptySet();
         }
-        return new GenericScope(node, frame.materialize());
+        if (env != null && env != REnvironment.emptyEnv()) {
+            RScope scope = new RScope(node.getRootNode(), env);
+            return createScopes(scope, context.stateREnvironment.getGlobalEnv());
+        }
+        MaterializedFrame mFrame = frame.materialize();
+        String name = node.getRootNode().getName();
+        if (name == null) {
+            name = "local";
+        }
+        return Collections.singleton(Scope.newBuilder(name, new GenericVariablesObject(mFrame, false)).node(node).arguments(new GenericVariablesObject(mFrame, true)).build());
+    }
+
+    public static Iterable<Scope> createTopScopes(RContext context) {
+        REnvironment env = context.stateREnvironment.getGlobalEnv();
+        RScope scope = new RScope(env);
+        return createScopes(scope, null);
+    }
+
+    private static Iterable<Scope> createScopes(RScope scope, REnvironment toEnv) {
+        return new Iterable<Scope>() {
+            @Override
+            public Iterator<Scope> iterator() {
+                return new Iterator<Scope>() {
+                    private RScope previousScope;
+                    private RScope nextScope = scope;
+
+                    @Override
+                    public boolean hasNext() {
+                        if (nextScope == null) {
+                            nextScope = previousScope.findParent();
+                            if (nextScope != null && nextScope.env == toEnv) {
+                                nextScope = null;
+                            }
+                        }
+                        return nextScope != null;
+                    }
+
+                    @Override
+                    public Scope next() {
+                        if (!hasNext()) {
+                            throw new NoSuchElementException();
+                        }
+                        Scope vscope = Scope.newBuilder(nextScope.getName(), nextScope.getVariables()).node(nextScope.getNode()).arguments(nextScope.getArguments()).build();
+                        previousScope = nextScope;
+                        nextScope = null;
+                        return vscope;
+                    }
+                };
+            }
+        };
     }
 
     /**
@@ -136,42 +184,6 @@ public final class RScope extends AbstractScope {
             return REnvironment.frameToEnvironment(materialized);
         }
         return obj;
-    }
-
-    private static final class GenericScope extends AbstractScope {
-
-        private final MaterializedFrame mFrame;
-        private final Node node;
-
-        protected GenericScope(Node node, MaterializedFrame frame) {
-            this.node = node;
-            this.mFrame = frame;
-        }
-
-        @Override
-        protected String getName() {
-            return node.getRootNode().getName();
-        }
-
-        @Override
-        protected Node getNode() {
-            return node;
-        }
-
-        @Override
-        protected Object getVariables(Frame frame) {
-            return new GenericVariablesObject(mFrame, false);
-        }
-
-        @Override
-        protected Object getArguments(Frame frame) {
-            return new GenericVariablesObject(mFrame, true);
-        }
-
-        @Override
-        protected AbstractScope findParent() {
-            return null;
-        }
     }
 
     abstract static class VariablesObject implements TruffleObject {

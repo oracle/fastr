@@ -26,18 +26,17 @@ import java.util.HashMap;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.Scope;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
-import com.oracle.truffle.api.metadata.ScopeProvider;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.engine.interop.RForeignAccessFactoryImpl;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -60,7 +59,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @TruffleLanguage.Registration(name = "R", id = "R", version = "3.3.2", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class})
-public final class TruffleRLanguageImpl extends TruffleRLanguage implements ScopeProvider<RContext> {
+public final class TruffleRLanguageImpl extends TruffleRLanguage {
 
     private final HashMap<String, RFunction> builtinFunctionCache = new HashMap<>();
 
@@ -202,15 +201,6 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage implements Scop
     private static final R2Foreign r2foreign = R2ForeignNodeGen.create();
 
     @Override
-    protected Object lookupSymbol(RContext context, String symbolName) {
-        Object value = context.stateREnvironment.getGlobalEnv().get(symbolName);
-        if (value instanceof RPromise) {
-            value = PromiseHelperNode.evaluateSlowPath((RPromise) value);
-        }
-        return value != null ? r2foreign.execute(value) : null;
-    }
-
-    @Override
     protected Object getLanguageGlobal(RContext context) {
         // TODO: what's the meaning of "language global" for R?
         return null;
@@ -225,7 +215,12 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage implements Scop
     }
 
     @Override
-    public AbstractScope findScope(RContext langContext, Node node, Frame frame) {
-        return RScope.createScope(node, frame);
+    public Iterable<Scope> findLocalScopes(RContext langContext, Node node, Frame frame) {
+        return RScope.createLocalScopes(langContext, node, frame);
+    }
+
+    @Override
+    protected Iterable<Scope> findTopScopes(RContext langContext) {
+        return RScope.createTopScopes(langContext);
     }
 }
