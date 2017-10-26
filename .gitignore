@@ -45,6 +45,7 @@
 /com.oracle.truffle.r.release/LICENSE
 /com.oracle.truffle.r.release/COPYRIGHT
 /com.oracle.truffle.r.release/README.md
+/deparse/
 /DEPARSE_ERROR
 /Rpkgsource/*
 /install.cran.logs/

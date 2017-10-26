@@ -473,37 +473,40 @@ def gnu_rtests(args, env=None):
     os.mkdir(tstlog)
     diffname = join(tstlog, 'all.diff')
     diff = open(diffname, 'a')
-    for subd in ['Examples', '']:
-        logd = join(tstlog, subd)
-        if subd != '':
-            os.mkdir(logd)
-        os.chdir(logd)
-        srcd = join(tstsrc, subd)
-        for f in sorted(os.listdir(srcd)):
-            if f.endswith('.R'):
-                print 'Running {} explicitly by FastR CMD BATCH ...'.format(f)
-                mx.run([r_path(), '--vanilla', 'CMD', 'BATCH', join(srcd, f)] + args, nonZeroIsFatal=False, env=env, timeout=90)
-                outf = f + 'out'
-                if os.path.isfile(outf):
-                    outff = outf + '.fastr'
-                    os.rename(outf, outff)
-                    print 'Running {} explicitly by GnuR CMD BATCH ...'.format(f)
-                    mx.run([join(_gnur_path(), 'R'), '--vanilla', 'CMD', 'BATCH', join(srcd, f)] + args, nonZeroIsFatal=False, env=env, timeout=90)
-                    ferrs_new_size = os.stat(ferrs).st_size if os.access(ferrs, os.R_OK) else 0
-                    if ferrs_new_size - ferrs_size > 0:
-                        with open(ferrs) as f:
-                            nlines = sum(1 for _ in f)
-                        print '  Size of {} increased to {:,} bytes ({:,} lines).\n'.format(ferrs, ferrs_new_size, nlines)
-                        ferrs_size = ferrs_new_size
+    try:
+        for subd in ['Examples', '']:
+            logd = join(tstlog, subd)
+            if subd != '':
+                os.mkdir(logd)
+            os.chdir(logd)
+            srcd = join(tstsrc, subd)
+            for f in sorted(os.listdir(srcd)):
+                if f.endswith('.R'):
+                    print 'Running {} explicitly by FastR CMD BATCH ...'.format(f)
+                    mx.run([r_path(), '--vanilla', 'CMD', 'BATCH', join(srcd, f)] + args, nonZeroIsFatal=False, env=env, timeout=90)
+                    outf = f + 'out'
                     if os.path.isfile(outf):
-                        outfg = outf + '.gnur'
-                        os.rename(outf, outfg)
-                        diff.write('\nRdiff {} {}:\n'.format(outfg, outff))
-                        diff.flush()
-                        subprocess.Popen([r_path(), 'CMD', 'Rdiff', outfg, outff], stdout=diff, stderr=diff, shell=False)
-                        diff.flush()
-    diff.close()
-    print 'FastR to GnuR diff was written to {}.'.format(diffname)
+                        outff = outf + '.fastr'
+                        os.rename(outf, outff)
+                        print 'Running {} explicitly by GnuR CMD BATCH ...'.format(f)
+                        mx.run([join(_gnur_path(), 'R'), '--vanilla', 'CMD', 'BATCH', join(srcd, f)] + args, nonZeroIsFatal=False, env=env, timeout=90)
+                        ferrs_new_size = os.stat(ferrs).st_size if os.access(ferrs, os.R_OK) else 0
+                        if ferrs_new_size - ferrs_size > 0:
+                            with open(ferrs) as f:
+                                nlines = sum(1 for _ in f)
+                            print '  Size of {} increased to {:,} bytes ({:,} lines).\n'.format(ferrs, ferrs_new_size, nlines)
+                            ferrs_size = ferrs_new_size
+                        if os.path.isfile(outf):
+                            outfg = outf + '.gnur'
+                            os.rename(outf, outfg)
+                            diff.write('\nRdiff {} {}:\n'.format(outfg, outff))
+                            diff.flush()
+                            subprocess.Popen([r_path(), 'CMD', 'Rdiff', outfg, outff], stdout=diff, stderr=diff, shell=False)
+                            diff.flush()
+        diff.close()
+        print 'FastR to GnuR diff was written to {}.'.format(diffname)
+    finally:
+        shutil.rmtree(join(_fastr_suite.dir, 'deparse'), True)
 
 def nativebuild(args):
     '''
