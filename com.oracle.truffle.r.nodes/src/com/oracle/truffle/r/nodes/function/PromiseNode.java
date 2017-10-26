@@ -343,6 +343,11 @@ public abstract class PromiseNode extends RNode {
         public boolean isFunctionLookup() {
             return false;
         }
+
+        @Override
+        public boolean isPromiseLookup() {
+            return true;
+        }
     }
 
     @TruffleBoundary

@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
@@ -33,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -53,7 +57,7 @@ public class RSubstitute {
      * {@code env} and, if bound, return whatever value it had (as an {@link RSyntaxElement},or
      * {@code null} if not bound.
      */
-    private static RSyntaxElement substituteElement(Object val) {
+    private static <T> RSyntaxElement substituteElement(Object val, RCodeBuilder<T> builder) {
         if (val == null) {
             // not bound in env,
             return null;
@@ -61,7 +65,8 @@ public class RSubstitute {
             // strange special case, mimics GnuR behavior
             return RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "", false);
         } else if (val instanceof RPromise) {
-            return ((RPromise) val).getRep().asRSyntaxNode();
+            RPromise promise = (RPromise) val;
+            return substitutePromise(promise, builder);
         } else if (val instanceof RLanguage) {
             return ((RLanguage) val).getRep().asRSyntaxNode();
         } else if (val instanceof RSymbol) {
@@ -72,6 +77,34 @@ public class RSubstitute {
             // An actual value
             return RSyntaxConstant.createDummyConstant(RSyntaxNode.LAZY_DEPARSE, val);
         }
+    }
+
+    /**
+     * Promises may contain two types of "..X" (e.g. "..1") lookups. One is actual read of this
+     * variable, the other may be transitive varargs component reference, which we should follow and
+     * not interpret as syntax.
+     */
+    private static <T> RSyntaxElement substitutePromise(RPromise promise, RCodeBuilder<T> builder) {
+        RSyntaxNode result = promise.getRep().asRSyntaxNode();
+        if (result instanceof RSyntaxLookup && ((RSyntaxLookup) result).isPromiseLookup()) {
+            int dotIdx = RSyntaxLookup.getVariadicComponentIndex(((RSyntaxLookup) result).getIdentifier());
+            if (dotIdx != -1) {
+                if (promise instanceof EagerPromise) {
+                    ((EagerPromise) promise).materialize();
+                }
+                MaterializedFrame promiseFrame = promise.getFrame();
+                FrameSlot dotsSlot = promiseFrame.getFrameDescriptor().findFrameSlot("...");
+                RArgsValuesAndNames dots = null;
+                try {
+                    dots = (RArgsValuesAndNames) promiseFrame.getObject(dotsSlot);
+                } catch (FrameSlotTypeException e) {
+                    e.printStackTrace();
+                }
+                assert dotIdx <= dots.getLength() : "promise to a vararg .." + dotIdx + " outside of the varargs bounds";
+                return substituteElement(dots.getArgument(dotIdx - 1), builder);
+            }
+        }
+        return result;
     }
 
     private static boolean isLookup(RSyntaxElement element, String identifier) {
@@ -105,15 +138,13 @@ public class RSubstitute {
                     if (arguments[1] instanceof RSyntaxConstant) {
                         String field = RRuntime.asStringLengthOne(((RSyntaxConstant) arguments[1]).getValue());
                         if (field != null) {
-                            RSyntaxElement substitute = substituteElement(env.get(field));
-                            if (field != null) {
-                                if (substitute instanceof RSyntaxLookup) {
-                                    substitute = RSyntaxConstant.createDummyConstant(RSyntaxNode.LAZY_DEPARSE, ((RSyntaxLookup) substitute).getIdentifier());
-                                }
-                                if (substitute instanceof RSyntaxConstant) {
-                                    arguments = Arrays.copyOf(arguments, arguments.length, RSyntaxElement[].class);
-                                    arguments[1] = substitute;
-                                }
+                            RSyntaxElement substitute = substituteElement(env.get(field), builder);
+                            if (substitute instanceof RSyntaxLookup) {
+                                substitute = RSyntaxConstant.createDummyConstant(RSyntaxNode.LAZY_DEPARSE, ((RSyntaxLookup) substitute).getIdentifier());
+                            }
+                            if (substitute instanceof RSyntaxConstant) {
+                                arguments = Arrays.copyOf(arguments, arguments.length, RSyntaxElement[].class);
+                                arguments[1] = substitute;
                             }
                         }
                     }
@@ -138,7 +169,7 @@ public class RSubstitute {
                                 RArgsValuesAndNames dots = (RArgsValuesAndNames) substitute;
                                 for (int j = 0; j < dots.getLength(); j++) {
                                     Object dotArg = dots.getArgument(j);
-                                    RSyntaxElement contents = substituteElement(dotArg);
+                                    RSyntaxElement contents = substituteElement(dotArg, builder);
                                     if (dotArg instanceof RPromise) {
                                         // Replace the environment used to substitute symbols in a
                                         // promise by the empty one to prevent an infinite recursion
@@ -168,7 +199,7 @@ public class RSubstitute {
             @Override
             protected T visit(RSyntaxLookup element) {
                 // this takes care of replacing variable lookups
-                RSyntaxElement substitute = substituteElement(env.get(element.getIdentifier()));
+                RSyntaxElement substitute = substituteElement(env.get(element.getIdentifier()), builder);
                 if (substitute != null) {
                     return builder.process(substitute);
                 } else {

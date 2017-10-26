@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.ClosureCache;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -142,13 +141,13 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
             if (vargsSymbolsIndex < varArgsSymbolIndices.length && varArgsSymbolIndices[vargsSymbolsIndex] == i) {
                 if (varArgSignature.isEmpty()) {
                     // An empty "..." vanishes
-                    values = Utils.resizeArray(values, values.length - 1);
-                    newNames = Utils.resizeArray(newNames, newNames.length - 1);
+                    values = Arrays.copyOf(values, values.length - 1);
+                    newNames = Arrays.copyOf(newNames, newNames.length - 1);
                     continue;
                 }
 
-                values = Utils.resizeArray(values, values.length + varArgSignature.getLength() - 1);
-                newNames = Utils.resizeArray(newNames, newNames.length + varArgSignature.getLength() - 1);
+                values = Arrays.copyOf(values, values.length + varArgSignature.getLength() - 1);
+                newNames = Arrays.copyOf(newNames, newNames.length + varArgSignature.getLength() - 1);
                 for (int j = 0; j < varArgSignature.getLength(); j++) {
                     values[index] = PromiseNode.createVarArg(j);
                     newNames[index] = varArgSignature.getName(j);
