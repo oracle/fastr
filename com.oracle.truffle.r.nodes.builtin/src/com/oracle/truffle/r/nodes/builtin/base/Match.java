@@ -51,8 +51,11 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RSequence;
+import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -72,10 +75,6 @@ import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 public abstract class Match extends RBuiltinNode.Arg4 {
 
     protected abstract Object executeRIntVector(Object x, Object table, Object noMatch, Object incomparables);
-
-    @Child private CastStringNode castString;
-
-    @Child private Match matchRecursive;
 
     static {
         Casts casts = new Casts(Match.class);
@@ -195,8 +194,6 @@ public abstract class Match extends RBuiltinNode.Arg4 {
 
         @Child private CastStringNode castString;
 
-        @Child private MatchInternalNode matchRecursive;
-
         private final ConditionProfile bigTableProfile = ConditionProfile.createBinaryProfile();
 
         private RAbstractStringVector castString(RAbstractVector operand) {
@@ -207,7 +204,56 @@ public abstract class Match extends RBuiltinNode.Arg4 {
             return (RAbstractStringVector) castString.doCast(operand);
         }
 
+        protected boolean isSequence(RAbstractVector vec) {
+            return vec instanceof RSequence;
+        }
+
         @Specialization
+        @TruffleBoundary
+        protected RIntVector matchInSequence(RAbstractIntVector x, RIntSequence table, int nomatch) {
+            int[] result = initResult(x.getLength(), nomatch);
+            boolean matchAll = true;
+
+            for (int i = 0; i < result.length; i++) {
+                int xx = x.getDataAt(i);
+                int index = table.getIndexFor(xx);
+                if (index != -1) {
+                    result[i] = index + 1;
+                } else {
+                    matchAll = false;
+                }
+            }
+            return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
+        }
+
+        @Specialization(guards = {"x.getLength() == 1", "!isSequence(table)"})
+        @TruffleBoundary
+        protected int matchSizeOne(RAbstractIntVector x, RAbstractIntVector table, int nomatch,
+                        @Cached("create()") NAProfile naProfile,
+                        @Cached("create()") BranchProfile foundProfile,
+                        @Cached("create()") BranchProfile notFoundProfile) {
+            int element = x.getDataAt(0);
+            int length = table.getLength();
+            if (naProfile.isNA(element)) {
+                for (int i = 0; i < length; i++) {
+                    if (RRuntime.isNA(table.getDataAt(i))) {
+                        foundProfile.enter();
+                        return i + 1;
+                    }
+                }
+            } else {
+                for (int i = 0; i < length; i++) {
+                    if (element == table.getDataAt(i)) {
+                        foundProfile.enter();
+                        return i + 1;
+                    }
+                }
+            }
+            notFoundProfile.enter();
+            return nomatch;
+        }
+
+        @Specialization(guards = {"x.getLength() != 1", "!isSequence(table)"})
         @TruffleBoundary
         protected RIntVector match(RAbstractIntVector x, RAbstractIntVector table, int nomatch) {
             int[] result = initResult(x.getLength(), nomatch);
@@ -322,7 +368,34 @@ public abstract class Match extends RBuiltinNode.Arg4 {
             return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
         }
 
-        @Specialization
+        @Specialization(guards = "x.getLength() == 1")
+        @TruffleBoundary
+        protected int matchSizeOne(RAbstractDoubleVector x, RAbstractDoubleVector table, int nomatch,
+                        @Cached("create()") NAProfile naProfile,
+                        @Cached("create()") BranchProfile foundProfile,
+                        @Cached("create()") BranchProfile notFoundProfile) {
+            double element = x.getDataAt(0);
+            int length = table.getLength();
+            if (naProfile.isNA(element)) {
+                for (int i = 0; i < length; i++) {
+                    if (RRuntime.isNA(table.getDataAt(i))) {
+                        foundProfile.enter();
+                        return i + 1;
+                    }
+                }
+            } else {
+                for (int i = 0; i < length; i++) {
+                    if (element == table.getDataAt(i)) {
+                        foundProfile.enter();
+                        return i + 1;
+                    }
+                }
+            }
+            notFoundProfile.enter();
+            return nomatch;
+        }
+
+        @Specialization(guards = "x.getLength() != 1")
         @TruffleBoundary
         protected RIntVector match(RAbstractDoubleVector x, RAbstractDoubleVector table, int nomatch) {
             int[] result = initResult(x.getLength(), nomatch);
@@ -422,7 +495,25 @@ public abstract class Match extends RBuiltinNode.Arg4 {
             return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
         }
 
-        @Specialization(guards = "x.getLength() == 1")
+        @Specialization
+        @TruffleBoundary
+        protected RIntVector matchInSequence(RAbstractStringVector x, RStringSequence table, int nomatch) {
+            int[] result = initResult(x.getLength(), nomatch);
+            boolean matchAll = true;
+
+            for (int i = 0; i < result.length; i++) {
+                String xx = x.getDataAt(i);
+                int index = table.getIndexFor(xx);
+                if (index != -1) {
+                    result[i] = index + 1;
+                } else {
+                    matchAll = false;
+                }
+            }
+            return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
+        }
+
+        @Specialization(guards = {"x.getLength() == 1", "!isSequence(table)"})
         @TruffleBoundary
         protected int matchSizeOne(RAbstractStringVector x, RAbstractStringVector table, int nomatch,
                         @Cached("create()") NAProfile naProfile,
@@ -449,7 +540,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
             return nomatch;
         }
 
-        @Specialization
+        @Specialization(guards = {"x.getLength() != 1", "!isSequence(table)"})
         @TruffleBoundary
         protected RIntVector match(RAbstractStringVector x, RAbstractStringVector table, int nomatch) {
             int[] result = initResult(x.getLength(), nomatch);
@@ -486,15 +577,120 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         }
 
         @Specialization
+        protected RIntVector match(RAbstractDoubleVector x, RAbstractComplexVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match((RAbstractComplexVector) x.castSafe(RType.Complex, isNAProfile), table, nomatch);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractLogicalVector x, RAbstractIntVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match((RAbstractIntVector) x.castSafe(RType.Integer, isNAProfile), table, nomatch);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractLogicalVector x, RAbstractDoubleVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match((RAbstractDoubleVector) x.castSafe(RType.Double, isNAProfile), table, nomatch);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractLogicalVector x, RAbstractComplexVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match((RAbstractComplexVector) x.castSafe(RType.Complex, isNAProfile), table, nomatch);
+        }
+
+        @Specialization
         protected RIntVector match(RAbstractLogicalVector x, RAbstractStringVector table, int nomatch,
                         @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
             return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), table, nomatch);
         }
 
         @Specialization
+        protected RIntVector match(RAbstractIntVector x, RAbstractComplexVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match((RAbstractComplexVector) x.castSafe(RType.Complex, isNAProfile), table, nomatch);
+        }
+
+        @Specialization(guards = "x.getLength() == 1")
+        @TruffleBoundary
+        protected int matchSizeOne(RAbstractRawVector x, RAbstractRawVector table, int nomatch,
+                        @Cached("create()") BranchProfile foundProfile,
+                        @Cached("create()") BranchProfile notFoundProfile) {
+            byte element = x.getDataAt(0).getValue();
+            int length = table.getLength();
+            for (int i = 0; i < length; i++) {
+                if (element == table.getDataAt(i).getValue()) {
+                    foundProfile.enter();
+                    return i + 1;
+                }
+            }
+            notFoundProfile.enter();
+            return nomatch;
+        }
+
+        @Specialization(guards = "x.getLength() != 1")
+        protected RIntVector match(RAbstractRawVector x, RAbstractRawVector table, int nomatch) {
+            int[] result = initResult(x.getLength(), nomatch);
+            boolean matchAll = true;
+            NonRecursiveHashMapRaw hashTable;
+            if (bigTableProfile.profile(table.getLength() > (x.getLength() * TABLE_SIZE_FACTOR))) {
+                hashTable = new NonRecursiveHashMapRaw();
+                NonRecursiveHashSetRaw hashSet = new NonRecursiveHashSetRaw();
+
+                for (int i = 0; i < result.length; i++) {
+                    hashSet.add(x.getDataAt(i).getValue());
+                }
+                for (int i = table.getLength() - 1; i >= 0; i--) {
+                    byte val = table.getDataAt(i).getValue();
+                    if (hashSet.contains(val)) {
+                        hashTable.put(val, i);
+                    }
+                }
+            } else {
+                hashTable = new NonRecursiveHashMapRaw();
+                for (int i = table.getLength() - 1; i >= 0; i--) {
+                    hashTable.put(table.getDataAt(i).getValue(), i);
+                }
+            }
+            for (int i = 0; i < result.length; i++) {
+                byte xx = x.getDataAt(i).getValue();
+                int index = hashTable.get(xx);
+                if (index != -1) {
+                    result[i] = index + 1;
+                } else {
+                    matchAll = false;
+                }
+            }
+            return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
+        }
+
+        @Specialization
         protected RIntVector match(RAbstractRawVector x, RAbstractIntVector table, int nomatch,
                         @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
             return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), (RAbstractStringVector) table.castSafe(RType.Character, isNAProfile), nomatch);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractRawVector x, RAbstractDoubleVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), (RAbstractStringVector) table.castSafe(RType.Character, isNAProfile), nomatch);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractRawVector x, RAbstractStringVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), table, nomatch);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractRawVector x, RAbstractLogicalVector table, int nomatch) {
+            return RDataFactory.createIntVector(x.getLength(), true);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractRawVector x, RAbstractComplexVector table, int nomatch) {
+            return RDataFactory.createIntVector(x.getLength(), true);
         }
 
         @Specialization
@@ -507,6 +703,53 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         protected RIntVector match(RAbstractDoubleVector x, RAbstractStringVector table, int nomatch,
                         @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
             return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), table, nomatch);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractIntVector x, RAbstractRawVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), (RAbstractStringVector) table.castSafe(RType.Character, isNAProfile), nomatch);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractLogicalVector x, RAbstractRawVector table, int nomatch) {
+            return RDataFactory.createIntVector(x.getLength(), true);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractComplexVector x, RAbstractRawVector table, int nomatch) {
+            return RDataFactory.createIntVector(x.getLength(), true);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractComplexVector x, RAbstractLogicalVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match(x, (RAbstractComplexVector) table.castSafe(RType.Complex, isNAProfile), nomatch);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractComplexVector x, RAbstractIntVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match(x, (RAbstractComplexVector) table.castSafe(RType.Complex, isNAProfile), nomatch);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractComplexVector x, RAbstractDoubleVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match(x, (RAbstractComplexVector) table.castSafe(RType.Complex, isNAProfile), nomatch);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractComplexVector x, RAbstractStringVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), table, nomatch);
+        }
+
+        @Specialization
+        protected RIntVector match(RAbstractDoubleVector x, RAbstractRawVector table, int nomatch,
+                        @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+            return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile),
+                            (RAbstractStringVector) table.castSafe(RType.Character, isNAProfile), nomatch);
         }
 
         @Specialization
@@ -560,6 +803,33 @@ public abstract class Match extends RBuiltinNode.Arg4 {
                 }
             }
             return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
+        }
+
+        @Specialization(guards = "x.getLength() == 1")
+        @TruffleBoundary
+        protected int matchSizeOne(RAbstractComplexVector x, RAbstractComplexVector table, int nomatch,
+                        @Cached("create()") NAProfile naProfile,
+                        @Cached("create()") BranchProfile foundProfile,
+                        @Cached("create()") BranchProfile notFoundProfile) {
+            RComplex element = x.getDataAt(0);
+            int length = table.getLength();
+            if (naProfile.isNA(element)) {
+                for (int i = 0; i < length; i++) {
+                    if (RRuntime.isNA(table.getDataAt(i))) {
+                        foundProfile.enter();
+                        return i + 1;
+                    }
+                }
+            } else {
+                for (int i = 0; i < length; i++) {
+                    if (element.equals(table.getDataAt(i))) {
+                        foundProfile.enter();
+                        return i + 1;
+                    }
+                }
+            }
+            notFoundProfile.enter();
+            return nomatch;
         }
 
         @Specialization
@@ -622,7 +892,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
 
             protected NonRecursiveHashMap(int entryCount) {
                 int capacity = Math.max(entryCount * 3 / 2, 1);
-                values = new int[Integer.highestOneBit(capacity) << 1];
+                values = new int[Integer.highestOneBit(capacity) << 2];
             }
 
             protected int index(int hash) {
@@ -692,10 +962,22 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         private static final class NonRecursiveHashMapComplex extends NonRecursiveHashMap {
 
             private final RComplex[] keys;
+            private final int m;
+            private final int k;
 
-            NonRecursiveHashMapComplex(int approxCapacity) {
-                super(approxCapacity);
+            NonRecursiveHashMapComplex(int entryCount) {
+                super(entryCount);
                 keys = new RComplex[values.length];
+
+                int m1 = 2;
+                int k1 = 1;
+                int n = 2 * entryCount;
+                while (m1 < n) {
+                    m1 *= 2;
+                    k1++;
+                }
+                m = m1;
+                k = k1;
             }
 
             public boolean put(RComplex key, int value) {
@@ -715,7 +997,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
                             values[ind] = value + 1;
                             return true;
                         } else {
-                            ind++;
+                            ind = (ind + 1) % m;
                             if (ind == values.length) {
                                 ind = 0;
                             }
@@ -734,7 +1016,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
                         if (key.equals(keys[ind])) {
                             return values[ind] - 1;
                         } else {
-                            ind++;
+                            ind = (ind + 1) % m;
                             if (ind == values.length) {
                                 ind = 0;
                             }
@@ -744,6 +1026,13 @@ public abstract class Match extends RBuiltinNode.Arg4 {
                         }
                     }
                 }
+            }
+
+            private static final int u = new Long(3141592653L).intValue();
+
+            @Override
+            protected int index(int key) {
+                return u * key >>> (32 - k);
             }
         }
 
@@ -872,6 +1161,46 @@ public abstract class Match extends RBuiltinNode.Arg4 {
             }
         }
 
+        private static final class NonRecursiveHashMapRaw {
+
+            private final int[] keys;
+            protected final int[] values;
+
+            NonRecursiveHashMapRaw() {
+                values = new int[256];
+                keys = new int[256];
+                Arrays.fill(keys, -1);
+            }
+
+            public boolean put(byte key, int value) {
+                assert value >= 0;
+                int ind = key & 0xFF;
+                while (true) {
+                    if (values[ind] == 0) {
+                        keys[ind] = key;
+                        values[ind] = value + 1;
+                        return false;
+                    } else if (key == keys[ind]) {
+                        values[ind] = value + 1;
+                        return true;
+                    } else {
+                        assert false;
+                    }
+                }
+            }
+
+            public int get(byte key) {
+                int ind = key & 0xFF;
+                while (true) {
+                    if (key == keys[ind]) {
+                        return values[ind] - 1;
+                    } else {
+                        return -1;
+                    }
+                }
+            }
+        }
+
         private static class NonRecursiveHashSetInt {
             private final NonRecursiveHashMapInt map;
 
@@ -884,7 +1213,23 @@ public abstract class Match extends RBuiltinNode.Arg4 {
             }
 
             public boolean contains(int value) {
-                return map.get(value) == 1 ? true : false;
+                return map.get(value) == 1;
+            }
+        }
+
+        private static class NonRecursiveHashSetRaw {
+            private final NonRecursiveHashMapRaw map;
+
+            NonRecursiveHashSetRaw() {
+                map = new NonRecursiveHashMapRaw();
+            }
+
+            public boolean add(byte value) {
+                return map.put(value, 1);
+            }
+
+            public boolean contains(byte value) {
+                return map.get(value) == 1;
             }
         }
 
@@ -900,7 +1245,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
             }
 
             public boolean contains(double value) {
-                return map.get(value) == 1 ? true : false;
+                return map.get(value) == 1;
             }
         }
 
@@ -916,7 +1261,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
             }
 
             public boolean contains(String value) {
-                return map.get(value) == 1 ? true : false;
+                return map.get(value) == 1;
             }
         }
 
@@ -932,7 +1277,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
             }
 
             public boolean contains(RComplex value) {
-                return map.get(value) == 1 ? true : false;
+                return map.get(value) == 1;
             }
         }
     }

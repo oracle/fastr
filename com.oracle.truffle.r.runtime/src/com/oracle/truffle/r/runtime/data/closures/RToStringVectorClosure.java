@@ -245,7 +245,7 @@ final class RRawToStringVectorClosure extends RToStringVectorClosure {
 
     @Override
     public String getDataAt(int index) {
-        return RRuntime.rawToString(vector.getDataAt(index));
+        return RRuntime.rawToHexString(vector.getDataAt(index));
     }
 }
 

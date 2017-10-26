@@ -83,6 +83,16 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         return stride;
     }
 
+    public int getIndexFor(int element) {
+        if (element < getStart() || element > getEnd()) {
+            return -1;
+        }
+        if ((element - getStart()) % getStride() == 0) {
+            return (element - getStart()) / getStride();
+        }
+        return -1;
+    }
+
     private RIntVector populateVectorData(int[] result) {
         int current = start;
         for (int i = 0; i < result.length && i < getLength(); i++) {
