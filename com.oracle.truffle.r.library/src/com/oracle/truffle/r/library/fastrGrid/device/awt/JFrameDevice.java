@@ -160,6 +160,16 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
     }
 
     @Override
+    public int getNativeWidth() {
+        return inner.getWidthAwt();
+    }
+
+    @Override
+    public int getNativeHeight() {
+        return inner.getHeightAwt();
+    }
+
+    @Override
     public double getStringWidth(DrawingContext ctx, String text) {
         return inner.getStringWidth(ctx, text);
     }

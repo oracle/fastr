@@ -189,6 +189,16 @@ public class Graphics2DDevice implements GridDevice {
     }
 
     @Override
+    public int getNativeWidth() {
+        return getWidthAwt();
+    }
+
+    @Override
+    public int getNativeHeight() {
+        return getHeightAwt();
+    }
+
+    @Override
     public double getStringWidth(DrawingContext ctx, String text) {
         setStrokeAndFont(ctx);
         int swingUnits = graphics.getFontMetrics(graphics.getFont()).stringWidth(text);

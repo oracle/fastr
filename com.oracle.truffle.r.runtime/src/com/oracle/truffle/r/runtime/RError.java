@@ -909,7 +909,9 @@ public final class RError extends RuntimeException implements TruffleException {
         NOT_A_LIST_OF_SOCKETS("not a list of sockets"),
         NOT_A_SOCKET_CONNECTION("not a socket connection"),
         UNEXPECTED_OBJ_IN_SIZE("Unexpected object type %s while calculating estimated object size."),
-        BAD_CONSTANT_COUNT("bad constant count");
+        BAD_CONSTANT_COUNT("bad constant count"),
+        MUST_BE_MULTIPLE("argument '%s' must be a multiple of %d long"),
+        MUSTNOT_CONTAIN_NAS("argument '%s' must not contain NAs");
 
         public final String message;
         final boolean hasArgs;

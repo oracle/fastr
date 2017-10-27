@@ -51,4 +51,32 @@ eval(expression({
         }
         invisible(.External2(C_savePlot, filename, type, device))
     }
+    
+	# The plot recording/replaying in FastR uses the grid display list, instead of the device DL.
+    dev.control <- function (displaylist = c("inhibit", "enable")) {
+	    if (dev.cur() <= 1) 
+    	    stop("dev.control() called without an open graphics device")
+	    if (!missing(displaylist)) {
+	        displaylist <- match.arg(displaylist)
+        	grid::grid.display.list(displaylist == "enable")
+    	}
+	    else stop("argument is missing with no default")
+    	invisible()
+	}
+
+	# The grid display list is extracted using private grid C functions. 
+    recordPlot <- function() {
+		dl <- grid:::grid.Call(grid:::C_getDisplayList)
+		dl.idx <- grid:::grid.Call(grid:::C_getDLindex)
+		list(dl = dl, dl.idx = dl.idx)
+	}
+
+    # When replaying, the argument DL must be one produced by the overridden function recordPlot.
+    # The DL is restored using private grid C functions.
+	replayPlot <- function(dl) {
+		grid:::grid.Call(grid:::C_setDisplayList, dl$dl)
+		grid:::grid.Call(grid:::C_setDLindex, dl$dl.idx)
+		grid:::grid.refresh()	
+	}
+
 }), asNamespace("grDevices"))

@@ -104,6 +104,15 @@ public final class CPar extends RExternalBuiltinNode {
                  */
                 double cra = getCurrentDrawingContext().getFontSize();
                 return RDataFactory.createDoubleVector(new double[]{cra, cra}, RDataFactory.COMPLETE_VECTOR);
+            case "usr":
+                // TODO:
+                return RDataFactory.createDoubleVector(new double[]{0, 1, 0, 1}, RDataFactory.COMPLETE_VECTOR);
+            case "xlog":
+                // TODO:
+                return RDataFactory.createLogicalVectorFromScalar(false);
+            case "ylog":
+                // TODO:
+                return RDataFactory.createLogicalVectorFromScalar(false);
             default:
                 throw RError.nyi(RError.NO_CALLER, "C_Par parameter '" + name + "'");
         }

@@ -18,6 +18,7 @@ import static com.oracle.truffle.r.library.fastrGrid.Unit.inchesToCm;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
+import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -157,8 +158,8 @@ public final class ViewPort {
             GridDevice device = GridContext.getContext().getCurrentDevice();
             // TODO: properly set the scale according to the current device
             Object[] data = topVP.getDataWithoutCopying();
-            data[ViewPort.VP_XSCALE] = RDataFactory.createDoubleVector(new double[]{0, device.getWidth()}, RDataFactory.COMPLETE_VECTOR);
-            data[ViewPort.VP_YSCALE] = RDataFactory.createDoubleVector(new double[]{0, device.getHeight()}, RDataFactory.COMPLETE_VECTOR);
+            data[ViewPort.VP_XSCALE] = RDataFactory.createDoubleVector(new double[]{0, device.getNativeWidth()}, RDataFactory.COMPLETE_VECTOR);
+            data[ViewPort.VP_YSCALE] = RDataFactory.createDoubleVector(new double[]{device.getNativeHeight(), 0}, RDataFactory.COMPLETE_VECTOR);
             data[ViewPort.PVP_GPAR] = GridContext.getContext().getGridState().getGpar();
             return DoSetViewPort.doSetViewPort(topVP, false, true);
         }

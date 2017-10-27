@@ -119,6 +119,16 @@ public interface GridDevice {
     double getHeight();
 
     /**
+     * @return The native width of the device.
+     */
+    int getNativeWidth();
+
+    /**
+     * @return The native height of the device.
+     */
+    int getNativeHeight();
+
+    /**
      * May change the default values the of the initial drawing context instance. Must return
      * non-null value.
      */
